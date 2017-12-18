@@ -63,7 +63,8 @@ def set_PIA(filename, wno):
 		ts+=[i]*len(wno)
 	xmean['temperature'] = pd.Series(ts, index = xmean.index)
 
-	#now fill dataframe
+	#now fill dataframe with interpolated H2 data and set wno (spectral wave) as the index\
+	#note here that the pd.index will be repeat for values of temperature
 	for i in h2cia['temperature'].unique():
 		cia = h2cia.loc[(h2cia['temperature']==i)]
 		cia.pop('temperature')
@@ -97,3 +98,44 @@ def pandas_interpolate(df,at, interp_column, method='linear'):
 	df = df.reset_index()
 	df = df.rename(columns={'index': interp_column})
 	return df
+
+def fit_linsky(t, wno, va=3):
+	"""
+	Adds H2-H2 opacity from Linsky (1969) and Lenzuni et al. (1991) 
+
+	Parameters
+	----------
+	t : numpy.array
+		Temperature 
+	wno : numpy.array
+		wave number
+	va : int or float
+		(Optional) 1,2 or 3 (depending on what overtone to compute 
+
+	Returns
+	-------
+	numpy.array 
+		H2-H2 absorption in cm-1 amagat-2 
+	"""
+
+	sig0 = np.array([4162.043,8274.650,12017.753]) #applicable sections in wavelength 
+
+	d1 = np.array([1.2750e5,1.32e6,1.32e6])
+	d2 = np.array([2760.,2760.,2760.])
+	d3 = np.array([0.40,0.40,0.40])
+
+	a1 = np.array([-7.661,-9.70,-11.32])
+	a2 = np.array([0.5725,0.5725,0.5725])
+
+	b1 = np.array([0.9376,0.9376,0.9376])
+	b2 = np.array([0.5616,0.5616,0.5616])
+
+	j = va 
+	d=d3[j]*np.sqrt(d1[j]+d2[j]*t)
+	a=10**(a1[j]+a2[j]*np.log10(t))
+	b=10**(b1[j]+b2[j]*np.log10(t))
+	aa=4.0/13.0*a/d*np.exp(1.5*d/b)
+
+	
+
+	return kappa
