@@ -38,7 +38,8 @@
 		"wmax":null,
 		"files":{
 			"wavegrid":"wave.h5",
-			"h2cia":"h2cia.h5"
+			"h2cia":"h2cia_2015.h5",
+			"h2minus":"h2minus.csv"
 		}
 	}
 }
