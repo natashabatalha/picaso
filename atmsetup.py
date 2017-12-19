@@ -105,7 +105,7 @@ class ATMSETUP():
 		else:
 			raise Exception("There is not adequte information to compute PT profile")
 
-	def calc_TP(self, T, logKir, logg1, logPc):
+	def calc_PT(self, T, logKir, logg1, logPc):
 		"""
 		Calculates parameterized PT profile from Guillot. This isntance is here 
 		primary for the retrieval scheme, so this can be updated
