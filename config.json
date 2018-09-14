@@ -7,7 +7,7 @@
 		"mass":null,
 		"mass_unit":null
 	},
-	"chemistry":{
+	"atmosphere":{
 		"profile":{
 			"type":"user",
 			"filepath":null,
@@ -22,7 +22,9 @@
 			"logg1":null,
 			"logPc":null
 		},
-		"clouds":null,
+		"clouds":{
+			"filepath":null
+		},
 	},
 	"geometry":{
 		"pangle":null
@@ -38,7 +40,8 @@
 		"wmax":null,
 		"files":{
 			"wavegrid":"wave.h5",
-			"h2cia":"h2cia.h5"
+			"h2cia":"h2cia_2015.h5",
+			"h2minus":"h2minus.csv"
 		}
 	}
 }
