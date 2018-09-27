@@ -109,6 +109,7 @@ class ATMSETUP():
 			#if one big file was uploaded, then cycle through each column
 			self.molecules = np.array([],dtype=str)
 			for i in read.keys():
+				if i in ['pressure', 'temperature']: continue
 				try:
 					weights[i] = pd.Series([self.get_weights([i])[i]])
 					self.molecules = np.concatenate((self.molecules ,np.array([i])))
@@ -192,10 +193,12 @@ class ATMSETUP():
 			self.continuum_molecules += [['H-','bf']]
 		if ("H" in self.molecules) and ("electrons" in self.level.keys()):
 			self.continuum_molecules += [['H-','ff']]
-		if ("H2" in self.molecules) and ("H2-" in self.molecules) and ("e-" in self.molecules):
+		if ("H2" in self.molecules) and ("electrons" in self.level.keys()):
 			self.continuum_molecules += [['H2','H2-']]
 		#now we can remove continuum molecules from self.molecules to keep them separate 
-		self.molecules = np.array([ x for x in self.molecules if x not in ['H','H2-','H2','H-','He','N2'] ])
+		if 'H+' in ['H','H2-','H2','H-','He','N2']: self.add_warnings('No H+ continuum opacity included')
+
+		self.molecules = np.array([ x for x in self.molecules if x not in ['H','H2-','H2','H-','He','N2', 'H+'] ])
 
 	def get_weights(self, molecule):
 		"""
@@ -317,14 +320,14 @@ class ATMSETUP():
 				w0 = wavelength.regrid(w0, self.input_wno, wno)
 				self.layer['cloud']['w0'] = w0  
 			else: 
-				raise Except('Cld file specified does not exist. Replace with None or find real file')            
+				raise Excepttion('Cld file specified does not exist. Replace with None or find real file')            
 		elif self.input['atmosphere']['clouds']['filepath'] == None:
 			zeros = np.zeros((self.c.nlayer,self.c.output_npts_wave))
 			self.layer['cloud'] = {'w0': zeros}
 			self.layer['cloud']['g0'] = zeros
 			self.layer['cloud']['opd'] = zeros
 		else:
-			raise Except("CLD input not recognized. Either input a filepath, or input None")
+			raise Exception("CLD input not recognized. Either input a filepath, or input None")
 
 		return
 
@@ -336,4 +339,9 @@ class ATMSETUP():
 		self.warnings += [warn]
 		return
 
+	def get_stellar_spec(self,wno):
+		"""
+		Get the stellar spectrum using pysynphot and bin to the correct wavelength 
+		"""
+		return
 

@@ -48,7 +48,7 @@ class ContinuumFactory():
 		self.old_wno = self.og_opacity['wno'].unique()
 		#define units
 		self.w_unit = 'cm-1'
-		self.abs_unit = 'log(cm-1 amagat^-2)'
+		self.abs_unit = 'cm-1 amagat^-2'
 		self.molecules = colnames[1:]
 		
 		#this will be what everything is rebinned to
@@ -66,11 +66,10 @@ class ContinuumFactory():
 		for i in range(self.ntemp): 
 			for m in self.molecules:
 				opa_bundle = self.og_opacity.iloc[ i*self.nwno : (i+1) * self.nwno][m].values
-				new_bundle = np.interp(self.new_wno,  self.old_wno, opa_bundle,right=-33,left=-33)
+				new_bundle = 10**(np.interp(self.new_wno,  self.old_wno, opa_bundle,right=-33,left=-33))
 				#now for anywhere that doesn't have opacity (-33) replace with linsky
 				if m=='H2H2':
-
-					new_bundle[np.where(new_bundle==-33)] = self.fit_linsky(self.temperatures[i],self.new_wno[np.where(new_bundle==-33)])
+					new_bundle[np.where(new_bundle==1e-33)] = self.fit_linsky(self.temperatures[i],self.new_wno[np.where(new_bundle==1e-33)])
 
 				dset = self.db_cia.create_dataset(m+'/'+str(self.temperatures[i]), data=new_bundle, chunks=True)
 		#get h2minus opacity, currently returns -33 for h2minus opacity regions that are out of bounds
@@ -86,7 +85,7 @@ class ContinuumFactory():
 		#get hminusbf 
 		for i in range(self.ntemp):
 			if self.temperatures[i]<600.0:
-				bundle = np.zeros(len(self.new_wno)) -50
+				bundle = np.zeros(len(self.new_wno)) 
 			else:
 				bundle = self.get_hminusbf(self.new_wno)
 			dset = self.db_cia.create_dataset('H-bf/'+str(self.temperatures[i]), data = bundle, chunks=True)
@@ -143,7 +142,7 @@ class ContinuumFactory():
 		if len(even_smaller)>0:
 			kappa[even_smaller]=a*d*wno[even_smaller]/((wno[even_smaller]-w)**2+d*d)
 
-		return np.log10(kappa)
+		return kappa
 
 	def get_h2minus(self, t, wno):
 		"""
@@ -179,11 +178,13 @@ class ContinuumFactory():
 		new_t = 5040.0/t
 		new_w = wno
 
-		h2m_interpolator =  RegularGridInterpolator((df.index.values,wno_bell), df.as_matrix(), bounds_error=False,fill_value=None)
+		h2m_interpolator =  RegularGridInterpolator((df.index.values,wno_bell), df.as_matrix(), bounds_error=False,fill_value=None)#)bounds_error=False,fill_value=None)
 
 		new = np.c_[new_t, new_w]
 		pts = 10**h2m_interpolator(new)*1e-26 #units from Bell 1980
-		return np.log10(pts)
+		#zeros for out of bound temperatures
+		pts[np.where(new_t>np.max(df.index.values))] = 0 
+		return pts
 
 	def get_hminusbf(self,wno):
 		"""
@@ -207,7 +208,8 @@ class ContinuumFactory():
 		nonzero = np.where(wno > 1e4/lambda_0)
 		for i in coeff: 
 			f[nonzero] = f[nonzero]*x[nonzero] + i 
-		return np.log10((wave*x)**3*f*1e-18)
+		result = (wave*x)**3*f*1e-18
+		return result
 		
 	def get_hminusff(self, t, wno):
 		"""
@@ -245,7 +247,7 @@ class ContinuumFactory():
 		nwave = np.size(wave)
 
 		if t<800 : 
-			return np.zeros(nwave )
+			return np.zeros(nwave ) 
 
 		t_coeff = 5040.0/t
 
@@ -272,7 +274,7 @@ class ContinuumFactory():
 		if np.size(past20) > 0 :
 			hm_cx[past20] = np.zeros(np.size(past20)) 
 
-		return	np.log10(hm_cx * 1.380658e-16 * t )
+		return	hm_cx * 1.380658e-16 * t 
 
 class MolecularFactory():
 	"""
@@ -320,9 +322,9 @@ class MolecularFactory():
 		for fold in next(os.walk(self.original_dir))[1]:
 			print(fold)
 			file = list(listdir(os.path.join(self.original_dir, fold)))
-			if (fold == 'Na') or (fold =='K'):
-				print('skip')
-				continue
+			#if (fold == 'Na') or (fold =='K'):
+			#	print('skip')
+			#	continue
 			if len(file)==1060:
 				grid = pd.read_csv(os.path.join(self.original_dir, 'PTgrid1060.txt'),delim_whitespace=True,skiprows=1,
 					header=None, names=['i','p','t'], dtype=str)

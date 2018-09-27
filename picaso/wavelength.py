@@ -5,7 +5,7 @@ import numpy as np
 __refdata__ = os.environ.get('picaso_refdata')
 import pickle as pk
 import astropy.constants as c
-
+import scipy.interpolate as sci
 def get_output_grid(filename, wmin=0.3, wmax=1, R=5000):
 	"""
 	Defines wavelength grid from HDF5 file.(comparable to SETSPV)
@@ -75,4 +75,6 @@ def regrid(matrix, old_wno, new_wno):
 	new = np.zeros((matrix.shape[0],len(new_wno)))
 	for i in range(matrix.shape[0]): 
 		new[i, :] = np.interp(new_wno, old_wno, matrix[i,:])
+		#f = sci.interp1d(old_wno, matrix[i,:],kind='cubic')
+		#new[i, :] = f(new_wno)
 	return new

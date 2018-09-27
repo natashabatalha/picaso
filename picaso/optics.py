@@ -5,12 +5,44 @@ import os
 from numba import jit
 from bokeh.plotting import figure, show, output_file
 from bokeh.palettes import inferno
-debug = True 
+debug = False 
 
 #@jit(nopython=True)
 def optc(atmosphere, opacityclass):
 	"""
-	Returns total optical depth per slab layer including molecular opacity, continuum opacity 
+	Returns total optical depth per slab layer including molecular opacity, continuum opacity. 
+	It should automatically select the molecules needed
+	
+	Parameters
+	----------
+	atmosphere : class ATMSETUP
+		This inherets the class from atmsetup.py 
+	opacityclass : class opacity
+		This inherets the class from optics.py. It is done this way so that the opacity db doesnt have 
+		to be reloaded in a retrieval 
+
+	Returns
+	-------
+	DTAU : ndarray 
+		This is a matrix with # layer by # wavelength. It is the opacity contained within a layer 
+		including the continuum, scattering, cloud (if specified), and molecular opacity
+	TAU : ndarray
+		This is a matrix with # level by # wavelength. It is the cumsum of opacity contained 
+		including the continuum, scattering, cloud (if specified), and molecular opacity
+
+	WBAR : ndarray
+		This is the single scattering albedo that includes rayleigh, raman and user input scattering sources. 
+		It has dimensions: # layer by # wavelength
+
+	COSB : ndarray
+		This is the asymettry factor which accounts for rayleigh and user specified values 
+		It has dimensions: # layer by # wavelength
+
+	Notes
+	-----
+	This was baselined against jupiter with the old fortran code. It matches 100% for all cases 
+	except for hotter cases where Na & K are present. This differences is not a product of the code 
+	but a product of the different opacities (1060 grid versus old 736 grid)
 	"""
 
 	atm = atmosphere
@@ -20,10 +52,12 @@ def optc(atmosphere, opacityclass):
 	tlayer = atm.layer['temperature']
 	player = atm.layer['pressure']/atm.c.pconv #think of a better solution for this later when mark responds
 
-	gravity = atm.planet.gravity * 100.0 #this too... need to have consistent units.
+	gravity = atm.planet.gravity / 100.0 #this too... need to have consistent units.
 
-	if debug: opt_figure = figure(x_axis_label = 'Wavenumber', y_axis_label='TAUGAS in optics.py', 
-		title = 'Opacity at nlayers/2, T='+str(tlayer[int(np.size(tlayer)/2)])
+	if debug: 
+		plot_layer=int(np.size(tlayer)/2-1)
+		opt_figure = figure(x_axis_label = 'Wavenumber', y_axis_label='TAUGAS in optics.py', 
+		title = 'Opacity at T='+str(tlayer[plot_layer])+' Layer='+str(plot_layer)
 		,y_axis_type='log',height=800, width=1200)
 
 	#====================== INITIALIZE TAUGAS#======================
@@ -33,7 +67,8 @@ def optc(atmosphere, opacityclass):
 	if debug: colors = inferno(2+len(atm.continuum_molecules) + len(atm.molecules))
 
 	#====================== ADD CONTIMUUM OPACITY======================	
-	#coefficients from McKay TO DO: Check with Mark where this comes from
+	#Set up coefficients needed to convert amagat to a normal human unit
+	#these COEF's are only used for the continuum opacity. 
 	ACOEF = (tlayer/(tlevel[:-1]*tlevel[1:]))*(
 	 		tlevel[1:]*plevel[1:] - tlevel[:-1]*plevel[:-1])/(plevel[1:]-plevel[:-1]) #UNITLESS
 
@@ -44,7 +79,10 @@ def optc(atmosphere, opacityclass):
 		ACOEF* (plevel[1:]**2 - plevel[:-1]**2) + BCOEF*(
 			2./3.)*(plevel[1:]**3 - plevel[:-1]**3) ) / (
 		1.01325**2 *gravity*tlayer*atm.layer['mmw'])
+
 	#go through every molecule in the continuum first 
+	#testing = {}
+	#testing['COEF'] = COEF1
 	for m in atm.continuum_molecules:
 		#H- Bound-Free
 		if (m[0] == "H-") and (m[1] == "bf"):
@@ -53,8 +91,9 @@ def optc(atmosphere, opacityclass):
 							atm.layer['mixingratios'][:,h_]*      							#nlayer
 			               	atm.layer['colden']/ 											  #nlayer
 			               	(atm.layer['mmw']*atm.c.amu)) 	).T								  #nlayer)].T
+			#testing['H-bf'] = ADDTAU
 			TAUGAS += ADDTAU
-			if debug: opt_figure.line(opacityclass.wno, ADDTAU[int(np.size(tlayer)/2),:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
+			if debug: opt_figure.line(opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
 		#H- Free-Free
 		elif (m[0] == "H-") and (m[1] == "ff"):
@@ -64,9 +103,9 @@ def optc(atmosphere, opacityclass):
 							atm.layer['mixingratios'][:,h_]*atm.layer['electrons']*           #nlayer
 			               	atm.layer['colden']/ 											  #nlayer
 			               	(tlayer*atm.layer['mmw']*atm.c.amu*atm.c.k_b)) 	).T				  #nlayer)].T
-
+			#testing['H-ff'] = ADDTAU
 			TAUGAS += ADDTAU
-			if debug: opt_figure.line(opacityclass.wno, ADDTAU[int(np.size(tlayer)/2),:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
+			if debug: opt_figure.line(opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
 		#H2- 
 		elif (m[0] == "H2") and (m[1] == "H2-"): 
@@ -81,9 +120,10 @@ def optc(atmosphere, opacityclass):
 							atm.layer['mixingratios'][:,h2_]*atm.layer['electrons']* #nlayer
 			               	atm.layer['colden']/ 											  #nlayer
 			               	(atm.layer['mmw']*atm.c.amu)) 	).T								  #nlayer)].T
+			#testing['H2-'] = ADDTAU
 
 			TAUGAS += ADDTAU
-			if debug: opt_figure.line(opacityclass.wno, ADDTAU[int(np.size(tlayer)/2),:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
+			if debug: opt_figure.line(opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
 		#everything else.. e.g. H2-H2, H2-CH4. Automatically determined by which molecules were requested
 		else:
@@ -95,14 +135,15 @@ def optc(atmosphere, opacityclass):
 								COEF1*													#nlayer
 								atm.layer['mixingratios'][:,m0]*						#nlayer
 								atm.layer['mixingratios'][:,m1] )  ).T 					#nlayer)].T
+			#testing[m[0]+m[1]] = ADDTAU
 			TAUGAS += ADDTAU
-			if debug: opt_figure.line(opacityclass.wno, ADDTAU[int(np.size(tlayer)/2),:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
+			if debug: opt_figure.line(opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
 		c+=1
 	
 	#====================== ADD MOLECULAR OPACITY======================	
 	for m in atm.molecules:
-		if (m =='CH4') or (m =='CO'):
+		if (m =='CO'):
 			#METHANE IS WHACK FIX THIS LATER
 			continue
 		ind = np.where(m==np.array(atm.weights.keys()))[0][0]
@@ -111,7 +152,7 @@ def optc(atmosphere, opacityclass):
 					atm.layer['mixingratios'][:,ind]*atm.weights[m].values[0]/ 
 			        atm.layer['mmw']) ).T
 		TAUGAS += ADDTAU
-
+		#testing[m] = ADDTAU
 		if debug: opt_figure.line(opacityclass.wno, ADDTAU[int(np.size(tlayer)/2),:], alpha=0.7,legend=m, line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
 		c+=1
@@ -119,10 +160,11 @@ def optc(atmosphere, opacityclass):
 	#====================== ADD RAYLEIGH OPACITY======================	
 	ih2 = np.where('H2'==np.array(atm.weights.keys()))[0][0]
 	ihe = np.where('He'==np.array(atm.weights.keys()))[0][0]
-	#ich4 = np.where('CH4'==np.array(atm.weights.keys()))[0][0]
+	ich4 = np.where('CH4'==np.array(atm.weights.keys()))[0][0]
 	TAURAY = rayleigh(atm.layer['colden'],atm.layer['mixingratios'][:,ih2], 
-					atm.layer['mixingratios'][:,ihe], atm.layer['mixingratios'][:,ihe], #ich4], 
+					atm.layer['mixingratios'][:,ihe], atm.layer['mixingratios'][:,ich4], 
 					opacityclass.wave, atm.layer['mmw'],atm.c.amu )
+	#testing['ray'] = TAURAY
 	if debug: opt_figure.line(opacityclass.wno, TAURAY[int(np.size(tlayer)/2),:], alpha=0.7,legend='Rayleigh', line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)	
 
@@ -133,15 +175,25 @@ def optc(atmosphere, opacityclass):
 
 	#====================== ADD CLOUD OPACITY======================	
 	TAUCLD = atm.layer['cloud']['opd'] #TAUCLD is the total extinction from cloud = (abs + scattering)
+	#testing['cld'] = TAUCLD
 	asym_factor_cld = atm.layer['cloud']['g0'] 
 	single_scattering_cld = atm.layer['cloud']['w0'] #scatter / (abs + scattering) from cloud only 
 
+	#testing['W0'] = single_scattering_cld
+	#testing['G0'] = asym_factor_cld
+
+	#import pickle as pk
+	#pk.dump(testing, open('../testing_notebooks/optc_all_taus.pk','wb'))
 
 	#====================== ADD EVERYTHING TOGETHER PER LAYER======================	
+	#formerly DTAUV
 	DTAU = TAUGAS + TAURAY + TAUCLD 
-	g_tot = (TAUCLD*asym_factor_cld)/(TAUCLD + TAURAY)
-	w_tot = (TAURAY*raman_factor + TAUCLD*single_scattering_cld) / (TAUGAS + TAURAY + TAUCLD) #TOTAL single scattering 
-
+	#formerly COSBV
+	COSB = (TAUCLD*asym_factor_cld)/(TAUCLD + TAURAY)
+	#formerly GCOSB2 
+	GCOS2 = 0.5*TAURAY/(TAURAY + TAUCLD)
+	#formerly WBARV.. change name later
+	WBAR = (TAURAY*raman_factor + TAUCLD*single_scattering_cld) / (TAUGAS + TAURAY + TAUCLD) #TOTAL single scattering 
 
 	if debug:
 		opt_figure.line(opacityclass.wno, DTAU[int(np.size(tlayer)/2),:], legend='TOTAL', line_width=4, color=colors[0],
@@ -151,14 +203,14 @@ def optc(atmosphere, opacityclass):
 		show(opt_figure)
 
 	#====================== TOTAL INTEGRATED EXTINCTION OPTICAL DEPTH======================
-	
+
 	#this extra zero is because the total integrated extinction should have nlevel and not, nlayer 
 	#Later, the zero will be replaced with the lower boundary condition
-	tau_tot =np.concatenate(([0], np.cumsum(DTAU)))
+	#TAU =np.concatenate(([0], np.cumsum(DTAU))) #taking this out since its redone in gfluxv
 
-	return tau_tot, g_tot, w_tot
+	return DTAU,  WBAR, COSB #,TAU
 
-@jit('f8[:,:](f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8)')
+@jit('f8[:,:](f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8)', cache=True)
 def rayleigh(colden,H2,He,CH4,wave,xmu,amu):
 	"""
 	Rayleigh function taken from old albedo code. Keeping this modular, as we may want 
@@ -199,7 +251,7 @@ def rayleigh(colden,H2,He,CH4,wave,xmu,amu):
 	gasmixing = np.zeros((cold.size, 3))
 	gasmixing[:,0] = H2
 	gasmixing[:,1] = He
-	gasmixing[:,2] = CH4*0 #FIX THISISIS
+	gasmixing[:,2] = CH4
 	#add rayleigh from each contributing gas using corresponding mixing 
 	for i in np.arange(0,3,1):
 		tec = cfray*(dpol[i]/wave**4)*(gnu[0,i]+gnu[1,i]/   #nwave
@@ -217,7 +269,7 @@ def raman(wavelength):
 
 	Will be added to the rayleigh scattering as : TAURAY*RAMAN
 	"""
-	return 1.0 
+	return 0.9999999 
 
 
 class RetrieveOpacities():
@@ -241,6 +293,8 @@ class RetrieveOpacities():
 
 		self.mol_db = h5py.File(molecular_data)
 
+		self.molecules = np.array([i for i in self.mol_db.keys()])
+
 		self.mol_temps = np.array([float(i) for i in self.mol_db['H2O'].keys()])
 		self.mol_press = {}
 		for i in self.mol_temps:
@@ -252,7 +306,6 @@ class RetrieveOpacities():
 		self.nwno = np.size(wno)
 
 
-	#@jit(nopython=True)
 	def get_continuum_opac(self, temperature, molecule): 
 		"""
 		Based on a temperature, this retrieves the continuum opacity for 
@@ -275,7 +328,7 @@ class RetrieveOpacities():
 		a = np.zeros((sizeT, self.nwno))
 		for i,t in zip(range(sizeT) ,nearestT): 
 			a[i,:] = np.array(self.cia_db[molecule][t])
-		return 10**(a)
+		return a
 
 	def get_molecular_opac(self, temperature, pressure, molecule):
 		"""
@@ -291,15 +344,24 @@ class RetrieveOpacities():
 		molecule : str 
 			Which opacity source to query. Will get error if not in the db
 		"""
-		nearestT = [self.mol_temps[find_nearest(self.mol_temps, t)].astype(str) for t in temperature]
-		nearestP = [self.mol_press[str(t)][find_nearest(self.mol_press[str(t)], p)].astype(str) for p,t in zip(pressure,nearestT)]
+		if (molecule == 'Na') or (molecule == 'K'):
+			mol_temps = np.array([float(i) for i in self.mol_db['Na'].keys()])
+			mol_press = {}
+			for i in mol_temps:
+				mol_press[str(i)] = np.array([float(i) for i in self.mol_db['Na'][str(i)].keys()])
+			nearestT = [mol_temps[find_nearest(mol_temps, t)].astype(str) for t in temperature]
+			nearestP = [mol_press[str(t)][find_nearest(mol_press[str(t)], p)].astype(str) for p,t in zip(pressure,nearestT)]
+		else:
+			nearestT = [self.mol_temps[find_nearest(self.mol_temps, t)].astype(str) for t in temperature]
+			nearestP = [self.mol_press[str(t)][find_nearest(self.mol_press[str(t)], p)].astype(str) for p,t in zip(pressure,nearestT)]
+
 		sizeT = np.size(nearestT)
 		a = np.zeros((sizeT, self.nwno))
 		for i,t,p in zip(range(sizeT) ,nearestT,nearestP): 
 			a[i,:] = np.array(self.mol_db[molecule][t][p])
 		return a
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def find_nearest(array,value):
 	#small program to find the nearest neighbor in temperature  
 	idx = (np.abs(array-value)).argmin()
