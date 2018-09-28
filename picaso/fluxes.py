@@ -2,7 +2,7 @@ from numba import jit
 import numpy as np
 import copy
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_flux_toon(nlevel, wno, nwno, dtau_DTDEL, wbar_WDEL, cosb_CDEL, surf_reflect, ubar0, F0PI):
 	"""
 
@@ -66,7 +66,7 @@ def get_flux_toon(nlevel, wno, nwno, dtau_DTDEL, wbar_WDEL, cosb_CDEL, surf_refl
 
 	#sum up taus starting at the top, going to depth
 	tau = np.zeros((nlevel, nwno))
-	tau[1:,:]=numba_cumsum(copy.deepcopy(dtau))
+	tau[1:,:]=numba_cumsum(dtau)
 	#now define terms of Toon et al 1989 quadrature Table 1 
 	#https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JD094iD13p16287
 	#see table of terms 
@@ -76,8 +76,6 @@ def get_flux_toon(nlevel, wno, nwno, dtau_DTDEL, wbar_WDEL, cosb_CDEL, surf_refl
 	lamda = np.sqrt(g1**2 - g2**2)                     #eqn 21
 	gama  = (g1-lamda)/g2                              #eqn 22
 	
-	#pk.dump([g1, g2, g3, lamda, gama] ,open('../testing_notebooks/g1g2g3lamdagama.pk','wb'))
-
 	# now calculate c_plus and c_minus (equation 23 and 24)
 	g4 = 1.0 - g3
 	denominator = lamda**2 - 1.0/ubar0**2.0
@@ -103,43 +101,29 @@ def get_flux_toon(nlevel, wno, nwno, dtau_DTDEL, wbar_WDEL, cosb_CDEL, surf_refl
 
 	exptrm_positive = np.exp(exptrm) #EP
 	exptrm_minus = np.exp(-exptrm) #EM
-	import pickle as pk
-	pk.dump({'AM':a_minus, 'AP':a_plus,
-		'CPM1':c_plus_up, 'CMM1':c_minus_up, 'CP':c_plus_down,'CM':c_minus_down,
-		'EXPTRM':exptrm,'DTAU':dtau}, open('../testing_notebooks/gflux_a_c_pm.pk','wb'))
-	
-	#========================= Start loop over wavelength =========================
+
+
+	#boundary conditions 
+	b_top = 0.0                                          
+	b_surface = 0. + surf_reflect*ubar0*F0PI*np.exp(-tau[-1, :]/ubar0)
+
+	#Now we need the terms for the tridiagonal rotated layered method
+	A, B, C, D = setup_tri_diag(nlayer, c_plus_up, c_minus_up, 
+									c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
+									g1, g2, g3, lamda, gama, dtau, 
+									exptrm_positive,  exptrm_minus) 
+
 	positive = np.zeros((nlayer, nwno))
 	negative = np.zeros((nlayer, nwno))
-	#import pandas as pd
-	#import pickle as pk
-	#testingA = pd.DataFrame(columns=wno, index=range(2*nlayer) )
-	#testingB = pd.DataFrame(columns=wno, index=range(2*nlayer) )
-	#testingC = pd.DataFrame(columns=wno, index=range(2*nlayer) )
-	#testingD = pd.DataFrame(columns=wno, index=range(2*nlayer) )
-
+	#========================= Start loop over wavelength =========================
+	L = 2*nlayer
 	for w in range(nwno):
-		#boundary conditions 
-		b_top = 0.0                                          
-		b_surface = 0. + surf_reflect*ubar0*F0PI[w]*np.exp(-tau[-1, w]/ubar0)
-
-		#Now we need the terms for the tridiagonal rotated layered method
-		A, B, C, D = setup_tri_diag(nlayer, c_plus_up[:,w], c_minus_up[:,w], 
-									c_plus_down[:,w], c_minus_down[:,w], b_top, b_surface, surf_reflect,
-									g1[:,w], g2[:,w], g3[:,w], lamda[:,w], gama[:,w], dtau[:,w], 
-									exptrm_positive[:,w],  exptrm_minus[:,w]) 
-		#testingA[wno[w]] = A
-		#testingB[wno[w]] = B
-		#testingC[wno[w]] = C
-		#testingD[wno[w]] = D
-		
 		#coefficient of posive and negative exponential terms 
-		X = tri_diag_solve(2*nlayer, A, B, C, D)
-	
+		X = tri_diag_solve(L, A[:,w], B[:,w], C[:,w], D[:,w])
+
 		#unmix the coefficients
 		positive[:,w] = X[::2] + X[1::2] 
 		negative[:,w] = X[::2] - X[1::2]
-	#pk.dump([testingA, testingB, testingC, testingD], open('../testing_notebooks/GFLUX_ABCD.pk','wb'))
 	#========================= End loop over wavelength =========================
 
 	#might have to add this in to avoid numerical problems later. 
@@ -181,11 +165,7 @@ def get_flux_toon(nlevel, wno, nwno, dtau_DTDEL, wbar_WDEL, cosb_CDEL, surf_refl
 	#add direct flux to downwelling term 
 	flux_minus_mdpt = flux_minus_mdpt + ubar0*F0PI*np.exp(-1.0*tau_mdpt/ubar0)
 
-	#finally, get cumulative fluxes 
-	flux_plus_net  = numba_cumsum(flux_plus)
-	flux_minus_net = numba_cumsum(flux_minus)
-
-	return flux_plus_net, flux_minus_net 
+	return flux_plus, flux_minus
 
 @jit(nopython=True, cache=True)
 def slice_eq(array, lim, value):
@@ -222,9 +202,10 @@ def numba_cumsum(mat):
 	"""Function to compute cumsum along axis=0 to bypass numba not allowing kwargs in 
 	cumsum 
 	"""
+	new_mat = np.zeros(mat.shape)
 	for i in range(mat.shape[1]):
-		mat[:,i] = np.cumsum(mat[:,i])
-	return mat
+		new_mat[:,i] = np.cumsum(mat[:,i])
+	return new_mat
 
 
 @jit(nopython=True, cache=True)
@@ -280,8 +261,6 @@ def setup_tri_diag(nlayer, c_plus_up, c_minus_up,
 	
 	"""
 	L = 2 * nlayer
-	LM2 = L - 2 
-	LM1 = L - 1 
 
 	#EQN 44 
 
@@ -291,35 +270,38 @@ def setup_tri_diag(nlayer, c_plus_up, c_minus_up,
 	e4 = gama*exptrm_positive - exptrm_minus
 
 	#now build terms 
-	A = np.zeros(L) 
-	B = np.zeros(L) 
-	C = np.zeros(L)
-	D = np.zeros(L)
+	A = np.zeros((L,e1.shape[1] )) 
+	B = np.zeros((L,e1.shape[1] )) 
+	C = np.zeros((L,e1.shape[1] )) 
+	D = np.zeros((L,e1.shape[1] )) 
 
-	A[0] = 0.0
-	B[0] = gama[0] + 1.0
-	C[0] = gama[0] - 1.0
-	D[0] = b_top - c_minus_up[0]
+	A[0,:] = 0.0
+	B[0,:] = gama[0,:] + 1.0
+	C[0,:] = gama[0,:] - 1.0
+	D[0,:] = b_top - c_minus_up[0,:]
 
 	#even terms, not including the last !CMM1 = UP
-	A[1::2][:-1] = (e1[:-1]+e3[:-1]) * (gama[1:]-1.0) #always good
-	B[1::2][:-1] = (e2[:-1]+e4[:-1]) * (gama[1:]-1.0)
-	C[1::2][:-1] = 2.0 * (1.0-gama[1:]**2)            #always good 
-	D[1::2][:-1] = ((gama[1:]-1.0) * (c_plus_up[:1] - c_plus_down[:-1])
-							+ (1.-gama[1:]) * (c_minus_down[:-1] - c_minus_up[1:]))
-
+	A[1::2,:][:-1] = (e1[:-1,:]+e3[:-1,:]) * (gama[1:,:]-1.0) #always good
+	B[1::2,:][:-1] = (e2[:-1,:]+e4[:-1,:]) * (gama[1:,:]-1.0)
+	C[1::2,:][:-1] = 2.0 * (1.0-gama[1:,:]**2)            #always good 
+	D[1::2,:][:-1] =((gama[1:,:]-1.0)*(c_plus_up[1:,:] - c_plus_down[:-1,:]) + 
+							(1.0-gama[1:,:])*(c_minus_down[:-1,:] - c_minus_up[1:,:]))
+	#import pickle as pk
+	#pk.dump({'GAMA_1':(gama[1:,:]-1.0), 'CPM1':c_plus_up[1:,:] , 'CP':c_plus_down[:-1,:], '1_GAMA':(1.0-gama[1:,:]), 
+	#	'CM':c_minus_down[:-1,:],'CMM1':c_minus_up[1:,:],'Deven':D[1::2,:][:-1]}, open('../testing_notebooks/GFLUX_even_D_terms.pk','wb'))
+	
 	#odd terms, not including the first 
-	A[::2][1:] = 2.0*(1.0-gama[:-1]**2)
-	B[::2][1:] = (e1[:-1]-e3[:-1]) * (gama[1:]+1.0)
-	C[::2][1:] = (e1[:-1]+e3[:-1]) * (gama[1:]-1.0)
-	D[::2][1:] = (e3[:-1]*(c_plus_up[1:] - c_plus_down[:-1]) + 
-							e1[:-1]*(c_minus_down[:-1] - c_minus_up[1:]))
+	A[::2,:][1:] = 2.0*(1.0-gama[:-1,:]**2)
+	B[::2,:][1:] = (e1[:-1,:]-e3[:-1,:]) * (gama[1:,:]+1.0)
+	C[::2,:][1:] = (e1[:-1,:]+e3[:-1,:]) * (gama[1:,:]-1.0)
+	D[::2,:][1:] = (e3[:-1,:]*(c_plus_up[1:,:] - c_plus_down[:-1,:]) + 
+							e1[:-1,:]*(c_minus_down[:-1,:] - c_minus_up[1:,:]))
 
 	#last term [L-1]
-	A[-1] = e1[-1]-surf_reflect*e3[-1]
-	B[-1] = e2[-1]-surf_reflect*e4[-1]
-	C[-1] = 0.0
-	D[-1] = b_surface-c_plus_down[-1] + surf_reflect*c_minus_down[-1]
+	A[-1,:] = e1[-1,:]-surf_reflect*e3[-1,:]
+	B[-1,:] = e2[-1,:]-surf_reflect*e4[-1,:]
+	C[-1,:] = 0.0
+	D[-1,:] = b_surface-c_plus_down[-1,:] + surf_reflect*c_minus_down[-1,:]
 
 	return A, B, C, D
 
@@ -329,7 +311,6 @@ def tri_diag_solve(l, a, b, c, d):
     Tridiagonal Matrix Algorithm solver, a b c d can be NumPy array type or Python list type.
     refer to http://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm
     and to http://www.cfd-online.com/Wiki/Tridiagonal_matrix_algorithm_-_TDMA_(Thomas_algorithm)
-    Modified from : https://gist.github.com/cbellei/8ab3ab8551b8dfc8b081c518ccd9ada9
 	
 	A, B, C and D refer to: A(I)*X(I-1) + B(I)*X(I) + C(I)*X(I+1) = D(I)
 
@@ -347,16 +328,16 @@ def tri_diag_solve(l, a, b, c, d):
     array 
     	Solution, x 
     """
-    nf = l # number of equations
-    for it in range(1, nf):
-        mc = a[it-1]/b[it-1]
-        b[it] = b[it] - mc*c[it-1] 
-        d[it] = d[it] - mc*d[it-1]
-        	    
-    xc = b
-    xc[-1] = d[-1]/b[-1]
+    AS, DS, CS, DS,XK = np.zeros(l), np.zeros(l), np.zeros(l), np.zeros(l), np.zeros(l) # copy arrays
 
-    for il in range(nf-2, -1, -1):
-        xc[il] = (d[il]-c[il]*xc[il+1])/b[il]
+    AS[-1] = a[-1]/b[-1]
+    DS[-1] = d[-1]/b[-1]
 
-    return xc
+    for i in range(l-2, -1, -1):
+    	x = 1.0 / (b[i] - c[i] * AS[i+1])
+    	AS[i] = a[i] * x
+    	DS[i] = (d[i]-c[i] * DS[i+1]) * x
+    XK[0] = DS[0]
+    for i in range(1,l):
+    	XK[i] = DS[i] - AS[i] * XK[i-1]
+    return XK

@@ -57,13 +57,12 @@ def picaso(input):
 	#use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
 	ubar0 = 0.5 #hemispheric constant, sqrt(3) = guass quadrature
 	F0PI = np.zeros(nwno) + 1.0 
-	surf_reflect = 0
+	surf_reflect = np.zeros(nwno)
 
-	flux_plus_net, flux_minus_net  = fluxes.get_flux_toon(atm.c.nlevel, wno,nwno,
+	flux_plus, flux_minus  = fluxes.get_flux_toon(atm.c.nlevel, wno,nwno,
 														DTAU, WBAR, COSB, surf_reflect, ubar0, F0PI)
 
-	import pickle as pk 
-	pk.dump([wno, flux_plus_net, flux_minus_net ], open('../testing_notebooks/GFLUXV_TEST.pk','wb'))
+	
 
 	return atm
 
