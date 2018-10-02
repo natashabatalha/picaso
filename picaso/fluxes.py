@@ -1,9 +1,8 @@
-from numba import jit
-import numpy as np
-import copy
+from numba import jit, vectorize
+from numpy import exp, zeros, where, sqrt, cumsum , pi
 
 @jit(nopython=True, cache=True)
-def get_flux_toon(nlevel, wno, nwno, dtau_DTDEL, wbar_WDEL, cosb_CDEL, surf_reflect, ubar0, F0PI):
+def get_flux_toon(nlevel, wno, nwno, tau, dtau, w0, cosbar, surf_reflect, ubar0, F0PI):
 	"""
 
 	Parameters
@@ -17,10 +16,10 @@ def get_flux_toon(nlevel, wno, nwno, dtau_DTDEL, wbar_WDEL, cosb_CDEL, surf_refl
 	dtau : ndarray of float
 		This is the opacity contained within each individual layer (defined at midpoints of "levels")
 		Dimensions=# layer by # wave
-	wbar : ndarray of float 
+	w0 : ndarray of float 
 		This is the single scattering albedo, from scattering, clouds, raman, etc 
 		Dimensions=# layer by # wave
-	cosb : ndarray of float 
+	cosbar : ndarray of float 
 		This is the asymmetry factor 
 		Dimensions=# layer by # wave
 	surf_reflect : float 
@@ -33,12 +32,18 @@ def get_flux_toon(nlevel, wno, nwno, dtau_DTDEL, wbar_WDEL, cosb_CDEL, surf_refl
 
 	Returns
 	-------
+	flux_up and flux_down through each layer as a function of wavelength 
 
 	To Do
 	-----
 		- Replace detla-function adjustment with better approximation (e.g. Cuzzi)
 		- F0PI Solar flux shouldn't always be 1.. Follow up to make sure that this isn't a bad 
 		  hardwiring to solar 
+	
+	Examples
+	--------
+	flux_plus, flux_minus  = fluxes.get_flux_toon(atm.c.nlevel, wno,nwno,
+													tau_dedd,dtau_dedd, w0_dedd, cosb_dedd, surf_reflect, ubar0, F0PI)
 
 
 	"""
@@ -58,22 +63,23 @@ def get_flux_toon(nlevel, wno, nwno, dtau_DTDEL, wbar_WDEL, cosb_CDEL, surf_refl
 
 	#also see these lecture notes are pretty good
 	#http://irina.eas.gatech.edu/EAS8803_SPRING2012/Lec20.pdf
-	w0=wbar_WDEL*(1.-cosb_CDEL**2)/(1.0-wbar_WDEL*cosb_CDEL**2)
-	cosbar=cosb_CDEL/(1.+cosb_CDEL)
-	dtau=dtau_DTDEL*(1.-wbar_WDEL*cosb_CDEL**2) 
-	#import pickle as pk
-	#pk.dump([w0, cosbar,dtau] ,open('../testing_notebooks/optc_postcorrect.pk','wb'))
-
+	
+	#w0=wbar_WDEL*(1.-cosb_CDEL**2)/(1.0-wbar_WDEL*cosb_CDEL**2)
+	#cosbar=cosb_CDEL/(1.+cosb_CDEL)
+	#dtau=dtau_DTDEL*(1.-wbar_WDEL*cosb_CDEL**2) 
+	
 	#sum up taus starting at the top, going to depth
-	tau = np.zeros((nlevel, nwno))
-	tau[1:,:]=numba_cumsum(dtau)
+	#tau = zeros((nlevel, nwno))
+	#tau[1:,:]=numba_cumsum(dtau)
+
 	#now define terms of Toon et al 1989 quadrature Table 1 
 	#https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JD094iD13p16287
 	#see table of terms 
-	g1    = (np.sqrt(3.)*0.5)*(2. - w0*(1.+cosbar))    #table 1
-	g2    = (np.sqrt(3.)*w0*0.5)*(1.-cosbar)           #table 1
-	g3    = 0.5*(1.-np.sqrt(3.)*cosbar*ubar0)          #table 1
-	lamda = np.sqrt(g1**2 - g2**2)                     #eqn 21
+	sq3 = sqrt(3.)
+	g1    = (sq3*0.5)*(2. - w0*(1.+cosbar))    #table 1
+	g2    = (sq3*w0*0.5)*(1.-cosbar)           #table 1
+	g3    = 0.5*(1.-sq3*cosbar*ubar0)          #table 1
+	lamda = sqrt(g1**2 - g2**2)                     #eqn 21
 	gama  = (g1-lamda)/g2                              #eqn 22
 	
 	# now calculate c_plus and c_minus (equation 23 and 24)
@@ -89,32 +95,34 @@ def get_flux_toon(nlevel, wno, nwno, dtau_DTDEL, wbar_WDEL, cosb_CDEL, surf_refl
 	#add in exponntial to get full eqn
 	#_up is the terms evaluated at lower optical depths (higher altitudes)
 	#_down is terms evaluated at higher optical depths (lower altitudes)
-	c_minus_up = a_minus*np.exp(-tau[:-1,:]/ubar0) #CMM1
-	c_plus_up  = a_plus*np.exp(-tau[:-1,:]/ubar0) #CPM1
-	c_minus_down = a_minus*np.exp(-tau[1:,:]/ubar0) #CM
-	c_plus_down  = a_plus*np.exp(-tau[1:,:]/ubar0) #CP
+	x = exp(-tau[:-1,:]/ubar0)
+	c_minus_up = a_minus*x #CMM1
+	c_plus_up  = a_plus*x #CPM1
+	x = exp(-tau[1:,:]/ubar0)
+	c_minus_down = a_minus*x #CM
+	c_plus_down  = a_plus*x #CP
 
 	#calculate exponential terms needed for the tridiagonal rotated layered method
 	exptrm = lamda*dtau
 	#save from overflow 
 	exptrm = slice_gt (exptrm, 35.0)
 
-	exptrm_positive = np.exp(exptrm) #EP
-	exptrm_minus = np.exp(-exptrm) #EM
+	exptrm_positive = exp(exptrm) #EP
+	exptrm_minus = 1.0/exptrm_positive#exp(-exptrm) #EM
 
 
 	#boundary conditions 
 	b_top = 0.0                                          
-	b_surface = 0. + surf_reflect*ubar0*F0PI*np.exp(-tau[-1, :]/ubar0)
+	b_surface = 0. + surf_reflect*ubar0*F0PI*exp(-tau[-1, :]/ubar0)
 
 	#Now we need the terms for the tridiagonal rotated layered method
-	A, B, C, D = setup_tri_diag(nlayer, c_plus_up, c_minus_up, 
+	A, B, C, D = setup_tri_diag(nlayer,nwno,  c_plus_up, c_minus_up, 
 									c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
 									g1, g2, g3, lamda, gama, dtau, 
 									exptrm_positive,  exptrm_minus) 
 
-	positive = np.zeros((nlayer, nwno))
-	negative = np.zeros((nlayer, nwno))
+	positive = zeros((nlayer, nwno))
+	negative = zeros((nlayer, nwno))
 	#========================= Start loop over wavelength =========================
 	L = 2*nlayer
 	for w in range(nwno):
@@ -132,8 +140,8 @@ def get_flux_toon(nlevel, wno, nwno, dtau_DTDEL, wbar_WDEL, cosb_CDEL, surf_refl
 	#evaluate the fluxes through the layers 
 	#use the top optical depth expression to evaluate fp and fm 
 	#at the top of each layer 
-	flux_plus  = np.zeros((nlevel, nwno))
-	flux_minus = np.zeros((nlevel, nwno))
+	flux_plus  = zeros((nlevel, nwno))
+	flux_minus = zeros((nlevel, nwno))
 	flux_plus[:-1,:]  = positive + gama*negative + c_plus_up #everything but the last row (botton of atmosphere)
 	flux_minus[:-1,:] = positive*gama + negative + c_minus_up #everything but the last row (botton of atmosphere
 
@@ -149,21 +157,21 @@ def get_flux_toon(nlevel, wno, nwno, dtau_DTDEL, wbar_WDEL, cosb_CDEL, surf_refl
 	#other cases in meador & weaver JAS, 37, 630-643, 1980
 
 	#now add direct flux term to the downwelling radiation, Liou 1982
-	flux_minus = flux_minus + ubar0*F0PI*np.exp(-1.0*tau/ubar0)
+	flux_minus = flux_minus + ubar0*F0PI*exp(-1.0*tau/ubar0)
 
 	#now calculate the fluxes at the midpoints of the layers 
-	exptrm_positive_mdpt = np.exp(0.5*exptrm) #EP_mdpt
-	exptrm_minus_mdpt = np.exp(-0.5*exptrm) #EM_mdpt
+	#exptrm_positive_mdpt = exp(0.5*exptrm) #EP_mdpt
+	#exptrm_minus_mdpt = exp(-0.5*exptrm) #EM_mdpt
 
-	tau_mdpt = tau[:-1] + 0.5*dtau #start from bottom up to define midpoints 
-	c_plus_mdpt = a_plus*np.exp(-tau_mdpt/ubar0)
-	c_minus_mdpt = a_minus*np.exp(-tau_mdpt/ubar0)
+	#tau_mdpt = tau[:-1] + 0.5*dtau #start from bottom up to define midpoints 
+	#c_plus_mdpt = a_plus*exp(-tau_mdpt/ubar0)
+	#c_minus_mdpt = a_minus*exp(-tau_mdpt/ubar0)
 	
-	flux_plus_mdpt = positive*exptrm_positive_mdpt + gama*negative*exptrm_minus_mdpt + c_plus_mdpt
-	flux_minus_mdpt = positive*exptrm_positive_mdpt*gama + negative*exptrm_minus_mdpt + c_minus_mdpt
+	#flux_plus_mdpt = positive*exptrm_positive_mdpt + gama*negative*exptrm_minus_mdpt + c_plus_mdpt
+	#flux_minus_mdpt = positive*exptrm_positive_mdpt*gama + negative*exptrm_minus_mdpt + c_minus_mdpt
 
 	#add direct flux to downwelling term 
-	flux_minus_mdpt = flux_minus_mdpt + ubar0*F0PI*np.exp(-1.0*tau_mdpt/ubar0)
+	#flux_minus_mdpt = flux_minus_mdpt + ubar0*F0PI*exp(-1.0*tau_mdpt/ubar0)
 
 	return flux_plus, flux_minus
 
@@ -173,7 +181,7 @@ def slice_eq(array, lim, value):
 	"""
 	for i in range(array.shape[0]):
 		new = array[i,:] 
-		new[np.where(new==lim)] = value
+		new[where(new==lim)] = value
 		array[i,:] = new     
 	return array
 
@@ -183,7 +191,7 @@ def slice_lt(array, lim):
 	"""
 	for i in range(array.shape[0]):
 		new = array[i,:] 
-		new[np.where(new<lim)] = lim
+		new[where(new<lim)] = lim
 		array[i,:] = new     
 	return array
 
@@ -193,7 +201,7 @@ def slice_gt(array, lim):
 	"""
 	for i in range(array.shape[0]):
 		new = array[i,:] 
-		new[np.where(new>lim)] = lim
+		new[where(new>lim)] = lim
 		array[i,:] = new     
 	return array
 
@@ -202,14 +210,13 @@ def numba_cumsum(mat):
 	"""Function to compute cumsum along axis=0 to bypass numba not allowing kwargs in 
 	cumsum 
 	"""
-	new_mat = np.zeros(mat.shape)
+	new_mat = zeros(mat.shape)
 	for i in range(mat.shape[1]):
-		new_mat[:,i] = np.cumsum(mat[:,i])
+		new_mat[:,i] = cumsum(mat[:,i])
 	return new_mat
 
-
 @jit(nopython=True, cache=True)
-def setup_tri_diag(nlayer, c_plus_up, c_minus_up, 
+def setup_tri_diag(nlayer,nwno ,c_plus_up, c_minus_up, 
 	c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
 	g1, g2, g3, lamda, gama, dtau, exptrm_positive,  exptrm_minus):
 	"""
@@ -221,6 +228,8 @@ def setup_tri_diag(nlayer, c_plus_up, c_minus_up,
 	----------
 	nlayer : int 
 		number of layers in the model 
+	nwno : int 
+		number of wavelength points
 	c_plus_up : array 
 		c-plus evaluated at the top of the atmosphere 
 	c_minus_up : array 
@@ -270,10 +279,10 @@ def setup_tri_diag(nlayer, c_plus_up, c_minus_up,
 	e4 = gama*exptrm_positive - exptrm_minus
 
 	#now build terms 
-	A = np.zeros((L,e1.shape[1] )) 
-	B = np.zeros((L,e1.shape[1] )) 
-	C = np.zeros((L,e1.shape[1] )) 
-	D = np.zeros((L,e1.shape[1] )) 
+	A = zeros((L,nwno)) 
+	B = zeros((L,nwno )) 
+	C = zeros((L,nwno )) 
+	D = zeros((L,nwno )) 
 
 	A[0,:] = 0.0
 	B[0,:] = gama[0,:] + 1.0
@@ -328,7 +337,7 @@ def tri_diag_solve(l, a, b, c, d):
     array 
     	Solution, x 
     """
-    AS, DS, CS, DS,XK = np.zeros(l), np.zeros(l), np.zeros(l), np.zeros(l), np.zeros(l) # copy arrays
+    AS, DS, CS, DS,XK = zeros(l), zeros(l), zeros(l), zeros(l), zeros(l) # copy arrays
 
     AS[-1] = a[-1]/b[-1]
     DS[-1] = d[-1]/b[-1]
@@ -341,3 +350,197 @@ def tri_diag_solve(l, a, b, c, d):
     for i in range(1,l):
     	XK[i] = DS[i] - AS[i] * XK[i-1]
     return XK
+
+
+@jit(nopython=True, cache=True)
+def get_flux_geom(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, dtau_dedd, tau_dedd, w0_dedd, cosb_dedd ,
+	surf_reflect,ubar0, ubar1,cos_theta, F0PI):
+	"""
+
+	Parameters
+	----------
+	nlevel : int 
+		Number of levels in the model 
+	wno : array of float 
+		Wave number grid in cm -1 
+	nwno : int 
+		Number of wave points
+	numg : int 
+		Number of Gauss angles 
+	numt : int 
+		Number of Chebyshev angles 
+	DTAU : ndarray of float
+		This is the opacity contained within each individual layer (defined at midpoints of "levels")
+		WITHOUT D-Eddington Correction
+		Dimensions=# layer by # wave
+	TAU : ndarray of float
+		This is the cumulative summed opacity 
+		WITHOUT D-Eddington Correction
+		Dimensions=# level by # wave		
+	W0 : ndarray of float 
+		This is the single scattering albedo, from scattering, clouds, raman, etc 
+		WITHOUT D-Eddington Correction
+		Dimensions=# layer by # wave
+	COSB : ndarray of float 
+		This is the asymmetry factor 
+		WITHOUT D-Eddington Correction
+		Dimensions=# layer by # wave
+	GCOS2 : ndarray of float 
+		Parameter that allows us to directly include Rayleigh scattering 
+		= 0.5*tau_rayleigh/(tau_rayleigh + tau_cloud)
+	dtau_dedd : ndarray of float 
+		This is the opacity contained within each individual layer (defined at midpoints of "levels")
+		WITH D-Eddington Correction
+		Dimensions=# layer by # wave
+	tau_dedd : ndarray of float
+		This is the cumulative summed opacity 
+		WITH D-Eddington Correction
+		Dimensions=# level by # wave	
+	w0_dedd : ndarray of float 
+		Same as w0 but with the delta eddington correction		
+	cosb_dedd : ndarray of float 
+		Same as cosbar buth with the delta eddington correction 
+	surf_reflect : float 
+		Surface reflectivity 
+	ubar0 : ndarray of float 
+		matrix of cosine of the incident angle from geometric.json
+	ubar1 : ndarray of float 
+		matrix of cosine of the observer angles
+	cos_theta : float 
+		Cosine of the phase angle of the planet 
+	F0PI : array 
+		Downward incident solar radiation
+
+
+	Returns
+	-------
+	intensity at the top of the atmosphere for all the different ubar1 and ubar2 
+
+	To Do
+	-----
+	- F0PI Solar flux shouldn't always be 1.. Follow up to make sure that this isn't a bad 
+		  hardwiring to solar, despite "relative albedo"
+
+	"""
+
+	#what we want : intensity at the top as a function of all the different angles
+
+	xint_at_top = zeros((numg, numt, nwno))
+
+	nlayer = nlevel - 1 
+
+	#now define terms of Toon et al 1989 quadrature Table 1 
+	#https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JD094iD13p16287
+	#see table of terms 
+
+	#terms not dependent on incident angle
+	sq3 = sqrt(3.)
+	g1    = (sq3*0.5)*(2. - w0*(1.+cosb_dedd))    #table 1
+	g2    = (sq3*w0*0.5)*(1.-cosb_dedd)           #table 1
+	lamda = sqrt(g1**2 - g2**2)                     #eqn 21
+	gama  = (g1-lamda)/g2                              #eqn 22
+
+	#================ START CRAZE LOOP OVER ANGLE #================
+	for ng in range(numg):
+		for nt in range(numt):
+
+			g3    = 0.5*(1.-sq3*cosb_dedd*ubar0[ng, nt])   #table 1 #ubar is now 100x 10 matrix.. 
+	
+			# now calculate c_plus and c_minus (equation 23 and 24)
+			g4 = 1.0 - g3
+			denominator = lamda**2 - 1.0/ubar0[ng, nt]**2.0
+
+			#everything but the exponential 
+			a_minus = F0PI*w0_dedd* (g4*(g1 + 1.0/ubar0[ng, nt]) +g2*g3 ) / denominator
+			a_plus  = F0PI*w0_dedd*(g3*(g1-1.0/ubar0[ng, nt]) +g2*g4) / denominator
+
+			#add in exponential to get full eqn
+			#_up is the terms evaluated at lower optical depths (higher altitudes)
+			#_down is terms evaluated at higher optical depths (lower altitudes)
+			x = exp(-tau_dedd[:-1,:]/ubar0[ng, nt])
+			c_minus_up = a_minus*x #CMM1
+			c_plus_up  = a_plus*x #CPM1
+			x = exp(-tau_dedd[1:,:]/ubar0[ng, nt])
+			c_minus_down = a_minus*x #CM
+			c_plus_down  = a_plus*x #CP
+
+			#calculate exponential terms needed for the tridiagonal rotated layered method
+			exptrm = lamda*dtau_dedd
+			#save from overflow 
+			exptrm = slice_gt (exptrm, 35.0) 
+
+			exptrm_positive = exp(exptrm) #EP
+			exptrm_minus = 1.0/exptrm_positive#exp(-exptrm) #EM
+
+
+			#boundary conditions 
+			b_top = 0.0                                          
+			b_surface = 0. + surf_reflect*ubar0[ng, nt]*F0PI*exp(-tau_dedd[-1, :]/ubar0[ng, nt])
+
+			#Now we need the terms for the tridiagonal rotated layered method
+			A, B, C, D = setup_tri_diag(nlayer,nwno,  c_plus_up, c_minus_up, 
+									c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
+									g1, g2, g3, lamda, gama, dtau_dedd, 
+									exptrm_positive,  exptrm_minus) 
+
+			positive = zeros((nlayer, nwno))
+			negative = zeros((nlayer, nwno))
+			#========================= Start loop over wavelength =========================
+			L = 2*nlayer
+			for w in range(nwno):
+				#coefficient of posive and negative exponential terms 
+				X = tri_diag_solve(L, A[:,w], B[:,w], C[:,w], D[:,w])
+
+				#unmix the coefficients
+				positive[:,w] = X[::2] + X[1::2] 
+				negative[:,w] = X[::2] - X[1::2]
+			#========================= End loop over wavelength =========================
+
+			#use expression for bottom flux to get the flux_plus and flux_minus at last
+			#bottom layer
+			flux_zero  = positive[-1,:]*exptrm_positive[-1,:] + gama[-1,:]*negative[-1,:]*exptrm_minus[-1,:] + c_plus_down[-1,:]
+			
+			xint = zeros((nlevel,nwno))
+			xint[-1,:] = flux_zero/pi
+
+			#AM = c_minus_up
+			#AP = c_plus_up
+
+			#two stream source function with g2 term 
+			ubar2 = 0.767  # FIT TO PURE RAYLEIGH LIMIT, ~(1/sqrt(3))^(1/2)
+			F1 = (1.0+3.0*cosb_dedd*ubar1[ng,nt]
+							+ gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
+			F2 = (1.-3*cosb_dedd*ubar1[ng,nt] 
+							+ gcos2*(3.*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
+
+			G=w0_dedd*positive*(F1+gama*F2)
+			H=w0_dedd*negative*(gama*F1+F2)
+			A=w0_dedd*(F1*c_plus_up+F2*c_minus_up)
+
+			G=G*0.5/pi
+			H=H*0.5/pi
+			A=A*0.5/pi
+
+			#QUESTION HERE !!! Can we mix values with and without delta eddington approx 
+			puu0=((1-(cosb/2)**2) * (1-cosb**2)
+							/sqrt((1+cosb**2+2*cosb*cos_theta)**3) 
+							+((cosb/2)**2)*(1-(-cosb/2.)**2)
+							/sqrt((1+(-cosb/2.)**2+2*(-cosb/2.)*cos_theta)**3)+gcos2)
+
+			
+			mdelt = (1-w0*(cosb**2))
+
+			for i in range(nlayer-1,-1,-1):
+
+				#this equation is for sure fubar
+				xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/ubar1[ng,nt]) 
+						+(w0[i,:]*F0PI/(4.*pi))*
+						(puu0[i,:])*exp(-tau[i,:]/ubar0[ng,nt])*
+						(1. - exp(-dtau[i,:]*(ubar0[ng,nt]+ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
+						(ubar0[ng,nt]/(ubar0[ng,nt]+ubar1[ng,nt]))
+						+A[i,:]*(1. - exp(-dtau[i,:] *(ubar0[ng,nt]+mdelt[i,:]*ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
+						(ubar0[ng,nt]/(ubar0[ng,nt]+mdelt[i,:]*ubar1[ng,nt]))
+						+G[i,:]*(exp(exptrm[i,:]*mdelt[i,:]-dtau[i,:]/ubar1[ng,nt]) - 1.0)/(lamda[i,:]*mdelt[i,:]*ubar1[ng,nt] - 1.0)
+						+H[i,:]*(1. - exp(-exptrm[i,:]*mdelt[i,:]-dtau[i,:]/ubar1[ng,nt]))/(lamda[i,:]*mdelt[i,:]*ubar1[ng,nt] + 1.0))
+			xint_at_top[ng,nt,:] = xint[0,:]	
+	return xint_at_top

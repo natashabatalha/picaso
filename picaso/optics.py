@@ -43,6 +43,10 @@ def optc(atmosphere, opacityclass):
 	This was baselined against jupiter with the old fortran code. It matches 100% for all cases 
 	except for hotter cases where Na & K are present. This differences is not a product of the code 
 	but a product of the different opacities (1060 grid versus old 736 grid)
+
+	To Do 
+	-----
+		- Replace detla-function adjustment with better approximation (e.g. Cuzzi)
 	"""
 
 	atm = atmosphere
@@ -193,7 +197,12 @@ def optc(atmosphere, opacityclass):
 	#formerly GCOSB2 
 	GCOS2 = 0.5*TAURAY/(TAURAY + TAUCLD)
 	#formerly WBARV.. change name later
-	WBAR = (TAURAY*raman_factor + TAUCLD*single_scattering_cld) / (TAUGAS + TAURAY + TAUCLD) #TOTAL single scattering 
+	W0 = (TAURAY*raman_factor + TAUCLD*single_scattering_cld) / (TAUGAS + TAURAY + TAUCLD) #TOTAL single scattering 
+
+	#sum up taus starting at the top, going to depth
+	shape = DTAU.shape
+	TAU = np.zeros((shape[0]+1, shape[1]))
+	TAU[1:,:]=numba_cumsum(DTAU)
 
 	if debug:
 		opt_figure.line(opacityclass.wno, DTAU[int(np.size(tlayer)/2),:], legend='TOTAL', line_width=4, color=colors[0],
@@ -202,15 +211,33 @@ def optc(atmosphere, opacityclass):
 		output_file('OpacityDebug.html')
 		show(opt_figure)
 
-	#====================== TOTAL INTEGRATED EXTINCTION OPTICAL DEPTH======================
+	#====================== D-Eddington Approximation ======================
 
-	#this extra zero is because the total integrated extinction should have nlevel and not, nlayer 
-	#Later, the zero will be replaced with the lower boundary condition
-	#TAU =np.concatenate(([0], np.cumsum(DTAU))) #taking this out since its redone in gfluxv
+	#First thing to do is to use the delta function to icorporate the forward 
+	#peak contribution of scattering by adjusting optical properties such that 
+	#the fraction of scattered energy in the forward direction is removed from 
+	#the scattering parameters 
 
-	return DTAU,  WBAR, COSB #,TAU
+	#Joseph, J.H., W. J. Wiscombe, and J. A. Weinman, 
+	#The Delta-Eddington approximation for radiative flux transfer, J. Atmos. Sci. 33, 2452-2459, 1976.
 
-@jit('f8[:,:](f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8)', cache=True)
+	#also see these lecture notes are pretty good
+	#http://irina.eas.gatech.edu/EAS8803_SPRING2012/Lec20.pdf
+	w0_dedd=W0*(1.-COSB**2)/(1.0-W0*COSB**2)
+	cosb_dedd=COSB/(1.+COSB)
+	dtau_dedd=DTAU*(1.-W0*COSB**2) 
+	#import pickle as pk
+	#pk.dump([w0, cosbar,dtau] ,open('../testing_notebooks/optc_postcorrect.pk','wb'))
+
+	#sum up taus starting at the top, going to depth
+	tau_dedd = np.zeros((shape[0]+1, shape[1]))
+	tau_dedd[1:,:]=numba_cumsum(dtau_dedd)
+    
+    #returning the terms used in 
+	return DTAU, TAU, W0, COSB,GCOS2,dtau_dedd, tau_dedd,  w0_dedd, cosb_dedd 
+
+#'f8[:,:](f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8)',
+@jit(nopython=True, cache=True)
 def rayleigh(colden,H2,He,CH4,wave,xmu,amu):
 	"""
 	Rayleigh function taken from old albedo code. Keeping this modular, as we may want 
@@ -366,4 +393,12 @@ def find_nearest(array,value):
 	#small program to find the nearest neighbor in temperature  
 	idx = (np.abs(array-value)).argmin()
 	return idx
-
+@jit(nopython=True, cache=True)
+def numba_cumsum(mat):
+	"""Function to compute cumsum along axis=0 to bypass numba not allowing kwargs in 
+	cumsum 
+	"""
+	new_mat = np.zeros(mat.shape)
+	for i in range(mat.shape[1]):
+		new_mat[:,i] = np.cumsum(mat[:,i])
+	return new_mat

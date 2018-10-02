@@ -1,19 +1,22 @@
 from atmsetup import ATMSETUP
 import fluxes 
-
 import wavelength
 import numpy as np
 import optics 
 import os
 import pickle as pk
+import disco 
+
 __refdata__ = os.environ.get('picaso_refdata')
 
-def picaso(input):
+def picaso(input,phase_angle):
 	"""
 	Currently top level program to run albedo code 
 	"""
 
 	#setup atmosphere 
+	#phase_angle = 0
+
 	atm = ATMSETUP(input)
 
 	atm.get_profile()
@@ -40,7 +43,7 @@ def picaso(input):
 	#this is where continuum_factory would run, if it was a brand new grid
 	#TAG:TODO
 
-	#get opacity
+	#get opacity class
 	opacityclass=optics.RetrieveOpacities(wno, 1e4/wno,
 					os.path.join(__refdata__, 'opacities', atm.input['opacities']['files']['continuum']),
 					os.path.join(__refdata__, 'opacities', atm.input['opacities']['files']['molecular']) 
@@ -51,25 +54,44 @@ def picaso(input):
 	atm.add_warnings('No computed opacities for: '+','.join(no_opacities))
 	atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
 
-	#get optics 
-	DTAU,  WBAR, COSB  = optics.optc(atm, opacityclass)
+	#get geometry
+	#. 100 of these, 10 of these
+	gangle,gweight,tangle,tweight = disco.get_angles(__refdata__) 
+	ng = len(gangle)
+	nt = len(tangle)
 
-	#use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-	ubar0 = 0.5 #hemispheric constant, sqrt(3) = guass quadrature
+	#set star 
 	F0PI = np.zeros(nwno) + 1.0 
+
+    ################ From here on out is everything that must go through retrieval##############
+
+	#get optics (need D-eddington approximations and uncorrected )
+	DTAU, TAU, W0, COSB,GCOS2, dtau_dedd, tau_dedd, w0_dedd, cosb_dedd = optics.optc(atm, opacityclass)
+
+	#determine surface reflectivity as function of wavelength (set to zero here)
 	surf_reflect = np.zeros(nwno)
 
-	flux_plus, flux_minus  = fluxes.get_flux_toon(atm.c.nlevel, wno,nwno,
-														DTAU, WBAR, COSB, surf_reflect, ubar0, F0PI)
+	#now get the geometric albedo given the layer opacities for each single wavelength
+	#planet disk is divieded into gaussian and chebyshev angles and weights for perfoming the 
+	#intensity as a function of planetary pahse angle 
+	ubar0, ubar1, cos_theta = disco.compute_disco(ng, nt, gangle, tangle, phase_angle)
 
-	
+	#use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
+	xint_at_top  = fluxes.get_flux_geom(atm.c.nlevel, wno,nwno,ng,nt,
+													DTAU, TAU, W0, COSB,GCOS2, dtau_dedd, tau_dedd, w0_dedd, cosb_dedd ,
+													surf_reflect, ubar0,ubar1,cos_theta, F0PI)
 
-	return atm
+	#now compress everything based on the weights 
+	albedo = disco.compress_disco(ng, nt, nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
+	return wno, albedo 
 
 
 if __name__ == "__main__":
 	import json
 	import pandas as pd
+	from bokeh.plotting import figure, show, output_file
+	from bokeh.palettes import inferno
+	colors = inferno(19)
 	a = json.load(open('../reference/config.json'))
 	a['atmosphere']['profile']['filepath'] = '../reference/base_cases/jupiter.pt'
 	a['planet']['gravity'] = 25
@@ -80,5 +102,13 @@ if __name__ == "__main__":
 	#prof['H-'] =prof['H-']*1e30
 	#a['atmosphere']['profile']['profile'] = prof
 	#a['planet']['gravity'] = 25
-	#a['planet']['gravity_unit'] = 'm/(s**2)' 	
-	picaso(a)
+	#a['planet']['gravity_unit'] = 'm/(s**2)' 
+	fig = figure(width=1200, height=800)
+	ii = 0 
+	for phase in [0.0, 0.1745, 0.3491, 0.5236, 0.6981, 0.8727, 1.0472, 1.2217, 1.3963,1.5708, 1.7453, 1.9199, 2.0944, 2.2689, 2.4435, 2.6180, 2.7925, 2.9671, 3.139]:
+		print(phase)
+		wno, alb = picaso(a, phase)
+		pk.dump([1e4/wno, alb], open('../first_run/phase'+str(phase)+'.pk','wb'))
+		fig.line(1e4/wno, alb, line_width = 4, color = colors[ii], legend = 'Phase='+str(phase))
+		ii+=1 
+		show(fig)
