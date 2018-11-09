@@ -25,12 +25,17 @@
 		"clouds":{
 			"filepath":null
 		},
-		"grid":{
-			"nlevel":null
+		"scattering":{
+			"g0":null,
+			"w0":null
 		}
 	},
-	"geometry":{
-		"pangle":null
+	"approx":{
+		"delta_eddington":true
+	},
+	"disco":{
+		"num_gangle":null,
+		"num_tangle":null
 	},
 	"opacities":{
 		"year":null,
@@ -45,5 +50,7 @@
 			"h2minus":"h2minus.csv",
 			"cld_input_grid":"wave_EGP.dat"
 		}
-	}
+
+	},
+	"test_mode":null
 }

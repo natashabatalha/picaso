@@ -9,6 +9,7 @@ import warnings
 import numpy as np
 import wavelength
 from numba import jit
+import h5py 
 
 __refdata__ = os.environ.get('picaso_refdata')
 
@@ -51,9 +52,98 @@ class ATMSETUP():
 		self.c.pi = np.pi
 
 		#code constants
-		self.c.input_npts_wave = len(self.input_wno) 
+		self.c.input_npts_wave = len(self.input_wno)
+		self.c.ngangle = self.input['disco']['num_gangle']
+		self.c.ntangle = self.input['disco']['num_tangle']
 
 		return
+
+	def get_profile_3d(self):
+		"""
+		A separate routine is written to get the 3d profile because the inputs are much more 
+		rigid. In this framework, the following restrictions are placed: 
+			1) Input must be in hdf5 format (see tutorial for help)
+
+		"""
+		#SET DIMENSIONALITY 
+		self.dimension = '3d'
+
+		chemistry_input = self.input['atmosphere']
+		h5db = h5py.File(chemistry_input['profile']['filepath'],'r+')
+		#get header of columns
+		header = h5db.attrs['header'].split(',')
+
+		iheader = list(range(len(header)))
+
+		#get all the gangles 
+		self.gangles = [i for i in h5db.keys()]
+		ng = self.c.ngangle
+		#get all the tangles 
+		self.tangles = [i for i in h5db[self.gangles[0]].keys()]
+		nt = self.c.ntangle
+
+		nlevel = h5db[str(self.gangles[0])][str(self.tangles[0])].shape[0]
+		self.c.nlevel = nlevel
+		self.c.nlayer = nlevel-1
+
+		#fill empty arrays for everything
+		self.level['temperature'] = np.zeros((nlevel, ng, nt))
+		self.level['pressure'] = np.zeros((nlevel, ng, nt))
+		self.layer['temperature'] = np.zeros((nlevel-1, ng, nt))
+		self.layer['pressure'] = np.zeros((nlevel-1, ng, nt))
+
+		if 'e-' in header:
+
+			electron=True
+			#check to see if there is an electron
+			self.level['electrons'] = np.zeros((nlevel, ng, nt))
+			self.layer['electrons'] = np.zeros((nlevel-1, ng, nt))
+			ielec = np.where('e-' == np.array(header))[0][0]
+		else: 
+			electron=False		
+
+		first = True
+		#loop over gangles 
+		for g in range(self.c.ngangle):
+			#loop over tangles 
+			for t in range(self.c.ntangle):
+				if first:
+					#on first pass find index where temperature and pressure are located
+					itemp = np.where('temperature' == np.array(header))[0][0]
+					ipress = np.where('pressure' == np.array(header))[0][0]
+					iheader.pop(ielec)
+					iheader.pop(itemp)
+					iheader.pop(ipress)
+
+					#after getting rid of electrons, temperature and pressure the rest should 
+					#represent the number of molecules 
+					num_mol = len(iheader)
+					self.level['mixingratios'] = np.zeros((nlevel, num_mol, ng, nt))
+					self.layer['mixingratios'] = np.zeros((nlevel-1, num_mol, ng, nt))
+
+					self.weights = pd.DataFrame({})
+					self.molecules=[]
+					for i in iheader:
+						self.weights[header[i]] = pd.Series([self.get_weights([header[i]])[header[i]]])
+						self.molecules += [header[i]]
+
+					first = False
+
+				if electron: 
+					#if there is an electron column, fill in the values 
+					self.level['electrons'][:,g,t] = h5db[self.gangles[g]][self.tangles[t]].value[:,ielec]
+					self.layer['electrons'][:,g,t] = 0.5*(self.level['electrons'][1:,g,t] + self.level['electrons'][:-1,g,t])
+
+				self.level['temperature'][:,g,t] = h5db[self.gangles[g]][self.tangles[t]].value[:,itemp]
+				self.layer['temperature'][:,g,t] = 0.5*(self.level['temperature'][1:,g,t] + self.level['temperature'][:-1,g,t])
+
+				self.level['pressure'][:,g,t] = h5db[self.gangles[g]][self.tangles[t]].value[:,ipress]*self.c.pconv #CONVERTING BARS TO DYN/CM2
+				self.layer['pressure'][:,g,t] = np.sqrt(self.level['pressure'][1:,g,t] * self.level['pressure'][:-1,g,t])
+
+
+				self.level['mixingratios'][:,:,g,t] = h5db[self.gangles[g]][self.tangles[t]].value[:,iheader]
+				self.layer['mixingratios'][:,:,g,t] = 0.5*(self.level['mixingratios'][1:,:,g,t] + self.level['mixingratios'][:-1,:,g,t])
+
 
 	def get_profile(self):
 		"""
@@ -66,8 +156,10 @@ class ATMSETUP():
 		-----
 		- Add regridding to this by having users be able to set a different nlevel than the input cloud code is
 		"""
-
 		#get chemistry input from configuration
+		#SET DIMENSIONALITY
+		self.dimension = '1d'
+
 		chemistry_input = self.input['atmosphere']
 		if chemistry_input['profile']['type'] == 'user':
 
@@ -97,15 +189,19 @@ class ATMSETUP():
 			if num_mol >= 1:
 				#go through list and compute molecular weights for each one
 				for i in chemistry_input['molecules']['whichones']:
-					try: 
+					#try to get the mmw of the molecule
+					try:
 						weights[i] = pd.Series([self.get_weights([i])[i]])
 					except:
+						#if there is an error, means its not a molecule
 						if i == 'e-':
+							#check to see if its an electron
 							self.level['electrons'] = read['e-'].values
 							self.layer['electrons'] = 0.5*(self.level['electrons'][1:] + self.level['electrons'][:-1])
 						else:
-							raise Exception("Molecule %s in Subset is not recognized, check list and resubmit" %i)
-		else: 
+							#if its not user messed up.. raise exception
+							raise Exception("Molecule %s in whichones is not recognized, check list and resubmit" %i)
+		else:
 			#if one big file was uploaded, then cycle through each column
 			self.molecules = np.array([],dtype=str)
 			for i in read.keys():
@@ -246,7 +342,14 @@ class ATMSETUP():
 		"""
 		Returns the mean molecular weight of the atmosphere 
 		"""
-		weighted_matrix = self.level['mixingratios'] @ self.weights.values[0]
+		if self.dimension=='1d':
+			weighted_matrix = self.level['mixingratios'] @ self.weights.values[0]
+		elif self.dimension=='3d':
+			weighted_matrix=np.zeros((self.c.nlevel, self.c.ngangle, self.c.ntangle))
+			for g in range(self.c.ngangle):
+				for t in range(self.c.ntangle):
+					weighted_matrix[:,g,t] = self.level['mixingratios'][:,:,g,t] @ self.weights.values[0]
+
 		#levels are the edges
 		self.level['mmw'] = weighted_matrix
 		#layer is the midpoint
@@ -303,30 +406,98 @@ class ATMSETUP():
 		"""
 
 		self.c.output_npts_wave = np.size(wno)
+		#if a cloud filepath exists... 
+		if (self.input['atmosphere']['clouds']['filepath'] != None) and (self.dimension=='1d'):
 
-		if self.input['atmosphere']['clouds']['filepath'] != None:
-			if os.path.exists(self.input['atmosphere']['clouds']['filepath']):			
+			if os.path.exists(self.input['atmosphere']['clouds']['filepath']):	
+				#read in the file that was supplied 		
 				cld_input = pd.read_csv(self.input['atmosphere']['clouds']['filepath'], delim_whitespace = True,
 					header=None, skiprows=1, names = ['lvl', 'wv','opd','g0','w0','sigma'])
-				#make sure cloud input is has the correct number of waves and PT points
+				#make sure cloud input has the correct number of waves and PT points
 				assert cld_input.shape[0] is not self.c.nlayer*self.c.input_npts_wave, "Cloud input file is not on the same grid as the input PT profile:"
+
+				#then reshape and regrid inputs to be a nice matrix that is nlayer by nwave
+
+				#total extinction optical depth 
 				opd = np.reshape(cld_input['opd'].values, (self.c.nlayer,self.c.input_npts_wave))
 				opd = wavelength.regrid(opd, self.input_wno, wno)
 				self.layer['cloud'] = {'opd': opd}
+				#cloud assymetry parameter
 				g0 = np.reshape(cld_input['g0'].values, (self.c.nlayer,self.c.input_npts_wave))
 				g0 = wavelength.regrid(g0, self.input_wno, wno)
 				self.layer['cloud']['g0'] = g0
+				#cloud single scattering albedo 
 				w0 = np.reshape(cld_input['w0'].values, (self.c.nlayer,self.c.input_npts_wave))
 				w0 = wavelength.regrid(w0, self.input_wno, wno)
 				self.layer['cloud']['w0'] = w0  
+
 			else: 
-				raise Excepttion('Cld file specified does not exist. Replace with None or find real file')            
-		elif self.input['atmosphere']['clouds']['filepath'] == None:
+
+				#raise an exception if the file doesnt exist 
+				raise Excepttion('Cld file specified does not exist. Replace with None or find real file') 
+
+		#if no filepath was given and nothing was given for g0/w0, then assume the run is cloud free and give zeros for all thi stuff          
+		elif (self.input['atmosphere']['clouds']['filepath'] == None) and (self.input['atmosphere']['scattering']['g0'] == None) and (self.dimension=='1d'):
+
 			zeros = np.zeros((self.c.nlayer,self.c.output_npts_wave))
 			self.layer['cloud'] = {'w0': zeros}
 			self.layer['cloud']['g0'] = zeros
 			self.layer['cloud']['opd'] = zeros
+
+		#if a value for those are given add those to "scattering"
+		#note there is a distinction here between the "cloud" single scattering albedo, asym factor, opacity and the "TOTAL"
+		#single scattering albedo, and asym factor. This is why there are two separate entries for total and cloud
+
+		elif (self.input['atmosphere']['clouds']['filepath'] == None) and (self.input['atmosphere']['scattering']['g0'] != None) and (self.dimension=='1d'):
+
+			zeros = np.zeros((self.c.nlayer,self.c.output_npts_wave))
+			#scattering is the TOTAL asym factor and single scattering albedo 
+			self.layer['scattering'] = {'w0': zeros+self.input['atmosphere']['scattering']['w0']}
+			self.layer['scattering']['g0'] = zeros+self.input['atmosphere']['scattering']['g0']
+			#w0 and g0 here are the single scattering and asymm for the cloud ONLY
+			self.layer['cloud'] = {'w0': zeros}
+			self.layer['cloud']['g0'] = zeros
+			self.layer['cloud']['opd'] = zeros
+
+		#ONLY OPTION FOR 3D INPUT
+		elif self.dimension=='3d':
+			cld_input = h5py.File(self.input['atmosphere']['clouds']['filepath'])
+			opd = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle))
+			g0 = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle)) 
+			w0 = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle))
+			header = cld_input.attrs['header'].split(',')
+			iopd = np.where('opd' == np.array(header))[0][0]
+			ig0 = np.where('g0' == np.array(header))[0][0]
+			iw0 = np.where('w0' == np.array(header))[0][0]
+			#stick in clouds that are gangle and tangle dependent 
+			for g in range(self.c.ngangle):
+				for t in range(self.c.ntangle):
+
+					data = cld_input[self.gangles[g]][self.tangles[t]]
+
+					#make sure cloud input has the correct number of waves and PT points
+					assert data.shape[0] is not (self.c.nlayer*self.c.input_npts_wave
+						*self.c.ngangle*self.c.ntangle), "Cloud input file is not on the same grid as the input PT/Angles profile:"
+
+					#Then, reshape and regrid inputs to be a nice matrix that is nlayer by nwave
+
+					#total extinction optical depth 
+					opd_lowres = np.reshape(data[:,iopd], (self.c.nlayer,self.c.input_npts_wave))
+					opd[:,:,g,t] = wavelength.regrid(opd_lowres, self.input_wno, wno)
+					self.layer['cloud'] = {'opd': opd}
+
+					#cloud assymetry parameter
+					g0_lowres = np.reshape(data[:,ig0], (self.c.nlayer,self.c.input_npts_wave))
+					g0[:,:,g,t] = wavelength.regrid(g0_lowres, self.input_wno, wno)
+					self.layer['cloud']['g0'] = g0
+
+					#cloud single scattering albedo 
+					w0_lowres = np.reshape(data[:,iw0], (self.c.nlayer,self.c.input_npts_wave))
+					w0[:,:,g,t] = wavelength.regrid(w0_lowres, self.input_wno, wno)
+					self.layer['cloud']['w0'] = w0 			
+
 		else:
+
 			raise Exception("CLD input not recognized. Either input a filepath, or input None")
 
 		return
@@ -344,4 +515,37 @@ class ATMSETUP():
 		Get the stellar spectrum using pysynphot and bin to the correct wavelength 
 		"""
 		return
+
+	def get_surf_reflect(self,nwno):
+		"""
+		Gets the surface reflectivity from input
+		"""
+		self.surf_reflect = np.zeros(nwno)
+		return
+
+	def disect(self,g,t):
+		"""
+		This disects the 3d input to a 1d input which is a function of a single gangle and tangle. 
+		This makes it possible for us to get the opacities at each facet before we go into the 
+		flux calculation
+
+		Parameters:
+		g : int 
+			Gauss angle index 
+		t : int 
+			Tchebyshev angle index  
+		"""
+		self.level['temperature'] = self.level['temperature'][:,g,t]
+		self.level['pressure'] = self.level['pressure'][:,g,t]
+		self.layer['temperature'] = self.layer['temperature'][:,g,t]
+		self.layer['pressure'] = self.layer['pressure'][:,g,t]
+
+		self.layer['mmw'] = self.layer['mmw'][:,g,t]
+		self.layer['mixingratios'] = self.layer['mixingratios'][:,:,g,t]
+		self.layer['colden'] = self.layer['colden'][:,g,t]
+		self.layer['electrons'] = self.layer['electrons'][:,g,t]
+
+		self.layer['cloud']['opd'] = self.layer['cloud']['opd'][:,:,g,t]
+		self.layer['cloud']['g0']= self.layer['cloud']['g0'][:,:,g,t]
+		self.layer['cloud']['w0'] = self.layer['cloud']['w0'][:,:,g,t]
 

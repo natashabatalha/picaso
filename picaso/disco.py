@@ -1,5 +1,6 @@
 from numba import jit
-from numpy import zeros, cos, arcsin, sin, arccos,outer,array,sum,zeros
+from numpy import pi, zeros, cos, arcsin, sin, arccos,outer,array,sum,zeros, linspace
+from numpy import polynomial
 import json 
 import os 
 
@@ -12,9 +13,9 @@ def compute_disco(ng, nt, gangle, tangle, phase_angle):
 	Parameters 
 	----------
 	ng : int 
-		Number of angles 
+		Number of gauss angles 
 	nt : int 
-		Number of angles 
+		Number of tchebyshev angles 
 	gangle : float  
 		Gaussian Angles 
 	tangle : float 
@@ -32,21 +33,41 @@ def compute_disco(ng, nt, gangle, tangle, phase_angle):
 		Cosine of the phase angle 
 	"""
 	cos_theta = cos(phase_angle)
-	numtx = arcsin((gangle-(cos_theta-1.0)/(cos_theta+1.0))/(2.0/(cos_theta+1)))
+	longitude = arcsin((gangle-(cos_theta-1.0)/(cos_theta+1.0))/(2.0/(cos_theta+1)))
+	latitude = arccos(tangle)
 
-	f = sin(arccos(tangle)) #define to eliminate repitition
-	ubar0 = outer(cos(numtx-phase_angle) , f) #ng by nt (100,10)
-	ubar1 = outer(cos(numtx) , f) 
+	f = sin(latitude) #define to eliminate repitition
+	ubar0 = outer(cos(longitude-phase_angle) , f) #ng by nt 
+	ubar1 = outer(cos(longitude) , f) 
 
-	return ubar0, ubar1, cos_theta 
+	return ubar0, ubar1, cos_theta ,latitude,longitude
 
 
 
-def get_angles(refdata):
-	"""Grabs the angles from the geometry.json file
+def get_angles(num_gangle, num_tangle):
+	"""Computes angles for disco ball 
+	
+	Parameters
+	----------
+	num_gangles : int 
+		Number of Gauss angles 
+	num_tangles : int 
+		Number of Tchebychev angles desired 
+
+	Returns
+	-------
+	np.ndarray, np.ndarray, np.ndarray, np.ndarray
+		Gauss Angles,Gauss Weights,Tchebyshev Angles,Tchebyshev weights
 	"""
-	a=json.load(open(os.path.join(refdata,'geometry.json')))
-	return array(a['gangle']),array(a['gweight']),array(a['tangle']),array(a['tweight'])
+	#compute tangles tweights 
+	i = linspace(1,num_tangle,num_tangle)
+	tangle = cos(i*pi/(num_tangle + 1))
+	tweight = pi/(num_tangle + 1) * sin(i*pi/(num_tangle + 1))**2.0
+
+	#gangles and gweights 
+	gangle, gweight=polynomial.legendre.leggauss(num_gangle)
+	#a=json.load(open(os.path.join(refdata,'geometry.json')))
+	return gangle,gweight,tangle,tweight
 
 @jit(nopython=True, cache=True)
 def compress_disco(numg, numt, nwno, cos_theta, xint_at_top, gweight, tweight,F0PI): 
@@ -75,6 +96,7 @@ def compress_disco(numg, numt, nwno, cos_theta, xint_at_top, gweight, tweight,F0
 	"""
 	albedo=zeros(nwno)
 	for w in range(nwno):
+		#                [umg, numt, nwno]
 		albedo[w] = sum((xint_at_top[:,:,w]*tweight).T*gweight)
 	albedo = 0.5 * albedo /F0PI * (cos_theta + 1.0)
 	return albedo

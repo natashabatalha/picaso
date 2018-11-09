@@ -8,7 +8,7 @@ from bokeh.palettes import inferno
 debug = False 
 
 #@jit(nopython=True)
-def optc(atmosphere, opacityclass):
+def optc(atmosphere, opacityclass, delta_eddington=True,test_mode=False):
 	"""
 	Returns total optical depth per slab layer including molecular opacity, continuum opacity. 
 	It should automatically select the molecules needed
@@ -20,6 +20,10 @@ def optc(atmosphere, opacityclass):
 	opacityclass : class opacity
 		This inherets the class from optics.py. It is done this way so that the opacity db doesnt have 
 		to be reloaded in a retrieval 
+	delta_eddington : bool 
+		(Optional) Default=True, With Delta-eddington on, it incorporates the forward peak 
+		contribution by adjusting optical properties such that the fraction of scattered energy
+		in the forward direction is removed from the scattering parameters 
 
 	Returns
 	-------
@@ -52,15 +56,15 @@ def optc(atmosphere, opacityclass):
 	atm = atmosphere
 	tlevel = atm.level['temperature']
 	plevel = atm.level['pressure']/atm.c.pconv #think of a better solution for this later when mark responds
-
+	
 	tlayer = atm.layer['temperature']
 	player = atm.layer['pressure']/atm.c.pconv #think of a better solution for this later when mark responds
 
 	gravity = atm.planet.gravity / 100.0 #this too... need to have consistent units.
 
 	if debug: 
-		plot_layer=int(np.size(tlayer)/2-1)
-		opt_figure = figure(x_axis_label = 'Wavenumber', y_axis_label='TAUGAS in optics.py', 
+		plot_layer=0#np.size(tlayer)-1
+		opt_figure = figure(x_axis_label = 'Wavelength', y_axis_label='TAUGAS in optics.py', 
 		title = 'Opacity at T='+str(tlayer[plot_layer])+' Layer='+str(plot_layer)
 		,y_axis_type='log',height=800, width=1200)
 
@@ -85,31 +89,29 @@ def optc(atmosphere, opacityclass):
 		1.01325**2 *gravity*tlayer*atm.layer['mmw'])
 
 	#go through every molecule in the continuum first 
-	#testing = {}
-	#testing['COEF'] = COEF1
 	for m in atm.continuum_molecules:
 		#H- Bound-Free
 		if (m[0] == "H-") and (m[1] == "bf"):
 			h_ =np.where(m[0]==np.array(atm.weights.keys()))[0][0]
-			ADDTAU = (opacityclass.get_continuum_opac(tlayer, 'H-bf').T*( 		          #[(nlayer x nwno).T *(
-							atm.layer['mixingratios'][:,h_]*      							#nlayer
-			               	atm.layer['colden']/ 											  #nlayer
-			               	(atm.layer['mmw']*atm.c.amu)) 	).T								  #nlayer)].T
+			ADDTAU = (opacityclass.get_continuum_opac(tlayer, 'H-bf').T*( 		#[(nlayer x nwno).T *(
+							atm.layer['mixingratios'][:,h_]*      				#nlayer
+			               	atm.layer['colden']/ 								#nlayer
+			               	(atm.layer['mmw']*atm.c.amu)) 	).T					#nlayer)].T
 			#testing['H-bf'] = ADDTAU
 			TAUGAS += ADDTAU
-			if debug: opt_figure.line(opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
+			if debug: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
 		#H- Free-Free
 		elif (m[0] == "H-") and (m[1] == "ff"):
 			h_ = np.where('H'==np.array(atm.weights.keys()))[0][0]
-			ADDTAU = (opacityclass.get_continuum_opac(tlayer, 'H-ff').T*( 		              #[(nlayer x nwno).T *(
-							atm.layer['pressure']* 								  			  #nlayer
-							atm.layer['mixingratios'][:,h_]*atm.layer['electrons']*           #nlayer
-			               	atm.layer['colden']/ 											  #nlayer
-			               	(tlayer*atm.layer['mmw']*atm.c.amu*atm.c.k_b)) 	).T				  #nlayer)].T
+			ADDTAU = (opacityclass.get_continuum_opac(tlayer, 'H-ff').T*( 		        #[(nlayer x nwno).T *(
+							atm.layer['pressure']* 								  		#nlayer
+							atm.layer['mixingratios'][:,h_]*atm.layer['electrons']*     #nlayer
+			               	atm.layer['colden']/ 										#nlayer
+			               	(tlayer*atm.layer['mmw']*atm.c.amu*atm.c.k_b)) 	).T			#nlayer)].T
 			#testing['H-ff'] = ADDTAU
 			TAUGAS += ADDTAU
-			if debug: opt_figure.line(opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
+			if debug: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
 		#H2- 
 		elif (m[0] == "H2") and (m[1] == "H2-"): 
@@ -119,15 +121,15 @@ def optc(atmosphere, opacityclass):
 			#this is a hefty matrix multiplication to make sure that we are 
 			#multiplying each column of the opacities by the same 1D vector (as opposed to traditional 
 			#matrix multiplication). This is the reason for the transposes.
-			ADDTAU = (opacityclass.get_continuum_opac(tlayer, 'H2-').T*( 		          #[(nlayer x nwno).T *(
-							atm.layer['pressure']* 								  			  #nlayer
-							atm.layer['mixingratios'][:,h2_]*atm.layer['electrons']* #nlayer
-			               	atm.layer['colden']/ 											  #nlayer
-			               	(atm.layer['mmw']*atm.c.amu)) 	).T								  #nlayer)].T
+			ADDTAU = (opacityclass.get_continuum_opac(tlayer, 'H2-').T*( 		        #[(nlayer x nwno).T *(
+							atm.layer['pressure']* 								  		#nlayer
+							atm.layer['mixingratios'][:,h2_]*atm.layer['electrons']*    #nlayer
+			               	atm.layer['colden']/ 										#nlayer
+			               	(atm.layer['mmw']*atm.c.amu)) 	).T							#nlayer)].T
 			#testing['H2-'] = ADDTAU
 
 			TAUGAS += ADDTAU
-			if debug: opt_figure.line(opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
+			if debug: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
 		#everything else.. e.g. H2-H2, H2-CH4. Automatically determined by which molecules were requested
 		else:
@@ -135,21 +137,18 @@ def optc(atmosphere, opacityclass):
 			m1 = np.where(m[1]==np.array(atm.weights.keys()))[0][0]
 			#calculate opacity
 
-			ADDTAU = (opacityclass.get_continuum_opac(tlayer, m[0]+m[1]).T * (#[(nlayer x nwno).T *(
-								COEF1*													#nlayer
-								atm.layer['mixingratios'][:,m0]*						#nlayer
-								atm.layer['mixingratios'][:,m1] )  ).T 					#nlayer)].T
+			ADDTAU = (opacityclass.get_continuum_opac(tlayer, m[0]+m[1]).T * ( #[(nlayer x nwno).T *(
+								COEF1*											#nlayer
+								atm.layer['mixingratios'][:,m0]*				#nlayer
+								atm.layer['mixingratios'][:,m1] )  ).T 			#nlayer)].T
 			#testing[m[0]+m[1]] = ADDTAU
 			TAUGAS += ADDTAU
-			if debug: opt_figure.line(opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
+			if debug: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
 		c+=1
 	
 	#====================== ADD MOLECULAR OPACITY======================	
 	for m in atm.molecules:
-		if (m =='CO'):
-			#METHANE IS WHACK FIX THIS LATER
-			continue
 		ind = np.where(m==np.array(atm.weights.keys()))[0][0]
 		ADDTAU = (opacityclass.get_molecular_opac(tlayer,player, m).T * ( 
 					atm.layer['colden']*
@@ -157,24 +156,24 @@ def optc(atmosphere, opacityclass):
 			        atm.layer['mmw']) ).T
 		TAUGAS += ADDTAU
 		#testing[m] = ADDTAU
-		if debug: opt_figure.line(opacityclass.wno, ADDTAU[int(np.size(tlayer)/2),:], alpha=0.7,legend=m, line_width=3, color=colors[c],
+		if debug: opt_figure.line(1e4/opacityclass.wno, ADDTAU[int(np.size(tlayer)/2),:], alpha=0.7,legend=m, line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
 		c+=1
 
 	#====================== ADD RAYLEIGH OPACITY======================	
+	ich4 = np.where('CH4'==np.array(atm.weights.keys()))[0][0]
 	ih2 = np.where('H2'==np.array(atm.weights.keys()))[0][0]
 	ihe = np.where('He'==np.array(atm.weights.keys()))[0][0]
-	ich4 = np.where('CH4'==np.array(atm.weights.keys()))[0][0]
 	TAURAY = rayleigh(atm.layer['colden'],atm.layer['mixingratios'][:,ih2], 
 					atm.layer['mixingratios'][:,ihe], atm.layer['mixingratios'][:,ich4], 
 					opacityclass.wave, atm.layer['mmw'],atm.c.amu )
 	#testing['ray'] = TAURAY
-	if debug: opt_figure.line(opacityclass.wno, TAURAY[int(np.size(tlayer)/2),:], alpha=0.7,legend='Rayleigh', line_width=3, color=colors[c],
+	if debug: opt_figure.line(1e4/opacityclass.wno, TAURAY[int(np.size(tlayer)/2),:], alpha=0.7,legend='Rayleigh', line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)	
 
 
 	#====================== ADD RAMAN OPACITY======================
-	raman_factor = raman(opacityclass.wno) #CURRENTLY ONLY RETURNS ONES 
+	raman_factor = 0.9999#raman(opacityclass.wno) #CURRENTLY ONLY RETURNS ONES 
 
 
 	#====================== ADD CLOUD OPACITY======================	
@@ -183,11 +182,6 @@ def optc(atmosphere, opacityclass):
 	asym_factor_cld = atm.layer['cloud']['g0'] 
 	single_scattering_cld = atm.layer['cloud']['w0'] #scatter / (abs + scattering) from cloud only 
 
-	#testing['W0'] = single_scattering_cld
-	#testing['G0'] = asym_factor_cld
-
-	#import pickle as pk
-	#pk.dump(testing, open('../testing_notebooks/optc_all_taus.pk','wb'))
 
 	#====================== ADD EVERYTHING TOGETHER PER LAYER======================	
 	#formerly DTAUV
@@ -195,7 +189,7 @@ def optc(atmosphere, opacityclass):
 	#formerly COSBV
 	COSB = (TAUCLD*asym_factor_cld)/(TAUCLD + TAURAY)
 	#formerly GCOSB2 
-	GCOS2 = 0.5*TAURAY/(TAURAY + TAUCLD)
+	GCOS2 = 0.5*TAURAY/(TAURAY + TAUCLD) #Hansen & Travis 1974 for Rayleigh scattering 
 	#formerly WBARV.. change name later
 	W0 = (TAURAY*raman_factor + TAUCLD*single_scattering_cld) / (TAUGAS + TAURAY + TAUCLD) #TOTAL single scattering 
 
@@ -205,36 +199,51 @@ def optc(atmosphere, opacityclass):
 	TAU[1:,:]=numba_cumsum(DTAU)
 
 	if debug:
-		opt_figure.line(opacityclass.wno, DTAU[int(np.size(tlayer)/2),:], legend='TOTAL', line_width=4, color=colors[0],
+		opt_figure.line(1e4/opacityclass.wno, DTAU[int(np.size(tlayer)/2),:], legend='TOTAL', line_width=4, color=colors[0],
 			muted_color=colors[c], muted_alpha=0.2)
 		opt_figure.legend.click_policy="mute"
 		output_file('OpacityDebug.html')
 		show(opt_figure)
 
-	#====================== D-Eddington Approximation ======================
+	if test_mode != None:  
+		#this is to check against Dlugach & Yanovitskij 
+		#https://www.sciencedirect.com/science/article/pii/0019103574901675?via%3Dihub
+		if test_mode=='rayleigh':
+			DTAU = TAURAY 
+			GCOS2 = 0.5
+		else: 
+			DTAU = TAURAY*0+0.5
+			GCOS2 = 0.0
+		COSB = atm.layer['scattering']['g0']
+		W0 = atm.layer['scattering']['w0']
+		TAU = np.zeros((shape[0]+1, shape[1]))
+		TAU[1:,:]=numba_cumsum(DTAU)
 
-	#First thing to do is to use the delta function to icorporate the forward 
-	#peak contribution of scattering by adjusting optical properties such that 
-	#the fraction of scattered energy in the forward direction is removed from 
-	#the scattering parameters 
+	#====================== D-Eddington Approximation or TEST mode======================
+	if delta_eddington:
+		#First thing to do is to use the delta function to icorporate the forward 
+		#peak contribution of scattering by adjusting optical properties such that 
+		#the fraction of scattered energy in the forward direction is removed from 
+		#the scattering parameters 
 
-	#Joseph, J.H., W. J. Wiscombe, and J. A. Weinman, 
-	#The Delta-Eddington approximation for radiative flux transfer, J. Atmos. Sci. 33, 2452-2459, 1976.
+		#Joseph, J.H., W. J. Wiscombe, and J. A. Weinman, 
+		#The Delta-Eddington approximation for radiative flux transfer, J. Atmos. Sci. 33, 2452-2459, 1976.
 
-	#also see these lecture notes are pretty good
-	#http://irina.eas.gatech.edu/EAS8803_SPRING2012/Lec20.pdf
-	w0_dedd=W0*(1.-COSB**2)/(1.0-W0*COSB**2)
-	cosb_dedd=COSB/(1.+COSB)
-	dtau_dedd=DTAU*(1.-W0*COSB**2) 
-	#import pickle as pk
-	#pk.dump([w0, cosbar,dtau] ,open('../testing_notebooks/optc_postcorrect.pk','wb'))
+		#also see these lecture notes are pretty good
+		#http://irina.eas.gatech.edu/EAS8803_SPRING2012/Lec20.pdf
+		w0_dedd=W0*(1.-COSB**2)/(1.0-W0*COSB**2)
+		cosb_dedd=COSB/(1.+COSB)
+		dtau_dedd=DTAU*(1.-W0*COSB**2) 
 
-	#sum up taus starting at the top, going to depth
-	tau_dedd = np.zeros((shape[0]+1, shape[1]))
-	tau_dedd[1:,:]=numba_cumsum(dtau_dedd)
+		#sum up taus starting at the top, going to depth
+		tau_dedd = np.zeros((shape[0]+1, shape[1]))
+		tau_dedd[1:,:]=numba_cumsum(dtau_dedd)
     
-    #returning the terms used in 
-	return DTAU, TAU, W0, COSB,GCOS2,dtau_dedd, tau_dedd,  w0_dedd, cosb_dedd 
+    	#returning the terms used in 
+		return dtau_dedd, tau_dedd,  w0_dedd, cosb_dedd ,GCOS2
+
+	else: 
+		return DTAU, TAU, W0, COSB,GCOS2
 
 #'f8[:,:](f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8)',
 @jit(nopython=True, cache=True)
@@ -289,15 +298,78 @@ def rayleigh(colden,H2,He,CH4,wave,xmu,amu):
 
 	return TAURAY
 
+@jit(nopython=True, cache=True)
 def raman(wavelength):
 	"""
 	The Ramam scattering will alter the rayleigh scattering. The returned value is 
-	modified single scattering albedo
+	modified single scattering albedo. 
+
+	This method is described in Pollack+1986. Albeit not the best method. Sromovsky+2005 
+	pointed out the inconsistencies in this method. You can see from his comparisons 
+	that the Pollack approximations don't accurately capture the depths of the line centers. 
+	Since then, OKLOPCIC+2016 did a much
+	better model of raman scattring (with ghost lines). Might be worth it to consider a more 
+	sophisticated version of Raman scattering. 
 
 	Will be added to the rayleigh scattering as : TAURAY*RAMAN
 	"""
-	return 0.9999999 
+	#constants 
+	h = 6.6252e-27
+	c = 2.9978e10
+	bohrd = 5.2917e-9
+	hmass = 1.6734e-24
+	rmu = .5 * hmass
 
+	#set wavelength shift of the ramam scatterer
+	shift_v0 = 4161.0 
+
+	facip = h * c / ( 1.e-4 * 27.2 * 1.602e-12 ) 
+	facray = 1.e16 * bohrd ** 3 * 128. * np.pi ** 5 * bohrd ** 3 / 9. 
+	facv = 2.08 / 2.38 * facray / bohrd ** 2 / ( 8. * np.pi * np.pi * rmu * c * shift_v0 ) * h
+
+	#cross section of the unshifted rayleigh and the vibrationally shifted rayleigh
+	gli = np.zeros(5)
+	wli = gli 
+	gri = gli 
+	wri = gli 
+	gli[:] = [1.296, .247, .297,  .157,  .003]
+	wli[:] = [.507, .628, .733, 1.175, 2.526]
+	gri[:] = [.913, .239, .440,  .344,  .064]
+	wri[:] = [.537, .639, .789, 1.304, 3.263]
+
+	alp = np.zeros(7)
+	arp = alp
+	alp[:] = [6.84, 6.96, 7.33, 8.02, 9.18, 11.1, 14.5 ]
+	arp[:] = [3.66, 3.71, 3.88, 4.19, 4.70, 5.52, 6.88 ]
+
+	omega = facip / wavelength
+
+	#first compute extinction cross section for unshifted component 
+	#e.g. rayleigh
+	alpha_l=0
+	alpha_r=0
+
+	for i in range(5):
+		alpha_l += gli[i] / ( wli[i] ** 2 - omega ** 2 ) 
+		alpha_r += gri[i] / ( wri[i] ** 2 - omega ** 2 )
+
+	alpha2 = (( 2. * alpha_r + alpha_l ) / 3. ) ** 2
+	gamma2 = ( alpha_l - alpha_r ) ** 2
+	qray = facray * ( 3. * alpha2 + 2./3. * gamma2 ) / wavelength ** 4
+
+	#next, compute the extinction cross section for vibrationally 
+	#shifted component 
+	ip = np.min([int(omega/0.05), 5.0]) + 1 
+	f = omega / 0.5 - (ip-1)
+	alpha_pl = ( 1. - f ) * alp[ip] + f * alp[ip+1]
+	alpha_pr = ( 1. - f ) * arp[ip] + f * arp[ip+1]
+	alpha_p2 = (( 2. * alpha_pr + alpha_pl ) / 3. ) ** 2
+	gamma_p2 = ( alpha_pl - alpha_pr ) ** 2
+	qv = facv / SHIFT( WAVEL, -SHIFTV0 ) ** 4 * ( 3. * alpha_p2 + 2./3. * gamma_p2 )	
+
+
+
+	return 0.9999999 
 
 class RetrieveOpacities():
 	"""
