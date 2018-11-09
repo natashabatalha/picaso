@@ -88,12 +88,12 @@ if __name__ == "__main__":
 	ng = 10 
 	nt = 10
 
-	input_file='/Users/natashabatalha/Documents/picaso/test.profile'
-	output_file='/Users/natashabatalha/Documents/picaso/3d_pt_test.hdf5'
+	input_file='../test.profile'
+	output_file='../3d_pt_test.hdf5'
 
 	make_3d_pt_input(ng, nt,phase_angle, input_file,output_file)	
 
-	input_file='/Users/natashabatalha/Documents/picaso/test.cld'
-	output_file='/Users/natashabatalha/Documents/picaso/3d_cld_test.hdf5'
+	input_file='../test.cld'
+	output_file='../3d_cld_test.hdf5'
 
 	make_3d_cld_input(ng, nt,phase_angle, input_file,output_file)	
