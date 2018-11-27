@@ -353,8 +353,9 @@ def tri_diag_solve(l, a, b, c, d):
 
 
 @jit(nopython=True, cache=True)
-def get_flux_geom_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3d,gcos2_3d, 
-	surf_reflect,ubar0, ubar1,cos_theta, F0PI):
+def get_flux_geom_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3d,gcos2_3d, ftau_cld_3d,ftau_ray_3d,
+	dtau_og_3d, tau_og_3d, w0_og_3d, cos_ogb_3d, 
+	surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase):
 	"""
 	Computes toon fluxes given tau and everything is 3 dimensional. This is the exact same function 
 	as `get_flux_geom_1d` but is kept separately so we don't have to do unecessary indexing for 
@@ -372,37 +373,43 @@ def get_flux_geom_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 		Number of Gauss angles 
 	numt : int 
 		Number of Chebyshev angles 
-	DTAU : ndarray of float
+	dtau_3d : ndarray of float
 		This is the opacity contained within each individual layer (defined at midpoints of "levels")
 		WITHOUT D-Eddington Correction
 		Dimensions=# layer by # wave
-	TAU : ndarray of float
+	tau_3d : ndarray of float
 		This is the cumulative summed opacity 
 		WITHOUT D-Eddington Correction
 		Dimensions=# level by # wave		
-	W0 : ndarray of float 
+	w0_3d : ndarray of float 
 		This is the single scattering albedo, from scattering, clouds, raman, etc 
 		WITHOUT D-Eddington Correction
 		Dimensions=# layer by # wave
-	COSB : ndarray of float 
+	cosb_3d : ndarray of float 
 		This is the asymmetry factor 
 		WITHOUT D-Eddington Correction
 		Dimensions=# layer by # wave
-	GCOS2 : ndarray of float 
+	gcos2_3d : ndarray of float 
 		Parameter that allows us to directly include Rayleigh scattering 
 		= 0.5*tau_rayleigh/(tau_rayleigh + tau_cloud)
-	dtau_dedd : ndarray of float 
+	ftau_cld_3d : ndarray of float 
+		Fraction of cloud extinction to total 
+		= tau_cloud/(tau_rayleigh + tau_cloud)
+	ftau_ray_3d : ndarray of float 
+		Fraction of rayleigh extinction to total 
+		= tau_rayleigh/(tau_rayleigh + tau_cloud)
+	dtau_og_3d : ndarray of float 
 		This is the opacity contained within each individual layer (defined at midpoints of "levels")
-		WITH D-Eddington Correction
+		WITHOUT the delta eddington correction, if it was specified by user
 		Dimensions=# layer by # wave
-	tau_dedd : ndarray of float
+	tau_og_3d : ndarray of float
 		This is the cumulative summed opacity 
-		WITH D-Eddington Correction
+		WITHOUT the delta eddington correction, if it was specified by user
 		Dimensions=# level by # wave	
-	w0_dedd : ndarray of float 
-		Same as w0 but with the delta eddington correction		
-	cosb_dedd : ndarray of float 
-		Same as cosbar buth with the delta eddington correction 
+	w0_og_3d : ndarray of float 
+		Same as w0 but WITHOUT the delta eddington correction, if it was specified by user	
+	cosb_og_3d : ndarray of float 
+		Same as cosbar buth WITHOUT the delta eddington correction, if it was specified by user
 	surf_reflect : float 
 		Surface reflectivity 
 	ubar0 : ndarray of float 
@@ -413,7 +420,10 @@ def get_flux_geom_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 		Cosine of the phase angle of the planet 
 	F0PI : array 
 		Downward incident solar radiation
- 
+	single_phase : str 
+		Single scattering phase function, default is the two-term henyey-greenstein phase function
+ 	multi_phase : str 
+ 		Multiple scattering phase function, defulat is N=2 Legendre polynomial
 
 	Returns
 	-------
@@ -450,6 +460,18 @@ def get_flux_geom_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 			tau = tau_3d[:,:,ng,nt]
 			w0 = w0_3d[:,:,ng,nt]
 			gcos2 = gcos2_3d[:,:,ng,nt]
+			ftau_cld = ftau_cld_3d[:,:,ng,nt]
+			ftau_ray = ftau_ray_3d[:,:,ng,nt]
+
+			#uncorrected original values (in case user specified D-Eddington)
+			#If they did not, this is the same thing as what is defined above 
+			#These are used because HG single scattering phase function does get 
+			#the forward and back scattering pretty accurately so delta-eddington
+			#is only applied to the multiple scattering terms
+			cosb_og = cosb_og_3d[:,:,ng,nt]
+			dtau_og = dtau_og_3d[:,:,ng,nt]
+			tau_og = tau_og_3d[:,:,ng,nt]
+			w0_og = w0_og_3d[:,:,ng,nt]			
 
 			g1    = (sq3*0.5)*(2. - w0*(1.+cosb))    #table 1
 			g2    = (sq3*w0*0.5)*(1.-cosb)           #table 1
@@ -514,52 +536,92 @@ def get_flux_geom_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 			xint = zeros((nlevel,nwno))
 			xint[-1,:] = flux_zero/pi
 
+			################################ BEGIN OPTIONS FOR MULTIPLE SCATTERING####################
+
 			#Legendre polynomials for the Phase function due to multiple scatterers 
+			if multi_phase ==0:#'N=2':
+				#ubar2 is defined to deal with the integration over the second moment of the 
+				#intensity. It is FIT TO PURE RAYLEIGH LIMIT, ~(1/sqrt(3))^(1/2)
+				#this is a decent assumption because our second order legendre polynomial 
+				#is forced to be equal to the rayleigh phase function
+				ubar2 = 0.767  # 
+				multi_plus = (1.0+1.5*cosb*ubar1[ng,nt] #!was 3
+								+ gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
+				multi_minus = (1.-1.5*cosb*ubar1[ng,nt] 
+								+ gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
+			elif multi_phase ==1:#'N=1':
+				multi_plus = 1.0+1.5*cosb*ubar1[ng,nt]	
+				multi_minus = 1.-1.5*cosb*ubar1[ng,nt]
+			################################ END OPTIONS FOR MULTIPLE SCATTERING####################
 
-			ubar2 = 0.767  # FIT TO PURE RAYLEIGH LIMIT, ~(1/sqrt(3))^(1/2)
-			F1 = (1.0+1.5*cosb*ubar1[ng,nt] #!was 3
-							+ gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
-			F2 = (1.-1.5*cosb*ubar1[ng,nt] 
-							+ gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
 
-			G=w0*positive*(F1+gama*F2)
-			H=w0*negative*(gama*F1+F2)
-			A=w0*(F1*c_plus_up+F2*c_minus_up)
+			G=w0*positive*(multi_plus+gama*multi_minus)
+			H=w0*negative*(gama*multi_plus+multi_minus)
+			A=w0*(multi_plus*c_plus_up+multi_minus*c_minus_up)
 
 			G=G*0.5/pi
 			H=H*0.5/pi
 			A=A*0.5/pi
 
-			#Phase function for single scattering albedo frum Solar beam
-			#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-                  #first term of TTHG: forward scattering
-			puu0=((1-(cosb/2)**2) * (1-cosb**2)
-							/sqrt((1+cosb**2+2*cosb*cos_theta)**3) 
-							#second term of TTHG: backward scattering
-							+((cosb/2)**2)*(1-(-cosb/2.)**2)
-							/sqrt((1+(-cosb/2.)**2+2*(-cosb/2.)*cos_theta)**3)+
-                            #rayleigh phase function
-							(gcos2))
+			################################ BEGIN OPTIONS FOR DIRECT SCATTERING####################
+			if single_phase==0:#'cahoy':
+				#Phase function for single scattering albedo frum Solar beam
+				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
+	                  #first term of TTHG: forward scattering 
+				p_single=((1-(cosb_og/2)**2) * (1-cosb_og**2)
+								/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+								#second term of TTHG: backward scattering
+								+((cosb_og/2)**2)*(1-(-cosb_og/2.)**2)
+								/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3)+
+	                            #rayleigh phase function
+								(gcos2))
+			elif single_phase==1:#'OTHG':
+				p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+			elif single_phase==2:#'TTHG':
+				#Phase function for single scattering albedo frum Solar beam
+				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
+	                  #first term of TTHG: forward scattering
+				p_single=((1-(cosb_og/2)**2) * (1-cosb_og**2)
+								/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+								#second term of TTHG: backward scattering
+								+((cosb_og/2)**2)*(1-(-cosb_og/2.)**2)
+								/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3))
+			elif single_phase==3:#'TTHG_ray':
+				#Phase function for single scattering albedo frum Solar beam
+				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
+	                  		#first term of TTHG: forward scattering
+				p_single=(ftau_cld*((1-(cosb_og/2)**2) * (1-cosb_og**2)
+												/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+												#second term of TTHG: backward scattering
+												+((cosb_og/2)**2)*(1-(-cosb_og/2.)**2)
+												/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3))+			
+												#rayleigh phase function
+												ftau_ray*(0.75*(1+cos_theta**2.0)))
+			################################ END OPTIONS FOR DIRECT SCATTERING####################
 
 			for i in range(nlayer-1,-1,-1):
-                        #direct beam
-				xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/ubar1[ng,nt]) 
+				#direct beam
+				#note when delta-eddington=off, then tau_single=tau, cosb_single=cosb, w0_single=w0, etc
+				xint[i,:] =( xint[i+1,:]*exp(-dtau_og[i,:]/ubar1[ng,nt])
 					    #single scattering albedo from sun beam (from ubar0 to ubar1)
-						+(w0[i,:]*F0PI/(4.*pi))*
-						(puu0[i,:])*exp(-tau[i,:]/ubar0[ng,nt])*
-						(1. - exp(-dtau[i,:]*(ubar0[ng,nt]+ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
+						+(w0_og[i,:]*F0PI/(4.*pi))*
+						(p_single[i,:])*exp(-tau_og[i,:]/ubar0[ng,nt])*
+						(1. - exp(-dtau_og[i,:]*(ubar0[ng,nt]+ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
 						(ubar0[ng,nt]/(ubar0[ng,nt]+ubar1[ng,nt]))
 						#multiple scattering terms 
 						+A[i,:]*(1. - exp(-dtau[i,:] *(ubar0[ng,nt]+1*ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
 						(ubar0[ng,nt]/(ubar0[ng,nt]+1*ubar1[ng,nt]))
 						+G[i,:]*(exp(exptrm[i,:]*1-dtau[i,:]/ubar1[ng,nt]) - 1.0)/(lamda[i,:]*1*ubar1[ng,nt] - 1.0)
 						+H[i,:]*(1. - exp(-exptrm[i,:]*1-dtau[i,:]/ubar1[ng,nt]))/(lamda[i,:]*1*ubar1[ng,nt] + 1.0))
+						#thermal
+
 			xint_at_top[ng,nt,:] = xint[0,:]	
 	return xint_at_top
 
 @jit(nopython=True, cache=True)
-def get_flux_geom_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, 
-	surf_reflect,ubar0, ubar1,cos_theta, F0PI):
+def get_flux_geom_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
+	dtau_og, tau_og, w0_og, cosb_og, 
+	surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase):
 	"""
 	Computes toon fluxes given tau and everything is 1 dimensional. This is the exact same function 
 	as `get_flux_geom_3d` but is kept separately so we don't have to do unecessary indexing for fast
@@ -596,18 +658,24 @@ def get_flux_geom_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2,
 	GCOS2 : ndarray of float 
 		Parameter that allows us to directly include Rayleigh scattering 
 		= 0.5*tau_rayleigh/(tau_rayleigh + tau_cloud)
-	dtau_dedd : ndarray of float 
+	ftau_cld : ndarray of float 
+		Fraction of cloud extinction to total 
+		= tau_cloud/(tau_rayleigh + tau_cloud)
+	ftau_ray : ndarray of float 
+		Fraction of rayleigh extinction to total 
+		= tau_rayleigh/(tau_rayleigh + tau_cloud)
+	dtau_og : ndarray of float 
 		This is the opacity contained within each individual layer (defined at midpoints of "levels")
-		WITH D-Eddington Correction
+		WITHOUT the delta eddington correction, if it was specified by user
 		Dimensions=# layer by # wave
-	tau_dedd : ndarray of float
+	tau_og : ndarray of float
 		This is the cumulative summed opacity 
-		WITH D-Eddington Correction
+		WITHOUT the delta eddington correction, if it was specified by user
 		Dimensions=# level by # wave	
-	w0_dedd : ndarray of float 
-		Same as w0 but with the delta eddington correction		
-	cosb_dedd : ndarray of float 
-		Same as cosbar buth with the delta eddington correction 
+	w0_og : ndarray of float 
+		Same as w0 but WITHOUT the delta eddington correction, if it was specified by user	
+	cosb_og : ndarray of float 
+		Same as cosbar buth WITHOUT the delta eddington correction, if it was specified by user
 	surf_reflect : float 
 		Surface reflectivity 
 	ubar0 : ndarray of float 
@@ -618,7 +686,10 @@ def get_flux_geom_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2,
 		Cosine of the phase angle of the planet 
 	F0PI : array 
 		Downward incident solar radiation
- 
+	single_phase : str 
+		Single scattering phase function, default is the two-term henyey-greenstein phase function
+ 	multi_phase : str 
+ 		Multiple scattering phase function, defulat is N=2 Legendre polynomial 
 
 	Returns
 	-------
@@ -711,45 +782,77 @@ def get_flux_geom_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2,
 			xint = zeros((nlevel,nwno))
 			xint[-1,:] = flux_zero/pi
 
-			#AM = c_minus_up
-			#AP = c_plus_up
+			################################ BEGIN OPTIONS FOR MULTIPLE SCATTERING####################
 
 			#Legendre polynomials for the Phase function due to multiple scatterers 
+			if multi_phase ==0:#'N=2':
+				#ubar2 is defined to deal with the integration over the second moment of the 
+				#intensity. It is FIT TO PURE RAYLEIGH LIMIT, ~(1/sqrt(3))^(1/2)
+				#this is a decent assumption because our second order legendre polynomial 
+				#is forced to be equal to the rayleigh phase function
+				ubar2 = 0.767  # 
+				multi_plus = (1.0+1.5*cosb*ubar1[ng,nt] #!was 3
+								+ gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
+				multi_minus = (1.-1.5*cosb*ubar1[ng,nt] 
+								+ gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
+			elif multi_phase ==1:#'N=1':
+				multi_plus = 1.0+1.5*cosb*ubar1[ng,nt]	
+				multi_minus = 1.-1.5*cosb*ubar1[ng,nt]
+			################################ END OPTIONS FOR MULTIPLE SCATTERING####################
 
-			ubar2 = 0.767  # FIT TO PURE RAYLEIGH LIMIT, ~(1/sqrt(3))^(1/2)
-			F1 = (1.0+1.5*cosb*ubar1[ng,nt] #!was 3
-							+ gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
-			F2 = (1.-1.5*cosb*ubar1[ng,nt] 
-							+ gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
-
-			G=w0*positive*(F1+gama*F2)
-			H=w0*negative*(gama*F1+F2)
-			A=w0*(F1*c_plus_up+F2*c_minus_up)
+			G=w0*positive*(multi_plus+gama*multi_minus)
+			H=w0*negative*(gama*multi_plus+multi_minus)
+			A=w0*(multi_plus*c_plus_up+multi_minus*c_minus_up)
 
 			G=G*0.5/pi
 			H=H*0.5/pi
 			A=A*0.5/pi
 
-			#Phase function for single scattering albedo frum Solar beam
-			#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-                  #first term of TTHG: forward scattering
-			puu0=((1-(cosb/2)**2) * (1-cosb**2)
-							/sqrt((1+cosb**2+2*cosb*cos_theta)**3) 
-							#second term of TTHG: backward scattering
-							+((cosb/2)**2)*(1-(-cosb/2.)**2)
-							/sqrt((1+(-cosb/2.)**2+2*(-cosb/2.)*cos_theta)**3)+
-                            #rayleigh phase function
-							(gcos2))
+			################################ BEGIN OPTIONS FOR DIRECT SCATTERING####################
+			if single_phase==0:#'cahoy':
+				#Phase function for single scattering albedo frum Solar beam
+				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
+	                  #first term of TTHG: forward scattering
+				p_single=((1-(cosb_og/2)**2) * (1-cosb_og**2)
+								/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+								#second term of TTHG: backward scattering
+								+((cosb_og/2)**2)*(1-(-cosb_og/2.)**2)
+								/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3)+
+	                            #rayleigh phase function
+								(gcos2))
+			elif single_phase==1:#'OTHG':
+				p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+			elif single_phase==2:#'TTHG':
+				#Phase function for single scattering albedo frum Solar beam
+				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
+	                  #first term of TTHG: forward scattering
+				p_single=((1-(cosb_og/2)**2) * (1-cosb_og**2)
+								/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+								#second term of TTHG: backward scattering
+								+((cosb_og/2)**2)*(1-(-cosb_og/2.)**2)
+								/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3))
+			elif single_phase==3:#'TTHG_ray':
+				#Phase function for single scattering albedo frum Solar beam
+				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
+	                  		#first term of TTHG: forward scattering
+				p_single=(ftau_cld*((1-(cosb_og/2)**2) * (1-cosb_og**2)
+												/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+												#second term of TTHG: backward scattering
+												+((cosb_og/2)**2)*(1-(-cosb_og/2.)**2)
+												/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3))+			
+	                            #rayleigh phase function
+								ftau_ray*(0.75*(1+cos_theta**2.0)))
+			################################ END OPTIONS FOR DIRECT SCATTERING####################
 
 			for i in range(nlayer-1,-1,-1):
                         #direct beam
 				xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/ubar1[ng,nt]) 
 					    #single scattering albedo from sun beam (from ubar0 to ubar1)
-						+(w0[i,:]*F0PI/(4.*pi))*
-						(puu0[i,:])*exp(-tau[i,:]/ubar0[ng,nt])*
-						(1. - exp(-dtau[i,:]*(ubar0[ng,nt]+ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
+						+(w0_og[i,:]*F0PI/(4.*pi))*
+						(p_single[i,:])*exp(-tau_og[i,:]/ubar0[ng,nt])*
+						(1. - exp(-dtau_og[i,:]*(ubar0[ng,nt]+ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
 						(ubar0[ng,nt]/(ubar0[ng,nt]+ubar1[ng,nt]))
-						#multiple scattering terms 
+						#multiple scattering terms p_single
 						+A[i,:]*(1. - exp(-dtau[i,:] *(ubar0[ng,nt]+1*ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
 						(ubar0[ng,nt]/(ubar0[ng,nt]+1*ubar1[ng,nt]))
 						+G[i,:]*(exp(exptrm[i,:]*1-dtau[i,:]/ubar1[ng,nt]) - 1.0)/(lamda[i,:]*1*ubar1[ng,nt] - 1.0)

@@ -17,6 +17,13 @@ def picaso(input,phase_angle, dimension = '1d'):
 
 	#check to see if we are running in test mode
 	test_mode = input['test_mode']
+	#set approx numbers options (to be used in numba compiled functions)
+	single_phase_options = ['cahoy','OTHG','TTHG','TTGH_ray']
+	single_phase = single_phase_options.index(input['approx']['single_phase'])
+	multi_phase_options = ['N=2','N=1']
+	multi_phase = multi_phase_options.index(input['approx']['multi_phase'])
+	raman_options = ["oklopcic","pollack","none"]
+	raman_approx = raman_options.index(input['approx']['raman'])
 
 	#get wavelength grid and order it
 	grid = wavelength.get_output_grid(input['opacities']['files']['wavegrid'])
@@ -30,7 +37,8 @@ def picaso(input,phase_angle, dimension = '1d'):
 	#get opacity class
 	opacityclass=optics.RetrieveOpacities(wno, 1e4/wno,
 					os.path.join(__refdata__, 'opacities', input['opacities']['files']['continuum']),
-					os.path.join(__refdata__, 'opacities', input['opacities']['files']['molecular']) 
+					os.path.join(__refdata__, 'opacities', input['opacities']['files']['molecular']), 
+					os.path.join(__refdata__, 'opacities', input['opacities']['files']['raman']) 
 					)
 
 	#get geometry
@@ -49,8 +57,14 @@ def picaso(input,phase_angle, dimension = '1d'):
 
 	#begin atm setup
 	atm = ATMSETUP(input)
+
+	############### To stuff needed for the star ###############
 	#get star 
-	atm.get_stellar_spec(wno) 
+	star = input['star']
+	wno_star, flux_star, hires_wno_star, hires_flux_star = atm.get_stellar_spec(opacityclass.wno, star['database'],star['temp'], star['metal'], star['logg']) 
+	#this is added to the opacity class
+	stellar_raman_shifts = opacityclass.compute_stellar_shits(hires_wno_star, hires_flux_star)
+
 
 	################ From here on out is everything that would go through retrieval or 3d input##############
 	atm.get_gravity()
@@ -81,13 +95,20 @@ def picaso(input,phase_angle, dimension = '1d'):
 
 	if dimension == '1d':
 		#only need to get opacities for one pt profile
-		DTAU, TAU, W0, COSB,GCOS2= optics.optc(atm, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode)
+
+		#There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
+		#We use HG function for single scattering which gets the forward scattering/back scattering peaks 
+		#well. We only really want to use delta-edd for multi scattering legendre polynomials. 
+		DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG= optics.optc(
+			atm, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode)
 
 
 		#use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
 		xint_at_top  = fluxes.get_flux_geom_1d(atm.c.nlevel, wno,nwno,ng,nt,
-													DTAU, TAU, W0, COSB,GCOS2,# dtau_dedd, tau_dedd, w0_dedd, cosb_dedd ,
-													atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI)
+													DTAU, TAU, W0, COSB,GCOS2,ftau_cld,ftau_ray,
+													DTAU_OG, TAU_OG, W0_OG, COSB_OG ,
+													atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
+													single_phase,multi_phase)
 	elif dimension == '3d':
 
 		#setup zero array to fill with opacities
@@ -96,6 +117,14 @@ def picaso(input,phase_angle, dimension = '1d'):
 		W0_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
 		COSB_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
 		GCOS2_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
+		FTAU_CLD_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
+		FTAU_RAY_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
+		#these are the unchanged values from delta-eddington
+		TAU_OG_3d = np.zeros((atm.c.nlevel, nwno, ng, nt))
+		DTAU_OG_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
+		W0_OG_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
+		COSB_OG_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
+
 		#get opacities at each facet
 		for g in range(ng):
 			for t in range(nt): 
@@ -106,19 +135,28 @@ def picaso(input,phase_angle, dimension = '1d'):
 				#diesct just a subsection to get the opacity 
 				atm_1d.disect(g,t)
 
-				dtau, tau, w0, cosb, gcos2 = optics.optc(
-					atm_1d, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode) 
+				dtau, tau, w0, cosb,ftau_cld, ftau_ray, gcos2, DTAU_OG, TAU_OG, W0_OG, COSB_OG = optics.optc(
+					atm_1d, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode)
 
 				DTAU_3d[:,:,g,t] = dtau
 				TAU_3d[:,:,g,t] = tau
 				W0_3d[:,:,g,t] = w0 
 				COSB_3d[:,:,g,t] = cosb
 				GCOS2_3d[:,:,g,t]= gcos2 
+				FTAU_CLD_3d[:,:,g,t]= ftau_cld
+				FTAU_RAY_3d[:,:,g,t]= ftau_ray
+				#these are the unchanged values from delta-eddington
+				TAU_OG_3d[:,:,g,t] = TAU_OG
+				DTAU_OG_3d[:,:,g,t] = DTAU_OG
+				W0_OG_3d[:,:,g,t] = W0_OG
+				COSB_OG_3d[:,:,g,t] = COSB_OG
 
 		#use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
 		xint_at_top  = fluxes.get_flux_geom_3d(atm.c.nlevel, wno,nwno,ng,nt,
-													DTAU_3d, TAU_3d, W0_3d, COSB_3d,GCOS2_3d,# dtau_dedd, tau_dedd, w0_dedd, cosb_dedd ,
-													atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI)		
+											DTAU_3d, TAU_3d, W0_3d, COSB_3d,GCOS2_3d, FTAU_CLD_3d,FTAU_RAY_3d,
+											DTAU_OG_3d, TAU_OG_3d, W0_OG_3d, COSB_OG_3d,
+											atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
+											single_phase,multi_phase)
 	
 	#now compress everything based on the weights 
 	albedo = disco.compress_disco(ng, nt, nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
@@ -133,25 +171,28 @@ if __name__ == "__main__":
 	from bokeh.palettes import inferno
 	colors = inferno(19)
 	a = json.load(open('../reference/config.json'))
-	a['atmosphere']['profile']['filepath'] = '../3d_pt_test.hdf5'#'../reference/base_cases/jupiter.pt'#
+	#paths to pt and cld files
+	a['atmosphere']['profile']['filepath'] = '../reference/base_cases/jupiter.pt'#'../3d_pt_test.hdf5'#
+	a['atmosphere']['clouds']['filepath'] =  '../reference/base_cases/jupiterf3.cld'#'../3d_cld_test.hdf5'#
+	#define gravity
 	a['planet']['gravity'] = 25
 	a['planet']['gravity_unit'] = 'm/(s**2)' 
-	a['atmosphere']['clouds']['filepath'] =  '../3d_cld_test.hdf5'#'../reference/base_cases/jupiterf3.cld'#
-	#a['approx']['delta_eddington']=False
+	#this is default. But set eddington approx
+	a['approx']['delta_eddington']=True
+	#define number of integration angles
 	a['disco']['num_gangle']= 10
 	a['disco']['num_tangle'] = 10
-	#prof = pd.read_csv('../test.profile',delim_whitespace=True)
-	#prof['temperature'] =prof['temperature']*10.0
-	#prof['H-'] =prof['H-']*1e30
-	#a['atmosphere']['profile']['profile'] = prof
-	#a['planet']['gravity'] = 25
-	#a['planet']['gravity_unit'] = 'm/(s**2)' 
+	#add star properties for raman scattering
+	a['star']['temp'] = 6000
+	a['star']['metal'] = 0.0122
+	a['star']['logg'] = 4.437
+
 	fig = figure(width=1200, height=800)
 	ii = 0 
-	for phase in [0.0, 0.1745]:#, 0.3491, 0.5236, 0.6981, 0.8727, 1.0472, 1.2217, 1.3963,1.5708, 1.7453, 1.9199, 2.0944, 2.2689, 2.4435, 2.6180, 2.7925, 2.9671, 3.139]:
+	for phase in [0.0]:
 		print(phase)
-		wno, alb = picaso(a, phase,dimension='3d')
-		pk.dump([1e4/wno, alb], open('../first_run/phase'+str(phase)+'.pk','wb'))
+		wno, alb = picaso(a, phase,dimension='1d')
+		pk.dump([1e4/wno, alb], open('../first_run/phase_'+str(phase)+'.pk','wb'))
 		fig.line(1e4/wno, alb, line_width = 4, color = colors[ii], legend = 'Phase='+str(phase))
 		ii+=1 
 		show(fig)

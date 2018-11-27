@@ -8,7 +8,7 @@ from bokeh.palettes import inferno
 debug = False 
 
 #@jit(nopython=True)
-def optc(atmosphere, opacityclass, delta_eddington=True,test_mode=False):
+def optc(atmosphere, opacityclass, delta_eddington=True,raman=0,test_mode=False):
 	"""
 	Returns total optical depth per slab layer including molecular opacity, continuum opacity. 
 	It should automatically select the molecules needed
@@ -24,6 +24,13 @@ def optc(atmosphere, opacityclass, delta_eddington=True,test_mode=False):
 		(Optional) Default=True, With Delta-eddington on, it incorporates the forward peak 
 		contribution by adjusting optical properties such that the fraction of scattered energy
 		in the forward direction is removed from the scattering parameters 
+	raman : int 
+		(Optional) Default =0 which corresponds to oklopcic+2018 raman scattering cross sections. 
+		Other options include 1 for original pollack approximation for a 6000K blackbody. 
+		And 2 for nothing.  
+	test_mode : bool 
+		(Optional) Default = False to run as normal. This will overwrite the opacities and fix the 
+		delta tau at 0.5. 
 
 	Returns
 	-------
@@ -59,8 +66,9 @@ def optc(atmosphere, opacityclass, delta_eddington=True,test_mode=False):
 	
 	tlayer = atm.layer['temperature']
 	player = atm.layer['pressure']/atm.c.pconv #think of a better solution for this later when mark responds
-
 	gravity = atm.planet.gravity / 100.0 #this too... need to have consistent units.
+	nlayer = atm.c.nlayer
+	nwno = opacityclass.nwno
 
 	if debug: 
 		plot_layer=0#np.size(tlayer)-1
@@ -71,8 +79,8 @@ def optc(atmosphere, opacityclass, delta_eddington=True,test_mode=False):
 	#====================== INITIALIZE TAUGAS#======================
 	TAUGAS = 0 
 	c=1
-	#set color scheme.. adding 2 for rayleigh, and total
-	if debug: colors = inferno(2+len(atm.continuum_molecules) + len(atm.molecules))
+	#set color scheme.. adding 3 for raman, rayleigh, and total
+	if debug: colors = inferno(3+len(atm.continuum_molecules) + len(atm.molecules))
 
 	#====================== ADD CONTIMUUM OPACITY======================	
 	#Set up coefficients needed to convert amagat to a normal human unit
@@ -94,9 +102,9 @@ def optc(atmosphere, opacityclass, delta_eddington=True,test_mode=False):
 		if (m[0] == "H-") and (m[1] == "bf"):
 			h_ =np.where(m[0]==np.array(atm.weights.keys()))[0][0]
 			ADDTAU = (opacityclass.get_continuum_opac(tlayer, 'H-bf').T*( 		#[(nlayer x nwno).T *(
-							atm.layer['mixingratios'][:,h_]*      				#nlayer
-			               	atm.layer['colden']/ 								#nlayer
-			               	(atm.layer['mmw']*atm.c.amu)) 	).T					#nlayer)].T
+							atm.layer['mixingratios'][:,h_]*	  				#nlayer
+						   	atm.layer['colden']/ 								#nlayer
+						   	(atm.layer['mmw']*atm.c.amu)) 	).T					#nlayer)].T
 			#testing['H-bf'] = ADDTAU
 			TAUGAS += ADDTAU
 			if debug: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
@@ -104,11 +112,11 @@ def optc(atmosphere, opacityclass, delta_eddington=True,test_mode=False):
 		#H- Free-Free
 		elif (m[0] == "H-") and (m[1] == "ff"):
 			h_ = np.where('H'==np.array(atm.weights.keys()))[0][0]
-			ADDTAU = (opacityclass.get_continuum_opac(tlayer, 'H-ff').T*( 		        #[(nlayer x nwno).T *(
+			ADDTAU = (opacityclass.get_continuum_opac(tlayer, 'H-ff').T*( 				#[(nlayer x nwno).T *(
 							atm.layer['pressure']* 								  		#nlayer
-							atm.layer['mixingratios'][:,h_]*atm.layer['electrons']*     #nlayer
-			               	atm.layer['colden']/ 										#nlayer
-			               	(tlayer*atm.layer['mmw']*atm.c.amu*atm.c.k_b)) 	).T			#nlayer)].T
+							atm.layer['mixingratios'][:,h_]*atm.layer['electrons']*	 #nlayer
+						   	atm.layer['colden']/ 										#nlayer
+						   	(tlayer*atm.layer['mmw']*atm.c.amu*atm.c.k_b)) 	).T			#nlayer)].T
 			#testing['H-ff'] = ADDTAU
 			TAUGAS += ADDTAU
 			if debug: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
@@ -121,11 +129,11 @@ def optc(atmosphere, opacityclass, delta_eddington=True,test_mode=False):
 			#this is a hefty matrix multiplication to make sure that we are 
 			#multiplying each column of the opacities by the same 1D vector (as opposed to traditional 
 			#matrix multiplication). This is the reason for the transposes.
-			ADDTAU = (opacityclass.get_continuum_opac(tlayer, 'H2-').T*( 		        #[(nlayer x nwno).T *(
+			ADDTAU = (opacityclass.get_continuum_opac(tlayer, 'H2-').T*( 				#[(nlayer x nwno).T *(
 							atm.layer['pressure']* 								  		#nlayer
-							atm.layer['mixingratios'][:,h2_]*atm.layer['electrons']*    #nlayer
-			               	atm.layer['colden']/ 										#nlayer
-			               	(atm.layer['mmw']*atm.c.amu)) 	).T							#nlayer)].T
+							atm.layer['mixingratios'][:,h2_]*atm.layer['electrons']*	#nlayer
+						   	atm.layer['colden']/ 										#nlayer
+						   	(atm.layer['mmw']*atm.c.amu)) 	).T							#nlayer)].T
 			#testing['H2-'] = ADDTAU
 
 			TAUGAS += ADDTAU
@@ -153,7 +161,7 @@ def optc(atmosphere, opacityclass, delta_eddington=True,test_mode=False):
 		ADDTAU = (opacityclass.get_molecular_opac(tlayer,player, m).T * ( 
 					atm.layer['colden']*
 					atm.layer['mixingratios'][:,ind]*atm.weights[m].values[0]/ 
-			        atm.layer['mmw']) ).T
+					atm.layer['mmw']) ).T
 		TAUGAS += ADDTAU
 		#testing[m] = ADDTAU
 		if debug: opt_figure.line(1e4/opacityclass.wno, ADDTAU[int(np.size(tlayer)/2),:], alpha=0.7,legend=m, line_width=3, color=colors[c],
@@ -173,23 +181,43 @@ def optc(atmosphere, opacityclass, delta_eddington=True,test_mode=False):
 
 
 	#====================== ADD RAMAN OPACITY======================
-	raman_factor = 0.9999#raman(opacityclass.wno) #CURRENTLY ONLY RETURNS ONES 
-
+	raman_db = opacityclass.raman_db
+	#OKLOPCIC OPACITY
+	if raman == 0 :
+		raman_factor = compute_raman(nwno, nlayer,opacityclass.wno, 
+			opacityclass.raman_stellar_shifts, tlayer, raman_db['c'].values,
+				raman_db['ji'].values, raman_db['deltanu'].values)
+		if debug: opt_figure.line(1e4/opacityclass.wno, raman_factor[int(np.size(tlayer)/2),:]*TAURAY[int(np.size(tlayer)/2),:], alpha=0.7,legend='Shifted Raman', line_width=3, color=colors[c],
+				muted_color=colors[c], muted_alpha=0.2)
+		raman_factor = np.minimum(raman_factor, raman_factor*0+0.99999)
+	#POLLACK OPACITY
+	elif raman ==1: 
+		raman_factor = raman_pollack(nlayer)
+		raman_factor = np.minimum(raman_factor, raman_factor*0+0.99999)		
+		if debug: opt_figure.line(1e4/opacityclass.wno, raman_factor[int(np.size(tlayer)/2),:]*TAURAY[int(np.size(tlayer)/2),:], alpha=0.7,legend='Shifted Raman', line_width=3, color=colors[c],
+				muted_color=colors[c], muted_alpha=0.2)
+	#NOTHING
+	else: 
+		raman_factor = 0.99999
+	
 
 	#====================== ADD CLOUD OPACITY======================	
 	TAUCLD = atm.layer['cloud']['opd'] #TAUCLD is the total extinction from cloud = (abs + scattering)
 	#testing['cld'] = TAUCLD
 	asym_factor_cld = atm.layer['cloud']['g0'] 
-	single_scattering_cld = atm.layer['cloud']['w0'] #scatter / (abs + scattering) from cloud only 
+	single_scattering_cld = atm.layer['cloud']['w0'] 
 
 
 	#====================== ADD EVERYTHING TOGETHER PER LAYER======================	
 	#formerly DTAUV
 	DTAU = TAUGAS + TAURAY + TAUCLD 
 	#formerly COSBV
-	COSB = (TAUCLD*asym_factor_cld)/(TAUCLD + TAURAY)
+	ftau_cld = TAUCLD/(TAUCLD + TAURAY)
+	COSB = ftau_cld*asym_factor_cld
+
 	#formerly GCOSB2 
-	GCOS2 = 0.5*TAURAY/(TAURAY + TAUCLD) #Hansen & Travis 1974 for Rayleigh scattering 
+	ftau_ray = TAURAY/(TAURAY + TAUCLD)
+	GCOS2 = 0.5*ftau_ray #Hansen & Travis 1974 for Rayleigh scattering 
 	#formerly WBARV.. change name later
 	W0 = (TAURAY*raman_factor + TAUCLD*single_scattering_cld) / (TAUGAS + TAURAY + TAUCLD) #TOTAL single scattering 
 
@@ -211,6 +239,8 @@ def optc(atmosphere, opacityclass, delta_eddington=True,test_mode=False):
 		if test_mode=='rayleigh':
 			DTAU = TAURAY 
 			GCOS2 = 0.5
+			ftau_ray = 1.0
+			ftau_cld = 1e-6
 		else: 
 			DTAU = TAURAY*0+0.5
 			GCOS2 = 0.0
@@ -219,7 +249,7 @@ def optc(atmosphere, opacityclass, delta_eddington=True,test_mode=False):
 		TAU = np.zeros((shape[0]+1, shape[1]))
 		TAU[1:,:]=numba_cumsum(DTAU)
 
-	#====================== D-Eddington Approximation or TEST mode======================
+	#====================== D-Eddington Approximation======================
 	if delta_eddington:
 		#First thing to do is to use the delta function to icorporate the forward 
 		#peak contribution of scattering by adjusting optical properties such that 
@@ -238,12 +268,15 @@ def optc(atmosphere, opacityclass, delta_eddington=True,test_mode=False):
 		#sum up taus starting at the top, going to depth
 		tau_dedd = np.zeros((shape[0]+1, shape[1]))
 		tau_dedd[1:,:]=numba_cumsum(dtau_dedd)
-    
-    	#returning the terms used in 
-		return dtau_dedd, tau_dedd,  w0_dedd, cosb_dedd ,GCOS2
+	
+		#returning the terms used in 
+		return dtau_dedd, tau_dedd, w0_dedd, cosb_dedd ,ftau_cld, ftau_ray, GCOS2, \
+		       DTAU, TAU, W0, COSB #these are returned twice because we need the uncorrected 
+		       					   #values for single scattering terms where we use the TTHG phase function
 
 	else: 
-		return DTAU, TAU, W0, COSB,GCOS2
+		return DTAU, TAU, W0, COSB, ftau_cld, ftau_ray, GCOS2, \
+			   DTAU, TAU, W0, COSB  #these are returned twice for consistency with the delta-eddington option
 
 #'f8[:,:](f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8)',
 @jit(nopython=True, cache=True)
@@ -291,7 +324,7 @@ def rayleigh(colden,H2,He,CH4,wave,xmu,amu):
 	#add rayleigh from each contributing gas using corresponding mixing 
 	for i in np.arange(0,3,1):
 		tec = cfray*(dpol[i]/wave**4)*(gnu[0,i]+gnu[1,i]/   #nwave
-                     wave**2)**2 
+					 wave**2)**2 
 		TAUR = (cold*gasmixing[:,i]).reshape((-1, 1)) * tec * 1e-5 / XN0
 		
 		TAURAY += TAUR
@@ -299,10 +332,178 @@ def rayleigh(colden,H2,He,CH4,wave,xmu,amu):
 	return TAURAY
 
 @jit(nopython=True, cache=True)
-def raman(wavelength):
+def compute_raman(nwno, nlayer, wno, stellar_shifts, tlayer, cross_sections, j_initial, deltanu):
 	"""
 	The Ramam scattering will alter the rayleigh scattering. The returned value is 
 	modified single scattering albedo. 
+
+	Cross sectiosn from: 
+	http://iopscience.iop.org/0004-637X/832/1/30/suppdata/apjaa3ec7t2_mrt.txt
+
+	This method is described in Pollack+1986. Albeit not the best method. Sromovsky+2005 
+	pointed out the inconsistencies in this method. You can see from his comparisons 
+	that the Pollack approximations don't accurately capture the depths of the line centers. 
+	Since then, OKLOPCIC+2016 recomputed cross sections for J<=9. We are using those cross 
+	sections here with a different star. Huge improvement over what we had before. 
+	Number of J levels is hard coded to 10 ! 
+
+	Will be added to the rayleigh scattering as : TAURAY*RAMAN
+
+	Parameters
+	----------
+	nwno : int 
+		Number of wave points
+	nlayer : int 
+		Number of layers 
+	wno : array
+		Array of output grid of wavenumbers
+	stellar_shifts : ndarray 
+		Array of floats that has dimensions (n wave pts x n J levels: 0-9)
+	tlayer : array 
+		Array of floats that has dimensions nlayer 
+	cross_sections : ndarray 
+		The row of "C's" from Antonija's table. 
+	j_initial : ndarray 
+		The row of initial rotational energy states from Antonija's table
+	deltanu : ndarray
+		The row of delta nu's from Antonia's table
+
+	"""
+	raman_sigma_w_shift = np.zeros(( nlayer,nwno))
+	raman_sigma_wo_shift = np.zeros(( nlayer,nwno))
+	rayleigh_sigma = np.zeros(( nlayer,nwno))
+
+	#first calculate the j fraction at every layer 
+
+	number_of_Js = 10 #(including 0)
+	j_at_temp = np.zeros((number_of_Js,nlayer))
+	for i in range(number_of_Js):
+		j_at_temp[i,:] = j_fraction(i,tlayer)
+	
+	for i in range(cross_sections.shape[0]):
+		#define initial state
+		ji = j_initial[i]
+		#for that initial state.. What is the expected wavenumber shift 
+		shifted_wno = wno + deltanu[i]
+		#compute the cross section 
+		Q = cross_sections[i] / wno**3.0 / shifted_wno #see A4 in Antonija's 2018 paper
+		#if deltanu is zero that is technically rayleigh scattering
+		if deltanu[i] == 0 :
+			rayleigh_sigma += np.outer(j_at_temp[ji,:] , Q )
+		else:
+			#if not, then compute the shifted and unshifted raman scattering
+			raman_sigma_w_shift += np.outer(j_at_temp[ji,:] , Q*stellar_shifts[:,i])
+			raman_sigma_wo_shift += np.outer(j_at_temp[ji,:] , Q)
+	#figq = figure(y_axis_type='log',x_range=[0.3,1])
+	#for i in range(len(tlayer)): 
+	#	w = (rayleigh_sigma + raman_sigma_w_shift)/ (rayleigh_sigma + raman_sigma_wo_shift)
+	#	figq.line(1e4/wno, w[i,:],legend='RAYLEIGH',color='red')
+	#show(figq)
+	#finally return the contribution that will be added to total rayleigh
+	return (rayleigh_sigma + raman_sigma_w_shift)/ (rayleigh_sigma + raman_sigma_wo_shift)
+
+@jit(nopython=True, cache=True)
+def bin_star(wno_new,wno_old, Fp):
+	"""
+	Takes average of group of points using uniform tophat 
+	
+	Parameters
+	----------
+	wno_new : numpy.array
+		inverse cm grid to bin to (cm-1) 
+	wno_old : numpy.array
+		inverse cm grid (old grid)
+	Fp : numpy.array
+		transmission spectra, which is on wno grid
+	"""
+	szmod=wno_new.shape[0]
+
+	delta=np.zeros(szmod)
+	Fint=np.zeros(szmod)
+	delta[0:-1]=wno_new[1:]-wno_new[:-1]  
+	delta[szmod-1]=delta[szmod-2] 
+	for i in range(1,szmod):
+		loc=np.where((wno_old >= wno_new[i]-0.5*delta[i-1]) & (wno_old < wno_new[i]+0.5*delta[i]))
+		Fint[i]=np.mean(Fp[loc])
+	loc=np.where((wno_old > wno_new[0]-0.5*delta[0]) & (wno_old < wno_new[0]+0.5*delta[0]))
+	Fint[0]=np.mean(Fp[loc])
+	return Fint
+
+
+@jit(nopython=True, cache=True)
+def partition_function(j, T):
+	"""
+	Given j and T computes partition function for ro-vibrational levels of H2. 
+	This is the exponential and the statistical weight g_J in 
+	Eqn 3 in https://arxiv.org/pdf/1605.07185.pdf
+	It is also used to compute the partition sum Z.
+
+	Parameters
+	----------
+	j : int 
+		Energy level 
+	T : array float 
+		Temperature at each atmospheric layer in the atmosphere
+
+	Returns
+	-------
+	Returns partition function 
+	"""
+	k = 1.38064852e-16  #(c.k_B.cgs)
+	b = 60.853# units of /u.cm #rotational constant for H2
+	c =  29979245800 #.c.cgs
+	h = 6.62607004e-27 #c.h.cgs
+	b_energy = (b*(h)*(c)*j*(j+1)/k)
+	if (j % 2 == 0 ):
+		return (2.0*j+1.0)*np.exp(-0.5*b_energy*j*(j+1)/T) #1/2 is the symmetry # for homonuclear molecule
+	else:
+		return 3.0*(2.0*j+1.0)*np.exp(-0.5*b_energy*j*(j+1)/T)
+
+@jit(nopython=True, cache=True)
+def partition_sum(T):
+	"""
+	This is the total partition sum. I am truncating it at 20 since it seems to approach 1 around then. 
+	This is also pretty fast to compute so 20 is fine for now. 
+
+	Parameters
+	----------
+	T : array 
+		Array of temperatures for each layer 
+
+	Returns
+	-------
+	Z, the partition sum 
+	"""
+	Z=np.zeros(T.size)
+	for j in range(0,20):
+		Z += partition_function(j,T)
+	return Z
+
+@jit(nopython=True, cache=True)
+def j_fraction(j,T):
+	"""
+	This computes the fraction of molecules at each J level. 
+
+	Parameters
+	----------
+	j : int 
+		The initial rotational levels ranging from J=0 to 9 for hydrogen only
+
+	Returns
+	-------
+	f_J in eqn. 3 https://arxiv.org/pdf/1605.07185.pdf
+	"""
+	return partition_function(j,T)/partition_sum(T)
+
+
+
+
+#@jit(nopython=True, cache=True)
+def raman_pollack(nlayer):
+	"""
+	Mystery raman scattering. Couldn't figure out where it came from.. so discontinuing. 
+	Currently function doesnt' totally work. In half fortran-half python. Legacy from 
+	fortran albedo code. 
 
 	This method is described in Pollack+1986. Albeit not the best method. Sromovsky+2005 
 	pointed out the inconsistencies in this method. You can see from his comparisons 
@@ -312,7 +513,8 @@ def raman(wavelength):
 	sophisticated version of Raman scattering. 
 
 	Will be added to the rayleigh scattering as : TAURAY*RAMAN
-	"""
+	
+	#OLD FORTRAN CODE
 	#constants 
 	h = 6.6252e-27
 	c = 2.9978e10
@@ -329,16 +531,16 @@ def raman(wavelength):
 
 	#cross section of the unshifted rayleigh and the vibrationally shifted rayleigh
 	gli = np.zeros(5)
-	wli = gli 
-	gri = gli 
-	wri = gli 
+	wli = np.zeros(5) 
+	gri = np.zeros(5) 
+	wri = np.zeros(5) 
 	gli[:] = [1.296, .247, .297,  .157,  .003]
 	wli[:] = [.507, .628, .733, 1.175, 2.526]
 	gri[:] = [.913, .239, .440,  .344,  .064]
 	wri[:] = [.537, .639, .789, 1.304, 3.263]
 
 	alp = np.zeros(7)
-	arp = alp
+	arp = np.zeros(7)
 	alp[:] = [6.84, 6.96, 7.33, 8.02, 9.18, 11.1, 14.5 ]
 	arp[:] = [3.66, 3.71, 3.88, 4.19, 4.70, 5.52, 6.88 ]
 
@@ -359,17 +561,23 @@ def raman(wavelength):
 
 	#next, compute the extinction cross section for vibrationally 
 	#shifted component 
-	ip = np.min([int(omega/0.05), 5.0]) + 1 
-	f = omega / 0.5 - (ip-1)
+	ip = np.zeros(2)
+	ip[:] = [int(omega/0.05), 5.0]
+	ip = np.min(ip) + 1 
+	f = omega / 0.05 - float(ip-1)
 	alpha_pl = ( 1. - f ) * alp[ip] + f * alp[ip+1]
 	alpha_pr = ( 1. - f ) * arp[ip] + f * arp[ip+1]
 	alpha_p2 = (( 2. * alpha_pr + alpha_pl ) / 3. ) ** 2
 	gamma_p2 = ( alpha_pl - alpha_pr ) ** 2
 	qv = facv / SHIFT( WAVEL, -SHIFTV0 ) ** 4 * ( 3. * alpha_p2 + 2./3. * gamma_p2 )	
-
-
-
-	return 0.9999999 
+	"""
+	dat = pd.read_csv(os.path.join(os.environ.get('picaso_refdata'), 'opacities','raman_fortran.txt'),
+						delim_whitespace=True, header=None, names = ['w','f'])
+	#fill in matrix to match real raman format
+	raman_factor = np.zeros((nlayer, dat.shape[0]))
+	for i in range(nlayer): 
+		raman_factor[i,:] = dat['f'].values[::-1]#return flipped values for raman
+	return  raman_factor 
 
 class RetrieveOpacities():
 	"""
@@ -385,7 +593,7 @@ class RetrieveOpacities():
 		given a pressure and temperature, retrieve the wavelength dependent opacity
 
 	"""
-	def __init__(self, wno, wave, continuum_data, molecular_data):
+	def __init__(self, wno, wave, continuum_data, molecular_data,raman_data):
 		self.cia_db = h5py.File(continuum_data)
 		self.cia_temps = np.array([float(i) for i in self.cia_db['H2H2'].keys()])
 		#self.cia_mols = [i for i in self.cia_db.keys()]
@@ -404,6 +612,9 @@ class RetrieveOpacities():
 		self.wave = wave
 		self.nwno = np.size(wno)
 
+		#raman cross sections 
+		self.raman_db = pd.read_csv(raman_data,
+					 delim_whitespace=True, skiprows=16,header=None, names=['ji','jf','vf','c','deltanu'])
 
 	def get_continuum_opac(self, temperature, molecule): 
 		"""
@@ -459,6 +670,40 @@ class RetrieveOpacities():
 		for i,t,p in zip(range(sizeT) ,nearestT,nearestP): 
 			a[i,:] = np.array(self.mol_db[molecule][t][p])
 		return a
+
+	def compute_stellar_shits(self, wno_star, flux_star):
+		"""
+		Takes the hires stellar spectrum and computes Raman shifts 
+		
+		Parameters
+		----------
+		wno_star : array 
+			hires wavelength grid of the star in wave number
+		flux_star : array 
+			Flux of the star in whatever units. Doesn't matter for this since it's returning a ratio
+		
+		Returns
+		-------
+		matrix
+			array of the shifted stellar spec divided by the unshifted stellar spec on the model wave
+			number grid 
+		"""
+		model_wno = self.wno
+		deltanu = self.raman_db['deltanu'].values
+
+		all_shifted_spec = np.zeros((len(model_wno), len(deltanu)))
+		
+		for i in range(len(deltanu)):
+			dnu = deltanu[i]
+			shifted_wno = model_wno + dnu 
+			shifted_flux = bin_star(shifted_wno,wno_star, flux_star)
+			if i ==0:
+				unshifted = shifted_flux*0+shifted_flux
+			all_shifted_spec[:,i] = shifted_flux/unshifted
+
+		self.raman_stellar_shifts = all_shifted_spec
+
+		return all_shifted_spec
 
 @jit(nopython=True, cache=True)
 def find_nearest(array,value):

@@ -10,6 +10,7 @@ import numpy as np
 import wavelength
 from numba import jit
 import h5py 
+import pysynphot as psyn
 
 __refdata__ = os.environ.get('picaso_refdata')
 
@@ -124,6 +125,7 @@ class ATMSETUP():
 					self.weights = pd.DataFrame({})
 					self.molecules=[]
 					for i in iheader:
+
 						self.weights[header[i]] = pd.Series([self.get_weights([header[i]])[header[i]]])
 						self.molecules += [header[i]]
 
@@ -392,14 +394,32 @@ class ATMSETUP():
 
 	def get_clouds(self, wno):
 		"""
-		Get cloud properties from .cld input returned from eddysed
+		Get cloud properties from .cld input returned from eddysed. The eddysed file should have the following specifications 
+			1) Have the following column names (any order)  opd g0 w0 
+			2) Be white space delimeted 
+			3) Has to have values for pressure levels (N) and wavelengths (M). The row order should go:
+			   level wave opd
+			   1.     1.   ...
+			   1.     2.   ...
+			   1.     3.   ...
+			   .      .    ...
+			   .      .    ...
+			   1.     M.   ...
+			   2.     1.   ...
+			   .      .    ...
+			   N.     .    ...
+
+		Warning
+		-------
+		The order of the rows is very important because each column will be transformed 
+		into a matrix that has the size: [nlayer,nwave]. 
 
 		Input
 		-----
 		wno : array
 			Array in ascending order of wavenumbers. This is used to regrid the cloud output
 
-		TO DO 
+		To Do 
 		-----
 		- Allow users to add different kinds of "simple" cloud options like "isotropic scattering" or grey 
 		opacity at certain pressure. 
@@ -411,10 +431,12 @@ class ATMSETUP():
 
 			if os.path.exists(self.input['atmosphere']['clouds']['filepath']):	
 				#read in the file that was supplied 		
-				cld_input = pd.read_csv(self.input['atmosphere']['clouds']['filepath'], delim_whitespace = True,
-					header=None, skiprows=1, names = ['lvl', 'wv','opd','g0','w0','sigma'])
-				#make sure cloud input has the correct number of waves and PT points
-				assert cld_input.shape[0] is not self.c.nlayer*self.c.input_npts_wave, "Cloud input file is not on the same grid as the input PT profile:"
+				cld_input = pd.read_csv(self.input['atmosphere']['clouds']['filepath'], delim_whitespace = True) 
+				#make sure cloud input has the correct number of waves and PT points and names
+				assert cld_input.shape[0] == self.c.nlayer*self.c.input_npts_wave, "Cloud input file is not on the same grid as the input PT profile:"
+				assert 'g0' in cld_input.keys(), "Please make sure g0 is a named column in cld file"
+				assert 'w0' in cld_input.keys(), "Please make sure w0 is a named column in cld file"
+				assert 'opd' in cld_input.keys(), "Please make sure opd is a named column in cld file"
 
 				#then reshape and regrid inputs to be a nice matrix that is nlayer by nwave
 
@@ -466,6 +488,11 @@ class ATMSETUP():
 			g0 = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle)) 
 			w0 = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle))
 			header = cld_input.attrs['header'].split(',')
+
+			assert 'g0' not in header, "Please make sure g0 is a named column in hdf5 cld file"
+			assert 'w0' not in header, "Please make sure w0 is a named column in hdf5 cld file"
+			assert 'opd' not in header, "Please make sure opd is a named column in hdf5 cld file"
+
 			iopd = np.where('opd' == np.array(header))[0][0]
 			ig0 = np.where('g0' == np.array(header))[0][0]
 			iw0 = np.where('w0' == np.array(header))[0][0]
@@ -510,11 +537,48 @@ class ATMSETUP():
 		self.warnings += [warn]
 		return
 
-	def get_stellar_spec(self,wno):
+	def get_stellar_spec(self,wno, database, temp, metal, logg ):
 		"""
-		Get the stellar spectrum using pysynphot and bin to the correct wavelength 
+		Get the stellar spectrum using pysynphot and interpolate onto a much finer grid than the 
+		planet grid. 
+
+		Warning
+		-------
+		If the resolution of the stellar spectrum models increase 
+		to higher resolution you could take out the lines that start with `fine_wno_star` and 
+		`fine_flux-star` 
+
+		Parameters
+		----------
+		wno : array 
+			Array of the planet model output wavenumber grid 
+		database : str 
+			The database to pull stellar spectrum from. See documentation for pysynphot. 
+		temp : float 
+			Teff of the stellar model 
+		metal : float 
+			Metallicity of the stellar model 
+		logg : float 
+			Logg cgs of the stellar model
+
+		Returns 
+		wno, flux 
+			Wavenumber and stellar flux in wavenumber and FLAM units 
 		"""
-		return
+		sp = psyn.Icat(database, temp, metal, logg)
+		sp.convert("um")
+		sp.convert('flam') 
+		wno_star = 1e4/sp.wave[::-1] #convert to wave number and flip
+		flux_star = sp.flux[::-1]     #flip here to get correct order 	
+		#now we need to make sure that the stellar grid is on a 3x finer resolution 
+		#than the model. 
+		max_shift = np.max(wno)+6000 #this 6000 is just the max raman shift we could have 
+		min_shift = np.min(wno) -2000 #it is just to make sure we cut off the right wave ranges
+
+		#do a fail safe to make sure that star is on a fine enough grid for planet case 
+		fine_wno_star = np.linspace(min_shift, max_shift, len(wno)*5)
+		fine_flux_star = np.interp(fine_wno_star,wno_star, flux_star)
+		return wno_star, flux_star, fine_wno_star, fine_flux_star
 
 	def get_surf_reflect(self,nwno):
 		"""

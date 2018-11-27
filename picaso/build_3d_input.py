@@ -38,10 +38,10 @@ def make_3d_pt_input(ng,nt,phase_angle,input_file,output_file):
 		for t in tangle:
 
 			data = pd.read_csv(input_file, delim_whitespace=True)
-			if first:
-				h5db.attrs['header'] = ','.join(list(data.keys()))
-				first = False
-			dset = h5db.create_dataset(str(g)+'/'+str(t), data=data, chunks=True)
+				if first:
+					h5db.attrs['header'] = ','.join(list(data.keys()))
+					first = False
+				dset = h5db.create_dataset(i'/'+str(g)+'/'+str(t), data=data, chunks=True)
 
 def make_3d_cld_input(ng,nt,phase_angle,input_file,output_file):
 	"""
@@ -76,7 +76,7 @@ def make_3d_cld_input(ng,nt,phase_angle,input_file,output_file):
 			data = pd.read_csv(input_file, delim_whitespace = True,
 					header=None, skiprows=1, names = ['lvl', 'wv','opd','g0','w0','sigma'],
 					dtype='f8')
-			data.l
+			data = data*0
 			if first:
 				h5db.attrs['header'] = ','.join(list(data.keys()))
 				first = False
@@ -88,12 +88,12 @@ if __name__ == "__main__":
 	ng = 10 
 	nt = 10
 
-	input_file='../test.profile'
+	input_file='/Users/natashabatalha/Documents/picaso/reference/base_cases/jupiter.pt'
 	output_file='../3d_pt_test.hdf5'
 
 	make_3d_pt_input(ng, nt,phase_angle, input_file,output_file)	
 
-	input_file='../test.cld'
+	input_file='/Users/natashabatalha/Documents/picaso/reference/base_cases/jupiterf3.cld'
 	output_file='../3d_cld_test.hdf5'
 
 	make_3d_cld_input(ng, nt,phase_angle, input_file,output_file)	

@@ -7,6 +7,12 @@
 		"mass":null,
 		"mass_unit":null
 	},
+	"star":{
+		"database":"ck04models",
+		"temp":null,
+		"metal":null, 
+		"logg":null
+	},
 	"atmosphere":{
 		"profile":{
 			"type":"user",
@@ -31,7 +37,10 @@
 		}
 	},
 	"approx":{
-		"delta_eddington":true
+		"single_phase":"TTHG",
+		"multi_phase":"N=2",
+		"delta_eddington":true,
+		"raman":"oklopcic"
 	},
 	"disco":{
 		"num_gangle":null,
@@ -46,9 +55,9 @@
 			"wavegrid":"wave.h5",
 			"continuum":"continuum.hdf5",
 			"molecular":"molecular.hdf5",
-			"h2cia":"h2cia_2015.h5",
 			"h2minus":"h2minus.csv",
-			"cld_input_grid":"wave_EGP.dat"
+			"cld_input_grid":"wave_EGP.dat",
+			"raman":"raman.txt"
 		}
 
 	},
