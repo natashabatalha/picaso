@@ -1,13 +1,13 @@
-from elements import ELEMENTS as ele 
+from .elements import ELEMENTS as ele 
 import json 
 import os
-from io_utils import read_json
+from .io_utils import read_json
 import astropy.units as u
 import astropy.constants as c
 import pandas as pd
 import warnings 
 import numpy as np
-import wavelength
+from .wavelength import get_cld_input_grid, regrid
 from numba import jit
 import h5py 
 import pysynphot as psyn
@@ -30,7 +30,6 @@ class ATMSETUP():
 		self.planet = type('planet', (object,),{})
 		self.layer = {}
 		self.level = {}
-		self.input_wno = np.sort(wavelength.get_input_grid(self.input['opacities']['files']['cld_input_grid'])['wavenumber'].values)
 		self.get_constants()
 
 	def get_constants(self):
@@ -53,7 +52,6 @@ class ATMSETUP():
 		self.c.pi = np.pi
 
 		#code constants
-		self.c.input_npts_wave = len(self.input_wno)
 		self.c.ngangle = self.input['disco']['num_gangle']
 		self.c.ntangle = self.input['disco']['num_tangle']
 
@@ -424,8 +422,10 @@ class ATMSETUP():
 		- Allow users to add different kinds of "simple" cloud options like "isotropic scattering" or grey 
 		opacity at certain pressure. 
 		"""
+		self.input_wno = get_cld_input_grid(self.input['atmosphere']['clouds']['wavenumber'])
 
 		self.c.output_npts_wave = np.size(wno)
+		self.c.input_npts_wave = len(self.input_wno)
 		#if a cloud filepath exists... 
 		if (self.input['atmosphere']['clouds']['filepath'] != None) and (self.dimension=='1d'):
 
@@ -442,15 +442,15 @@ class ATMSETUP():
 
 				#total extinction optical depth 
 				opd = np.reshape(cld_input['opd'].values, (self.c.nlayer,self.c.input_npts_wave))
-				opd = wavelength.regrid(opd, self.input_wno, wno)
+				opd = regrid(opd, self.input_wno, wno)
 				self.layer['cloud'] = {'opd': opd}
 				#cloud assymetry parameter
 				g0 = np.reshape(cld_input['g0'].values, (self.c.nlayer,self.c.input_npts_wave))
-				g0 = wavelength.regrid(g0, self.input_wno, wno)
+				g0 = regrid(g0, self.input_wno, wno)
 				self.layer['cloud']['g0'] = g0
 				#cloud single scattering albedo 
 				w0 = np.reshape(cld_input['w0'].values, (self.c.nlayer,self.c.input_npts_wave))
-				w0 = wavelength.regrid(w0, self.input_wno, wno)
+				w0 = regrid(w0, self.input_wno, wno)
 				self.layer['cloud']['w0'] = w0  
 
 			else: 
@@ -510,17 +510,17 @@ class ATMSETUP():
 
 					#total extinction optical depth 
 					opd_lowres = np.reshape(data[:,iopd], (self.c.nlayer,self.c.input_npts_wave))
-					opd[:,:,g,t] = wavelength.regrid(opd_lowres, self.input_wno, wno)
+					opd[:,:,g,t] = regrid(opd_lowres, self.input_wno, wno)
 					self.layer['cloud'] = {'opd': opd}
 
 					#cloud assymetry parameter
 					g0_lowres = np.reshape(data[:,ig0], (self.c.nlayer,self.c.input_npts_wave))
-					g0[:,:,g,t] = wavelength.regrid(g0_lowres, self.input_wno, wno)
+					g0[:,:,g,t] = regrid(g0_lowres, self.input_wno, wno)
 					self.layer['cloud']['g0'] = g0
 
 					#cloud single scattering albedo 
 					w0_lowres = np.reshape(data[:,iw0], (self.c.nlayer,self.c.input_npts_wave))
-					w0[:,:,g,t] = wavelength.regrid(w0_lowres, self.input_wno, wno)
+					w0[:,:,g,t] = regrid(w0_lowres, self.input_wno, wno)
 					self.layer['cloud']['w0'] = w0 			
 
 		else:

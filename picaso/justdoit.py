@@ -1,13 +1,13 @@
-from atmsetup import ATMSETUP
-import fluxes 
-import wavelength
+from .atmsetup import ATMSETUP
+from .fluxes import get_flux_geom_1d, get_flux_geom_3d 
+from .wavelength import get_output_grid
 import numpy as np
-import optics 
+from .optics import RetrieveOpacities,compute_opacity
 import os
 import pickle as pk
-import disco 
+from .disco import get_angles, compute_disco, compress_disco
 import copy
-
+import json
 __refdata__ = os.environ.get('picaso_refdata')
 
 def picaso(input,phase_angle, dimension = '1d'):
@@ -17,16 +17,12 @@ def picaso(input,phase_angle, dimension = '1d'):
 
 	#check to see if we are running in test mode
 	test_mode = input['test_mode']
+
 	#set approx numbers options (to be used in numba compiled functions)
-	single_phase_options = ['cahoy','OTHG','TTHG','TTGH_ray']
-	single_phase = single_phase_options.index(input['approx']['single_phase'])
-	multi_phase_options = ['N=2','N=1']
-	multi_phase = multi_phase_options.index(input['approx']['multi_phase'])
-	raman_options = ["oklopcic","pollack","none"]
-	raman_approx = raman_options.index(input['approx']['raman'])
+	single_phase, multi_phase, raman_approx = set_approximations(input) 
 
 	#get wavelength grid and order it
-	grid = wavelength.get_output_grid(input['opacities']['files']['wavegrid'])
+	grid = get_output_grid(input['opacities']['files']['wavegrid'])
 	wno = np.sort(grid['wavenumber'].values)
 	nwno = len(wno)
 
@@ -35,7 +31,7 @@ def picaso(input,phase_angle, dimension = '1d'):
 	#TAG:TODO
 
 	#get opacity class
-	opacityclass=optics.RetrieveOpacities(wno, 1e4/wno,
+	opacityclass=RetrieveOpacities(wno, 1e4/wno,
 					os.path.join(__refdata__, 'opacities', input['opacities']['files']['continuum']),
 					os.path.join(__refdata__, 'opacities', input['opacities']['files']['molecular']), 
 					os.path.join(__refdata__, 'opacities', input['opacities']['files']['raman']) 
@@ -44,10 +40,10 @@ def picaso(input,phase_angle, dimension = '1d'):
 	#get geometry
 	ng = input['disco']['num_gangle']
 	nt = input['disco']['num_tangle']
-	gangle,gweight,tangle,tweight = disco.get_angles(ng, nt) 
+	gangle,gweight,tangle,tweight = get_angles(ng, nt) 
 	#planet disk is divieded into gaussian and chebyshev angles and weights for perfoming the 
 	#intensity as a function of planetary pahse angle 
-	ubar0, ubar1, cos_theta,lat,lon = disco.compute_disco(ng, nt, gangle, tangle, phase_angle)
+	ubar0, ubar1, cos_theta,lat,lon = compute_disco(ng, nt, gangle, tangle, phase_angle)
 
 	#set star 
 	F0PI = np.zeros(nwno) + 1.0 
@@ -99,12 +95,12 @@ def picaso(input,phase_angle, dimension = '1d'):
 		#There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
 		#We use HG function for single scattering which gets the forward scattering/back scattering peaks 
 		#well. We only really want to use delta-edd for multi scattering legendre polynomials. 
-		DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG= optics.optc(
-			atm, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode)
+		DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG= compute_opacity(
+			atm, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx)
 
 
 		#use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-		xint_at_top  = fluxes.get_flux_geom_1d(atm.c.nlevel, wno,nwno,ng,nt,
+		xint_at_top  = get_flux_geom_1d(atm.c.nlevel, wno,nwno,ng,nt,
 													DTAU, TAU, W0, COSB,GCOS2,ftau_cld,ftau_ray,
 													DTAU_OG, TAU_OG, W0_OG, COSB_OG ,
 													atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
@@ -135,8 +131,8 @@ def picaso(input,phase_angle, dimension = '1d'):
 				#diesct just a subsection to get the opacity 
 				atm_1d.disect(g,t)
 
-				dtau, tau, w0, cosb,ftau_cld, ftau_ray, gcos2, DTAU_OG, TAU_OG, W0_OG, COSB_OG = optics.optc(
-					atm_1d, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode)
+				dtau, tau, w0, cosb,ftau_cld, ftau_ray, gcos2, DTAU_OG, TAU_OG, W0_OG, COSB_OG = compute_opacity(
+					atm_1d, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx)
 
 				DTAU_3d[:,:,g,t] = dtau
 				TAU_3d[:,:,g,t] = tau
@@ -152,28 +148,78 @@ def picaso(input,phase_angle, dimension = '1d'):
 				COSB_OG_3d[:,:,g,t] = COSB_OG
 
 		#use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-		xint_at_top  = fluxes.get_flux_geom_3d(atm.c.nlevel, wno,nwno,ng,nt,
+		xint_at_top  = get_flux_geom_3d(atm.c.nlevel, wno,nwno,ng,nt,
 											DTAU_3d, TAU_3d, W0_3d, COSB_3d,GCOS2_3d, FTAU_CLD_3d,FTAU_RAY_3d,
 											DTAU_OG_3d, TAU_OG_3d, W0_OG_3d, COSB_OG_3d,
 											atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
 											single_phase,multi_phase)
 	
 	#now compress everything based on the weights 
-	albedo = disco.compress_disco(ng, nt, nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
+	albedo = compress_disco(ng, nt, nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
 	
 	return wno, albedo 
 
+def set_approximations(input):
+	"""
+	This is a function devoded to defining all the approximations within the code. 
+	This was built to make the code slightly more transparent in terms of options it 
+	is making. A lof of the functions are numba, which means they cannot compare strings. 
+	Therefore, this function returns integers for each option based on placement in a string. 
+	The functions in the rest of the code follow from this.  
+
+	Parameters
+	----------
+	input : dict 
+		Input dictionary from main config.json structure 
+
+	Returns
+	-------
+	Integer option for single scattering phase function, multiple scattering phase function, 
+	and raman scattering 
+	"""
+
+	#define all possible options
+	single_phase = single_phase_options().index(input['approx']['single_phase'])
+
+	multi_phase = multi_phase_options().index(input['approx']['multi_phase'])
+
+	raman_approx = raman_options().index(input['approx']['raman'])
+
+	return single_phase, multi_phase, raman_approx
+
+def load_inputs():
+	"""Function to load empty inputs"""
+	return json.load(open(os.path.join(__refdata__,'config.json')))
+def jupiter_pt():
+	"""Function to get Jupiter's PT profile"""
+	return os.path.join(__refdata__, 'base_cases','jupiter.pt')
+def jupiter_cld():
+	"""Function to get rough Jupiter Cloud model with fsed=3"""
+	return os.path.join(__refdata__, 'base_cases','jupiterf3.cld')
+def single_phase_options():
+	"""Retrieve all the options for direct radation"""
+	return ['cahoy','OTHG','TTHG','TTGH_ray']
+def multi_phase_options():
+	"""Retrieve all the options for multiple scattering radiation"""
+	return ['N=2','N=1']
+def raman_options():
+	"""Retrieve options for raman scattering approximtions"""
+	return ["oklopcic","pollack","none"]
 
 if __name__ == "__main__":
-	import json
+	
 	import pandas as pd
 	from bokeh.plotting import figure, show, output_file
 	from bokeh.palettes import inferno
 	colors = inferno(19)
-	a = json.load(open('../reference/config.json'))
+
+	__refdata__ = os.environ.get('picaso_refdata')
+	
+	a = load_inputs()
+
 	#paths to pt and cld files
-	a['atmosphere']['profile']['filepath'] = '../reference/base_cases/jupiter.pt'#'../3d_pt_test.hdf5'#
-	a['atmosphere']['clouds']['filepath'] =  '../reference/base_cases/jupiterf3.cld'#'../3d_cld_test.hdf5'#
+	a['atmosphere']['profile']['filepath'] = jupiter_pt()
+	#a['atmosphere']['clouds']['filepath'] =  jupiter_cld()
 	#define gravity
 	a['planet']['gravity'] = 25
 	a['planet']['gravity_unit'] = 'm/(s**2)' 
@@ -192,7 +238,6 @@ if __name__ == "__main__":
 	for phase in [0.0]:
 		print(phase)
 		wno, alb = picaso(a, phase,dimension='1d')
-		pk.dump([1e4/wno, alb], open('../first_run/phase_'+str(phase)+'.pk','wb'))
 		fig.line(1e4/wno, alb, line_width = 4, color = colors[ii], legend = 'Phase='+str(phase))
 		ii+=1 
 		show(fig)

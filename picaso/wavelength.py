@@ -1,6 +1,6 @@
 import pandas as pd 
 import os 
-from io_utils import read_hdf
+from .io_utils import read_hdf
 import numpy as np
 __refdata__ = os.environ.get('picaso_refdata')
 import pickle as pk
@@ -30,7 +30,7 @@ def get_output_grid(filename, wmin=0.3, wmax=1, R=5000):
 	grid = read_hdf(pfile,  requires)
 	return grid
 
-def get_input_grid(filename):
+def get_cld_input_grid(filename_or_grid):
 	"""
 	The albedo code relies on the cloud code input, which is traditionally on a 196 wavelength grid. 
 	This method is to retrieve that grid. This file should be kept in the package reference data. Alternatively, 
@@ -38,19 +38,30 @@ def get_input_grid(filename):
 
 	Parameters
 	----------
-	filename : str
-		filename of the input grid 
+	filename_or_grid : str or ndarray
+		filename of the input grid OR a numpy array of wavenumber corresponding to cloud 
+		input
 
 	Returns 
 	-------
 	array 
 		array of wave numbers in increasing order 
-
-	To Do 
-	-----
-	Add this directly to reference data 
 	"""
-	grid = pd.read_csv(os.path.join(__refdata__, 'opacities',filename), delim_whitespace=True, header=None, names=['micron','wavenumber'], usecols=[1,2])
+	if filename_or_grid == 'wave_EGP.dat':
+		grid = pd.read_csv(os.path.join(__refdata__, 'opacities',filename_or_grid), delim_whitespace=True)
+		grid = grid.sort_values('wavenumber')['wavenumber'].values
+	elif isinstance(filename_or_grid, np.ndarray):
+		grid = np.sort(filename_or_grid)
+	elif (isinstance(filename_or_grid, str) & (filename_or_grid != 'wave_EGP.dat') & 
+		os.path.exists(filename_or_grid)):	
+		grid = pd.read_csv(os.path.join(filename_or_grid), delim_whitespace=True)
+		if 'wavenumber' in grid.keys():
+			grid = grid.sort_values('wavenumber')['wavenumber'].values
+		else: 
+			raise Exception('Please make sure there is a column named "wavenumber" in your cloud wavegrid file')
+	else:
+		raise Exception("Please enter valid cloud wavegrid filepath, or numpy array. Or use default in reference file.")
+
 	return grid
 
 def regrid(matrix, old_wno, new_wno):

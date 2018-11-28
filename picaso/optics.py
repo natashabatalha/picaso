@@ -5,10 +5,9 @@ import os
 from numba import jit
 from bokeh.plotting import figure, show, output_file
 from bokeh.palettes import inferno
-debug = False 
 
 #@jit(nopython=True)
-def optc(atmosphere, opacityclass, delta_eddington=True,raman=0,test_mode=False):
+def compute_opacity(atmosphere, opacityclass, delta_eddington=True,raman=0,test_mode=False, plot_opacity=False):
 	"""
 	Returns total optical depth per slab layer including molecular opacity, continuum opacity. 
 	It should automatically select the molecules needed
@@ -70,7 +69,7 @@ def optc(atmosphere, opacityclass, delta_eddington=True,raman=0,test_mode=False)
 	nlayer = atm.c.nlayer
 	nwno = opacityclass.nwno
 
-	if debug: 
+	if plot_opacity: 
 		plot_layer=0#np.size(tlayer)-1
 		opt_figure = figure(x_axis_label = 'Wavelength', y_axis_label='TAUGAS in optics.py', 
 		title = 'Opacity at T='+str(tlayer[plot_layer])+' Layer='+str(plot_layer)
@@ -80,7 +79,7 @@ def optc(atmosphere, opacityclass, delta_eddington=True,raman=0,test_mode=False)
 	TAUGAS = 0 
 	c=1
 	#set color scheme.. adding 3 for raman, rayleigh, and total
-	if debug: colors = inferno(3+len(atm.continuum_molecules) + len(atm.molecules))
+	if plot_opacity: colors = inferno(3+len(atm.continuum_molecules) + len(atm.molecules))
 
 	#====================== ADD CONTIMUUM OPACITY======================	
 	#Set up coefficients needed to convert amagat to a normal human unit
@@ -107,7 +106,7 @@ def optc(atmosphere, opacityclass, delta_eddington=True,raman=0,test_mode=False)
 						   	(atm.layer['mmw']*atm.c.amu)) 	).T					#nlayer)].T
 			#testing['H-bf'] = ADDTAU
 			TAUGAS += ADDTAU
-			if debug: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
+			if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
 		#H- Free-Free
 		elif (m[0] == "H-") and (m[1] == "ff"):
@@ -119,7 +118,7 @@ def optc(atmosphere, opacityclass, delta_eddington=True,raman=0,test_mode=False)
 						   	(tlayer*atm.layer['mmw']*atm.c.amu*atm.c.k_b)) 	).T			#nlayer)].T
 			#testing['H-ff'] = ADDTAU
 			TAUGAS += ADDTAU
-			if debug: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
+			if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
 		#H2- 
 		elif (m[0] == "H2") and (m[1] == "H2-"): 
@@ -137,7 +136,7 @@ def optc(atmosphere, opacityclass, delta_eddington=True,raman=0,test_mode=False)
 			#testing['H2-'] = ADDTAU
 
 			TAUGAS += ADDTAU
-			if debug: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
+			if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
 		#everything else.. e.g. H2-H2, H2-CH4. Automatically determined by which molecules were requested
 		else:
@@ -151,7 +150,7 @@ def optc(atmosphere, opacityclass, delta_eddington=True,raman=0,test_mode=False)
 								atm.layer['mixingratios'][:,m1] )  ).T 			#nlayer)].T
 			#testing[m[0]+m[1]] = ADDTAU
 			TAUGAS += ADDTAU
-			if debug: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
+			if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
 		c+=1
 	
@@ -164,7 +163,7 @@ def optc(atmosphere, opacityclass, delta_eddington=True,raman=0,test_mode=False)
 					atm.layer['mmw']) ).T
 		TAUGAS += ADDTAU
 		#testing[m] = ADDTAU
-		if debug: opt_figure.line(1e4/opacityclass.wno, ADDTAU[int(np.size(tlayer)/2),:], alpha=0.7,legend=m, line_width=3, color=colors[c],
+		if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[int(np.size(tlayer)/2),:], alpha=0.7,legend=m, line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
 		c+=1
 
@@ -176,7 +175,7 @@ def optc(atmosphere, opacityclass, delta_eddington=True,raman=0,test_mode=False)
 					atm.layer['mixingratios'][:,ihe], atm.layer['mixingratios'][:,ich4], 
 					opacityclass.wave, atm.layer['mmw'],atm.c.amu )
 	#testing['ray'] = TAURAY
-	if debug: opt_figure.line(1e4/opacityclass.wno, TAURAY[int(np.size(tlayer)/2),:], alpha=0.7,legend='Rayleigh', line_width=3, color=colors[c],
+	if plot_opacity: opt_figure.line(1e4/opacityclass.wno, TAURAY[int(np.size(tlayer)/2),:], alpha=0.7,legend='Rayleigh', line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)	
 
 
@@ -187,14 +186,14 @@ def optc(atmosphere, opacityclass, delta_eddington=True,raman=0,test_mode=False)
 		raman_factor = compute_raman(nwno, nlayer,opacityclass.wno, 
 			opacityclass.raman_stellar_shifts, tlayer, raman_db['c'].values,
 				raman_db['ji'].values, raman_db['deltanu'].values)
-		if debug: opt_figure.line(1e4/opacityclass.wno, raman_factor[int(np.size(tlayer)/2),:]*TAURAY[int(np.size(tlayer)/2),:], alpha=0.7,legend='Shifted Raman', line_width=3, color=colors[c],
+		if plot_opacity: opt_figure.line(1e4/opacityclass.wno, raman_factor[int(np.size(tlayer)/2),:]*TAURAY[int(np.size(tlayer)/2),:], alpha=0.7,legend='Shifted Raman', line_width=3, color=colors[c],
 				muted_color=colors[c], muted_alpha=0.2)
 		raman_factor = np.minimum(raman_factor, raman_factor*0+0.99999)
 	#POLLACK OPACITY
 	elif raman ==1: 
 		raman_factor = raman_pollack(nlayer)
 		raman_factor = np.minimum(raman_factor, raman_factor*0+0.99999)		
-		if debug: opt_figure.line(1e4/opacityclass.wno, raman_factor[int(np.size(tlayer)/2),:]*TAURAY[int(np.size(tlayer)/2),:], alpha=0.7,legend='Shifted Raman', line_width=3, color=colors[c],
+		if plot_opacity: opt_figure.line(1e4/opacityclass.wno, raman_factor[int(np.size(tlayer)/2),:]*TAURAY[int(np.size(tlayer)/2),:], alpha=0.7,legend='Shifted Raman', line_width=3, color=colors[c],
 				muted_color=colors[c], muted_alpha=0.2)
 	#NOTHING
 	else: 
@@ -226,7 +225,7 @@ def optc(atmosphere, opacityclass, delta_eddington=True,raman=0,test_mode=False)
 	TAU = np.zeros((shape[0]+1, shape[1]))
 	TAU[1:,:]=numba_cumsum(DTAU)
 
-	if debug:
+	if plot_opacity:
 		opt_figure.line(1e4/opacityclass.wno, DTAU[int(np.size(tlayer)/2),:], legend='TOTAL', line_width=4, color=colors[0],
 			muted_color=colors[c], muted_alpha=0.2)
 		opt_figure.legend.click_policy="mute"
@@ -394,11 +393,7 @@ def compute_raman(nwno, nlayer, wno, stellar_shifts, tlayer, cross_sections, j_i
 			#if not, then compute the shifted and unshifted raman scattering
 			raman_sigma_w_shift += np.outer(j_at_temp[ji,:] , Q*stellar_shifts[:,i])
 			raman_sigma_wo_shift += np.outer(j_at_temp[ji,:] , Q)
-	#figq = figure(y_axis_type='log',x_range=[0.3,1])
-	#for i in range(len(tlayer)): 
-	#	w = (rayleigh_sigma + raman_sigma_w_shift)/ (rayleigh_sigma + raman_sigma_wo_shift)
-	#	figq.line(1e4/wno, w[i,:],legend='RAYLEIGH',color='red')
-	#show(figq)
+
 	#finally return the contribution that will be added to total rayleigh
 	return (rayleigh_sigma + raman_sigma_w_shift)/ (rayleigh_sigma + raman_sigma_wo_shift)
 
