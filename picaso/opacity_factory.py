@@ -10,19 +10,19 @@ class ContinuumFactory():
 	The continuum factory takes the CIA opacity file and adds in extra sources of 
 	opacity from other references to fill in empty bands. It assumes that the original file is 
 	structured as following,with the first column wavenumber and the rest molecules: 
-	  1000 198
-		75.
- 	 0.0  -33.0000  -33.0000  -33.0000  -33.0000  -33.0000
- 	20.0   -7.4572   -7.4518   -6.8038   -6.0928   -5.9806
- 	40.0   -6.9547   -6.9765   -6.6322   -5.7934   -5.4823
+	1000 198
+	75.
+	0.0  -33.0000  -33.0000  -33.0000  -33.0000  -33.0000
+	20.0   -7.4572   -7.4518   -6.8038   -6.0928   -5.9806
+	40.0   -6.9547   -6.9765   -6.6322   -5.7934   -5.4823
 	... ... ... etc 
 
 	Where 1000 corresponds to the number of wavelengths, 198 corresponds to the number of temperatures
 	and 75 is the first temperature. If this structure changes, we will need to restructure this top 
 	level __init__ function that reads it in the original opacity file. 
 	
-	Parameters:
-	-----------
+	Parameters
+	----------
 	original_file : str
 		Filepath that points to original opacity file (see description above)
 	colnames : list 
@@ -30,13 +30,13 @@ class ContinuumFactory():
 		colnames would be ['wno','h2h2','h2he','h2h','h2ch4','h2n2']
 	new_wno : numpy.ndarray, list 
 		wavenumber grid to interpolate onto (units of inverse cm)
-	overwrite: bool 
+	overwrite : bool 
 		Default is set to False as to not overwrite any existing files. This parameter controls overwriting 
 		cia database 
 
-	To Do: 
-	-----
-	- change this to be able to input the filename specified by the input config file
+	Todo 
+	----
+	- Change this to be able to input the filename specified by the input config file
 	"""
 	def __init__(self, original_file,colnames, new_wno, overwrite=False):
 		#original opacity database from freedman, hopefully we can discontinue this soon
@@ -48,7 +48,7 @@ class ContinuumFactory():
 		self.old_wno = self.og_opacity['wno'].unique()
 		#define units
 		self.w_unit = 'cm-1'
-		self.abs_unit = 'cm-1 amagat^-2'
+		self.opacity_unit = 'cm-1 amagat^-2'
 		self.molecules = colnames[1:]
 		
 		#this will be what everything is rebinned to
@@ -60,6 +60,11 @@ class ContinuumFactory():
 			if overwrite:
 				raise Exception("Overwrite is set to false to save db's from being overwritten.")
 		self.db_cia = h5py.File(dbfile, 'w')
+		self.db_cia.attrs['w_unit'] = w_unit
+		self.db_cia.attrs['opacity_unit'] = opacity_unit
+		self.db_cia.attrs['wavenumber_grid'] = new_wno
+		self.db_cia.attrs['temperature_unit'] ='K'
+
 
 	def restructure_opacity(self):
 		dset = self.db_cia.create_dataset('wavenumber', data=self.new_wno, chunks=True)
@@ -190,8 +195,8 @@ class ContinuumFactory():
 		"""
 		H- bound free opacity, which is only dependent on wavelength. From John 1988 http://adsabs.harvard.edu/abs/1988A%26A...193..189J
 
-		Parameters:
-		-----------
+		Parameters
+		----------
 		wno :  numpy.ndarray 
 			Wavenumber in cm-1
 
@@ -287,8 +292,8 @@ class MolecularFactory():
 	ch4_2014 opacities from 0.3 to 1 microns at R~5000 resolution 	
 	wavelength 	 opacity (cm2/g)  
 
-	Warning
-	-------
+	Warnings
+	--------
 	When this routine puts everything into the hdf5 database it will reorder everything 
 	by wavenumber!! This way molcular opacity and continuum opacity are on the same grid 
 
@@ -302,7 +307,7 @@ class MolecularFactory():
 	def __init__(self, original_dir, new_wno, overwrite=False):
 		#define units
 		self.w_unit = 'cm-1'
-		self.abs_unit = 'cm2/g'
+		self.opacity_unit = 'cm2/g'
 
 		#this will be what everything is rebinned to
 		self.new_wno = new_wno
@@ -315,6 +320,12 @@ class MolecularFactory():
 			if overwrite:
 				raise Exception("Overwrite is set to false to save db's from being overwritten.")
 		self.db_mole = h5py.File(dbfile, 'w')
+
+		self.db_mole.attrs['w_unit'] = w_unit
+		self.db_mole.attrs['opacity_unit'] = opacity_unit
+		self.db_mole.attrs['wavenumber_grid'] = new_wno
+		self.db_molecular.attrs['prssure_unit'] ='bars'
+		self.db_molecular.attrs['temperature_unit'] ='K'
 
 	def restructure_opacity(self):
 		dset = self.db_mole.create_dataset('wavenumber', data=self.new_wno, chunks=True)

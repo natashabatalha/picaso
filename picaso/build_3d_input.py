@@ -38,10 +38,10 @@ def make_3d_pt_input(ng,nt,phase_angle,input_file,output_file):
 		for t in tangle:
 
 			data = pd.read_csv(input_file, delim_whitespace=True)
-				if first:
-					h5db.attrs['header'] = ','.join(list(data.keys()))
-					first = False
-				dset = h5db.create_dataset(i'/'+str(g)+'/'+str(t), data=data, chunks=True)
+			if first:
+				h5db.attrs['header'] = ','.join(list(data.keys()))
+				first = False
+			dset = h5db.create_dataset(i+'/'+str(g)+'/'+str(t), data=data, chunks=True)
 
 def make_3d_cld_input(ng,nt,phase_angle,input_file,output_file):
 	"""

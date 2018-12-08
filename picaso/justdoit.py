@@ -10,9 +10,27 @@ import copy
 import json
 __refdata__ = os.environ.get('picaso_refdata')
 
-def picaso(input,phase_angle, dimension = '1d'):
+def picaso(input,phase_angle, dimension = '1d', full_output=False):
 	"""
 	Currently top level program to run albedo code 
+
+	Parameters 
+	----------
+	input : dict 
+		This input dict is built by loading the input = `justdoit.load_inputs()` 
+	phase_angle : int 	
+		Phase angle of the planet in radians 
+	dimension : str 
+		(Optional) Dimensions of the calculation. Default = '1d'. But '3d' is also accepted. 
+		In order to run '3d' calculations, user must build 3d input (see tutorials)
+	full_output : bool 
+		(Optional) Default = False. Returns atmosphere class, which enables several 
+		plotting capabilities. 
+
+	Return
+	------
+	Wavenumber, albedo if full_output=False 
+	Wavenumber, albedo, atmosphere if full_output = True 
 	"""
 
 	#check to see if we are running in test mode
@@ -96,8 +114,8 @@ def picaso(input,phase_angle, dimension = '1d'):
 		#We use HG function for single scattering which gets the forward scattering/back scattering peaks 
 		#well. We only really want to use delta-edd for multi scattering legendre polynomials. 
 		DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG= compute_opacity(
-			atm, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx)
-
+			atm, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
+			full_output=full_output)
 
 		#use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
 		xint_at_top  = get_flux_geom_1d(atm.c.nlevel, wno,nwno,ng,nt,
@@ -157,7 +175,10 @@ def picaso(input,phase_angle, dimension = '1d'):
 	#now compress everything based on the weights 
 	albedo = compress_disco(ng, nt, nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
 	
-	return wno, albedo 
+	if full_output:
+		return wno, albedo , atm
+	else: 
+		return wno, albedo
 
 def set_approximations(input):
 	"""

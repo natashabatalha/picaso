@@ -7,7 +7,8 @@ from bokeh.plotting import figure, show, output_file
 from bokeh.palettes import inferno
 
 #@jit(nopython=True)
-def compute_opacity(atmosphere, opacityclass, delta_eddington=True,raman=0,test_mode=False, plot_opacity=False):
+def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=False,raman=0, plot_opacity=False,
+	full_output=False):
 	"""
 	Returns total optical depth per slab layer including molecular opacity, continuum opacity. 
 	It should automatically select the molecules needed
@@ -30,23 +31,51 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,raman=0,test_
 	test_mode : bool 
 		(Optional) Default = False to run as normal. This will overwrite the opacities and fix the 
 		delta tau at 0.5. 
+	full_output : bool 
+		(Optional) Default = False. If true, This will add taugas, taucld, tauray to the atmosphere class. 
+		This is done so that the users can debug, plot, etc. 
 
 	Returns
 	-------
 	DTAU : ndarray 
 		This is a matrix with # layer by # wavelength. It is the opacity contained within a layer 
 		including the continuum, scattering, cloud (if specified), and molecular opacity
+		**If requested, this is corrected for with Delta-Eddington.**
 	TAU : ndarray
 		This is a matrix with # level by # wavelength. It is the cumsum of opacity contained 
 		including the continuum, scattering, cloud (if specified), and molecular opacity
-
+		**If requested, this is corrected for with Delta-Eddington.**
 	WBAR : ndarray
 		This is the single scattering albedo that includes rayleigh, raman and user input scattering sources. 
 		It has dimensions: # layer by # wavelength
-
+		**If requested, this is corrected for with Delta-Eddington.**
 	COSB : ndarray
 		This is the asymettry factor which accounts for rayleigh and user specified values 
 		It has dimensions: # layer by # wavelength
+		**If requested, this is corrected for with Delta-Eddington.**
+	ftau_cld : ndarray 
+		This is the fraction of cloud opacity relative to the total TAUCLD/(TAUCLD + TAURAY)
+	ftau_ray : ndarray 
+		This is the fraction of rayleigh opacity relative to the total TAURAY/(TAUCLD + TAURAY)
+	GCOS2 : ndarray
+		This is used for Cahoy+2010 methodology for accounting for rayleigh scattering. It 
+		replaces the use of the actual rayleigh phase function by just multiplying ftau_ray by 2
+	DTAU : ndarray 
+		This is a matrix with # layer by # wavelength. It is the opacity contained within a layer 
+		including the continuum, scattering, cloud (if specified), and molecular opacity
+		**If requested, this is corrected for with Delta-Eddington.**
+	TAU : ndarray
+		This is a matrix with # level by # wavelength. It is the cumsum of opacity contained 
+		including the continuum, scattering, cloud (if specified), and molecular opacity
+		**Original, never corrected for with Delta-Eddington.**
+	WBAR : ndarray
+		This is the single scattering albedo that includes rayleigh, raman and user input scattering sources. 
+		It has dimensions: # layer by # wavelength
+		**Original, never corrected for with Delta-Eddington.**
+	COSB : ndarray
+		This is the asymettry factor which accounts for rayleigh and user specified values 
+		It has dimensions: # layer by # wavelength
+		**Original, never corrected for with Delta-Eddington.**
 
 	Notes
 	-----
@@ -54,9 +83,10 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,raman=0,test_
 	except for hotter cases where Na & K are present. This differences is not a product of the code 
 	but a product of the different opacities (1060 grid versus old 736 grid)
 
-	To Do 
+	Todo 
 	-----
-		- Replace detla-function adjustment with better approximation (e.g. Cuzzi)
+	- Add a better approximation than delta-scale (e.g. M.Marley suggests a paper by Cuzzi that has 
+	a better methodology)
 	"""
 
 	atm = atmosphere
@@ -206,12 +236,22 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,raman=0,test_
 	asym_factor_cld = atm.layer['cloud']['g0'] 
 	single_scattering_cld = atm.layer['cloud']['w0'] 
 
+	#====================== If user requests full output, add Tau's to atmosphere class=====
+	if full_output:
+		atmosphere.taugas = TAUGAS
+		atmosphere.tauray = TAURAY
+		atmosphere.taucld = TAUCLD
+		atmosphere.wavenumber = opacityclass.wno
 
 	#====================== ADD EVERYTHING TOGETHER PER LAYER======================	
 	#formerly DTAUV
 	DTAU = TAUGAS + TAURAY + TAUCLD 
-	#formerly COSBV
-	ftau_cld = TAUCLD/(TAUCLD + TAURAY)
+	
+	# This is the fractional of the total scattering that will be due to the cloud
+	#VERY important note. You must weight the taucld by the single scattering 
+	#this is because we only care about the fractional opacity from the cloud that is 
+	#scattering. 
+	ftau_cld = (single_scattering_cld * TAUCLD)/(single_scattering_cld * TAUCLD + TAURAY)
 	COSB = ftau_cld*asym_factor_cld
 
 	#formerly GCOSB2 

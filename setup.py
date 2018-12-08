@@ -69,8 +69,7 @@ setup(
           'astropy==2.0.2',
           'pysynphot',
           'sphinx',
-          'scipy',
-          'pandexo.engine'
+          'scipy'
           ], 
     zip_safe = False,
 )

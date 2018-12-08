@@ -3,12 +3,12 @@ import pandas as pd
 from bokeh.plotting import figure, show, output_file
 from bokeh.palettes import inferno
 import numpy as np
-from picaso import picaso 
+from .justdoit import picaso 
 import os 
 
 __refdata__ = os.environ.get('picaso_refdata')
  
-def run_all_test(phase_function=None, single_scattering=None):
+def run_all_test(output_dir = os.getcwd(), phase_function=None, single_scattering=None):
 	"""
 	Test the flux against against Dlugach & Yanovitskij 
 	https://www.sciencedirect.com/science/article/pii/0019103574901675?via%3Dihub
@@ -18,6 +18,8 @@ def run_all_test(phase_function=None, single_scattering=None):
 
 	Parameters
 	----------
+	output_dir : str 
+		Output directory for results of test. Default is current working directory. 
 	phase_function : str or float
 		This defines the phase function to test the flux routine with. Options include: 
 		"rayleigh" for pure rayleigh, or a single value for the asymmetry factors. 
@@ -89,4 +91,6 @@ def run_all_test(phase_function=None, single_scattering=None):
 			print(g0,w0,(100*(alb[-1]-real_answer.loc[g0][w])/real_answer.loc[g0][w]))
 			#show(fig)
 	perror.to_csv('test_results.csv')
-run_all_test()
+
+if __name__ == "__main__":
+	run_all_test()

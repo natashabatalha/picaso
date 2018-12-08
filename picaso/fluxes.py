@@ -4,6 +4,9 @@ from numpy import exp, zeros, where, sqrt, cumsum , pi
 @jit(nopython=True, cache=True)
 def get_flux_toon(nlevel, wno, nwno, tau, dtau, w0, cosbar, surf_reflect, ubar0, F0PI):
 	"""
+	Warning
+	-------
+	Discontinued function. See `get_flux_geom_1d` and `get_flux_geom_3d`.
 
 	Parameters
 	----------
@@ -34,15 +37,16 @@ def get_flux_toon(nlevel, wno, nwno, tau, dtau, w0, cosbar, surf_reflect, ubar0,
 	-------
 	flux_up and flux_down through each layer as a function of wavelength 
 
-	To Do
-	-----
-		- Replace detla-function adjustment with better approximation (e.g. Cuzzi)
-		- F0PI Solar flux shouldn't always be 1.. Follow up to make sure that this isn't a bad 
+	Todo
+	----
+	- Replace detla-function adjustment with better approximation (e.g. Cuzzi)
+	- F0PI Solar flux shouldn't always be 1.. Follow up to make sure that this isn't a bad 
 		  hardwiring to solar 
 	
 	Examples
 	--------
-	flux_plus, flux_minus  = fluxes.get_flux_toon(atm.c.nlevel, wno,nwno,
+	
+	>>> flux_plus, flux_minus  = fluxes.get_flux_toon(atm.c.nlevel, wno,nwno,
 													tau_dedd,dtau_dedd, w0_dedd, cosb_dedd, surf_reflect, ubar0, F0PI)
 
 
@@ -76,11 +80,11 @@ def get_flux_toon(nlevel, wno, nwno, tau, dtau, w0, cosbar, surf_reflect, ubar0,
 	#https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JD094iD13p16287
 	#see table of terms 
 	sq3 = sqrt(3.)
-	g1    = (sq3*0.5)*(2. - w0*(1.+cosbar))    #table 1
-	g2    = (sq3*w0*0.5)*(1.-cosbar)           #table 1
-	g3    = 0.5*(1.-sq3*cosbar*ubar0)          #table 1
-	lamda = sqrt(g1**2 - g2**2)                     #eqn 21
-	gama  = (g1-lamda)/g2                              #eqn 22
+	g1	= (sq3*0.5)*(2. - w0*(1.+cosbar))	#table 1
+	g2	= (sq3*w0*0.5)*(1.-cosbar)		   #table 1
+	g3	= 0.5*(1.-sq3*cosbar*ubar0)		  #table 1
+	lamda = sqrt(g1**2 - g2**2)					 #eqn 21
+	gama  = (g1-lamda)/g2							  #eqn 22
 	
 	# now calculate c_plus and c_minus (equation 23 and 24)
 	g4 = 1.0 - g3
@@ -112,7 +116,7 @@ def get_flux_toon(nlevel, wno, nwno, tau, dtau, w0, cosbar, surf_reflect, ubar0,
 
 
 	#boundary conditions 
-	b_top = 0.0                                          
+	b_top = 0.0										  
 	b_surface = 0. + surf_reflect*ubar0*F0PI*exp(-tau[-1, :]/ubar0)
 
 	#Now we need the terms for the tridiagonal rotated layered method
@@ -182,7 +186,7 @@ def slice_eq(array, lim, value):
 	for i in range(array.shape[0]):
 		new = array[i,:] 
 		new[where(new==lim)] = value
-		array[i,:] = new     
+		array[i,:] = new	 
 	return array
 
 @jit(nopython=True, cache=True)
@@ -192,7 +196,7 @@ def slice_lt(array, lim):
 	for i in range(array.shape[0]):
 		new = array[i,:] 
 		new[where(new<lim)] = lim
-		array[i,:] = new     
+		array[i,:] = new	 
 	return array
 
 @jit(nopython=True, cache=True)
@@ -202,7 +206,7 @@ def slice_gt(array, lim):
 	for i in range(array.shape[0]):
 		new = array[i,:] 
 		new[where(new>lim)] = lim
-		array[i,:] = new     
+		array[i,:] = new	 
 	return array
 
 @jit(nopython=True, cache=True)
@@ -292,7 +296,7 @@ def setup_tri_diag(nlayer,nwno ,c_plus_up, c_minus_up,
 	#even terms, not including the last !CMM1 = UP
 	A[1::2,:][:-1] = (e1[:-1,:]+e3[:-1,:]) * (gama[1:,:]-1.0) #always good
 	B[1::2,:][:-1] = (e2[:-1,:]+e4[:-1,:]) * (gama[1:,:]-1.0)
-	C[1::2,:][:-1] = 2.0 * (1.0-gama[1:,:]**2)            #always good 
+	C[1::2,:][:-1] = 2.0 * (1.0-gama[1:,:]**2)			#always good 
 	D[1::2,:][:-1] =((gama[1:,:]-1.0)*(c_plus_up[1:,:] - c_plus_down[:-1,:]) + 
 							(1.0-gama[1:,:])*(c_minus_down[:-1,:] - c_minus_up[1:,:]))
 	#import pickle as pk
@@ -316,40 +320,44 @@ def setup_tri_diag(nlayer,nwno ,c_plus_up, c_minus_up,
 
 @jit(nopython=True, cache=True)
 def tri_diag_solve(l, a, b, c, d):
-    """
-    Tridiagonal Matrix Algorithm solver, a b c d can be NumPy array type or Python list type.
-    refer to http://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm
-    and to http://www.cfd-online.com/Wiki/Tridiagonal_matrix_algorithm_-_TDMA_(Thomas_algorithm)
+	"""
+	Tridiagonal Matrix Algorithm solver, a b c d can be NumPy array type or Python list type.
+	refer to this wiki_ and to this explanation_. 
 	
-	A, B, C and D refer to: A(I)*X(I-1) + B(I)*X(I) + C(I)*X(I+1) = D(I)
+	.. _wiki: http://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm
+	.. _explanation: http://www.cfd-online.com/Wiki/Tridiagonal_matrix_algorithm_-_TDMA_(Thomas_algorithm)
+	
+	A, B, C and D refer to: 
 
-	Solver returns X. 
+	.. math:: A(I)*X(I-1) + B(I)*X(I) + C(I)*X(I+1) = D(I)
+
+	This solver returns X. 
 
 	Parameters
 	----------
-    A : array or list 
-    B : array or list 
-    C : array or list 
-    C : array or list 
+	A : array or list 
+	B : array or list 
+	C : array or list 
+	C : array or list 
 
-    Returns
-    --------
-    array 
-    	Solution, x 
-    """
-    AS, DS, CS, DS,XK = zeros(l), zeros(l), zeros(l), zeros(l), zeros(l) # copy arrays
+	Returns
+	-------
+	array 
+		Solution, x 
+	"""
+	AS, DS, CS, DS,XK = zeros(l), zeros(l), zeros(l), zeros(l), zeros(l) # copy arrays
 
-    AS[-1] = a[-1]/b[-1]
-    DS[-1] = d[-1]/b[-1]
+	AS[-1] = a[-1]/b[-1]
+	DS[-1] = d[-1]/b[-1]
 
-    for i in range(l-2, -1, -1):
-    	x = 1.0 / (b[i] - c[i] * AS[i+1])
-    	AS[i] = a[i] * x
-    	DS[i] = (d[i]-c[i] * DS[i+1]) * x
-    XK[0] = DS[0]
-    for i in range(1,l):
-    	XK[i] = DS[i] - AS[i] * XK[i-1]
-    return XK
+	for i in range(l-2, -1, -1):
+		x = 1.0 / (b[i] - c[i] * AS[i+1])
+		AS[i] = a[i] * x
+		DS[i] = (d[i]-c[i] * DS[i+1]) * x
+	XK[0] = DS[0]
+	for i in range(1,l):
+		XK[i] = DS[i] - AS[i] * XK[i-1]
+	return XK
 
 
 @jit(nopython=True)
@@ -473,11 +481,11 @@ def get_flux_geom_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 			tau_og = tau_og_3d[:,:,ng,nt]
 			w0_og = w0_og_3d[:,:,ng,nt]			
 
-			g1    = (sq3*0.5)*(2. - w0*(1.+cosb))    #table 1
-			g2    = (sq3*w0*0.5)*(1.-cosb)           #table 1
-			lamda = sqrt(g1**2 - g2**2)              #eqn 21
-			gama  = (g1-lamda)/g2                    #eqn 22
-			g3    = 0.5*(1.-sq3*cosb*ubar0[ng, nt])   #table 1 #ubar is now 100x 10 matrix.. 
+			g1	= (sq3*0.5)*(2. - w0*(1.+cosb))	#table 1
+			g2	= (sq3*w0*0.5)*(1.-cosb)		   #table 1
+			lamda = sqrt(g1**2 - g2**2)			  #eqn 21
+			gama  = (g1-lamda)/g2					#eqn 22
+			g3	= 0.5*(1.-sq3*cosb*ubar0[ng, nt])   #table 1 #ubar is now 100x 10 matrix.. 
 	
 			# now calculate c_plus and c_minus (equation 23 and 24)
 			g4 = 1.0 - g3
@@ -507,7 +515,7 @@ def get_flux_geom_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 
 
 			#boundary conditions 
-			b_top = 0.0                                          
+			b_top = 0.0										  
 			b_surface = 0. + surf_reflect*ubar0[ng, nt]*F0PI*exp(-tau[-1, :]/ubar0[ng, nt])
 
 			#Now we need the terms for the tridiagonal rotated layered method
@@ -567,20 +575,20 @@ def get_flux_geom_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 			if single_phase==0:#'cahoy':
 				#Phase function for single scattering albedo frum Solar beam
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-	                  #first term of TTHG: forward scattering 
+					  #first term of TTHG: forward scattering 
 				p_single=((1-(cosb_og/2)**2) * (1-cosb_og**2)
 								/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 								#second term of TTHG: backward scattering
 								+((cosb_og/2)**2)*(1-(-cosb_og/2.)**2)
 								/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3)+
-	                            #rayleigh phase function
+								#rayleigh phase function
 								(gcos2))
 			elif single_phase==1:#'OTHG':
 				p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 			elif single_phase==2:#'TTHG':
 				#Phase function for single scattering albedo frum Solar beam
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-	                  #first term of TTHG: forward scattering
+					  #first term of TTHG: forward scattering
 				p_single=((1-(cosb_og/2)**2) * (1-cosb_og**2)
 								/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 								#second term of TTHG: backward scattering
@@ -589,7 +597,7 @@ def get_flux_geom_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 			elif single_phase==3:#'TTHG_ray':
 				#Phase function for single scattering albedo frum Solar beam
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-	                  		#first term of TTHG: forward scattering
+					  		#first term of TTHG: forward scattering
 				p_single=(ftau_cld*((1-(cosb_og/2)**2) * (1-cosb_og**2)
 												/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 												#second term of TTHG: backward scattering
@@ -603,7 +611,7 @@ def get_flux_geom_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 				#direct beam
 				#note when delta-eddington=off, then tau_single=tau, cosb_single=cosb, w0_single=w0, etc
 				xint[i,:] =( xint[i+1,:]*exp(-dtau_og[i,:]/ubar1[ng,nt])
-					    #single scattering albedo from sun beam (from ubar0 to ubar1)
+						#single scattering albedo from sun beam (from ubar0 to ubar1)
 						+(w0_og[i,:]*F0PI/(4.*pi))*
 						(p_single[i,:])*exp(-tau_og[i,:]/ubar0[ng,nt])*
 						(1. - exp(-dtau_og[i,:]*(ubar0[ng,nt]+ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
@@ -714,16 +722,16 @@ def get_flux_geom_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
 	#terms not dependent on incident angle
 	sq3 = sqrt(3.)
-	g1    = (sq3*0.5)*(2. - w0*(1.+cosb))    #table 1
-	g2    = (sq3*w0*0.5)*(1.-cosb)           #table 1
-	lamda = sqrt(g1**2 - g2**2)              #eqn 21
-	gama  = (g1-lamda)/g2                    #eqn 22
+	g1	= (sq3*0.5)*(2. - w0*(1.+cosb))	#table 1
+	g2	= (sq3*w0*0.5)*(1.-cosb)		   #table 1
+	lamda = sqrt(g1**2 - g2**2)			  #eqn 21
+	gama  = (g1-lamda)/g2					#eqn 22
 
 	#================ START CRAZE LOOP OVER ANGLE #================
 	for ng in range(numg):
 		for nt in range(numt):
 
-			g3    = 0.5*(1.-sq3*cosb*ubar0[ng, nt])   #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
+			g3	= 0.5*(1.-sq3*cosb*ubar0[ng, nt])   #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
 	
 			# now calculate c_plus and c_minus (equation 23 and 24)
 			g4 = 1.0 - g3
@@ -753,7 +761,7 @@ def get_flux_geom_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
 
 			#boundary conditions 
-			b_top = 0.0                                          
+			b_top = 0.0										  
 			b_surface = 0. + surf_reflect*ubar0[ng, nt]*F0PI*exp(-tau[-1, :]/ubar0[ng, nt])
 
 			#Now we need the terms for the tridiagonal rotated layered method
@@ -812,20 +820,20 @@ def get_flux_geom_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 			if single_phase==0:#'cahoy':
 				#Phase function for single scattering albedo frum Solar beam
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-	                  #first term of TTHG: forward scattering
+					  #first term of TTHG: forward scattering
 				p_single=((1-(cosb_og/2)**2) * (1-cosb_og**2)
 								/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 								#second term of TTHG: backward scattering
 								+((cosb_og/2)**2)*(1-(-cosb_og/2.)**2)
 								/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3)+
-	                            #rayleigh phase function
+								#rayleigh phase function
 								(gcos2))
 			elif single_phase==1:#'OTHG':
 				p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 			elif single_phase==2:#'TTHG':
 				#Phase function for single scattering albedo frum Solar beam
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-	                  #first term of TTHG: forward scattering
+					  #first term of TTHG: forward scattering
 				p_single=((1-(cosb_og/2)**2) * (1-cosb_og**2)
 								/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 								#second term of TTHG: backward scattering
@@ -834,20 +842,20 @@ def get_flux_geom_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 			elif single_phase==3:#'TTHG_ray':
 				#Phase function for single scattering albedo frum Solar beam
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-	                  		#first term of TTHG: forward scattering
+					  		#first term of TTHG: forward scattering
 				p_single=(ftau_cld*((1-(cosb_og/2)**2) * (1-cosb_og**2)
 												/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 												#second term of TTHG: backward scattering
 												+((cosb_og/2)**2)*(1-(-cosb_og/2.)**2)
 												/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3))+			
-	                            #rayleigh phase function
+								#rayleigh phase function
 								ftau_ray*(0.75*(1+cos_theta**2.0)))
 			################################ END OPTIONS FOR DIRECT SCATTERING####################
 
 			for i in range(nlayer-1,-1,-1):
-                        #direct beam
+						#direct beam
 				xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/ubar1[ng,nt]) 
-					    #single scattering albedo from sun beam (from ubar0 to ubar1)
+						#single scattering albedo from sun beam (from ubar0 to ubar1)
 						+(w0_og[i,:]*F0PI/(4.*pi))*
 						(p_single[i,:])*exp(-tau_og[i,:]/ubar0[ng,nt])*
 						(1. - exp(-dtau_og[i,:]*(ubar0[ng,nt]+ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*

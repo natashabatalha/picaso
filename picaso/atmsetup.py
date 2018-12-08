@@ -16,9 +16,13 @@ __refdata__ = os.environ.get('picaso_refdata')
 
 class ATMSETUP():
 	"""
-	Reads in default source onfiguration from JSON 
-	No parameters yet. Parameters would come in if multiple configs were 
-	eventually defined. Currently there is only a single. 
+	Reads in default source configuration from JSON and creates a full atmosphere class. 
+
+	- Gets PT profile 
+	- Computes mean molecular weight, density, column density, mixing ratios 
+	- Gets cloud profile 
+	- Gets stellar profile 
+
 	"""
 	def __init__(self, config):
 		if __refdata__ is None:
@@ -61,7 +65,11 @@ class ATMSETUP():
 		"""
 		A separate routine is written to get the 3d profile because the inputs are much more 
 		rigid. In this framework, the following restrictions are placed: 
-			1) Input must be in hdf5 format (see tutorial for help)
+		
+		Warning
+		-------
+		The input must be in hdf5 format. The tutorial for 3d calculations 
+		can help guid you to make these files correctly. 
 
 		"""
 		#SET DIMENSIONALITY 
@@ -152,8 +160,8 @@ class ATMSETUP():
 
 		Currently only needs inputs from config file
 
-		TO DO
-		-----
+		Todo
+		----
 		- Add regridding to this by having users be able to set a different nlevel than the input cloud code is
 		"""
 		#get chemistry input from configuration
@@ -255,6 +263,7 @@ class ATMSETUP():
 
 		Parameters
 		----------
+
 		T : float 
 		logKir : float
 		logg1 : float 
@@ -270,8 +279,8 @@ class ATMSETUP():
 		want all of them. 
 		'wno','h2h2','h2he','h2h','h2ch4','h2n2']
 
-		To Do
-		-----
+		Todo
+		----
 		- Add in temperature dependent to negate h- and things when not necessary
 		"""
 		self.continuum_molecules = []
@@ -325,7 +334,7 @@ class ATMSETUP():
 					elif i[j].islower(): molecule_list[j-1] =  molecule_list[j-1] + i[j]
 			totmass=0
 			for j in range(0,len(molecule_list)): 
-	            
+				
 				if isinstance(molecule_list[j],str):
 					elem = ele[molecule_list[j]]
 					try:
@@ -393,32 +402,36 @@ class ATMSETUP():
 	def get_clouds(self, wno):
 		"""
 		Get cloud properties from .cld input returned from eddysed. The eddysed file should have the following specifications 
-			1) Have the following column names (any order)  opd g0 w0 
-			2) Be white space delimeted 
-			3) Has to have values for pressure levels (N) and wavelengths (M). The row order should go:
-			   level wave opd
-			   1.     1.   ...
-			   1.     2.   ...
-			   1.     3.   ...
-			   .      .    ...
-			   .      .    ...
-			   1.     M.   ...
-			   2.     1.   ...
-			   .      .    ...
-			   N.     .    ...
+
+		1) Have the following column names (any order)  opd g0 w0 
+
+		2) Be white space delimeted 
+
+		3) Has to have values for pressure levels (N) and wavelengths (M). The row order should go:
+
+		level wave opd w0 g0
+		1.	 1.   ... . .
+		1.	 2.   ... . .
+		1.	 3.   ... . .
+		.	  .	... . .
+		.	  .	... . .
+		1.	 M.   ... . .
+		2.	 1.   ... . .
+		.	  .	... . .
+		N.	 .	... . .
 
 		Warning
 		-------
 		The order of the rows is very important because each column will be transformed 
 		into a matrix that has the size: [nlayer,nwave]. 
 
-		Input
-		-----
+		Parameters
+		----------
 		wno : array
 			Array in ascending order of wavenumbers. This is used to regrid the cloud output
 
-		To Do 
-		-----
+		Todo 
+		----
 		- Allow users to add different kinds of "simple" cloud options like "isotropic scattering" or grey 
 		opacity at certain pressure. 
 		"""
@@ -458,7 +471,7 @@ class ATMSETUP():
 				#raise an exception if the file doesnt exist 
 				raise Excepttion('Cld file specified does not exist. Replace with None or find real file') 
 
-		#if no filepath was given and nothing was given for g0/w0, then assume the run is cloud free and give zeros for all thi stuff          
+		#if no filepath was given and nothing was given for g0/w0, then assume the run is cloud free and give zeros for all thi stuff		  
 		elif (self.input['atmosphere']['clouds']['filepath'] == None) and (self.input['atmosphere']['scattering']['g0'] == None) and (self.dimension=='1d'):
 
 			zeros = np.zeros((self.c.nlayer,self.c.output_npts_wave))
@@ -562,6 +575,7 @@ class ATMSETUP():
 			Logg cgs of the stellar model
 
 		Returns 
+		-------
 		wno, flux 
 			Wavenumber and stellar flux in wavenumber and FLAM units 
 		"""
@@ -569,7 +583,7 @@ class ATMSETUP():
 		sp.convert("um")
 		sp.convert('flam') 
 		wno_star = 1e4/sp.wave[::-1] #convert to wave number and flip
-		flux_star = sp.flux[::-1]     #flip here to get correct order 	
+		flux_star = sp.flux[::-1]	 #flip here to get correct order 	
 		#now we need to make sure that the stellar grid is on a 3x finer resolution 
 		#than the model. 
 		max_shift = np.max(wno)+6000 #this 6000 is just the max raman shift we could have 
@@ -593,7 +607,9 @@ class ATMSETUP():
 		This makes it possible for us to get the opacities at each facet before we go into the 
 		flux calculation
 
-		Parameters:
+		Parameters
+		----------
+
 		g : int 
 			Gauss angle index 
 		t : int 
@@ -612,4 +628,3 @@ class ATMSETUP():
 		self.layer['cloud']['opd'] = self.layer['cloud']['opd'][:,:,g,t]
 		self.layer['cloud']['g0']= self.layer['cloud']['g0'][:,:,g,t]
 		self.layer['cloud']['w0'] = self.layer['cloud']['w0'][:,:,g,t]
-

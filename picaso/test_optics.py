@@ -1,7 +1,7 @@
-from atmsetup import ATMSETUP
-import wavelength
+from .atmsetup import ATMSETUP
+from .wavelength import get_output_grid
 import numpy as np
-import optics 
+from .optics import compute_opacity,RetrieveOpacities
 import os
 import pickle as pk
 __refdata__ = os.environ.get('picaso_refdata')
@@ -25,7 +25,7 @@ def test_optc(input):
 
 
 	#get wavelength grid and order it
-	grid = wavelength.get_output_grid(atm.input['opacities']['files']['wavegrid'])
+	grid = get_output_grid(atm.input['opacities']['files']['wavegrid'])
 	wno = np.sort(grid['wavenumber'].values)
 
 	#get cloud properties, if there are any and put it on current grid 
@@ -38,7 +38,7 @@ def test_optc(input):
 	#TAG:TODO
 
 	#get opacity
-	opacityclass=optics.RetrieveOpacities(wno, 1e4/wno,
+	opacityclass=RetrieveOpacities(wno, 1e4/wno,
 					os.path.join(__refdata__, 'opacities', atm.input['opacities']['files']['continuum']),
 					os.path.join(__refdata__, 'opacities', atm.input['opacities']['files']['molecular']) 
 					)
@@ -51,7 +51,7 @@ def test_optc(input):
 
 
 	#get optics 
-	DTAU,  WBAR, COSB  = optics.optc(atm, opacityclass)
+	DTAU,  WBAR, COSB  = compute_opacity(atm, opacityclass)
 	pk.dump([DTAU, WBAR, COSB], open('../testing_notebooks/OPTC_Sep2018.pk','wb'))
 	#solve for coefficients of two stream: upward flux and downward flux at each layer
 	#fluxes.get_flux_toon(nlevel, wno, DTAU, TAU, WBAR, COSB)
