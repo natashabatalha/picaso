@@ -8,8 +8,33 @@
    <br/><br/>
 
 
+.. class:: center
 Computation of reflected light spectroscopy.
+
+Read The Docs 
+-------------
 
 .. raw:: html
 
-    <object data="docs/file-alt-regular.svg" type="image/svg+xml"></object>
+	 <div class="row" align="center">
+	  <div class="col-md-3">
+	    <div class="thumbnail">
+	      <a href="natashabatalha.github.io/picaso">
+	        <img src="docs/file-alt-regular.svg" alt="installation" width="30px">
+	      </a>
+	    </div>
+	</div>
+
+Read The Paper 
+--------------
+
+.. raw:: html
+
+	 <div class="row" align="center">
+	  <div class="col-md-3">
+	    <div class="thumbnail">
+	      <a href="natashabatalha.github.io/picaso">
+	        <img src="docs/scroll-solid.svg" alt="installation" width="30px">
+	      </a>
+	    </div>
+	</div>
