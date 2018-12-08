@@ -1,4 +1,15 @@
-PICASO: Planetary Intensity Code for Atmospheric Scattering Observations
----------------------------------------------------------------------
+.. raw:: html
 
-Some folders are excluded from `reference` file, which may inhibit users from running the code
+   <div align="center">
+   <img src="docs/logo.png" width="450px">
+   </img>
+   <br/>
+   </div>
+   <br/><br/>
+
+
+Computation of reflected light spectroscopy.
+
+.. raw:: html
+
+    <object data="docs/file-alt-regular.svg" type="image/svg+xml"></object>

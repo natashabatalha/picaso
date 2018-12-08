@@ -12,7 +12,7 @@
    </div>
    <br/><br/>
 
-Welcome to ``picaso`` documentation. ``picaso`` enables the computation of reflected light observations. Check out the use cases below to determine if ``picaso`` is the right tool for your science.
+``picaso`` enables the computation of reflected light spectroscopy. Check out the use cases below to determine if ``picaso`` is the right tool for your science.
 
 Use Cases
 =========
