@@ -8,8 +8,6 @@
    <br/><br/>
 
 
-.. class:: center
-
 Computation of reflected light spectroscopy.
 
 Read The Docs 
