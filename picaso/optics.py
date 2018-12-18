@@ -34,6 +34,9 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 	full_output : bool 
 		(Optional) Default = False. If true, This will add taugas, taucld, tauray to the atmosphere class. 
 		This is done so that the users can debug, plot, etc. 
+	plot_opacity : bool 
+		(Optional) Default = False. If true, Will create a pop up plot of the weighted of each absorber 
+		at the middle layer.
 
 	Returns
 	-------
@@ -100,7 +103,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 	nwno = opacityclass.nwno
 
 	if plot_opacity: 
-		plot_layer=0#np.size(tlayer)-1
+		plot_layer=50#np.size(tlayer)-1
 		opt_figure = figure(x_axis_label = 'Wavelength', y_axis_label='TAUGAS in optics.py', 
 		title = 'Opacity at T='+str(tlayer[plot_layer])+' Layer='+str(plot_layer)
 		,y_axis_type='log',height=800, width=1200)
@@ -252,6 +255,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 	#this is because we only care about the fractional opacity from the cloud that is 
 	#scattering. 
 	ftau_cld = (single_scattering_cld * TAUCLD)/(single_scattering_cld * TAUCLD + TAURAY)
+
 	COSB = ftau_cld*asym_factor_cld
 
 	#formerly GCOSB2 
@@ -269,7 +273,6 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 		opt_figure.line(1e4/opacityclass.wno, DTAU[int(np.size(tlayer)/2),:], legend='TOTAL', line_width=4, color=colors[0],
 			muted_color=colors[c], muted_alpha=0.2)
 		opt_figure.legend.click_policy="mute"
-		output_file('OpacityDebug.html')
 		show(opt_figure)
 
 	if test_mode != None:  

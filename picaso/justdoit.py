@@ -10,7 +10,7 @@ import copy
 import json
 __refdata__ = os.environ.get('picaso_refdata')
 
-def picaso(input,phase_angle, dimension = '1d', full_output=False):
+def picaso(input,phase_angle, dimension = '1d', full_output=False, plot_opacity= False):
 	"""
 	Currently top level program to run albedo code 
 
@@ -26,6 +26,8 @@ def picaso(input,phase_angle, dimension = '1d', full_output=False):
 	full_output : bool 
 		(Optional) Default = False. Returns atmosphere class, which enables several 
 		plotting capabilities. 
+	plot_opacity : bool 
+		(Optional) Default = False, Creates pop up of the weighted opacity
 
 	Return
 	------
@@ -37,7 +39,15 @@ def picaso(input,phase_angle, dimension = '1d', full_output=False):
 	test_mode = input['test_mode']
 
 	#set approx numbers options (to be used in numba compiled functions)
-	single_phase, multi_phase, raman_approx = set_approximations(input) 
+	single_phase, multi_phase, raman_approx, = set_approximations(input) 
+	#parameters needed for the two term hg phase function. 
+	#Defaults are set in config.json
+	f = input['approx']['TTHG_params']['fraction']
+	frac_a = f[0]
+	frac_b = f[1]
+	frac_c = f[2]
+	constant_back = input['approx']['TTHG_params']['constant_back']
+	constant_forward = input['approx']['TTHG_params']['constant_forward']
 
 	#get wavelength grid and order it
 	grid = get_output_grid(input['opacities']['files']['wavegrid'])
@@ -115,14 +125,15 @@ def picaso(input,phase_angle, dimension = '1d', full_output=False):
 		#well. We only really want to use delta-edd for multi scattering legendre polynomials. 
 		DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG= compute_opacity(
 			atm, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
-			full_output=full_output)
+			full_output=full_output, plot_opacity=plot_opacity)
 
 		#use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
 		xint_at_top  = get_flux_geom_1d(atm.c.nlevel, wno,nwno,ng,nt,
 													DTAU, TAU, W0, COSB,GCOS2,ftau_cld,ftau_ray,
 													DTAU_OG, TAU_OG, W0_OG, COSB_OG ,
 													atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
-													single_phase,multi_phase)
+													single_phase,multi_phase,
+													frac_a,frac_b,frac_c,constant_back,constant_forward)
 	elif dimension == '3d':
 
 		#setup zero array to fill with opacities
@@ -170,7 +181,8 @@ def picaso(input,phase_angle, dimension = '1d', full_output=False):
 											DTAU_3d, TAU_3d, W0_3d, COSB_3d,GCOS2_3d, FTAU_CLD_3d,FTAU_RAY_3d,
 											DTAU_OG_3d, TAU_OG_3d, W0_OG_3d, COSB_OG_3d,
 											atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
-											single_phase,multi_phase)
+											single_phase,multi_phase,
+											frac_a,frac_b,frac_c,constant_back,constant_forward)
 	
 	#now compress everything based on the weights 
 	albedo = compress_disco(ng, nt, nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
@@ -200,9 +212,9 @@ def set_approximations(input):
 	"""
 
 	#define all possible options
-	single_phase = single_phase_options().index(input['approx']['single_phase'])
+	single_phase = single_phase_options(printout=False).index(input['approx']['single_phase'])
 
-	multi_phase = multi_phase_options().index(input['approx']['multi_phase'])
+	multi_phase = multi_phase_options(printout=False).index(input['approx']['multi_phase'])
 
 	raman_approx = raman_options().index(input['approx']['raman'])
 
@@ -217,11 +229,13 @@ def jupiter_pt():
 def jupiter_cld():
 	"""Function to get rough Jupiter Cloud model with fsed=3"""
 	return os.path.join(__refdata__, 'base_cases','jupiterf3.cld')
-def single_phase_options():
+def single_phase_options(printout=True):
 	"""Retrieve all the options for direct radation"""
-	return ['cahoy','OTHG','TTHG','TTGH_ray']
-def multi_phase_options():
+	if printout: print("Can also set functional form of forward/back scattering in approx['TTHG_params']")
+	return ['cahoy','OTHG','TTHG','TTHG_ray']
+def multi_phase_options(printout=True):
 	"""Retrieve all the options for multiple scattering radiation"""
+	if printout: print("Can also set delta_eddington=True/False in approx['delta_eddington']")
 	return ['N=2','N=1']
 def raman_options():
 	"""Retrieve options for raman scattering approximtions"""

@@ -363,7 +363,8 @@ def tri_diag_solve(l, a, b, c, d):
 @jit(nopython=True)
 def get_flux_geom_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3d,gcos2_3d, ftau_cld_3d,ftau_ray_3d,
 	dtau_og_3d, tau_og_3d, w0_og_3d, cos_ogb_3d, 
-	surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase):
+	surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
+	frac_a, frac_b, frac_c, constant_back, constant_forward):
 	"""
 	Computes toon fluxes given tau and everything is 3 dimensional. This is the exact same function 
 	as `get_flux_geom_1d` but is kept separately so we don't have to do unecessary indexing for 
@@ -432,7 +433,21 @@ def get_flux_geom_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 		Single scattering phase function, default is the two-term henyey-greenstein phase function
  	multi_phase : str 
  		Multiple scattering phase function, defulat is N=2 Legendre polynomial
-
+	frac_a : float 
+		(Optional), If using the TTHG phase function. Must specify the functional form for fraction 
+		of forward to back scattering (A + B * gcosb^C)
+	frac_b : float 
+		(Optional), If using the TTHG phase function. Must specify the functional form for fraction 
+		of forward to back scattering (A + B * gcosb^C)
+	frac_c : float 
+		(Optional), If using the TTHG phase function. Must specify the functional form for fraction 
+		of forward to back scattering (A + B * gcosb^C), Default is : 1 - gcosb^2
+	constant_back : float 
+		(Optional), If using the TTHG phase function. Must specify the assymetry of back scatterer. 
+		Remember, the output of A & M code does not separate back and forward scattering.
+	constant_forward : float 
+		(Optional), If using the TTHG phase function. Must specify the assymetry of forward scatterer. 
+		Remember, the output of A & M code does not separate back and forward scattering.
 	Returns
 	-------
 	intensity at the top of the atmosphere for all the different ubar1 and ubar2 
@@ -572,14 +587,23 @@ def get_flux_geom_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 			A=A*0.5/pi
 
 			################################ BEGIN OPTIONS FOR DIRECT SCATTERING####################
+			#define f (fraction of forward to back scattering), 
+			#g_forward (forward asymmetry), g_back (backward asym)
+			#needed for everything except the OTHG
+			if single_phase!=1: 
+				g_forward = constant_forward*cosb_og
+				g_back = -constant_back*cosb_og
+				f = frac_a + frac_b*g_back**frac_c
+
+
 			if single_phase==0:#'cahoy':
 				#Phase function for single scattering albedo frum Solar beam
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-					  #first term of TTHG: forward scattering 
-				p_single=((1-(cosb_og/2)**2) * (1-cosb_og**2)
+					  #first term of TTHG: forward scattering
+				p_single=(f * (1-g_forward**2)
 								/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 								#second term of TTHG: backward scattering
-								+((cosb_og/2)**2)*(1-(-cosb_og/2.)**2)
+								+(1-f)*(1-g_back**2)
 								/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3)+
 								#rayleigh phase function
 								(gcos2))
@@ -589,22 +613,22 @@ def get_flux_geom_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 				#Phase function for single scattering albedo frum Solar beam
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
 					  #first term of TTHG: forward scattering
-				p_single=((1-(cosb_og/2)**2) * (1-cosb_og**2)
+				p_single=(f * (1-g_forward**2)
 								/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 								#second term of TTHG: backward scattering
-								+((cosb_og/2)**2)*(1-(-cosb_og/2.)**2)
+								+(1-f)*(1-g_back**2)
 								/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3))
 			elif single_phase==3:#'TTHG_ray':
 				#Phase function for single scattering albedo frum Solar beam
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
 					  		#first term of TTHG: forward scattering
-				p_single=(ftau_cld*((1-(cosb_og/2)**2) * (1-cosb_og**2)
+				p_single=(ftau_cld*(f * (1-g_forward**2)
 												/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 												#second term of TTHG: backward scattering
-												+((cosb_og/2)**2)*(1-(-cosb_og/2.)**2)
+												+(1-f)*(1-g_back**2)
 												/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3))+			
-												#rayleigh phase function
-												ftau_ray*(0.75*(1+cos_theta**2.0)))
+								#rayleigh phase function
+								ftau_ray*(0.75*(1+cos_theta**2.0)))
 			################################ END OPTIONS FOR DIRECT SCATTERING####################
 
 			for i in range(nlayer-1,-1,-1):
@@ -616,8 +640,8 @@ def get_flux_geom_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 						(p_single[i,:])*exp(-tau_og[i,:]/ubar0[ng,nt])*
 						(1. - exp(-dtau_og[i,:]*(ubar0[ng,nt]+ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
 						(ubar0[ng,nt]/(ubar0[ng,nt]+ubar1[ng,nt]))
-						#multiple scattering terms 
-						+A[i,:]*(1. - exp(-dtau[i,:] *(ubar0[ng,nt]+1*ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
+						#three multiple scattering terms 
+						+A[i,:]* (1. - exp(-dtau[i,:] *(ubar0[ng,nt]+1*ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
 						(ubar0[ng,nt]/(ubar0[ng,nt]+1*ubar1[ng,nt]))
 						+G[i,:]*(exp(exptrm[i,:]*1-dtau[i,:]/ubar1[ng,nt]) - 1.0)/(lamda[i,:]*1*ubar1[ng,nt] - 1.0)
 						+H[i,:]*(1. - exp(-exptrm[i,:]*1-dtau[i,:]/ubar1[ng,nt]))/(lamda[i,:]*1*ubar1[ng,nt] + 1.0))
@@ -629,7 +653,8 @@ def get_flux_geom_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 @jit(nopython=True)
 def get_flux_geom_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
 	dtau_og, tau_og, w0_og, cosb_og, 
-	surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase):
+	surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
+	frac_a, frac_b, frac_c, constant_back, constant_forward):
 	"""
 	Computes toon fluxes given tau and everything is 1 dimensional. This is the exact same function 
 	as `get_flux_geom_3d` but is kept separately so we don't have to do unecessary indexing for fast
@@ -698,7 +723,21 @@ def get_flux_geom_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 		Single scattering phase function, default is the two-term henyey-greenstein phase function
  	multi_phase : str 
  		Multiple scattering phase function, defulat is N=2 Legendre polynomial 
-
+	frac_a : float 
+		(Optional), If using the TTHG phase function. Must specify the functional form for fraction 
+		of forward to back scattering (A + B * gcosb^C)
+	frac_b : float 
+		(Optional), If using the TTHG phase function. Must specify the functional form for fraction 
+		of forward to back scattering (A + B * gcosb^C)
+	frac_c : float 
+		(Optional), If using the TTHG phase function. Must specify the functional form for fraction 
+		of forward to back scattering (A + B * gcosb^C), Default is : 1 - gcosb^2
+	constant_back : float 
+		(Optional), If using the TTHG phase function. Must specify the assymetry of back scatterer. 
+		Remember, the output of A & M code does not separate back and forward scattering.
+	constant_forward : float 
+		(Optional), If using the TTHG phase function. Must specify the assymetry of forward scatterer. 
+		Remember, the output of A & M code does not separate back and forward scattering.
 	Returns
 	-------
 	intensity at the top of the atmosphere for all the different ubar1 and ubar2 
@@ -817,14 +856,23 @@ def get_flux_geom_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 			A=A*0.5/pi
 
 			################################ BEGIN OPTIONS FOR DIRECT SCATTERING####################
+			#define f (fraction of forward to back scattering), 
+			#g_forward (forward asymmetry), g_back (backward asym)
+			#needed for everything except the OTHG
+			if single_phase!=1: 
+				g_forward = constant_forward*cosb_og
+				g_back = -constant_back*cosb_og
+				f = frac_a + frac_b*g_back**frac_c
+
+
 			if single_phase==0:#'cahoy':
 				#Phase function for single scattering albedo frum Solar beam
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
 					  #first term of TTHG: forward scattering
-				p_single=((1-(cosb_og/2)**2) * (1-cosb_og**2)
+				p_single=(f * (1-g_forward**2)
 								/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 								#second term of TTHG: backward scattering
-								+((cosb_og/2)**2)*(1-(-cosb_og/2.)**2)
+								+(1-f)*(1-g_back**2)
 								/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3)+
 								#rayleigh phase function
 								(gcos2))
@@ -834,19 +882,19 @@ def get_flux_geom_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 				#Phase function for single scattering albedo frum Solar beam
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
 					  #first term of TTHG: forward scattering
-				p_single=((1-(cosb_og/2)**2) * (1-cosb_og**2)
+				p_single=(f * (1-g_forward**2)
 								/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 								#second term of TTHG: backward scattering
-								+((cosb_og/2)**2)*(1-(-cosb_og/2.)**2)
+								+(1-f)*(1-g_back**2)
 								/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3))
 			elif single_phase==3:#'TTHG_ray':
 				#Phase function for single scattering albedo frum Solar beam
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
 					  		#first term of TTHG: forward scattering
-				p_single=(ftau_cld*((1-(cosb_og/2)**2) * (1-cosb_og**2)
+				p_single=(ftau_cld*(f * (1-g_forward**2)
 												/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 												#second term of TTHG: backward scattering
-												+((cosb_og/2)**2)*(1-(-cosb_og/2.)**2)
+												+(1-f)*(1-g_back**2)
 												/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3))+			
 								#rayleigh phase function
 								ftau_ray*(0.75*(1+cos_theta**2.0)))

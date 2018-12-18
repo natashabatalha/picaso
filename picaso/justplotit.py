@@ -224,7 +224,7 @@ def tau_pressure(full_output, at_tau=1,**kwargs):
 		fig.patch(band_x,band_y, color=Colorblind8[6], alpha=0.3)
 
 	plot_format(fig)
-	return fig
+	return fig #,wave,at_pressures_gas,at_pressures_cld,at_pressures_ray
 
 def plot_format(df):
 	"""Function to reformat plots"""
