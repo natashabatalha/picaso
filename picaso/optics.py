@@ -286,6 +286,8 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 		else: 
 			DTAU = TAURAY*0+0.5
 			GCOS2 = 0.0
+			ftau_ray = 1e-6
+			ftau_cld = 1			
 		COSB = atm.layer['scattering']['g0']
 		W0 = atm.layer['scattering']['w0']
 		TAU = np.zeros((shape[0]+1, shape[1]))

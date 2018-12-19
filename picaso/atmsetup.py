@@ -469,7 +469,7 @@ class ATMSETUP():
 			else: 
 
 				#raise an exception if the file doesnt exist 
-				raise Excepttion('Cld file specified does not exist. Replace with None or find real file') 
+				raise Exception('Cld file specified does not exist. Replace with None or find real file') 
 
 		#if no filepath was given and nothing was given for g0/w0, then assume the run is cloud free and give zeros for all thi stuff		  
 		elif (self.input['atmosphere']['clouds']['filepath'] == None) and (self.input['atmosphere']['scattering']['g0'] == None) and (self.dimension=='1d'):
