@@ -105,5 +105,97 @@ def dlugach_test(single_phase = 'TTHG_ray', output_dir = None, rayleigh=True, co
 		if output_dir!=None: perror.to_csv(os.path.join(output_dir,'test_results.csv'))
 	return perror
 
-if __name__ == "__main__":
-	run_all_test()
+def madhu_test(rayleigh=True, isotropic=True, lambert=True, asymmetric=True, single_phase = 'TTHG_ray', output_dir = None):
+	"""
+	Test the flux against against Madhu and Burrows  
+	https://arxiv.org/pdf/1112.4476.pdf
+
+	There are three tests: rayleigh, isotropic, and lambert. Reproduces Figure 2 of 
+	Madhu and Burrows paper. 
+
+	Parameters
+	----------
+	rayleigh : bool 
+		Tests rayleigh phase function 
+	isotropic : bool 
+		Tests isotropic phase function 
+	lambert : bool 
+		Tests lambertian phase function 
+	single_phase : str 
+		Single phase function to test with the constant_tau test. Can either be: 
+		"cahoy","TTHG_ray","TTHG", and "OTHG"
+	output_dir : str 
+		Output directory for results of test. Default is to just return the dataframe (None). 
+
+
+	Returns
+	-------
+	DataFrame of % deviation from Dlugach & Yanovitskij Table XXI
+
+	"""
+
+	#read in table from reference data with the test values
+	real_answer = pd.read_csv(os.path.join(__refdata__,'base_cases', 'MADHU.csv'))
+	
+	#perror = real_answer.copy()
+
+	a = json.load(open(os.path.join(__refdata__,'config.json')))
+
+	p = np.logspace(-5,4,60)
+	t = p*0+300
+	h2o = p*0 +0.01
+	h2 = p*0 + 0.99
+
+	a['atmosphere']['profile']['profile'] = pd.DataFrame({'pressure':p,
+														'temperature':t,
+														'CH4':h2o,
+														'H2':h2/2,
+														'He':h2/2})
+	a['planet']['gravity'] = 10
+	a['planet']['gravity_unit'] = 'm/(s**2)' 
+	a['star']['temp'] = 6000 #kelvin
+	a['star']['metal'] = 0.0122 #log metal
+	a['star']['logg'] = 4.437 #log cgs
+	a['atmosphere']['scattering']['g0'] = 0.0
+
+	if rayleigh:
+		#SCALAR RAYLEIGH
+		a['approx']['delta_eddington']=True
+		a['approx']['raman']='pollack'
+		a['approx']['single_phase'] ='TTHG_ray'
+		a['test_mode']='rayleigh'
+		a['atmosphere']['scattering']['g0'] = 0
+
+		for i in real_answer.index:
+			a['atmosphere']['scattering']['w0'] = real_answer['omega'][i]
+			wno, alb = picaso(a, 0.0)
+			real_answer.loc[i,'rayleigh']=alb[-1] 
+
+	if isotropic:
+		#constant tau
+		a['approx']['delta_eddington'] = True
+		a['approx']['raman']='pollack'
+		a['approx']['single_phase'] = 'OTHG'
+		a['test_mode']='constant_tau'
+		a['atmosphere']['scattering']['g0'] = 0
+
+		for i in real_answer.index:
+			a['atmosphere']['scattering']['w0'] = real_answer['omega'][i]
+			wno, alb = picaso(a, 0.0)
+			real_answer.loc[i,'0.0']=alb[-1] 
+
+	if asymmetric:
+		#constant tau
+		a['approx']['delta_eddington']=True
+		a['approx']['raman']='pollack'
+		a['approx']['single_phase'] = single_phase
+
+		a['test_mode']='constant_tau'
+
+		for g in [0.2,0.4,0.6,0.8]: 
+			a['atmosphere']['scattering']['g0'] = g
+			for i in real_answer.index:
+				a['atmosphere']['scattering']['w0'] = real_answer['omega'][i]
+				wno, alb = picaso(a, 0.0)
+				real_answer.loc[i,str(g)]=alb[-1] 
+	return real_answer

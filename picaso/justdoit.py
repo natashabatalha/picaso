@@ -10,7 +10,7 @@ import copy
 import json
 __refdata__ = os.environ.get('picaso_refdata')
 
-def picaso(input,phase_angle, dimension = '1d', full_output=False, plot_opacity= False):
+def picaso(input,dimension = '1d', full_output=False, plot_opacity= False):
 	"""
 	Currently top level program to run albedo code 
 
@@ -18,8 +18,6 @@ def picaso(input,phase_angle, dimension = '1d', full_output=False, plot_opacity=
 	----------
 	input : dict 
 		This input dict is built by loading the input = `justdoit.load_inputs()` 
-	phase_angle : int 	
-		Phase angle of the planet in radians 
 	dimension : str 
 		(Optional) Dimensions of the calculation. Default = '1d'. But '3d' is also accepted. 
 		In order to run '3d' calculations, user must build 3d input (see tutorials)
@@ -40,6 +38,10 @@ def picaso(input,phase_angle, dimension = '1d', full_output=False, plot_opacity=
 
 	#set approx numbers options (to be used in numba compiled functions)
 	single_phase, multi_phase, raman_approx, = set_approximations(input) 
+
+	#phase angle 
+	phase_angle = input['phase_angle']
+
 	#parameters needed for the two term hg phase function. 
 	#Defaults are set in config.json
 	f = input['approx']['TTHG_params']['fraction']

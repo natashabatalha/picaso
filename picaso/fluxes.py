@@ -629,6 +629,7 @@ def get_flux_geom_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 												/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3))+			
 								#rayleigh phase function
 								ftau_ray*(0.75*(1+cos_theta**2.0)))
+
 			################################ END OPTIONS FOR DIRECT SCATTERING####################
 
 			for i in range(nlayer-1,-1,-1):
@@ -898,6 +899,7 @@ def get_flux_geom_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 												/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3))+			
 								#rayleigh phase function
 								ftau_ray*(0.75*(1+cos_theta**2.0)))
+
 			################################ END OPTIONS FOR DIRECT SCATTERING####################
 
 			for i in range(nlayer-1,-1,-1):
