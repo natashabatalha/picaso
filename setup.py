@@ -60,13 +60,13 @@ setup(
   ],
   packages=['picaso'],
   install_requires=[
-          'numpy>=1.12.1',
+          'numpy',
           'bokeh',
           'h5py',
           'pandas',
           'joblib',
           'photutils',
-          'astropy==2.0.2',
+          'astropy',
           'pysynphot',
           'sphinx',
           'scipy'
