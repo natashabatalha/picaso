@@ -502,9 +502,9 @@ class ATMSETUP():
 			w0 = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle))
 			header = cld_input.attrs['header'].split(',')
 
-			assert 'g0' not in header, "Please make sure g0 is a named column in hdf5 cld file"
-			assert 'w0' not in header, "Please make sure w0 is a named column in hdf5 cld file"
-			assert 'opd' not in header, "Please make sure opd is a named column in hdf5 cld file"
+			assert 'g0' in header, "Please make sure g0 is a named column in hdf5 cld file"
+			assert 'w0' in header, "Please make sure w0 is a named column in hdf5 cld file"
+			assert 'opd' in header, "Please make sure opd is a named column in hdf5 cld file"
 
 			iopd = np.where('opd' == np.array(header))[0][0]
 			ig0 = np.where('g0' == np.array(header))[0][0]
@@ -516,8 +516,7 @@ class ATMSETUP():
 					data = cld_input[self.gangles[g]][self.tangles[t]]
 
 					#make sure cloud input has the correct number of waves and PT points
-					assert data.shape[0] is not (self.c.nlayer*self.c.input_npts_wave
-						*self.c.ngangle*self.c.ntangle), "Cloud input file is not on the same grid as the input PT/Angles profile:"
+					assert data.shape[0] == self.c.nlayer*self.c.input_npts_wave, "Cloud input file is not on the same grid as the input PT/Angles profile:"
 
 					#Then, reshape and regrid inputs to be a nice matrix that is nlayer by nwave
 
