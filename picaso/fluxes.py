@@ -362,7 +362,7 @@ def tri_diag_solve(l, a, b, c, d):
 
 @jit(nopython=True)
 def get_flux_geom_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3d,gcos2_3d, ftau_cld_3d,ftau_ray_3d,
-	dtau_og_3d, tau_og_3d, w0_og_3d, cos_og_3d, 
+	dtau_og_3d, tau_og_3d, w0_og_3d, cosb_og_3d, 
 	surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
 	frac_a, frac_b, frac_c, constant_back, constant_forward):
 	"""
