@@ -635,7 +635,7 @@ def get_flux_geom_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 			for i in range(nlayer-1,-1,-1):
 				#direct beam
 				#note when delta-eddington=off, then tau_single=tau, cosb_single=cosb, w0_single=w0, etc
-				xint[i,:] =( xint[i+1,:]*exp(-dtau_og[i,:]/ubar1[ng,nt])
+				xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/ubar1[ng,nt])
 						#single scattering albedo from sun beam (from ubar0 to ubar1)
 						+(w0_og[i,:]*F0PI/(4.*pi))*
 						(p_single[i,:])*exp(-tau_og[i,:]/ubar0[ng,nt])*

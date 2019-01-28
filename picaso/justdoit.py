@@ -178,6 +178,8 @@ def picaso(input,dimension = '1d', full_output=False, plot_opacity= False):
 				W0_OG_3d[:,:,g,t] = W0_OG
 				COSB_OG_3d[:,:,g,t] = COSB_OG
 
+
+
 		#use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
 		xint_at_top  = get_flux_geom_3d(atm.c.nlevel, wno,nwno,ng,nt,
 											DTAU_3d, TAU_3d, W0_3d, COSB_3d,GCOS2_3d, FTAU_CLD_3d,FTAU_RAY_3d,
@@ -185,7 +187,7 @@ def picaso(input,dimension = '1d', full_output=False, plot_opacity= False):
 											atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
 											single_phase,multi_phase,
 											frac_a,frac_b,frac_c,constant_back,constant_forward)
-	
+
 	#now compress everything based on the weights 
 	albedo = compress_disco(ng, nt, nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
 	
