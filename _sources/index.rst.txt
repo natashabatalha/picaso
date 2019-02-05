@@ -68,7 +68,7 @@ Resources
 	  </div>
 	  <div class="col-md-3">
 	    <div class="thumbnail">
-	      <a href="https://natashabatalha.github.io/picaso/picaso">
+	      <a href="https://natashabatalha.github.io/picaso_dev">
 	        <img src="_images/derivations.png" alt="derivations" style="width:100%">
 	      </a>
 	    </div>
@@ -91,7 +91,7 @@ Resources
 
    Installation <installation>
    The Tutorials <tutorials>
-   The Derivations <https://natashabatalha.github.io/picaso/picaso>
+   The Derivations <https://natashabatalha.github.io/picaso_dev>
    The Code <picaso>
    Github <https://github.com/natashabatalha/picaso>
    The Paper <picaso>
