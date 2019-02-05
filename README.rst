@@ -31,7 +31,7 @@ Read The Paper
 	 <div class="row" align="center">
 	  <div class="col-md-3">
 	    <div class="thumbnail">
-	      <a href="natashabatalha.github.io/picaso">
+	      <a href="https://natashabatalha.github.io/picaso">
 	        <img src="docs/scroll-solid.svg" alt="installation" width="30px">
 	      </a>
 	    </div>
@@ -45,7 +45,7 @@ Do The Math
 	 <div class="row" align="center">
 	  <div class="col-md-3">
 	    <div class="thumbnail">
-	      <a href="natashabatalha.github.io/picaso_dev">
+	      <a href="https://natashabatalha.github.io/picaso_dev">
 	        <img src="docs/chalkboard-solid.svg" alt="installation" width="30px">
 	      </a>
 	    </div>
