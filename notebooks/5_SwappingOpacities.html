@@ -1,0 +1,664 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Creating new Opacity Databases &mdash; picaso 0.0dev documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="picaso 0.0dev documentation" href="../index.html"/>
+        <link rel="up" title="Tutorials" href="../tutorials.html"/>
+        <link rel="next" title="The Code" href="../picaso.html"/>
+        <link rel="prev" title="Diving into code approximations" href="4_AnalyzingApproximations.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> picaso
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0dev
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../tutorials.html">The Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#basics">Basics</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../tutorials.html#radiative-transfer-approximations">Radiative Transfer Approximations</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="4_AnalyzingApproximations.html">Investigating Approximations</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Opacity Factory</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Continuum-Opacity-Formatting-:-continuum.hdf5">Continuum Opacity Formatting : <code class="docutils literal"><span class="pre">continuum.hdf5</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Quick-HDF5-Tutorial">Quick HDF5 Tutorial</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Molecular-Opacity-Formatting:-molecular.hdf5">Molecular Opacity Formatting: <code class="docutils literal"><span class="pre">molecular.hdf5</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#moving-to-3-dimensions-tutorials-coming-soon">Moving to 3 Dimensions (tutorials coming soon)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#retrievals-tutorials-coming-soon">Retrievals (tutorials coming soon)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso/picaso">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../picaso.html">The Paper</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">picaso</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../tutorials.html">Tutorials</a> &raquo;</li>
+        
+      <li>Creating new Opacity Databases</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/notebooks/5_SwappingOpacities.ipynb.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput,
+div.nbinput div.prompt,
+div.nbinput div.input_area,
+div.nbinput div[class*=highlight],
+div.nbinput div[class*=highlight] pre,
+div.nboutput,
+div.nbinput div.prompt,
+div.nbinput div.output_area,
+div.nboutput div[class*=highlight],
+div.nboutput div[class*=highlight] pre {
+    background: none;
+    border: none;
+    padding: 0 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+/* avoid gaps between output lines */
+div.nboutput div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput,
+div.nboutput {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput,
+    div.nboutput {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput div.prompt pre {
+    color: #303F9F;
+}
+
+/* output prompt */
+div.nboutput div.prompt pre {
+    color: #D84315;
+}
+
+/* all prompts */
+div.nbinput div.prompt,
+div.nboutput div.prompt {
+    min-width: 8ex;
+    padding-top: 0.4em;
+    padding-right: 0.4em;
+    text-align: right;
+    flex: 0;
+}
+@media (max-width: 540px) {
+    div.nbinput div.prompt,
+    div.nboutput div.prompt {
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput div.prompt.empty {
+        padding: 0;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput div.prompt pre,
+div.nboutput div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput div.input_area,
+div.nboutput div.output_area {
+    padding: 0.4em;
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput div.input_area,
+    div.nboutput div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput div.input_area {
+    border: 1px solid #cfcfcf;
+    border-radius: 2px;
+    background: #f7f7f7;
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.pngmath center alignment in output cells */
+div.nboutput div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast,
+.nboutput.nblast {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast + .nbinput {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+</style>
+<div class="section" id="Creating-new-Opacity-Databases">
+<h1>Creating new Opacity Databases<a class="headerlink" href="#Creating-new-Opacity-Databases" title="Permalink to this headline">¶</a></h1>
+<p><code class="docutils literal"><span class="pre">PICASO</span></code> currently comes with one set of molecular and continuum
+opacities. The continuum opacity file is already included in the
+<code class="docutils literal"><span class="pre">reference/</span></code> directory. The molecular opacity file is included on
+<a class="reference external" href="https://osf.io/hf8bp/">Open Science Framework</a>.</p>
+<p>If you want to swap out opacities, this tutorial shows you how to make a
+correctly formatted <code class="docutils literal"><span class="pre">hdf5</span></code> file that will compatible with <code class="docutils literal"><span class="pre">PICASO</span></code></p>
+<p>Here you will learn how to create the correctly formatted database that
+<code class="docutils literal"><span class="pre">picaso</span></code> reads in for the <strong>molecular.hdf5</strong> and <strong>continuum.hdf5</strong></p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="Continuum-Opacity-Formatting-:-continuum.hdf5">
+<h2>Continuum Opacity Formatting : <code class="docutils literal"><span class="pre">continuum.hdf5</span></code><a class="headerlink" href="#Continuum-Opacity-Formatting-:-continuum.hdf5" title="Permalink to this headline">¶</a></h2>
+<p><strong>Note on molecule names</strong>: Because <code class="docutils literal"><span class="pre">picaso</span></code> uses dict formatting to
+handle opacities, users can easily swap in different molecules.</p>
+<p>For example, if I wanted to include CO2-H2 CIA absorption, I can add
+<code class="docutils literal"><span class="pre">CO2H2</span></code> to the molecules list below.</p>
+<p><strong>Exceptions</strong>: The exceptions to this are non-CIA continuum opacities.
+Right now, the other sources of continuum enabled are <code class="docutils literal"><span class="pre">H2-</span></code>, <code class="docutils literal"><span class="pre">H-bf</span></code>
+and <code class="docutils literal"><span class="pre">H-ff</span></code> which have odd-ball formatting since they aren’t simple two
+molecules. <em>Please let me know if you want to see another continuum
+source added</em>.</p>
+<p><strong>Careful</strong> with case sensitive molecules like <strong>TiO</strong>, <strong>Na</strong>. Make
+sure you get these right.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="n">wave_unit</span> <span class="o">=</span> <span class="s1">&#39;cm-1&#39;</span>
+<span class="n">opacity_unit</span> <span class="o">=</span> <span class="s1">&#39;cm-1 amagat-2&#39;</span>
+<span class="n">molecules</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;H2H2&#39;</span><span class="p">,</span><span class="s1">&#39;H2He&#39;</span><span class="p">,</span><span class="s1">&#39;H2CH4&#39;</span><span class="p">,</span><span class="s1">&#39;H2-&#39;</span><span class="p">,</span><span class="s1">&#39;H-bf&#39;</span><span class="p">,</span><span class="s1">&#39;H-ff&#39;</span><span class="p">]</span> <span class="c1">#and whatever else CO2H2</span>
+<span class="n">temperatures</span> <span class="o">=</span> <span class="p">[</span><span class="mi">300</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">2000</span><span class="p">]</span> <span class="c1">#Kelvin</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="Initialize-HDF5-database">
+<h3>Initialize HDF5 database<a class="headerlink" href="#Initialize-HDF5-database" title="Permalink to this headline">¶</a></h3>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="n">db_continuum</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;/new_continuum_db.hdf5&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Create-Continuum-Dataset">
+<h3>Create Continuum Dataset<a class="headerlink" href="#Create-Continuum-Dataset" title="Permalink to this headline">¶</a></h3>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="c1">#add meta data</span>
+<span class="n">db_continuum</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;wave_units&#39;</span><span class="p">]</span> <span class="o">=</span><span class="n">wave_unit</span>
+<span class="n">db_continuum</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;opacity_unit&#39;</span><span class="p">]</span> <span class="o">=</span><span class="n">opacity_unit</span>
+<span class="n">db_continuum</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;temperature_unit&#39;</span><span class="p">]</span> <span class="o">=</span><span class="s1">&#39;K&#39;</span>
+<span class="n">db_continuum</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;wavenumber_grid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="mi">30000</span><span class="p">,</span><span class="mi">1000</span><span class="p">)</span><span class="c1">#fake grid</span>
+
+<span class="c1">#add data</span>
+<span class="n">fake_absorption</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span><span class="o">+</span><span class="mf">1e-30</span> <span class="c1">#cm-1 amagat-2</span>
+<span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">molecules</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">temperatures</span><span class="p">:</span>
+        <span class="n">dset</span> <span class="o">=</span> <span class="n">db_continuum</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">m</span><span class="o">+</span><span class="s1">&#39;/&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">data</span><span class="o">=</span><span class="n">fake_absorption</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="Quick-HDF5-Tutorial">
+<h2>Quick HDF5 Tutorial<a class="headerlink" href="#Quick-HDF5-Tutorial" title="Permalink to this headline">¶</a></h2>
+<p>Let’s make sure you know how to navigate your file</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="c1">#what molecules are in your database?</span>
+<span class="nb">print</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">db_continuum</span><span class="o">.</span><span class="n">keys</span><span class="p">()])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;H-bf&#39;, &#39;H-ff&#39;, &#39;H2-&#39;, &#39;H2CH4&#39;, &#39;H2H2&#39;, &#39;H2He&#39;]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="c1">#what temperatures are in your database?</span>
+<span class="nb">print</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">db_continuum</span><span class="p">[</span><span class="s1">&#39;H2CH4&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;1000&#39;, &#39;2000&#39;, &#39;300&#39;, &#39;500&#39;]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="c1">#check to see if there is your temperature of interest</span>
+<span class="n">db_continuum</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;H2H2&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>Out[7]:
+</pre></div>
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>&lt;HDF5 group &quot;/H2H2&quot; (4 members)&gt;
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="c1">#get wavelength grid</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">db_continuum</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;wavenumber_grid&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Molecular-Opacity-Formatting:-molecular.hdf5">
+<h2>Molecular Opacity Formatting: <code class="docutils literal"><span class="pre">molecular.hdf5</span></code><a class="headerlink" href="#Molecular-Opacity-Formatting:-molecular.hdf5" title="Permalink to this headline">¶</a></h2>
+<p>Because <code class="docutils literal"><span class="pre">picaso</span></code> uses <code class="docutils literal"><span class="pre">dict</span></code> formatting to handle opacities, users
+can add <strong>any</strong> new molecule to this database.</p>
+<p><strong>Careful</strong> with case sensitive molecules like <strong>TiO</strong>, <strong>Na</strong>. Make
+sure you get these right.</p>
+<p><strong>Wave Grid</strong> must be the same as <strong>continuum.hdf5</strong></p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="n">wave_unit</span> <span class="o">=</span> <span class="s1">&#39;cm-1&#39;</span>
+<span class="n">opacity_unit</span> <span class="o">=</span> <span class="s1">&#39;cm-2/g&#39;</span>
+<span class="n">molecules</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;H2&#39;</span><span class="p">,</span><span class="s1">&#39;H&#39;</span><span class="p">,</span><span class="s1">&#39;He&#39;</span><span class="p">,</span><span class="s1">&#39;CH4&#39;</span><span class="p">,</span><span class="s1">&#39;H2O&#39;</span><span class="p">,</span><span class="s1">&#39;N2&#39;</span><span class="p">,</span><span class="s1">&#39;TiO&#39;</span><span class="p">]</span> <span class="c1">#and whatever else</span>
+<span class="n">temperatures</span> <span class="o">=</span> <span class="p">[</span><span class="mi">300</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">2000</span><span class="p">]</span> <span class="c1">#Kelvin</span>
+<span class="n">pressures</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1e-6</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span> <span class="c1">#bars</span>
+<span class="n">prssure_unit</span> <span class="o">=</span> <span class="s1">&#39;bars&#39;</span>
+<span class="n">temperature_unit</span> <span class="o">=</span> <span class="s1">&#39;K&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="Initialize-HDF5-database">
+<h3>Initialize HDF5 database<a class="headerlink" href="#Initialize-HDF5-database" title="Permalink to this headline">¶</a></h3>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="n">db_molecular</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;/new_molecular_db.hdf5&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Create-Molecular-Dataset">
+<h3>Create Molecular Dataset<a class="headerlink" href="#Create-Molecular-Dataset" title="Permalink to this headline">¶</a></h3>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="c1">#add meta data</span>
+<span class="n">db_molecular</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;wave_units&#39;</span><span class="p">]</span> <span class="o">=</span><span class="n">wave_unit</span>
+<span class="n">db_molecular</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;opacity_unit&#39;</span><span class="p">]</span> <span class="o">=</span><span class="n">opacity_unit</span>
+<span class="n">db_molecular</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;prssure_unit&#39;</span><span class="p">]</span> <span class="o">=</span><span class="n">prssure_unit</span>
+<span class="n">db_molecular</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;temperature_unit&#39;</span><span class="p">]</span> <span class="o">=</span><span class="n">temperature_unit</span>
+<span class="n">db_molecular</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;wavenumber_grid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">db_continuum</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;wavenumber_grid&#39;</span><span class="p">]</span><span class="c1">#MUST be on same grid as continuum db!!!</span>
+
+<span class="c1">#add data</span>
+<span class="n">fake_opacity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span><span class="o">+</span><span class="mf">1e-30</span> <span class="c1">#cm-2/g</span>
+<span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">molecules</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">temperatures</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pressures</span><span class="p">:</span>
+            <span class="n">dset</span> <span class="o">=</span> <span class="n">db_molecular</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">m</span><span class="o">+</span><span class="s1">&#39;/&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;/&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">data</span><span class="o">=</span><span class="n">fake_opacity</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../picaso.html" class="btn btn-neutral float-right" title="The Code" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="4_AnalyzingApproximations.html" class="btn btn-neutral" title="Diving into code approximations" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Natasha E. Batalha.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.0dev',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+      <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
