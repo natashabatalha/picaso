@@ -6,29 +6,6 @@ __refdata__ = os.environ.get('picaso_refdata')
 import pickle as pk
 import astropy.constants as c
 import scipy.interpolate as sci
-def get_output_grid(filename, wmin=0.3, wmax=1, R=5000):
-	"""
-	Defines wavelength grid from HDF5 file.(comparable to SETSPV)
-
-	Currently, only single option for wavelength grid, could be expanded to include more 
-	grids, more opacities. Currently there is only one grid, so all values are defaulted to 
-	0.3-1 at R=5000
-
-	Parameters
-	----------
-	filename : name of file  
-		filename
-	wmin : float
-		minimum wavelength 
-	wmax : float 
-		maximum wavelength 
-	R : float
-		Resolution 
-	"""
-	pfile = os.path.join(__refdata__, 'opacities',filename)
-	requires = {'wmin':wmin, 'wmax':wmax,'R':R}
-	grid = read_hdf(pfile,  requires)
-	return grid
 
 def get_cld_input_grid(filename_or_grid):
 	"""
