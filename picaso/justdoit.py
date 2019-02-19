@@ -12,7 +12,7 @@ import json
 import pysynphot as psyn
 __refdata__ = os.environ.get('picaso_refdata')
 
-def picaso(input,dimension = '1d', full_output=False, plot_opacity= False):
+def picaso(bundle,dimension = '1d', full_output=False, plot_opacity= False):
 	"""
 	Currently top level program to run albedo code 
 
@@ -34,48 +34,38 @@ def picaso(input,dimension = '1d', full_output=False, plot_opacity= False):
 	Wavenumber, albedo if full_output=False 
 	Wavenumber, albedo, atmosphere if full_output = True 
 	"""
+	inputs = bundle.inputs
+	opacityclass = bundle.opacityclass
+	wno = bundle.opacityclass.wno
+	nwno = bundle.opacityclass.nwno
 
 	#check to see if we are running in test mode
-	test_mode = input['test_mode']
+	test_mode = inputs['test_mode']
 
 	#set approx numbers options (to be used in numba compiled functions)
-	single_phase = input['approx']['single_phase']
-	multi_phase = input['approx']['multi_phase']
-	raman_approx =input['approx']['raman']
-	
+	single_phase = inputs['approx']['single_phase']
+	multi_phase = inputs['approx']['multi_phase']
+	raman_approx =inputs['approx']['raman']
+
 	#phase angle 
-	phase_angle = input['phase_angle']
+	phase_angle = inputs['phase_angle']
 
 	#parameters needed for the two term hg phase function. 
 	#Defaults are set in config.json
-	f = input['approx']['TTHG_params']['fraction']
+	f = inputs['approx']['TTHG_params']['fraction']
 	frac_a = f[0]
 	frac_b = f[1]
 	frac_c = f[2]
-	constant_back = input['approx']['TTHG_params']['constant_back']
-	constant_forward = input['approx']['TTHG_params']['constant_forward']
+	constant_back = inputs['approx']['TTHG_params']['constant_back']
+	constant_forward = inputs['approx']['TTHG_params']['constant_forward']
 
-	#get wavelength grid and order it
-	grid = get_output_grid(input['opacities']['files']['wavegrid'])
-	wno = np.sort(grid['wavenumber'].values)
-	nwno = len(wno)
-
-	#check to see if new wavelength grid is necessary .. assuming its always the same here
-	#this is where continuum_factory would run, if it was a brand new grid
-	#TAG:TODO
-
-	#get opacity class
-	opacityclass=RetrieveOpacities(wno, 1e4/wno,
-					os.path.join(__refdata__, 'opacities', input['opacities']['files']['continuum']),
-					os.path.join(__refdata__, 'opacities', input['opacities']['files']['molecular']), 
-					os.path.join(__refdata__, 'opacities', input['opacities']['files']['raman']) 
-					)
 
 	#get geometry
-	ng = input['disco']['num_gangle']
-	nt = input['disco']['num_tangle']
+	ng = inputs['disco']['num_gangle']
+	nt = inputs['disco']['num_tangle']
+
 	gangle,gweight,tangle,tweight = get_angles(ng, nt) 
-	#planet disk is divieded into gaussian and chebyshev angles and weights for perfoming the 
+	#planet disk is divided into gaussian and chebyshev angles and weights for perfoming the 
 	#intensity as a function of planetary pahse angle 
 	ubar0, ubar1, cos_theta,lat,lon = compute_disco(ng, nt, gangle, tangle, phase_angle)
 
@@ -83,21 +73,13 @@ def picaso(input,dimension = '1d', full_output=False, plot_opacity= False):
 	F0PI = np.zeros(nwno) + 1.0 
 
 	#define approximinations 
-	delta_eddington = input['approx']['delta_eddington']
+	delta_eddington = inputs['approx']['delta_eddington']
 
 	#begin atm setup
-	atm = ATMSETUP(input)
-
-	############### To stuff needed for the star ###############
-	#get star 
-	star = input['star']
-	wno_star, flux_star, hires_wno_star, hires_flux_star = atm.get_stellar_spec(opacityclass.wno, star['wno'],star['flux']) 
-	#this is added to the opacity class
-	stellar_raman_shifts = opacityclass.compute_stellar_shits(hires_wno_star, hires_flux_star)
-
+	atm = ATMSETUP(inputs)
 
 	################ From here on out is everything that would go through retrieval or 3d input##############
-	atm.planet.gravity = input['planet']['gravity']
+	atm.planet.gravity = inputs['planet']['gravity']
 
 	if dimension == '1d':
 		atm.get_profile()
@@ -197,46 +179,73 @@ def picaso(input,dimension = '1d', full_output=False, plot_opacity= False):
 	albedo = compress_disco(ng, nt, nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
 	
 	if full_output:
+		#add full solution and latitude and longitudes to the full output
+		atm.xint_at_top = xint_at_top
+		atm.latitude = lat
+		atm.longitude = lon
 		return wno, albedo , atm
 	else: 
 		return wno, albedo
 
-def set_approximations(input):
-	"""
-	This is a function devoded to defining all the approximations within the code. 
-	This was built to make the code slightly more transparent in terms of options it 
-	is making. A lof of the functions are numba, which means they cannot compare strings. 
-	Therefore, this function returns integers for each option based on placement in a string. 
-	The functions in the rest of the code follow from this.  
+class inputs():
+	"""Class to setup planet to run
 
 	Parameters
 	----------
-	input : dict 
-		Input dictionary from main config.json structure 
+	continuum_db: str 
+		(Optional)Filename that points to the HDF5 contimuum database (see notebook on swapping out opacities).
+		This database pointer will also define the wavelength grid to run on. So, wavenumber grid 
+		should be specified in the database as an attribute!
+		Default will pull the zenodo defualt opacities 
+	molecular_db: str 
+		(Optional)Filename that points to the HDF5 molecular database (see notebook on swapping out opacities).
+		This database pointer will also define the wavelength grid to run on. So, wavenumber grid 
+		should be specified in the database as an attribute!
+		Default will pull the zenodo defualt opacities 
+	raman_db: str 
+		(Optional)Filename that points to the raman scattering database. Default is the text file from Ocklopcic+2018 paper 
+		on exoplanet raman scattering. 
 
-	Returns
-	-------
-	Integer option for single scattering phase function, multiple scattering phase function, 
-	and raman scattering 
+	Attributes
+	----------
+	phase_angle() : set phase angle
+	gravity() : set gravity
+	star() : set stellar spec
+	atmosphere() : set atmosphere composition and PT
+	clouds() : set cloud profile
+	approx()  : set approximation
+	spectrum() : create spectrum
 	"""
-
-	#define all possible options
-	single_phase = single_phase_options(printout=False).index(input['approx']['single_phase'])
-
-	multi_phase = multi_phase_options(printout=False).index(input['approx']['multi_phase'])
-
-	raman_approx = raman_options().index(input['approx']['raman'])
-
-	return single_phase, multi_phase, raman_approx
-
-class inputs():
-	"""Class to setup planet to run"""
-	def __init__(self):
+	def __init__(self, continuum_db = None, molecular_db = None, raman_db = None):
 
 		self.inputs = json.load(open(os.path.join(__refdata__,'config.json')))
-	def phase_angle(self, phase=0)	:
-		"""Define phase angle"""
+
+		if isinstance(continuum_db,type(None) ): continuum_db = os.path.join(__refdata__, 'opacities', self.inputs['opacities']['files']['continuum'])
+		if isinstance(molecular_db,type(None) ): molecular_db = os.path.join(__refdata__, 'opacities', self.inputs['opacities']['files']['molecular'])
+		if isinstance(raman_db,type(None) ): raman_db = os.path.join(__refdata__, 'opacities', self.inputs['opacities']['files']['raman'])
+
+		self.opacityclass=RetrieveOpacities(
+					continuum_db,
+					molecular_db, 
+					raman_db
+					)
+
+
+	def phase_angle(self, phase=0,num_gangle=10, num_tangle=10):
+		"""Define phase angle and number of gauss and tchebychev angles to compute. 
+		
+		phase : float,int
+			Phase angle in radians 
+		num_gangle : int 
+			Number of Gauss angles to integrate over facets (Default is 10).
+			 Higher numbers will slow down code. 
+		num_tangle : int 
+			Number of Tchebyshev angles to integrate over facets (default is 10)
+		"""
 		self.inputs['phase_angle'] = phase
+		self.inputs['disco']['num_gangle'] = int(num_gangle)
+		self.inputs['disco']['num_tangle'] = int(num_tangle)
+
 	def gravity(self, gravity=None, gravity_unit=None, 
 		              radius=None, radius_unit=None, 
 		              mass = None, mass_unit=None):
@@ -298,12 +307,24 @@ class inputs():
 		wno_star = 1e4/sp.wave[::-1] #convert to wave number and flip
 		flux_star = sp.flux[::-1]	 #flip here to get correct order 
 
+		wno_planet = self.opacityclass.wno
+		max_shift = np.max(wno_planet)+6000 #this 6000 is just the max raman shift we could have 
+		min_shift = np.min(wno_planet) -2000 #it is just to make sure we cut off the right wave ranges
+
+		#do a fail safe to make sure that star is on a fine enough grid for planet case 
+		fine_wno_star = np.linspace(min_shift, max_shift, len(wno_planet)*5)
+		fine_flux_star = np.interp(fine_wno_star,wno_star, flux_star)
+
+		#this adds stellar shifts 'self.raman_stellar_shifts' to the opacity class
+		#the cross sections are computed later 
+		self.opacityclass.compute_stellar_shits(fine_wno_star, fine_flux_star)
+
 		self.inputs['star']['database'] = database
 		self.inputs['star']['temp'] = temp
 		self.inputs['star']['logg'] = logg
 		self.inputs['star']['metal'] = metal
-		self.inputs['star']['wno'] = wno_star 
-		self.inputs['star']['flux'] = flux_star 
+		self.inputs['star']['wno'] = fine_wno_star 
+		self.inputs['star']['flux'] = fine_flux_star 
 
 	def atmosphere(self, df=None, filename=None, pt_params = None,exclude_mol=None, **pd_kwargs):
 		"""
@@ -511,11 +532,9 @@ class inputs():
 		self.inputs['approx']['TTHG_params']['constant_forward']=tthg_forward
 
 
-
-
 	def spectrum(self,dimension = '1d', full_output=False, plot_opacity= False):
 		"""Run Spectrum"""
-		return picaso(self.inputs, full_output=full_output, plot_opacity=plot_opacity)
+		return picaso(self, full_output=full_output, plot_opacity=plot_opacity)
 
 
 def jupiter_pt():

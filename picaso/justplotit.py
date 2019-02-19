@@ -12,6 +12,9 @@ from bokeh.models import HoverTool
 from bokeh.models import LinearColorMapper, LogTicker,BasicTicker, ColorBar,LogColorMapper,Legend
 import os 
 from numba import jit
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+import matplotlib.pyplot as plt
 
 def mixing_ratio(full_output,**kwargs):
 	"""Returns plot of mixing ratios 
@@ -40,11 +43,11 @@ def mixing_ratio(full_output,**kwargs):
 
 	fig = figure(**kwargs)
 	cols = colfun1(len(molecules))
-	legend_it=[]    
+	legend_it=[]	
 	for mol , c in zip(molecules,cols):
 		ind = np.where(mol==np.array(molecules))[0][0]
 		f = fig.line(full_output.layer['mixingratios'][:,ind],pressure, color=c, line_width=3,
-                    muted_color=c, muted_alpha=0.2)
+					muted_color=c, muted_alpha=0.2)
 		legend_it.append((mol, [f]))
 
 	legend = Legend(items=legend_it, location=(0, -20))
@@ -278,15 +281,15 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,**pd_kwargs):
 	scat01 = np.flip(np.reshape(dat01['w0'].values,(nlayer,nwno)),0)
 	xr, yr = scat01.shape
 	f01a = figure(x_range=[0, yr], y_range=[0,xr],
-	                       x_axis_label='Wavenumber Grid', y_axis_label='Pressure Grid, TOA ->',
-	                       title="Single Scattering Albedo",
-	                      plot_width=300, plot_height=300)
+						   x_axis_label='Wavenumber Grid', y_axis_label='Pressure Grid, TOA ->',
+						   title="Single Scattering Albedo",
+						  plot_width=300, plot_height=300)
 
 
 	f01a.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw =yr )
 
 	color_bar = ColorBar(color_mapper=color_mapper, #ticker=LogTicker(),
-	                   label_standoff=12, border_line_color=None, location=(0,0))
+					   label_standoff=12, border_line_color=None, location=(0,0))
 
 	f01a.add_layout(color_bar, 'left')
 
@@ -300,14 +303,14 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,**pd_kwargs):
 
 
 	f01 = figure(x_range=[0, yr], y_range=[0,xr],
-	                       x_axis_label='Wavenumber Grid', y_axis_label='Pressure Grid, TOA ->',
-	                       title="Cloud Optical Depth Per Layer",
-	                      plot_width=300, plot_height=300)
+						   x_axis_label='Wavenumber Grid', y_axis_label='Pressure Grid, TOA ->',
+						   title="Cloud Optical Depth Per Layer",
+						  plot_width=300, plot_height=300)
 
 	f01.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw =yr )
 
 	color_bar = ColorBar(color_mapper=color_mapper, ticker=LogTicker(),
-	                   label_standoff=12, border_line_color=None, location=(0,0))
+					   label_standoff=12, border_line_color=None, location=(0,0))
 	f01.add_layout(color_bar, 'left')
 
 	#PLOT G0
@@ -319,14 +322,14 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,**pd_kwargs):
 
 
 	f01b = figure(x_range=[0, yr], y_range=[0,xr],
-	                       x_axis_label='Wavenumber Grid', y_axis_label='Pressure Grid, TOA ->',
-	                       title="Assymetry Parameter",
-	                      plot_width=300, plot_height=300)
+						   x_axis_label='Wavenumber Grid', y_axis_label='Pressure Grid, TOA ->',
+						   title="Assymetry Parameter",
+						  plot_width=300, plot_height=300)
 
 	f01b.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw =yr )
 
 	color_bar = ColorBar(color_mapper=color_mapper, ticker=BasicTicker(),
-	                   label_standoff=12, border_line_color=None, location=(0,0))
+					   label_standoff=12, border_line_color=None, location=(0,0))
 	f01b.add_layout(color_bar, 'left')
 	return column(row(f01a, f01, row(f01b)))
 
@@ -340,7 +343,7 @@ def cloud(full_output):
 
 	Parameters
 	----------
-	full_
+	full_output
 
 	Returns
 	-------
@@ -355,15 +358,15 @@ def cloud(full_output):
 	scat01 = np.flip(dat01['w0'])#[0:10,:]
 	xr, yr = scat01.shape
 	f01a = figure(x_range=[0, yr], y_range=[0,xr],
-	                       x_axis_label='Wavenumber Grid', y_axis_label='Pressure Grid, TOA ->',
-	                       title="Single Scattering Albedo",
-	                      plot_width=300, plot_height=300)
+						   x_axis_label='Wavenumber Grid', y_axis_label='Pressure Grid, TOA ->',
+						   title="Single Scattering Albedo",
+						  plot_width=300, plot_height=300)
 
 
 	f01a.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw = yr)
 
 	color_bar = ColorBar(color_mapper=color_mapper, #ticker=LogTicker(),
-	                   label_standoff=12, border_line_color=None, location=(0,0))
+					   label_standoff=12, border_line_color=None, location=(0,0))
 
 	f01a.add_layout(color_bar, 'left')
 
@@ -377,14 +380,14 @@ def cloud(full_output):
 
 
 	f01 = figure(x_range=[0, yr], y_range=[0,xr],
-	                       x_axis_label='Wavenumber Grid', y_axis_label='Pressure Grid, TOA ->',
-	                       title="Cloud Optical Depth Per Layer",
-	                      plot_width=300, plot_height=300)
+						   x_axis_label='Wavenumber Grid', y_axis_label='Pressure Grid, TOA ->',
+						   title="Cloud Optical Depth Per Layer",
+						  plot_width=300, plot_height=300)
 
 	f01.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw = yr)
 
 	color_bar = ColorBar(color_mapper=color_mapper, ticker=LogTicker(),
-	                   label_standoff=12, border_line_color=None, location=(0,0))
+					   label_standoff=12, border_line_color=None, location=(0,0))
 	f01.add_layout(color_bar, 'left')
 
 	#PLOT G0
@@ -396,16 +399,73 @@ def cloud(full_output):
 
 
 	f01b = figure(x_range=[0, yr], y_range=[0,xr],
-	                       x_axis_label='Wavenumber Grid', y_axis_label='Pressure Grid, TOA ->',
-	                       title="Assymetry Parameter",
-	                      plot_width=300, plot_height=300)
+						   x_axis_label='Wavenumber Grid', y_axis_label='Pressure Grid, TOA ->',
+						   title="Assymetry Parameter",
+						  plot_width=300, plot_height=300)
 
 	f01b.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw = yr)
 
 	color_bar = ColorBar(color_mapper=color_mapper, ticker=BasicTicker(),
-	                   label_standoff=12, border_line_color=None, location=(0,0))
+					   label_standoff=12, border_line_color=None, location=(0,0))
 	f01b.add_layout(color_bar, 'left')
 	return column(row(f01a, f01, row(f01b)))
+
+
+def disco(full_output,wavelength=[0.3]):
+	"""
+	Plot disco ball with facets. Bokeh is not good with 3D things. So this is in matplotlib
+
+	Parameters
+	----------
+	full_output : class 
+		Full output from picaso
+
+	wavelength : list 
+		Where to plot 3d facets. Can input as many wavelengths as wanted. 
+		Must be a list, must be in microns. 
+	"""
+
+	nrow = int(np.ceil(len(wavelength)/3))
+	ncol = int(np.min([3,len(wavelength)])) #at most 3 columns
+	fig = plt.figure(figsize=(6*ncol,4*nrow))
+	for i,w in zip(range(len(wavelength)),wavelength):
+		ax = fig.add_subplot(nrow,ncol,i+1, projection='3d')
+		#else:ax = fig.gca(projection='3d')
+		wave = 1e4/full_output.wavenumber
+		indw = find_nearest(wave,w)
+		#[umg, numt, nwno] this is xint_at_top
+		xint_at_top = full_output.xint_at_top[:,:,indw]
+
+		f = full_output.latitude  #tangle
+		numtx = full_output.longitude #gangle
+
+		cm = plt.cm.get_cmap('plasma')
+		u, v = np.meshgrid(numtx, f)
+		x = np.cos(u)*np.sin(v)
+		y = np.sin(u)*np.sin(v)
+		z = np.cos(v)
+
+		ax.plot_wireframe(x, y, z, color="gray")
+
+		sc = ax.scatter(x,y,z, c = xint_at_top.T.ravel(),cmap=cm,s=150)
+
+		fig.colorbar(sc)
+		ax.set_zlim3d(-1, 1)					# viewrange for z-axis should be [-4,4]
+		ax.set_ylim3d(-1, 1)					# viewrange for y-axis should be [-2,2]
+		ax.set_xlim3d(-1, 1)
+		ax.view_init(0, 0)
+		ax.set_title(str(w)+' Microns')
+		# Hide grid lines
+		ax.grid(False)
+
+		# Hide axes ticks
+		ax.set_xticks([])
+		ax.set_yticks([])
+		ax.set_zticks([])
+		plt.axis('off')
+
+	plt.subplots_adjust(wspace=0.3, hspace=0.3)
+	plt.show()
 
 #@jit(nopython=True, cache=True)
 def find_nearest(array,value):

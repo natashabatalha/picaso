@@ -44,12 +44,8 @@
 		"num_tangle":10
 	},
 	"opacities":{
-		"year":null,
-		"R":null,
-		"wmin":null,
-		"wmax":null,
+		"wnogrid":null,
 		"files":{
-			"wavegrid":"wave.h5",
 			"continuum":"continuum.hdf5",
 			"molecular":"molecular.hdf5",
 			"h2minus":"h2minus.csv",

@@ -633,7 +633,7 @@ class RetrieveOpacities():
 		given a pressure and temperature, retrieve the wavelength dependent opacity
 
 	"""
-	def __init__(self, wno, wave, continuum_data, molecular_data,raman_data):
+	def __init__(self, continuum_data, molecular_data,raman_data):
 		self.cia_db = h5py.File(continuum_data)
 		self.cia_temps = np.array([float(i) for i in self.cia_db['H2H2'].keys()])
 		#self.cia_mols = [i for i in self.cia_db.keys()]
@@ -648,9 +648,16 @@ class RetrieveOpacities():
 			self.mol_press[str(i)] = np.array([float(i) for i in self.mol_db['H2O'][str(i)].keys()])
 		#self.cia_mols = [i for i in self.cia_db.keys()]
 
-		self.wno = wno
-		self.wave = wave
-		self.nwno = np.size(wno)
+		if 'wavenumber' in self.cia_db.attrs:
+			self.wno = np.array(self.cia_db.attrs['wavenumber'])
+			self.wave = 1e4/self.wno 
+			self.nwno = np.size(self.wno)
+		elif 'wavenumber' in self.cia_db.keys():
+			self.wno = np.array(self.cia_db['wavenumber'])
+			self.wave = 1e4/self.wno 
+			self.nwno = np.size(self.wno)	
+		else: 
+			raise Exception('Cannot find `wavenumber` in continuum opacity database. Add it as attribute or key.')		
 
 		#raman cross sections 
 		self.raman_db = pd.read_csv(raman_data,
@@ -742,8 +749,6 @@ class RetrieveOpacities():
 			all_shifted_spec[:,i] = shifted_flux/unshifted
 
 		self.raman_stellar_shifts = all_shifted_spec
-
-		return all_shifted_spec
 
 @jit(nopython=True, cache=True)
 def find_nearest(array,value):

@@ -465,43 +465,6 @@ class ATMSETUP():
 		self.warnings += [warn]
 		return
 
-	def get_stellar_spec(self,wno_planet, wno_star, flux_star ):
-		"""
-		Put on hires planet spec
-
-		Warning
-		-------
-		If the resolution of the stellar spectrum models increase 
-		to higher resolution you could take out the lines that start with `fine_wno_star` and 
-		`fine_flux-star` 
-
-		Parameters
-		----------
-		wno : array 
-			Array of the planet model output wavenumber grid 
-		database : str 
-			The database to pull stellar spectrum from. See documentation for pysynphot. 
-		temp : float 
-			Teff of the stellar model 
-		metal : float 
-			Metallicity of the stellar model 
-		logg : float 
-			Logg cgs of the stellar model
-
-		Returns 
-		-------
-		wno, flux 
-			Wavenumber and stellar flux in wavenumber and FLAM units 
-		"""
-		#now we need to make sure that the stellar grid is on a 3x finer resolution 
-		#than the model. 
-		max_shift = np.max(wno_planet)+6000 #this 6000 is just the max raman shift we could have 
-		min_shift = np.min(wno_planet) -2000 #it is just to make sure we cut off the right wave ranges
-
-		#do a fail safe to make sure that star is on a fine enough grid for planet case 
-		fine_wno_star = np.linspace(min_shift, max_shift, len(wno_planet)*5)
-		fine_flux_star = np.interp(fine_wno_star,wno_star, flux_star)
-		return wno_star, flux_star, fine_wno_star, fine_flux_star
 
 	def get_surf_reflect(self,nwno):
 		"""
