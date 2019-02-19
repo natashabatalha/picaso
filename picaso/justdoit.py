@@ -467,8 +467,7 @@ class inputs():
 
 	def spectrum(self,dimension = '1d', full_output=False, plot_opacity= False):
 		"""Run Spectrum"""
-		w, a = picaso(self.inputs, full_output=full_output, plot_opacity=plot_opacity)
-		return w, a
+		return picaso(self.inputs, full_output=full_output, plot_opacity=plot_opacity)
 
 
 def jupiter_pt():

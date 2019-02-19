@@ -119,7 +119,7 @@ def spectrum(wno, alb,legend=None, **kwargs):
 	plot_format(fig)
 	return fig
 
-def tau_pressure(full_output, at_tau=1,**kwargs):
+def photon_attenuation(full_output, at_tau=0.5,**kwargs):
 	"""
 	Plot breakdown of gas opacity, cloud opacity, 
 	Rayleigh scattering opacity at a specified pressure level. 
