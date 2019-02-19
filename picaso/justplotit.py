@@ -436,11 +436,11 @@ def disco(full_output,wavelength=[0.3]):
 		#[umg, numt, nwno] this is xint_at_top
 		xint_at_top = full_output.xint_at_top[:,:,indw]
 
-		f = full_output.latitude  #tangle
-		numtx = full_output.longitude #gangle
+		latitude = full_output.latitude  #tangle
+		longitude = full_output.longitude #gangle
 
 		cm = plt.cm.get_cmap('plasma')
-		u, v = np.meshgrid(numtx, f)
+		u, v = np.meshgrid(longitude, latitude)
 		x = np.cos(u)*np.sin(v)
 		y = np.sin(u)*np.sin(v)
 		z = np.cos(v)
