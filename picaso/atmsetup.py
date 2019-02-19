@@ -378,10 +378,11 @@ class ATMSETUP():
 		self.input_wno = self.input['clouds']['wavenumber']
 
 		self.c.output_npts_wave = np.size(wno)
-		self.c.input_npts_wave = len(self.input_wno)
+		
 
 		#if a cloud profile exists... 
-		if (self.dimension=='1d'):
+		if ((self.dimension=='1d') & (not isinstance(self.input_wno, type(None)))) :
+			self.c.input_npts_wave = len(self.input_wno)
 
 			#read in the file that was supplied 		
 			cld_input = self.input['clouds']['profile'] 
@@ -401,7 +402,7 @@ class ATMSETUP():
 			self.layer['cloud']['w0'] = w0  
 
 		#if no filepath was given and nothing was given for g0/w0, then assume the run is cloud free and give zeros for all thi stuff		  
-		elif (self.input['clouds']['profile'] == None) and (self.dimension=='1d'):
+		elif ((self.input['clouds']['profile'] == None) and (self.dimension=='1d')):
 
 			zeros = np.zeros((self.c.nlayer,self.c.output_npts_wave))
 			self.layer['cloud'] = {'w0': zeros}
@@ -409,7 +410,8 @@ class ATMSETUP():
 			self.layer['cloud']['opd'] = zeros
 
 		#ONLY OPTION FOR 3D INPUT
-		elif self.dimension=='3d':
+		elif ((self.dimension=='3d') & (not isinstance(self.input_wno, type(None)))):
+			self.c.input_npts_wave = len(self.input_wno)
 			cld_input = h5py.File(self.input['clouds']['filepath'])
 			opd = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle))
 			g0 = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle)) 

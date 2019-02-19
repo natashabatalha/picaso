@@ -39,8 +39,10 @@ def picaso(input,dimension = '1d', full_output=False, plot_opacity= False):
 	test_mode = input['test_mode']
 
 	#set approx numbers options (to be used in numba compiled functions)
-	single_phase, multi_phase, raman_approx, = set_approximations(input) 
-
+	single_phase = input['approx']['single_phase']
+	multi_phase = input['approx']['multi_phase']
+	raman_approx =input['approx']['raman']
+	
 	#phase angle 
 	phase_angle = input['phase_angle']
 
@@ -465,6 +467,52 @@ class inputs():
 
 			self.inputs['clouds']['profile'] = df
 
+	def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,raman='oklopcic',
+				tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1):
+		"""
+		This function sets all the default approximations in the code. It transforms the string specificatons
+		into a number so that they can be used in numba nopython routines. 
+
+		For `str` cases such as `TTHG_ray` users see all the options by using the function `single_phase_options`
+		or `multi_phase_options`, etc. 
+
+		single_phase : str 
+			Single scattering phase function approximation 
+		multi_phase : str 
+			Multiple scattering phase function approximation 
+		delta_eddington : bool 
+			Turns delta-eddington on and off
+		raman : str 
+			Uses various versions of raman scattering 
+		tthg_frac : list 
+			Functional of forward to back scattering with the form of polynomial :
+			tthg_frac[0] + tthg_frac[1]*g_b^tthg_frac[2]
+			See eqn. 6 in picaso paper 
+		tthg_back : float 
+			Back scattering asymmetry factor gf = g_bar*tthg_back
+		tthg_forward : float 
+			Forward scattering asymmetry factor gb = g_bar * tthg_forward 
+		"""
+
+		self.inputs['approx']['single_phase'] = single_phase_options(printout=False).index(single_phase)
+		self.inputs['approx']['multi_phase'] = multi_phase_options(printout=False).index(multi_phase)
+		self.inputs['approx']['delta_eddington'] = delta_eddington
+		self.inputs['approx']['raman'] =  raman_options().index(raman)
+
+		if isinstance(tthg_frac, (list, np.ndarray)):
+			if len(tthg_frac) == 3:
+				self.inputs['approx']['TTHG_params']['fraction'] = tthg_frac
+			else:
+				raise Exception('tthg_frac should be of length=3 so that : tthg_frac[0] + tthg_frac[1]*g_b^tthg_frac[2]')
+		else: 
+			raise Exception('tthg_frac should be a list or ndarray of length=3')
+
+		self.inputs['approx']['TTHG_params']['constant_back'] = tthg_back
+		self.inputs['approx']['TTHG_params']['constant_forward']=tthg_forward
+
+
+
+
 	def spectrum(self,dimension = '1d', full_output=False, plot_opacity= False):
 		"""Run Spectrum"""
 		return picaso(self.inputs, full_output=full_output, plot_opacity=plot_opacity)
@@ -488,38 +536,3 @@ def raman_options():
 	"""Retrieve options for raman scattering approximtions"""
 	return ["oklopcic","pollack","none"]
 
-if __name__ == "__main__":
-	
-	import pandas as pd
-	from bokeh.plotting import figure, show, output_file
-	from bokeh.palettes import inferno
-	colors = inferno(19)
-
-	__refdata__ = os.environ.get('picaso_refdata')
-	
-	a = load_inputs()
-
-	#paths to pt and cld files
-	a['atmosphere']['profile']['filepath'] = jupiter_pt()
-	#a['atmosphere']['clouds']['filepath'] =  jupiter_cld()
-	#define gravity
-	a['planet']['gravity'] = 25
-	a['planet']['gravity_unit'] = 'm/(s**2)' 
-	#this is default. But set eddington approx
-	a['approx']['delta_eddington']=True
-	#define number of integration angles
-	a['disco']['num_gangle']= 10
-	a['disco']['num_tangle'] = 10
-	#add star properties for raman scattering
-	a['star']['temp'] = 6000
-	a['star']['metal'] = 0.0122
-	a['star']['logg'] = 4.437
-
-	fig = figure(width=1200, height=800)
-	ii = 0 
-	for phase in [0.0]:
-		print(phase)
-		wno, alb = picaso(a, phase,dimension='1d')
-		fig.line(1e4/wno, alb, line_width = 4, color = colors[ii], legend = 'Phase='+str(phase))
-		ii+=1 
-		show(fig)
