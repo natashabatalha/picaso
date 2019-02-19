@@ -240,7 +240,7 @@ def plot_format(df):
 	df.yaxis.axis_label_text_font_style = 'bold'
 
 
-def plot_cld_input(file, nwno, nlayer):
+def plot_cld_input(nwno, nlayer, filename=None,df=None,**pd_kwargs):
 	"""
 	This function was created to investigate CLD input file for PICASO. 
 
@@ -250,13 +250,17 @@ def plot_cld_input(file, nwno, nlayer):
 
 	Parameters
 	----------
-	file : str 
-		Path  to cloud input file
 	nwno : int 
 		Number of wavenumber points. For runs from Ackerman & Marley, this will always be 196. 
 	nlayer : int 
 		Should be one less than the number of levels in your pressure temperature grid. Cloud 
 		opacity is assigned for slabs. 
+	file : str 
+		(Optional)Path to cloud input file
+	df : str 
+		(Optional)Dataframe of cloud input file
+	pd_kwargs : kwargs
+		Pandas key word arguments for `pandas.read_csv`
 
 	Returns
 	-------
@@ -265,10 +269,13 @@ def plot_cld_input(file, nwno, nlayer):
 	cols = colfun1(200)
 	color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
 
-	dat01 = pd.read_csv(file, delim_whitespace=True)
+	if not isinstance(filename,type(None)):
+		dat01 = pd.read_csv(filename, **pd_kwargs)
+	elif not isinstance(df,type(None)):
+		dat01=df
 
 	#PLOT W0
-	scat01 = np.flip(np.reshape(dat01['w0'].values,(nlayer,nwno)),0)#[0:10,:]
+	scat01 = np.flip(np.reshape(dat01['w0'].values,(nlayer,nwno)),0)
 	xr, yr = scat01.shape
 	f01a = figure(x_range=[0, yr], y_range=[0,xr],
 	                       x_axis_label='Wavenumber Grid', y_axis_label='Pressure Grid, TOA ->',
@@ -276,7 +283,7 @@ def plot_cld_input(file, nwno, nlayer):
 	                      plot_width=300, plot_height=300)
 
 
-	f01a.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw = yr)
+	f01a.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw =yr )
 
 	color_bar = ColorBar(color_mapper=color_mapper, #ticker=LogTicker(),
 	                   label_standoff=12, border_line_color=None, location=(0,0))
@@ -285,7 +292,7 @@ def plot_cld_input(file, nwno, nlayer):
 
 
 	#PLOT OPD
-	scat01 = np.flip(np.reshape(dat01['opd'].values+1e-60,(nlayer,nwno)),0)
+	scat01 = np.flip(np.reshape(dat01['opd'].values,(nlayer,nwno)),0)
 
 	xr, yr = scat01.shape
 	cols = colfun2(200)[::-1]
@@ -297,14 +304,14 @@ def plot_cld_input(file, nwno, nlayer):
 	                       title="Cloud Optical Depth Per Layer",
 	                      plot_width=300, plot_height=300)
 
-	f01.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw = yr)
+	f01.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw =yr )
 
 	color_bar = ColorBar(color_mapper=color_mapper, ticker=LogTicker(),
 	                   label_standoff=12, border_line_color=None, location=(0,0))
 	f01.add_layout(color_bar, 'left')
 
 	#PLOT G0
-	scat01 = np.flip(np.reshape(dat01['g0'].values+1e-60,(nlayer,nwno)),0)
+	scat01 = np.flip(np.reshape(dat01['g0'].values,(nlayer,nwno)),0)
 
 	xr, yr = scat01.shape
 	cols = colfun3(200)[::-1]
@@ -316,7 +323,7 @@ def plot_cld_input(file, nwno, nlayer):
 	                       title="Assymetry Parameter",
 	                      plot_width=300, plot_height=300)
 
-	f01b.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw = yr)
+	f01b.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw =yr )
 
 	color_bar = ColorBar(color_mapper=color_mapper, ticker=BasicTicker(),
 	                   label_standoff=12, border_line_color=None, location=(0,0))

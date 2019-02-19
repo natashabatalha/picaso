@@ -20,16 +20,14 @@
 		"pt_params":null
 	},
 	"clouds":{
-			"filepath":null,
-			"wavenumber":"wave_EGP.dat"
-		},
+		"profile":null,
+		"wavenumber":null,
 		"scattering":{
 			"g0":null,
 			"w0":null,
-			"opd":null,
-			"p":null,
-			"dp":null
-		},
+			"opd":null
+		}
+	},
 	"approx":{
 		"single_phase":"TTHG_ray",
 		"TTHG_params":{

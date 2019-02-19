@@ -105,7 +105,7 @@ def dlugach_test(single_phase = 'TTHG_ray', output_dir = None, rayleigh=True, co
 		if output_dir!=None: perror.to_csv(os.path.join(output_dir,'test_results.csv'))
 	return perror
 
-def madhu_test(rayleigh=True, isotropic=True, lambert=True, asymmetric=True, single_phase = 'TTHG_ray', output_dir = None):
+def madhu_test(rayleigh=True, isotropic=True, asymmetric=True, single_phase = 'TTHG_ray', output_dir = None):
 	"""
 	Test the flux against against Madhu and Burrows  
 	https://arxiv.org/pdf/1112.4476.pdf
@@ -119,8 +119,6 @@ def madhu_test(rayleigh=True, isotropic=True, lambert=True, asymmetric=True, sin
 		Tests rayleigh phase function 
 	isotropic : bool 
 		Tests isotropic phase function 
-	lambert : bool 
-		Tests lambertian phase function 
 	single_phase : str 
 		Single phase function to test with the constant_tau test. Can either be: 
 		"cahoy","TTHG_ray","TTHG", and "OTHG"
@@ -135,7 +133,7 @@ def madhu_test(rayleigh=True, isotropic=True, lambert=True, asymmetric=True, sin
 	"""
 
 	#read in table from reference data with the test values
-	real_answer = pd.read_csv(os.path.join(__refdata__,'base_cases', 'MADHU.csv'))
+	real_answer = pd.read_csv(os.path.join(__refdata__,'base_cases', 'MADHU_isotropic.csv'))
 	
 	#perror = real_answer.copy()
 
@@ -157,7 +155,7 @@ def madhu_test(rayleigh=True, isotropic=True, lambert=True, asymmetric=True, sin
 	a['star']['metal'] = 0.0122 #log metal
 	a['star']['logg'] = 4.437 #log cgs
 	a['atmosphere']['scattering']['g0'] = 0.0
-
+	a['phase_angle']=0
 	if rayleigh:
 		#SCALAR RAYLEIGH
 		a['approx']['delta_eddington']=True
@@ -167,8 +165,8 @@ def madhu_test(rayleigh=True, isotropic=True, lambert=True, asymmetric=True, sin
 		a['atmosphere']['scattering']['g0'] = 0
 
 		for i in real_answer.index:
-			a['atmosphere']['scattering']['w0'] = real_answer['omega'][i]
-			wno, alb = picaso(a, 0.0)
+			a['atmosphere']['scattering']['w0'] = real_answer['ssa'][i]
+			wno, alb = picaso(a)
 			real_answer.loc[i,'rayleigh']=alb[-1] 
 
 	if isotropic:
@@ -180,8 +178,8 @@ def madhu_test(rayleigh=True, isotropic=True, lambert=True, asymmetric=True, sin
 		a['atmosphere']['scattering']['g0'] = 0
 
 		for i in real_answer.index:
-			a['atmosphere']['scattering']['w0'] = real_answer['omega'][i]
-			wno, alb = picaso(a, 0.0)
+			a['atmosphere']['scattering']['w0'] = real_answer['ssa'][i]
+			wno, alb = picaso(a)
 			real_answer.loc[i,'0.0']=alb[-1] 
 
 	if asymmetric:
@@ -196,6 +194,6 @@ def madhu_test(rayleigh=True, isotropic=True, lambert=True, asymmetric=True, sin
 			a['atmosphere']['scattering']['g0'] = g
 			for i in real_answer.index:
 				a['atmosphere']['scattering']['w0'] = real_answer['omega'][i]
-				wno, alb = picaso(a, 0.0)
+				wno, alb = picaso(a)
 				real_answer.loc[i,str(g)]=alb[-1] 
 	return real_answer

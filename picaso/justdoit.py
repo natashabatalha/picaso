@@ -1,6 +1,6 @@
 from .atmsetup import ATMSETUP
 from .fluxes import get_flux_geom_1d, get_flux_geom_3d 
-from .wavelength import get_output_grid
+from .wavelength import get_output_grid,get_cld_input_grid
 import numpy as np
 import pandas as pd
 from .optics import RetrieveOpacities,compute_opacity
@@ -328,14 +328,17 @@ class inputs():
 				raise Exception("df must be pandas DataFrame or dictionary")
 		if not isinstance(filename, type(None)):
 			df = pd.read_csv(filename, **pd_kwargs)
+			self.nlevel=df.shape[0] 
 
 		if 'pressure' not in df.keys(): 
 			raise Exception("Check column names. `pressure` must be included.")
 
 		if (('temperature' not in df.keys()) and (isinstance(pt_params, type(None)))):
 			raise Exception("`temperature` not specified and pt_params not given. Do one or the other.")
+
 		else: 
 			self.inputs['atmosphere']['pt_params'] = pt_params
+			self.nlevel=61 #default n of levels for parameterization
 
 		if not isinstance(exclude_mol, type(None)):
 			df = df.drop(exclude_mol, axis=1)
@@ -343,6 +346,124 @@ class inputs():
 
 		self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
 
+
+	def clouds(self, filename = None, g0=None, w0=None, opd=None,p=None, dp=None,**pd_kwargs):
+		"""
+		Cloud specification for the model. Clouds are parameterized by a single scattering albedo (w0), 
+		an assymetry parameter (g0), and a total extinction per layer (opd).
+
+		g0,w0, and opd are both wavelength and pressure dependent. Our cloud models come 
+		from eddysed. Their output looks like this (where level 1=TOA, and wavenumber1=Smallest number)
+
+		level wavenumber opd w0 g0
+		1.	 1.   ... . .
+		1.	 2.   ... . .
+		1.	 3.   ... . .
+		.	  .	... . .
+		.	  .	... . .
+		1.	 M.   ... . .
+		2.	 1.   ... . .
+		.	  .	... . .
+		N.	 .	... . .
+
+		If you are creating your own file you have to make sure that you have a 
+		**pressure** (bars) and **wavenumber**(inverse cm) column. We will use this to make sure that your cloud 
+		and atmospheric profiles are on the same grid. **If there is no pressure or wavelength parameter
+		we will assume that you are on the same grid as your atmospheric input, and on the 
+		eddysed wavelength grid! **
+
+		Users can also input their own fixed cloud parameters, by specifying a single value 
+		for g0,w0,opd and defining the thickness and location of the cloud. 
+
+		Parameters
+		----------
+		filename : str 
+			(Optional) Filename with info on the wavelength and pressure-dependent single scattering
+			albedo, asymmetry factor, and total extinction per layer. Input associated pd_kwargs 
+			so that the resultant output has columns named : `g0`, `w0` and `opd`. If you are not 
+			using the eddysed output, you will also need a `wavenumber` and `pressure` column in units 
+			of inverse cm, and bars. 
+		g0 : float, list of float
+			(Optional) Asymmetry factor. Can be a single float for a single cloud. Or a list of floats 
+			for two different cloud layers 
+		w0 : list of float 
+			(Optional) Single Scattering Albedo. Can be a single float for a single cloud. Or a list of floats 
+			for two different cloud layers 		
+		opd : list of float 
+			(Optional) Total Extinction in `dp`. Can be a single float for a single cloud. Or a list of floats 
+			for two different cloud layers 
+		p : list of float 
+			(Optional) Center location of cloud deck (bars). Can be a single float for a single cloud. Or a list of floats 
+			for two different cloud layers 
+		dp : list of float 
+			(Optional) Total thickness cloud deck (bars). Can be a single float for a single cloud or a list of floats 
+			for two different cloud layers 
+			Cloud will span 10**(np.log10(p) +- np.log10(dp)/2)
+		"""
+
+		#first complete options if user inputs dataframe or dict 
+		if not isinstance(filename, type(None)):
+
+			df = pd.read_csv(filename, **pd_kwargs)
+			cols = df.keys()
+
+			assert 'g0' in cols, "Please make sure g0 is a named column in cld file"
+			assert 'w0' in cols, "Please make sure w0 is a named column in cld file"
+			assert 'opd' in cols, "Please make sure opd is a named column in cld file"
+
+			#CHECK SIZES
+
+			#if it's a user specified pressure and wavenumber
+			if (('pressure' in cols) & ('wavenumber' in cols)):
+				df = df.sort_values(['wavenumber','pressure']).reset_index(drop=True)
+				self.inputs['clouds']['wavenumber'] = df['wavenumber'].unique()
+				nwave = len(self.inputs['clouds']['wavenumber'])
+				nlayer = len(df['pressure'].unique())
+				assert df.shape[0] == (self.nlevel-1)*nwave, "There are {0} rows in the df, which does not equal {1} layers previously specified x {2} wave pts".format(df.shape[0], self.nlevel-1, nwave) 
+			
+			#if its eddysed, make sure there are 196 wave points 
+			else: 
+				assert df.shape[0] == (self.nlevel-1)*196, "There are {0} rows in the df, which does not equal {1} layers x 196 eddysed wave pts".format(df.shape[0], self.nlevel-1) 
+				
+				self.inputs['clouds']['wavenumber'] = get_cld_input_grid('wave_EGP.dat')
+
+			#add it to input
+			self.inputs['clouds']['profile'] = df
+
+		#first make sure that all of these have been specified
+		elif None in [g0, w0, opd, p,dp]:
+			raise Exception("Must either give dataframe/dict, OR a complete set of g0, w0, opd,p,dp to compute cloud profile")
+		else:
+			pressure_level = self.inputs['atmosphere']['profile']['pressure'].values
+			pressure = np.sqrt(pressure_level[1:] * pressure_level[0:-1])#layer
+
+			w = get_cld_input_grid('wave_EGP.dat')
+
+			self.inputs['clouds']['wavenumber'] = w
+
+			pressure_all =[]
+			for i in pressure: pressure_all += [i]*len(w)
+			wave_all = list(w)*len(pressure)
+
+			df = pd.DataFrame({'pressure':pressure_all,
+								'wavenumber': wave_all })
+
+
+			zeros=np.zeros(196*(self.nlevel-1))
+
+			#add in cloud layers 
+			df['g0'] = zeros
+			df['w0'] = zeros
+			df['opd'] = zeros
+			#loop through all cloud layers and set cloud profile
+			for ig, iw, io , ip, idp in zip(g0,w0,opd,p,dp):
+				minp = 10**(np.log10(ip) - np.log10(idp/2))
+				maxp = 10**(np.log10(ip) + np.log10(idp/2))
+				df.loc[((df['pressure'] >= minp) & (df['pressure'] <= maxp)),'g0']= ig
+				df.loc[((df['pressure'] >= minp) & (df['pressure'] <= maxp)),'w0']= iw
+				df.loc[((df['pressure'] >= minp) & (df['pressure'] <= maxp)),'opd']= io
+
+			self.inputs['clouds']['profile'] = df
 
 	def spectrum(self,dimension = '1d', full_output=False, plot_opacity= False):
 		"""Run Spectrum"""

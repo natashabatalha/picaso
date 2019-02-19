@@ -170,23 +170,6 @@ class ATMSETUP():
 
 		read = self.input['atmosphere']['profile']
 
-		# chemistry_input = self.input['atmosphere']
-		# if chemistry_input['profile']['type'] == 'user':
-
-		# 	if chemistry_input['profile']['filepath'] != None:
-
-		# 		read = pd.read_csv(chemistry_input['profile']['filepath'], delim_whitespace=True)
-
-		# 	elif (isinstance(chemistry_input['profile']['profile'],pd.core.frame.DataFrame) or 
-		# 			isinstance(chemistry_input['profile']['profile'], dict)): 
-		# 			read = chemistry_input['profile']['profile']
-		# 	else:
-		# 		raise Exception("Provide dictionary or a pointer to pointer to filepath")
-		# else: 
-		# 	raise Exception("TODO: only capability for user is included right now")
-
-		# #if a subset is not specified, 
-		# #determine which of the columns is a molecule by trying to get it's weight 
 		
 		#COMPUTE THE MOLECULAT WEIGHTS OF THE MOLECULES
 		weights = pd.DataFrame({})
@@ -356,23 +339,6 @@ class ATMSETUP():
 		self.layer['colden'] = (self.level['pressure'][1:] - self.level['pressure'][:-1] ) / self.planet.gravity
 		return
 
-	# def get_gravity(self):
-	# 	"""
-	# 	Get gravity based on mass and radius, or gravity inputs 
-	# 	"""
-	# 	planet_input = self.input['planet']
-	# 	if planet_input['gravity'] is not None:
-	# 		g = (planet_input['gravity']*u.Unit(planet_input['gravity_unit'])).to('cm/(s**2)')
-	# 		g = g.value
-	# 	elif (planet_input['mass'] is not None) and (planet_input['radius'] is not None):
-	# 		m = (planet_input['mass']*u.Unit(planet_input['mass_unit'])).to(u.g)
-	# 		r = ((planet_input['radius']*u.Unit(planet_input['radius_unit'])).to(u.cm))
-	# 		g = (self.c.G * m /  (r**2)).value
-	# 	else: 
-	# 		raise Exception('Need to specify gravity or radius and mass + additional units')
-	# 	self.planet.gravity = g 
-	# 	return
-
 
 	def get_clouds(self, wno):
 		"""
@@ -407,64 +373,37 @@ class ATMSETUP():
 
 		Todo 
 		----
-		- Allow users to add different kinds of "simple" cloud options like "isotropic scattering" or grey 
-		opacity at certain pressure. 
+		- Take regridding out of here and add it to `justdoit`
 		"""
-		self.input_wno = get_cld_input_grid(self.input['clouds']['wavenumber'])
+		self.input_wno = self.input['clouds']['wavenumber']
 
 		self.c.output_npts_wave = np.size(wno)
 		self.c.input_npts_wave = len(self.input_wno)
-		#if a cloud filepath exists... 
-		if (self.input['clouds']['filepath'] != None) and (self.dimension=='1d'):
 
-			if os.path.exists(self.input['clouds']['filepath']):	
-				#read in the file that was supplied 		
-				cld_input = pd.read_csv(self.input['clouds']['filepath'], delim_whitespace = True) 
-				#make sure cloud input has the correct number of waves and PT points and names
-				assert cld_input.shape[0] == self.c.nlayer*self.c.input_npts_wave, "Cloud input file is not on the same grid as the input PT profile:"
-				assert 'g0' in cld_input.keys(), "Please make sure g0 is a named column in cld file"
-				assert 'w0' in cld_input.keys(), "Please make sure w0 is a named column in cld file"
-				assert 'opd' in cld_input.keys(), "Please make sure opd is a named column in cld file"
+		#if a cloud profile exists... 
+		if (self.dimension=='1d'):
 
-				#then reshape and regrid inputs to be a nice matrix that is nlayer by nwave
-
-				#total extinction optical depth 
-				opd = np.reshape(cld_input['opd'].values, (self.c.nlayer,self.c.input_npts_wave))
-				opd = regrid(opd, self.input_wno, wno)
-				self.layer['cloud'] = {'opd': opd}
-				#cloud assymetry parameter
-				g0 = np.reshape(cld_input['g0'].values, (self.c.nlayer,self.c.input_npts_wave))
-				g0 = regrid(g0, self.input_wno, wno)
-				self.layer['cloud']['g0'] = g0
-				#cloud single scattering albedo 
-				w0 = np.reshape(cld_input['w0'].values, (self.c.nlayer,self.c.input_npts_wave))
-				w0 = regrid(w0, self.input_wno, wno)
-				self.layer['cloud']['w0'] = w0  
-
-			else: 
-
-				#raise an exception if the file doesnt exist 
-				raise Exception('Cld file specified does not exist. Replace with None or find real file') 
+			#read in the file that was supplied 		
+			cld_input = self.input['clouds']['profile'] 
+			
+			#then reshape and regrid inputs to be a nice matrix that is nlayer by nwave
+			#total extinction optical depth 
+			opd = np.reshape(cld_input['opd'].values, (self.c.nlayer,self.c.input_npts_wave))
+			opd = regrid(opd, self.input_wno, wno)
+			self.layer['cloud'] = {'opd': opd}
+			#cloud assymetry parameter
+			g0 = np.reshape(cld_input['g0'].values, (self.c.nlayer,self.c.input_npts_wave))
+			g0 = regrid(g0, self.input_wno, wno)
+			self.layer['cloud']['g0'] = g0
+			#cloud single scattering albedo 
+			w0 = np.reshape(cld_input['w0'].values, (self.c.nlayer,self.c.input_npts_wave))
+			w0 = regrid(w0, self.input_wno, wno)
+			self.layer['cloud']['w0'] = w0  
 
 		#if no filepath was given and nothing was given for g0/w0, then assume the run is cloud free and give zeros for all thi stuff		  
-		elif (self.input['clouds']['filepath'] == None) and (self.input['scattering']['g0'] == None) and (self.dimension=='1d'):
+		elif (self.input['clouds']['profile'] == None) and (self.dimension=='1d'):
 
 			zeros = np.zeros((self.c.nlayer,self.c.output_npts_wave))
-			self.layer['cloud'] = {'w0': zeros}
-			self.layer['cloud']['g0'] = zeros
-			self.layer['cloud']['opd'] = zeros
-
-		#if a value for those are given add those to "scattering"
-		#note there is a distinction here between the "cloud" single scattering albedo, asym factor, opacity and the "TOTAL"
-		#single scattering albedo, and asym factor. This is why there are two separate entries for total and cloud
-
-		elif (self.input['clouds']['filepath'] == None) and (self.input['scattering']['g0'] != None) and (self.dimension=='1d'):
-
-			zeros = np.zeros((self.c.nlayer,self.c.output_npts_wave))
-			#scattering is the TOTAL asym factor and single scattering albedo 
-			self.layer['scattering'] = {'w0': zeros+self.input['scattering']['w0']}
-			self.layer['scattering']['g0'] = zeros+self.input['scattering']['g0']
-			#w0 and g0 here are the single scattering and asymm for the cloud ONLY
 			self.layer['cloud'] = {'w0': zeros}
 			self.layer['cloud']['g0'] = zeros
 			self.layer['cloud']['opd'] = zeros
