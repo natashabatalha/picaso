@@ -2,12 +2,14 @@ from .atmsetup import ATMSETUP
 from .fluxes import get_flux_geom_1d, get_flux_geom_3d 
 from .wavelength import get_output_grid
 import numpy as np
+import pandas as pd
 from .optics import RetrieveOpacities,compute_opacity
 import os
 import pickle as pk
 from .disco import get_angles, compute_disco, compress_disco
 import copy
 import json
+import pysynphot as psyn
 __refdata__ = os.environ.get('picaso_refdata')
 
 def picaso(input,dimension = '1d', full_output=False, plot_opacity= False):
@@ -87,13 +89,14 @@ def picaso(input,dimension = '1d', full_output=False, plot_opacity= False):
 	############### To stuff needed for the star ###############
 	#get star 
 	star = input['star']
-	wno_star, flux_star, hires_wno_star, hires_flux_star = atm.get_stellar_spec(opacityclass.wno, star['database'],star['temp'], star['metal'], star['logg']) 
+	wno_star, flux_star, hires_wno_star, hires_flux_star = atm.get_stellar_spec(opacityclass.wno, star['wno'],star['flux']) 
 	#this is added to the opacity class
 	stellar_raman_shifts = opacityclass.compute_stellar_shits(hires_wno_star, hires_flux_star)
 
 
 	################ From here on out is everything that would go through retrieval or 3d input##############
-	atm.get_gravity()
+	atm.planet.gravity = input['planet']['gravity']
+
 	if dimension == '1d':
 		atm.get_profile()
 	elif dimension == '3d':
@@ -224,9 +227,129 @@ def set_approximations(input):
 
 	return single_phase, multi_phase, raman_approx
 
-def load_inputs():
-	"""Function to load empty inputs"""
-	return json.load(open(os.path.join(__refdata__,'config.json')))
+class inputs():
+	"""Class to setup planet to run"""
+	def __init__(self):
+
+		self.inputs = json.load(open(os.path.join(__refdata__,'config.json')))
+	def phase_angle(self, phase=0)	:
+		"""Define phase angle"""
+		self.inputs['phase_angle'] = phase
+	def gravity(self, gravity=None, gravity_unit=None, 
+		              radius=None, radius_unit=None, 
+		              mass = None, mass_unit=None):
+		"""
+		Get gravity based on mass and radius, or gravity inputs 
+
+		Parameters
+		----------
+		gravity : float 
+			(Optional) Gravity of planet 
+		gravity_unit : astropy.unit
+			(Optional) Unit of Gravity
+		radius : float 
+			(Optional) radius of planet 
+		radius_unit : astropy.unit
+			(Optional) Unit of radius
+		mass : float 
+			(Optional) mass of planet 
+		mass_unit : astropy.unit
+			(Optional) Unit of mass	
+		"""
+		if gravity is not None:
+			g = (gravity*gravity_unit).to('cm/(s**2)')
+			g = g.value
+			self.inputs['planet']['gravity'] = g
+			self.inputs['planet']['gravity_unit'] = 'cm/(s**2)'
+		elif (mass is not None) and (radius is not None):
+			m = (mass*mass_unit).to(u.g)
+			r = (radius*radius_unit).to(u.cm)
+			g = (self.c.G * m /  (r**2)).value
+			self.inputs['planet']['radius'] = r
+			self.inputs['planet']['radius_unit'] = 'cm'
+			self.inputs['planet']['mass'] = m
+			self.inputs['planet']['mass_unit'] = 'g'
+			self.inputs['planet']['gravity'] = g
+			self.inputs['planet']['gravity_unit'] = 'cm/(s**2)'
+		else: 
+			raise Exception('Need to specify gravity or radius and mass + additional units')
+
+	def star(self, temp, metal, logg ,database='ck04models'):
+		"""
+		Get the stellar spectrum using pysynphot and interpolate onto a much finer grid than the 
+		planet grid. 
+
+		Parameters
+		----------
+		temp : float 
+			Teff of the stellar model 
+		metal : float 
+			Metallicity of the stellar model 
+		logg : float 
+			Logg cgs of the stellar model
+		database : str 
+			(Optional)The database to pull stellar spectrum from. See documentation for pysynphot. 
+		"""
+		sp = psyn.Icat(database, temp, metal, logg)
+		sp.convert("um")
+		sp.convert('flam') 
+		wno_star = 1e4/sp.wave[::-1] #convert to wave number and flip
+		flux_star = sp.flux[::-1]	 #flip here to get correct order 
+
+		self.inputs['star']['database'] = database
+		self.inputs['star']['temp'] = temp
+		self.inputs['star']['logg'] = logg
+		self.inputs['star']['metal'] = metal
+		self.inputs['star']['wno'] = wno_star 
+		self.inputs['star']['flux'] = flux_star 
+
+	def atmosphere(self, df=None, filename=None, pt_params = None,exclude_mol=None, **pd_kwargs):
+		"""
+		Builds a dataframe and makes sure that minimum necessary parameters have been suplied. 
+
+		Parameters
+		----------
+		df : pandas.DataFrame
+			(Optional) Dataframe with volume mixing ratios and pressure, temperature profile. 
+			Must contain pressure (bars) at least one molecule
+		filename : str 
+			(Optional) Filename with pressure, temperature and volume mixing ratios.
+			Must contain pressure at least one molecule
+		exclude_mol : list of str 
+			(Optional) List of molecules to ignore from file
+		pt_params : list of float 
+			(Optional) list of [T, logKir, logg1,logg2, alpha] from Guillot+2010
+		pd_kwargs : kwargs 
+			Key word arguments for pd.read_csv to read in supplied atmosphere file 
+		"""
+
+		if not isinstance(df, type(None)):
+			if ((not isinstance(df, dict )) & (not isinstance(df, pd.core.frame.DataFrame ))): 
+				raise Exception("df must be pandas DataFrame or dictionary")
+		if not isinstance(filename, type(None)):
+			df = pd.read_csv(filename, **pd_kwargs)
+
+		if 'pressure' not in df.keys(): 
+			raise Exception("Check column names. `pressure` must be included.")
+
+		if (('temperature' not in df.keys()) and (isinstance(pt_params, type(None)))):
+			raise Exception("`temperature` not specified and pt_params not given. Do one or the other.")
+		else: 
+			self.inputs['atmosphere']['pt_params'] = pt_params
+
+		if not isinstance(exclude_mol, type(None)):
+			df = df.drop(exclude_mol, axis=1)
+			self.inputs['atmosphere']['exclude_mol'] = exclude_mol
+
+		self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
+
+
+	def spectrum(self,dimension = '1d', full_output=False, plot_opacity= False):
+		"""Run Spectrum"""
+		w, a = picaso(self.inputs, full_output=full_output, plot_opacity=plot_opacity)
+		return w, a
+
+
 def jupiter_pt():
 	"""Function to get Jupiter's PT profile"""
 	return os.path.join(__refdata__, 'base_cases','jupiter.pt')

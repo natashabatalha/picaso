@@ -48,11 +48,9 @@ def read_hdf(filename, requires, raise_except=False, **kwargs):
         data from H5 file decoded into python object 
     """
     requires_list = [i+'='+str(requires[i]) for i in requires.keys()]
-    try: 
-        hdf_name = pd.read_hdf(filename,'header',where=requires_list, columns=['table'],**kwargs)
-    except:
-        msg = "Missing HDF5 file: %s" % filename
-        raise Exception(msg)
+
+    hdf_name = pd.read_hdf(filename,'header',where=requires_list, columns=['table'],**kwargs)
+
     if len(hdf_name['table'].values) > 1:
         msg = "HDF requirements satify two grids. Using %s in %s" % (hdf_name.values[0],filename)
         warnings.warn(msg, UserWarning)

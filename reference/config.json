@@ -15,29 +15,21 @@
 		"logg":null
 	},
 	"atmosphere":{
-		"profile":{
-			"type":"user",
-			"filepath":null,
-			"profile":null
-		},
-		"molecules":{
-			"whichones":null
-		},
-		"PT":{
-			"T":null,
-			"logKir":null,
-			"logg1":null,
-			"logPc":null
-		},
-		"clouds":{
+		"profile":null,
+		"exclude_mol":null,
+		"pt_params":null
+	},
+	"clouds":{
 			"filepath":null,
 			"wavenumber":"wave_EGP.dat"
 		},
 		"scattering":{
 			"g0":null,
-			"w0":null
-		}
-	},
+			"w0":null,
+			"opd":null,
+			"p":null,
+			"dp":null
+		},
 	"approx":{
 		"single_phase":"TTHG_ray",
 		"TTHG_params":{

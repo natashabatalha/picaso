@@ -168,62 +168,45 @@ class ATMSETUP():
 		#SET DIMENSIONALITY
 		self.dimension = '1d'
 
-		chemistry_input = self.input['atmosphere']
-		if chemistry_input['profile']['type'] == 'user':
+		read = self.input['atmosphere']['profile']
 
-			if chemistry_input['profile']['filepath'] != None:
+		# chemistry_input = self.input['atmosphere']
+		# if chemistry_input['profile']['type'] == 'user':
 
-				read = pd.read_csv(chemistry_input['profile']['filepath'], delim_whitespace=True)
+		# 	if chemistry_input['profile']['filepath'] != None:
 
-			elif (isinstance(chemistry_input['profile']['profile'],pd.core.frame.DataFrame) or 
-					isinstance(chemistry_input['profile']['profile'], dict)): 
-					read = chemistry_input['profile']['profile']
-			else:
-				raise Exception("Provide dictionary or a pointer to pointer to filepath")
-		else: 
-			raise Exception("TODO: only capability for user is included right now")
+		# 		read = pd.read_csv(chemistry_input['profile']['filepath'], delim_whitespace=True)
 
-		#if a subset is not specified, 
-		#determine which of the columns is a molecule by trying to get it's weight 
+		# 	elif (isinstance(chemistry_input['profile']['profile'],pd.core.frame.DataFrame) or 
+		# 			isinstance(chemistry_input['profile']['profile'], dict)): 
+		# 			read = chemistry_input['profile']['profile']
+		# 	else:
+		# 		raise Exception("Provide dictionary or a pointer to pointer to filepath")
+		# else: 
+		# 	raise Exception("TODO: only capability for user is included right now")
+
+		# #if a subset is not specified, 
+		# #determine which of the columns is a molecule by trying to get it's weight 
 		
 		#COMPUTE THE MOLECULAT WEIGHTS OF THE MOLECULES
 		weights = pd.DataFrame({})
 
-		#users have the option of specifying a subset of specified file or pd dataframe
-		if isinstance(chemistry_input['molecules']['whichones'], list):
-			#make sure that the whichones list has more than one molecule
-			num_mol = len(chemistry_input['molecules']['whichones'])
-			self.molecules = np.array(chemistry_input['molecules']['whichones'])
-			if num_mol >= 1:
-				#go through list and compute molecular weights for each one
-				for i in chemistry_input['molecules']['whichones']:
-					#try to get the mmw of the molecule
-					try:
-						weights[i] = pd.Series([self.get_weights([i])[i]])
-					except:
-						#if there is an error, means its not a molecule
-						if i == 'e-':
-							#check to see if its an electron
-							self.level['electrons'] = read['e-'].values
-							self.layer['electrons'] = 0.5*(self.level['electrons'][1:] + self.level['electrons'][:-1])
-						else:
-							#if its not user messed up.. raise exception
-							raise Exception("Molecule %s in whichones is not recognized, check list and resubmit" %i)
-		else:
-			#if one big file was uploaded, then cycle through each column
-			self.molecules = np.array([],dtype=str)
-			for i in read.keys():
-				if i in ['pressure', 'temperature']: continue
-				try:
-					weights[i] = pd.Series([self.get_weights([i])[i]])
-					self.molecules = np.concatenate((self.molecules ,np.array([i])))
-				except:
-					if i == 'e-':
-						self.level['electrons'] = read['e-'].values
-						self.layer['electrons'] = 0.5*(self.level['electrons'][1:] + self.level['electrons'][:-1])
-					else:					#don't raise exception, instead add user warning that a column has been automatically skipped
-						self.add_warnings("Ignoring %s in input file, not recognized molecule" % i)
-			
+		#Cycle through each column
+		self.molecules = np.array([],dtype=str)
+
+		for i in read.keys():
+			if i in ['pressure', 'temperature']: continue
+			try:
+				weights[i] = pd.Series([self.get_weights([i])[i]])
+				self.molecules = np.concatenate((self.molecules ,np.array([i])))
+			except:
+				if i == 'e-':
+					self.level['electrons'] = read['e-'].values
+					self.layer['electrons'] = 0.5*(self.level['electrons'][1:] + self.level['electrons'][:-1])
+				else:					#don't raise exception, instead add user warning that a column has been automatically skipped
+					self.add_warnings("Ignoring %s in input file, not recognized molecule" % i)
+					warnings.warn("Ignoring %s in input file, not a recognized molecule" % i, UserWarning)
+		
 
 		#DEFINE MIXING RATIOS
 		self.level['mixingratios'] = read[list(weights.keys())].as_matrix()
@@ -231,32 +214,25 @@ class ATMSETUP():
 		self.weights = weights
 
 		#GET TP PROFILE 
-		#define these to see if they are floats check to see that they are floats 
-		T = chemistry_input['PT']['T']
-		logg1 = chemistry_input['PT']['logg1']
-		logKir = chemistry_input['PT']['logKir']
-		logPc = chemistry_input['PT']['logPc']
-
-		#from file
-		if ('temperature' in read.keys()) and ('pressure' in read.keys()):
+		#if parameterization is needed?
+		if not isinstance(self.input['atmosphere']['pt_params'], type(None)):
+			T, logKir, logg1,logg2, alpha= self.input['atmosphere']['pt_params']
+			self.level['pressure'] = read['pressure'].values*self.c.pconv #CONVERTING BARS TO DYN/CM2
+			temperature = calc_PT(self.level['pressure'], T, logKir, logg1)
+			self.level['temperature'] = temperature
+		else:
 			self.level['temperature'] = read['temperature'].values
 			self.level['pressure'] = read['pressure'].values*self.c.pconv #CONVERTING BARS TO DYN/CM2
 			self.layer['temperature'] = 0.5*(self.level['temperature'][1:] + self.level['temperature'][:-1])
 			self.layer['pressure'] = np.sqrt(self.level['pressure'][1:] * self.level['pressure'][:-1])
-		#from parameterization
-		elif (isinstance(T,(float,int)) and isinstance(logg1,(float,int)) and 
-							isinstance(logKir,(float,int)) and isinstance(logPc,(float,int))): 
-			self.profile = calc_TP(T,logKir, logg1, logPc)
-		#no other options supported so raise error 
-		else:
-			raise Exception("There is not adequte information to compute PT profile")
+
 
 		#Define nlevel and nlayers after profile has been built
 		self.c.nlevel = self.level['mixingratios'].shape[0]
 
 		self.c.nlayer = self.c.nlevel - 1		
 
-	def calc_PT(self, T, logKir, logg1, logPc):
+	def calc_PT(self,logPc, T, logKir, logg1):
 		"""
 		Calculates parameterized PT profile from Guillot. This isntance is here 
 		primary for the retrieval scheme, so this can be updated
@@ -269,8 +245,7 @@ class ATMSETUP():
 		logg1 : float 
 		logPc : float 
 		"""
-		raise Exception('TODO: Temperature parameterization option not included yet')
-		return pd.DataFrame({'temperature':[], 'pressure':[], 'den':[], 'mu':[]})
+		return np.zeros(len(logPc)) + T #return isothermal for now
 
 	def get_needed_continuum(self):
 		"""
@@ -381,22 +356,22 @@ class ATMSETUP():
 		self.layer['colden'] = (self.level['pressure'][1:] - self.level['pressure'][:-1] ) / self.planet.gravity
 		return
 
-	def get_gravity(self):
-		"""
-		Get gravity based on mass and radius, or gravity inputs 
-		"""
-		planet_input = self.input['planet']
-		if planet_input['gravity'] is not None:
-			g = (planet_input['gravity']*u.Unit(planet_input['gravity_unit'])).to('cm/(s**2)')
-			g = g.value
-		elif (planet_input['mass'] is not None) and (planet_input['radius'] is not None):
-			m = (planet_input['mass']*u.Unit(planet_input['mass_unit'])).to(u.g)
-			r = ((planet_input['radius']*u.Unit(planet_input['radius_unit'])).to(u.cm))
-			g = (self.c.G * m /  (r**2)).value
-		else: 
-			raise Exception('Need to specify gravity or radius and mass + additional units')
-		self.planet.gravity = g 
-		return
+	# def get_gravity(self):
+	# 	"""
+	# 	Get gravity based on mass and radius, or gravity inputs 
+	# 	"""
+	# 	planet_input = self.input['planet']
+	# 	if planet_input['gravity'] is not None:
+	# 		g = (planet_input['gravity']*u.Unit(planet_input['gravity_unit'])).to('cm/(s**2)')
+	# 		g = g.value
+	# 	elif (planet_input['mass'] is not None) and (planet_input['radius'] is not None):
+	# 		m = (planet_input['mass']*u.Unit(planet_input['mass_unit'])).to(u.g)
+	# 		r = ((planet_input['radius']*u.Unit(planet_input['radius_unit'])).to(u.cm))
+	# 		g = (self.c.G * m /  (r**2)).value
+	# 	else: 
+	# 		raise Exception('Need to specify gravity or radius and mass + additional units')
+	# 	self.planet.gravity = g 
+	# 	return
 
 
 	def get_clouds(self, wno):
@@ -435,16 +410,16 @@ class ATMSETUP():
 		- Allow users to add different kinds of "simple" cloud options like "isotropic scattering" or grey 
 		opacity at certain pressure. 
 		"""
-		self.input_wno = get_cld_input_grid(self.input['atmosphere']['clouds']['wavenumber'])
+		self.input_wno = get_cld_input_grid(self.input['clouds']['wavenumber'])
 
 		self.c.output_npts_wave = np.size(wno)
 		self.c.input_npts_wave = len(self.input_wno)
 		#if a cloud filepath exists... 
-		if (self.input['atmosphere']['clouds']['filepath'] != None) and (self.dimension=='1d'):
+		if (self.input['clouds']['filepath'] != None) and (self.dimension=='1d'):
 
-			if os.path.exists(self.input['atmosphere']['clouds']['filepath']):	
+			if os.path.exists(self.input['clouds']['filepath']):	
 				#read in the file that was supplied 		
-				cld_input = pd.read_csv(self.input['atmosphere']['clouds']['filepath'], delim_whitespace = True) 
+				cld_input = pd.read_csv(self.input['clouds']['filepath'], delim_whitespace = True) 
 				#make sure cloud input has the correct number of waves and PT points and names
 				assert cld_input.shape[0] == self.c.nlayer*self.c.input_npts_wave, "Cloud input file is not on the same grid as the input PT profile:"
 				assert 'g0' in cld_input.keys(), "Please make sure g0 is a named column in cld file"
@@ -472,7 +447,7 @@ class ATMSETUP():
 				raise Exception('Cld file specified does not exist. Replace with None or find real file') 
 
 		#if no filepath was given and nothing was given for g0/w0, then assume the run is cloud free and give zeros for all thi stuff		  
-		elif (self.input['atmosphere']['clouds']['filepath'] == None) and (self.input['atmosphere']['scattering']['g0'] == None) and (self.dimension=='1d'):
+		elif (self.input['clouds']['filepath'] == None) and (self.input['scattering']['g0'] == None) and (self.dimension=='1d'):
 
 			zeros = np.zeros((self.c.nlayer,self.c.output_npts_wave))
 			self.layer['cloud'] = {'w0': zeros}
@@ -483,12 +458,12 @@ class ATMSETUP():
 		#note there is a distinction here between the "cloud" single scattering albedo, asym factor, opacity and the "TOTAL"
 		#single scattering albedo, and asym factor. This is why there are two separate entries for total and cloud
 
-		elif (self.input['atmosphere']['clouds']['filepath'] == None) and (self.input['atmosphere']['scattering']['g0'] != None) and (self.dimension=='1d'):
+		elif (self.input['clouds']['filepath'] == None) and (self.input['scattering']['g0'] != None) and (self.dimension=='1d'):
 
 			zeros = np.zeros((self.c.nlayer,self.c.output_npts_wave))
 			#scattering is the TOTAL asym factor and single scattering albedo 
-			self.layer['scattering'] = {'w0': zeros+self.input['atmosphere']['scattering']['w0']}
-			self.layer['scattering']['g0'] = zeros+self.input['atmosphere']['scattering']['g0']
+			self.layer['scattering'] = {'w0': zeros+self.input['scattering']['w0']}
+			self.layer['scattering']['g0'] = zeros+self.input['scattering']['g0']
 			#w0 and g0 here are the single scattering and asymm for the cloud ONLY
 			self.layer['cloud'] = {'w0': zeros}
 			self.layer['cloud']['g0'] = zeros
@@ -496,7 +471,7 @@ class ATMSETUP():
 
 		#ONLY OPTION FOR 3D INPUT
 		elif self.dimension=='3d':
-			cld_input = h5py.File(self.input['atmosphere']['clouds']['filepath'])
+			cld_input = h5py.File(self.input['clouds']['filepath'])
 			opd = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle))
 			g0 = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle)) 
 			w0 = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle))
@@ -549,10 +524,9 @@ class ATMSETUP():
 		self.warnings += [warn]
 		return
 
-	def get_stellar_spec(self,wno, database, temp, metal, logg ):
+	def get_stellar_spec(self,wno_planet, wno_star, flux_star ):
 		"""
-		Get the stellar spectrum using pysynphot and interpolate onto a much finer grid than the 
-		planet grid. 
+		Put on hires planet spec
 
 		Warning
 		-------
@@ -578,18 +552,13 @@ class ATMSETUP():
 		wno, flux 
 			Wavenumber and stellar flux in wavenumber and FLAM units 
 		"""
-		sp = psyn.Icat(database, temp, metal, logg)
-		sp.convert("um")
-		sp.convert('flam') 
-		wno_star = 1e4/sp.wave[::-1] #convert to wave number and flip
-		flux_star = sp.flux[::-1]	 #flip here to get correct order 	
 		#now we need to make sure that the stellar grid is on a 3x finer resolution 
 		#than the model. 
-		max_shift = np.max(wno)+6000 #this 6000 is just the max raman shift we could have 
-		min_shift = np.min(wno) -2000 #it is just to make sure we cut off the right wave ranges
+		max_shift = np.max(wno_planet)+6000 #this 6000 is just the max raman shift we could have 
+		min_shift = np.min(wno_planet) -2000 #it is just to make sure we cut off the right wave ranges
 
 		#do a fail safe to make sure that star is on a fine enough grid for planet case 
-		fine_wno_star = np.linspace(min_shift, max_shift, len(wno)*5)
+		fine_wno_star = np.linspace(min_shift, max_shift, len(wno_planet)*5)
 		fine_flux_star = np.interp(fine_wno_star,wno_star, flux_star)
 		return wno_star, flux_star, fine_wno_star, fine_flux_star
 
