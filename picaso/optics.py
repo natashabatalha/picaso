@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
-import h5py 
+#import h5py 
+import json
 import os
 from numba import jit
 from bokeh.plotting import figure, show, output_file
@@ -633,12 +634,17 @@ class RetrieveOpacities():
 		given a pressure and temperature, retrieve the wavelength dependent opacity
 
 	"""
-	def __init__(self, continuum_data, molecular_data,raman_data):
-		self.cia_db = h5py.File(continuum_data)
+	def __init__(self, continuum_data, molecular_data,raman_data, db = 'local'):
+		#self.cia_db = h5py.File(continuum_data,'r', swmr=True)
+		if db == 'local':
+			self.cia_db = json.load(open(continuum_data,'r'))
+
 		self.cia_temps = np.array([float(i) for i in self.cia_db['H2H2'].keys()])
 		#self.cia_mols = [i for i in self.cia_db.keys()]
 
-		self.mol_db = h5py.File(molecular_data)
+		if db == 'local':
+			#self.mol_db = h5py.File(molecular_data,'r', swmr=True)
+			self.mol_db = json.load(open(molecular_data,'r'))
 
 		self.molecules = np.array([i for i in self.mol_db.keys()])
 
@@ -648,12 +654,9 @@ class RetrieveOpacities():
 			self.mol_press[str(i)] = np.array([float(i) for i in self.mol_db['H2O'][str(i)].keys()])
 		#self.cia_mols = [i for i in self.cia_db.keys()]
 
-		if 'wavenumber' in self.cia_db.attrs:
-			self.wno = np.array(self.cia_db.attrs['wavenumber'])
-			self.wave = 1e4/self.wno 
-			self.nwno = np.size(self.wno)
-		elif 'wavenumber' in self.cia_db.keys():
-			self.wno = np.array(self.cia_db['wavenumber'])
+
+		if 'wavenumber_grid' in self.cia_db.keys():
+			self.wno = np.array(self.cia_db['wavenumber_grid'])
 			self.wave = 1e4/self.wno 
 			self.nwno = np.size(self.wno)	
 		else: 

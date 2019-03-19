@@ -9,7 +9,7 @@ import warnings
 import numpy as np
 from .wavelength import get_cld_input_grid, regrid
 from numba import jit
-import h5py 
+import h5pickle as h5py
 import pysynphot as psyn
 
 __refdata__ = os.environ.get('picaso_refdata')
@@ -76,7 +76,7 @@ class ATMSETUP():
 		self.dimension = '3d'
 
 		chemistry_input = self.input['atmosphere']
-		h5db = h5py.File(chemistry_input['profile']['filepath'],'r+')
+		h5db = h5py.File(chemistry_input['profile']['filepath'],'r',swmr=True)
 		#get header of columns
 		header = h5db.attrs['header'].split(',')
 
@@ -192,7 +192,7 @@ class ATMSETUP():
 		
 
 		#DEFINE MIXING RATIOS
-		self.level['mixingratios'] = read[list(weights.keys())].as_matrix()
+		self.level['mixingratios'] = read[list(weights.keys())].values
 		self.layer['mixingratios'] = 0.5*(self.level['mixingratios'][1:,:] + self.level['mixingratios'][:-1,:])
 		self.weights = weights
 
@@ -412,7 +412,7 @@ class ATMSETUP():
 		#ONLY OPTION FOR 3D INPUT
 		elif ((self.dimension=='3d') & (not isinstance(self.input_wno, type(None)))):
 			self.c.input_npts_wave = len(self.input_wno)
-			cld_input = h5py.File(self.input['clouds']['filepath'])
+			cld_input = h5py.File(self.input['clouds']['filepath'],'r',swmr=True)
 			opd = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle))
 			g0 = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle)) 
 			w0 = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle))
@@ -500,3 +500,38 @@ class ATMSETUP():
 		self.layer['cloud']['opd'] = self.layer['cloud']['opd'][:,:,g,t]
 		self.layer['cloud']['g0']= self.layer['cloud']['g0'][:,:,g,t]
 		self.layer['cloud']['w0'] = self.layer['cloud']['w0'][:,:,g,t]
+
+	def as_dict(self):
+		"""
+		Get output into picklable dict format 
+		"""
+		df = {} 
+		df['weights'] = self.weights
+		df['layer'] = {}
+		df['layer']['pressure_unit'] = 'bars'
+		df['layer']['mixingratio_unit'] = 'volume/volume'
+		df['layer']['temperature_unit'] = 'K'
+		df['layer']['pressure'] = self.layer['pressure']/ self.c.pconv #bars
+		df['layer']['mixingratios'] = self.layer['mixingratios']
+		df['layer']['temperature'] = self.layer['temperature']
+		df['wavenumber'] = self.wavenumber
+		df['wavenumber_unit'] = 'cm-1'
+
+		df['layer']['cloud'] = {}
+		df['layer']['cloud']['w0'] = self.layer['cloud']['w0']
+		df['layer']['cloud']['g0'] = self.layer['cloud']['g0']
+		df['layer']['cloud']['opd'] = self.layer['cloud']['opd']
+
+		df['taugas'] = self.taugas
+		df['tauray'] = self.tauray
+		df['taucld'] = self.taucld
+
+		df['level'] = {}
+		df['level']['pressure'] = self.level['pressure']/ self.c.pconv #bars
+		df['level']['temperature'] = self.level['temperature']
+
+		df['latitude'] = self.latitude
+		df['longitude'] = self.longitude
+		df['albedo_3d'] = self.xint_at_top
+
+		return df

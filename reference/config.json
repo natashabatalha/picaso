@@ -46,8 +46,8 @@
 	"opacities":{
 		"wnogrid":null,
 		"files":{
-			"continuum":"continuum.hdf5",
-			"molecular":"molecular.hdf5",
+			"continuum":"continuum.json",
+			"molecular":"molecular.json",
 			"h2minus":"h2minus.csv",
 			"raman":"raman.txt"
 		}

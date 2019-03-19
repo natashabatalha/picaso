@@ -27,8 +27,8 @@ def mixing_ratio(full_output,**kwargs):
 		Any key word argument for bokeh.figure() 
 	"""
 	#set plot defaults
-	molecules = full_output.weights.keys()
-	pressure = full_output.layer['pressure']/full_output.c.pconv
+	molecules = full_output['weights'].keys()
+	pressure = full_output['layer']['pressure']
 
 	kwargs['plot_height'] = kwargs.get('plot_height',300)
 	kwargs['plot_width'] = kwargs.get('plot_width',400)
@@ -46,7 +46,7 @@ def mixing_ratio(full_output,**kwargs):
 	legend_it=[]	
 	for mol , c in zip(molecules,cols):
 		ind = np.where(mol==np.array(molecules))[0][0]
-		f = fig.line(full_output.layer['mixingratios'][:,ind],pressure, color=c, line_width=3,
+		f = fig.line(full_output['layer']['mixingratios'][:,ind],pressure, color=c, line_width=3,
 					muted_color=c, muted_alpha=0.2)
 		legend_it.append((mol, [f]))
 
@@ -67,8 +67,8 @@ def pt(full_output,**kwargs):
 		Any key word argument for bokeh.figure() 
 	"""
 	#set plot defaults
-	pressure = full_output.layer['pressure']/full_output.c.pconv
-	temperature = full_output.layer['temperature']
+	pressure = full_output['layer']['pressure']
+	temperature = full_output['layer']['temperature']
 
 	kwargs['plot_height'] = kwargs.get('plot_height',300)
 	kwargs['plot_width'] = kwargs.get('plot_width',400)
@@ -141,11 +141,11 @@ def photon_attenuation(full_output, at_tau=0.5,**kwargs):
 	-------
 	bokeh plot
 	"""
-	wave = 1e4/full_output.wavenumber
+	wave = 1e4/full_output['wavenumber']
 
-	dtaugas = full_output.taugas
-	dtaucld = full_output.taucld*full_output.layer['cloud']['w0']
-	dtauray = full_output.tauray
+	dtaugas = full_output['taugas']
+	dtaucld = full_output['taucld']*full_output['layer']['cloud']['w0']
+	dtauray = full_output['tauray']
 	shape = dtauray.shape
 	taugas = np.zeros((shape[0]+1, shape[1]))
 	taucld = np.zeros((shape[0]+1, shape[1]))
@@ -157,7 +157,7 @@ def photon_attenuation(full_output, at_tau=0.5,**kwargs):
 	tauray[1:,:]=numba_cumsum(dtauray)
 
 
-	pressure = full_output.level['pressure']/full_output.c.pconv
+	pressure = full_output['level']['pressure']
 
 	at_pressures = np.zeros(shape[1]) #pressure for each wave point
 
@@ -198,7 +198,7 @@ def photon_attenuation(full_output, at_tau=0.5,**kwargs):
 
 	legend = Legend(items=legend_it, location=(0, -20))
 	legend.click_policy="mute"
-	fig.add_layout(legend, 'left')   
+	fig.add_layout(legend, 'right')   
 
 	#finally add color sections 
 	gas_dominate_ind = np.where((at_pressures_gas<at_pressures_cld) & (at_pressures_gas<at_pressures_ray))[0]
@@ -352,10 +352,10 @@ def cloud(full_output):
 	cols = colfun1(200)
 	color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
 
-	dat01 = full_output.layer['cloud']
+	dat01 = full_output['layer']['cloud']
 
 	#PLOT W0
-	scat01 = np.flip(dat01['w0'])#[0:10,:]
+	scat01 = np.flip(dat01['w0'],0)#[0:10,:]
 	xr, yr = scat01.shape
 	f01a = figure(x_range=[0, yr], y_range=[0,xr],
 						   x_axis_label='Wavenumber Grid', y_axis_label='Pressure Grid, TOA ->',
@@ -372,7 +372,7 @@ def cloud(full_output):
 
 
 	#PLOT OPD
-	scat01 = np.flip(dat01['opd']+1e-60)
+	scat01 = np.flip(dat01['opd']+1e-60,0)
 
 	xr, yr = scat01.shape
 	cols = colfun2(200)[::-1]
@@ -391,7 +391,7 @@ def cloud(full_output):
 	f01.add_layout(color_bar, 'left')
 
 	#PLOT G0
-	scat01 = np.flip(dat01['g0']+1e-60)
+	scat01 = np.flip(dat01['g0']+1e-60,0)
 
 	xr, yr = scat01.shape
 	cols = colfun3(200)[::-1]
@@ -431,13 +431,13 @@ def disco(full_output,wavelength=[0.3]):
 	for i,w in zip(range(len(wavelength)),wavelength):
 		ax = fig.add_subplot(nrow,ncol,i+1, projection='3d')
 		#else:ax = fig.gca(projection='3d')
-		wave = 1e4/full_output.wavenumber
+		wave = 1e4/full_output['wavenumber']
 		indw = find_nearest(wave,w)
 		#[umg, numt, nwno] this is xint_at_top
-		xint_at_top = full_output.xint_at_top[:,:,indw]
+		xint_at_top = full_output['albedo_3d'][:,:,indw]
 
-		latitude = full_output.latitude  #tangle
-		longitude = full_output.longitude #gangle
+		latitude = full_output['latitude']  #tangle
+		longitude = full_output['longitude'] #gangle
 
 		cm = plt.cm.get_cmap('plasma')
 		u, v = np.meshgrid(longitude, latitude)

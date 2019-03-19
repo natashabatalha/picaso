@@ -1,6 +1,6 @@
 from .atmsetup import ATMSETUP
 from .fluxes import get_flux_geom_1d, get_flux_geom_3d 
-from .wavelength import get_output_grid,get_cld_input_grid
+from .wavelength import get_cld_input_grid
 import numpy as np
 import pandas as pd
 from .optics import RetrieveOpacities,compute_opacity
@@ -10,6 +10,8 @@ from .disco import get_angles, compute_disco, compress_disco
 import copy
 import json
 import pysynphot as psyn
+import astropy.units as u
+import astropy.constants as c
 __refdata__ = os.environ.get('picaso_refdata')
 
 def picaso(bundle,dimension = '1d', full_output=False, plot_opacity= False):
@@ -183,7 +185,7 @@ def picaso(bundle,dimension = '1d', full_output=False, plot_opacity= False):
 		atm.xint_at_top = xint_at_top
 		atm.latitude = lat
 		atm.longitude = lon
-		return wno, albedo , atm
+		return wno, albedo , atm.as_dict()
 	else: 
 		return wno, albedo
 
@@ -275,7 +277,7 @@ class inputs():
 		elif (mass is not None) and (radius is not None):
 			m = (mass*mass_unit).to(u.g)
 			r = (radius*radius_unit).to(u.cm)
-			g = (self.c.G * m /  (r**2)).value
+			g = (c.G * m /  (r**2)).value
 			self.inputs['planet']['radius'] = r
 			self.inputs['planet']['radius_unit'] = 'cm'
 			self.inputs['planet']['mass'] = m
@@ -285,7 +287,7 @@ class inputs():
 		else: 
 			raise Exception('Need to specify gravity or radius and mass + additional units')
 
-	def star(self, temp, metal, logg ,database='ck04models'):
+	def star(self, temp=None, metal=None, logg=None ,database='ck04models',filename=None, w_units=None, f_units=None):
 		"""
 		Get the stellar spectrum using pysynphot and interpolate onto a much finer grid than the 
 		planet grid. 
@@ -300,12 +302,62 @@ class inputs():
 			Logg cgs of the stellar model
 		database : str 
 			(Optional)The database to pull stellar spectrum from. See documentation for pysynphot. 
+		filename : str 
+			(Optional) Upload your own stellar spectrum. File format = two column white space (wave, flux)
+		wunits : str 
+			(Optional) Used for stellar file wave units 
+		funits : str 
+			(Optional) Used for stellar file flux units 
 		"""
-		sp = psyn.Icat(database, temp, metal, logg)
-		sp.convert("um")
-		sp.convert('flam') 
-		wno_star = 1e4/sp.wave[::-1] #convert to wave number and flip
-		flux_star = sp.flux[::-1]	 #flip here to get correct order 
+		#most people will just upload their thing from a database
+		if (not isinstance(temp, type(None))):
+			sp = psyn.Icat(database, temp, metal, logg)
+			sp.convert("um")
+			sp.convert('flam') 
+			wno_star = 1e4/sp.wave[::-1] #convert to wave number and flip
+			flux_star = sp.flux[::-1]	 #flip here to get correct order
+
+		#but you can also upload a stellar spec of your own 
+		elif (not isinstance(filename),type(none)):
+			star = np.genfromtxt(filename, dtype=(float, float), names='w, f')
+			flux = star['f']
+			wave = star['w']
+			#sort if not in ascending order 
+			sort = np.array([wave,flux]).T
+			sort= sort[sort[:,0].argsort()]
+			wave = sort[:,0]
+			flux = sort[:,1] 
+			if w_unit == 'um':
+				WAVEUNITS = 'um' 
+			elif w_unit == 'nm':
+				WAVEUNITS = 'nm'
+			elif w_unit == 'cm' :
+				WAVEUNITS = 'cm'
+			elif w_unit == 'Angs' :
+				WAVEUNITS = 'angstrom'
+			elif w_unit == 'Hz' :
+				WAVEUNITS = 'Hz'
+			else: 
+				raise Exception('Stellar units are not correct. Pick um, nm, cm, hz, or Angs')        
+
+			#convert to photons/s/nm/m^2 for flux normalization based on 
+			#http://www.gemini.edu/sciops/instruments/integration-time-calculators/itc-help/source-definition
+			if f_unit == 'Jy':
+				FLUXUNITS = 'jy' 
+			elif f_unit == 'FLAM' :
+				FLUXUNITS = 'FLAM'
+			elif f_unit == 'erg/cm2/s/Hz':
+				flux = flux*1e23
+				FLUXUNITS = 'jy' 
+			else: 
+				raise Exception('Stellar units are not correct. Pick FLAM or Jy or erg/cm2/s/Hz')
+
+			sp = psyn.ArraySpectrum(wave, flux, waveunits=WAVEUNITS, fluxunits=FLUXUNITS)        #Convert evrything to nanometer for converstion based on gemini.edu  
+			sp.convert("um")
+			sp.convert('flam')
+			wno_star = 1e4/sp.wave[::-1] #convert to wave number and flip
+			flux_star = sp.flux[::-1]	 #flip here to get correct order			
+
 
 		wno_planet = self.opacityclass.wno
 		max_shift = np.max(wno_planet)+6000 #this 6000 is just the max raman shift we could have 
@@ -350,6 +402,7 @@ class inputs():
 			if ((not isinstance(df, dict )) & (not isinstance(df, pd.core.frame.DataFrame ))): 
 				raise Exception("df must be pandas DataFrame or dictionary")
 		if not isinstance(filename, type(None)):
+			print(filename)
 			df = pd.read_csv(filename, **pd_kwargs)
 			self.nlevel=df.shape[0] 
 
@@ -370,7 +423,7 @@ class inputs():
 		self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
 
 
-	def clouds(self, filename = None, g0=None, w0=None, opd=None,p=None, dp=None,**pd_kwargs):
+	def clouds(self, filename = None, g0=None, w0=None, opd=None,p=None, dp=None,df =None,**pd_kwargs):
 		"""
 		Cloud specification for the model. Clouds are parameterized by a single scattering albedo (w0), 
 		an assymetry parameter (g0), and a total extinction per layer (opd).
@@ -422,12 +475,16 @@ class inputs():
 			(Optional) Total thickness cloud deck (bars). Can be a single float for a single cloud or a list of floats 
 			for two different cloud layers 
 			Cloud will span 10**(np.log10(p) +- np.log10(dp)/2)
+		df : pd.DataFrame, dict
+			(Optional) Same as what would be included in the file, but in DataFrame or dict form
 		"""
 
 		#first complete options if user inputs dataframe or dict 
-		if not isinstance(filename, type(None)):
+		if (not isinstance(filename, type(None)) & isinstance(df, type(None))) or (isinstance(filename, type(None)) & (not isinstance(df, type(None)))):
 
-			df = pd.read_csv(filename, **pd_kwargs)
+			if not isinstance(filename, type(None)):
+				df = pd.read_csv(filename, **pd_kwargs)
+
 			cols = df.keys()
 
 			assert 'g0' in cols, "Please make sure g0 is a named column in cld file"
