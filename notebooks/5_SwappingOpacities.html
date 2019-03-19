@@ -100,9 +100,10 @@
 <li class="toctree-l2 current"><a class="reference internal" href="../tutorials.html#radiative-transfer-approximations">Radiative Transfer Approximations</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="4_AnalyzingApproximations.html">Investigating Approximations</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">Opacity Factory</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#Continuum-Opacity-Formatting-:-continuum.hdf5">Continuum Opacity Formatting : <code class="docutils literal"><span class="pre">continuum.hdf5</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#Quick-HDF5-Tutorial">Quick HDF5 Tutorial</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#Molecular-Opacity-Formatting:-molecular.hdf5">Molecular Opacity Formatting: <code class="docutils literal"><span class="pre">molecular.hdf5</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Continuum-Opacity-Formatting-:-continuum.json">Continuum Opacity Formatting : <code class="docutils literal"><span class="pre">continuum.json</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Create-Fake-Continuum-Dataset">Create Fake Continuum Dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Quick-json-Tutorial">Quick json Tutorial</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Molecular-Opacity-Formatting:-molecular.json">Molecular Opacity Formatting: <code class="docutils literal"><span class="pre">molecular.json</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -370,23 +371,23 @@ opacities. The continuum opacity file is already included in the
 <code class="docutils literal"><span class="pre">reference/</span></code> directory. The molecular opacity file is included on
 <a class="reference external" href="https://osf.io/hf8bp/">Open Science Framework</a>.</p>
 <p>If you want to swap out opacities, this tutorial shows you how to make a
-correctly formatted <code class="docutils literal"><span class="pre">hdf5</span></code> file that will compatible with <code class="docutils literal"><span class="pre">PICASO</span></code></p>
+correctly formatted <code class="docutils literal"><span class="pre">json</span></code> file that will compatible with <code class="docutils literal"><span class="pre">PICASO</span></code></p>
 <p>Here you will learn how to create the correctly formatted database that
-<code class="docutils literal"><span class="pre">picaso</span></code> reads in for the <strong>molecular.hdf5</strong> and <strong>continuum.hdf5</strong></p>
+<code class="docutils literal"><span class="pre">picaso</span></code> reads in for the <strong>molecular.json</strong> and <strong>continuum.json</strong></p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
-<span></span>In [12]:
+<span></span>In [1]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">h5py</span>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">os</span>
 </pre></div>
 </div>
 </div>
-<div class="section" id="Continuum-Opacity-Formatting-:-continuum.hdf5">
-<h2>Continuum Opacity Formatting : <code class="docutils literal"><span class="pre">continuum.hdf5</span></code><a class="headerlink" href="#Continuum-Opacity-Formatting-:-continuum.hdf5" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="Continuum-Opacity-Formatting-:-continuum.json">
+<h2>Continuum Opacity Formatting : <code class="docutils literal"><span class="pre">continuum.json</span></code><a class="headerlink" href="#Continuum-Opacity-Formatting-:-continuum.json" title="Permalink to this headline">¶</a></h2>
 <p><strong>Note on molecule names</strong>: Because <code class="docutils literal"><span class="pre">picaso</span></code> uses dict formatting to
 handle opacities, users can easily swap in different molecules.</p>
 <p>For example, if I wanted to include CO2-H2 CIA absorption, I can add
@@ -411,49 +412,39 @@ sure you get these right.</p>
 </pre></div>
 </div>
 </div>
-<div class="section" id="Initialize-HDF5-database">
-<h3>Initialize HDF5 database<a class="headerlink" href="#Initialize-HDF5-database" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="Create-Fake-Continuum-Dataset">
+<h2>Create Fake Continuum Dataset<a class="headerlink" href="#Create-Fake-Continuum-Dataset" title="Permalink to this headline">¶</a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="n">db_continuum</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;/new_continuum_db.hdf5&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="section" id="Create-Continuum-Dataset">
-<h3>Create Continuum Dataset<a class="headerlink" href="#Create-Continuum-Dataset" title="Permalink to this headline">¶</a></h3>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none"><div class="highlight"><pre>
-<span></span>In [4]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="c1">#add meta data</span>
-<span class="n">db_continuum</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;wave_units&#39;</span><span class="p">]</span> <span class="o">=</span><span class="n">wave_unit</span>
-<span class="n">db_continuum</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;opacity_unit&#39;</span><span class="p">]</span> <span class="o">=</span><span class="n">opacity_unit</span>
-<span class="n">db_continuum</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;temperature_unit&#39;</span><span class="p">]</span> <span class="o">=</span><span class="s1">&#39;K&#39;</span>
-<span class="n">db_continuum</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;wavenumber_grid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="mi">30000</span><span class="p">,</span><span class="mi">1000</span><span class="p">)</span><span class="c1">#fake grid</span>
+<span></span><span class="c1">#start by filling in molcules for dict</span>
+<span class="n">db_continuum</span> <span class="o">=</span> <span class="p">{</span><span class="n">m</span><span class="p">:{}</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">molecules</span><span class="p">}</span>
+
+<span class="c1">#add meta data</span>
+<span class="n">db_continuum</span><span class="p">[</span><span class="s1">&#39;wave_units&#39;</span><span class="p">]</span> <span class="o">=</span><span class="n">wave_unit</span>
+<span class="n">db_continuum</span><span class="p">[</span><span class="s1">&#39;opacity_unit&#39;</span><span class="p">]</span> <span class="o">=</span><span class="n">opacity_unit</span>
+<span class="n">db_continuum</span><span class="p">[</span><span class="s1">&#39;temperature_unit&#39;</span><span class="p">]</span> <span class="o">=</span><span class="s1">&#39;K&#39;</span>
+<span class="n">db_continuum</span><span class="p">[</span><span class="s1">&#39;wavenumber_grid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="mi">30000</span><span class="p">,</span><span class="mi">1000</span><span class="p">))</span><span class="c1">#fake grid, make sure it&#39;s a list</span>
 
 <span class="c1">#add data</span>
 <span class="n">fake_absorption</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span><span class="o">+</span><span class="mf">1e-30</span> <span class="c1">#cm-1 amagat-2</span>
 <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">molecules</span><span class="p">:</span>
     <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">temperatures</span><span class="p">:</span>
-        <span class="n">dset</span> <span class="o">=</span> <span class="n">db_continuum</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">m</span><span class="o">+</span><span class="s1">&#39;/&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">data</span><span class="o">=</span><span class="n">fake_absorption</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">db_continuum</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">fake_absorption</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
-</div>
-<div class="section" id="Quick-HDF5-Tutorial">
-<h2>Quick HDF5 Tutorial<a class="headerlink" href="#Quick-HDF5-Tutorial" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="Quick-json-Tutorial">
+<h2>Quick json Tutorial<a class="headerlink" href="#Quick-json-Tutorial" title="Permalink to this headline">¶</a></h2>
 <p>Let’s make sure you know how to navigate your file</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
-<span></span>In [5]:
+<span></span>In [4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3"><div class="highlight"><pre>
@@ -467,12 +458,12 @@ sure you get these right.</p>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&#39;H-bf&#39;, &#39;H-ff&#39;, &#39;H2-&#39;, &#39;H2CH4&#39;, &#39;H2H2&#39;, &#39;H2He&#39;]
+[&#39;H2H2&#39;, &#39;H2He&#39;, &#39;H2CH4&#39;, &#39;H2-&#39;, &#39;H-bf&#39;, &#39;H-ff&#39;, &#39;wave_units&#39;, &#39;opacity_unit&#39;, &#39;temperature_unit&#39;, &#39;wavenumber_grid&#39;]
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
-<span></span>In [6]:
+<span></span>In [5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3"><div class="highlight"><pre>
@@ -486,52 +477,51 @@ sure you get these right.</p>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&#39;1000&#39;, &#39;2000&#39;, &#39;300&#39;, &#39;500&#39;]
+[&#39;300&#39;, &#39;500&#39;, &#39;1000&#39;, &#39;2000&#39;]
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="c1">#check to see if there is your temperature of interest</span>
+<span class="n">opa</span> <span class="o">=</span> <span class="n">db_continuum</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;H2H2&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;300&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">opa</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+1000
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="c1">#check to see if there is your temperature of interest</span>
-<span class="n">db_continuum</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;H2H2&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt highlight-none"><div class="highlight"><pre>
-<span></span>Out[7]:
-</pre></div>
-</div>
-<div class="output_area highlight-none"><div class="highlight"><pre>
-<span></span>&lt;HDF5 group &quot;/H2H2&quot; (4 members)&gt;
-</pre></div>
-</div>
-</div>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none"><div class="highlight"><pre>
-<span></span>In [8]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="c1">#get wavelength grid</span>
-<span class="n">wave</span> <span class="o">=</span> <span class="n">db_continuum</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;wavenumber_grid&#39;</span><span class="p">]</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">db_continuum</span><span class="p">[</span><span class="s1">&#39;wavenumber_grid&#39;</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
 </div>
-<div class="section" id="Molecular-Opacity-Formatting:-molecular.hdf5">
-<h2>Molecular Opacity Formatting: <code class="docutils literal"><span class="pre">molecular.hdf5</span></code><a class="headerlink" href="#Molecular-Opacity-Formatting:-molecular.hdf5" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="Molecular-Opacity-Formatting:-molecular.json">
+<h2>Molecular Opacity Formatting: <code class="docutils literal"><span class="pre">molecular.json</span></code><a class="headerlink" href="#Molecular-Opacity-Formatting:-molecular.json" title="Permalink to this headline">¶</a></h2>
 <p>Because <code class="docutils literal"><span class="pre">picaso</span></code> uses <code class="docutils literal"><span class="pre">dict</span></code> formatting to handle opacities, users
 can add <strong>any</strong> new molecule to this database.</p>
 <p><strong>Careful</strong> with case sensitive molecules like <strong>TiO</strong>, <strong>Na</strong>. Make
 sure you get these right.</p>
-<p><strong>Wave Grid</strong> must be the same as <strong>continuum.hdf5</strong></p>
+<p><strong>Wave Grid</strong> must be the same as <strong>continuum.json</strong></p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
-<span></span>In [9]:
+<span></span>In [8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3"><div class="highlight"><pre>
@@ -545,40 +535,40 @@ sure you get these right.</p>
 </pre></div>
 </div>
 </div>
-<div class="section" id="Initialize-HDF5-database">
-<h3>Initialize HDF5 database<a class="headerlink" href="#Initialize-HDF5-database" title="Permalink to this headline">¶</a></h3>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none"><div class="highlight"><pre>
-<span></span>In [10]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="n">db_molecular</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;/new_molecular_db.hdf5&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
 <div class="section" id="Create-Molecular-Dataset">
 <h3>Create Molecular Dataset<a class="headerlink" href="#Create-Molecular-Dataset" title="Permalink to this headline">¶</a></h3>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
-<span></span>In [11]:
+<span></span>In [9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="c1">#add meta data</span>
-<span class="n">db_molecular</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;wave_units&#39;</span><span class="p">]</span> <span class="o">=</span><span class="n">wave_unit</span>
-<span class="n">db_molecular</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;opacity_unit&#39;</span><span class="p">]</span> <span class="o">=</span><span class="n">opacity_unit</span>
-<span class="n">db_molecular</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;prssure_unit&#39;</span><span class="p">]</span> <span class="o">=</span><span class="n">prssure_unit</span>
-<span class="n">db_molecular</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;temperature_unit&#39;</span><span class="p">]</span> <span class="o">=</span><span class="n">temperature_unit</span>
-<span class="n">db_molecular</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;wavenumber_grid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">db_continuum</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;wavenumber_grid&#39;</span><span class="p">]</span><span class="c1">#MUST be on same grid as continuum db!!!</span>
+<span></span><span class="c1">#initialize db with molcules and temps</span>
+<span class="n">db_molecular</span> <span class="o">=</span> <span class="p">{</span><span class="n">m</span><span class="p">:{</span><span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">):{}</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">temperatures</span><span class="p">}</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">molecules</span><span class="p">}</span>
+
+<span class="c1">#add meta data</span>
+<span class="n">db_molecular</span><span class="p">[</span><span class="s1">&#39;wave_units&#39;</span><span class="p">]</span> <span class="o">=</span><span class="n">wave_unit</span>
+<span class="n">db_molecular</span><span class="p">[</span><span class="s1">&#39;opacity_unit&#39;</span><span class="p">]</span> <span class="o">=</span><span class="n">opacity_unit</span>
+<span class="n">db_molecular</span><span class="p">[</span><span class="s1">&#39;prssure_unit&#39;</span><span class="p">]</span> <span class="o">=</span><span class="n">prssure_unit</span>
+<span class="n">db_molecular</span><span class="p">[</span><span class="s1">&#39;temperature_unit&#39;</span><span class="p">]</span> <span class="o">=</span><span class="n">temperature_unit</span>
+<span class="n">db_molecular</span><span class="p">[</span><span class="s1">&#39;wavenumber_grid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">db_continuum</span><span class="p">[</span><span class="s1">&#39;wavenumber_grid&#39;</span><span class="p">]</span><span class="c1">#MUST be on same grid as continuum db!!!</span>
 
 <span class="c1">#add data</span>
 <span class="n">fake_opacity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span><span class="o">+</span><span class="mf">1e-30</span> <span class="c1">#cm-2/g</span>
 <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">molecules</span><span class="p">:</span>
     <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">temperatures</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pressures</span><span class="p">:</span>
-            <span class="n">dset</span> <span class="o">=</span> <span class="n">db_molecular</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">m</span><span class="o">+</span><span class="s1">&#39;/&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;/&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">data</span><span class="o">=</span><span class="n">fake_opacity</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">db_molecular</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">)][</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">fake_opacity</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span>
 </pre></div>
 </div>
 </div>

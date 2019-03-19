@@ -247,6 +247,12 @@
 </dd></dl>
 
 <dl class="method">
+<dt id="picaso.atmsetup.ATMSETUP.as_dict">
+<code class="descname">as_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.atmsetup.ATMSETUP.as_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get output into picklable dict format</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="picaso.atmsetup.ATMSETUP.calc_PT">
 <code class="descname">calc_PT</code><span class="sig-paren">(</span><em>logPc</em>, <em>T</em>, <em>logKir</em>, <em>logg1</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.atmsetup.ATMSETUP.calc_PT" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates parameterized PT profile from Guillot. This isntance is here
@@ -1676,7 +1682,7 @@ contain a bunch of different folders (one for each molecule).</td>
 <span id="picaso-optics-module"></span><h2>picaso.optics module<a class="headerlink" href="#module-picaso.optics" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="picaso.optics.RetrieveOpacities">
-<em class="property">class </em><code class="descclassname">picaso.optics.</code><code class="descname">RetrieveOpacities</code><span class="sig-paren">(</span><em>continuum_data</em>, <em>molecular_data</em>, <em>raman_data</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacities" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">picaso.optics.</code><code class="descname">RetrieveOpacities</code><span class="sig-paren">(</span><em>continuum_data</em>, <em>molecular_data</em>, <em>raman_data</em>, <em>db='local'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacities" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <p>This will be the class that will retrieve the opacities from the h5 database. Right
 now we are just employing nearest neighbors to grab the respective opacities.
