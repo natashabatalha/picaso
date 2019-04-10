@@ -30,11 +30,7 @@ Download and Link Reference Documentation
 
 1) If you did not download the github repository, make sure you pull the `Reference Folder <https://github.com/natashabatalha/picaso/tree/master/reference>`_.  
 
-2) Download the molecular opacities, which are located here on the `PICASO Open Science Framework <https://osf.io/hf8bp/>`_. 
-
-3) Download, untar and place `molecular.hdf5` in the `reference/opacities` folder. 
-
-4) Now you can create an environment variable:
+2) Now you can create an environment variable:
 
 
 .. code-block:: bash
