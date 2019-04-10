@@ -136,6 +136,15 @@ latex_elements = {
     # 'figure_align': 'htbp',
 }
 
+nbsphinx_prolog = """
+{% set docname = env.doc2path(env.docname, base=None) %}
+.. note::  `Download full notebook here <https://github.com/natashabatalha/picaso/tree/master/docs/{{ docname }}>`_
+"""
+#.. only:: html
+#
+#    This notebook can be downloaded at : https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/{{ docname }}
+#
+
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
