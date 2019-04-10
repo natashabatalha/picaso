@@ -70,17 +70,13 @@ def get_angles(num_gangle, num_tangle):
 	return gangle,gweight,tangle,tweight
 
 @jit(nopython=True, cache=True)
-def compress_disco(numg, numt, nwno, cos_theta, xint_at_top, gweight, tweight,F0PI): 
+def compress_disco( nwno, cos_theta, xint_at_top, gweight, tweight,F0PI): 
 	"""
 	Last step in albedo code. Integrates over phase angle based on the 
 	Gaussian-Chebychev weights in geometry.json 
 	
 	Parameters
 	----------
-	numg : int 
-		Number of Gauss angles 
-	numt : int 
-		Number of Chebychev Angles 
 	nwno : int 
 		Number of wavenumbers 
 	cos_theta : float 
@@ -96,8 +92,30 @@ def compress_disco(numg, numt, nwno, cos_theta, xint_at_top, gweight, tweight,F0
 	"""
 	albedo=zeros(nwno)
 	for w in range(nwno):
-		#                [umg, numt, nwno]
 		albedo[w] = sum((xint_at_top[:,:,w]*tweight).T*gweight)
 	albedo = 0.5 * albedo /F0PI * (cos_theta + 1.0)
 	return albedo
 
+@jit(nopython=True, cache=True)
+def compress_thermal(nwno, ubar1, flux_at_top, gweight, tweight): 
+	"""
+	Last step in albedo code. Integrates over phase angle based on the 
+	Gaussian-Chebychev weights in geometry.json 
+	
+	Parameters
+	----------
+	nwno : int 
+		Number of wavenumbers 
+	ubar1 : ndarray of floats 
+		Outgoing angles 
+	flux_at_top : ndarray of floats 
+		Thermal Flux at the top of the atmosphere with dimensions (ng, nt, nwno)
+	gweight : ndarray of floats 
+		Gaussian weights for integration 
+	tweight : ndarray of floats 
+		Chebychev weights for integration
+	"""
+	flux=zeros(nwno)
+	for w in range(nwno):
+		flux[w] = 0.5 * sum((ubar1*flux_at_top[:,:,w]*tweight).T*gweight)
+	return flux

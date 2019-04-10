@@ -62,14 +62,13 @@ setup(
   install_requires=[
           'numpy',
           'bokeh',
-          'h5py',
           'pandas',
           'joblib',
           'photutils',
           'astropy',
           'pysynphot',
           'sphinx',
-          'scipy'
+          'scipy',
           ], 
     zip_safe = False,
 )

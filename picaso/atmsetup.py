@@ -9,8 +9,9 @@ import warnings
 import numpy as np
 from .wavelength import get_cld_input_grid, regrid
 from numba import jit
-import h5pickle as h5py
+import h5py
 import pysynphot as psyn
+import math 
 
 __refdata__ = os.environ.get('picaso_refdata')
 
@@ -190,11 +191,12 @@ class ATMSETUP():
 					self.add_warnings("Ignoring %s in input file, not recognized molecule" % i)
 					warnings.warn("Ignoring %s in input file, not a recognized molecule" % i, UserWarning)
 		
+		self.weights = weights 
 
 		#DEFINE MIXING RATIOS
-		self.level['mixingratios'] = read[list(weights.keys())].values
-		self.layer['mixingratios'] = 0.5*(self.level['mixingratios'][1:,:] + self.level['mixingratios'][:-1,:])
-		self.weights = weights
+		self.level['mixingratios'] = read[list(weights.keys())]
+		self.layer['mixingratios'] = 0.5*(self.level['mixingratios'][1:].reset_index(drop=True) + 
+     						self.level['mixingratios'][0:-1].reset_index(drop=True))
 
 		#GET TP PROFILE 
 		#if parameterization is needed?
@@ -213,7 +215,8 @@ class ATMSETUP():
 		#Define nlevel and nlayers after profile has been built
 		self.c.nlevel = self.level['mixingratios'].shape[0]
 
-		self.c.nlayer = self.c.nlevel - 1		
+		self.c.nlayer = self.c.nlevel - 1
+
 
 	def calc_PT(self,logPc, T, logKir, logg1):
 		"""
@@ -241,9 +244,13 @@ class ATMSETUP():
 		----
 		- Add in temperature dependent to negate h- and things when not necessary
 		"""
+		self.rayleigh_molecules = []
 		self.continuum_molecules = []
 		if "H2" in self.molecules:
 			self.continuum_molecules += [['H2','H2']]
+			self.rayleigh_molecules += ['H2']
+		if "He" in self.molecules:
+			self.rayleigh_molecules += ['He']
 		if ("H2" in self.molecules) and ("He" in self.molecules):
 			self.continuum_molecules += [['H2','He']]
 		if ("H2" in self.molecules) and ("N2" in self.molecules):
@@ -257,12 +264,14 @@ class ATMSETUP():
 		if ("H" in self.molecules) and ("electrons" in self.level.keys()):
 			self.continuum_molecules += [['H-','ff']]
 		if ("H2" in self.molecules) and ("electrons" in self.level.keys()):
-			self.continuum_molecules += [['H2','H2-']]
+			self.continuum_molecules += [['H2-','']]
 		#now we can remove continuum molecules from self.molecules to keep them separate 
 		if 'H+' in ['H','H2-','H2','H-','He','N2']: self.add_warnings('No H+ continuum opacity included')
 
 		self.molecules = np.array([ x for x in self.molecules if x not in ['H','H2-','H2','H-','He','N2', 'H+'] ])
 
+		#and rayleigh opacity
+		if 'CH4' in self.molecules : self.rayleigh_molecules += ['CH4']
 	def get_weights(self, molecule):
 		"""
 		Automatically gets mean molecular weights of any molecule. Requires that 
@@ -310,7 +319,7 @@ class ATMSETUP():
 		Returns the mean molecular weight of the atmosphere 
 		"""
 		if self.dimension=='1d':
-			weighted_matrix = self.level['mixingratios'] @ self.weights.values[0]
+			weighted_matrix = self.level['mixingratios'].values @ self.weights.values[0]
 		elif self.dimension=='3d':
 			weighted_matrix=np.zeros((self.c.nlevel, self.c.ngangle, self.c.ntangle))
 			for g in range(self.c.ngangle):
@@ -321,6 +330,7 @@ class ATMSETUP():
 		self.level['mmw'] = weighted_matrix
 		#layer is the midpoint
 		self.layer['mmw'] = 0.5*(weighted_matrix[:-1]+weighted_matrix[1:])
+
 		return 
 
 	#@jit(nopython=True)

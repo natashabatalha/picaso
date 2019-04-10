@@ -1,12 +1,12 @@
 from .atmsetup import ATMSETUP
-from .fluxes import get_flux_geom_1d, get_flux_geom_3d 
+from .fluxes import get_flux_geom_1d, get_flux_geom_3d , get_flux_thermal_1d
 from .wavelength import get_cld_input_grid
 import numpy as np
 import pandas as pd
 from .optics import RetrieveOpacities,compute_opacity
 import os
 import pickle as pk
-from .disco import get_angles, compute_disco, compress_disco
+from .disco import get_angles, compute_disco, compress_disco, compress_thermal
 import copy
 import json
 import pysynphot as psyn
@@ -14,13 +14,13 @@ import astropy.units as u
 import astropy.constants as c
 __refdata__ = os.environ.get('picaso_refdata')
 
-def picaso(bundle,dimension = '1d', full_output=False, plot_opacity= False):
+def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_output=False, plot_opacity= False):
 	"""
 	Currently top level program to run albedo code 
 
 	Parameters 
 	----------
-	input : dict 
+	bundle : dict 
 		This input dict is built by loading the input = `justdoit.load_inputs()` 
 	dimension : str 
 		(Optional) Dimensions of the calculation. Default = '1d'. But '3d' is also accepted. 
@@ -37,9 +37,9 @@ def picaso(bundle,dimension = '1d', full_output=False, plot_opacity= False):
 	Wavenumber, albedo, atmosphere if full_output = True 
 	"""
 	inputs = bundle.inputs
-	opacityclass = bundle.opacityclass
-	wno = bundle.opacityclass.wno
-	nwno = bundle.opacityclass.nwno
+
+	wno = opacityclass.wno
+	nwno = opacityclass.nwno
 
 	#check to see if we are running in test mode
 	test_mode = inputs['test_mode']
@@ -61,7 +61,6 @@ def picaso(bundle,dimension = '1d', full_output=False, plot_opacity= False):
 	constant_back = inputs['approx']['TTHG_params']['constant_back']
 	constant_forward = inputs['approx']['TTHG_params']['constant_forward']
 
-
 	#get geometry
 	ng = inputs['disco']['num_gangle']
 	nt = inputs['disco']['num_tangle']
@@ -72,6 +71,7 @@ def picaso(bundle,dimension = '1d', full_output=False, plot_opacity= False):
 	ubar0, ubar1, cos_theta,lat,lon = compute_disco(ng, nt, gangle, tangle, phase_angle)
 
 	#set star 
+	radius_star = inputs['star']['radius']
 	F0PI = np.zeros(nwno) + 1.0 
 
 	#define approximinations 
@@ -82,6 +82,7 @@ def picaso(bundle,dimension = '1d', full_output=False, plot_opacity= False):
 
 	################ From here on out is everything that would go through retrieval or 3d input##############
 	atm.planet.gravity = inputs['planet']['gravity']
+	atm.planet.radius = inputs['planet']['radius']
 
 	if dimension == '1d':
 		atm.get_profile()
@@ -107,6 +108,8 @@ def picaso(bundle,dimension = '1d', full_output=False, plot_opacity= False):
 	atm.add_warnings('No computed opacities for: '+','.join(no_opacities))
 	atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
 
+	#lastly grab needed opacities for the problem
+	opacityclass.get_opacities(atm)
 
 	if dimension == '1d':
 		#only need to get opacities for one pt profile
@@ -118,13 +121,19 @@ def picaso(bundle,dimension = '1d', full_output=False, plot_opacity= False):
 			atm, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
 			full_output=full_output, plot_opacity=plot_opacity)
 
-		#use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-		xint_at_top  = get_flux_geom_1d(atm.c.nlevel, wno,nwno,ng,nt,
+		if  'reflected' in calculation:
+			#use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
+			xint_at_top  = get_flux_geom_1d(atm.c.nlevel, wno,nwno,ng,nt,
 													DTAU, TAU, W0, COSB,GCOS2,ftau_cld,ftau_ray,
 													DTAU_OG, TAU_OG, W0_OG, COSB_OG ,
 													atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
 													single_phase,multi_phase,
 													frac_a,frac_b,frac_c,constant_back,constant_forward)
+		if 'thermal' in calculation:
+			#use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
+			flux_at_top  = get_flux_thermal_1d(atm.c.nlevel, wno,nwno,ng,nt,atm.level['temperature'],
+													DTAU_OG, W0_OG, COSB_OG, atm.level['pressure'],ubar1)
+			
 	elif dimension == '3d':
 
 		#setup zero array to fill with opacities
@@ -178,16 +187,46 @@ def picaso(bundle,dimension = '1d', full_output=False, plot_opacity= False):
 											frac_a,frac_b,frac_c,constant_back,constant_forward)
 
 	#now compress everything based on the weights 
-	albedo = compress_disco(ng, nt, nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
-	
-	if full_output:
+	if  ('reflected' in calculation) & ('thermal' not in calculation):
+		albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
+		returns = (wno, albedo)
+
+	elif ('reflected' not in calculation) & ('thermal' in calculation):
+		thermal = compress_thermal(nwno,ubar1, flux_at_top, gweight, tweight)
+		fpfs_thermal = thermal/(opacityclass.unshifted_stellar_spec)*(atm.planet.radius/radius_star)**2.0
+		returns = wno,fpfs_thermal,thermal
+
+	elif ('reflected' in calculation) & ('thermal' in calculation):
+		albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
+		thermal = compress_thermal(nwno,ubar1,flux_at_top, gweight, tweight)
+		fpfs_thermal = thermal/(opacityclass.unshifted_stellar_spec)*(atm.planet.radius/radius_star)**2.0
+		returns = wno,albedo, fpfs_thermal,thermal
+
+	if full_output:	
 		#add full solution and latitude and longitudes to the full output
+		#atm.flux_at_top = flux_at_top
 		atm.xint_at_top = xint_at_top
 		atm.latitude = lat
 		atm.longitude = lon
 		return wno, albedo , atm.as_dict()
 	else: 
-		return wno, albedo
+		return returns
+
+def opannection(filename_db = None, raman_db = None):
+	"""
+	Sets up database connection to opacities. 
+	"""
+
+	inputs = json.load(open(os.path.join(__refdata__,'config.json')))
+
+	if isinstance(filename_db,type(None) ): filename_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['opacity'])
+	if isinstance(raman_db,type(None) ): raman_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['raman'])
+
+	opacityclass=RetrieveOpacities(
+				filename_db, 
+				raman_db
+				)
+	return opacityclass
 
 class inputs():
 	"""Class to setup planet to run
@@ -218,19 +257,19 @@ class inputs():
 	approx()  : set approximation
 	spectrum() : create spectrum
 	"""
-	def __init__(self, continuum_db = None, molecular_db = None, raman_db = None):
+	def __init__(self):#continuum_db = None, molecular_db = None, raman_db = None):
 
 		self.inputs = json.load(open(os.path.join(__refdata__,'config.json')))
 
-		if isinstance(continuum_db,type(None) ): continuum_db = os.path.join(__refdata__, 'opacities', self.inputs['opacities']['files']['continuum'])
-		if isinstance(molecular_db,type(None) ): molecular_db = os.path.join(__refdata__, 'opacities', self.inputs['opacities']['files']['molecular'])
-		if isinstance(raman_db,type(None) ): raman_db = os.path.join(__refdata__, 'opacities', self.inputs['opacities']['files']['raman'])
+		#if isinstance(continuum_db,type(None) ): continuum_db = os.path.join(__refdata__, 'opacities', self.inputs['opacities']['files']['continuum'])
+		#if isinstance(molecular_db,type(None) ): molecular_db = os.path.join(__refdata__, 'opacities', self.inputs['opacities']['files']['molecular'])
+		#if isinstance(raman_db,type(None) ): raman_db = os.path.join(__refdata__, 'opacities', self.inputs['opacities']['files']['raman'])
 
-		self.opacityclass=RetrieveOpacities(
-					continuum_db,
-					molecular_db, 
-					raman_db
-					)
+		#self.opacityclass=RetrieveOpacities(
+		#			continuum_db,
+		#			molecular_db, 
+		#			raman_db
+		#			)
 
 
 	def phase_angle(self, phase=0,num_gangle=10, num_tangle=10):
@@ -244,6 +283,7 @@ class inputs():
 		num_tangle : int 
 			Number of Tchebyshev angles to integrate over facets (default is 10)
 		"""
+		if (num_gangle < 2 ) or (num_tangle < 2 ): raise Exception("length of gangle and tangle must be > than 2")
 		self.inputs['phase_angle'] = phase
 		self.inputs['disco']['num_gangle'] = int(num_gangle)
 		self.inputs['disco']['num_tangle'] = int(num_tangle)
@@ -261,7 +301,7 @@ class inputs():
 		gravity_unit : astropy.unit
 			(Optional) Unit of Gravity
 		radius : float 
-			(Optional) radius of planet 
+			(Optional) radius of planet MUST be specified for thermal emission!
 		radius_unit : astropy.unit
 			(Optional) Unit of radius
 		mass : float 
@@ -269,37 +309,46 @@ class inputs():
 		mass_unit : astropy.unit
 			(Optional) Unit of mass	
 		"""
-		if gravity is not None:
+		if (mass is not None) and (radius is not None):
+			m = (mass*mass_unit).to(u.g)
+			r = (radius*radius_unit).to(u.cm)
+			g = (c.G * m /  (r**2)).value
+			self.inputs['planet']['radius'] = r.value
+			self.inputs['planet']['radius_unit'] = 'cm'
+			self.inputs['planet']['mass'] = m.value
+			self.inputs['planet']['mass_unit'] = 'g'
+			self.inputs['planet']['gravity'] = g
+			self.inputs['planet']['gravity_unit'] = 'cm/(s**2)'
+		elif gravity is not None:
 			g = (gravity*gravity_unit).to('cm/(s**2)')
 			g = g.value
 			self.inputs['planet']['gravity'] = g
 			self.inputs['planet']['gravity_unit'] = 'cm/(s**2)'
-		elif (mass is not None) and (radius is not None):
-			m = (mass*mass_unit).to(u.g)
-			r = (radius*radius_unit).to(u.cm)
-			g = (c.G * m /  (r**2)).value
-			self.inputs['planet']['radius'] = r
-			self.inputs['planet']['radius_unit'] = 'cm'
-			self.inputs['planet']['mass'] = m
-			self.inputs['planet']['mass_unit'] = 'g'
-			self.inputs['planet']['gravity'] = g
-			self.inputs['planet']['gravity_unit'] = 'cm/(s**2)'
+			self.inputs['planet']['radius'] = np.nan
+			self.inputs['planet']['radius_unit'] = 'Radius not specified'
 		else: 
 			raise Exception('Need to specify gravity or radius and mass + additional units')
 
-	def star(self, temp=None, metal=None, logg=None ,database='ck04models',filename=None, w_units=None, f_units=None):
+	def star(self, opannection,temp=None, metal=None, logg=None ,radius = None, radius_unit=None,
+		database='ck04models',filename=None, w_units=None, f_units=None):
 		"""
 		Get the stellar spectrum using pysynphot and interpolate onto a much finer grid than the 
 		planet grid. 
 
 		Parameters
 		----------
+		opannection : class picaso.RetrieveOpacities
+			This is the opacity class and it's needed to get the correct wave info and raman scattering cross sections
 		temp : float 
 			Teff of the stellar model 
 		metal : float 
 			Metallicity of the stellar model 
 		logg : float 
 			Logg cgs of the stellar model
+		radius : float 
+			Radius of the star 
+		radius_unit : astropy.unit
+			Any astropy unit (e.g. `radius_unit=astropy.unit.Unit("R_sun")`)
 		database : str 
 			(Optional)The database to pull stellar spectrum from. See documentation for pysynphot. 
 		filename : str 
@@ -310,12 +359,19 @@ class inputs():
 			(Optional) Used for stellar file flux units 
 		"""
 		#most people will just upload their thing from a database
+		if (not isinstance(radius, type(None))):
+			r = (radius*radius_unit).to(u.cm).value
+			radius_unit='cm'
+		else :
+			r = np.nan
+			radius_unit = "Radius not supplied"
+
 		if (not isinstance(temp, type(None))):
 			sp = psyn.Icat(database, temp, metal, logg)
 			sp.convert("um")
 			sp.convert('flam') 
 			wno_star = 1e4/sp.wave[::-1] #convert to wave number and flip
-			flux_star = sp.flux[::-1]	 #flip here to get correct order
+			flux_star = sp.flux[::-1]*1e8	 #flip here and convert to ergs/cm3/s to get correct order
 
 		#but you can also upload a stellar spec of your own 
 		elif (not isinstance(filename),type(none)):
@@ -340,7 +396,6 @@ class inputs():
 			else: 
 				raise Exception('Stellar units are not correct. Pick um, nm, cm, hz, or Angs')        
 
-			#convert to photons/s/nm/m^2 for flux normalization based on 
 			#http://www.gemini.edu/sciops/instruments/integration-time-calculators/itc-help/source-definition
 			if f_unit == 'Jy':
 				FLUXUNITS = 'jy' 
@@ -354,12 +409,12 @@ class inputs():
 
 			sp = psyn.ArraySpectrum(wave, flux, waveunits=WAVEUNITS, fluxunits=FLUXUNITS)        #Convert evrything to nanometer for converstion based on gemini.edu  
 			sp.convert("um")
-			sp.convert('flam')
+			sp.convert('flam') #ergs/cm2/s/ang
 			wno_star = 1e4/sp.wave[::-1] #convert to wave number and flip
-			flux_star = sp.flux[::-1]	 #flip here to get correct order			
+			flux_star = sp.flux[::-1]*1e8 #flip and convert to ergs/cm3/s here to get correct order			
 
 
-		wno_planet = self.opacityclass.wno
+		wno_planet = opannection.wno
 		max_shift = np.max(wno_planet)+6000 #this 6000 is just the max raman shift we could have 
 		min_shift = np.min(wno_planet) -2000 #it is just to make sure we cut off the right wave ranges
 
@@ -369,14 +424,16 @@ class inputs():
 
 		#this adds stellar shifts 'self.raman_stellar_shifts' to the opacity class
 		#the cross sections are computed later 
-		self.opacityclass.compute_stellar_shits(fine_wno_star, fine_flux_star)
+		opannection.compute_stellar_shits(fine_wno_star, fine_flux_star)
 
 		self.inputs['star']['database'] = database
 		self.inputs['star']['temp'] = temp
 		self.inputs['star']['logg'] = logg
 		self.inputs['star']['metal'] = metal
-		self.inputs['star']['wno'] = fine_wno_star 
+		self.inputs['star']['radius'] = r 
+		self.inputs['star']['radius_unit'] = radius_unit 
 		self.inputs['star']['flux'] = fine_flux_star 
+		self.inputs['star']['wno'] = fine_wno_star 
 
 	def atmosphere(self, df=None, filename=None, pt_params = None,exclude_mol=None, **pd_kwargs):
 		"""
@@ -401,10 +458,15 @@ class inputs():
 		if not isinstance(df, type(None)):
 			if ((not isinstance(df, dict )) & (not isinstance(df, pd.core.frame.DataFrame ))): 
 				raise Exception("df must be pandas DataFrame or dictionary")
-		if not isinstance(filename, type(None)):
-			print(filename)
+			else:
+				self.nlevel=df.shape[0] 
+		elif not isinstance(filename, type(None)):
 			df = pd.read_csv(filename, **pd_kwargs)
 			self.nlevel=df.shape[0] 
+		elif not isinstance(pt_params, type(None)): 
+			self.inputs['atmosphere']['pt_params'] = pt_params
+			self.nlevel=61 #default n of levels for parameterization
+			raise Exception('Pt parameterization not in yet')
 
 		if 'pressure' not in df.keys(): 
 			raise Exception("Check column names. `pressure` must be included.")
@@ -412,9 +474,7 @@ class inputs():
 		if (('temperature' not in df.keys()) and (isinstance(pt_params, type(None)))):
 			raise Exception("`temperature` not specified and pt_params not given. Do one or the other.")
 
-		else: 
-			self.inputs['atmosphere']['pt_params'] = pt_params
-			self.nlevel=61 #default n of levels for parameterization
+
 
 		if not isinstance(exclude_mol, type(None)):
 			df = df.drop(exclude_mol, axis=1)
@@ -589,9 +649,13 @@ class inputs():
 		self.inputs['approx']['TTHG_params']['constant_forward']=tthg_forward
 
 
-	def spectrum(self,dimension = '1d', full_output=False, plot_opacity= False):
+	def spectrum(self,opacityclass,dimension = '1d', calculation='reflected', full_output=False, plot_opacity= False):
 		"""Run Spectrum"""
-		return picaso(self, full_output=full_output, plot_opacity=plot_opacity)
+		if ('thermal' in calculation) and (np.isnan(self.inputs['star']['radius']) or np.isnan(self.inputs['planet']['radius'])):
+			raise Exception("Stellar or Planet radius not supplied but thermal flux was requested. See options in `star()` `gravity()`")
+			
+		return picaso(self, opacityclass,dimension=dimension,calculation=calculation,
+			full_output=full_output, plot_opacity=plot_opacity)
 
 
 def jupiter_pt():

@@ -1,9 +1,11 @@
 import numpy as np
 import os
-import h5py
+import json
 import pandas as pd
 from scipy.interpolate import RegularGridInterpolator
 __refdata__ = os.environ.get('picaso_refdata')
+import scipy.signal as sig
+
 
 class ContinuumFactory():
 	"""
@@ -38,8 +40,9 @@ class ContinuumFactory():
 	----
 	- Change this to be able to input the filename specified by the input config file
 	"""
-	def __init__(self, original_file,colnames, new_wno, overwrite=False):
+	def __init__(self, original_file,colnames, new_wno, overwrite=False,new_filename=os.path.join(__refdata__, 'opacities','continuum.json')):
 		#original opacity database from freedman, hopefully we can discontinue this soon
+		self.new_filename = new_filename
 		self.og_opacity = pd.read_csv(original_file,delim_whitespace=True,names=colnames)
 		self.temperatures = self.og_opacity['wno'].loc[np.isnan(self.og_opacity[colnames[1]])].values
 		self.ntemp = int(self.og_opacity[colnames[1]][0])
@@ -55,50 +58,80 @@ class ContinuumFactory():
 		self.new_wno = new_wno
 
 		#create database file
-		dbfile = os.path.join(__refdata__, 'opacities','continuum.hdf5')
+		dbfile = new_filename
 		if os.path.exists(dbfile):
 			if overwrite:
 				raise Exception("Overwrite is set to false to save db's from being overwritten.")
-		self.db_cia = h5py.File(dbfile, 'w')
-		self.db_cia.attrs['w_unit'] = w_unit
-		self.db_cia.attrs['opacity_unit'] = opacity_unit
-		self.db_cia.attrs['wavenumber_grid'] = new_wno
-		self.db_cia.attrs['temperature_unit'] ='K'
+		self.db_cia = {i:{} for i in self.molecules}# h5py.File(dbfile, driver='mpio', comm=MPI.COMM_WORLD)#, 'w')
+		self.db_cia['wave_unit'] = self.w_unit
+		self.db_cia['opacity_unit'] = self.opacity_unit
+		self.db_cia['wavenumber_grid'] = list(new_wno)
+		self.db_cia['temperature_unit'] ='K'
 
 
 	def restructure_opacity(self):
-		dset = self.db_cia.create_dataset('wavenumber', data=self.new_wno, chunks=True)
 		for i in range(self.ntemp): 
 			for m in self.molecules:
 				opa_bundle = self.og_opacity.iloc[ i*self.nwno : (i+1) * self.nwno][m].values
 				new_bundle = 10**(np.interp(self.new_wno,  self.old_wno, opa_bundle,right=-33,left=-33))
 				#now for anywhere that doesn't have opacity (-33) replace with linsky
 				if m=='H2H2':
+					h2h2, loc = self.h2h2_overtone(self.temperatures[i],self.new_wno)
+					new_bundle[loc] = h2h2
 					new_bundle[np.where(new_bundle==1e-33)] = self.fit_linsky(self.temperatures[i],self.new_wno[np.where(new_bundle==1e-33)])
+					new_bundle = sig.medfilt(np.array(new_bundle), kernel_size=5) #this is to smooth the discontinuous parts 
 
-				dset = self.db_cia.create_dataset(m+'/'+str(self.temperatures[i]), data=new_bundle, chunks=True)
+				self.db_cia[m][str(self.temperatures[i])] = list(new_bundle) #, chunks=True)
 		#get h2minus opacity, currently returns -33 for h2minus opacity regions that are out of bounds
 		allw = np.array(list(self.new_wno)*len(self.temperatures))
 		allt = np.concatenate([[i]*len(self.new_wno) for i in self.temperatures])
 
 		h2minus = self.get_h2minus(allt, allw)
-
+		self.db_cia['H2-'] = {}
 		for i in range(self.ntemp): 
 			bundle = h2minus[i*len(self.new_wno) : (i+1) * len(self.new_wno)]
-			dset = self.db_cia.create_dataset('H2-/'+str(self.temperatures[i]), data=bundle, chunks=True)
+			self.db_cia['H2-'][str(self.temperatures[i])]=list(bundle)#), chunks=True)
 
 		#get hminusbf 
+		self.db_cia['H-bf'] = {}
 		for i in range(self.ntemp):
 			if self.temperatures[i]<600.0:
 				bundle = np.zeros(len(self.new_wno)) 
 			else:
 				bundle = self.get_hminusbf(self.new_wno)
-			dset = self.db_cia.create_dataset('H-bf/'+str(self.temperatures[i]), data = bundle, chunks=True)
+			self.db_cia['H-bf'][str(self.temperatures[i])] = list(bundle)#), chunks=True)
 
 		#get hminusff 
+		self.db_cia['H-ff'] = {}
 		for i in range(self.ntemp):
 			bundle = self.get_hminusff(self.temperatures[i], self.new_wno) 
-			dset = self.db_cia.create_dataset('H-ff/'+str(self.temperatures[i]), data=bundle, chunks=True)
+			self.db_cia['H-ff'][str(self.temperatures[i])]=list(bundle)#), chunks=True)
+
+		with open(self.new_filename, 'w') as fp:
+			json.dump(self.db_cia, fp)
+	def h2h2_overtone(self, t, wno):
+		"""
+		Add in special CIA h2h2 band at 0.8 microns
+
+		Parameters
+		---------- 
+		t : float
+			Temperature 
+		wno : numpy.array
+			wave number
+
+		Returns
+		-------
+		H2-H2 absorption in cm-1 amagat-2 		
+		"""
+		fname = os.path.join(__refdata__, 'opacities','H2H2_ov2_eq.tbl')
+		df = pd.read_csv(fname, delim_whitespace=True).set_index('wavenumber').apply(np.log10)		
+		temps = [ float(i) for i in df.keys()]
+		it = find_nearest(temps, t)
+		placeholder_temp = temps[it]
+		loc = np.where((wno>=df.index.min()) & (wno<=df.index.max()))
+		new_opa = 10**(np.interp(wno[loc],  np.array(df.index), df[list(df.keys())[it]].values,right=-33,left=-33))
+		return new_opa, loc
 
 	def fit_linsky(self, t, wno, va=3):
 		"""
@@ -214,6 +247,7 @@ class ContinuumFactory():
 		for i in coeff: 
 			f[nonzero] = f[nonzero]*x[nonzero] + i 
 		result = (wave*x)**3*f*1e-18
+		result[np.isnan(result)] = 1e-33
 		return result
 		
 	def get_hminusff(self, t, wno):
@@ -284,17 +318,17 @@ class ContinuumFactory():
 class MolecularFactory():
 	"""
 	This class contains everything needed to take Richard's Opacities and turn them into 
-	usable HDF5 database for fast querying.
+	usable json database for fast querying.
 
 	This directly translates Richards old opacities from the original albedo code to the new 
-	HDF5 format. Each molecule has the 1060 files with the following header structure: 
+	json format. Each molecule has the 1060 files with the following header structure: 
 
 	ch4_2014 opacities from 0.3 to 1 microns at R~5000 resolution 	
 	wavelength 	 opacity (cm2/g)  
 
 	Warnings
 	--------
-	When this routine puts everything into the hdf5 database it will reorder everything 
+	When this routine puts everything into the json database it will reorder everything 
 	by wavenumber!! This way molcular opacity and continuum opacity are on the same grid 
 
 	Parameters
@@ -304,7 +338,7 @@ class MolecularFactory():
 		contain a bunch of different folders (one for each molecule). 
 	
 	"""
-	def __init__(self, original_dir, new_wno, overwrite=False):
+	def __init__(self, original_dir, new_wno, overwrite=False,new_filename=os.path.join(__refdata__, 'opacities','molecular.json')):
 		#define units
 		self.w_unit = 'cm-1'
 		self.opacity_unit = 'cm2/g'
@@ -315,20 +349,20 @@ class MolecularFactory():
 		self.original_dir = original_dir
 
 		#create database file
-		dbfile = os.path.join(__refdata__, 'opacities','molecular.hdf5')
+		dbfile = new_filename
 		if os.path.exists(dbfile):
 			if overwrite:
 				raise Exception("Overwrite is set to false to save db's from being overwritten.")
-		self.db_mole = h5py.File(dbfile, 'w')
+		self.db_mole = {}
 
-		self.db_mole.attrs['w_unit'] = w_unit
+		self.db_mole.attrs['wave_unit'] = w_unit
 		self.db_mole.attrs['opacity_unit'] = opacity_unit
 		self.db_mole.attrs['wavenumber_grid'] = new_wno
 		self.db_molecular.attrs['prssure_unit'] ='bars'
 		self.db_molecular.attrs['temperature_unit'] ='K'
 
 	def restructure_opacity(self):
-		dset = self.db_mole.create_dataset('wavenumber', data=self.new_wno, chunks=True)
+		dset = self.db_mole.create_dataset('wavenumber', data=self.new_wno)#, chunks=True)
 
 		for fold in next(os.walk(self.original_dir))[1]:
 			print(fold)
@@ -351,13 +385,16 @@ class MolecularFactory():
 			file1 = file[0][0:file[0].find('.')+1]
 			file2 = file[0][file[0].rfind('.'):]
 			for i in np.linspace(1,len(file),len(file),dtype=int):
-				a = pd.read_csv(os.path.join(self.original_dir, fold,file1+str(i)+file2), delim_whitespace=True, skiprows=2, header=None, 
-					names=['wave','cm2/g'])
+				a = pd.read_csv(os.path.join(self.original_dir, fold,file1+str(i)+file2), delim_whitespace=True, skiprows=2, header=None, names=['wave','cm2/g'])
 				a['wno'] = 1e4/a['wave']
 				a = a.sort_values('wno')
 				new_bundle = a['cm2/g'].values
-				dset = self.db_mole.create_dataset(fold+'/'+temperatures[i-1]+'/'+pressures[i-1], data=new_bundle, chunks=True)
+				dset = self.db_mole.create_dataset(fold+'/'+temperatures[i-1]+'/'+pressures[i-1], data=new_bundle)#, chunks=True)
 				
+def find_nearest(array,value):
+	#small program to find the nearest neighbor in temperature  
+	idx = (np.abs(array-value)).argmin()
+	return idx
 
 def listdir(path):
     for f in os.listdir(path):

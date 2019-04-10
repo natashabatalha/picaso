@@ -6,7 +6,9 @@ import os
 from numba import jit
 from bokeh.plotting import figure, show, output_file
 from bokeh.palettes import inferno
-
+import io 
+import sqlite3
+import math
 #@jit(nopython=True)
 def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=False,raman=0, plot_opacity=False,
 	full_output=False):
@@ -92,7 +94,6 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 	- Add a better approximation than delta-scale (e.g. M.Marley suggests a paper by Cuzzi that has 
 	a better methodology)
 	"""
-
 	atm = atmosphere
 	tlevel = atm.level['temperature']
 	plevel = atm.level['pressure']/atm.c.pconv #think of a better solution for this later when mark responds
@@ -104,7 +105,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 	nwno = opacityclass.nwno
 
 	if plot_opacity: 
-		plot_layer=50#np.size(tlayer)-1
+		plot_layer=int(nlayer/2)#np.size(tlayer)-1
 		opt_figure = figure(x_axis_label = 'Wavelength', y_axis_label='TAUGAS in optics.py', 
 		title = 'Opacity at T='+str(tlayer[plot_layer])+' Layer='+str(plot_layer)
 		,y_axis_type='log',height=800, width=1200)
@@ -131,58 +132,55 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 
 	#go through every molecule in the continuum first 
 	for m in atm.continuum_molecules:
+
 		#H- Bound-Free
 		if (m[0] == "H-") and (m[1] == "bf"):
-			h_ =np.where(m[0]==np.array(atm.weights.keys()))[0][0]
-			ADDTAU = (opacityclass.get_continuum_opac(tlayer, 'H-bf').T*( 		#[(nlayer x nwno).T *(
-							atm.layer['mixingratios'][:,h_]*	  				#nlayer
-						   	atm.layer['colden']/ 								#nlayer
-						   	(atm.layer['mmw']*atm.c.amu)) 	).T					#nlayer)].T
-			#testing['H-bf'] = ADDTAU
+			ADDTAU = (opacityclass.continuum_opa['H-bf']*( 		     #[(nwno x nlayer) *(
+							atm.layer['mixingratios'][m[0]].values*	 #nlayer
+						   	atm.layer['colden']/ 					 #nlayer
+						   	(atm.layer['mmw']*atm.c.amu)) 	).T		 #nlayer)].T
+
 			TAUGAS += ADDTAU
 			if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
+
 		#H- Free-Free
 		elif (m[0] == "H-") and (m[1] == "ff"):
-			h_ = np.where('H'==np.array(atm.weights.keys()))[0][0]
-			ADDTAU = (opacityclass.get_continuum_opac(tlayer, 'H-ff').T*( 				#[(nlayer x nwno).T *(
-							atm.layer['pressure']* 								  		#nlayer
-							atm.layer['mixingratios'][:,h_]*atm.layer['electrons']*	 #nlayer
-						   	atm.layer['colden']/ 										#nlayer
-						   	(tlayer*atm.layer['mmw']*atm.c.amu*atm.c.k_b)) 	).T			#nlayer)].T
+			ADDTAU = (opacityclass.continuum_opa['H-ff']*( 				                 #[(nwno x nlayer) *(
+							atm.layer['pressure']* 								  		 #nlayer
+							atm.layer['mixingratios']['H'].values*atm.layer['electrons']*#nlayer
+						   	atm.layer['colden']/ 										 #nlayer
+						   	(tlayer*atm.layer['mmw']*atm.c.amu*atm.c.k_b)) 	).T			 #nlayer)].T
 			#testing['H-ff'] = ADDTAU
 			TAUGAS += ADDTAU
 			if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
+
 		#H2- 
-		elif (m[0] == "H2") and (m[1] == "H2-"): 
-			#make sure you know which index of matrix is h2 and e-
-			h2_ = np.where(m[0]==np.array(atm.weights.keys()))[0][0]
+		elif (m[0] == "H2-") and (m[1] == ""): 
 			#calculate opacity
 			#this is a hefty matrix multiplication to make sure that we are 
 			#multiplying each column of the opacities by the same 1D vector (as opposed to traditional 
 			#matrix multiplication). This is the reason for the transposes.
-			ADDTAU = (opacityclass.get_continuum_opac(tlayer, 'H2-').T*( 				#[(nlayer x nwno).T *(
+			ADDTAU = (opacityclass.continuum_opa['H2-']*( 				#[(nwno x nlayer) *(
 							atm.layer['pressure']* 								  		#nlayer
-							atm.layer['mixingratios'][:,h2_]*atm.layer['electrons']*	#nlayer
+							atm.layer['mixingratios']['H2'].values*atm.layer['electrons']*	#nlayer
 						   	atm.layer['colden']/ 										#nlayer
 						   	(atm.layer['mmw']*atm.c.amu)) 	).T							#nlayer)].T
-			#testing['H2-'] = ADDTAU
+
 
 			TAUGAS += ADDTAU
 			if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
 		#everything else.. e.g. H2-H2, H2-CH4. Automatically determined by which molecules were requested
 		else:
-			m0 = np.where(m[0]==np.array(atm.weights.keys()))[0][0]
-			m1 = np.where(m[1]==np.array(atm.weights.keys()))[0][0]
-			#calculate opacity
 
-			ADDTAU = (opacityclass.get_continuum_opac(tlayer, m[0]+m[1]).T * ( #[(nlayer x nwno).T *(
+			#calculate opacity
+			ADDTAU = (opacityclass.continuum_opa[m[0]+m[1]] * ( #[(nwno x nlayer) *(
 								COEF1*											#nlayer
-								atm.layer['mixingratios'][:,m0]*				#nlayer
-								atm.layer['mixingratios'][:,m1] )  ).T 			#nlayer)].T
-			#testing[m[0]+m[1]] = ADDTAU
+								atm.layer['mixingratios'][m[0]].values *				#nlayer
+								atm.layer['mixingratios'][m[1]].values )  ).T 			#nlayer)].T
+
 			TAUGAS += ADDTAU
 			if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
@@ -190,26 +188,27 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 	
 	#====================== ADD MOLECULAR OPACITY======================	
 	for m in atm.molecules:
-		ind = np.where(m==np.array(atm.weights.keys()))[0][0]
-		ADDTAU = (opacityclass.get_molecular_opac(tlayer,player, m).T * ( 
+		#ind = np.where(m==np.array(atm.weights.keys()))[0][0]
+		ADDTAU = (opacityclass.molecular_opa[m] * ( #[(nwno x nlayer) *(
 					atm.layer['colden']*
-					atm.layer['mixingratios'][:,ind]*atm.weights[m].values[0]/ 
-					atm.layer['mmw']) ).T
+					atm.layer['mixingratios'][m].values/ #removing this bc of opa unit change *atm.weights[m].values[0]/ 
+					atm.layer['mmw']) ).T 
 		TAUGAS += ADDTAU
 		#testing[m] = ADDTAU
-		if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[int(np.size(tlayer)/2),:], alpha=0.7,legend=m, line_width=3, color=colors[c],
+		if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m, line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
 		c+=1
 
 	#====================== ADD RAYLEIGH OPACITY======================	
-	ich4 = np.where('CH4'==np.array(atm.weights.keys()))[0][0]
-	ih2 = np.where('H2'==np.array(atm.weights.keys()))[0][0]
-	ihe = np.where('He'==np.array(atm.weights.keys()))[0][0]
-	TAURAY = rayleigh(atm.layer['colden'],atm.layer['mixingratios'][:,ih2], 
-					atm.layer['mixingratios'][:,ihe], atm.layer['mixingratios'][:,ich4], 
+	ray_mixingratios = np.zeros((nlayer,3))#hardwired because we only have h2,he and ch4 scattering
+	for i,j in zip(['H2','He','CH4'],range(3)):
+		if i in atm.rayleigh_molecules:
+			ray_mixingratios[:,j] = atm.layer['mixingratios'][i].values
+
+	TAURAY = rayleigh(atm.layer['colden'],ray_mixingratios, 
 					opacityclass.wave, atm.layer['mmw'],atm.c.amu )
-	#testing['ray'] = TAURAY
-	if plot_opacity: opt_figure.line(1e4/opacityclass.wno, TAURAY[int(np.size(tlayer)/2),:], alpha=0.7,legend='Rayleigh', line_width=3, color=colors[c],
+
+	if plot_opacity: opt_figure.line(1e4/opacityclass.wno, TAURAY[plot_layer,:], alpha=0.7,legend='Rayleigh', line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)	
 
 
@@ -220,14 +219,14 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 		raman_factor = compute_raman(nwno, nlayer,opacityclass.wno, 
 			opacityclass.raman_stellar_shifts, tlayer, raman_db['c'].values,
 				raman_db['ji'].values, raman_db['deltanu'].values)
-		if plot_opacity: opt_figure.line(1e4/opacityclass.wno, raman_factor[int(np.size(tlayer)/2),:]*TAURAY[int(np.size(tlayer)/2),:], alpha=0.7,legend='Shifted Raman', line_width=3, color=colors[c],
+		if plot_opacity: opt_figure.line(1e4/opacityclass.wno, raman_factor[plot_layer,:]*TAURAY[plot_layer,:], alpha=0.7,legend='Shifted Raman', line_width=3, color=colors[c],
 				muted_color=colors[c], muted_alpha=0.2)
 		raman_factor = np.minimum(raman_factor, raman_factor*0+0.99999)
 	#POLLACK OPACITY
 	elif raman ==1: 
 		raman_factor = raman_pollack(nlayer)
 		raman_factor = np.minimum(raman_factor, raman_factor*0+0.99999)		
-		if plot_opacity: opt_figure.line(1e4/opacityclass.wno, raman_factor[int(np.size(tlayer)/2),:]*TAURAY[int(np.size(tlayer)/2),:], alpha=0.7,legend='Shifted Raman', line_width=3, color=colors[c],
+		if plot_opacity: opt_figure.line(1e4/opacityclass.wno, raman_factor[plot_layer,:]*TAURAY[plot_layer,:], alpha=0.7,legend='Shifted Raman', line_width=3, color=colors[c],
 				muted_color=colors[c], muted_alpha=0.2)
 	#NOTHING
 	else: 
@@ -236,7 +235,6 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 
 	#====================== ADD CLOUD OPACITY======================	
 	TAUCLD = atm.layer['cloud']['opd'] #TAUCLD is the total extinction from cloud = (abs + scattering)
-	#testing['cld'] = TAUCLD
 	asym_factor_cld = atm.layer['cloud']['g0'] 
 	single_scattering_cld = atm.layer['cloud']['w0'] 
 
@@ -248,7 +246,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 		atmosphere.wavenumber = opacityclass.wno
 
 	#====================== ADD EVERYTHING TOGETHER PER LAYER======================	
-	#formerly DTAUV
+	#formerly DTAU
 	DTAU = TAUGAS + TAURAY + TAUCLD 
 	
 	# This is the fractional of the total scattering that will be due to the cloud
@@ -262,7 +260,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 	#formerly GCOSB2 
 	ftau_ray = TAURAY/(TAURAY + TAUCLD)
 	GCOS2 = 0.5*ftau_ray #Hansen & Travis 1974 for Rayleigh scattering 
-	#formerly WBARV.. change name later
+
 	W0 = (TAURAY*raman_factor + TAUCLD*single_scattering_cld) / (TAUGAS + TAURAY + TAUCLD) #TOTAL single scattering 
 
 	#sum up taus starting at the top, going to depth
@@ -323,9 +321,8 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 		return DTAU, TAU, W0, COSB, ftau_cld, ftau_ray, GCOS2, \
 			   DTAU, TAU, W0, COSB  #these are returned twice for consistency with the delta-eddington option
 
-#'f8[:,:](f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8)',
 @jit(nopython=True, cache=True)
-def rayleigh(colden,H2,He,CH4,wave,xmu,amu):
+def rayleigh(colden,gasmixing,wave,xmu,amu):
 	"""
 	Rayleigh function taken from old albedo code. Keeping this modular, as we may want 
 	to swap out different methods to calculate rayleigh opacity 
@@ -334,12 +331,8 @@ def rayleigh(colden,H2,He,CH4,wave,xmu,amu):
 	----------
 	colden : array of float 
 		Column Density in CGS units 
-	H2 : array of float 
-		Mixing ratio as function of altitude for H2 
-	He : array of flaot 
-		Mixing ratio as a function of altitude for He 
-	CH4 : array of float 
-		Mixing ratio as a function of altitude fro CH4 
+	mixingratios : array of float 
+		Mixing ratio as function of altitude for [H2  He CH4 ] 
 	wave : array of float 
 		wavelength (microns) of grid. This should be in DECENDING order to comply with 
 		everything else being in wave numberes 
@@ -362,10 +355,6 @@ def rayleigh(colden,H2,He,CH4,wave,xmu,amu):
 	XN0 = 2.687E19
 	cfray = 32.0*np.pi**3*1.e21/(3.0*2.687e19)
 	cold = colden / (xmu * amu) #nlayers
-	gasmixing = np.zeros((cold.size, 3))
-	gasmixing[:,0] = H2
-	gasmixing[:,1] = He
-	gasmixing[:,2] = CH4
 	#add rayleigh from each contributing gas using corresponding mixing 
 	for i in np.arange(0,3,1):
 		tec = cfray*(dpol[i]/wave**4)*(gnu[0,i]+gnu[1,i]/   #nwave
@@ -634,38 +623,113 @@ class RetrieveOpacities():
 		given a pressure and temperature, retrieve the wavelength dependent opacity
 
 	"""
-	def __init__(self, continuum_data, molecular_data,raman_data, db = 'local'):
-		#self.cia_db = h5py.File(continuum_data,'r', swmr=True)
-		if db == 'local':
-			self.cia_db = json.load(open(continuum_data,'r'))
+	#def __init__(self, continuum_data, molecular_data,raman_data, db = 'local'):
+	def __init__(self, db_filename, raman_data, location = 'local'):
 
-		self.cia_temps = np.array([float(i) for i in self.cia_db['H2H2'].keys()])
-		#self.cia_mols = [i for i in self.cia_db.keys()]
+		if location == 'local':
+			self.conn = sqlite3.connect(db_filename, detect_types=sqlite3.PARSE_DECLTYPES)
+			#tell sqlite what to do with an array
+		sqlite3.register_adapter(np.ndarray, self.adapt_array)
+		sqlite3.register_converter("array", self.convert_array)
+		self.cur = self.conn.cursor()
 
-		if db == 'local':
-			#self.mol_db = h5py.File(molecular_data,'r', swmr=True)
-			self.mol_db = json.load(open(molecular_data,'r'))
-
-		self.molecules = np.array([i for i in self.mol_db.keys()])
-
-		self.mol_temps = np.array([float(i) for i in self.mol_db['H2O'].keys()])
-		self.mol_press = {}
-		for i in self.mol_temps:
-			self.mol_press[str(i)] = np.array([float(i) for i in self.mol_db['H2O'][str(i)].keys()])
-		#self.cia_mols = [i for i in self.cia_db.keys()]
-
-
-		if 'wavenumber_grid' in self.cia_db.keys():
-			self.wno = np.array(self.cia_db['wavenumber_grid'])
-			self.wave = 1e4/self.wno 
-			self.nwno = np.size(self.wno)	
-		else: 
-			raise Exception('Cannot find `wavenumber` in continuum opacity database. Add it as attribute or key.')		
-
+		self.get_available_data()
+		self.get_wave_grid()
+		
 		#raman cross sections 
 		self.raman_db = pd.read_csv(raman_data,
 					 delim_whitespace=True, skiprows=16,header=None, names=['ji','jf','vf','c','deltanu'])
 
+	def get_available_data(self):
+		"""Get the pressures and temperatures that are available for the continuum and molecules"""
+		self.cur.execute('SELECT temperature FROM continuum')
+		self.cia_temps = np.unique(self.cur.fetchall())
+		#self.cur.execute('SELECT pressure FROM molecular')
+		#self.mol_press = np.unique(self.cur.fetchall())
+		self.cur.execute('SELECT molecule FROM molecular')
+		self.molecules = np.unique(self.cur.fetchall())
+		#self.cur.execute('SELECT temperature FROM molecular')
+		#self.mol_temps = np.unique(self.cur.fetchall())
+		#get PT indexes for getting opacities 
+		self.cur.execute('SELECT ptid, pressure, temperature FROM molecular')
+		data= self.cur.fetchall()
+		self.pt_pairs = sorted(list(set(data)),key=lambda x: (x[0]) )
+
+	def get_wave_grid(self):
+		"""Get the wave grid info"""
+		self.cur.execute('SELECT wavenumber_grid FROM header')
+		self.wno =  self.cur.fetchone()[0]
+		self.wave = 1e4/self.wno 
+		self.nwno = np.size(self.wno)
+
+	def get_opacities(self,atmosphere):
+		"""
+		Get's opacities using the atmosphere class
+		"""
+		nlayer =atmosphere.c.nlayer
+		tlayer =atmosphere.layer['temperature']
+		player = atmosphere.layer['pressure']
+		molecules = atmosphere.molecules
+		cia_molecules = atmosphere.continuum_molecules
+
+		#struture opacity dictionary
+		self.molecular_opa = {key:np.zeros((self.nwno, nlayer)) for key in molecules}
+		self.continuum_opa = {key[0]+key[1]:np.zeros((self.nwno, nlayer)) for key in cia_molecules}
+
+		#this will make getting opacities faster 
+		#this is getting the ptid corresponding to the pairs
+		ind_pt=[min(self.pt_pairs, 
+			key=lambda c: math.hypot(c[1]- coordinate[0], c[2]-coordinate[1]))[0] 
+				for coordinate in  zip(player,tlayer)]
+
+		#query molecular opacities from sqlite3
+		if len(molecules) ==1: 
+			query_mol = """WHERE molecule= '{}' """.format(str(molecules[0]))
+		else:
+			query_mol = 'WHERE molecule in '+str(tuple(molecules) )
+
+		atmosphere.layer['pt_opa_index'] = ind_pt
+		self.cur.execute("""SELECT molecule,ptid,opacity 
+		            FROM molecular 
+		            {} 
+		            AND ptid in {}""".format(query_mol, str(tuple(np.unique(ind_pt)))))
+		#fetch everything and stick into a dictionary where we can find the right
+		#pt and molecules
+		data= self.cur.fetchall()
+		data = dict((x+'_'+str(y), dat) for x,y,dat in data)		
+
+		#structure it into a dictionary e.g. {'H2O':ndarray(nwave x nlayer), 'CH4':ndarray(nwave x nlayer)}.. 
+		for i in self.molecular_opa.keys():
+			for j,ind in zip(ind_pt,range(nlayer)):
+				self.molecular_opa[i][:,ind] = data[i+'_'+str(j)]*6.02214086e+23 #add to opacity bundle
+
+		#continuum
+		#find nearest temp for cia grid
+		tcia = [np.unique(self.cia_temps)[find_nearest(np.unique(self.cia_temps),i)] for i in tlayer]
+
+		#if user only runs a single molecule or temperature
+		if len(tcia) ==1: 
+			query_temp = """AND temperature= '{}' """.format(str(tcia[0]))
+		else:
+			query_temp = 'AND temperature in '+str(tuple(tcia) )
+		cia_mol = list(self.continuum_opa.keys())
+		if len(cia_mol) ==1: 
+			query_mol = """WHERE molecule= '{}' """.format(str(cia_mol[0]))
+		else:
+			query_mol = 'WHERE molecule in '+str(tuple(cia_mol) )		
+
+		self.cur.execute("""SELECT molecule,temperature,opacity 
+		            FROM continuum 
+		            {} 
+		            {}""".format(query_mol, query_temp))
+
+		data = self.cur.fetchall()
+		data = dict((x+'_'+str(y), dat) for x, y,dat in data)
+
+		for i in self.continuum_opa.keys():
+		    for j,ind in zip(tcia,range(nlayer)):
+		        self.continuum_opa[i][:,ind] = data[i+'_'+str(j)]
+		        
 	def get_continuum_opac(self, temperature, molecule): 
 		"""
 		Based on a temperature, this retrieves the continuum opacity for 
@@ -683,17 +747,21 @@ class RetrieveOpacities():
 		matrix 
 			number of layers by number of wave points 
 		"""
-		nearestT = [self.cia_temps[find_nearest(self.cia_temps, t)].astype(str) for t in temperature]
+		nearestT = [self.cia_temps[find_nearest(self.cia_temps, t)] for t in temperature]
 		sizeT = np.size(nearestT)
 		a = np.zeros((sizeT, self.nwno))
 		for i,t in zip(range(sizeT) ,nearestT): 
-			a[i,:] = np.array(self.cia_db[molecule][t])
+			self.cur.execute('SELECT opacity FROM continuum WHERE molecule=? AND temperature=?',(molecule,t))
+			a[i,:] = self.cur.fetchall()[0][0]#np.array(self.cia_db[molecule][t])
 		return a
 
 	def get_molecular_opac(self, temperature, pressure, molecule):
 		"""
 		Based on temperature, and pressure, retrieves the molecular opacity for 
 		certain molecule 
+
+		Molecular opacity should be in cm2/molecule units. That is why there is an 
+		multiplication of N_a on return 
 
 		Parameters
 		----------
@@ -704,22 +772,21 @@ class RetrieveOpacities():
 		molecule : str 
 			Which opacity source to query. Will get error if not in the db
 		"""
-		if (molecule == 'Na') or (molecule == 'K'):
-			mol_temps = np.array([float(i) for i in self.mol_db['Na'].keys()])
-			mol_press = {}
-			for i in mol_temps:
-				mol_press[str(i)] = np.array([float(i) for i in self.mol_db['Na'][str(i)].keys()])
-			nearestT = [mol_temps[find_nearest(mol_temps, t)].astype(str) for t in temperature]
-			nearestP = [mol_press[str(t)][find_nearest(mol_press[str(t)], p)].astype(str) for p,t in zip(pressure,nearestT)]
-		else:
-			nearestT = [self.mol_temps[find_nearest(self.mol_temps, t)].astype(str) for t in temperature]
-			nearestP = [self.mol_press[str(t)][find_nearest(self.mol_press[str(t)], p)].astype(str) for p,t in zip(pressure,nearestT)]
-
+		#if (molecule == 'Na') or (molecule == 'K'):
+		#	mol_temps = np.array([float(i) for i in self.mol_db['Na'].keys()])
+		#	mol_press = {}
+		#	for i in mol_temps:
+		#		mol_press[str(i)] = np.array([float(i) for i in self.mol_db['Na'][str(i)].keys()])
+		#	nearestT = [mol_temps[find_nearest(mol_temps, t)].astype(str) for t in temperature]
+		#	nearestP = [mol_press[str(t)][find_nearest(mol_press[str(t)], p)].astype(str) for p,t in zip(pressure,nearestT)]
+		#else:
+		nearestT = [self.mol_temps[find_nearest(self.mol_temps, t)] for t in temperature]
 		sizeT = np.size(nearestT)
 		a = np.zeros((sizeT, self.nwno))
-		for i,t,p in zip(range(sizeT) ,nearestT,nearestP): 
-			a[i,:] = np.array(self.mol_db[molecule][t][p])
-		return a
+		for i,t,p in zip(range(sizeT) ,nearestT,pressure): 
+			self.cur.execute('SELECT opacity FROM molecular WHERE molecule=? AND temperature=? ORDER BY ABS(? - pressure) LIMIT 1',(molecule,t,p))
+			a[i,:] = self.cur.fetchall()[0][0]
+		return a*6.02214086e+23 
 
 	def compute_stellar_shits(self, wno_star, flux_star):
 		"""
@@ -743,6 +810,8 @@ class RetrieveOpacities():
 
 		all_shifted_spec = np.zeros((len(model_wno), len(deltanu)))
 		
+		self.unshifted_stellar_spec = bin_star(model_wno, wno_star, flux_star)
+
 		for i in range(len(deltanu)):
 			dnu = deltanu[i]
 			shifted_wno = model_wno + dnu 
@@ -752,6 +821,19 @@ class RetrieveOpacities():
 			all_shifted_spec[:,i] = shifted_flux/unshifted
 
 		self.raman_stellar_shifts = all_shifted_spec
+
+	def adapt_array(arr):
+		"""needed to interpret bytes to array"""
+		out = io.BytesIO()
+		np.save(out, arr)
+		out.seek(0)
+		return sqlite3.Binary(out.read())
+
+	def convert_array(clas, text):
+		"""needed to interpret bytes to array"""
+		out = io.BytesIO(text)
+		out.seek(0)
+		return np.load(out)
 
 @jit(nopython=True, cache=True)
 def find_nearest(array,value):

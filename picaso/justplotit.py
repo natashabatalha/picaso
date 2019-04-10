@@ -46,7 +46,7 @@ def mixing_ratio(full_output,**kwargs):
 	legend_it=[]	
 	for mol , c in zip(molecules,cols):
 		ind = np.where(mol==np.array(molecules))[0][0]
-		f = fig.line(full_output['layer']['mixingratios'][:,ind],pressure, color=c, line_width=3,
+		f = fig.line(full_output['layer']['mixingratios'][mol],pressure, color=c, line_width=3,
 					muted_color=c, muted_alpha=0.2)
 		legend_it.append((mol, [f]))
 

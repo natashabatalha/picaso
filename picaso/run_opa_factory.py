@@ -1,9 +1,10 @@
 from .opacity_factory import ContinuumFactory ,MolecularFactory
 import pandas as pd
 import numpy as np
-
-def continuum(new_wno_file ='../scripts/newwave_2000.coverage', original_file = '../testing_notebooks/CIA_DS_aug_2015.dat',
-	colnames = ['wno','H2H2','H2He','H2H','H2CH4','H2N2']):
+import os 
+__refdata__ = os.environ.get('picaso_refdata')
+def continuum(new_wno ='newwave_2000.coverage', original_file = 'CIA_DS_aug_2015.dat',
+	colnames = ['wno','H2H2','H2He','H2H','H2CH4','H2N2'], new_filename=os.path.join(__refdata__, 'opacities','continuum.json')):
 	"""
 	This is a top level function to run the opacity facotry to compute the continuum. 
 	It leverages D. Saumom's continuum opacity file and regrids it to the wavelength 
@@ -11,9 +12,9 @@ def continuum(new_wno_file ='../scripts/newwave_2000.coverage', original_file = 
 
 	Parameters
 	----------
-	new_wno_file : str 
+	new_wno : str , array
 		This is a pointer to the filename that is whitespace delimeted with at least one column 
-		called "wavenumber"
+		called "wavenumber". Can also be a numpy array
 	original_file : str 
 		This is a pointer to the original continuum opacity file that is structured according to 
 		D. Saumon. This will eventually be replaced with the opacity db structure. 
@@ -22,12 +23,15 @@ def continuum(new_wno_file ='../scripts/newwave_2000.coverage', original_file = 
 		opacities. In future updates, the file might be updated to include more continuum 
 		absorbers. 
 	"""
-	new_wno = np.sort(pd.read_csv(new_wno_file, delim_whitespace=True)['wavenumber'].values)
-	factory = ContinuumFactory(original_file,colnames, new_wno)
+	if isinstance(new_wno ,str):
+		new_wno = np.sort(pd.read_csv(new_wno, delim_whitespace=True)['wavenumber'].values)
+	else: 
+		new_wno = np.sort(new_wno)
+	factory = ContinuumFactory(original_file,colnames, new_wno,new_filename=new_filename)
 	factory.restructure_opacity()
 
 def molecular(original_dir = '/Users/natashabatalha/Documents/AlbedoCodeWC/opacities/', 
-	new_wno_file ='../scripts/newwave_2000.coverage'):
+	new_wno ='newwave_2000.coverage',new_filename=os.path.join(__refdata__, 'opacities','molecular.hdf5')):
 	"""
 	Currently, picaso is operating on a BYO opacities. Therefore, this function should be used 
 	to go through a large directory of opacities and restructure them to the hdf5 databse that 
@@ -43,9 +47,9 @@ def molecular(original_dir = '/Users/natashabatalha/Documents/AlbedoCodeWC/opaci
 
 	Parameters
 	----------
-	new_wno_file : str 
+	new_wno : str, array
 		This is a pointer to the filename that is whitespace delimeted with at least one column 
-		called "wavenumber"
+		called "wavenumber". Can also be a numpy array.
 	original_dier : str 
 		This is a pointer to the a file that should have a directory for each molecule. 
 
@@ -55,13 +59,11 @@ def molecular(original_dir = '/Users/natashabatalha/Documents/AlbedoCodeWC/opaci
 	have a better opacity database
 	"""
 	
-	new_wno = np.sort(pd.read_csv(new_wno_file, delim_whitespace=True)['wavenumber'].values)
-	factory = MolecularFactory(original_dir, new_wno)
+	if isinstance(new_wno ,str):
+		new_wno = np.sort(pd.read_csv(new_wno, delim_whitespace=True)['wavenumber'].values)
+	else: 
+		new_wno = np.sort(new_wno)
+	factory = MolecularFactory(original_dir, new_wno,new_filename=new_filename)
 	factory.restructure_opacity()
-
-if __name__ == "__main__":
-	#Create both molecular and continuum factory. 
-	molecular()
-	continuum()
 
 #
