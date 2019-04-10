@@ -17,43 +17,40 @@
   
 
   
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
-  
-  
-    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" type="text/css" />
-  
-
-  
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="picaso 0.0dev documentation" href="index.html"/>
-        <link rel="prev" title="Creating new Opacity Databases" href="notebooks/5_SwappingOpacities.html"/> 
-
-  
-  <script src="_static/js/modernizr.min.js"></script>
-
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Opacity Databases" href="notebooks/5_SwappingOpacities.html" /> 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -151,7 +148,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">picaso</a>
@@ -159,9 +156,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -221,6 +219,11 @@
 .admonition > p:before {
     margin-right: 4px;  /* make room for the exclamation icon */
 }
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
 </style>
 <div class="section" id="the-code">
 <h1>The Code<a class="headerlink" href="#the-code" title="Permalink to this headline">¶</a></h1>
@@ -232,7 +235,7 @@
 <dl class="class">
 <dt id="picaso.atmsetup.ATMSETUP">
 <em class="property">class </em><code class="descclassname">picaso.atmsetup.</code><code class="descname">ATMSETUP</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.atmsetup.ATMSETUP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Reads in default source configuration from JSON and creates a full atmosphere class.</p>
 <ul class="simple">
 <li>Gets PT profile</li>
@@ -262,10 +265,10 @@ primary for the retrieval scheme, so this can be updated</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>T</strong> (<em>float</em>) &#8211; </li>
-<li><strong>logKir</strong> (<em>float</em>) &#8211; </li>
-<li><strong>logg1</strong> (<em>float</em>) &#8211; </li>
-<li><strong>logPc</strong> (<em>float</em>) &#8211; </li>
+<li><strong>T</strong> (<em>float</em>) – </li>
+<li><strong>logKir</strong> (<em>float</em>) – </li>
+<li><strong>logg1</strong> (<em>float</em>) – </li>
+<li><strong>logPc</strong> (<em>float</em>) – </li>
 </ul>
 </td>
 </tr>
@@ -284,8 +287,8 @@ flux calculation</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>g</strong> (<em>int</em>) &#8211; Gauss angle index</li>
-<li><strong>t</strong> (<em>int</em>) &#8211; Tchebyshev angle index</li>
+<li><strong>g</strong> (<em>int</em>) – Gauss angle index</li>
+<li><strong>t</strong> (<em>int</em>) – Tchebyshev angle index</li>
 </ul>
 </td>
 </tr>
@@ -303,15 +306,15 @@ flux calculation</p>
 <li>Has to have values for pressure levels (N) and wavelengths (M). The row order should go:</li>
 </ol>
 <p>level wave opd w0 g0
-1.       1.   ... . .
-1.       2.   ... . .
-1.       3.   ... . .
-.         .     ... . .
-.         .     ... . .
-1.       M.   ... . .
-2.       1.   ... . .
-.         .     ... . .
-N.       .      ... . .</p>
+1.       1.   … . .
+1.       2.   … . .
+1.       3.   … . .
+.         .     … . .
+.         .     … . .
+1.       M.   … . .
+2.       1.   … . .
+.         .     … . .
+N.       .      … . .</p>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
 <p class="last">The order of the rows is very important because each column will be transformed
@@ -321,7 +324,7 @@ into a matrix that has the size: [nlayer,nwave].</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>wno</strong> (<em>array</em>) &#8211; Array in ascending order of wavenumbers. This is used to regrid the cloud output</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>wno</strong> (<em>array</em>) – Array in ascending order of wavenumbers. This is used to regrid the cloud output</td>
 </tr>
 </tbody>
 </table>
@@ -364,9 +367,9 @@ call lengths of things once (e.g. number of wavelength points, number of layers 
 <dt id="picaso.atmsetup.ATMSETUP.get_needed_continuum">
 <code class="descname">get_needed_continuum</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.atmsetup.ATMSETUP.get_needed_continuum" title="Permalink to this definition">¶</a></dt>
 <dd><p>This will define which molecules are needed for the continuum opacities. THis is based on
-temperature and molecules. Eventually CIA&#8217;s will expand but we may not necessarily
+temperature and molecules. Eventually CIA’s will expand but we may not necessarily
 want all of them.
-&#8216;wno&#8217;,&#8217;h2h2&#8217;,&#8217;h2he&#8217;,&#8217;h2h&#8217;,&#8217;h2ch4&#8217;,&#8217;h2n2&#8217;]</p>
+‘wno’,’h2h2’,’h2he’,’h2h’,’h2ch4’,’h2n2’]</p>
 <div class="admonition-todo admonition" id="index-1">
 <p class="first admonition-title">Todo</p>
 <ul class="last simple">
@@ -416,7 +419,7 @@ user inputs case sensitive molecules i.e. TiO instead of TIO.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>molecule</strong> (<em>str</em><em> or </em><em>list</em>) &#8211; any molecule string e.g. &#8220;H2O&#8221;, &#8220;CH4&#8221; etc &#8220;TiO&#8221; or [&#8220;H2O&#8221;, &#8216;CH4&#8217;]</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>molecule</strong> (<em>str</em><em> or </em><em>list</em>) – any molecule string e.g. “H2O”, “CH4” etc “TiO” or [“H2O”, ‘CH4’]</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">molecule as keys with molecular weights as value</td>
 </tr>
@@ -440,18 +443,18 @@ user inputs case sensitive molecules i.e. TiO instead of TIO.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>ng</strong> (<em>int</em>) &#8211; Number of gauss angles</li>
-<li><strong>nt</strong> (<em>int</em>) &#8211; Number of Tchebysehv angles</li>
-<li><strong>phase_angle</strong> (<em>float</em>) &#8211; Geometry of phase angle</li>
-<li><strong>input_file</strong> (<em>str</em>) &#8211; CLD input file you want to create the 3d grid from. Currently takes in a single 1d CLD profile.
-Input file must be structured with the following columns in the correct order: [&#8216;lvl&#8217;, &#8216;wv&#8217;,&#8217;opd&#8217;,&#8217;g0&#8217;,&#8217;w0&#8217;,&#8217;sigma&#8217;]
+<li><strong>ng</strong> (<em>int</em>) – Number of gauss angles</li>
+<li><strong>nt</strong> (<em>int</em>) – Number of Tchebysehv angles</li>
+<li><strong>phase_angle</strong> (<em>float</em>) – Geometry of phase angle</li>
+<li><strong>input_file</strong> (<em>str</em>) – CLD input file you want to create the 3d grid from. Currently takes in a single 1d CLD profile.
+Input file must be structured with the following columns in the correct order: [‘lvl’, ‘wv’,’opd’,’g0’,’w0’,’sigma’]
 input file</li>
-<li><strong>output_file</strong> (<em>str</em>) &#8211; Output file location</li>
-<li><strong>lat_range</strong> (<em>list</em>) &#8211; (Optional)Range of latitudes to exclude in the CLD file</li>
-<li><strong>lon_range</strong> (<em>list</em>) &#8211; (Optional)Range of longitudes to exclud in the CLD file</li>
-<li><strong>rand_coverage</strong> (<em>float</em>) &#8211; (Optional)Fractional cloud coverage. rand_cov=1 introduces full cloud coverage. rand_cov=0 has no
+<li><strong>output_file</strong> (<em>str</em>) – Output file location</li>
+<li><strong>lat_range</strong> (<em>list</em>) – (Optional)Range of latitudes to exclude in the CLD file</li>
+<li><strong>lon_range</strong> (<em>list</em>) – (Optional)Range of longitudes to exclud in the CLD file</li>
+<li><strong>rand_coverage</strong> (<em>float</em>) – (Optional)Fractional cloud coverage. rand_cov=1 introduces full cloud coverage. rand_cov=0 has no
 coverage.</li>
-<li><strong>**kwargs</strong> (<em>dict</em>) &#8211; Key word arguments used for <cite>panads.read_csv</cite></li>
+<li><strong>**kwargs</strong> (<em>dict</em>) – Key word arguments used for <cite>panads.read_csv</cite></li>
 </ul>
 </td>
 </tr>
@@ -465,7 +468,7 @@ coverage.</li>
 </table>
 <p class="rubric">Examples</p>
 <p>Basic use of creating a 3D file:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">phase_angle</span> <span class="o">=</span> <span class="mi">0</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">phase_angle</span> <span class="o">=</span> <span class="mi">0</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">number_gauss_angles</span> <span class="o">=</span> <span class="mi">2</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">number_tcheby_angles</span> <span class="o">=</span> <span class="mi">3</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">phase_angle</span> <span class="o">=</span> <span class="mi">0</span>
@@ -486,13 +489,13 @@ coverage.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>ng</strong> (<em>int</em>) &#8211; Number of gauss angles</li>
-<li><strong>nt</strong> (<em>int</em>) &#8211; Number of Tchebysehv angles</li>
-<li><strong>phase_angle</strong> (<em>float</em>) &#8211; Geometry of phase angle</li>
-<li><strong>input_file</strong> (<em>str</em>) &#8211; PT input file you want to create the 3d grid from. Currently takes in a single 1d PT profile.
+<li><strong>ng</strong> (<em>int</em>) – Number of gauss angles</li>
+<li><strong>nt</strong> (<em>int</em>) – Number of Tchebysehv angles</li>
+<li><strong>phase_angle</strong> (<em>float</em>) – Geometry of phase angle</li>
+<li><strong>input_file</strong> (<em>str</em>) – PT input file you want to create the 3d grid from. Currently takes in a single 1d PT profile.
 Must have labeled, whitespace delimeted columns. In the columns, must have <cite>temperature</cite>,
 <cite>pressure</cite>, and at least some molecular species (which are ALL case-sensitive)</li>
-<li><strong>output_file</strong> (<em>str</em>) &#8211; Output file location</li>
+<li><strong>output_file</strong> (<em>str</em>) – Output file location</li>
 </ul>
 </td>
 </tr>
@@ -506,7 +509,7 @@ Must have labeled, whitespace delimeted columns. In the columns, must have <cite
 </table>
 <p class="rubric">Examples</p>
 <p>Basic use of creating a 3D file:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">phase_angle</span> <span class="o">=</span> <span class="mi">0</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">phase_angle</span> <span class="o">=</span> <span class="mi">0</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">number_gauss_angles</span> <span class="o">=</span> <span class="mi">2</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">number_tcheby_angles</span> <span class="o">=</span> <span class="mi">3</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">phase_angle</span> <span class="o">=</span> <span class="mi">0</span>
@@ -534,14 +537,34 @@ Gaussian-Chebychev weights in geometry.json</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>numg</strong> (<em>int</em>) &#8211; Number of Gauss angles</li>
-<li><strong>numt</strong> (<em>int</em>) &#8211; Number of Chebychev Angles</li>
-<li><strong>nwno</strong> (<em>int</em>) &#8211; Number of wavenumbers</li>
-<li><strong>cos_theta</strong> (<em>float</em>) &#8211; Cosine of phase angle</li>
-<li><strong>xint_at_top</strong> (<em>ndarray of floats</em>) &#8211; Planetary intensity at the top of the atmosphere with dimensions (ng, nt, nwno)</li>
-<li><strong>gweight</strong> (<em>ndarray of floats</em>) &#8211; Gaussian weights for integration</li>
-<li><strong>tweight</strong> (<em>ndarray of floats</em>) &#8211; Chebychev weights for integration</li>
-<li><strong>F0PI</strong> (<em>ndarray of floats</em>) &#8211; Stellar flux</li>
+<li><strong>nwno</strong> (<em>int</em>) – Number of wavenumbers</li>
+<li><strong>cos_theta</strong> (<em>float</em>) – Cosine of phase angle</li>
+<li><strong>xint_at_top</strong> (<em>ndarray of floats</em>) – Planetary intensity at the top of the atmosphere with dimensions (ng, nt, nwno)</li>
+<li><strong>gweight</strong> (<em>ndarray of floats</em>) – Gaussian weights for integration</li>
+<li><strong>tweight</strong> (<em>ndarray of floats</em>) – Chebychev weights for integration</li>
+<li><strong>F0PI</strong> (<em>ndarray of floats</em>) – Stellar flux</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="picaso.disco.compress_thermal">
+<code class="descclassname">picaso.disco.</code><code class="descname">compress_thermal</code><a class="headerlink" href="#picaso.disco.compress_thermal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Last step in albedo code. Integrates over phase angle based on the
+Gaussian-Chebychev weights in geometry.json</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>nwno</strong> (<em>int</em>) – Number of wavenumbers</li>
+<li><strong>ubar1</strong> (<em>ndarray of floats</em>) – Outgoing angles</li>
+<li><strong>flux_at_top</strong> (<em>ndarray of floats</em>) – Thermal Flux at the top of the atmosphere with dimensions (ng, nt, nwno)</li>
+<li><strong>gweight</strong> (<em>ndarray of floats</em>) – Gaussian weights for integration</li>
+<li><strong>tweight</strong> (<em>ndarray of floats</em>) – Chebychev weights for integration</li>
 </ul>
 </td>
 </tr>
@@ -559,18 +582,18 @@ chebyshev angles in geometry.json</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>ng</strong> (<em>int</em>) &#8211; Number of gauss angles</li>
-<li><strong>nt</strong> (<em>int</em>) &#8211; Number of tchebyshev angles</li>
-<li><strong>gangle</strong> (<em>float</em>) &#8211; Gaussian Angles</li>
-<li><strong>tangle</strong> (<em>float</em>) &#8211; Chevychev Angles</li>
-<li><strong>phase_angle</strong> (<em>float</em>) &#8211; Planetary phase angle</li>
+<li><strong>ng</strong> (<em>int</em>) – Number of gauss angles</li>
+<li><strong>nt</strong> (<em>int</em>) – Number of tchebyshev angles</li>
+<li><strong>gangle</strong> (<em>float</em>) – Gaussian Angles</li>
+<li><strong>tangle</strong> (<em>float</em>) – Chevychev Angles</li>
+<li><strong>phase_angle</strong> (<em>float</em>) – Planetary phase angle</li>
 </ul>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
-<li><em>ubar0</em> &#8211; the incident angles</li>
-<li><em>ubar1</em> &#8211; the outgoing angles</li>
-<li><em>cos_theta</em> &#8211; Cosine of the phase angle</li>
+<li><em>ubar0</em> – the incident angles</li>
+<li><em>ubar1</em> – the outgoing angles</li>
+<li><em>cos_theta</em> – Cosine of the phase angle</li>
 </ul>
 </p>
 </td>
@@ -588,8 +611,8 @@ chebyshev angles in geometry.json</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>num_gangles</strong> (<em>int</em>) &#8211; Number of Gauss angles</li>
-<li><strong>num_tangles</strong> (<em>int</em>) &#8211; Number of Tchebychev angles desired</li>
+<li><strong>num_gangles</strong> (<em>int</em>) – Number of Gauss angles</li>
+<li><strong>num_tangles</strong> (<em>int</em>) – Number of Tchebychev angles desired</li>
 </ul>
 </td>
 </tr>
@@ -632,7 +655,7 @@ and descriptive properties of the elements are stored as instance attributes.</p
 <li><a class="reference external" href="http://www.miranda.org/~jkominek/elements/elements.db">http://www.miranda.org/~jkominek/elements/elements.db</a></li>
 </ol>
 <p class="rubric">Examples</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">elements</span> <span class="k">import</span> <span class="n">ELEMENTS</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">elements</span> <span class="k">import</span> <span class="n">ELEMENTS</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">ELEMENTS</span><span class="p">)</span>
 <span class="go">109</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">str</span><span class="p">(</span><span class="n">ELEMENTS</span><span class="p">[</span><span class="mi">109</span><span class="p">])</span>
@@ -654,63 +677,87 @@ and descriptive properties of the elements are stored as instance attributes.</p
 <div class="section" id="module-picaso.fluxes">
 <span id="picaso-fluxes-module"></span><h2>picaso.fluxes module<a class="headerlink" href="#module-picaso.fluxes" title="Permalink to this headline">¶</a></h2>
 <dl class="attribute">
+<dt id="picaso.fluxes.blackbody">
+<code class="descclassname">picaso.fluxes.</code><code class="descname">blackbody</code><a class="headerlink" href="#picaso.fluxes.blackbody" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blackbody flux in cgs units in per unit wavelength</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>t</strong> (<em>array</em><em>,</em><em>float</em>) – Temperature (K)</li>
+<li><strong>w</strong> (<em>array</em><em>, </em><em>float</em>) – Wavelength (cgs)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray with shape ntemp x numwave</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="picaso.fluxes.get_flux_geom_1d">
 <code class="descclassname">picaso.fluxes.</code><code class="descname">get_flux_geom_1d</code><a class="headerlink" href="#picaso.fluxes.get_flux_geom_1d" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes toon fluxes given tau and everything is 1 dimensional. This is the exact same function
-as <cite>get_flux_geom_3d</cite> but is kept separately so we don&#8217;t have to do unecessary indexing for fast
+as <cite>get_flux_geom_3d</cite> but is kept separately so we don’t have to do unecessary indexing for fast
 retrievals.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>nlevel</strong> (<em>int</em>) &#8211; Number of levels in the model</li>
-<li><strong>wno</strong> (<em>array of float</em>) &#8211; Wave number grid in cm -1</li>
-<li><strong>nwno</strong> (<em>int</em>) &#8211; Number of wave points</li>
-<li><strong>numg</strong> (<em>int</em>) &#8211; Number of Gauss angles</li>
-<li><strong>numt</strong> (<em>int</em>) &#8211; Number of Chebyshev angles</li>
-<li><strong>DTAU</strong> (<em>ndarray of float</em>) &#8211; This is the opacity contained within each individual layer (defined at midpoints of &#8220;levels&#8221;)
+<li><strong>nlevel</strong> (<em>int</em>) – Number of levels in the model</li>
+<li><strong>wno</strong> (<em>array of float</em>) – Wave number grid in cm -1</li>
+<li><strong>nwno</strong> (<em>int</em>) – Number of wave points</li>
+<li><strong>numg</strong> (<em>int</em>) – Number of Gauss angles</li>
+<li><strong>numt</strong> (<em>int</em>) – Number of Chebyshev angles</li>
+<li><strong>DTAU</strong> (<em>ndarray of float</em>) – This is the opacity contained within each individual layer (defined at midpoints of “levels”)
 WITHOUT D-Eddington Correction
 Dimensions=# layer by # wave</li>
-<li><strong>TAU</strong> (<em>ndarray of float</em>) &#8211; This is the cumulative summed opacity
+<li><strong>TAU</strong> (<em>ndarray of float</em>) – This is the cumulative summed opacity
 WITHOUT D-Eddington Correction
 Dimensions=# level by # wave</li>
-<li><strong>W0</strong> (<em>ndarray of float</em>) &#8211; This is the single scattering albedo, from scattering, clouds, raman, etc
+<li><strong>W0</strong> (<em>ndarray of float</em>) – This is the single scattering albedo, from scattering, clouds, raman, etc
 WITHOUT D-Eddington Correction
 Dimensions=# layer by # wave</li>
-<li><strong>COSB</strong> (<em>ndarray of float</em>) &#8211; This is the asymmetry factor
+<li><strong>COSB</strong> (<em>ndarray of float</em>) – This is the asymmetry factor
 WITHOUT D-Eddington Correction
 Dimensions=# layer by # wave</li>
-<li><strong>GCOS2</strong> (<em>ndarray of float</em>) &#8211; Parameter that allows us to directly include Rayleigh scattering
+<li><strong>GCOS2</strong> (<em>ndarray of float</em>) – Parameter that allows us to directly include Rayleigh scattering
 = 0.5*tau_rayleigh/(tau_rayleigh + tau_cloud)</li>
-<li><strong>ftau_cld</strong> (<em>ndarray of float</em>) &#8211; Fraction of cloud extinction to total
+<li><strong>ftau_cld</strong> (<em>ndarray of float</em>) – Fraction of cloud extinction to total
 = tau_cloud/(tau_rayleigh + tau_cloud)</li>
-<li><strong>ftau_ray</strong> (<em>ndarray of float</em>) &#8211; Fraction of rayleigh extinction to total
+<li><strong>ftau_ray</strong> (<em>ndarray of float</em>) – Fraction of rayleigh extinction to total
 = tau_rayleigh/(tau_rayleigh + tau_cloud)</li>
-<li><strong>dtau_og</strong> (<em>ndarray of float</em>) &#8211; This is the opacity contained within each individual layer (defined at midpoints of &#8220;levels&#8221;)
+<li><strong>dtau_og</strong> (<em>ndarray of float</em>) – This is the opacity contained within each individual layer (defined at midpoints of “levels”)
 WITHOUT the delta eddington correction, if it was specified by user
 Dimensions=# layer by # wave</li>
-<li><strong>tau_og</strong> (<em>ndarray of float</em>) &#8211; This is the cumulative summed opacity
+<li><strong>tau_og</strong> (<em>ndarray of float</em>) – This is the cumulative summed opacity
 WITHOUT the delta eddington correction, if it was specified by user
 Dimensions=# level by # wave</li>
-<li><strong>w0_og</strong> (<em>ndarray of float</em>) &#8211; Same as w0 but WITHOUT the delta eddington correction, if it was specified by user</li>
-<li><strong>cosb_og</strong> (<em>ndarray of float</em>) &#8211; Same as cosbar buth WITHOUT the delta eddington correction, if it was specified by user</li>
-<li><strong>surf_reflect</strong> (<em>float</em>) &#8211; Surface reflectivity</li>
-<li><strong>ubar0</strong> (<em>ndarray of float</em>) &#8211; matrix of cosine of the incident angle from geometric.json</li>
-<li><strong>ubar1</strong> (<em>ndarray of float</em>) &#8211; matrix of cosine of the observer angles</li>
-<li><strong>cos_theta</strong> (<em>float</em>) &#8211; Cosine of the phase angle of the planet</li>
-<li><strong>F0PI</strong> (<em>array</em>) &#8211; Downward incident solar radiation</li>
-<li><strong>single_phase</strong> (<em>str</em>) &#8211; Single scattering phase function, default is the two-term henyey-greenstein phase function</li>
-<li><strong>multi_phase</strong> (<em>str</em>) &#8211; Multiple scattering phase function, defulat is N=2 Legendre polynomial</li>
-<li><strong>frac_a</strong> (<em>float</em>) &#8211; (Optional), If using the TTHG phase function. Must specify the functional form for fraction
+<li><strong>w0_og</strong> (<em>ndarray of float</em>) – Same as w0 but WITHOUT the delta eddington correction, if it was specified by user</li>
+<li><strong>cosb_og</strong> (<em>ndarray of float</em>) – Same as cosbar buth WITHOUT the delta eddington correction, if it was specified by user</li>
+<li><strong>surf_reflect</strong> (<em>float</em>) – Surface reflectivity</li>
+<li><strong>ubar0</strong> (<em>ndarray of float</em>) – matrix of cosine of the incident angle from geometric.json</li>
+<li><strong>ubar1</strong> (<em>ndarray of float</em>) – matrix of cosine of the observer angles</li>
+<li><strong>cos_theta</strong> (<em>float</em>) – Cosine of the phase angle of the planet</li>
+<li><strong>F0PI</strong> (<em>array</em>) – Downward incident solar radiation</li>
+<li><strong>single_phase</strong> (<em>str</em>) – Single scattering phase function, default is the two-term henyey-greenstein phase function</li>
+<li><strong>multi_phase</strong> (<em>str</em>) – Multiple scattering phase function, defulat is N=2 Legendre polynomial</li>
+<li><strong>frac_a</strong> (<em>float</em>) – (Optional), If using the TTHG phase function. Must specify the functional form for fraction
 of forward to back scattering (A + B * gcosb^C)</li>
-<li><strong>frac_b</strong> (<em>float</em>) &#8211; (Optional), If using the TTHG phase function. Must specify the functional form for fraction
+<li><strong>frac_b</strong> (<em>float</em>) – (Optional), If using the TTHG phase function. Must specify the functional form for fraction
 of forward to back scattering (A + B * gcosb^C)</li>
-<li><strong>frac_c</strong> (<em>float</em>) &#8211; (Optional), If using the TTHG phase function. Must specify the functional form for fraction
+<li><strong>frac_c</strong> (<em>float</em>) – (Optional), If using the TTHG phase function. Must specify the functional form for fraction
 of forward to back scattering (A + B * gcosb^C), Default is : 1 - gcosb^2</li>
-<li><strong>constant_back</strong> (<em>float</em>) &#8211; (Optional), If using the TTHG phase function. Must specify the assymetry of back scatterer.
+<li><strong>constant_back</strong> (<em>float</em>) – (Optional), If using the TTHG phase function. Must specify the assymetry of back scatterer.
 Remember, the output of A &amp; M code does not separate back and forward scattering.</li>
-<li><strong>constant_forward</strong> (<em>float</em>) &#8211; (Optional), If using the TTHG phase function. Must specify the assymetry of forward scatterer.
+<li><strong>constant_forward</strong> (<em>float</em>) – (Optional), If using the TTHG phase function. Must specify the assymetry of forward scatterer.
 Remember, the output of A &amp; M code does not separate back and forward scattering.</li>
 </ul>
 </td>
@@ -718,9 +765,8 @@ Remember, the output of A &amp; M code does not separate back and forward scatte
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
 <li><em>intensity at the top of the atmosphere for all the different ubar1 and ubar2</em></li>
 <li><em>To Do</em></li>
-<li><em>&#8212;&#8211;</em></li>
-<li><em>- F0PI Solar flux shouldn&#8217;t always be 1.. Follow up to make sure that this isn&#8217;t a bad</em> &#8211; hardwiring to solar, despite &#8220;relative albedo&#8221;</li>
-<li><em>- take delta eddington option out of fluxes and move it all over to optics</em></li>
+<li><em>—–</em></li>
+<li><em>- F0PI Solar flux shouldn’t always be 1.. Follow up to make sure that this isn’t a bad</em> – hardwiring to solar, despite “relative albedo”</li>
 </ul>
 </p>
 </td>
@@ -733,60 +779,60 @@ Remember, the output of A &amp; M code does not separate back and forward scatte
 <dt id="picaso.fluxes.get_flux_geom_3d">
 <code class="descclassname">picaso.fluxes.</code><code class="descname">get_flux_geom_3d</code><a class="headerlink" href="#picaso.fluxes.get_flux_geom_3d" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes toon fluxes given tau and everything is 3 dimensional. This is the exact same function
-as <cite>get_flux_geom_1d</cite> but is kept separately so we don&#8217;t have to do unecessary indexing for
+as <cite>get_flux_geom_1d</cite> but is kept separately so we don’t have to do unecessary indexing for
 retrievals.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>nlevel</strong> (<em>int</em>) &#8211; Number of levels in the model</li>
-<li><strong>wno</strong> (<em>array of float</em>) &#8211; Wave number grid in cm -1</li>
-<li><strong>nwno</strong> (<em>int</em>) &#8211; Number of wave points</li>
-<li><strong>numg</strong> (<em>int</em>) &#8211; Number of Gauss angles</li>
-<li><strong>numt</strong> (<em>int</em>) &#8211; Number of Chebyshev angles</li>
-<li><strong>dtau_3d</strong> (<em>ndarray of float</em>) &#8211; This is the opacity contained within each individual layer (defined at midpoints of &#8220;levels&#8221;)
+<li><strong>nlevel</strong> (<em>int</em>) – Number of levels in the model</li>
+<li><strong>wno</strong> (<em>array of float</em>) – Wave number grid in cm -1</li>
+<li><strong>nwno</strong> (<em>int</em>) – Number of wave points</li>
+<li><strong>numg</strong> (<em>int</em>) – Number of Gauss angles</li>
+<li><strong>numt</strong> (<em>int</em>) – Number of Chebyshev angles</li>
+<li><strong>dtau_3d</strong> (<em>ndarray of float</em>) – This is the opacity contained within each individual layer (defined at midpoints of “levels”)
 WITHOUT D-Eddington Correction
 Dimensions=# layer by # wave</li>
-<li><strong>tau_3d</strong> (<em>ndarray of float</em>) &#8211; This is the cumulative summed opacity
+<li><strong>tau_3d</strong> (<em>ndarray of float</em>) – This is the cumulative summed opacity
 WITHOUT D-Eddington Correction
 Dimensions=# level by # wave</li>
-<li><strong>w0_3d</strong> (<em>ndarray of float</em>) &#8211; This is the single scattering albedo, from scattering, clouds, raman, etc
+<li><strong>w0_3d</strong> (<em>ndarray of float</em>) – This is the single scattering albedo, from scattering, clouds, raman, etc
 WITHOUT D-Eddington Correction
 Dimensions=# layer by # wave</li>
-<li><strong>cosb_3d</strong> (<em>ndarray of float</em>) &#8211; This is the asymmetry factor
+<li><strong>cosb_3d</strong> (<em>ndarray of float</em>) – This is the asymmetry factor
 WITHOUT D-Eddington Correction
 Dimensions=# layer by # wave</li>
-<li><strong>gcos2_3d</strong> (<em>ndarray of float</em>) &#8211; Parameter that allows us to directly include Rayleigh scattering
+<li><strong>gcos2_3d</strong> (<em>ndarray of float</em>) – Parameter that allows us to directly include Rayleigh scattering
 = 0.5*tau_rayleigh/(tau_rayleigh + tau_cloud)</li>
-<li><strong>ftau_cld_3d</strong> (<em>ndarray of float</em>) &#8211; Fraction of cloud extinction to total
+<li><strong>ftau_cld_3d</strong> (<em>ndarray of float</em>) – Fraction of cloud extinction to total
 = tau_cloud/(tau_rayleigh + tau_cloud)</li>
-<li><strong>ftau_ray_3d</strong> (<em>ndarray of float</em>) &#8211; Fraction of rayleigh extinction to total
+<li><strong>ftau_ray_3d</strong> (<em>ndarray of float</em>) – Fraction of rayleigh extinction to total
 = tau_rayleigh/(tau_rayleigh + tau_cloud)</li>
-<li><strong>dtau_og_3d</strong> (<em>ndarray of float</em>) &#8211; This is the opacity contained within each individual layer (defined at midpoints of &#8220;levels&#8221;)
+<li><strong>dtau_og_3d</strong> (<em>ndarray of float</em>) – This is the opacity contained within each individual layer (defined at midpoints of “levels”)
 WITHOUT the delta eddington correction, if it was specified by user
 Dimensions=# layer by # wave</li>
-<li><strong>tau_og_3d</strong> (<em>ndarray of float</em>) &#8211; This is the cumulative summed opacity
+<li><strong>tau_og_3d</strong> (<em>ndarray of float</em>) – This is the cumulative summed opacity
 WITHOUT the delta eddington correction, if it was specified by user
 Dimensions=# level by # wave</li>
-<li><strong>w0_og_3d</strong> (<em>ndarray of float</em>) &#8211; Same as w0 but WITHOUT the delta eddington correction, if it was specified by user</li>
-<li><strong>cosb_og_3d</strong> (<em>ndarray of float</em>) &#8211; Same as cosbar buth WITHOUT the delta eddington correction, if it was specified by user</li>
-<li><strong>surf_reflect</strong> (<em>float</em>) &#8211; Surface reflectivity</li>
-<li><strong>ubar0</strong> (<em>ndarray of float</em>) &#8211; matrix of cosine of the incident angle from geometric.json</li>
-<li><strong>ubar1</strong> (<em>ndarray of float</em>) &#8211; matrix of cosine of the observer angles</li>
-<li><strong>cos_theta</strong> (<em>float</em>) &#8211; Cosine of the phase angle of the planet</li>
-<li><strong>F0PI</strong> (<em>array</em>) &#8211; Downward incident solar radiation</li>
-<li><strong>single_phase</strong> (<em>str</em>) &#8211; Single scattering phase function, default is the two-term henyey-greenstein phase function</li>
-<li><strong>multi_phase</strong> (<em>str</em>) &#8211; Multiple scattering phase function, defulat is N=2 Legendre polynomial</li>
-<li><strong>frac_a</strong> (<em>float</em>) &#8211; (Optional), If using the TTHG phase function. Must specify the functional form for fraction
+<li><strong>w0_og_3d</strong> (<em>ndarray of float</em>) – Same as w0 but WITHOUT the delta eddington correction, if it was specified by user</li>
+<li><strong>cosb_og_3d</strong> (<em>ndarray of float</em>) – Same as cosbar buth WITHOUT the delta eddington correction, if it was specified by user</li>
+<li><strong>surf_reflect</strong> (<em>float</em>) – Surface reflectivity</li>
+<li><strong>ubar0</strong> (<em>ndarray of float</em>) – matrix of cosine of the incident angle from geometric.json</li>
+<li><strong>ubar1</strong> (<em>ndarray of float</em>) – matrix of cosine of the observer angles</li>
+<li><strong>cos_theta</strong> (<em>float</em>) – Cosine of the phase angle of the planet</li>
+<li><strong>F0PI</strong> (<em>array</em>) – Downward incident solar radiation</li>
+<li><strong>single_phase</strong> (<em>str</em>) – Single scattering phase function, default is the two-term henyey-greenstein phase function</li>
+<li><strong>multi_phase</strong> (<em>str</em>) – Multiple scattering phase function, defulat is N=2 Legendre polynomial</li>
+<li><strong>frac_a</strong> (<em>float</em>) – (Optional), If using the TTHG phase function. Must specify the functional form for fraction
 of forward to back scattering (A + B * gcosb^C)</li>
-<li><strong>frac_b</strong> (<em>float</em>) &#8211; (Optional), If using the TTHG phase function. Must specify the functional form for fraction
+<li><strong>frac_b</strong> (<em>float</em>) – (Optional), If using the TTHG phase function. Must specify the functional form for fraction
 of forward to back scattering (A + B * gcosb^C)</li>
-<li><strong>frac_c</strong> (<em>float</em>) &#8211; (Optional), If using the TTHG phase function. Must specify the functional form for fraction
+<li><strong>frac_c</strong> (<em>float</em>) – (Optional), If using the TTHG phase function. Must specify the functional form for fraction
 of forward to back scattering (A + B * gcosb^C), Default is : 1 - gcosb^2</li>
-<li><strong>constant_back</strong> (<em>float</em>) &#8211; (Optional), If using the TTHG phase function. Must specify the assymetry of back scatterer.
+<li><strong>constant_back</strong> (<em>float</em>) – (Optional), If using the TTHG phase function. Must specify the assymetry of back scatterer.
 Remember, the output of A &amp; M code does not separate back and forward scattering.</li>
-<li><strong>constant_forward</strong> (<em>float</em>) &#8211; (Optional), If using the TTHG phase function. Must specify the assymetry of forward scatterer.
+<li><strong>constant_forward</strong> (<em>float</em>) – (Optional), If using the TTHG phase function. Must specify the assymetry of forward scatterer.
 Remember, the output of A &amp; M code does not separate back and forward scattering.</li>
 </ul>
 </td>
@@ -794,8 +840,8 @@ Remember, the output of A &amp; M code does not separate back and forward scatte
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
 <li><em>intensity at the top of the atmosphere for all the different ubar1 and ubar2</em></li>
 <li><em>To Do</em></li>
-<li><em>&#8212;&#8211;</em></li>
-<li><em>- F0PI Solar flux shouldn&#8217;t always be 1.. Follow up to make sure that this isn&#8217;t a bad</em> &#8211; hardwiring to solar, despite &#8220;relative albedo&#8221;</li>
+<li><em>—–</em></li>
+<li><em>- F0PI Solar flux shouldn’t always be 1.. Follow up to make sure that this isn’t a bad</em> – hardwiring to solar, despite “relative albedo”</li>
 <li><em>- take delta eddington option out of fluxes and move it all over to optics</em></li>
 </ul>
 </p>
@@ -804,6 +850,11 @@ Remember, the output of A &amp; M code does not separate back and forward scatte
 </tbody>
 </table>
 </dd></dl>
+
+<dl class="attribute">
+<dt id="picaso.fluxes.get_flux_thermal_1d">
+<code class="descclassname">picaso.fluxes.</code><code class="descname">get_flux_thermal_1d</code><a class="headerlink" href="#picaso.fluxes.get_flux_thermal_1d" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="attribute">
 <dt id="picaso.fluxes.get_flux_toon">
@@ -817,18 +868,18 @@ Remember, the output of A &amp; M code does not separate back and forward scatte
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>nlevel</strong> (<em>int</em>) &#8211; Number of levels in the model</li>
-<li><strong>wno</strong> (<em>array of float</em>) &#8211; Wave number grid in cm -1</li>
-<li><strong>nwno</strong> (<em>int</em>) &#8211; Number of wave points</li>
-<li><strong>dtau</strong> (<em>ndarray of float</em>) &#8211; This is the opacity contained within each individual layer (defined at midpoints of &#8220;levels&#8221;)
+<li><strong>nlevel</strong> (<em>int</em>) – Number of levels in the model</li>
+<li><strong>wno</strong> (<em>array of float</em>) – Wave number grid in cm -1</li>
+<li><strong>nwno</strong> (<em>int</em>) – Number of wave points</li>
+<li><strong>dtau</strong> (<em>ndarray of float</em>) – This is the opacity contained within each individual layer (defined at midpoints of “levels”)
 Dimensions=# layer by # wave</li>
-<li><strong>w0</strong> (<em>ndarray of float</em>) &#8211; This is the single scattering albedo, from scattering, clouds, raman, etc
+<li><strong>w0</strong> (<em>ndarray of float</em>) – This is the single scattering albedo, from scattering, clouds, raman, etc
 Dimensions=# layer by # wave</li>
-<li><strong>cosbar</strong> (<em>ndarray of float</em>) &#8211; This is the asymmetry factor
+<li><strong>cosbar</strong> (<em>ndarray of float</em>) – This is the asymmetry factor
 Dimensions=# layer by # wave</li>
-<li><strong>surf_reflect</strong> (<em>float</em>) &#8211; Surface reflectivity</li>
-<li><strong>ubar0</strong> (<em>float</em>) &#8211; Cosine of the incident angle</li>
-<li><strong>F0PI</strong> (<em>array</em>) &#8211; Downward incident solar radiation</li>
+<li><strong>surf_reflect</strong> (<em>float</em>) – Surface reflectivity</li>
+<li><strong>ubar0</strong> (<em>float</em>) – Cosine of the incident angle</li>
+<li><strong>F0PI</strong> (<em>array</em>) – Downward incident solar radiation</li>
 </ul>
 </td>
 </tr>
@@ -845,14 +896,14 @@ Dimensions=# layer by # wave</li>
 <ul class="last simple">
 <li>Replace detla-function adjustment with better approximation (e.g. Cuzzi)</li>
 <li><dl class="first docutils">
-<dt>F0PI Solar flux shouldn&#8217;t always be 1.. Follow up to make sure that this isn&#8217;t a bad</dt>
+<dt>F0PI Solar flux shouldn’t always be 1.. Follow up to make sure that this isn’t a bad</dt>
 <dd>hardwiring to solar</dd>
 </dl>
 </li>
 </ul>
 </div>
 <p class="rubric">Examples</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">flux_plus</span><span class="p">,</span> <span class="n">flux_minus</span>  <span class="o">=</span> <span class="n">fluxes</span><span class="o">.</span><span class="n">get_flux_toon</span><span class="p">(</span><span class="n">atm</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">nlevel</span><span class="p">,</span> <span class="n">wno</span><span class="p">,</span><span class="n">nwno</span><span class="p">,</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">flux_plus</span><span class="p">,</span> <span class="n">flux_minus</span>  <span class="o">=</span> <span class="n">fluxes</span><span class="o">.</span><span class="n">get_flux_toon</span><span class="p">(</span><span class="n">atm</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">nlevel</span><span class="p">,</span> <span class="n">wno</span><span class="p">,</span><span class="n">nwno</span><span class="p">,</span>
 <span class="go">                                                                                                tau_dedd,dtau_dedd, w0_dedd, cosb_dedd, surf_reflect, ubar0, F0PI)</span>
 </pre></div>
 </div>
@@ -869,31 +920,31 @@ cumsum</p>
 <dt id="picaso.fluxes.setup_tri_diag">
 <code class="descclassname">picaso.fluxes.</code><code class="descname">setup_tri_diag</code><a class="headerlink" href="#picaso.fluxes.setup_tri_diag" title="Permalink to this definition">¶</a></dt>
 <dd><p>Before we can solve the tridiagonal matrix (See Toon+1989) section
-&#8220;SOLUTION OF THE TwO-STREAM EQUATIONS FOR MULTIPLE LAYERS&#8221;, we
+“SOLUTION OF THE TwO-STREAM EQUATIONS FOR MULTIPLE LAYERS”, we
 need to set up the coefficients.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>nlayer</strong> (<em>int</em>) &#8211; number of layers in the model</li>
-<li><strong>nwno</strong> (<em>int</em>) &#8211; number of wavelength points</li>
-<li><strong>c_plus_up</strong> (<em>array</em>) &#8211; c-plus evaluated at the top of the atmosphere</li>
-<li><strong>c_minus_up</strong> (<em>array</em>) &#8211; c_minus evaluated at the top of the atmosphere</li>
-<li><strong>c_plus_down</strong> (<em>array</em>) &#8211; c_plus evaluated at the bottom of the atmosphere</li>
-<li><strong>c_minus_down</strong> (<em>array</em>) &#8211; c_minus evaluated at the bottom of the atmosphere</li>
-<li><strong>b_top</strong> (<em>array</em>) &#8211; The diffuse radiation into the model at the top of the atmosphere</li>
-<li><strong>b_surface</strong> (<em>array</em>) &#8211; The diffuse radiation into the model at the bottom. Includes emission, reflection
+<li><strong>nlayer</strong> (<em>int</em>) – number of layers in the model</li>
+<li><strong>nwno</strong> (<em>int</em>) – number of wavelength points</li>
+<li><strong>c_plus_up</strong> (<em>array</em>) – c-plus evaluated at the top of the atmosphere</li>
+<li><strong>c_minus_up</strong> (<em>array</em>) – c_minus evaluated at the top of the atmosphere</li>
+<li><strong>c_plus_down</strong> (<em>array</em>) – c_plus evaluated at the bottom of the atmosphere</li>
+<li><strong>c_minus_down</strong> (<em>array</em>) – c_minus evaluated at the bottom of the atmosphere</li>
+<li><strong>b_top</strong> (<em>array</em>) – The diffuse radiation into the model at the top of the atmosphere</li>
+<li><strong>b_surface</strong> (<em>array</em>) – The diffuse radiation into the model at the bottom. Includes emission, reflection
 of the unattenuated portion of the direct beam</li>
-<li><strong>surf_reflect</strong> (<em>array</em>) &#8211; Surface reflectivity</li>
-<li><strong>g1</strong> (<em>array</em>) &#8211; table 1 toon et al 1989</li>
-<li><strong>g2</strong> (<em>array</em>) &#8211; table 1 toon et al 1989</li>
-<li><strong>g3</strong> (<em>array</em>) &#8211; table 1 toon et al 1989</li>
-<li><strong>lamba</strong> (<em>array</em>) &#8211; Eqn 21 toon et al 1989</li>
-<li><strong>gama</strong> (<em>array</em>) &#8211; Eqn 22 toon et al 1989</li>
-<li><strong>dtau</strong> (<em>array</em>) &#8211; Opacity per layer</li>
-<li><strong>exptrm_positive</strong> (<em>array</em>) &#8211; Eqn 44, expoential terms needed for tridiagonal rotated layered, clipped at 35</li>
-<li><strong>exptrm_minus</strong> (<em>array</em>) &#8211; Eqn 44, expoential terms needed for tridiagonal rotated layered, clipped at 35</li>
+<li><strong>surf_reflect</strong> (<em>array</em>) – Surface reflectivity</li>
+<li><strong>g1</strong> (<em>array</em>) – table 1 toon et al 1989</li>
+<li><strong>g2</strong> (<em>array</em>) – table 1 toon et al 1989</li>
+<li><strong>g3</strong> (<em>array</em>) – table 1 toon et al 1989</li>
+<li><strong>lamba</strong> (<em>array</em>) – Eqn 21 toon et al 1989</li>
+<li><strong>gama</strong> (<em>array</em>) – Eqn 22 toon et al 1989</li>
+<li><strong>dtau</strong> (<em>array</em>) – Opacity per layer</li>
+<li><strong>exptrm_positive</strong> (<em>array</em>) – Eqn 44, expoential terms needed for tridiagonal rotated layered, clipped at 35</li>
+<li><strong>exptrm_minus</strong> (<em>array</em>) – Eqn 44, expoential terms needed for tridiagonal rotated layered, clipped at 35</li>
 </ul>
 </td>
 </tr>
@@ -931,7 +982,7 @@ of the unattenuated portion of the direct beam</li>
 <dd><p>Tridiagonal Matrix Algorithm solver, a b c d can be NumPy array type or Python list type.
 refer to this <a class="reference external" href="http://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm">wiki</a> and to this <a class="reference external" href="http://www.cfd-online.com/Wiki/Tridiagonal_matrix_algorithm_-_TDMA_(Thomas_algorithm)">explanation</a>.</p>
 <p>A, B, C and D refer to:</p>
-<div class="math">
+<div class="math notranslate nohighlight">
 \[A(I)*X(I-1) + B(I)*X(I) + C(I)*X(I+1) = D(I)\]</div>
 <p>This solver returns X.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -939,10 +990,10 @@ refer to this <a class="reference external" href="http://en.wikipedia.org/wiki/T
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>A</strong> (<em>array</em><em> or </em><em>list</em>) &#8211; </li>
-<li><strong>B</strong> (<em>array</em><em> or </em><em>list</em>) &#8211; </li>
-<li><strong>C</strong> (<em>array</em><em> or </em><em>list</em>) &#8211; </li>
-<li><strong>C</strong> &#8211; </li>
+<li><strong>A</strong> (<em>array</em><em> or </em><em>list</em>) – </li>
+<li><strong>B</strong> (<em>array</em><em> or </em><em>list</em>) – </li>
+<li><strong>C</strong> (<em>array</em><em> or </em><em>list</em>) – </li>
+<li><strong>C</strong> – </li>
 </ul>
 </td>
 </tr>
@@ -969,13 +1020,13 @@ header information in the requires field. return None if file is not there</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>filename</strong> (<em>str</em>) &#8211; name of H5 file to read</li>
-<li><strong>requires</strong> (<em>dict</em>) &#8211; dictionary with keys and values to get correct table
-e.g. {&#8216;wmin&#8217;:0.3, &#8216;wmax&#8217;:1, &#8216;R&#8217;:5000} for opacity grid</li>
+<li><strong>filename</strong> (<em>str</em>) – name of H5 file to read</li>
+<li><strong>requires</strong> (<em>dict</em>) – dictionary with keys and values to get correct table
+e.g. {‘wmin’:0.3, ‘wmax’:1, ‘R’:5000} for opacity grid</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>d</strong> &#8211; data from H5 file decoded into python object</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>d</strong> – data from H5 file decoded into python object</p>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">python object</p>
@@ -994,12 +1045,12 @@ e.g. {&#8216;wmin&#8217;:0.3, &#8216;wmax&#8217;:1, &#8216;R&#8217;:5000} for op
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>filename</strong> (<em>string</em>) &#8211; name of the JSON file to read</li>
-<li><strong>except</strong> (<em>bool</em>) &#8211; if true, raise exception if file is missing. if false, return empty dict.</li>
+<li><strong>filename</strong> (<em>string</em>) – name of the JSON file to read</li>
+<li><strong>except</strong> (<em>bool</em>) – if true, raise exception if file is missing. if false, return empty dict.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>d</strong> &#8211; data from JSON file decoded into python object</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>d</strong> – data from JSON file decoded into python object</p>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">python object</p>
@@ -1014,23 +1065,23 @@ e.g. {&#8216;wmin&#8217;:0.3, &#8216;wmax&#8217;:1, &#8216;R&#8217;:5000} for op
 <span id="picaso-justdoit-module"></span><h2>picaso.justdoit module<a class="headerlink" href="#module-picaso.justdoit" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="picaso.justdoit.inputs">
-<em class="property">class </em><code class="descclassname">picaso.justdoit.</code><code class="descname">inputs</code><span class="sig-paren">(</span><em>continuum_db=None</em>, <em>molecular_db=None</em>, <em>raman_db=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<em class="property">class </em><code class="descclassname">picaso.justdoit.</code><code class="descname">inputs</code><a class="headerlink" href="#picaso.justdoit.inputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Class to setup planet to run</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>continuum_db</strong> (<em>str</em>) &#8211; (Optional)Filename that points to the HDF5 contimuum database (see notebook on swapping out opacities).
+<li><strong>continuum_db</strong> (<em>str</em>) – (Optional)Filename that points to the HDF5 contimuum database (see notebook on swapping out opacities).
 This database pointer will also define the wavelength grid to run on. So, wavenumber grid
 should be specified in the database as an attribute!
 Default will pull the zenodo defualt opacities</li>
-<li><strong>molecular_db</strong> (<em>str</em>) &#8211; (Optional)Filename that points to the HDF5 molecular database (see notebook on swapping out opacities).
+<li><strong>molecular_db</strong> (<em>str</em>) – (Optional)Filename that points to the HDF5 molecular database (see notebook on swapping out opacities).
 This database pointer will also define the wavelength grid to run on. So, wavenumber grid
 should be specified in the database as an attribute!
 Default will pull the zenodo defualt opacities</li>
-<li><strong>raman_db</strong> (<em>str</em>) &#8211; (Optional)Filename that points to the raman scattering database. Default is the text file from Ocklopcic+2018 paper
+<li><strong>raman_db</strong> (<em>str</em>) – (Optional)Filename that points to the raman scattering database. Default is the text file from Ocklopcic+2018 paper
 on exoplanet raman scattering.</li>
 </ul>
 </td>
@@ -1040,43 +1091,92 @@ on exoplanet raman scattering.</li>
 <dl class="attribute">
 <dt id="picaso.justdoit.inputs.phase_angle">
 <code class="descname">phase_angle</code><a class="headerlink" href="#picaso.justdoit.inputs.phase_angle" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>set phase angle</em></p>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">set phase angle</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="picaso.justdoit.inputs.gravity">
 <code class="descname">gravity</code><a class="headerlink" href="#picaso.justdoit.inputs.gravity" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>set gravity</em></p>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">set gravity</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="picaso.justdoit.inputs.star">
 <code class="descname">star</code><a class="headerlink" href="#picaso.justdoit.inputs.star" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>set stellar spec</em></p>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">set stellar spec</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="picaso.justdoit.inputs.atmosphere">
 <code class="descname">atmosphere</code><a class="headerlink" href="#picaso.justdoit.inputs.atmosphere" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>set atmosphere composition and PT</em></p>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">set atmosphere composition and PT</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="picaso.justdoit.inputs.clouds">
 <code class="descname">clouds</code><a class="headerlink" href="#picaso.justdoit.inputs.clouds" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>set cloud profile</em></p>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">set cloud profile</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="picaso.justdoit.inputs.approx">
 <code class="descname">approx</code><a class="headerlink" href="#picaso.justdoit.inputs.approx" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>set approximation</em></p>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">set approximation</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="picaso.justdoit.inputs.spectrum">
 <code class="descname">spectrum</code><a class="headerlink" href="#picaso.justdoit.inputs.spectrum" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>create spectrum</em></p>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">create spectrum</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -1115,13 +1215,13 @@ See eqn. 6 in picaso paper</dd>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>df</strong> (<em>pandas.DataFrame</em>) &#8211; (Optional) Dataframe with volume mixing ratios and pressure, temperature profile.
+<li><strong>df</strong> (<em>pandas.DataFrame</em>) – (Optional) Dataframe with volume mixing ratios and pressure, temperature profile.
 Must contain pressure (bars) at least one molecule</li>
-<li><strong>filename</strong> (<em>str</em>) &#8211; (Optional) Filename with pressure, temperature and volume mixing ratios.
+<li><strong>filename</strong> (<em>str</em>) – (Optional) Filename with pressure, temperature and volume mixing ratios.
 Must contain pressure at least one molecule</li>
-<li><strong>exclude_mol</strong> (<em>list of str</em>) &#8211; (Optional) List of molecules to ignore from file</li>
-<li><strong>pt_params</strong> (<em>list of float</em>) &#8211; (Optional) list of [T, logKir, logg1,logg2, alpha] from Guillot+2010</li>
-<li><strong>pd_kwargs</strong> (<em>kwargs</em>) &#8211; Key word arguments for pd.read_csv to read in supplied atmosphere file</li>
+<li><strong>exclude_mol</strong> (<em>list of str</em>) – (Optional) List of molecules to ignore from file</li>
+<li><strong>pt_params</strong> (<em>list of float</em>) – (Optional) list of [T, logKir, logg1,logg2, alpha] from Guillot+2010</li>
+<li><strong>pd_kwargs</strong> (<em>kwargs</em>) – Key word arguments for pd.read_csv to read in supplied atmosphere file</li>
 </ul>
 </td>
 </tr>
@@ -1137,15 +1237,15 @@ an assymetry parameter (g0), and a total extinction per layer (opd).</p>
 <p>g0,w0, and opd are both wavelength and pressure dependent. Our cloud models come
 from eddysed. Their output looks like this (where level 1=TOA, and wavenumber1=Smallest number)</p>
 <p>level wavenumber opd w0 g0
-1.       1.   ... . .
-1.       2.   ... . .
-1.       3.   ... . .
-.         .     ... . .
-.         .     ... . .
-1.       M.   ... . .
-2.       1.   ... . .
-.         .     ... . .
-N.       .      ... . .</p>
+1.       1.   … . .
+1.       2.   … . .
+1.       3.   … . .
+.         .     … . .
+.         .     … . .
+1.       M.   … . .
+2.       1.   … . .
+.         .     … . .
+N.       .      … . .</p>
 <p>If you are creating your own file you have to make sure that you have a
 <strong>pressure</strong> (bars) and <a href="#id1"><span class="problematic" id="id2">**</span></a>wavenumber**(inverse cm) column. We will use this to make sure that your cloud
 and atmospheric profiles are on the same grid. <a href="#id3"><span class="problematic" id="id4">**</span></a>If there is no pressure or wavelength parameter
@@ -1158,23 +1258,23 @@ for g0,w0,opd and defining the thickness and location of the cloud.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>filename</strong> (<em>str</em>) &#8211; (Optional) Filename with info on the wavelength and pressure-dependent single scattering
+<li><strong>filename</strong> (<em>str</em>) – (Optional) Filename with info on the wavelength and pressure-dependent single scattering
 albedo, asymmetry factor, and total extinction per layer. Input associated pd_kwargs
 so that the resultant output has columns named : <cite>g0</cite>, <cite>w0</cite> and <cite>opd</cite>. If you are not
 using the eddysed output, you will also need a <cite>wavenumber</cite> and <cite>pressure</cite> column in units
 of inverse cm, and bars.</li>
-<li><strong>g0</strong> (<em>float</em><em>, </em><em>list of float</em>) &#8211; (Optional) Asymmetry factor. Can be a single float for a single cloud. Or a list of floats
+<li><strong>g0</strong> (<em>float</em><em>, </em><em>list of float</em>) – (Optional) Asymmetry factor. Can be a single float for a single cloud. Or a list of floats
 for two different cloud layers</li>
-<li><strong>w0</strong> (<em>list of float</em>) &#8211; (Optional) Single Scattering Albedo. Can be a single float for a single cloud. Or a list of floats
+<li><strong>w0</strong> (<em>list of float</em>) – (Optional) Single Scattering Albedo. Can be a single float for a single cloud. Or a list of floats
 for two different cloud layers</li>
-<li><strong>opd</strong> (<em>list of float</em>) &#8211; (Optional) Total Extinction in <cite>dp</cite>. Can be a single float for a single cloud. Or a list of floats
+<li><strong>opd</strong> (<em>list of float</em>) – (Optional) Total Extinction in <cite>dp</cite>. Can be a single float for a single cloud. Or a list of floats
 for two different cloud layers</li>
-<li><strong>p</strong> (<em>list of float</em>) &#8211; (Optional) Center location of cloud deck (bars). Can be a single float for a single cloud. Or a list of floats
+<li><strong>p</strong> (<em>list of float</em>) – (Optional) Center location of cloud deck (bars). Can be a single float for a single cloud. Or a list of floats
 for two different cloud layers</li>
-<li><strong>dp</strong> (<em>list of float</em>) &#8211; (Optional) Total thickness cloud deck (bars). Can be a single float for a single cloud or a list of floats
+<li><strong>dp</strong> (<em>list of float</em>) – (Optional) Total thickness cloud deck (bars). Can be a single float for a single cloud or a list of floats
 for two different cloud layers
 Cloud will span 10**(np.log10(p) +- np.log10(dp)/2)</li>
-<li><strong>df</strong> (<em>pd.DataFrame</em><em>, </em><em>dict</em>) &#8211; (Optional) Same as what would be included in the file, but in DataFrame or dict form</li>
+<li><strong>df</strong> (<em>pd.DataFrame</em><em>, </em><em>dict</em>) – (Optional) Same as what would be included in the file, but in DataFrame or dict form</li>
 </ul>
 </td>
 </tr>
@@ -1191,12 +1291,12 @@ Cloud will span 10**(np.log10(p) +- np.log10(dp)/2)</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>gravity</strong> (<em>float</em>) &#8211; (Optional) Gravity of planet</li>
-<li><strong>gravity_unit</strong> (<em>astropy.unit</em>) &#8211; (Optional) Unit of Gravity</li>
-<li><strong>radius</strong> (<em>float</em>) &#8211; (Optional) radius of planet</li>
-<li><strong>radius_unit</strong> (<em>astropy.unit</em>) &#8211; (Optional) Unit of radius</li>
-<li><strong>mass</strong> (<em>float</em>) &#8211; (Optional) mass of planet</li>
-<li><strong>mass_unit</strong> (<em>astropy.unit</em>) &#8211; (Optional) Unit of mass</li>
+<li><strong>gravity</strong> (<em>float</em>) – (Optional) Gravity of planet</li>
+<li><strong>gravity_unit</strong> (<em>astropy.unit</em>) – (Optional) Unit of Gravity</li>
+<li><strong>radius</strong> (<em>float</em>) – (Optional) radius of planet MUST be specified for thermal emission!</li>
+<li><strong>radius_unit</strong> (<em>astropy.unit</em>) – (Optional) Unit of radius</li>
+<li><strong>mass</strong> (<em>float</em>) – (Optional) mass of planet</li>
+<li><strong>mass_unit</strong> (<em>astropy.unit</em>) – (Optional) Unit of mass</li>
 </ul>
 </td>
 </tr>
@@ -1224,13 +1324,13 @@ Cloud will span 10**(np.log10(p) +- np.log10(dp)/2)</li>
 
 <dl class="method">
 <dt>
-<code class="descname">spectrum</code><span class="sig-paren">(</span><em>dimension='1d'</em>, <em>full_output=False</em>, <em>plot_opacity=False</em><span class="sig-paren">)</span></dt>
+<code class="descname">spectrum</code><span class="sig-paren">(</span><em>opacityclass</em>, <em>dimension='1d'</em>, <em>calculation='reflected'</em>, <em>full_output=False</em>, <em>plot_opacity=False</em><span class="sig-paren">)</span></dt>
 <dd><p>Run Spectrum</p>
 </dd></dl>
 
 <dl class="method">
 <dt>
-<code class="descname">star</code><span class="sig-paren">(</span><em>temp=None</em>, <em>metal=None</em>, <em>logg=None</em>, <em>database='ck04models'</em>, <em>filename=None</em>, <em>w_units=None</em>, <em>f_units=None</em><span class="sig-paren">)</span></dt>
+<code class="descname">star</code><span class="sig-paren">(</span><em>opannection</em>, <em>temp=None</em>, <em>metal=None</em>, <em>logg=None</em>, <em>radius=None</em>, <em>radius_unit=None</em>, <em>database='ck04models'</em>, <em>filename=None</em>, <em>w_units=None</em>, <em>f_units=None</em><span class="sig-paren">)</span></dt>
 <dd><p>Get the stellar spectrum using pysynphot and interpolate onto a much finer grid than the
 planet grid.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -1238,13 +1338,16 @@ planet grid.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>temp</strong> (<em>float</em>) &#8211; Teff of the stellar model</li>
-<li><strong>metal</strong> (<em>float</em>) &#8211; Metallicity of the stellar model</li>
-<li><strong>logg</strong> (<em>float</em>) &#8211; Logg cgs of the stellar model</li>
-<li><strong>database</strong> (<em>str</em>) &#8211; (Optional)The database to pull stellar spectrum from. See documentation for pysynphot.</li>
-<li><strong>filename</strong> (<em>str</em>) &#8211; (Optional) Upload your own stellar spectrum. File format = two column white space (wave, flux)</li>
-<li><strong>wunits</strong> (<em>str</em>) &#8211; (Optional) Used for stellar file wave units</li>
-<li><strong>funits</strong> (<em>str</em>) &#8211; (Optional) Used for stellar file flux units</li>
+<li><strong>opannection</strong> (<em>class picaso.RetrieveOpacities</em>) – This is the opacity class and it’s needed to get the correct wave info and raman scattering cross sections</li>
+<li><strong>temp</strong> (<em>float</em>) – Teff of the stellar model</li>
+<li><strong>metal</strong> (<em>float</em>) – Metallicity of the stellar model</li>
+<li><strong>logg</strong> (<em>float</em>) – Logg cgs of the stellar model</li>
+<li><strong>radius</strong> (<em>float</em>) – Radius of the star</li>
+<li><strong>radius_unit</strong> (<em>astropy.unit</em>) – Any astropy unit (e.g. <cite>radius_unit=astropy.unit.Unit(“R_sun”)</cite>)</li>
+<li><strong>database</strong> (<em>str</em>) – (Optional)The database to pull stellar spectrum from. See documentation for pysynphot.</li>
+<li><strong>filename</strong> (<em>str</em>) – (Optional) Upload your own stellar spectrum. File format = two column white space (wave, flux)</li>
+<li><strong>wunits</strong> (<em>str</em>) – (Optional) Used for stellar file wave units</li>
+<li><strong>funits</strong> (<em>str</em>) – (Optional) Used for stellar file flux units</li>
 </ul>
 </td>
 </tr>
@@ -1263,7 +1366,7 @@ planet grid.</p>
 <dl class="function">
 <dt id="picaso.justdoit.jupiter_pt">
 <code class="descclassname">picaso.justdoit.</code><code class="descname">jupiter_pt</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.jupiter_pt" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function to get Jupiter&#8217;s PT profile</p>
+<dd><p>Function to get Jupiter’s PT profile</p>
 </dd></dl>
 
 <dl class="function">
@@ -1273,20 +1376,26 @@ planet grid.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="picaso.justdoit.opannection">
+<code class="descclassname">picaso.justdoit.</code><code class="descname">opannection</code><span class="sig-paren">(</span><em>filename_db=None</em>, <em>raman_db=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.opannection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets up database connection to opacities.</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="picaso.justdoit.picaso">
-<code class="descclassname">picaso.justdoit.</code><code class="descname">picaso</code><span class="sig-paren">(</span><em>bundle</em>, <em>dimension='1d'</em>, <em>full_output=False</em>, <em>plot_opacity=False</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.picaso" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">picaso.justdoit.</code><code class="descname">picaso</code><span class="sig-paren">(</span><em>bundle</em>, <em>opacityclass</em>, <em>dimension='1d'</em>, <em>calculation='reflected'</em>, <em>full_output=False</em>, <em>plot_opacity=False</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.picaso" title="Permalink to this definition">¶</a></dt>
 <dd><p>Currently top level program to run albedo code</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>input</strong> (<em>dict</em>) &#8211; This input dict is built by loading the input = <cite>justdoit.load_inputs()</cite></li>
-<li><strong>dimension</strong> (<em>str</em>) &#8211; (Optional) Dimensions of the calculation. Default = &#8216;1d&#8217;. But &#8216;3d&#8217; is also accepted.
-In order to run &#8216;3d&#8217; calculations, user must build 3d input (see tutorials)</li>
-<li><strong>full_output</strong> (<em>bool</em>) &#8211; (Optional) Default = False. Returns atmosphere class, which enables several
+<li><strong>bundle</strong> (<em>dict</em>) – This input dict is built by loading the input = <cite>justdoit.load_inputs()</cite></li>
+<li><strong>dimension</strong> (<em>str</em>) – (Optional) Dimensions of the calculation. Default = ‘1d’. But ‘3d’ is also accepted.
+In order to run ‘3d’ calculations, user must build 3d input (see tutorials)</li>
+<li><strong>full_output</strong> (<em>bool</em>) – (Optional) Default = False. Returns atmosphere class, which enables several
 plotting capabilities.</li>
-<li><strong>plot_opacity</strong> (<em>bool</em>) &#8211; (Optional) Default = False, Creates pop up of the weighted opacity</li>
+<li><strong>plot_opacity</strong> (<em>bool</em>) – (Optional) Default = False, Creates pop up of the weighted opacity</li>
 </ul>
 </td>
 </tr>
@@ -1319,14 +1428,14 @@ plotting capabilities.</li>
 <dl class="function">
 <dt id="picaso.justplotit.cloud">
 <code class="descclassname">picaso.justplotit.</code><code class="descname">cloud</code><span class="sig-paren">(</span><em>full_output</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.cloud" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plotting the cloud input from <code class="docutils literal"><span class="pre">picaso</span></code>.</p>
+<dd><p>Plotting the cloud input from <code class="docutils literal notranslate"><span class="pre">picaso</span></code>.</p>
 <p>The plot itselfs creates maps of the wavelength dependent single scattering albedo
 and cloud opacity as a function of altitude.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>full_output</strong> &#8211; </td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>full_output</strong> – </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
 </tr>
@@ -1345,8 +1454,8 @@ and cloud opacity as a function of altitude.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>full_output</strong> (<em>class</em>) &#8211; Full output from picaso</li>
-<li><strong>wavelength</strong> (<em>list</em>) &#8211; Where to plot 3d facets. Can input as many wavelengths as wanted.
+<li><strong>full_output</strong> (<em>class</em>) – Full output from picaso</li>
+<li><strong>wavelength</strong> (<em>list</em>) – Where to plot 3d facets. Can input as many wavelengths as wanted.
 Must be a list, must be in microns.</li>
 </ul>
 </td>
@@ -1369,8 +1478,8 @@ Must be a list, must be in microns.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>full_output</strong> (<em>class</em>) &#8211; picaso.atmsetup.ATMSETUP</li>
-<li><strong>**kwargs</strong> (<em>dict</em>) &#8211; Any key word argument for bokeh.figure()</li>
+<li><strong>full_output</strong> (<em>class</em>) – picaso.atmsetup.ATMSETUP</li>
+<li><strong>**kwargs</strong> (<em>dict</em>) – Any key word argument for bokeh.figure()</li>
 </ul>
 </td>
 </tr>
@@ -1395,10 +1504,10 @@ Rayleigh scattering opacity at a specified pressure level.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>full_output</strong> (<em>class</em>) &#8211; picaso.atmsetup.ATMSETUP</li>
-<li><strong>at_tau</strong> (<em>float</em>) &#8211; Opacity at which to plot the cumulative opacity.
+<li><strong>full_output</strong> (<em>class</em>) – picaso.atmsetup.ATMSETUP</li>
+<li><strong>at_tau</strong> (<em>float</em>) – Opacity at which to plot the cumulative opacity.
 Default =1 bar.</li>
-<li><strong>**kwargs</strong> (<em>dict</em>) &#8211; Any key word argument for bokeh.plotting.figure()</li>
+<li><strong>**kwargs</strong> (<em>dict</em>) – Any key word argument for bokeh.plotting.figure()</li>
 </ul>
 </td>
 </tr>
@@ -1423,12 +1532,12 @@ and cloud opacity and assymetry parameter as a function of altitude.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>nwno</strong> (<em>int</em>) &#8211; Number of wavenumber points. For runs from Ackerman &amp; Marley, this will always be 196.</li>
-<li><strong>nlayer</strong> (<em>int</em>) &#8211; Should be one less than the number of levels in your pressure temperature grid. Cloud
+<li><strong>nwno</strong> (<em>int</em>) – Number of wavenumber points. For runs from Ackerman &amp; Marley, this will always be 196.</li>
+<li><strong>nlayer</strong> (<em>int</em>) – Should be one less than the number of levels in your pressure temperature grid. Cloud
 opacity is assigned for slabs.</li>
-<li><strong>file</strong> (<em>str</em>) &#8211; (Optional)Path to cloud input file</li>
-<li><strong>df</strong> (<em>str</em>) &#8211; (Optional)Dataframe of cloud input file</li>
-<li><strong>pd_kwargs</strong> (<em>kwargs</em>) &#8211; Pandas key word arguments for <cite>pandas.read_csv</cite></li>
+<li><strong>file</strong> (<em>str</em>) – (Optional)Path to cloud input file</li>
+<li><strong>df</strong> (<em>str</em>) – (Optional)Dataframe of cloud input file</li>
+<li><strong>pd_kwargs</strong> (<em>kwargs</em>) – Pandas key word arguments for <cite>pandas.read_csv</cite></li>
 </ul>
 </td>
 </tr>
@@ -1457,8 +1566,8 @@ opacity is assigned for slabs.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>full_output</strong> (<em>class</em>) &#8211; picaso.atmsetup.ATMSETUP</li>
-<li><strong>**kwargs</strong> (<em>dict</em>) &#8211; Any key word argument for bokeh.figure()</li>
+<li><strong>full_output</strong> (<em>class</em>) – picaso.atmsetup.ATMSETUP</li>
+<li><strong>**kwargs</strong> (<em>dict</em>) – Any key word argument for bokeh.figure()</li>
 </ul>
 </td>
 </tr>
@@ -1475,10 +1584,10 @@ opacity is assigned for slabs.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>wno</strong> (<em>float array</em><em>, </em><em>list of arrays</em>) &#8211; wavenumber</li>
-<li><strong>alb</strong> (<em>float array</em><em>, </em><em>list of arrays</em>) &#8211; albedo</li>
-<li><strong>legend</strong> (<em>list of str</em>) &#8211; legends for plotting</li>
-<li><strong>**kwargs</strong> (<em>dict</em>) &#8211; Any key word argument for bokeh.plotting.figure()</li>
+<li><strong>wno</strong> (<em>float array</em><em>, </em><em>list of arrays</em>) – wavenumber</li>
+<li><strong>alb</strong> (<em>float array</em><em>, </em><em>list of arrays</em>) – albedo</li>
+<li><strong>legend</strong> (<em>list of str</em>) – legends for plotting</li>
+<li><strong>**kwargs</strong> (<em>dict</em>) – Any key word argument for bokeh.plotting.figure()</li>
 </ul>
 </td>
 </tr>
@@ -1497,8 +1606,8 @@ opacity is assigned for slabs.</li>
 <span id="picaso-opacity-factory-module"></span><h2>picaso.opacity_factory module<a class="headerlink" href="#module-picaso.opacity_factory" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="picaso.opacity_factory.ContinuumFactory">
-<em class="property">class </em><code class="descclassname">picaso.opacity_factory.</code><code class="descname">ContinuumFactory</code><span class="sig-paren">(</span><em>original_file</em>, <em>colnames</em>, <em>new_wno</em>, <em>overwrite=False</em>, <em>new_filename='/Users/natashabatalha/Documents/PICASO/picaso/reference/opacities/continuum.hdf5'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.ContinuumFactory" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<em class="property">class </em><code class="descclassname">picaso.opacity_factory.</code><code class="descname">ContinuumFactory</code><span class="sig-paren">(</span><em>original_file</em>, <em>colnames</em>, <em>new_wno</em>, <em>overwrite=False</em>, <em>new_filename='/Users/Natasha/Documents/PICASO/picaso/reference/opacities/continuum.json'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.ContinuumFactory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>The continuum factory takes the CIA opacity file and adds in extra sources of
 opacity from other references to fill in empty bands. It assumes that the original file is
 structured as following,with the first column wavenumber and the rest molecules:
@@ -1507,7 +1616,7 @@ structured as following,with the first column wavenumber and the rest molecules:
 0.0  -33.0000  -33.0000  -33.0000  -33.0000  -33.0000
 20.0   -7.4572   -7.4518   -6.8038   -6.0928   -5.9806
 40.0   -6.9547   -6.9765   -6.6322   -5.7934   -5.4823
-... ... ... etc</p>
+… … … etc</p>
 <p>Where 1000 corresponds to the number of wavelengths, 198 corresponds to the number of temperatures
 and 75 is the first temperature. If this structure changes, we will need to restructure this top
 level __init__ function that reads it in the original opacity file.</p>
@@ -1516,11 +1625,11 @@ level __init__ function that reads it in the original opacity file.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>original_file</strong> (<em>str</em>) &#8211; Filepath that points to original opacity file (see description above)</li>
-<li><strong>colnames</strong> (<em>list</em>) &#8211; defines the sources of opacity in the original file. For the example file above,
-colnames would be [&#8216;wno&#8217;,&#8217;h2h2&#8217;,&#8217;h2he&#8217;,&#8217;h2h&#8217;,&#8217;h2ch4&#8217;,&#8217;h2n2&#8217;]</li>
-<li><strong>new_wno</strong> (<em>numpy.ndarray</em><em>, </em><em>list</em>) &#8211; wavenumber grid to interpolate onto (units of inverse cm)</li>
-<li><strong>overwrite</strong> (<em>bool</em>) &#8211; Default is set to False as to not overwrite any existing files. This parameter controls overwriting
+<li><strong>original_file</strong> (<em>str</em>) – Filepath that points to original opacity file (see description above)</li>
+<li><strong>colnames</strong> (<em>list</em>) – defines the sources of opacity in the original file. For the example file above,
+colnames would be [‘wno’,’h2h2’,’h2he’,’h2h’,’h2ch4’,’h2n2’]</li>
+<li><strong>new_wno</strong> (<em>numpy.ndarray</em><em>, </em><em>list</em>) – wavenumber grid to interpolate onto (units of inverse cm)</li>
+<li><strong>overwrite</strong> (<em>bool</em>) – Default is set to False as to not overwrite any existing files. This parameter controls overwriting
 cia database</li>
 </ul>
 </td>
@@ -1543,9 +1652,9 @@ to values that were set to -33 as place holders.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>t</strong> (<em>float</em>) &#8211; Temperature</li>
-<li><strong>wno</strong> (<em>numpy.array</em>) &#8211; wave number</li>
-<li><strong>va</strong> (<em>int</em><em> or </em><em>float</em>) &#8211; (Optional) 1,2 or 3 (depending on what overtone to compute</li>
+<li><strong>t</strong> (<em>float</em>) – Temperature</li>
+<li><strong>wno</strong> (<em>numpy.array</em>) – wave number</li>
+<li><strong>va</strong> (<em>int</em><em> or </em><em>float</em>) – (Optional) 1,2 or 3 (depending on what overtone to compute</li>
 </ul>
 </td>
 </tr>
@@ -1575,8 +1684,8 @@ This will happen when we go to sum opacities. For now returns will be in cm4/dyn
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>t</strong> (<em>numpy.ndarray</em>) &#8211; temperature in K</li>
-<li><strong>wno</strong> (<em>numpy.ndarray</em>) &#8211; wave number cm-1</li>
+<li><strong>t</strong> (<em>numpy.ndarray</em>) – temperature in K</li>
+<li><strong>wno</strong> (<em>numpy.ndarray</em>) – wave number cm-1</li>
 </ul>
 </td>
 </tr>
@@ -1593,12 +1702,12 @@ This will happen when we go to sum opacities. For now returns will be in cm4/dyn
 <dl class="method">
 <dt id="picaso.opacity_factory.ContinuumFactory.get_hminusbf">
 <code class="descname">get_hminusbf</code><span class="sig-paren">(</span><em>wno</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.ContinuumFactory.get_hminusbf" title="Permalink to this definition">¶</a></dt>
-<dd><p>H- bound free opacity, which is only dependent on wavelength. From John 1988 <a class="reference external" href="http://adsabs.harvard.edu/abs/1988A%26A...193..189J">http://adsabs.harvard.edu/abs/1988A%26A...193..189J</a></p>
+<dd><p>H- bound free opacity, which is only dependent on wavelength. From John 1988 <a class="reference external" href="http://adsabs.harvard.edu/abs/1988A%26A...193..189J">http://adsabs.harvard.edu/abs/1988A%26A…193..189J</a></p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>wno</strong> (<em>numpy.ndarray</em>) &#8211; Wavenumber in cm-1</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>wno</strong> (<em>numpy.ndarray</em>) – Wavenumber in cm-1</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Absorption coefficient in units of cm2</td>
 </tr>
@@ -1619,8 +1728,8 @@ Also includes factor for simulated emission</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>t</strong> (<em>float</em>) &#8211; Temperature in K</li>
-<li><strong>wno</strong> (<em>numpy.ndarray</em>) &#8211; Wavenumber in cm-1</li>
+<li><strong>t</strong> (<em>float</em>) – Temperature in K</li>
+<li><strong>wno</strong> (<em>numpy.ndarray</em>) – Wavenumber in cm-1</li>
 </ul>
 </td>
 </tr>
@@ -1628,6 +1737,30 @@ Also includes factor for simulated emission</p>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">array of float</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="picaso.opacity_factory.ContinuumFactory.h2h2_overtone">
+<code class="descname">h2h2_overtone</code><span class="sig-paren">(</span><em>t</em>, <em>wno</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.ContinuumFactory.h2h2_overtone" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add in special CIA h2h2 band at 0.8 microns</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>t</strong> (<em>float</em>) – Temperature</li>
+<li><strong>wno</strong> (<em>numpy.array</em>) – wave number</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">H2-H2 absorption in cm-1 amagat-2</p>
 </td>
 </tr>
 </tbody>
@@ -1643,24 +1776,24 @@ Also includes factor for simulated emission</p>
 
 <dl class="class">
 <dt id="picaso.opacity_factory.MolecularFactory">
-<em class="property">class </em><code class="descclassname">picaso.opacity_factory.</code><code class="descname">MolecularFactory</code><span class="sig-paren">(</span><em>original_dir</em>, <em>new_wno</em>, <em>overwrite=False</em>, <em>new_filename='/Users/natashabatalha/Documents/PICASO/picaso/reference/opacities/molecular.hdf5'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.MolecularFactory" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
-<p>This class contains everything needed to take Richard&#8217;s Opacities and turn them into
-usable HDF5 database for fast querying.</p>
+<em class="property">class </em><code class="descclassname">picaso.opacity_factory.</code><code class="descname">MolecularFactory</code><span class="sig-paren">(</span><em>original_dir</em>, <em>new_wno</em>, <em>overwrite=False</em>, <em>new_filename='/Users/Natasha/Documents/PICASO/picaso/reference/opacities/molecular.json'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.MolecularFactory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This class contains everything needed to take Richard’s Opacities and turn them into
+usable json database for fast querying.</p>
 <p>This directly translates Richards old opacities from the original albedo code to the new
-HDF5 format. Each molecule has the 1060 files with the following header structure:</p>
+json format. Each molecule has the 1060 files with the following header structure:</p>
 <p>ch4_2014 opacities from 0.3 to 1 microns at R~5000 resolution
 wavelength       opacity (cm2/g)</p>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p class="last">When this routine puts everything into the hdf5 database it will reorder everything
+<p class="last">When this routine puts everything into the json database it will reorder everything
 by wavenumber!! This way molcular opacity and continuum opacity are on the same grid</p>
 </div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>original_dir</strong> (<em>str</em>) &#8211; Pointer to the original directory that contains all the opacities. This folder should
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>original_dir</strong> (<em>str</em>) – Pointer to the original directory that contains all the opacities. This folder should
 contain a bunch of different folders (one for each molecule).</td>
 </tr>
 </tbody>
@@ -1673,6 +1806,11 @@ contain a bunch of different folders (one for each molecule).</td>
 </dd></dl>
 
 <dl class="function">
+<dt id="picaso.opacity_factory.find_nearest">
+<code class="descclassname">picaso.opacity_factory.</code><code class="descname">find_nearest</code><span class="sig-paren">(</span><em>array</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.find_nearest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
 <dt id="picaso.opacity_factory.listdir">
 <code class="descclassname">picaso.opacity_factory.</code><code class="descname">listdir</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.listdir" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -1682,8 +1820,8 @@ contain a bunch of different folders (one for each molecule).</td>
 <span id="picaso-optics-module"></span><h2>picaso.optics module<a class="headerlink" href="#module-picaso.optics" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="picaso.optics.RetrieveOpacities">
-<em class="property">class </em><code class="descclassname">picaso.optics.</code><code class="descname">RetrieveOpacities</code><span class="sig-paren">(</span><em>continuum_data</em>, <em>molecular_data</em>, <em>raman_data</em>, <em>db='local'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacities" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<em class="property">class </em><code class="descclassname">picaso.optics.</code><code class="descname">RetrieveOpacities</code><span class="sig-paren">(</span><em>db_filename</em>, <em>raman_data</em>, <em>location='local'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacities" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>This will be the class that will retrieve the opacities from the h5 database. Right
 now we are just employing nearest neighbors to grab the respective opacities.
 Eventually, we will want to do something like correlated K.</p>
@@ -1700,6 +1838,12 @@ Eventually, we will want to do something like correlated K.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="picaso.optics.RetrieveOpacities.adapt_array">
+<code class="descname">adapt_array</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacities.adapt_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>needed to interpret bytes to array</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="picaso.optics.RetrieveOpacities.compute_stellar_shits">
 <code class="descname">compute_stellar_shits</code><span class="sig-paren">(</span><em>wno_star</em>, <em>flux_star</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacities.compute_stellar_shits" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes the hires stellar spectrum and computes Raman shifts</p>
@@ -1708,8 +1852,8 @@ Eventually, we will want to do something like correlated K.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>wno_star</strong> (<em>array</em>) &#8211; hires wavelength grid of the star in wave number</li>
-<li><strong>flux_star</strong> (<em>array</em>) &#8211; Flux of the star in whatever units. Doesn&#8217;t matter for this since it&#8217;s returning a ratio</li>
+<li><strong>wno_star</strong> (<em>array</em>) – hires wavelength grid of the star in wave number</li>
+<li><strong>flux_star</strong> (<em>array</em>) – Flux of the star in whatever units. Doesn’t matter for this since it’s returning a ratio</li>
 </ul>
 </td>
 </tr>
@@ -1725,6 +1869,18 @@ number grid</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="picaso.optics.RetrieveOpacities.convert_array">
+<code class="descname">convert_array</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacities.convert_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>needed to interpret bytes to array</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="picaso.optics.RetrieveOpacities.get_available_data">
+<code class="descname">get_available_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacities.get_available_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the pressures and temperatures that are available for the continuum and molecules</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="picaso.optics.RetrieveOpacities.get_continuum_opac">
 <code class="descname">get_continuum_opac</code><span class="sig-paren">(</span><em>temperature</em>, <em>molecule</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacities.get_continuum_opac" title="Permalink to this definition">¶</a></dt>
 <dd><p>Based on a temperature, this retrieves the continuum opacity for</p>
@@ -1733,8 +1889,8 @@ number grid</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>temperature</strong> (<em>float array</em>) &#8211; An array of temperatures to retrieve the continuum opacity at</li>
-<li><strong>molecule</strong> (<em>str</em>) &#8211; Which opacity source to query. currently available: &#8216;h2h2&#8217;,&#8217;h2he&#8217;,&#8217;h2h&#8217;,&#8217;h2ch4&#8217;,&#8217;h2n2&#8217;</li>
+<li><strong>temperature</strong> (<em>float array</em>) – An array of temperatures to retrieve the continuum opacity at</li>
+<li><strong>molecule</strong> (<em>str</em>) – Which opacity source to query. currently available: ‘h2h2’,’h2he’,’h2h’,’h2ch4’,’h2n2’</li>
 </ul>
 </td>
 </tr>
@@ -1753,19 +1909,33 @@ number grid</p>
 <code class="descname">get_molecular_opac</code><span class="sig-paren">(</span><em>temperature</em>, <em>pressure</em>, <em>molecule</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacities.get_molecular_opac" title="Permalink to this definition">¶</a></dt>
 <dd><p>Based on temperature, and pressure, retrieves the molecular opacity for
 certain molecule</p>
+<p>Molecular opacity should be in cm2/molecule units. That is why there is an
+multiplication of N_a on return</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>temperature</strong> (<em>array of float</em>) &#8211; An array of temperatures to retrieve the continuum opacity at</li>
-<li><strong>pressure</strong> (<em>array of float</em>) &#8211; Pressures (IN BARS) to retrieve the continuum opacity at</li>
-<li><strong>molecule</strong> (<em>str</em>) &#8211; Which opacity source to query. Will get error if not in the db</li>
+<li><strong>temperature</strong> (<em>array of float</em>) – An array of temperatures to retrieve the continuum opacity at</li>
+<li><strong>pressure</strong> (<em>array of float</em>) – Pressures (IN BARS) to retrieve the continuum opacity at</li>
+<li><strong>molecule</strong> (<em>str</em>) – Which opacity source to query. Will get error if not in the db</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="method">
+<dt id="picaso.optics.RetrieveOpacities.get_opacities">
+<code class="descname">get_opacities</code><span class="sig-paren">(</span><em>atmosphere</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacities.get_opacities" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get’s opacities using the atmosphere class</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="picaso.optics.RetrieveOpacities.get_wave_grid">
+<code class="descname">get_wave_grid</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacities.get_wave_grid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the wave grid info</p>
 </dd></dl>
 
 </dd></dl>
@@ -1779,9 +1949,9 @@ certain molecule</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>wno_new</strong> (<em>numpy.array</em>) &#8211; inverse cm grid to bin to (cm-1)</li>
-<li><strong>wno_old</strong> (<em>numpy.array</em>) &#8211; inverse cm grid (old grid)</li>
-<li><strong>Fp</strong> (<em>numpy.array</em>) &#8211; transmission spectra, which is on wno grid</li>
+<li><strong>wno_new</strong> (<em>numpy.array</em>) – inverse cm grid to bin to (cm-1)</li>
+<li><strong>wno_old</strong> (<em>numpy.array</em>) – inverse cm grid (old grid)</li>
+<li><strong>Fp</strong> (<em>numpy.array</em>) – transmission spectra, which is on wno grid</li>
 </ul>
 </td>
 </tr>
@@ -1799,51 +1969,51 @@ It should automatically select the molecules needed</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>atmosphere</strong> (<em>class ATMSETUP</em>) &#8211; This inherets the class from atmsetup.py</li>
-<li><strong>opacityclass</strong> (<em>class opacity</em>) &#8211; This inherets the class from optics.py. It is done this way so that the opacity db doesnt have
+<li><strong>atmosphere</strong> (<em>class ATMSETUP</em>) – This inherets the class from atmsetup.py</li>
+<li><strong>opacityclass</strong> (<em>class opacity</em>) – This inherets the class from optics.py. It is done this way so that the opacity db doesnt have
 to be reloaded in a retrieval</li>
-<li><strong>delta_eddington</strong> (<em>bool</em>) &#8211; (Optional) Default=True, With Delta-eddington on, it incorporates the forward peak
+<li><strong>delta_eddington</strong> (<em>bool</em>) – (Optional) Default=True, With Delta-eddington on, it incorporates the forward peak
 contribution by adjusting optical properties such that the fraction of scattered energy
 in the forward direction is removed from the scattering parameters</li>
-<li><strong>raman</strong> (<em>int</em>) &#8211; (Optional) Default =0 which corresponds to oklopcic+2018 raman scattering cross sections.
+<li><strong>raman</strong> (<em>int</em>) – (Optional) Default =0 which corresponds to oklopcic+2018 raman scattering cross sections.
 Other options include 1 for original pollack approximation for a 6000K blackbody.
 And 2 for nothing.</li>
-<li><strong>test_mode</strong> (<em>bool</em>) &#8211; (Optional) Default = False to run as normal. This will overwrite the opacities and fix the
+<li><strong>test_mode</strong> (<em>bool</em>) – (Optional) Default = False to run as normal. This will overwrite the opacities and fix the
 delta tau at 0.5.</li>
-<li><strong>full_output</strong> (<em>bool</em>) &#8211; (Optional) Default = False. If true, This will add taugas, taucld, tauray to the atmosphere class.
+<li><strong>full_output</strong> (<em>bool</em>) – (Optional) Default = False. If true, This will add taugas, taucld, tauray to the atmosphere class.
 This is done so that the users can debug, plot, etc.</li>
-<li><strong>plot_opacity</strong> (<em>bool</em>) &#8211; (Optional) Default = False. If true, Will create a pop up plot of the weighted of each absorber
+<li><strong>plot_opacity</strong> (<em>bool</em>) – (Optional) Default = False. If true, Will create a pop up plot of the weighted of each absorber
 at the middle layer.</li>
 </ul>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
-<li><strong>DTAU</strong> (<em>ndarray</em>) &#8211; This is a matrix with # layer by # wavelength. It is the opacity contained within a layer
+<li><strong>DTAU</strong> (<em>ndarray</em>) – This is a matrix with # layer by # wavelength. It is the opacity contained within a layer
 including the continuum, scattering, cloud (if specified), and molecular opacity
 <strong>If requested, this is corrected for with Delta-Eddington.</strong></li>
-<li><strong>TAU</strong> (<em>ndarray</em>) &#8211; This is a matrix with # level by # wavelength. It is the cumsum of opacity contained
+<li><strong>TAU</strong> (<em>ndarray</em>) – This is a matrix with # level by # wavelength. It is the cumsum of opacity contained
 including the continuum, scattering, cloud (if specified), and molecular opacity
 <strong>If requested, this is corrected for with Delta-Eddington.</strong></li>
-<li><strong>WBAR</strong> (<em>ndarray</em>) &#8211; This is the single scattering albedo that includes rayleigh, raman and user input scattering sources.
+<li><strong>WBAR</strong> (<em>ndarray</em>) – This is the single scattering albedo that includes rayleigh, raman and user input scattering sources.
 It has dimensions: # layer by # wavelength
 <strong>If requested, this is corrected for with Delta-Eddington.</strong></li>
-<li><strong>COSB</strong> (<em>ndarray</em>) &#8211; This is the asymettry factor which accounts for rayleigh and user specified values
+<li><strong>COSB</strong> (<em>ndarray</em>) – This is the asymettry factor which accounts for rayleigh and user specified values
 It has dimensions: # layer by # wavelength
 <strong>If requested, this is corrected for with Delta-Eddington.</strong></li>
-<li><strong>ftau_cld</strong> (<em>ndarray</em>) &#8211; This is the fraction of cloud opacity relative to the total TAUCLD/(TAUCLD + TAURAY)</li>
-<li><strong>ftau_ray</strong> (<em>ndarray</em>) &#8211; This is the fraction of rayleigh opacity relative to the total TAURAY/(TAUCLD + TAURAY)</li>
-<li><strong>GCOS2</strong> (<em>ndarray</em>) &#8211; This is used for Cahoy+2010 methodology for accounting for rayleigh scattering. It
+<li><strong>ftau_cld</strong> (<em>ndarray</em>) – This is the fraction of cloud opacity relative to the total TAUCLD/(TAUCLD + TAURAY)</li>
+<li><strong>ftau_ray</strong> (<em>ndarray</em>) – This is the fraction of rayleigh opacity relative to the total TAURAY/(TAUCLD + TAURAY)</li>
+<li><strong>GCOS2</strong> (<em>ndarray</em>) – This is used for Cahoy+2010 methodology for accounting for rayleigh scattering. It
 replaces the use of the actual rayleigh phase function by just multiplying ftau_ray by 2</li>
-<li><strong>DTAU</strong> (<em>ndarray</em>) &#8211; This is a matrix with # layer by # wavelength. It is the opacity contained within a layer
+<li><strong>DTAU</strong> (<em>ndarray</em>) – This is a matrix with # layer by # wavelength. It is the opacity contained within a layer
 including the continuum, scattering, cloud (if specified), and molecular opacity
 <strong>If requested, this is corrected for with Delta-Eddington.</strong></li>
-<li><strong>TAU</strong> (<em>ndarray</em>) &#8211; This is a matrix with # level by # wavelength. It is the cumsum of opacity contained
+<li><strong>TAU</strong> (<em>ndarray</em>) – This is a matrix with # level by # wavelength. It is the cumsum of opacity contained
 including the continuum, scattering, cloud (if specified), and molecular opacity
 <strong>Original, never corrected for with Delta-Eddington.</strong></li>
-<li><strong>WBAR</strong> (<em>ndarray</em>) &#8211; This is the single scattering albedo that includes rayleigh, raman and user input scattering sources.
+<li><strong>WBAR</strong> (<em>ndarray</em>) – This is the single scattering albedo that includes rayleigh, raman and user input scattering sources.
 It has dimensions: # layer by # wavelength
 <strong>Original, never corrected for with Delta-Eddington.</strong></li>
-<li><strong>COSB</strong> (<em>ndarray</em>) &#8211; This is the asymettry factor which accounts for rayleigh and user specified values
+<li><strong>COSB</strong> (<em>ndarray</em>) – This is the asymettry factor which accounts for rayleigh and user specified values
 It has dimensions: # layer by # wavelength
 <strong>Original, never corrected for with Delta-Eddington.</strong></li>
 </ul>
@@ -1874,7 +2044,7 @@ modified single scattering albedo.</p>
 <a class="reference external" href="http://iopscience.iop.org/0004-637X/832/1/30/suppdata/apjaa3ec7t2_mrt.txt">http://iopscience.iop.org/0004-637X/832/1/30/suppdata/apjaa3ec7t2_mrt.txt</a></p>
 <p>This method is described in Pollack+1986. Albeit not the best method. Sromovsky+2005
 pointed out the inconsistencies in this method. You can see from his comparisons
-that the Pollack approximations don&#8217;t accurately capture the depths of the line centers.
+that the Pollack approximations don’t accurately capture the depths of the line centers.
 Since then, OKLOPCIC+2016 recomputed cross sections for J&lt;=9. We are using those cross
 sections here with a different star. Huge improvement over what we had before.
 Number of J levels is hard coded to 10 !</p>
@@ -1884,14 +2054,14 @@ Number of J levels is hard coded to 10 !</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>nwno</strong> (<em>int</em>) &#8211; Number of wave points</li>
-<li><strong>nlayer</strong> (<em>int</em>) &#8211; Number of layers</li>
-<li><strong>wno</strong> (<em>array</em>) &#8211; Array of output grid of wavenumbers</li>
-<li><strong>stellar_shifts</strong> (<em>ndarray</em>) &#8211; Array of floats that has dimensions (n wave pts x n J levels: 0-9)</li>
-<li><strong>tlayer</strong> (<em>array</em>) &#8211; Array of floats that has dimensions nlayer</li>
-<li><strong>cross_sections</strong> (<em>ndarray</em>) &#8211; The row of &#8220;C&#8217;s&#8221; from Antonija&#8217;s table.</li>
-<li><strong>j_initial</strong> (<em>ndarray</em>) &#8211; The row of initial rotational energy states from Antonija&#8217;s table</li>
-<li><strong>deltanu</strong> (<em>ndarray</em>) &#8211; The row of delta nu&#8217;s from Antonia&#8217;s table</li>
+<li><strong>nwno</strong> (<em>int</em>) – Number of wave points</li>
+<li><strong>nlayer</strong> (<em>int</em>) – Number of layers</li>
+<li><strong>wno</strong> (<em>array</em>) – Array of output grid of wavenumbers</li>
+<li><strong>stellar_shifts</strong> (<em>ndarray</em>) – Array of floats that has dimensions (n wave pts x n J levels: 0-9)</li>
+<li><strong>tlayer</strong> (<em>array</em>) – Array of floats that has dimensions nlayer</li>
+<li><strong>cross_sections</strong> (<em>ndarray</em>) – The row of “C’s” from Antonija’s table.</li>
+<li><strong>j_initial</strong> (<em>ndarray</em>) – The row of initial rotational energy states from Antonija’s table</li>
+<li><strong>deltanu</strong> (<em>ndarray</em>) – The row of delta nu’s from Antonia’s table</li>
 </ul>
 </td>
 </tr>
@@ -1912,7 +2082,7 @@ Number of J levels is hard coded to 10 !</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>j</strong> (<em>int</em>) &#8211; The initial rotational levels ranging from J=0 to 9 for hydrogen only</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>j</strong> (<em>int</em>) – The initial rotational levels ranging from J=0 to 9 for hydrogen only</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>f_J in eqn. 3 https</strong></td>
 </tr>
@@ -1941,8 +2111,8 @@ It is also used to compute the partition sum Z.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>j</strong> (<em>int</em>) &#8211; Energy level</li>
-<li><strong>T</strong> (<em>array float</em>) &#8211; Temperature at each atmospheric layer in the atmosphere</li>
+<li><strong>j</strong> (<em>int</em>) – Energy level</li>
+<li><strong>T</strong> (<em>array float</em>) – Temperature at each atmospheric layer in the atmosphere</li>
 </ul>
 </td>
 </tr>
@@ -1965,7 +2135,7 @@ This is also pretty fast to compute so 20 is fine for now.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>T</strong> (<em>array</em>) &#8211; Array of temperatures for each layer</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>T</strong> (<em>array</em>) – Array of temperatures for each layer</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
 </tr>
@@ -1978,12 +2148,12 @@ This is also pretty fast to compute so 20 is fine for now.</p>
 <dl class="function">
 <dt id="picaso.optics.raman_pollack">
 <code class="descclassname">picaso.optics.</code><code class="descname">raman_pollack</code><span class="sig-paren">(</span><em>nlayer</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.raman_pollack" title="Permalink to this definition">¶</a></dt>
-<dd><p>Mystery raman scattering. Couldn&#8217;t figure out where it came from.. so discontinuing.
-Currently function doesnt&#8217; totally work. In half fortran-half python. Legacy from
+<dd><p>Mystery raman scattering. Couldn’t figure out where it came from.. so discontinuing.
+Currently function doesnt’ totally work. In half fortran-half python. Legacy from
 fortran albedo code.</p>
 <p>This method is described in Pollack+1986. Albeit not the best method. Sromovsky+2005
 pointed out the inconsistencies in this method. You can see from his comparisons
-that the Pollack approximations don&#8217;t accurately capture the depths of the line centers.
+that the Pollack approximations don’t accurately capture the depths of the line centers.
 Since then, OKLOPCIC+2016 did a much
 better model of raman scattring (with ghost lines). Might be worth it to consider a more
 sophisticated version of Raman scattering.</p>
@@ -2049,14 +2219,12 @@ to swap out different methods to calculate rayleigh opacity</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>colden</strong> (<em>array of float</em>) &#8211; Column Density in CGS units</li>
-<li><strong>H2</strong> (<em>array of float</em>) &#8211; Mixing ratio as function of altitude for H2</li>
-<li><strong>He</strong> (<em>array of flaot</em>) &#8211; Mixing ratio as a function of altitude for He</li>
-<li><strong>CH4</strong> (<em>array of float</em>) &#8211; Mixing ratio as a function of altitude fro CH4</li>
-<li><strong>wave</strong> (<em>array of float</em>) &#8211; wavelength (microns) of grid. This should be in DECENDING order to comply with
+<li><strong>colden</strong> (<em>array of float</em>) – Column Density in CGS units</li>
+<li><strong>mixingratios</strong> (<em>array of float</em>) – Mixing ratio as function of altitude for [H2  He CH4 ]</li>
+<li><strong>wave</strong> (<em>array of float</em>) – wavelength (microns) of grid. This should be in DECENDING order to comply with
 everything else being in wave numberes</li>
-<li><strong>xmu</strong> (<em>array of float</em>) &#8211; mean molecular weight of atmosphere in amu</li>
-<li><strong>amu</strong> (<em>float</em>) &#8211; amu constant in grams</li>
+<li><strong>xmu</strong> (<em>array of float</em>) – mean molecular weight of atmosphere in amu</li>
+<li><strong>amu</strong> (<em>float</em>) – amu constant in grams</li>
 </ul>
 </td>
 </tr>
@@ -2069,20 +2237,20 @@ everything else being in wave numberes</li>
 <span id="picaso-run-opa-factory-module"></span><h2>picaso.run_opa_factory module<a class="headerlink" href="#module-picaso.run_opa_factory" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="picaso.run_opa_factory.continuum">
-<code class="descclassname">picaso.run_opa_factory.</code><code class="descname">continuum</code><span class="sig-paren">(</span><em>new_wno_file='../scripts/newwave_2000.coverage', original_file='../testing_notebooks/CIA_DS_aug_2015.dat', colnames=['wno', 'H2H2', 'H2He', 'H2H', 'H2CH4', 'H2N2'], new_filename='/Users/natashabatalha/Documents/PICASO/picaso/reference/opacities/continuum.hdf5'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.run_opa_factory.continuum" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">picaso.run_opa_factory.</code><code class="descname">continuum</code><span class="sig-paren">(</span><em>new_wno='newwave_2000.coverage', original_file='CIA_DS_aug_2015.dat', colnames=['wno', 'H2H2', 'H2He', 'H2H', 'H2CH4', 'H2N2'], new_filename='/Users/Natasha/Documents/PICASO/picaso/reference/opacities/continuum.json'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.run_opa_factory.continuum" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is a top level function to run the opacity facotry to compute the continuum.
-It leverages D. Saumom&#8217;s continuum opacity file and regrids it to the wavelength
+It leverages D. Saumom’s continuum opacity file and regrids it to the wavelength
 that the user is attempting to create a spectrum on.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>new_wno_file</strong> (<em>str</em>) &#8211; This is a pointer to the filename that is whitespace delimeted with at least one column
-called &#8220;wavenumber&#8221;</li>
-<li><strong>original_file</strong> (<em>str</em>) &#8211; This is a pointer to the original continuum opacity file that is structured according to
+<li><strong>new_wno</strong> (<em>str</em><em> , </em><em>array</em>) – This is a pointer to the filename that is whitespace delimeted with at least one column
+called “wavenumber”. Can also be a numpy array</li>
+<li><strong>original_file</strong> (<em>str</em>) – This is a pointer to the original continuum opacity file that is structured according to
 D. Saumon. This will eventually be replaced with the opacity db structure.</li>
-<li><strong>colnames</strong> (<em>list</em><em>, </em><em>str</em>) &#8211; This identifies the continuum absorbers that are located within the original_file with
+<li><strong>colnames</strong> (<em>list</em><em>, </em><em>str</em>) – This identifies the continuum absorbers that are located within the original_file with
 opacities. In future updates, the file might be updated to include more continuum
 absorbers.</li>
 </ul>
@@ -2094,7 +2262,7 @@ absorbers.</li>
 
 <dl class="function">
 <dt id="picaso.run_opa_factory.molecular">
-<code class="descclassname">picaso.run_opa_factory.</code><code class="descname">molecular</code><span class="sig-paren">(</span><em>original_dir='/Users/natashabatalha/Documents/AlbedoCodeWC/opacities/'</em>, <em>new_wno_file='../scripts/newwave_2000.coverage'</em>, <em>new_filename='/Users/natashabatalha/Documents/PICASO/picaso/reference/opacities/molecular.hdf5'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.run_opa_factory.molecular" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">picaso.run_opa_factory.</code><code class="descname">molecular</code><span class="sig-paren">(</span><em>original_dir='/Users/natashabatalha/Documents/AlbedoCodeWC/opacities/'</em>, <em>new_wno='newwave_2000.coverage'</em>, <em>new_filename='/Users/Natasha/Documents/PICASO/picaso/reference/opacities/molecular.hdf5'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.run_opa_factory.molecular" title="Permalink to this definition">¶</a></dt>
 <dd><p>Currently, picaso is operating on a BYO opacities. Therefore, this function should be used
 to go through a large directory of opacities and restructure them to the hdf5 databse that
 picaso uses.</p>
@@ -2111,9 +2279,9 @@ separate script. Please contact
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>new_wno_file</strong> (<em>str</em>) &#8211; This is a pointer to the filename that is whitespace delimeted with at least one column
-called &#8220;wavenumber&#8221;</li>
-<li><strong>original_dier</strong> (<em>str</em>) &#8211; This is a pointer to the a file that should have a directory for each molecule.</li>
+<li><strong>new_wno</strong> (<em>str</em><em>, </em><em>array</em>) – This is a pointer to the filename that is whitespace delimeted with at least one column
+called “wavenumber”. Can also be a numpy array.</li>
+<li><strong>original_dier</strong> (<em>str</em>) – This is a pointer to the a file that should have a directory for each molecule.</li>
 </ul>
 </td>
 </tr>
@@ -2145,14 +2313,14 @@ error in various realms</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>single_phase</strong> (<em>str</em>) &#8211; Single phase function to test with the constant_tau test. Can either be:
-&#8220;cahoy&#8221;,&#8221;TTHG_ray&#8221;,&#8221;TTHG&#8221;, and &#8220;OTHG&#8221;</li>
-<li><strong>output_dir</strong> (<em>str</em>) &#8211; Output directory for results of test. Default is to just return the dataframe (None).</li>
-<li><strong>rayleigh</strong> (<em>bool</em>) &#8211; Default is True. Turns on and off the rayleigh phase function test</li>
-<li><strong>constant_tau</strong> (<em>float</em>) &#8211; Default=True. Turns on and off the constant tau phase function test</li>
-<li><strong>Retuns</strong> &#8211; </li>
-<li><strong>------</strong> &#8211; </li>
-<li><strong>of % deviation from Dlugach &amp; Yanovitskij Table XXI</strong> (<em>DataFrame</em>) &#8211; </li>
+<li><strong>single_phase</strong> (<em>str</em>) – Single phase function to test with the constant_tau test. Can either be:
+“cahoy”,”TTHG_ray”,”TTHG”, and “OTHG”</li>
+<li><strong>output_dir</strong> (<em>str</em>) – Output directory for results of test. Default is to just return the dataframe (None).</li>
+<li><strong>rayleigh</strong> (<em>bool</em>) – Default is True. Turns on and off the rayleigh phase function test</li>
+<li><strong>constant_tau</strong> (<em>float</em>) – Default=True. Turns on and off the constant tau phase function test</li>
+<li><strong>Retuns</strong> – </li>
+<li><strong>------</strong> – </li>
+<li><strong>of % deviation from Dlugach &amp; Yanovitskij Table XXI</strong> (<em>DataFrame</em>) – </li>
 </ul>
 </td>
 </tr>
@@ -2172,11 +2340,11 @@ Madhu and Burrows paper.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>rayleigh</strong> (<em>bool</em>) &#8211; Tests rayleigh phase function</li>
-<li><strong>isotropic</strong> (<em>bool</em>) &#8211; Tests isotropic phase function</li>
-<li><strong>single_phase</strong> (<em>str</em>) &#8211; Single phase function to test with the constant_tau test. Can either be:
-&#8220;cahoy&#8221;,&#8221;TTHG_ray&#8221;,&#8221;TTHG&#8221;, and &#8220;OTHG&#8221;</li>
-<li><strong>output_dir</strong> (<em>str</em>) &#8211; Output directory for results of test. Default is to just return the dataframe (None).</li>
+<li><strong>rayleigh</strong> (<em>bool</em>) – Tests rayleigh phase function</li>
+<li><strong>isotropic</strong> (<em>bool</em>) – Tests isotropic phase function</li>
+<li><strong>single_phase</strong> (<em>str</em>) – Single phase function to test with the constant_tau test. Can either be:
+“cahoy”,”TTHG_ray”,”TTHG”, and “OTHG”</li>
+<li><strong>output_dir</strong> (<em>str</em>) – Output directory for results of test. Default is to just return the dataframe (None).</li>
 </ul>
 </td>
 </tr>
@@ -2206,7 +2374,7 @@ it might be useful to add it directly to the input.cld file.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filename_or_grid</strong> (<em>str</em><em> or </em><em>ndarray</em>) &#8211; filename of the input grid OR a numpy array of wavenumber corresponding to cloud
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filename_or_grid</strong> (<em>str</em><em> or </em><em>ndarray</em>) – filename of the input grid OR a numpy array of wavenumber corresponding to cloud
 input</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">array of wave numbers in increasing order</td>
@@ -2227,9 +2395,9 @@ to a new wave grid.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>matrix</strong> (<em>ndarray</em>) &#8211; matrix that is (number of something versus number of wavelength points)</li>
-<li><strong>old_wno</strong> (<em>array</em>) &#8211; array that represents the old wavelength grid of the matrix</li>
-<li><strong>new_wno</strong> (<em>array</em>) &#8211; array that represents the desired wavelength grid</li>
+<li><strong>matrix</strong> (<em>ndarray</em>) – matrix that is (number of something versus number of wavelength points)</li>
+<li><strong>old_wno</strong> (<em>array</em>) – array that represents the old wavelength grid of the matrix</li>
+<li><strong>new_wno</strong> (<em>array</em>) – array that represents the desired wavelength grid</li>
 </ul>
 </td>
 </tr>
@@ -2251,16 +2419,14 @@ to a new wave grid.</p>
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
       
-        <a href="notebooks/5_SwappingOpacities.html" class="btn btn-neutral" title="Creating new Opacity Databases" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="notebooks/5_SwappingOpacities.html" class="btn btn-neutral float-left" title="Opacity Databases" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -2269,11 +2435,11 @@ to a new wave grid.</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2018, Natasha E. Batalha.
+        &copy; Copyright 2018, Natasha E. Batalha
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -2286,39 +2452,15 @@ to a new wave grid.</p>
   
 
 
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'./',
-            VERSION:'0.0dev',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="_static/jquery.js"></script>
-      <script type="text/javascript" src="_static/underscore.js"></script>
-      <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-      <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-  
-
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
   </script>
+
+  
+  
+    
    
 
 </body>
