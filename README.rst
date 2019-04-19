@@ -54,4 +54,5 @@ Math
 .. image:: https://travis-ci.com/natashabatalha/picaso.svg?token=rhFPvNo2sGUpKx2Zyx86&branch=master
     :target: https://travis-ci.com/natashabatalha/picaso
 
-
+.. image:: https://zenodo.org/badge/113474583.svg
+   :target: https://zenodo.org/badge/latestdoi/113474583
