@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Getting Started : Basic Inputs and Outputs &mdash; picaso 0.0dev documentation</title>
+  <title>Getting Started : Basic Inputs and Outputs &mdash; picaso 0.0 documentation</title>
   
 
   
@@ -17,41 +17,45 @@
   
 
   
-  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../_static/jquery.js"></script>
-        <script type="text/javascript" src="../_static/underscore.js"></script>
-        <script type="text/javascript" src="../_static/doctools.js"></script>
-        <script type="text/javascript" src="../_static/language_data.js"></script>
-        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-        <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
-    
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
 
+  
+  
     
 
   
-  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" type="text/css" />
-    <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Adding Cloud Opacity, Scattering, Assymetry" href="2_AddingClouds.html" />
-    <link rel="prev" title="Tutorials" href="../tutorials.html" /> 
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="picaso 0.0 documentation" href="../index.html"/>
+        <link rel="up" title="Tutorials" href="../tutorials.html"/>
+        <link rel="next" title="Adding Cloud Opacity, Scattering, Assymetry" href="2_AddingClouds.html"/>
+        <link rel="prev" title="Tutorials" href="../tutorials.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
 </head>
 
-<body class="wy-body-for-nav">
+<body class="wy-body-for-nav" role="document">
 
    
   <div class="wy-grid-for-nav">
+
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+        <div class="wy-side-nav-search">
           
 
           
@@ -65,7 +69,7 @@
             
             
               <div class="version">
-                0.0dev
+                0.0
               </div>
             
           
@@ -125,7 +129,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" aria-label="top navigation">
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../index.html">picaso</a>
@@ -133,10 +137,9 @@
       </nav>
 
 
+      
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
           
 
 
@@ -235,18 +238,18 @@ div.nblast {
 
 /* input prompt */
 div.nbinput div.prompt pre {
-    color: #307FC1;
+    color: #303F9F;
 }
 
 /* output prompt */
 div.nboutput div.prompt pre {
-    color: #BF5B3D;
+    color: #D84315;
 }
 
 /* all prompts */
 div.nbinput div.prompt,
 div.nboutput div.prompt {
-    min-width: 5ex;
+    min-width: 8ex;
     padding-top: 0.4em;
     padding-right: 0.4em;
     text-align: right;
@@ -286,9 +289,9 @@ div.nboutput div.output_area {
 
 /* input area */
 div.nbinput div.input_area {
-    border: 1px solid #e0e0e0;
+    border: 1px solid #cfcfcf;
     border-radius: 2px;
-    background: #f5f5f5;
+    background: #f7f7f7;
 }
 
 /* override MathJax center alignment in output cells */
@@ -296,7 +299,7 @@ div.nboutput div[class*=MathJax] {
     text-align: left !important;
 }
 
-/* override sphinx.ext.imgmath center alignment in output cells */
+/* override sphinx.ext.pngmath center alignment in output cells */
 div.nboutput div.math p {
     text-align: left;
 }
@@ -346,40 +349,6 @@ div.nboutput div.output_area.stderr {
 .ansi-bold { font-weight: bold; }
 .ansi-underline { text-decoration: underline; }
 
-/* Some additional styling taken form the Jupyter notebook CSS */
-div.rendered_html table {
-  border: none;
-  border-collapse: collapse;
-  border-spacing: 0;
-  color: black;
-  font-size: 12px;
-  table-layout: fixed;
-}
-div.rendered_html thead {
-  border-bottom: 1px solid black;
-  vertical-align: bottom;
-}
-div.rendered_html tr,
-div.rendered_html th,
-div.rendered_html td {
-  text-align: right;
-  vertical-align: middle;
-  padding: 0.5em 0.5em;
-  line-height: normal;
-  white-space: normal;
-  max-width: none;
-  border: none;
-}
-div.rendered_html th {
-  font-weight: bold;
-}
-div.rendered_html tbody tr:nth-child(odd) {
-  background: #f5f5f5;
-}
-div.rendered_html tbody tr:hover {
-  background: rgba(66, 165, 245, 0.2);
-}
-
 /* CSS overrides for sphinx_rtd_theme */
 
 /* 24px margin */
@@ -396,11 +365,6 @@ div.rendered_html tbody tr:hover {
 .admonition > p:before {
     margin-right: 4px;  /* make room for the exclamation icon */
 }
-
-/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
-.math {
-    text-align: unset;
-}
 </style>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -412,14 +376,17 @@ div.rendered_html tbody tr:hover {
 <ol class="arabic simple">
 <li>Installed the code</li>
 <li>Downloaded the necessary reference data</li>
-<li>Added <code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">picaso_refdata=&quot;/path/to/picaso/reference&quot;</span></code> to ~/.bash_profile</li>
+<li>Added <code class="docutils literal"><span class="pre">export</span> <span class="pre">picaso_refdata=&quot;/path/to/picaso/reference&quot;</span></code> to
+~/.bash_profile</li>
 </ol>
-<p>If you have not done these things, please return to <a class="reference external" href="https://natashabatalha.github.io/picaso/installation.html">Installation Guilde</a></p>
+<p>If you have not done these things, please return to <a class="reference external" href="https://natashabatalha.github.io/picaso/installation.html">Installation
+Guilde</a></p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">warnings</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -439,7 +406,7 @@ div.rendered_html tbody tr:hover {
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area rendered_html docutils container">
+<div class="output_area docutils container">
 <div class="bk-root">
     <a href="https://bokeh.pydata.org" target="_blank" class="bk-logo bk-logo-small bk-logo-notebook"></a>
     <span id="1001">Loading BokehJS ...</span>
@@ -724,7 +691,6 @@ var element = document.currentScript.previousSibling.previousSibling;
 </div>
 <div class="section" id="Connect-to-Opacity-Database">
 <h2>Connect to Opacity Database<a class="headerlink" href="#Connect-to-Opacity-Database" title="Permalink to this headline">¶</a></h2>
-<<<<<<< HEAD
 <p>There is a full notebook in the tutorials devoted to learning how to
 make opacity databases in our format. If you cloned from <code class="docutils literal"><span class="pre">github</span></code>,
 there should also be an opacity database there called <code class="docutils literal"><span class="pre">opacity.db</span></code>.</p>
@@ -734,14 +700,6 @@ there should also be an opacity database there called <code class="docutils lite
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3"><div class="highlight"><pre>
-=======
-<p>There is a full notebook in the tutorials devoted to learning how to make opacity databases in our format. If you cloned from <code class="docutils literal notranslate"><span class="pre">github</span></code>, there should also be an opacity database there called <code class="docutils literal notranslate"><span class="pre">opacity.db</span></code>.</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 <span></span><span class="n">opacity</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -750,30 +708,30 @@ there should also be an opacity database there called <code class="docutils lite
 <div class="section" id="Load-blank-slate">
 <h2>Load blank slate<a class="headerlink" href="#Load-blank-slate" title="Permalink to this headline">¶</a></h2>
 <div class="nbinput nblast docutils container">
-<<<<<<< HEAD
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [3]:
-=======
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="n">start_case</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
-<p>In order to run the code we need (at the minimum) specific info about the:</p>
+<p>In order to run the code we need (at the minimum) specific info about
+the:</p>
 <ul class="simple">
 <li><strong>phase angle</strong></li>
 <li><strong>planet</strong> : gravity</li>
 <li><strong>star</strong> : temperature, metallicity, gravity</li>
-<li><strong>atmosphere</strong> : P-T profile, chemical composition, cloud properties (discussed later)</li>
+<li><strong>atmosphere</strong> : P-T profile, chemical composition, cloud properties
+(discussed later)</li>
 </ul>
-<p>Additionally, we have some optional parameters that will be discussed in later notebooks:</p>
+<p>Additionally, we have some optional parameters that will be discussed in
+later notebooks:</p>
 <ul class="simple">
 <li><strong>approx</strong> : approximations to rapidly compute reflected light</li>
-<li><strong>disco</strong> : number of individual facets you want to compute before integrating to 1D spectrum (think disco ball)</li>
+<li><strong>disco</strong> : number of individual facets you want to compute before
+integrating to 1D spectrum (think disco ball)</li>
 <li><strong>opacities</strong> : keeping track of opacity files used</li>
 <li><strong>test_mode</strong> : used to do benchmark testing</li>
 </ul>
@@ -781,15 +739,11 @@ there should also be an opacity database there called <code class="docutils lite
 <div class="section" id="Set-Planet-&amp;-Star-Properties">
 <h2>Set Planet &amp; Star Properties<a class="headerlink" href="#Set-Planet-&-Star-Properties" title="Permalink to this headline">¶</a></h2>
 <div class="nbinput nblast docutils container">
-<<<<<<< HEAD
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [4]:
-=======
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="c1">#phase angle</span>
 <span class="n">start_case</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c1">#radians</span>
 
@@ -805,23 +759,20 @@ there should also be an opacity database there called <code class="docutils lite
 <div class="section" id="Set-Atmospheric-Composition">
 <h2>Set Atmospheric Composition<a class="headerlink" href="#Set-Atmospheric-Composition" title="Permalink to this headline">¶</a></h2>
 <p>There are different options for setting atmospheric composition.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">1</span><span class="p">)</span> <span class="n">Specifying</span> <span class="n">a</span> <span class="n">file</span> <span class="n">path</span> <span class="n">to</span> <span class="n">model</span> <span class="n">run</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mi">1</span><span class="p">)</span> <span class="n">Specifying</span> <span class="n">a</span> <span class="n">file</span> <span class="n">path</span> <span class="n">to</span> <span class="n">model</span> <span class="n">run</span>
 <span class="mi">2</span><span class="p">)</span> <span class="n">Give</span> <span class="n">arbitrary</span> <span class="n">pressure</span><span class="p">,</span> <span class="n">temperature</span> <span class="ow">and</span> <span class="n">composition</span> <span class="n">directly</span> <span class="k">as</span> <span class="n">a</span> <span class="n">dictionary</span> <span class="nb">input</span>
 </pre></div>
 </div>
 <div class="section" id="Option-1)-Specify-file-path">
 <h3>Option 1) Specify file path<a class="headerlink" href="#Option-1)-Specify-file-path" title="Permalink to this headline">¶</a></h3>
-<p>Below, I am loading in a profile path for Jupiter that should be included in your reference data</p>
+<p>Below, I am loading in a profile path for Jupiter that should be
+included in your reference data</p>
 <div class="nbinput docutils container">
-<<<<<<< HEAD
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [5]:
-=======
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="nb">print</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_pt</span><span class="p">())</span> <span class="c1">#should return the path to your reference data</span>
 </pre></div>
 </div>
@@ -835,15 +786,11 @@ there should also be an opacity database there called <code class="docutils lite
 </pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
-<<<<<<< HEAD
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [6]:
-=======
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="n">start_case</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_pt</span><span class="p">(),</span> <span class="n">delim_whitespace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -852,20 +799,21 @@ there should also be an opacity database there called <code class="docutils lite
 <div class="section" id="File-format">
 <h3>File format<a class="headerlink" href="#File-format" title="Permalink to this headline">¶</a></h3>
 <ol class="arabic simple">
-<li>Must have <strong>pressure</strong>(bars), <strong>temperature</strong>(Kelvin), and <code class="docutils literal notranslate"><span class="pre">case</span> <span class="pre">sensitive</span></code> molecule names (e.g.&nbsp;TiO, Na, H2O, etc) for mixing ratios (in no particular order)</li>
-<li>Can specify any necessary key word arguments for pd.read_csv at the end</li>
+<li>Must have <strong>pressure</strong>(bars), <strong>temperature</strong>(Kelvin), and
+<code class="docutils literal"><span class="pre">case</span> <span class="pre">sensitive</span></code> molecule names (e.g.&nbsp;TiO, Na, H2O, etc) for mixing
+ratios (in no particular order)</li>
+<li>Can specify any necessary key word arguments for pd.read_csv at the
+end</li>
 </ol>
-<p><strong>PICASO will auto-compute mixing ratios, determine what CIA is neceesary and compute mean molecular weight based on these headers. Take at the preloaded example below</strong></p>
+<p><strong>PICASO will auto-compute mixing ratios, determine what CIA is
+neceesary and compute mean molecular weight based on these headers. Take
+at the preloaded example below</strong></p>
 <div class="nbinput docutils container">
-<<<<<<< HEAD
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [7]:
-=======
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="c1">#to give you an idea</span>
 <span class="n">comp_file</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_pt</span><span class="p">(),</span> <span class="n">delim_whitespace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="c1">#see example below</span>
@@ -874,15 +822,11 @@ there should also be an opacity database there called <code class="docutils lite
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<<<<<<< HEAD
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>Out[7]:
-=======
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 </pre></div>
 </div>
-<div class="output_area rendered_html docutils container">
+<div class="output_area docutils container">
 <div>
 <style scoped>
     .dataframe tbody tr th:only-of-type {
@@ -1029,20 +973,14 @@ there should also be an opacity database there called <code class="docutils lite
 </div>
 <div class="section" id="Create-1D-Spectrum">
 <h2>Create 1D Spectrum<a class="headerlink" href="#Create-1D-Spectrum" title="Permalink to this headline">¶</a></h2>
-<p>Let’s create our first spectrum of Jupiter’s reflected light at full phase</p>
+<p>Let’s create our first spectrum of Jupiter’s reflected light at full
+phase</p>
 <div class="nbinput docutils container">
-<<<<<<< HEAD
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3"><div class="highlight"><pre>
-=======
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 <span></span><span class="n">wno</span><span class="p">,</span> <span class="n">alb</span> <span class="o">=</span> <span class="n">start_case</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opacity</span><span class="p">)</span>
 <span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">wno</span><span class="p">,</span> <span class="n">alb</span><span class="p">,</span> <span class="n">plot_width</span><span class="o">=</span><span class="mi">500</span><span class="p">))</span>
 </pre></div>
@@ -1051,11 +989,7 @@ there should also be an opacity database there called <code class="docutils lite
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<<<<<<< HEAD
 <div class="output_area docutils container">
-=======
-<div class="output_area rendered_html docutils container">
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 <div class="bk-root" id="c198f441-eb87-4e17-89c1-15cb6813ca25" data-root-id="1002"></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1094,17 +1028,16 @@ var element = document.currentScript.previousSibling.previousSibling;
 </div>
 <div class="section" id="Option-2)-Arbitrary-PT-and-Chemistry">
 <h3>Option 2) Arbitrary PT and Chemistry<a class="headerlink" href="#Option-2)-Arbitrary-PT-and-Chemistry" title="Permalink to this headline">¶</a></h3>
-<p>Sometimes for testing (or for atmospheres that we don’t fully understand) an isothermal, well-mixed profile is sufficient. If we don’t want to load in a full profile, we can give it a simple DataFrame with the info we need.</p>
+<p>Sometimes for testing (or for atmospheres that we don’t fully
+understand) an isothermal, well-mixed profile is sufficient. If we don’t
+want to load in a full profile, we can give it a simple DataFrame with
+the info we need.</p>
 <div class="nbinput nblast docutils container">
-<<<<<<< HEAD
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [9]:
-=======
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="n">start_case</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span> <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;pressure&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">60</span><span class="p">),</span>
                                                  <span class="s1">&#39;temperature&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">60</span><span class="p">)</span><span class="o">*</span><span class="mi">0</span><span class="o">+</span><span class="mi">200</span><span class="p">,</span>
                                                  <span class="s2">&quot;H2&quot;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">60</span><span class="p">)</span><span class="o">*</span><span class="mi">0</span><span class="o">+</span><span class="mf">0.837</span><span class="p">,</span>
@@ -1115,32 +1048,21 @@ var element = document.currentScript.previousSibling.previousSibling;
 </div>
 </div>
 <div class="nbinput nblast docutils container">
-<<<<<<< HEAD
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3"><div class="highlight"><pre>
-=======
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 <span></span><span class="n">wno_ch4</span><span class="p">,</span> <span class="n">alb_ch4</span> <span class="o">=</span> <span class="n">start_case</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opacity</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="nbinput docutils container">
-<<<<<<< HEAD
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [11]:
-=======
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">wno_ch4</span><span class="p">,</span> <span class="n">alb_ch4</span><span class="p">,</span> <span class="n">plot_width</span><span class="o">=</span><span class="mi">500</span><span class="p">))</span>
 </pre></div>
 </div>
@@ -1148,11 +1070,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<<<<<<< HEAD
 <div class="output_area docutils container">
-=======
-<div class="output_area rendered_html docutils container">
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 <div class="bk-root" id="3155a94a-2d26-4755-b8b2-22f157c50a29" data-root-id="1104"></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1189,21 +1107,20 @@ var element = document.currentScript.previousSibling.previousSibling;
 })(window);
 </script></div>
 </div>
-<p>See how the plot above is much easier to interpret than the one with the full set of molecular input. Here we can clearly see the effects of methane opacity, raman and rayleigh scattering (the next notebook will include a tutorial for more diagnostic plotting)</p>
+<p>See how the plot above is much easier to interpret than the one with the
+full set of molecular input. Here we can clearly see the effects of
+methane opacity, raman and rayleigh scattering (the next notebook will
+include a tutorial for more diagnostic plotting)</p>
 </div>
 <div class="section" id="Diagnostic-help:-Sometimes-it-helps-to-exclude-molecule-to-see-how-it-is-influencing-the-spectrum">
 <h3>Diagnostic help: Sometimes it helps to exclude molecule to see how it is influencing the spectrum<a class="headerlink" href="#Diagnostic-help:-Sometimes-it-helps-to-exclude-molecule-to-see-how-it-is-influencing-the-spectrum" title="Permalink to this headline">¶</a></h3>
 <p>Take a look below</p>
 <div class="nbinput docutils container">
-<<<<<<< HEAD
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [12]:
-=======
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="n">start_case</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_pt</span><span class="p">(),</span> <span class="n">exclude_mol</span><span class="o">=</span><span class="s1">&#39;H2O&#39;</span><span class="p">,</span> <span class="n">delim_whitespace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <span class="n">wno_nowater</span><span class="p">,</span> <span class="n">alb_nowater</span> <span class="o">=</span> <span class="n">start_case</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opacity</span><span class="p">)</span>
@@ -1216,11 +1133,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<<<<<<< HEAD
 <div class="output_area docutils container">
-=======
-<div class="output_area rendered_html docutils container">
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 <div class="bk-root" id="2facd321-e695-447b-aff3-a43d9f1fbc85" data-root-id="1215"></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1258,18 +1171,11 @@ var element = document.currentScript.previousSibling.previousSibling;
 </script></div>
 </div>
 <div class="nbinput nblast docutils container">
-<<<<<<< HEAD
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [ ]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3"><div class="highlight"><pre>
-=======
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 <span></span>
 </pre></div>
 </div>
@@ -1280,7 +1186,9 @@ var element = document.currentScript.previousSibling.previousSibling;
 
 
            </div>
-           
+           <div class="articleComments">
+            
+           </div>
           </div>
           <footer>
   
@@ -1289,7 +1197,7 @@ var element = document.currentScript.previousSibling.previousSibling;
         <a href="2_AddingClouds.html" class="btn btn-neutral float-right" title="Adding Cloud Opacity, Scattering, Assymetry" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="../tutorials.html" class="btn btn-neutral float-left" title="Tutorials" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="../tutorials.html" class="btn btn-neutral" title="Tutorials" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -1298,11 +1206,11 @@ var element = document.currentScript.previousSibling.previousSibling;
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2018, Natasha E. Batalha
+        &copy; Copyright 2018, Natasha E. Batalha.
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -1315,15 +1223,39 @@ var element = document.currentScript.previousSibling.previousSibling;
   
 
 
-  <script type="text/javascript">
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script>
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+      <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
 
   
   
-    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
    
 
 </body>

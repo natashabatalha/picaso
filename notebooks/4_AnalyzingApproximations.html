@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Diving into code approximations &mdash; picaso 0.0dev documentation</title>
+  <title>Diving into code approximations &mdash; picaso 0.0 documentation</title>
   
 
   
@@ -17,22 +17,11 @@
   
 
   
-  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+
+  
   
     
-      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../_static/jquery.js"></script>
-        <script type="text/javascript" src="../_static/underscore.js"></script>
-        <script type="text/javascript" src="../_static/doctools.js"></script>
-        <script type="text/javascript" src="../_static/language_data.js"></script>
-        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-        <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
-    
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-<<<<<<< HEAD
   
 
   
@@ -48,32 +37,25 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="picaso 0.0dev documentation" href="../index.html"/>
+    <link rel="top" title="picaso 0.0 documentation" href="../index.html"/>
         <link rel="up" title="Tutorials" href="../tutorials.html"/>
         <link rel="next" title="Opacity Databases" href="5_SwappingOpacities.html"/>
         <link rel="prev" title="Using Full Output for Diagnostics" href="3_PlotDiagnostics.html"/> 
-=======
-    
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 
   
-  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" type="text/css" />
-    <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Opacity Databases" href="5_SwappingOpacities.html" />
-    <link rel="prev" title="Using Full Output for Diagnostics" href="3_PlotDiagnostics.html" /> 
+  <script src="../_static/js/modernizr.min.js"></script>
+
 </head>
 
-<body class="wy-body-for-nav">
+<body class="wy-body-for-nav" role="document">
 
    
   <div class="wy-grid-for-nav">
+
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+        <div class="wy-side-nav-search">
           
 
           
@@ -87,7 +69,7 @@
             
             
               <div class="version">
-                0.0dev
+                0.0
               </div>
             
           
@@ -117,7 +99,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../tutorials.html#basics">Basics</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="../tutorials.html#approximations-opacities">Approximations &amp; Opacities</a><ul class="current">
 <li class="toctree-l3 current"><a class="current reference internal" href="#">Investigating Approximations</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#Using-the-approx-key">Using the <code class="docutils literal notranslate"><span class="pre">approx</span></code> key</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Using-the-approx-key">Using the <code class="docutils literal"><span class="pre">approx</span></code> key</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#What-approximations-exist?">What approximations exist?</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#Direct-Scattering-Approximation">Direct Scattering Approximation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#Multiple-Scattering-Approximations">Multiple Scattering Approximations</a></li>
@@ -147,7 +129,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" aria-label="top navigation">
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../index.html">picaso</a>
@@ -155,10 +137,9 @@
       </nav>
 
 
+      
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
           
 
 
@@ -257,18 +238,18 @@ div.nblast {
 
 /* input prompt */
 div.nbinput div.prompt pre {
-    color: #307FC1;
+    color: #303F9F;
 }
 
 /* output prompt */
 div.nboutput div.prompt pre {
-    color: #BF5B3D;
+    color: #D84315;
 }
 
 /* all prompts */
 div.nbinput div.prompt,
 div.nboutput div.prompt {
-    min-width: 5ex;
+    min-width: 8ex;
     padding-top: 0.4em;
     padding-right: 0.4em;
     text-align: right;
@@ -308,9 +289,9 @@ div.nboutput div.output_area {
 
 /* input area */
 div.nbinput div.input_area {
-    border: 1px solid #e0e0e0;
+    border: 1px solid #cfcfcf;
     border-radius: 2px;
-    background: #f5f5f5;
+    background: #f7f7f7;
 }
 
 /* override MathJax center alignment in output cells */
@@ -318,7 +299,7 @@ div.nboutput div[class*=MathJax] {
     text-align: left !important;
 }
 
-/* override sphinx.ext.imgmath center alignment in output cells */
+/* override sphinx.ext.pngmath center alignment in output cells */
 div.nboutput div.math p {
     text-align: left;
 }
@@ -368,40 +349,6 @@ div.nboutput div.output_area.stderr {
 .ansi-bold { font-weight: bold; }
 .ansi-underline { text-decoration: underline; }
 
-/* Some additional styling taken form the Jupyter notebook CSS */
-div.rendered_html table {
-  border: none;
-  border-collapse: collapse;
-  border-spacing: 0;
-  color: black;
-  font-size: 12px;
-  table-layout: fixed;
-}
-div.rendered_html thead {
-  border-bottom: 1px solid black;
-  vertical-align: bottom;
-}
-div.rendered_html tr,
-div.rendered_html th,
-div.rendered_html td {
-  text-align: right;
-  vertical-align: middle;
-  padding: 0.5em 0.5em;
-  line-height: normal;
-  white-space: normal;
-  max-width: none;
-  border: none;
-}
-div.rendered_html th {
-  font-weight: bold;
-}
-div.rendered_html tbody tr:nth-child(odd) {
-  background: #f5f5f5;
-}
-div.rendered_html tbody tr:hover {
-  background: rgba(66, 165, 245, 0.2);
-}
-
 /* CSS overrides for sphinx_rtd_theme */
 
 /* 24px margin */
@@ -418,11 +365,6 @@ div.rendered_html tbody tr:hover {
 .admonition > p:before {
     margin-right: 4px;  /* make room for the exclamation icon */
 }
-
-/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
-.math {
-    text-align: unset;
-}
 </style>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -430,13 +372,17 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="section" id="Diving-into-code-approximations">
 <h1>Diving into code approximations<a class="headerlink" href="#Diving-into-code-approximations" title="Permalink to this headline">¶</a></h1>
-<p>Like any code, there are several approximations that go into computing intesity from various phase functions. In reflected light models, some of these approximations drastically change the output spectra.</p>
-<p>Here we go through each approximation to show what the effects are of each. Also, to show how to toggle between various inputs.</p>
+<p>Like any code, there are several approximations that go into computing
+intesity from various phase functions. In reflected light models, some
+of these approximations drastically change the output spectra.</p>
+<p>Here we go through each approximation to show what the effects are of
+each. Also, to show how to toggle between various inputs.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">warnings</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
 <span class="c1">#picaso</span>
@@ -454,7 +400,7 @@ div.rendered_html tbody tr:hover {
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area rendered_html docutils container">
+<div class="output_area docutils container">
 <div class="bk-root">
     <a href="https://bokeh.pydata.org" target="_blank" class="bk-logo bk-logo-small bk-logo-notebook"></a>
     <span id="1001">Loading BokehJS ...</span>
@@ -738,31 +684,32 @@ var element = document.currentScript.previousSibling.previousSibling;
 </script></div>
 </div>
 <div class="section" id="Using-the-approx-key">
-<h2>Using the <code class="docutils literal notranslate"><span class="pre">approx</span></code> key<a class="headerlink" href="#Using-the-approx-key" title="Permalink to this headline">¶</a></h2>
+<h2>Using the <code class="docutils literal"><span class="pre">approx</span></code> key<a class="headerlink" href="#Using-the-approx-key" title="Permalink to this headline">¶</a></h2>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [2]:
 </pre></div>
 </div>
-<<<<<<< HEAD
 <div class="input_area highlight-ipython3"><div class="highlight"><pre>
-=======
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 <span></span><span class="n">opa</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">()</span>
 <span class="n">cloud_free</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
-<p>Notice that all the <code class="docutils literal notranslate"><span class="pre">approx</span></code> keys have predefined inputs. These are our recommendations for how to run the code. But, users should always be weary of these and test their sensitivity to your results.</p>
+<p>Notice that all the <code class="docutils literal"><span class="pre">approx</span></code> keys have predefined inputs. These are
+our recommendations for how to run the code. But, users should always be
+weary of these and test their sensitivity to your results.</p>
 </div>
 <div class="section" id="What-approximations-exist?">
 <h2>What approximations exist?<a class="headerlink" href="#What-approximations-exist?" title="Permalink to this headline">¶</a></h2>
-<p>We can easily print out all our options for what approximations exist in the code</p>
+<p>We can easily print out all our options for what approximations exist in
+the code</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Options for Direct Scattring Phase: &#39;</span><span class="p">,</span> <span class="n">jdi</span><span class="o">.</span><span class="n">single_phase_options</span><span class="p">())</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Options for Multiple Scattring Phase: &#39;</span><span class="p">,</span> <span class="n">jdi</span><span class="o">.</span><span class="n">multi_phase_options</span><span class="p">())</span>
@@ -786,10 +733,11 @@ Options for Raman Scattring:  [&#39;oklopcic&#39;, &#39;pollack&#39;, &#39;none&
 <div class="section" id="Set-inputs-normally">
 <h3>Set inputs normally<a class="headerlink" href="#Set-inputs-normally" title="Permalink to this headline">¶</a></h3>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="n">cloud_free</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c1">#phase in radians</span>
 
 <span class="n">cloud_free</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">gravity</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span> <span class="n">gravity_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;m/(s**2)&#39;</span> <span class="p">))</span>
@@ -811,16 +759,29 @@ Options for Raman Scattring:  [&#39;oklopcic&#39;, &#39;pollack&#39;, &#39;none&
 </div>
 <div class="section" id="Direct-Scattering-Approximation">
 <h2>Direct Scattering Approximation<a class="headerlink" href="#Direct-Scattering-Approximation" title="Permalink to this headline">¶</a></h2>
-<p>The <a class="reference external" href="https://natashabatalha.github.io/picaso_dev#slide02">derivation documentation</a> has a full description of these direct scattering approximations. Briefly I’ll describe them here:</p>
-<p>At the center of each is the <a class="reference external" href="http://adsabs.harvard.edu/abs/1941ApJ....93...70H">One Term Henyey-Greenstein Phase Function (OTHG)</a> and the <a class="reference external" href="http://adsabs.harvard.edu/abs/1965ApJ...142.1563I">Two Term HG Phase Function (TTHG)</a>.</p>
-<p>We also know that planet atmospheres have high degrees of Rayleigh scattering. <a class="reference external" href="http://adsabs.harvard.edu/abs/2010ApJ...724..189C">Cahoy+2010</a> developed a methodology for incorporating Rayleigh into the direct scattering component.</p>
-<p>A more rrobust way of dealing with Rayleigh is to directly fold it’s phase function into the TTHG phase function (TTHG_Ray).</p>
-<p>We’ll run each case with and without a cloud so you can see what happens in both regimes</p>
+<p>The <a class="reference external" href="https://natashabatalha.github.io/picaso_dev#slide02">derivation
+documentation</a>
+has a full description of these direct scattering approximations.
+Briefly I’ll describe them here:</p>
+<p>At the center of each is the <a class="reference external" href="http://adsabs.harvard.edu/abs/1941ApJ....93...70H">One Term Henyey-Greenstein Phase Function
+(OTHG)</a> and the
+<a class="reference external" href="http://adsabs.harvard.edu/abs/1965ApJ...142.1563I">Two Term HG Phase Function
+(TTHG)</a>.</p>
+<p>We also know that planet atmospheres have high degrees of Rayleigh
+scattering.
+<a class="reference external" href="http://adsabs.harvard.edu/abs/2010ApJ...724..189C">Cahoy+2010</a>
+developed a methodology for incorporating Rayleigh into the direct
+scattering component.</p>
+<p>A more rrobust way of dealing with Rayleigh is to directly fold it’s
+phase function into the TTHG phase function (TTHG_Ray).</p>
+<p>We’ll run each case with and without a cloud so you can see what happens
+in both regimes</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="c1">#let&#39;s make two different figures for this</span>
 <span class="n">fig_cloudy</span> <span class="o">=</span> <span class="n">figure</span><span class="p">(</span><span class="n">x_range</span><span class="o">=</span><span class="p">[</span><span class="mf">0.3</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span><span class="n">y_range</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mf">1.2</span><span class="p">],</span> <span class="n">width</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">300</span>
                     <span class="p">,</span><span class="n">x_axis_label</span><span class="o">=</span><span class="s1">&#39;Wavelength [μm]&#39;</span><span class="p">,</span> <span class="n">y_axis_label</span><span class="o">=</span><span class="s1">&#39;Geometric Albedo&#39;</span><span class="p">,)</span>
@@ -857,11 +818,7 @@ Can also set functional form of forward/back scattering in approx[&#39;TTHG_para
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<<<<<<< HEAD
 <div class="output_area docutils container">
-=======
-<div class="output_area rendered_html docutils container">
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 <div class="bk-root" id="38efaaf8-63af-4982-9dfc-8aabe6a69041" data-root-id="1155"></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -901,13 +858,22 @@ var element = document.currentScript.previousSibling.previousSibling;
 </div>
 <div class="section" id="Multiple-Scattering-Approximations">
 <h2>Multiple Scattering Approximations<a class="headerlink" href="#Multiple-Scattering-Approximations" title="Permalink to this headline">¶</a></h2>
-<p>Again, <a class="reference external" href="https://natashabatalha.github.io/picaso_dev#slide03">derivation documentation</a> has a full description of these multiple scattering approximations.</p>
-<p>To complete the multiple scattering integration over all <em>diffuse angles</em>, we have to use some mathematical tricks. <a class="reference external" href="http://mathworld.wolfram.com/LegendrePolynomial.html">Legendre Polynomials</a> are often used to complete this integration to varying degrees. For Solar System/Exoplanet papers, we often stop the expansion at either <code class="docutils literal notranslate"><span class="pre">N=1</span></code> or <code class="docutils literal notranslate"><span class="pre">N=2</span></code>. Our standard will be to run with <code class="docutils literal notranslate"><span class="pre">N=2</span></code>, but below we show how to run each.</p>
+<p>Again, <a class="reference external" href="https://natashabatalha.github.io/picaso_dev#slide03">derivation
+documentation</a>
+has a full description of these multiple scattering approximations.</p>
+<p>To complete the multiple scattering integration over all <em>diffuse
+angles</em>, we have to use some mathematical tricks. <a class="reference external" href="http://mathworld.wolfram.com/LegendrePolynomial.html">Legendre
+Polynomials</a>
+are often used to complete this integration to varying degrees. For
+Solar System/Exoplanet papers, we often stop the expansion at either
+<code class="docutils literal"><span class="pre">N=1</span></code> or <code class="docutils literal"><span class="pre">N=2</span></code>. Our standard will be to run with <code class="docutils literal"><span class="pre">N=2</span></code>, but below
+we show how to run each.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [6]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">figure</span><span class="p">(</span><span class="n">x_range</span><span class="o">=</span><span class="p">[</span><span class="mf">0.3</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span><span class="n">y_range</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mf">1.2</span><span class="p">],</span> <span class="n">width</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
              <span class="n">x_axis_label</span><span class="o">=</span><span class="s1">&#39;Wavelength [μm]&#39;</span><span class="p">,</span> <span class="n">y_axis_label</span><span class="o">=</span><span class="s1">&#39;Geometric Albedo&#39;</span><span class="p">,)</span>
 
@@ -937,11 +903,7 @@ Can also set delta_eddington=True/False in approx[&#39;delta_eddington&#39;]
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<<<<<<< HEAD
 <div class="output_area docutils container">
-=======
-<div class="output_area rendered_html docutils container">
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 <div class="bk-root" id="350f551e-0ac7-45a9-ac58-e69d448e6838" data-root-id="1366"></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -981,19 +943,27 @@ var element = document.currentScript.previousSibling.previousSibling;
 </div>
 <div class="section" id="Raman-Scattering-Approximations">
 <h2>Raman Scattering Approximations<a class="headerlink" href="#Raman-Scattering-Approximations" title="Permalink to this headline">¶</a></h2>
-<p>We all know the importance of Rayleigh scattering in planetary atmospheres. Raman scattering also has important implications for our spectra (these features have been observed in Solar System planets). In particular, at short wavelengths, Raman scattering imprints molecular features from the star on the planetary spectrum.</p>
-<p>The most complete analysis of all Raman approximations is in <a class="reference external" href="http://adsabs.harvard.edu/abs/2005Icar..173..254S">Sromosvky+2005</a>. From these, we use the <em>Pollack Approximation</em> that was used in <a class="reference external" href="http://adsabs.harvard.edu/abs/2010ApJ...724..189C">Cahoy+2010</a> and others.</p>
-<p>We include the original Pollack methodology, but also include a modified version with <a class="reference external" href="http://iopscience.iop.org/article/10.3847/0004-637X/832/1/30/meta">Oklopcic et al 2018</a> cross sections and updated methodology to include effects of stellar spectrum.</p>
+<p>We all know the importance of Rayleigh scattering in planetary
+atmospheres. Raman scattering also has important implications for our
+spectra (these features have been observed in Solar System planets). In
+particular, at short wavelengths, Raman scattering imprints molecular
+features from the star on the planetary spectrum.</p>
+<p>The most complete analysis of all Raman approximations is in
+<a class="reference external" href="http://adsabs.harvard.edu/abs/2005Icar..173..254S">Sromosvky+2005</a>.
+From these, we use the <em>Pollack Approximation</em> that was used in
+<a class="reference external" href="http://adsabs.harvard.edu/abs/2010ApJ...724..189C">Cahoy+2010</a> and
+others.</p>
+<p>We include the original Pollack methodology, but also include a modified
+version with <a class="reference external" href="http://iopscience.iop.org/article/10.3847/0004-637X/832/1/30/meta">Oklopcic et al
+2018</a>
+cross sections and updated methodology to include effects of stellar
+spectrum.</p>
 <div class="nbinput docutils container">
-<<<<<<< HEAD
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [8]:
-=======
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="n">fig_cloudy</span> <span class="o">=</span> <span class="n">figure</span><span class="p">(</span><span class="n">x_range</span><span class="o">=</span><span class="p">[</span><span class="mf">0.3</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span><span class="n">y_range</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mf">1.2</span><span class="p">],</span> <span class="n">width</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">300</span>
                     <span class="p">,</span><span class="n">x_axis_label</span><span class="o">=</span><span class="s1">&#39;Wavelength [μm]&#39;</span><span class="p">,</span> <span class="n">y_axis_label</span><span class="o">=</span><span class="s1">&#39;Geometric Albedo&#39;</span><span class="p">,)</span>
 <span class="n">fig_no_cloud</span> <span class="o">=</span> <span class="n">figure</span><span class="p">(</span><span class="n">x_range</span><span class="o">=</span><span class="p">[</span><span class="mf">0.3</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span><span class="n">y_range</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mf">1.2</span><span class="p">],</span> <span class="n">width</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">300</span>
@@ -1019,11 +989,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<<<<<<< HEAD
 <div class="output_area docutils container">
-=======
-<div class="output_area rendered_html docutils container">
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 <div class="bk-root" id="997a0ba7-1add-4b24-911d-6b652067814a" data-root-id="2041"></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1063,17 +1029,15 @@ var element = document.currentScript.previousSibling.previousSibling;
 </div>
 <div class="section" id="The-Effect-of-Stellar-Spectrum">
 <h2>The Effect of Stellar Spectrum<a class="headerlink" href="#The-Effect-of-Stellar-Spectrum" title="Permalink to this headline">¶</a></h2>
-<p>With the updated Raman scattering approximation, you will notice imprints of the stellar spectrum in the planet reflected light spectrum. Take a look below.</p>
+<p>With the updated Raman scattering approximation, you will notice
+imprints of the stellar spectrum in the planet reflected light spectrum.
+Take a look below.</p>
 <div class="nbinput docutils container">
-<<<<<<< HEAD
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [9]:
-=======
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="n">fig_cloudy</span> <span class="o">=</span> <span class="n">figure</span><span class="p">(</span><span class="n">x_range</span><span class="o">=</span><span class="p">[</span><span class="mf">0.3</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span><span class="n">y_range</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mf">1.2</span><span class="p">],</span> <span class="n">width</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">300</span>
                     <span class="p">,</span><span class="n">x_axis_label</span><span class="o">=</span><span class="s1">&#39;Wavelength [μm]&#39;</span><span class="p">,</span> <span class="n">y_axis_label</span><span class="o">=</span><span class="s1">&#39;Geometric Albedo&#39;</span><span class="p">,)</span>
 <span class="n">fig_no_cloud</span> <span class="o">=</span> <span class="n">figure</span><span class="p">(</span><span class="n">x_range</span><span class="o">=</span><span class="p">[</span><span class="mf">0.3</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span><span class="n">y_range</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mf">1.2</span><span class="p">],</span> <span class="n">width</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">300</span>
@@ -1113,11 +1077,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<<<<<<< HEAD
 <div class="output_area docutils container">
-=======
-<div class="output_area rendered_html docutils container">
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 <div class="bk-root" id="b36d1dc9-29f5-4de1-9ecd-22c512f275ea" data-root-id="2448"></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1155,10 +1115,11 @@ var element = document.currentScript.previousSibling.previousSibling;
 </script></div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span>
 </pre></div>
 </div>
@@ -1168,7 +1129,9 @@ var element = document.currentScript.previousSibling.previousSibling;
 
 
            </div>
-           
+           <div class="articleComments">
+            
+           </div>
           </div>
           <footer>
   
@@ -1177,7 +1140,7 @@ var element = document.currentScript.previousSibling.previousSibling;
         <a href="5_SwappingOpacities.html" class="btn btn-neutral float-right" title="Opacity Databases" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="3_PlotDiagnostics.html" class="btn btn-neutral float-left" title="Using Full Output for Diagnostics" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="3_PlotDiagnostics.html" class="btn btn-neutral" title="Using Full Output for Diagnostics" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -1186,11 +1149,11 @@ var element = document.currentScript.previousSibling.previousSibling;
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2018, Natasha E. Batalha
+        &copy; Copyright 2018, Natasha E. Batalha.
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -1203,15 +1166,39 @@ var element = document.currentScript.previousSibling.previousSibling;
   
 
 
-  <script type="text/javascript">
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script>
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+      <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
 
   
   
-    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
    
 
 </body>

@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Installation &mdash; picaso 0.0dev documentation</title>
+  <title>Installation &mdash; picaso 0.0 documentation</title>
   
 
   
@@ -17,41 +17,44 @@
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
-        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-        <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
-    
-    <script type="text/javascript" src="_static/js/theme.js"></script>
 
+  
+  
     
 
   
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" type="text/css" />
-    <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Tutorials" href="tutorials.html" />
-    <link rel="prev" title="Use Cases" href="index.html" /> 
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="picaso 0.0 documentation" href="index.html"/>
+        <link rel="next" title="Tutorials" href="tutorials.html"/>
+        <link rel="prev" title="Use Cases" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
 </head>
 
-<body class="wy-body-for-nav">
+<body class="wy-body-for-nav" role="document">
 
    
   <div class="wy-grid-for-nav">
+
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+        <div class="wy-side-nav-search">
           
 
           
@@ -65,7 +68,7 @@
             
             
               <div class="version">
-                0.0dev
+                0.0
               </div>
             
           
@@ -113,7 +116,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" aria-label="top navigation">
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">picaso</a>
@@ -121,10 +124,9 @@
       </nav>
 
 
+      
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
           
 
 
@@ -184,33 +186,18 @@
 .admonition > p:before {
     margin-right: 4px;  /* make room for the exclamation icon */
 }
-
-/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
-.math {
-    text-align: unset;
-}
 </style>
 <div class="section" id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="install-with-pip">
 <h2>Install with Pip<a class="headerlink" href="#install-with-pip" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install picaso
+<div class="highlight-bash"><div class="highlight"><pre><span></span>pip install picaso
 </pre></div>
 </div>
 </div>
-<<<<<<< HEAD
-=======
-<div class="section" id="install-with-conda">
-<h2>Install with Conda<a class="headerlink" href="#install-with-conda" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda config --add channels conda-forge
-conda install picaso
-</pre></div>
-</div>
-</div>
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 <div class="section" id="install-with-git">
 <h2>Install with Git<a class="headerlink" href="#install-with-git" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/natashabatalha/picaso.git
+<div class="highlight-bash"><div class="highlight"><pre><span></span>git clone https://github.com/natashabatalha/picaso.git
 <span class="nb">cd</span> picaso
 python setup.py install
 </pre></div>
@@ -222,15 +209,15 @@ python setup.py install
 <li>If you did not download the github repository, make sure you pull the <a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/reference">Reference Folder</a>.</li>
 <li>Now you can create an environment variable:</li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>vi ~/.bash_profle
+<div class="highlight-bash"><div class="highlight"><pre><span></span>vi ~/.bash_profle
 </pre></div>
 </div>
 <p>Add add this line:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">picaso_refdata</span><span class="o">=</span><span class="s2">&quot;/path/to/picaso/reference/&quot;</span>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">picaso_refdata</span><span class="o">=</span><span class="s2">&quot;/path/to/picaso/reference/&quot;</span>
 </pre></div>
 </div>
 <p>Should look something like this</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> /path/to/picaso/reference/data
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span> /path/to/picaso/reference/data
 ls
 base_cases      config.json     opacities
 </pre></div>
@@ -243,15 +230,15 @@ base_cases      config.json     opacities
 <li>Download the <cite>stellar spectra from here &lt;https://pysynphot.readthedocs.io/en/latest/appendixa.html&gt;_. The Defulat for `PICASO</cite> is <cite>Castelli-Kurucz Atlas: ck04models</cite>.</li>
 <li>Create environment variable</li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>vi ~/.bash_profle
+<div class="highlight-bash"><div class="highlight"><pre><span></span>vi ~/.bash_profle
 </pre></div>
 </div>
 <p>Add add this line:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">PYSYN_CDBS</span><span class="o">=</span><span class="s2">&quot;/path/to/stellar/data/&quot;</span>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">PYSYN_CDBS</span><span class="o">=</span><span class="s2">&quot;/path/to/stellar/data/&quot;</span>
 </pre></div>
 </div>
 <p>Should look something like this</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> /path/to/stellar/data/
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span> /path/to/stellar/data/
 ls
 ck04models      phoenix
 </pre></div>
@@ -262,7 +249,9 @@ ck04models      phoenix
 
 
            </div>
-           
+           <div class="articleComments">
+            
+           </div>
           </div>
           <footer>
   
@@ -271,7 +260,7 @@ ck04models      phoenix
         <a href="tutorials.html" class="btn btn-neutral float-right" title="Tutorials" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="index.html" class="btn btn-neutral float-left" title="Use Cases" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="index.html" class="btn btn-neutral" title="Use Cases" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -280,11 +269,11 @@ ck04models      phoenix
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2018, Natasha E. Batalha
+        &copy; Copyright 2018, Natasha E. Batalha.
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -297,15 +286,39 @@ ck04models      phoenix
   
 
 
-  <script type="text/javascript">
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script>
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+      <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
 
   
   
-    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
    
 
 </body>

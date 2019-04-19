@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Adding Cloud Opacity, Scattering, Assymetry &mdash; picaso 0.0dev documentation</title>
+  <title>Adding Cloud Opacity, Scattering, Assymetry &mdash; picaso 0.0 documentation</title>
   
 
   
@@ -17,41 +17,45 @@
   
 
   
-  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../_static/jquery.js"></script>
-        <script type="text/javascript" src="../_static/underscore.js"></script>
-        <script type="text/javascript" src="../_static/doctools.js"></script>
-        <script type="text/javascript" src="../_static/language_data.js"></script>
-        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-        <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
-    
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
 
+  
+  
     
 
   
-  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" type="text/css" />
-    <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Using Full Output for Diagnostics" href="3_PlotDiagnostics.html" />
-    <link rel="prev" title="Getting Started : Basic Inputs and Outputs" href="1_GetStarted.html" /> 
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="picaso 0.0 documentation" href="../index.html"/>
+        <link rel="up" title="Tutorials" href="../tutorials.html"/>
+        <link rel="next" title="Using Full Output for Diagnostics" href="3_PlotDiagnostics.html"/>
+        <link rel="prev" title="Getting Started : Basic Inputs and Outputs" href="1_GetStarted.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
 </head>
 
-<body class="wy-body-for-nav">
+<body class="wy-body-for-nav" role="document">
 
    
   <div class="wy-grid-for-nav">
+
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+        <div class="wy-side-nav-search">
           
 
           
@@ -65,7 +69,7 @@
             
             
               <div class="version">
-                0.0dev
+                0.0
               </div>
             
           
@@ -123,7 +127,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" aria-label="top navigation">
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../index.html">picaso</a>
@@ -131,10 +135,9 @@
       </nav>
 
 
+      
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
           
 
 
@@ -233,18 +236,18 @@ div.nblast {
 
 /* input prompt */
 div.nbinput div.prompt pre {
-    color: #307FC1;
+    color: #303F9F;
 }
 
 /* output prompt */
 div.nboutput div.prompt pre {
-    color: #BF5B3D;
+    color: #D84315;
 }
 
 /* all prompts */
 div.nbinput div.prompt,
 div.nboutput div.prompt {
-    min-width: 5ex;
+    min-width: 8ex;
     padding-top: 0.4em;
     padding-right: 0.4em;
     text-align: right;
@@ -284,9 +287,9 @@ div.nboutput div.output_area {
 
 /* input area */
 div.nbinput div.input_area {
-    border: 1px solid #e0e0e0;
+    border: 1px solid #cfcfcf;
     border-radius: 2px;
-    background: #f5f5f5;
+    background: #f7f7f7;
 }
 
 /* override MathJax center alignment in output cells */
@@ -294,7 +297,7 @@ div.nboutput div[class*=MathJax] {
     text-align: left !important;
 }
 
-/* override sphinx.ext.imgmath center alignment in output cells */
+/* override sphinx.ext.pngmath center alignment in output cells */
 div.nboutput div.math p {
     text-align: left;
 }
@@ -344,40 +347,6 @@ div.nboutput div.output_area.stderr {
 .ansi-bold { font-weight: bold; }
 .ansi-underline { text-decoration: underline; }
 
-/* Some additional styling taken form the Jupyter notebook CSS */
-div.rendered_html table {
-  border: none;
-  border-collapse: collapse;
-  border-spacing: 0;
-  color: black;
-  font-size: 12px;
-  table-layout: fixed;
-}
-div.rendered_html thead {
-  border-bottom: 1px solid black;
-  vertical-align: bottom;
-}
-div.rendered_html tr,
-div.rendered_html th,
-div.rendered_html td {
-  text-align: right;
-  vertical-align: middle;
-  padding: 0.5em 0.5em;
-  line-height: normal;
-  white-space: normal;
-  max-width: none;
-  border: none;
-}
-div.rendered_html th {
-  font-weight: bold;
-}
-div.rendered_html tbody tr:nth-child(odd) {
-  background: #f5f5f5;
-}
-div.rendered_html tbody tr:hover {
-  background: rgba(66, 165, 245, 0.2);
-}
-
 /* CSS overrides for sphinx_rtd_theme */
 
 /* 24px margin */
@@ -394,11 +363,6 @@ div.rendered_html tbody tr:hover {
 .admonition > p:before {
     margin-right: 4px;  /* make room for the exclamation icon */
 }
-
-/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
-.math {
-    text-align: unset;
-}
 </style>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -407,13 +371,19 @@ div.rendered_html tbody tr:hover {
 <div class="section" id="Adding-Cloud-Opacity,-Scattering,-Assymetry">
 <h1>Adding Cloud Opacity, Scattering, Assymetry<a class="headerlink" href="#Adding-Cloud-Opacity,-Scattering,-Assymetry" title="Permalink to this headline">¶</a></h1>
 <p>Clouds play a critical role in shaping your reflected light spectrum.</p>
-<p>We use the <a class="reference external" href="http://adsabs.harvard.edu/abs/2001ApJ...556..872A">Ackerman &amp; Marley</a> cloud code to generate most of the profiles used in this tutorial. This code will soon be available for download on <a class="reference external" href="http://github.com/exobd">Github</a>. Check back soon!</p>
-<p>Until it’s release, we will guide you through the file format of the cloud input.</p>
+<p>We use the <a class="reference external" href="http://adsabs.harvard.edu/abs/2001ApJ...556..872A">Ackerman &amp;
+Marley</a> cloud code
+to generate most of the profiles used in this tutorial. This code will
+soon be available for download on <a class="reference external" href="http://github.com/exobd">Github</a>.
+Check back soon!</p>
+<p>Until it’s release, we will guide you through the file format of the
+cloud input.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">warnings</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -433,7 +403,7 @@ div.rendered_html tbody tr:hover {
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area rendered_html docutils container">
+<div class="output_area docutils container">
 <div class="bk-root">
     <a href="https://bokeh.pydata.org" target="_blank" class="bk-logo bk-logo-small bk-logo-notebook"></a>
     <span id="1001">Loading BokehJS ...</span>
@@ -718,24 +688,22 @@ var element = document.currentScript.previousSibling.previousSibling;
 </div>
 <p>Start with the same inputs as before</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [2]:
 </pre></div>
 </div>
-<<<<<<< HEAD
 <div class="input_area highlight-ipython3"><div class="highlight"><pre>
-=======
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 <span></span><span class="n">opa</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">()</span>
 <span class="n">case1</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="c1">#phase</span>
 <span class="n">case1</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c1">#radians</span>
 
@@ -752,12 +720,15 @@ var element = document.currentScript.previousSibling.previousSibling;
 </div>
 <div class="section" id="Specify-Cloud-Input">
 <h2>Specify Cloud Input<a class="headerlink" href="#Specify-Cloud-Input" title="Permalink to this headline">¶</a></h2>
-<p>Just as with the Jupiter PT, we will use a Jupiter cloud profile as a demo. This should also be included in your base_cases reference file directory.</p>
+<p>Just as with the Jupiter PT, we will use a Jupiter cloud profile as a
+demo. This should also be included in your base_cases reference file
+directory.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="nb">print</span><span class="p">(</span> <span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_cld</span><span class="p">())</span>
 </pre></div>
 </div>
@@ -771,30 +742,33 @@ var element = document.currentScript.previousSibling.previousSibling;
 </pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="c1">#set model clouds</span>
 <span class="n">case1</span><span class="o">.</span><span class="n">clouds</span><span class="p">(</span> <span class="n">filename</span><span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_cld</span><span class="p">(),</span> <span class="n">delim_whitespace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [6]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="c1">#run</span>
 <span class="n">wno</span><span class="p">,</span> <span class="n">alb</span> <span class="o">=</span> <span class="n">case1</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">wno</span><span class="p">,</span> <span class="n">alb</span><span class="p">,</span> <span class="n">plot_width</span><span class="o">=</span><span class="mi">500</span><span class="p">))</span>
 </pre></div>
 </div>
@@ -802,11 +776,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<<<<<<< HEAD
 <div class="output_area docutils container">
-=======
-<div class="output_area rendered_html docutils container">
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 <div class="bk-root" id="12c3f56b-9060-4fde-9d15-204e547c55c2" data-root-id="1002"></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -843,7 +813,9 @@ var element = document.currentScript.previousSibling.previousSibling;
 })(window);
 </script></div>
 </div>
-<p><strong>Huge</strong> difference from our cloud free cases. High altitude water clouds have increased the albedo dramatically. Let’s make sure we understand what is going on with the input file</p>
+<p><strong>Huge</strong> difference from our cloud free cases. High altitude water
+clouds have increased the albedo dramatically. Let’s make sure we
+understand what is going on with the input file</p>
 </div>
 <div class="section" id="1)-Cloud-Input-Parameters-from-Model">
 <h2>1) Cloud Input Parameters from Model<a class="headerlink" href="#1)-Cloud-Input-Parameters-from-Model" title="Permalink to this headline">¶</a></h2>
@@ -854,36 +826,45 @@ var element = document.currentScript.previousSibling.previousSibling;
 <li><strong>opd</strong> : Total extinction (tau) of each layer (<strong>not</strong> cumulative)</li>
 </ol>
 <div class="section" id="Cloud-file-specifications-from-a-model-(such-as-eddysed)">
-<h3>Cloud file specifications from a model (such as <code class="docutils literal notranslate"><span class="pre">eddysed</span></code>)<a class="headerlink" href="#Cloud-file-specifications-from-a-model-(such-as-eddysed)" title="Permalink to this headline">¶</a></h3>
+<h3>Cloud file specifications from a model (such as <code class="docutils literal"><span class="pre">eddysed</span></code>)<a class="headerlink" href="#Cloud-file-specifications-from-a-model-(such-as-eddysed)" title="Permalink to this headline">¶</a></h3>
 <ol class="arabic">
-<li><p class="first">Pressure and temperature are specified at the <strong>boundaries</strong> of each level. Cloud parameters are specified for each slab. Therefore, your cloud file should have <strong>(number of PT points -1) layers</strong>.</p>
+<li><p class="first">Pressure and temperature are specified at the <strong>boundaries</strong> of each
+level. Cloud parameters are specified for each slab. Therefore, your
+cloud file should have <strong>(number of PT points -1) layers</strong>.</p>
 </li>
-<li><p class="first">Cloud files are pressure AND wavelength dependent. The file format could look something like this:</p>
+<li><p class="first">Cloud files are pressure AND wavelength dependent. The file format
+could look something like this:</p>
 <p>nlayer nwave pressure wavenumber w0 g0 opd</p>
 <p>1 1 # # # # #</p>
 <p>1 2 # # # # #</p>
 <p>1 3 # # # # #</p>
-<p>… … .</p>
-<p>1 nwno …</p>
-<p>2 1 …</p>
-<p>2 2 …</p>
-<p>2 3 …</p>
-<p>… . .</p>
-<p>… . .</p>
-<p>… . .</p>
-<p>npt-1 nwno … . .</p>
+<p>. . . . . . .</p>
+<p>1 nwno . . .</p>
+<p>2 1 . . .</p>
+<p>2 2 . . .</p>
+<p>2 3 . . .</p>
+<p>. . . . .</p>
+<p>. . . . .</p>
+<p>. . . . .</p>
+<p>npt-1 nwno . . . . .</p>
 </li>
-<li><p class="first">It’s assumed that these pressure grids correspond to your atmospheric grid. You will see errors through if #cld points != #atmo points - 1</p>
+<li><p class="first">It’s assumed that these pressure grids correspond to your atmospheric
+grid. You will see errors through if #cld points != #atmo points - 1</p>
 </li>
-<li><p class="first">You only have to speciy wavenumber grid if you aren’t using <code class="docutils literal notranslate"><span class="pre">eddysed</span></code></p>
+<li><p class="first">You only have to speciy wavenumber grid if you aren’t using
+<code class="docutils literal"><span class="pre">eddysed</span></code></p>
 </li>
 </ol>
-<p>Let’s look at the premade example to make sure we understand. Since this is from <code class="docutils literal notranslate"><span class="pre">eddysed</span></code>, and since i know my pressure grid is the same as my previous input, I don’t have to have columns for pressure and temperature</p>
+<p>Let’s look at the premade example to make sure we understand. Since this
+is from <code class="docutils literal"><span class="pre">eddysed</span></code>, and since i know my pressure grid is the same as my
+previous input, I don’t have to have columns for pressure and
+temperature</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="c1">#Let&#39;s look at the premade example</span>
 <span class="n">cld</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_cld</span><span class="p">(),</span> <span class="n">delim_whitespace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">cld</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
@@ -892,10 +873,11 @@ var element = document.currentScript.previousSibling.previousSibling;
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>Out[8]:
 </pre></div>
 </div>
-<div class="output_area rendered_html docutils container">
+<div class="output_area docutils container">
 <div>
 <style scoped>
     .dataframe tbody tr th:only-of-type {
@@ -975,12 +957,14 @@ var element = document.currentScript.previousSibling.previousSibling;
 </div>
 <div class="section" id="Plotting-Cloud-Input">
 <h3>Plotting Cloud Input<a class="headerlink" href="#Plotting-Cloud-Input" title="Permalink to this headline">¶</a></h3>
-<p>It’s always good to make sure you intuitievly understand what is going on in your input before you create your spectrum.</p>
+<p>It’s always good to make sure you intuitievly understand what is going
+on in your input before you create your spectrum.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [9]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="n">nwno</span> <span class="o">=</span> <span class="mi">196</span> <span class="c1">#this is the default number for A&amp;M cloud code (see below if your wave grid is different)</span>
 <span class="n">nlayer</span> <span class="o">=</span> <span class="mi">60</span> <span class="c1">#one less than the number of PT points in your input</span>
 <span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">plot_cld_input</span><span class="p">(</span> <span class="n">nwno</span><span class="p">,</span> <span class="n">nlayer</span><span class="p">,</span><span class="n">filename</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_cld</span><span class="p">(),</span><span class="n">delim_whitespace</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
@@ -990,11 +974,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<<<<<<< HEAD
 <div class="output_area docutils container">
-=======
-<div class="output_area rendered_html docutils container">
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 <div class="bk-root" id="deca61aa-d5f0-4ade-b543-0a0f735b3e45" data-root-id="1239"></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1031,17 +1011,24 @@ var element = document.currentScript.previousSibling.previousSibling;
 })(window);
 </script></div>
 </div>
-<p>The dark regions of the cloud optical depth plot specify where the bulk of the cloud opacity is. The light regions of the single scattering plot, indicate regions of wavenumber where your atmosphere is highly scattering.</p>
+<p>The dark regions of the cloud optical depth plot specify where the bulk
+of the cloud opacity is. The light regions of the single scattering
+plot, indicate regions of wavenumber where your atmosphere is highly
+scattering.</p>
 </div>
 </div>
 <div class="section" id="2)-Cloud-Input-for-Simple-Cloud">
 <h2>2) Cloud Input for Simple Cloud<a class="headerlink" href="#2)-Cloud-Input-for-Simple-Cloud" title="Permalink to this headline">¶</a></h2>
-<p>Sometimes we are looking for something simpler than a full cloud model. In these cases we can speciy our cloud layer with <code class="docutils literal notranslate"><span class="pre">g0</span></code>, <code class="docutils literal notranslate"><span class="pre">w0</span></code>, <code class="docutils literal notranslate"><span class="pre">opd</span></code> and then <code class="docutils literal notranslate"><span class="pre">p</span></code> (the pressure level) and <code class="docutils literal notranslate"><span class="pre">dp</span></code> (the cloud thickness)</p>
+<p>Sometimes we are looking for something simpler than a full cloud model.
+In these cases we can speciy our cloud layer with <code class="docutils literal"><span class="pre">g0</span></code>, <code class="docutils literal"><span class="pre">w0</span></code>,
+<code class="docutils literal"><span class="pre">opd</span></code> and then <code class="docutils literal"><span class="pre">p</span></code> (the pressure level) and <code class="docutils literal"><span class="pre">dp</span></code> (the cloud
+thickness)</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [10]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="c1">#set model clouds, note these are lists since you can specify multiple cloud layers</span>
 <span class="n">case1</span><span class="o">.</span><span class="n">clouds</span><span class="p">(</span> <span class="n">g0</span><span class="o">=</span><span class="p">[</span><span class="mf">0.9</span><span class="p">],</span> <span class="n">w0</span><span class="o">=</span><span class="p">[</span><span class="mf">0.8</span><span class="p">],</span> <span class="n">opd</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">],</span> <span class="n">p</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dp</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">])</span>
 </pre></div>
@@ -1050,10 +1037,11 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="section" id="Plotting-simple-cloud-profile">
 <h3>Plotting simple cloud profile<a class="headerlink" href="#Plotting-simple-cloud-profile" title="Permalink to this headline">¶</a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [11]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="n">nwno</span> <span class="o">=</span> <span class="mi">196</span> <span class="c1">#this is the default number for A&amp;M cloud code (see below if your wave grid is different)</span>
 <span class="n">nlayer</span> <span class="o">=</span> <span class="mi">60</span> <span class="c1">#one less than the number of PT points in your input</span>
 <span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">plot_cld_input</span><span class="p">(</span><span class="n">nwno</span><span class="p">,</span> <span class="n">nlayer</span><span class="p">,</span><span class="n">df</span><span class="o">=</span><span class="n">case1</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;clouds&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">]))</span>
@@ -1063,11 +1051,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<<<<<<< HEAD
 <div class="output_area docutils container">
-=======
-<div class="output_area rendered_html docutils container">
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 <div class="bk-root" id="c5901604-636b-4297-931e-a30bb8a74235" data-root-id="1580"></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1105,14 +1089,11 @@ var element = document.currentScript.previousSibling.previousSibling;
 </script></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [12]:
 </pre></div>
 </div>
-<<<<<<< HEAD
 <div class="input_area highlight-ipython3"><div class="highlight"><pre>
-=======
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 <span></span><span class="n">wno</span><span class="p">,</span> <span class="n">alb</span> <span class="o">=</span> <span class="n">case1</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">)</span>
 <span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">wno</span><span class="p">,</span> <span class="n">alb</span><span class="p">,</span> <span class="n">plot_width</span><span class="o">=</span><span class="mi">500</span><span class="p">))</span>
 </pre></div>
@@ -1121,11 +1102,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<<<<<<< HEAD
 <div class="output_area docutils container">
-=======
-<div class="output_area rendered_html docutils container">
->>>>>>> 6447aed0e5df9f229e6452baede4c186292b5260
 <div class="bk-root" id="832da69f-f65a-4d3f-a4f9-f37480ca90a7" data-root-id="1814"></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1163,10 +1140,11 @@ var element = document.currentScript.previousSibling.previousSibling;
 </script></div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span>
 </pre></div>
 </div>
@@ -1177,7 +1155,9 @@ var element = document.currentScript.previousSibling.previousSibling;
 
 
            </div>
-           
+           <div class="articleComments">
+            
+           </div>
           </div>
           <footer>
   
@@ -1186,7 +1166,7 @@ var element = document.currentScript.previousSibling.previousSibling;
         <a href="3_PlotDiagnostics.html" class="btn btn-neutral float-right" title="Using Full Output for Diagnostics" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="1_GetStarted.html" class="btn btn-neutral float-left" title="Getting Started : Basic Inputs and Outputs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="1_GetStarted.html" class="btn btn-neutral" title="Getting Started : Basic Inputs and Outputs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -1195,11 +1175,11 @@ var element = document.currentScript.previousSibling.previousSibling;
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2018, Natasha E. Batalha
+        &copy; Copyright 2018, Natasha E. Batalha.
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -1212,15 +1192,39 @@ var element = document.currentScript.previousSibling.previousSibling;
   
 
 
-  <script type="text/javascript">
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script>
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+      <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
 
   
   
-    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
    
 
 </body>
