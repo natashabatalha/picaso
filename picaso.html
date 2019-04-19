@@ -38,7 +38,7 @@
               href="genindex.html"/>
         <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="picaso 0.0dev documentation" href="index.html"/>
-        <link rel="prev" title="Creating new Opacity Databases" href="notebooks/5_SwappingOpacities.html"/> 
+        <link rel="prev" title="Opacity Databases" href="notebooks/5_SwappingOpacities.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -534,14 +534,34 @@ Gaussian-Chebychev weights in geometry.json</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>numg</strong> (<em>int</em>) &#8211; Number of Gauss angles</li>
-<li><strong>numt</strong> (<em>int</em>) &#8211; Number of Chebychev Angles</li>
 <li><strong>nwno</strong> (<em>int</em>) &#8211; Number of wavenumbers</li>
 <li><strong>cos_theta</strong> (<em>float</em>) &#8211; Cosine of phase angle</li>
 <li><strong>xint_at_top</strong> (<em>ndarray of floats</em>) &#8211; Planetary intensity at the top of the atmosphere with dimensions (ng, nt, nwno)</li>
 <li><strong>gweight</strong> (<em>ndarray of floats</em>) &#8211; Gaussian weights for integration</li>
 <li><strong>tweight</strong> (<em>ndarray of floats</em>) &#8211; Chebychev weights for integration</li>
 <li><strong>F0PI</strong> (<em>ndarray of floats</em>) &#8211; Stellar flux</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="picaso.disco.compress_thermal">
+<code class="descclassname">picaso.disco.</code><code class="descname">compress_thermal</code><a class="headerlink" href="#picaso.disco.compress_thermal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Last step in albedo code. Integrates over phase angle based on the
+Gaussian-Chebychev weights in geometry.json</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>nwno</strong> (<em>int</em>) &#8211; Number of wavenumbers</li>
+<li><strong>ubar1</strong> (<em>ndarray of floats</em>) &#8211; Outgoing angles</li>
+<li><strong>flux_at_top</strong> (<em>ndarray of floats</em>) &#8211; Thermal Flux at the top of the atmosphere with dimensions (ng, nt, nwno)</li>
+<li><strong>gweight</strong> (<em>ndarray of floats</em>) &#8211; Gaussian weights for integration</li>
+<li><strong>tweight</strong> (<em>ndarray of floats</em>) &#8211; Chebychev weights for integration</li>
 </ul>
 </td>
 </tr>
@@ -654,8 +674,85 @@ and descriptive properties of the elements are stored as instance attributes.</p
 <div class="section" id="module-picaso.fluxes">
 <span id="picaso-fluxes-module"></span><h2>picaso.fluxes module<a class="headerlink" href="#module-picaso.fluxes" title="Permalink to this headline">¶</a></h2>
 <dl class="attribute">
-<dt id="picaso.fluxes.get_flux_geom_1d">
-<code class="descclassname">picaso.fluxes.</code><code class="descname">get_flux_geom_1d</code><a class="headerlink" href="#picaso.fluxes.get_flux_geom_1d" title="Permalink to this definition">¶</a></dt>
+<dt id="picaso.fluxes.blackbody">
+<code class="descclassname">picaso.fluxes.</code><code class="descname">blackbody</code><a class="headerlink" href="#picaso.fluxes.blackbody" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blackbody flux in cgs units in per unit wavelength</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>t</strong> (<em>array</em><em>,</em><em>float</em>) &#8211; Temperature (K)</li>
+<li><strong>w</strong> (<em>array</em><em>, </em><em>float</em>) &#8211; Wavelength (cgs)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray with shape ntemp x numwave</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="picaso.fluxes.get_flux_toon">
+<code class="descclassname">picaso.fluxes.</code><code class="descname">get_flux_toon</code><a class="headerlink" href="#picaso.fluxes.get_flux_toon" title="Permalink to this definition">¶</a></dt>
+<dd><div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Discontinued function. See <cite>get_flux_geom_1d</cite> and <cite>get_flux_geom_3d</cite>.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>nlevel</strong> (<em>int</em>) &#8211; Number of levels in the model</li>
+<li><strong>wno</strong> (<em>array of float</em>) &#8211; Wave number grid in cm -1</li>
+<li><strong>nwno</strong> (<em>int</em>) &#8211; Number of wave points</li>
+<li><strong>dtau</strong> (<em>ndarray of float</em>) &#8211; This is the opacity contained within each individual layer (defined at midpoints of &#8220;levels&#8221;)
+Dimensions=# layer by # wave</li>
+<li><strong>w0</strong> (<em>ndarray of float</em>) &#8211; This is the single scattering albedo, from scattering, clouds, raman, etc
+Dimensions=# layer by # wave</li>
+<li><strong>cosbar</strong> (<em>ndarray of float</em>) &#8211; This is the asymmetry factor
+Dimensions=# layer by # wave</li>
+<li><strong>surf_reflect</strong> (<em>float</em>) &#8211; Surface reflectivity</li>
+<li><strong>ubar0</strong> (<em>float</em>) &#8211; Cosine of the incident angle</li>
+<li><strong>F0PI</strong> (<em>array</em>) &#8211; Downward incident solar radiation</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">flux_up and flux_down through each layer as a function of wavelength</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition-todo admonition" id="index-3">
+<p class="first admonition-title">Todo</p>
+<ul class="last simple">
+<li>Replace detla-function adjustment with better approximation (e.g. Cuzzi)</li>
+<li><dl class="first docutils">
+<dt>F0PI Solar flux shouldn&#8217;t always be 1.. Follow up to make sure that this isn&#8217;t a bad</dt>
+<dd>hardwiring to solar</dd>
+</dl>
+</li>
+</ul>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">flux_plus</span><span class="p">,</span> <span class="n">flux_minus</span>  <span class="o">=</span> <span class="n">fluxes</span><span class="o">.</span><span class="n">get_flux_toon</span><span class="p">(</span><span class="n">atm</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">nlevel</span><span class="p">,</span> <span class="n">wno</span><span class="p">,</span><span class="n">nwno</span><span class="p">,</span>
+<span class="go">                                                                                                tau_dedd,dtau_dedd, w0_dedd, cosb_dedd, surf_reflect, ubar0, F0PI)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="picaso.fluxes.get_reflected_1d">
+<code class="descclassname">picaso.fluxes.</code><code class="descname">get_reflected_1d</code><a class="headerlink" href="#picaso.fluxes.get_reflected_1d" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes toon fluxes given tau and everything is 1 dimensional. This is the exact same function
 as <cite>get_flux_geom_3d</cite> but is kept separately so we don&#8217;t have to do unecessary indexing for fast
 retrievals.</p>
@@ -720,7 +817,6 @@ Remember, the output of A &amp; M code does not separate back and forward scatte
 <li><em>To Do</em></li>
 <li><em>&#8212;&#8211;</em></li>
 <li><em>- F0PI Solar flux shouldn&#8217;t always be 1.. Follow up to make sure that this isn&#8217;t a bad</em> &#8211; hardwiring to solar, despite &#8220;relative albedo&#8221;</li>
-<li><em>- take delta eddington option out of fluxes and move it all over to optics</em></li>
 </ul>
 </p>
 </td>
@@ -730,8 +826,8 @@ Remember, the output of A &amp; M code does not separate back and forward scatte
 </dd></dl>
 
 <dl class="attribute">
-<dt id="picaso.fluxes.get_flux_geom_3d">
-<code class="descclassname">picaso.fluxes.</code><code class="descname">get_flux_geom_3d</code><a class="headerlink" href="#picaso.fluxes.get_flux_geom_3d" title="Permalink to this definition">¶</a></dt>
+<dt id="picaso.fluxes.get_reflected_3d">
+<code class="descclassname">picaso.fluxes.</code><code class="descname">get_reflected_3d</code><a class="headerlink" href="#picaso.fluxes.get_reflected_3d" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes toon fluxes given tau and everything is 3 dimensional. This is the exact same function
 as <cite>get_flux_geom_1d</cite> but is kept separately so we don&#8217;t have to do unecessary indexing for
 retrievals.</p>
@@ -806,57 +902,9 @@ Remember, the output of A &amp; M code does not separate back and forward scatte
 </dd></dl>
 
 <dl class="attribute">
-<dt id="picaso.fluxes.get_flux_toon">
-<code class="descclassname">picaso.fluxes.</code><code class="descname">get_flux_toon</code><a class="headerlink" href="#picaso.fluxes.get_flux_toon" title="Permalink to this definition">¶</a></dt>
-<dd><div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">Discontinued function. See <cite>get_flux_geom_1d</cite> and <cite>get_flux_geom_3d</cite>.</p>
-</div>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>nlevel</strong> (<em>int</em>) &#8211; Number of levels in the model</li>
-<li><strong>wno</strong> (<em>array of float</em>) &#8211; Wave number grid in cm -1</li>
-<li><strong>nwno</strong> (<em>int</em>) &#8211; Number of wave points</li>
-<li><strong>dtau</strong> (<em>ndarray of float</em>) &#8211; This is the opacity contained within each individual layer (defined at midpoints of &#8220;levels&#8221;)
-Dimensions=# layer by # wave</li>
-<li><strong>w0</strong> (<em>ndarray of float</em>) &#8211; This is the single scattering albedo, from scattering, clouds, raman, etc
-Dimensions=# layer by # wave</li>
-<li><strong>cosbar</strong> (<em>ndarray of float</em>) &#8211; This is the asymmetry factor
-Dimensions=# layer by # wave</li>
-<li><strong>surf_reflect</strong> (<em>float</em>) &#8211; Surface reflectivity</li>
-<li><strong>ubar0</strong> (<em>float</em>) &#8211; Cosine of the incident angle</li>
-<li><strong>F0PI</strong> (<em>array</em>) &#8211; Downward incident solar radiation</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">flux_up and flux_down through each layer as a function of wavelength</p>
-</td>
-</tr>
-</tbody>
-</table>
-<div class="admonition-todo admonition" id="index-3">
-<p class="first admonition-title">Todo</p>
-<ul class="last simple">
-<li>Replace detla-function adjustment with better approximation (e.g. Cuzzi)</li>
-<li><dl class="first docutils">
-<dt>F0PI Solar flux shouldn&#8217;t always be 1.. Follow up to make sure that this isn&#8217;t a bad</dt>
-<dd>hardwiring to solar</dd>
-</dl>
-</li>
-</ul>
-</div>
-<p class="rubric">Examples</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">flux_plus</span><span class="p">,</span> <span class="n">flux_minus</span>  <span class="o">=</span> <span class="n">fluxes</span><span class="o">.</span><span class="n">get_flux_toon</span><span class="p">(</span><span class="n">atm</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">nlevel</span><span class="p">,</span> <span class="n">wno</span><span class="p">,</span><span class="n">nwno</span><span class="p">,</span>
-<span class="go">                                                                                                tau_dedd,dtau_dedd, w0_dedd, cosb_dedd, surf_reflect, ubar0, F0PI)</span>
-</pre></div>
-</div>
-</dd></dl>
+<dt id="picaso.fluxes.get_thermal_1d">
+<code class="descclassname">picaso.fluxes.</code><code class="descname">get_thermal_1d</code><a class="headerlink" href="#picaso.fluxes.get_thermal_1d" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="attribute">
 <dt id="picaso.fluxes.numba_cumsum">
@@ -1014,7 +1062,7 @@ e.g. {&#8216;wmin&#8217;:0.3, &#8216;wmax&#8217;:1, &#8216;R&#8217;:5000} for op
 <span id="picaso-justdoit-module"></span><h2>picaso.justdoit module<a class="headerlink" href="#module-picaso.justdoit" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="picaso.justdoit.inputs">
-<em class="property">class </em><code class="descclassname">picaso.justdoit.</code><code class="descname">inputs</code><span class="sig-paren">(</span><em>continuum_db=None</em>, <em>molecular_db=None</em>, <em>raman_db=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">picaso.justdoit.</code><code class="descname">inputs</code><a class="headerlink" href="#picaso.justdoit.inputs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <p>Class to setup planet to run</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -1193,7 +1241,7 @@ Cloud will span 10**(np.log10(p) +- np.log10(dp)/2)</li>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>gravity</strong> (<em>float</em>) &#8211; (Optional) Gravity of planet</li>
 <li><strong>gravity_unit</strong> (<em>astropy.unit</em>) &#8211; (Optional) Unit of Gravity</li>
-<li><strong>radius</strong> (<em>float</em>) &#8211; (Optional) radius of planet</li>
+<li><strong>radius</strong> (<em>float</em>) &#8211; (Optional) radius of planet MUST be specified for thermal emission!</li>
 <li><strong>radius_unit</strong> (<em>astropy.unit</em>) &#8211; (Optional) Unit of radius</li>
 <li><strong>mass</strong> (<em>float</em>) &#8211; (Optional) mass of planet</li>
 <li><strong>mass_unit</strong> (<em>astropy.unit</em>) &#8211; (Optional) Unit of mass</li>
@@ -1224,13 +1272,13 @@ Cloud will span 10**(np.log10(p) +- np.log10(dp)/2)</li>
 
 <dl class="method">
 <dt>
-<code class="descname">spectrum</code><span class="sig-paren">(</span><em>dimension='1d'</em>, <em>full_output=False</em>, <em>plot_opacity=False</em><span class="sig-paren">)</span></dt>
+<code class="descname">spectrum</code><span class="sig-paren">(</span><em>opacityclass</em>, <em>dimension='1d'</em>, <em>calculation='reflected'</em>, <em>full_output=False</em>, <em>plot_opacity=False</em><span class="sig-paren">)</span></dt>
 <dd><p>Run Spectrum</p>
 </dd></dl>
 
 <dl class="method">
 <dt>
-<code class="descname">star</code><span class="sig-paren">(</span><em>temp=None</em>, <em>metal=None</em>, <em>logg=None</em>, <em>database='ck04models'</em>, <em>filename=None</em>, <em>w_units=None</em>, <em>f_units=None</em><span class="sig-paren">)</span></dt>
+<code class="descname">star</code><span class="sig-paren">(</span><em>opannection</em>, <em>temp=None</em>, <em>metal=None</em>, <em>logg=None</em>, <em>radius=None</em>, <em>radius_unit=None</em>, <em>database='ck04models'</em>, <em>filename=None</em>, <em>w_units=None</em>, <em>f_units=None</em><span class="sig-paren">)</span></dt>
 <dd><p>Get the stellar spectrum using pysynphot and interpolate onto a much finer grid than the
 planet grid.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -1238,9 +1286,12 @@ planet grid.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>opannection</strong> (<em>class picaso.RetrieveOpacities</em>) &#8211; This is the opacity class and it&#8217;s needed to get the correct wave info and raman scattering cross sections</li>
 <li><strong>temp</strong> (<em>float</em>) &#8211; Teff of the stellar model</li>
 <li><strong>metal</strong> (<em>float</em>) &#8211; Metallicity of the stellar model</li>
 <li><strong>logg</strong> (<em>float</em>) &#8211; Logg cgs of the stellar model</li>
+<li><strong>radius</strong> (<em>float</em>) &#8211; Radius of the star</li>
+<li><strong>radius_unit</strong> (<em>astropy.unit</em>) &#8211; Any astropy unit (e.g. <cite>radius_unit=astropy.unit.Unit(&#8220;R_sun&#8221;)</cite>)</li>
 <li><strong>database</strong> (<em>str</em>) &#8211; (Optional)The database to pull stellar spectrum from. See documentation for pysynphot.</li>
 <li><strong>filename</strong> (<em>str</em>) &#8211; (Optional) Upload your own stellar spectrum. File format = two column white space (wave, flux)</li>
 <li><strong>wunits</strong> (<em>str</em>) &#8211; (Optional) Used for stellar file wave units</li>
@@ -1273,15 +1324,21 @@ planet grid.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="picaso.justdoit.opannection">
+<code class="descclassname">picaso.justdoit.</code><code class="descname">opannection</code><span class="sig-paren">(</span><em>filename_db=None</em>, <em>raman_db=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.opannection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets up database connection to opacities.</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="picaso.justdoit.picaso">
-<code class="descclassname">picaso.justdoit.</code><code class="descname">picaso</code><span class="sig-paren">(</span><em>bundle</em>, <em>dimension='1d'</em>, <em>full_output=False</em>, <em>plot_opacity=False</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.picaso" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">picaso.justdoit.</code><code class="descname">picaso</code><span class="sig-paren">(</span><em>bundle</em>, <em>opacityclass</em>, <em>dimension='1d'</em>, <em>calculation='reflected'</em>, <em>full_output=False</em>, <em>plot_opacity=False</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.picaso" title="Permalink to this definition">¶</a></dt>
 <dd><p>Currently top level program to run albedo code</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>input</strong> (<em>dict</em>) &#8211; This input dict is built by loading the input = <cite>justdoit.load_inputs()</cite></li>
+<li><strong>bundle</strong> (<em>dict</em>) &#8211; This input dict is built by loading the input = <cite>justdoit.load_inputs()</cite></li>
 <li><strong>dimension</strong> (<em>str</em>) &#8211; (Optional) Dimensions of the calculation. Default = &#8216;1d&#8217;. But &#8216;3d&#8217; is also accepted.
 In order to run &#8216;3d&#8217; calculations, user must build 3d input (see tutorials)</li>
 <li><strong>full_output</strong> (<em>bool</em>) &#8211; (Optional) Default = False. Returns atmosphere class, which enables several
@@ -1497,7 +1554,7 @@ opacity is assigned for slabs.</li>
 <span id="picaso-opacity-factory-module"></span><h2>picaso.opacity_factory module<a class="headerlink" href="#module-picaso.opacity_factory" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="picaso.opacity_factory.ContinuumFactory">
-<em class="property">class </em><code class="descclassname">picaso.opacity_factory.</code><code class="descname">ContinuumFactory</code><span class="sig-paren">(</span><em>original_file</em>, <em>colnames</em>, <em>new_wno</em>, <em>overwrite=False</em>, <em>new_filename='/Users/natashabatalha/Documents/PICASO/picaso/reference/opacities/continuum.hdf5'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.ContinuumFactory" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">picaso.opacity_factory.</code><code class="descname">ContinuumFactory</code><span class="sig-paren">(</span><em>original_file</em>, <em>colnames</em>, <em>new_wno</em>, <em>overwrite=False</em>, <em>new_filename='/Users/natashabatalha/Documents/PICASO/picaso/reference/opacities/continuum.json'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.ContinuumFactory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <p>The continuum factory takes the CIA opacity file and adds in extra sources of
 opacity from other references to fill in empty bands. It assumes that the original file is
@@ -1635,6 +1692,30 @@ Also includes factor for simulated emission</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="picaso.opacity_factory.ContinuumFactory.h2h2_overtone">
+<code class="descname">h2h2_overtone</code><span class="sig-paren">(</span><em>t</em>, <em>wno</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.ContinuumFactory.h2h2_overtone" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add in special CIA h2h2 band at 0.8 microns</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>t</strong> (<em>float</em>) &#8211; Temperature</li>
+<li><strong>wno</strong> (<em>numpy.array</em>) &#8211; wave number</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">H2-H2 absorption in cm-1 amagat-2</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="picaso.opacity_factory.ContinuumFactory.restructure_opacity">
 <code class="descname">restructure_opacity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.ContinuumFactory.restructure_opacity" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -1643,17 +1724,17 @@ Also includes factor for simulated emission</p>
 
 <dl class="class">
 <dt id="picaso.opacity_factory.MolecularFactory">
-<em class="property">class </em><code class="descclassname">picaso.opacity_factory.</code><code class="descname">MolecularFactory</code><span class="sig-paren">(</span><em>original_dir</em>, <em>new_wno</em>, <em>overwrite=False</em>, <em>new_filename='/Users/natashabatalha/Documents/PICASO/picaso/reference/opacities/molecular.hdf5'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.MolecularFactory" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">picaso.opacity_factory.</code><code class="descname">MolecularFactory</code><span class="sig-paren">(</span><em>original_dir</em>, <em>new_wno</em>, <em>overwrite=False</em>, <em>new_filename='/Users/natashabatalha/Documents/PICASO/picaso/reference/opacities/molecular.json'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.MolecularFactory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <p>This class contains everything needed to take Richard&#8217;s Opacities and turn them into
-usable HDF5 database for fast querying.</p>
+usable json database for fast querying.</p>
 <p>This directly translates Richards old opacities from the original albedo code to the new
-HDF5 format. Each molecule has the 1060 files with the following header structure:</p>
+json format. Each molecule has the 1060 files with the following header structure:</p>
 <p>ch4_2014 opacities from 0.3 to 1 microns at R~5000 resolution
 wavelength       opacity (cm2/g)</p>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p class="last">When this routine puts everything into the hdf5 database it will reorder everything
+<p class="last">When this routine puts everything into the json database it will reorder everything
 by wavenumber!! This way molcular opacity and continuum opacity are on the same grid</p>
 </div>
 <table class="docutils field-list" frame="void" rules="none">
@@ -1673,6 +1754,11 @@ contain a bunch of different folders (one for each molecule).</td>
 </dd></dl>
 
 <dl class="function">
+<dt id="picaso.opacity_factory.find_nearest">
+<code class="descclassname">picaso.opacity_factory.</code><code class="descname">find_nearest</code><span class="sig-paren">(</span><em>array</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.find_nearest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
 <dt id="picaso.opacity_factory.listdir">
 <code class="descclassname">picaso.opacity_factory.</code><code class="descname">listdir</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.listdir" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -1682,21 +1768,33 @@ contain a bunch of different folders (one for each molecule).</td>
 <span id="picaso-optics-module"></span><h2>picaso.optics module<a class="headerlink" href="#module-picaso.optics" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="picaso.optics.RetrieveOpacities">
-<em class="property">class </em><code class="descclassname">picaso.optics.</code><code class="descname">RetrieveOpacities</code><span class="sig-paren">(</span><em>continuum_data</em>, <em>molecular_data</em>, <em>raman_data</em>, <em>db='local'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacities" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">picaso.optics.</code><code class="descname">RetrieveOpacities</code><span class="sig-paren">(</span><em>db_filename</em>, <em>raman_data</em>, <em>location='local'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacities" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
-<p>This will be the class that will retrieve the opacities from the h5 database. Right
+<p>This will be the class that will retrieve the opacities from the sqlite3 database. Right
 now we are just employing nearest neighbors to grab the respective opacities.
-Eventually, we will want to do something like correlated K.</p>
+Eventually, we will switch to correlated K.</p>
 <dl class="attribute">
-<dt id="picaso.optics.RetrieveOpacities.get_continuum_atlayer">
-<code class="descname">get_continuum_atlayer</code><a class="headerlink" href="#picaso.optics.RetrieveOpacities.get_continuum_atlayer" title="Permalink to this definition">¶</a></dt>
-<dd><p>given a temperature and molecule, retrieve the wavelength depedent opacity</p>
+<dt id="picaso.optics.RetrieveOpacities.open_local">
+<code class="descname">open_local</code><a class="headerlink" href="#picaso.optics.RetrieveOpacities.open_local" title="Permalink to this definition">¶</a></dt>
+<dd><p>Opens up connection sqlite3 and enables array interpretation from bytes</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="picaso.optics.RetrieveOpacities.get_molopac_atlayer">
-<code class="descname">get_molopac_atlayer</code><a class="headerlink" href="#picaso.optics.RetrieveOpacities.get_molopac_atlayer" title="Permalink to this definition">¶</a></dt>
-<dd><p>given a pressure and temperature, retrieve the wavelength dependent opacity</p>
+<dt id="picaso.optics.RetrieveOpacities.get_available_data">
+<code class="descname">get_available_data</code><a class="headerlink" href="#picaso.optics.RetrieveOpacities.get_available_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get some opacity db attributes such as T,Ps avail, Molecules avail.. etc.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="picaso.optics.RetrieveOpacities.get_opacities">
+<code class="descname">get_opacities</code><a class="headerlink" href="#picaso.optics.RetrieveOpacities.get_opacities" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is run after user specifies atmospheric profile (e.g. full PT and Composition)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="picaso.optics.RetrieveOpacities.adapt_array">
+<code class="descname">adapt_array</code><span class="sig-paren">(</span><em>arr</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacities.adapt_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>needed to interpret bytes to array</p>
 </dd></dl>
 
 <dl class="method">
@@ -1725,9 +1823,22 @@ number grid</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="picaso.optics.RetrieveOpacities.convert_array">
+<code class="descname">convert_array</code><span class="sig-paren">(</span><em>clas</em>, <em>text</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacities.convert_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>needed to interpret bytes to array</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">get_available_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dd><p>Get the pressures and temperatures that are available for the continuum and molecules</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="picaso.optics.RetrieveOpacities.get_continuum_opac">
 <code class="descname">get_continuum_opac</code><span class="sig-paren">(</span><em>temperature</em>, <em>molecule</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacities.get_continuum_opac" title="Permalink to this definition">¶</a></dt>
-<dd><p>Based on a temperature, this retrieves the continuum opacity for</p>
+<dd><p>DISCONTINUED.
+Based on a temperature, this retrieves the continuum opacity for</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1751,8 +1862,11 @@ number grid</p>
 <dl class="method">
 <dt id="picaso.optics.RetrieveOpacities.get_molecular_opac">
 <code class="descname">get_molecular_opac</code><span class="sig-paren">(</span><em>temperature</em>, <em>pressure</em>, <em>molecule</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacities.get_molecular_opac" title="Permalink to this definition">¶</a></dt>
-<dd><p>Based on temperature, and pressure, retrieves the molecular opacity for
+<dd><p>DISCONTINUED.
+Based on temperature, and pressure, retrieves the molecular opacity for
 certain molecule</p>
+<p>Molecular opacity should be in cm2/molecule units. That is why there is an
+multiplication of N_a on return</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1766,6 +1880,18 @@ certain molecule</p>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">get_opacities</code><span class="sig-paren">(</span><em>atmosphere</em><span class="sig-paren">)</span></dt>
+<dd><p>Get&#8217;s opacities using the atmosphere class</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">open_local</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dd><p>Code needed to open up local database, interpret arrays from bytes and return cursor</p>
 </dd></dl>
 
 </dd></dl>
@@ -2050,9 +2176,7 @@ to swap out different methods to calculate rayleigh opacity</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>colden</strong> (<em>array of float</em>) &#8211; Column Density in CGS units</li>
-<li><strong>H2</strong> (<em>array of float</em>) &#8211; Mixing ratio as function of altitude for H2</li>
-<li><strong>He</strong> (<em>array of flaot</em>) &#8211; Mixing ratio as a function of altitude for He</li>
-<li><strong>CH4</strong> (<em>array of float</em>) &#8211; Mixing ratio as a function of altitude fro CH4</li>
+<li><strong>mixingratios</strong> (<em>array of float</em>) &#8211; Mixing ratio as function of altitude for [H2  He CH4 ]</li>
 <li><strong>wave</strong> (<em>array of float</em>) &#8211; wavelength (microns) of grid. This should be in DECENDING order to comply with
 everything else being in wave numberes</li>
 <li><strong>xmu</strong> (<em>array of float</em>) &#8211; mean molecular weight of atmosphere in amu</li>
@@ -2069,7 +2193,7 @@ everything else being in wave numberes</li>
 <span id="picaso-run-opa-factory-module"></span><h2>picaso.run_opa_factory module<a class="headerlink" href="#module-picaso.run_opa_factory" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="picaso.run_opa_factory.continuum">
-<code class="descclassname">picaso.run_opa_factory.</code><code class="descname">continuum</code><span class="sig-paren">(</span><em>new_wno_file='../scripts/newwave_2000.coverage', original_file='../testing_notebooks/CIA_DS_aug_2015.dat', colnames=['wno', 'H2H2', 'H2He', 'H2H', 'H2CH4', 'H2N2'], new_filename='/Users/natashabatalha/Documents/PICASO/picaso/reference/opacities/continuum.hdf5'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.run_opa_factory.continuum" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">picaso.run_opa_factory.</code><code class="descname">continuum</code><span class="sig-paren">(</span><em>new_wno='newwave_2000.coverage', original_file='CIA_DS_aug_2015.dat', colnames=['wno', 'H2H2', 'H2He', 'H2H', 'H2CH4', 'H2N2'], new_filename='/Users/natashabatalha/Documents/PICASO/picaso/reference/opacities/continuum.json'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.run_opa_factory.continuum" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is a top level function to run the opacity facotry to compute the continuum.
 It leverages D. Saumom&#8217;s continuum opacity file and regrids it to the wavelength
 that the user is attempting to create a spectrum on.</p>
@@ -2078,8 +2202,8 @@ that the user is attempting to create a spectrum on.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>new_wno_file</strong> (<em>str</em>) &#8211; This is a pointer to the filename that is whitespace delimeted with at least one column
-called &#8220;wavenumber&#8221;</li>
+<li><strong>new_wno</strong> (<em>str</em><em> , </em><em>array</em>) &#8211; This is a pointer to the filename that is whitespace delimeted with at least one column
+called &#8220;wavenumber&#8221;. Can also be a numpy array</li>
 <li><strong>original_file</strong> (<em>str</em>) &#8211; This is a pointer to the original continuum opacity file that is structured according to
 D. Saumon. This will eventually be replaced with the opacity db structure.</li>
 <li><strong>colnames</strong> (<em>list</em><em>, </em><em>str</em>) &#8211; This identifies the continuum absorbers that are located within the original_file with
@@ -2094,7 +2218,7 @@ absorbers.</li>
 
 <dl class="function">
 <dt id="picaso.run_opa_factory.molecular">
-<code class="descclassname">picaso.run_opa_factory.</code><code class="descname">molecular</code><span class="sig-paren">(</span><em>original_dir='/Users/natashabatalha/Documents/AlbedoCodeWC/opacities/'</em>, <em>new_wno_file='../scripts/newwave_2000.coverage'</em>, <em>new_filename='/Users/natashabatalha/Documents/PICASO/picaso/reference/opacities/molecular.hdf5'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.run_opa_factory.molecular" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">picaso.run_opa_factory.</code><code class="descname">molecular</code><span class="sig-paren">(</span><em>original_dir='/Users/natashabatalha/Documents/AlbedoCodeWC/opacities/'</em>, <em>new_wno='newwave_2000.coverage'</em>, <em>new_filename='/Users/natashabatalha/Documents/PICASO/picaso/reference/opacities/molecular.hdf5'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.run_opa_factory.molecular" title="Permalink to this definition">¶</a></dt>
 <dd><p>Currently, picaso is operating on a BYO opacities. Therefore, this function should be used
 to go through a large directory of opacities and restructure them to the hdf5 databse that
 picaso uses.</p>
@@ -2111,8 +2235,8 @@ separate script. Please contact
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>new_wno_file</strong> (<em>str</em>) &#8211; This is a pointer to the filename that is whitespace delimeted with at least one column
-called &#8220;wavenumber&#8221;</li>
+<li><strong>new_wno</strong> (<em>str</em><em>, </em><em>array</em>) &#8211; This is a pointer to the filename that is whitespace delimeted with at least one column
+called &#8220;wavenumber&#8221;. Can also be a numpy array.</li>
 <li><strong>original_dier</strong> (<em>str</em>) &#8211; This is a pointer to the a file that should have a directory for each molecule.</li>
 </ul>
 </td>
@@ -2260,7 +2384,7 @@ to a new wave grid.</p>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
       
-        <a href="notebooks/5_SwappingOpacities.html" class="btn btn-neutral" title="Creating new Opacity Databases" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="notebooks/5_SwappingOpacities.html" class="btn btn-neutral" title="Opacity Databases" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

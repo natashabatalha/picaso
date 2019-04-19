@@ -12,8 +12,8 @@ Basics
    Adding Clouds  </notebooks/2_AddingClouds.ipynb>
    Plot Diagnostics </notebooks/3_PlotDiagnostics.ipynb>
 
-Radiative Transfer Approximations
----------------------------------
+Approximations & Opacities
+--------------------------
 
 .. toctree::
    :titlesonly:
