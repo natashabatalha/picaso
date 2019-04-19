@@ -41,13 +41,13 @@ except ImportError:
 # to this sample package.
 setup(
     name='picaso', 
-    version = 'dev0.0',
+    version = '0.0',
     description = 'planetary intesity code for atmospheric scattering observations',
-    long_description = 'README.md',
-    author = 'Natasha Batalha at UCSC',
+    long_description = 'README.rst',
+    author = 'Natasha E. Batalha',
     author_email = 'natasha.e.batalha@gmail.com',
     url = 'https://natashabatalha.github.io/picaso',
-    license = 'MIT',
+    license = 'GPL-3.0',
     download_url = 'https://github.com/natashabatalha/picaso',
     classifiers = [
                   'Intended Audience :: Science/Research',

@@ -361,7 +361,7 @@ def tri_diag_solve(l, a, b, c, d):
 
 
 @jit(nopython=True, cache=True)
-def get_flux_geom_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3d,gcos2_3d, ftau_cld_3d,ftau_ray_3d,
+def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3d,gcos2_3d, ftau_cld_3d,ftau_ray_3d,
 	dtau_og_3d, tau_og_3d, w0_og_3d, cosb_og_3d, 
 	surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
 	frac_a, frac_b, frac_c, constant_back, constant_forward):
@@ -652,7 +652,7 @@ def get_flux_geom_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 	return xint_at_top
 
 @jit(nopython=True, cache=True)
-def get_flux_geom_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
+def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
 	dtau_og, tau_og, w0_og, cosb_og, 
 	surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
 	frac_a, frac_b, frac_c, constant_back, constant_forward):
@@ -939,7 +939,7 @@ def blackbody(t,w):
 	return ((2.0*h*c**2.0)/(w**5.0))*(1.0/(exp((h*c)/outer(t, w*k)) - 1.0))
 
 @jit(nopython=True, cache=True)
-def get_flux_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1):
+def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1):
 	
 	nlayer = nlevel -1 #nlayers 
 

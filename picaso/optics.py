@@ -525,9 +525,6 @@ def j_fraction(j,T):
 	"""
 	return partition_function(j,T)/partition_sum(T)
 
-
-
-
 #@jit(nopython=True, cache=True)
 def raman_pollack(nlayer):
 	"""
@@ -611,61 +608,77 @@ def raman_pollack(nlayer):
 
 class RetrieveOpacities():
 	"""
-	This will be the class that will retrieve the opacities from the h5 database. Right 
+	This will be the class that will retrieve the opacities from the sqlite3 database. Right 
 	now we are just employing nearest neighbors to grab the respective opacities. 
-	Eventually, we will want to do something like correlated K. 
+	Eventually, we will switch to correlated K. 
 
 	Attributes
 	----------
-	get_continuum_atlayer 
-		given a temperature and molecule, retrieve the wavelength depedent opacity 
-	get_molopac_atlayer 
-		given a pressure and temperature, retrieve the wavelength dependent opacity
-
+	open_local 
+		Opens up connection sqlite3 and enables array interpretation from bytes 
+	get_available_data 
+		Get some opacity db attributes such as T,Ps avail, Molecules avail.. etc. 
+	get_opacities 
+		This is run after user specifies atmospheric profile (e.g. full PT and Composition)
 	"""
 	#def __init__(self, continuum_data, molecular_data,raman_data, db = 'local'):
 	def __init__(self, db_filename, raman_data, location = 'local'):
 
 		if location == 'local':
-			self.conn = sqlite3.connect(db_filename, detect_types=sqlite3.PARSE_DECLTYPES)
-			#tell sqlite what to do with an array
-		sqlite3.register_adapter(np.ndarray, self.adapt_array)
-		sqlite3.register_converter("array", self.convert_array)
-		self.cur = self.conn.cursor()
+			#self.conn = sqlite3.connect(db_filename, detect_types=sqlite3.PARSE_DECLTYPES)
+			self.db_filename = db_filename
+			self.db_connect = self.open_local
 
 		self.get_available_data()
-		self.get_wave_grid()
 		
 		#raman cross sections 
 		self.raman_db = pd.read_csv(raman_data,
 					 delim_whitespace=True, skiprows=16,header=None, names=['ji','jf','vf','c','deltanu'])
+		#self.conn.close()
+
+	def open_local(self):
+		"""Code needed to open up local database, interpret arrays from bytes and return cursor"""
+		conn = sqlite3.connect(self.db_filename, detect_types=sqlite3.PARSE_DECLTYPES)
+		#tell sqlite what to do with an array
+		sqlite3.register_adapter(np.ndarray, self.adapt_array)
+		sqlite3.register_converter("array", self.convert_array)
+		cur = conn.cursor()
+		return cur,conn
 
 	def get_available_data(self):
 		"""Get the pressures and temperatures that are available for the continuum and molecules"""
-		self.cur.execute('SELECT temperature FROM continuum')
-		self.cia_temps = np.unique(self.cur.fetchall())
-		#self.cur.execute('SELECT pressure FROM molecular')
-		#self.mol_press = np.unique(self.cur.fetchall())
-		self.cur.execute('SELECT molecule FROM molecular')
-		self.molecules = np.unique(self.cur.fetchall())
-		#self.cur.execute('SELECT temperature FROM molecular')
-		#self.mol_temps = np.unique(self.cur.fetchall())
+		
+		#open connection 
+		cur, conn = self.db_connect()
+
+		#get temps
+		cur.execute('SELECT temperature FROM continuum')
+		self.cia_temps = np.unique(cur.fetchall())
+
+		#get available molecules
+		cur.execute('SELECT molecule FROM molecular')
+		self.molecules = np.unique(cur.fetchall())
+
 		#get PT indexes for getting opacities 
-		self.cur.execute('SELECT ptid, pressure, temperature FROM molecular')
-		data= self.cur.fetchall()
+		cur.execute('SELECT ptid, pressure, temperature FROM molecular')
+		data= cur.fetchall()
 		self.pt_pairs = sorted(list(set(data)),key=lambda x: (x[0]) )
 
-	def get_wave_grid(self):
-		"""Get the wave grid info"""
-		self.cur.execute('SELECT wavenumber_grid FROM header')
-		self.wno =  self.cur.fetchone()[0]
+		#Get the wave grid info
+		cur.execute('SELECT wavenumber_grid FROM header')
+		self.wno =  cur.fetchone()[0]
 		self.wave = 1e4/self.wno 
 		self.nwno = np.size(self.wno)
+
+		conn.close()
 
 	def get_opacities(self,atmosphere):
 		"""
 		Get's opacities using the atmosphere class
 		"""
+		#open connection 
+		cur, conn = self.db_connect()
+
 		nlayer =atmosphere.c.nlayer
 		tlayer =atmosphere.layer['temperature']
 		player = atmosphere.layer['pressure']
@@ -689,13 +702,13 @@ class RetrieveOpacities():
 			query_mol = 'WHERE molecule in '+str(tuple(molecules) )
 
 		atmosphere.layer['pt_opa_index'] = ind_pt
-		self.cur.execute("""SELECT molecule,ptid,opacity 
+		cur.execute("""SELECT molecule,ptid,opacity 
 		            FROM molecular 
 		            {} 
 		            AND ptid in {}""".format(query_mol, str(tuple(np.unique(ind_pt)))))
 		#fetch everything and stick into a dictionary where we can find the right
 		#pt and molecules
-		data= self.cur.fetchall()
+		data= cur.fetchall()
 		data = dict((x+'_'+str(y), dat) for x,y,dat in data)		
 
 		#structure it into a dictionary e.g. {'H2O':ndarray(nwave x nlayer), 'CH4':ndarray(nwave x nlayer)}.. 
@@ -718,20 +731,21 @@ class RetrieveOpacities():
 		else:
 			query_mol = 'WHERE molecule in '+str(tuple(cia_mol) )		
 
-		self.cur.execute("""SELECT molecule,temperature,opacity 
+		cur.execute("""SELECT molecule,temperature,opacity 
 		            FROM continuum 
 		            {} 
 		            {}""".format(query_mol, query_temp))
 
-		data = self.cur.fetchall()
+		data = cur.fetchall()
 		data = dict((x+'_'+str(y), dat) for x, y,dat in data)
 
 		for i in self.continuum_opa.keys():
 		    for j,ind in zip(tcia,range(nlayer)):
 		        self.continuum_opa[i][:,ind] = data[i+'_'+str(j)]
-		        
+
+		conn.close()      
 	def get_continuum_opac(self, temperature, molecule): 
-		"""
+		"""DISCONTINUED.
 		Based on a temperature, this retrieves the continuum opacity for 
 
 		Parameters
@@ -756,7 +770,7 @@ class RetrieveOpacities():
 		return a
 
 	def get_molecular_opac(self, temperature, pressure, molecule):
-		"""
+		"""DISCONTINUED.
 		Based on temperature, and pressure, retrieves the molecular opacity for 
 		certain molecule 
 

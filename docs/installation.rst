@@ -8,13 +8,6 @@ Install with Pip
 
 	pip install picaso
 
-Install with Conda
-------------------
-
-.. code-block:: bash 
-
-	conda config --add channels conda-forge
-	conda install picaso
 
 Install with Git
 ----------------

@@ -1,5 +1,5 @@
 from .atmsetup import ATMSETUP
-from .fluxes import get_flux_geom_1d, get_flux_geom_3d , get_flux_thermal_1d
+from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d
 from .wavelength import get_cld_input_grid
 import numpy as np
 import pandas as pd
@@ -123,7 +123,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
 		if  'reflected' in calculation:
 			#use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-			xint_at_top  = get_flux_geom_1d(atm.c.nlevel, wno,nwno,ng,nt,
+			xint_at_top  = get_reflected_1d(atm.c.nlevel, wno,nwno,ng,nt,
 													DTAU, TAU, W0, COSB,GCOS2,ftau_cld,ftau_ray,
 													DTAU_OG, TAU_OG, W0_OG, COSB_OG ,
 													atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
@@ -131,7 +131,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 													frac_a,frac_b,frac_c,constant_back,constant_forward)
 		if 'thermal' in calculation:
 			#use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-			flux_at_top  = get_flux_thermal_1d(atm.c.nlevel, wno,nwno,ng,nt,atm.level['temperature'],
+			flux_at_top  = get_thermal_1d(atm.c.nlevel, wno,nwno,ng,nt,atm.level['temperature'],
 													DTAU_OG, W0_OG, COSB_OG, atm.level['pressure'],ubar1)
 			
 	elif dimension == '3d':
@@ -179,7 +179,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
 
 		#use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-		xint_at_top  = get_flux_geom_3d(atm.c.nlevel, wno,nwno,ng,nt,
+		xint_at_top  = get_reflected_3d(atm.c.nlevel, wno,nwno,ng,nt,
 											DTAU_3d, TAU_3d, W0_3d, COSB_3d,GCOS2_3d, FTAU_CLD_3d,FTAU_RAY_3d,
 											DTAU_OG_3d, TAU_OG_3d, W0_OG_3d, COSB_OG_3d,
 											atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,

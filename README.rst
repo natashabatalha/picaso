@@ -9,8 +9,8 @@
 
 Reflected light spectroscopy for planetary atmospheres.
 
-Read The Docs 
--------------
+Docs 
+----
 
 .. raw:: html
 
@@ -23,8 +23,8 @@ Read The Docs
 	    </div>
 	</div>
 
-Read The Paper 
---------------
+Paper 
+-----
 
 .. raw:: html
 
@@ -37,8 +37,8 @@ Read The Paper
 	    </div>
 	</div>
 
-Do The Math 
------------
+Math 
+----
 
 .. raw:: html
 
@@ -50,3 +50,8 @@ Do The Math
 	      </a>
 	    </div>
 	</div>
+
+.. image:: https://travis-ci.com/natashabatalha/picaso.svg?token=rhFPvNo2sGUpKx2Zyx86&branch=master
+    :target: https://travis-ci.com/natashabatalha/picaso
+
+
