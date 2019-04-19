@@ -14,7 +14,7 @@ Docs
 
 .. raw:: html
 
-	 <div class="row" align="center">
+	 <div class="row">
 	  <div class="col-md-3">
 	    <div class="thumbnail">
 	      <a href="https://natashabatalha.github.io/picaso">
@@ -28,7 +28,7 @@ Paper
 
 .. raw:: html
 
-	 <div class="row" align="center">
+	 <div class="row">
 	  <div class="col-md-3">
 	    <div class="thumbnail">
 	      <a href="https://natashabatalha.github.io/picaso">
@@ -42,7 +42,7 @@ Math
 
 .. raw:: html
 
-	 <div class="row" align="center">
+	 <div class="row>
 	  <div class="col-md-3">
 	    <div class="thumbnail">
 	      <a href="https://natashabatalha.github.io/picaso_dev">
