@@ -4,8 +4,6 @@ import pandas as pd
 import numpy as np
 
 
-
-
 def make_3d_pt_input(ng,nt,phase_angle,input_file,output_file,**kwargs):
 	"""
 	Program to create 3d PT input. Used to feed GCM input into disco ball.

@@ -34,9 +34,9 @@ def compute_disco(ng, nt, gangle, tangle, phase_angle):
 	"""
 	cos_theta = cos(phase_angle)
 	longitude = arcsin((gangle-(cos_theta-1.0)/(cos_theta+1.0))/(2.0/(cos_theta+1)))
-	latitude = arccos(tangle)
-
-	f = sin(latitude) #define to eliminate repitition
+	colatitude = arccos(tangle)#colatitude = 90-latitude 
+	latitude = pi/2-colatitude
+	f = sin(colatitude) #define to eliminate repitition
 	ubar0 = outer(cos(longitude-phase_angle) , f) #ng by nt 
 	ubar1 = outer(cos(longitude) , f) 
 

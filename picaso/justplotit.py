@@ -122,6 +122,7 @@ def spectrum(wno, alb,legend=None, **kwargs):
 	plot_format(fig)
 	return fig
 
+
 def photon_attenuation(full_output, at_tau=0.5,**kwargs):
 	"""
 	Plot breakdown of gas opacity, cloud opacity, 
@@ -410,6 +411,15 @@ def cloud(full_output):
 	f01b.add_layout(color_bar, 'left')
 	return column(row(f01a, f01, row(f01b)))
 
+def lon_lat_to_cartesian(lon_r, lat_r, R = 1):
+	"""
+	calculates lon, lat coordinates of a point on a sphere with
+	radius R
+	"""
+	x =  R * np.cos(lat_r) * np.cos(lon_r)
+	y = R * np.cos(lat_r) * np.sin(lon_r)
+	z = R * np.sin(lat_r)
+	return x,y,z
 
 def disco(full_output,wavelength=[0.3]):
 	"""
@@ -441,9 +451,8 @@ def disco(full_output,wavelength=[0.3]):
 
 		cm = plt.cm.get_cmap('plasma')
 		u, v = np.meshgrid(longitude, latitude)
-		x = np.cos(u)*np.sin(v)
-		y = np.sin(u)*np.sin(v)
-		z = np.cos(v)
+		
+		x,y,z = lon_lat_to_cartesian(u, v)
 
 		ax.plot_wireframe(x, y, z, color="gray")
 

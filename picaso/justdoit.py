@@ -4,6 +4,9 @@ from .wavelength import get_cld_input_grid
 import numpy as np
 import pandas as pd
 from .optics import RetrieveOpacities,compute_opacity
+from scipy.interpolate import RegularGridInterpolator
+import scipy as sp
+from scipy import special
 import os
 import pickle as pk
 from .disco import get_angles, compute_disco, compress_disco, compress_thermal
@@ -129,10 +132,15 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 													atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
 													single_phase,multi_phase,
 													frac_a,frac_b,frac_c,constant_back,constant_forward)
+
 		if 'thermal' in calculation:
 			#use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-			flux_at_top  = get_thermal_1d(atm.c.nlevel, wno,nwno,ng,nt,atm.level['temperature'],
-													DTAU_OG, W0_OG, COSB_OG, atm.level['pressure'],ubar1)
+			ng_therm = 8 #this is always 8 because in 1d we don't care where the flux is coming from 
+			nt_therm = 2 #ditto
+			gangle_therm,gweight_therm,tangle_therm,tweight_therm = get_angles(ng_therm, nt_therm) 
+			j, ubar1_therm, j,j,j = compute_disco(ng_therm, nt_therm, gangle_therm, tangle_therm, phase_angle)
+			flux_at_top  = get_thermal_1d(atm.c.nlevel, wno,nwno,ng_therm,nt_therm,atm.level['temperature'],
+													DTAU_OG, W0_OG, COSB_OG, atm.level['pressure'],ubar1_therm)
 			
 	elif dimension == '3d':
 
@@ -192,15 +200,15 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 		returns = (wno, albedo)
 
 	elif ('reflected' not in calculation) & ('thermal' in calculation):
-		thermal = compress_thermal(nwno,ubar1, flux_at_top, gweight, tweight)
+		thermal = compress_thermal(nwno,ubar1_therm, flux_at_top, gweight_therm, tweight_therm)
 		fpfs_thermal = thermal/(opacityclass.unshifted_stellar_spec)*(atm.planet.radius/radius_star)**2.0
-		returns = wno,fpfs_thermal,thermal
+		returns = wno,fpfs_thermal#,thermal
 
 	elif ('reflected' in calculation) & ('thermal' in calculation):
 		albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
-		thermal = compress_thermal(nwno,ubar1,flux_at_top, gweight, tweight)
+		thermal = compress_thermal(nwno,ubar1_therm, flux_at_top, gweight_therm, tweight_therm)
 		fpfs_thermal = thermal/(opacityclass.unshifted_stellar_spec)*(atm.planet.radius/radius_star)**2.0
-		returns = wno,albedo, fpfs_thermal,thermal
+		returns = wno,albedo, fpfs_thermal#,thermal
 
 	if full_output:	
 		#add full solution and latitude and longitudes to the full output
@@ -257,19 +265,12 @@ class inputs():
 	approx()  : set approximation
 	spectrum() : create spectrum
 	"""
-	def __init__(self):#continuum_db = None, molecular_db = None, raman_db = None):
+	def __init__(self, chemeq=False):#continuum_db = None, molecular_db = None, raman_db = None):
 
 		self.inputs = json.load(open(os.path.join(__refdata__,'config.json')))
 
-		#if isinstance(continuum_db,type(None) ): continuum_db = os.path.join(__refdata__, 'opacities', self.inputs['opacities']['files']['continuum'])
-		#if isinstance(molecular_db,type(None) ): molecular_db = os.path.join(__refdata__, 'opacities', self.inputs['opacities']['files']['molecular'])
-		#if isinstance(raman_db,type(None) ): raman_db = os.path.join(__refdata__, 'opacities', self.inputs['opacities']['files']['raman'])
-
-		#self.opacityclass=RetrieveOpacities(
-		#			continuum_db,
-		#			molecular_db, 
-		#			raman_db
-		#			)
+		#if runnng chemical equilibrium, need to load chemeq grid
+		if chemeq: self.chemeq_pic = pk.load(open(os.path.join(__refdata__,'chem_full.pic'),'rb'), encoding='latin1')
 
 
 	def phase_angle(self, phase=0,num_gangle=10, num_tangle=10):
@@ -435,13 +436,14 @@ class inputs():
 		self.inputs['star']['flux'] = fine_flux_star 
 		self.inputs['star']['wno'] = fine_wno_star 
 
-	def atmosphere(self, df=None, filename=None, pt_params = None,exclude_mol=None, **pd_kwargs):
+	def atmosphere(self, df=None, filename=None, exclude_mol=None, **pd_kwargs):
 		"""
-		Builds a dataframe and makes sure that minimum necessary parameters have been suplied. 
+		Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
+		Sets number of layers in model.  
 
 		Parameters
 		----------
-		df : pandas.DataFrame
+		df : pandas.DataFrame or dict
 			(Optional) Dataframe with volume mixing ratios and pressure, temperature profile. 
 			Must contain pressure (bars) at least one molecule
 		filename : str 
@@ -449,8 +451,6 @@ class inputs():
 			Must contain pressure at least one molecule
 		exclude_mol : list of str 
 			(Optional) List of molecules to ignore from file
-		pt_params : list of float 
-			(Optional) list of [T, logKir, logg1,logg2, alpha] from Guillot+2010
 		pd_kwargs : kwargs 
 			Key word arguments for pd.read_csv to read in supplied atmosphere file 
 		"""
@@ -472,9 +472,7 @@ class inputs():
 			raise Exception("Check column names. `pressure` must be included.")
 
 		if (('temperature' not in df.keys()) and (isinstance(pt_params, type(None)))):
-			raise Exception("`temperature` not specified and pt_params not given. Do one or the other.")
-
-
+			raise Exception("`temperature` not specified as a column/key name, and `pt_params` for a parameterized PT profile was not supplied. Please make sure to use one or the other.")
 
 		if not isinstance(exclude_mol, type(None)):
 			df = df.drop(exclude_mol, axis=1)
@@ -482,6 +480,144 @@ class inputs():
 
 		self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
 
+	def chemeq(self, CtoO, Met, P=None,T=None):
+		"""
+		This interpolates from a precomputed grid of CEA runs (run by M.R. Line)
+
+		Parameters
+		----------
+		P : array
+			Pressure (bars)
+		T : array
+			Temperature (K)
+		CtoO : float
+			log C to O ratio (log solar = -0.26)
+		Met : float 
+			log Metallicity relative to solar (solar = 0 (log10(1) ))
+		"""
+		 
+		P, T = self.inputs['atmosphere']['profile']['pressure'].values,self.inputs['atmosphere']['profile']['temperature'].values
+		
+		T[T<400] = 400
+		T[T>2800] = 2800
+
+		logCtoO, logMet, Tarr, logParr, gases=self.chemeq_pic
+		assert Met < 10**np.max(logMet), 'Metallicity entered is higher than the max of the grid: M/H = '+ str(np.max(10**logMet))
+		assert CtoO < 10**np.max(logCtoO), 'C/O ratio entered is higher than the max of the grid: C/O = '+ str(np.max(10**logCtoO))
+		assert Met > 10**np.min(logMet), 'Metallicity entered is higher than the max of the grid: M/H = '+ str(np.min(10**logMet))
+		assert CtoO > 10**np.min(logCtoO), 'C/O ratio entered is higher than the max of the grid: C/O = '+ str(np.min(10**logCtoO))
+
+		loggas=np.log10(gases)
+		Ngas = loggas.shape[3]
+		gas=np.zeros((Ngas,len(P)))
+		for j in range(Ngas):
+			gas_to_interp=loggas[:,:,:,j,:]
+			IF=RegularGridInterpolator((logCtoO, logMet, np.log10(Tarr),logParr),gas_to_interp,bounds_error=False)
+			for i in range(len(P)):
+				gas[j,i]=10**IF(np.array([np.log10(CtoO), np.log10(Met), np.log10(T[i]), np.log10(P[i])]))
+		H2Oarr, CH4arr, COarr, CO2arr, NH3arr, N2arr, HCNarr, H2Sarr,PH3arr, C2H2arr, C2H6arr, Naarr, Karr, TiOarr, VOarr, FeHarr, Harr,H2arr, Hearr, mmw=gas
+
+		df = pd.DataFrame({'H2O': H2Oarr, 'CH4': CH4arr, 'CO': COarr, 'CO2': CO2arr, 'NH3': NH3arr, 
+			               'N2' : N2arr, 'HCN': HCNarr, 'H2S': H2Sarr, 'PH3': PH3arr, 'C2H2': C2H2arr, 
+			               'C2H6' :C2H6arr, 'Na' : Naarr, 'K' : Karr, 'TiO': TiOarr, 'VO' : VOarr, 
+			               'Fe': FeHarr,  'H': Harr, 'H2' : H2arr, 'He' : Hearr, 'temperature':T, 
+			               'pressure': P})
+		self.inputs['atmosphere']['profile'] = df
+		return 
+
+
+	def guillot_pt(self, Teq, T_int, logg1, logKir, alpha=0.5,nlevel=61):
+		"""
+		Creates temperature pressure profile given parameterization in Guillot 2010 TP profile
+		called in fx()
+
+		Parameters
+		----------
+		Teq : float 
+		    equilibrium temperature 
+		T_int : float 
+		    Internal temperature, if low (100) currently set to 100 for everything  
+		kv1 : float 
+		    see parameterization Guillot 2010 (10.**(logg1+logKir))
+		kv2 : float
+		    see parameterization Guillot 2010 (10.**(logg1+logKir))
+		kth : float
+		    see parameterization Guillot 2010 (10.**logKir)
+		alpha : float 
+		    set to 0.5
+		nlevel : int
+			Number of atmospheric layers
+		    
+		Returns
+		-------
+		T : numpy.array 
+		    Temperature grid 
+		P : numpy.array
+		    Pressure grid
+		        
+		"""
+		kv1, kv2 =10.**(logg1+logKir),10.**(logg1+logKir)
+		kth=10.**logKir
+
+		Teff = T_int
+		f = 1.0  # solar re-radiation factor
+		A = 0.0  # planetary albedo
+		g0 = self.inputs['planet']['gravity']/100.0 #cm/s2 to m/s2
+
+		# Compute equilibrium temperature and set up gamma's
+		T0 = Teq
+		gamma1 = kv1/kth #Eqn. 25
+		gamma2 = kv2/kth
+
+		# Initialize arrays
+		logtau =np.arange(-10,20,.1)
+		tau =10**logtau
+
+		#computing temperature
+		T4ir = 0.75*(Teff**(4.))*(tau+(2.0/3.0))
+		f1 = 2.0/3.0 + 2.0/(3.0*gamma1)*(1.+(gamma1*tau/2.0-1.0)*sp.exp(-gamma1*tau))+2.0*gamma1/3.0*(1.0-tau**2.0/2.0)*special.expn(2.0,gamma1*tau)
+		f2 = 2.0/3.0 + 2.0/(3.0*gamma2)*(1.+(gamma2*tau/2.0-1.0)*sp.exp(-gamma2*tau))+2.0*gamma2/3.0*(1.0-tau**2.0/2.0)*special.expn(2.0,gamma2*tau)
+		T4v1=f*0.75*T0**4.0*(1.0-alpha)*f1
+		T4v2=f*0.75*T0**4.0*alpha*f2
+		T=(T4ir+T4v1+T4v2)**(0.25)
+		P=tau*g0/(kth*0.1)/1.E5
+		self.nlevel=nlevel 
+		logP = np.linspace(-6.8,1.5,nlevel)
+		newP = 10.0**logP
+		T = np.interp(logP,np.log10(P),T)
+
+		self.inputs['atmosphere']['profile']  = pd.DataFrame({'temperature': T, 'pressure':newP})
+
+		# Return TP profile
+		return self.inputs['atmosphere']['profile'] 
+
+	def atmosphere_3d(self, df=None, filename=None, exclude_mol=None, **pd_kwargs):
+		"""
+		Builds a dataframe and makes sure that minimum necessary parameters have been suplied. 
+
+		Parameters
+		----------
+		df : pandas.DataFrame
+			(Optional) Dataframe with volume mixing ratios and pressure, temperature profile. 
+			Must contain pressure (bars) at least one molecule
+		filename : str 
+			(Optional) Filename with pressure, temperature and volume mixing ratios.
+			Must contain pressure at least one molecule
+		exclude_mol : list of str 
+			(Optional) List of molecules to ignore from file
+		pd_kwargs : kwargs 
+			Key word arguments for pd.read_csv to read in supplied atmosphere file 
+		"""
+		if not isinstance(df, type(None)):
+			if ((not isinstance(df, dict )) & (not isinstance(df, pd.core.frame.DataFrame ))): 
+				raise Exception("df must be pandas DataFrame or dictionary")
+			else:
+				self.nlevel=df.shape[0] 
+		elif not isinstance(filename, type(None)):
+			df = pd.read_csv(filename, **pd_kwargs)
+			self.nlevel=df.shape[0] 
+
+		return
 
 	def clouds(self, filename = None, g0=None, w0=None, opd=None,p=None, dp=None,df =None,**pd_kwargs):
 		"""
