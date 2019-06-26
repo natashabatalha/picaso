@@ -423,11 +423,11 @@ class inputs():
 
 		#this adds stellar shifts 'self.raman_stellar_shifts' to the opacity class
 		#the cross sections are computed later 
-		if self.inputs['approx'] == 0: 
+		if self.inputs['approx']['raman'] == 0: 
 			#do a fail safe to make sure that star is on a fine enough grid for planet case 
 			fine_wno_star = np.linspace(min_shift, max_shift, len(wno_planet)*5)
 			fine_flux_star = np.interp(fine_wno_star,wno_star, flux_star)
-			opannection.compute_stellar_shits(fine_wno_star, fine_flux_star)	
+			opannection.compute_stellar_shits(fine_wno_star, fine_flux_star)
 		else :
 			fine_wno_star = wno_planet
 			fine_flux_star = np.interp(wno_planet,wno_star, flux_star)	

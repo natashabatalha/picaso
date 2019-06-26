@@ -15,6 +15,9 @@ from numba import jit
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 import matplotlib.pyplot as plt
+import holoviews as hv
+from holoviews.operation.datashader import datashade
+hv.extension('bokeh')
 
 def mixing_ratio(full_output,**kwargs):
 	"""Returns plot of mixing ratios 
@@ -490,3 +493,35 @@ def numba_cumsum(mat):
 	for i in range(mat.shape[1]):
 		new_mat[:,i] = np.cumsum(mat[:,i])
 	return new_mat
+
+def spectrum_hires(wno, alb,legend=None, **kwargs):
+	"""Plot formated albedo spectrum
+
+	Parameters
+	----------
+	wno : float array, list of arrays
+		wavenumber 
+	alb : float array, list of arrays 
+		albedo 
+	legend : list of str 
+		legends for plotting 
+	**kwargs : dict 	
+		Any key word argument for hv.opts
+
+	Returns
+	-------
+	bokeh plot
+	"""
+	kwargs['plot_height'] = kwargs.get('plot_height',345)
+	kwargs['plot_width'] = kwargs.get('plot_width',1000)
+	kwargs['y_axis_label'] = kwargs.get('y_axis_label','Albedo')
+	kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength [μm]')
+	kwargs['y_range'] = kwargs.get('y_range',[0,1.2])
+	kwargs['x_range'] = kwargs.get('x_range',[0.3,1])
+
+	points_og = hv.Curve((1e4/w, alb))
+
+	return points_og
+
+
+	
