@@ -213,9 +213,9 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 
 
 	#====================== ADD RAMAN OPACITY======================
-	raman_db = opacityclass.raman_db
 	#OKLOPCIC OPACITY
 	if raman == 0 :
+		raman_db = opacityclass.raman_db
 		raman_factor = compute_raman(nwno, nlayer,opacityclass.wno, 
 			opacityclass.raman_stellar_shifts, tlayer, raman_db['c'].values,
 				raman_db['ji'].values, raman_db['deltanu'].values)
@@ -743,7 +743,8 @@ class RetrieveOpacities():
 		    for j,ind in zip(tcia,range(nlayer)):
 		        self.continuum_opa[i][:,ind] = data[i+'_'+str(j)]
 
-		conn.close()      
+		conn.close() 
+		     
 	def get_continuum_opac(self, temperature, molecule): 
 		"""DISCONTINUED.
 		Based on a temperature, this retrieves the continuum opacity for 

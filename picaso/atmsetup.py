@@ -35,6 +35,7 @@ class ATMSETUP():
 		self.planet = type('planet', (object,),{})
 		self.layer = {}
 		self.level = {}
+		self.longitude , self.latitude = self.input['disco']['longitude'], self.input['disco']['latitude']
 		self.get_constants()
 
 	def get_constants(self):
@@ -62,7 +63,7 @@ class ATMSETUP():
 
 		return
 
-	def get_profile_3d(self):
+	def get_profile_3d_old(self):
 		"""
 		A separate routine is written to get the 3d profile because the inputs are much more 
 		rigid. In this framework, the following restrictions are placed: 
@@ -153,6 +154,90 @@ class ATMSETUP():
 				self.level['mixingratios'][:,:,g,t] = h5db[self.gangles[g]][self.tangles[t]].value[:,iheader]
 				self.layer['mixingratios'][:,:,g,t] = 0.5*(self.level['mixingratios'][1:,:,g,t] + self.level['mixingratios'][:-1,:,g,t])
 
+	def get_profile_3d(self):
+		"""
+		Get profile from file or from user input file or direct pandas dataframe. If PT profile 
+		is not given, use parameterization 
+
+		Currently only needs inputs from config file
+
+		Parameters
+		----------
+		lat : array
+			Array of latitudes (radians)
+		lon : array 
+			Array of longitudes (radians)
+
+		Todo
+		----
+		- Add regridding to this by having users be able to set a different nlevel than the input cloud code is
+		"""
+		#get chemistry input from configuration
+		#SET DIMENSIONALITY
+		self.dimension = '3d'
+		latitude, longitude = self.latitude, self.longitude
+		read_3d = self.input['atmosphere']['profile'] #huge dictionary with [lat][lon][bundle]
+
+		self.c.nlevel = read_3d[latitude[0]][longitude[0]].shape[0]
+		self.c.nlayer = self.c.nlevel - 1  
+		ng , nt = self.c.ngangle, self.c.ntangle
+
+		self.level['temperature'] = np.zeros((self.c.nlevel, ng, nt))
+		self.level['pressure'] = np.zeros((self.c.nlevel, ng, nt))
+		self.level['electrons'] = np.zeros((self.c.nlevel, ng, nt))
+
+		self.layer['temperature'] = np.zeros((self.c.nlayer, ng, nt))
+		self.layer['pressure'] = np.zeros((self.c.nlayer, ng, nt))
+		self.layer['electrons'] = np.zeros((self.c.nlayer, ng, nt))
+
+		#COMPUTE THE MOLECULAT WEIGHTS OF THE MOLECULES
+		weights = pd.DataFrame({})
+
+		#Cycle through each column
+		self.molecules = np.array([],dtype=str)
+
+		# loop over gangles and tangles 
+		first = True
+		electrons = False
+		for g in range(ng):
+			for t in range(nt):
+				read = read_3d[latitude[t]][longitude[g]].sort_values('pressure').reset_index(drop=True)
+
+				#on the first pass look through all the molecules, parse out the electrons and 
+				#add warnings for molecules that aren't recognized
+				if first:
+					for i in read.keys():
+						if i in ['pressure', 'temperature']: continue
+						try:
+							weights[i] = pd.Series([self.get_weights([i])[i]])
+							self.molecules = np.concatenate((self.molecules ,np.array([i])))
+						except:
+							if i == 'e-':
+								electrons = True
+							else:					#don't raise exception, instead add user warning that a column has been automatically skipped
+								self.add_warnings("Ignoring %s in input file, not recognized molecule" % i)
+								warnings.warn("Ignoring %s in input file, not a recognized molecule" % i, UserWarning)
+					
+					first = False
+					self.weights = weights 
+					num_mol = len(weights.keys())
+					self.layer['mixingratios'] = np.zeros((self.c.nlayer, num_mol, ng, nt))
+					self.level['mixingratios'] = np.zeros((self.c.nlevel,num_mol,  ng, nt))
+
+
+				if electrons:
+					self.level['electrons'][:,g,t] = read['e-'].values
+					self.layer['electrons'][:,g,t] = 0.5*(self.level['electrons'][1:,g,t] + self.level['electrons'][:-1,g,t])
+				#DEFINE MIXING RATIOS
+				self.level['mixingratios'][:,:,g,t] = read[list(weights.keys())]
+
+				self.layer['mixingratios'][:,:,g,t] = 0.5*(self.level['mixingratios'][1:,:,g,t] + 
+		     						self.level['mixingratios'][0:-1,:,g,t])
+
+				self.level['temperature'][:,g,t] = read['temperature'].values
+				self.level['pressure'][:,g,t] = read['pressure'].values*self.c.pconv #CONVERTING BARS TO DYN/CM2
+				self.layer['temperature'][:,g,t] = 0.5*(self.level['temperature'][1:,g,t] + self.level['temperature'][:-1,g,t])
+				self.layer['pressure'][:,g,t] = np.sqrt(self.level['pressure'][1:,g,t] * self.level['pressure'][:-1,g,t])
 
 	def get_profile(self):
 		"""
@@ -198,18 +283,10 @@ class ATMSETUP():
 		self.layer['mixingratios'] = 0.5*(self.level['mixingratios'][1:].reset_index(drop=True) + 
      						self.level['mixingratios'][0:-1].reset_index(drop=True))
 
-		#GET TP PROFILE 
-		#if parameterization is needed?
-		if not isinstance(self.input['atmosphere']['pt_params'], type(None)):
-			T, logKir, logg1,logg2, alpha= self.input['atmosphere']['pt_params']
-			self.level['pressure'] = read['pressure'].values*self.c.pconv #CONVERTING BARS TO DYN/CM2
-			temperature = calc_PT(self.level['pressure'], T, logKir, logg1)
-			self.level['temperature'] = temperature
-		else:
-			self.level['temperature'] = read['temperature'].values
-			self.level['pressure'] = read['pressure'].values*self.c.pconv #CONVERTING BARS TO DYN/CM2
-			self.layer['temperature'] = 0.5*(self.level['temperature'][1:] + self.level['temperature'][:-1])
-			self.layer['pressure'] = np.sqrt(self.level['pressure'][1:] * self.level['pressure'][:-1])
+		self.level['temperature'] = read['temperature'].values
+		self.level['pressure'] = read['pressure'].values*self.c.pconv #CONVERTING BARS TO DYN/CM2
+		self.layer['temperature'] = 0.5*(self.level['temperature'][1:] + self.level['temperature'][:-1])
+		self.layer['pressure'] = np.sqrt(self.level['pressure'][1:] * self.level['pressure'][:-1])
 
 
 		#Define nlevel and nlayers after profile has been built
@@ -389,8 +466,7 @@ class ATMSETUP():
 
 		self.c.output_npts_wave = np.size(wno)
 		
-
-		#if a cloud profile exists... 
+		#if a cloud profile exists 
 		if ((self.dimension=='1d') & (not isinstance(self.input_wno, type(None)))) :
 			self.c.input_npts_wave = len(self.input_wno)
 
@@ -418,49 +494,47 @@ class ATMSETUP():
 			self.layer['cloud'] = {'w0': zeros}
 			self.layer['cloud']['g0'] = zeros
 			self.layer['cloud']['opd'] = zeros
-
-		#ONLY OPTION FOR 3D INPUT
+		# 3D without clouds 		  
+		elif ((self.input['clouds']['profile'] == None) and (self.dimension=='3d')):
+			self.layer['cloud'] = {'w0': np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle))}
+			self.layer['cloud']['g0'] = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle))
+			self.layer['cloud']['opd'] = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle))
+		#3D with clouds
 		elif ((self.dimension=='3d') & (not isinstance(self.input_wno, type(None)))):
 			self.c.input_npts_wave = len(self.input_wno)
-			cld_input = h5py.File(self.input['clouds']['filepath'],'r',swmr=True)
+			
+			cld_input = self.input['clouds']['profile'] 
+
 			opd = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle))
 			g0 = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle)) 
 			w0 = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle))
-			header = cld_input.attrs['header'].split(',')
 
-			assert 'g0' in header, "Please make sure g0 is a named column in hdf5 cld file"
-			assert 'w0' in header, "Please make sure w0 is a named column in hdf5 cld file"
-			assert 'opd' in header, "Please make sure opd is a named column in hdf5 cld file"
-
-			iopd = np.where('opd' == np.array(header))[0][0]
-			ig0 = np.where('g0' == np.array(header))[0][0]
-			iw0 = np.where('w0' == np.array(header))[0][0]
 			#stick in clouds that are gangle and tangle dependent 
 			for g in range(self.c.ngangle):
 				for t in range(self.c.ntangle):
 
-					data = cld_input[self.gangles[g]][self.tangles[t]]
+					data = cld_input[latitude[t]][longitude[t]]
 
 					#make sure cloud input has the correct number of waves and PT points
 					assert data.shape[0] == self.c.nlayer*self.c.input_npts_wave, "Cloud input file is not on the same grid as the input PT/Angles profile:"
 
 					#Then, reshape and regrid inputs to be a nice matrix that is nlayer by nwave
-
 					#total extinction optical depth 
-					opd_lowres = np.reshape(data[:,iopd], (self.c.nlayer,self.c.input_npts_wave))
+					opd_lowres = np.reshape(data['opd'].values, (self.c.nlayer,self.c.input_npts_wave))
 					opd[:,:,g,t] = regrid(opd_lowres, self.input_wno, wno)
-					self.layer['cloud'] = {'opd': opd}
 
 					#cloud assymetry parameter
-					g0_lowres = np.reshape(data[:,ig0], (self.c.nlayer,self.c.input_npts_wave))
+					g0_lowres = np.reshape(data['g0'].values, (self.c.nlayer,self.c.input_npts_wave))
 					g0[:,:,g,t] = regrid(g0_lowres, self.input_wno, wno)
-					self.layer['cloud']['g0'] = g0
+					
 
 					#cloud single scattering albedo 
-					w0_lowres = np.reshape(data[:,iw0], (self.c.nlayer,self.c.input_npts_wave))
+					w0_lowres = np.reshape(data['w0'].values, (self.c.nlayer,self.c.input_npts_wave))
 					w0[:,:,g,t] = regrid(w0_lowres, self.input_wno, wno)
-					self.layer['cloud']['w0'] = w0 			
-
+					
+			self.layer['cloud'] = {'opd': opd}
+			self.layer['cloud']['g0'] = g0
+			self.layer['cloud']['w0'] = w0 	
 		else:
 
 			raise Exception("CLD input not recognized. Either input a filepath, or input None")
@@ -503,7 +577,7 @@ class ATMSETUP():
 		self.layer['pressure'] = self.layer['pressure'][:,g,t]
 
 		self.layer['mmw'] = self.layer['mmw'][:,g,t]
-		self.layer['mixingratios'] = self.layer['mixingratios'][:,:,g,t]
+		self.layer['mixingratios'] = pd.DataFrame(self.layer['mixingratios'][:,:,g,t],columns=self.weights.keys())
 		self.layer['colden'] = self.layer['colden'][:,g,t]
 		self.layer['electrons'] = self.layer['electrons'][:,g,t]
 

@@ -577,7 +577,6 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 				multi_minus = 1.-1.5*cosb*ubar1[ng,nt]
 			################################ END OPTIONS FOR MULTIPLE SCATTERING####################
 
-
 			G=w0*positive*(multi_plus+gama*multi_minus)
 			H=w0*negative*(gama*multi_plus+multi_minus)
 			A=w0*(multi_plus*c_plus_up+multi_minus*c_minus_up)

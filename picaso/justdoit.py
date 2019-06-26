@@ -73,6 +73,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 	#intensity as a function of planetary pahse angle 
 	ubar0, ubar1, cos_theta,lat,lon = compute_disco(ng, nt, gangle, tangle, phase_angle)
 
+	inputs['disco']['latitude'] = lat
+	inputs['disco']['longitude'] = lon
+
 	#set star 
 	radius_star = inputs['star']['radius']
 	F0PI = np.zeros(nwno) + 1.0 
@@ -111,10 +114,11 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 	atm.add_warnings('No computed opacities for: '+','.join(no_opacities))
 	atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
 
-	#lastly grab needed opacities for the problem
-	opacityclass.get_opacities(atm)
+	
 
 	if dimension == '1d':
+		#lastly grab needed opacities for the problem
+		opacityclass.get_opacities(atm)
 		#only need to get opacities for one pt profile
 
 		#There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
@@ -168,9 +172,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 				#diesct just a subsection to get the opacity 
 				atm_1d.disect(g,t)
 
+				opacityclass.get_opacities(atm_1d)
+
 				dtau, tau, w0, cosb,ftau_cld, ftau_ray, gcos2, DTAU_OG, TAU_OG, W0_OG, COSB_OG = compute_opacity(
 					atm_1d, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx)
-
 				DTAU_3d[:,:,g,t] = dtau
 				TAU_3d[:,:,g,t] = tau
 				W0_3d[:,:,g,t] = w0 
@@ -183,9 +188,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 				DTAU_OG_3d[:,:,g,t] = DTAU_OG
 				W0_OG_3d[:,:,g,t] = W0_OG
 				COSB_OG_3d[:,:,g,t] = COSB_OG
-
-
-
 		#use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
 		xint_at_top  = get_reflected_3d(atm.c.nlevel, wno,nwno,ng,nt,
 											DTAU_3d, TAU_3d, W0_3d, COSB_3d,GCOS2_3d, FTAU_CLD_3d,FTAU_RAY_3d,
@@ -419,13 +421,17 @@ class inputs():
 		max_shift = np.max(wno_planet)+6000 #this 6000 is just the max raman shift we could have 
 		min_shift = np.min(wno_planet) -2000 #it is just to make sure we cut off the right wave ranges
 
-		#do a fail safe to make sure that star is on a fine enough grid for planet case 
-		fine_wno_star = np.linspace(min_shift, max_shift, len(wno_planet)*5)
-		fine_flux_star = np.interp(fine_wno_star,wno_star, flux_star)
-
 		#this adds stellar shifts 'self.raman_stellar_shifts' to the opacity class
 		#the cross sections are computed later 
-		opannection.compute_stellar_shits(fine_wno_star, fine_flux_star)
+		if self.inputs['approx'] == 0: 
+			#do a fail safe to make sure that star is on a fine enough grid for planet case 
+			fine_wno_star = np.linspace(min_shift, max_shift, len(wno_planet)*5)
+			fine_flux_star = np.interp(fine_wno_star,wno_star, flux_star)
+			opannection.compute_stellar_shits(fine_wno_star, fine_flux_star)	
+		else :
+			fine_wno_star = wno_planet
+			fine_flux_star = np.interp(wno_planet,wno_star, flux_star)	
+			opannection.unshifted_stellar_spec =fine_flux_star
 
 		self.inputs['star']['database'] = database
 		self.inputs['star']['temp'] = temp
@@ -591,7 +597,7 @@ class inputs():
 		# Return TP profile
 		return self.inputs['atmosphere']['profile'] 
 
-	def atmosphere_3d(self, df=None, filename=None, exclude_mol=None, **pd_kwargs):
+	def atmosphere_3d(self, dictionary=None, filename=None, exclude_mol=None, **pd_kwargs):
 		"""
 		Builds a dataframe and makes sure that minimum necessary parameters have been suplied. 
 
@@ -601,22 +607,38 @@ class inputs():
 			(Optional) Dataframe with volume mixing ratios and pressure, temperature profile. 
 			Must contain pressure (bars) at least one molecule
 		filename : str 
-			(Optional) Filename with pressure, temperature and volume mixing ratios.
+			(Optional) Pickle filename that is a dictionary structured: 
+			dictionary[float(lat)][float(lon)] = pd.DataFrame({'pressure':[], 'temperature': [],
+			'H2O':[]....}). As well as df['phase_angle'] = 0 (in radians).
+			Therefore, the latitude and longitude keys should be floats, any other meta data 
+			should be  represented by a string.
 			Must contain pressure at least one molecule
 		exclude_mol : list of str 
 			(Optional) List of molecules to ignore from file
 		pd_kwargs : kwargs 
 			Key word arguments for pd.read_csv to read in supplied atmosphere file 
 		"""
-		if not isinstance(df, type(None)):
-			if ((not isinstance(df, dict )) & (not isinstance(df, pd.core.frame.DataFrame ))): 
+		if not isinstance(dictionary, type(None)):
+
+			if (not isinstance(dictionary, dict )): 
 				raise Exception("df must be pandas DataFrame or dictionary")
 			else:
 				self.nlevel=df.shape[0] 
-		elif not isinstance(filename, type(None)):
-			df = pd.read_csv(filename, **pd_kwargs)
-			self.nlevel=df.shape[0] 
 
+		elif not isinstance(filename, type(None)):
+			df3d = pk.load(open(filename,'rb'))
+
+		df3d_phase = 	df3d['phase_angle']
+
+		lats = list(i for i in df3d.keys() if isinstance(i,float))
+		df3d_nt = len(lats)
+		df3d_ng =  len(df3d[lats[0]].keys())
+		np.testing.assert_almost_equal(self.inputs['phase_angle'] ,df3d_phase, decimal=1,err_msg='Phase Angles not the same as 3d input file', verbose=True)
+		assert self.inputs['disco']['num_gangle'] == int(df3d_nt), 'Number of gauss angles does not match creation of 3d input file'
+		assert self.inputs['disco']['num_tangle']  == int(df3d_ng), 'Number of Tchebyshev angles does not match creation of 3d input file'
+
+		self.inputs['atmosphere']['profile'] = df3d
+		
 		return
 
 	def clouds(self, filename = None, g0=None, w0=None, opd=None,p=None, dp=None,df =None,**pd_kwargs):
