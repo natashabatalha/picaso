@@ -681,7 +681,9 @@ class RetrieveOpacities():
 
 		nlayer =atmosphere.c.nlayer
 		tlayer =atmosphere.layer['temperature']
-		player = atmosphere.layer['pressure']
+		print(tlayer)
+		player = atmosphere.layer['pressure']/atmosphere.c.pconv
+		print(player)
 		molecules = atmosphere.molecules
 		cia_molecules = atmosphere.continuum_molecules
 
@@ -691,10 +693,10 @@ class RetrieveOpacities():
 
 		#this will make getting opacities faster 
 		#this is getting the ptid corresponding to the pairs
+
 		ind_pt=[min(self.pt_pairs, 
 			key=lambda c: math.hypot(c[1]- coordinate[0], c[2]-coordinate[1]))[0] 
 				for coordinate in  zip(player,tlayer)]
-
 		#query molecular opacities from sqlite3
 		if len(molecules) ==1: 
 			query_mol = """WHERE molecule= '{}' """.format(str(molecules[0]))

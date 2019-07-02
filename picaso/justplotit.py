@@ -519,7 +519,7 @@ def spectrum_hires(wno, alb,legend=None, **kwargs):
 	kwargs['y_range'] = kwargs.get('y_range',[0,1.2])
 	kwargs['x_range'] = kwargs.get('x_range',[0.3,1])
 
-	points_og = hv.Curve((1e4/w, alb))
+	points_og = datashade(hv.Curve((1e4/wno, alb)))
 
 	return points_og
 
