@@ -3,11 +3,10 @@ from .disco import get_angles, compute_disco
 import pandas as pd
 import numpy as np
 from scipy.spatial import cKDTree
-from .justdoit import 
 import astropy.units as u
 def rebin_mitgcm(ng, nt, phase_angle, input_file, output_file,p_unit='Pa', run_chem=False, MH=None, CtoO=None):
 	"""
-	Rebin GCM grid to a smaller grid. 
+	Rebin GCM grid to a smaller grid. Function does not yet work!! 
 
 	Parameters 
 	----------
@@ -27,6 +26,10 @@ def rebin_mitgcm(ng, nt, phase_angle, input_file, output_file,p_unit='Pa', run_c
 		Pressure Unit (default Pascal)
 	run_chem : bool 
 		(Optional) runs chemistry and adds to json file
+
+	TO DO
+	-----
+	- add run chemistry to get 3d chem
 	"""	
 
 	gangle,gweight,tangle,tweight = get_angles(ng,nt)
@@ -110,8 +113,6 @@ def rebin_mitgcm(ng, nt, phase_angle, input_file, output_file,p_unit='Pa', run_c
 		df[lat2d[ilat]][lon2d[ipos]] = data
 
 	df['phase_angle'] = phase_angle
-
-	#pk.dump('')
 
 def make_3d_pt_input(ng,nt,phase_angle,input_file,output_file,**kwargs):
 	"""
