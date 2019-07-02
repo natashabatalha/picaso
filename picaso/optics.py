@@ -681,9 +681,7 @@ class RetrieveOpacities():
 
 		nlayer =atmosphere.c.nlayer
 		tlayer =atmosphere.layer['temperature']
-		print(tlayer)
 		player = atmosphere.layer['pressure']/atmosphere.c.pconv
-		print(player)
 		molecules = atmosphere.molecules
 		cia_molecules = atmosphere.continuum_molecules
 
