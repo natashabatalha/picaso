@@ -377,7 +377,7 @@ class inputs():
 			flux_star = sp.flux[::-1]*1e8	 #flip here and convert to ergs/cm3/s to get correct order
 
 		#but you can also upload a stellar spec of your own 
-		elif (not isinstance(filename),type(none)):
+		elif (not isinstance(filename,type(None))):
 			star = np.genfromtxt(filename, dtype=(float, float), names='w, f')
 			flux = star['f']
 			wave = star['w']

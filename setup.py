@@ -62,7 +62,10 @@ setup(
   install_requires=[
           'numpy',
           'bokeh',
+          'holoviews',
+          'numba',
           'pandas',
+          'h5py',
           'joblib',
           'photutils',
           'astropy',
