@@ -243,7 +243,6 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 		atmosphere.taugas = TAUGAS
 		atmosphere.tauray = TAURAY
 		atmosphere.taucld = TAUCLD
-		atmosphere.wavenumber = opacityclass.wno
 
 	#====================== ADD EVERYTHING TOGETHER PER LAYER======================	
 	#formerly DTAU
@@ -672,16 +671,22 @@ class RetrieveOpacities():
 
 		conn.close()
 
-	def get_opacities(self,atmosphere):
+	def get_opacities(self,atmosphere, dimension='1d'):
 		"""
 		Get's opacities using the atmosphere class
 		"""
 		#open connection 
 		cur, conn = self.db_connect()
-
+		
+		#if dimension=='1d':
 		nlayer =atmosphere.c.nlayer
 		tlayer =atmosphere.layer['temperature']
 		player = atmosphere.layer['pressure']/atmosphere.c.pconv
+		#elif dimension=='3d':
+		#	nlayer =atmosphere.c.nlayer
+		#	tlayer =atmosphere.layer['temperature'].ravel()
+		#	player = (atmosphere.layer['pressure']/atmosphere.c.pconv).ravel()
+
 		molecules = atmosphere.molecules
 		cia_molecules = atmosphere.continuum_molecules
 

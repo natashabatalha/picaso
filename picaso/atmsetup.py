@@ -175,10 +175,10 @@ class ATMSETUP():
 		#get chemistry input from configuration
 		#SET DIMENSIONALITY
 		self.dimension = '3d'
-		latitude, longitude = self.latitude, self.longitude
+		latitude, longitude = self.latitude*180/np.pi, self.longitude*180/np.pi
 		read_3d = self.input['atmosphere']['profile'] #huge dictionary with [lat][lon][bundle]
 
-		self.c.nlevel = read_3d[latitude[0]][longitude[0]].shape[0]
+		self.c.nlevel = read_3d[int(latitude[0])][int(longitude[0])].shape[0]
 		self.c.nlayer = self.c.nlevel - 1  
 		ng , nt = self.c.ngangle, self.c.ntangle
 
@@ -201,7 +201,7 @@ class ATMSETUP():
 		electrons = False
 		for g in range(ng):
 			for t in range(nt):
-				read = read_3d[latitude[t]][longitude[g]].sort_values('pressure').reset_index(drop=True)
+				read = read_3d[int(latitude[t])][int(longitude[g])].sort_values('pressure').reset_index(drop=True)
 
 				#on the first pass look through all the molecules, parse out the electrons and 
 				#add warnings for molecules that aren't recognized
@@ -435,9 +435,9 @@ class ATMSETUP():
 
 		2) Be white space delimeted 
 
-		3) Has to have values for pressure levels (N) and wavelengths (M). The row order should go:
+		3) Has to have values for pressure levels (N) and wwavenumbers (M). The row order should go:
 
-		level wave opd w0 g0
+		level wavenumber opd w0 g0
 		1.	 1.   ... . .
 		1.	 2.   ... . .
 		1.	 3.   ... . .
@@ -502,7 +502,7 @@ class ATMSETUP():
 		#3D with clouds
 		elif ((self.dimension=='3d') & (not isinstance(self.input_wno, type(None)))):
 			self.c.input_npts_wave = len(self.input_wno)
-			
+			latitude, longitude = self.latitude*180/np.pi, self.longitude*180/np.pi
 			cld_input = self.input['clouds']['profile'] 
 
 			opd = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle))
@@ -513,7 +513,7 @@ class ATMSETUP():
 			for g in range(self.c.ngangle):
 				for t in range(self.c.ntangle):
 
-					data = cld_input[latitude[t]][longitude[t]]
+					data = cld_input[int(latitude[t])][int(longitude[g])]
 
 					#make sure cloud input has the correct number of waves and PT points
 					assert data.shape[0] == self.c.nlayer*self.c.input_npts_wave, "Cloud input file is not on the same grid as the input PT/Angles profile:"
@@ -540,6 +540,7 @@ class ATMSETUP():
 			raise Exception("CLD input not recognized. Either input a filepath, or input None")
 
 		return
+
 
 
 	def add_warnings(self, warn):

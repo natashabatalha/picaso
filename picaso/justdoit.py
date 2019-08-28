@@ -15,6 +15,7 @@ import json
 import pysynphot as psyn
 import astropy.units as u
 import astropy.constants as c
+import warnings
 __refdata__ = os.environ.get('picaso_refdata')
 
 def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_output=False, plot_opacity= False):
@@ -47,13 +48,13 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 	#check to see if we are running in test mode
 	test_mode = inputs['test_mode']
 
+	############# DEFINE ALL APPROXIMATIONS USED IN CALCULATION #############
+	#see class `inputs` attribute `approx`
+
 	#set approx numbers options (to be used in numba compiled functions)
 	single_phase = inputs['approx']['single_phase']
 	multi_phase = inputs['approx']['multi_phase']
 	raman_approx =inputs['approx']['raman']
-
-	#phase angle 
-	phase_angle = inputs['phase_angle']
 
 	#parameters needed for the two term hg phase function. 
 	#Defaults are set in config.json
@@ -64,28 +65,31 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 	constant_back = inputs['approx']['TTHG_params']['constant_back']
 	constant_forward = inputs['approx']['TTHG_params']['constant_forward']
 
+	#define delta eddington approximinations 
+	delta_eddington = inputs['approx']['delta_eddington']
+
+	############# DEFINE ALL GEOMETRY USED IN CALCULATION #############
+	#see class `inputs` attribute `phase_angle`
+	
+
+	#phase angle 
+	phase_angle = inputs['phase_angle']
 	#get geometry
-	ng = inputs['disco']['num_gangle']
-	nt = inputs['disco']['num_tangle']
+	geom = inputs['disco']
 
-	gangle,gweight,tangle,tweight = get_angles(ng, nt) 
-	#planet disk is divided into gaussian and chebyshev angles and weights for perfoming the 
-	#intensity as a function of planetary pahse angle 
-	ubar0, ubar1, cos_theta,lat,lon = compute_disco(ng, nt, gangle, tangle, phase_angle)
-
-	inputs['disco']['latitude'] = lat
-	inputs['disco']['longitude'] = lon
+	ng, nt = geom['num_gangle'], geom['num_tangle']
+	gangle,gweight,tangle,tweight = geom['gangle'], geom['gweight'],geom['tangle'], geom['tweight']
+	lat, lon = geom['latitude'], geom['longitude']  
+	cos_theta = geom['cos_theta']
+	ubar0, ubar1 = geom['ubar0'], geom['ubar1']
 
 	#set star 
 	radius_star = inputs['star']['radius']
 	F0PI = np.zeros(nwno) + 1.0 
 
-	#define approximinations 
-	delta_eddington = inputs['approx']['delta_eddington']
-
 	#begin atm setup
 	atm = ATMSETUP(inputs)
-
+	atm.wavenumber = wno
 	################ From here on out is everything that would go through retrieval or 3d input##############
 	atm.planet.gravity = inputs['planet']['gravity']
 	atm.planet.radius = inputs['planet']['radius']
@@ -104,6 +108,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
 	#get cloud properties, if there are any and put it on current grid 
 	atm.get_clouds(wno)
+
 
 	#determine surface reflectivity as function of wavelength (set to zero here)
 	#TODO: Should be an input
@@ -162,6 +167,12 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 		W0_OG_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
 		COSB_OG_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
 
+		#if users want to retain all the individual opacity info they can here 
+		if full_output:
+			TAUGAS_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
+			TAUCLD_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
+			TAURAY_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))	
+
 		#get opacities at each facet
 		for g in range(ng):
 			for t in range(nt): 
@@ -175,7 +186,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 				opacityclass.get_opacities(atm_1d)
 
 				dtau, tau, w0, cosb,ftau_cld, ftau_ray, gcos2, DTAU_OG, TAU_OG, W0_OG, COSB_OG = compute_opacity(
-					atm_1d, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx)
+					atm_1d, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx, full_output=full_output)
 				DTAU_3d[:,:,g,t] = dtau
 				TAU_3d[:,:,g,t] = tau
 				W0_3d[:,:,g,t] = w0 
@@ -188,6 +199,17 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 				DTAU_OG_3d[:,:,g,t] = DTAU_OG
 				W0_OG_3d[:,:,g,t] = W0_OG
 				COSB_OG_3d[:,:,g,t] = COSB_OG
+
+				if full_output:
+					TAUGAS_3d[:,:,g,t] = atm_1d.taugas
+					TAUCLD_3d[:,:,g,t] = atm_1d.taucld
+					TAURAY_3d[:,:,g,t] = atm_1d.tauray
+
+		if full_output:
+			atm.taugas = TAUGAS_3d
+			atm.taucld = TAUCLD_3d
+			atm.tauray = TAURAY_3d
+
 		#use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
 		xint_at_top  = get_reflected_3d(atm.c.nlevel, wno,nwno,ng,nt,
 											DTAU_3d, TAU_3d, W0_3d, COSB_3d,GCOS2_3d, FTAU_CLD_3d,FTAU_RAY_3d,
@@ -216,8 +238,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 		#add full solution and latitude and longitudes to the full output
 		#atm.flux_at_top = flux_at_top
 		atm.xint_at_top = xint_at_top
-		atm.latitude = lat
-		atm.longitude = lon
+
 		return wno, albedo , atm.as_dict()
 	else: 
 		return returns
@@ -277,6 +298,8 @@ class inputs():
 
 	def phase_angle(self, phase=0,num_gangle=10, num_tangle=10):
 		"""Define phase angle and number of gauss and tchebychev angles to compute. 
+		Controls all geometry of the calculation. Computes latitude and longitudes. 
+		Computes cos theta and incoming and outgoing angles. Adds everything to class. 
 		
 		phase : float,int
 			Phase angle in radians 
@@ -288,12 +311,28 @@ class inputs():
 		"""
 		if (num_gangle < 2 ) or (num_tangle < 2 ): raise Exception("length of gangle and tangle must be > than 2")
 		self.inputs['phase_angle'] = phase
-		self.inputs['disco']['num_gangle'] = int(num_gangle)
-		self.inputs['disco']['num_tangle'] = int(num_tangle)
+		ng = int(num_gangle)
+		nt = int(num_tangle)
 
-	def gravity(self, gravity=None, gravity_unit=None, 
-		              radius=None, radius_unit=None, 
-		              mass = None, mass_unit=None):
+		gangle,gweight,tangle,tweight = get_angles(ng, nt) 
+
+		geom={}
+
+		#planet disk is divided into gaussian and chebyshev angles and weights for perfoming the 
+		#intensity as a function of planetary pahse angle 
+		ubar0, ubar1, cos_theta,lat,lon = compute_disco(ng, nt, gangle, tangle, phase)
+
+		#build dictionary
+		geom['num_gangle'], geom['num_tangle'] = ng, nt 
+		geom['gangle'], geom['gweight'],geom['tangle'], geom['tweight'] = gangle,gweight,tangle,tweight
+		geom['latitude'], geom['longitude']  = lat, lon 
+		geom['cos_theta'] = cos_theta 
+		geom['ubar0'], geom['ubar1'] = ubar0, ubar1 
+
+		#add everything to disco
+		self.inputs['disco'] = geom
+
+	def gravity(self, gravity=None, gravity_unit=None, radius=None, radius_unit=None, mass = None, mass_unit=None):
 		"""
 		Get gravity based on mass and radius, or gravity inputs 
 
@@ -597,59 +636,85 @@ class inputs():
 		# Return TP profile
 		return self.inputs['atmosphere']['profile'] 
 
-	def atmosphere_3d(self, dictionary=None, filename=None, exclude_mol=None, **pd_kwargs):
+	def atmosphere_3d(self, dictionary=None, filename=None):
 		"""
 		Builds a dataframe and makes sure that minimum necessary parameters have been suplied. 
 
 		Parameters
 		----------
-		df : pandas.DataFrame
+		df : dict
 			(Optional) Dataframe with volume mixing ratios and pressure, temperature profile. 
-			Must contain pressure (bars) at least one molecule
+			Must contain pressure (bars) and at least one molecule
 		filename : str 
 			(Optional) Pickle filename that is a dictionary structured: 
-			dictionary[float(lat)][float(lon)] = pd.DataFrame({'pressure':[], 'temperature': [],
+			dictionary[int(lat) in degrees][int(lon) in degrees] = pd.DataFrame({'pressure':[], 'temperature': [],
 			'H2O':[]....}). As well as df['phase_angle'] = 0 (in radians).
-			Therefore, the latitude and longitude keys should be floats, any other meta data 
-			should be  represented by a string.
-			Must contain pressure at least one molecule
-		exclude_mol : list of str 
-			(Optional) List of molecules to ignore from file
-		pd_kwargs : kwargs 
-			Key word arguments for pd.read_csv to read in supplied atmosphere file 
+			Therefore, the latitude and longitude keys should be INTEGERS taken from the lat/longs calculated in 
+			inputs.phase_angle! Any other meta data should be  represented by a string.
+			Must contain pressure and at least one molecule
+
+		Examples
+		--------
+
+		>>import picaso.justdoit as jdi
+		>>new = jdi.inputs()
+		>>new.phase_angle(0) #loads the geometry you need to get your 3d model on
+		>>lats, lons = int(new.inputs['disco']['latitude']*180/np.pi), int(new.inputs['disco']['longitude']*180/np.pi)
+
+		Build an empty dictionary to be filled later 
+
+		>>dict_3d = {la: {lo : for lo in lons} for la in lats} #build empty one 
+		
+		Now you need to bin your GCM output on this grid and fill the dictionary with the necessary dataframes. For example:
+		
+		>>dict_3d[lats[0]][lons[0]] = pd.DataFrame({'pressure':[], 'temperature': [],'H2O':[]})
+
+		Once this is filled you can add it to this function 
+
+		>>new.atmosphere_3d(dictionary=dict_3d)
 		"""
-		if not isinstance(dictionary, type(None)):
 
-			if (not isinstance(dictionary, dict )): 
-				raise Exception("df must be pandas DataFrame or dictionary")
-			else:
-				self.nlevel=df.shape[0] 
+		if (isinstance(dictionary, dict) and isinstance(filename, type(None))):
+			df3d = dictionary
 
-		elif not isinstance(filename, type(None)):
+		elif (isinstance(dictionary, type(None)) and isinstance(filename, str)):
 			df3d = pk.load(open(filename,'rb'))
+		else:
+			raise Exception("Please input either a dict using dictionary or a str using filename")
 
-		df3d_phase = 	df3d['phase_angle']
-
-		lats = list(i for i in df3d.keys() if isinstance(i,float))
+		#get lats and lons out of dictionary and puts them in reverse 
+		#order so that they match what comes out of disco calcualtion
+		lats = np.sort(list(i for i in df3d.keys() if isinstance(i,int))) #latitude is positive to negative 
+		lons = np.sort(list(i for i in df3d[lats[0]].keys() if isinstance(i,int))) #longitude is negative to positive 
+		#check they are about the same as the ones computed in phase angle 
 		df3d_nt = len(lats)
 		df3d_ng =  len(df3d[lats[0]].keys())
-		np.testing.assert_almost_equal(self.inputs['phase_angle'] ,df3d_phase, decimal=1,err_msg='Phase Angles not the same as 3d input file', verbose=True)
-		assert self.inputs['disco']['num_gangle'] == int(df3d_nt), 'Number of gauss angles does not match creation of 3d input file'
-		assert self.inputs['disco']['num_tangle']  == int(df3d_ng), 'Number of Tchebyshev angles does not match creation of 3d input file'
 
+		assert self.inputs['disco']['num_gangle'] == int(df3d_nt), 'Number of gauss angles input does not match creation of 3d input file. Check function `inputs.phase_angle()`. num_gangle=10 is set by default and you may have to change it.'
+		assert self.inputs['disco']['num_tangle']  == int(df3d_ng), 'Number of Tchebyshev angles does not match creation of 3d input file.  Check function `inputs.phase_angle()`.  num_tangle=10 is set by default and you may have to change it.'
+		
+		self.nlevel=df3d[lats[0]][lons[0]].shape[0]
+
+		#now check that the lats and longs are about the same
+		for ilat ,nlat in  zip(np.sort(self.inputs['disco']['latitude']*180/np.pi), lats): 
+			np.testing.assert_almost_equal(int(ilat) ,nlat, decimal=0,err_msg='Latitudes from dictionary(units degrees) are not the same as latitudes computed in inputs.phase_angle', verbose=True)
+
+		for ilon ,nlon in  zip(np.sort(self.inputs['disco']['longitude']*180/np.pi), lons): 
+			np.testing.assert_almost_equal(int(ilon) ,nlon , decimal=0,err_msg='Longitudes from dictionary(units degrees) are not the same as longitudes computed in inputs.phase_angle', verbose=True)
+		
 		self.inputs['atmosphere']['profile'] = df3d
 		
-		return
-
 	def clouds(self, filename = None, g0=None, w0=None, opd=None,p=None, dp=None,df =None,**pd_kwargs):
 		"""
 		Cloud specification for the model. Clouds are parameterized by a single scattering albedo (w0), 
 		an assymetry parameter (g0), and a total extinction per layer (opd).
 
 		g0,w0, and opd are both wavelength and pressure dependent. Our cloud models come 
-		from eddysed. Their output looks like this (where level 1=TOA, and wavenumber1=Smallest number)
+		from eddysed. Their output look something like this where 
+		pressure is in bars and wavenumber is inverse cm. We will sort pressure and wavenumber before we reshape
+		so the exact order doesn't matter
 
-		level wavenumber opd w0 g0
+		pressure wavenumber opd w0 g0
 		1.	 1.   ... . .
 		1.	 2.   ... . .
 		1.	 3.   ... . .
@@ -713,7 +778,7 @@ class inputs():
 
 			#if it's a user specified pressure and wavenumber
 			if (('pressure' in cols) & ('wavenumber' in cols)):
-				df = df.sort_values(['wavenumber','pressure']).reset_index(drop=True)
+				df = df.sort_values(['pressure', 'wavenumber']).reset_index(drop=True)
 				self.inputs['clouds']['wavenumber'] = df['wavenumber'].unique()
 				nwave = len(self.inputs['clouds']['wavenumber'])
 				nlayer = len(df['pressure'].unique())
@@ -762,6 +827,115 @@ class inputs():
 				df.loc[((df['pressure'] >= minp) & (df['pressure'] <= maxp)),'opd']= io
 
 			self.inputs['clouds']['profile'] = df
+
+
+	def clouds_3d(self, filename = None, dictionary =None):
+		"""
+		Cloud specification for the model. Clouds are parameterized by a single scattering albedo (w0), 
+		an assymetry parameter (g0), and a total extinction per layer (opd).
+
+		g0,w0, and opd are both wavelength and pressure dependent. Our cloud models come 
+		from eddysed. Their output looks like this (where level 1=TOA, and wavenumber1=Smallest number)
+
+		level wavenumber opd w0 g0
+		1.	 1.   ... . .
+		1.	 2.   ... . .
+		1.	 3.   ... . .
+		.	  .	... . .
+		.	  .	... . .
+		1.	 M.   ... . .
+		2.	 1.   ... . .
+		.	  .	... . .
+		N.	 .	... . .
+
+		If you are creating your own file you have to make sure that you have a 
+		**pressure** (bars) and **wavenumber**(inverse cm) column. We will use this to make sure that your cloud 
+		and atmospheric profiles are on the same grid. **If there is no pressure or wavelength parameter
+		we will assume that you are on the same grid as your atmospheric input, and on the 
+		eddysed wavelength grid! **
+
+		Users can also input their own fixed cloud parameters, by specifying a single value 
+		for g0,w0,opd and defining the thickness and location of the cloud. 
+
+		Parameters
+		----------
+		filename : str 
+			(Optional) Filename with info on the wavelength and pressure-dependent single scattering
+			albedo, asymmetry factor, and total extinction per layer. Input associated pd_kwargs 
+			so that the resultant output has columns named : `g0`, `w0` and `opd`. If you are not 
+			using the eddysed output, you will also need a `wavenumber` and `pressure` column in units 
+			of inverse cm, and bars. 
+		dictionary : dict
+			(Optional) Same as what would be included in the file, but in dict form
+
+		Examples
+		--------
+
+		>>import picaso.justdoit as jdi
+		>>new = jdi.inputs()
+		>>new.phase_angle(0) #loads the geometry you need to get your 3d model on
+		>>lats, lons = int(new.inputs['disco']['latitude']*180/np.pi), int(new.inputs['disco']['longitude']*180/np.pi)
+
+		Build an empty dictionary to be filled later 
+
+		>>dict_3d = {la: {lo : for lo in lons} for la in lats} #build empty one 
+		
+		Now you need to bin your 3D clouds GCM output on this grid and fill the dictionary with the necessary dataframes. For example:
+		
+		>>dict_3d[lats[0]][lons[0]] = pd.DataFrame({'pressure':[], 'temperature': [],'H2O':[]})
+
+		Once this is filled you can add it to this function 
+
+		>>new.clouds_3d(dictionary=dict_3d)
+		"""
+
+		#first complete options if user inputs dataframe or dict 
+		if (isinstance(filename, str) & isinstance(dictionary, type(None))): 
+			df = pk.load(open(filename,'rb'))
+		elif (isinstance(filename, type(None)) & isinstance(dictionary, dict)):
+			df = dictionary
+		else: 
+			raise Exception("Input must be a filename or a dictionary")
+
+		cols = df[list(df.keys())[0]][list(df[list(df.keys())[0]].keys())[0]].keys()
+
+		assert 'g0' in cols, "Please make sure g0 is a named column in cld file"
+		assert 'w0' in cols, "Please make sure w0 is a named column in cld file"
+		assert 'opd' in cols, "Please make sure opd is a named column in cld file"
+		#again, check lat and lon in comparison to the computed ones 
+		#get lats and lons out of dictionary 
+		lats = np.sort(list(i for i in df.keys() if isinstance(i,int)))
+		lons = np.sort(list(i for i in df[lats[0]].keys() if isinstance(i,int)))	
+				
+		for ilat ,nlat in  zip(np.sort(self.inputs['disco']['latitude']*180/np.pi), lats): 
+			np.testing.assert_almost_equal(int(ilat) ,nlat, decimal=0,err_msg='Latitudes from dictionary(units degrees) are not the same as latitudes computed in inputs.phase_angle', verbose=True)
+			
+		for ilon ,nlon in  zip(np.sort(self.inputs['disco']['longitude']*180/np.pi), lons): 
+			np.testing.assert_almost_equal(int(ilon) ,nlon , decimal=0,err_msg='Latitudes from dictionary(units degrees) are not the same as latitudes computed in inputs.phase_angle', verbose=True)
+
+		#CHECK SIZES
+		#if it's a user specified pressure and wavenumber
+		if (('pressure' in cols) & ('wavenumber' in cols)):
+			for i in df.keys():
+				#loop through different lat and longs and make sure that each one of them is ordered correct 
+				for j in df[i].keys():
+					df[i][j] = df[i][j].sort_values(['pressure', 'wavenumber']).reset_index(drop=True)
+					self.inputs['clouds']['wavenumber'] = df[i][j]['wavenumber'].unique()
+					nwave = len(self.inputs['clouds']['wavenumber'])
+					nlayer = len(df[i][j]['pressure'].unique())
+					assert df[i][j].shape[0] == (self.nlevel-1)*nwave, "There are {0} rows in the df, which does not equal {1} layers previously specified x {2} wave pts".format(df[i][j].shape[0], self.nlevel-1, nwave) 
+				
+		#if its eddysed, make sure there are 196 wave points 
+		#this does not reorder so it assumes that 
+		else: 
+			shape = df[list(df.keys())[0]][list(df[list(df.keys())[0]].keys())[0]].shape[0]
+			assert shape == (self.nlevel-1)*196, "There are {0} rows in the df, which does not equal {1} layers x 196 eddysed wave pts".format(shape, self.nlevel-1) 
+			
+			#get wavelength grid from ackerman code
+			self.inputs['clouds']['wavenumber'] = get_cld_input_grid('wave_EGP.dat')
+
+			#add it to input
+		self.inputs['clouds']['profile'] = df
 
 	def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,raman='oklopcic',
 				tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1):
