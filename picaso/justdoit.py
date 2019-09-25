@@ -354,7 +354,7 @@ class inputs():
 		if (mass is not None) and (radius is not None):
 			m = (mass*mass_unit).to(u.g)
 			r = (radius*radius_unit).to(u.cm)
-			g = (c.G * m /  (r**2)).value
+			g = (c.G.cgs * m /  (r**2)).value
 			self.inputs['planet']['radius'] = r.value
 			self.inputs['planet']['radius_unit'] = 'cm'
 			self.inputs['planet']['mass'] = m.value
