@@ -937,10 +937,10 @@ def blackbody(t,w):
 
 	return ((2.0*h*c**2.0)/(w**5.0))*(1.0/(exp((h*c)/outer(t, w*k)) - 1.0))
 
-@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)
 def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1):
 	
-	nlayer = nlevel -1 #nlayers 
+	nlayer = nlevel - 1 #nlayers 
 
 	mu1 = 0.5 #from Table 1 Toon  
 	twopi = pi+pi
@@ -955,7 +955,6 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 	lamda = alpha*(1.-w0*cosb)/mu1 #eqn 21 toon
 	gama = (1.-alpha)/(1.+alpha) #eqn 22 toon
 	g1_plus_g2 = mu1/(1.-w0*cosb) #effectively 1/(gamma1 + gamma2) .. second half of eqn.27
-
 
 	#same as with reflected light, compute c_plus and c_minus 
 	#these are eqns 27a & b in Toon89
@@ -1001,10 +1000,10 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
 	#calculate everyting from Table 3 toon
 	alphax = ((1.0-w0)/(1.0-w0*cosb))**0.5
-	G = twopi*w0*positive*(1.0+cosb*alphax)/(1.0+alphax)
-	H = twopi*w0*negative*(1.0-cosb*alphax)/(1.0+alphax)
-	J = twopi*w0*positive*(1.0-cosb*alphax)/(1.0+alphax)
-	K = twopi*w0*negative*(1.0+cosb*alphax)/(1.0+alphax)
+	G = twopi*w0*positive*(1.0+cosb*alphax)/(1.0+alphax)#
+	H = twopi*w0*negative*(1.0-cosb*alphax)/(1.0+alphax)#
+	J = twopi*w0*positive*(1.0-cosb*alphax)/(1.0+alphax)#
+	K = twopi*w0*negative*(1.0+cosb*alphax)/(1.0+alphax)#
 	alpha1 = twopi*(b0+ b1*(mu1*w0*cosb/(1.0-w0*cosb)))
 	alpha2 = twopi*b1
 	sigma1 = twopi*(b0- b1*(mu1*w0*cosb/(1.0-w0*cosb)))
@@ -1034,17 +1033,17 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 			for itop in range(nlayer):
 
 				#disbanning this for now because we dont need it in the thermal emission code
-				#flux_minus[itop+1,:]=(flux_minus[itop,:]*exptrm_angle[itop,:]+
-				#	                 (J[itop,:]/(lamda[itop,:]*ubar1[ng,nt]+1.0))*(exptrm_positive[itop,:]-exptrm_angle[itop,:])+
-				#	                 (K[itop,:]/(lamda[itop,:]*ubar1[ng,nt]-1.0))*(exptrm_angle[itop,:]-exptrm_minus[itop,:])+
-				#	                 sigma1[itop,:]*(1.-exptrm_angle[itop,:])+
-				#	                 sigma2[itop,:]*(ubar1[ng,nt]*exptrm_angle[itop,:]+dtau[itop,:]-ubar1[ng,nt]) )
+				flux_minus[itop+1,:]=(flux_minus[itop,:]*exptrm_angle[itop,:]+
+					                 (J[itop,:]/(lamda[itop,:]*ubar1[ng,nt]+1.0))*(exptrm_positive[itop,:]-exptrm_angle[itop,:])+
+					                 (K[itop,:]/(lamda[itop,:]*ubar1[ng,nt]-1.0))*(exptrm_angle[itop,:]-exptrm_minus[itop,:])+
+					                 sigma1[itop,:]*(1.-exptrm_angle[itop,:])+
+					                 sigma2[itop,:]*(ubar1[ng,nt]*exptrm_angle[itop,:]+dtau[itop,:]-ubar1[ng,nt]) )
 
-				#flux_minus_mdpt[itop,:]=(flux_minus[itop,:]*exptrm_angle_mdpt[itop,:]+
-				#                        (J[itop,:]/(lamda[itop,:]*ubar1[ng,nt]+1.0))*(exptrm_positive_mdpt[itop,:]-exptrm_angle_mdpt[itop,:])+
-				#                        (K[itop,:]/(-lamda[itop,:]*ubar1[ng,nt]+1.0))*(exptrm_minus_mdpt[itop,:]-exptrm_angle_mdpt[itop,:])+
-				#                        sigma1[itop,:]*(1.-exptrm_angle_mdpt[itop,:])+
-				#                        sigma2[itop,:]*(ubar1[ng,nt]*exptrm_angle_mdpt[itop,:]+0.5*dtau[itop,:]-ubar1[ng,nt]))
+				flux_minus_mdpt[itop,:]=(flux_minus[itop,:]*exptrm_angle_mdpt[itop,:]+
+				                        (J[itop,:]/(lamda[itop,:]*ubar1[ng,nt]+1.0))*(exptrm_positive_mdpt[itop,:]-exptrm_angle_mdpt[itop,:])+
+				                        (K[itop,:]/(-lamda[itop,:]*ubar1[ng,nt]+1.0))*(exptrm_minus_mdpt[itop,:]-exptrm_angle_mdpt[itop,:])+
+				                        sigma1[itop,:]*(1.-exptrm_angle_mdpt[itop,:])+
+				                        sigma2[itop,:]*(ubar1[ng,nt]*exptrm_angle_mdpt[itop,:]+0.5*dtau[itop,:]-ubar1[ng,nt]))
 
 				ibot=nlayer-1-itop
 
@@ -1065,6 +1064,6 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 		
 		#for testing purposes
 		#import pickle as pk
-		#pk.dump([flux_at_top, flux_down, flux_minus, flux_minus_mdpt, flux_plus, flux_plus_mdpt], open('/Users/natashabatalha/Documents/PICASO/test/thermal/debugthermal.pk','wb'))
+		#pk.dump([flux_at_top, flux_down, flux_minus, flux_minus_mdpt, flux_plus, flux_plus_mdpt], open('/Users/nbatalh1/Documents/codes/PICASO/test/thermal/debugthermal.pk','wb'))
 
 	return flux_at_top #, flux_down# numg x numt x nwno

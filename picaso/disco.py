@@ -117,5 +117,5 @@ def compress_thermal(nwno, ubar1, flux_at_top, gweight, tweight):
 	"""
 	flux=zeros(nwno)
 	for w in range(nwno):
-		flux[w] = 0.5 * sum((ubar1*flux_at_top[:,:,w]*tweight).T*gweight)
+		flux[w] =  0.5*sum((ubar1*flux_at_top[:,:,w]*tweight).T*gweight)
 	return flux

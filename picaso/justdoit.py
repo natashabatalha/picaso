@@ -79,7 +79,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
 	ng, nt = geom['num_gangle'], geom['num_tangle']
 	gangle,gweight,tangle,tweight = geom['gangle'], geom['gweight'],geom['tangle'], geom['tweight']
-	lat, lon = geom['latitude'], geom['longitude']  
+	lat, lon = geom['latitude'], geom['longitude']
 	cos_theta = geom['cos_theta']
 	ubar0, ubar1 = geom['ubar0'], geom['ubar1']
 
@@ -129,7 +129,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 		#There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
 		#We use HG function for single scattering which gets the forward scattering/back scattering peaks 
 		#well. We only really want to use delta-edd for multi scattering legendre polynomials. 
-		DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG= compute_opacity(
+		DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman= compute_opacity(
 			atm, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
 			full_output=full_output, plot_opacity=plot_opacity)
 
@@ -142,14 +142,25 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 													single_phase,multi_phase,
 													frac_a,frac_b,frac_c,constant_back,constant_forward)
 
+			#if full output is requested add in xint at top for 3d plots
+			if full_output: 
+				atm.xint_at_top = xint_at_top
+
 		if 'thermal' in calculation:
 			#use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-			ng_therm = 8 #this is always 8 because in 1d we don't care where the flux is coming from 
-			nt_therm = 2 #ditto
+			ng_therm = ng#8 #this is always 8 because in 1d we don't care where the flux is coming from 
+			nt_therm = nt#2 #ditto
 			gangle_therm,gweight_therm,tangle_therm,tweight_therm = get_angles(ng_therm, nt_therm) 
 			j, ubar1_therm, j,j,j = compute_disco(ng_therm, nt_therm, gangle_therm, tangle_therm, phase_angle)
+			#(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1):
+			#remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
+			#the uncorrected raman single scattering 
 			flux_at_top  = get_thermal_1d(atm.c.nlevel, wno,nwno,ng_therm,nt_therm,atm.level['temperature'],
-													DTAU_OG, W0_OG, COSB_OG, atm.level['pressure'],ubar1_therm)
+													DTAU_OG, W0_no_raman, COSB_OG, atm.level['pressure'],ubar1_therm)
+
+			#if full output is requested add in flux at top for 3d plots
+			if full_output: 
+				atm.flux_at_top = flux_at_top
 			
 	elif dimension == '3d':
 
@@ -185,7 +196,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
 				opacityclass.get_opacities(atm_1d)
 
-				dtau, tau, w0, cosb,ftau_cld, ftau_ray, gcos2, DTAU_OG, TAU_OG, W0_OG, COSB_OG = compute_opacity(
+				dtau, tau, w0, cosb,ftau_cld, ftau_ray, gcos2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, WO_no_raman = compute_opacity(
 					atm_1d, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx, full_output=full_output)
 				DTAU_3d[:,:,g,t] = dtau
 				TAU_3d[:,:,g,t] = tau
@@ -218,30 +229,24 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 											single_phase,multi_phase,
 											frac_a,frac_b,frac_c,constant_back,constant_forward)
 
-	#now compress everything based on the weights 
-	if  ('reflected' in calculation) & ('thermal' not in calculation):
-		albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
-		returns = (wno, albedo)
+	#now compress everything based on the weights
+	returns = [wno] 
 
-	elif ('reflected' not in calculation) & ('thermal' in calculation):
+	if  ('reflected' in calculation):
+		albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
+		returns += [albedo]
+
+	if ('thermal' in calculation):
 		thermal = compress_thermal(nwno,ubar1_therm, flux_at_top, gweight_therm, tweight_therm)
 		fpfs_thermal = thermal/(opacityclass.unshifted_stellar_spec)*(atm.planet.radius/radius_star)**2.0
-		returns = wno,fpfs_thermal#,thermal
-
-	elif ('reflected' in calculation) & ('thermal' in calculation):
-		albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
-		thermal = compress_thermal(nwno,ubar1_therm, flux_at_top, gweight_therm, tweight_therm)
-		fpfs_thermal = thermal/(opacityclass.unshifted_stellar_spec)*(atm.planet.radius/radius_star)**2.0
-		returns = wno,albedo, fpfs_thermal#,thermal
+		returns += [fpfs_thermal,thermal]
+		if full_output: atm.thermal_flux_planet = thermal
 
 	if full_output:	
-		#add full solution and latitude and longitudes to the full output
-		#atm.flux_at_top = flux_at_top
-		atm.xint_at_top = xint_at_top
-
-		return wno, albedo , atm.as_dict()
+		returns += [atm.as_dict()]
+		return tuple(returns)
 	else: 
-		return returns
+		return tuple(returns)
 
 def opannection(filename_db = None, raman_db = None):
 	"""
@@ -305,9 +310,9 @@ class inputs():
 			Phase angle in radians 
 		num_gangle : int 
 			Number of Gauss angles to integrate over facets (Default is 10).
-			 Higher numbers will slow down code. 
+			Higher numbers will slow down code. 
 		num_tangle : int 
-			Number of Tchebyshev angles to integrate over facets (default is 10)
+			Number of Tchebyshev angles to integrate over facets (Default is 10)
 		"""
 		if (num_gangle < 2 ) or (num_tangle < 2 ): raise Exception("length of gangle and tangle must be > than 2")
 		self.inputs['phase_angle'] = phase
@@ -319,7 +324,7 @@ class inputs():
 		geom={}
 
 		#planet disk is divided into gaussian and chebyshev angles and weights for perfoming the 
-		#intensity as a function of planetary pahse angle 
+		#intensity as a function of planetary phase angle 
 		ubar0, ubar1, cos_theta,lat,lon = compute_disco(ng, nt, gangle, tangle, phase)
 
 		#build dictionary
@@ -536,9 +541,9 @@ class inputs():
 		T : array
 			Temperature (K)
 		CtoO : float
-			log C to O ratio (log solar = -0.26)
+			C to O ratio (log solar = -0.26)
 		Met : float 
-			log Metallicity relative to solar (solar = 0 (log10(1) ))
+			Metallicity relative to solar (solar = 0 (log10(1) ))
 		"""
 		 
 		P, T = self.inputs['atmosphere']['profile']['pressure'].values,self.inputs['atmosphere']['profile']['temperature'].values
@@ -547,10 +552,10 @@ class inputs():
 		T[T>2800] = 2800
 
 		logCtoO, logMet, Tarr, logParr, gases=self.chemeq_pic
-		assert Met < 10**np.max(logMet), 'Metallicity entered is higher than the max of the grid: M/H = '+ str(np.max(10**logMet))
-		assert CtoO < 10**np.max(logCtoO), 'C/O ratio entered is higher than the max of the grid: C/O = '+ str(np.max(10**logCtoO))
-		assert Met > 10**np.min(logMet), 'Metallicity entered is higher than the max of the grid: M/H = '+ str(np.min(10**logMet))
-		assert CtoO > 10**np.min(logCtoO), 'C/O ratio entered is higher than the max of the grid: C/O = '+ str(np.min(10**logCtoO))
+		assert Met <= 10**np.max(logMet), 'Metallicity entered is higher than the max of the grid: M/H = '+ str(np.max(10**logMet))+'. Make sure units are not in log. Solar M/H = 1.'
+		assert CtoO <= 10**np.max(logCtoO), 'C/O ratio entered is higher than the max of the grid: C/O = '+ str(np.max(10**logCtoO))+'. Make sure units are not in log. Solar C/O = 0.55'
+		assert Met >= 10**np.min(logMet), 'Metallicity entered is lower than the min of the grid: M/H = '+ str(np.min(10**logMet))+'. Make sure units are not in log. Solar M/H = 1.'
+		assert CtoO >= 10**np.min(logCtoO), 'C/O ratio entered is lower than the min of the grid: C/O = '+ str(np.min(10**logCtoO))+'. Make sure units are not in log. Solar C/O = 0.55'
 
 		loggas=np.log10(gases)
 		Ngas = loggas.shape[3]
@@ -990,12 +995,19 @@ class inputs():
 			full_output=full_output, plot_opacity=plot_opacity)
 
 
+
 def jupiter_pt():
 	"""Function to get Jupiter's PT profile"""
 	return os.path.join(__refdata__, 'base_cases','jupiter.pt')
 def jupiter_cld():
 	"""Function to get rough Jupiter Cloud model with fsed=3"""
 	return os.path.join(__refdata__, 'base_cases','jupiterf3.cld')
+def HJ_pt():
+	"""Function to get Jupiter's PT profile"""
+	return os.path.join(__refdata__, 'base_cases','HJ.pt')
+def HJ_cld():
+	"""Function to get rough Jupiter Cloud model with fsed=3"""
+	return os.path.join(__refdata__, 'base_cases','HJ.cld')
 def single_phase_options(printout=True):
 	"""Retrieve all the options for direct radation"""
 	if printout: print("Can also set functional form of forward/back scattering in approx['TTHG_params']")

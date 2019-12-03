@@ -141,7 +141,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 						   	(atm.layer['mmw']*atm.c.amu)) 	).T		 #nlayer)].T
 
 			TAUGAS += ADDTAU
-			if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
+			if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
 
 		#H- Free-Free
@@ -153,7 +153,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 						   	(tlayer*atm.layer['mmw']*atm.c.amu*atm.c.k_b)) 	).T			 #nlayer)].T
 			#testing['H-ff'] = ADDTAU
 			TAUGAS += ADDTAU
-			if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
+			if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
 
 		#H2- 
@@ -170,7 +170,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 
 
 			TAUGAS += ADDTAU
-			if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
+			if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
 		#everything else.. e.g. H2-H2, H2-CH4. Automatically determined by which molecules were requested
 		else:
@@ -182,7 +182,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 								atm.layer['mixingratios'][m[1]].values )  ).T 			#nlayer)].T
 
 			TAUGAS += ADDTAU
-			if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
+			if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
 		c+=1
 	
@@ -195,7 +195,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 					atm.layer['mmw']) ).T 
 		TAUGAS += ADDTAU
 		#testing[m] = ADDTAU
-		if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m, line_width=3, color=colors[c],
+		if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m, line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)
 		c+=1
 
@@ -208,7 +208,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 	TAURAY = rayleigh(atm.layer['colden'],ray_mixingratios, 
 					opacityclass.wave, atm.layer['mmw'],atm.c.amu )
 
-	if plot_opacity: opt_figure.line(1e4/opacityclass.wno, TAURAY[plot_layer,:], alpha=0.7,legend='Rayleigh', line_width=3, color=colors[c],
+	if plot_opacity: opt_figure.line(1e4/opacityclass.wno, TAURAY[plot_layer,:], alpha=0.7,legend_label='Rayleigh', line_width=3, color=colors[c],
 			muted_color=colors[c], muted_alpha=0.2)	
 
 
@@ -219,14 +219,14 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 		raman_factor = compute_raman(nwno, nlayer,opacityclass.wno, 
 			opacityclass.raman_stellar_shifts, tlayer, raman_db['c'].values,
 				raman_db['ji'].values, raman_db['deltanu'].values)
-		if plot_opacity: opt_figure.line(1e4/opacityclass.wno, raman_factor[plot_layer,:]*TAURAY[plot_layer,:], alpha=0.7,legend='Shifted Raman', line_width=3, color=colors[c],
+		if plot_opacity: opt_figure.line(1e4/opacityclass.wno, raman_factor[plot_layer,:]*TAURAY[plot_layer,:], alpha=0.7,legend_label='Shifted Raman', line_width=3, color=colors[c],
 				muted_color=colors[c], muted_alpha=0.2)
 		raman_factor = np.minimum(raman_factor, raman_factor*0+0.99999)
 	#POLLACK OPACITY
 	elif raman ==1: 
 		raman_factor = raman_pollack(nlayer)
 		raman_factor = np.minimum(raman_factor, raman_factor*0+0.99999)		
-		if plot_opacity: opt_figure.line(1e4/opacityclass.wno, raman_factor[plot_layer,:]*TAURAY[plot_layer,:], alpha=0.7,legend='Shifted Raman', line_width=3, color=colors[c],
+		if plot_opacity: opt_figure.line(1e4/opacityclass.wno, raman_factor[plot_layer,:]*TAURAY[plot_layer,:], alpha=0.7,legend_label='Shifted Raman', line_width=3, color=colors[c],
 				muted_color=colors[c], muted_alpha=0.2)
 	#NOTHING
 	else: 
@@ -235,7 +235,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 
 	#====================== ADD CLOUD OPACITY======================	
 	TAUCLD = atm.layer['cloud']['opd'] #TAUCLD is the total extinction from cloud = (abs + scattering)
-	asym_factor_cld = atm.layer['cloud']['g0'] 
+	asym_factor_cld = atm.layer['cloud']['g0']
 	single_scattering_cld = atm.layer['cloud']['w0'] 
 
 	#====================== If user requests full output, add Tau's to atmosphere class=====
@@ -260,7 +260,13 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 	ftau_ray = TAURAY/(TAURAY + TAUCLD)
 	GCOS2 = 0.5*ftau_ray #Hansen & Travis 1974 for Rayleigh scattering 
 
+	#Raman correction is usually used for reflected light calculations 
+	#although users to have option turn it off in reflected light as well 
 	W0 = (TAURAY*raman_factor + TAUCLD*single_scattering_cld) / (TAUGAS + TAURAY + TAUCLD) #TOTAL single scattering 
+
+	#if a user wants both reflected and thermal, this computes SSA without raman correction, but with 
+	#scattering from clouds still
+	W0_no_raman = (TAURAY*0.99999 + TAUCLD*single_scattering_cld) / (TAUGAS + TAURAY + TAUCLD) #TOTAL single scattering 
 
 	#sum up taus starting at the top, going to depth
 	shape = DTAU.shape
@@ -268,7 +274,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 	TAU[1:,:]=numba_cumsum(DTAU)
 
 	if plot_opacity:
-		opt_figure.line(1e4/opacityclass.wno, DTAU[int(np.size(tlayer)/2),:], legend='TOTAL', line_width=4, color=colors[0],
+		opt_figure.line(1e4/opacityclass.wno, DTAU[int(np.size(tlayer)/2),:], legend_label='TOTAL', line_width=4, color=colors[0],
 			muted_color=colors[c], muted_alpha=0.2)
 		opt_figure.legend.click_policy="mute"
 		show(opt_figure)
@@ -312,13 +318,15 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 		tau_dedd[1:,:]=numba_cumsum(dtau_dedd)
 	
 		#returning the terms used in 
-		return dtau_dedd, tau_dedd, w0_dedd, cosb_dedd ,ftau_cld, ftau_ray, GCOS2, \
-		       DTAU, TAU, W0, COSB #these are returned twice because we need the uncorrected 
-		       					   #values for single scattering terms where we use the TTHG phase function
+		return (dtau_dedd, tau_dedd, w0_dedd, cosb_dedd ,ftau_cld, ftau_ray, GCOS2, 
+				DTAU, TAU, W0, COSB,    #these are returned twice because we need the uncorrected 
+				W0_no_raman) 	        #values for single scattering terms where we use the TTHG phase function
+										# w0_no_raman is used in thermal calculations only
 
 	else: 
-		return DTAU, TAU, W0, COSB, ftau_cld, ftau_ray, GCOS2, \
-			   DTAU, TAU, W0, COSB  #these are returned twice for consistency with the delta-eddington option
+		return (DTAU, TAU, W0, COSB, ftau_cld, ftau_ray, GCOS2, 
+				DTAU, TAU, W0, COSB,  #these are returned twice for consistency with the delta-eddington option
+				W0_no_raman)		  #W0_no_raman is used for thermal calculations only 
 
 @jit(nopython=True, cache=True)
 def rayleigh(colden,gasmixing,wave,xmu,amu):

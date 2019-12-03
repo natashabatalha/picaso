@@ -17,6 +17,9 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 import holoviews as hv
 from holoviews.operation.datashader import datashade
+
+from .fluxes import blackbody
+
 hv.extension('bokeh')
 
 def mixing_ratio(full_output,**kwargs):
@@ -88,17 +91,19 @@ def pt(full_output,**kwargs):
 	plot_format(fig)
 	return fig
 
-def spectrum(wno, alb,legend=None, **kwargs):
+def spectrum(xarray, yarray,legend=None,wno_to_micron=True, **kwargs):
 	"""Plot formated albedo spectrum
 
 	Parameters
 	----------
-	wno : float array, list of arrays
-		wavenumber 
-	alb : float array, list of arrays 
-		albedo 
-	legend : list of str 
+	xarray : float array, list of arrays
+		wavenumber or micron 
+	yarray : float array, list of arrays 
+		albedo or fluxes 
+	legend : list of str , optional
 		legends for plotting 
+	wno_to_micron : bool , optional
+		Converts wavenumber to micron 
 	**kwargs : dict 	
 		Any key word argument for bokeh.plotting.figure()
 
@@ -106,22 +111,36 @@ def spectrum(wno, alb,legend=None, **kwargs):
 	-------
 	bokeh plot
 	"""
+	if wno_to_micron : 
+		x_axis_label = 'Wavelength [μm]'
+		def conv(x):
+			return 1e4/x
+	else: 
+		x_axis_label = 'Wavenumber [(]cm-1]'
+		def conv(x):
+			return x
+
 	kwargs['plot_height'] = kwargs.get('plot_height',345)
 	kwargs['plot_width'] = kwargs.get('plot_width',1000)
-	kwargs['y_axis_label'] = kwargs.get('y_axis_label','Albedo')
-	kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength [μm]')
-	kwargs['y_range'] = kwargs.get('y_range',[0,1.2])
-	kwargs['x_range'] = kwargs.get('x_range',[0.3,1])
+	kwargs['y_axis_label'] = kwargs.get('y_axis_label','Spectrum')
+	kwargs['x_axis_label'] = kwargs.get('x_axis_label',x_axis_label)
+	#kwargs['y_range'] = kwargs.get('y_range',[0,1.2])
+	#kwargs['x_range'] = kwargs.get('x_range',[0.3,1])
 
 	fig = figure(**kwargs)
 
-	if isinstance(wno, list):
-		if legend == None: legend=[None]*len(wno) 
-		for w, a,i,l in zip(wno, alb, range(len(wno)), legend):
-			fig.line(1e4/w, a, legend=l, color=Colorblind8[np.mod(i, len(Colorblind8))], line_width=3)
+	if isinstance(xarray, list):
+		if legend==None: legend=[None]*len(xarray[0])
+		for w, a,i,l in zip(xarray, yarray, range(len(xarray)), legend):
+			if l == None: 
+				fig.line(conv(w),  a,  color=Colorblind8[np.mod(i, len(Colorblind8))], line_width=3)
+			else:
+				fig.line(conv(w), a, legend_label=l, color=Colorblind8[np.mod(i, len(Colorblind8))], line_width=3)
 	else: 
-		fig.line(1e4/wno, alb, legend=legend, color=Colorblind8[0], line_width=3)
-
+		if legend ==None:
+			fig.line(conv(xarray), yarray,  color=Colorblind8[0], line_width=3)
+		else:
+			fig.line(conv(xarray), yarray, legend_label=legend, color=Colorblind8[0], line_width=3)
 	plot_format(fig)
 	return fig
 
@@ -424,7 +443,7 @@ def lon_lat_to_cartesian(lon_r, lat_r, R = 1):
 	z = R * np.sin(lat_r)
 	return x,y,z
 
-def disco(full_output,wavelength=[0.3]):
+def disco(full_output,wavelength=[0.3],calc_type='reflected'):
 	"""
 	Plot disco ball with facets. Bokeh is not good with 3D things. So this is in matplotlib
 
@@ -436,7 +455,11 @@ def disco(full_output,wavelength=[0.3]):
 	wavelength : list 
 		Where to plot 3d facets. Can input as many wavelengths as wanted. 
 		Must be a list, must be in microns. 
+	type : str, optional 
+		Default is to plot 'reflected' light but can also switch to 'thermal' if it has been computed
 	"""
+	if calc_type=='reflected':to_plot='albedo_3d'
+	elif calc_type=='thermal':to_plot='flux_planet_3d'
 
 	nrow = int(np.ceil(len(wavelength)/3))
 	ncol = int(np.min([3,len(wavelength)])) #at most 3 columns
@@ -447,7 +470,7 @@ def disco(full_output,wavelength=[0.3]):
 		wave = 1e4/full_output['wavenumber']
 		indw = find_nearest(wave,w)
 		#[umg, numt, nwno] this is xint_at_top
-		xint_at_top = full_output['albedo_3d'][:,:,indw]
+		xint_at_top = full_output[calc_type][to_plot][:,:,indw]
 
 		latitude = full_output['latitude']  #tangle
 		longitude = full_output['longitude'] #gangle
@@ -484,6 +507,7 @@ def find_nearest(array,value):
 	#small program to find the nearest neighbor in a matrix
 	idx = (np.abs(array-value)).argmin(axis=0)
 	return idx
+
 @jit(nopython=True, cache=True)
 def numba_cumsum(mat):
 	"""Function to compute cumsum along axis=0 to bypass numba not allowing kwargs in 
@@ -522,6 +546,53 @@ def spectrum_hires(wno, alb,legend=None, **kwargs):
 	points_og = datashade(hv.Curve((1e4/wno, alb)))
 
 	return points_og
+
+def flux_at_top(full_output, plot_bb = True, pressures = [1e-1,1e-2,1e-3], **kwargs):
+	"""
+	Routine to plot the OLR with overlaying black bodies. 
+
+	Flux units are CGS = erg/s/cm^3 
+	
+	Parameters
+	----------
+
+	full_output : class
+		picaso.atmsetup.ATMSETUP
+	plot_bb : bool , optional 
+		Default is to plot black bodies for three pressures specified by `pressures`
+	pressures : list, optional 
+		Default is a list of three pressures (in bars) =  [1e-1,1e-2,1e-3]
+	**kwargs : dict 
+		Any key word argument for bokeh.figure() 
+	"""
+	pressure_all = full_output['layer']['pressure']
+	temperature_all = full_output['layer']['temperature']
+
+	if not isinstance(pressures, (np.ndarray, list)): 
+		raise Exception('check pressure input. It must be list or array. You can still input a single value as `pressures = [1e-3]`')
+
+	kwargs['plot_height'] = kwargs.get('plot_height',300)
+	kwargs['plot_width'] = kwargs.get('plot_width',400)
+	kwargs['title'] = kwargs.get('title','Outgoing Thermal Radiation')
+	kwargs['y_axis_label'] = kwargs.get('y_axis_label','Flux (erg/s/cm^3)')
+	kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength [μm]')
+	kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
+	kwargs['x_axis_type'] = kwargs.get('x_axis_type','log')	
+
+	fig = figure(**kwargs)
+	cols = colfun1(len(pressures))
+
+	wno = full_output['wavenumber']
+	fig.line(1e4/wno, full_output['thermal']['flux_planet'], color='black', line_width=4)
+
+	for p,c in zip(pressures,cols): 
+		ip = find_nearest(pressure_all, p)
+		t = temperature_all[ip]
+		intensity = blackbody(t, 1/wno)[0] 
+		flux = np.pi * intensity
+		fig.line(1e4/wno, flux, color=c, alpha=0.5, legend_label=str(int(t))+' K at '+str(p)+' bars' , line_width=4)
+
+	return fig
 
 
 	

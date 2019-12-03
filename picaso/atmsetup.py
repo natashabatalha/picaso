@@ -617,6 +617,22 @@ class ATMSETUP():
 
 		df['latitude'] = self.latitude
 		df['longitude'] = self.longitude
-		df['albedo_3d'] = self.xint_at_top
+
+		try: 
+			x =  self.xint_at_top
+			df['reflected'] = {}
+			df['reflected']['albedo_3d'] = x
+		except:
+			pass 
+	
+
+		try: 
+			x = self.thermal_flux_planet
+			df['thermal'] = {}
+			df['thermal']['flux_planet'] = x
+			x = self.flux_at_top
+			df['thermal']['flux_planet_3d'] = x
+		except:
+			pass
 
 		return df
