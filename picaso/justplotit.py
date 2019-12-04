@@ -15,12 +15,8 @@ from numba import jit
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 import matplotlib.pyplot as plt
-import holoviews as hv
-from holoviews.operation.datashader import datashade
 
 from .fluxes import blackbody
-
-hv.extension('bokeh')
 
 def mixing_ratio(full_output,**kwargs):
 	"""Returns plot of mixing ratios 
@@ -48,7 +44,9 @@ def mixing_ratio(full_output,**kwargs):
 
 
 	fig = figure(**kwargs)
-	cols = colfun1(len(molecules))
+	if len(molecules) < 3: ncol = 5
+	else: ncol = len(molecules)
+	cols = colfun1(ncol)
 	legend_it=[]	
 	for mol , c in zip(molecules,cols):
 		ind = np.where(mol==np.array(molecules))[0][0]
@@ -156,7 +154,7 @@ def photon_attenuation(full_output, at_tau=0.5,**kwargs):
 		picaso.atmsetup.ATMSETUP
 	at_tau : float 
 		Opacity at which to plot the cumulative opacity. 
-		Default =1 bar. 
+		Default = 0.5. 
 	**kwargs : dict 
 		Any key word argument for bokeh.plotting.figure()
 
@@ -184,9 +182,9 @@ def photon_attenuation(full_output, at_tau=0.5,**kwargs):
 
 	at_pressures = np.zeros(shape[1]) #pressure for each wave point
 
-	ind_gas = find_nearest(taugas, at_tau)
-	ind_cld = find_nearest(taucld, at_tau)
-	ind_ray = find_nearest(tauray, at_tau)
+	ind_gas = find_nearest_2d(taugas, at_tau)
+	ind_cld = find_nearest_2d(taucld, at_tau)
+	ind_ray = find_nearest_2d(tauray, at_tau)
 
 	if (len(taucld[taucld == 0]) == taucld.shape[0]*taucld.shape[1]) : 
 		ind_cld = ind_cld*0 + shape[0]
@@ -468,7 +466,7 @@ def disco(full_output,wavelength=[0.3],calc_type='reflected'):
 		ax = fig.add_subplot(nrow,ncol,i+1, projection='3d')
 		#else:ax = fig.gca(projection='3d')
 		wave = 1e4/full_output['wavenumber']
-		indw = find_nearest(wave,w)
+		indw = find_nearest_1d(wave,w)
 		#[umg, numt, nwno] this is xint_at_top
 		xint_at_top = full_output[calc_type][to_plot][:,:,indw]
 
@@ -503,10 +501,33 @@ def disco(full_output,wavelength=[0.3],calc_type='reflected'):
 	plt.show()
 
 #@jit(nopython=True, cache=True)
-def find_nearest(array,value):
+def find_nearest_old(array,value):
 	#small program to find the nearest neighbor in a matrix
 	idx = (np.abs(array-value)).argmin(axis=0)
 	return idx
+
+def find_nearest_2d(array,value,axis=1):
+    #small program to find the nearest neighbor in a matrix
+    all_out = []
+    for i in range(array.shape[axis]):
+        ar , iar ,ic = np.unique(array[:,i],return_index=True,return_counts=True)
+        idx = (np.abs(ar-value)).argmin(axis=0)
+        if ic[idx]>1: 
+            idx = iar[idx] + (ic[idx]-1)
+        else: 
+            idx = iar[idx]
+        all_out+=[idx]
+    return all_out
+
+def find_nearest_1d(array,value):
+    #small program to find the nearest neighbor in a matrix
+    ar , iar ,ic = np.unique(array,return_index=True,return_counts=True)
+    idx = (np.abs(ar-value)).argmin(axis=0)
+    if ic[idx]>1: 
+        idx = iar[idx] + (ic[idx]-1)
+    else: 
+        idx = iar[idx]
+    return idx
 
 @jit(nopython=True, cache=True)
 def numba_cumsum(mat):
@@ -536,6 +557,11 @@ def spectrum_hires(wno, alb,legend=None, **kwargs):
 	-------
 	bokeh plot
 	"""
+	import holoviews as hv
+	from holoviews.operation.datashader import datashade
+
+	hv.extension('bokeh')
+
 	kwargs['plot_height'] = kwargs.get('plot_height',345)
 	kwargs['plot_width'] = kwargs.get('plot_width',1000)
 	kwargs['y_axis_label'] = kwargs.get('y_axis_label','Albedo')
@@ -580,13 +606,15 @@ def flux_at_top(full_output, plot_bb = True, pressures = [1e-1,1e-2,1e-3], **kwa
 	kwargs['x_axis_type'] = kwargs.get('x_axis_type','log')	
 
 	fig = figure(**kwargs)
-	cols = colfun1(len(pressures))
+	if len(pressures) < 3: ncol = 5
+	else: ncol = len(pressures)
+	cols = colfun1(ncol)
 
 	wno = full_output['wavenumber']
 	fig.line(1e4/wno, full_output['thermal']['flux_planet'], color='black', line_width=4)
 
 	for p,c in zip(pressures,cols): 
-		ip = find_nearest(pressure_all, p)
+		ip = find_nearest_1d(pressure_all, p)
 		t = temperature_all[ip]
 		intensity = blackbody(t, 1/wno)[0] 
 		flux = np.pi * intensity
