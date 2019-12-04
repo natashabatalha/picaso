@@ -148,15 +148,14 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
 		if 'thermal' in calculation:
 			#use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-			ng_therm = ng#8 #this is always 8 because in 1d we don't care where the flux is coming from 
-			nt_therm = nt#2 #ditto
-			gangle_therm,gweight_therm,tangle_therm,tweight_therm = get_angles(ng_therm, nt_therm) 
-			j, ubar1_therm, j,j,j = compute_disco(ng_therm, nt_therm, gangle_therm, tangle_therm, phase_angle)
-			#(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1):
+			if nt >2 : print('Warning! You are running greater than 2 Chebychev angles (num_tangle in the jdi.inputs.phase_angle() routine) \
+				             with a 1d thermal flux calculation. This is a symmetric problem so >2 angles is needlessly slowing down \
+				             your radiative transfer. Consider switching to phase_angle(0,num_gangle=8, num_tangle=2).')
+			
 			#remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
 			#the uncorrected raman single scattering 
-			flux_at_top  = get_thermal_1d(atm.c.nlevel, wno,nwno,ng_therm,nt_therm,atm.level['temperature'],
-													DTAU_OG, W0_no_raman, COSB_OG, atm.level['pressure'],ubar1_therm)
+			flux_at_top  = get_thermal_1d(atm.c.nlevel, wno,nwno,ng,nt,atm.level['temperature'],
+													DTAU_OG, W0_no_raman, COSB_OG, atm.level['pressure'],ubar1)
 
 			#if full output is requested add in flux at top for 3d plots
 			if full_output: 
@@ -237,7 +236,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 		returns += [albedo]
 
 	if ('thermal' in calculation):
-		thermal = compress_thermal(nwno,ubar1_therm, flux_at_top, gweight_therm, tweight_therm)
+		thermal = compress_thermal(nwno,ubar1, flux_at_top, gweight, tweight)
 		fpfs_thermal = thermal/(opacityclass.unshifted_stellar_spec)*(atm.planet.radius/radius_star)**2.0
 		returns += [fpfs_thermal,thermal]
 		if full_output: atm.thermal_flux_planet = thermal

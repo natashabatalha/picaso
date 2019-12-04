@@ -937,13 +937,13 @@ def blackbody(t,w):
 
 	return ((2.0*h*c**2.0)/(w**5.0))*(1.0/(exp((h*c)/outer(t, w*k)) - 1.0))
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1):
 	
 	nlayer = nlevel - 1 #nlayers 
 
 	mu1 = 0.5 #from Table 1 Toon  
-	twopi = pi+pi
+	twopi = pi#+pi #NEB REMOVING A PI FROM HERE BECAUSE WE ASSUME NO SYMMETRY! 
 
 	#get matrix of blackbodies 
 	all_b = blackbody(tlevel, 1/wno) #returns nlevel by nwave	
@@ -1059,11 +1059,7 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 				                       alpha1[ibot,:]*(1.-exptrm_angle_mdpt[ibot,:])+
 				                       alpha2[ibot,:]*(ubar1[ng,nt]+0.5*dtau[ibot,:]-(dtau[ibot,:]+ubar1[ng,nt])*exptrm_angle_mdpt[ibot,:])  )
 
-		flux_at_top[ng,nt,:] = flux_plus_mdpt[0,:] #nlevel by nwno
-		#flux_down[ng,nt,:] = flux_minus_mdpt[0,:] #nlevel by nwno, Dont really need to compute this for now
-		
-		#for testing purposes
-		#import pickle as pk
-		#pk.dump([flux_at_top, flux_down, flux_minus, flux_minus_mdpt, flux_plus, flux_plus_mdpt], open('/Users/nbatalh1/Documents/codes/PICASO/test/thermal/debugthermal.pk','wb'))
+			flux_at_top[ng,nt,:] = flux_plus_mdpt[0,:] #nlevel by nwno
+			#flux_down[ng,nt,:] = flux_minus_mdpt[0,:] #nlevel by nwno, Dont really need to compute this for now
 
 	return flux_at_top #, flux_down# numg x numt x nwno
