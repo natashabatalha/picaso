@@ -1,5 +1,5 @@
 from .atmsetup import ATMSETUP
-from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d
+from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d
 from .wavelength import get_cld_input_grid
 import numpy as np
 import pandas as pd
@@ -171,11 +171,19 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 		GCOS2_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
 		FTAU_CLD_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
 		FTAU_RAY_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
+
 		#these are the unchanged values from delta-eddington
 		TAU_OG_3d = np.zeros((atm.c.nlevel, nwno, ng, nt))
 		DTAU_OG_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
 		W0_OG_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
 		COSB_OG_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
+		#this is the single scattering without the raman correction 
+		#used for the thermal caclulation
+		W0_no_raman_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
+
+		#pressure and temperature 
+		TLEVEL_3d = np.zeros((atm.c.nlevel, ng, nt))
+		PLEVEL_3d = np.zeros((atm.c.nlevel, ng, nt))
 
 		#if users want to retain all the individual opacity info they can here 
 		if full_output:
@@ -204,11 +212,17 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 				GCOS2_3d[:,:,g,t]= gcos2 
 				FTAU_CLD_3d[:,:,g,t]= ftau_cld
 				FTAU_RAY_3d[:,:,g,t]= ftau_ray
+
 				#these are the unchanged values from delta-eddington
 				TAU_OG_3d[:,:,g,t] = TAU_OG
 				DTAU_OG_3d[:,:,g,t] = DTAU_OG
 				W0_OG_3d[:,:,g,t] = W0_OG
 				COSB_OG_3d[:,:,g,t] = COSB_OG
+				W0_no_raman_3d[:,:,g,t] = WO_no_raman
+
+				#temp and pressure on 3d grid
+				TLEVEL_3d[:,g,t] = atm_1d.level['temperature']
+				PLEVEL_3d[:,g,t] = atm_1d.level['pressure']
 
 				if full_output:
 					TAUGAS_3d[:,:,g,t] = atm_1d.taugas
@@ -220,13 +234,28 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 			atm.taucld = TAUCLD_3d
 			atm.tauray = TAURAY_3d
 
-		#use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-		xint_at_top  = get_reflected_3d(atm.c.nlevel, wno,nwno,ng,nt,
+		if  'reflected' in calculation:
+			#use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
+			xint_at_top  = get_reflected_3d(atm.c.nlevel, wno,nwno,ng,nt,
 											DTAU_3d, TAU_3d, W0_3d, COSB_3d,GCOS2_3d, FTAU_CLD_3d,FTAU_RAY_3d,
 											DTAU_OG_3d, TAU_OG_3d, W0_OG_3d, COSB_OG_3d,
 											atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
 											single_phase,multi_phase,
 											frac_a,frac_b,frac_c,constant_back,constant_forward)
+			#if full output is requested add in xint at top for 3d plots
+			if full_output: 
+				atm.xint_at_top = xint_at_top
+
+		elif 'thermal' in calculation:
+
+			#remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
+			#the uncorrected raman single scattering 
+			flux_at_top  = get_thermal_3d(atm.c.nlevel, wno,nwno,ng,nt,TLEVEL_3d,
+													DTAU_OG_3d, W0_no_raman_3d, COSB_OG_3d, PLEVEL_3d,ubar1)
+
+			#if full output is requested add in flux at top for 3d plots
+			if full_output: 
+				atm.flux_at_top = flux_at_top
 
 	#now compress everything based on the weights
 	returns = [wno] 
@@ -540,9 +569,9 @@ class inputs():
 		T : array
 			Temperature (K)
 		CtoO : float
-			C to O ratio (log solar = -0.26)
+			C to O ratio (solar = 0.55)
 		Met : float 
-			Metallicity relative to solar (solar = 0 (log10(1) ))
+			Metallicity relative to solar (solar = 1)
 		"""
 		 
 		P, T = self.inputs['atmosphere']['profile']['pressure'].values,self.inputs['atmosphere']['profile']['temperature'].values

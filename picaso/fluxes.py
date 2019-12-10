@@ -1119,9 +1119,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
 
 
-
 @jit(nopython=True, cache=True)
-def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1):
+def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel_3d, dtau_3d, w0_3d,cosb_3d,plevel_3d, ubar1):
 	"""
 	This function uses the source function method, which is outlined here : 
 	https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JD094iD13p16287
@@ -1152,18 +1151,21 @@ def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 		Number of gauss points (think longitude points)
 	numt : int 
 		Number of chebychev points (think latitude points)
-	tlevel : numpy.ndarray
-		Temperature as a function of level (not layer)
-	dtau : numpy.ndarray
+	tlevel_3d : numpy.ndarray
+		Temperature as a function of level (not layer). This 3d matrix has dimensions [nlevel,ngangle,ntangle].
+	dtau_3d : numpy.ndarray
 		This is a matrix of nlayer by nwave. This describes the per layer optical depth. 
-	w0 : numpy.ndarray
+		This 4d matrix has dimensions [nlevel, nwave,ngangle,ntangle].
+	w0_3d : numpy.ndarray
 		This is a matrix of nlayer by nwave. This describes the single scattering albedo of 
 		the atmosphere. Note this is free of any Raman scattering or any d-eddington correction 
 		that is sometimes included in reflected light calculations.
-	cosb : numpy.ndarray
+		This 4d matrix has dimensions [nlevel, nwave,ngangle,ntangle].
+	cosb_3d : numpy.ndarray
 		This is a matrix of nlayer by nwave. This describes the asymmetry of the 
 		atmosphere. Note this is free of any Raman scattering or any d-eddington correction 
 		that is sometimes included in reflected light calculations.
+		This 4d matrix has dimensions [nlevel, nwave,ngangle,ntangle].
 	plevel : numpy.ndarray
 		Pressure for each level (not layer, which is midpoints). CGS units (dyne/cm2)
 	ubar1 : numpy.ndarray
@@ -1176,90 +1178,104 @@ def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 		Thermal flux in CGS units (erg/cm3/s) in a matrix that is 
 		numg x numt x nwno
 	"""	
+
 	nlayer = nlevel - 1 #nlayers 
+	mu1 = 0.5 #from Table 1 Toon 
 
-	mu1 = 0.5 #from Table 1 Toon  
-	twopi = pi#+pi #NEB REMOVING A PI FROM HERE BECAUSE WE ASSUME NO SYMMETRY! 
+	#twopi is just pi because we are assuming no lat/lon symmetry
+	#the 2 comes back in when we do the gauss/tchebychev angle integration
+	twopi = pi#+pi 
 
-	#get matrix of blackbodies 
-	all_b = blackbody(tlevel, 1/wno) #returns nlevel by nwave	
-	b0 = all_b[0:-1,:]
-	b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
+	#eventual output
+	flux_at_top = zeros((numg, numt, nwno))
+	flux_down = zeros((numg, numt, nwno))
+	
+	#in 3D we have to immediately loop through ng and nt 
+	#so that we can use different TP profiles at each point
+	for ng in range(numg):
+		for nt in range(numt): 
 
-	#hemispheric mean parameters from Tabe 1 toon 
-	alpha = sqrt( (1.-w0) / (1.-w0*cosb) )
-	lamda = alpha*(1.-w0*cosb)/mu1 #eqn 21 toon
-	gama = (1.-alpha)/(1.+alpha) #eqn 22 toon
-	g1_plus_g2 = mu1/(1.-w0*cosb) #effectively 1/(gamma1 + gamma2) .. second half of eqn.27
+			cosb = cosb_3d[:,:,ng,nt]
+			dtau = dtau_3d[:,:,ng,nt]
+			w0 = w0_3d[:,:,ng,nt]
+			tlevel = tlevel_3d[:, ng,nt]
+			plevel = plevel_3d[:, ng,nt]
 
-	#same as with reflected light, compute c_plus and c_minus 
-	#these are eqns 27a & b in Toon89
-	#_ups are evaluated at lower optical depth, TOA
-	#_dows are evaluated at higher optical depth, bottom of atmosphere
-	c_plus_up = b0 + b1* g1_plus_g2
-	c_minus_up = b0 - b1* g1_plus_g2
+			#get matrix of blackbodies 
+			all_b = blackbody(tlevel, 1/wno) #returns nlevel by nwave	
+			b0 = all_b[0:-1,:]
+			b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
 
-	c_plus_down = b0 + b1 * dtau + b1 * g1_plus_g2 
-	c_minus_down = b0 + b1 * dtau - b1 * g1_plus_g2
+			#hemispheric mean parameters from Tabe 1 toon 
+			alpha = sqrt( (1.-w0) / (1.-w0*cosb) )
+			lamda = alpha*(1.-w0*cosb)/mu1 #eqn 21 toon
+			gama = (1.-alpha)/(1.+alpha) #eqn 22 toon
+			g1_plus_g2 = mu1/(1.-w0*cosb) #effectively 1/(gamma1 + gamma2) .. second half of eqn.27
 
-	#calculate exponential terms needed for the tridiagonal rotated layered method
-	exptrm = lamda*dtau
-	#save from overflow 
-	exptrm = slice_gt (exptrm, 35.0) 
+			#same as with reflected light, compute c_plus and c_minus 
+			#these are eqns 27a & b in Toon89
+			#_ups are evaluated at lower optical depth, TOA
+			#_dows are evaluated at higher optical depth, bottom of atmosphere
+			c_plus_up = b0 + b1* g1_plus_g2
+			c_minus_up = b0 - b1* g1_plus_g2
 
-	exptrm_positive = exp(exptrm) 
-	exptrm_minus = 1.0/exptrm_positive#exp(-exptrm) 
+			c_plus_down = b0 + b1 * dtau + b1 * g1_plus_g2 
+			c_minus_down = b0 + b1 * dtau - b1 * g1_plus_g2
 
-	tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0])
-	b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:] 
-	b_surface = all_b[-1,:] + b1[-1,:]*mu1
-	surf_reflect = 0.
+			#calculate exponential terms needed for the tridiagonal rotated layered method
+			exptrm = lamda*dtau
+			#save from overflow 
+			exptrm = slice_gt (exptrm, 35.0) 
 
-	#Now we need the terms for the tridiagonal rotated layered method
-	A, B, C, D = setup_tri_diag(nlayer,nwno,  c_plus_up, c_minus_up, 
+			exptrm_positive = exp(exptrm) 
+			exptrm_minus = 1.0/exptrm_positive#exp(-exptrm) 
+
+			tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0])
+			b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:] 
+			b_surface = all_b[-1,:] + b1[-1,:]*mu1
+			surf_reflect = 0.
+
+			#Now we need the terms for the tridiagonal rotated layered method
+			A, B, C, D = setup_tri_diag(nlayer,nwno,  c_plus_up, c_minus_up, 
 							c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
 							gama, dtau, 
 							exptrm_positive,  exptrm_minus) 
-	positive = zeros((nlayer, nwno))
-	negative = zeros((nlayer, nwno))
-	#========================= Start loop over wavelength =========================
-	L = nlayer+nlayer
-	for w in range(nwno):
-		#coefficient of posive and negative exponential terms 
-		X = tri_diag_solve(L, A[:,w], B[:,w], C[:,w], D[:,w])
+			positive = zeros((nlayer, nwno))
+			negative = zeros((nlayer, nwno))
+			#========================= Start loop over wavelength =========================
+			L = nlayer+nlayer
+			for w in range(nwno):
+				#coefficient of posive and negative exponential terms 
+				X = tri_diag_solve(L, A[:,w], B[:,w], C[:,w], D[:,w])
 
-		#unmix the coefficients
-		positive[:,w] = X[::2] + X[1::2] 
-		negative[:,w] = X[::2] - X[1::2]
+				#unmix the coefficients
+				positive[:,w] = X[::2] + X[1::2] 
+				negative[:,w] = X[::2] - X[1::2]
 
-	f_up = pi*(positive * exptrm_positive + gama * negative * exptrm_minus + c_plus_up)
+			f_up = pi*(positive * exptrm_positive + gama * negative * exptrm_minus + c_plus_up)
 
-	#calculate everyting from Table 3 toon
-	alphax = ((1.0-w0)/(1.0-w0*cosb))**0.5
-	G = twopi*w0*positive*(1.0+cosb*alphax)/(1.0+alphax)#
-	H = twopi*w0*negative*(1.0-cosb*alphax)/(1.0+alphax)#
-	J = twopi*w0*positive*(1.0-cosb*alphax)/(1.0+alphax)#
-	K = twopi*w0*negative*(1.0+cosb*alphax)/(1.0+alphax)#
-	alpha1 = twopi*(b0+ b1*(mu1*w0*cosb/(1.0-w0*cosb)))
-	alpha2 = twopi*b1
-	sigma1 = twopi*(b0- b1*(mu1*w0*cosb/(1.0-w0*cosb)))
-	sigma2 = twopi*b1
+			#calculate everyting from Table 3 toon
+			alphax = ((1.0-w0)/(1.0-w0*cosb))**0.5
+			G = twopi*w0*positive*(1.0+cosb*alphax)/(1.0+alphax)#
+			H = twopi*w0*negative*(1.0-cosb*alphax)/(1.0+alphax)#
+			J = twopi*w0*positive*(1.0-cosb*alphax)/(1.0+alphax)#
+			K = twopi*w0*negative*(1.0+cosb*alphax)/(1.0+alphax)#
+			alpha1 = twopi*(b0+ b1*(mu1*w0*cosb/(1.0-w0*cosb)))
+			alpha2 = twopi*b1
+			sigma1 = twopi*(b0- b1*(mu1*w0*cosb/(1.0-w0*cosb)))
+			sigma2 = twopi*b1
 
-	flux_minus = zeros((nlevel,nwno))
-	flux_plus = zeros((nlevel,nwno))
-	flux_minus_mdpt = zeros((nlevel,nwno))
-	flux_plus_mdpt = zeros((nlevel,nwno))
+			flux_minus = zeros((nlevel,nwno))
+			flux_plus = zeros((nlevel,nwno))
+			flux_minus_mdpt = zeros((nlevel,nwno))
+			flux_plus_mdpt = zeros((nlevel,nwno))
 
-	exptrm_positive_mdpt = exp(0.5*exptrm) 
-	exptrm_minus_mdpt = 1/exptrm_positive_mdpt 
+			exptrm_positive_mdpt = exp(0.5*exptrm) 
+			exptrm_minus_mdpt = 1/exptrm_positive_mdpt 
 
-	#================ START CRAZE LOOP OVER ANGLE #================
-	flux_at_top = zeros((numg, numt, nwno))
-	flux_down = zeros((numg, numt, nwno))
+			#================ START CRAZE LOOP OVER ANGLE #================
 
-	#work through building eqn 55 in toon (tons of bookeeping exponentials)
-	for ng in range(numg):
-		for nt in range(numt): 
+			#work through building eqn 55 in toon (tons of bookeeping exponentials)
 			flux_plus[-1,:] = twopi * (b_surface + b1[-1,:] * ubar1[ng,nt])
 			flux_minus[0,:] = twopi * (1 - exp(-tau_top / ubar1[ng,nt])) * all_b[0,:]
 			
