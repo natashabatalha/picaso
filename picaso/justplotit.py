@@ -60,7 +60,7 @@ def mixing_ratio(full_output,**kwargs):
 
 	return fig
 	
-def pt(full_output,**kwargs):
+def pt(full_output,ng=None, nt=None, **kwargs):
 	"""Returns plot of pressure temperature profile
 
 	Parameters
@@ -71,8 +71,12 @@ def pt(full_output,**kwargs):
 		Any key word argument for bokeh.figure() 
 	"""
 	#set plot defaults
-	pressure = full_output['layer']['pressure']
-	temperature = full_output['layer']['temperature']
+	if ((ng==None) & (nt==None)):
+		pressure = full_output['layer']['pressure']
+		temperature = full_output['layer']['temperature']
+	else: 
+		pressure = full_output['layer']['pressure'][:,ng,nt]
+		temperature = full_output['layer']['temperature'][:,ng,nt]
 
 	kwargs['plot_height'] = kwargs.get('plot_height',300)
 	kwargs['plot_width'] = kwargs.get('plot_width',400)
@@ -500,7 +504,86 @@ def disco(full_output,wavelength=[0.3],calc_type='reflected'):
 	plt.subplots_adjust(wspace=0.3, hspace=0.3)
 	plt.show()
 
-#@jit(nopython=True, cache=True)
+def map(full_output,pressure=[0.1], plot='temperature', wavelength = None):
+	"""
+	Plot disco ball with facets. Bokeh is not good with 3D things. So this is in matplotlib
+
+	Parameters
+	----------
+	full_output : class 
+		Full output from picaso
+	pressure : list 
+		What pressure (in bars) to make the map on. Note: this assumes that the 
+		pressure grid is the same for each ng,nt point accross the grid. 
+	plot : str, optional 
+		Default is to plot 'temperature' map but can also switch to any 
+		3d output in full_output. You can check what is available to plot by printing:
+		`print(full_output['layer'].keys()`. 
+		If you are plotting something that is ALSO wavelength dependent you have to 
+		also supply a single wavelength. 
+	wavelength, float, optional
+		This allows users to plot maps of things that are wavelength dependent, like 
+		`taugas` and `taucld`. 
+		
+	"""
+	
+	to_plot = explore(full_output, plot)
+
+	if isinstance(to_plot,np.ndarray):
+		if len(to_plot.shape) < 3: 
+			raise Exception("The key you are search for is not a 3D matrix. This function \
+				is used to plot out a map of a matrix that is [nlayer, nlong, nlat] or \
+				[nlayer, nwave, nlong, nlat, ].")
+		elif len(to_plot.shape) == 4: 
+			wave = 1e4/full_output['wavenumber']
+			indw = find_nearest_1d(wave,wavelength)
+			to_plot= to_plot[:,indw,:,:]
+	else:
+		raise Exception ("The key you are search for is not an np.ndarray. This function \
+				is used to plot out a map of an numpy.ndarray matrix that is [nlayer, nlong, nlat] or \
+				[nlayer, nwave, nlong, nlat, ]")
+
+	nrow = int(np.ceil(len(pressure)/3))
+	ncol = int(np.min([3,len(pressure)])) #at most 3 columns
+	fig = plt.figure(figsize=(6*ncol,4*nrow))
+	for i,p in zip(range(len(pressure)),pressure):
+		ax = fig.add_subplot(nrow,ncol,i+1, projection='3d')
+		#else:ax = fig.gca(projection='3d')
+		pressure = full_output['layer']['pressure'][:,0,0]
+		indp = find_nearest_1d(np.log10(pressure),np.log10(p))
+		
+		to_map = to_plot[indp, :,:]
+
+		latitude = full_output['latitude']  #tangle
+		longitude = full_output['longitude'] #gangle
+
+		cm = plt.cm.get_cmap('plasma')
+		u, v = np.meshgrid(longitude, latitude)
+		
+		x,y,z = lon_lat_to_cartesian(u, v)
+
+		ax.plot_wireframe(x, y, z, color="gray")
+
+		sc = ax.scatter(x,y,z, c = to_map.T.ravel(),cmap=cm,s=150)
+
+		fig.colorbar(sc)
+		ax.set_zlim3d(-1, 1)					# viewrange for z-axis should be [-4,4]
+		ax.set_ylim3d(-1, 1)					# viewrange for y-axis should be [-2,2]
+		ax.set_xlim3d(-1, 1)
+		ax.view_init(0, 0)
+		ax.set_title(str(p)+' bars')
+		# Hide grid lines
+		ax.grid(False)
+
+		# Hide axes ticks
+		ax.set_xticks([])
+		ax.set_yticks([])
+		ax.set_zticks([])
+		plt.axis('off')
+
+	plt.subplots_adjust(wspace=0.3, hspace=0.3)
+	plt.show()
+
 def find_nearest_old(array,value):
 	#small program to find the nearest neighbor in a matrix
 	idx = (np.abs(array-value)).argmin(axis=0)
@@ -573,7 +656,7 @@ def spectrum_hires(wno, alb,legend=None, **kwargs):
 
 	return points_og
 
-def flux_at_top(full_output, plot_bb = True, pressures = [1e-1,1e-2,1e-3], **kwargs):
+def flux_at_top(full_output, plot_bb = True, pressures = [1e-1,1e-2,1e-3],ng=None, nt=None, **kwargs):
 	"""
 	Routine to plot the OLR with overlaying black bodies. 
 
@@ -591,8 +674,12 @@ def flux_at_top(full_output, plot_bb = True, pressures = [1e-1,1e-2,1e-3], **kwa
 	**kwargs : dict 
 		Any key word argument for bokeh.figure() 
 	"""
-	pressure_all = full_output['layer']['pressure']
-	temperature_all = full_output['layer']['temperature']
+	if ((ng==None) & (nt ==None)):
+		pressure_all = full_output['layer']['pressure']
+		temperature_all = full_output['layer']['temperature']
+	else: 
+		pressure_all = full_output['layer']['pressure'][:,ng,nt]
+		temperature_all = full_output['layer']['temperature'][:,ng,nt]
 
 	if not isinstance(pressures, (np.ndarray, list)): 
 		raise Exception('check pressure input. It must be list or array. You can still input a single value as `pressures = [1e-3]`')
@@ -622,5 +709,41 @@ def flux_at_top(full_output, plot_bb = True, pressures = [1e-1,1e-2,1e-3], **kwa
 
 	return fig
 
+def explore(df, key):
+    """Function to explore a dictionary that is THREE levels deep and return the data sitting at 
+    the end of key. 
+
+    Parameters
+    ----------
+    df : dict 
+    	Dictionary that you want to search through. 
+    
+    Examples
+    ---------
+    Consider a dictionary that has `df['layer']['cloud']['w0'] = [0,0,0]` 
+    
+    >>>explore(df, 'w0')
+    [0,0,0]
+    """
+    check=[False,True,True]
+    if df.get(key) is None: 
+        for i in df.keys():
+            try:
+                if df[i].get(key) is None: 
+                    for ii in df[i].keys(): 
+                        try:
+                            if df[i][ii].get(key) is not None:
+                                return df[i][ii].get(key)
+                        except AttributeError:
+                            check[2] = False
+                else:
+                    return df[i].get(key)
+            except AttributeError:
+                check[1]=False
+    elif df.get(key) is not None: 
+        return df.get(key)
+    
+    if True not in check: 
+            raise Exception ('The key that was entered cloud not be found within three layers of the specified dictionary')
 
 	

@@ -8,7 +8,8 @@ from .justdoit import inputs
 import pickle as pk
 def rebin_mitgcm(ng, nt, phase_angle, input_file, output_file,p_unit='Pa', kzz_unit = 'm*m/s',run_chem=False, MH=None, CtoO=None):
 	"""
-	Rebin GCM grid to a smaller grid. 
+	Rebin GCM grid to a smaller grid. This function creates a pickle file 
+	that can be directly input into `atmosphere_3d`.
 
 	Parameters 
 	----------
@@ -24,14 +25,21 @@ def rebin_mitgcm(ng, nt, phase_angle, input_file, output_file,p_unit='Pa', kzz_u
 		`pressure`, and at least some molecular species (which are ALL case-sensitive)
 	output_file : str
 		output file location
-	p_unit : str
+	p_unit : str,optional
 		Pressure Unit (default Pascal)
-	run_chem : bool 
+	kzz_unit : str,optional 
+		Kzz Unit (default is m*m/s)
+	run_chem : bool , optional
 		(Optional) runs chemistry and adds to json file
-
-	TO DO
-	-----
-	- add run chemistry to get 3d chem
+	run_chem : bool , optional
+		(Optional) MIT gcm output doesn't usually come with chemistry in the files 
+		If this is the case then you can post process chemistry by setting this to True. 
+	MH : float , optional
+		(Optional) This is only used if run_chem is set to True. It is the Metallicity of 
+		the planet in NON log units. MH = 1 is solar. 
+	CtoO : float , optional
+		(Optional) This is the C/O ratio of the planet also in NON log units. 
+		CtoO = 0.55 is solar.  
 	"""	
 
 	gangle,gweight,tangle,tweight = get_angles(ng,nt)
