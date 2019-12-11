@@ -517,7 +517,7 @@ def map(full_output,pressure=[0.1], plot='temperature', wavelength = None):
 		pressure grid is the same for each ng,nt point accross the grid. 
 	plot : str, optional 
 		Default is to plot 'temperature' map but can also switch to any 
-		3d output in full_output. You can check what is available to plot by printing:
+		3d [nlayer, nlong, nlat] or 4d [nlayer, nwave, nlong, nlat] output in full_output. You can check what is available to plot by printing:
 		`print(full_output['layer'].keys()`. 
 		If you are plotting something that is ALSO wavelength dependent you have to 
 		also supply a single wavelength. 
@@ -746,4 +746,114 @@ def explore(df, key):
     if True not in check: 
             raise Exception ('The key that was entered cloud not be found within three layers of the specified dictionary')
 
+def taumap(full_output, at_tau=1, wavelength=1):
+	"""
+	Plot breakdown of gas opacity, cloud opacity, 
+	Rayleigh scattering opacity at a specified pressure level. 
+	
+	Parameters
+	----------
+	full_output : class 
+		picaso.atmsetup.ATMSETUP
+	at_tau : float 
+		Opacity at which to plot the cumulative opacity. 
+		Default = 0.5. 
+	**kwargs : dict 
+		Any key word argument for bokeh.plotting.figure()
+
+	Returns
+	-------
+	bokeh plot
+	"""	
+	all_dtau_gas = full_output['taugas']
+	all_dtau_cld = full_output['taucld']*full_output['layer']['cloud']['w0']
+	all_dtau_ray = full_output['tauray']
+
+	ng = all_dtau_gas.shape[2]
+	nt = all_dtau_gas.shape[3]
+
+	map_gas = np.zeros((ng, nt))
+	map_cld = np.zeros((ng, nt))
+	map_ray = np.zeros((ng, nt))
+
+	wave = 1e4/full_output['wavenumber']
+
+	iw = find_nearest_1d(wave, wavelength)
+
+	#build tau 1 map 
+	for ig in range(ng):
+		for it in range(nt):
+
+			dtaugas = all_dtau_gas[:,iw, ig, it]
+			dtaucld = all_dtau_cld[:,iw, ig, it]
+			dtauray = all_dtau_ray[:,iw, ig, it]
+			
+			shape = len(dtaugas)
+
+			taugas = np.zeros(shape+1)
+			taucld = np.zeros(shape+1)
+			tauray = np.zeros(shape+1)
+
+			#comptue cumulative opacity
+			taugas[1:]=np.cumsum(dtaugas)
+			taucld[1:]=np.cumsum(dtaucld)
+			tauray[1:]=np.cumsum(dtauray)
+
+
+			pressure = full_output['level']['pressure'][:,ig,it]
+
+			ind_gas = find_nearest_1d(taugas, at_tau)
+			ind_cld = find_nearest_1d(taucld, at_tau)
+			ind_ray = find_nearest_1d(tauray, at_tau)
+
+			if (len(taucld[taucld == 0]) == len(taucld.shape)) : 
+				ind_cld = ind_cld*0 + shape
+
+			map_gas[ig, it] = pressure[ind_gas]
+			map_cld[ig, it] = pressure[ind_cld]
+			map_ray[ig, it] = pressure[ind_ray]
+
+	#now build three panel plot 
+	all_maps = [map_gas, map_cld, map_ray]
+	labels = ['Molecular Opacity','Cloud Opacity','Rayleigh Opacity']
+
+	nrow = 1
+	ncol = 3 #at most 3 columns
+	fig = plt.figure(figsize=(6*ncol,4*nrow))
+	for i,w,l in zip(range(len(all_maps)),all_maps,labels):
+		ax = fig.add_subplot(nrow,ncol,i+1, projection='3d')
+
+
+		#[umg, numt, nwno] this is xint_at_top
+		xint_at_top = w
+
+		latitude = full_output['latitude']  #tangle
+		longitude = full_output['longitude'] #gangle
+
+		cm = plt.cm.get_cmap('plasma')
+		u, v = np.meshgrid(longitude, latitude)
+		
+		x,y,z = lon_lat_to_cartesian(u, v)
+
+		ax.plot_wireframe(x, y, z, color="gray")
+
+		sc = ax.scatter(x,y,z, c = xint_at_top.T.ravel(),cmap=cm,s=150)
+
+		fig.colorbar(sc)
+		ax.set_zlim3d(-1, 1)					# viewrange for z-axis should be [-4,4]
+		ax.set_ylim3d(-1, 1)					# viewrange for y-axis should be [-2,2]
+		ax.set_xlim3d(-1, 1)
+		ax.view_init(0, 0)
+		ax.set_title(l)
+		# Hide grid lines
+		ax.grid(False)
+
+		# Hide axes ticks
+		ax.set_xticks([])
+		ax.set_yticks([])
+		ax.set_zticks([])
+		plt.axis('off')
+
+	plt.subplots_adjust(wspace=0.3, hspace=0.3)
+	plt.show()	
 	

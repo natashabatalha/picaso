@@ -692,11 +692,13 @@ class inputs():
 		>>import picaso.justdoit as jdi
 		>>new = jdi.inputs()
 		>>new.phase_angle(0) #loads the geometry you need to get your 3d model on
-		>>lats, lons = int(new.inputs['disco']['latitude']*180/np.pi), int(new.inputs['disco']['longitude']*180/np.pi)
+		>>lats= new.inputs['disco']['latitude']*180/np.pi).astype(int)
+		>>>lons = (new.inputs['disco']['longitude']*180/np.pi).astype(int)
 
 		Build an empty dictionary to be filled later 
 
-		>>dict_3d = {la: {lo : for lo in lons} for la in lats} #build empty one 
+		>>dict_3d = {la: {lo : [] for lo in lons} for la in lats} #build empty one 
+		>>dict_3d['phase_angle'] = 0 #this is a double check for consistency 
 		
 		Now you need to bin your GCM output on this grid and fill the dictionary with the necessary dataframes. For example:
 		
@@ -912,6 +914,7 @@ class inputs():
 		Build an empty dictionary to be filled later 
 
 		>>dict_3d = {la: {lo : for lo in lons} for la in lats} #build empty one 
+		>>dict_3d['phase_angle'] = 0 #add this for a consistensy check
 		
 		Now you need to bin your 3D clouds GCM output on this grid and fill the dictionary with the necessary dataframes. For example:
 		

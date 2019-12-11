@@ -6,7 +6,7 @@ from scipy.spatial import cKDTree
 import astropy.units as u
 from .justdoit import inputs 
 import pickle as pk
-def rebin_mitgcm(ng, nt, phase_angle, input_file, output_file,p_unit='Pa', kzz_unit = 'm*m/s',run_chem=False, MH=None, CtoO=None):
+def rebin_mitgcm_pt(ng, nt, phase_angle, input_file, output_file,p_unit='Pa', kzz_unit = 'm*m/s',run_chem=False, MH=None, CtoO=None):
 	"""
 	Rebin GCM grid to a smaller grid. This function creates a pickle file 
 	that can be directly input into `atmosphere_3d`.
@@ -121,8 +121,107 @@ def rebin_mitgcm(ng, nt, phase_angle, input_file, output_file,p_unit='Pa', kzz_u
 
 	pk.dump(df,open(output_file, 'wb'))
 
-def make_3d_pt_input(ng,nt,phase_angle,input_file,output_file,**kwargs):
+
+def rebin_mitgcm_cld(ng, nt, phase_angle, input_file, output_file,names=['i','j','opd','g0','w0']):
 	"""
+	Rebin post processed GCM cloud grid to a smaller grid. This function creates a pickle file 
+	that can be directly input into `clouds_3d`.
+
+	Parameters 
+	----------
+	ng : int
+		Number of gauss angles
+	nt : int
+		Number of Tchebysehv angles
+	phase_angle : float
+		Geometry of phase angle (radians)
+	input_file : str
+		PT input file you want to create the 3d grid from. Currently takes in a single 1d PT profile.
+		Must have labeled, whitespace delimeted columns. In the columns, must have `temperature`, 
+		`pressure`, and at least some molecular species (which are ALL case-sensitive)
+	output_file : str
+		output file location
+	names : list,str,optional
+		List of names for the post processed file. The Default value is what generallly 
+		comes out of A&M code.. But double check before running!! 
+	"""	
+
+	gangle,gweight,tangle,tweight = get_angles(ng,nt)
+	ubar0, ubar1, cos_theta ,lat_picaso,lon_picaso = compute_disco(ng,nt, gangle, tangle, phase_angle)    
+
+
+	threed_grid = pd.read_csv(input_file,delim_whitespace=True,names=names)
+	#get the lat and lon points by looking at the locations that the last 
+	#index is nan but the first two have values. 
+	#this assumes that the MIT GCM person has created their file by printing
+	#Lon, Lat before the dump of output.cld
+	all_lon= threed_grid.loc[np.isnan(threed_grid[names[-1]])][names[0]].values
+	all_lat=  threed_grid.loc[np.isnan(threed_grid[names[-1]])][names[1]].values
+	latlong_ind = np.concatenate((np.array(threed_grid.loc[np.isnan(threed_grid['k'])].index),[threed_grid.shape[0]] ))
+	threed_grid = threed_grid.dropna() 
+
+	lon = np.unique(all_lon)
+	lat = np.unique(all_lat)
+
+	nlon = len(lon)
+	nlat = len(lat)
+	total_pts = nlon*nlat
+	nznw = latlong_ind[1] - 1 #number of wavepoints * number of levels
+
+	opd = np.zeros((nlon,nlat,nznw))
+	g0 = np.zeros((nlon,nlat,nznw))
+	w0 = np.zeros((nlon,nlat,nznw))
+
+	for i in range(len(latlong_ind)-1):
+
+		ilon = list(lon).index(all_lon[i])
+		ilat = list(lat).index(all_lat[i])
+
+		opd[ilon, ilat, :] = threed_grid.loc[latlong_ind[i]:latlong_ind[i+1]]['opd'].values
+		g0[ilon, ilat, :] = threed_grid.loc[latlong_ind[i]:latlong_ind[i+1]]['g0'].values
+		w0[ilon, ilat, :] = threed_grid.loc[latlong_ind[i]:latlong_ind[i+1]]['w0'].values
+
+
+	lon2d, lat2d = np.meshgrid(lon_picaso, lat_picaso)
+	lon2d = lon2d.flatten()
+	lat2d = lat2d.flatten()
+
+	xs, ys, zs = lon_lat_to_cartesian(all_lon,all_lat)
+	xt, yt, zt = lon_lat_to_cartesian(lon2d,lat2d)
+
+	tree = cKDTree(list(zip(xs,ys,zs)))
+	nn = int(total_pts / (ng*nt))
+	d,inds = tree.query(list(zip(xt,yt,zt)),k=nn)
+
+	new_opd = np.zeros((ng*nt,nznw))
+	new_g0 = np.zeros((ng*nt,nznw))
+	new_w0 = np.zeros((ng*nt,nznw))
+
+	for iz in range(0,nznw):
+		new_opd[:,iz] = np.sum(opd[:,:,iz].flatten()[inds],axis=1)/nn
+		new_g0[:,iz] = np.sum(g0[:,:,iz].flatten()[inds],axis=1)/nn
+		new_w0[:,iz] = np.sum(w0[:,:,iz].flatten()[inds],axis=1)/nn
+
+
+	df = {} 
+	df={int(i*180/np.pi):{} for i in lat_picaso}
+
+
+	outfile = open(output_file,'w')
+	if run_chem == True: case = inputs(chemeq=True)
+	
+	for ipos in range(0,ng*nt):
+		
+		data = pd.DataFrame({'opd':new_opd[ipos,0:nznw], 'g0':new_g0[ipos,0:nznw], 'w0':new_w0[ipos,0:nznw]})
+
+		df[int(lat2d[ipos]*180/np.pi)][int(lon2d[ipos]*180/np.pi)] = data
+
+	df['phase_angle'] = phase_angle
+
+	pk.dump(df,open(output_file, 'wb'))
+
+def make_3d_pt_input(ng,nt,phase_angle,input_file,output_file,**kwargs):
+	"""Discontinued
 	Program to create 3d PT input. Used to feed GCM input into disco ball.
 
 	Parameters
@@ -182,7 +281,7 @@ def make_3d_pt_input(ng,nt,phase_angle,input_file,output_file,**kwargs):
 			dset[str(g)][str(t)] = data
 
 def make_3d_cld_input(ng,nt,phase_angle,input_file,output_file, lat_range=None, lon_range=None,rand_coverage=1):
-	"""
+	"""Discontinued
 	Program to create 3d CLOUD input. Used to feed GCM input into disco ball.
 
 	Parameters
