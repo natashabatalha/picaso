@@ -298,6 +298,14 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
 	-------
 	Three bokeh plots with the single scattering, optical depth, and assymetry maps
 	"""
+	if (pressure is not None):
+		pressure_label = 'Pressure (units by user)'
+	else: 
+		pressure_label = 'Pressure Grid, TOA ->'
+	if (wavelength is not None):
+		wavelength_label = 'Wavelength (units by user)'
+	else: 
+		wavelength_label = 'Wavenumber Grid'
 	cols = colfun1(200)
 	color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
 
@@ -310,7 +318,7 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
 	scat01 = np.flip(np.reshape(dat01['w0'].values,(nlayer,nwno)),0)
 	xr, yr = scat01.shape
 	f01a = figure(x_range=[0, yr], y_range=[0,xr],
-						   x_axis_label='Wavenumber Grid', y_axis_label='Pressure Grid, TOA ->',
+						   x_axis_label=wavelength_label, y_axis_label=pressure_label,
 						   title="Single Scattering Albedo",
 						  plot_width=300, plot_height=300)
 
@@ -332,7 +340,7 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
 
 
 	f01 = figure(x_range=[0, yr], y_range=[0,xr],
-						   x_axis_label='Wavenumber Grid', y_axis_label='Pressure Grid, TOA ->',
+						   x_axis_label=wavelength_label, y_axis_label=pressure_label,
 						   title="Cloud Optical Depth Per Layer",
 						  plot_width=300, plot_height=300)
 
@@ -351,7 +359,7 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
 
 
 	f01b = figure(x_range=[0, yr], y_range=[0,xr],
-						   x_axis_label='Wavenumber Grid', y_axis_label='Pressure Grid, TOA ->',
+						   x_axis_label=wavelength_label, y_axis_label=pressure_label,
 						   title="Assymetry Parameter",
 						  plot_width=300, plot_height=300)
 
