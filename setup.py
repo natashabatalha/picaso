@@ -68,7 +68,7 @@ setup(
           'h5py',
           'joblib',
           'photutils',
-          'astropy>=2.0.12',
+          'astropy',
           'pysynphot',
           'sphinx',
           'scipy',

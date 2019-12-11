@@ -268,7 +268,7 @@ def plot_format(df):
 	df.yaxis.axis_label_text_font_style = 'bold'
 
 
-def plot_cld_input(nwno, nlayer, filename=None,df=None,**pd_kwargs):
+def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength=None, **pd_kwargs):
 	"""
 	This function was created to investigate CLD input file for PICASO. 
 
@@ -283,10 +283,14 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,**pd_kwargs):
 	nlayer : int 
 		Should be one less than the number of levels in your pressure temperature grid. Cloud 
 		opacity is assigned for slabs. 
-	file : str 
+	file : str , optional
 		(Optional)Path to cloud input file
 	df : str 
 		(Optional)Dataframe of cloud input file
+	wavelength : array , optional
+		(Optional) this allows you to reset the tick marks to wavelengths instead of indicies 
+	pressure : array, optional 
+		(Optional) this allows you to reset the tick marks to pressure instead of indicies 	
 	pd_kwargs : kwargs
 		Pandas key word arguments for `pandas.read_csv`
 
@@ -356,7 +360,34 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,**pd_kwargs):
 	color_bar = ColorBar(color_mapper=color_mapper, ticker=BasicTicker(),
 					   label_standoff=12, border_line_color=None, location=(0,0))
 	f01b.add_layout(color_bar, 'left')
-	return column(row(f01a, f01, row(f01b)))
+
+	#CHANGE X AND Y AXIS TO BE PHYSICAL UNITS 
+	#indexes for pressure plot 
+	if (pressure is not None):
+		pressure = ["{:.1E}".format(i) for i in pressure[::-1]] #flip since we are also flipping matrices
+		npres = len(pressure)
+		ipres = np.array(range(npres))
+		#set how many we actually want to put on the figure 
+		#hard code ten on each.. 
+		ipres = ipres[::int(npres/10)]
+		pressure = pressure[::int(npres/10)]
+		#create dictionary for tick marks 
+		ptick = {int(i):j for i,j in zip(ipres,pressure)}
+		for i in [f01a, f01, f01b]:
+			i.yaxis.ticker = ipres
+			i.yaxis.major_label_overrides = ptick
+	if (wavelength is not None):
+		wave = ["{:.2F}".format(i) for i in wavelength]
+		nwave = len(wave)
+		iwave = np.array(range(nwave))
+		iwave = iwave[::int(nwave/10)]
+		wave = wave[::int(nwave/10)]
+		wtick = {int(i):j for i,j in zip(iwave,wave)}
+		for i in [f01a, f01, f01b]:
+			i.xaxis.ticker = iwave
+			i.xaxis.major_label_overrides = wtick		
+
+	return row(f01a, f01,f01b)
 
 def cloud(full_output):
 	"""
@@ -379,11 +410,12 @@ def cloud(full_output):
 
 	dat01 = full_output['layer']['cloud']
 
+
 	#PLOT W0
 	scat01 = np.flip(dat01['w0'],0)#[0:10,:]
 	xr, yr = scat01.shape
 	f01a = figure(x_range=[0, yr], y_range=[0,xr],
-						   x_axis_label='Wavenumber Grid', y_axis_label='Pressure Grid, TOA ->',
+						   x_axis_label='Wavelength (micron)', y_axis_label='Pressure (bar)',
 						   title="Single Scattering Albedo",
 						  plot_width=300, plot_height=300)
 
@@ -405,7 +437,7 @@ def cloud(full_output):
 
 
 	f01 = figure(x_range=[0, yr], y_range=[0,xr],
-						   x_axis_label='Wavenumber Grid', y_axis_label='Pressure Grid, TOA ->',
+						   x_axis_label='Wavelength (micron)', y_axis_label='Pressure (bar)',
 						   title="Cloud Optical Depth Per Layer",
 						  plot_width=300, plot_height=300)
 
@@ -424,7 +456,7 @@ def cloud(full_output):
 
 
 	f01b = figure(x_range=[0, yr], y_range=[0,xr],
-						   x_axis_label='Wavenumber Grid', y_axis_label='Pressure Grid, TOA ->',
+						   x_axis_label='Wavelength (micron)', y_axis_label='Pressure (bar)',
 						   title="Assymetry Parameter",
 						  plot_width=300, plot_height=300)
 
@@ -433,7 +465,32 @@ def cloud(full_output):
 	color_bar = ColorBar(color_mapper=color_mapper, ticker=BasicTicker(),
 					   label_standoff=12, border_line_color=None, location=(0,0))
 	f01b.add_layout(color_bar, 'left')
-	return column(row(f01a, f01, row(f01b)))
+
+	#CHANGE X AND Y AXIS TO BE PHYSICAL UNITS 
+	#indexes for pressure plot 
+	pressure = ["{:.1E}".format(i) for i in full_output['layer']['pressure'][::-1]] #flip since we are also flipping matrices
+	wave = ["{:.2F}".format(i) for i in 1e4/full_output['wavenumber']]
+	nwave = len(wave)
+	npres = len(pressure)
+	iwave = np.array(range(nwave))
+	ipres = np.array(range(npres))
+	#set how many we actually want to put on the figure 
+	#hard code ten on each.. 
+	iwave = iwave[::int(nwave/10)]
+	ipres = ipres[::int(npres/10)]
+	pressure = pressure[::int(npres/10)]
+	wave = wave[::int(nwave/10)]
+	#create dictionary for tick marks 
+	ptick = {int(i):j for i,j in zip(ipres,pressure)}
+	wtick = {int(i):j for i,j in zip(iwave,wave)}
+	for i in [f01a, f01, f01b]:
+		i.xaxis.ticker = iwave
+		i.yaxis.ticker = ipres
+		i.xaxis.major_label_overrides = wtick
+		i.yaxis.major_label_overrides = ptick
+
+
+	return row(f01a, f01, f01b)
 
 def lon_lat_to_cartesian(lon_r, lat_r, R = 1):
 	"""
