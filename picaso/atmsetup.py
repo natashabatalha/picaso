@@ -310,7 +310,7 @@ class ATMSETUP():
 		"""
 		return np.zeros(len(logPc)) + T #return isothermal for now
 
-	def get_needed_continuum(self):
+	def get_needed_continuum(self,available_ray_mol):
 		"""
 		This will define which molecules are needed for the continuum opacities. THis is based on 
 		temperature and molecules. Eventually CIA's will expand but we may not necessarily 
@@ -325,9 +325,6 @@ class ATMSETUP():
 		self.continuum_molecules = []
 		if "H2" in self.molecules:
 			self.continuum_molecules += [['H2','H2']]
-			self.rayleigh_molecules += ['H2']
-		if "He" in self.molecules:
-			self.rayleigh_molecules += ['He']
 		if ("H2" in self.molecules) and ("He" in self.molecules):
 			self.continuum_molecules += [['H2','He']]
 		if ("H2" in self.molecules) and ("N2" in self.molecules):
@@ -345,10 +342,12 @@ class ATMSETUP():
 		#now we can remove continuum molecules from self.molecules to keep them separate 
 		if 'H+' in ['H','H2-','H2','H-','He','N2']: self.add_warnings('No H+ continuum opacity included')
 
+		#and rayleigh opacity
+		for i in available_ray_mol: 
+			if i in self.molecules : self.rayleigh_molecules += [i]
+
 		self.molecules = np.array([ x for x in self.molecules if x not in ['H','H2-','H2','H-','He','N2', 'H+'] ])
 
-		#and rayleigh opacity
-		if 'CH4' in self.molecules : self.rayleigh_molecules += ['CH4']
 	def get_weights(self, molecule):
 		"""
 		Automatically gets mean molecular weights of any molecule. Requires that 

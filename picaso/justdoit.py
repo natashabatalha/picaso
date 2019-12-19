@@ -103,8 +103,11 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 	atm.get_mmw()
 	atm.get_density()
 	atm.get_column_density()
-	#get needed continuum molecules 
-	atm.get_needed_continuum()
+
+	#gets both continuum and needed rayleigh cross sections 
+	#relies on continuum molecules are added into the opacity 
+	#database. Rayleigh molecules are all in `rayleigh.py` 
+	atm.get_needed_continuum(opacityclass.rayleigh_molecules)
 
 	#get cloud properties, if there are any and put it on current grid 
 	atm.get_clouds(wno)
@@ -604,7 +607,7 @@ class inputs():
 		return 
 
 
-	def guillot_pt(self, Teq, T_int, logg1, logKir, alpha=0.5,nlevel=61):
+	def guillot_pt(self, Teq, T_int, logg1, logKir, alpha=0.5,nlevel=61, p_bottom = 1.5, p_top = -6):
 		"""
 		Creates temperature pressure profile given parameterization in Guillot 2010 TP profile
 		called in fx()
@@ -621,10 +624,14 @@ class inputs():
 		    see parameterization Guillot 2010 (10.**(logg1+logKir))
 		kth : float
 		    see parameterization Guillot 2010 (10.**logKir)
-		alpha : float 
+		alpha : float , optional
 		    set to 0.5
-		nlevel : int
+		nlevel : int, optional
 			Number of atmospheric layers
+		p_bottom : float, optional 
+			Log pressure (bars) of the lower bound pressure 
+		p_top : float , optional
+			Log pressure (bars) of the TOA 
 		    
 		Returns
 		-------
@@ -660,7 +667,7 @@ class inputs():
 		T=(T4ir+T4v1+T4v2)**(0.25)
 		P=tau*g0/(kth*0.1)/1.E5
 		self.nlevel=nlevel 
-		logP = np.linspace(-6.8,1.5,nlevel)
+		logP = np.linspace(p_top,p_bottom,nlevel)
 		newP = 10.0**logP
 		T = np.interp(logP,np.log10(P),T)
 
@@ -787,10 +794,11 @@ class inputs():
 			(Optional) Total Extinction in `dp`. Can be a single float for a single cloud. Or a list of floats 
 			for two different cloud layers 
 		p : list of float 
-			(Optional) Center location of cloud deck (bars). Can be a single float for a single cloud. Or a list of floats 
+			(Optional) Bottom location of cloud deck (LOG10 bars). Can be a single float for a single cloud. Or a list of floats 
 			for two different cloud layers 
 		dp : list of float 
-			(Optional) Total thickness cloud deck (bars). Can be a single float for a single cloud or a list of floats 
+			(Optional) Total thickness cloud deck above p (LOG10 bars). 
+			Can be a single float for a single cloud or a list of floats 
 			for two different cloud layers 
 			Cloud will span 10**(np.log10(p) +- np.log10(dp)/2)
 		df : pd.DataFrame, dict
@@ -855,8 +863,8 @@ class inputs():
 			df['opd'] = zeros
 			#loop through all cloud layers and set cloud profile
 			for ig, iw, io , ip, idp in zip(g0,w0,opd,p,dp):
-				minp = 10**(np.log10(ip) - np.log10(idp/2))
-				maxp = 10**(np.log10(ip) + np.log10(idp/2))
+				maxp = 10**ip #max pressure is bottom of cloud deck
+				minp = 10**(ip - idp) #min pressure 
 				df.loc[((df['pressure'] >= minp) & (df['pressure'] <= maxp)),'g0']= ig
 				df.loc[((df['pressure'] >= minp) & (df['pressure'] <= maxp)),'w0']= iw
 				df.loc[((df['pressure'] >= minp) & (df['pressure'] <= maxp)),'opd']= io
