@@ -937,8 +937,8 @@ def blackbody(t,w):
 
 	return ((2.0*h*c**2.0)/(w**5.0))*(1.0/(exp((h*c)/outer(t, w*k)) - 1.0))
 
-@jit(nopython=True, cache=True)
-def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1):
+#@jit(nopython=True, cache=True)
+def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,surf_reflect):
 	"""
 	This function uses the source function method, which is outlined here : 
 	https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JD094iD13p16287
@@ -986,6 +986,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 	ubar1 : numpy.ndarray
 		This is a matrix of ng by nt. This describes the outgoing incident angles and is generally
 		computed in `picaso.disco`
+	surf_reflect : numpy.ndarray	
+		Surface reflectivity as a function of wavenumber. 
 
 	Returns
 	-------
@@ -1025,12 +1027,11 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 	exptrm = slice_gt (exptrm, 35.0) 
 
 	exptrm_positive = exp(exptrm) 
-	exptrm_minus = 1.0/exptrm_positive#exp(-exptrm) 
+	exptrm_minus = 1.0/exptrm_positive
 
 	tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0])
 	b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:] 
 	b_surface = all_b[-1,:] + b1[-1,:]*mu1
-	surf_reflect = 0.
 
 	#Now we need the terms for the tridiagonal rotated layered method
 	A, B, C, D = setup_tri_diag(nlayer,nwno,  c_plus_up, c_minus_up, 

@@ -137,12 +137,12 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, **kwargs):
 			if l == None: 
 				fig.line(conv(w),  a,  color=Colorblind8[np.mod(i, len(Colorblind8))], line_width=3)
 			else:
-				fig.line(conv(w), a, legend_label=l, color=Colorblind8[np.mod(i, len(Colorblind8))], line_width=3)
+				fig.line(conv(w), a, legend=l, color=Colorblind8[np.mod(i, len(Colorblind8))], line_width=3)
 	else: 
 		if legend ==None:
 			fig.line(conv(xarray), yarray,  color=Colorblind8[0], line_width=3)
 		else:
-			fig.line(conv(xarray), yarray, legend_label=legend, color=Colorblind8[0], line_width=3)
+			fig.line(conv(xarray), yarray, legend=legend, color=Colorblind8[0], line_width=3)
 	plot_format(fig)
 	return fig
 
@@ -770,7 +770,7 @@ def flux_at_top(full_output, plot_bb = True, pressures = [1e-1,1e-2,1e-3],ng=Non
 		t = temperature_all[ip]
 		intensity = blackbody(t, 1/wno)[0] 
 		flux = np.pi * intensity
-		fig.line(1e4/wno, flux, color=c, alpha=0.5, legend_label=str(int(t))+' K at '+str(p)+' bars' , line_width=4)
+		fig.line(1e4/wno, flux, color=c, alpha=0.5, legend=str(int(t))+' K at '+str(p)+' bars' , line_width=4)
 
 	return fig
 
