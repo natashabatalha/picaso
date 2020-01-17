@@ -274,10 +274,14 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     if  ('reflected' in calculation):
         albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
         returns['albedo'] = albedo 
-        if not np.isnan(sa ):
+        if ((not np.isnan(sa ) and (not np.isnan(atm.planet.radius))) ):
             returns['fpfs_reflected'] = albedo*(atm.planet.radius/sa)**2.0
         else: 
-            returns['fpfs_reflected'] = 'Semi-major axis not supplied. If you want this, add it to `star` function.'
+            returns['fpfs_reflected'] =[]
+            if np.isnan(sa ):
+                returns['fpfs_reflected'] += ['Semi-major axis not supplied. If you want fpfs, add it to `star` function. ']
+            if np.isnan(atm.planet.radius): 
+                returns['fpfs_reflected'] += ['Planet Radius not supplied. If you want fpfs, add it to `gravity` function.']
     if ('thermal' in calculation):
         thermal = compress_thermal(nwno,ubar1, flux_at_top, gweight, tweight)
         fpfs_thermal = thermal/(opacityclass.unshifted_stellar_spec)*(atm.planet.radius/radius_star)**2.0
@@ -853,7 +857,7 @@ class inputs():
         
         self.inputs['atmosphere']['profile'] = df3d
 
-    def surface_reflect(self,albedo):
+    def surface_reflect(self, albedo, wavenumber, old_wavenumber = None):
         """
         Set atmospheric surface reflectivity
 
@@ -862,7 +866,13 @@ class inputs():
         albedo : float
             Set constant albedo for surface reflectivity 
         """
-        self.inputs['surface_reflect'] = albedo
+        if isinstance(albedo, (float, int)):
+            self.inputs['surface_reflect'] = np.array([albedo]*len(wavenumber))
+        elif isinstance(albedo, (list, np.ndarray)): 
+            if isinstance(old_wavenumber, type(None)):
+                self.inputs['surface_reflect'] = albedo
+            else: 
+                self.inputs['surface_reflect'] = np.interp(wavenumber, old_wavenumber, albedo)
 
     def clouds(self, filename = None, g0=None, w0=None, opd=None,p=None, dp=None,df =None,**pd_kwargs):
         """
