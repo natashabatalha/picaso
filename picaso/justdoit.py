@@ -591,6 +591,16 @@ class inputs():
 
         self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
 
+        #lastly check to see if the atmosphere is non-H2 dominant. 
+        #if it is, let's turn off Raman scattering for the user. 
+        if (("H2" not in df.keys()) and (self.inputs['approx']['raman'] != 2)):
+            print("Turning off Raman for Non-H2 atmosphere")
+            self.approx(raman='none')
+        elif (("H2" in df.keys()) and (self.inputs['approx']['raman'] != 2)): 
+            if df['H2'].min() < 0.8: 
+                print("Turning off Raman for Non-H2 atmosphere")
+                self.approx(raman='none')
+
     def chemeq(self, CtoO, Met, P=None,T=None):
         """
         This interpolates from a precomputed grid of CEA runs (run by M.R. Line)
