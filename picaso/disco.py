@@ -92,8 +92,8 @@ def compress_disco( nwno, cos_theta, xint_at_top, gweight, tweight,F0PI):
 	"""
 	albedo=zeros(nwno)
 	for w in range(nwno):
-		albedo[w] = sum((xint_at_top[:,:,w]*tweight).T*gweight)
-	albedo = 0.5 * albedo /F0PI * (cos_theta + 1.0)
+		albedo[w] = 0.5 * sum((xint_at_top[:,:,w]*tweight).T*gweight)
+	albedo = albedo /F0PI * (cos_theta + 1.0)
 	return albedo
 
 @jit(nopython=True, cache=True)
@@ -117,5 +117,5 @@ def compress_thermal(nwno, ubar1, flux_at_top, gweight, tweight):
 	"""
 	flux=zeros(nwno)
 	for w in range(nwno):
-		flux[w] = 0.5 * sum((ubar1*flux_at_top[:,:,w]*tweight).T*gweight)
+		flux[w] =  0.5*sum((ubar1*flux_at_top[:,:,w]*tweight).T*gweight)
 	return flux
