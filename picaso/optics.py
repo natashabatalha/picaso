@@ -93,7 +93,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 
     Todo 
     -----
-    - Add a better approximation than delta-scale (e.g. M.Marley suggests a paper by Cuzzi that has 
+    Add a better approximation than delta-scale (e.g. M.Marley suggests a paper by Cuzzi that has 
     a better methodology)
     """
     atm = atmosphere
@@ -110,7 +110,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
         plot_layer=int(nlayer/2)#np.size(tlayer)-1
         opt_figure = figure(x_axis_label = 'Wavelength', y_axis_label='TAUGAS in optics.py', 
         title = 'Opacity at T='+str(tlayer[plot_layer])+' Layer='+str(plot_layer)
-        ,y_axis_type='log',height=800, width=1200)
+        ,y_axis_type='log',height=600, width=800,x_range=[0.3,1])
 
     #====================== INITIALIZE TAUGAS#======================
     TAUGAS = 0 
@@ -144,7 +144,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
                             (atm.layer['mmw']*atm.c.amu))   ).T      #nlayer)].T
 
             TAUGAS += ADDTAU
-            if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
+            if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
             muted_color=colors[c], muted_alpha=0.2)
 
         #H- Free-Free
@@ -156,7 +156,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
                             (tlayer*atm.layer['mmw']*atm.c.amu*atm.c.k_b))  ).T          #nlayer)].T
             #testing['H-ff'] = ADDTAU
             TAUGAS += ADDTAU
-            if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
+            if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
             muted_color=colors[c], muted_alpha=0.2)
 
         #H2- 
@@ -173,7 +173,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 
 
             TAUGAS += ADDTAU
-            if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
+            if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
             muted_color=colors[c], muted_alpha=0.2)
         #everything else.. e.g. H2-H2, H2-CH4. Automatically determined by which molecules were requested
         else:
@@ -185,42 +185,64 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
                                 atm.layer['mixingratios'][m[1]].values )  ).T           #nlayer)].T
 
             TAUGAS += ADDTAU
-            if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m[0]+m[1], line_width=3, color=colors[c],
+            if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
             muted_color=colors[c], muted_alpha=0.2)
         c+=1
     
     #====================== ADD MOLECULAR OPACITY====================== 
     for m in atm.molecules:
-        #ind = np.where(m==np.array(atm.weights.keys()))[0][0]
+        #if m =='O3':
+        #    df = pd.read_csv('~/Desktop/LIFE/O3_visible.txt',delim_whitespace=True,names=['nm','cx'])
+        #    wno_old1 = (df['nm']*1e-3).values
+        #    wno1 = 1e4/opacityclass.wno[::-1]
+        #    o31 = np.zeros((len(wno1),1))
+        #    o31[:,0] = np.interp(wno1, wno_old1 ,df['cx'], left=1e-33, right=1e-33)[::-1]*6.02214086e+23 
+        #    opacityclass.molecular_opa[m] += o31
+
         ADDTAU = (opacityclass.molecular_opa[m] * ( #[(nwno x nlayer) *(
                     atm.layer['colden']*
                     atm.layer['mixingratios'][m].values/ #removing this bc of opa unit change *atm.weights[m].values[0]/ 
                     atm.layer['mmw']) ).T 
         TAUGAS += ADDTAU
         #testing[m] = ADDTAU
-        if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend=m, line_width=3, color=colors[c],
+        if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m, line_width=3, color=colors[c],
             muted_color=colors[c], muted_alpha=0.2)
         c+=1
 
     #====================== ADD RAYLEIGH OPACITY======================  
-    #print(atm.rayleigh_molecules)
-    #ray_mixingratios = np.zeros((nlayer,3))#hardwired because we only have h2,he and ch4 scattering
-    #for i,j in zip(['H2','He','CH4'],range(3)):
-    #    if i in atm.rayleigh_molecules:
-    #        print(i)
-    #        ray_mixingratios[:,j] = atm.layer['mixingratios'][i].values
-    #
-    #TAURAY = rayleigh(atm.layer['colden'],ray_mixingratios, 
-    #                opacityclass.wave, atm.layer['mmw'],atm.c.amu )
-    if m in atm.rayleigh_molecules:
+    #old 1
+    """
+    ray_mixingratios = np.zeros((nlayer,3))#hardwired because we only have h2,he and ch4 scattering
+    for i,j in zip(['H2','He','CH4'],range(3)):
+        if i in atm.rayleigh_molecules:
+            print(i)
+            ray_mixingratios[:,j] = atm.layer['mixingratios'][i].values
+    
+    TAURAY = rayleigh_old(atm.layer['colden'],ray_mixingratios, 
+                    opacityclass.wave, atm.layer['mmw'],atm.c.amu )
+    """
+    for m in atm.rayleigh_molecules:
         ray_matrix = np.array([opacityclass.rayleigh_opa[m]]*nlayer).T
         ADDTAU = (ray_matrix * ( #[(nwno x nlayer) *(
                     atm.layer['colden']*
                     atm.layer['mixingratios'][m].values/ #removing this bc of opa unit change *atm.weights[m].values[0]/ 
                     atm.layer['mmw'])).T 
         TAURAY += ADDTAU 
-
-    if plot_opacity: opt_figure.line(1e4/opacityclass.wno, TAURAY[plot_layer,:], alpha=0.7,legend='Rayleigh', line_width=3, color=colors[c],
+        
+    """
+    #old 3 
+    lam = np.zeros((len(opacityclass.wno),1))
+    lam[:,0] = 1e4/opacityclass.wno
+    nam1=1E-8*(8342.13+2406030./(130.-lam**(-2))+15997./(38.9-lam**(-2)))
+    ff=1.05
+    Na0=2.55E19*100.**3
+    ray_matrix=np.zeros((len(opacityclass.wno), nlayer))+32.*np.pi**3./(3.*Na0**2)*(nam1**2)*ff/((lam*1E-6)**4.)
+    TAURAY = (6.02214086e+23 * 1e4 * ray_matrix * ( #[(nwno x nlayer) *(
+                    atm.layer['colden']*
+                    atm.layer['mixingratios']['N2'].values/ #removing this bc of opa unit change *atm.weights[m].values[0]/ 
+                    atm.layer['mmw'])).T 
+    """
+    if plot_opacity: opt_figure.line(1e4/opacityclass.wno, TAURAY[plot_layer,:], alpha=0.7,legend_label='Rayleigh', line_width=3, color=colors[c],
             muted_color=colors[c], muted_alpha=0.2) 
 
 
@@ -231,14 +253,14 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
         raman_factor = compute_raman(nwno, nlayer,opacityclass.wno, 
             opacityclass.raman_stellar_shifts, tlayer, raman_db['c'].values,
                 raman_db['ji'].values, raman_db['deltanu'].values)
-        if plot_opacity: opt_figure.line(1e4/opacityclass.wno, raman_factor[plot_layer,:]*TAURAY[plot_layer,:], alpha=0.7,legend='Shifted Raman', line_width=3, color=colors[c],
+        if plot_opacity: opt_figure.line(1e4/opacityclass.wno, raman_factor[plot_layer,:]*TAURAY[plot_layer,:], alpha=0.7,legend_label='Shifted Raman', line_width=3, color=colors[c],
                 muted_color=colors[c], muted_alpha=0.2)
         raman_factor = np.minimum(raman_factor, raman_factor*0+0.99999)
     #POLLACK OPACITY
     elif raman ==1: 
         raman_factor = raman_pollack(nlayer)
         raman_factor = np.minimum(raman_factor, raman_factor*0+0.99999)     
-        if plot_opacity: opt_figure.line(1e4/opacityclass.wno, raman_factor[plot_layer,:]*TAURAY[plot_layer,:], alpha=0.7,legend='Shifted Raman', line_width=3, color=colors[c],
+        if plot_opacity: opt_figure.line(1e4/opacityclass.wno, raman_factor[plot_layer,:]*TAURAY[plot_layer,:], alpha=0.7,legend_label='Shifted Raman', line_width=3, color=colors[c],
                 muted_color=colors[c], muted_alpha=0.2)
     #NOTHING
     else: 
@@ -286,7 +308,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
     TAU[1:,:]=numba_cumsum(DTAU)
 
     if plot_opacity:
-        opt_figure.line(1e4/opacityclass.wno, DTAU[int(np.size(tlayer)/2),:], legend='TOTAL', line_width=4, color=colors[0],
+        opt_figure.line(1e4/opacityclass.wno, DTAU[int(np.size(tlayer)/2),:], legend_label='TOTAL', line_width=4, color=colors[0],
             muted_color=colors[c], muted_alpha=0.2)
         opt_figure.legend.click_policy="mute"
         show(opt_figure)

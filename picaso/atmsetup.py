@@ -343,10 +343,10 @@ class ATMSETUP():
 		if 'H+' in ['H','H2-','H2','H-','He','N2']: self.add_warnings('No H+ continuum opacity included')
 
 		#and rayleigh opacity
-		for i in available_ray_mol: 
-			if i in self.molecules : self.rayleigh_molecules += [i]
+		for i in self.molecules: 
+			if i in available_ray_mol : self.rayleigh_molecules += [i]
 
-		self.molecules = np.array([ x for x in self.molecules if x not in ['H','H2-','H2','H-','He','N2', 'H+'] ])
+		#self.molecules = np.array([ x for x in self.molecules if x not in ['H','H2-','H2','H-','He','N2', 'H+'] ])
 
 	def get_weights(self, molecule):
 		"""
@@ -553,6 +553,7 @@ class ATMSETUP():
 	def get_surf_reflect(self,nwno):
 		"""
 		Gets the surface reflectivity from input
+
 		"""
 		self.surf_reflect = np.zeros(nwno)
 		return
