@@ -93,7 +93,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 
     Todo 
     -----
-    - Add a better approximation than delta-scale (e.g. M.Marley suggests a paper by Cuzzi that has 
+    Add a better approximation than delta-scale (e.g. M.Marley suggests a paper by Cuzzi that has 
     a better methodology)
     """
     atm = atmosphere
