@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Tutorials &mdash; picaso 0.0 documentation</title>
+  <title>Tutorials &mdash; picaso 1.0 documentation</title>
   
 
   
@@ -17,44 +17,42 @@
   
 
   
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
-  
-  
-    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" type="text/css" />
-  
-
-  
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="picaso 0.0 documentation" href="index.html"/>
-        <link rel="next" title="Getting Started : Basic Inputs and Outputs" href="notebooks/1_GetStarted.html"/>
-        <link rel="prev" title="Installation" href="installation.html"/> 
-
-  
-  <script src="_static/js/modernizr.min.js"></script>
-
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Getting Started : Basic Inputs and Outputs" href="notebooks/1_GetStarted.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -68,7 +66,7 @@
             
             
               <div class="version">
-                0.0
+                1.0
               </div>
             
           
@@ -95,7 +93,7 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">The Tutorials</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#basics">Basics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#basics-reflected-light">Basics Reflected Light</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/1_GetStarted.html">Getting Started</a></li>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/2_AddingClouds.html">Adding Clouds</a></li>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/3_PlotDiagnostics.html">Plot Diagnostics</a></li>
@@ -106,7 +104,12 @@
 <li class="toctree-l3"><a class="reference internal" href="notebooks/5_SwappingOpacities.html">Opacity Factory</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#moving-to-3-dimensions-tutorials-coming-soon">Moving to 3 Dimensions (tutorials coming soon)</a><ul class="simple">
+<li class="toctree-l2"><a class="reference internal" href="#basics-of-thermal-emission">Basics of Thermal Emission</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/6_AddingThermalFlux.html">Thermal Emission</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#moving-to-3-dimensions">Moving to 3 Dimensions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/7_Adding3DFunctionality.html">From 1D to 3D</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#retrievals-tutorials-coming-soon">Retrievals (tutorials coming soon)</a><ul class="simple">
@@ -117,7 +120,7 @@
 <li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="picaso.html">The Code</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
-<li class="toctree-l1"><a class="reference internal" href="picaso.html">The Paper</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://arxiv.org/abs/1904.09355">The Paper</a></li>
 </ul>
 
             
@@ -129,7 +132,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">picaso</a>
@@ -137,9 +140,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -186,24 +190,29 @@
 /* CSS overrides for sphinx_rtd_theme */
 
 /* 24px margin */
-.nbinput.nblast,
-.nboutput.nblast {
+.nbinput.nblast.container,
+.nboutput.nblast.container {
     margin-bottom: 19px;  /* padding has already 5px */
 }
 
 /* ... except between code cells! */
-.nblast + .nbinput {
+.nblast.container + .nbinput.container {
     margin-top: -19px;
 }
 
 .admonition > p:before {
     margin-right: 4px;  /* make room for the exclamation icon */
 }
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
 </style>
 <div class="section" id="tutorials">
 <h1>Tutorials<a class="headerlink" href="#tutorials" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="basics">
-<h2>Basics<a class="headerlink" href="#basics" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="basics-reflected-light">
+<h2>Basics Reflected Light<a class="headerlink" href="#basics-reflected-light" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/1_GetStarted.html">Getting Started</a></li>
@@ -221,9 +230,20 @@
 </ul>
 </div>
 </div>
-<div class="section" id="moving-to-3-dimensions-tutorials-coming-soon">
-<h2>Moving to 3 Dimensions (tutorials coming soon)<a class="headerlink" href="#moving-to-3-dimensions-tutorials-coming-soon" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="basics-of-thermal-emission">
+<h2>Basics of Thermal Emission<a class="headerlink" href="#basics-of-thermal-emission" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/6_AddingThermalFlux.html">Thermal Emission</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="moving-to-3-dimensions">
+<h2>Moving to 3 Dimensions<a class="headerlink" href="#moving-to-3-dimensions" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/7_Adding3DFunctionality.html">From 1D to 3D</a></li>
+</ul>
 </div>
 </div>
 <div class="section" id="retrievals-tutorials-coming-soon">
@@ -235,9 +255,7 @@
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -246,7 +264,7 @@
         <a href="notebooks/1_GetStarted.html" class="btn btn-neutral float-right" title="Getting Started : Basic Inputs and Outputs" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="installation.html" class="btn btn-neutral" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -255,11 +273,11 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2018, Natasha E. Batalha.
+        &copy; Copyright 2018, Natasha E. Batalha
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -272,39 +290,15 @@
   
 
 
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'./',
-            VERSION:'0.0',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="_static/jquery.js"></script>
-      <script type="text/javascript" src="_static/underscore.js"></script>
-      <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-      <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-  
-
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
   </script>
+
+  
+  
+    
    
 
 </body>
