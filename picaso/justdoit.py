@@ -601,7 +601,7 @@ class inputs():
             print("Turning off Raman for Non-H2 atmosphere")
             self.approx(raman='none')
         elif (("H2" in df.keys()) and (self.inputs['approx']['raman'] != 2)): 
-            if df['H2'].min() < 0.8: 
+            if df['H2'].min() < 0.7: 
                 print("Turning off Raman for Non-H2 atmosphere")
                 self.approx(raman='none')
 
@@ -928,7 +928,7 @@ class inputs():
             (Optional) Total thickness cloud deck above p (LOG10 bars). 
             Can be a single float for a single cloud or a list of floats 
             for two different cloud layers 
-            Cloud will span 10**(np.log10(p) +- np.log10(dp)/2)
+            Cloud will span 10**(np.log10(p-dp))
         df : pd.DataFrame, dict
             (Optional) Same as what would be included in the file, but in DataFrame or dict form
         """
@@ -992,7 +992,7 @@ class inputs():
             #loop through all cloud layers and set cloud profile
             for ig, iw, io , ip, idp in zip(g0,w0,opd,p,dp):
                 maxp = 10**ip #max pressure is bottom of cloud deck
-                minp = 10**(ip) - 10**(idp) #min pressure 
+                minp = 10**(ip-idp) #min pressure 
                 df.loc[((df['pressure'] >= minp) & (df['pressure'] <= maxp)),'g0']= ig
                 df.loc[((df['pressure'] >= minp) & (df['pressure'] <= maxp)),'w0']= iw
                 df.loc[((df['pressure'] >= minp) & (df['pressure'] <= maxp)),'opd']= io
@@ -1176,6 +1176,9 @@ def jupiter_cld():
 def HJ_pt():
     """Function to get Jupiter's PT profile"""
     return os.path.join(__refdata__, 'base_cases','HJ.pt')
+def HJ_pt_3d():
+    """Function to get Jupiter's PT profile"""
+    return os.path.join(__refdata__, 'base_cases','HJ_3d.pt')
 def HJ_cld():
     """Function to get rough Jupiter Cloud model with fsed=3"""
     return os.path.join(__refdata__, 'base_cases','HJ.cld')

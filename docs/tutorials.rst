@@ -1,8 +1,8 @@
 Tutorials
 =========
 
-Basics
-------
+Basics Reflected Light
+----------------------
 
 .. toctree::
    :titlesonly:
@@ -22,16 +22,22 @@ Approximations & Opacities
    Investigating Approximations  </notebooks/4_AnalyzingApproximations.ipynb>
    Opacity Factory </notebooks/5_SwappingOpacities.ipynb>
 
+Basics of Thermal Emission
+--------------------------
 
-Moving to 3 Dimensions (tutorials coming soon)
-----------------------------------------------
 .. toctree::
    :titlesonly:
    :maxdepth: 1
 
-   From 1D to 3D </notebooks/6_Running3DCalcs.ipynb>
-   Patchy Clouds or Banding </notebooks/7_3DClouds.ipynb>
-   3D Plotting Diagnostics </notebooks/8_3DPlotDiagnostics.ipynb>
+   Thermal Emission  </notebooks/6_AddingThermalFlux.ipynb>
+
+Moving to 3 Dimensions
+----------------------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   From 1D to 3D </notebooks/7_Adding3DFunctionality.ipynb>
 
 Retrievals (tutorials coming soon)
 ----------------------------------
