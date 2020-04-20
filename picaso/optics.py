@@ -98,19 +98,21 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
     """
     atm = atmosphere
     tlevel = atm.level['temperature']
-    plevel = atm.level['pressure']/atm.c.pconv #think of a better solution for this later when mark responds
+    #these units are purely because of the wonky continuum units
+    #plevel in this routine is only used for those 
+    plevel = atm.level['pressure']/atm.c.pconv #THIS IS DANGEROUS, used for continuum
     
     tlayer = atm.layer['temperature']
-    player = atm.layer['pressure']/atm.c.pconv #think of a better solution for this later when mark responds
-    gravity = atm.planet.gravity / 100.0 #this too... need to have consistent units.
+    player = atm.layer['pressure']/atm.c.pconv #THIS IS DANGEROUS, used for continuum
+    gravity = atm.planet.gravity / 100.0  #THIS IS DANGEROUS, used for continuum
     nlayer = atm.c.nlayer
     nwno = opacityclass.nwno
 
     if plot_opacity: 
-        plot_layer=int(nlayer/2)#np.size(tlayer)-1
+        plot_layer=int(nlayer/1.5)#np.size(tlayer)-1
         opt_figure = figure(x_axis_label = 'Wavelength', y_axis_label='TAUGAS in optics.py', 
-        title = 'Opacity at T='+str(tlayer[plot_layer])+' Layer='+str(plot_layer)
-        ,y_axis_type='log',height=600, width=800,x_range=[0.3,1])
+        title = 'Opacity at T='+str(tlayer[plot_layer])+' P='+str(player[plot_layer])
+        ,y_axis_type='log',height=700, width=600)
 
     #====================== INITIALIZE TAUGAS#======================
     TAUGAS = 0 
@@ -131,7 +133,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
     COEF1 = atm.c.rgas*273.15**2*.5E5* (
         ACOEF* (plevel[1:]**2 - plevel[:-1]**2) + BCOEF*(
             2./3.)*(plevel[1:]**3 - plevel[:-1]**3) ) / (
-        1.01325**2 *gravity*tlayer*atm.layer['mmw'])
+        1.01325**2 *gravity*tlayer*atm.layer['mmw']) 
 
     #go through every molecule in the continuum first 
     for m in atm.continuum_molecules:
@@ -258,7 +260,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
         raman_factor = np.minimum(raman_factor, raman_factor*0+0.99999)
     #POLLACK OPACITY
     elif raman ==1: 
-        raman_factor = raman_pollack(nlayer)
+        raman_factor = raman_pollack(nlayer,1e4/opacityclass.wno)
         raman_factor = np.minimum(raman_factor, raman_factor*0+0.99999)     
         if plot_opacity: opt_figure.line(1e4/opacityclass.wno, raman_factor[plot_layer,:]*TAURAY[plot_layer,:], alpha=0.7,legend_label='Shifted Raman', line_width=3, color=colors[c],
                 muted_color=colors[c], muted_alpha=0.2)
@@ -308,7 +310,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
     TAU[1:,:]=numba_cumsum(DTAU)
 
     if plot_opacity:
-        opt_figure.line(1e4/opacityclass.wno, DTAU[int(np.size(tlayer)/2),:], legend_label='TOTAL', line_width=4, color=colors[0],
+        opt_figure.line(1e4/opacityclass.wno, DTAU[plot_layer,:], legend_label='TOTAL', line_width=4, color=colors[0],
             muted_color=colors[c], muted_alpha=0.2)
         opt_figure.legend.click_policy="mute"
         show(opt_figure)
@@ -567,7 +569,7 @@ def j_fraction(j,T):
     return partition_function(j,T)/partition_sum(T)
 
 #@jit(nopython=True, cache=True)
-def raman_pollack(nlayer):
+def raman_pollack(nlayer,wave):
     """
     Mystery raman scattering. Couldn't figure out where it came from.. so discontinuing. 
     Currently function doesnt' totally work. In half fortran-half python. Legacy from 
@@ -642,9 +644,10 @@ def raman_pollack(nlayer):
     dat = pd.read_csv(os.path.join(os.environ.get('picaso_refdata'), 'opacities','raman_fortran.txt'),
                         delim_whitespace=True, header=None, names = ['w','f'])
     #fill in matrix to match real raman format
-    raman_factor = np.zeros((nlayer, dat.shape[0]))
+    interp_raman = np.interp(wave, dat['w'].values, dat['f'].values, )[::-1]
+    raman_factor = np.zeros((nlayer, len(wave)))
     for i in range(nlayer): 
-        raman_factor[i,:] = dat['f'].values[::-1]#return flipped values for raman
+        raman_factor[i,:] = interp_raman#return flipped values for raman
     return  raman_factor 
 
 class RetrieveOpacities():
@@ -653,6 +656,21 @@ class RetrieveOpacities():
     now we are just employing nearest neighbors to grab the respective opacities. 
     Eventually, we will switch to correlated K. 
     
+    Parameters
+    ----------
+    db_filename : str 
+        Opacity file name 
+    raman_data : str 
+        file name of the raman cross section data 
+    wave_range : list of float
+        Wavelength range (in microns) to run. 
+        Default None grabs all the full wavelength range available 
+    location : str 
+        Default = local. This is the only option currently available since 
+        we dont have AWS or other services enabled. 
+    resample : int 
+        Default =1 (no resampling)
+
     Attributes
     ----------
     raman_db : pandas.DataFrame
@@ -698,14 +716,14 @@ class RetrieveOpacities():
         Gets opacities after user specifies atmospheric profile (e.g. full PT and Composition)
     """
     #def __init__(self, continuum_data, molecular_data,raman_data, db = 'local'):
-    def __init__(self, db_filename, raman_data, location = 'local'):
+    def __init__(self, db_filename, raman_data, wave_range=None,location = 'local',resample=1):
 
         if location == 'local':
             #self.conn = sqlite3.connect(db_filename, detect_types=sqlite3.PARSE_DECLTYPES)
             self.db_filename = db_filename
             self.db_connect = self.open_local
 
-        self.get_available_data()
+        self.get_available_data(wave_range, resample)
         
         #raman cross sections 
         self.raman_db = pd.read_csv(raman_data,
@@ -723,9 +741,9 @@ class RetrieveOpacities():
         cur = conn.cursor()
         return cur,conn
 
-    def get_available_data(self):
+    def get_available_data(self, wave_range, resample):
         """Get the pressures and temperatures that are available for the continuum and molecules"""
-        
+        self.resample = resample
         #open connection 
         cur, conn = self.db_connect()
 
@@ -744,8 +762,14 @@ class RetrieveOpacities():
 
         #Get the wave grid info
         cur.execute('SELECT wavenumber_grid FROM header')
-        self.wno =  cur.fetchone()[0]
+        self.wno =  cur.fetchone()[0][::self.resample]
         self.wave = 1e4/self.wno 
+        if wave_range == None: 
+            self.loc = [True]*len(self.wno )
+        else:
+            self.loc = np.where(((self.wave>min(wave_range)) & (self.wave<max(wave_range))))
+        self.wave = self.wave[self.loc]
+        self.wno = self.wno[self.loc]
         self.nwno = np.size(self.wno)
 
         conn.close()
@@ -800,7 +824,7 @@ class RetrieveOpacities():
         #fetch everything and stick into a dictionary where we can find the right
         #pt and molecules
         data= cur.fetchall()
-        data = dict((x+'_'+str(y), dat) for x,y,dat in data)        
+        data = dict((x+'_'+str(y), dat[::self.resample][self.loc]) for x,y,dat in data)        
 
         #structure it into a dictionary e.g. {'H2O':ndarray(nwave x nlayer), 'CH4':ndarray(nwave x nlayer)}.. 
         for i in self.molecular_opa.keys():
@@ -829,10 +853,9 @@ class RetrieveOpacities():
 
         data = cur.fetchall()
         data = dict((x+'_'+str(y), dat) for x, y,dat in data)
-
         for i in self.continuum_opa.keys():
             for j,ind in zip(tcia,range(nlayer)):
-                self.continuum_opa[i][:,ind] = data[i+'_'+str(j)]
+                self.continuum_opa[i][:,ind] = data[i+'_'+str(j)][::self.resample][self.loc]
 
         conn.close() 
              
