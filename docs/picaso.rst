@@ -84,26 +84,10 @@ picaso\.optics module
     :undoc-members:
     :show-inheritance:
 
-picaso\.run\_opa\_factory module
---------------------------------
-
-.. automodule:: picaso.run_opa_factory
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 picaso\.test module
 -------------------
 
 .. automodule:: picaso.test
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-picaso\.test\_optics module
----------------------------
-
-.. automodule:: picaso.test_optics
     :members:
     :undoc-members:
     :show-inheritance:
