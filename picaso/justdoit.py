@@ -155,7 +155,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman= compute_opacity(
             atm, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
             full_output=full_output, plot_opacity=plot_opacity)
-
         if  'reflected' in calculation:
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
             xint_at_top  = get_reflected_1d(atm.c.nlevel, wno,nwno,ng,nt,
@@ -1444,7 +1443,7 @@ class inputs():
         self.inputs['clouds']['profile'] = df
 
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
-        raman='oklopcic',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1):
+        raman='pollack',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1):
         """
         This function sets all the default approximations in the code. It transforms the string specificatons
         into a number so that they can be used in numba nopython routines. 

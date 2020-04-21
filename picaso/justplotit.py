@@ -749,7 +749,7 @@ def spectrum_hires(wno, alb,legend=None, **kwargs):
 
     return points_og
 
-def flux_at_top(full_output, plot_bb = True, pressures = [1e-1,1e-2,1e-3],ng=None, nt=None, **kwargs):
+def flux_at_top(full_output, plot_bb = True, R=None, pressures = [1e-1,1e-2,1e-3],ng=None, nt=None, **kwargs):
     """
     Routine to plot the OLR with overlaying black bodies. 
 
@@ -762,8 +762,14 @@ def flux_at_top(full_output, plot_bb = True, pressures = [1e-1,1e-2,1e-3],ng=Non
         full dictionary output with {'wavenumber','thermal','full_output'}
     plot_bb : bool , optional 
         Default is to plot black bodies for three pressures specified by `pressures`
+    R : float 
+        New constant R to bin to 
     pressures : list, optional 
         Default is a list of three pressures (in bars) =  [1e-1,1e-2,1e-3]
+    ng : int    
+        Used for 3D calculations to select point on the sphere (equivalent to longitude point)
+    nt : int    
+        Used for 3D calculations to select point on the sphere (equivalent to latitude point)
     **kwargs : dict 
         Any key word argument for bokeh.figure() 
     """
@@ -791,7 +797,11 @@ def flux_at_top(full_output, plot_bb = True, pressures = [1e-1,1e-2,1e-3],ng=Non
     cols = colfun1(ncol)
 
     wno = full_output['wavenumber']
-    fig.line(1e4/wno, full_output['thermal'], color='black', line_width=4)
+    if isinstance(R,(int, float)): 
+        wno, thermal = mean_regrid(wno, full_output['thermal'], R=R)
+    else: 
+        thermal =  full_output['thermal']
+    fig.line(1e4/wno, thermal, color='black', line_width=4)
 
     for p,c in zip(pressures,cols): 
         ip = find_nearest_1d(pressure_all, p)

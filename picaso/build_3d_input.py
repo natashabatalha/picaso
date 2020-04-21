@@ -1,5 +1,5 @@
 import json
-from .disco import get_angles, compute_disco
+from .disco import get_angles_3d, compute_disco
 import pandas as pd
 import numpy as np
 from scipy.spatial import cKDTree
@@ -42,7 +42,7 @@ def rebin_mitgcm_pt(ng, nt, phase_angle, input_file, output_file,p_unit='Pa', kz
 		CtoO = 0.55 is solar.  
 	"""	
 
-	gangle,gweight,tangle,tweight = get_angles(ng,nt)
+	gangle,gweight,tangle,tweight = get_angles_3d(ng,nt)
 	ubar0, ubar1, cos_theta ,lat_picaso,lon_picaso = compute_disco(ng,nt, gangle, tangle, phase_angle)    
 
 
@@ -146,7 +146,7 @@ def rebin_mitgcm_cld(ng, nt, phase_angle, input_file, output_file,names=['i','j'
 		comes out of A&M code.. But double check before running!! 
 	"""	
 
-	gangle,gweight,tangle,tweight = get_angles(ng,nt)
+	gangle,gweight,tangle,tweight = get_angles_3d(ng,nt)
 	ubar0, ubar1, cos_theta ,lat_picaso,lon_picaso = compute_disco(ng,nt, gangle, tangle, phase_angle)    
 
 
@@ -265,7 +265,7 @@ def make_3d_pt_input(ng,nt,phase_angle,input_file,output_file,**kwargs):
 
 	h5db = h5py.File(output_file,'w')
 	#get geometry
-	gangle,gweight,tangle,tweight = disco.get_angles(ng, nt)
+	gangle,gweight,tangle,tweight = disco.get_angles_3d(ng, nt)
 	ubar0, ubar1, cos_theta,lat,lon = disco.compute_disco(ng, nt, gangle, tangle, phase_angle)
 
 
@@ -328,7 +328,7 @@ def make_3d_cld_input(ng,nt,phase_angle,input_file,output_file, lat_range=None, 
 
 	h5db = h5py.File(output_file,'w')
 	#get geometry
-	gangle,gweight,tangle,tweight = disco.get_angles(ng, nt)
+	gangle,gweight,tangle,tweight = disco.get_angles_3d(ng, nt)
 	ubar0, ubar1, cos_theta,lat,lon = disco.compute_disco(ng, nt, gangle, tangle, phase_angle)
 	first = True
 
