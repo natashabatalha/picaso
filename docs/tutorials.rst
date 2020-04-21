@@ -5,12 +5,12 @@ Basics Reflected Light
 ----------------------
 
 .. toctree::
-   :titlesonly:
    :maxdepth: 2
 
    Getting Started  </notebooks/1_GetStarted.ipynb>
    Adding Clouds  </notebooks/2_AddingClouds.ipynb>
-   Plot Diagnostics </notebooks/3_PlotDiagnostics.ipynb>
+   Adding Surface Reflectivity </notebooks/3_AddingSurfaceReflectivity.ipynb>
+   Plot Diagnostics </notebooks/4_PlotDiagnostics.ipynb>
 
 
 Basics of Thermal Emission
@@ -20,20 +20,17 @@ Basics of Thermal Emission
    :titlesonly:
    :maxdepth: 2
 
-   Thermal Emission  </notebooks/4_AddingThermalFlux.ipynb>
-   Brown Dwarfs </notebooks/5_BrownDwarfs.ipynb>
+   Thermal Emission Exoplanets </notebooks/5_AddingThermalFlux.ipynb>
+   Brown Dwarfs </notebooks/6_BrownDwarfs.ipynb>
 
-Approximations & Opacities
---------------------------
+Cloud Modeling with `Virga`
+---------------------------
 
 .. toctree::
    :titlesonly:
    :maxdepth: 2
 
-   Investigating Approximations  </notebooks/7_AnalyzingApproximations.ipynb>
-   Opacity Factory </notebooks/8_SwappingOpacities.ipynb>
-   SQLITE Tutorial </notebooks/9_Sqlite3Tutorial.ipynb>
-   Spherical Integration Grid </notebooks/10_SphericalIntegration.ipynb>
+   Moving Away From Box Models </notebooks/7_PairingPICASOToVIRGA.ipynb>
 
 Moving to 3 Dimensions
 ----------------------
@@ -41,7 +38,20 @@ Moving to 3 Dimensions
    :titlesonly:
    :maxdepth: 2
 
-   From 1D to 3D </notebooks/11_Adding3DFunctionality.ipynb>
+   Non-Zero Phase and Spherical Integration </notebooks/8_SphericalIntegration.ipynb>
+   From 1D to 3D </notebooks/9_Adding3DFunctionality.ipynb>
+
+Opacities & Approximatons
+-------------------------
+
+.. toctree::
+   :titlesonly:
+   :maxdepth: 2
+
+   Opacity Factory </notebooks/9_SwappingOpacities.ipynb>
+   Investigating Approximations  </notebooks/10_AnalyzingApproximations.ipynb>
+   SQLITE Tutorial </notebooks/11_Sqlite3Tutorial.ipynb>
+
 
 Retrievals (tutorials coming soon)
 ----------------------------------
