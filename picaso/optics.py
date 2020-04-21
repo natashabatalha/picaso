@@ -261,7 +261,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
     #POLLACK OPACITY
     elif raman ==1: 
         raman_factor = raman_pollack(nlayer,1e4/opacityclass.wno)
-        raman_factor = np.minimum(raman_factor, raman_factor*0+0.99999)     
+        raman_factor = np.minimum(raman_factor, raman_factor*0+0.99999)  
         if plot_opacity: opt_figure.line(1e4/opacityclass.wno, raman_factor[plot_layer,:]*TAURAY[plot_layer,:], alpha=0.7,legend_label='Shifted Raman', line_width=3, color=colors[c],
                 muted_color=colors[c], muted_alpha=0.2)
     #NOTHING
@@ -644,7 +644,7 @@ def raman_pollack(nlayer,wave):
     dat = pd.read_csv(os.path.join(os.environ.get('picaso_refdata'), 'opacities','raman_fortran.txt'),
                         delim_whitespace=True, header=None, names = ['w','f'])
     #fill in matrix to match real raman format
-    interp_raman = np.interp(wave, dat['w'].values, dat['f'].values, )[::-1]
+    interp_raman = np.interp(wave, dat['w'].values, dat['f'].values, )
     raman_factor = np.zeros((nlayer, len(wave)))
     for i in range(nlayer): 
         raman_factor[i,:] = interp_raman#return flipped values for raman
