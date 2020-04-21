@@ -37,7 +37,7 @@
 		},
 		"multi_phase":0,
 		"delta_eddington":true,
-		"raman":0
+		"raman":1
 	},
 	"disco":{
 		"num_gangle":10,
