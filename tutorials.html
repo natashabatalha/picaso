@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Tutorials &mdash; picaso 1.0 documentation</title>
+  <title>Tutorials &mdash; picaso 2.0 documentation</title>
   
 
   
@@ -25,8 +25,6 @@
         <script type="text/javascript" src="_static/underscore.js"></script>
         <script type="text/javascript" src="_static/doctools.js"></script>
         <script type="text/javascript" src="_static/language_data.js"></script>
-        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-        <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
         <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
@@ -38,7 +36,6 @@
   
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Getting Started : Basic Inputs and Outputs" href="notebooks/1_GetStarted.html" />
@@ -66,7 +63,7 @@
             
             
               <div class="version">
-                1.0
+                2.0
               </div>
             
           
@@ -96,20 +93,28 @@
 <li class="toctree-l2"><a class="reference internal" href="#basics-reflected-light">Basics Reflected Light</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/1_GetStarted.html">Getting Started</a></li>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/2_AddingClouds.html">Adding Clouds</a></li>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/3_PlotDiagnostics.html">Plot Diagnostics</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#approximations-opacities">Approximations &amp; Opacities</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/4_AnalyzingApproximations.html">Investigating Approximations</a></li>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/5_SwappingOpacities.html">Opacity Factory</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/3_AddingSurfaceReflectivity.html">Adding Surface Reflectivity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/4_PlotDiagnostics.html">Plot Diagnostics</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#basics-of-thermal-emission">Basics of Thermal Emission</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/6_AddingThermalFlux.html">Thermal Emission</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/5_AddingThermalFlux.html">Thermal Emission Exoplanets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/6_BrownDwarfs.html">Brown Dwarfs</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#cloud-modeling-with-virga">Cloud Modeling with <cite>Virga</cite></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/7_PairingPICASOToVIRGA.html">Moving Away From Box Models</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#moving-to-3-dimensions">Moving to 3 Dimensions</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/7_Adding3DFunctionality.html">From 1D to 3D</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/8_SphericalIntegration.html">Non-Zero Phase and Spherical Integration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/9_Adding3DFunctionality.html">From 1D to 3D</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#opacities-approximatons">Opacities &amp; Approximatons</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/9_SwappingOpacities.html">Opacity Factory</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html">Investigating Approximations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/11_Sqlite3Tutorial.html">SQLITE Tutorial</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#retrievals-tutorials-coming-soon">Retrievals (tutorials coming soon)</a><ul class="simple">
@@ -215,18 +220,31 @@
 <h2>Basics Reflected Light<a class="headerlink" href="#basics-reflected-light" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/1_GetStarted.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/2_AddingClouds.html">Adding Clouds</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/3_PlotDiagnostics.html">Plot Diagnostics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/1_GetStarted.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/1_GetStarted.html#Connect-to-Opacity-Database">Connect to Opacity Database</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/1_GetStarted.html#Load-blank-slate">Load blank slate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/1_GetStarted.html#Set-Planet-&amp;-Star-Properties">Set Planet &amp; Star Properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/1_GetStarted.html#Set-Atmospheric-Composition">Set Atmospheric Composition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/1_GetStarted.html#Create-1D-Reflected-Light-Spectrum">Create 1D Reflected Light Spectrum</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/1_GetStarted.html#Regrid-Opacities-to-Constant-Resolution">Regrid Opacities to Constant Resolution</a></li>
 </ul>
-</div>
-</div>
-<div class="section" id="approximations-opacities">
-<h2>Approximations &amp; Opacities<a class="headerlink" href="#approximations-opacities" title="Permalink to this headline">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/4_AnalyzingApproximations.html">Investigating Approximations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/5_SwappingOpacities.html">Opacity Factory</a></li>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/2_AddingClouds.html">Adding Clouds</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/2_AddingClouds.html#User-Defined-Cloud-Input">User Defined Cloud Input</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/2_AddingClouds.html#Cloud-Input-for-Using-Single-Parameter-Box-Model">Cloud Input for Using Single Parameter Box Model</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/3_AddingSurfaceReflectivity.html">Adding Surface Reflectivity</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/3_AddingSurfaceReflectivity.html#Connect-to-Opacity-Database">Connect to Opacity Database</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/3_AddingSurfaceReflectivity.html#Load-blank-slate">Load blank slate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/3_AddingSurfaceReflectivity.html#Set-Planet-&amp;-Star-Properties">Set Planet &amp; Star Properties</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/4_PlotDiagnostics.html">Plot Diagnostics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/4_PlotDiagnostics.html#Return-PICASO-Full-Ouput">Return <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> Full Ouput</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/4_PlotDiagnostics.html#Visualizing-Full-Output">Visualizing Full Output</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -234,7 +252,35 @@
 <h2>Basics of Thermal Emission<a class="headerlink" href="#basics-of-thermal-emission" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/6_AddingThermalFlux.html">Thermal Emission</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/5_AddingThermalFlux.html">Thermal Emission Exoplanets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/5_AddingThermalFlux.html#Return-PICASO-Full-Ouput">Return <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> Full Ouput</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/5_AddingThermalFlux.html#Analyzing-Thermal-Emission-Output">Analyzing Thermal Emission Output</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/5_AddingThermalFlux.html#Standard-Relative-Flux-Fp/Fs">Standard Relative Flux Fp/Fs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/5_AddingThermalFlux.html#Exploring-Thermal-Emission-Spectrum">Exploring Thermal Emission Spectrum</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/6_BrownDwarfs.html">Brown Dwarfs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/6_BrownDwarfs.html#Download-and-Query-from-Sonora-Profile-Grid">Download and Query from Sonora Profile Grid</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/6_BrownDwarfs.html#Run-Spectrum">Run Spectrum</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/6_BrownDwarfs.html#Convert-to-F_\nu-Units-and-Regrid">Convert to <span class="math notranslate nohighlight">\(F_\nu\)</span> Units and Regrid</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/6_BrownDwarfs.html#Compare-with-Sonora-Grid">Compare with Sonora Grid</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="cloud-modeling-with-virga">
+<h2>Cloud Modeling with <cite>Virga</cite><a class="headerlink" href="#cloud-modeling-with-virga" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/7_PairingPICASOToVIRGA.html">Moving Away From Box Models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/7_PairingPICASOToVIRGA.html#Submit-virga-run-within-picaso">Submit <code class="docutils literal notranslate"><span class="pre">virga</span></code> run within <code class="docutils literal notranslate"><span class="pre">picaso</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/7_PairingPICASOToVIRGA.html#Analyzing-Cloudy-versus-Cloud-free">Analyzing Cloudy versus Cloud-free</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/7_PairingPICASOToVIRGA.html#How-varying-cloud-species-affects-reflectance-spectrum">How varying cloud species affects reflectance spectrum</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/7_PairingPICASOToVIRGA.html#How-sedimentation-efficiency-affects-albedo-spectrum?">How sedimentation efficiency affects albedo spectrum?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/7_PairingPICASOToVIRGA.html#How-K_{z}-affects-albedo-spectrum?">How <span class="math notranslate nohighlight">\(K_{z}\)</span> affects albedo spectrum?</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -242,7 +288,50 @@
 <h2>Moving to 3 Dimensions<a class="headerlink" href="#moving-to-3-dimensions" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/7_Adding3DFunctionality.html">From 1D to 3D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/8_SphericalIntegration.html">Non-Zero Phase and Spherical Integration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/8_SphericalIntegration.html#Test-Geometry-with-Brown-Dwarf-Sonora-Example">Test Geometry with Brown Dwarf Sonora Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/8_SphericalIntegration.html#Geometry-with-Reflectivity-and-Non-Zero-Phase">Geometry with Reflectivity and Non-Zero Phase</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/9_Adding3DFunctionality.html">From 1D to 3D</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9_Adding3DFunctionality.html#Same-procedure-as-normal">Same procedure as normal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9_Adding3DFunctionality.html#Build-3D-Chemistry-and-PT-Input">Build 3D Chemistry and PT Input</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9_Adding3DFunctionality.html#1)-MIT-GCM">1) MIT GCM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9_Adding3DFunctionality.html#2)-Building-Generic-Input">2) Building Generic Input</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9_Adding3DFunctionality.html#Create-1D-Thermal-Emission-Spectrum-from-3D-Output">Create 1D Thermal Emission Spectrum from 3D Output</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9_Adding3DFunctionality.html#Analyze-3D-Output">Analyze 3D Output</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9_Adding3DFunctionality.html#Compare-flux-to-blackbodies">Compare flux to blackbodies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9_Adding3DFunctionality.html#3D-Map-of-Flux">3D Map of Flux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9_Adding3DFunctionality.html#More-3D-Mapping-Functions">More 3D Mapping Functions</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="opacities-approximatons">
+<h2>Opacities &amp; Approximatons<a class="headerlink" href="#opacities-approximatons" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/9_SwappingOpacities.html">Opacity Factory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9_SwappingOpacities.html#General-Sqlite3-and-how-our-database-is-structured">General Sqlite3 and how our database is structured</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9_SwappingOpacities.html#How-to-Query-the-Database">How to Query the Database</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html">Investigating Approximations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html#Using-the-approx-key">Using the <code class="docutils literal notranslate"><span class="pre">approx</span></code> key</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html#What-approximations-exist?">What approximations exist?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html#Direct-Scattering-Approximation">Direct Scattering Approximation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html#Multiple-Scattering-Approximations">Multiple Scattering Approximations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html#Raman-Scattering-Approximations">Raman Scattering Approximations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html#The-Effect-of-Stellar-Spectrum">The Effect of Stellar Spectrum</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/11_Sqlite3Tutorial.html">SQLITE Tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/11_Sqlite3Tutorial.html#Establishing-a-Connection-to-a-Database">Establishing a Connection to a Database</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/11_Sqlite3Tutorial.html#Using-SELECT-*-FROM-to-Query-Items">Using <code class="docutils literal notranslate"><span class="pre">SELECT</span> <span class="pre">*</span> <span class="pre">FROM</span></code> to Query Items</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/11_Sqlite3Tutorial.html#Creating-a-New-Database-from-Scratch">Creating a New Database from Scratch</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>

@@ -9,7 +9,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Index &mdash; picaso 1.0 documentation</title>
+  <title>Index &mdash; picaso 2.0 documentation</title>
   
 
   
@@ -26,8 +26,6 @@
         <script type="text/javascript" src="_static/underscore.js"></script>
         <script type="text/javascript" src="_static/doctools.js"></script>
         <script type="text/javascript" src="_static/language_data.js"></script>
-        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-        <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
         <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
@@ -39,7 +37,6 @@
   
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" type="text/css" />
     <link rel="index" title="Index" href="#" />
     <link rel="search" title="Search" href="search.html" /> 
 </head>
@@ -65,7 +62,7 @@
             
             
               <div class="version">
-                1.0
+                2.0
               </div>
             
           
@@ -180,14 +177,19 @@
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
+ | <a href="#V"><strong>V</strong></a>
  | <a href="#W"><strong>W</strong></a>
  
 </div>
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="picaso.html#picaso.optics.RetrieveOpacities.adapt_array">adapt_array() (picaso.optics.RetrieveOpacities method)</a>
+      <li><a href="picaso.html#picaso.opacity_factory.adapt_array">adapt_array() (in module picaso.opacity_factory)</a>
+
+      <ul>
+        <li><a href="picaso.html#picaso.optics.RetrieveOpacities.adapt_array">(picaso.optics.RetrieveOpacities method)</a>
 </li>
+      </ul></li>
       <li><a href="picaso.html#picaso.atmsetup.ATMSETUP.add_warnings">add_warnings() (picaso.atmsetup.ATMSETUP method)</a>
 </li>
       <li><a href="picaso.html#picaso.justdoit.inputs.approx">approx (picaso.justdoit.inputs attribute)</a>
@@ -218,6 +220,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="picaso.html#picaso.fluxes.blackbody">blackbody (in module picaso.fluxes)</a>
 </li>
+      <li><a href="picaso.html#picaso.opacity_factory.build_skeleton">build_skeleton() (in module picaso.opacity_factory)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -226,7 +230,13 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="picaso.html#picaso.atmsetup.ATMSETUP.calc_PT">calc_PT() (picaso.atmsetup.ATMSETUP method)</a>
 </li>
+      <li><a href="picaso.html#picaso.justdoit.inputs.channon_grid_high">channon_grid_high() (picaso.justdoit.inputs method)</a>
+</li>
+      <li><a href="picaso.html#picaso.justdoit.inputs.channon_grid_low">channon_grid_low() (picaso.justdoit.inputs method)</a>
+</li>
       <li><a href="picaso.html#picaso.justdoit.inputs.chemeq">chemeq() (picaso.justdoit.inputs method)</a>
+</li>
+      <li><a href="picaso.html#picaso.justplotit.chunk">chunk() (in module picaso.justplotit)</a>
 </li>
       <li><a href="picaso.html#picaso.optics.RetrieveOpacities.cia_temps">cia_temps (picaso.optics.RetrieveOpacities attribute)</a>
 </li>
@@ -237,6 +247,8 @@
       <li><a href="picaso.html#picaso.justdoit.inputs.clouds">clouds() (picaso.justdoit.inputs method)</a>
 </li>
       <li><a href="picaso.html#picaso.justdoit.inputs.clouds_3d">clouds_3d() (picaso.justdoit.inputs method)</a>
+</li>
+      <li><a href="picaso.html#picaso.justdoit.inputs.clouds_reset">clouds_reset() (picaso.justdoit.inputs method)</a>
 </li>
       <li><a href="picaso.html#picaso.disco.compress_disco">compress_disco (in module picaso.disco)</a>
 </li>
@@ -252,13 +264,23 @@
 </li>
       <li><a href="picaso.html#picaso.optics.RetrieveOpacities.compute_stellar_shits">compute_stellar_shits() (picaso.optics.RetrieveOpacities method)</a>
 </li>
-      <li><a href="picaso.html#picaso.run_opa_factory.continuum">continuum() (in module picaso.run_opa_factory)</a>
+      <li><a href="picaso.html#picaso.opacity_factory.continuum_avail">continuum_avail() (in module picaso.opacity_factory)</a>
 </li>
       <li><a href="picaso.html#picaso.optics.RetrieveOpacities.continuum_opa">continuum_opa (picaso.optics.RetrieveOpacities attribute)</a>
 </li>
-      <li><a href="picaso.html#picaso.opacity_factory.ContinuumFactory">ContinuumFactory (class in picaso.opacity_factory)</a>
+      <li><a href="picaso.html#picaso.opacity_factory.convert_array">convert_array() (in module picaso.opacity_factory)</a>
+
+      <ul>
+        <li><a href="picaso.html#picaso.optics.RetrieveOpacities.convert_array">(picaso.optics.RetrieveOpacities method)</a>
 </li>
-      <li><a href="picaso.html#picaso.optics.RetrieveOpacities.convert_array">convert_array() (picaso.optics.RetrieveOpacities method)</a>
+      </ul></li>
+      <li><a href="picaso.html#picaso.justplotit.corr_continuum">corr_continuum() (in module picaso.justplotit)</a>
+</li>
+      <li><a href="picaso.html#picaso.justplotit.corr_molecular">corr_molecular() (in module picaso.justplotit)</a>
+</li>
+      <li><a href="picaso.html#picaso.opacity_factory.create_grid">create_grid() (in module picaso.opacity_factory)</a>
+</li>
+      <li><a href="picaso.html#picaso.opacity_factory.create_grid_minR">create_grid_minR() (in module picaso.opacity_factory)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -295,14 +317,18 @@
       <li><a href="picaso.html#picaso.opacity_factory.find_nearest">find_nearest() (in module picaso.opacity_factory)</a>
 </li>
       <li><a href="picaso.html#picaso.justplotit.find_nearest_1d">find_nearest_1d() (in module picaso.justplotit)</a>
+
+      <ul>
+        <li><a href="picaso.html#picaso.opacity_factory.find_nearest_1d">(in module picaso.opacity_factory)</a>
 </li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="picaso.html#picaso.justplotit.find_nearest_2d">find_nearest_2d() (in module picaso.justplotit)</a>
 </li>
       <li><a href="picaso.html#picaso.justplotit.find_nearest_old">find_nearest_old() (in module picaso.justplotit)</a>
 </li>
-      <li><a href="picaso.html#picaso.opacity_factory.ContinuumFactory.fit_linsky">fit_linsky() (picaso.opacity_factory.ContinuumFactory method)</a>
+      <li><a href="picaso.html#picaso.opacity_factory.fit_linsky">fit_linsky() (in module picaso.opacity_factory)</a>
 </li>
       <li><a href="picaso.html#picaso.justplotit.flux_at_top">flux_at_top() (in module picaso.justplotit)</a>
 </li>
@@ -312,11 +338,15 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="picaso.html#picaso.disco.get_angles">get_angles() (in module picaso.disco)</a>
+      <li><a href="picaso.html#picaso.disco.get_angles_1d">get_angles_1d() (in module picaso.disco)</a>
+</li>
+      <li><a href="picaso.html#picaso.disco.get_angles_3d">get_angles_3d() (in module picaso.disco)</a>
 </li>
       <li><a href="picaso.html#picaso.optics.RetrieveOpacities.get_available_data">get_available_data() (picaso.optics.RetrieveOpacities method)</a>, <a href="picaso.html#picaso.optics.RetrieveOpacities.get_available_data">[1]</a>
 </li>
       <li><a href="picaso.html#picaso.optics.RetrieveOpacities.get_available_rayleigh">get_available_rayleigh() (picaso.optics.RetrieveOpacities method)</a>, <a href="picaso.html#picaso.optics.RetrieveOpacities.get_available_rayleigh">[1]</a>
+</li>
+      <li><a href="picaso.html#picaso.justplotit.get_bad_bands">get_bad_bands() (in module picaso.justplotit)</a>
 </li>
       <li><a href="picaso.html#picaso.wavelength.get_cld_input_grid">get_cld_input_grid() (in module picaso.wavelength)</a>
 </li>
@@ -326,33 +356,43 @@
 </li>
       <li><a href="picaso.html#picaso.atmsetup.ATMSETUP.get_constants">get_constants() (picaso.atmsetup.ATMSETUP method)</a>
 </li>
+      <li><a href="picaso.html#picaso.opacity_factory.get_continuum">get_continuum() (in module picaso.opacity_factory)</a>
+</li>
       <li><a href="picaso.html#picaso.optics.RetrieveOpacities.get_continuum_opac">get_continuum_opac() (picaso.optics.RetrieveOpacities method)</a>
 </li>
       <li><a href="picaso.html#picaso.atmsetup.ATMSETUP.get_density">get_density() (picaso.atmsetup.ATMSETUP method)</a>
 </li>
       <li><a href="picaso.html#picaso.fluxes.get_flux_toon">get_flux_toon (in module picaso.fluxes)</a>
 </li>
-      <li><a href="picaso.html#picaso.opacity_factory.ContinuumFactory.get_h2minus">get_h2minus() (picaso.opacity_factory.ContinuumFactory method)</a>
+      <li><a href="picaso.html#picaso.opacity_factory.get_h2minus">get_h2minus() (in module picaso.opacity_factory)</a>
 </li>
-      <li><a href="picaso.html#picaso.opacity_factory.ContinuumFactory.get_hminusbf">get_hminusbf() (picaso.opacity_factory.ContinuumFactory method)</a>
+      <li><a href="picaso.html#picaso.opacity_factory.get_hminusbf">get_hminusbf() (in module picaso.opacity_factory)</a>
 </li>
-      <li><a href="picaso.html#picaso.opacity_factory.ContinuumFactory.get_hminusff">get_hminusff() (picaso.opacity_factory.ContinuumFactory method)</a>
+      <li><a href="picaso.html#picaso.opacity_factory.get_hminusff">get_hminusff() (in module picaso.opacity_factory)</a>
 </li>
-      <li><a href="picaso.html#picaso.atmsetup.ATMSETUP.get_mmw">get_mmw() (picaso.atmsetup.ATMSETUP method)</a>
+      <li><a href="picaso.html#picaso.opacity_factory.get_kark_CH4">get_kark_CH4() (in module picaso.opacity_factory)</a>
+</li>
+      <li><a href="picaso.html#picaso.opacity_factory.get_kark_CH4_noTdependence">get_kark_CH4_noTdependence() (in module picaso.opacity_factory)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="picaso.html#picaso.atmsetup.ATMSETUP.get_mmw">get_mmw() (picaso.atmsetup.ATMSETUP method)</a>
+</li>
+      <li><a href="picaso.html#picaso.opacity_factory.get_molecular">get_molecular() (in module picaso.opacity_factory)</a>
+</li>
       <li><a href="picaso.html#picaso.optics.RetrieveOpacities.get_molecular_opac">get_molecular_opac() (picaso.optics.RetrieveOpacities method)</a>
 </li>
       <li><a href="picaso.html#picaso.atmsetup.ATMSETUP.get_needed_continuum">get_needed_continuum() (picaso.atmsetup.ATMSETUP method)</a>
 </li>
       <li><a href="picaso.html#picaso.optics.RetrieveOpacities.get_opacities">get_opacities() (picaso.optics.RetrieveOpacities method)</a>, <a href="picaso.html#picaso.optics.RetrieveOpacities.get_opacities">[1]</a>
 </li>
+      <li><a href="picaso.html#picaso.opacity_factory.get_optical_o3">get_optical_o3() (in module picaso.opacity_factory)</a>
+</li>
+      <li><a href="picaso.html#picaso.opacity_factory.get_original_data">get_original_data() (in module picaso.opacity_factory)</a>
+</li>
       <li><a href="picaso.html#picaso.atmsetup.ATMSETUP.get_profile">get_profile() (picaso.atmsetup.ATMSETUP method)</a>
 </li>
       <li><a href="picaso.html#picaso.atmsetup.ATMSETUP.get_profile_3d">get_profile_3d() (picaso.atmsetup.ATMSETUP method)</a>
-</li>
-      <li><a href="picaso.html#picaso.atmsetup.ATMSETUP.get_profile_3d_old">get_profile_3d_old() (picaso.atmsetup.ATMSETUP method)</a>
 </li>
       <li><a href="picaso.html#picaso.fluxes.get_reflected_1d">get_reflected_1d (in module picaso.fluxes)</a>
 </li>
@@ -360,7 +400,7 @@
 </li>
       <li><a href="picaso.html#picaso.atmsetup.ATMSETUP.get_surf_reflect">get_surf_reflect() (picaso.atmsetup.ATMSETUP method)</a>
 </li>
-      <li><a href="picaso.html#picaso.fluxes.get_thermal_1d">get_thermal_1d() (in module picaso.fluxes)</a>
+      <li><a href="picaso.html#picaso.fluxes.get_thermal_1d">get_thermal_1d (in module picaso.fluxes)</a>
 </li>
       <li><a href="picaso.html#picaso.fluxes.get_thermal_3d">get_thermal_3d (in module picaso.fluxes)</a>
 </li>
@@ -378,7 +418,7 @@
 <h2 id="H">H</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="picaso.html#picaso.opacity_factory.ContinuumFactory.h2h2_overtone">h2h2_overtone() (picaso.opacity_factory.ContinuumFactory method)</a>
+      <li><a href="picaso.html#picaso.opacity_factory.h2h2_overtone">h2h2_overtone() (in module picaso.opacity_factory)</a>
 </li>
       <li><a href="picaso.html#picaso.justdoit.HJ_cld">HJ_cld() (in module picaso.justdoit)</a>
 </li>
@@ -395,6 +435,12 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="picaso.html#picaso.justdoit.inputs">inputs (class in picaso.justdoit)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="picaso.html#picaso.opacity_factory.insert">insert() (in module picaso.opacity_factory)</a>
+</li>
+      <li><a href="picaso.html#picaso.opacity_factory.insert_wno_grid">insert_wno_grid() (in module picaso.opacity_factory)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -440,15 +486,15 @@
 </li>
       <li><a href="picaso.html#picaso.justplotit.map">map() (in module picaso.justplotit)</a>
 </li>
-      <li><a href="picaso.html#picaso.justplotit.mixing_ratio">mixing_ratio() (in module picaso.justplotit)</a>
+      <li><a href="picaso.html#picaso.justdoit.mean_regrid">mean_regrid() (in module picaso.justdoit)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="picaso.html#picaso.run_opa_factory.molecular">molecular() (in module picaso.run_opa_factory)</a>
+      <li><a href="picaso.html#picaso.justplotit.mixing_ratio">mixing_ratio() (in module picaso.justplotit)</a>
+</li>
+      <li><a href="picaso.html#picaso.opacity_factory.molecular_avail">molecular_avail() (in module picaso.opacity_factory)</a>
 </li>
       <li><a href="picaso.html#picaso.optics.RetrieveOpacities.molecular_opa">molecular_opa (picaso.optics.RetrieveOpacities attribute)</a>
-</li>
-      <li><a href="picaso.html#picaso.opacity_factory.MolecularFactory">MolecularFactory (class in picaso.opacity_factory)</a>
 </li>
       <li><a href="picaso.html#picaso.optics.RetrieveOpacities.molecules">molecules (picaso.optics.RetrieveOpacities attribute)</a>
 </li>
@@ -460,6 +506,8 @@
 <h2 id="N">N</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="picaso.html#picaso.justdoit.inputs.nostar">nostar() (picaso.justdoit.inputs method)</a>
+</li>
       <li><a href="picaso.html#picaso.fluxes.numba_cumsum">numba_cumsum (in module picaso.fluxes)</a>
 
       <ul>
@@ -482,8 +530,12 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="picaso.html#picaso.optics.RetrieveOpacities.open_local">open_local() (picaso.optics.RetrieveOpacities method)</a>, <a href="picaso.html#picaso.optics.RetrieveOpacities.open_local">[1]</a>
+      <li><a href="picaso.html#picaso.opacity_factory.open_local">open_local() (in module picaso.opacity_factory)</a>
+
+      <ul>
+        <li><a href="picaso.html#picaso.optics.RetrieveOpacities.open_local">(picaso.optics.RetrieveOpacities method)</a>, <a href="picaso.html#picaso.optics.RetrieveOpacities.open_local">[1]</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -526,13 +578,13 @@
 </li>
       <li><a href="picaso.html#module-picaso.optics">picaso.optics (module)</a>
 </li>
-      <li><a href="picaso.html#module-picaso.run_opa_factory">picaso.run_opa_factory (module)</a>
-</li>
       <li><a href="picaso.html#module-picaso.test">picaso.test (module)</a>
 </li>
       <li><a href="picaso.html#module-picaso.wavelength">picaso.wavelength (module)</a>
 </li>
       <li><a href="picaso.html#picaso.justplotit.plot_cld_input">plot_cld_input() (in module picaso.justplotit)</a>
+</li>
+      <li><a href="picaso.html#picaso.justplotit.plot_errorbar">plot_errorbar() (in module picaso.justplotit)</a>
 </li>
       <li><a href="picaso.html#picaso.justplotit.plot_format">plot_format() (in module picaso.justplotit)</a>
 </li>
@@ -558,22 +610,22 @@
 </li>
       <li><a href="picaso.html#picaso.io_utils.read_hdf">read_hdf() (in module picaso.io_utils)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="picaso.html#picaso.io_utils.read_json">read_json() (in module picaso.io_utils)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="picaso.html#picaso.build_3d_input.rebin_mitgcm_cld">rebin_mitgcm_cld() (in module picaso.build_3d_input)</a>
 </li>
       <li><a href="picaso.html#picaso.build_3d_input.rebin_mitgcm_pt">rebin_mitgcm_pt() (in module picaso.build_3d_input)</a>
 </li>
       <li><a href="picaso.html#picaso.wavelength.regrid">regrid() (in module picaso.wavelength)</a>
 </li>
-      <li><a href="picaso.html#picaso.opacity_factory.ContinuumFactory.restructure_opacity">restructure_opacity() (picaso.opacity_factory.ContinuumFactory method)</a>
-
-      <ul>
-        <li><a href="picaso.html#picaso.opacity_factory.MolecularFactory.restructure_opacity">(picaso.opacity_factory.MolecularFactory method)</a>
+      <li><a href="picaso.html#picaso.opacity_factory.resample_and_insert_molecular">resample_and_insert_molecular() (in module picaso.opacity_factory)</a>
 </li>
-      </ul></li>
+      <li><a href="picaso.html#picaso.opacity_factory.restruct_continuum">restruct_continuum() (in module picaso.opacity_factory)</a>
+</li>
+      <li><a href="picaso.html#picaso.opacity_factory.restructure_opacity">restructure_opacity() (in module picaso.opacity_factory)</a>
+</li>
       <li><a href="picaso.html#picaso.optics.RetrieveOpacities">RetrieveOpacities (class in picaso.optics)</a>
 </li>
   </ul></td>
@@ -592,10 +644,12 @@
 </li>
       <li><a href="picaso.html#picaso.fluxes.slice_lt">slice_lt (in module picaso.fluxes)</a>
 </li>
-      <li><a href="picaso.html#picaso.justdoit.inputs.spectrum">spectrum (picaso.justdoit.inputs attribute)</a>
+      <li><a href="picaso.html#picaso.justdoit.inputs.sonora">sonora() (picaso.justdoit.inputs method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="picaso.html#picaso.justdoit.inputs.spectrum">spectrum (picaso.justdoit.inputs attribute)</a>
+</li>
       <li><a href="picaso.html#picaso.justplotit.spectrum">spectrum() (in module picaso.justplotit)</a>
 
       <ul>
@@ -623,6 +677,22 @@
       <li><a href="picaso.html#picaso.justdoit.inputs.TP_line_earth">TP_line_earth() (picaso.justdoit.inputs method)</a>
 </li>
       <li><a href="picaso.html#picaso.fluxes.tri_diag_solve">tri_diag_solve (in module picaso.fluxes)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="V">V</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="picaso.html#picaso.opacity_factory.vectorize_rebin_mean">vectorize_rebin_mean() (in module picaso.opacity_factory)</a>
+</li>
+      <li><a href="picaso.html#picaso.opacity_factory.vectorize_rebin_median">vectorize_rebin_median() (in module picaso.opacity_factory)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="picaso.html#picaso.justdoit.inputs.virga">virga() (picaso.justdoit.inputs method)</a>
+</li>
+      <li><a href="picaso.html#picaso.opacity_factory.vresample_and_insert_molecular">vresample_and_insert_molecular() (in module picaso.opacity_factory)</a>
 </li>
   </ul></td>
 </tr></table>

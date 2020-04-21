@@ -1,0 +1,1046 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Adding Surface Reflectivity &mdash; picaso 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> picaso
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">The Tutorials</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://arxiv.org/abs/1904.09355">The Paper</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">picaso</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Adding Surface Reflectivity</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/notebooks/6_AddingSurfaceReflectivity.ipynb.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container,
+div.nbinput.container div.prompt,
+div.nbinput.container div.input_area,
+div.nbinput.container div[class*=highlight],
+div.nbinput.container div[class*=highlight] pre,
+div.nboutput.container,
+div.nboutput.container div.prompt,
+div.nboutput.container div.output_area,
+div.nboutput.container div[class*=highlight],
+div.nboutput.container div[class*=highlight] pre {
+    background: none;
+    border: none;
+    padding: 0 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    min-width: 5ex;
+    padding-top: 0.3rem;
+    padding-right: 0.3rem;
+    text-align: right;
+    flex: 0;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    background: #f5f5f5;
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 0.3rem;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt a.copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+div.rendered_html th {
+  font-weight: bold;
+}
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/6_AddingSurfaceReflectivity.ipynb">Download full notebook here</a></p>
+</div>
+<div class="section" id="Adding-Surface-Reflectivity">
+<h1>Adding Surface Reflectivity<a class="headerlink" href="#Adding-Surface-Reflectivity" title="Permalink to this headline">¶</a></h1>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
+
+<span class="c1">#picaso</span>
+<span class="kn">from</span> <span class="nn">picaso</span> <span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
+<span class="kn">from</span> <span class="nn">picaso</span> <span class="kn">import</span> <span class="n">justplotit</span> <span class="k">as</span> <span class="n">jpi</span>
+<span class="c1">#plotting</span>
+<span class="kn">from</span> <span class="nn">bokeh.io</span> <span class="kn">import</span> <span class="n">output_notebook</span>
+<span class="n">output_notebook</span><span class="p">()</span>
+<span class="kn">from</span> <span class="nn">bokeh.plotting</span> <span class="kn">import</span> <span class="n">show</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div class="bk-root">
+    <a href="https://bokeh.org" target="_blank" class="bk-logo bk-logo-small bk-logo-notebook"></a>
+    <span id="1001">Loading BokehJS ...</span>
+</div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+
+(function(root) {
+  function now() {
+    return new Date();
+  }
+
+  var force = true;
+
+  if (typeof root._bokeh_onload_callbacks === "undefined" || force === true) {
+    root._bokeh_onload_callbacks = [];
+    root._bokeh_is_loading = undefined;
+  }
+
+  var JS_MIME_TYPE = 'application/javascript';
+  var HTML_MIME_TYPE = 'text/html';
+  var EXEC_MIME_TYPE = 'application/vnd.bokehjs_exec.v0+json';
+  var CLASS_NAME = 'output_bokeh rendered_html';
+
+  /**
+   * Render data to the DOM node
+   */
+  function render(props, node) {
+    var script = document.createElement("script");
+    node.appendChild(script);
+  }
+
+  /**
+   * Handle when an output is cleared or removed
+   */
+  function handleClearOutput(event, handle) {
+    var cell = handle.cell;
+
+    var id = cell.output_area._bokeh_element_id;
+    var server_id = cell.output_area._bokeh_server_id;
+    // Clean up Bokeh references
+    if (id != null && id in Bokeh.index) {
+      Bokeh.index[id].model.document.clear();
+      delete Bokeh.index[id];
+    }
+
+    if (server_id !== undefined) {
+      // Clean up Bokeh references
+      var cmd = "from bokeh.io.state import curstate; print(curstate().uuid_to_server['" + server_id + "'].get_sessions()[0].document.roots[0]._id)";
+      cell.notebook.kernel.execute(cmd, {
+        iopub: {
+          output: function(msg) {
+            var id = msg.content.text.trim();
+            if (id in Bokeh.index) {
+              Bokeh.index[id].model.document.clear();
+              delete Bokeh.index[id];
+            }
+          }
+        }
+      });
+      // Destroy server and session
+      var cmd = "import bokeh.io.notebook as ion; ion.destroy_server('" + server_id + "')";
+      cell.notebook.kernel.execute(cmd);
+    }
+  }
+
+  /**
+   * Handle when a new output is added
+   */
+  function handleAddOutput(event, handle) {
+    var output_area = handle.output_area;
+    var output = handle.output;
+
+    // limit handleAddOutput to display_data with EXEC_MIME_TYPE content only
+    if ((output.output_type != "display_data") || (!output.data.hasOwnProperty(EXEC_MIME_TYPE))) {
+      return
+    }
+
+    var toinsert = output_area.element.find("." + CLASS_NAME.split(' ')[0]);
+
+    if (output.metadata[EXEC_MIME_TYPE]["id"] !== undefined) {
+      toinsert[toinsert.length - 1].firstChild.textContent = output.data[JS_MIME_TYPE];
+      // store reference to embed id on output_area
+      output_area._bokeh_element_id = output.metadata[EXEC_MIME_TYPE]["id"];
+    }
+    if (output.metadata[EXEC_MIME_TYPE]["server_id"] !== undefined) {
+      var bk_div = document.createElement("div");
+      bk_div.innerHTML = output.data[HTML_MIME_TYPE];
+      var script_attrs = bk_div.children[0].attributes;
+      for (var i = 0; i < script_attrs.length; i++) {
+        toinsert[toinsert.length - 1].firstChild.setAttribute(script_attrs[i].name, script_attrs[i].value);
+        toinsert[toinsert.length - 1].firstChild.textContent = bk_div.children[0].textContent
+      }
+      // store reference to server id on output_area
+      output_area._bokeh_server_id = output.metadata[EXEC_MIME_TYPE]["server_id"];
+    }
+  }
+
+  function register_renderer(events, OutputArea) {
+
+    function append_mime(data, metadata, element) {
+      // create a DOM node to render to
+      var toinsert = this.create_output_subarea(
+        metadata,
+        CLASS_NAME,
+        EXEC_MIME_TYPE
+      );
+      this.keyboard_manager.register_events(toinsert);
+      // Render to node
+      var props = {data: data, metadata: metadata[EXEC_MIME_TYPE]};
+      render(props, toinsert[toinsert.length - 1]);
+      element.append(toinsert);
+      return toinsert
+    }
+
+    /* Handle when an output is cleared or removed */
+    events.on('clear_output.CodeCell', handleClearOutput);
+    events.on('delete.Cell', handleClearOutput);
+
+    /* Handle when a new output is added */
+    events.on('output_added.OutputArea', handleAddOutput);
+
+    /**
+     * Register the mime type and append_mime function with output_area
+     */
+    OutputArea.prototype.register_mime_type(EXEC_MIME_TYPE, append_mime, {
+      /* Is output safe? */
+      safe: true,
+      /* Index of renderer in `output_area.display_order` */
+      index: 0
+    });
+  }
+
+  // register the mime type if in Jupyter Notebook environment and previously unregistered
+  if (root.Jupyter !== undefined) {
+    var events = require('base/js/events');
+    var OutputArea = require('notebook/js/outputarea').OutputArea;
+
+    if (OutputArea.prototype.mime_types().indexOf(EXEC_MIME_TYPE) == -1) {
+      register_renderer(events, OutputArea);
+    }
+  }
+
+
+  if (typeof (root._bokeh_timeout) === "undefined" || force === true) {
+    root._bokeh_timeout = Date.now() + 5000;
+    root._bokeh_failed_load = false;
+  }
+
+  var NB_LOAD_WARNING = {'data': {'text/html':
+     "<div style='background-color: #fdd'>\n"+
+     "<p>\n"+
+     "BokehJS does not appear to have successfully loaded. If loading BokehJS from CDN, this \n"+
+     "may be due to a slow or bad network connection. Possible fixes:\n"+
+     "</p>\n"+
+     "<ul>\n"+
+     "<li>re-rerun `output_notebook()` to attempt to load from CDN again, or</li>\n"+
+     "<li>use INLINE resources instead, as so:</li>\n"+
+     "</ul>\n"+
+     "<code>\n"+
+     "from bokeh.resources import INLINE\n"+
+     "output_notebook(resources=INLINE)\n"+
+     "</code>\n"+
+     "</div>"}};
+
+  function display_loaded() {
+    var el = document.getElementById("1001");
+    if (el != null) {
+      el.textContent = "BokehJS is loading...";
+    }
+    if (root.Bokeh !== undefined) {
+      if (el != null) {
+        el.textContent = "BokehJS " + root.Bokeh.version + " successfully loaded.";
+      }
+    } else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(display_loaded, 100)
+    }
+  }
+
+
+  function run_callbacks() {
+    try {
+      root._bokeh_onload_callbacks.forEach(function(callback) {
+        if (callback != null)
+          callback();
+      });
+    } finally {
+      delete root._bokeh_onload_callbacks
+    }
+    console.debug("Bokeh: all callbacks have finished");
+  }
+
+  function load_libs(css_urls, js_urls, callback) {
+    if (css_urls == null) css_urls = [];
+    if (js_urls == null) js_urls = [];
+
+    root._bokeh_onload_callbacks.push(callback);
+    if (root._bokeh_is_loading > 0) {
+      console.debug("Bokeh: BokehJS is being loaded, scheduling callback at", now());
+      return null;
+    }
+    if (js_urls == null || js_urls.length === 0) {
+      run_callbacks();
+      return null;
+    }
+    console.debug("Bokeh: BokehJS not loaded, scheduling load and callback at", now());
+    root._bokeh_is_loading = css_urls.length + js_urls.length;
+
+    function on_load() {
+      root._bokeh_is_loading--;
+      if (root._bokeh_is_loading === 0) {
+        console.debug("Bokeh: all BokehJS libraries/stylesheets loaded");
+        run_callbacks()
+      }
+    }
+
+    function on_error() {
+      console.error("failed to load " + url);
+    }
+
+    for (var i = 0; i < css_urls.length; i++) {
+      var url = css_urls[i];
+      const element = document.createElement("link");
+      element.onload = on_load;
+      element.onerror = on_error;
+      element.rel = "stylesheet";
+      element.type = "text/css";
+      element.href = url;
+      console.debug("Bokeh: injecting link tag for BokehJS stylesheet: ", url);
+      document.body.appendChild(element);
+    }
+
+    const hashes = {"https://cdn.bokeh.org/bokeh/release/bokeh-2.0.1.min.js": "JpP8FXbgAZLkfur7LiK3j9AGBhHNIvF742meBJrjO2ShJDhCG2I1uVvW+0DUtrmc", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.0.1.min.js": "xZlADit0Q04ISQEdKg2k3L4W9AwQBAuDs9nJL9fM/WwzL1tEU9VPNezOFX0nLEAz", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.0.1.min.js": "4BuPRZkdMKSnj3zoxiNrQ86XgNw0rYmBOxe7nshquXwwcauupgBF2DHLVG1WuZlV", "https://cdn.bokeh.org/bokeh/release/bokeh-gl-2.0.1.min.js": "Dv1SQ87hmDqK6S5OhBf0bCuwAEvL5QYL0PuR/F1SPVhCS/r/abjkbpKDYL2zeM19"};
+
+    for (var i = 0; i < js_urls.length; i++) {
+      var url = js_urls[i];
+      var element = document.createElement('script');
+      element.onload = on_load;
+      element.onerror = on_error;
+      element.async = false;
+      element.src = url;
+      if (url in hashes) {
+        element.crossOrigin = "anonymous";
+        element.integrity = "sha384-" + hashes[url];
+      }
+      console.debug("Bokeh: injecting script tag for BokehJS library: ", url);
+      document.head.appendChild(element);
+    }
+  };var element = document.getElementById("1001");
+  if (element == null) {
+    console.error("Bokeh: ERROR: autoload.js configured with elementid '1001' but no matching script tag was found. ")
+    return false;
+  }
+
+  function inject_raw_css(css) {
+    const element = document.createElement("style");
+    element.appendChild(document.createTextNode(css));
+    document.body.appendChild(element);
+  }
+
+
+  var js_urls = ["https://cdn.bokeh.org/bokeh/release/bokeh-2.0.1.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.0.1.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.0.1.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-gl-2.0.1.min.js"];
+  var css_urls = [];
+
+
+  var inline_js = [
+    function(Bokeh) {
+      Bokeh.set_log_level("info");
+    },
+    function(Bokeh) {
+
+
+    }
+  ];
+
+  function run_inline_js() {
+
+    if (root.Bokeh !== undefined || force === true) {
+
+    for (var i = 0; i < inline_js.length; i++) {
+      inline_js[i].call(root, root.Bokeh);
+    }
+    if (force === true) {
+        display_loaded();
+      }} else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(run_inline_js, 100);
+    } else if (!root._bokeh_failed_load) {
+      console.log("Bokeh: BokehJS failed to load within specified timeout.");
+      root._bokeh_failed_load = true;
+    } else if (force !== true) {
+      var cell = $(document.getElementById("1001")).parents('.cell').data().cell;
+      cell.output_area.append_execute_result(NB_LOAD_WARNING)
+    }
+
+  }
+
+  if (root._bokeh_is_loading === 0) {
+    console.debug("Bokeh: BokehJS loaded, going straight to plotting");
+    run_inline_js();
+  } else {
+    load_libs(css_urls, js_urls, function() {
+      console.debug("Bokeh: BokehJS plotting callback run at", now());
+      run_inline_js();
+    });
+  }
+}(window));
+</script></div>
+</div>
+<div class="section" id="Connect-to-Opacity-Database">
+<h2>Connect to Opacity Database<a class="headerlink" href="#Connect-to-Opacity-Database" title="Permalink to this headline">¶</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">opacity</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="p">[</span><span class="mf">0.3</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Load-blank-slate">
+<h2>Load blank slate<a class="headerlink" href="#Load-blank-slate" title="Permalink to this headline">¶</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">sum_planet</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Set-Planet-&amp;-Star-Properties">
+<h2>Set Planet &amp; Star Properties<a class="headerlink" href="#Set-Planet-&-Star-Properties" title="Permalink to this headline">¶</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1">#phase angle</span>
+<span class="n">sum_planet</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c1">#radians</span>
+
+<span class="c1">#define gravity</span>
+<span class="n">sum_planet</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">gravity</span><span class="o">=</span><span class="mf">3.7</span><span class="p">,</span> <span class="n">gravity_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;m/(s**2)&#39;</span><span class="p">))</span> <span class="c1">#any astropy units available</span>
+
+
+<span class="c1">#define star</span>
+<span class="n">sum_planet</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">opacity</span><span class="p">,</span><span class="mi">5000</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mf">4.0</span><span class="p">)</span> <span class="c1">#pysynphot database, temp, metallicity, logg</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="Add-Surface-Reflectivity">
+<h3>Add Surface Reflectivity<a class="headerlink" href="#Add-Surface-Reflectivity" title="Permalink to this headline">¶</a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">sum_planet</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;pressure&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">40</span><span class="p">),</span>
+                         <span class="s1">&#39;temperature&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">270</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">40</span><span class="p">),</span>
+                         <span class="s1">&#39;H2O&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">40</span><span class="p">)</span><span class="o">+</span><span class="mf">0.01</span><span class="p">,</span>
+                         <span class="s1">&#39;CO2&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">40</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="o">-</span><span class="mf">0.01</span><span class="p">}))</span>
+
+<span class="n">sum_planet</span><span class="o">.</span><span class="n">surface_reflect</span><span class="p">(</span><span class="mf">0.3</span><span class="p">,</span><span class="n">opacity</span><span class="o">.</span><span class="n">wno</span><span class="p">)</span>
+
+<span class="c1">#can also input a wavelength dependent quantity here</span>
+<span class="c1">#fake_surface= np.linspace(0.01,0.9, opacity.nwno)</span>
+<span class="c1">#sum_planet.surface_reflect(fake_surface,opacity.wno)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Turning off Raman for Non-H2 atmosphere
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">sum_planet</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;pressure&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">40</span><span class="p">),</span>
+                         <span class="s1">&#39;temperature&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mi">270</span><span class="p">,</span><span class="mi">40</span><span class="p">),</span>
+                         <span class="s1">&#39;H2O&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">40</span><span class="p">)</span><span class="o">+</span><span class="mf">0.01</span><span class="p">,</span>
+                         <span class="s1">&#39;CO2&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">40</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="o">-</span><span class="mf">0.01</span><span class="p">}))</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Create-1D-Albedo-Spectrum">
+<h3>Create 1D Albedo Spectrum<a class="headerlink" href="#Create-1D-Albedo-Spectrum" title="Permalink to this headline">¶</a></h3>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">df</span> <span class="o">=</span> <span class="n">sum_planet</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opacity</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">wno</span><span class="p">,</span> <span class="n">alb</span><span class="p">,</span> <span class="n">fpfs</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;albedo&#39;</span><span class="p">],</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;fpfs_reflected&#39;</span><span class="p">]</span>
+<span class="n">wno</span><span class="p">,</span> <span class="n">alb</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">wno</span><span class="p">,</span> <span class="n">alb</span><span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">([</span><span class="n">wno</span><span class="p">],</span> <span class="p">[</span><span class="n">alb</span><span class="p">],</span> <span class="n">plot_width</span><span class="o">=</span><span class="mi">500</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div class="bk-root" id="0b7eab68-f7fb-4a6a-8977-661076c91b2a" data-root-id="1002"></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+(function(root) {
+  function embed_document(root) {
+
+  var docs_json = {"6f7788d7-4fc7-45c5-a8a8-2d399408b358":{"roots":{"references":[{"attributes":{"below":[{"id":"1011"}],"center":[{"id":"1014"},{"id":"1018"}],"left":[{"id":"1015"}],"plot_height":345,"plot_width":500,"renderers":[{"id":"1036"}],"title":{"id":"1038"},"toolbar":{"id":"1026"},"x_range":{"id":"1003"},"x_scale":{"id":"1007"},"y_range":{"id":"1005"},"y_scale":{"id":"1009"}},"id":"1002","subtype":"Figure","type":"Plot"},{"attributes":{"text":""},"id":"1038","type":"Title"},{"attributes":{},"id":"1016","type":"BasicTicker"},{"attributes":{"line_color":"#0072B2","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1034","type":"Line"},{"attributes":{"axis_label":"Wavelength [\u03bcm]","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","formatter":{"id":"1043"},"major_label_text_font":"times","major_label_text_font_size":"14pt","ticker":{"id":"1012"}},"id":"1011","type":"LinearAxis"},{"attributes":{"data":{"x":{"__ndarray__":"81tTwSf77z9wqmRuwcTvP7pzF6S3ju8/jW8FxQlZ7z8cEtQ0tyPvP5jEMli/7u4/2CDZlCG67j/uL4VR3YXuP8ir+fXxUe4/ukP86l4e7j8H5FOaI+vtP0gAx24/uO0/z+AZ1LGF7T/h8gw3elPtP8kbWwWYIe0/2Q64rQrw7D8kps6f0b7sPyA+P0zsjew/CBSeJFpd7D8Jp3GbGi3sPyQcMSQt/es/5KRCM5HN6z+v6Pk9Rp7rP+xwlrpLb+s/uBdCIKFA6z9deQ/nRRLrP2Zo+Ic55Oo/TWTcfHu26j/XEn9AC4nqP/e7hk7oW+o/U8h6IxIv6j9RQsI8iALqP7FZohhK1uk/ruk8Nleq6T+kAY8Vr37pPzJwbzdRU+k/1VCNHT0o6T/9m25Kcv3oP5O5bkHw0ug/5RW9hrao6D8MuVufxH7oP6TgHREaVeg/9JumYrYr6D9xamcbmQLoP43cnsPB2ec/8TZX5C+x5z/1F2UH44jnP3UfZrfaYOc/3pi/fxY55z+VJ53slRHnP5J174pY6uY/NORq6F3D5j9kP4aTpZzmP9pyeRsvduY/nUE8EPpP5j+v/4QCBirmP+5Nx4NSBOY/DNgyJt/e5T+zFLJ8q7nlP80H6Rq3lOU/5gY0lQFw5T+gf6aAikvlP0TACXNRJ+U/ZMLbAlYD5T+I903Hl9/kP+gXRFgWvOQ/LvNSTtGY5D82Q79CyHXkP9qAfM/6UuQ/rrorj2gw5D+/bRodEQ7kP0JgQRX06+M/PH5DFBHK4z8UuGy3Z6jjPxXjsJz3huM/1ZuqYsBl4z+JKpqowUTjPzFpZA77I+M/rauRNGwD4z+wqUy8FOPiP3pqYUf0wuI/fTI8eAqj4j/KcujxVoPiP1G6D1jZY+I/7Kj4TpFE4j8w5IV7fiXiPwsONYOgBuI/KL0dDPfn4T8Cd/C8gcnhP8yr9TxAq+E/A7QMNDKN4T+8z6pKV2/hP6gn2imvUeE/ys84ezk04T/by/fo9RbhP1gV2h3k+eA/PKMzxQPd4D9gc+iKVMDgP3uVaxvWo+A/yDe+I4iH4D9KtW5RamvgP6Cll1J8T+A/hO7e1b0z4D/R1nSKLhjgP0U2JkCc+d8/+wf4jTjD3z8q+/JfMY3fPxtiuBiGV98/lj71GzYi3z+QemDOQO3eP9gjuZWluN4/16rE2GOE3j8sJE3/elDeP2WNH3LqHN4/iBQKm7Hp3T+iYtrkz7bdPzfpW7tEhN0/gjJWiw9S3T+4NIvCLyDdPwmotc+k7tw/el+HIm693D+VpKcri4zcP+KVsVz7W9w/IogyKL4r3D9PaqgB0/vbP10sgF05zNs/qygUsfCc2z8okKpy+G3bPzHZcxlQP9s/DjGJHfcQ2z8Y8Or37OLaP4QQfyIxtdo/zacPGMOH2j+kYklUolraP5QDulPOLdo/FuTOk0YB2j9CeNOSCtXZPwPV788Zqdk/zzgny3N92T/WllYFGFLZP7ckMwAGJ9k/o+pIPj382D/xVflCvdHYPyXOeZKFp9g/WUzSsZV92D8X9dsm7VPYP4a0P3iLKtg//9x0LXAB2D/4x7/OmtjXPz95MOUKsNc/kUSh+r+H1z9wdbWZuV/XP1b51033N9c/Fww6o3gQ1z+X5tEmPenWP69vWWZEwtY/X+9M8I2b1j8bxOlTGXXWP2caLSHmTtY/j6bS6PMo1j+PYFM8QgPWPydC5K3Q3dU/Bwd10J641T8r7643rJPVP0OD83f4btU/RVtbJoNK1T//5rTYSybVP884gyVSAtU/X9L8o5Xe1D9rcwrsFbvUP5PqRZbSl9Q/Kej4O8t01D8O0xt3/1HUP3mfVOJuL9Q/xaf1GBkN1D8wh/y2/erTP432EFkcydM/66qDnHSn0z8dNk0fBobTPzXpDIDQZNM/4rgHXtND0z8=","dtype":"float64","shape":[181]},"y":{"__ndarray__":"id7/3ZsPyj9h8nn6C5jCP8LaqcMPR7g/POlYu5ZHpT9SUB/oD9agP107iwY07Zs/Ay8Qoa0fkT/6g5RdyOGKP52XJ469uYY/E9Ipit6Qhz9DSiuvln6BPwXScWLFcp0/HloAqDKvpz8q43goqD6hP9SeCTuXAqE/2ZXnYw9fqD8BGmL6+CymPyOhU5+oo8Q/2/LjhGJN0T+EuVPOO7PVP7AqON2p7s8/yyKIFyd7zj96LMMnd2zdP76e31LvwtQ/fQvRcLBzzT9P2qabqh7OPyt7wLsvX8Y/m1BWEsQWvj/8U7tTlMyzPxItZ9RbQ7M/0CUyr7XArz8v6ZWE1Su6PyO/4z6DN8c/NUblcRgNwj/QMytOImnHP13RBTfpYcU/1X9f1u8szj9LdeVShAfbP3CaHLrpduM/3a4Hfe6r5D9dx0S0WMjkP5EJyoPpE+M/uq0mFNrn4j/qVrPFvybhP+29516f1d0/gVpVKIDx0T/DcLucEk3HP0sqIw5QCb4/Wi4KLP31tT8L22VKiJe4P73uamhz3sQ/gJ7n5WA8zz8uoDkXHArOPziFZ8KBk8k/InLeS+5Lyz9Jj9YCrMbRP+54BAkclt8/VbL+8n4u4T8jBBTmnm7kP19gjVDosuU/5auXSSPb5D+s0gyVxrfhP2qKkklL5t0/EWG5h2Xf0z9kMtDXPJ3UP2CQh/tz6dA/HNLlo0Bl3T9S6dXE4DHgP0+H/h7Dj98/OO4EcU4S3j/sW0PqJmPgP/AbdpylzOU/7k63W6Rm5j/Qo4mEOIXmP2oFEo3gEeY/Z8a2V2h+5D9wEL3lQPrgP+61BNtEQNg/6xV4C3vi0j/qwigzz0TQPwgTZsywFt4/Sp/zrOWp4j9Gckp18u/hPzP/w0dcXt8/vlE2llV93j92n1+LGJriP890pghmUuU/R29N4FLn5T9NYmzOLqTmP/+oeiAQT+U/7AsZnJvV4j/jBH/esIXgP543e4nMHuE/Hh5rkbca5T8Pa/8Waf3lPxdrHuLCcuU/ENI5kkm65T/LUCibUtPlP+DKms+QC+c/R/andJSs5j/7GoIKFKHlP/1rSRb1ceI/0Pf406Wb4D8IuN6uzr3gP6wSARZRjOU/qzVD2hj15j+bl55r3lTmP9cG8LmON+U/KWNKHpqG5D/7rgwqU6XmP4r34EQINuc/9txs8k7S5j/b4pvvlpTlP+6r7I2S3OQ/Xc5L9y7I5T9qcEMXDEbnPz8XELIUU+c/igCNGt/55j/Vn07zydzmP2Ps03mjJec/6EnvNVq15j81YURhof3kP9SjaC9xX+Q/NTsdVe+E5j/qnvSLgGDnP8zU3fxqjOc/Cc9HNHR25z/ReVO24hHnP2NJg7EM8+Y/EnKlRw1z5z89sDlnfvDmP2eKsIK3HeY/vecrZZ7q5j/iEkJaQnTnPxyBFjdFouc/f5cJoGuQ5z/aTmiYnk/nP0GSHhJa1OY/V+C+DzRn5j9Qg9eyZSbnPxxCETYXRec/ocXNi2k05z+KWX3Sh6bnP/NcJc40qOc/sXOk1n2e5z/qygqXzXbnP12DGQRYB+c/OaeuqCFI5z+qj0LQG2bnP42ZyNursOc/0YuKgum/5z8sttye4IjnP5sMHbu7I+c/UDOTgx555z/DBFT9x4PnPyre70w6WOc/zWEukTR65z8ZhwC2irznP4iIP7Wjruc/oHi7xQ2B5z8AoY/OVaDnP+DvE2I/pOc/1Y12WrGq5z/46tm1cbLnP2h8r8sb1Oc/UKKueFDg5z8SjSA0kuDnP+j+d6fJ4Oc/+lw+Wvzg5z+J4sCTKuHnP5ZxuZZU4ec/rlwSpXrh5z9RdbX/nOHnPxLLWea74ec/6d1Ql9fh5z9eEVRP8OHnPy44U0kG4uc/9hNFvhni5z/tovrkKuLnP80P9vE54uc/8ZVvJkfi5z8=","dtype":"float64","shape":[181]}},"selected":{"id":"1044"},"selection_policy":{"id":"1045"}},"id":"1033","type":"ColumnDataSource"},{"attributes":{},"id":"1007","type":"LinearScale"},{"attributes":{},"id":"1020","type":"WheelZoomTool"},{"attributes":{},"id":"1044","type":"Selection"},{"attributes":{},"id":"1005","type":"DataRange1d"},{"attributes":{"data_source":{"id":"1033"},"glyph":{"id":"1034"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"1035"},"selection_glyph":null,"view":{"id":"1037"}},"id":"1036","type":"GlyphRenderer"},{"attributes":{},"id":"1041","type":"BasicTickFormatter"},{"attributes":{"overlay":{"id":"1025"}},"id":"1021","type":"BoxZoomTool"},{"attributes":{},"id":"1043","type":"BasicTickFormatter"},{"attributes":{},"id":"1019","type":"PanTool"},{"attributes":{"active_drag":"auto","active_inspect":"auto","active_multi":null,"active_scroll":"auto","active_tap":"auto","tools":[{"id":"1019"},{"id":"1020"},{"id":"1021"},{"id":"1022"},{"id":"1023"},{"id":"1024"}]},"id":"1026","type":"Toolbar"},{"attributes":{},"id":"1022","type":"SaveTool"},{"attributes":{"line_alpha":0.1,"line_color":"#0072B2","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1035","type":"Line"},{"attributes":{"axis_label":"Spectrum","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","formatter":{"id":"1041"},"major_label_text_font":"times","major_label_text_font_size":"14pt","ticker":{"id":"1016"}},"id":"1015","type":"LinearAxis"},{"attributes":{},"id":"1024","type":"HelpTool"},{"attributes":{},"id":"1045","type":"UnionRenderers"},{"attributes":{},"id":"1012","type":"BasicTicker"},{"attributes":{"axis":{"id":"1011"},"ticker":null},"id":"1014","type":"Grid"},{"attributes":{},"id":"1009","type":"LinearScale"},{"attributes":{},"id":"1003","type":"DataRange1d"},{"attributes":{"source":{"id":"1033"}},"id":"1037","type":"CDSView"},{"attributes":{"axis":{"id":"1015"},"dimension":1,"ticker":null},"id":"1018","type":"Grid"},{"attributes":{},"id":"1023","type":"ResetTool"},{"attributes":{"bottom_units":"screen","fill_alpha":0.5,"fill_color":"lightgrey","left_units":"screen","level":"overlay","line_alpha":1.0,"line_color":"black","line_dash":[4,4],"line_width":2,"render_mode":"css","right_units":"screen","top_units":"screen"},"id":"1025","type":"BoxAnnotation"}],"root_ids":["1002"]},"title":"Bokeh Application","version":"2.0.1"}};
+  var render_items = [{"docid":"6f7788d7-4fc7-45c5-a8a8-2d399408b358","root_ids":["1002"],"roots":{"1002":"0b7eab68-f7fb-4a6a-8977-661076c91b2a"}}];
+  root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    var attempts = 0;
+    var timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        clearInterval(timer);
+        embed_document(root);
+      } else {
+        attempts++;
+        if (attempts > 100) {
+          clearInterval(timer);
+          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        }
+      }
+    }, 10, root)
+  }
+})(window);
+</script></div>
+</div>
+<p>What about contrast units?</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">fpfs</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;Semi-major axis not supplied. If you want fpfs, add it to `star` function. &#39;,
+ &#39;Planet Radius not supplied. If you want fpfs, add it to `gravity` function with Mass.&#39;]
+</pre></div></div>
+</div>
+</div>
+<div class="section" id="Get-Contrast-Units">
+<h3>Get Contrast Units<a class="headerlink" href="#Get-Contrast-Units" title="Permalink to this headline">¶</a></h3>
+<p>In order to get contrast units we have to make sure to give the <code class="docutils literal notranslate"><span class="pre">gravity</span></code> and <code class="docutils literal notranslate"><span class="pre">star</span></code> functions semi major axis, mass and radius.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">sum_planet</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">opacity</span><span class="p">,</span><span class="mi">5000</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mf">4.0</span><span class="p">,</span><span class="n">semi_major</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">semi_major_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;au&#39;</span><span class="p">))</span>
+<span class="n">sum_planet</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mf">1.</span><span class="o">/</span><span class="mf">3.</span><span class="p">,</span><span class="n">radius_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_earth&#39;</span><span class="p">),</span>
+             <span class="n">mass</span><span class="o">=</span><span class="mf">1.</span><span class="o">/</span><span class="mf">3.</span><span class="p">,</span><span class="n">mass_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;M_earth&#39;</span><span class="p">))</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">sum_planet</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opacity</span><span class="p">)</span>
+<span class="n">wno</span><span class="p">,</span> <span class="n">alb</span><span class="p">,</span> <span class="n">fpfs</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;albedo&#39;</span><span class="p">],</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;fpfs_reflected&#39;</span><span class="p">]</span>
+<span class="n">wno</span><span class="p">,</span> <span class="n">fpfs</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">wno</span><span class="p">,</span> <span class="n">fpfs</span> <span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">([</span><span class="n">wno</span><span class="p">],</span> <span class="p">[</span><span class="n">fpfs</span><span class="o">*</span><span class="mf">1e6</span><span class="p">],</span> <span class="n">plot_width</span><span class="o">=</span><span class="mi">500</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div class="bk-root" id="9108bead-4786-4b00-a606-abcb5c7bee21" data-root-id="1209"></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+(function(root) {
+  function embed_document(root) {
+
+  var docs_json = {"eaeb0ec9-8843-42f6-93ee-a2b37e6ab51f":{"roots":{"references":[{"attributes":{"below":[{"id":"1218"}],"center":[{"id":"1221"},{"id":"1225"}],"left":[{"id":"1222"}],"plot_height":345,"plot_width":500,"renderers":[{"id":"1243"}],"title":{"id":"1263"},"toolbar":{"id":"1233"},"x_range":{"id":"1210"},"x_scale":{"id":"1214"},"y_range":{"id":"1212"},"y_scale":{"id":"1216"}},"id":"1209","subtype":"Figure","type":"Plot"},{"attributes":{"data":{"x":{"__ndarray__":"81tTwSf77z9wqmRuwcTvP7pzF6S3ju8/jW8FxQlZ7z8cEtQ0tyPvP5jEMli/7u4/2CDZlCG67j/uL4VR3YXuP8ir+fXxUe4/ukP86l4e7j8H5FOaI+vtP0gAx24/uO0/z+AZ1LGF7T/h8gw3elPtP8kbWwWYIe0/2Q64rQrw7D8kps6f0b7sPyA+P0zsjew/CBSeJFpd7D8Jp3GbGi3sPyQcMSQt/es/5KRCM5HN6z+v6Pk9Rp7rP+xwlrpLb+s/uBdCIKFA6z9deQ/nRRLrP2Zo+Ic55Oo/TWTcfHu26j/XEn9AC4nqP/e7hk7oW+o/U8h6IxIv6j9RQsI8iALqP7FZohhK1uk/ruk8Nleq6T+kAY8Vr37pPzJwbzdRU+k/1VCNHT0o6T/9m25Kcv3oP5O5bkHw0ug/5RW9hrao6D8MuVufxH7oP6TgHREaVeg/9JumYrYr6D9xamcbmQLoP43cnsPB2ec/8TZX5C+x5z/1F2UH44jnP3UfZrfaYOc/3pi/fxY55z+VJ53slRHnP5J174pY6uY/NORq6F3D5j9kP4aTpZzmP9pyeRsvduY/nUE8EPpP5j+v/4QCBirmP+5Nx4NSBOY/DNgyJt/e5T+zFLJ8q7nlP80H6Rq3lOU/5gY0lQFw5T+gf6aAikvlP0TACXNRJ+U/ZMLbAlYD5T+I903Hl9/kP+gXRFgWvOQ/LvNSTtGY5D82Q79CyHXkP9qAfM/6UuQ/rrorj2gw5D+/bRodEQ7kP0JgQRX06+M/PH5DFBHK4z8UuGy3Z6jjPxXjsJz3huM/1ZuqYsBl4z+JKpqowUTjPzFpZA77I+M/rauRNGwD4z+wqUy8FOPiP3pqYUf0wuI/fTI8eAqj4j/KcujxVoPiP1G6D1jZY+I/7Kj4TpFE4j8w5IV7fiXiPwsONYOgBuI/KL0dDPfn4T8Cd/C8gcnhP8yr9TxAq+E/A7QMNDKN4T+8z6pKV2/hP6gn2imvUeE/ys84ezk04T/by/fo9RbhP1gV2h3k+eA/PKMzxQPd4D9gc+iKVMDgP3uVaxvWo+A/yDe+I4iH4D9KtW5RamvgP6Cll1J8T+A/hO7e1b0z4D/R1nSKLhjgP0U2JkCc+d8/+wf4jTjD3z8q+/JfMY3fPxtiuBiGV98/lj71GzYi3z+QemDOQO3eP9gjuZWluN4/16rE2GOE3j8sJE3/elDeP2WNH3LqHN4/iBQKm7Hp3T+iYtrkz7bdPzfpW7tEhN0/gjJWiw9S3T+4NIvCLyDdPwmotc+k7tw/el+HIm693D+VpKcri4zcP+KVsVz7W9w/IogyKL4r3D9PaqgB0/vbP10sgF05zNs/qygUsfCc2z8okKpy+G3bPzHZcxlQP9s/DjGJHfcQ2z8Y8Or37OLaP4QQfyIxtdo/zacPGMOH2j+kYklUolraP5QDulPOLdo/FuTOk0YB2j9CeNOSCtXZPwPV788Zqdk/zzgny3N92T/WllYFGFLZP7ckMwAGJ9k/o+pIPj382D/xVflCvdHYPyXOeZKFp9g/WUzSsZV92D8X9dsm7VPYP4a0P3iLKtg//9x0LXAB2D/4x7/OmtjXPz95MOUKsNc/kUSh+r+H1z9wdbWZuV/XP1b51033N9c/Fww6o3gQ1z+X5tEmPenWP69vWWZEwtY/X+9M8I2b1j8bxOlTGXXWP2caLSHmTtY/j6bS6PMo1j+PYFM8QgPWPydC5K3Q3dU/Bwd10J641T8r7643rJPVP0OD83f4btU/RVtbJoNK1T//5rTYSybVP884gyVSAtU/X9L8o5Xe1D9rcwrsFbvUP5PqRZbSl9Q/Kej4O8t01D8O0xt3/1HUP3mfVOJuL9Q/xaf1GBkN1D8wh/y2/erTP432EFkcydM/66qDnHSn0z8dNk0fBobTPzXpDIDQZNM/4rgHXtND0z8=","dtype":"float64","shape":[181]},"y":{"__ndarray__":"nS0Z/6rvAD+ePQiitsr2PteyOpZ29uY+hefwIkBMzz4biN472XjHPqBnUW+U3sM+nauUeXq1tz4f/21Iif+xPu5V3Xdwz60+1KkaWYsPsD7alYoJW3imPrB5aTGFVsU+/z6Ok4Xv0T6FYAvYCtHIPt5/YT8XDcg+RQfsqvSn0T5cqfpeWL3NPkq24NNy0PM+pwhYDji0Az8OkqGUMh0LP6AyKrbBBAU/6McTxmlFAD/X1GaE5TIRPwv6wAMJlgs/0q9K+rE6Az8NmdndgmIDP9VWbWYLkPg+9vy7nEiJ6z5CrtELVfzfPoo5XzKcUt4+htHBtdwf2D6NZdHco3HnPqOTOG75Bfs+Mk1pJ7ZF8z7M4Pem4dL5PgUi/SEoVfY+XBdGJDJDAz/9R+59oTYQPzoLkMvFQhU/aSRq7JC+FT8u/CEmSfAVP9QjGdEIthU/LqZ+CR/VFT/2722+QkwVP67iQr1PZxM/YN3XbETLBT99JPEUCkr4PihUw3ItIuo+gU+g0ry44T4Jwc+EWlXmPp4QAA/9k/Y+xLloXK3QBD+qxA04dSMCP149aaTNd/s+PU7Y48dO/T7OHlmCdxwFP+LZ9HvtkxU/Uyv6S4dEFz8gsMLbHwMZP4uOzAKoixk/jp5n9QV+GT+4SetDTQQYP6FJArhpFxU/tY66cLxzCT/BbOzm/7wJPwwSlj1WNQQ/4yDQ4/pQFT8fhBdP65cXP61KatBspRY/q1g6JW5YFT+3mFxt8/MWPxRW56Ky3hs/NWMNMJk3HD83cmKlUW8cP0Rs45iNgxw/jysDsZoVHD9qDqQdw7YYPw/lARD3PhA/RDZYHIc4Bz/Ou+aUn4ADP/gQyfjsHhY/rTFUt3qZGz89hZv/AeEaP5MHxbPpaxc/5X6wX1+DFj/10fqbcDwbP/914hYLWh4/EFwvzP3DHj/pxd12li4fP6UYf0oVvx4/hwdyXE6fHD8BExQHuvAZP8+QxEnlnRo/issSzqY7Hz8XsKwNCucfP9Wfz8NKvx8/zO0nL1cCID/Cd0WtoRIgP31NdiZ/biA/rNo2nQZyID9OJEF4ZS8gP7Fa/OzMURw/iqoxvZMSGT/L80FtK5oZP9IoLAFTZiA/O8kx+knmID9dds2HutQgP6mnf4xsfiA/vI+PXVk7ID+SgtjRnwshP40RsYCMPyE/gseJUfc6IT8ixl/vldsgP7Uqi7YsiSA/go5mSLQSIT/mvOdPpIkhP7M+KhdVmSE/08sZFWSWIT9C6hsEgJwhP4qeTdDuuCE/crMzRVSdIT8UsCKgWa8gP9B49S2MRCA/DRdDx4ytIT9RH0B9t/4hP1sOgXL2ECI/5JM0hHwYIj89Qjze9A4iP8AsPiTaDyI/QGhikAc4Ij/GWurA2hwiP4cnpQoj0CE/QdaTfnAxIj/fN9QR1V4iP7lFAoH9byI/b6ixYCp2Ij93hfsrTHAiPzG3Z3CVSSI/cAToSF4TIj+Bkb1mVHkiPxmwNbG/jSI/Q3OfBW+RIj+aD5h2BLQiP8yJKpLKuyI/WS1SIozBIj+8puzWjr4iP0+5YLplmCI/D1ZMs3+8Ij9eWJB26swiPzP5EijV5iI/yAy2HdnvIj9QNtF/zugiPxw8fidTyiI/XXxV/r7wIj8suLpT+/giP8AqrZ2h7yI/Ye76tJ3+Ij8Zpk7GpRcjPxYDKdXHGSM/wPe+8uMQIz97kcivfR8jP3Sax6dgJCM/fSxEMMIrIz/hjstDdjIjP6YzDoPdPSM/XBjp9U9EIz/zk99oqUgjP6BXhXbkTCM/4X3AxAJRIz+HXO7yBFUjP8wXiJzrWCM/0i3uWbdcIz/JE2zAaGAjP6N0PGIAZCM/cQiOzn5nIz8n/oiR5GojP7HwVDQybiM/D2AfPWhxIz/kqyIvh3QjP2GIrYqPdyM/rxmbdoV6Iz8=","dtype":"float64","shape":[181]}},"selected":{"id":"1269"},"selection_policy":{"id":"1270"}},"id":"1240","type":"ColumnDataSource"},{"attributes":{},"id":"1214","type":"LinearScale"},{"attributes":{"overlay":{"id":"1232"}},"id":"1228","type":"BoxZoomTool"},{"attributes":{"line_alpha":0.1,"line_color":"#0072B2","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1242","type":"Line"},{"attributes":{},"id":"1229","type":"SaveTool"},{"attributes":{},"id":"1219","type":"BasicTicker"},{"attributes":{"bottom_units":"screen","fill_alpha":0.5,"fill_color":"lightgrey","left_units":"screen","level":"overlay","line_alpha":1.0,"line_color":"black","line_dash":[4,4],"line_width":2,"render_mode":"css","right_units":"screen","top_units":"screen"},"id":"1232","type":"BoxAnnotation"},{"attributes":{},"id":"1210","type":"DataRange1d"},{"attributes":{"line_color":"#0072B2","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1241","type":"Line"},{"attributes":{},"id":"1268","type":"BasicTickFormatter"},{"attributes":{"axis":{"id":"1218"},"ticker":null},"id":"1221","type":"Grid"},{"attributes":{"axis_label":"Spectrum","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","formatter":{"id":"1266"},"major_label_text_font":"times","major_label_text_font_size":"14pt","ticker":{"id":"1223"}},"id":"1222","type":"LinearAxis"},{"attributes":{"active_drag":"auto","active_inspect":"auto","active_multi":null,"active_scroll":"auto","active_tap":"auto","tools":[{"id":"1226"},{"id":"1227"},{"id":"1228"},{"id":"1229"},{"id":"1230"},{"id":"1231"}]},"id":"1233","type":"Toolbar"},{"attributes":{},"id":"1212","type":"DataRange1d"},{"attributes":{},"id":"1216","type":"LinearScale"},{"attributes":{"data_source":{"id":"1240"},"glyph":{"id":"1241"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"1242"},"selection_glyph":null,"view":{"id":"1244"}},"id":"1243","type":"GlyphRenderer"},{"attributes":{"source":{"id":"1240"}},"id":"1244","type":"CDSView"},{"attributes":{},"id":"1226","type":"PanTool"},{"attributes":{"axis":{"id":"1222"},"dimension":1,"ticker":null},"id":"1225","type":"Grid"},{"attributes":{},"id":"1227","type":"WheelZoomTool"},{"attributes":{},"id":"1230","type":"ResetTool"},{"attributes":{},"id":"1231","type":"HelpTool"},{"attributes":{},"id":"1270","type":"UnionRenderers"},{"attributes":{},"id":"1223","type":"BasicTicker"},{"attributes":{},"id":"1266","type":"BasicTickFormatter"},{"attributes":{"axis_label":"Wavelength [\u03bcm]","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","formatter":{"id":"1268"},"major_label_text_font":"times","major_label_text_font_size":"14pt","ticker":{"id":"1219"}},"id":"1218","type":"LinearAxis"},{"attributes":{},"id":"1269","type":"Selection"},{"attributes":{"text":""},"id":"1263","type":"Title"}],"root_ids":["1209"]},"title":"Bokeh Application","version":"2.0.1"}};
+  var render_items = [{"docid":"eaeb0ec9-8843-42f6-93ee-a2b37e6ab51f","root_ids":["1209"],"roots":{"1209":"9108bead-4786-4b00-a606-abcb5c7bee21"}}];
+  root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    var attempts = 0;
+    var timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        clearInterval(timer);
+        embed_document(root);
+      } else {
+        attempts++;
+        if (attempts > 100) {
+          clearInterval(timer);
+          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        }
+      }
+    }, 10, root)
+  }
+})(window);
+</script></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Natasha E. Batalha
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

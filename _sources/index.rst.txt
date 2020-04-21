@@ -19,69 +19,44 @@ Use Cases
 
 .. raw:: html 
 
-	 <div class="row">
-	  <div class="col-md-6">
-	    <div class="thumbnail">
-	      <a href="_images/planettype.png">
-	        <img src="_images/planettype.png" alt="Planet Type" style="width:100%">
-	      </a>
-	    </div>
-	  </div>
-	  <div class="col-md-6">
-	    <div class="thumbnail">
-	      <a href="_images/refem.png">
-	        <img src="_images/refem.png" alt="Geometry" style="width:100%">
-	      </a>
-	    </div>
-	  </div>
-	  </div>
-	  <div class="row">
-	  <div class="col-md-12">
-	    <div class="thumbnail">
-	      <a href="_images/multiphase.png">
-	        <img src="_images/multiphase.png" alt="Multi Phases" style="width:100%">
-	      </a>
-	    </div>
-	  </div>
-	</div>
-	</div>
+   <div align="center">
+   <img src="_images/planettype.png" width="300px">
+   </img>
+   <img src="_images/refem.png" width="300px">
+   </img>
+   <br/>
+   </div>
+   <br/><br/>
+
+   <div align="center">
+   <img src="_images/multiphase.png" width="600px">
+   </img>
+   <br/>
+   </div>
+   <br/><br/>
+
 
 Resources
 =========
 
 .. raw:: html 
 
-	 <div class="row">
-	  <div class="col-md-3">
-	    <div class="thumbnail">
-	      <a href="installation.html">
-	        <img src="_images/installation.png" alt="installation" style="width:100%">
-	      </a>
-	    </div>
-	  </div>
-	  <div class="col-md-3">
-	    <div class="thumbnail">
-	      <a href="tutorials.html">
-	        <img src="_images/tutorials.png" alt="tutorials" style="width:100%">
-	      </a>
-	    </div>
-	  </div>
-	  <div class="col-md-3">
-	    <div class="thumbnail">
-	      <a href="https://natashabatalha.github.io/picaso_dev">
-	        <img src="_images/derivations.png" alt="derivations" style="width:100%">
-	      </a>
-	    </div>
-	  </div>
-	  <div class="col-md-3">
-	    <div class="thumbnail">
-	      <a href="picaso.html">
-	        <img src="_images/picaso.png" alt="code" style="width:100%">
-	      </a>
-	    </div>
-	  </div>
-	</div>
-	</div>
+   <div align="center">
+   <a href="installation.html">
+   <img src="_images/installation.png" width="150px">
+   </img></a>
+   <a href="tutorials.html">
+   <img src="_images/tutorials.png" width="150px">
+   </img></a>
+   <a href="https://natashabatalha.github.io/picaso_dev">
+   <img src="_images/derivations.png" width="150px">
+   </img></a>
+   <a href="picaso.html">
+   <img src="_images/picaso.png" width="150px">
+   </img></a>      
+   <br/>
+   </div>
+   <br/><br/>
 
 
 
