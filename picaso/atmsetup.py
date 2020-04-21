@@ -9,7 +9,6 @@ import warnings
 import numpy as np
 from .wavelength import get_cld_input_grid, regrid
 from numba import jit
-import h5py
 import pysynphot as psyn
 import math 
 
@@ -62,97 +61,6 @@ class ATMSETUP():
 		self.c.ntangle = self.input['disco']['num_tangle']
 
 		return
-
-	def get_profile_3d_old(self):
-		"""
-		A separate routine is written to get the 3d profile because the inputs are much more 
-		rigid. In this framework, the following restrictions are placed: 
-		
-		Warning
-		-------
-		The input must be in hdf5 format. The tutorial for 3d calculations 
-		can help guid you to make these files correctly. 
-
-		"""
-		#SET DIMENSIONALITY 
-		self.dimension = '3d'
-
-		chemistry_input = self.input['atmosphere']
-		h5db = h5py.File(chemistry_input['profile']['filepath'],'r',swmr=True)
-		#get header of columns
-		header = h5db.attrs['header'].split(',')
-
-		iheader = list(range(len(header)))
-
-		#get all the gangles 
-		self.gangles = [i for i in h5db.keys()]
-		ng = self.c.ngangle
-		#get all the tangles 
-		self.tangles = [i for i in h5db[self.gangles[0]].keys()]
-		nt = self.c.ntangle
-
-		nlevel = h5db[str(self.gangles[0])][str(self.tangles[0])].shape[0]
-		self.c.nlevel = nlevel
-		self.c.nlayer = nlevel-1
-
-		#fill empty arrays for everything
-		self.level['temperature'] = np.zeros((nlevel, ng, nt))
-		self.level['pressure'] = np.zeros((nlevel, ng, nt))
-		self.layer['temperature'] = np.zeros((nlevel-1, ng, nt))
-		self.layer['pressure'] = np.zeros((nlevel-1, ng, nt))
-
-		if 'e-' in header:
-
-			electron=True
-			#check to see if there is an electron
-			self.level['electrons'] = np.zeros((nlevel, ng, nt))
-			self.layer['electrons'] = np.zeros((nlevel-1, ng, nt))
-			ielec = np.where('e-' == np.array(header))[0][0]
-		else: 
-			electron=False		
-
-		first = True
-		#loop over gangles 
-		for g in range(self.c.ngangle):
-			#loop over tangles 
-			for t in range(self.c.ntangle):
-				if first:
-					#on first pass find index where temperature and pressure are located
-					itemp = np.where('temperature' == np.array(header))[0][0]
-					ipress = np.where('pressure' == np.array(header))[0][0]
-					iheader.pop(ielec)
-					iheader.pop(itemp)
-					iheader.pop(ipress)
-
-					#after getting rid of electrons, temperature and pressure the rest should 
-					#represent the number of molecules 
-					num_mol = len(iheader)
-					self.level['mixingratios'] = np.zeros((nlevel, num_mol, ng, nt))
-					self.layer['mixingratios'] = np.zeros((nlevel-1, num_mol, ng, nt))
-
-					self.weights = pd.DataFrame({})
-					self.molecules=[]
-					for i in iheader:
-
-						self.weights[header[i]] = pd.Series([self.get_weights([header[i]])[header[i]]])
-						self.molecules += [header[i]]
-
-					first = False
-
-				if electron: 
-					#if there is an electron column, fill in the values 
-					self.level['electrons'][:,g,t] = h5db[self.gangles[g]][self.tangles[t]].value[:,ielec]
-					self.layer['electrons'][:,g,t] = 0.5*(self.level['electrons'][1:,g,t] + self.level['electrons'][:-1,g,t])
-
-				self.level['temperature'][:,g,t] = h5db[self.gangles[g]][self.tangles[t]].value[:,itemp]
-				self.layer['temperature'][:,g,t] = 0.5*(self.level['temperature'][1:,g,t] + self.level['temperature'][:-1,g,t])
-
-				self.level['pressure'][:,g,t] = h5db[self.gangles[g]][self.tangles[t]].value[:,ipress]*self.c.pconv #CONVERTING BARS TO DYN/CM2
-				self.layer['pressure'][:,g,t] = np.sqrt(self.level['pressure'][1:,g,t] * self.level['pressure'][:-1,g,t])
-
-
-				self.level['mixingratios'][:,:,g,t] = h5db[self.gangles[g]][self.tangles[t]].value[:,iheader]
-				self.layer['mixingratios'][:,:,g,t] = 0.5*(self.level['mixingratios'][1:,:,g,t] + self.level['mixingratios'][:-1,:,g,t])
 
 	def get_profile_3d(self):
 		"""
@@ -389,7 +297,6 @@ class ATMSETUP():
 		return weights
 
 
-	#@jit(nopython=True)
 	def get_mmw(self):
 		"""
 		Returns the mean molecular weight of the atmosphere 
@@ -409,7 +316,6 @@ class ATMSETUP():
 
 		return 
 
-	#@jit(nopython=True)
 	def get_density(self):
 		"""
 		Calculates density of atmospheres used on TP profile: LEVEL
@@ -417,7 +323,6 @@ class ATMSETUP():
 		self.level['den'] = self.level['pressure'] / (self.c.k_b * self.level['temperature']) 
 		return
 
-	#@jit(nopython=True)
 	def get_column_density(self):
 		"""
 		Calculates the column desntiy based on TP profile: LAYER
@@ -620,18 +525,16 @@ class ATMSETUP():
 
 		try: 
 			x =  self.xint_at_top
-			df['reflected'] = {}
-			df['reflected']['albedo_3d'] = x
+			df['albedo_3d'] = x
+			df['reflected_unit'] = 'albedo'
 		except:
 			pass 
 	
 
 		try: 
-			x = self.thermal_flux_planet
-			df['thermal'] = {}
-			df['thermal']['flux_planet'] = x
 			x = self.flux_at_top
-			df['thermal']['flux_planet_3d'] = x
+			df['thermal_unit'] = 'erg/cm2/s/cm'
+			df['thermal_3d'] = x
 		except:
 			pass
 

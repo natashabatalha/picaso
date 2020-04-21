@@ -550,6 +550,7 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 				#unmix the coefficients
 				positive[:,w] = X[::2] + X[1::2] 
 				negative[:,w] = X[::2] - X[1::2]
+
 			#========================= End loop over wavelength =========================
 
 			#use expression for bottom flux to get the flux_plus and flux_minus at last
@@ -898,9 +899,8 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 								ftau_ray*(0.75*(1+cos_theta**2.0)))
 
 			################################ END OPTIONS FOR DIRECT SCATTERING####################
-
 			for i in range(nlayer-1,-1,-1):
-						#direct beam
+				#direct beam
 				xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/ubar1[ng,nt]) 
 						#single scattering albedo from sun beam (from ubar0 to ubar1)
 						+(w0_og[i,:]*F0PI/(4.*pi))*
@@ -937,7 +937,7 @@ def blackbody(t,w):
 
 	return ((2.0*h*c**2.0)/(w**5.0))*(1.0/(exp((h*c)/outer(t, w*k)) - 1.0))
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,surf_reflect):
 	"""
 	This function uses the source function method, which is outlined here : 
@@ -997,7 +997,7 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 	"""
 	nlayer = nlevel - 1 #nlayers 
 
-	mu1 = 0.5 #from Table 1 Toon  
+	mu1 = 0.5#0.88#0.5 #from Table 1 Toon  
 	twopi = pi#+pi #NEB REMOVING A PI FROM HERE BECAUSE WE ASSUME NO SYMMETRY! 
 
 	#get matrix of blackbodies 
@@ -1029,9 +1029,9 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 	exptrm_positive = exp(exptrm) 
 	exptrm_minus = 1.0/exptrm_positive
 
-	tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0])
-	b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:] 
-	b_surface = all_b[-1,:] + b1[-1,:]*mu1
+	tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
+	b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
+	b_surface = all_b[-1,:] + b1[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
 
 	#Now we need the terms for the tridiagonal rotated layered method
 	A, B, C, D = setup_tri_diag(nlayer,nwno,  c_plus_up, c_minus_up, 
@@ -1078,42 +1078,45 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 	#work through building eqn 55 in toon (tons of bookeeping exponentials)
 	for ng in range(numg):
 		for nt in range(numt): 
-			flux_plus[-1,:] = twopi * (b_surface + b1[-1,:] * ubar1[ng,nt])
-			flux_minus[0,:] = twopi * (1 - exp(-tau_top / ubar1[ng,nt])) * all_b[0,:]
+
+			iubar = ubar1[ng,nt]
+
+			flux_plus[-1,:] = twopi * (b_surface + b1[-1,:] * iubar)
+			flux_minus[0,:] = twopi * (1 - exp(-tau_top / iubar)) * all_b[0,:]
 			
-			exptrm_angle = exp( - dtau / ubar1[ng,nt])
-			exptrm_angle_mdpt = exp( -0.5 * dtau / ubar1[ng,nt]) 
+			exptrm_angle = exp( - dtau / iubar)
+			exptrm_angle_mdpt = exp( -0.5 * dtau / iubar) 
 
 			for itop in range(nlayer):
 
 				#disbanning this for now because we dont need it in the thermal emission code
 				flux_minus[itop+1,:]=(flux_minus[itop,:]*exptrm_angle[itop,:]+
-					                 (J[itop,:]/(lamda[itop,:]*ubar1[ng,nt]+1.0))*(exptrm_positive[itop,:]-exptrm_angle[itop,:])+
-					                 (K[itop,:]/(lamda[itop,:]*ubar1[ng,nt]-1.0))*(exptrm_angle[itop,:]-exptrm_minus[itop,:])+
+					                 (J[itop,:]/(lamda[itop,:]*iubar+1.0))*(exptrm_positive[itop,:]-exptrm_angle[itop,:])+
+					                 (K[itop,:]/(lamda[itop,:]*iubar-1.0))*(exptrm_angle[itop,:]-exptrm_minus[itop,:])+
 					                 sigma1[itop,:]*(1.-exptrm_angle[itop,:])+
-					                 sigma2[itop,:]*(ubar1[ng,nt]*exptrm_angle[itop,:]+dtau[itop,:]-ubar1[ng,nt]) )
+					                 sigma2[itop,:]*(iubar*exptrm_angle[itop,:]+dtau[itop,:]-iubar) )
 
 				flux_minus_mdpt[itop,:]=(flux_minus[itop,:]*exptrm_angle_mdpt[itop,:]+
-				                        (J[itop,:]/(lamda[itop,:]*ubar1[ng,nt]+1.0))*(exptrm_positive_mdpt[itop,:]-exptrm_angle_mdpt[itop,:])+
-				                        (K[itop,:]/(-lamda[itop,:]*ubar1[ng,nt]+1.0))*(exptrm_minus_mdpt[itop,:]-exptrm_angle_mdpt[itop,:])+
+				                        (J[itop,:]/(lamda[itop,:]*iubar+1.0))*(exptrm_positive_mdpt[itop,:]-exptrm_angle_mdpt[itop,:])+
+				                        (K[itop,:]/(-lamda[itop,:]*iubar+1.0))*(exptrm_minus_mdpt[itop,:]-exptrm_angle_mdpt[itop,:])+
 				                        sigma1[itop,:]*(1.-exptrm_angle_mdpt[itop,:])+
-				                        sigma2[itop,:]*(ubar1[ng,nt]*exptrm_angle_mdpt[itop,:]+0.5*dtau[itop,:]-ubar1[ng,nt]))
+				                        sigma2[itop,:]*(iubar*exptrm_angle_mdpt[itop,:]+0.5*dtau[itop,:]-iubar))
 
 				ibot=nlayer-1-itop
 
 				flux_plus[ibot,:]=(flux_plus[ibot+1,:]*exptrm_angle[ibot,:]+
-				                  (G[ibot,:]/(lamda[ibot,:]*ubar1[ng,nt]-1.0))*(exptrm_positive[ibot,:]*exptrm_angle[ibot,:]-1.0)+
-				                  (H[ibot,:]/(lamda[ibot,:]*ubar1[ng,nt]+1.0))*(1.0-exptrm_minus[ibot,:] * exptrm_angle[ibot,:])+
+				                  (G[ibot,:]/(lamda[ibot,:]*iubar-1.0))*(exptrm_positive[ibot,:]*exptrm_angle[ibot,:]-1.0)+
+				                  (H[ibot,:]/(lamda[ibot,:]*iubar+1.0))*(1.0-exptrm_minus[ibot,:] * exptrm_angle[ibot,:])+
 				                  alpha1[ibot,:]*(1.-exptrm_angle[ibot,:])+
-				                  alpha2[ibot,:]*(ubar1[ng,nt]-(dtau[ibot,:]+ubar1[ng,nt])*exptrm_angle[ibot,:]) )
+				                  alpha2[ibot,:]*(iubar-(dtau[ibot,:]+iubar)*exptrm_angle[ibot,:]) )
 
 				flux_plus_mdpt[ibot,:]=(flux_plus[ibot+1,:]*exptrm_angle_mdpt[ibot,:]+
-				                       (G[ibot,:]/(lamda[ibot,:]*ubar1[ng,nt]-1.0))*(exptrm_positive[ibot,:]*exptrm_angle_mdpt[ibot,:]-exptrm_positive_mdpt[ibot,:])-
-				                       (H[ibot,:]/(lamda[ibot,:]*ubar1[ng,nt]+1.0))*(exptrm_minus[ibot,:]*exptrm_angle_mdpt[ibot,:]-exptrm_minus_mdpt[ibot,:])+
+				                       (G[ibot,:]/(lamda[ibot,:]*iubar-1.0))*(exptrm_positive[ibot,:]*exptrm_angle_mdpt[ibot,:]-exptrm_positive_mdpt[ibot,:])-
+				                       (H[ibot,:]/(lamda[ibot,:]*iubar+1.0))*(exptrm_minus[ibot,:]*exptrm_angle_mdpt[ibot,:]-exptrm_minus_mdpt[ibot,:])+
 				                       alpha1[ibot,:]*(1.-exptrm_angle_mdpt[ibot,:])+
-				                       alpha2[ibot,:]*(ubar1[ng,nt]+0.5*dtau[ibot,:]-(dtau[ibot,:]+ubar1[ng,nt])*exptrm_angle_mdpt[ibot,:])  )
+				                       alpha2[ibot,:]*(iubar+0.5*dtau[ibot,:]-(dtau[ibot,:]+iubar)*exptrm_angle_mdpt[ibot,:])  )
 
-			flux_at_top[ng,nt,:] = flux_plus_mdpt[0,:] #nlevel by nwno
+			flux_at_top[ng,nt,:] = flux_plus_mdpt[0,:] #nlevel by nwno #flux_plus[0,:]#
 			#flux_down[ng,nt,:] = flux_minus_mdpt[0,:] #nlevel by nwno, Dont really need to compute this for now
 
 	return flux_at_top #, flux_down# numg x numt x nwno
