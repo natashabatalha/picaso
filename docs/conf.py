@@ -58,7 +58,6 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'picaso'
-copyright = '2018, Natasha E. Batalha'
 author = 'Natasha E. Batalha'
 
 # The version info for the project you're documenting, acts as replacement for
