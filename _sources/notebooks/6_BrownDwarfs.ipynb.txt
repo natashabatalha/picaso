@@ -11,7 +11,7 @@
     "In this tutorial you will learn:\n",
     "\n",
     "1. How to turn that feature off \n",
-    "2. Query a profile from the Sonora Grid (not you will need to download and untar this to provide a filepath.) \n",
+    "2. Query a profile from the [Sonora Grid](https://zenodo.org/record/1309035#.Xo5GbZNKjGJ). Note, this is note necessary -- just convenient! \n",
     "3. Create a Brown Dwarf Spectrum "
    ]
   },

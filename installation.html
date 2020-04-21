@@ -207,7 +207,8 @@ python setup.py install
 <div class="section" id="download-and-link-reference-documentation">
 <h2>Download and Link Reference Documentation<a class="headerlink" href="#download-and-link-reference-documentation" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic simple">
-<li><p>If you did not download the github repository, make sure you pull the <a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/reference">Reference Folder</a>.</p></li>
+<li><p>Download the <a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/reference">Reference Folder from Github</a>. You may have this already if you did a Git clone.</p></li>
+<li><p>Download the <a class="reference external" href="https://doi.org/10.5281/zenodo.3759675">Resampled Opacity File from Zenodo</a>. Unzip and place in the <a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/reference">Reference Folder you downloaded from Github</a>.</p></li>
 <li><p>Now you can create an environment variable:</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>vi ~/.bash_profle
@@ -223,6 +224,7 @@ ls
 base_cases      config.json     opacities
 </pre></div>
 </div>
+<p>Your opacities folder shown above should include the unzipped <cite>opacity.db</cite> <a class="reference external" href="https://doi.org/10.5281/zenodo.3759675">file downloaded from zenodo</a>. This is mostly a matter of preference, as PICASO allows you to point to an opacity directory. Personally, I like to store something with the reference data so that I don’t have to constantly specify a folder path when running the code.</p>
 </div>
 <div class="section" id="download-and-link-pysynphot-stellar-data">
 <h2>Download and Link Pysynphot Stellar Data<a class="headerlink" href="#download-and-link-pysynphot-stellar-data" title="Permalink to this headline">¶</a></h2>
@@ -268,7 +270,7 @@ grid
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2018, Natasha E. Batalha
+        &copy; Copyright 
 
     </p>
   </div>
