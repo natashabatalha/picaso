@@ -7,7 +7,7 @@
    </div>
    <br/><br/>
 
-Reflected light spectroscopy for planetary atmospheres.
+Spectroscopy for planetary atmospheres.
 
 Docs 
 ----
