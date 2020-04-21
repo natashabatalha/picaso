@@ -17,7 +17,6 @@ Basics of Thermal Emission
 --------------------------
 
 .. toctree::
-   :titlesonly:
    :maxdepth: 2
 
    Thermal Emission Exoplanets </notebooks/5_AddingThermalFlux.ipynb>
@@ -27,7 +26,6 @@ Cloud Modeling with `Virga`
 ---------------------------
 
 .. toctree::
-   :titlesonly:
    :maxdepth: 2
 
    Moving Away From Box Models </notebooks/7_PairingPICASOToVIRGA.ipynb>
@@ -35,7 +33,6 @@ Cloud Modeling with `Virga`
 Moving to 3 Dimensions
 ----------------------
 .. toctree::
-   :titlesonly:
    :maxdepth: 2
 
    Non-Zero Phase and Spherical Integration </notebooks/8_SphericalIntegration.ipynb>
@@ -45,7 +42,6 @@ Opacities & Approximatons
 -------------------------
 
 .. toctree::
-   :titlesonly:
    :maxdepth: 2
 
    Opacity Factory </notebooks/9_SwappingOpacities.ipynb>
@@ -57,7 +53,6 @@ Retrievals (tutorials coming soon)
 ----------------------------------
 
 .. toctree::
-   :titlesonly:
    :maxdepth: 2
 
    Retrievals </notebooks/9_Retrievals.ipynb>
