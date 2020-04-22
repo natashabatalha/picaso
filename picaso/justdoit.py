@@ -5,6 +5,7 @@ from .opacity_factory import create_grid
 from .optics import RetrieveOpacities,compute_opacity
 from .disco import get_angles_1d, get_angles_3d, compute_disco, compress_disco, compress_thermal
 
+from virga import justdoit as vj
 from scipy.signal import savgol_filter
 from scipy.interpolate import RegularGridInterpolator
 import scipy as sp
@@ -1303,7 +1304,7 @@ class inputs():
         mmw : float 
             Atmospheric mean molecular weight  
         """
-        from virga import justdoit as vj
+        
         cloud_p = vj.Atmosphere(condensates,fsed=fsed,mh=mh,
                  mmw = mmw) 
 
