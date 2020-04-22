@@ -72,6 +72,7 @@ setup(
           'pysynphot',
           'sphinx',
           'scipy',
+          'virga-exo'
           ], 
     zip_safe = False,
 )
