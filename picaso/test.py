@@ -150,7 +150,7 @@ def madhu_test(rayleigh=True, isotropic=True, asymmetric=True, single_phase = 'T
 	a['star']['temp'] = 6000 #kelvin
 	a['star']['metal'] = 0.0122 #log metal
 	a['star']['logg'] = 4.437 #log cgs
-	a['atmosphere']['scattering']['g0'] = 0.0
+	a['atmosphere']['cloud']['g0'] = 0.0
 	a['phase_angle']=0
 	if rayleigh:
 		#SCALAR RAYLEIGH
@@ -158,10 +158,10 @@ def madhu_test(rayleigh=True, isotropic=True, asymmetric=True, single_phase = 'T
 		a['approx']['raman']='pollack'
 		a['approx']['single_phase'] ='TTHG_ray'
 		a['test_mode']='rayleigh'
-		a['atmosphere']['scattering']['g0'] = 0
+		a['atmosphere']['cloud']['g0'] = 0
 
 		for i in real_answer.index:
-			a['atmosphere']['scattering']['w0'] = real_answer['ssa'][i]
+			a['atmosphere']['cloud']['w0'] = real_answer['ssa'][i]
 			wno, alb = picaso(a)
 			real_answer.loc[i,'rayleigh']=alb[-1] 
 
@@ -171,10 +171,10 @@ def madhu_test(rayleigh=True, isotropic=True, asymmetric=True, single_phase = 'T
 		a['approx']['raman']='pollack'
 		a['approx']['single_phase'] = 'OTHG'
 		a['test_mode']='constant_tau'
-		a['atmosphere']['scattering']['g0'] = 0
+		a['atmosphere']['cloud']['g0'] = 0
 
 		for i in real_answer.index:
-			a['atmosphere']['scattering']['w0'] = real_answer['ssa'][i]
+			a['atmosphere']['cloud']['w0'] = real_answer['ssa'][i]
 			wno, alb = picaso(a)
 			real_answer.loc[i,'0.0']=alb[-1] 
 
@@ -187,9 +187,9 @@ def madhu_test(rayleigh=True, isotropic=True, asymmetric=True, single_phase = 'T
 		a['test_mode']='constant_tau'
 
 		for g in [0.2,0.4,0.6,0.8]: 
-			a['atmosphere']['scattering']['g0'] = g
+			a['atmosphere']['cloud']['g0'] = g
 			for i in real_answer.index:
-				a['atmosphere']['scattering']['w0'] = real_answer['omega'][i]
+				a['atmosphere']['cloud']['w0'] = real_answer['omega'][i]
 				wno, alb = picaso(a)
 				real_answer.loc[i,str(g)]=alb[-1] 
 	return real_answer
