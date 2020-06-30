@@ -1,5 +1,5 @@
 from .atmsetup import ATMSETUP
-from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d
+from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_new
 from .wavelength import get_cld_input_grid
 from .opacity_factory import create_grid
 from .optics import RetrieveOpacities,compute_opacity
@@ -25,8 +25,8 @@ import math
 
 __refdata__ = os.environ.get('picaso_refdata')
 
-def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_output=False,
-     plot_opacity= False,as_dict=True):
+def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_output=False, 
+    plot_opacity= False, as_dict=True, tridiagonal=1, approximation='2stream', stream=2):
     """
     Currently top level program to run albedo code 
 
@@ -158,12 +158,35 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             full_output=full_output, plot_opacity=plot_opacity)
         if  'reflected' in calculation:
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-            xint_at_top  = get_reflected_1d(atm.c.nlevel, wno,nwno,ng,nt,
+            nlevel = atm.c.nlevel
+            nwno = 50
+            wno = wno[0:nwno]
+            TAU = TAU[0:nlevel,0:nwno]
+            DTAU = DTAU[0:nlevel-1,0:nwno]
+            W0 = W0[0:nlevel-1,0:nwno]
+            COSB = COSB[0:nlevel-1,0:nwno]
+            GCOS2 = GCOS2[0:nlevel-1,0:nwno]
+            ftau_cld = ftau_cld[0:nlevel-1,0:nwno]
+            ftau_ray = ftau_ray[0:nlevel-1,0:nwno]
+            TAU_OG = TAU_OG[0:nlevel-1,0:nwno]
+            DTAU_OG = DTAU_OG[0:nlevel-1,0:nwno]
+            W0_OG = W0_OG[0:nlevel-1,0:nwno]
+            COSB_OG = COSB_OG[0:nlevel-1,0:nwno]
+            F0PI = F0PI[0:nwno]
+            if '4stream' in approximation:
+                (xint_at_top, flux)= get_reflected_new(nlevel, nwno, ng, nt, 
+                                            DTAU, TAU, W0, COSB, GCOS2, 
+                                            DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
+                                            atm.surf_reflect, ubar0, ubar1, F0PI, dimension, stream)
+                #import IPython; IPython.embed()
+                #import sys; sys.exit()
+            else:
+                (xint_at_top, flux)= get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                                     DTAU, TAU, W0, COSB,GCOS2,ftau_cld,ftau_ray,
                                                     DTAU_OG, TAU_OG, W0_OG, COSB_OG ,
                                                     atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
                                                     single_phase,multi_phase,
-                                                    frac_a,frac_b,frac_c,constant_back,constant_forward)
+                                                    frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)
 
             #if full output is requested add in xint at top for 3d plots
             if full_output: 
@@ -285,6 +308,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     #set up initial returns
     returns = {}
     returns['wavenumber'] = wno
+    returns['flux'] = flux
 
 
     #for reflected light use compress_disco routine
@@ -1487,8 +1511,8 @@ class inputs():
         self.inputs['approx']['TTHG_params']['constant_forward']=tthg_forward
 
 
-    def spectrum(self,opacityclass,calculation='reflected',dimension = '1d',  full_output=False, 
-        plot_opacity= False,as_dict=True):
+    def spectrum(self,opacityclass,dimension = '1d', calculation='reflected', full_output=False, 
+        plot_opacity= False, as_dict=True, tridiagonal=1, approximation='2stream', stream=2):
         """Run Spectrum
 
         Parameters
@@ -1525,8 +1549,10 @@ class inputs():
             #been run 
             self.inputs['surface_reflect'] = 0 
 
+            
         return picaso(self, opacityclass,dimension=dimension,calculation=calculation,
-            full_output=full_output, plot_opacity=plot_opacity,as_dict=as_dict)
+            full_output=full_output, plot_opacity=plot_opacity, as_dict=as_dict, 
+            tridiagonal=tridiagonal, approximation=approximation, stream=stream)
 
 def mean_regrid(x, y, newx=None, R=None):
     """
