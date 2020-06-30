@@ -863,7 +863,6 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 				g_back = -constant_back*cosb_og
 				f = frac_a + frac_b*g_back**frac_c
 
-
 			if single_phase==0:#'cahoy':
 				#Phase function for single scattering albedo frum Solar beam
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
@@ -925,7 +924,7 @@ def blackbody(t,w):
 	t : array,float
 		Temperature (K)
 	w : array, float
-		Wavelength (cgs)
+		Wavelength (cm)
 	
 	Returns
 	-------
@@ -1050,7 +1049,9 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 		positive[:,w] = X[::2] + X[1::2] 
 		negative[:,w] = X[::2] - X[1::2]
 
+	#if you stop here this is regular ole 2 stream
 	f_up = pi*(positive * exptrm_positive + gama * negative * exptrm_minus + c_plus_up)
+
 
 	#calculate everyting from Table 3 toon
 	alphax = ((1.0-w0)/(1.0-w0*cosb))**0.5

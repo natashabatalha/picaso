@@ -324,12 +324,13 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
             ftau_ray = 1.0
             ftau_cld = 1e-6
         else: 
-            DTAU = TAURAY*0+0.5
+            DTAU = atm.layer['cloud']['opd']#TAURAY*0+0.05
             GCOS2 = 0.0
             ftau_ray = 1e-6
             ftau_cld = 1            
-        COSB = atm.layer['scattering']['g0']
-        W0 = atm.layer['scattering']['w0']
+        COSB = atm.layer['cloud']['g0']
+        W0 = atm.layer['cloud']['w0']
+        W0_no_raman = atm.layer['cloud']['w0']
         TAU = np.zeros((shape[0]+1, shape[1]))
         TAU[1:,:]=numba_cumsum(DTAU)
 

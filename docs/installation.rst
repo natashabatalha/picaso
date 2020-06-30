@@ -23,7 +23,7 @@ Download and Link Reference Documentation
 
 1) Download the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_. You may have this already if you did a Git clone.
 
-2) Download the `Resampled Opacity File from Drive <https://drive.google.com/file/d/1RqPAc4H2WjvQpVPgHfy30B-YovfereQ7/view?usp=sharing>`_. Unzip and place in the `Reference Folder you downloaded from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_.
+2) Download the `Resampled Opacity File from Zenodo <https://doi.org/10.5281/zenodo.3759675>`_. Unzip and place in the `Reference Folder you downloaded from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_.
 
 3) Now you can create an environment variable:
 

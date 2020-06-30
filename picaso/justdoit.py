@@ -812,17 +812,14 @@ class inputs():
         elif chem == 'low':
             self.channon_grid_low(filename=os.path.join(__refdata__,'chemistry','visscher_abunds_m+0.0_co1.0' ))
         self.inputs['atmosphere']['sonora_filename'] = build_filename
+        self.nlevel = ptchem.shape[0]
 
-    def chemeq(self, CtoO, Met, P=None,T=None):
+    def chemeq(self, CtoO, Met):
         """
         This interpolates from a precomputed grid of CEA runs (run by M.R. Line)
 
         Parameters
         ----------
-        P : array
-            Pressure (bars)
-        T : array
-            Temperature (K)
         CtoO : float
             C to O ratio (solar = 0.55)
         Met : float 
@@ -861,6 +858,7 @@ class inputs():
     def channon_grid_high(self,filename=os.path.join(__refdata__,'chemistry','ChannonGrid.csv')):
         #df = self.inputs['atmosphere']['profile']
         df = self.inputs['atmosphere']['profile']
+        self.nlevel = df.shape[0]
         
         player = df['pressure'].values
         tlayer  = df['temperature'].values
@@ -872,20 +870,19 @@ class inputs():
         mols.pop(mols.index('temperature'))
         
         #add molecules to df
-        df = df.loc[:,['pressure','temperature']+mols]
+        df = df.reindex(columns = ['pressure','temperature']+mols) 
 
         #add pt_ids so we can grab the right points
-        pt_pairs = channon.loc[:,['pt_id','pressure','temperature']]
+        pt_pairs = channon.loc[:,['pressure','temperature']]
         pt_pairs['pt_id'] = np.arange(pt_pairs.shape[0])
         channon['pt_id'] = pt_pairs['pt_id']
 
-        pt_pairs = pt_pairs.values
+        pt_pairs = pt_pairs.values#p,t,id
         
         #find index corresponding to each pair
         ind_pt=[min(pt_pairs, 
-                    key=lambda c: math.hypot(c[1]- coordinate[0], c[2]-coordinate[1]))[0] 
+                    key=lambda c: math.hypot(c[0]- coordinate[0], c[1]-coordinate[1]))[2] 
                         for coordinate in  zip(np.log10(player),tlayer)]
-        
         #build dataframe with chemistry
         for i in range(df.shape[0]):
             pair_for_layer = ind_pt[i]
@@ -900,9 +897,9 @@ class inputs():
         """
         a = pd.read_csv(filename)
         mols = list(a.loc[:, ~a.columns.isin(['Unnamed: 0','pressure','temperature'])].keys())
-
         #get pt from what users have already input
         player_tlayer = self.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']]
+        self.nlevel = player_tlayer.shape[0]
 
         #loop through all pressure and temperature layers
         for i in player_tlayer.index:
