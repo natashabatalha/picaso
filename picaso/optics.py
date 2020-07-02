@@ -320,9 +320,12 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
             #https://www.sciencedirect.com/science/article/pii/0019103574901675?via%3Dihub
             if test_mode=='rayleigh':
                 DTAU = TAURAY 
-                GCOS2 = 0.5
-                ftau_ray = 1.0
-                ftau_cld = 1e-6
+                #GCOS2 = 0.5
+                GCOS2 = np.zeros(DTAU.shape) + 0.5
+                #ftau_ray = 1.0
+                ftau_ray = np.zeros(DTAU.shape) + 1.0
+                #ftau_cld = 1e-6
+                ftau_cld = np.zeros(DTAU.shape) + 1e-6
             else: 
                 DTAU = atm.layer['cloud']['opd']#TAURAY*0+0.05
                 GCOS2 = np.zeros(DTAU.shape)#0.0
