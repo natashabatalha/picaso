@@ -159,7 +159,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         if  'reflected' in calculation:
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
             nlevel = atm.c.nlevel
-            #nwno = 50
+            nwno = 50
             wno = wno[0:nwno]
             TAU = TAU[0:nlevel,0:nwno]
             DTAU = DTAU[0:nlevel-1,0:nwno]

@@ -1098,7 +1098,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 						)
 			import pickle as pk
 			pk.dump(xint, open('savefile.pk','wb'))
-			xint_at_top[ng,nt,:] = xint[0,:]	
+			xint_at_top[ng,nt,:] = xint[1,:]	
 	pk.dump(xint_at_top, open('xint_at_top1.pk','wb'))
 	pk.dump(surf_reflect, open('surf_reflect.pk','wb'))
 	return (xint_at_top, flux)
@@ -1577,8 +1577,8 @@ def setup_4_stream(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0
 	if np.any(beta**2 - 4*gama) < 0:
 		print('determinant of characteristic function negative')
 		import sys; sys.exit()
-	lam1 = np.sqrt(beta + np.sqrt(beta**2 - 4*gama) / 2)
-	lam2 = np.sqrt(beta - np.sqrt(beta**2 - 4*gama) / 2)
+	lam1 = np.sqrt((beta + np.sqrt(beta**2 - 4*gama)) / 2)
+	lam2 = np.sqrt((beta - np.sqrt(beta**2 - 4*gama)) / 2)
 	## note we could have issues here due to sqrts of negatives 
 
 	def f(x):
@@ -1587,21 +1587,17 @@ def setup_4_stream(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0
 	Del = 9 * f(1/ubar0)
 	Dels = []
 	Dels.append((a[1]*b[0] - b[1]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
-		+ 2*(3*a[3]*b[2] - 2*a[3]*b[0] - 3*b[3]/ubar0)/ubar0**2)
-#		+ 2*(a[3]*b[2] - 2*a[3]*b[0] - 3*b[3]/ubar0)/ubar0**2)
+		+ 2*(a[3]*b[2] - 2*a[3]*b[0] - 3*b[3]/ubar0)/ubar0**2)
 	Dels.append((a[0]*b[1] - b[0]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
-		- 2*a[0]*(3*a[3]*b[2] - 3*b[3]/ubar0)/ubar0)
-#		- 2*a[0]*(a[3]*b[2] - 3*b[3]/ubar0)/ubar0)
-#	Dels.append((a[3]*b[2] - 3*b[3]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
-	Dels.append((3*a[3]*b[2] - 3*b[3]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
+		- 2*a[0]*(a[3]*b[2] - 3*b[3]/ubar0)/ubar0)
+	Dels.append((a[3]*b[2] - 3*b[3]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
 		- 2*a[3]*(a[0]*b[1] - b[0]/ubar0)/ubar0)
-#	Dels.append((a[2]*b[3] - 3*b[2]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
-	Dels.append((a[2]*b[3] - 9*b[2]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
+	Dels.append((a[2]*b[3] - 3*b[2]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
 		+ 2*(3*a[0]*b[1] - 2*a[0]*b[3] - 3*b[0]/ubar0)/ubar0**2)
 	
 	eta = []
 	for l in range(4):
-		eta.append(-Dels[l]/Del)
+		eta.append(Dels[l]/Del)
 
 	expo1 = lam1*dtau
 	expo2 = lam2*dtau
@@ -1872,7 +1868,8 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 				for l in range(stream):
 					xint[i,:] = xint[i,:] + (2*l+1) * X[stream*i+l, :] * P(ubar1[ng,nt])[l]
 			import pickle as pk
-			pk.dump(xint, open('savefile1.pk','wb'))
+			filename = 'xint_%d.pk' % stream
+			pk.dump(xint, open(filename,'wb'))
 			pk.dump(w0, open('w0.pk','wb'))
 			#total = 0
 			#for i in np.arange(nlayer-1,0,-1):
@@ -1916,7 +1913,8 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 
 
 			xint_at_top[ng,nt,:] = xint[0,:] 
-	pk.dump(xint_at_top, open('xint_at_top2.pk','wb'))
+	filename = 'xint_at_top_%d.pk' % stream
+	pk.dump(xint_at_top, open(filename,'wb'))
 
 	return (xint_at_top, flux)
 
