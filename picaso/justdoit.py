@@ -12,6 +12,7 @@ import scipy as sp
 from scipy import special
 from scipy.stats import binned_statistic
 
+import requests
 import os
 import pickle as pk
 import numpy as np
@@ -925,7 +926,7 @@ class inputs():
 
         self.inputs['atmosphere']['profile'] = player_tlayer
 
-    def guillot_pt(self, Teq, T_int, logg1, logKir, alpha=0.5,nlevel=61, p_bottom = 1.5, p_top = -6):
+    def guillot_pt(self, Teq, T_int=100, logg1=-1, logKir=-1.5, alpha=0.5,nlevel=61, p_bottom = 1.5, p_top = -6):
         """
         Creates temperature pressure profile given parameterization in Guillot 2010 TP profile
         called in fx()
@@ -1285,7 +1286,7 @@ class inputs():
             self.inputs['clouds']['profile'] = df
 
     def virga(self, condensates, directory,
-        fsed=1, mh=1, mmw=2.2,kz_min=1e5,full_output=False): 
+        fsed=1, mh=1, mmw=2.2,kz_min=1e5,sig=2, full_output=False): 
         """
         Runs virga cloud code based on the PT and Kzz profiles 
         that have been added to inptus class.
@@ -1303,7 +1304,7 @@ class inputs():
         """
         
         cloud_p = vj.Atmosphere(condensates,fsed=fsed,mh=mh,
-                 mmw = mmw) 
+                 mmw = mmw, sig =sig) 
 
         if 'kz' not in self.inputs['atmosphere']['profile'].keys():
             raise Exception ("Must supply kz to atmosphere/chemistry DataFrame, \
@@ -1483,7 +1484,6 @@ class inputs():
         self.inputs['approx']['TTHG_params']['constant_back'] = tthg_back
         self.inputs['approx']['TTHG_params']['constant_forward']=tthg_forward
 
-
     def spectrum(self,opacityclass,calculation='reflected',dimension = '1d',  full_output=False, 
         plot_opacity= False,as_dict=True):
         """Run Spectrum
@@ -1524,6 +1524,119 @@ class inputs():
 
         return picaso(self, opacityclass,dimension=dimension,calculation=calculation,
             full_output=full_output, plot_opacity=plot_opacity,as_dict=as_dict)
+
+def load_planet(df, opacity, phase_angle = 0, stellar_db='phoenix', verbose=False,  **planet_kwargs):
+    """
+    Wrapper to simplify PICASO run. This really turns chimera into a black box. This was created 
+    specifically Sagan School tutorial. 
+
+    Parameters
+    -----------
+    df : pd.DataFrame
+        This is single row from `all_planets()`
+    opacity : np.array 
+        Opacity loaded from opannection
+    phase_angle : float 
+        Observing phase angle (radians)
+    verbose : bool , options
+        Print out warnings 
+    planet_kwargs : dict 
+        List of parameters to supply NexSci database is values don't exist 
+    """
+    if len(df.index)>1: raise Exception("Dataframe consists of more than 1 row. Make sure to select single planet")
+
+    for i in df.index:
+
+        planet = df.loc[i,:].dropna().to_dict()
+
+        temp = planet.get('st_teff', planet_kwargs.get('st_teff',np.nan))
+        if np.isnan(temp) : raise Exception('Stellar temperature is not added to \
+            dataframe input or to planet_kwargs through the column/key named st_teff. Please add it to one of them')
+
+        logg = planet.get('st_logg', planet_kwargs.get('st_logg',np.nan))
+        if np.isnan(logg) : raise Exception('Stellar logg is not added to \
+            dataframe input or to planet_kwargs through the column/key named st_logg. Please add it to one of them')
+
+        logmh = planet.get('st_metfe', planet_kwargs.get('st_metfe',np.nan))
+        if np.isnan(logmh) : raise Exception('Stellar Fe/H is not added to \
+            dataframe input or to planet_kwargs through the column/key named st_metfe. Please add it to one of them')
+
+        stellar_db = 'phoenix'
+
+        if logmh > 0.5: 
+            if verbose: print ('Stellar M/H exceeded max value of 0.5. Value has been reset to the maximum')
+            logmh = 0.5
+        elif logmh < -4.0 :
+            if verbose: print ('Stellar M/H exceeded min value of -4.0 . Value has been reset to the mininum')
+            logmh = -4.0 
+
+        if logg > 4.5: 
+            if verbose: print ('Stellar logg exceeded max value of 4.5. Value has been reset to the maximum')
+            logg = 4.5   
+
+
+        #the parameters
+        #planet/star system params--typically not free parameters in retrieval
+        # Planet radius in Jupiter Radii--this will be forced to be 10 bar radius--arbitrary (scaling to this is free par)
+
+        Rp = planet.get('pl_radj', planet_kwargs.get('pl_radj',np.nan))
+        if np.isnan(Rp) : raise Exception('Planet Radii is not added to \
+            dataframe input or to planet_kwargs through the column/key named pl_radj. J for JUPITER! \
+            Please add it to one of them')
+
+
+        #Stellar Radius in Solar Radii
+        Rstar = planet.get('st_rad', planet_kwargs.get('st_rad',np.nan))
+        if np.isnan(Rstar) : raise Exception('Stellar Radii is not added to \
+            dataframe input or to planet_kwargs through the column/key named st_rad. Solar radii! \
+            Please add it to one of them')
+
+        #Mass in Jupiter Masses
+        Mp = planet.get('pl_bmassj', planet_kwargs.get('pl_bmassj',np.nan))
+        if np.isnan(Mp) : raise Exception('Planet Mass is not added to \
+            dataframe input or to planet_kwargs through the column/key named pl_bmassj. J for JUPITER! \
+            Please add it to one of them')  
+
+        #TP profile params (3--Guillot 2010, Parmentier & Guillot 2013--see Line et al. 2013a for implementation)
+        Tirr=planet.get('pl_eqt', planet_kwargs.get('pl_eqt',np.nan))
+
+        if np.isnan(Tirr): 
+            p =  planet.get('pl_orbper', planet_kwargs.get('pl_orbper',np.nan))
+            p = p * (1*u.day).to(u.yr).value #convert to year 
+            a =  (p**(2/3)*u.au).to(u.R_sun).value
+            temp = planet.get('st_teff', planet_kwargs.get('st_teff',np.nan))
+            Tirr = temp * np.sqrt(Rstar/(2*a))
+
+        if np.isnan(Tirr): raise Exception('Planet Eq Temp is not added to \
+            dataframe input or to planet_kwargs through the column/key named pl_eqt. Kelvin \
+            Please add it to one of them') 
+
+        p=planet.get('pl_orbper', planet_kwargs.get('pl_orbper',np.nan))
+
+        if np.isnan(Tirr): raise Exception('Orbital Period is not added to \
+            dataframe input or to planet_kwargs through the column/key named pl_orbper. Days Units') 
+        else: 
+            p = p * (1*u.day).to(u.yr).value #convert to year 
+            a =  p**(2/3) #semi major axis in AU
+
+
+        #setup picaso
+        start_case = inputs()
+        start_case.phase_angle(phase_angle) #radians 
+
+        #define gravity
+        start_case.gravity(mass=Mp, mass_unit=u.Unit('M_jup'),
+                            radius=Rp, radius_unit=u.Unit('R_jup')) #any astropy units available
+
+        #define star
+        start_case.star(opacity, temp,logmh,logg,radius=Rstar, radius_unit=u.Unit('R_sun'),
+                            semi_major=a, semi_major_unit=u.Unit('au'),
+                            database = stellar_db ) #opacity db, pysynphot database, temp, metallicity, logg
+
+        ##running this with all default inputs (users can override whatever after this initial run)
+        start_case.guillot_pt(Tirr) 
+
+    return start_case
 
 def mean_regrid(x, y, newx=None, R=None):
     """
@@ -1585,3 +1698,34 @@ def raman_options():
     """Retrieve options for raman scattering approximtions"""
     return ["oklopcic","pollack","none"]
 
+
+def all_planets():
+    """
+    Load all planets from https://exoplanetarchive.ipac.caltech.edu
+    """
+    # use this default URL to start out with 
+    default_query = "https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=exoplanets&format=csv"
+    all_planets =  requests.get(default_query)  
+    all_planets = all_planets.text.replace(' ','').split('\n')
+
+    # default data doesn't come with all the parameters we need so let's 
+    # add those in 
+    add_few_elements = '&select='+all_planets[0]+','.join(
+        [',pl_trandur','pl_eqt','st_logg','st_metfe','st_j','st_h','st_k&'])
+
+    # use requests to grab the csv formatted data and split by the commas 
+    all_planets =  requests.get(default_query.split('&')[0] 
+                                + add_few_elements + default_query.split('&')[1] )  
+    all_planets = all_planets.text.replace(' ','').split('\n')
+
+    # get into useful pandas dataframe format
+    planets_df = pd.DataFrame(columns=all_planets[0].split(','), 
+                             data = [i.split(',') for i in all_planets[1:-1]])
+    planets_df = planets_df.replace(to_replace='', value=np.nan)    
+
+
+    # convert to float when possible
+    for i in planets_df.columns: 
+        planets_df[i] = planets_df[i].astype(float,errors='ignore')
+
+    return planets_df
