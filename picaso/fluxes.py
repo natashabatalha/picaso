@@ -592,9 +592,14 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 			#needed for everything except the OTHG
 			if single_phase!=1: 
 				g_forward = constant_forward*cosb_og
-				g_back = -constant_back*cosb_og
+				g_back = constant_back*cosb_og#-
 				f = frac_a + frac_b*g_back**frac_c
 
+			# NOTE ABOUT HG function: we are translating to the frame of the downward propagating beam
+			# Therefore our HG phase function becomes:
+			# p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+			# as opposed to the traditional:
+			# p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2-2*cosb_og*cos_theta)**3) (NOTICE NEGATIVE)
 
 			if single_phase==0:#'cahoy':
 				#Phase function for single scattering albedo frum Solar beam
@@ -614,19 +619,19 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
 					  #first term of TTHG: forward scattering
 				p_single=(f * (1-g_forward**2)
-								/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+								/sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
 								#second term of TTHG: backward scattering
 								+(1-f)*(1-g_back**2)
-								/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3))
+								/sqrt((1+g_back**2+2*g_back*cos_theta)**3))
 			elif single_phase==3:#'TTHG_ray':
 				#Phase function for single scattering albedo frum Solar beam
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
 					  		#first term of TTHG: forward scattering
 				p_single=(ftau_cld*(f * (1-g_forward**2)
-												/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+												/sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
 												#second term of TTHG: backward scattering
 												+(1-f)*(1-g_back**2)
-												/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3))+			
+												/sqrt((1+g_back**2+2*g_back*cos_theta)**3))+			
 								#rayleigh phase function
 								ftau_ray*(0.75*(1+cos_theta**2.0)))
 
@@ -860,8 +865,14 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 			#needed for everything except the OTHG
 			if single_phase!=1: 
 				g_forward = constant_forward*cosb_og
-				g_back = -constant_back*cosb_og
+				g_back = constant_back*cosb_og#-
 				f = frac_a + frac_b*g_back**frac_c
+
+			# NOTE ABOUT HG function: we are translating to the frame of the downward propagating beam
+			# Therefore our HG phase function becomes:
+			# p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+			# as opposed to the traditional:
+			# p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2-2*cosb_og*cos_theta)**3) (NOTICE NEGATIVE)
 
 			if single_phase==0:#'cahoy':
 				#Phase function for single scattering albedo frum Solar beam
@@ -881,19 +892,19 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
 					  #first term of TTHG: forward scattering
 				p_single=(f * (1-g_forward**2)
-								/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+								/sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
 								#second term of TTHG: backward scattering
 								+(1-f)*(1-g_back**2)
-								/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3))
+								/sqrt((1+g_back**2+2*g_back*cos_theta)**3))
 			elif single_phase==3:#'TTHG_ray':
 				#Phase function for single scattering albedo frum Solar beam
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
 					  		#first term of TTHG: forward scattering
 				p_single=(ftau_cld*(f * (1-g_forward**2)
-												/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+												/sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
 												#second term of TTHG: backward scattering
 												+(1-f)*(1-g_back**2)
-												/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3))+			
+												/sqrt((1+g_back**2+2*g_back*cos_theta)**3))+			
 								#rayleigh phase function
 								ftau_ray*(0.75*(1+cos_theta**2.0)))
 
