@@ -114,171 +114,173 @@ def pt(full_output,ng=None, nt=None, **kwargs):
     return fig
 
 def spectrum(xarray, yarray,legend=None,wno_to_micron=True, **kwargs):
-    """Plot formated albedo spectrum
+	"""Plot formated albedo spectrum
 
-    Parameters
-    ----------
-    xarray : float array, list of arrays
-        wavenumber or micron 
-    yarray : float array, list of arrays 
-        albedo or fluxes 
-    legend : list of str , optional
-        legends for plotting 
-    wno_to_micron : bool , optional
-        Converts wavenumber to micron 
-    **kwargs : dict     
-        Any key word argument for bokeh.plotting.figure()
+	Parameters
+	----------
+	xarray : float array, list of arrays
+		wavenumber or micron 
+	yarray : float array, list of arrays 
+		albedo or fluxes 
+	legend : list of str , optional
+		legends for plotting 
+	wno_to_micron : bool , optional
+		Converts wavenumber to micron 
+	**kwargs : dict 	
+		Any key word argument for bokeh.plotting.figure()
 
-    Returns
-    -------
-    bokeh plot
-    """
-    if wno_to_micron : 
-        x_axis_label = 'Wavelength [μm]'
-        def conv(x):
-            return 1e4/x
-    else: 
-        x_axis_label = 'Wavenumber [(]cm-1]'
-        def conv(x):
-            return x
+	Returns
+	-------
+	bokeh plot
+	""" 
+	if len(yarray)==len(xarray):
+		Y = [yarray]
+	else:
+		Y = yarray
 
-    kwargs['plot_height'] = kwargs.get('plot_height',345)
-    kwargs['plot_width'] = kwargs.get('plot_width',1000)
-    kwargs['y_axis_label'] = kwargs.get('y_axis_label','Spectrum')
-    kwargs['x_axis_label'] = kwargs.get('x_axis_label',x_axis_label)
-    #kwargs['y_range'] = kwargs.get('y_range',[0,1.2])
-    #kwargs['x_range'] = kwargs.get('x_range',[0.3,1])
+	if wno_to_micron : 
+		x_axis_label = 'Wavelength [μm]'
+		def conv(x):
+			return 1e4/x
+	else: 
+		x_axis_label = 'Wavenumber [(]cm-1]'
+		def conv(x):
+			return x
 
-    fig = figure(**kwargs)
+	kwargs['plot_height'] = kwargs.get('plot_height',345)
+	kwargs['plot_width'] = kwargs.get('plot_width',1000)
+	kwargs['y_axis_label'] = kwargs.get('y_axis_label','Spectrum')
+	kwargs['x_axis_label'] = kwargs.get('x_axis_label',x_axis_label)
+	#kwargs['y_range'] = kwargs.get('y_range',[0,1.2])
+	#kwargs['x_range'] = kwargs.get('x_range',[0.3,1])
 
-    if isinstance(xarray, list):
-        if legend==None: legend=[None]*len(xarray[0])
-        for w, a,i,l in zip(xarray, yarray, range(len(xarray)), legend):
-            if l == None: 
-                fig.line(conv(w),  a,  color=Colorblind8[np.mod(i, len(Colorblind8))], line_width=3)
-            else:
-                fig.line(conv(w), a, legend_label=l, color=Colorblind8[np.mod(i, len(Colorblind8))], line_width=3)
-    else: 
-        if legend ==None:
-            fig.line(conv(xarray), yarray,  color=Colorblind8[0], line_width=3)
-        else:
-            fig.line(conv(xarray), yarray, legend_label=legend, color=Colorblind8[0], line_width=3)
-    plot_format(fig)
-    return fig
+	fig = figure(**kwargs)
 
-
-def photon_attenuation(full_output, at_tau=0.5,return_all=False,**kwargs):
-    """
-    Plot breakdown of gas opacity, cloud opacity, 
-    Rayleigh scattering opacity at a specified pressure level. 
-    
-    Parameters
-    ----------
-    full_output : class 
-        picaso.atmsetup.ATMSETUP
-    at_tau : float 
-        Opacity at which to plot the cumulative opacity. 
-        Default = 0.5.
-    return_all :  bool , optional
-        Default is False, returns at_tau pressure levels for 
-        taugas, taucld, and tauray
-    **kwargs : dict 
-        Any key word argument for bokeh.plotting.figure()
-
-    Returns
-    -------
-    bokeh plot
-    """
-    wave = 1e4/full_output['wavenumber']
-
-    dtaugas = full_output['taugas']
-    dtaucld = full_output['taucld']*full_output['layer']['cloud']['w0']
-    dtauray = full_output['tauray']
-    shape = dtauray.shape
-    taugas = np.zeros((shape[0]+1, shape[1]))
-    taucld = np.zeros((shape[0]+1, shape[1]))
-    tauray = np.zeros((shape[0]+1, shape[1]))
-
-    #comptue cumulative opacity
-    taugas[1:,:]=numba_cumsum(dtaugas)
-    taucld[1:,:]=numba_cumsum(dtaucld)
-    tauray[1:,:]=numba_cumsum(dtauray)
+	i = 0
+	for yarray in Y:
+		if isinstance(xarray, list):
+			if legend==None: legend=[None]*len(xarray[0])
+			for w, a,i,l in zip(xarray, yarray, range(len(xarray)), legend):
+				if l == None: 
+					fig.line(conv(w),  a,  color=Colorblind8[np.mod(i, len(Colorblind8))], line_width=3)
+				else:
+					fig.line(conv(w), a, legend_label=l, color=Colorblind8[np.mod(i, len(Colorblind8))], line_width=3)
+		else: 
+			if legend ==None:
+				fig.line(conv(xarray), yarray,  color=Colorblind8[i], line_width=3)
+			else:
+				fig.line(conv(xarray), yarray, legend_label=legend, color=Colorblind8[i], line_width=3)
+		i = i+1
+	plot_format(fig)
+	return fig
 
 
-    pressure = full_output['level']['pressure']
+def photon_attenuation(full_output, at_tau=0.5,**kwargs):
+	"""
+	Plot breakdown of gas opacity, cloud opacity, 
+	Rayleigh scattering opacity at a specified pressure level. 
+	
+	Parameters
+	----------
+	full_output : class 
+		picaso.atmsetup.ATMSETUP
+	at_tau : float 
+		Opacity at which to plot the cumulative opacity. 
+		Default = 0.5. 
+	**kwargs : dict 
+		Any key word argument for bokeh.plotting.figure()
 
-    at_pressures = np.zeros(shape[1]) #pressure for each wave point
+	Returns
+	-------
+	bokeh plot
+	"""
+	wave = 1e4/full_output['wavenumber']
 
-    ind_gas = find_nearest_2d(taugas, at_tau)
-    ind_cld = find_nearest_2d(taucld, at_tau)
-    ind_ray = find_nearest_2d(tauray, at_tau)
+	dtaugas = full_output['taugas']
+	dtaucld = full_output['taucld']*full_output['layer']['cloud']['w0']
+	dtauray = full_output['tauray']
+	shape = dtauray.shape
+	taugas = np.zeros((shape[0]+1, shape[1]))
+	taucld = np.zeros((shape[0]+1, shape[1]))
+	tauray = np.zeros((shape[0]+1, shape[1]))
 
-    #if (len(taucld[taucld == 0]) == taucld.shape[0]*taucld.shape[1]) : 
-    #   ind_cld = ind_cld*0 + shape[0]
+	#comptue cumulative opacity
+	taugas[1:,:]=numba_cumsum(dtaugas)
+	taucld[1:,:]=numba_cumsum(dtaucld)
+	tauray[1:,:]=numba_cumsum(dtauray)
 
-    at_pressures_gas = np.zeros(shape[1])
-    at_pressures_cld = np.zeros(shape[1])
-    at_pressures_ray = np.zeros(shape[1])
 
-    for i in range(shape[1]):
-        at_pressures_gas[i] = pressure[ind_gas[i]]
-        at_pressures_cld[i] = pressure[ind_cld[i]]
-        at_pressures_ray[i] = pressure[ind_ray[i]]
+	pressure = full_output['level']['pressure']
 
-    kwargs['plot_height'] = kwargs.get('plot_height',300)
-    kwargs['plot_width'] = kwargs.get('plot_width',1000)
-    kwargs['title'] = kwargs.get('title','Pressure at 𝞽 =' +str(at_tau))
-    kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
-    kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength [μm]')
-    kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
-    kwargs['y_range'] = kwargs.get('y_range',[np.max(pressure),1e-2])
+	at_pressures = np.zeros(shape[1]) #pressure for each wave point
 
-    fig = figure(**kwargs)
+	ind_gas = find_nearest_2d(taugas, at_tau)
+	ind_cld = find_nearest_2d(taucld, at_tau)
+	ind_ray = find_nearest_2d(tauray, at_tau)
 
-    legend_it = []
+	if (len(taucld[taucld == 0]) == taucld.shape[0]*taucld.shape[1]) : 
+		ind_cld = ind_cld*0 + shape[0]
 
-    f = fig.line(wave,at_pressures_gas,line_width=3, color=Colorblind8[0]) 
-    legend_it.append(('Gas Opacity', [f]))
-    f = fig.line(wave,at_pressures_cld,line_width=3, color=Colorblind8[3]) 
-    legend_it.append(('Cloud Opacity', [f]))
-    f = fig.line(wave,at_pressures_ray,line_width=3,color=Colorblind8[6]) 
-    legend_it.append(('Rayleigh Opacity', [f]))
+	at_pressures_gas = np.zeros(shape[1])
+	at_pressures_cld = np.zeros(shape[1])
+	at_pressures_ray = np.zeros(shape[1])
 
-    legend = Legend(items=legend_it, location=(0, -20))
-    legend.click_policy="mute"
-    fig.add_layout(legend, 'right')   
+	for i in range(shape[1]):
+		at_pressures_gas[i] = pressure[ind_gas[i]]
+		at_pressures_cld[i] = pressure[ind_cld[i]]
+		at_pressures_ray[i] = pressure[ind_ray[i]]
 
-    #finally add color sections 
-    gas_dominate_ind = np.where((at_pressures_gas<at_pressures_cld) & (at_pressures_gas<at_pressures_ray))[0]
-    cld_dominate_ind = np.where((at_pressures_cld<at_pressures_gas) & (at_pressures_cld<at_pressures_ray))[0]
-    ray_dominate_ind = np.where((at_pressures_ray<at_pressures_cld) & (at_pressures_ray<at_pressures_gas))[0]
+	kwargs['plot_height'] = kwargs.get('plot_height',300)
+	kwargs['plot_width'] = kwargs.get('plot_width',1000)
+	kwargs['title'] = kwargs.get('title','Pressure at 𝞽 =' +str(at_tau))
+	kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
+	kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength [μm]')
+	kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
+	kwargs['y_range'] = kwargs.get('y_range',[np.max(pressure),1e-2])
 
-    gas_dominate = np.zeros(shape[1]) + 1e-8
-    cld_dominate = np.zeros(shape[1]) + 1e-8
-    ray_dominate = np.zeros(shape[1])+ 1e-8
+	fig = figure(**kwargs)
 
-    gas_dominate[gas_dominate_ind] = at_pressures_gas[gas_dominate_ind]
-    cld_dominate[cld_dominate_ind] = at_pressures_cld[cld_dominate_ind]
-    ray_dominate[ray_dominate_ind] = at_pressures_ray[ray_dominate_ind]
+	legend_it = []
 
-    if len(gas_dominate) > 0  :
-        band_x = np.append(np.array(wave), np.array(wave[::-1]))
-        band_y = np.append(np.array(gas_dominate), np.array(gas_dominate)[::-1]*0+1e-8)
-        fig.patch(band_x,band_y, color=Colorblind8[0], alpha=0.3)
-    if len(cld_dominate) > 0  :
-        band_x = np.append(np.array(wave), np.array(wave[::-1]))
-        band_y = np.append(np.array(cld_dominate), np.array(cld_dominate)[::-1]*0+1e-8)
-        fig.patch(band_x,band_y, color=Colorblind8[3], alpha=0.3)
-    if len(ray_dominate) > 0  :
-        band_x = np.append(np.array(wave), np.array(wave[::-1]))
-        band_y = np.append(np.array(ray_dominate), np.array(ray_dominate)[::-1]*0+1e-8)
-        fig.patch(band_x,band_y, color=Colorblind8[6], alpha=0.3)
+	f = fig.line(wave,at_pressures_gas,line_width=3, color=Colorblind8[0]) 
+	legend_it.append(('Gas Opacity', [f]))
+	f = fig.line(wave,at_pressures_cld,line_width=3, color=Colorblind8[3]) 
+	legend_it.append(('Cloud Opacity', [f]))
+	f = fig.line(wave,at_pressures_ray,line_width=3,color=Colorblind8[6]) 
+	legend_it.append(('Rayleigh Opacity', [f]))
 
-    plot_format(fig)
-    if return_all:
-        return fig , at_pressures_gas,at_pressures_cld,at_pressures_ray
-    else :
-        return fig
+	legend = Legend(items=legend_it, location=(0, -20))
+	legend.click_policy="mute"
+	fig.add_layout(legend, 'right')   
+
+	#finally add color sections 
+	gas_dominate_ind = np.where((at_pressures_gas<at_pressures_cld) & (at_pressures_gas<at_pressures_ray))[0]
+	cld_dominate_ind = np.where((at_pressures_cld<at_pressures_gas) & (at_pressures_cld<at_pressures_ray))[0]
+	ray_dominate_ind = np.where((at_pressures_ray<at_pressures_cld) & (at_pressures_ray<at_pressures_gas))[0]
+
+	gas_dominate = np.zeros(shape[1]) + 1e-8
+	cld_dominate = np.zeros(shape[1]) + 1e-8
+	ray_dominate = np.zeros(shape[1])+ 1e-8
+
+	gas_dominate[gas_dominate_ind] = at_pressures_gas[gas_dominate_ind]
+	cld_dominate[cld_dominate_ind] = at_pressures_cld[cld_dominate_ind]
+	ray_dominate[ray_dominate_ind] = at_pressures_ray[ray_dominate_ind]
+
+	if len(gas_dominate) > 0  :
+		band_x = np.append(np.array(wave), np.array(wave[::-1]))
+		band_y = np.append(np.array(gas_dominate), np.array(gas_dominate)[::-1]*0+1e-8)
+		fig.patch(band_x,band_y, color=Colorblind8[0], alpha=0.3)
+	if len(cld_dominate) > 0  :
+		band_x = np.append(np.array(wave), np.array(wave[::-1]))
+		band_y = np.append(np.array(cld_dominate), np.array(cld_dominate)[::-1]*0+1e-8)
+		fig.patch(band_x,band_y, color=Colorblind8[3], alpha=0.3)
+	if len(ray_dominate) > 0  :
+		band_x = np.append(np.array(wave), np.array(wave[::-1]))
+		band_y = np.append(np.array(ray_dominate), np.array(ray_dominate)[::-1]*0+1e-8)
+		fig.patch(band_x,band_y, color=Colorblind8[6], alpha=0.3)
+
+	plot_format(fig)
+	return fig #,wave,at_pressures_gas,at_pressures_cld,at_pressures_ray
 
 def plot_format(df):
     """Function to reformat plots"""
@@ -1340,4 +1342,3 @@ def corr_molecular(atm,filename_db, wavenumber , residual, max_plot,threshold):
     p.outline_line_color = None
 
     return column(p,spec)
-    
