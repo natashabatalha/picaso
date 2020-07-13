@@ -360,7 +360,15 @@ def opannection(wave_range = None, filename_db = None, raman_db = None, resample
 
     inputs = json.load(open(os.path.join(__refdata__,'config.json')))
 
-    if isinstance(filename_db,type(None) ): filename_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['opacity'])
+    if isinstance(filename_db,type(None) ): 
+        filename_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['opacity'])
+        if not os.path.isfile(filename_db):
+            raise Exception('The opacity file does not exist: '  + filename_db+' The default is to a file opacities.db in reference/opacity/. If you have an older version of PICASO your file might be called opacity.db. Consider just adding the correct path to filename_db=')
+    elif not isinstance(filename_db,type(None) ): 
+        if not os.path.isfile(filename_db):
+            raise Exception('The opacity file youve entered does not exist: '  + filename_db)
+
+           
     if isinstance(raman_db,type(None) ): raman_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['raman'])
 
     if resample != 1:
