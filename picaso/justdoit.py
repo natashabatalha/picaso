@@ -1,5 +1,5 @@
 from .atmsetup import ATMSETUP
-from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d
+from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_new
 from .wavelength import get_cld_input_grid
 from .opacity_factory import create_grid
 from .optics import RetrieveOpacities,compute_opacity
@@ -26,8 +26,8 @@ import math
 
 __refdata__ = os.environ.get('picaso_refdata')
 
-def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_output=False,
-     plot_opacity= False,as_dict=True):
+def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_output=False, 
+    plot_opacity= False, as_dict=True):
     """
     Currently top level program to run albedo code 
 
@@ -70,7 +70,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     single_phase = inputs['approx']['single_phase']
     multi_phase = inputs['approx']['multi_phase']
     raman_approx =inputs['approx']['raman']
-
+    tridiagonal = 0 #pentadiagonal is not yet fully functional 
+    nstream = 2 #number of streams (2 or 4)
+    
     #parameters needed for the two term hg phase function. 
     #Defaults are set in config.json
     f = inputs['approx']['TTHG_params']['fraction']
@@ -136,16 +138,14 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     #get cloud properties, if there are any and put it on current grid 
     atm.get_clouds(wno)
 
-
-    #determine surface reflectivity as function of wavelength (set to zero here)
-    #TODO: Should be an input
-    #atm.get_surf_reflect(nwno,albedo = surface_reflect) 
-
     #Make sure that all molecules are in opacityclass. If not, remove them and add warning
     no_opacities = [i for i in atm.molecules if i not in opacityclass.molecules]
     atm.add_warnings('No computed opacities for: '+','.join(no_opacities))
     atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
-    
+
+    nlevel = atm.c.nlevel
+    nlayer = atm.c.nlayer
+
     if dimension == '1d':
         #lastly grab needed opacities for the problem
         opacityclass.get_opacities(atm)
@@ -157,14 +157,22 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman= compute_opacity(
             atm, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
             full_output=full_output, plot_opacity=plot_opacity)
+
         if  'reflected' in calculation:
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-            xint_at_top  = get_reflected_1d(atm.c.nlevel, wno,nwno,ng,nt,
+            #if '4stream' in approximation:
+            #    (xint_at_top, flux)= get_reflected_new(nlevel, nwno, ng, nt, 
+            #                                DTAU, TAU, W0, COSB, GCOS2, 
+            #                                DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
+            #                                atm.surf_reflect, ubar0, ubar1, F0PI, dimension, stream)
+
+            #else:
+            xint_at_top = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                                     DTAU, TAU, W0, COSB,GCOS2,ftau_cld,ftau_ray,
                                                     DTAU_OG, TAU_OG, W0_OG, COSB_OG ,
                                                     atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
                                                     single_phase,multi_phase,
-                                                    frac_a,frac_b,frac_c,constant_back,constant_forward)
+                                                    frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)
 
             #if full output is requested add in xint at top for 3d plots
             if full_output: 
@@ -176,9 +184,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
             #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
             #the uncorrected raman single scattering 
-            flux_at_top  = get_thermal_1d(atm.c.nlevel, wno,nwno,ng,nt,atm.level['temperature'],
+            flux_at_top  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
                                                     DTAU_OG, W0_no_raman, COSB_OG, atm.level['pressure'],ubar1,
-                                                    atm.surf_reflect)
+                                                    atm.surf_reflect, tridiagonal)
 
             #if full output is requested add in flux at top for 3d plots
             if full_output: 
@@ -187,32 +195,32 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     elif dimension == '3d':
 
         #setup zero array to fill with opacities
-        TAU_3d = np.zeros((atm.c.nlevel, nwno, ng, nt))
-        DTAU_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
-        W0_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
-        COSB_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
-        GCOS2_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
-        FTAU_CLD_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
-        FTAU_RAY_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
+        TAU_3d = np.zeros((nlevel, nwno, ng, nt))
+        DTAU_3d = np.zeros((nlayer, nwno, ng, nt))
+        W0_3d = np.zeros((nlayer, nwno, ng, nt))
+        COSB_3d = np.zeros((nlayer, nwno, ng, nt))
+        GCOS2_3d = np.zeros((nlayer, nwno, ng, nt))
+        FTAU_CLD_3d = np.zeros((nlayer, nwno, ng, nt))
+        FTAU_RAY_3d = np.zeros((nlayer, nwno, ng, nt))
 
         #these are the unchanged values from delta-eddington
-        TAU_OG_3d = np.zeros((atm.c.nlevel, nwno, ng, nt))
-        DTAU_OG_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
-        W0_OG_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
-        COSB_OG_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
+        TAU_OG_3d = np.zeros((nlevel, nwno, ng, nt))
+        DTAU_OG_3d = np.zeros((nlayer, nwno, ng, nt))
+        W0_OG_3d = np.zeros((nlayer, nwno, ng, nt))
+        COSB_OG_3d = np.zeros((nlayer, nwno, ng, nt))
         #this is the single scattering without the raman correction 
         #used for the thermal caclulation
-        W0_no_raman_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
+        W0_no_raman_3d = np.zeros((nlayer, nwno, ng, nt))
 
         #pressure and temperature 
-        TLEVEL_3d = np.zeros((atm.c.nlevel, ng, nt))
-        PLEVEL_3d = np.zeros((atm.c.nlevel, ng, nt))
+        TLEVEL_3d = np.zeros((nlevel, ng, nt))
+        PLEVEL_3d = np.zeros((nlevel, ng, nt))
 
         #if users want to retain all the individual opacity info they can here 
         if full_output:
-            TAUGAS_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
-            TAUCLD_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
-            TAURAY_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))  
+            TAUGAS_3d = np.zeros((nlayer, nwno, ng, nt))
+            TAUCLD_3d = np.zeros((nlayer, nwno, ng, nt))
+            TAURAY_3d = np.zeros((nlayer, nwno, ng, nt))  
 
         #get opacities at each facet
         for g in range(ng):
@@ -259,12 +267,12 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
         if  'reflected' in calculation:
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-            xint_at_top  = get_reflected_3d(atm.c.nlevel, wno,nwno,ng,nt,
+            xint_at_top  = get_reflected_3d(nlevel, wno,nwno,ng,nt,
                                             DTAU_3d, TAU_3d, W0_3d, COSB_3d,GCOS2_3d, FTAU_CLD_3d,FTAU_RAY_3d,
                                             DTAU_OG_3d, TAU_OG_3d, W0_OG_3d, COSB_OG_3d,
                                             atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
                                             single_phase,multi_phase,
-                                            frac_a,frac_b,frac_c,constant_back,constant_forward)
+                                            frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)
             #if full output is requested add in xint at top for 3d plots
             if full_output: 
                 atm.xint_at_top = xint_at_top
@@ -273,8 +281,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
             #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
             #the uncorrected raman single scattering 
-            flux_at_top  = get_thermal_3d(atm.c.nlevel, wno,nwno,ng,nt,TLEVEL_3d,
-                                                    DTAU_OG_3d, W0_no_raman_3d, COSB_OG_3d, PLEVEL_3d,ubar1)
+            flux_at_top  = get_thermal_3d(nlevel, wno,nwno,ng,nt,TLEVEL_3d,
+                                                    DTAU_OG_3d, W0_no_raman_3d, COSB_OG_3d, PLEVEL_3d,ubar1, tridiagonal)
 
             #if full output is requested add in flux at top for 3d plots
             if full_output: 
@@ -286,6 +294,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     #set up initial returns
     returns = {}
     returns['wavenumber'] = wno
+    #returns['flux'] = flux
 
 
     #for reflected light use compress_disco routine
@@ -1522,8 +1531,9 @@ class inputs():
             #been run 
             self.inputs['surface_reflect'] = 0 
 
+            
         return picaso(self, opacityclass,dimension=dimension,calculation=calculation,
-            full_output=full_output, plot_opacity=plot_opacity,as_dict=as_dict)
+            full_output=full_output, plot_opacity=plot_opacity, as_dict=as_dict)
 
 def load_planet(df, opacity, phase_angle = 0, stellar_db='phoenix', verbose=False,  **planet_kwargs):
     """

@@ -316,23 +316,23 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
         show(opt_figure)
 
     if test_mode != None:  
-        #this is to check against Dlugach & Yanovitskij 
-        #https://www.sciencedirect.com/science/article/pii/0019103574901675?via%3Dihub
-        if test_mode=='rayleigh':
-            DTAU = TAURAY 
-            GCOS2 = 0.5
-            ftau_ray = 1.0
-            ftau_cld = 1e-6
-        else: 
-            DTAU = atm.layer['cloud']['opd']#TAURAY*0+0.05
-            GCOS2 = 0.0
-            ftau_ray = 1e-6
-            ftau_cld = 1            
-        COSB = atm.layer['cloud']['g0']
-        W0 = atm.layer['cloud']['w0']
-        W0_no_raman = atm.layer['cloud']['w0']
-        TAU = np.zeros((shape[0]+1, shape[1]))
-        TAU[1:,:]=numba_cumsum(DTAU)
+            #this is to check against Dlugach & Yanovitskij 
+            #https://www.sciencedirect.com/science/article/pii/0019103574901675?via%3Dihub
+            if test_mode=='rayleigh':
+                DTAU = TAURAY 
+                GCOS2 = 0.5
+                ftau_ray = 1.0
+                ftau_cld = 1e-6
+            else: 
+                DTAU = atm.layer['cloud']['opd']#TAURAY*0+0.05
+                GCOS2 = np.zeros(DTAU.shape)#0.0
+                ftau_ray = np.zeros(DTAU.shape)+1e-6
+                ftau_cld = np.zeros(DTAU.shape)+1            
+            COSB = atm.layer['cloud']['g0']
+            W0 = atm.layer['cloud']['w0']
+            W0_no_raman = atm.layer['cloud']['w0']
+            TAU = np.zeros((shape[0]+1, shape[1]))
+            TAU[1:,:]=numba_cumsum(DTAU)
 
     #====================== D-Eddington Approximation======================
     if delta_eddington:
