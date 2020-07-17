@@ -3,6 +3,7 @@ from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh
 import numpy as np
 import pentapy as pp
 import time
+import pickle as pk
 
 #@jit(nopython=True, cache=True)
 def get_flux_toon(nlevel, wno, nwno, tau, dtau, w0, cosbar, surf_reflect, ubar0, F0PI):
@@ -923,8 +924,8 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
 	#terms not dependent on incident angle
 	sq3 = sqrt(3.)
-	g1	= (7-w0*(4+3*cosb))/4 #(sq3*0.5)*(2. - w0*(1.+cosb))	#table 1
-	g2	= -(1-w0*(4-3*cosb))/4 #(sq3*w0*0.5)*(1.-cosb)		#table 1
+	g1	= (sq3*0.5)*(2. - w0*(1.+cosb)) #(7-w0*(4+3*cosb))/4 #	#table 1
+	g2	= (sq3*w0*0.5)*(1.-cosb) #-(1-w0*(4-3*cosb))/4 #		#table 1
 	lamda = sqrt(g1**2 - g2**2)			#eqn 21
 	gama  = (g1-lamda)/g2				#eqn 22
 
@@ -932,7 +933,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 	for ng in range(numg):
 		for nt in range(numt):
 
-			g3	= (2-3*cosb*ubar0[ng,nt])/4#0.5*(1.-sq3*cosb*ubar0[ng, nt])   #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
+			g3	= 0.5*(1.-sq3*cosb*ubar0[ng, nt]) #(2-3*cosb*ubar0[ng,nt])/4#  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
 	
 			# now calculate c_plus and c_minus (equation 23 and 24 toon)
 			g4 = 1.0 - g3
@@ -1050,10 +1051,10 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
 					  #first term of TTHG: forward scattering
 				p_single=(f * (1-g_forward**2)
-								/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+								/sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
 								#second term of TTHG: backward scattering
 								+(1-f)*(1-g_back**2)
-								/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3)+
+								/sqrt((1+g_back**2+2*g_back*cos_theta)**3)+
 								#rayleigh phase function
 								(gcos2))
 			elif single_phase==1:#'OTHG':
@@ -1063,19 +1064,19 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
 					  #first term of TTHG: forward scattering
 				p_single=(f * (1-g_forward**2)
-								/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+								/sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
 								#second term of TTHG: backward scattering
 								+(1-f)*(1-g_back**2)
-								/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3))
+								/sqrt((1+g_back**2+2*g_back*cos_theta)**3))
 			elif single_phase==3:#'TTHG_ray':
 				#Phase function for single scattering albedo frum Solar beam
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
 					  		#first term of TTHG: forward scattering
 				p_single=(ftau_cld*(f * (1-g_forward**2)
-							/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+							/sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
 							#second term of TTHG: backward scattering
 							+(1-f)*(1-g_back**2)
-							/sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3))+
+							/sqrt((1+g_back**2+2*g_back*cos_theta)**3))+
 								#rayleigh phase function
 								ftau_ray*(0.75*(1+cos_theta**2.0)))
 
@@ -1535,7 +1536,7 @@ def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel_3d, dtau_3d, w0_3d,cosb_3d
 	return flux_at_top #, flux_down# numg x numt x nwno
 
 
-def setup_4_stream(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, w, ubar1, P):
+def setup_4_stream(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, w_single, w_multi, ubar1, P):
 	"""
 	Parameters
 	----------
@@ -1569,17 +1570,13 @@ def setup_4_stream(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0
 
 	a = []; b = []
 	for l in range(4):
-		a.append((2*l + 1) - w0 * w[l])
-		b.append((F0PI * (w0 * w[l]).T).T * P(-ubar0)[l] / (4 * np.pi))
+		a.append((2*l + 1) - w0 * w_single[l])
+		b.append((F0PI * (w0 * w_multi[l]).T).T * P(-ubar0)[l] / (4 * np.pi))
 
 	beta = a[0]*a[1] + 4*a[0]*a[3]/9 + a[2]*a[3]/9
 	gama = a[0]*a[1]*a[2]*a[3]/9
-	if np.any(beta**2 - 4*gama) < 0:
-		print('determinant of characteristic function negative')
-		import sys; sys.exit()
 	lam1 = np.sqrt((beta + np.sqrt(beta**2 - 4*gama)) / 2)
 	lam2 = np.sqrt((beta - np.sqrt(beta**2 - 4*gama)) / 2)
-	## note we could have issues here due to sqrts of negatives 
 
 	def f(x):
 		return x**4 - beta*x**2 + gama
@@ -1599,10 +1596,8 @@ def setup_4_stream(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0
 	for l in range(4):
 		eta.append(Dels[l]/Del)
 
-	expo1 = lam1*dtau
-	expo2 = lam2*dtau
-	expo1 = slice_gt(expo1, 35.0) 
-	expo2 = slice_gt(expo2, 35.0) 
+	expo1 = slice_gt(lam1*dtau, 35.0) 
+	expo2 = slice_gt(lam2*dtau, 35.0) 
 	exptrm1 = np.exp(-expo1)
 	exptrm2 = np.exp(-expo2)
 
@@ -1720,7 +1715,7 @@ def setup_4_stream(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0
 	return M, B, A, N, F, G
 
 
-def solve_4_stream(M, B, A, N, F, G):
+def solve_4_stream(M, B, A, N, F, G, stream):
 
 	M_inv = np.linalg.inv(M)
 	X = M_inv.dot(B)
@@ -1728,16 +1723,17 @@ def solve_4_stream(M, B, A, N, F, G):
 	flux = F.dot(X) + G
 	
 	I = A.dot(X) + N
-	#l = len(A)
-	#I = A.dot(X[0:l])+N
+	#   just return I0, I1, I2, I3 from top of atmosphere
+	#I = A[0:stream, 0:stream].dot(X[0:stream])+N[0:stream]
 
 	return (I, flux)
 
 
 #@jit(nopython=True, cache=True)
-def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, 
+def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_cld, ftau_ray,
 	dtau_og, tau_og, w0_og, cosb_og, 
-	surf_reflect, ubar0, ubar1, F0PI, dim, stream):
+	surf_reflect, ubar0, ubar1, cos_theta, F0PI, single_phase, multi_phase, 
+	frac_a, frac_b, frac_c, constant_back, constant_forward, dim, stream):
 	"""
 	Computes rooney fluxes given tau and everything is 3 dimensional. This is the exact same function 
 	as `get_flux_geom_1d` but is kept separately so we don't have to do unecessary indexing for 
@@ -1834,22 +1830,91 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 			#boundary conditions 
 			b_top = 0.0
 			b_surface = 0. + surf_reflect*ubar0[ng, nt]*F0PI*exp(-tau[-1, :]/ubar0[ng, nt])
+
+			if single_phase!=1: 
+				g_forward = constant_forward*cosb
+				g_back = -constant_back*cosb
+				f = frac_a + frac_b*g_back**frac_c
+
+			if single_phase==0:#'cahoy':
+				import IPython; IPython.embed()
+				print('Do not know what cahoy is meant to do')
+				import sys; sys.exit()
+				g0_s = (ftau_cld + ftau_ray).T
+				#g0_s = np.zeros((nwno, nlayer)) #+ 2.
+				#g1_s = (3*cosb).T 
+				g1_s = (3*ftau_cld*cosb).T 
+				g2_s = (5*ftau_cld*(cosb**2)).T + 0.5*ftau_ray.T
+				#g3_s = (7*(cosb**3)).T
+				g3_s = (7*ftau_cld*(cosb**3)).T
+
+				g0_m = g0_s
+				g1_m = g1_s
+				g2_m = g2_s
+				g3_m = g3_s
+
+			elif single_phase==1:#'OTHG':
+				g0_s = np.ones((nwno, nlayer))
+				g1_s = 3*cosb.T
+				#g2 = gcos2.T
+				g2_s = 5*(cosb**2).T
+				#g3 = gcos2.T/10 # moments of phase function ** need to define 4th moment
+				g3_s = 7*(cosb**3).T
+
+				g0_m = g0_s
+				g1_m = g1_s
+				g2_m = g2_s
+				g3_m = g3_s
+
+			elif single_phase==2:#'TTHG':
+				#Phase function for single scattering albedo frum Solar beam
+				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
+					  #first term of TTHG: forward scattering
+				g0_s = np.ones((nwno, nlayer))
+				g1_s = 3*(f*g_forward + (1-f)*g_back).T
+				#g2 = gcos2.T
+				g2_s = 5*(f*g_forward**2 + (1-f)*g_back**2).T
+				#g3 = gcos2.T/10 # moments of phase function ** need to define 4th moment
+				g3_s = 7*(f*g_forward**3 + (1-f)*g_back**3).T
+
+				g0_m = g0_s
+				g1_m = g1_s
+				g2_m = g2_s
+				g3_m = g3_s
+				#g0_m = np.ones((nwno, nlayer))
+				#g1_m = 3*cosb.T
+				#g2_m = 5*(cosb**2).T
+				#g3_m = 7*(cosb**3).T
+
+
+			elif single_phase==3:#'TTHG_ray':
+				#Phase function for single scattering albedo frum Solar beam
+				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
+					  		#first term of TTHG: forward scattering
+				g0_s = (ftau_cld + ftau_ray).T
+				g1_s = (3*ftau_cld*(f*g_forward + (1-f)*g_back)).T
+				g2_s = (5*ftau_cld*(f*g_forward**2 + (1-f)*g_back**2)).T + 0.5*ftau_ray.T
+				g3_s = (7*ftau_cld*(f*g_forward**3 + (1-f)*g_back**3)).T
+
+				g0_m = g0_s
+				#g1_m = g1_s
+				g1_m = 3*(f*g_forward + (1-f)*g_back).T
+				g2_m = g2_s
+				#g3_m = g3_s
+				g3_m = 7*(f*g_forward**3 + (1-f)*g_back**3).T
 			
-			g0 = np.ones((nwno, nlayer))
-			g1 = 3*cosb.T
-			g2 = gcos2.T
-			g3 = gcos2.T/10 # moments of phase function ** need to define 4th moment
-			w = [g0, g1, g2, g3]
+			w_single = [g0_s, g1_s, g2_s, g3_s]
+			w_multi = [g0_m, g1_m, g2_m, g3_m]
 			
 			def P(mu): # Legendre polynomials
 				return [1, mu, 1/2 * (3*mu**2 - 1), 1/2 * (5*mu**3 - 3*mu)]
 			
 			if stream==2:
 				M, B, A, N, F, G = setup_2_stream(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
-						ubar0[ng, nt], dtau, tau, w, ubar1[ng,nt], P)
+						ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
 			elif stream==4:
 				M, B, A, N, F, G = setup_4_stream(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
-						ubar0[ng, nt], dtau, tau, w, ubar1[ng,nt], P)
+						ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
 
 			X = zeros((stream*nlevel, nwno))
 			#X = zeros((stream, nwno))
@@ -1857,60 +1922,17 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 			#========================= Start loop over wavelength =========================
 			for W in range(nwno):
 			    
-				(X[:,W], flux[:,W]) = solve_4_stream(M[W], B[W], A[W], N[W], F[W], G[W])
+				(X[:,W], flux[:,W]) = solve_4_stream(M[W], B[W], A[W], N[W], F[W], G[W], stream)
 			
 			
 			#========================= End loop over wavelength =========================
 			
 			xint = zeros((nlevel, nwno))
-			#xint[-1,:] = flux[-1,:]/np.pi
+			#xint = 0.
 			for i in range(nlevel):
 				for l in range(stream):
 					xint[i,:] = xint[i,:] + (2*l+1) * X[stream*i+l, :] * P(ubar1[ng,nt])[l]
-			import pickle as pk
-			filename = 'xint_%d.pk' % stream
-			pk.dump(xint, open(filename,'wb'))
-			pk.dump(w0, open('w0.pk','wb'))
-			#total = 0
-			#for i in np.arange(nlayer-1,0,-1):
-			###	total = total+xint[i,:]
-			##	total = total + ( xint[i,:]*exp(-dtau[i,:]/ubar1[ng,nt]) 
-			#	xint[i,:] = xint[i+1,:]*np.exp(-dtau[i,:]/ubar1[ng,nt])
-
-#			from scipy import interpolate
-#			def I0(x): return interpolate.interp1d(tau[:,0], X[::stream,0])(x)
-#			def I1(x): return interpolate.interp1d(tau[:,0], X[1::stream,0])(x)
-#			dt = 0.001;
-#			dI0dt = np.zeros(len(tau[:,0]))
-#			dI1dt = np.zeros(len(tau[:,0]))
-#			if stream == 4:
-#				def I2(x): return interpolate.interp1d(tau[:,0], X[2::stream,0])(x)
-#				def I3(x): return interpolate.interp1d(tau[:,0], X[3::stream,0])(x)
-#				dI2dt = np.zeros(len(tau[:,0]))
-#				dI3dt = np.zeros(len(tau[:,0]))
-#			
-#			for i in range(len(tau[:,0])-1):
-#			    dI0dt[i] = (I0(tau[i,0]+dt) - I0(tau[i,0])) / dt
-#			    dI1dt[i] = (I1(tau[i,0]+dt) - I1(tau[i,0])) / dt
-#			    if stream == 4:
-#				    dI2dt[i] = (I2(tau[i,0]+dt) - I2(tau[i,0])) / dt
-#				    dI3dt[i] = (I3(tau[i,0]+dt) - I3(tau[i,0])) / dt
-#
-#			ubar = ubar1[ng,nt]
-#			if stream==4:
-#				LHS = ubar*(dI0dt+3*ubar*dI1dt+5*(3*ubar**2-1)/2*dI2dt + 7*(5*ubar**3-3*ubar)/2*dI3dt)
-#				RHS = (I0(tau[:,0])+3*ubar*I1(tau[:,0])+5*(3*ubar**2-1)/2*I2(tau[:,0]) 
-#					+ 7*(5*ubar**3-3*ubar)/2*I3(tau[:,0]) - 0.5*I0(tau[:,0]) 
-#					- 0.5*F0PI*np.exp(-tau[:,0]/ubar0[ng,nt])/(4*np.pi))
-#			else:
-#				LHS = ubar*(dI0dt+3*ubar*dI1dt)
-#				RHS = (I0(tau[:,0])+3*ubar*I1(tau[:,0])
-#					- 0.5*I0(tau[:,0]) 
-#					- 0.5*F0PI*np.exp(-tau[:,0]/ubar0[ng,nt])/(4*np.pi))
-
-
-
-
+				#xint = xint + (2*l+1) * X[l, :] * P(ubar1[ng,nt])[l]
 
 			xint_at_top[ng,nt,:] = xint[0,:] 
 	filename = 'xint_at_top_%d.pk' % stream
@@ -1918,7 +1940,7 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 
 	return (xint_at_top, flux)
 
-def setup_2_stream(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau, tau, w, ubar1, P):
+def setup_2_stream(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau, tau, w_single, w_multi, ubar1, P):
 	"""
 	Parameters
 	----------
@@ -1953,8 +1975,8 @@ def setup_2_stream(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0
 	
 	a = []; b = []
 	for l in range(2):
-		a.append((2*l + 1) - w0 * w[l])
-		b.append((F0PI * (w0 * w[l]).T).T * P(-ubar0)[l] / (4 * np.pi))
+		a.append((2*l + 1) - w0 * w_single[l])
+		b.append((F0PI * (w0 * w_multi[l]).T).T * P(-ubar0)[l] / (4 * np.pi))
 
 	lam = np.sqrt(a[0]*a[1])
 
