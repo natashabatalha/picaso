@@ -26,7 +26,7 @@ import math
 __refdata__ = os.environ.get('picaso_refdata')
 
 def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_output=False, 
-    plot_opacity= False, as_dict=True, tridiagonal=1, approximation='2stream', stream=2):
+    plot_opacity= False, as_dict=True, tridiagonal=0, approximation='2stream', stream=2):
     """
     Currently top level program to run albedo code 
 
@@ -154,12 +154,12 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         #We use HG function for single scattering which gets the forward scattering/back scattering peaks 
         #well. We only really want to use delta-edd for multi scattering legendre polynomials. 
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman= compute_opacity(
-            atm, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
+            atm, opacityclass, stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
             full_output=full_output, plot_opacity=plot_opacity)
         if  'reflected' in calculation:
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
             nlevel = atm.c.nlevel
-            nwno = 50
+            nwno = 10
             wno = wno[0:nwno]
             TAU = TAU[0:nlevel,0:nwno]
             DTAU = DTAU[0:nlevel-1,0:nwno]
@@ -175,9 +175,12 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             F0PI = F0PI[0:nwno]
             if '4stream' in approximation:
                 (xint_at_top, flux)= get_reflected_new(nlevel, nwno, ng, nt, 
-                                            DTAU, TAU, W0, COSB, GCOS2, 
+                                            DTAU, TAU, W0, COSB, GCOS2, ftau_cld, ftau_ray,
                                             DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
-                                            atm.surf_reflect, ubar0, ubar1, F0PI, dimension, stream)
+                                            atm.surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
+                                            single_phase, multi_phase, 
+	                                    frac_a, frac_b, frac_c, constant_back, constant_forward, 
+                                            dimension, stream)
                 #import IPython; IPython.embed()
                 #import sys; sys.exit()
             else:
@@ -1544,7 +1547,7 @@ class inputs():
         except KeyError:
             #I don't make people add this as an input so adding a default here if it hasnt
             #been run 
-            self.inputs['surface_reflect'] = 0 
+            self.inputs['surface_reflect'] = 1 
 
             
         return picaso(self, opacityclass,dimension=dimension,calculation=calculation,
