@@ -1100,7 +1100,6 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 			import pickle as pk
 			pk.dump(xint, open('savefile.pk','wb'))
 			xint_at_top[ng,nt,:] = xint[0,:]	
-			import IPython; IPython.embed()
 	pk.dump(xint_at_top, open('xint_at_top1.pk','wb'))
 	pk.dump(surf_reflect, open('surf_reflect.pk','wb'))
 	return (xint_at_top, flux)
@@ -2070,6 +2069,8 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				g2_m = g2_s
 				g3_m = g3_s
 
+				p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+
 			#elif single_phase==2:#'TTHG':
 			#	#Phase function for single scattering albedo frum Solar beam
 			#	#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
@@ -2108,6 +2109,11 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				g1_m = -3*(ftau_cld*cosb).T
 				g2_m = 5*(ftau_cld*cosb**2).T + 0.5*ftau_ray.T
 				g3_m = -7*(ftau_cld*cosb**3).T
+
+				p_single=(ftau_cld*(1-cosb_og**2)
+							/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+								#rayleigh phase function
+								+ ftau_ray*(0.75*(1+cos_theta**2.0)))
 			
 			w_single = [g0_s, g1_s, g2_s, g3_s]
 			w_multi = [g0_m, g1_m, g2_m, g3_m]
@@ -2131,23 +2137,43 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 			#X = zeros((stream, nwno))
 			flux = zeros((stream*nlevel, nwno))
 			xint_maybe = zeros(nwno)
+			xint_old = zeros(nwno)
 			#========================= Start loop over wavelength =========================
 			from scipy.interpolate import UnivariateSpline, CubicSpline
 			from scipy.integrate import simps, trapz
+			p_single = np.insert(p_single, 0, p_single[0,:], 0)
+			w0_ = np.insert(w0, 0, w0[0,:], 0)
 			for W in range(nwno):
 			    
 				(X[:,W], flux[:,W]) = solve_4_stream(M[W], B[W], A[W], N[W], F[W], G[W], stream)
 
-				spl = UnivariateSpline(tau[:,W], X[::stream,W]*np.exp(-tau[:,W]/ubar1[ng,nt]))
-				spl2 = CubicSpline(tau[:,W], X[::stream,W]*np.exp(-tau[:,W]/ubar1[ng,nt]))
-				intgrl = spl.integral(0, tau[-1,W])
-				intgrl2 = spl2.integrate(0, tau[-1,W])
-				intgrl3 = simps(X[::stream,W]*np.exp(-tau[:,W]/ubar1[ng,nt]), x = tau[:,W])
-				intgrl4 = trapz(X[::stream,W]*np.exp(-tau[:,W]/ubar1[ng,nt]), x = tau[:,W])
+				#spl = UnivariateSpline(tau[:,W], X[::stream,W]*np.exp(-tau[:,W]/ubar1[ng,nt]))
+				#spl2 = CubicSpline(tau[:,W], X[::stream,W]*np.exp(-tau[:,W]/ubar1[ng,nt]))
+				#intgrl = spl.integral(0, tau[-1,W])
+				#intgrl2 = spl2.integrate(0, tau[-1,W])
+				#intgrl3 = simps(X[::stream,W]*np.exp(-tau[:,W]/ubar1[ng,nt]), x = tau[:,W])
+				#intgrl4 = trapz(X[::stream,W]*np.exp(-tau[:,W]/ubar1[ng,nt]), x = tau[:,W])
+				#ub = (ubar1[ng,nt] + ubar0[ng,nt]) / (ubar1[ng,nt] *ubar0[ng,nt])
+				#xint_old[W] = (flux[-1,W]/np.pi * np.exp(-tau[-1,0]/ubar1[ng,nt]) 
+				#		    + w0[0,W] * (intgrl2/ubar1[ng,nt] - (ubar0[ng,nt]/(ubar1[ng,nt]+ubar0[ng,nt]))
+				#			* F0PI[W]*(np.exp(-tau[-1,W]*ub)-1)/(4*pi)))
 
-				ub = (ubar1[ng,nt] + ubar0[ng,nt]) / (ubar1[ng,nt] *ubar0[ng,nt])
-				xint_maybe[W] = w0[0,W] * (intgrl2/ubar1[ng,nt] - (ubar0[ng,nt]/(ubar1[ng,nt]+ubar0[ng,nt]))
-							* F0PI[W]*(np.exp(-tau[-1,W]*ub)-1)/(4*pi))
+				intsy = np.zeros(nlevel)
+				for l in range(stream):
+					intsy[0] = intsy[0] + w_multi[l][W,0] * X[l, W] * P(ubar1[ng,nt])[l]
+				for j in range(1, nlevel):
+					for l in range(stream):
+						intsy[j] = intsy[j] + w_multi[l][W,j-1] * X[stream*j+l, W] * P(ubar1[ng,nt])[l]
+				intgrnd = (w0_[:,W] * (intsy + F0PI[W] * np.exp(-tau[:,W]/ubar0[ng,nt]) 
+							    * p_single[:,W] / (4*np.pi) ) * np.exp(-tau[:,W]/ubar1[ng,nt]) ) 
+				intgrl = CubicSpline(tau[:,W], intgrnd).integrate(0, tau[-1,W])
+
+				xint_bot = 0.
+				for l in range(stream):
+					xint_bot = xint_bot + (2*l+1) * X[(nlevel-1)*stream + l, W] * P(ubar1[ng,nt])[l]
+				xint_maybe[W] = (xint_bot * np.exp(-tau[-1,W]/ubar1[ng,nt])
+						    + intgrl / ubar1[ng,nt])
+
 			
 			
 			#========================= End loop over wavelength =========================
@@ -2167,12 +2193,11 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				#    * np.exp(-dtau[i,:]/ubar1[ng,nt]) / ubar1[ng,nt])
 
 			#xint_at_top[ng,nt,:] = xint[0,:] 
-			if stream == 2:
-				indx = 1
-			else:
-				indx = 2
-			xint_at_top[ng,nt,:] = flux[indx,:] / np.pi # this is good approximation for isotropic scattering
-			import IPython; IPython.embed()
+			#if stream == 2:
+			#	indx = 1
+			#else:
+			#	indx = 2
+			#xint_at_top[ng,nt,:] = flux[indx,:] / np.pi # this is good approximation for isotropic scattering
 			xint_at_top[ng,nt,:] = xint_maybe
 			#xint_at_top[ng,nt,:] = flux[1,:] / np.pi
 	filename = 'xint_at_top_%d.pk' % stream
