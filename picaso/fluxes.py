@@ -2447,7 +2447,6 @@ def setup_2_stream(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0
 
 		return (np.array([eta[0][:,n], eta[1][:,n]]) * exptau).T
 
-	ubar0 = ubar0*tauN
 	alpha = (tauN/ubar1 + lam);		beta = (tauN/ubar1 - lam);		mus = tauN * (ubar1 + ubar0) / (ubar1 * ubar0)
 	expo_alp = alpha * dtau;		expo_bet = beta * dtau;			expo_mus = mus * dtau 
 	expo_alp = slice_gt(expo_alp, 35.0);	expo_bet = slice_gt(expo_bet, 35.0);	expo_mus = slice_gt(expo_mus, 35.0)    
