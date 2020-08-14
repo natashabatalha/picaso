@@ -933,6 +933,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 	#================ START CRAZE LOOP OVER ANGLE #================
 	for ng in range(numg):
 		for nt in range(numt):
+			t1 = time.time()
 
 			g3	= (2-3*cosb*ubar0[ng,nt])/4#0.5*(1.-sq3*cosb*ubar0[ng, nt]) #  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
 	
@@ -979,6 +980,10 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 									 gama, dtau, 
 									exptrm_positive,  exptrm_minus, g1,g2,exptrm,lamda) 
 
+			t2 = time.time()
+			t_setup = t2-t1
+			#print("time to set up matrices = ", t_setup)
+			t3 = time.time()
 			positive = zeros((nlayer, nwno))
 			negative = zeros((nlayer, nwno))
 			#========================= Start loop over wavelength =========================
@@ -998,6 +1003,10 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 					positive[:,w] = exptrm_minus[:,w] * (X[::2] + X[1::2])
 					negative[:,w] = X[::2] - X[1::2]
 
+			t4 = time.time()
+			t_invert = t4-t3
+			#print("time to invert matrices = ", t_invert)
+			t5 = time.time()
 			#========================= End loop over wavelength =========================
 
 			#use expression for bottom flux to get the flux_plus and flux_minus at last
@@ -1101,6 +1110,9 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 			import pickle as pk
 			pk.dump(xint, open('savefile.pk','wb'))
 			xint_at_top[ng,nt,:] = xint[0,:]	
+			t6 = time.time()
+			t_sum = t6-t5
+			#print("time to sum over layers = ", t_sum)
 				
 	pk.dump(xint_at_top, open('xint_at_top1.pk','wb'))
 	pk.dump(surf_reflect, open('surf_reflect.pk','wb'))
@@ -2112,6 +2124,7 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 	#================ START CRAZE LOOP OVER ANGLE #================
 	for ng in range(numg):
 		for nt in range(numt):
+			t1 = time.time()
 			if dim == '3d':
 				#get needed chunk for 3d inputs
 				#should consider thinking of a better method for when doing 1d only
@@ -2239,6 +2252,11 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 					M, B, A, N, F, G, A_int, N_int = setup_4_stream(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
 						ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
 
+			t2 = time.time()
+			t_setup = t2-t1
+			#print("time to set up matrices = ", t_setup)
+
+			t3 = time.time()
 
 			X = zeros((stream*nlevel, nwno))
 			C = zeros((stream*nlayer, nwno))
@@ -2267,6 +2285,11 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 			for W in range(nwno):
 			    
 				(X[:,W], flux[:,W], intgrl_new[:,W]) = solve_4_stream(M[W], B[W], A[W], N[W], F[W], G[W], A_int[W], N_int[W], stream)
+
+			t4 = time.time()
+			t_invert = t4-t3
+			#print("time to invert matrices = ", t_invert)
+			t5 = time.time()
 
 			if scaled:
 				tauN=1.
@@ -2310,6 +2333,9 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 			
 			xint_new = xint_temp[0, :]
 			xint_at_top[ng,nt,:] = xint_new
+			t6 = time.time()
+			t_sum = t6-t5
+			#print("time to sum over layers = ", t_sum)
 	filename = 'xint_at_top_%d.pk' % stream
 	pk.dump(xint_at_top, open(filename,'wb'))
 	#import IPython; IPython.embed()
@@ -2587,24 +2613,26 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	Q2 = 0.5 - q
 	#e1 = np.exp(exptrm)
 
-	def F_block(n, t):
-		if np.any(t!=0):
-			e1 = exptrm[:,n]; e2 = 1/e1
-		else:
-			e1 = np.ones(nwno); e2 = e1
-
-		block = 2*np.pi * np.array([[Q1[:,n]*e1, Q2[:,n]*e1], [Q2[:,n]*e2, Q1[:,n]*e2]])
-		return block.T
+	Q1mn = Q1*exptrm;  Q2mn = Q2*exptrm
+	Q1pl = Q1/exptrm;  Q2pl = Q2/exptrm
+	def F_block(n, lev):
+		if lev == "up":
+		    return 2*np.pi * np.array([[Q1mn[:,n], Q2mn[:,n]], [Q2pl[:,n], Q1pl[:,n]]]).T
+		elif lev == "down":
+		    return 2*np.pi * np.array([[Q1[:,n], Q2[:,n]], [Q2[:,n], Q1[:,n]]]).T
 
 	exp_tau_u0 = np.exp(-tau/ubar0)
-	def Z_block(n, t):
-		if np.any(t!=0):
-			exptau = exp_tau_u0[:,n+1]
-		else:
-			exptau = exp_tau_u0[:,n]
-		
-		return 2*np.pi * (np.array([(0.5 * eta[0] - eta[1])[:,n], 
-			(0.5 * eta[0] + eta[1])[:,n]]) * exptau).T
+	zmn = 0.5*eta[0] - eta[1] 
+	zpl = 0.5*eta[0] + eta[1]
+	zmn_up = zmn * exp_tau_u0[:,1:] 
+	zpl_up = zpl * exp_tau_u0[:,1:] 
+	zmn_down = zmn * exp_tau_u0[:,:-1] 
+	zpl_down = zpl * exp_tau_u0[:,:-1] 
+	def Z_block(n, lev):
+		if lev == "up":
+			return 2*np.pi * (np.array([zmn_up[:,n], zpl_up[:,n]])).T
+		if lev == "down":
+			return 2*np.pi * (np.array([zmn_down[:,n], zpl_down[:,n]])).T
 	
 	def A_block(n, t):
 		if np.any(t!=0):
@@ -2664,24 +2692,24 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	zero = np.zeros(nwno)
 	
 	#   first row: BC 1
-	M[:,0,0:2] = F_block(0,zero)[:,0,]
-	B[:,0] = b_top - Z_block(0,zero)[:,0]        
+	M[:,0,0:2] = F_block(0,"down")[:,0,]
+	B[:,0] = b_top - Z_block(0,"down")[:,0]        
 
-	F[:,0:2,0:2] = F_block(0,zero)
-	G[:,0:2] = Z_block(0,zero)
+	#F[:,0:2,0:2] = F_block(0,zero)
+	#G[:,0:2] = Z_block(0,zero)
 
 	#   rows 1 through 2*nlayer-1: BCs 2 and 3
 	for n in range(0, nlayer-1):
 		im = 2*n+1; iM = (2*n+2)+1
 		jm = 2*n; j_ = (2*n+1)+1; jM = (2*n+3)+1
-		M[:,im:iM,jm:j_] = F_block(n,dtau[:,n])
-		M[:,im:iM,j_:jM] = -F_block(n+1,zero)
-		B[:,im:iM] = Z_block(n+1,zero) - Z_block(n,dtau[:,n])
+		M[:,im:iM,jm:j_] = F_block(n,"up")
+		M[:,im:iM,j_:jM] = -F_block(n+1,"down")
+		B[:,im:iM] = Z_block(n+1,"down") - Z_block(n,"up")
 		
 		im = 2*n+2; iM = (2*n+3)+1
 		jm = 2*n; jM = (2*n+1)+1
-		F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
-		G[:,im:iM] = Z_block(n,dtau[:,n])
+		#F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
+		#G[:,im:iM] = Z_block(n,dtau[:,n])
 
 		A[:,im:iM,jm:jM] = A_block(n,dtau[:,n])
 		N[:,im:iM] = N_block(n,dtau[:,n])
@@ -2694,15 +2722,15 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	im = 2*nlayer-1; 
 	jm = 2*nlayer-2; jM = 2*nlayer
 	n = nlayer-1
-	M[:,im,jm:jM] = F_block(n,dtau[:,n])[:,1,] - surf_reflect*F_block(n,dtau[:,n])[:,0,]
-	B[:,im] = b_surface - Z_block(n,dtau[:,n])[:,1] + surf_reflect * Z_block(n,dtau[:,n])[:,0]
+	M[:,im,jm:jM] = F_block(n,"up")[:,1,] - surf_reflect*F_block(n,"up")[:,0,]
+	B[:,im] = b_surface - Z_block(n,"up")[:,1] + surf_reflect * Z_block(n,"up")[:,0]
 	
 
 	n = nlayer-1
 	im = 2*nlevel-2; iM = 2*nlevel
 	jm = 2*nlayer-2; jM = 2*nlayer
-	F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
-	G[:,im:iM] = Z_block(n,dtau[:,n])
+	#F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
+	#G[:,im:iM] = Z_block(n,dtau[:,n])
 
 	A[:,im:iM,jm:jM] = A_block(n,dtau[:,n])
 	N[:,im:iM] = N_block(n,dtau[:,n])
@@ -2711,13 +2739,5 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	jm = 2*nlayer-2; jM = 2*nlayer
 	A_int[:,im:iM,jm:jM] = A_int_block(n)
 	N_int[:,im:iM] = N_int_block(n)
-
-	M_inv = np.linalg.inv(M[0])
-	X = M_inv.dot(B[0])
-	
-	flux = F.dot(X) + G
-	
-	I = A.dot(X) + N 
-	intgrl_new = A_int[0].dot(X) + N_int[0]
 
 	return M, B, A, N, F, G, A_int, N_int
