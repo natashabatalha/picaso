@@ -1631,11 +1631,12 @@ def setup_4_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 					[p2pl[:,n]*e2pl, q2pl[:,n]*e2pl, p2mn[:,n]*e2pl, q2mn[:,n]*e2pl]])
 		return block.T
 
+	exp_tau_u0 = np.exp(-tau/ubar0)
 	def Z_block(n, t):
 		if np.any(t!=0):
-			exptau = np.exp(-tau[:,n+1]/ubar0)
+			exptau = exp_tau_u0[:,n+1]
 		else:
-			exptau = np.exp(-tau[:,n]/ubar0)
+			exptau = exp_tau_u0[:,n]
 
 		return (np.array([z1mn[:,n], z2mn[:,n], z1pl[:,n], z2pl[:,n]]) * exptau).T
 	
@@ -1655,9 +1656,9 @@ def setup_4_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	
 	def N_block(n, t):
 		if np.any(t!=0):
-			exptau = np.exp(-tau[:,n+1]/ubar0)
+			exptau = exp_tau_u0[:,n+1]
 		else:
-			exptau = np.exp(-tau[:,n]/ubar0)
+			exptau = exp_tau_u0[:,n]
 
 		return (np.array([eta[0][:,n], eta[1][:,n], eta[2][:,n], eta[3][:,n]]) * exptau).T
 
@@ -1670,39 +1671,39 @@ def setup_4_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	exptrm_alp1 = np.exp(-expo_alp1);	exptrm_bet1 = np.exp(-expo_bet1);	exptrm_mus = np.exp(-expo_mus)
 	exptrm_alp2 = np.exp(-expo_alp2);	exptrm_bet2 = np.exp(-expo_bet2);
 
+	#expo_alp1 = tau[:,:-1] * (alpha1 - 1/ubar1)	
+	#expo_alp1 = slice_gt(expo_alp1, 35.0)
+	#exptau_alp1 = np.exp(-expo_alp1)
+	#expo_alp2 = tau[:,:-1] * (alpha2 - 1/ubar1)	
+	#expo_alp2 = slice_gt(expo_alp2, 35.0)
+	#exptau_alp2 = np.exp(-expo_alp2)
+	#expo_bet1 = tau[:,:-1] * (beta1- 1/ubar1)
+	#expo_bet1 = slice_gt(expo_bet1, 35.0)
+	#exptau_bet1 = np.exp(-expo_bet1)
+	#expo_bet2 = tau[:,:-1] * (beta2 - 1/ubar1)	
+	#expo_bet2 = slice_gt(expo_bet2, 35.0)
+	#exptau_bet2 = np.exp(-expo_bet2)
+
+	exp_alp1 = (1 - exptrm_alp1) / alpha1 #* exptau_alp1[:,n] 
+	exp_bet1 = (1 - exptrm_bet1) / beta1  #* exptau_bet1[:,n] 
+	exp_alp2 = (1 - exptrm_alp2) / alpha2 #* exptau_alp2[:,n] 
+	exp_bet2 = (1 - exptrm_bet2) / beta2  #* exptau_bet2[:,n] 
 	def A_int_block(n):
-		expo_alp1 = tau[:,:-1] * (alpha1 - 1/ubar1)	
-		expo_alp1 = slice_gt(expo_alp1, 35.0)
-		exptau_alp1 = np.exp(-expo_alp1)
-		expo_alp2 = tau[:,:-1] * (alpha2 - 1/ubar1)	
-		expo_alp2 = slice_gt(expo_alp2, 35.0)
-		exptau_alp2 = np.exp(-expo_alp2)
-		expo_bet1 = tau[:,:-1] * (beta1- 1/ubar1)
-		expo_bet1 = slice_gt(expo_bet1, 35.0)
-		exptau_bet1 = np.exp(-expo_bet1)
-		expo_bet2 = tau[:,:-1] * (beta2 - 1/ubar1)	
-		expo_bet2 = slice_gt(expo_bet2, 35.0)
-		exptau_bet2 = np.exp(-expo_bet2)
 
-		e1mn = (1 - exptrm_alp1[:,n]) / alpha1[:,n] #* exptau_alp1[:,n] 
-		e1pl = (1 - exptrm_bet1[:,n]) / beta1[:,n]  #* exptau_bet1[:,n] 
-		e2mn = (1 - exptrm_alp2[:,n]) / alpha2[:,n] #* exptau_alp2[:,n] 
-		e2pl = (1 - exptrm_bet2[:,n]) / beta2[:,n]  #* exptau_bet2[:,n] 
-
-		block = np.array([[e1mn, R1[:,n]*e1mn, Q1[:,n]*e1mn, S1[:,n]*e1mn],
-			[e1pl, -R1[:,n]*e1pl, Q1[:,n]*e1pl, -S1[:,n]*e1pl],
-			[e2mn,  R2[:,n]*e2mn, Q2[:,n]*e2mn,  S2[:,n]*e2mn],
-			[e2pl, -R2[:,n]*e2pl, Q2[:,n]*e2pl, -S2[:,n]*e2pl]])
+		block = np.array([[exp_alp1[:,n], (R1*exp_alp1)[:,n], (Q1*exp_alp1)[:,n], (S1*exp_alp1)[:,n]],
+		    [exp_bet1[:,n], -(R1*exp_bet1)[:,n], (Q1*exp_bet1)[:,n], -(S1*exp_bet1)[:,n]],
+		    [exp_alp2[:,n],  (R2*exp_alp2)[:,n], (Q2*exp_alp2)[:,n],  (S2*exp_alp2)[:,n]],
+		    [exp_bet2[:,n], -(R2*exp_bet2)[:,n], (Q2*exp_bet2)[:,n], -(S2*exp_bet2)[:,n]]])
 
 		return block.T
 	
+	tau_mu = tau[:,:-1] * (mus - 1/ubar1)
+	tau_mu = slice_gt(tau_mu, 35.0)
+	exptau_mu = np.exp(-tau_mu)
+	exp_mu = (1 - exptrm_mus) * exptau_mu / mus
 	def N_int_block(n):
-		expo = tau * (mus - 1/ubar1)
-		expo = slice_gt(expo, 35.0)
-		exptau = np.exp(-expo)
-		e1 = (1 - exptrm_mus[:,n]) * exptau[:,n] / mus
 
-		return (np.array([eta[0][:,n], eta[1][:,n], eta[2][:,n], eta[3][:,n]]) * e1).T
+	    return (np.array([eta[0][:,n], eta[1][:,n], eta[2][:,n], eta[3][:,n]]) * exp_mu[:,n]).T
 
 
 	M = np.zeros((nwno, 4*nlayer, 4*nlayer))
@@ -2015,7 +2016,7 @@ def setup_4_stream(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0
 	return M, B, A, N, F, G, A_int, N_int
 
 
-def solve_4_stream(M, B, A, N, F, G, stream):
+def solve_4_stream(M, B, A, N, F, G, A_int, N_int, stream):
 
 	M_inv = np.linalg.inv(M)
 	X = M_inv.dot(B)
@@ -2025,8 +2026,9 @@ def solve_4_stream(M, B, A, N, F, G, stream):
 	I = A.dot(X) + N
 	#   just return I0, I1, I2, I3 from top of atmosphere
 	#I = A[0:stream, 0:stream].dot(X[0:stream])+N[0:stream]
+	intgrl_new = A_int.dot(X) + N_int
 
-	return (I, flux, X)
+	return (I, flux, intgrl_new)
 
 
 #@jit(nopython=True, cache=True)
@@ -2240,6 +2242,10 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 
 			X = zeros((stream*nlevel, nwno))
 			C = zeros((stream*nlayer, nwno))
+			intgrl_new = np.zeros((stream*nlayer, nwno))
+			intgrl_per_layer = np.zeros((nlayer, nwno))
+			full_intgrl = np.zeros((nlayer, nwno))
+			sing_scat = np.zeros((nlayer, nwno))
 			#X = zeros((stream, nwno))
 			flux = zeros((stream*nlevel, nwno))
 			xint_maybe = zeros(nwno)
@@ -2260,117 +2266,49 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 
 			for W in range(nwno):
 			    
-				(X[:,W], flux[:,W], C[:,W]) = solve_4_stream(M[W], B[W], A[W], N[W], F[W], G[W], stream)
+				(X[:,W], flux[:,W], intgrl_new[:,W]) = solve_4_stream(M[W], B[W], A[W], N[W], F[W], G[W], A_int[W], N_int[W], stream)
 
-				#   interpolate 
+			if scaled:
+				tauN=1.
+			else:
+				tauN = tau[-1,W]
+			tau_ = tau/tauN
+			dtau_ = dtau/tauN
+
+			mus = tauN * (ubar1[ng,nt] + ubar0[ng,nt]) / (ubar1[ng,nt] * ubar0[ng,nt])
+			expo_mus = mus * dtau_ 
+			expo_mus = slice_gt(expo_mus, 35.0)    
+			exptrm_mus = np.exp(-expo_mus)
+
+			for i in range(nlayer):
 				for l in range(stream):
-					intsy[0, W] = intsy[0, W] + w_multi[l][W,0] * X[l, W] * P(ubar1[ng,nt])[l]
-				for j in range(1, nlevel):
-					for l in range(stream):
-						intsy[j, W] = intsy[j, W] + w_multi[l][W,j-1] * X[stream*j+l, W] * P(ubar1[ng,nt])[l]
-				#intgrnd[:,W] = intsy[:,W] * np.exp(-tau[:,W]/ubar1[ng,nt]) 
-				intgrnd[:,W] = (w0_[:,W] * (intsy[:,W] 
-							    + F0PI[W] * np.exp(-tau[:,W]/ubar0[ng,nt]) 
-							    * p_sing[:,W] / (4*np.pi) 
-							    ) * np.exp(-tau[:,W]/ubar1[ng,nt]) ) 
+					sing_scat[i,:] = sing_scat[i,:] + w_multi[l][:,i] * P(ubar1[ng,nt])[l] * intgrl_new[stream*i+l,:]
 
-				func1 = CubicSpline(tau[:,W], intgrnd[:,W])
-				intgrl_per_layer_maybe = np.zeros(nlayer)
-				for i in range(nlayer):
-					intgrl_per_layer_maybe[i] = func1.integrate(tau[i,W], tau[i+1,W])
-				intgrl[W] = func1.integrate(0, tau[-1,W])
-				intgrl1[W] = trapz(intgrnd[:,W], x = tau[:,W])
+			if scaled:
+				intgrl_per_layer = (tauN * w0 * ( sing_scat 
+						+ F0PI / (4*np.pi) * p_single 
+						* np.exp(-tau_[:-1,:]*(mus-1/ubar1[ng,nt])) * (1 - exptrm_mus) / mus))
+			else:
+				intgrl_per_layer = (tauN * w0 * ( sing_scat 
+						+ F0PI / (4*np.pi) * p_single 
+						* np.exp(-tau_[:-1,:]*mus) * (1 - exptrm_mus) / mus))
 
-				#full_intgrl1 = np.zeros(nlayer)
-				#for i in range(nlayer):
-				#	j = nlayer-i
-				#	full_intgrl1[i] = np.sum(intgrl[-j:])
+			for i in range(nlayer):
+				j = nlayer-i
+				full_intgrl[i] = np.sum(intgrl_per_layer[-j:,:])
 
-				for l in range(stream):
-					xint_bot[W] = xint_bot[W] + (2*l+1) * X[(nlevel-1)*stream + l, W] * P(ubar1[ng,nt])[l]
-				#xint_maybe[-1,W] = xint_bot[W]
-				#for i in range(nlayer-1,-1,-1):
-				#	#xint_maybe[i,W] = (xint_bot[W] * np.exp(-(tau[-1,W]-tau[i,W])/ubar1[ng,nt])
-				#	xint_maybe[i,W] = (xint_bot[W] * np.exp(-dtau[i,W]/ubar1[ng,nt])
-				#		    + intgrl[i,W] / ubar1[ng,nt])
-
-				xint_maybe[W] = (xint_bot[W] * np.exp(-tau[-1,W]/ubar1[ng,nt])
-					    + intgrl[W] / ubar1[ng,nt])
-
-				#   per layer
-
-				if scaled:
-					tauN=1.
-				else:
-					tauN = tau[-1,W]
-				tau_ = tau/tauN
-				dtau_ = dtau/tauN
-
-				intgrl_new = A_int[W].dot(C[:,W]) + N_int[W]
-				mus = tauN * (ubar1[ng,nt] + ubar0[ng,nt]) / (ubar1[ng,nt] * ubar0[ng,nt])
-				expo_mus = mus * dtau_ 
-				expo_mus = slice_gt(expo_mus, 35.0)    
-				exptrm_mus = np.exp(-expo_mus)
-
-				sing_scat = np.zeros(nlayer)
-				for i in range(nlayer):
-					for l in range(stream):
-						sing_scat[i] = sing_scat[i] + w_multi[l][W,i] * P(ubar1[ng,nt])[l] * intgrl_new[stream*i+l]
-
-				if scaled:
-					intgrl_per_layer = (tauN * w0[:,W] * ( sing_scat 
-							+ F0PI[W] / (4*np.pi) * p_single[:,W] 
-							* np.exp(-tau_[:-1,W]*(mus-1/ubar1[ng,nt])) * (1 - exptrm_mus[:,W]) / mus))
-				else:
-					intgrl_per_layer = (tauN * w0[:,W] * ( sing_scat 
-							+ F0PI[W] / (4*np.pi) * p_single[:,W] 
-							* np.exp(-tau_[:-1,W]*mus) * (1 - exptrm_mus[:,W]) / mus))
-
-				full_intgrl = np.zeros(nlayer)
-				for i in range(nlayer):
-					j = nlayer-i
-					full_intgrl[i] = np.sum(intgrl_per_layer[-j:])
-
-				for l in range(stream):
-					xint_temp[-1, W] = xint_temp[-1, W] + (2*l+1) * X[stream*(nlevel-1)+l, W] * P(ubar1[ng,nt])[l]
-				if scaled:
-					for i in range(nlayer-1,-1,-1):
-						xint_temp[i, W] = (xint_temp[i+1, W] * np.exp(-dtau_[i,W]/ubar1[ng,nt]) 
-									+ intgrl_per_layer[i] / ubar1[ng,nt]) 
-				else:
-					for i in range(nlayer-1,-1,-1):
-						xint_temp[i, W] = (xint_temp[-1, W] * np.exp(-tauN*(tau_[-1,W]-tau_[i,W])/ubar1[ng,nt]) 
-									+ full_intgrl[i] / ubar1[ng,nt]) 
-				
-				xint_new[W] = xint_temp[0, W]
-			#if ng==3:
-			#	import IPython; IPython.embed()
-			#	import sys; sys.exit()
-
+			for l in range(stream):
+				xint_temp[-1, :] = xint_temp[-1, :] + (2*l+1) * X[stream*(nlevel-1)+l, :] * P(ubar1[ng,nt])[l]
+			if scaled:
+				for i in range(nlayer-1,-1,-1):
+					xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau_[i,:]/ubar1[ng,nt]) 
+							    + intgrl_per_layer[i,:] / ubar1[ng,nt]) 
+			else:
+				for i in range(nlayer-1,-1,-1):
+					xint_temp[i, :] = (xint_temp[-1, :] * np.exp(-tauN*(tau_[-1,:]-tau_[i,:])/ubar1[ng,nt]) 
+							    + full_intgrl[i,:] / ubar1[ng,nt]) 
 			
-			#========================= End loop over wavelength =========================
-			
-			#xint = zeros((nlevel, nwno))
-			#for i in range(nlevel):
-			#	for l in range(stream):
-			#		xint[i,:] = xint[i,:] + (2*l + 1) * X[stream*i+l, :] * P(ubar1[ng,nt])[l]
-				#	#xint[i,:] = (xint[i+1,:]*exp(-tau[i,:]/ubar1[ng,nt])  
-				#	#		+ (2*l+1) * X[stream*i+l, :] * P(ubar1[ng,nt])[l])
-				#	x = (2*l + 1) * X[stream*i+l, :] * P(ubar1[ng,nt])[l]
-
-				#xint[i,:] = (xint[i+1,:] + (w0[i,:] * x
-				#    + w0[i,:] * F0PI * np.exp(-tau[i+1,:]/ubar0[ng,nt]) 
-				#    * (1-3*cosb[i,:]*ubar0[ng,nt])/ (4*np.pi))
-				#    * np.exp(-dtau[i,:]/ubar1[ng,nt]) / ubar1[ng,nt])
-
-			#xint_at_top[ng,nt,:] = xint[0,:] 
-			#if stream == 2:
-			#	indx = 1
-			#else:
-			#	indx = 2
-			#xint_at_top[ng,nt,:] = flux[indx,:] / np.pi # this is good approximation for isotropic scattering
-			#xint_at_top_new[ng,nt,:] = xint_new
-			#xint_at_top[ng,nt,:] = flux[1,:] / np.pi
+			xint_new = xint_temp[0, :]
 			xint_at_top[ng,nt,:] = xint_new
 	filename = 'xint_at_top_%d.pk' % stream
 	pk.dump(xint_at_top, open(filename,'wb'))
@@ -2658,11 +2596,12 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 		block = 2*np.pi * np.array([[Q1[:,n]*e1, Q2[:,n]*e1], [Q2[:,n]*e2, Q1[:,n]*e2]])
 		return block.T
 
+	exp_tau_u0 = np.exp(-tau/ubar0)
 	def Z_block(n, t):
 		if np.any(t!=0):
-			exptau = np.exp(-tau[:,n+1] /ubar0)
+			exptau = exp_tau_u0[:,n+1]
 		else:
-			exptau = np.exp(-tau[:,n] /ubar0)
+			exptau = exp_tau_u0[:,n]
 		
 		return 2*np.pi * (np.array([(0.5 * eta[0] - eta[1])[:,n], 
 			(0.5 * eta[0] + eta[1])[:,n]]) * exptau).T
@@ -2678,42 +2617,38 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	
 	def N_block(n, t):
 		if np.any(t!=0):
-			exptau = np.exp(-tau[:,n+1] / ubar0)
+			exptau = exp_tau_u0[:,n+1]
 		else:
-			exptau = np.exp(-tau[:,n]  / ubar0)
+			exptau = exp_tau_u0[:,n]
 
 		return (np.array([eta[0][:,n], eta[1][:,n]]) * exptau).T
 
 	alpha = 1/ubar1 + lam;			beta = 1/ubar1 - lam;			mus = (ubar1 + ubar0) / (ubar1 * ubar0)
 	expo_alp = alpha * dtau;		expo_bet = beta * dtau;			expo_mus = mus * dtau 
 	expo_alp = slice_gt(expo_alp, 35.0);	expo_bet = slice_gt(expo_bet, 35.0);	expo_mus = slice_gt(expo_mus, 35.0)    
-	#expo_alp = slice_lt(expo_alp, -35.0);	expo_bet = slice_lt(expo_bet, -35.0);	expo_mus = slice_lt(expo_mus, -35.0)    
 	exptrm_alp = np.exp(-expo_alp);		exptrm_bet = np.exp(-expo_bet);		exptrm_mus = np.exp(-expo_mus)
 
+	#expo_alp = tau[:,:-1] * (alpha - 1/ubar1)
+	#expo_alp = slice_gt(expo_alp, 35.0)
+	#exptau_alp = np.exp(-expo_alp)
+	#expo_bet = tau[:,:-1] * (beta - 1/ubar1)
+	#expo_bet = slice_gt(expo_bet, 35.0)
+	#exptau_bet = np.exp(-expo_bet)
+	exp_alp = (1 - exptrm_alp) / alpha #* exptau_alp[:,n] 
+	exp_bet = (1 - exptrm_bet) / beta  #* exptau_bet[:,n] 
 	def A_int_block(n):
-		expo_alp = tau[:,:-1] * (alpha - 1/ubar1)
-		expo_alp = slice_gt(expo_alp, 35.0)
-		#expo_alp = slice_lt(expo_alp, -35.0)
-		exptau_alp = np.exp(-expo_alp)
-		expo_bet = tau[:,:-1] * (beta - 1/ubar1)
-		expo_bet = slice_gt(expo_bet, 35.0)
-		#expo_bet = slice_lt(expo_bet, -35.0)
-		exptau_bet = np.exp(-expo_bet)
-		e1 = (1 - exptrm_alp[:,n]) / alpha[:,n] #* exptau_alp[:,n] 
-		e2 = (1 - exptrm_bet[:,n]) / beta[:,n]  #* exptau_bet[:,n] 
 
-		block =  np.array([[e1, -q[:,n] * e1], 
-				    [e2, q[:,n] * e2]])
+		block =  np.array([[exp_alp[:,n], -q[:,n] * exp_alp[:,n]], 
+				    [exp_bet[:,n], q[:,n] * exp_bet[:,n]]])
 		return block.T
 
+	tau_mu = tau[:,:-1] * (mus - 1/ubar1)
+	tau_mu = slice_gt(tau_mu, 35.0)
+	exp_tau_mu = np.exp(-tau_mu)
+	exp_mu = (1 - exptrm_mus) * exp_tau_mu / mus
 	def N_int_block(n):
-		expo = tau[:,:-1] * (mus - 1/ubar1)
-		expo = slice_gt(expo, 35.0)
-		#expo = slice_lt(expo, -35.0)
-		exptau = np.exp(-expo)
-		e1 = (1 - exptrm_mus[:,n]) * exptau[:,n] / mus
 
-		return (np.array([eta[0][:,n], eta[1][:,n]]) * e1 ).T
+		return (np.array([eta[0][:,n], eta[1][:,n]]) * exp_mu[:,n] ).T
 	
 	M = np.zeros((nwno, 2*nlayer, 2*nlayer))
 	B = np.zeros((nwno, 2*nlayer))
