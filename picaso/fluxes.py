@@ -4,6 +4,7 @@ import numpy as np
 import pentapy as pp
 import time
 import pickle as pk
+from scipy.sparse.linalg import spsolve
 
 #@jit(nopython=True, cache=True)
 def get_flux_toon(nlevel, wno, nwno, tau, dtau, w0, cosbar, surf_reflect, ubar0, F0PI):
@@ -2056,14 +2057,13 @@ def setup_4_stream(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0
 
 def solve_4_stream(M, B, A, N, F, G, A_int, N_int, stream):
 
-	M_inv = np.linalg.inv(M)
-	X = M_inv.dot(B)
+	#M_inv = np.linalg.inv(M)
+	#X = M_inv.dot(B)
+	X = spsolve(M, B)
 	
 	#flux = F.dot(X) + G
 	
 	I = A.dot(X) + N
-	#   just return I0, I1, I2, I3 from top of atmosphere
-	#I = A[0:stream, 0:stream].dot(X[0:stream])+N[0:stream]
 	intgrl_new = A_int.dot(X) + N_int
 
 	return (I, intgrl_new)
