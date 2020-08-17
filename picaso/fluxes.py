@@ -1121,7 +1121,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 	pk.dump(surf_reflect, open('surf_reflect.pk','wb'))
 #	import IPython; IPython.embed()
 #	import sys; sys.exit()
-	return (xint_at_top, flux)
+	return xint_at_top
 
 #@jit(nopython=True, cache=True)
 def blackbody(t,w):
@@ -2059,14 +2059,14 @@ def solve_4_stream(M, B, A, N, F, G, A_int, N_int, stream):
 	M_inv = np.linalg.inv(M)
 	X = M_inv.dot(B)
 	
-	flux = F.dot(X) + G
+	#flux = F.dot(X) + G
 	
 	I = A.dot(X) + N
 	#   just return I0, I1, I2, I3 from top of atmosphere
 	#I = A[0:stream, 0:stream].dot(X[0:stream])+N[0:stream]
 	intgrl_new = A_int.dot(X) + N_int
 
-	return (I, flux, intgrl_new)
+	return (I, intgrl_new)
 
 
 #@jit(nopython=True, cache=True)
@@ -2262,20 +2262,11 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 			b_top = 0.0
 			b_surface = 0. + surf_reflect*ubar0[ng, nt]*F0PI*exp(-tau[-1, :]/ubar0[ng, nt])
 
-			scaled=True
-			if scaled:
-				if stream==2:
-					M, B, A, N, F, G, A_int, N_int = setup_2_stream_scaled(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
-						ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
-				elif stream==4:
-					M, B, A, N, F, G, A_int, N_int = setup_4_stream_scaled(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
+			if stream==2:
+				M, B, A, N, F, G, A_int, N_int = setup_2_stream_scaled(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
 						ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
 			else:
-				if stream==2:
-					M, B, A, N, F, G, A_int, N_int = setup_2_stream(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
-						ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
-				elif stream==4:
-					M, B, A, N, F, G, A_int, N_int = setup_4_stream(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
+				M, B, A, N, F, G, A_int, N_int = setup_4_stream_scaled(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
 						ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
 
 			t2 = time.time()
@@ -2286,32 +2277,16 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 			t3 = time.time()
 
 			X = zeros((stream*nlevel, nwno))
-			C = zeros((stream*nlayer, nwno))
 			intgrl_new = np.zeros((stream*nlayer, nwno))
 			intgrl_per_layer = np.zeros((nlayer, nwno))
 			full_intgrl = np.zeros((nlayer, nwno))
 			sing_scat = np.zeros((nlayer, nwno))
-			#X = zeros((stream, nwno))
-			flux = zeros((stream*nlevel, nwno))
-			xint_maybe = zeros(nwno)
 			xint_temp = zeros((nlevel, nwno))
 			xint_new = zeros(nwno)
-			intgrnd = zeros((nlevel,nwno))
-			intgrl = zeros(nwno)
-			intgrl1 = zeros(nwno)
-			intsy = np.zeros((nlevel,nwno))
-			xint_bot = np.zeros(nwno)
-			xint_chk = np.zeros(nwno)
-			intgrl_chk = np.zeros((nlayer, nwno))
 			#========================= Start loop over wavelength =========================
-			from scipy.interpolate import UnivariateSpline, CubicSpline
-			from scipy.integrate import simps, trapz
-			p_sing = np.insert(p_single, 0, p_single[0,:], 0)
-			w0_ = np.insert(w0, 0, w0[0,:], 0)
-
 			for W in range(nwno):
 			    
-				(X[:,W], flux[:,W], intgrl_new[:,W]) = solve_4_stream(M[W], B[W], A[W], N[W], F[W], G[W], A_int[W], N_int[W], stream)
+				(X[:,W], intgrl_new[:,W]) = solve_4_stream(M[W], B[W], A[W], N[W], F[W], G[W], A_int[W], N_int[W], stream)
 
 			t4 = time.time()
 			t_invert = t4-t3
@@ -2319,15 +2294,8 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				print("time to invert matrices = ", t_invert)
 			t5 = time.time()
 
-			if scaled:
-				tauN=1.
-			else:
-				tauN = tau[-1,W]
-			tau_ = tau/tauN
-			dtau_ = dtau/tauN
-
-			mus = tauN * (ubar1[ng,nt] + ubar0[ng,nt]) / (ubar1[ng,nt] * ubar0[ng,nt])
-			expo_mus = mus * dtau_ 
+			mus = (ubar1[ng,nt] + ubar0[ng,nt]) / (ubar1[ng,nt] * ubar0[ng,nt])
+			expo_mus = mus * dtau 
 			expo_mus = slice_gt(expo_mus, 35.0)    
 			exptrm_mus = np.exp(-expo_mus)
 
@@ -2335,14 +2303,9 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				for l in range(stream):
 					sing_scat[i,:] = sing_scat[i,:] + w_multi[l][:,i] * P(ubar1[ng,nt])[l] * intgrl_new[stream*i+l,:]
 
-			if scaled:
-				intgrl_per_layer = (tauN * w0 * ( sing_scat 
+			intgrl_per_layer = w0 * ( sing_scat 
 						+ F0PI / (4*np.pi) * p_single 
-						* np.exp(-tau_[:-1,:]*(mus-1/ubar1[ng,nt])) * (1 - exptrm_mus) / mus))
-			else:
-				intgrl_per_layer = (tauN * w0 * ( sing_scat 
-						+ F0PI / (4*np.pi) * p_single 
-						* np.exp(-tau_[:-1,:]*mus) * (1 - exptrm_mus) / mus))
+						* np.exp(-tau[:-1,:]*(mus-1/ubar1[ng,nt])) * (1 - exptrm_mus) / mus)
 
 			for i in range(nlayer):
 				j = nlayer-i
@@ -2350,15 +2313,10 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 
 			for l in range(stream):
 				xint_temp[-1, :] = xint_temp[-1, :] + (2*l+1) * X[stream*(nlevel-1)+l, :] * P(ubar1[ng,nt])[l]
-			if scaled:
-				for i in range(nlayer-1,-1,-1):
-					xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau_[i,:]/ubar1[ng,nt]) 
-							    + intgrl_per_layer[i,:] / ubar1[ng,nt]) 
-			else:
-				for i in range(nlayer-1,-1,-1):
-					xint_temp[i, :] = (xint_temp[-1, :] * np.exp(-tauN*(tau_[-1,:]-tau_[i,:])/ubar1[ng,nt]) 
-							    + full_intgrl[i,:] / ubar1[ng,nt]) 
-			
+			for i in range(nlayer-1,-1,-1):
+				xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/ubar1[ng,nt]) 
+							+ intgrl_per_layer[i,:] / ubar1[ng,nt]) 
+
 			xint_new = xint_temp[0, :]
 			xint_at_top[ng,nt,:] = xint_new
 			t6 = time.time()
@@ -2370,7 +2328,7 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 	#import IPython; IPython.embed()
 	#import sys; sys.exit()
 
-	return (xint_at_top, flux)
+	return xint_at_top
 
 def setup_2_stream(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau, tau, w_single, w_multi, ubar1, P):
 	"""
