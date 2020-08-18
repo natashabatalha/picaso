@@ -26,7 +26,7 @@ import math
 __refdata__ = os.environ.get('picaso_refdata')
 
 def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_output=False, 
-    plot_opacity= False, as_dict=True, tridiagonal=0, approximation='2stream', stream=2):
+    plot_opacity= False, as_dict=True, tridiagonal=0):
     """
     Currently top level program to run albedo code 
 
@@ -69,6 +69,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     single_phase = inputs['approx']['single_phase']
     multi_phase = inputs['approx']['multi_phase']
     raman_approx =inputs['approx']['raman']
+    method = inputs['approx']['method']
+    stream = inputs['approx']['stream']
+    print_time = inputs['approx']['print_time']
 
     #parameters needed for the two term hg phase function. 
     #Defaults are set in config.json
@@ -159,7 +162,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         if  'reflected' in calculation:
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
             nlevel = atm.c.nlevel
-            nwno = 10
+            #nwno = 100
             wno = wno[0:nwno]
             TAU = TAU[0:nlevel,0:nwno]
             DTAU = DTAU[0:nlevel-1,0:nwno]
@@ -173,23 +176,23 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             W0_OG = W0_OG[0:nlevel-1,0:nwno]
             COSB_OG = COSB_OG[0:nlevel-1,0:nwno]
             F0PI = F0PI[0:nwno]
-            if '4stream' in approximation:
-                (xint_at_top, flux)= get_reflected_new(nlevel, nwno, ng, nt, 
+            if method == 'SH':
+                xint_at_top = get_reflected_new(nlevel, nwno, ng, nt, 
                                             DTAU, TAU, W0, COSB, GCOS2, ftau_cld, ftau_ray,
                                             DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
                                             atm.surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
                                             single_phase, multi_phase, 
 	                                    frac_a, frac_b, frac_c, constant_back, constant_forward, 
-                                            dimension, stream)
+                                            dimension, stream, print_time)
                 #import IPython; IPython.embed()
                 #import sys; sys.exit()
             else:
-                (xint_at_top, flux)= get_reflected_1d(nlevel, wno,nwno,ng,nt,
+                xint_at_top = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                                     DTAU, TAU, W0, COSB,GCOS2,ftau_cld,ftau_ray,
                                                     DTAU_OG, TAU_OG, W0_OG, COSB_OG ,
                                                     atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
                                                     single_phase,multi_phase,
-                                                    frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)
+                                                    frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal, print_time)
 
             #if full output is requested add in xint at top for 3d plots
             if full_output: 
@@ -311,7 +314,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     #set up initial returns
     returns = {}
     returns['wavenumber'] = wno
-    returns['flux'] = flux
+    #returns['flux'] = flux
 
 
     #for reflected light use compress_disco routine
@@ -1468,7 +1471,8 @@ class inputs():
         self.inputs['clouds']['profile'] = df
 
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
-        raman='pollack',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1):
+        raman='pollack',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1, 
+        method='Toon', stream=2, print_time=False):
         """
         This function sets all the default approximations in the code. It transforms the string specificatons
         into a number so that they can be used in numba nopython routines. 
@@ -1498,7 +1502,10 @@ class inputs():
         self.inputs['approx']['multi_phase'] = multi_phase_options(printout=False).index(multi_phase)
         self.inputs['approx']['delta_eddington'] = delta_eddington
         self.inputs['approx']['raman'] =  raman_options().index(raman)
-
+        self.inputs['approx']['method'] = method
+        self.inputs['approx']['stream'] = stream
+        self.inputs['approx']['print_time'] = print_time
+ 
         if isinstance(tthg_frac, (list, np.ndarray)):
             if len(tthg_frac) == 3:
                 self.inputs['approx']['TTHG_params']['fraction'] = tthg_frac
@@ -1512,7 +1519,7 @@ class inputs():
 
 
     def spectrum(self,opacityclass,dimension = '1d', calculation='reflected', full_output=False, 
-        plot_opacity= False, as_dict=True, tridiagonal=1, approximation='2stream', stream=2):
+        plot_opacity= False, as_dict=True, tridiagonal=0):
         """Run Spectrum
 
         Parameters
@@ -1552,7 +1559,7 @@ class inputs():
             
         return picaso(self, opacityclass,dimension=dimension,calculation=calculation,
             full_output=full_output, plot_opacity=plot_opacity, as_dict=as_dict, 
-            tridiagonal=tridiagonal, approximation=approximation, stream=stream)
+            tridiagonal=tridiagonal)
 
 def mean_regrid(x, y, newx=None, R=None):
     """
@@ -1613,4 +1620,11 @@ def multi_phase_options(printout=True):
 def raman_options():
     """Retrieve options for raman scattering approximtions"""
     return ["oklopcic","pollack","none"]
-
+def methodology_options(printout=True):
+    """Retrieve all the options for methodology"""
+    if printout: print("Can calculate spectrum using Toon 1989 methodology or sperhical harmonics")
+    return ['Toon','SH']
+def stream_options(printout=True):
+    """Retrieve all the options for stream"""
+    if printout: print("Can use 2-stream or 4-stream sperhical harmonics")
+    return [2,4]
