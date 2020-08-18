@@ -2173,7 +2173,7 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 
 			if single_phase!=1: 
 				g_forward = constant_forward*cosb
-				g_back = constant_back*cosb
+				g_back = -constant_back*cosb
 				f = frac_a + frac_b*g_back**frac_c
 
 			if single_phase==0:#'cahoy':
@@ -2193,13 +2193,13 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				g2_m = g2_s
 				g3_m = g3_s
 
-			elif single_phase==1 or single_phase==2:#'OTHG':
+			elif single_phase==1:#'OTHG':
 				g0_s = np.ones((nwno, nlayer))
-				g1_s = -3*cosb.T
+				g1_s = 3*cosb.T
 				#g2 = gcos2.T
 				g2_s = 5*(cosb**2).T
 				#g3 = gcos2.T/10 # moments of phase function ** need to define 4th moment
-				g3_s = -7*(cosb**3).T
+				g3_s = 7*(cosb**3).T
 
 				g0_m = g0_s
 				g1_m = g1_s
@@ -2208,25 +2208,31 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 
 				p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 
-			#elif single_phase==2:#'TTHG':
-			#	#Phase function for single scattering albedo frum Solar beam
-			#	#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-			#		  #first term of TTHG: forward scattering
-			#	g0_s = np.ones((nwno, nlayer))
-			#	g1_s = -3*(f*g_forward + (1-f)*g_back).T
-			#	#g2 = gcos2.T
-			#	g2_s = 5*(f*g_forward**2 + (1-f)*g_back**2).T
-			#	#g3 = gcos2.T/10 # moments of phase function ** need to define 4th moment
-			#	g3_s = -7*(f*g_forward**3 + (1-f)*g_back**3).T
+			elif single_phase==2:#'TTHG':
+				#Phase function for single scattering albedo frum Solar beam
+				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
+					  #first term of TTHG: forward scattering
+				g0_s = np.ones((nwno, nlayer))
+				g1_s = 3*(f*g_forward + (1-f)*g_back).T
+				#g2 = gcos2.T
+				g2_s = 5*(f*g_forward**2 + (1-f)*g_back**2).T
+				#g3 = gcos2.T/10 # moments of phase function ** need to define 4th moment
+				g3_s = 7*(f*g_forward**3 + (1-f)*g_back**3).T
 
-			#	#g0_m = g0_s
-			#	#g1_m = g1_s
-			#	#g2_m = g2_s
-			#	#g3_m = g3_s
-			#	g0_m = np.ones((nwno, nlayer))
-			#	g1_m = -3*cosb.T
-			#	g2_m = 5*(cosb**2).T
-			#	g3_m = -7*(cosb**3).T
+				g0_m = g0_s
+				g1_m = g1_s
+				g2_m = g2_s
+				g3_m = g3_s
+				#g0_m = np.ones((nwno, nlayer))
+				#g1_m = 3*cosb.T
+				#g2_m = 5*(cosb**2).T
+				#g3_m = 7*(cosb**3).T
+
+				p_single=(f * (1-g_forward**2) /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
+								#second term of TTHG: backward scattering
+								+(1-f)*(1-g_back**2)
+								/sqrt((1+g_back**2+2*g_back*cos_theta)**3))
+				p_single_=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 
 
 			elif single_phase==3:#'TTHG_ray':
@@ -2234,23 +2240,26 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
 					  		#first term of TTHG: forward scattering
 				g0_s = (ftau_cld + ftau_ray).T
-				g1_s = -(3*ftau_cld*cosb).T 
-				g2_s = (5*ftau_cld*(cosb**2)).T + 0.5*ftau_ray.T 
-				g3_s = -(7*ftau_cld*(cosb**3)).T
+				g1_s = (3*ftau_cld*(f*g_forward + (1-f)*g_back)).T 
+				g2_s = (5*ftau_cld*(f*g_forward**2 + (1-f)*g_back**2)).T + 0.5*ftau_ray.T 
+				g3_s = (7*ftau_cld*(f*g_forward**3 + (1-f)*g_back**3)).T
 
 				#g0_m = g0_s
 				#g1_m = g1_s
 				#g2_m = g2_s
 				#g3_m = g3_s
 				g0_m = np.ones((nwno, nlayer))
-				g1_m = -3*(ftau_cld*cosb).T
+				g1_m = 3*(ftau_cld*cosb).T
 				g2_m = 5*(ftau_cld*cosb**2).T + 0.5*ftau_ray.T
-				g3_m = -7*(ftau_cld*cosb**3).T
+				g3_m = 7*(ftau_cld*cosb**3).T
 
-				p_single=(ftau_cld*(1-cosb_og**2)
-							/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+				p_single=(ftau_cld*(f * (1-g_forward**2)
+							/sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
+							#second term of TTHG: backward scattering
+							+(1-f)*(1-g_back**2)
+							/sqrt((1+g_back**2+2*g_back*cos_theta)**3))+
 								#rayleigh phase function
-								+ ftau_ray*(0.75*(1+cos_theta**2.0)))
+								ftau_ray*(0.75*(1+cos_theta**2.0)))
 			
 			w_single = [g0_s, g1_s, g2_s, g3_s]
 			w_multi = [g0_m, g1_m, g2_m, g3_m]
