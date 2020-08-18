@@ -1082,12 +1082,6 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 								+(1-f)*(1-g_back**2)
 								/sqrt((1+g_back**2+2*g_back*cos_theta)**3))
 				
-				#p_single_=(f * (1-g_forward**2)
-				#				/sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
-				#				#second term of TTHG: backward scattering
-				#				+(1-f)*(1-g_back**2)
-				#				/sqrt((1+g_back**2-2*g_back*cos_theta)**3))
-				#import IPython; IPython.embed()
 			elif single_phase==3:#'TTHG_ray':
 				#Phase function for single scattering albedo frum Solar beam
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
