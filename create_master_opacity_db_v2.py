@@ -1,0 +1,66 @@
+import picaso.opacity_factory as opa_fac
+import time
+import os
+import numpy as np
+import sys 
+
+#Define wavelength region you want 
+
+min_wavelength = 0.3#0.3#0.3 #micron 
+max_wavelength = 50.0#30#30 #micron
+
+#Define resolution. NOTE!!!! This should be ~100x greater than the final planet 
+#spectrum you want. For example, for HST data (R=100) you would want R~10,000 models.
+
+#if new_R is set to None it will create a grid with the same grid spacing as the original 1060 grid
+new_R = 10000#None#10000 
+
+#this is the directory where the original LBL opacities are. 
+
+og_directory ='/Volumes/ExoBook/'
+#og_directory ='/home/ehsan/picaso/reference/opacities_Richard/'
+#og_directory="/Volumes/ExoBook/Freedman/"
+# "e-","H2","H","H+","H-","H2-","H2+","H3+","He","Fe","Li","graphite","lithium",
+# "N2"
+
+#data_labels1=["H2O","CO","CO2","CH4","NH3"]
+#data_labels2=["TiO","VO","FeH","CrH","MgH",'H2S','PH3',"SiO","HCN","C2H2","C2H4","C2H6","OCS"]
+data_labels3=["Na",'K','Cs','Rb'] #missing Fe
+data_labels4=["LiCl"] #missing Li, "Li(g)","LiOH","LiH","LiF"
+#data_labels3=['Rb'] #missing Fe
+molecules=["CaH","Na"]#data_labels4#+data_labels4#+data_labels3+data_labels4
+#molecules=data_labels3
+
+
+#new_db='/Users/egharibn/picaso/reference/opacities/new_opacities/LiProject_All__ON_LiCl__OFF_Fe_Li_LiF_LiH_LiOH__R1E5.db'
+new_db='/Users/egharibn/picaso/reference/opacities/new_opacities/Na_CaH_1E4.db'
+
+original_continuum = '/Users/egharibn/picaso/reference/opacities/CIA_DS_aug_2015.dat'
+#CIA=np.fromfile(original_continuum);print(CIA);sys.exit()
+
+#hack locations
+dir_kark = '/Users/egharibn/picaso/reference/opacities/KarkCH4TempDependent.csv'
+dir_o3 = '/Users/egharibn/picaso/reference/opacities/O3_visible.txt'
+
+#two extra files for karkoshka methane and optical ozone. This is 
+#just the directory of where they are located 
+
+#print ("test path:",os.getenv('picaso_refdata'))
+opa_fac.build_skeleton(new_db)
+
+
+for molecule in molecules:
+	start_time = time.time()
+	print('Inserting: '+molecule)
+	new_waveno_grid = opa_fac.resample_and_insert_molecular_v3(molecule, min_wavelength, max_wavelength, new_R, 
+        	og_directory, new_db,
+                dir_kark_ch4=dir_kark, dir_optical_o3=dir_o3) #these two parameters are used to hack in extra cross sections into the db 
+	print(molecule+ ' inserts finished in :' +str((time.time() - start_time)/60.0)[0:3]+' minutes')
+
+
+start_time = time.time()
+#new_waveno_grid = opa_fac.get_molecular(new_db,['H2O'],[500],[1])['wavenumber']
+opa_fac.restruct_continuum(original_continuum,['wno','H2H2','H2He','H2H','H2CH4','H2N2']
+                               ,new_waveno_grid, overwrite=False,
+                               new_db = new_db)
+print('Continuum inserts finished in :' +str((time.time() - start_time)/60.0)[0:3]+' minutes')

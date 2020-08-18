@@ -1,0 +1,42 @@
+Instruction to use PICASO:
+
+* Install Picaso
+   I did the following steps in order to install and run Picaso code on my Mac 
+
+  1. Cloning Picaso repo:
+   If you want to get a copy of an existing Git repository — for example, a project you’d like to contribute to — 
+   the command you need is git clone. You clone a repository with git clone <url>.
+   *git clone https://github.com/natashabatalha/picaso*
+   
+  2. cd picaso
+
+  3. Install conda
+
+  4. Python Enviroment
+     *Creat Evviroment:* conda create --name your_env_name python=3.7 -y
+     *Activate Enviroment:* conda activate your_env_name
+     *Check all Enviroments:* conda env list
+     *Viewing a list of the packages in an environment:* conda list -n myenv
+     *To see if a specific package is installed in an environment:* conda list -n myenv scipy:
+
+ 5. python setup.py install
+   4. vi ~/.bash_profle
+   5. export picaso_refdata="/path/to/picaso/reference/"
+   6. 
+
+
+** Macbook info
+   MacBook Pro (15-inch, 2019), 2.3 GHz 8-Core Intel Core i9, 32 GB 2400 MHz DDR4, Intel UHD Graphics 630 1536 MB
+   
+
+* Create Python Enviroment
+   1. source ~/.bash_profile
+   2. conda activate picaso
+   3. Jupyter-lab
+   4. To create your own environment with a specific name and python package:
+       conda create --name your_env_name python=3.7 -y
+
+
+* Generate Opacity.db
+
+* Make Thermal Flux

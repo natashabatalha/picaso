@@ -1,0 +1,1 @@
+"e-},\ce{H2},\ce{H},\ce{H+},\ce{H-},\ce{H2-},\ce{H2+},\ce{H3+},\ce{He},\ce{H2O},\ce{CH4},\ce{CO},\ce{NH3},\ce{N2},\ce{PH3},\ce{H2S},\ce{TiO},\ce{VO},\ce{Fe},\ce{FeH},\ce{CrH},\ce{Na},\ce{K},\ce{Rb},\ce{Cs},\ce{CO2},\ce{HCN},\ce{C2H2},\ce{C2H4},\ce{C2H6},\ce{SiO},\ce{MgH},\ce{OCS},\ce{Li},\ce{LiOH},\ce{LiH},\ce{LiCl},\ce{graphite},\ce{lithium"
