@@ -1089,9 +1089,6 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 				#				/sqrt((1+g_back**2-2*g_back*cos_theta)**3))
 				#import IPython; IPython.embed()
 			elif single_phase==3:#'TTHG_ray':
-				g_forward = cosb
-				g_back = 0.
-				f = 1.
 				#Phase function for single scattering albedo frum Solar beam
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
 					  		#first term of TTHG: forward scattering
@@ -2224,55 +2221,30 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 					  #first term of TTHG: forward scattering
 				g0_s = np.ones((nwno, nlayer))
 				g1_s = 3*(f*g_forward + (1-f)*g_back).T
-				#g2 = gcos2.T
 				g2_s = 5*(f*g_forward**2 + (1-f)*g_back**2).T
-				#g3 = gcos2.T/10 # moments of phase function ** need to define 4th moment
 				g3_s = 7*(f*g_forward**3 + (1-f)*g_back**3).T
 
-				#g0_m = g0_s
-				#g1_m = g1_s
-				#g2_m = g2_s
-				#g3_m = g3_s
 				g0_m = np.ones((nwno, nlayer))
 				g1_m = 3*cosb.T
 				g2_m = 5*(cosb**2).T
 				g3_m = 7*(cosb**3).T
 
-				#g_forward = constant_forward*cosb_og
-				#g_back = constant_back*cosb_og
-				#f = frac_a + frac_b*g_back**frac_c
 
 				p_single=(f * (1-g_forward**2) /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
 								#second term of TTHG: backward scattering
 								+(1-f)*(1-g_back**2)
 								/sqrt((1+g_back**2+2*g_back*cos_theta)**3))
 
-				#print("g_back = %f, p_single = %f" %(g_back[0,0], p_single[0,0]))
-				#p_single_=(f * (1-g_forward**2)
-				#				/sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
-				#				#second term of TTHG: backward scattering
-				#				+(1-f)*(1-g_back**2)
-				#				/sqrt((1+g_back**2-2*g_back*cos_theta)**3))
-				#print("g_back = %f, p_single = %f" %(g_back[0,0], p_single_[0,0]))
-
-
 			elif single_phase==3:#'TTHG_ray':
 				#Phase function for single scattering albedo frum Solar beam
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
 					  		#first term of TTHG: forward scattering
-				g_forward = cosb
-				g_back = 0.
-				f = 1.
 
 				g0_s = (ftau_cld + ftau_ray).T
 				g1_s = (3*ftau_cld*(f*g_forward + (1-f)*g_back)).T 
 				g2_s = (5*ftau_cld*(f*g_forward**2 + (1-f)*g_back**2)).T + 0.5*ftau_ray.T 
 				g3_s = (7*ftau_cld*(f*g_forward**3 + (1-f)*g_back**3)).T
 
-				#g0_m = g0_s
-				#g1_m = g1_s
-				#g2_m = g2_s
-				#g3_m = g3_s
 				g0_m = np.ones((nwno, nlayer))
 				g1_m = 3*(ftau_cld*cosb).T
 				g2_m = 5*(ftau_cld*cosb**2).T + 0.5*ftau_ray.T
