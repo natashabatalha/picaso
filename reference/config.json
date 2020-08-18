@@ -46,7 +46,7 @@
 	"opacities":{
 		"wnogrid":null,
 		"files":{
-			"opacity":"opacity.db",
+			"opacity":"opacities.db",
 			"continuum":"continuum.json",
 			"molecular":"molecular.json",
 			"h2minus":"h2minus.csv",
