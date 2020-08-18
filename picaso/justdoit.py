@@ -818,7 +818,7 @@ class inputs():
 
         self.inputs['atmosphere']['profile'] = ptchem.loc[:,['pressure','temperature']]
         if chem == 'high':
-            self.channon_grid_high(filename=os.path.join(__refdata__, 'chemistry','ChannonGrid.csv'))
+            self.channon_grid_high(filename=os.path.join(__refdata__, 'chemistry','grid75_feh+000_co_100_highP.txt'))
         elif chem == 'low':
             self.channon_grid_low(filename=os.path.join(__refdata__,'chemistry','visscher_abunds_m+0.0_co1.0' ))
         self.inputs['atmosphere']['sonora_filename'] = build_filename
@@ -865,7 +865,7 @@ class inputs():
         self.inputs['atmosphere']['profile'] = df
         return 
 
-    def channon_grid_high(self,filename=os.path.join(__refdata__,'chemistry','ChannonGrid.csv')):
+    def channon_grid_high(self,filename=os.path.join(__refdata__,'chemistry','grid75_feh+000_co_100_highP.txt')):
         #df = self.inputs['atmosphere']['profile']
         df = self.inputs['atmosphere']['profile']
         self.nlevel = df.shape[0]
