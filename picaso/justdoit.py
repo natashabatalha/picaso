@@ -1,5 +1,5 @@
 from .atmsetup import ATMSETUP
-from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_new
+from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_new, get_transit_1d
 from .wavelength import get_cld_input_grid
 from .opacity_factory import create_grid
 from .optics import RetrieveOpacities,compute_opacity
@@ -118,6 +118,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     ################ From here on out is everything that would go through retrieval or 3d input##############
     atm.planet.gravity = inputs['planet']['gravity']
     atm.planet.radius = inputs['planet']['radius']
+    atm.planet.mass = inputs['planet']['mass']
 
     if dimension == '1d':
         atm.get_profile()
@@ -191,7 +192,14 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             #if full output is requested add in flux at top for 3d plots
             if full_output: 
                 atm.flux_at_top = flux_at_top
-            
+        
+        if 'transmission' in calculation:
+            p_reference = 1.1 * atm.c.pconv
+            rprs2 = get_transit_1d(nlevel, nwno, atm.planet.radius, atm.planet.gravity, 
+                                  radius_star, atm.planet.mass, atm.layer['mmw'], 
+                                  atm.c.k_b, atm.c.G, p_reference, atm.level['pressure'], 
+                                  atm.level['temperature'], atm.layer['pressure'],
+                                  atm.layer['temperature'], atm.layer['colden'],DTAU_OG)
     elif dimension == '3d':
 
         #setup zero array to fill with opacities
@@ -295,6 +303,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     returns = {}
     returns['wavenumber'] = wno
     #returns['flux'] = flux
+    if 'transmission' in calculation: 
+        returns['transit_depth'] = rprs2
 
 
     #for reflected light use compress_disco routine
@@ -586,6 +596,8 @@ class inputs():
             self.inputs['planet']['gravity_unit'] = 'cm/(s**2)'
             self.inputs['planet']['radius'] = np.nan
             self.inputs['planet']['radius_unit'] = 'Radius not specified'
+            self.inputs['planet']['mass'] = np.nan
+            self.inputs['planet']['mass_unit'] = 'Mass not specified'
         else: 
             raise Exception('Need to specify gravity or radius and mass + additional units')
 
@@ -826,7 +838,7 @@ class inputs():
 
         self.inputs['atmosphere']['profile'] = ptchem.loc[:,['pressure','temperature']]
         if chem == 'high':
-            self.channon_grid_high(filename=os.path.join(__refdata__, 'chemistry','ChannonGrid.csv'))
+            self.channon_grid_high(filename=os.path.join(__refdata__, 'chemistry','grid75_feh+000_co_100_highP.txt'))
         elif chem == 'low':
             self.channon_grid_low(filename=os.path.join(__refdata__,'chemistry','visscher_abunds_m+0.0_co1.0' ))
         self.inputs['atmosphere']['sonora_filename'] = build_filename
@@ -1542,6 +1554,38 @@ class inputs():
             
         return picaso(self, opacityclass,dimension=dimension,calculation=calculation,
             full_output=full_output, plot_opacity=plot_opacity, as_dict=as_dict)
+
+def get_targets():
+    """Function to grab available targets
+
+    Returns
+    -------
+    Dataframe from Exoplanet Archive
+    """
+    default_query = "https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=exoplanets&format=csv"
+    all_planets =  requests.get(default_query)  
+    all_planets = all_planets.text.replace(' ','').split('\n')
+
+    # default data doesn't come with all the parameters we need so let's 
+    # add those in 
+    add_few_elements = '&select='+all_planets[0]+','.join(
+        [',pl_trandur','pl_eqt','st_logg','st_metfe','st_j','st_h','st_k&'])
+
+    # use requests to grab the csv formatted data and split by the commas 
+    all_planets =  requests.get(default_query.split('&')[0] 
+                                + add_few_elements + default_query.split('&')[1] )  
+    all_planets = all_planets.text.replace(' ','').split('\n')
+
+    # get into useful pandas dataframe format
+    planets_df = pd.DataFrame(columns=all_planets[0].split(','), 
+                             data = [i.split(',') for i in all_planets[1:-1]])
+    planets_df = planets_df.replace(to_replace='', value=np.nan)
+
+    # convert to float when possible
+    for i in planets_df.columns: 
+        planets_df[i] = planets_df[i].astype(float,errors='ignore') 
+
+    return planets_df
 
 def load_planet(df, opacity, phase_angle = 0, stellar_db='phoenix', verbose=False,  **planet_kwargs):
     """

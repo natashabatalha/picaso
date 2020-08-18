@@ -293,7 +293,7 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
     COSB = ftau_cld*asym_factor_cld
 
     #formerly GCOSB2 
-    ftau_ray = TAURAY/(TAURAY + TAUCLD)
+    ftau_ray = TAURAY/(TAURAY + single_scattering_cld * TAUCLD)
     GCOS2 = 0.5*ftau_ray #Hansen & Travis 1974 for Rayleigh scattering 
 
     #Raman correction is usually used for reflected light calculations 

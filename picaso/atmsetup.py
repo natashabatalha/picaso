@@ -504,6 +504,8 @@ class ATMSETUP():
 		df['layer']['pressure'] = self.layer['pressure']/ self.c.pconv #bars
 		df['layer']['mixingratios'] = self.layer['mixingratios']
 		df['layer']['temperature'] = self.layer['temperature']
+		df['layer']['column_density'] = self.layer['colden']
+		df['layer']['mmw'] = self.layer['mmw']
 		df['wavenumber'] = self.wavenumber
 		df['wavenumber_unit'] = 'cm-1'
 

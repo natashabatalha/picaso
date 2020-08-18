@@ -32,6 +32,7 @@ def compute_disco(ng, nt, gangle, tangle, phase_angle):
     cos_theta 
         Cosine of the phase angle 
     """
+    #this theta is defined from the frame of the downward propagating beam
     cos_theta = cos(phase_angle)
     longitude = arcsin((gangle-(cos_theta-1.0)/(cos_theta+1.0))/(2.0/(cos_theta+1)))
     colatitude = arccos(tangle)#colatitude = 90-latitude 
