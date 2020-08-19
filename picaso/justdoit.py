@@ -70,9 +70,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     single_phase = inputs['approx']['single_phase']
     multi_phase = inputs['approx']['multi_phase']
     raman_approx =inputs['approx']['raman']
-    tridiagonal = 0 #pentadiagonal is not yet fully functional 
-    nstream = 2 #number of streams (2 or 4)
-    
+    method = inputs['approx']['method']
+    stream = inputs['approx']['stream']
+    print_time = inputs['approx']['print_time']
+
     #parameters needed for the two term hg phase function. 
     #Defaults are set in config.json
     f = inputs['approx']['TTHG_params']['fraction']
@@ -105,7 +106,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
     #set star parameters
     radius_star = inputs['star']['radius']
-    F0PI = np.zeros(nwno) + 1.0 
+    F0PI = np.zeros(nwno) + 1.
     #semi major axis
     sa = inputs['star']['semi_major']
 
@@ -156,24 +157,43 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         #We use HG function for single scattering which gets the forward scattering/back scattering peaks 
         #well. We only really want to use delta-edd for multi scattering legendre polynomials. 
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman= compute_opacity(
-            atm, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
+            atm, opacityclass, stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
             full_output=full_output, plot_opacity=plot_opacity)
 
         if  'reflected' in calculation:
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-            #if '4stream' in approximation:
-            #    (xint_at_top, flux)= get_reflected_new(nlevel, nwno, ng, nt, 
-            #                                DTAU, TAU, W0, COSB, GCOS2, 
-            #                                DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
-            #                                atm.surf_reflect, ubar0, ubar1, F0PI, dimension, stream)
-
-            #else:
-            xint_at_top = get_reflected_1d(nlevel, wno,nwno,ng,nt,
+            nlevel = atm.c.nlevel
+            #nwno = 100
+            wno = wno[0:nwno]
+            TAU = TAU[0:nlevel,0:nwno]
+            DTAU = DTAU[0:nlevel-1,0:nwno]
+            W0 = W0[0:nlevel-1,0:nwno]
+            COSB = COSB[0:nlevel-1,0:nwno]
+            GCOS2 = GCOS2[0:nlevel-1,0:nwno]
+            ftau_cld = ftau_cld[0:nlevel-1,0:nwno]
+            ftau_ray = ftau_ray[0:nlevel-1,0:nwno]
+            TAU_OG = TAU_OG[0:nlevel-1,0:nwno]
+            DTAU_OG = DTAU_OG[0:nlevel-1,0:nwno]
+            W0_OG = W0_OG[0:nlevel-1,0:nwno]
+            COSB_OG = COSB_OG[0:nlevel-1,0:nwno]
+            F0PI = F0PI[0:nwno]
+            if method == 'SH':
+                xint_at_top = get_reflected_new(nlevel, nwno, ng, nt, 
+                                            DTAU, TAU, W0, COSB, GCOS2, ftau_cld, ftau_ray,
+                                            DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
+                                            atm.surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
+                                            single_phase, multi_phase, 
+	                                    frac_a, frac_b, frac_c, constant_back, constant_forward, 
+                                            dimension, stream, print_time)
+                #import IPython; IPython.embed()
+                #import sys; sys.exit()
+            else:
+                xint_at_top = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                                     DTAU, TAU, W0, COSB,GCOS2,ftau_cld,ftau_ray,
                                                     DTAU_OG, TAU_OG, W0_OG, COSB_OG ,
                                                     atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
                                                     single_phase,multi_phase,
-                                                    frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)
+                                                    frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal, print_time)
 
             #if full output is requested add in xint at top for 3d plots
             if full_output: 
@@ -1472,7 +1492,7 @@ class inputs():
 
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='pollack',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
-        p_reference=1):
+        p_reference=1,method='Toon', stream=2, print_time=False):
         """
         This function sets all the default approximations in the code. It transforms the string specificatons
         into a number so that they can be used in numba nopython routines. 
@@ -1500,13 +1520,20 @@ class inputs():
             Reference pressure (bars) This is an arbitrary pressure that 
             corresponds do the user's input of radius. Usually something "at depth"
             around 1-10 bars. 
+        method : str
+            Toon ('Toon') or spherical harmonics ('SH'). 
+        stream : int 
+            Two stream or four stream (options are 2 or 4). For 4 stream need to set method='SH'
         """
 
         self.inputs['approx']['single_phase'] = single_phase_options(printout=False).index(single_phase)
         self.inputs['approx']['multi_phase'] = multi_phase_options(printout=False).index(multi_phase)
         self.inputs['approx']['delta_eddington'] = delta_eddington
         self.inputs['approx']['raman'] =  raman_options().index(raman)
-
+        self.inputs['approx']['method'] = method
+        self.inputs['approx']['stream'] = stream
+        self.inputs['approx']['print_time'] = print_time
+ 
         if isinstance(tthg_frac, (list, np.ndarray)):
             if len(tthg_frac) == 3:
                 self.inputs['approx']['TTHG_params']['fraction'] = tthg_frac
@@ -1768,6 +1795,7 @@ def raman_options():
     return ["oklopcic","pollack","none"]
 
 
+
 def all_planets():
     """
     Load all planets from https://exoplanetarchive.ipac.caltech.edu
@@ -1798,3 +1826,13 @@ def all_planets():
         planets_df[i] = planets_df[i].astype(float,errors='ignore')
 
     return planets_df
+
+def methodology_options(printout=True):
+    """Retrieve all the options for methodology"""
+    if printout: print("Can calculate spectrum using Toon 1989 methodology or sperhical harmonics")
+    return ['Toon','SH']
+def stream_options(printout=True):
+    """Retrieve all the options for stream"""
+    if printout: print("Can use 2-stream or 4-stream sperhical harmonics")
+    return [2,4]
+

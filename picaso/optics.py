@@ -12,7 +12,7 @@ import sqlite3
 import math
 
 #@jit(nopython=True)
-def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=False,raman=0, plot_opacity=False,
+def compute_opacity(atmosphere, opacityclass, stream, delta_eddington=True,test_mode=False,raman=0, plot_opacity=False,
     full_output=False):
     """
     Returns total optical depth per slab layer including molecular opacity, continuum opacity. 
@@ -320,13 +320,16 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
             #https://www.sciencedirect.com/science/article/pii/0019103574901675?via%3Dihub
             if test_mode=='rayleigh':
                 DTAU = TAURAY 
-                GCOS2 = 0.5
-                ftau_ray = 1.0
-                ftau_cld = 1e-6
+                #GCOS2 = 0.5
+                GCOS2 = np.zeros(DTAU.shape) + 0.5
+                #ftau_ray = 1.0
+                ftau_ray = np.zeros(DTAU.shape) + 1.0
+                #ftau_cld = 1e-6
+                ftau_cld = np.zeros(DTAU.shape) #+ 1e-6
             else: 
                 DTAU = atm.layer['cloud']['opd']#TAURAY*0+0.05
                 GCOS2 = np.zeros(DTAU.shape)#0.0
-                ftau_ray = np.zeros(DTAU.shape)+1e-6
+                ftau_ray = np.zeros(DTAU.shape)#+1e-6
                 ftau_cld = np.zeros(DTAU.shape)+1            
             COSB = atm.layer['cloud']['g0']
             W0 = atm.layer['cloud']['w0']
@@ -346,9 +349,10 @@ def compute_opacity(atmosphere, opacityclass, delta_eddington=True,test_mode=Fal
 
         #also see these lecture notes are pretty good
         #http://irina.eas.gatech.edu/EAS8803_SPRING2012/Lec20.pdf
-        w0_dedd=W0*(1.-COSB**2)/(1.0-W0*COSB**2)
+        w0_dedd=W0*(1.-COSB**stream)/(1.0-W0*COSB**stream)
         cosb_dedd=COSB/(1.+COSB)
-        dtau_dedd=DTAU*(1.-W0*COSB**2) 
+        dtau_dedd=DTAU*(1.-W0*COSB**stream) 
+        import IPython; IPython.embed()
 
         #sum up taus starting at the top, going to depth
         tau_dedd = np.zeros((shape[0]+1, shape[1]))
