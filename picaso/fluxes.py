@@ -933,8 +933,8 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
     #terms not dependent on incident angle
     sq3 = sqrt(3.)
-    g1  = (7-w0*(4+3*cosb))/4 #(sq3*0.5)*(2. - w0*(1.+cosb))    #table 1
-    g2  = -(1-w0*(4-3*cosb))/4 #(sq3*w0*0.5)*(1.-cosb)      #table 1
+    g1  = (sq3*0.5)*(2. - w0*(1.+cosb)) #table 1 # (7-w0*(4+3*cosb))/4 #
+    g2  = (sq3*w0*0.5)*(1.-cosb)        #table 1 # -(1-w0*(4-3*cosb))/4 #
     lamda = sqrt(g1**2 - g2**2)         #eqn 21
     gama  = (g1-lamda)/g2               #eqn 22
 
@@ -942,7 +942,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
     for ng in range(numg):
         for nt in range(numt):
 
-            g3  = (2-3*cosb*ubar0[ng,nt])/4#0.5*(1.-sq3*cosb*ubar0[ng, nt])   #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
+            g3  = 0.5*(1.-sq3*cosb*ubar0[ng, nt]) #(2-3*cosb*ubar0[ng,nt])/4#  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
     
             # now calculate c_plus and c_minus (equation 23 and 24 toon)
             g4 = 1.0 - g3
@@ -973,6 +973,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
             #boundary conditions 
             b_top = 0.0                                       
+
             b_surface = 0. + surf_reflect*ubar0[ng, nt]*F0PI*exp(-tau[-1, :]/ubar0[ng, nt])
 
             #Now we need the terms for the tridiagonal rotated layered method
@@ -981,6 +982,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                                     c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
                                      gama, dtau, 
                                     exptrm_positive,  exptrm_minus) 
+
             #else:
             #   A_, B_, C_, D_, E_, F_ = setup_pent_diag(nlayer,nwno,  c_plus_up, c_minus_up, 
             #                       c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
@@ -998,6 +1000,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                     #unmix the coefficients
                     positive[:,w] = X[::2] + X[1::2] 
                     negative[:,w] = X[::2] - X[1::2]
+
                 #else: 
                 #   X = pent_diag_solve(L, A_[:,w], B_[:,w], C_[:,w], D_[:,w], E_[:,w], F_[:,w])
                     #unmix the coefficients
