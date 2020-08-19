@@ -1550,53 +1550,88 @@ def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel_3d, dtau_3d, w0_3d,cosb_3d
 
     return flux_at_top #, flux_down# numg x numt x nwno
 
-def get_transit_1d(nlevel, nwno, radius, gravity, 
-                                  rstar, mass, mmw, 
-                                  k_b, G, p_reference, plevel, 
-                                  tlevel, player,
-                                  tlayer, colden,dtau):
+def get_transit_1d(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
+                    player, tlayer, colden, DTAU):
+    """
+    Routine to get the transmission spectrum 
 
-    z = zeros(nlevel) 
-    dz = zeros(nlevel) 
-    for i in where(plevel>p_reference)[0]-1:
-        g = G * mass / (radius + z[i] )**2
-        scale_h = k_b * tlevel[i] / (mmw[i] * g)
-        dz[i] = scale_h*(log(plevel[i+1]/ plevel[i]))
-        z[i+1] = z[i] - dz[i]
+    Parameters
+    ----------
+    z : float, array
+        Altitude in decreasing order (cm)
+    dz : float, array 
+        length of each atmospheric layer 
+    nlevel : int 
+        Number of levels 
+    nwno : int
+        Number of wavelength points 
+    rstar : float 
+        Radius of star (cm)
+    mmw : float, array
+        Mean molecular weight 
+    k_b : float 
+        Boltzman constant cgs 
+    amu : float 
+        Atomic mass units cgs 
+    player : float, array
+        Pressure at layers (dyn/cm2)
+    tlayer : float, array 
+        Temperature at layers (K)
+    colden : float, array
+        Column density conputed in atmsetup.get_column_density()
+    DTAU : float, array
+        Matrix of summed tau opacities from optics. This is 
+        TAUGAS + TAURAY + TAUCLD
 
-    for i in where(plevel<=p_reference)[0][::-1][:-1]:
-        g = G * mass / (radius + z[i] )**2
-        scale_h = k_b * tlevel[i] / (mmw[i] * g)
-        dz[i] = scale_h*(log(plevel[i+1]/ plevel[i]))
-        z[i-1] = z[i] + dz[i]
-      
-    dlarr=zeros((nlevel,nlevel))
-    uarr=zeros((nlevel,nlevel))
+    Returns
+    -------
+    array 
+        Rp**2 /Rs**2 as a function of wavelength 
+    """
+    mmw = mmw * amu #make sure mmw in grams
+
+    delta_length=zeros((nlevel,nlevel))
 
     for i in range(nlevel):
         for j in range(i):
-            index=i-j-1
-            r1=radius+z[i]
-            r2=radius+z[i-j]
-            r3=radius+z[index]
-            dlarr[i,j]=(r3**2-r1**2)**0.5-(r2**2-r1**2)**0.5
-            uarr[i,j]=dlarr[i,j]*player[index]/tlayer[index]/k_b
-    taus = array([dtau[:,i]  / colden * mmw  for i in range(nwno)])
+            reference_shell = z[i]
+            inner_shell = z[i-j]
+            outer_shell = z[i-j-1]
+            #this is the path length between two layers 
+            #essentially tangent from the inner_shell and toward 
+            #line of sight to the outer shell
+            integrate_segment=((outer_shell**2-reference_shell**2)**0.5-
+                    (inner_shell**2-reference_shell**2)**0.5)
+            #make sure to use the pressure and temperature  
+            #between inner and outer shell
+            #this is the same index as outer shell because ind = 0 is the outer-
+            #most layer 
+            delta_length[i,j]=integrate_segment*player[i-j-1]/tlayer[i-j-1]/k_b
+            
+    #remove column density and mmw from DTAU which was calculated in 
+    #optics because line of site integration is diff for transit
+    TAU = array([DTAU[:,i]  / colden * mmw  for i in range(nwno)])
 
-    trans=zeros((taus.shape[0], nlevel))+1.0
+    transmitted=zeros((nwno, nlevel))+1.0
     for i in range(nlevel):
-        tautmp=0.
+        TAUALL=0.
         for j in range(i):
-            index=i-j-1
-            tautmp += 2*taus[:,index]*uarr[i,j]
-        trans[:,i]=exp(-tautmp)
+            #two because symmetry of sphere
+            TAUALL += 2*TAU[:,i-j-1]*delta_length[i,j]
+        transmitted[:,i]=exp(-TAUALL)
 
-    F=(((radius+min(z))/(rstar))**2 + 
-        2./(rstar)**2.*dot((1.-trans),(radius+z)*dz))
+    F=(((min(z))/(rstar))**2 + 
+        2./(rstar)**2.*dot((1.-transmitted),z*dz))
 
     return F
 
-### CAOIMHE ###
+
+def get_transit_3d(nlevel, nwno, radius, gravity,rstar, mass, mmw, k_b, G,amu,
+                   p_reference, plevel, tlevel, player, tlayer, colden, DTAU):
+    """
+    Routine to get the 3D transmission spectrum 
+    """
+    return 
 
 def setup_4_stream(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau, w, ubar1, P):
     """

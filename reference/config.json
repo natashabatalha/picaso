@@ -29,6 +29,7 @@
 		}
 	},
 	"approx":{
+		"p_reference":1,
 		"single_phase":3,
 		"TTHG_params":{
 			"fraction":[1,-1,2],
