@@ -352,7 +352,6 @@ def compute_opacity(atmosphere, opacityclass, stream, delta_eddington=True,test_
         w0_dedd=W0*(1.-COSB**stream)/(1.0-W0*COSB**stream)
         cosb_dedd=COSB/(1.+COSB)
         dtau_dedd=DTAU*(1.-W0*COSB**stream) 
-        import IPython; IPython.embed()
 
         #sum up taus starting at the top, going to depth
         tau_dedd = np.zeros((shape[0]+1, shape[1]))
