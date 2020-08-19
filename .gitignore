@@ -2,6 +2,7 @@
 *.html~
 *.p
 *.json~
+*.db
 
 # Jupyter Notebooks
 .ipynb_checkpoints

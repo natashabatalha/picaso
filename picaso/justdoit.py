@@ -1,5 +1,5 @@
 from .atmsetup import ATMSETUP
-from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_new
+from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_new, get_transit_1d
 from .wavelength import get_cld_input_grid
 from .opacity_factory import create_grid
 from .optics import RetrieveOpacities,compute_opacity
@@ -12,6 +12,7 @@ import scipy as sp
 from scipy import special
 from scipy.stats import binned_statistic
 
+import requests
 import os
 import pickle as pk
 import numpy as np
@@ -26,7 +27,7 @@ import math
 __refdata__ = os.environ.get('picaso_refdata')
 
 def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_output=False, 
-    plot_opacity= False, as_dict=True, tridiagonal=0):
+    plot_opacity= False, as_dict=True):
     """
     Currently top level program to run albedo code 
 
@@ -85,6 +86,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     #define delta eddington approximinations 
     delta_eddington = inputs['approx']['delta_eddington']
 
+    #pressure assumption
+    p_reference =  inputs['approx']['p_reference']
+
     ############# DEFINE ALL GEOMETRY USED IN CALCULATION #############
     #see class `inputs` attribute `phase_angle`
     
@@ -109,25 +113,22 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     #begin atm setup
     atm = ATMSETUP(inputs)
 
-
-    #surface albedo from inputs 
+    #Add inputs to class 
     atm.surf_reflect = inputs['surface_reflect']
-
     atm.wavenumber = wno
-
-    ################ From here on out is everything that would go through retrieval or 3d input##############
     atm.planet.gravity = inputs['planet']['gravity']
     atm.planet.radius = inputs['planet']['radius']
+    atm.planet.mass = inputs['planet']['mass']
 
     if dimension == '1d':
         atm.get_profile()
     elif dimension == '3d':
         atm.get_profile_3d()
 
-
     #now can get these 
     atm.get_mmw()
     atm.get_density()
+    atm.get_altitude(p_reference = p_reference)#will calculate altitude if r and m are given (opposed to just g)
     atm.get_column_density()
 
     #gets both continuum and needed rayleigh cross sections 
@@ -138,16 +139,15 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     #get cloud properties, if there are any and put it on current grid 
     atm.get_clouds(wno)
 
-
-    #determine surface reflectivity as function of wavelength (set to zero here)
-    #TODO: Should be an input
-    #atm.get_surf_reflect(nwno,albedo = surface_reflect) 
-
     #Make sure that all molecules are in opacityclass. If not, remove them and add warning
     no_opacities = [i for i in atm.molecules if i not in opacityclass.molecules]
     atm.add_warnings('No computed opacities for: '+','.join(no_opacities))
     atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
+
+    nlevel = atm.c.nlevel
+    nlayer = atm.c.nlayer
     
+
     if dimension == '1d':
         #lastly grab needed opacities for the problem
         opacityclass.get_opacities(atm)
@@ -159,6 +159,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman= compute_opacity(
             atm, opacityclass, stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
             full_output=full_output, plot_opacity=plot_opacity)
+
         if  'reflected' in calculation:
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
             nlevel = atm.c.nlevel
@@ -204,43 +205,48 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
             #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
             #the uncorrected raman single scattering 
-            flux_at_top  = get_thermal_1d(atm.c.nlevel, wno,nwno,ng,nt,atm.level['temperature'],
+            flux_at_top  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
                                                     DTAU_OG, W0_no_raman, COSB_OG, atm.level['pressure'],ubar1,
-                                                    atm.surf_reflect)
+                                                    atm.surf_reflect, tridiagonal)
 
             #if full output is requested add in flux at top for 3d plots
             if full_output: 
                 atm.flux_at_top = flux_at_top
-            
+        
+        if 'transmission' in calculation:
+            rprs2 = get_transit_1d(atm.level['z'],atm.level['dz'],
+                                  nlevel, nwno, radius_star, atm.layer['mmw'], 
+                                  atm.c.k_b, atm.c.amu, atm.level['pressure'], 
+                                  atm.level['temperature'], atm.layer['colden'],DTAU_OG)
     elif dimension == '3d':
 
         #setup zero array to fill with opacities
-        TAU_3d = np.zeros((atm.c.nlevel, nwno, ng, nt))
-        DTAU_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
-        W0_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
-        COSB_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
-        GCOS2_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
-        FTAU_CLD_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
-        FTAU_RAY_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
+        TAU_3d = np.zeros((nlevel, nwno, ng, nt))
+        DTAU_3d = np.zeros((nlayer, nwno, ng, nt))
+        W0_3d = np.zeros((nlayer, nwno, ng, nt))
+        COSB_3d = np.zeros((nlayer, nwno, ng, nt))
+        GCOS2_3d = np.zeros((nlayer, nwno, ng, nt))
+        FTAU_CLD_3d = np.zeros((nlayer, nwno, ng, nt))
+        FTAU_RAY_3d = np.zeros((nlayer, nwno, ng, nt))
 
         #these are the unchanged values from delta-eddington
-        TAU_OG_3d = np.zeros((atm.c.nlevel, nwno, ng, nt))
-        DTAU_OG_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
-        W0_OG_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
-        COSB_OG_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
+        TAU_OG_3d = np.zeros((nlevel, nwno, ng, nt))
+        DTAU_OG_3d = np.zeros((nlayer, nwno, ng, nt))
+        W0_OG_3d = np.zeros((nlayer, nwno, ng, nt))
+        COSB_OG_3d = np.zeros((nlayer, nwno, ng, nt))
         #this is the single scattering without the raman correction 
         #used for the thermal caclulation
-        W0_no_raman_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
+        W0_no_raman_3d = np.zeros((nlayer, nwno, ng, nt))
 
         #pressure and temperature 
-        TLEVEL_3d = np.zeros((atm.c.nlevel, ng, nt))
-        PLEVEL_3d = np.zeros((atm.c.nlevel, ng, nt))
+        TLEVEL_3d = np.zeros((nlevel, ng, nt))
+        PLEVEL_3d = np.zeros((nlevel, ng, nt))
 
         #if users want to retain all the individual opacity info they can here 
         if full_output:
-            TAUGAS_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
-            TAUCLD_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))
-            TAURAY_3d = np.zeros((atm.c.nlayer, nwno, ng, nt))  
+            TAUGAS_3d = np.zeros((nlayer, nwno, ng, nt))
+            TAUCLD_3d = np.zeros((nlayer, nwno, ng, nt))
+            TAURAY_3d = np.zeros((nlayer, nwno, ng, nt))  
 
         #get opacities at each facet
         for g in range(ng):
@@ -287,12 +293,12 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
         if  'reflected' in calculation:
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-            xint_at_top  = get_reflected_3d(atm.c.nlevel, wno,nwno,ng,nt,
+            xint_at_top  = get_reflected_3d(nlevel, wno,nwno,ng,nt,
                                             DTAU_3d, TAU_3d, W0_3d, COSB_3d,GCOS2_3d, FTAU_CLD_3d,FTAU_RAY_3d,
                                             DTAU_OG_3d, TAU_OG_3d, W0_OG_3d, COSB_OG_3d,
                                             atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
                                             single_phase,multi_phase,
-                                            frac_a,frac_b,frac_c,constant_back,constant_forward)
+                                            frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)
             #if full output is requested add in xint at top for 3d plots
             if full_output: 
                 atm.xint_at_top = xint_at_top
@@ -301,8 +307,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
             #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
             #the uncorrected raman single scattering 
-            flux_at_top  = get_thermal_3d(atm.c.nlevel, wno,nwno,ng,nt,TLEVEL_3d,
-                                                    DTAU_OG_3d, W0_no_raman_3d, COSB_OG_3d, PLEVEL_3d,ubar1)
+            flux_at_top  = get_thermal_3d(nlevel, wno,nwno,ng,nt,TLEVEL_3d,
+                                                    DTAU_OG_3d, W0_no_raman_3d, COSB_OG_3d, PLEVEL_3d,ubar1, tridiagonal)
 
             #if full output is requested add in flux at top for 3d plots
             if full_output: 
@@ -315,6 +321,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     returns = {}
     returns['wavenumber'] = wno
     #returns['flux'] = flux
+    if 'transmission' in calculation: 
+        returns['transit_depth'] = rprs2
 
 
     #for reflected light use compress_disco routine
@@ -380,7 +388,15 @@ def opannection(wave_range = None, filename_db = None, raman_db = None, resample
 
     inputs = json.load(open(os.path.join(__refdata__,'config.json')))
 
-    if isinstance(filename_db,type(None) ): filename_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['opacity'])
+    if isinstance(filename_db,type(None) ): 
+        filename_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['opacity'])
+        if not os.path.isfile(filename_db):
+            raise Exception('The opacity file does not exist: '  + filename_db+' The default is to a file opacities.db in reference/opacity/. If you have an older version of PICASO your file might be called opacity.db. Consider just adding the correct path to filename_db=')
+    elif not isinstance(filename_db,type(None) ): 
+        if not os.path.isfile(filename_db):
+            raise Exception('The opacity file youve entered does not exist: '  + filename_db)
+
+           
     if isinstance(raman_db,type(None) ): raman_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['raman'])
 
     if resample != 1:
@@ -598,6 +614,8 @@ class inputs():
             self.inputs['planet']['gravity_unit'] = 'cm/(s**2)'
             self.inputs['planet']['radius'] = np.nan
             self.inputs['planet']['radius_unit'] = 'Radius not specified'
+            self.inputs['planet']['mass'] = np.nan
+            self.inputs['planet']['mass_unit'] = 'Mass not specified'
         else: 
             raise Exception('Need to specify gravity or radius and mass + additional units')
 
@@ -838,7 +856,7 @@ class inputs():
 
         self.inputs['atmosphere']['profile'] = ptchem.loc[:,['pressure','temperature']]
         if chem == 'high':
-            self.channon_grid_high(filename=os.path.join(__refdata__, 'chemistry','ChannonGrid.csv'))
+            self.channon_grid_high(filename=os.path.join(__refdata__, 'chemistry','grid75_feh+000_co_100_highP.txt'))
         elif chem == 'low':
             self.channon_grid_low(filename=os.path.join(__refdata__,'chemistry','visscher_abunds_m+0.0_co1.0' ))
         self.inputs['atmosphere']['sonora_filename'] = build_filename
@@ -885,7 +903,8 @@ class inputs():
         self.inputs['atmosphere']['profile'] = df
         return 
 
-    def channon_grid_high(self,filename=os.path.join(__refdata__,'chemistry','ChannonGrid.csv')):
+    def channon_grid_high(self,filename=None):
+        if isinstance(filename, type(None)):filename=os.path.join(__refdata__,'chemistry','grid75_feh+000_co_100_highP.txt')
         #df = self.inputs['atmosphere']['profile']
         df = self.inputs['atmosphere']['profile']
         self.nlevel = df.shape[0]
@@ -921,10 +940,11 @@ class inputs():
         
         self.inputs['atmosphere']['profile'] = df
 
-    def channon_grid_low(self, filename = os.path.join(__refdata__,'chemistry','visscher_abunds_m+0.0_co1.0'), interp_window = 11, interp_poly=2):
+    def channon_grid_low(self, filename = None, interp_window = 11, interp_poly=2):
         """
         Interpolate from visscher grid
         """
+        if isinstance(filename, type(None)):filename= os.path.join(__refdata__,'chemistry','visscher_abunds_m+0.0_co1.0')
         a = pd.read_csv(filename)
         mols = list(a.loc[:, ~a.columns.isin(['Unnamed: 0','pressure','temperature'])].keys())
         #get pt from what users have already input
@@ -955,7 +975,7 @@ class inputs():
 
         self.inputs['atmosphere']['profile'] = player_tlayer
 
-    def guillot_pt(self, Teq, T_int, logg1, logKir, alpha=0.5,nlevel=61, p_bottom = 1.5, p_top = -6):
+    def guillot_pt(self, Teq, T_int=100, logg1=-1, logKir=-1.5, alpha=0.5,nlevel=61, p_bottom = 1.5, p_top = -6):
         """
         Creates temperature pressure profile given parameterization in Guillot 2010 TP profile
         called in fx()
@@ -1315,7 +1335,7 @@ class inputs():
             self.inputs['clouds']['profile'] = df
 
     def virga(self, condensates, directory,
-        fsed=1, mh=1, mmw=2.2,kz_min=1e5,full_output=False): 
+        fsed=1, mh=1, mmw=2.2,kz_min=1e5,sig=2, full_output=False): 
         """
         Runs virga cloud code based on the PT and Kzz profiles 
         that have been added to inptus class.
@@ -1333,7 +1353,7 @@ class inputs():
         """
         
         cloud_p = vj.Atmosphere(condensates,fsed=fsed,mh=mh,
-                 mmw = mmw) 
+                 mmw = mmw, sig =sig) 
 
         if 'kz' not in self.inputs['atmosphere']['profile'].keys():
             raise Exception ("Must supply kz to atmosphere/chemistry DataFrame, \
@@ -1471,8 +1491,8 @@ class inputs():
         self.inputs['clouds']['profile'] = df
 
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
-        raman='pollack',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1, 
-        method='Toon', stream=2, print_time=False):
+        raman='pollack',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
+        p_reference=1,method='Toon', stream=2, print_time=False):
         """
         This function sets all the default approximations in the code. It transforms the string specificatons
         into a number so that they can be used in numba nopython routines. 
@@ -1496,6 +1516,14 @@ class inputs():
             Back scattering asymmetry factor gf = g_bar*tthg_back
         tthg_forward : float 
             Forward scattering asymmetry factor gb = g_bar * tthg_forward 
+        p_reference : float 
+            Reference pressure (bars) This is an arbitrary pressure that 
+            corresponds do the user's input of radius. Usually something "at depth"
+            around 1-10 bars. 
+        method : str
+            Toon ('Toon') or spherical harmonics ('SH'). 
+        stream : int 
+            Two stream or four stream (options are 2 or 4). For 4 stream need to set method='SH'
         """
 
         self.inputs['approx']['single_phase'] = single_phase_options(printout=False).index(single_phase)
@@ -1517,9 +1545,10 @@ class inputs():
         self.inputs['approx']['TTHG_params']['constant_back'] = tthg_back
         self.inputs['approx']['TTHG_params']['constant_forward']=tthg_forward
 
+        self.inputs['approx']['p_reference']= p_reference
 
-    def spectrum(self,opacityclass,dimension = '1d', calculation='reflected', full_output=False, 
-        plot_opacity= False, as_dict=True, tridiagonal=0):
+    def spectrum(self, opacityclass, calculation='reflected', dimension = '1d',  full_output=False, 
+        plot_opacity= False, as_dict=True):
         """Run Spectrum
 
         Parameters
@@ -1558,8 +1587,152 @@ class inputs():
 
             
         return picaso(self, opacityclass,dimension=dimension,calculation=calculation,
-            full_output=full_output, plot_opacity=plot_opacity, as_dict=as_dict, 
-            tridiagonal=tridiagonal)
+            full_output=full_output, plot_opacity=plot_opacity, as_dict=as_dict)
+
+def get_targets():
+    """Function to grab available targets
+
+    Returns
+    -------
+    Dataframe from Exoplanet Archive
+    """
+    default_query = "https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=exoplanets&format=csv"
+    all_planets =  requests.get(default_query)  
+    all_planets = all_planets.text.replace(' ','').split('\n')
+
+    # default data doesn't come with all the parameters we need so let's 
+    # add those in 
+    add_few_elements = '&select='+all_planets[0]+','.join(
+        [',pl_trandur','pl_eqt','st_logg','st_metfe','st_j','st_h','st_k&'])
+
+    # use requests to grab the csv formatted data and split by the commas 
+    all_planets =  requests.get(default_query.split('&')[0] 
+                                + add_few_elements + default_query.split('&')[1] )  
+    all_planets = all_planets.text.replace(' ','').split('\n')
+
+    # get into useful pandas dataframe format
+    planets_df = pd.DataFrame(columns=all_planets[0].split(','), 
+                             data = [i.split(',') for i in all_planets[1:-1]])
+    planets_df = planets_df.replace(to_replace='', value=np.nan)
+
+    # convert to float when possible
+    for i in planets_df.columns: 
+        planets_df[i] = planets_df[i].astype(float,errors='ignore') 
+
+    return planets_df
+
+def load_planet(df, opacity, phase_angle = 0, stellar_db='phoenix', verbose=False,  **planet_kwargs):
+    """
+    Wrapper to simplify PICASO run. This really turns chimera into a black box. This was created 
+    specifically Sagan School tutorial. 
+
+    Parameters
+    -----------
+    df : pd.DataFrame
+        This is single row from `all_planets()`
+    opacity : np.array 
+        Opacity loaded from opannection
+    phase_angle : float 
+        Observing phase angle (radians)
+    verbose : bool , options
+        Print out warnings 
+    planet_kwargs : dict 
+        List of parameters to supply NexSci database is values don't exist 
+    """
+    if len(df.index)>1: raise Exception("Dataframe consists of more than 1 row. Make sure to select single planet")
+
+    for i in df.index:
+
+        planet = df.loc[i,:].dropna().to_dict()
+
+        temp = planet.get('st_teff', planet_kwargs.get('st_teff',np.nan))
+        if np.isnan(temp) : raise Exception('Stellar temperature is not added to \
+            dataframe input or to planet_kwargs through the column/key named st_teff. Please add it to one of them')
+
+        logg = planet.get('st_logg', planet_kwargs.get('st_logg',np.nan))
+        if np.isnan(logg) : raise Exception('Stellar logg is not added to \
+            dataframe input or to planet_kwargs through the column/key named st_logg. Please add it to one of them')
+
+        logmh = planet.get('st_metfe', planet_kwargs.get('st_metfe',np.nan))
+        if np.isnan(logmh) : raise Exception('Stellar Fe/H is not added to \
+            dataframe input or to planet_kwargs through the column/key named st_metfe. Please add it to one of them')
+
+        stellar_db = 'phoenix'
+
+        if logmh > 0.5: 
+            if verbose: print ('Stellar M/H exceeded max value of 0.5. Value has been reset to the maximum')
+            logmh = 0.5
+        elif logmh < -4.0 :
+            if verbose: print ('Stellar M/H exceeded min value of -4.0 . Value has been reset to the mininum')
+            logmh = -4.0 
+
+        if logg > 4.5: 
+            if verbose: print ('Stellar logg exceeded max value of 4.5. Value has been reset to the maximum')
+            logg = 4.5   
+
+
+        #the parameters
+        #planet/star system params--typically not free parameters in retrieval
+        # Planet radius in Jupiter Radii--this will be forced to be 10 bar radius--arbitrary (scaling to this is free par)
+
+        Rp = planet.get('pl_radj', planet_kwargs.get('pl_radj',np.nan))
+        if np.isnan(Rp) : raise Exception('Planet Radii is not added to \
+            dataframe input or to planet_kwargs through the column/key named pl_radj. J for JUPITER! \
+            Please add it to one of them')
+
+
+        #Stellar Radius in Solar Radii
+        Rstar = planet.get('st_rad', planet_kwargs.get('st_rad',np.nan))
+        if np.isnan(Rstar) : raise Exception('Stellar Radii is not added to \
+            dataframe input or to planet_kwargs through the column/key named st_rad. Solar radii! \
+            Please add it to one of them')
+
+        #Mass in Jupiter Masses
+        Mp = planet.get('pl_bmassj', planet_kwargs.get('pl_bmassj',np.nan))
+        if np.isnan(Mp) : raise Exception('Planet Mass is not added to \
+            dataframe input or to planet_kwargs through the column/key named pl_bmassj. J for JUPITER! \
+            Please add it to one of them')  
+
+        #TP profile params (3--Guillot 2010, Parmentier & Guillot 2013--see Line et al. 2013a for implementation)
+        Tirr=planet.get('pl_eqt', planet_kwargs.get('pl_eqt',np.nan))
+
+        if np.isnan(Tirr): 
+            p =  planet.get('pl_orbper', planet_kwargs.get('pl_orbper',np.nan))
+            p = p * (1*u.day).to(u.yr).value #convert to year 
+            a =  (p**(2/3)*u.au).to(u.R_sun).value
+            temp = planet.get('st_teff', planet_kwargs.get('st_teff',np.nan))
+            Tirr = temp * np.sqrt(Rstar/(2*a))
+
+        if np.isnan(Tirr): raise Exception('Planet Eq Temp is not added to \
+            dataframe input or to planet_kwargs through the column/key named pl_eqt. Kelvin \
+            Please add it to one of them') 
+
+        p=planet.get('pl_orbper', planet_kwargs.get('pl_orbper',np.nan))
+
+        if np.isnan(Tirr): raise Exception('Orbital Period is not added to \
+            dataframe input or to planet_kwargs through the column/key named pl_orbper. Days Units') 
+        else: 
+            p = p * (1*u.day).to(u.yr).value #convert to year 
+            a =  p**(2/3) #semi major axis in AU
+
+
+        #setup picaso
+        start_case = inputs()
+        start_case.phase_angle(phase_angle) #radians 
+
+        #define gravity
+        start_case.gravity(mass=Mp, mass_unit=u.Unit('M_jup'),
+                            radius=Rp, radius_unit=u.Unit('R_jup')) #any astropy units available
+
+        #define star
+        start_case.star(opacity, temp,logmh,logg,radius=Rstar, radius_unit=u.Unit('R_sun'),
+                            semi_major=a, semi_major_unit=u.Unit('au'),
+                            database = stellar_db ) #opacity db, pysynphot database, temp, metallicity, logg
+
+        ##running this with all default inputs (users can override whatever after this initial run)
+        start_case.guillot_pt(Tirr) 
+
+    return start_case
 
 def mean_regrid(x, y, newx=None, R=None):
     """
@@ -1620,6 +1793,40 @@ def multi_phase_options(printout=True):
 def raman_options():
     """Retrieve options for raman scattering approximtions"""
     return ["oklopcic","pollack","none"]
+
+
+
+def all_planets():
+    """
+    Load all planets from https://exoplanetarchive.ipac.caltech.edu
+    """
+    # use this default URL to start out with 
+    default_query = "https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=exoplanets&format=csv"
+    all_planets =  requests.get(default_query)  
+    all_planets = all_planets.text.replace(' ','').split('\n')
+
+    # default data doesn't come with all the parameters we need so let's 
+    # add those in 
+    add_few_elements = '&select='+all_planets[0]+','.join(
+        [',pl_trandur','pl_eqt','st_logg','st_metfe','st_j','st_h','st_k&'])
+
+    # use requests to grab the csv formatted data and split by the commas 
+    all_planets =  requests.get(default_query.split('&')[0] 
+                                + add_few_elements + default_query.split('&')[1] )  
+    all_planets = all_planets.text.replace(' ','').split('\n')
+
+    # get into useful pandas dataframe format
+    planets_df = pd.DataFrame(columns=all_planets[0].split(','), 
+                             data = [i.split(',') for i in all_planets[1:-1]])
+    planets_df = planets_df.replace(to_replace='', value=np.nan)    
+
+
+    # convert to float when possible
+    for i in planets_df.columns: 
+        planets_df[i] = planets_df[i].astype(float,errors='ignore')
+
+    return planets_df
+
 def methodology_options(printout=True):
     """Retrieve all the options for methodology"""
     if printout: print("Can calculate spectrum using Toon 1989 methodology or sperhical harmonics")
@@ -1628,3 +1835,4 @@ def stream_options(printout=True):
     """Retrieve all the options for stream"""
     if printout: print("Can use 2-stream or 4-stream sperhical harmonics")
     return [2,4]
+

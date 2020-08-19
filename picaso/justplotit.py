@@ -113,7 +113,7 @@ def pt(full_output,ng=None, nt=None, **kwargs):
     plot_format(fig)
     return fig
 
-def spectrum(xarray, yarray,legend=None,wno_to_micron=True, **kwargs):
+def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind8, **kwargs):
 	"""Plot formated albedo spectrum
 
 	Parameters
@@ -125,7 +125,10 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, **kwargs):
 	legend : list of str , optional
 		legends for plotting 
 	wno_to_micron : bool , optional
-		Converts wavenumber to micron 
+		Converts wavenumber to micron
+    palette : list,optional
+        List of colors for lines. Default only has 8 colors so if you input more lines, you must
+        give a different pallete 
 	**kwargs : dict 	
 		Any key word argument for bokeh.plotting.figure()
 
@@ -159,17 +162,17 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, **kwargs):
 	i = 0
 	for yarray in Y:
 		if isinstance(xarray, list):
-			if legend==None: legend=[None]*len(xarray[0])
+			if isinstance(legend,type(None)): legend=[None]*len(xarray[0])
 			for w, a,i,l in zip(xarray, yarray, range(len(xarray)), legend):
 				if l == None: 
-					fig.line(conv(w),  a,  color=Colorblind8[np.mod(i, len(Colorblind8))], line_width=3)
+					fig.line(conv(w),  a,  color=palette[np.mod(i, len(palette))], line_width=3)
 				else:
-					fig.line(conv(w), a, legend_label=l, color=Colorblind8[np.mod(i, len(Colorblind8))], line_width=3)
+					fig.line(conv(w), a, legend_label=l, color=palette[np.mod(i, len(palette))], line_width=3)
 		else: 
-			if legend ==None:
-				fig.line(conv(xarray), yarray,  color=Colorblind8[i], line_width=3)
+			if isinstance(legend,type(None)):
+				fig.line(conv(xarray), yarray,  color=palette[i], line_width=3)
 			else:
-				fig.line(conv(xarray), yarray, legend_label=legend, color=Colorblind8[i], line_width=3)
+				fig.line(conv(xarray), yarray, legend_label=legend, color=palette[i], line_width=3)
 		i = i+1
 	plot_format(fig)
 	return fig
