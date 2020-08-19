@@ -85,6 +85,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     #define delta eddington approximinations 
     delta_eddington = inputs['approx']['delta_eddington']
 
+    #pressure assumption
+    p_reference =  inputs['approx']['p_reference']
+
     ############# DEFINE ALL GEOMETRY USED IN CALCULATION #############
     #see class `inputs` attribute `phase_angle`
     
@@ -109,13 +112,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     #begin atm setup
     atm = ATMSETUP(inputs)
 
-
-    #surface albedo from inputs 
+    #Add inputs to class 
     atm.surf_reflect = inputs['surface_reflect']
-
     atm.wavenumber = wno
-
-    ################ From here on out is everything that would go through retrieval or 3d input##############
     atm.planet.gravity = inputs['planet']['gravity']
     atm.planet.radius = inputs['planet']['radius']
     atm.planet.mass = inputs['planet']['mass']
@@ -125,10 +124,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     elif dimension == '3d':
         atm.get_profile_3d()
 
-
     #now can get these 
     atm.get_mmw()
     atm.get_density()
+    atm.get_altitude(p_reference = p_reference)#will calculate altitude if r and m are given (opposed to just g)
     atm.get_column_density()
 
     #gets both continuum and needed rayleigh cross sections 
@@ -146,6 +145,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
     nlevel = atm.c.nlevel
     nlayer = atm.c.nlayer
+    
 
     if dimension == '1d':
         #lastly grab needed opacities for the problem
@@ -194,12 +194,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                 atm.flux_at_top = flux_at_top
         
         if 'transmission' in calculation:
-            p_reference = 1.1 * atm.c.pconv
-            rprs2 = get_transit_1d(nlevel, nwno, atm.planet.radius, atm.planet.gravity, 
-                                  radius_star, atm.planet.mass, atm.layer['mmw'], 
-                                  atm.c.k_b, atm.c.G, p_reference, atm.level['pressure'], 
-                                  atm.level['temperature'], atm.layer['pressure'],
-                                  atm.layer['temperature'], atm.layer['colden'],DTAU_OG)
+            rprs2 = get_transit_1d(atm.level['z'],atm.level['dz'],
+                                  nlevel, nwno, radius_star, atm.layer['mmw'], 
+                                  atm.c.k_b, atm.c.amu, atm.level['pressure'], 
+                                  atm.level['temperature'], atm.layer['colden'],DTAU_OG)
     elif dimension == '3d':
 
         #setup zero array to fill with opacities
@@ -885,7 +883,8 @@ class inputs():
         self.inputs['atmosphere']['profile'] = df
         return 
 
-    def channon_grid_high(self,filename=os.path.join(__refdata__,'chemistry','ChannonGrid.csv')):
+    def channon_grid_high(self,filename=None):
+        if isinstance(filename, type(None)):filename=os.path.join(__refdata__,'chemistry','grid75_feh+000_co_100_highP.txt')
         #df = self.inputs['atmosphere']['profile']
         df = self.inputs['atmosphere']['profile']
         self.nlevel = df.shape[0]
@@ -921,10 +920,11 @@ class inputs():
         
         self.inputs['atmosphere']['profile'] = df
 
-    def channon_grid_low(self, filename = os.path.join(__refdata__,'chemistry','visscher_abunds_m+0.0_co1.0'), interp_window = 11, interp_poly=2):
+    def channon_grid_low(self, filename = None, interp_window = 11, interp_poly=2):
         """
         Interpolate from visscher grid
         """
+        if isinstance(filename, type(None)):filename= os.path.join(__refdata__,'chemistry','visscher_abunds_m+0.0_co1.0')
         a = pd.read_csv(filename)
         mols = list(a.loc[:, ~a.columns.isin(['Unnamed: 0','pressure','temperature'])].keys())
         #get pt from what users have already input
@@ -1471,7 +1471,8 @@ class inputs():
         self.inputs['clouds']['profile'] = df
 
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
-        raman='pollack',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1):
+        raman='pollack',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
+        p_reference=1):
         """
         This function sets all the default approximations in the code. It transforms the string specificatons
         into a number so that they can be used in numba nopython routines. 
@@ -1495,6 +1496,10 @@ class inputs():
             Back scattering asymmetry factor gf = g_bar*tthg_back
         tthg_forward : float 
             Forward scattering asymmetry factor gb = g_bar * tthg_forward 
+        p_reference : float 
+            Reference pressure (bars) This is an arbitrary pressure that 
+            corresponds do the user's input of radius. Usually something "at depth"
+            around 1-10 bars. 
         """
 
         self.inputs['approx']['single_phase'] = single_phase_options(printout=False).index(single_phase)
@@ -1513,8 +1518,10 @@ class inputs():
         self.inputs['approx']['TTHG_params']['constant_back'] = tthg_back
         self.inputs['approx']['TTHG_params']['constant_forward']=tthg_forward
 
-    def spectrum(self,opacityclass,calculation='reflected',dimension = '1d',  full_output=False, 
-        plot_opacity= False,as_dict=True):
+        self.inputs['approx']['p_reference']= p_reference
+
+    def spectrum(self, opacityclass, calculation='reflected', dimension = '1d',  full_output=False, 
+        plot_opacity= False, as_dict=True):
         """Run Spectrum
 
         Parameters
