@@ -325,11 +325,11 @@ def compute_opacity(atmosphere, opacityclass, stream, delta_eddington=True,test_
                 #ftau_ray = 1.0
                 ftau_ray = np.zeros(DTAU.shape) + 1.0
                 #ftau_cld = 1e-6
-                ftau_cld = np.zeros(DTAU.shape) #+ 1e-6
+                ftau_cld = np.zeros(DTAU.shape) + 1e-6
             else: 
                 DTAU = atm.layer['cloud']['opd']#TAURAY*0+0.05
                 GCOS2 = np.zeros(DTAU.shape)#0.0
-                ftau_ray = np.zeros(DTAU.shape)#+1e-6
+                ftau_ray = np.zeros(DTAU.shape)+1e-6
                 ftau_cld = np.zeros(DTAU.shape)+1            
             COSB = atm.layer['cloud']['g0']
             W0 = atm.layer['cloud']['w0']
@@ -352,7 +352,6 @@ def compute_opacity(atmosphere, opacityclass, stream, delta_eddington=True,test_
         w0_dedd=W0*(1.-COSB**stream)/(1.0-W0*COSB**stream)
         cosb_dedd=COSB/(1.+COSB)
         dtau_dedd=DTAU*(1.-W0*COSB**stream) 
-        import IPython; IPython.embed()
 
         #sum up taus starting at the top, going to depth
         tau_dedd = np.zeros((shape[0]+1, shape[1]))

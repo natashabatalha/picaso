@@ -193,7 +193,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                                     DTAU_OG, TAU_OG, W0_OG, COSB_OG ,
                                                     atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
                                                     single_phase,multi_phase,
-                                                    frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal, print_time)
+                                                    frac_a,frac_b,frac_c,constant_back,constant_forward)
 
             #if full output is requested add in xint at top for 3d plots
             if full_output: 
@@ -1531,7 +1531,10 @@ class inputs():
         self.inputs['approx']['delta_eddington'] = delta_eddington
         self.inputs['approx']['raman'] =  raman_options().index(raman)
         self.inputs['approx']['method'] = method
-        self.inputs['approx']['stream'] = stream
+        if method == 'Toon':
+                self.inputs['approx']['stream'] = 2 # having method="Toon" and stream=4 messes up delta-eddington stuff
+        else:
+                self.inputs['approx']['stream'] = stream
         self.inputs['approx']['print_time'] = print_time
  
         if isinstance(tthg_frac, (list, np.ndarray)):

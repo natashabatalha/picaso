@@ -223,6 +223,7 @@ def slice_gt(array, lim):
     for i in range(array.shape[0]):
         new = array[i,:] 
         new[where(new>lim)] = lim
+        new[where(new<-lim)] = -lim
         array[i,:] = new     
     return array
 
@@ -827,7 +828,7 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
-    frac_a, frac_b, frac_c, constant_back, constant_forward, tridiagonal):
+    frac_a, frac_b, frac_c, constant_back, constant_forward, tridiagonal=0):
     """
     Computes toon fluxes given tau and everything is 1 dimensional. This is the exact same function 
     as `get_flux_geom_3d` but is kept separately so we don't have to do unecessary indexing for fast
