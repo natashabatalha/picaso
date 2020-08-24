@@ -2354,6 +2354,7 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				print("time to set up matrices = ", t_setup)
 
 			t3 = time.time()
+			import IPython; IPython.embed()
 
 			X = zeros((stream*nlevel, nwno))
 			intgrl_new = np.zeros((stream*nlayer, nwno))
@@ -2779,37 +2780,49 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 
 	#   rows 1 through 2*nlayer-1: BCs 2 and 3
 	#   need to get rid of loop to speed things up
-	for n in range(0, nlayer-1):
-		im = 2*n+1; iM = (2*n+2)+1
-		jm = 2*n; j_ = (2*n+1)+1; jM = (2*n+3)+1
-		#M[:,im:iM,jm:j_] = F_block(n,"up")
-		#M_new[:,im:iM,jm:j_] = F_block_new(n,"up")
-		#M[:,im:iM,j_:jM] = -F_block(n+1,"down")
-		#M_new[:,im:iM,j_:jM] = -F_block_new(n+1,"down")
+#	for n in range(0, nlayer-1):
+#		im = 2*n+1; iM = (2*n+2)+1
+#		jm = 2*n; j_ = (2*n+1)+1; jM = (2*n+3)+1
+#		M[:,im:iM,jm:j_] = F_block(n,"up")
+#		#M_new[:,im:iM,jm:j_] = F_block_new(n,"up")
+#		M[:,im:iM,j_:jM] = -F_block(n+1,"down")
+#		#M_new[:,im:iM,j_:jM] = -F_block_new(n+1,"down")
+#
+#		#B[:,im:iM] = Z_block(n+1,"down") - Z_block(n,"up")
+#		
+#		im = 2*n+2; iM = (2*n+3)+1
+#		jm = 2*n; jM = (2*n+1)+1
+#		#F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
+#		#G[:,im:iM] = Z_block(n,dtau[:,n])
+#
+#		#A[:,im:iM,jm:jM] = A_block(n)
+#		#N[:,im:iM] = N_block(n)
+#
+#		im = 2*n; iM = (2*n+1)+1
+#		#A_int[:,im:iM,jm:jM] = A_int_block(n)
+#		#N_int[:,im:iM] = N_int_block(n)
 
-		M_new[:,2*n+1,2*n] = Q1mn[:,n]
-		M_new[:,2*n+1,2*n+1] = Q2pl[:,n]
-		M_new[:,2*n+2,2*n] = Q2mn[:,n]
-		M_new[:,2*n+2,2*n+1] = Q1pl[:,n]
+	n = range(0,nlayer-1)
+#	M_new[:,2*n+1,2*n] = Q1mn[:,n]
+#	M_new[:,2*n+1,2*n+1] = Q2pl[:,n]
+#	M_new[:,2*n+2,2*n] = Q2mn[:,n]
+#	M_new[:,2*n+2,2*n+1] = Q1pl[:,n]
+#	M_new[:,2*n+1,2*n+2] = -Q1[:,n]
+#	M_new[:,2*n+1,2*n+3] = -Q2[:,n]
+#	M_new[:,2*n+2,2*n+2] = -Q2[:,n]
+#	M_new[:,2*n+2,2*n+3] = -Q1[:,n]
 
-		M_new[:,2*n+1,2*n+2] = -Q1[:,n]
-		M_new[:,2*n+1,2*n+3] = -Q2[:,n]
-		M_new[:,2*n+2,2*n+2] = -Q2[:,n]
-		M_new[:,2*n+2,2*n+3] = -Q1[:,n]
+	nn = list(range(0,2*nlayer))
+	M_new[:,nn[1:-1:2],nn[:-2:2]] = Q1mn[:,n]
+	M_new[:,nn[1:-1:2],nn[1:-1:2]] = Q2pl[:,n]
+	M_new[:,nn[2::2], nn[:-2:2]] = Q2mn[:,n]
+	M_new[:,nn[2::2], nn[1:-1:2]] = Q1pl[:,n]
+	
+	M_new[:,nn[1:-1:2],nn[2::2]] = -Q1[:,n]
+	M_new[:,nn[1:-1:2],nn[3::2]] = -Q2[:,n]
+	M_new[:,nn[2::2], nn[2::2]] = -Q2[:,n]
+	M_new[:,nn[2::2], nn[3::2]] = -Q1[:,n]
 
-		#B[:,im:iM] = Z_block(n+1,"down") - Z_block(n,"up")
-		
-		im = 2*n+2; iM = (2*n+3)+1
-		jm = 2*n; jM = (2*n+1)+1
-		#F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
-		#G[:,im:iM] = Z_block(n,dtau[:,n])
-
-		#A[:,im:iM,jm:jM] = A_block(n)
-		#N[:,im:iM] = N_block(n)
-
-		im = 2*n; iM = (2*n+1)+1
-		#A_int[:,im:iM,jm:jM] = A_int_block(n)
-		#N_int[:,im:iM] = N_int_block(n)
 
 	#   last row: BC 4
 	im = 2*nlayer-1; 
