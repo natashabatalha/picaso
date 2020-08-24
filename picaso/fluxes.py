@@ -2342,7 +2342,7 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 			b_surface = 0. + surf_reflect*ubar0[ng, nt]*F0PI*exp(-tau[-1, :]/ubar0[ng, nt])
 
 			if stream==2:
-				M, B, A, N, F, G, A_int, N_int = setup_2_stream_scaled(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
+				M, B, A, N, F, G, A_int, N_int = setup_2_stream_fast(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
 						ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
 			else:
 				M, B, A, N, F, G, A_int, N_int = setup_4_stream_scaled(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
@@ -2579,11 +2579,10 @@ def setup_2_stream(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0
 		F[:,im:iM,jm:jM] = F_block(n,exptrm_up[:,n])
 		G[:,im:iM] = Z_block(n,exptau_up[:,n])
 
-		#im = 2*n; iM = (2*n+1)+1
+		im = 2*n; iM = (2*n+1)+1
 		A[:,im:iM,jm:jM] = A_block(n,exptrm_up[:,n])
 		N[:,im:iM] = N_block(n,exptau_up[:,n])
 
-		im = 2*n; iM = (2*n+1)+1
 		A_int[:,im:iM,jm:jM] = A_int_block(n)
 		N_int[:,im:iM] = N_int_block(n)
 
@@ -2707,17 +2706,17 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 			return temp
 
 	exptau_u0 = np.exp(-tau/ubar0)
-	zmn = 0.5*eta[0] - eta[1] 
-	zpl = 0.5*eta[0] + eta[1]
+	zmn = 2*pi*(0.5*eta[0] - eta[1]) 
+	zpl = 2*pi*(0.5*eta[0] + eta[1])
 	zmn_up = zmn * exptau_u0[:,1:] 
 	zpl_up = zpl * exptau_u0[:,1:] 
 	zmn_down = zmn * exptau_u0[:,:-1] 
 	zpl_down = zpl * exptau_u0[:,:-1] 
 	def Z_block(n, lev):
 		if lev == "up":
-			return 2*np.pi * (np.array([zmn_up[:,n], zpl_up[:,n]])).T
+			return (np.array([zmn_up[:,n], zpl_up[:,n]])).T
 		elif lev == "down":
-			return 2*np.pi * (np.array([zmn_down[:,n], zpl_down[:,n]])).T
+			return (np.array([zmn_down[:,n], zpl_down[:,n]])).T
 	
 	exptrmpl = 1/exptrm
 	qmn = -q*exptrm; qpl = q/exptrm
@@ -2755,84 +2754,55 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 		return (np.array([nint0[:,n], nint1[:,n]])).T
 	
 	M = np.zeros((nwno, 2*nlayer, 2*nlayer))
-	M_new = np.zeros((nwno, 2*nlayer, 2*nlayer))
 	B = np.zeros((nwno, 2*nlayer))
 
 	nlevel = nlayer+1
 	F = np.zeros((nwno, 2*nlevel, 2*nlayer))
 	G = np.zeros((nwno, 2*nlevel))
-	A = np.zeros((nwno, 2*nlevel, 2*nlayer))
+	A = np.zeros((nwno, 2*nlayer, 2*nlayer))
 	N = np.zeros((nwno, 2*nlevel))
+
 	A_int = np.zeros((nwno, 2*nlayer, 2*nlayer))
 	N_int = np.zeros((nwno, 2*nlayer))
 
 	zero = np.zeros(nwno)
 	
 	#   first row: BC 1
-	#M[:,0,0:2] = F_block(0,"down")[:,0,]
-	#M_new[:,0,0:2] = F_block_new(0,"down")[:,0,]
-	M_new[:,0,0] = Q1[:,0]
-	M_new[:,0,1] = Q2[:,0]
-	#B[:,0] = b_top - Z_block(0,"down")[:,0]        
+	M[:,0,0:2] = F_block(0,"down")[:,0,]
+
+	B[:,0] = b_top - Z_block(0,"down")[:,0]        
 
 	#F[:,0:2,0:2] = F_block(0,zero)
 	#G[:,0:2] = Z_block(0,zero)
 
 	#   rows 1 through 2*nlayer-1: BCs 2 and 3
 	#   need to get rid of loop to speed things up
-#	for n in range(0, nlayer-1):
-#		im = 2*n+1; iM = (2*n+2)+1
-#		jm = 2*n; j_ = (2*n+1)+1; jM = (2*n+3)+1
-#		M[:,im:iM,jm:j_] = F_block(n,"up")
-#		#M_new[:,im:iM,jm:j_] = F_block_new(n,"up")
-#		M[:,im:iM,j_:jM] = -F_block(n+1,"down")
-#		#M_new[:,im:iM,j_:jM] = -F_block_new(n+1,"down")
-#
-#		#B[:,im:iM] = Z_block(n+1,"down") - Z_block(n,"up")
-#		
-#		im = 2*n+2; iM = (2*n+3)+1
-#		jm = 2*n; jM = (2*n+1)+1
-#		#F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
-#		#G[:,im:iM] = Z_block(n,dtau[:,n])
-#
-#		#A[:,im:iM,jm:jM] = A_block(n)
-#		#N[:,im:iM] = N_block(n)
-#
-#		im = 2*n; iM = (2*n+1)+1
-#		#A_int[:,im:iM,jm:jM] = A_int_block(n)
-#		#N_int[:,im:iM] = N_int_block(n)
+	for n in range(0, nlayer-1):
+		im = 2*n+1; iM = (2*n+2)+1
+		jm = 2*n; j_ = (2*n+1)+1; jM = (2*n+3)+1
+		M[:,im:iM,jm:j_] = F_block(n,"up")
+		M[:,im:iM,j_:jM] = -F_block(n+1,"down")
 
-	n = range(0,nlayer-1)
-#	M_new[:,2*n+1,2*n] = Q1mn[:,n]
-#	M_new[:,2*n+1,2*n+1] = Q2pl[:,n]
-#	M_new[:,2*n+2,2*n] = Q2mn[:,n]
-#	M_new[:,2*n+2,2*n+1] = Q1pl[:,n]
-#	M_new[:,2*n+1,2*n+2] = -Q1[:,n]
-#	M_new[:,2*n+1,2*n+3] = -Q2[:,n]
-#	M_new[:,2*n+2,2*n+2] = -Q2[:,n]
-#	M_new[:,2*n+2,2*n+3] = -Q1[:,n]
+		B[:,im:iM] = Z_block(n+1,"down") - Z_block(n,"up")
+		
+		im = 2*n+2; iM = (2*n+3)+1
+		jm = 2*n; jM = (2*n+1)+1
+		#F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
+		#G[:,im:iM] = Z_block(n,dtau[:,n])
 
-	nn = list(range(0,2*nlayer))
-	M_new[:,nn[1:-1:2],nn[:-2:2]] = Q1mn[:,n]
-	M_new[:,nn[1:-1:2],nn[1:-1:2]] = Q2pl[:,n]
-	M_new[:,nn[2::2], nn[:-2:2]] = Q2mn[:,n]
-	M_new[:,nn[2::2], nn[1:-1:2]] = Q1pl[:,n]
-	
-	M_new[:,nn[1:-1:2],nn[2::2]] = -Q1[:,n]
-	M_new[:,nn[1:-1:2],nn[3::2]] = -Q2[:,n]
-	M_new[:,nn[2::2], nn[2::2]] = -Q2[:,n]
-	M_new[:,nn[2::2], nn[3::2]] = -Q1[:,n]
+		im = 2*n; iM = (2*n+1)+1
+		A[:,im:iM,jm:jM] = A_block(n)
+		N[:,im:iM] = N_block(n)
 
+		A_int[:,im:iM,jm:jM] = A_int_block(n)
+		N_int[:,im:iM] = N_int_block(n)
 
 	#   last row: BC 4
 	im = 2*nlayer-1; 
 	jm = 2*nlayer-2; jM = 2*nlayer
 	n = nlayer-1
-	#M[:,im,jm:jM] = F_block(n,"up")[:,1,] - surf_reflect*F_block(n,"up")[:,0,]
-	#M_new[:,im,jm:jM] = F_block_new(n,"up")[:,1,] - surf_reflect*F_block_new(n,"up")[:,0,]
-	M_new[:,2*nlayer-1, 2*nlayer-2] = Q2mn[:,n] - surf_reflect*Q1mn[:,n]
-	M_new[:,2*nlayer-1, 2*nlayer-1] = Q1pl[:,n] - surf_reflect*Q2pl[:,n]
-	#B[:,im] = b_surface - Z_block(n,"up")[:,1] + surf_reflect * Z_block(n,"up")[:,0]
+	M[:,im,jm:jM] = F_block(n,"up")[:,1,] - surf_reflect*F_block(n,"up")[:,0,]
+	B[:,im] = b_surface - Z_block(n,"up")[:,1] + surf_reflect * Z_block(n,"up")[:,0]
 	
 
 	n = nlayer-1
@@ -2841,15 +2811,188 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	#F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
 	#G[:,im:iM] = Z_block(n,dtau[:,n])
 
-	#A[:,im:iM,jm:jM] = A_block(n)
-	#N[:,im:iM] = N_block(n)
-
 	im = 2*nlayer-2; iM = 2*nlayer
 	jm = 2*nlayer-2; jM = 2*nlayer
-	#A_int[:,im:iM,jm:jM] = A_int_block(n)
-	#N_int[:,im:iM] = N_int_block(n); 
+	A[:,im:iM,jm:jM] = A_block(n)
+	N[:,im:iM] = N_block(n)
+
+	A_int[:,im:iM,jm:jM] = A_int_block(n)
+	N_int[:,im:iM] = N_int_block(n); 
 	t2 = time.time()
 	tot = t2-t1
 	print("time = ", tot)
 
 	return M, B, A, N, F, G, A_int, N_int
+
+def setup_2_stream_fast(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau, tau, w_single, w_multi, ubar1, P):
+	"""
+	Parameters
+	----------
+	nlayer : int 
+		number of layers in the model 
+	nwno : int 
+		number of wavelength points ## need to include this
+	W0: int
+		single scattering albedo 
+	b_top : array 
+		The diffuse radiation into the model at the top of the atmosphere
+	b_surface : arra
+		The diffuse radiation into the model at the bottom. Includes emission, reflection 
+		of the unattenuated portion of the direct beam  
+	surf_reflect : array 
+		Surface reflectivity 
+	F0PI : int  
+		solar radiation
+	ubar0: array
+		cosine of solar incident angle
+	dtau : array 
+		Opacity per layer
+	g : array 
+		asymmety parameters
+	P : array
+		Legendre polynomials
+	"""
+
+	import time
+	t1 = time.time()
+	w0 = W0.T
+	dtau = dtau.T
+	tau = tau.T
+	
+	a = []; b = []
+	for l in range(2):
+		a.append((((2*l + 1) - w0 * w_multi[l]).T).T)
+		b.append((F0PI * (w0 * w_single[l]).T).T * P(-ubar0)[l] / (4 * np.pi))
+
+	lam = np.sqrt(a[0]*a[1])
+
+	Del = ((1 / ubar0)**2 - a[0]*a[1])
+	Dels = []
+	Dels.append(b[1] /ubar0 - a[1]*b[0])
+	Dels.append(b[0] /ubar0 - a[0]*b[1])
+	
+	eta = []
+	for l in range(2):
+		eta.append(Dels[l]/Del)
+
+	expo = lam*dtau
+	#save from overflow 
+	expo = slice_gt(expo, 35.0) 
+	exptrm = np.exp(-expo)
+
+	q = lam/a[1]
+	Q1 = 2*pi*(0.5 + q)
+	Q2 = 2*pi*(0.5 - q)
+
+	Q1mn = Q1*exptrm;  Q2mn = Q2*exptrm
+	Q1pl = Q1/exptrm;  Q2pl = Q2/exptrm
+
+	exptau_u0 = np.exp(-tau/ubar0)
+	zmn = 2*pi*(0.5*eta[0] - eta[1]) 
+	zpl = 2*pi*(0.5*eta[0] + eta[1])
+	zmn_up = zmn * exptau_u0[:,1:] 
+	zpl_up = zpl * exptau_u0[:,1:] 
+	zmn_down = zmn * exptau_u0[:,:-1] 
+	zpl_down = zpl * exptau_u0[:,:-1] 
+	
+	exptrmpl = 1/exptrm
+	qmn = -q*exptrm; qpl = q/exptrm
+	
+	n0_up = eta[0] * exptau_u0[:,1:]
+	n1_up = eta[1] * exptau_u0[:,1:]
+
+	alpha = 1/ubar1 + lam;			beta = 1/ubar1 - lam;			mus = (ubar1 + ubar0) / (ubar1 * ubar0)
+	expo_alp = alpha * dtau;		expo_bet = beta * dtau;			expo_mus = mus * dtau 
+	expo_alp = slice_gt(expo_alp, 35.0);	expo_bet = slice_gt(expo_bet, 35.0);	expo_mus = slice_gt(expo_mus, 35.0)    
+	exptrm_alp = np.exp(-expo_alp);		exptrm_bet = np.exp(-expo_bet);		exptrm_mus = np.exp(-expo_mus)
+
+	exp_alp = (1 - exptrm_alp) / alpha 
+	exp_bet = (1 - exptrm_bet) / beta  
+	qexp_alp = -q * exp_alp	
+	qexp_bet = q * exp_bet
+
+	tau_mu = tau[:,:-1] * (mus - 1/ubar1)
+	tau_mu = slice_gt(tau_mu, 35.0)
+	exptau_mu = np.exp(-tau_mu)
+	exp_mu = (1 - exptrm_mus) * exptau_mu / mus
+	nint0 = eta[0] * exp_mu
+	nint1 = eta[1] * exp_mu
+
+	t = time.time()-t1
+	print('time to define variables = ', t)
+	t1 = time.time()
+	
+	M_new = np.zeros((nwno, 2*nlayer, 2*nlayer))
+	B_new = np.zeros((nwno, 2*nlayer))
+
+	nlevel = nlayer+1
+	F = np.zeros((nwno, 2*nlevel, 2*nlayer))
+	G = np.zeros((nwno, 2*nlevel))
+	A_new = np.zeros((nwno, 2*nlayer, 2*nlayer))
+	N_new = np.zeros((nwno, 2*nlevel))
+
+	A_int_new = np.zeros((nwno, 2*nlayer, 2*nlayer))
+	N_int_new = np.zeros((nwno, 2*nlayer))
+
+	zero = np.zeros(nwno)
+	
+	#   first row: BC 1
+	M_new[:,0,0] = Q1[:,0]
+	M_new[:,0,1] = Q2[:,0]
+
+	B_new[:,0] = b_top - zmn_down[:,0]        
+
+	#F[:,0:2,0:2] = F_block(0,zero)
+	#G[:,0:2] = Z_block(0,zero)
+
+	nn = list(range(0,2*nlayer))
+	M_new[:,nn[1:-1:2],nn[:-2:2]] = Q1mn[:,:-1]
+	M_new[:,nn[1:-1:2],nn[1:-1:2]] = Q2pl[:,:-1]
+	M_new[:,nn[2::2], nn[:-2:2]] = Q2mn[:,:-1]
+	M_new[:,nn[2::2], nn[1:-1:2]] = Q1pl[:,:-1]
+	
+	M_new[:,nn[1:-1:2],nn[2::2]] = -Q1[:,1:]
+	M_new[:,nn[1:-1:2],nn[3::2]] = -Q2[:,1:]
+	M_new[:,nn[2::2], nn[2::2]] = -Q2[:,1:]
+	M_new[:,nn[2::2], nn[3::2]] = -Q1[:,1:]
+
+	B_new[:,nn[1:-1:2]] = zmn_down[:,1:] - zmn_up[:,:-1]
+	B_new[:,nn[2::2]] = zpl_down[:,1:] - zpl_up[:,:-1]
+
+	A_new[:,nn[::2],nn[::2]] = exptrm
+	A_new[:,nn[::2],nn[1::2]] = exptrmpl
+	A_new[:,nn[1::2],nn[::2]] = qmn
+	A_new[:,nn[1::2],nn[1::2]] = qpl
+
+	N_new[:,nn[::2]] = n0_up
+	N_new[:,nn[1::2]] = n1_up
+
+	A_int_new[:,nn[::2],nn[::2]] = exp_alp
+	A_int_new[:,nn[::2],nn[1::2]] = exp_bet
+	A_int_new[:,nn[1::2],nn[::2]] = qexp_alp
+	A_int_new[:,nn[1::2],nn[1::2]] = qexp_bet
+
+	N_int_new[:,nn[::2]] = nint0
+	N_int_new[:,nn[1::2]] = nint1
+
+	#   last row: BC 4
+	im = 2*nlayer-1; 
+	jm = 2*nlayer-2; jM = 2*nlayer
+	n = nlayer-1
+	M_new[:,2*nlayer-1, 2*nlayer-2] = Q2mn[:,n] - surf_reflect*Q1mn[:,n]
+	M_new[:,2*nlayer-1, 2*nlayer-1] = Q1pl[:,n] - surf_reflect*Q2pl[:,n]
+	B_new[:,im] = b_surface - zpl_up[:,n] + surf_reflect * zmn_up[:,n]
+	
+
+	n = nlayer-1
+	im = 2*nlevel-2; iM = 2*nlevel
+	jm = 2*nlayer-2; jM = 2*nlayer
+	#F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
+	#G[:,im:iM] = Z_block(n,dtau[:,n])
+
+	t = time.time()-t1
+	print('time to assign matrix values = ', t)
+	import IPython; IPython.embed()
+	import sys; sys.exit()
+
+	return M_new, B_new, A_new, N_new, F, G, A_int_new, N_int_new
