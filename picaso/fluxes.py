@@ -936,8 +936,8 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
     #terms not dependent on incident angle
     sq3 = sqrt(3.)
-    g1  = (sq3*0.5)*(2. - w0*(1.+cosb)) #table 1 # (7-w0*(4+3*cosb))/4 #
-    g2  = (sq3*w0*0.5)*(1.-cosb)        #table 1 # -(1-w0*(4-3*cosb))/4 #
+    g1  = (7-w0*(4+3*cosb))/4 #(sq3*0.5)*(2. - w0*(1.+cosb)) #table 1 # 
+    g2  = -(1-w0*(4-3*cosb))/4 #(sq3*w0*0.5)*(1.-cosb)        #table 1 # 
     lamda = sqrt(g1**2 - g2**2)         #eqn 21
     gama  = (g1-lamda)/g2               #eqn 22
 
@@ -945,7 +945,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
     for ng in range(numg):
         for nt in range(numt):
 
-            g3  = 0.5*(1.-sq3*cosb*ubar0[ng, nt]) #(2-3*cosb*ubar0[ng,nt])/4#  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
+            g3  = (2-3*cosb*ubar0[ng,nt])/4#0.5*(1.-sq3*cosb*ubar0[ng, nt]) #  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
     
             # now calculate c_plus and c_minus (equation 23 and 24 toon)
             g4 = 1.0 - g3
@@ -2276,9 +2276,7 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 			elif single_phase==1:#'OTHG':
 				g0_s = np.ones((nwno, nlayer))
 				g1_s = 3*cosb.T
-				#g2 = gcos2.T
 				g2_s = 5*(cosb**2).T
-				#g3 = gcos2.T/10 # moments of phase function ** need to define 4th moment
 				g3_s = 7*(cosb**3).T
 
 				g0_m = g0_s
@@ -2296,6 +2294,7 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				g1_s = 3*(f*g_forward + (1-f)*g_back).T
 				g2_s = 5*(f*g_forward**2 + (1-f)*g_back**2).T
 				g3_s = 7*(f*g_forward**3 + (1-f)*g_back**3).T
+				g4_s = 9*(f*g_forward**4 + (1-f)*g_back**4).T
 
 				g0_m = np.ones((nwno, nlayer))
 				g1_m = 3*cosb.T
@@ -2317,6 +2316,7 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				g1_s = (3*ftau_cld*(f*g_forward + (1-f)*g_back)).T 
 				g2_s = (5*ftau_cld*(f*g_forward**2 + (1-f)*g_back**2)).T + 0.5*ftau_ray.T 
 				g3_s = (7*ftau_cld*(f*g_forward**3 + (1-f)*g_back**3)).T
+				g3_s = (9*ftau_cld*(f*g_forward**4 + (1-f)*g_back**4)).T
 
 				g0_m = np.ones((nwno, nlayer))
 				g1_m = 3*(ftau_cld*cosb).T
@@ -2335,7 +2335,7 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 			w_multi = [g0_m, g1_m, g2_m, g3_m]
 			
 			def P(mu): # Legendre polynomials
-				return [1, mu, 1/2 * (3*mu**2 - 1), 1/2 * (5*mu**3 - 3*mu)]
+				return [1, mu, 1/2 * (3*mu**2 - 1), 1/2 * (5*mu**3 - 3*mu), 1/8 * (35*mu**4 - 30*mu**2+3)]
 
 			#boundary conditions 
 			b_top = 0.0
@@ -2682,9 +2682,26 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	Q1pl = Q1/exptrm;  Q2pl = Q2/exptrm
 	def F_block(n, lev):
 		if lev == "up":
-		    return 2*np.pi * np.array([[Q1mn[:,n], Q2mn[:,n]], [Q2pl[:,n], Q1pl[:,n]]]).T
+			block= 2*np.pi * np.array([[Q1mn[:,n], Q2mn[:,n]], [Q2pl[:,n], Q1pl[:,n]]]).T
+			return block
 		elif lev == "down":
-		    return 2*np.pi * np.array([[Q1[:,n], Q2[:,n]], [Q2[:,n], Q1[:,n]]]).T
+			block = 2*np.pi * np.array([[Q1[:,n], Q2[:,n]], [Q2[:,n], Q1[:,n]]]).T
+			return block
+
+	temp = zeros((nwno,2,2))
+	def F_block_new(n, lev):
+		if lev == "up":
+			temp[:,0,0] = 2*np.pi * Q1mn[:,n]
+			temp[:,1,0] = 2*np.pi * Q2mn[:,n]
+			temp[:,0,1] = 2*np.pi * Q2pl[:,n]
+			temp[:,1,1] = 2*np.pi * Q1pl[:,n]
+			return temp
+		elif lev == "down":
+			temp[:,0,0] = 2*np.pi * Q1[:,n]
+			temp[:,1,0] = 2*np.pi * Q2[:,n]
+			temp[:,0,1] = 2*np.pi * Q2[:,n]
+			temp[:,1,1] = 2*np.pi * Q1[:,n]
+			return temp
 
 	exptau_u0 = np.exp(-tau/ubar0)
 	zmn = 0.5*eta[0] - eta[1] 
@@ -2735,6 +2752,7 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 		return (np.array([nint0[:,n], nint1[:,n]])).T
 	
 	M = np.zeros((nwno, 2*nlayer, 2*nlayer))
+	M_new = np.zeros((nwno, 2*nlayer, 2*nlayer))
 	B = np.zeros((nwno, 2*nlayer))
 
 	nlevel = nlayer+1
@@ -2749,6 +2767,7 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	
 	#   first row: BC 1
 	M[:,0,0:2] = F_block(0,"down")[:,0,]
+	M_new[:,0,0:2] = F_block_new(0,"down")[:,0,]
 	B[:,0] = b_top - Z_block(0,"down")[:,0]        
 
 	#F[:,0:2,0:2] = F_block(0,zero)
@@ -2760,7 +2779,9 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 		im = 2*n+1; iM = (2*n+2)+1
 		jm = 2*n; j_ = (2*n+1)+1; jM = (2*n+3)+1
 		M[:,im:iM,jm:j_] = F_block(n,"up")
+		M_new[:,im:iM,jm:j_] = F_block_new(n,"up")
 		M[:,im:iM,j_:jM] = -F_block(n+1,"down")
+		M_new[:,im:iM,j_:jM] = -F_block_new(n+1,"down")
 		B[:,im:iM] = Z_block(n+1,"down") - Z_block(n,"up")
 		
 		im = 2*n+2; iM = (2*n+3)+1
@@ -2780,6 +2801,7 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	jm = 2*nlayer-2; jM = 2*nlayer
 	n = nlayer-1
 	M[:,im,jm:jM] = F_block(n,"up")[:,1,] - surf_reflect*F_block(n,"up")[:,0,]
+	M_new[:,im,jm:jM] = F_block_new(n,"up")[:,1,] - surf_reflect*F_block_new(n,"up")[:,0,]
 	B[:,im] = b_surface - Z_block(n,"up")[:,1] + surf_reflect * Z_block(n,"up")[:,0]
 	
 
@@ -2795,6 +2817,6 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	im = 2*nlayer-2; iM = 2*nlayer
 	jm = 2*nlayer-2; jM = 2*nlayer
 	A_int[:,im:iM,jm:jM] = A_int_block(n)
-	N_int[:,im:iM] = N_int_block(n)
+	N_int[:,im:iM] = N_int_block(n); import IPython; IPython.embed(); import sys; sys.exit()
 
 	return M, B, A, N, F, G, A_int, N_int
