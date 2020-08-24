@@ -2649,6 +2649,8 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 		Legendre polynomials
 	"""
 
+	import time
+	t1 = time.time()
 	w0 = W0.T
 	dtau = dtau.T
 	tau = tau.T
@@ -2675,32 +2677,32 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	exptrm = np.exp(-expo)
 
 	q = lam/a[1]
-	Q1 = 0.5 + q
-	Q2 = 0.5 - q
+	Q1 = 2*pi*(0.5 + q)
+	Q2 = 2*pi*(0.5 - q)
 
 	Q1mn = Q1*exptrm;  Q2mn = Q2*exptrm
 	Q1pl = Q1/exptrm;  Q2pl = Q2/exptrm
 	def F_block(n, lev):
 		if lev == "up":
-			block= 2*np.pi * np.array([[Q1mn[:,n], Q2mn[:,n]], [Q2pl[:,n], Q1pl[:,n]]]).T
+			block= np.array([[Q1mn[:,n], Q2mn[:,n]], [Q2pl[:,n], Q1pl[:,n]]]).T
 			return block
 		elif lev == "down":
-			block = 2*np.pi * np.array([[Q1[:,n], Q2[:,n]], [Q2[:,n], Q1[:,n]]]).T
+			block = np.array([[Q1[:,n], Q2[:,n]], [Q2[:,n], Q1[:,n]]]).T
 			return block
 
 	temp = zeros((nwno,2,2))
 	def F_block_new(n, lev):
 		if lev == "up":
-			temp[:,0,0] = 2*np.pi * Q1mn[:,n]
-			temp[:,1,0] = 2*np.pi * Q2mn[:,n]
-			temp[:,0,1] = 2*np.pi * Q2pl[:,n]
-			temp[:,1,1] = 2*np.pi * Q1pl[:,n]
+			temp[:,0,0] = Q1mn[:,n]
+			temp[:,1,0] = Q2mn[:,n]
+			temp[:,0,1] = Q2pl[:,n]
+			temp[:,1,1] = Q1pl[:,n]
 			return temp
 		elif lev == "down":
-			temp[:,0,0] = 2*np.pi * Q1[:,n]
-			temp[:,1,0] = 2*np.pi * Q2[:,n]
-			temp[:,0,1] = 2*np.pi * Q2[:,n]
-			temp[:,1,1] = 2*np.pi * Q1[:,n]
+			temp[:,0,0] = Q1[:,n]
+			temp[:,1,0] = Q2[:,n]
+			temp[:,0,1] = Q2[:,n]
+			temp[:,1,1] = Q1[:,n]
 			return temp
 
 	exptau_u0 = np.exp(-tau/ubar0)
@@ -2766,9 +2768,11 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	zero = np.zeros(nwno)
 	
 	#   first row: BC 1
-	M[:,0,0:2] = F_block(0,"down")[:,0,]
-	M_new[:,0,0:2] = F_block_new(0,"down")[:,0,]
-	B[:,0] = b_top - Z_block(0,"down")[:,0]        
+	#M[:,0,0:2] = F_block(0,"down")[:,0,]
+	#M_new[:,0,0:2] = F_block_new(0,"down")[:,0,]
+	M_new[:,0,0] = Q1[:,0]
+	M_new[:,0,1] = Q2[:,0]
+	#B[:,0] = b_top - Z_block(0,"down")[:,0]        
 
 	#F[:,0:2,0:2] = F_block(0,zero)
 	#G[:,0:2] = Z_block(0,zero)
@@ -2778,31 +2782,44 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	for n in range(0, nlayer-1):
 		im = 2*n+1; iM = (2*n+2)+1
 		jm = 2*n; j_ = (2*n+1)+1; jM = (2*n+3)+1
-		M[:,im:iM,jm:j_] = F_block(n,"up")
-		M_new[:,im:iM,jm:j_] = F_block_new(n,"up")
-		M[:,im:iM,j_:jM] = -F_block(n+1,"down")
-		M_new[:,im:iM,j_:jM] = -F_block_new(n+1,"down")
-		B[:,im:iM] = Z_block(n+1,"down") - Z_block(n,"up")
+		#M[:,im:iM,jm:j_] = F_block(n,"up")
+		#M_new[:,im:iM,jm:j_] = F_block_new(n,"up")
+		#M[:,im:iM,j_:jM] = -F_block(n+1,"down")
+		#M_new[:,im:iM,j_:jM] = -F_block_new(n+1,"down")
+
+		M_new[:,2*n+1,2*n] = Q1mn[:,n]
+		M_new[:,2*n+1,2*n+1] = Q2pl[:,n]
+		M_new[:,2*n+2,2*n] = Q2mn[:,n]
+		M_new[:,2*n+2,2*n+1] = Q1pl[:,n]
+
+		M_new[:,2*n+1,2*n+2] = -Q1[:,n]
+		M_new[:,2*n+1,2*n+3] = -Q2[:,n]
+		M_new[:,2*n+2,2*n+2] = -Q2[:,n]
+		M_new[:,2*n+2,2*n+3] = -Q1[:,n]
+
+		#B[:,im:iM] = Z_block(n+1,"down") - Z_block(n,"up")
 		
 		im = 2*n+2; iM = (2*n+3)+1
 		jm = 2*n; jM = (2*n+1)+1
 		#F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
 		#G[:,im:iM] = Z_block(n,dtau[:,n])
 
-		A[:,im:iM,jm:jM] = A_block(n)
-		N[:,im:iM] = N_block(n)
+		#A[:,im:iM,jm:jM] = A_block(n)
+		#N[:,im:iM] = N_block(n)
 
 		im = 2*n; iM = (2*n+1)+1
-		A_int[:,im:iM,jm:jM] = A_int_block(n)
-		N_int[:,im:iM] = N_int_block(n)
+		#A_int[:,im:iM,jm:jM] = A_int_block(n)
+		#N_int[:,im:iM] = N_int_block(n)
 
 	#   last row: BC 4
 	im = 2*nlayer-1; 
 	jm = 2*nlayer-2; jM = 2*nlayer
 	n = nlayer-1
-	M[:,im,jm:jM] = F_block(n,"up")[:,1,] - surf_reflect*F_block(n,"up")[:,0,]
-	M_new[:,im,jm:jM] = F_block_new(n,"up")[:,1,] - surf_reflect*F_block_new(n,"up")[:,0,]
-	B[:,im] = b_surface - Z_block(n,"up")[:,1] + surf_reflect * Z_block(n,"up")[:,0]
+	#M[:,im,jm:jM] = F_block(n,"up")[:,1,] - surf_reflect*F_block(n,"up")[:,0,]
+	#M_new[:,im,jm:jM] = F_block_new(n,"up")[:,1,] - surf_reflect*F_block_new(n,"up")[:,0,]
+	M_new[:,2*nlayer-1, 2*nlayer-2] = Q2mn[:,n] - surf_reflect*Q1mn[:,n]
+	M_new[:,2*nlayer-1, 2*nlayer-1] = Q1pl[:,n] - surf_reflect*Q2pl[:,n]
+	#B[:,im] = b_surface - Z_block(n,"up")[:,1] + surf_reflect * Z_block(n,"up")[:,0]
 	
 
 	n = nlayer-1
@@ -2811,12 +2828,15 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	#F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
 	#G[:,im:iM] = Z_block(n,dtau[:,n])
 
-	A[:,im:iM,jm:jM] = A_block(n)
-	N[:,im:iM] = N_block(n)
+	#A[:,im:iM,jm:jM] = A_block(n)
+	#N[:,im:iM] = N_block(n)
 
 	im = 2*nlayer-2; iM = 2*nlayer
 	jm = 2*nlayer-2; jM = 2*nlayer
-	A_int[:,im:iM,jm:jM] = A_int_block(n)
-	N_int[:,im:iM] = N_int_block(n); import IPython; IPython.embed(); import sys; sys.exit()
+	#A_int[:,im:iM,jm:jM] = A_int_block(n)
+	#N_int[:,im:iM] = N_int_block(n); 
+	t2 = time.time()
+	tot = t2-t1
+	print("time = ", tot)
 
 	return M, B, A, N, F, G, A_int, N_int
