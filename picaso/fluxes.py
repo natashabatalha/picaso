@@ -2342,8 +2342,16 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 			b_surface = 0. + surf_reflect*ubar0[ng, nt]*F0PI*exp(-tau[-1, :]/ubar0[ng, nt])
 
 			if stream==2:
+				t1 = time.time()
 				M, B, A, N, F, G, A_int, N_int = setup_2_stream_fast(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
 						ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
+				t2 = time.time() - t1
+				print('fast code = ', t2)
+				#t1 = time.time()
+				#M, B, A, N, F, G, A_int, N_int = setup_2_stream_scaled(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
+				#		ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
+				#t2 = time.time() - t1
+				#print('og code = ', t2)
 			else:
 				M, B, A, N, F, G, A_int, N_int = setup_4_stream_scaled(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
 						ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
@@ -2354,9 +2362,8 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				print("time to set up matrices = ", t_setup)
 
 			t3 = time.time()
-			import IPython; IPython.embed()
 
-			X = zeros((stream*nlevel, nwno))
+			X = zeros((stream*nlayer, nwno))
 			intgrl_new = np.zeros((stream*nlayer, nwno))
 			intgrl_per_layer = np.zeros((nlayer, nwno))
 			full_intgrl = np.zeros((nlayer, nwno))
@@ -2392,7 +2399,7 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				full_intgrl[i] = np.sum(intgrl_per_layer[-j:,:])
 
 			for l in range(stream):
-				xint_temp[-1, :] = xint_temp[-1, :] + (2*l+1) * X[stream*(nlevel-1)+l, :] * P(ubar1[ng,nt])[l]
+				xint_temp[-1, :] = xint_temp[-1, :] + (2*l+1) * X[-stream+l, :] * P(ubar1[ng,nt])[l]
 			for i in range(nlayer-1,-1,-1):
 				xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/ubar1[ng,nt]) 
 							+ intgrl_per_layer[i,:] / ubar1[ng,nt]) 
@@ -2649,8 +2656,6 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 		Legendre polynomials
 	"""
 
-	import time
-	t1 = time.time()
 	w0 = W0.T
 	dtau = dtau.T
 	tau = tau.T
@@ -2760,7 +2765,7 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	F = np.zeros((nwno, 2*nlevel, 2*nlayer))
 	G = np.zeros((nwno, 2*nlevel))
 	A = np.zeros((nwno, 2*nlayer, 2*nlayer))
-	N = np.zeros((nwno, 2*nlevel))
+	N = np.zeros((nwno, 2*nlayer))
 
 	A_int = np.zeros((nwno, 2*nlayer, 2*nlayer))
 	N_int = np.zeros((nwno, 2*nlayer))
@@ -2818,13 +2823,11 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 
 	A_int[:,im:iM,jm:jM] = A_int_block(n)
 	N_int[:,im:iM] = N_int_block(n); 
-	t2 = time.time()
-	tot = t2-t1
-	print("time = ", tot)
 
 	return M, B, A, N, F, G, A_int, N_int
 
-def setup_2_stream_fast(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau, tau, w_single, w_multi, ubar1, P):
+#@jit(nopython=True, cache=True)
+def setup_2_stream_fast(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0, DTAU, TAU, w_single, w_multi, ubar1, P):
 	"""
 	Parameters
 	----------
@@ -2853,30 +2856,30 @@ def setup_2_stream_fast(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, 
 		Legendre polynomials
 	"""
 
-	import time
-	t1 = time.time()
 	w0 = W0.T
-	dtau = dtau.T
-	tau = tau.T
+	dtau = DTAU.T
+	tau = TAU.T
 	
 	a = []; b = []
 	for l in range(2):
-		a.append((((2*l + 1) - w0 * w_multi[l]).T).T)
+		#a.append((((2*l + 1) - w0 * w_multi[l]).T).T)
+		a.append(((2*l + 1) - w0 * w_multi[l]))
 		b.append((F0PI * (w0 * w_single[l]).T).T * P(-ubar0)[l] / (4 * np.pi))
 
+
+	#@jit(nopython=True, cache=True)
 	lam = np.sqrt(a[0]*a[1])
 
 	Del = ((1 / ubar0)**2 - a[0]*a[1])
 	Dels = []
 	Dels.append(b[1] /ubar0 - a[1]*b[0])
 	Dels.append(b[0] /ubar0 - a[0]*b[1])
-	
+
 	eta = []
 	for l in range(2):
 		eta.append(Dels[l]/Del)
 
 	expo = lam*dtau
-	#save from overflow 
 	expo = slice_gt(expo, 35.0) 
 	exptrm = np.exp(-expo)
 
@@ -2894,56 +2897,43 @@ def setup_2_stream_fast(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, 
 	zpl_up = zpl * exptau_u0[:,1:] 
 	zmn_down = zmn * exptau_u0[:,:-1] 
 	zpl_down = zpl * exptau_u0[:,:-1] 
-	
-	exptrmpl = 1/exptrm
-	qmn = -q*exptrm; qpl = q/exptrm
-	
-	n0_up = eta[0] * exptau_u0[:,1:]
-	n1_up = eta[1] * exptau_u0[:,1:]
 
-	alpha = 1/ubar1 + lam;			beta = 1/ubar1 - lam;			mus = (ubar1 + ubar0) / (ubar1 * ubar0)
-	expo_alp = alpha * dtau;		expo_bet = beta * dtau;			expo_mus = mus * dtau 
-	expo_alp = slice_gt(expo_alp, 35.0);	expo_bet = slice_gt(expo_bet, 35.0);	expo_mus = slice_gt(expo_mus, 35.0)    
-	exptrm_alp = np.exp(-expo_alp);		exptrm_bet = np.exp(-expo_bet);		exptrm_mus = np.exp(-expo_mus)
-
-	exp_alp = (1 - exptrm_alp) / alpha 
-	exp_bet = (1 - exptrm_bet) / beta  
-	qexp_alp = -q * exp_alp	
-	qexp_bet = q * exp_bet
+	
+#	exptrmpl = 1/exptrm
+#	qmn = -q*exptrm; qpl = q/exptrm
+	
+	alpha, beta, mus  = 1/ubar1 + lam, 1/ubar1 - lam, (ubar1 + ubar0) / (ubar1 * ubar0)
+	expo_alp = slice_gt(alpha * dtau, 35.0)
+	expo_bet = slice_gt(beta * dtau, 35.0) 
+	expo_mus = slice_gt(mus * dtau, 35.0)    
+	exptrm_alp, exptrm_bet, exptrm_mus = exp(-expo_alp), exp(-expo_bet), exp(-expo_mus)
 
 	tau_mu = tau[:,:-1] * (mus - 1/ubar1)
 	tau_mu = slice_gt(tau_mu, 35.0)
 	exptau_mu = np.exp(-tau_mu)
 	exp_mu = (1 - exptrm_mus) * exptau_mu / mus
-	nint0 = eta[0] * exp_mu
-	nint1 = eta[1] * exp_mu
 
-	t = time.time()-t1
-	print('time to define variables = ', t)
-	t1 = time.time()
-	
-	M_new = np.zeros((nwno, 2*nlayer, 2*nlayer))
-	B_new = np.zeros((nwno, 2*nlayer))
+	M_new = zeros((nwno, 2*nlayer, 2*nlayer))
+	B_new = zeros((nwno, 2*nlayer))
 
-	nlevel = nlayer+1
-	F = np.zeros((nwno, 2*nlevel, 2*nlayer))
-	G = np.zeros((nwno, 2*nlevel))
-	A_new = np.zeros((nwno, 2*nlayer, 2*nlayer))
-	N_new = np.zeros((nwno, 2*nlevel))
+	F = zeros((nwno, 2*nlayer, 2*nlayer))
+	G = zeros((nwno, 2*nlayer))
+	A_new = zeros((nwno, 2*nlayer, 2*nlayer))
+	N_new = zeros((nwno, 2*nlayer))
 
-	A_int_new = np.zeros((nwno, 2*nlayer, 2*nlayer))
-	N_int_new = np.zeros((nwno, 2*nlayer))
+	A_int_new = zeros((nwno, 2*nlayer, 2*nlayer))
+	N_int_new = zeros((nwno, 2*nlayer))
 
-	zero = np.zeros(nwno)
-	
 	#   first row: BC 1
 	M_new[:,0,0] = Q1[:,0]
 	M_new[:,0,1] = Q2[:,0]
+	import IPython; IPython.embed()
 
-	B_new[:,0] = b_top - zmn_down[:,0]        
 
-	#F[:,0:2,0:2] = F_block(0,zero)
-	#G[:,0:2] = Z_block(0,zero)
+	B_new[:,0] = b_top - zmn[:,0]        
+
+#	F[:,0:2,0:2] = F_block(0,zero)
+#	G[:,0:2] = Z_block(0,zero)
 
 	nn = list(range(0,2*nlayer))
 	M_new[:,nn[1:-1:2],nn[:-2:2]] = Q1mn[:,:-1]
@@ -2960,39 +2950,152 @@ def setup_2_stream_fast(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, 
 	B_new[:,nn[2::2]] = zpl_down[:,1:] - zpl_up[:,:-1]
 
 	A_new[:,nn[::2],nn[::2]] = exptrm
-	A_new[:,nn[::2],nn[1::2]] = exptrmpl
-	A_new[:,nn[1::2],nn[::2]] = qmn
-	A_new[:,nn[1::2],nn[1::2]] = qpl
+	A_new[:,nn[::2],nn[1::2]] = 1/exptrm
+	A_new[:,nn[1::2],nn[::2]] = -q*exptrm
+	A_new[:,nn[1::2],nn[1::2]] = q/exptrm
 
-	N_new[:,nn[::2]] = n0_up
-	N_new[:,nn[1::2]] = n1_up
+	N_new[:,nn[::2]] = eta[0] * exptau_u0[:,1:]
+	N_new[:,nn[1::2]] = eta[1] * exptau_u0[:,1:]
 
-	A_int_new[:,nn[::2],nn[::2]] = exp_alp
-	A_int_new[:,nn[::2],nn[1::2]] = exp_bet
-	A_int_new[:,nn[1::2],nn[::2]] = qexp_alp
-	A_int_new[:,nn[1::2],nn[1::2]] = qexp_bet
+	A_int_new[:,nn[::2],nn[::2]] = (1 - exptrm_alp) / alpha 
+	A_int_new[:,nn[::2],nn[1::2]] = (1 - exptrm_bet) / beta  
+	A_int_new[:,nn[1::2],nn[::2]] = -q * (1 - exptrm_alp) / alpha
+	A_int_new[:,nn[1::2],nn[1::2]] = q * (1 - exptrm_bet) / beta 
 
-	N_int_new[:,nn[::2]] = nint0
-	N_int_new[:,nn[1::2]] = nint1
+	N_int_new[:,nn[::2]] = eta[0] * exp_mu
+	N_int_new[:,nn[1::2]] = eta[1] * exp_mu
 
 	#   last row: BC 4
-	im = 2*nlayer-1; 
-	jm = 2*nlayer-2; jM = 2*nlayer
 	n = nlayer-1
 	M_new[:,2*nlayer-1, 2*nlayer-2] = Q2mn[:,n] - surf_reflect*Q1mn[:,n]
 	M_new[:,2*nlayer-1, 2*nlayer-1] = Q1pl[:,n] - surf_reflect*Q2pl[:,n]
-	B_new[:,im] = b_surface - zpl_up[:,n] + surf_reflect * zmn_up[:,n]
+	B_new[:,2*nlayer-1] = b_surface - zpl_up[:,n] + surf_reflect * zmn_up[:,n]
+
+#	n = nlayer-1
+#	im = 2*nlevel-2; iM = 2*nlevel
+#	jm = 2*nlayer-2; jM = 2*nlayer
+#	F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
+#	G[:,im:iM] = Z_block(n,dtau[:,n])
+	w0 = W0
+	dtau = DTAU
+	tau = TAU
 	
+	a = []; b = []
+	for l in range(2):
+		a.append(((2*l + 1) - W0 * w_multi[l].T))
+		b.append((F0PI * (W0 * w_single[l].T)) * P(-ubar0)[l] / (4 * np.pi))
 
+
+	#@jit(nopython=True, cache=True)
+	lam = np.sqrt(a[0]*a[1])
+
+	Del = ((1 / ubar0)**2 - a[0]*a[1])
+	Dels = []
+	Dels.append(b[1] /ubar0 - a[1]*b[0])
+	Dels.append(b[0] /ubar0 - a[0]*b[1])
+
+	eta = []
+	for l in range(2):
+		eta.append(Dels[l]/Del)
+
+	expo = lam*dtau
+	expo = slice_gt(expo, 35.0) 
+	exptrm = np.exp(-expo)
+
+	q = lam/a[1]
+	Q1 = 2*pi*(0.5 + q)
+	Q2 = 2*pi*(0.5 - q)
+
+	Q1mn = Q1*exptrm;  Q2mn = Q2*exptrm
+	Q1pl = Q1/exptrm;  Q2pl = Q2/exptrm
+
+	exptau_u0 = np.exp(-tau/ubar0)
+	zmn = 2*pi*(0.5*eta[0] - eta[1]) 
+	zpl = 2*pi*(0.5*eta[0] + eta[1])
+	zmn_up = zmn * exptau_u0[1:,:] 
+	zpl_up = zpl * exptau_u0[1:,:] 
+	zmn_down = zmn * exptau_u0[:-1,:] 
+	zpl_down = zpl * exptau_u0[:-1,:] 
+
+	
+#	exptrmpl = 1/exptrm
+#	qmn = -q*exptrm; qpl = q/exptrm
+	
+	alpha, beta, mus  = 1/ubar1 + lam, 1/ubar1 - lam, (ubar1 + ubar0) / (ubar1 * ubar0)
+	expo_alp = slice_gt(alpha * dtau, 35.0)
+	expo_bet = slice_gt(beta * dtau, 35.0) 
+	expo_mus = slice_gt(mus * dtau, 35.0)    
+	exptrm_alp, exptrm_bet, exptrm_mus = exp(-expo_alp), exp(-expo_bet), exp(-expo_mus)
+
+	tau_mu = tau[:-1,:] * (mus - 1/ubar1)
+	tau_mu = slice_gt(tau_mu, 35.0)
+	exptau_mu = np.exp(-tau_mu)
+	exp_mu = (1 - exptrm_mus) * exptau_mu / mus
+
+	M = zeros((2*nlayer, 2*nlayer, nwno))
+	B = zeros((2*nlayer, nwno))
+
+	F = zeros((2*nlayer, 2*nlayer, nwno))
+	G = zeros((2*nlayer, nwno))
+	A = zeros((2*nlayer, 2*nlayer, nwno))
+	N = zeros((2*nlayer, nwno))
+
+	A_int = zeros((2*nlayer, 2*nlayer, nwno))
+	N_int = zeros((2*nlayer, nwno))
+
+	#   first row: BC 1
+	M[0,0,:] = Q1[0,:]
+	M[0,1,:] = Q2[0,:]
+	import IPython; IPython.embed()
+
+
+	B[0,:] = b_top - zmn[0,:]        
+
+#	F[:,0:2,0:2] = F_block(0,zero)
+#	G[:,0:2] = Z_block(0,zero)
+
+	nn = list(range(0,2*nlayer))
+	M[nn[1:-1:2],nn[:-2:2],:] = Q1mn[:-1,:]
+	M[nn[1:-1:2],nn[1:-1:2],:] = Q2pl[:-1,:]
+	M[nn[2::2], nn[:-2:2],:] = Q2mn[:-1,:]
+	M[nn[2::2], nn[1:-1:2],:] = Q1pl[:-1,:]
+	
+	M[nn[1:-1:2],nn[2::2],:] = -Q1[1:,:]
+	M[nn[1:-1:2],nn[3::2],:] = -Q2[1:,:]
+	M[nn[2::2], nn[2::2],:] = -Q2[1:,:]
+	M[nn[2::2], nn[3::2],:] = -Q1[1:,:]
+
+	B[nn[1:-1:2],:] = zmn_down[1:,:] - zmn_up[:-1,:]
+	B[nn[2::2],:] = zpl_down[1:,:] - zpl_up[:-1,:]
+
+	A[nn[::2],nn[::2],:] = exptrm
+	A[nn[::2],nn[1::2],:] = 1/exptrm
+	A[nn[1::2],nn[::2],:] = -q*exptrm
+	A[nn[1::2],nn[1::2],:] = q/exptrm
+
+	N[nn[::2],:] = eta[0] * exptau_u0[1:,:]
+	N[nn[1::2],:] = eta[1] * exptau_u0[1:,:]
+
+	A_int[nn[::2],nn[::2],:] = (1 - exptrm_alp) / alpha 
+	A_int[nn[::2],nn[1::2],:] = (1 - exptrm_bet) / beta  
+	A_int[nn[1::2],nn[::2],:] = -q * (1 - exptrm_alp) / alpha
+	A_int[nn[1::2],nn[1::2],:] = q * (1 - exptrm_bet) / beta 
+
+	N_int[nn[::2],:] = eta[0] * exp_mu
+	N_int[nn[1::2],:] = eta[1] * exp_mu
+
+	#   last row: BC 4
 	n = nlayer-1
-	im = 2*nlevel-2; iM = 2*nlevel
-	jm = 2*nlayer-2; jM = 2*nlayer
-	#F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
-	#G[:,im:iM] = Z_block(n,dtau[:,n])
+	M[2*nlayer-1, 2*nlayer-2,:] = Q2mn[n,:] - surf_reflect*Q1mn[n,:]
+	M[2*nlayer-1, 2*nlayer-1,:] = Q1pl[n,:] - surf_reflect*Q2pl[n,:]
+	B[2*nlayer-1,:] = b_surface - zpl_up[n,:] + surf_reflect * zmn_up[n,:]
 
-	t = time.time()-t1
-	print('time to assign matrix values = ', t)
+#	n = nlayer-1
+#	im = 2*nlevel-2; iM = 2*nlevel
+#	jm = 2*nlayer-2; jM = 2*nlayer
+#	F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
+#	G[:,im:iM] = Z_block(n,dtau[:,n])
 	import IPython; IPython.embed()
 	import sys; sys.exit()
 
-	return M_new, B_new, A_new, N_new, F, G, A_int_new, N_int_new
+	return M, B, A, N, F, G, A_int, N_int
