@@ -1636,746 +1636,6 @@ def get_transit_3d(nlevel, nwno, radius, gravity,rstar, mass, mmw, k_b, G,amu,
     """
     return 
 
-
-def setup_4_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, w_single, w_multi, ubar1, P):
-	"""
-	Parameters
-	----------
-	nlayer : int 
-		number of layers in the model 
-	nwno : int 
-		number of wavelength points ## need to include this
-	W0: int
-		single scattering albedo 
-	b_top : array 
-		The diffuse radiation into the model at the top of the atmosphere
-	b_surface : array
-		The diffuse radiation into the model at the bottom. Includes emission, reflection 
-		of the unattenuated portion of the direct beam  
-	surf_reflect : array 
-		Surface reflectivity 
-	F0PI : int  
-		solar radiation
-	ubar0: array
-		cosine of solar incident angle
-	dtau : array 
-		Opacity per layer
-	g : array 
-		asymmetry parameters
-	P : array
-		Legendre polynomials
-	"""
-	w0 = W0.T
-	dtau = dtau.T
-	tau = tau.T
-
-	a = []; b = []
-	for l in range(4):
-		a.append((2*l + 1) - w0 * w_multi[l].T)
-		b.append((F0PI * (w0 * w_single[l].T).T).T * P(-ubar0)[l] / (4 * np.pi))
-
-	beta = a[0]*a[1] + 4*a[0]*a[3]/9 + a[2]*a[3]/9
-	gama = a[0]*a[1]*a[2]*a[3]/9
-	lam2 = np.sqrt((beta + np.sqrt(beta**2 - 4*gama)) / 2)
-	lam1 = np.sqrt((beta - np.sqrt(beta**2 - 4*gama)) / 2)
-
-	def f(x):
-		return x**4 - beta*x**2 + gama
-	
-	Del = 9 * f(1/ubar0)
-	Dels = []
-	Dels.append((a[1]*b[0] - b[1]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
-		+ 2*(a[3]*b[2] - 2*a[3]*b[0] - 3*b[3]/ubar0)/ubar0**2)
-	Dels.append((a[0]*b[1] - b[0]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
-		- 2*a[0]*(a[3]*b[2] - 3*b[3]/ubar0)/ubar0)
-	Dels.append((a[3]*b[2] - 3*b[3]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
-		- 2*a[3]*(a[0]*b[1] - b[0]/ubar0)/ubar0)
-	Dels.append((a[2]*b[3] - 3*b[2]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
-		+ 2*(3*a[0]*b[1] - 2*a[0]*b[3] - 3*b[0]/ubar0)/ubar0**2)
-	
-	eta = []
-	for l in range(4):
-		eta.append(Dels[l]/Del)
-
-	expo1 = slice_gt(lam1*dtau, 35.0) 
-	expo2 = slice_gt(lam2*dtau, 35.0) 
-	exptrm1 = np.exp(-expo1)
-	exptrm2 = np.exp(-expo2)
-
-	R1 = -a[0]/lam1; R2 = -a[0]/lam2
-	Q1 = 1/2 * (a[0]*a[1]/(lam1**2) - 1); Q2 = 1/2 * (a[0]*a[1]/(lam2**2) - 1)
-	S1 = -3/(2*a[3]) * (a[0]*a[1]/lam1 - lam1); S2 = -3/(2*a[3]) * (a[0]*a[1]/lam2 - lam2)
-	
-	p1pl = 2*np.pi*(1/2 + R1 + 5*Q1/8); p1mn = 2*np.pi*(1/2 - R1 + 5*Q1/8);
-	p2pl = 2*np.pi*(1/2 + R2 + 5*Q2/8); p2mn = 2*np.pi*(1/2 - R2 + 5*Q2/8);
-	q1pl = 2*np.pi*(-1/8 + 5*Q1/8 + S1); q1mn = 2*np.pi*(-1/8 + 5*Q1/8 - S1)
-	q2pl = 2*np.pi*(-1/8 + 5*Q2/8 + S2); q2mn = 2*np.pi*(-1/8 + 5*Q2/8 - S2)
-	z1pl = 2*np.pi*(eta[0]/2 + eta[1] + 5*eta[2]/8); z1mn = 2*np.pi*(eta[0]/2 - eta[1] + 5*eta[2]/8);
-	z2pl = 2*np.pi*(-eta[0]/8 + 5*eta[2]/8 + eta[3]); z2mn = 2*np.pi*(-eta[0]/8 + 5*eta[2]/8 - eta[3]);
-	
-	zero = np.zeros(nwno)
-
-	f00 = p1mn*exptrm1; f01 = p1pl/exptrm1;	f02 = p2mn*exptrm2; f03 = p2pl/exptrm2
-	f10 = q1mn*exptrm1; f11 = q1pl/exptrm1;	f12 = q2mn*exptrm2; f13 = q2pl/exptrm2
-	f20 = p1pl*exptrm1; f21 = p1mn/exptrm1;	f22 = p2pl*exptrm2; f23 = p2mn/exptrm2
-	f30 = q1pl*exptrm1; f31 = q1mn/exptrm1;	f32 = q2pl*exptrm2; f33 = q2mn/exptrm2
-	def F_block(n, lev):
-		if lev == "up":
-			return (np.array([[f00[:,n], f10[:,n], f20[:,n], f30[:,n]],
-					    [f01[:,n], f11[:,n], f21[:,n], f31[:,n]],
-			    		    [f02[:,n], f12[:,n], f22[:,n], f32[:,n]],
-			    		    [f03[:,n], f13[:,n], f23[:,n], f33[:,n]]])).T
-		elif lev == "down":
-			return (np.array([[p1mn[:,n], q1mn[:,n], p1pl[:,n], q1pl[:,n]],
-					    [p1pl[:,n], q1pl[:,n], p1mn[:,n], q1mn[:,n]],
-					    [p2mn[:,n], q2mn[:,n], p2pl[:,n], q2pl[:,n]],
-					    [p2pl[:,n], q2pl[:,n], p2mn[:,n], q2mn[:,n]]])).T
-
-		#block = np.array([[p1mn[:,n]*e1mn, q1mn[:,n]*e1mn, p1pl[:,n]*e1mn, q1pl[:,n]*e1mn],
-		#			[p1pl[:,n]*e1pl, q1pl[:,n]*e1pl, p1mn[:,n]*e1pl, q1mn[:,n]*e1pl],
-		#			[p2mn[:,n]*e2mn, q2mn[:,n]*e2mn, p2pl[:,n]*e2mn, q2pl[:,n]*e2mn],
-		#			[p2pl[:,n]*e2pl, q2pl[:,n]*e2pl, p2mn[:,n]*e2pl, q2mn[:,n]*e2pl]])
-		#return block.T
-	
-	exptau_u0 = np.exp(-tau/ubar0)
-	z1mn_up = z1mn * exptau_u0[:,1:]
-	z2mn_up = z2mn * exptau_u0[:,1:]
-	z1pl_up = z1pl * exptau_u0[:,1:]
-	z2pl_up = z2pl * exptau_u0[:,1:]
-	z1mn_down = z1mn * exptau_u0[:,:-1]
-	z2mn_down = z2mn * exptau_u0[:,:-1]
-	z1pl_down = z1pl * exptau_u0[:,:-1]
-	z2pl_down = z2pl * exptau_u0[:,:-1]
-
-	def Z_block(n, lev):
-		if lev == "up":
-			return (np.array([z1mn_up[:,n], z2mn_up[:,n], z1pl_up[:,n], z2pl_up[:,n]])).T
-		elif lev == "down":
-			return (np.array([z1mn_down[:,n], z2mn_down[:,n], z1pl_down[:,n], z2pl_down[:,n]])).T
-
-	
-	a00 = exptrm1;	    a01 = 1/exptrm1;	a02 = exptrm2;	    a03 = 1/exptrm2
-	a10 = R1*exptrm1;   a11 = -R1/exptrm1;	a12 = R2*exptrm2;   a13 = -R2/exptrm2
-	a20 = Q1*exptrm1;   a21 = Q1/exptrm1;	a22 = Q1*exptrm2;   a23 = Q1/exptrm2
-	a30 = S1*exptrm1;   a31 = -S1/exptrm1;	a32 = S1*exptrm2;   a33 = -S1/exptrm2
-	def A_block(n, lev):
-		if lev == "up":
-			return (np.array([[a00[:,n], a10[:,n], a20[:,n], a30[:,n]],
-						[a01[:,n], a11[:,n], a21[:,n], a31[:,n]],
-						[a02[:,n], a12[:,n], a22[:,n], a32[:,n]],
-						[a03[:,n], a13[:,n], a23[:,n], a33[:,n]]])).T
-		elif lev == "down":
-			return (np.array([[np.ones(nwno), R1[:,n], Q1[:,n], S1[:,n]],
-					    [np.ones(nwno), -R1[:,n], Q1[:,n], -S1[:,n]],
-					    [np.ones(nwno),  R2[:,n], Q2[:,n],  S2[:,n]],
-					    [np.ones(nwno), -R2[:,n], Q2[:,n], -S2[:,n]]])).T
-
-		#block = np.array([[e1mn, R1[:,n]*e1mn, Q1[:,n]*e1mn, S1[:,n]*e1mn],
-		#	[e1pl, -R1[:,n]*e1pl, Q1[:,n]*e1pl, -S1[:,n]*e1pl],
-		#	[e2mn,  R2[:,n]*e2mn, Q2[:,n]*e2mn,  S2[:,n]*e2mn],
-		#	[e2pl, -R2[:,n]*e2pl, Q2[:,n]*e2pl, -S2[:,n]*e2pl]])
-
-		#return block.T
-	
-	n0_up = eta[0]*exptau_u0[:,1:]; n0_down = eta[0]*exptau_u0[:,:-1]
-	n1_up = eta[1]*exptau_u0[:,1:]; n1_down = eta[1]*exptau_u0[:,:-1]
-	n2_up = eta[2]*exptau_u0[:,1:]; n2_down = eta[2]*exptau_u0[:,:-1]
-	n3_up = eta[3]*exptau_u0[:,1:]; n3_down = eta[3]*exptau_u0[:,:-1]
-	def N_block(n, lev):
-		if lev == "up":
-			return (np.array([n0_up[:,n], n1_up[:,n], n2_up[:,n], n3_up[:,n]])).T
-		elif lev == "down":
-			return (np.array([n0_down[:,n], n1_down[:,n], n2_down[:,n], n3_down[:,n]])).T
-
-
-	alpha1 = 1/ubar1 + lam1;		beta1 = 1/ubar1 - lam1;			mus = (ubar1 + ubar0) / (ubar1 * ubar0)
-	alpha2 = 1/ubar1 + lam2;		beta2 = 1/ubar1 - lam2;
-	expo_alp1 = alpha1 * dtau;		expo_bet1 = beta1 * dtau;		expo_mus = mus * dtau 
-	expo_alp2 = alpha2 * dtau;		expo_bet2 = beta2 * dtau;		
-	expo_alp1 = slice_gt(expo_alp1, 35.0);	expo_bet1 = slice_gt(expo_bet1, 35.0);	expo_mus = slice_gt(expo_mus, 35.0)    
-	expo_alp2 = slice_gt(expo_alp2, 35.0);	expo_bet2 = slice_gt(expo_bet2, 35.0);	
-	exptrm_alp1 = np.exp(-expo_alp1);	exptrm_bet1 = np.exp(-expo_bet1);	exptrm_mus = np.exp(-expo_mus)
-	exptrm_alp2 = np.exp(-expo_alp2);	exptrm_bet2 = np.exp(-expo_bet2);
-
-	A00 = (1-exptrm_alp1)/alpha1;	A01 = (1-exptrm_bet1)/beta1;	A02 = (1-exptrm_alp2)/alpha2;	A03 = (1-exptrm_bet2)/beta2
-	A10 = R1 * A00;			A11 = -R1 * A01;		A12 = R2 * A02;			A13 = -R2 * A03; 
-	A20 = Q1 * A00;			A21 =  Q1 * A01;		A22 = Q2 * A02;			A23 =  Q2 * A03; 
-	A30 = S1 * A00;			A31 = -S1 * A01;		A32 = S2 * A02;			A33 = -S2 * A03; 
-	
-	def A_int_block(n):
-
-		return (np.array([[A00[:,n], A10[:,n], A20[:,n], A30[:,n]],
-					    [A01[:,n], A11[:,n], A21[:,n], A31[:,n]],
-			    		    [A02[:,n], A12[:,n], A22[:,n], A32[:,n]],
-			    		    [A03[:,n], A13[:,n], A23[:,n], A33[:,n]]])).T
-
-		#block = np.array([[exp_alp1[:,n], (R1*exp_alp1)[:,n], (Q1*exp_alp1)[:,n], (S1*exp_alp1)[:,n]],
-		#    [exp_bet1[:,n], -(R1*exp_bet1)[:,n], (Q1*exp_bet1)[:,n], -(S1*exp_bet1)[:,n]],
-		#    [exp_alp2[:,n],  (R2*exp_alp2)[:,n], (Q2*exp_alp2)[:,n],  (S2*exp_alp2)[:,n]],
-		#    [exp_bet2[:,n], -(R2*exp_bet2)[:,n], (Q2*exp_bet2)[:,n], -(S2*exp_bet2)[:,n]]])
-
-		#return block.T
-	
-	tau_mu = tau[:,:-1] * (mus - 1/ubar1)
-	tau_mu = slice_gt(tau_mu, 35.0)
-	exptau_mu = np.exp(-tau_mu)
-	exp_mu = (1 - exptrm_mus) * exptau_mu / mus
-	N0 = eta[0] * exp_mu;	N1 = eta[1] * exp_mu;	N2 = eta[2] * exp_mu;	N3 = eta[3] * exp_mu;	
-	def N_int_block(n):
-
-	    return (np.array([N0[:,n], N1[:,n], N2[:,n], N3[:,n]])).T
-
-
-	M = np.zeros((nwno, 4*nlayer, 4*nlayer))
-	B = np.zeros((nwno, 4*nlayer))
-
-	nlevel = nlayer+1
-	F = np.zeros((nwno, 4*nlevel, 4*nlayer))
-	G = np.zeros((nwno, 4*nlevel))
-	A = np.zeros((nwno, 4*nlevel, 4*nlayer))
-	N = np.zeros((nwno, 4*nlevel))
-	A_int = np.zeros((nwno, 4*nlayer, 4*nlayer))
-	N_int = np.zeros((nwno, 4*nlayer))
-	
-	#   first two rows: BC 1
-	M[:,0:2,0:4] = F_block(0,"down")[:,0:2,]
-	B[:,0:2] = b_top - Z_block(0,"down")[:,0:2]        
-
-	#F[:,0:4,0:4] = F_block(0,zero)
-	#G[:,0:4] = Z_block(0,zero)
-
-	A[:,0:4,0:4] = A_block(0,"down")
-	N[:,0:4] = N_block(0,"down")
-
-	#   rows 3 through 4nlayer-2: BCs 2 and 3
-	for n in range(0, nlayer-1):
-		im = 4*n+2; iM = (4*n+5)+1
-		jm = 4*n; j_ = (4*n+3)+1; jM = (4*n+7)+1
-		M[:,im:iM,jm:j_] = F_block(n,"up")
-		M[:,im:iM,j_:jM] = -F_block(n+1,"down")
-		B[:,im:iM] = Z_block(n+1,"down") - Z_block(n,"up")
-		
-		im = 4*n+4; iM = (4*n+7)+1
-		jm = 4*n; jM = (4*n+3)+1
-		#F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
-		#G[:,im:iM] = Z_block(n,dtau[:,n])
-
-		A[:,im:iM,jm:jM] = A_block(n,"up")
-		N[:,im:iM] = N_block(n,"up")
-
-		im = 4*n; iM = (4*n+3)+1
-		A_int[:,im:iM,jm:jM] = A_int_block(n)
-		N_int[:,im:iM] = N_int_block(n)
-
-	#   last two rows: BC 4
-	im = 4*nlayer-2; iM = 4*nlayer
-	jm = 4*nlayer-4; jM = 4*nlayer
-	n = nlayer-1
-	M[:,im:iM,jm:jM] = F_block(n,"up")[:,[2,3],] - surf_reflect*F_block(n,"up")[:,[0,1],]
-	B[:,im] = b_surface - Z_block(n,"up")[:,2] + surf_reflect * Z_block(n,"up")[:,0]  
-	B[:,iM-1] = b_surface - Z_block(n,"up")[:,3] + surf_reflect * Z_block(n,"up")[:,1]  
-	## should have b_surface in here but it's zero
-	
-	im = 4*nlevel-4; iM = 4*nlevel
-	jm = 4*nlayer-4; jM = 4*nlayer
-	#F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
-	#G[:,im:iM] = Z_block(n,dtau[:,n])
-
-	A[:,im:iM,jm:jM] = A_block(n,"up")
-	N[:,im:iM] = N_block(n,"up")
-
-	im = 4*nlayer-4; iM = 4*nlayer
-	jm = 4*nlayer-4; jM = 4*nlayer
-	A_int[:,im:iM,jm:jM] = A_int_block(n)
-	N_int[:,im:iM] = N_int_block(n)
-
-#	return M, B, A, N, F, G, A_int, N_int
-#def setup_4_stream_new(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, w_single, w_multi, ubar1, P):
-
-	w0 = W0
-	dtau = dtau.T
-	tau = tau.T
-
-	a = []; b = []
-	for l in range(4):
-		a.append((2*l + 1) - w0 * w_multi[l])
-		b.append((F0PI * (w0 * w_single[l])) * P(-ubar0)[l] / (4 * np.pi))
-
-	beta = a[0]*a[1] + 4*a[0]*a[3]/9 + a[2]*a[3]/9
-	gama = a[0]*a[1]*a[2]*a[3]/9
-	lam2 = np.sqrt((beta + np.sqrt(beta**2 - 4*gama)) / 2)
-	lam1 = np.sqrt((beta - np.sqrt(beta**2 - 4*gama)) / 2)
-
-	def f(x):
-		return x**4 - beta*x**2 + gama
-	
-	Del = 9 * f(1/ubar0)
-	Dels = []
-	Dels.append((a[1]*b[0] - b[1]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
-		+ 2*(a[3]*b[2] - 2*a[3]*b[0] - 3*b[3]/ubar0)/ubar0**2)
-	Dels.append((a[0]*b[1] - b[0]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
-		- 2*a[0]*(a[3]*b[2] - 3*b[3]/ubar0)/ubar0)
-	Dels.append((a[3]*b[2] - 3*b[3]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
-		- 2*a[3]*(a[0]*b[1] - b[0]/ubar0)/ubar0)
-	Dels.append((a[2]*b[3] - 3*b[2]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
-		+ 2*(3*a[0]*b[1] - 2*a[0]*b[3] - 3*b[0]/ubar0)/ubar0**2)
-	
-	eta = []
-	for l in range(4):
-		eta.append(Dels[l]/Del)
-
-	expo1 = slice_gt(lam1*dtau, 35.0) 
-	expo2 = slice_gt(lam2*dtau, 35.0) 
-	exptrm1 = np.exp(-expo1)
-	exptrm2 = np.exp(-expo2)
-
-	R1 = -a[0]/lam1; R2 = -a[0]/lam2
-	Q1 = 1/2 * (a[0]*a[1]/(lam1**2) - 1); Q2 = 1/2 * (a[0]*a[1]/(lam2**2) - 1)
-	S1 = -3/(2*a[3]) * (a[0]*a[1]/lam1 - lam1); S2 = -3/(2*a[3]) * (a[0]*a[1]/lam2 - lam2)
-	
-	p1pl = 2*np.pi*(1/2 + R1 + 5*Q1/8); p1mn = 2*np.pi*(1/2 - R1 + 5*Q1/8);
-	p2pl = 2*np.pi*(1/2 + R2 + 5*Q2/8); p2mn = 2*np.pi*(1/2 - R2 + 5*Q2/8);
-	q1pl = 2*np.pi*(-1/8 + 5*Q1/8 + S1); q1mn = 2*np.pi*(-1/8 + 5*Q1/8 - S1)
-	q2pl = 2*np.pi*(-1/8 + 5*Q2/8 + S2); q2mn = 2*np.pi*(-1/8 + 5*Q2/8 - S2)
-	z1pl = 2*np.pi*(eta[0]/2 + eta[1] + 5*eta[2]/8); z1mn = 2*np.pi*(eta[0]/2 - eta[1] + 5*eta[2]/8);
-	z2pl = 2*np.pi*(-eta[0]/8 + 5*eta[2]/8 + eta[3]); z2mn = 2*np.pi*(-eta[0]/8 + 5*eta[2]/8 - eta[3]);
-	
-	zero = np.zeros(nwno)
-
-	f00 = p1mn*exptrm1; f01 = p1pl/exptrm1;	f02 = p2mn*exptrm2; f03 = p2pl/exptrm2
-	f10 = q1mn*exptrm1; f11 = q1pl/exptrm1;	f12 = q2mn*exptrm2; f13 = q2pl/exptrm2
-	f20 = p1pl*exptrm1; f21 = p1mn/exptrm1;	f22 = p2pl*exptrm2; f23 = p2mn/exptrm2
-	f30 = q1pl*exptrm1; f31 = q1mn/exptrm1;	f32 = q2pl*exptrm2; f33 = q2mn/exptrm2
-
-	exptau_u0 = np.exp(-tau/ubar0)
-	z1mn_up = z1mn * exptau_u0[1:,:]
-	z2mn_up = z2mn * exptau_u0[1:,:]
-	z1pl_up = z1pl * exptau_u0[1:,:]
-	z2pl_up = z2pl * exptau_u0[1:,:]
-	z1mn_down = z1mn * exptau_u0[:-1,:]
-	z2mn_down = z2mn * exptau_u0[:-1,:]
-	z1pl_down = z1pl * exptau_u0[:-1,:]
-	z2pl_down = z2pl * exptau_u0[:-1,:]
-
-	a00 = exptrm1;	    a01 = 1/exptrm1;	a02 = exptrm2;	    a03 = 1/exptrm2
-	a10 = R1*exptrm1;   a11 = -R1/exptrm1;	a12 = R2*exptrm2;   a13 = -R2/exptrm2
-	a20 = Q1*exptrm1;   a21 = Q1/exptrm1;	a22 = Q1*exptrm2;   a23 = Q1/exptrm2
-	a30 = S1*exptrm1;   a31 = -S1/exptrm1;	a32 = S1*exptrm2;   a33 = -S1/exptrm2
-
-	n0_up = eta[0]*exptau_u0[1:,:]; n0_down = eta[0]*exptau_u0[:-1,:]
-	n1_up = eta[1]*exptau_u0[1:,:]; n1_down = eta[1]*exptau_u0[:-1,:]
-	n2_up = eta[2]*exptau_u0[1:,:]; n2_down = eta[2]*exptau_u0[:-1,:]
-	n3_up = eta[3]*exptau_u0[1:,:]; n3_down = eta[3]*exptau_u0[:-1,:]
-
-	alpha1 = 1/ubar1 + lam1;		beta1 = 1/ubar1 - lam1;			mus = (ubar1 + ubar0) / (ubar1 * ubar0)
-	alpha2 = 1/ubar1 + lam2;		beta2 = 1/ubar1 - lam2;
-	expo_alp1 = alpha1 * dtau;		expo_bet1 = beta1 * dtau;		expo_mus = mus * dtau 
-	expo_alp2 = alpha2 * dtau;		expo_bet2 = beta2 * dtau;		
-	expo_alp1 = slice_gt(expo_alp1, 35.0);	expo_bet1 = slice_gt(expo_bet1, 35.0);	expo_mus = slice_gt(expo_mus, 35.0)    
-	expo_alp2 = slice_gt(expo_alp2, 35.0);	expo_bet2 = slice_gt(expo_bet2, 35.0);	
-	exptrm_alp1 = np.exp(-expo_alp1);	exptrm_bet1 = np.exp(-expo_bet1);	exptrm_mus = np.exp(-expo_mus)
-	exptrm_alp2 = np.exp(-expo_alp2);	exptrm_bet2 = np.exp(-expo_bet2);
-
-	A00 = (1-exptrm_alp1)/alpha1;	A01 = (1-exptrm_bet1)/beta1;	A02 = (1-exptrm_alp2)/alpha2;	A03 = (1-exptrm_bet2)/beta2
-	A10 = R1 * A00;			A11 = -R1 * A01;		A12 = R2 * A02;			A13 = -R2 * A03; 
-	A20 = Q1 * A00;			A21 =  Q1 * A01;		A22 = Q2 * A02;			A23 =  Q2 * A03; 
-	A30 = S1 * A00;			A31 = -S1 * A01;		A32 = S2 * A02;			A33 = -S2 * A03; 
-	
-	tau_mu = tau[:-1,:] * (mus - 1/ubar1)
-	tau_mu = slice_gt(tau_mu, 35.0)
-	exptau_mu = np.exp(-tau_mu)
-	exp_mu = (1 - exptrm_mus) * exptau_mu / mus
-	N0 = eta[0] * exp_mu;	N1 = eta[1] * exp_mu;	N2 = eta[2] * exp_mu;	N3 = eta[3] * exp_mu;	
-
-	M_new = np.zeros((4*nlayer, 4*nlayer, nwno))
-	B_new = np.zeros((4*nlayer, nwno))
-	A_new = np.zeros((4*nlayer, 4*nlayer, nwno))
-	N_new = np.zeros((4*nlayer, nwno))
-	A_int_new = np.zeros((4*nlayer, 4*nlayer, nwno))
-	N_int_new = np.zeros((4*nlayer, nwno))
-
-	#nlevel = nlayer+1
-	#F = np.zeros((4*nlevel, 4*nlayer, nwno))
-	#G = np.zeros((4*nlevel, nwno))
-	
-	#   first two rows: BC 1
-	M_new[0,0,:] = p1mn[0,:]
-	M_new[0,1,:] = p1pl[0,:]
-	M_new[0,2,:] = p2mn[0,:]
-	M_new[0,3,:] = p2pl[0,:]
-	M_new[1,0,:] = q1mn[0,:]
-	M_new[1,1,:] = q1pl[0,:]
-	M_new[1,2,:] = q2mn[0,:]
-	M_new[1,3,:] = q2pl[0,:]
-
-	B_new[0,:] = b_top - z1mn_down[0,:]
-	B_new[1,:] = b_top - z2mn_down[0,:]
-
-
-	#	im = 4*n; iM = (4*n+3)+1
-	#	A_int[:,im:iM,jm:jM] = A_int_block(n)
-	#	N_int[:,im:iM] = N_int_block(n)
-
-	nn = list(range(0,4*nlayer))
-	M_new[nn[2:-2:4],nn[:-4:4],:] = f00[:-1,:]
-	M_new[nn[2:-2:4],nn[1:-4:4],:] = f01[:-1,:]
-	M_new[nn[2:-2:4],nn[2:-4:4],:] = f02[:-1,:]
-	M_new[nn[2:-2:4],nn[3:-4:4],:] = f03[:-1,:]
-	M_new[nn[3:-2:4],nn[:-4:4],:] = f10[:-1,:]
-	M_new[nn[3:-2:4],nn[1:-4:4],:] = f11[:-1,:]
-	M_new[nn[3:-2:4],nn[2:-4:4],:] = f12[:-1,:]
-	M_new[nn[3:-2:4],nn[3:-4:4],:] = f13[:-1,:]
-	M_new[nn[4::4],nn[:-4:4],:] = f20[:-1,:]
-	M_new[nn[4::4],nn[1:-4:4],:] = f21[:-1,:]
-	M_new[nn[4::4],nn[2:-4:4],:] = f22[:-1,:]
-	M_new[nn[4::4],nn[3:-4:4],:] = f23[:-1,:]
-	M_new[nn[5::4],nn[:-4:4],:] = f30[:-1,:]
-	M_new[nn[5::4],nn[1:-4:4],:] = f31[:-1,:]
-	M_new[nn[5::4],nn[2:-4:4],:] = f32[:-1,:]
-	M_new[nn[5::4],nn[3:-4:4],:] = f33[:-1,:]
-
-	M_new[nn[2:-2:4],nn[4::4],:] = -p1mn[1:,:]
-	M_new[nn[2:-2:4],nn[5::4],:] = -p1pl[1:,:]
-	M_new[nn[2:-2:4],nn[6::4],:] = -p2mn[1:,:]
-	M_new[nn[2:-2:4],nn[7::4],:] = -p2pl[1:,:]
-	M_new[nn[3:-2:4],nn[4::4],:] = -q1mn[1:,:]
-	M_new[nn[3:-2:4],nn[5::4],:] = -q1pl[1:,:]
-	M_new[nn[3:-2:4],nn[6::4],:] = -q2mn[1:,:]
-	M_new[nn[3:-2:4],nn[7::4],:] = -q2pl[1:,:]
-	M_new[nn[4::4],nn[4::4],:] = -p1pl[1:,:]
-	M_new[nn[4::4],nn[5::4],:] = -p1mn[1:,:]
-	M_new[nn[4::4],nn[6::4],:] = -p2pl[1:,:]
-	M_new[nn[4::4],nn[7::4],:] = -p2mn[1:,:]
-	M_new[nn[5::4],nn[4::4],:] = -q1pl[1:,:]
-	M_new[nn[5::4],nn[5::4],:] = -q1mn[1:,:]
-	M_new[nn[5::4],nn[6::4],:] = -q2pl[1:,:]
-	M_new[nn[5::4],nn[7::4],:] = -q2mn[1:,:]
-
-	B_new[2:-2:4,:] = z1mn_down[1:,:] - z1mn_up[:-1,:]
-	B_new[3:-2:4,:] = z2mn_down[1:,:] - z2mn_up[:-1,:]
-	B_new[4::4,:] = z1pl_down[1:,:] - z1pl_up[:-1,:]
-	B_new[5::4,:] = z2pl_down[1:,:] - z2pl_up[:-1,:]
-
-	A_new[nn[::4],nn[::4],:] = a00
-	A_new[nn[::4],nn[1::4],:] = a01
-	A_new[nn[::4],nn[2::4],:] = a02
-	A_new[nn[::4],nn[3::4],:] = a03
-	A_new[nn[1::4],nn[::4],:] = a10
-	A_new[nn[1::4],nn[1::4],:] = a11
-	A_new[nn[1::4],nn[2::4],:] = a12
-	A_new[nn[1::4],nn[3::4],:] = a13
-	A_new[nn[2::4],nn[::4],:] = a20
-	A_new[nn[2::4],nn[1::4],:] = a21
-	A_new[nn[2::4],nn[2::4],:] = a22
-	A_new[nn[2::4],nn[3::4],:] = a23
-	A_new[nn[3::4],nn[::4],:] = a30
-	A_new[nn[3::4],nn[1::4],:] = a31
-	A_new[nn[3::4],nn[2::4],:] = a32
-	A_new[nn[3::4],nn[3::4],:] = a33
-
-	N_new[::4,:] = n0_up
-	N_new[1::4,:] = n1_up
-	N_new[2::4,:] = n2_up
-	N_new[3::4,:] = n3_up
-
-	A_int_new[nn[::4],nn[::4],:] = A00
-	A_int_new[nn[::4],nn[1::4],:] = A01
-	A_int_new[nn[::4],nn[2::4],:] = A02
-	A_int_new[nn[::4],nn[3::4],:] = A03
-	A_int_new[nn[1::4],nn[::4],:] = A10
-	A_int_new[nn[1::4],nn[1::4],:] = A11
-	A_int_new[nn[1::4],nn[2::4],:] = A12
-	A_int_new[nn[1::4],nn[3::4],:] = A13
-	A_int_new[nn[2::4],nn[::4],:] = A20
-	A_int_new[nn[2::4],nn[1::4],:] = A21
-	A_int_new[nn[2::4],nn[2::4],:] = A22
-	A_int_new[nn[2::4],nn[3::4],:] = A23
-	A_int_new[nn[3::4],nn[::4],:] = A30
-	A_int_new[nn[3::4],nn[1::4],:] = A31
-	A_int_new[nn[3::4],nn[2::4],:] = A32
-	A_int_new[nn[3::4],nn[3::4],:] = A33
-
-	N_int_new[::4,:] = N0
-	N_int_new[1::4,:] = N1
-	N_int_new[2::4,:] = N2
-	N_int_new[3::4,:] = N3
-
-	n = nlayer-1
-	M_new[4*nlayer-2, 4*nlayer-4,:] = f20[n,:] - surf_reflect*f00[n,:]
-	M_new[4*nlayer-2, 4*nlayer-3,:] = f21[n,:] - surf_reflect*f01[n,:]
-	M_new[4*nlayer-2, 4*nlayer-2,:] = f22[n,:] - surf_reflect*f02[n,:]
-	M_new[4*nlayer-2, 4*nlayer-1,:] = f23[n,:] - surf_reflect*f03[n,:]
-	M_new[4*nlayer-1, 4*nlayer-4,:] = f30[n,:] - surf_reflect*f10[n,:]
-	M_new[4*nlayer-1, 4*nlayer-3,:] = f31[n,:] - surf_reflect*f11[n,:]
-	M_new[4*nlayer-1, 4*nlayer-2,:] = f32[n,:] - surf_reflect*f12[n,:]
-	M_new[4*nlayer-1, 4*nlayer-1,:] = f33[n,:] - surf_reflect*f13[n,:]
-
-	B_new[4*nlayer-2,:] = b_surface - z1pl_up[n,:] + surf_reflect*z1mn_up[n,:]
-	B_new[4*nlayer-1,:] = b_surface - z2pl_up[n,:] + surf_reflect*z2mn_up[n,:]
-	
-	import IPython; IPython.embed()
-	import sys; sys.exit()
-
-	return M, B, A, N, F, G, A_int, N_int
-
-def setup_4_stream(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, w_single, w_multi, ubar1, P):
-	"""
-	Parameters
-	----------
-	nlayer : int 
-		number of layers in the model 
-	nwno : int 
-		number of wavelength points ## need to include this
-	W0: int
-		single scattering albedo 
-	b_top : array 
-		The diffuse radiation into the model at the top of the atmosphere
-	b_surface : array
-		The diffuse radiation into the model at the bottom. Includes emission, reflection 
-		of the unattenuated portion of the direct beam  
-	surf_reflect : array 
-		Surface reflectivity 
-	F0PI : int  
-		solar radiation
-	ubar0: array
-		cosine of solar incident angle
-	dtau : array 
-		Opacity per layer
-	g : array 
-		asymmetry parameters
-	P : array
-		Legendre polynomials
-	"""
-	w0 = W0.T
-	dtau = dtau.T
-	tau = tau.T
-	tauN = tau[0,-1]
-	tau = (tau.T/tauN).T
-	dtau = (dtau.T/tauN).T
-	
-	a = []; b = []
-	for l in range(4):
-		a.append((tauN * ((2*l + 1) - w0 * w_multi[l]).T).T)
-		b.append((tauN * F0PI * (w0 * w_single[l]).T).T * P(-ubar0)[l] / (4 * np.pi))
-
-	beta = a[0]*a[1] + 4*a[0]*a[3]/9 + a[2]*a[3]/9
-	gama = a[0]*a[1]*a[2]*a[3]/9
-	lam1 = np.sqrt((beta + np.sqrt(beta**2 - 4*gama)) / 2)
-	lam2 = np.sqrt((beta - np.sqrt(beta**2 - 4*gama)) / 2)
-
-	ubar0 = ubar0/tauN
-
-	def f(x):
-		return x**4 - beta*x**2 + gama
-	
-	Del = 9 * f(1/ubar0)
-	Dels = []
-	Dels.append((a[1]*b[0] - b[1]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
-		+ 2*(a[3]*b[2] - 2*a[3]*b[0] - 3*b[3]/ubar0)/ubar0**2)
-	Dels.append((a[0]*b[1] - b[0]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
-		- 2*a[0]*(a[3]*b[2] - 3*b[3]/ubar0)/ubar0)
-	Dels.append((a[3]*b[2] - 3*b[3]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
-		- 2*a[3]*(a[0]*b[1] - b[0]/ubar0)/ubar0)
-	Dels.append((a[2]*b[3] - 3*b[2]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
-		+ 2*(3*a[0]*b[1] - 2*a[0]*b[3] - 3*b[0]/ubar0)/ubar0**2)
-	
-	eta = []
-	for l in range(4):
-		eta.append(Dels[l]/Del)
-
-
-	expo1_up = slice_gt(lam1*tau[:,1:], 35.0) 
-	expo1_down = slice_gt(lam1*tau[:,:-1], 35.0) 
-	expo2_up = slice_gt(lam2*tau[:,1:], 35.0) 
-	expo2_down = slice_gt(lam2*tau[:,:-1], 35.0) 
-	exptrm1_up = np.exp(-expo1_up)
-	exptrm1_down = np.exp(-expo1_down)
-	exptrm2_up = np.exp(-expo2_up)
-	exptrm2_down = np.exp(-expo2_down)
-
-	exptau_up = np.exp(-tau[:,1:] / ubar0)
-	exptau_down = np.exp(-tau[:,:-1] / ubar0)
-
-	R1 = -a[0]/lam1; R2 = -a[0]/lam2
-	Q1 = 1/2 * (a[0]*a[1]/(lam1**2) - 1); Q2 = 1/2 * (a[0]*a[1]/(lam2**2) - 1)
-	S1 = -3/(2*a[3]) * (a[0]*a[1]/lam1 - lam1); S2 = -3/(2*a[3]) * (a[0]*a[1]/lam2 - lam2)
-	
-	p1pl = 2*np.pi*(1/2 + R1 + 5*Q1/8); p1mn = 2*np.pi*(1/2 - R1 + 5*Q1/8);
-	p2pl = 2*np.pi*(1/2 + R2 + 5*Q2/8); p2mn = 2*np.pi*(1/2 - R2 + 5*Q2/8);
-	q1pl = 2*np.pi*(-1/8 + 5*Q1/8 + S1); q1mn = 2*np.pi*(-1/8 + 5*Q1/8 - S1)
-	q2pl = 2*np.pi*(-1/8 + 5*Q2/8 + S2); q2mn = 2*np.pi*(-1/8 + 5*Q2/8 - S2)
-	z1pl = 2*np.pi*(eta[0]/2 + eta[1] + 5*eta[2]/8); z1mn = 2*np.pi*(eta[0]/2 - eta[1] + 5*eta[2]/8);
-	z2pl = 2*np.pi*(-eta[0]/8 + 5*eta[2]/8 + eta[3]); z2mn = 2*np.pi*(-eta[0]/8 + 5*eta[2]/8 - eta[3]);
-	
-	zero = np.zeros(nwno)
-
-	def F_block(n, lay):
-		if lay=="up":
-			e1mn = exptrm1_up[:,n]; e1pl = 1/e1mn
-			e2mn = exptrm2_up[:,n]; e2pl = 1/e2mn
-		elif lay=="down":
-			e1mn = exptrm1_down[:,n]; e1pl = 1/e1mn
-			e2mn = exptrm2_down[:,n]; e2pl = 1/e2mn
-		
-
-		block = np.array([[p1mn[:,n]*e1mn, q1mn[:,n]*e1mn, p1pl[:,n]*e1mn, q1pl[:,n]*e1mn],
-					[p1pl[:,n]*e1pl, q1pl[:,n]*e1pl, p1mn[:,n]*e1pl, q1mn[:,n]*e1pl],
-					[p2mn[:,n]*e2mn, q2mn[:,n]*e2mn, p2pl[:,n]*e2mn, q2pl[:,n]*e2mn],
-					[p2pl[:,n]*e2pl, q2pl[:,n]*e2pl, p2mn[:,n]*e2pl, q2mn[:,n]*e2pl]])
-		return block.T
-
-	def Z_block(n, lay):
-		if lay=="up":
-			exptau = exptau_up[:,n]
-		elif lay=="down":
-			exptau = exptau_down[:,n]
-
-		return (np.array([z1mn[:,n], z2mn[:,n], z1pl[:,n], z2pl[:,n]]) * exptau).T
-	
-	def A_block(n, lay):
-		if lay=="up":
-			e1mn = exptrm1_up[:,n]; e1pl = 1/e1mn
-			e2mn = exptrm2_up[:,n]; e2pl = 1/e2mn
-		elif lay=="down":
-			e1mn = exptrm1_down[:,n]; e1pl = 1/e1mn
-			e2mn = exptrm2_down[:,n]; e2pl = 1/e2mn
-
-		block = np.array([[e1mn, R1[:,n]*e1mn, Q1[:,n]*e1mn, S1[:,n]*e1mn],
-			[e1pl, -R1[:,n]*e1pl, Q1[:,n]*e1pl, -S1[:,n]*e1pl],
-			[e2mn,  R2[:,n]*e2mn, Q2[:,n]*e2mn,  S2[:,n]*e2mn],
-			[e2pl, -R2[:,n]*e2pl, Q2[:,n]*e2pl, -S2[:,n]*e2pl]])
-
-		return block.T
-	
-	def N_block(n, lay):
-		if lay=="up":
-			exptau = exptau_up[:,n]
-		elif lay=="down":
-			exptau = exptau_down[:,n]
-		
-		return (np.array([eta[0][:,n], eta[1][:,n], eta[2][:,n], eta[3][:,n]]) * exptau).T
-
-	ubar0 = ubar0*tauN
-	alpha1 = (tauN/ubar1 + lam1);		beta1 = (tauN/ubar1 - lam1);		mus = tauN * (ubar1 + ubar0) / (ubar1 * ubar0)
-	alpha2 = (tauN/ubar1 + lam2);		beta2 = (tauN/ubar1 - lam2);
-	expo_alp1 = alpha1 * dtau;		expo_bet1 = beta1 * dtau;		expo_mus = mus * dtau 
-	expo_alp2 = alpha2 * dtau;		expo_bet2 = beta2 * dtau;		
-	expo_alp1 = slice_gt(expo_alp1, 35.0);	expo_bet1 = slice_gt(expo_bet1, 35.0);	expo_mus = slice_gt(expo_mus, 35.0)    
-	expo_alp2 = slice_gt(expo_alp2, 35.0);	expo_bet2 = slice_gt(expo_bet2, 35.0);	
-	exptrm_alp1 = np.exp(-expo_alp1);	exptrm_bet1 = np.exp(-expo_bet1);	exptrm_mus = np.exp(-expo_mus)
-	exptrm_alp2 = np.exp(-expo_alp2);	exptrm_bet2 = np.exp(-expo_bet2);
-
-	def A_int_block(n):
-		exptau_alp1 = np.exp(-tau[:,n] * alpha1[:,n])
-		exptau_alp2 = np.exp(-tau[:,n] * alpha2[:,n])
-		exptau_bet1 = np.exp(-tau[:,n] * beta1[:,n])
-		exptau_bet2 = np.exp(-tau[:,n] * beta2[:,n])
-		e1mn = (1 - exptrm_alp1[:,n]) * exptau_alp1 / alpha1[:,n]
-		e1pl = (1 - exptrm_bet1[:,n]) * exptau_bet1 / beta1[:,n]
-		e2mn = (1 - exptrm_alp2[:,n]) * exptau_alp2 / alpha2[:,n]
-		e2pl = (1 - exptrm_bet2[:,n]) * exptau_bet2 / beta2[:,n]
-
-		block = np.array([[e1mn, R1[:,n]*e1mn, Q1[:,n]*e1mn, S1[:,n]*e1mn],
-			[e1pl, -R1[:,n]*e1pl, Q1[:,n]*e1pl, -S1[:,n]*e1pl],
-			[e2mn,  R2[:,n]*e2mn, Q2[:,n]*e2mn,  S2[:,n]*e2mn],
-			[e2pl, -R2[:,n]*e2pl, Q2[:,n]*e2pl, -S2[:,n]*e2pl]])
-
-		return block.T
-	
-	def N_int_block(n):
-		exptau = np.exp(-tau[:,n] * mus)
-		e1 = (1 - exptrm_mus[:,n]) * exptau / mus
-
-		return (np.array([eta[0][:,n], eta[1][:,n], eta[2][:,n], eta[3][:,n]]) * e1).T
-
-	M = np.zeros((nwno, 4*nlayer, 4*nlayer))
-	B = np.zeros((nwno, 4*nlayer))
-
-	nlevel = nlayer+1
-	F = np.zeros((nwno, 4*nlevel, 4*nlayer))
-	G = np.zeros((nwno, 4*nlevel))
-	A = np.zeros((nwno, 4*nlevel, 4*nlayer))
-	N = np.zeros((nwno, 4*nlevel))
-	A_int = np.zeros((nwno, 4*nlayer, 4*nlayer))
-	N_int = np.zeros((nwno, 4*nlayer))
-	
-	#   first two rows: BC 1
-	M[:,0:2,0:4] = F_block(0,"down")[:,0:2,]
-	B[:,0:2] = b_top - Z_block(0,"down")[:,0:2]        
-
-	F[:,0:4,0:4] = F_block(0,"down")
-	G[:,0:4] = Z_block(0,"down")
-
-	A[:,0:4,0:4] = A_block(0,"down")
-	N[:,0:4] = N_block(0,"down")
-
-	#   rows 3 through 4nlayer-2: BCs 2 and 3
-	for n in range(0, nlayer-1):
-		im = 4*n+2; iM = (4*n+5)+1
-		jm = 4*n; j_ = (4*n+3)+1; jM = (4*n+7)+1
-		M[:,im:iM,jm:j_] = F_block(n,"up")
-		M[:,im:iM,j_:jM] = -F_block(n+1,"down")
-		B[:,im:iM] = Z_block(n+1,"down") - Z_block(n,"up")
-		
-		im = 4*n+4; iM = (4*n+7)+1
-		jm = 4*n; jM = (4*n+3)+1
-		F[:,im:iM,jm:jM] = F_block(n,"up")
-		G[:,im:iM] = Z_block(n,"up")
-
-		A[:,im:iM,jm:jM] = A_block(n,"up")
-		N[:,im:iM] = N_block(n,"up")
-
-		im = 4*n; iM = (4*n+3)+1
-		A_int[:,im:iM,jm:jM] = A_int_block(n)
-		N_int[:,im:iM] = N_int_block(n)
-
-
-	#   last two rows: BC 4
-	im = 4*nlayer-2; iM = 4*nlayer
-	jm = 4*nlayer-4; jM = 4*nlayer
-	n = nlayer-1
-	M[:,im:iM,jm:jM] = F_block(n,"up")[:,[2,3],] - surf_reflect*F_block(n,"up")[:,[0,1],]
-	B[:,im] = b_surface - Z_block(n,"up")[:,2] + surf_reflect * Z_block(n,"up")[:,0]  
-	B[:,iM-1] = b_surface - Z_block(n,"up")[:,3] + surf_reflect * Z_block(n,"up")[:,1]  
-	## should have b_surface in here but it's zero
-	
-	im = 4*nlevel-4; iM = 4*nlevel
-	jm = 4*nlayer-4; jM = 4*nlayer
-	F[:,im:iM,jm:jM] = F_block(n,"up")
-	G[:,im:iM] = Z_block(n,"up")
-
-	A[:,im:iM,jm:jM] = A_block(n,"up")
-	N[:,im:iM] = N_block(n,"up")
-
-	im = 4*nlayer-4; iM = 4*nlayer
-	jm = 4*nlayer-4; jM = 4*nlayer
-	A_int[:,im:iM,jm:jM] = A_int_block(n)
-
-	M_inv = np.linalg.inv(M[0])
-	X = M_inv.dot(B[0])
-	
-	flux = F.dot(X) + G
-	
-	I = A[0].dot(X) + N[0]
-
-	intgrl = A_int[0].dot(X) + N_int[0]
-
-	return M, B, A, N, F, G, A_int, N_int
-
-
-#@jit(nopython=False, cache=True)
-def solve_4_stream(M, B, A, N, A_int, N_int, stream):
-
-	#	find constants
-	X = spsolve(M, B)
-	#	intensity at each level
-	I = A.dot(X) + N
-	#	integral of Iexp(-tau/ubar1) at each level 
-	intgrl_new = A_int.dot(X) + N_int
-
-	return (I, intgrl_new)
-
-
 #@jit(nopython=True, cache=True)
 def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_cld, ftau_ray,
 	dtau_og, tau_og, w0_og, cosb_og, 
@@ -2482,21 +1742,21 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				g_back = constant_back*cosb_og
 				f = frac_a + frac_b*g_back**frac_c
 
-			if single_phase==0:#'cahoy':
-				g0_s = (ftau_cld + ftau_ray)
-				#g0_s = np.zeros((nwno, nlayer)) #+ 2.
-				#g1_s = (3*cosb).T 
-				g1_s = (3*ftau_cld*cosb)
-				g2_s = (5*ftau_cld*(cosb**2)) + 0.5*ftau_ray
-				#g3_s = (7*(cosb**3)).T
-				g3_s = (7*ftau_cld*(cosb**3))
+			#if single_phase==0:#'cahoy':
+			#	g0_s = (ftau_cld + ftau_ray)
+			#	#g0_s = np.zeros((nwno, nlayer)) #+ 2.
+			#	#g1_s = (3*cosb).T 
+			#	g1_s = (3*ftau_cld*cosb)
+			#	g2_s = (5*ftau_cld*(cosb**2)) + 0.5*ftau_ray
+			#	#g3_s = (7*(cosb**3)).T
+			#	g3_s = (7*ftau_cld*(cosb**3))
 
-				g0_m = g0_s
-				g1_m = g1_s
-				g2_m = g2_s
-				g3_m = g3_s
+			#	g0_m = g0_s
+			#	g1_m = g1_s
+			#	g2_m = g2_s
+			#	g3_m = g3_s
 
-			elif single_phase==1:#'OTHG':
+			if single_phase==1:#'OTHG':
 				g0_s = np.ones((nlayer, nwno))
 				g1_s = 3*cosb
 				g2_s = 5*(cosb**2)
@@ -2567,13 +1827,8 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 			if stream==2:
 				M, B, A, N, A_int, N_int = setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
 						ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
-				#t1 = time.time()
-				#M, B, A, N, F, G, A_int, N_int = setup_2_stream_scaled(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
-				#		ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
-				#t2 = time.time() - t1
-				#print('og code = ', t2)
 			else:
-				M, B, A, N, F, G, A_int, N_int = setup_4_stream_scaled(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
+				M, B, A, N, A_int, N_int = setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
 						ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
 
 			X = zeros((stream*nlayer, nwno))
@@ -2618,216 +1873,6 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 
 	return xint_at_top
 
-def setup_2_stream(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau, tau, w_single, w_multi, ubar1, P):
-	"""
-	Parameters
-	----------
-	nlayer : int 
-		number of layers in the model 
-	nwno : int 
-		number of wavelength points ## need to include this
-	W0: int
-		single scattering albedo 
-	b_top : array 
-		The diffuse radiation into the model at the top of the atmosphere
-	b_surface : arra
-		The diffuse radiation into the model at the bottom. Includes emission, reflection 
-		of the unattenuated portion of the direct beam  
-	surf_reflect : array 
-		Surface reflectivity 
-	F0PI : int  
-		solar radiation
-	ubar0: array
-		cosine of solar incident angle
-	dtau : array 
-		Opacity per layer
-	g : array 
-		asymmety parameters
-	P : array
-		Legendre polynomials
-	"""
-
-	w0 = W0.T
-	dtau = dtau.T
-	tau = tau.T
-	tauN = tau[0,-1]
-	tau = (tau.T/tauN).T
-	dtau = (dtau.T/tauN).T
-	
-	a = []; b = []
-	for l in range(2):
-		a.append((tauN * ((2*l + 1) - w0 * w_multi[l]).T).T)
-		b.append((tauN * F0PI * (w0 * w_single[l]).T).T * P(-ubar0)[l] / (4 * np.pi))
-
-	lam = np.sqrt(a[0]*a[1])
-
-	Del = ((tauN / ubar0)**2 - a[0]*a[1])
-	Dels = []
-	Dels.append(b[1] * tauN /ubar0 - a[1]*b[0])
-	Dels.append(b[0] * tauN /ubar0 - a[0]*b[1])
-	
-	eta = []
-	for l in range(2):
-		eta.append(Dels[l]/Del)
-
-	#expo = lam*dtau
-	expo_up = lam*tau[:,1:]
-	expo_down = lam*tau[:,:-1]
-	#save from overflow 
-	expo_up = slice_gt(expo_up, 35.0) 
-	expo_down = slice_gt(expo_down, 35.0) 
-	exptrm_up = np.exp(-expo_up)
-	exptrm_down = np.exp(-expo_down)
-
-	expt_up = tau[:,1:] * tauN / ubar0
-	expt_down = tau[:,:-1] * tauN / ubar0
-	expt_up = slice_gt(expt_up,35.0)
-	expt_down = slice_gt(expt_down,35.0)
-	exptau_up = np.exp(-expt_up)
-	exptau_down = np.exp(-expt_down)
-
-	q = lam/a[1]
-	Q1 = 0.5 + q
-	Q2 = 0.5 - q
-	#e1 = np.exp(exptrm)
-
-	def F_block(n, e1):
-		#if np.any(t!=0):
-		#	e1 = exptrm[:,n]; e2 = 1/e1
-		#else:
-		#	e1 = np.ones(nwno); e2 = e1
-		e2 = 1/e1
-
-		block = 2*np.pi * np.array([[Q1[:,n]*e1, Q2[:,n]*e1], [Q2[:,n]*e2, Q1[:,n]*e2]])
-		return block.T
-
-	def Z_block(n, exptau):
-		#if np.any(t!=0):
-		#	exptau = np.exp(-tau[:,n+1] * tauN /ubar0)
-		#else:
-		#	exptau = np.exp(-tau[:,n] * tauN /ubar0)
-		
-		return 2*np.pi * (np.array([(0.5 * eta[0] - eta[1])[:,n], 
-			(0.5 * eta[0] + eta[1])[:,n]]) * exptau).T
-	
-	def A_block(n, e1):
-		#if np.any(t!=0):
-		#	e1 = exptrm[:,n]; e2 = 1/e1
-		#else:
-		#	e1 = np.ones(nwno); e2 = e1
-		e2 = 1/e1
-
-		block =  np.array([[e1, -q[:,n]*e1], [e2, q[:,n] * e2]])
-		return block.T
-	
-	def N_block(n, exptau):
-		#if np.any(t!=0):
-		#	exptau = np.exp(-tau[:,n+1] * tauN /ubar0)
-		#else:
-		#	exptau = np.exp(-tau[:,n] * tauN /ubar0)
-
-		return (np.array([eta[0][:,n], eta[1][:,n]]) * exptau).T
-
-	alpha = (tauN/ubar1 + lam);		beta = (tauN/ubar1 - lam);		mus = tauN * (ubar1 + ubar0) / (ubar1 * ubar0)
-	expo_alp = alpha * dtau;		expo_bet = beta * dtau;			expo_mus = mus * dtau 
-	expo_alp = slice_gt(expo_alp, 35.0);	expo_bet = slice_gt(expo_bet, 35.0);	expo_mus = slice_gt(expo_mus, 35.0)    
-	exptrm_alp = np.exp(-expo_alp);		exptrm_bet = np.exp(-expo_bet);		exptrm_mus = np.exp(-expo_mus)
-
-	def A_int_block(n):
-		exptau_alp = np.exp(-slice_gt(tau[:,:-1] * alpha, 35.0))
-		exptau_bet = np.exp(-slice_gt(tau[:,:-1] * beta, 35.0))
-		e1 = (1 - exptrm_alp[:,n]) * exptau_alp[:,n] / alpha[:,n]
-		e2 = (1 - exptrm_bet[:,n]) * exptau_bet[:,n] / beta[:,n]
-
-		block =  np.array([[e1, -q[:,n] * e1], 
-				    [e2, q[:,n] * e2]])
-		return block.T
-
-	def N_int_block(n):
-		exptau = np.exp(-slice_gt(tau * mus, 35.0))
-		e1 = (1 - exptrm_mus[:,n]) * exptau[:,n] / mus
-
-		return (np.array([eta[0][:,n], eta[1][:,n]]) * e1 ).T
-
-	
-	M = np.zeros((nwno, 2*nlayer, 2*nlayer))
-	B = np.zeros((nwno, 2*nlayer))
-
-	nlevel = nlayer+1
-	F = np.zeros((nwno, 2*nlevel, 2*nlayer))
-	G = np.zeros((nwno, 2*nlevel))
-	A = np.zeros((nwno, 2*nlevel, 2*nlayer))
-	N = np.zeros((nwno, 2*nlevel))
-
-	A_int = np.zeros((nwno, 2*nlayer, 2*nlayer))
-	N_int = np.zeros((nwno, 2*nlayer))
-
-	zero = np.zeros(nwno)
-	
-	#   first row: BC 1
-	M[:,0,0:2] = F_block(0,exptrm_down[:,0])[:,0,]
-	B[:,0] = b_top - Z_block(0,exptau_down[:,0])[:,0]        
-
-	F[:,0:2,0:2] = F_block(0,exptrm_down[:,0])
-	G[:,0:2] = Z_block(0,exptau_down[:,0])
-
-	A[:,0:2,0:2] = A_block(0,exptrm_down[:,0])
-	N[:,0:2] = N_block(0,exptau_down[:,0])
-
-	#   rows 1 through 2*nlayer-1: BCs 2 and 3
-	for n in range(0, nlayer-1):
-		im = 2*n+1; iM = (2*n+2)+1
-		jm = 2*n; j_ = (2*n+1)+1; jM = (2*n+3)+1
-		M[:,im:iM,jm:j_] = F_block(n,exptrm_up[:,n])
-		M[:,im:iM,j_:jM] = -F_block(n+1,exptrm_down[:,n+1])
-		B[:,im:iM] = Z_block(n+1,exptau_down[:,n+1]) - Z_block(n,exptau_up[:,n])
-		
-		im = 2*n+2; iM = (2*n+3)+1
-		jm = 2*n; jM = (2*n+1)+1
-		F[:,im:iM,jm:jM] = F_block(n,exptrm_up[:,n])
-		G[:,im:iM] = Z_block(n,exptau_up[:,n])
-
-		im = 2*n; iM = (2*n+1)+1
-		A[:,im:iM,jm:jM] = A_block(n,exptrm_up[:,n])
-		N[:,im:iM] = N_block(n,exptau_up[:,n])
-
-		A_int[:,im:iM,jm:jM] = A_int_block(n)
-		N_int[:,im:iM] = N_int_block(n)
-
-	#   last row: BC 4
-	im = 2*nlayer-1; 
-	jm = 2*nlayer-2; jM = 2*nlayer
-	n = nlayer-1
-	M[:,im,jm:jM] = F_block(n,exptrm_up[:,n])[:,1,] - surf_reflect*F_block(n,exptrm_up[:,n])[:,0,]
-	B[:,im] = b_surface - Z_block(n,exptau_up[:,n])[:,1] + surf_reflect * Z_block(n,exptau_up[:,n])[:,0]
-	
-
-	n = nlayer-1
-	im = 2*nlevel-2; iM = 2*nlevel
-	jm = 2*nlayer-2; jM = 2*nlayer
-	F[:,im:iM,jm:jM] = F_block(n,exptrm_up[:,n])
-	G[:,im:iM] = Z_block(n,exptau_up[:,n])
-
-	A[:,im:iM,jm:jM] = A_block(n,exptrm_up[:,n])
-	N[:,im:iM] = N_block(n,exptau_up[:,n])
-
-	im = 2*nlayer-2; iM = 2*nlayer
-	jm = 2*nlayer-2; jM = 2*nlayer
-	A_int[:,im:iM,jm:jM] = A_int_block(n)
-	N_int[:,im:iM] = N_int_block(n)
-
-	A0 = A_block(0,zero)
-	N0 = N_block(0,zero)
-
-	M_inv = np.linalg.inv(M[0])
-	X = M_inv.dot(B[0])
-	
-	flux = F.dot(X) + G
-	
-	I = A.dot(X) + N
-
-	return M, B, A, N, F, G, A_int, N_int
-
 def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau, tau, w_single, w_multi, ubar1, P):
 	"""
 	Parameters
@@ -2857,6 +1902,8 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 		Legendre polynomials
 	"""
 
+	print("setup_2_stream_scaled.py not updated for non-transposed version"
+	import sys; sys.exit()
 	w0 = W0.T
 	dtau = dtau.T
 	tau = tau.T
@@ -2895,21 +1942,6 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 		elif lev == "down":
 			block = np.array([[Q1[:,n], Q2[:,n]], [Q2[:,n], Q1[:,n]]]).T
 			return block
-
-	temp = zeros((nwno,2,2))
-	def F_block_new(n, lev):
-		if lev == "up":
-			temp[:,0,0] = Q1mn[:,n]
-			temp[:,1,0] = Q2mn[:,n]
-			temp[:,0,1] = Q2pl[:,n]
-			temp[:,1,1] = Q1pl[:,n]
-			return temp
-		elif lev == "down":
-			temp[:,0,0] = Q1[:,n]
-			temp[:,1,0] = Q2[:,n]
-			temp[:,0,1] = Q2[:,n]
-			temp[:,1,1] = Q1[:,n]
-			return temp
 
 	exptau_u0 = np.exp(-tau/ubar0)
 	zmn = 2*pi*(0.5*eta[0] - eta[1]) 
@@ -3027,8 +2059,7 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 
 	return M, B, A, N, F, G, A_int, N_int
 
-#@jit(nopython=True, cache=True)
-def setup_2_stream_fast(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0, DTAU, TAU, w_single, w_multi, ubar1, P):
+def setup_4_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, w_single, w_multi, ubar1, P):
 	"""
 	Parameters
 	----------
@@ -3040,7 +2071,7 @@ def setup_2_stream_fast(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, 
 		single scattering albedo 
 	b_top : array 
 		The diffuse radiation into the model at the top of the atmosphere
-	b_surface : arra
+	b_surface : array
 		The diffuse radiation into the model at the bottom. Includes emission, reflection 
 		of the unattenuated portion of the direct beam  
 	surf_reflect : array 
@@ -3052,131 +2083,217 @@ def setup_2_stream_fast(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, 
 	dtau : array 
 		Opacity per layer
 	g : array 
-		asymmety parameters
+		asymmetry parameters
 	P : array
 		Legendre polynomials
 	"""
-
+	print("setup_4_stream_scaled.py not updated for non-transposed version"
+	import sys; sys.exit()
 	w0 = W0.T
-	dtau = DTAU.T
-	tau = TAU.T
-	
+	dtau = dtau.T
+	tau = tau.T
+
 	a = []; b = []
-	for l in range(2):
-		#a.append((((2*l + 1) - w0 * w_multi[l]).T).T)
-		a.append(((2*l + 1) - w0 * w_multi[l]))
-		b.append((F0PI * (w0 * w_single[l]).T).T * P(-ubar0)[l] / (4 * np.pi))
+	for l in range(4):
+		a.append((2*l + 1) - w0 * w_multi[l].T)
+		b.append((F0PI * (w0 * w_single[l].T).T).T * P(-ubar0)[l] / (4 * np.pi))
 
+	beta = a[0]*a[1] + 4*a[0]*a[3]/9 + a[2]*a[3]/9
+	gama = a[0]*a[1]*a[2]*a[3]/9
+	lam2 = np.sqrt((beta + np.sqrt(beta**2 - 4*gama)) / 2)
+	lam1 = np.sqrt((beta - np.sqrt(beta**2 - 4*gama)) / 2)
 
-	#@jit(nopython=True, cache=True)
-	lam = np.sqrt(a[0]*a[1])
-
-	Del = ((1 / ubar0)**2 - a[0]*a[1])
+	def f(x):
+		return x**4 - beta*x**2 + gama
+	
+	Del = 9 * f(1/ubar0)
 	Dels = []
-	Dels.append(b[1] /ubar0 - a[1]*b[0])
-	Dels.append(b[0] /ubar0 - a[0]*b[1])
-
+	Dels.append((a[1]*b[0] - b[1]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
+		+ 2*(a[3]*b[2] - 2*a[3]*b[0] - 3*b[3]/ubar0)/ubar0**2)
+	Dels.append((a[0]*b[1] - b[0]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
+		- 2*a[0]*(a[3]*b[2] - 3*b[3]/ubar0)/ubar0)
+	Dels.append((a[3]*b[2] - 3*b[3]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
+		- 2*a[3]*(a[0]*b[1] - b[0]/ubar0)/ubar0)
+	Dels.append((a[2]*b[3] - 3*b[2]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
+		+ 2*(3*a[0]*b[1] - 2*a[0]*b[3] - 3*b[0]/ubar0)/ubar0**2)
+	
 	eta = []
-	for l in range(2):
+	for l in range(4):
 		eta.append(Dels[l]/Del)
 
-	expo = lam*dtau
-	expo = slice_gt(expo, 35.0) 
-	exptrm = np.exp(-expo)
+	expo1 = slice_gt(lam1*dtau, 35.0) 
+	expo2 = slice_gt(lam2*dtau, 35.0) 
+	exptrm1 = np.exp(-expo1)
+	exptrm2 = np.exp(-expo2)
 
-	q = lam/a[1]
-	Q1 = 2*pi*(0.5 + q)
-	Q2 = 2*pi*(0.5 - q)
+	R1 = -a[0]/lam1; R2 = -a[0]/lam2
+	Q1 = 1/2 * (a[0]*a[1]/(lam1**2) - 1); Q2 = 1/2 * (a[0]*a[1]/(lam2**2) - 1)
+	S1 = -3/(2*a[3]) * (a[0]*a[1]/lam1 - lam1); S2 = -3/(2*a[3]) * (a[0]*a[1]/lam2 - lam2)
+	
+	p1pl = 2*np.pi*(1/2 + R1 + 5*Q1/8); p1mn = 2*np.pi*(1/2 - R1 + 5*Q1/8);
+	p2pl = 2*np.pi*(1/2 + R2 + 5*Q2/8); p2mn = 2*np.pi*(1/2 - R2 + 5*Q2/8);
+	q1pl = 2*np.pi*(-1/8 + 5*Q1/8 + S1); q1mn = 2*np.pi*(-1/8 + 5*Q1/8 - S1)
+	q2pl = 2*np.pi*(-1/8 + 5*Q2/8 + S2); q2mn = 2*np.pi*(-1/8 + 5*Q2/8 - S2)
+	z1pl = 2*np.pi*(eta[0]/2 + eta[1] + 5*eta[2]/8); z1mn = 2*np.pi*(eta[0]/2 - eta[1] + 5*eta[2]/8);
+	z2pl = 2*np.pi*(-eta[0]/8 + 5*eta[2]/8 + eta[3]); z2mn = 2*np.pi*(-eta[0]/8 + 5*eta[2]/8 - eta[3]);
+	
+	zero = np.zeros(nwno)
 
-	Q1mn = Q1*exptrm;  Q2mn = Q2*exptrm
-	Q1pl = Q1/exptrm;  Q2pl = Q2/exptrm
+	f00 = p1mn*exptrm1; f01 = p1pl/exptrm1;	f02 = p2mn*exptrm2; f03 = p2pl/exptrm2
+	f10 = q1mn*exptrm1; f11 = q1pl/exptrm1;	f12 = q2mn*exptrm2; f13 = q2pl/exptrm2
+	f20 = p1pl*exptrm1; f21 = p1mn/exptrm1;	f22 = p2pl*exptrm2; f23 = p2mn/exptrm2
+	f30 = q1pl*exptrm1; f31 = q1mn/exptrm1;	f32 = q2pl*exptrm2; f33 = q2mn/exptrm2
+	def F_block(n, lev):
+		if lev == "up":
+			return (np.array([[f00[:,n], f10[:,n], f20[:,n], f30[:,n]],
+					    [f01[:,n], f11[:,n], f21[:,n], f31[:,n]],
+			    		    [f02[:,n], f12[:,n], f22[:,n], f32[:,n]],
+			    		    [f03[:,n], f13[:,n], f23[:,n], f33[:,n]]])).T
+		elif lev == "down":
+			return (np.array([[p1mn[:,n], q1mn[:,n], p1pl[:,n], q1pl[:,n]],
+					    [p1pl[:,n], q1pl[:,n], p1mn[:,n], q1mn[:,n]],
+					    [p2mn[:,n], q2mn[:,n], p2pl[:,n], q2pl[:,n]],
+					    [p2pl[:,n], q2pl[:,n], p2mn[:,n], q2mn[:,n]]])).T
 
+	
 	exptau_u0 = np.exp(-tau/ubar0)
-	zmn = 2*pi*(0.5*eta[0] - eta[1]) 
-	zpl = 2*pi*(0.5*eta[0] + eta[1])
-	zmn_up = zmn * exptau_u0[:,1:] 
-	zpl_up = zpl * exptau_u0[:,1:] 
-	zmn_down = zmn * exptau_u0[:,:-1] 
-	zpl_down = zpl * exptau_u0[:,:-1] 
+	z1mn_up = z1mn * exptau_u0[:,1:]
+	z2mn_up = z2mn * exptau_u0[:,1:]
+	z1pl_up = z1pl * exptau_u0[:,1:]
+	z2pl_up = z2pl * exptau_u0[:,1:]
+	z1mn_down = z1mn * exptau_u0[:,:-1]
+	z2mn_down = z2mn * exptau_u0[:,:-1]
+	z1pl_down = z1pl * exptau_u0[:,:-1]
+	z2pl_down = z2pl * exptau_u0[:,:-1]
+
+	def Z_block(n, lev):
+		if lev == "up":
+			return (np.array([z1mn_up[:,n], z2mn_up[:,n], z1pl_up[:,n], z2pl_up[:,n]])).T
+		elif lev == "down":
+			return (np.array([z1mn_down[:,n], z2mn_down[:,n], z1pl_down[:,n], z2pl_down[:,n]])).T
 
 	
-#	exptrmpl = 1/exptrm
-#	qmn = -q*exptrm; qpl = q/exptrm
+	a00 = exptrm1;	    a01 = 1/exptrm1;	a02 = exptrm2;	    a03 = 1/exptrm2
+	a10 = R1*exptrm1;   a11 = -R1/exptrm1;	a12 = R2*exptrm2;   a13 = -R2/exptrm2
+	a20 = Q1*exptrm1;   a21 = Q1/exptrm1;	a22 = Q1*exptrm2;   a23 = Q1/exptrm2
+	a30 = S1*exptrm1;   a31 = -S1/exptrm1;	a32 = S1*exptrm2;   a33 = -S1/exptrm2
+	def A_block(n, lev):
+		if lev == "up":
+			return (np.array([[a00[:,n], a10[:,n], a20[:,n], a30[:,n]],
+						[a01[:,n], a11[:,n], a21[:,n], a31[:,n]],
+						[a02[:,n], a12[:,n], a22[:,n], a32[:,n]],
+						[a03[:,n], a13[:,n], a23[:,n], a33[:,n]]])).T
+		elif lev == "down":
+			return (np.array([[np.ones(nwno), R1[:,n], Q1[:,n], S1[:,n]],
+					    [np.ones(nwno), -R1[:,n], Q1[:,n], -S1[:,n]],
+					    [np.ones(nwno),  R2[:,n], Q2[:,n],  S2[:,n]],
+					    [np.ones(nwno), -R2[:,n], Q2[:,n], -S2[:,n]]])).T
+
+	n0_up = eta[0]*exptau_u0[:,1:]; n0_down = eta[0]*exptau_u0[:,:-1]
+	n1_up = eta[1]*exptau_u0[:,1:]; n1_down = eta[1]*exptau_u0[:,:-1]
+	n2_up = eta[2]*exptau_u0[:,1:]; n2_down = eta[2]*exptau_u0[:,:-1]
+	n3_up = eta[3]*exptau_u0[:,1:]; n3_down = eta[3]*exptau_u0[:,:-1]
+	def N_block(n, lev):
+		if lev == "up":
+			return (np.array([n0_up[:,n], n1_up[:,n], n2_up[:,n], n3_up[:,n]])).T
+		elif lev == "down":
+			return (np.array([n0_down[:,n], n1_down[:,n], n2_down[:,n], n3_down[:,n]])).T
+
+
+	alpha1 = 1/ubar1 + lam1;		beta1 = 1/ubar1 - lam1;			mus = (ubar1 + ubar0) / (ubar1 * ubar0)
+	alpha2 = 1/ubar1 + lam2;		beta2 = 1/ubar1 - lam2;
+	expo_alp1 = alpha1 * dtau;		expo_bet1 = beta1 * dtau;		expo_mus = mus * dtau 
+	expo_alp2 = alpha2 * dtau;		expo_bet2 = beta2 * dtau;		
+	expo_alp1 = slice_gt(expo_alp1, 35.0);	expo_bet1 = slice_gt(expo_bet1, 35.0);	expo_mus = slice_gt(expo_mus, 35.0)    
+	expo_alp2 = slice_gt(expo_alp2, 35.0);	expo_bet2 = slice_gt(expo_bet2, 35.0);	
+	exptrm_alp1 = np.exp(-expo_alp1);	exptrm_bet1 = np.exp(-expo_bet1);	exptrm_mus = np.exp(-expo_mus)
+	exptrm_alp2 = np.exp(-expo_alp2);	exptrm_bet2 = np.exp(-expo_bet2);
+
+	A00 = (1-exptrm_alp1)/alpha1;	A01 = (1-exptrm_bet1)/beta1;	A02 = (1-exptrm_alp2)/alpha2;	A03 = (1-exptrm_bet2)/beta2
+	A10 = R1 * A00;			A11 = -R1 * A01;		A12 = R2 * A02;			A13 = -R2 * A03; 
+	A20 = Q1 * A00;			A21 =  Q1 * A01;		A22 = Q2 * A02;			A23 =  Q2 * A03; 
+	A30 = S1 * A00;			A31 = -S1 * A01;		A32 = S2 * A02;			A33 = -S2 * A03; 
 	
-	alpha, beta, mus  = 1/ubar1 + lam, 1/ubar1 - lam, (ubar1 + ubar0) / (ubar1 * ubar0)
-	expo_alp = slice_gt(alpha * dtau, 35.0)
-	expo_bet = slice_gt(beta * dtau, 35.0) 
-	expo_mus = slice_gt(mus * dtau, 35.0)    
-	exptrm_alp, exptrm_bet, exptrm_mus = exp(-expo_alp), exp(-expo_bet), exp(-expo_mus)
+	def A_int_block(n):
+
+		return (np.array([[A00[:,n], A10[:,n], A20[:,n], A30[:,n]],
+					    [A01[:,n], A11[:,n], A21[:,n], A31[:,n]],
+			    		    [A02[:,n], A12[:,n], A22[:,n], A32[:,n]],
+			    		    [A03[:,n], A13[:,n], A23[:,n], A33[:,n]]])).T
 
 	tau_mu = tau[:,:-1] * (mus - 1/ubar1)
 	tau_mu = slice_gt(tau_mu, 35.0)
 	exptau_mu = np.exp(-tau_mu)
 	exp_mu = (1 - exptrm_mus) * exptau_mu / mus
+	N0 = eta[0] * exp_mu;	N1 = eta[1] * exp_mu;	N2 = eta[2] * exp_mu;	N3 = eta[3] * exp_mu;	
+	def N_int_block(n):
 
-	M_new = zeros((nwno, 2*nlayer, 2*nlayer))
-	B_new = zeros((nwno, 2*nlayer))
-
-	F = zeros((nwno, 2*nlayer, 2*nlayer))
-	G = zeros((nwno, 2*nlayer))
-	A_new = zeros((nwno, 2*nlayer, 2*nlayer))
-	N_new = zeros((nwno, 2*nlayer))
-
-	A_int_new = zeros((nwno, 2*nlayer, 2*nlayer))
-	N_int_new = zeros((nwno, 2*nlayer))
-
-	#   first row: BC 1
-	M_new[:,0,0] = Q1[:,0]
-	M_new[:,0,1] = Q2[:,0]
-	import IPython; IPython.embed()
+	    return (np.array([N0[:,n], N1[:,n], N2[:,n], N3[:,n]])).T
 
 
-	B_new[:,0] = b_top - zmn[:,0]        
+	M = np.zeros((nwno, 4*nlayer, 4*nlayer))
+	B = np.zeros((nwno, 4*nlayer))
 
-#	F[:,0:2,0:2] = F_block(0,zero)
-#	G[:,0:2] = Z_block(0,zero)
-
-	nn = list(range(0,2*nlayer))
-	M_new[:,nn[1:-1:2],nn[:-2:2]] = Q1mn[:,:-1]
-	M_new[:,nn[1:-1:2],nn[1:-1:2]] = Q2pl[:,:-1]
-	M_new[:,nn[2::2], nn[:-2:2]] = Q2mn[:,:-1]
-	M_new[:,nn[2::2], nn[1:-1:2]] = Q1pl[:,:-1]
+	nlevel = nlayer+1
+	F = np.zeros((nwno, 4*nlevel, 4*nlayer))
+	G = np.zeros((nwno, 4*nlevel))
+	A = np.zeros((nwno, 4*nlevel, 4*nlayer))
+	N = np.zeros((nwno, 4*nlevel))
+	A_int = np.zeros((nwno, 4*nlayer, 4*nlayer))
+	N_int = np.zeros((nwno, 4*nlayer))
 	
-	M_new[:,nn[1:-1:2],nn[2::2]] = -Q1[:,1:]
-	M_new[:,nn[1:-1:2],nn[3::2]] = -Q2[:,1:]
-	M_new[:,nn[2::2], nn[2::2]] = -Q2[:,1:]
-	M_new[:,nn[2::2], nn[3::2]] = -Q1[:,1:]
+	#   first two rows: BC 1
+	M[:,0:2,0:4] = F_block(0,"down")[:,0:2,]
+	B[:,0:2] = b_top - Z_block(0,"down")[:,0:2]        
 
-	B_new[:,nn[1:-1:2]] = zmn_down[:,1:] - zmn_up[:,:-1]
-	B_new[:,nn[2::2]] = zpl_down[:,1:] - zpl_up[:,:-1]
+	#F[:,0:4,0:4] = F_block(0,zero)
+	#G[:,0:4] = Z_block(0,zero)
 
-	A_new[:,nn[::2],nn[::2]] = exptrm
-	A_new[:,nn[::2],nn[1::2]] = 1/exptrm
-	A_new[:,nn[1::2],nn[::2]] = -q*exptrm
-	A_new[:,nn[1::2],nn[1::2]] = q/exptrm
+	A[:,0:4,0:4] = A_block(0,"down")
+	N[:,0:4] = N_block(0,"down")
 
-	N_new[:,nn[::2]] = eta[0] * exptau_u0[:,1:]
-	N_new[:,nn[1::2]] = eta[1] * exptau_u0[:,1:]
+	#   rows 3 through 4nlayer-2: BCs 2 and 3
+	for n in range(0, nlayer-1):
+		im = 4*n+2; iM = (4*n+5)+1
+		jm = 4*n; j_ = (4*n+3)+1; jM = (4*n+7)+1
+		M[:,im:iM,jm:j_] = F_block(n,"up")
+		M[:,im:iM,j_:jM] = -F_block(n+1,"down")
+		B[:,im:iM] = Z_block(n+1,"down") - Z_block(n,"up")
+		
+		im = 4*n+4; iM = (4*n+7)+1
+		jm = 4*n; jM = (4*n+3)+1
+		#F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
+		#G[:,im:iM] = Z_block(n,dtau[:,n])
 
-	A_int_new[:,nn[::2],nn[::2]] = (1 - exptrm_alp) / alpha 
-	A_int_new[:,nn[::2],nn[1::2]] = (1 - exptrm_bet) / beta  
-	A_int_new[:,nn[1::2],nn[::2]] = -q * (1 - exptrm_alp) / alpha
-	A_int_new[:,nn[1::2],nn[1::2]] = q * (1 - exptrm_bet) / beta 
+		A[:,im:iM,jm:jM] = A_block(n,"up")
+		N[:,im:iM] = N_block(n,"up")
 
-	N_int_new[:,nn[::2]] = eta[0] * exp_mu
-	N_int_new[:,nn[1::2]] = eta[1] * exp_mu
+		im = 4*n; iM = (4*n+3)+1
+		A_int[:,im:iM,jm:jM] = A_int_block(n)
+		N_int[:,im:iM] = N_int_block(n)
 
-	#   last row: BC 4
+	#   last two rows: BC 4
+	im = 4*nlayer-2; iM = 4*nlayer
+	jm = 4*nlayer-4; jM = 4*nlayer
 	n = nlayer-1
-	M_new[:,2*nlayer-1, 2*nlayer-2] = Q2mn[:,n] - surf_reflect*Q1mn[:,n]
-	M_new[:,2*nlayer-1, 2*nlayer-1] = Q1pl[:,n] - surf_reflect*Q2pl[:,n]
-	B_new[:,2*nlayer-1] = b_surface - zpl_up[:,n] + surf_reflect * zmn_up[:,n]
+	M[:,im:iM,jm:jM] = F_block(n,"up")[:,[2,3],] - surf_reflect*F_block(n,"up")[:,[0,1],]
+	B[:,im] = b_surface - Z_block(n,"up")[:,2] + surf_reflect * Z_block(n,"up")[:,0]  
+	B[:,iM-1] = b_surface - Z_block(n,"up")[:,3] + surf_reflect * Z_block(n,"up")[:,1]  
+	## should have b_surface in here but it's zero
+	
+	im = 4*nlevel-4; iM = 4*nlevel
+	jm = 4*nlayer-4; jM = 4*nlayer
+	#F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
+	#G[:,im:iM] = Z_block(n,dtau[:,n])
 
-#	n = nlayer-1
-#	im = 2*nlevel-2; iM = 2*nlevel
-#	jm = 2*nlayer-2; jM = 2*nlayer
-#	F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
-#	G[:,im:iM] = Z_block(n,dtau[:,n])
+	A[:,im:iM,jm:jM] = A_block(n,"up")
+	N[:,im:iM] = N_block(n,"up")
+
+	im = 4*nlayer-4; iM = 4*nlayer
+	jm = 4*nlayer-4; jM = 4*nlayer
+	A_int[:,im:iM,jm:jM] = A_int_block(n)
+	N_int[:,im:iM] = N_int_block(n)
+
 	return M, B, A, N, F, G, A_int, N_int
 
 #@jit(nopython=True, cache=True)
@@ -3184,8 +2301,8 @@ def setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 
 	a = []; b = []
 	for l in range(2):
-		a.append(((2*l + 1) - W0 * w_multi[l]))
-		b.append((F0PI * (W0 * w_single[l])) * P(-ubar0)[l] / (4 * np.pi))
+		a.append(((2*l + 1) - w0 * w_multi[l]))
+		b.append((F0PI * (w0 * w_single[l])) * P(-ubar0)[l] / (4 * np.pi))
 
 	Del = ((1 / ubar0)**2 - a[0]*a[1])
 	Dels = []
@@ -3232,8 +2349,6 @@ def setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 	#	construct matrices
 	M = zeros((2*nlayer, 2*nlayer, nwno))
 	B = zeros((2*nlayer, nwno))
-#	F = zeros((2*nlayer, 2*nlayer, nwno))
-#	G = zeros((2*nlayer, nwno))
 	A = zeros((2*nlayer, 2*nlayer, nwno))
 	N = zeros((2*nlayer, nwno))
 	A_int = zeros((2*nlayer, 2*nlayer, nwno))
@@ -3243,9 +2358,6 @@ def setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 	M[0,0,:] = Q1[0,:]
 	M[0,1,:] = Q2[0,:]
 	B[0,:] = b_top - zmn[0,:]        
-
-#	F[:,0:2,0:2] = F_block(0,zero)
-#	G[:,0:2] = Z_block(0,zero)
 
 	nn = list(range(0,2*nlayer))
 	M[nn[1:-1:2],nn[:-2:2],:] = Q1mn[:-1,:]
@@ -3282,11 +2394,230 @@ def setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 	M[2*nlayer-1, 2*nlayer-1,:] = Q1pl[n,:] - surf_reflect*Q2pl[n,:]
 	B[2*nlayer-1,:] = b_surface - zpl_up[n,:] + surf_reflect * zmn_up[n,:]
 
-#	n = nlayer-1
-#	im = 2*nlevel-2; iM = 2*nlevel
-#	jm = 2*nlayer-2; jM = 2*nlayer
-#	F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
-#	G[:,im:iM] = Z_block(n,dtau[:,n])
-
 	return M, B, A, N, A_int, N_int
+
+def setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, w_single, w_multi, ubar1, P):
+
+	a = []; b = []
+	for l in range(4):
+		a.append((2*l + 1) - w0 * w_multi[l])
+		b.append((F0PI * (w0 * w_single[l])) * P(-ubar0)[l] / (4 * np.pi))
+
+	beta = a[0]*a[1] + 4*a[0]*a[3]/9 + a[2]*a[3]/9
+	gama = a[0]*a[1]*a[2]*a[3]/9
+	lam2 = np.sqrt((beta + np.sqrt(beta**2 - 4*gama)) / 2)
+	lam1 = np.sqrt((beta - np.sqrt(beta**2 - 4*gama)) / 2)
+
+	def f(x):
+		return x**4 - beta*x**2 + gama
+	
+	Del = 9 * f(1/ubar0)
+	Dels = []
+	Dels.append((a[1]*b[0] - b[1]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
+		+ 2*(a[3]*b[2] - 2*a[3]*b[0] - 3*b[3]/ubar0)/ubar0**2)
+	Dels.append((a[0]*b[1] - b[0]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
+		- 2*a[0]*(a[3]*b[2] - 3*b[3]/ubar0)/ubar0)
+	Dels.append((a[3]*b[2] - 3*b[3]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
+		- 2*a[3]*(a[0]*b[1] - b[0]/ubar0)/ubar0)
+	Dels.append((a[2]*b[3] - 3*b[2]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
+		+ 2*(3*a[0]*b[1] - 2*a[0]*b[3] - 3*b[0]/ubar0)/ubar0**2)
+	
+	eta = []
+	for l in range(4):
+		eta.append(Dels[l]/Del)
+
+	expo1 = slice_gt(lam1*dtau, 35.0) 
+	expo2 = slice_gt(lam2*dtau, 35.0) 
+	exptrm1 = np.exp(-expo1)
+	exptrm2 = np.exp(-expo2)
+
+	R1 = -a[0]/lam1; R2 = -a[0]/lam2
+	Q1 = 1/2 * (a[0]*a[1]/(lam1**2) - 1); Q2 = 1/2 * (a[0]*a[1]/(lam2**2) - 1)
+	S1 = -3/(2*a[3]) * (a[0]*a[1]/lam1 - lam1); S2 = -3/(2*a[3]) * (a[0]*a[1]/lam2 - lam2)
+	
+	p1pl = 2*np.pi*(1/2 + R1 + 5*Q1/8); p1mn = 2*np.pi*(1/2 - R1 + 5*Q1/8);
+	p2pl = 2*np.pi*(1/2 + R2 + 5*Q2/8); p2mn = 2*np.pi*(1/2 - R2 + 5*Q2/8);
+	q1pl = 2*np.pi*(-1/8 + 5*Q1/8 + S1); q1mn = 2*np.pi*(-1/8 + 5*Q1/8 - S1)
+	q2pl = 2*np.pi*(-1/8 + 5*Q2/8 + S2); q2mn = 2*np.pi*(-1/8 + 5*Q2/8 - S2)
+	z1pl = 2*np.pi*(eta[0]/2 + eta[1] + 5*eta[2]/8); z1mn = 2*np.pi*(eta[0]/2 - eta[1] + 5*eta[2]/8);
+	z2pl = 2*np.pi*(-eta[0]/8 + 5*eta[2]/8 + eta[3]); z2mn = 2*np.pi*(-eta[0]/8 + 5*eta[2]/8 - eta[3]);
+	
+	zero = np.zeros(nwno)
+
+	f00 = p1mn*exptrm1; f01 = p1pl/exptrm1;	f02 = p2mn*exptrm2; f03 = p2pl/exptrm2
+	f10 = q1mn*exptrm1; f11 = q1pl/exptrm1;	f12 = q2mn*exptrm2; f13 = q2pl/exptrm2
+	f20 = p1pl*exptrm1; f21 = p1mn/exptrm1;	f22 = p2pl*exptrm2; f23 = p2mn/exptrm2
+	f30 = q1pl*exptrm1; f31 = q1mn/exptrm1;	f32 = q2pl*exptrm2; f33 = q2mn/exptrm2
+
+	exptau_u0 = np.exp(-tau/ubar0)
+	z1mn_up = z1mn * exptau_u0[1:,:]
+	z2mn_up = z2mn * exptau_u0[1:,:]
+	z1pl_up = z1pl * exptau_u0[1:,:]
+	z2pl_up = z2pl * exptau_u0[1:,:]
+	z1mn_down = z1mn * exptau_u0[:-1,:]
+	z2mn_down = z2mn * exptau_u0[:-1,:]
+	z1pl_down = z1pl * exptau_u0[:-1,:]
+	z2pl_down = z2pl * exptau_u0[:-1,:]
+
+	a00 = exptrm1;	    a01 = 1/exptrm1;	a02 = exptrm2;	    a03 = 1/exptrm2
+	a10 = R1*exptrm1;   a11 = -R1/exptrm1;	a12 = R2*exptrm2;   a13 = -R2/exptrm2
+	a20 = Q1*exptrm1;   a21 = Q1/exptrm1;	a22 = Q1*exptrm2;   a23 = Q1/exptrm2
+	a30 = S1*exptrm1;   a31 = -S1/exptrm1;	a32 = S1*exptrm2;   a33 = -S1/exptrm2
+
+	n0_up = eta[0]*exptau_u0[1:,:]; n0_down = eta[0]*exptau_u0[:-1,:]
+	n1_up = eta[1]*exptau_u0[1:,:]; n1_down = eta[1]*exptau_u0[:-1,:]
+	n2_up = eta[2]*exptau_u0[1:,:]; n2_down = eta[2]*exptau_u0[:-1,:]
+	n3_up = eta[3]*exptau_u0[1:,:]; n3_down = eta[3]*exptau_u0[:-1,:]
+
+	alpha1 = 1/ubar1 + lam1;		beta1 = 1/ubar1 - lam1;			mus = (ubar1 + ubar0) / (ubar1 * ubar0)
+	alpha2 = 1/ubar1 + lam2;		beta2 = 1/ubar1 - lam2;
+	expo_alp1 = alpha1 * dtau;		expo_bet1 = beta1 * dtau;		expo_mus = mus * dtau 
+	expo_alp2 = alpha2 * dtau;		expo_bet2 = beta2 * dtau;		
+	expo_alp1 = slice_gt(expo_alp1, 35.0);	expo_bet1 = slice_gt(expo_bet1, 35.0);	expo_mus = slice_gt(expo_mus, 35.0)    
+	expo_alp2 = slice_gt(expo_alp2, 35.0);	expo_bet2 = slice_gt(expo_bet2, 35.0);	
+	exptrm_alp1 = np.exp(-expo_alp1);	exptrm_bet1 = np.exp(-expo_bet1);	exptrm_mus = np.exp(-expo_mus)
+	exptrm_alp2 = np.exp(-expo_alp2);	exptrm_bet2 = np.exp(-expo_bet2);
+
+	A00 = (1-exptrm_alp1)/alpha1;	A01 = (1-exptrm_bet1)/beta1;	A02 = (1-exptrm_alp2)/alpha2;	A03 = (1-exptrm_bet2)/beta2
+	A10 = R1 * A00;			A11 = -R1 * A01;		A12 = R2 * A02;			A13 = -R2 * A03; 
+	A20 = Q1 * A00;			A21 =  Q1 * A01;		A22 = Q2 * A02;			A23 =  Q2 * A03; 
+	A30 = S1 * A00;			A31 = -S1 * A01;		A32 = S2 * A02;			A33 = -S2 * A03; 
+	
+	tau_mu = tau[:-1,:] * (mus - 1/ubar1)
+	tau_mu = slice_gt(tau_mu, 35.0)
+	exptau_mu = np.exp(-tau_mu)
+	exp_mu = (1 - exptrm_mus) * exptau_mu / mus
+	N0 = eta[0] * exp_mu;	N1 = eta[1] * exp_mu;	N2 = eta[2] * exp_mu;	N3 = eta[3] * exp_mu;	
+
+	M = np.zeros((4*nlayer, 4*nlayer, nwno))
+	B = np.zeros((4*nlayer, nwno))
+	A = np.zeros((4*nlayer, 4*nlayer, nwno))
+	N = np.zeros((4*nlayer, nwno))
+	A_int = np.zeros((4*nlayer, 4*nlayer, nwno))
+	N_int = np.zeros((4*nlayer, nwno))
+
+	#   first two rows: BC 1
+	M[0,0,:] = p1mn[0,:]
+	M[0,1,:] = p1pl[0,:]
+	M[0,2,:] = p2mn[0,:]
+	M[0,3,:] = p2pl[0,:]
+	M[1,0,:] = q1mn[0,:]
+	M[1,1,:] = q1pl[0,:]
+	M[1,2,:] = q2mn[0,:]
+	M[1,3,:] = q2pl[0,:]
+
+	B[0,:] = b_top - z1mn_down[0,:]
+	B[1,:] = b_top - z2mn_down[0,:]
+
+	nn = list(range(0,4*nlayer))
+	M[nn[2:-2:4],nn[:-4:4],:] = f00[:-1,:]
+	M[nn[2:-2:4],nn[1:-4:4],:] = f01[:-1,:]
+	M[nn[2:-2:4],nn[2:-4:4],:] = f02[:-1,:]
+	M[nn[2:-2:4],nn[3:-4:4],:] = f03[:-1,:]
+	M[nn[3:-2:4],nn[:-4:4],:] = f10[:-1,:]
+	M[nn[3:-2:4],nn[1:-4:4],:] = f11[:-1,:]
+	M[nn[3:-2:4],nn[2:-4:4],:] = f12[:-1,:]
+	M[nn[3:-2:4],nn[3:-4:4],:] = f13[:-1,:]
+	M[nn[4::4],nn[:-4:4],:] = f20[:-1,:]
+	M[nn[4::4],nn[1:-4:4],:] = f21[:-1,:]
+	M[nn[4::4],nn[2:-4:4],:] = f22[:-1,:]
+	M[nn[4::4],nn[3:-4:4],:] = f23[:-1,:]
+	M[nn[5::4],nn[:-4:4],:] = f30[:-1,:]
+	M[nn[5::4],nn[1:-4:4],:] = f31[:-1,:]
+	M[nn[5::4],nn[2:-4:4],:] = f32[:-1,:]
+	M[nn[5::4],nn[3:-4:4],:] = f33[:-1,:]
+
+	M[nn[2:-2:4],nn[4::4],:] = -p1mn[1:,:]
+	M[nn[2:-2:4],nn[5::4],:] = -p1pl[1:,:]
+	M[nn[2:-2:4],nn[6::4],:] = -p2mn[1:,:]
+	M[nn[2:-2:4],nn[7::4],:] = -p2pl[1:,:]
+	M[nn[3:-2:4],nn[4::4],:] = -q1mn[1:,:]
+	M[nn[3:-2:4],nn[5::4],:] = -q1pl[1:,:]
+	M[nn[3:-2:4],nn[6::4],:] = -q2mn[1:,:]
+	M[nn[3:-2:4],nn[7::4],:] = -q2pl[1:,:]
+	M[nn[4::4],nn[4::4],:] = -p1pl[1:,:]
+	M[nn[4::4],nn[5::4],:] = -p1mn[1:,:]
+	M[nn[4::4],nn[6::4],:] = -p2pl[1:,:]
+	M[nn[4::4],nn[7::4],:] = -p2mn[1:,:]
+	M[nn[5::4],nn[4::4],:] = -q1pl[1:,:]
+	M[nn[5::4],nn[5::4],:] = -q1mn[1:,:]
+	M[nn[5::4],nn[6::4],:] = -q2pl[1:,:]
+	M[nn[5::4],nn[7::4],:] = -q2mn[1:,:]
+
+	B[2:-2:4,:] = z1mn_down[1:,:] - z1mn_up[:-1,:]
+	B[3:-2:4,:] = z2mn_down[1:,:] - z2mn_up[:-1,:]
+	B[4::4,:] = z1pl_down[1:,:] - z1pl_up[:-1,:]
+	B[5::4,:] = z2pl_down[1:,:] - z2pl_up[:-1,:]
+
+	A[nn[::4],nn[::4],:] = a00
+	A[nn[::4],nn[1::4],:] = a01
+	A[nn[::4],nn[2::4],:] = a02
+	A[nn[::4],nn[3::4],:] = a03
+	A[nn[1::4],nn[::4],:] = a10
+	A[nn[1::4],nn[1::4],:] = a11
+	A[nn[1::4],nn[2::4],:] = a12
+	A[nn[1::4],nn[3::4],:] = a13
+	A[nn[2::4],nn[::4],:] = a20
+	A[nn[2::4],nn[1::4],:] = a21
+	A[nn[2::4],nn[2::4],:] = a22
+	A[nn[2::4],nn[3::4],:] = a23
+	A[nn[3::4],nn[::4],:] = a30
+	A[nn[3::4],nn[1::4],:] = a31
+	A[nn[3::4],nn[2::4],:] = a32
+	A[nn[3::4],nn[3::4],:] = a33
+
+	N[::4,:] = n0_up
+	N[1::4,:] = n1_up
+	N[2::4,:] = n2_up
+	N[3::4,:] = n3_up
+
+	A_int[nn[::4],nn[::4],:] = A00
+	A_int[nn[::4],nn[1::4],:] = A01
+	A_int[nn[::4],nn[2::4],:] = A02
+	A_int[nn[::4],nn[3::4],:] = A03
+	A_int[nn[1::4],nn[::4],:] = A10
+	A_int[nn[1::4],nn[1::4],:] = A11
+	A_int[nn[1::4],nn[2::4],:] = A12
+	A_int[nn[1::4],nn[3::4],:] = A13
+	A_int[nn[2::4],nn[::4],:] = A20
+	A_int[nn[2::4],nn[1::4],:] = A21
+	A_int[nn[2::4],nn[2::4],:] = A22
+	A_int[nn[2::4],nn[3::4],:] = A23
+	A_int[nn[3::4],nn[::4],:] = A30
+	A_int[nn[3::4],nn[1::4],:] = A31
+	A_int[nn[3::4],nn[2::4],:] = A32
+	A_int[nn[3::4],nn[3::4],:] = A33
+
+	N_int[::4,:] = N0
+	N_int[1::4,:] = N1
+	N_int[2::4,:] = N2
+	N_int[3::4,:] = N3
+
+	n = nlayer-1
+	M[4*nlayer-2, 4*nlayer-4,:] = f20[n,:] - surf_reflect*f00[n,:]
+	M[4*nlayer-2, 4*nlayer-3,:] = f21[n,:] - surf_reflect*f01[n,:]
+	M[4*nlayer-2, 4*nlayer-2,:] = f22[n,:] - surf_reflect*f02[n,:]
+	M[4*nlayer-2, 4*nlayer-1,:] = f23[n,:] - surf_reflect*f03[n,:]
+	M[4*nlayer-1, 4*nlayer-4,:] = f30[n,:] - surf_reflect*f10[n,:]
+	M[4*nlayer-1, 4*nlayer-3,:] = f31[n,:] - surf_reflect*f11[n,:]
+	M[4*nlayer-1, 4*nlayer-2,:] = f32[n,:] - surf_reflect*f12[n,:]
+	M[4*nlayer-1, 4*nlayer-1,:] = f33[n,:] - surf_reflect*f13[n,:]
+
+	B[4*nlayer-2,:] = b_surface - z1pl_up[n,:] + surf_reflect*z1mn_up[n,:]
+	B[4*nlayer-1,:] = b_surface - z2pl_up[n,:] + surf_reflect*z2mn_up[n,:]
+	
+	return M, B, A, N, A_int, N_int
+
+#@jit(nopython=False, cache=True)
+def solve_4_stream(M, B, A, N, A_int, N_int, stream):
+
+	#	find constants
+	X = spsolve(M, B)
+	#	intensity at each level
+	I = A.dot(X) + N
+	#	integral of Iexp(-tau/ubar1) at each level 
+	intgrl_new = A_int.dot(X) + N_int
+
+	return (I, intgrl_new)
+
 
