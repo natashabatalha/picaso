@@ -2136,14 +2136,14 @@ def setup_4_stream(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0
 	return M, B, A, N, F, G, A_int, N_int
 
 
-def solve_4_stream(M, B, A, N, F, G, A_int, N_int, stream):
-	#M_inv = np.linalg.inv(M)
-	#X = M_inv.dot(B)
+#@jit(nopython=False, cache=True)
+def solve_4_stream(M, B, A, N, A_int, N_int, stream):
+
+	#	find constants
 	X = spsolve(M, B)
-	
-	#flux = F.dot(X) + G
-	
+	#	intensity at each level
 	I = A.dot(X) + N
+	#	integral of Iexp(-tau/ubar1) at each level 
 	intgrl_new = A_int.dot(X) + N_int
 
 	return (I, intgrl_new)
@@ -2230,7 +2230,6 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 	#================ START CRAZE LOOP OVER ANGLE #================
 	for ng in range(numg):
 		for nt in range(numt):
-			t1 = time.time()
 			if dim == '3d':
 				#get needed chunk for 3d inputs
 				#should consider thinking of a better method for when doing 1d only
@@ -2257,16 +2256,13 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				f = frac_a + frac_b*g_back**frac_c
 
 			if single_phase==0:#'cahoy':
-				import IPython; IPython.embed()
-				print('Do not know what cahoy is meant to do')
-				import sys; sys.exit()
-				g0_s = (ftau_cld + ftau_ray).T
+				g0_s = (ftau_cld + ftau_ray)
 				#g0_s = np.zeros((nwno, nlayer)) #+ 2.
 				#g1_s = (3*cosb).T 
-				g1_s = (3*ftau_cld*cosb).T 
-				g2_s = (5*ftau_cld*(cosb**2)).T + 0.5*ftau_ray.T
+				g1_s = (3*ftau_cld*cosb)
+				g2_s = (5*ftau_cld*(cosb**2)) + 0.5*ftau_ray
 				#g3_s = (7*(cosb**3)).T
-				g3_s = (7*ftau_cld*(cosb**3)).T
+				g3_s = (7*ftau_cld*(cosb**3))
 
 				g0_m = g0_s
 				g1_m = g1_s
@@ -2274,10 +2270,10 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				g3_m = g3_s
 
 			elif single_phase==1:#'OTHG':
-				g0_s = np.ones((nwno, nlayer))
-				g1_s = 3*cosb.T
-				g2_s = 5*(cosb**2).T
-				g3_s = 7*(cosb**3).T
+				g0_s = np.ones((nlayer, nwno))
+				g1_s = 3*cosb
+				g2_s = 5*(cosb**2)
+				g3_s = 7*(cosb**3)
 
 				g0_m = g0_s
 				g1_m = g1_s
@@ -2290,16 +2286,16 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				#Phase function for single scattering albedo frum Solar beam
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
 					  #first term of TTHG: forward scattering
-				g0_s = np.ones((nwno, nlayer))
-				g1_s = 3*(f*g_forward + (1-f)*g_back).T
-				g2_s = 5*(f*g_forward**2 + (1-f)*g_back**2).T
-				g3_s = 7*(f*g_forward**3 + (1-f)*g_back**3).T
-				g4_s = 9*(f*g_forward**4 + (1-f)*g_back**4).T
+				g0_s = np.ones((nlayer, nwno))
+				g1_s = 3*(f*g_forward + (1-f)*g_back)
+				g2_s = 5*(f*g_forward**2 + (1-f)*g_back**2)
+				g3_s = 7*(f*g_forward**3 + (1-f)*g_back**3)
+				g4_s = 9*(f*g_forward**4 + (1-f)*g_back**4)
 
-				g0_m = np.ones((nwno, nlayer))
-				g1_m = 3*cosb.T
-				g2_m = 5*(cosb**2).T
-				g3_m = 7*(cosb**3).T
+				g0_m = np.ones((nlayer, nwno))
+				g1_m = 3*cosb
+				g2_m = 5*(cosb**2)
+				g3_m = 7*(cosb**3)
 
 
 				p_single=(f * (1-g_forward**2) /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
@@ -2312,16 +2308,16 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
 					  		#first term of TTHG: forward scattering
 
-				g0_s = (ftau_cld + ftau_ray).T
-				g1_s = (3*ftau_cld*(f*g_forward + (1-f)*g_back)).T 
-				g2_s = (5*ftau_cld*(f*g_forward**2 + (1-f)*g_back**2)).T + 0.5*ftau_ray.T 
-				g3_s = (7*ftau_cld*(f*g_forward**3 + (1-f)*g_back**3)).T
-				g3_s = (9*ftau_cld*(f*g_forward**4 + (1-f)*g_back**4)).T
+				g0_s = (ftau_cld + ftau_ray)
+				g1_s = (3*ftau_cld*(f*g_forward + (1-f)*g_back)) 
+				g2_s = (5*ftau_cld*(f*g_forward**2 + (1-f)*g_back**2)) + 0.5*ftau_ray 
+				g3_s = (7*ftau_cld*(f*g_forward**3 + (1-f)*g_back**3))
+				g3_s = (9*ftau_cld*(f*g_forward**4 + (1-f)*g_back**4))
 
-				g0_m = np.ones((nwno, nlayer))
-				g1_m = 3*(ftau_cld*cosb).T
-				g2_m = 5*(ftau_cld*cosb**2).T + 0.5*ftau_ray.T
-				g3_m = 7*(ftau_cld*cosb**3).T
+				g0_m = np.ones((nlayer, nwno))
+				g1_m = 3*(ftau_cld*cosb)
+				g2_m = 5*(ftau_cld*cosb**2) + 0.5*ftau_ray
+				g3_m = 7*(ftau_cld*cosb**3)
 
 				p_single=(ftau_cld*(f * (1-g_forward**2)
 							/sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
@@ -2342,26 +2338,16 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 			b_surface = 0. + surf_reflect*ubar0[ng, nt]*F0PI*exp(-tau[-1, :]/ubar0[ng, nt])
 
 			if stream==2:
-				t1 = time.time()
-				M, B, A, N, F, G, A_int, N_int = setup_2_stream_fast(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
+				M, B, A, N, A_int, N_int = setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
 						ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
-				t2 = time.time() - t1
-				print('fast code = ', t2)
 				#t1 = time.time()
 				#M, B, A, N, F, G, A_int, N_int = setup_2_stream_scaled(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
 				#		ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
 				#t2 = time.time() - t1
 				#print('og code = ', t2)
-			else:
-				M, B, A, N, F, G, A_int, N_int = setup_4_stream_scaled(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
-						ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
-
-			t2 = time.time()
-			t_setup = t2-t1
-			if print_time:
-				print("time to set up matrices = ", t_setup)
-
-			t3 = time.time()
+			#else:
+			#	M, B, A, N, F, G, A_int, N_int = setup_4_stream_scaled(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
+			#			ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
 
 			X = zeros((stream*nlayer, nwno))
 			intgrl_new = np.zeros((stream*nlayer, nwno))
@@ -2373,13 +2359,8 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 			#========================= Start loop over wavelength =========================
 			for W in range(nwno):
 			    
-				(X[:,W], intgrl_new[:,W]) = solve_4_stream(M[W], B[W], A[W], N[W], F[W], G[W], A_int[W], N_int[W], stream)
-
-			t4 = time.time()
-			t_invert = t4-t3
-			if print_time:
-				print("time to invert matrices = ", t_invert)
-			t5 = time.time()
+				(X[:,W], intgrl_new[:,W]) = solve_4_stream(M[:,:,W], B[:,W], A[:,:,W], N[:,W], 
+															A_int[:,:,W], N_int[:,W], stream)
 
 			mus = (ubar1[ng,nt] + ubar0[ng,nt]) / (ubar1[ng,nt] * ubar0[ng,nt])
 			expo_mus = mus * dtau 
@@ -2388,7 +2369,7 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 
 			for i in range(nlayer):
 				for l in range(stream):
-					sing_scat[i,:] = sing_scat[i,:] + w_multi[l][:,i] * P(ubar1[ng,nt])[l] * intgrl_new[stream*i+l,:]
+					sing_scat[i,:] = sing_scat[i,:] + w_multi[l][i,:] * P(ubar1[ng,nt])[l] * intgrl_new[stream*i+l,:]
 
 			intgrl_per_layer = w0 * ( sing_scat 
 						+ F0PI / (4*np.pi) * p_single 
@@ -2406,14 +2387,7 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 
 			xint_new = xint_temp[0, :]
 			xint_at_top[ng,nt,:] = xint_new
-			t6 = time.time()
-			t_sum = t6-t5
-			if print_time:
-				print("time to sum over layers = ", t_sum)
 	filename = 'xint_at_top_%d.pk' % stream
-	pk.dump(xint_at_top, open(filename,'wb'))
-	#import IPython; IPython.embed()
-	#import sys; sys.exit()
 
 	return xint_at_top
 
@@ -2976,32 +2950,30 @@ def setup_2_stream_fast(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, 
 #	jm = 2*nlayer-2; jM = 2*nlayer
 #	F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
 #	G[:,im:iM] = Z_block(n,dtau[:,n])
-	w0 = W0
-	dtau = DTAU
-	tau = TAU
-	
+	return M, B, A, N, F, G, A_int, N_int
+
+#@jit(nopython=True, cache=True)
+def setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau, tau, w_single, w_multi, ubar1, P):
+
 	a = []; b = []
 	for l in range(2):
-		a.append(((2*l + 1) - W0 * w_multi[l].T))
-		b.append((F0PI * (W0 * w_single[l].T)) * P(-ubar0)[l] / (4 * np.pi))
-
-
-	#@jit(nopython=True, cache=True)
-	lam = np.sqrt(a[0]*a[1])
+		a.append(((2*l + 1) - W0 * w_multi[l]))
+		b.append((F0PI * (W0 * w_single[l])) * P(-ubar0)[l] / (4 * np.pi))
 
 	Del = ((1 / ubar0)**2 - a[0]*a[1])
 	Dels = []
 	Dels.append(b[1] /ubar0 - a[1]*b[0])
 	Dels.append(b[0] /ubar0 - a[0]*b[1])
-
 	eta = []
 	for l in range(2):
 		eta.append(Dels[l]/Del)
 
+	lam = np.sqrt(a[0]*a[1])
 	expo = lam*dtau
 	expo = slice_gt(expo, 35.0) 
 	exptrm = np.exp(-expo)
 
+	#	parameters in matrices
 	q = lam/a[1]
 	Q1 = 2*pi*(0.5 + q)
 	Q2 = 2*pi*(0.5 - q)
@@ -3017,11 +2989,9 @@ def setup_2_stream_fast(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, 
 	zmn_down = zmn * exptau_u0[:-1,:] 
 	zpl_down = zpl * exptau_u0[:-1,:] 
 
-	
-#	exptrmpl = 1/exptrm
-#	qmn = -q*exptrm; qpl = q/exptrm
-	
-	alpha, beta, mus  = 1/ubar1 + lam, 1/ubar1 - lam, (ubar1 + ubar0) / (ubar1 * ubar0)
+	alpha = 1/ubar1 + lam;	
+	beta = 1/ubar1 - lam;	
+	mus = (ubar1 + ubar0) / (ubar1 * ubar0)
 	expo_alp = slice_gt(alpha * dtau, 35.0)
 	expo_bet = slice_gt(beta * dtau, 35.0) 
 	expo_mus = slice_gt(mus * dtau, 35.0)    
@@ -3032,23 +3002,19 @@ def setup_2_stream_fast(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, 
 	exptau_mu = np.exp(-tau_mu)
 	exp_mu = (1 - exptrm_mus) * exptau_mu / mus
 
+	#	construct matrices
 	M = zeros((2*nlayer, 2*nlayer, nwno))
 	B = zeros((2*nlayer, nwno))
-
-	F = zeros((2*nlayer, 2*nlayer, nwno))
-	G = zeros((2*nlayer, nwno))
+#	F = zeros((2*nlayer, 2*nlayer, nwno))
+#	G = zeros((2*nlayer, nwno))
 	A = zeros((2*nlayer, 2*nlayer, nwno))
 	N = zeros((2*nlayer, nwno))
-
 	A_int = zeros((2*nlayer, 2*nlayer, nwno))
 	N_int = zeros((2*nlayer, nwno))
 
 	#   first row: BC 1
 	M[0,0,:] = Q1[0,:]
 	M[0,1,:] = Q2[0,:]
-	import IPython; IPython.embed()
-
-
 	B[0,:] = b_top - zmn[0,:]        
 
 #	F[:,0:2,0:2] = F_block(0,zero)
@@ -3059,7 +3025,6 @@ def setup_2_stream_fast(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, 
 	M[nn[1:-1:2],nn[1:-1:2],:] = Q2pl[:-1,:]
 	M[nn[2::2], nn[:-2:2],:] = Q2mn[:-1,:]
 	M[nn[2::2], nn[1:-1:2],:] = Q1pl[:-1,:]
-	
 	M[nn[1:-1:2],nn[2::2],:] = -Q1[1:,:]
 	M[nn[1:-1:2],nn[3::2],:] = -Q2[1:,:]
 	M[nn[2::2], nn[2::2],:] = -Q2[1:,:]
@@ -3095,7 +3060,5 @@ def setup_2_stream_fast(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, 
 #	jm = 2*nlayer-2; jM = 2*nlayer
 #	F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
 #	G[:,im:iM] = Z_block(n,dtau[:,n])
-	import IPython; IPython.embed()
-	import sys; sys.exit()
 
-	return M, B, A, N, F, G, A_int, N_int
+	return M, B, A, N, A_int, N_int
