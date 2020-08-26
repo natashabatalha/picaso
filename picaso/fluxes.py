@@ -828,7 +828,8 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
-    frac_a, frac_b, frac_c, constant_back, constant_forward, tridiagonal=0):
+    frac_a, frac_b, frac_c, constant_back, constant_forward,
+	approximation, tridiagonal=0):
     """
     Computes toon fluxes given tau and everything is 1 dimensional. This is the exact same function 
     as `get_flux_geom_3d` but is kept separately so we don't have to do unecessary indexing for fast
@@ -936,16 +937,22 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
     #terms not dependent on incident angle
     sq3 = sqrt(3.)
-    g1  = (7-w0*(4+3*cosb))/4 #(sq3*0.5)*(2. - w0*(1.+cosb)) #table 1 # 
-    g2  = -(1-w0*(4-3*cosb))/4 #(sq3*w0*0.5)*(1.-cosb)        #table 1 # 
+    if approximation == 1:#eddington
+        g1  = (7-w0*(4+3*cosb))/4 #(sq3*0.5)*(2. - w0*(1.+cosb)) #table 1 # 
+        g2  = -(1-w0*(4-3*cosb))/4 #(sq3*w0*0.5)*(1.-cosb)        #table 1 # 
+    elif approximation == 0:#quadrature
+        g1  = (sq3*0.5)*(2. - w0*(1.+cosb)) #table 1 # 
+        g2  = (sq3*w0*0.5)*(1.-cosb)        #table 1 # 
     lamda = sqrt(g1**2 - g2**2)         #eqn 21
     gama  = (g1-lamda)/g2               #eqn 22
 
     #================ START CRAZE LOOP OVER ANGLE #================
     for ng in range(numg):
         for nt in range(numt):
-
-            g3  = (2-3*cosb*ubar0[ng,nt])/4#0.5*(1.-sq3*cosb*ubar0[ng, nt]) #  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
+            if approximation == 1 : #eddington
+                g3  = (2-3*cosb*ubar0[ng,nt])/4#0.5*(1.-sq3*cosb*ubar0[ng, nt]) #  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
+            elif approximation == 0 :#quadrature
+                g3  = 0.5*(1.-sq3*cosb*ubar0[ng, nt]) #  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
     
             # now calculate c_plus and c_minus (equation 23 and 24 toon)
             g4 = 1.0 - g3
@@ -1902,7 +1909,7 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 		Legendre polynomials
 	"""
 
-	print("setup_2_stream_scaled.py not updated for non-transposed version"
+	print("setup_2_stream_scaled.py not updated for non-transposed version")
 	import sys; sys.exit()
 	w0 = W0.T
 	dtau = dtau.T
@@ -2087,7 +2094,7 @@ def setup_4_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	P : array
 		Legendre polynomials
 	"""
-	print("setup_4_stream_scaled.py not updated for non-transposed version"
+	print("setup_4_stream_scaled.py not updated for non-transposed version")
 	import sys; sys.exit()
 	w0 = W0.T
 	dtau = dtau.T

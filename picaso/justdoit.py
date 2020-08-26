@@ -73,6 +73,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     method = inputs['approx']['method']
     stream = inputs['approx']['stream']
     print_time = inputs['approx']['print_time']
+    approximation = inputs['approx']['Toon_coefficients']
 
     #parameters needed for the two term hg phase function. 
     #Defaults are set in config.json
@@ -193,7 +194,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                                     DTAU_OG, TAU_OG, W0_OG, COSB_OG ,
                                                     atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
                                                     single_phase,multi_phase,
-                                                    frac_a,frac_b,frac_c,constant_back,constant_forward)
+                                                    frac_a,frac_b,frac_c,constant_back,constant_forward,
+                                                    approximation)
 
             #if full output is requested add in xint at top for 3d plots
             if full_output: 
@@ -1492,7 +1494,7 @@ class inputs():
 
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='pollack',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
-        p_reference=1,method='Toon', stream=2, print_time=False):
+        p_reference=1,method='Toon', stream=2, print_time=False, Toon_coefficients="quadrature"):
         """
         This function sets all the default approximations in the code. It transforms the string specificatons
         into a number so that they can be used in numba nopython routines. 
@@ -1536,6 +1538,7 @@ class inputs():
         else:
                 self.inputs['approx']['stream'] = stream
         self.inputs['approx']['print_time'] = print_time
+        self.inputs['approx']['Toon_coefficients'] = coefficients_options(printout=False).index(Toon_coefficients)
  
         if isinstance(tthg_frac, (list, np.ndarray)):
             if len(tthg_frac) == 3:
@@ -1838,4 +1841,7 @@ def stream_options(printout=True):
     """Retrieve all the options for stream"""
     if printout: print("Can use 2-stream or 4-stream sperhical harmonics")
     return [2,4]
+def coefficients_options(printout=True):
+    """Retrieve options for coefficients used in Toon calculation"""
+    return ["quadrature","eddington"]
 
