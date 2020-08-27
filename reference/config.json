@@ -29,6 +29,8 @@
 		}
 	},
 	"approx":{
+		"method":"toon",
+		"stream":2,
 		"p_reference":1,
 		"single_phase":3,
 		"TTHG_params":{

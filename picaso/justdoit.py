@@ -72,8 +72,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     raman_approx =inputs['approx']['raman']
     method = inputs['approx']['method']
     stream = inputs['approx']['stream']
-    print_time = inputs['approx']['print_time']
     approximation = inputs['approx']['Toon_coefficients']
+    tridiagonal = 0 
+
 
     #parameters needed for the two term hg phase function. 
     #Defaults are set in config.json
@@ -164,20 +165,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         if  'reflected' in calculation:
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
             nlevel = atm.c.nlevel
-            #nwno = 100
-            wno = wno[0:nwno]
-            TAU = TAU[0:nlevel,0:nwno]
-            DTAU = DTAU[0:nlevel-1,0:nwno]
-            W0 = W0[0:nlevel-1,0:nwno]
-            COSB = COSB[0:nlevel-1,0:nwno]
-            GCOS2 = GCOS2[0:nlevel-1,0:nwno]
-            ftau_cld = ftau_cld[0:nlevel-1,0:nwno]
-            ftau_ray = ftau_ray[0:nlevel-1,0:nwno]
-            TAU_OG = TAU_OG[0:nlevel-1,0:nwno]
-            DTAU_OG = DTAU_OG[0:nlevel-1,0:nwno]
-            W0_OG = W0_OG[0:nlevel-1,0:nwno]
-            COSB_OG = COSB_OG[0:nlevel-1,0:nwno]
-            F0PI = F0PI[0:nwno]
             if method == 'SH':
                 xint_at_top = get_reflected_new(nlevel, nwno, ng, nt, 
                                             DTAU, TAU, W0, COSB, GCOS2, ftau_cld, ftau_ray,
@@ -186,8 +173,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                             single_phase, multi_phase, 
 	                                    frac_a, frac_b, frac_c, constant_back, constant_forward, 
                                             dimension, stream, print_time)
-                #import IPython; IPython.embed()
-                #import sys; sys.exit()
+
             else:
                 xint_at_top = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                                     DTAU, TAU, W0, COSB,GCOS2,ftau_cld,ftau_ray,
@@ -196,6 +182,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                                     single_phase,multi_phase,
                                                     frac_a,frac_b,frac_c,constant_back,constant_forward,
                                                     approximation)
+
 
             #if full output is requested add in xint at top for 3d plots
             if full_output: 
@@ -1494,7 +1481,8 @@ class inputs():
 
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='pollack',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
-        p_reference=1,method='Toon', stream=2, print_time=False, Toon_coefficients="quadrature"):
+        p_reference=1, method='Toon', stream=2, Toon_coefficients="quadrature"):
+
         """
         This function sets all the default approximations in the code. It transforms the string specificatons
         into a number so that they can be used in numba nopython routines. 
@@ -1526,6 +1514,9 @@ class inputs():
             Toon ('Toon') or spherical harmonics ('SH'). 
         stream : int 
             Two stream or four stream (options are 2 or 4). For 4 stream need to set method='SH'
+        Toon_coefficients: str
+            Decide whether to use Quadrature ("quadrature") or Eddington ("eddington") schemes
+            to define Toon coefficients in two-stream approximation (see Table 1 in Toon et al 1989)
         """
 
         self.inputs['approx']['single_phase'] = single_phase_options(printout=False).index(single_phase)
@@ -1537,7 +1528,6 @@ class inputs():
                 self.inputs['approx']['stream'] = 2 # having method="Toon" and stream=4 messes up delta-eddington stuff
         else:
                 self.inputs['approx']['stream'] = stream
-        self.inputs['approx']['print_time'] = print_time
         self.inputs['approx']['Toon_coefficients'] = coefficients_options(printout=False).index(Toon_coefficients)
  
         if isinstance(tthg_frac, (list, np.ndarray)):
