@@ -9,7 +9,8 @@ import astropy.units as u
 
 __refdata__ = os.environ.get('picaso_refdata')
  
-def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=True, approximation='2steam', stream=2):
+def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=True, 
+	method="Toon", stream=2, Toon_coefficients="quadrature"):
 	"""
 	Test the flux against against Dlugach & Yanovitskij 
 	https://www.sciencedirect.com/science/article/pii/0019103574901675?via%3Dihub
@@ -58,7 +59,10 @@ def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=
 	                                    'H2':np.logspace(-6,3,nlevel)*0+0.99, 
 	                                     'H2O':np.logspace(-6,3,nlevel)*0+0.01}))
 
-	start_case.inputs['approx']['delta_eddington']=False
+	start_case.inputs['approx']['delta_eddington']=True
+	start_case.inputs['test_mode']='constant_tau'
+	start_case.approx(single_phase = 'OTHG', method = method, stream = stream, 
+				Toon_coefficients = Toon_coefficients)
 
 	if rayleigh: 
 		#first test Rayleigh
@@ -72,13 +76,12 @@ def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=
 			start_case.clouds(df=pd.DataFrame({'opd':sum([[i]*196 for i in 10**np.linspace(-5, 3, nlevel-1)],[]),
 			                                    'w0':np.zeros(196*(nlevel-1)) + w0 ,
 			                                    'g0':np.zeros(196*(nlevel-1)) + 0}))
-			allout = start_case.spectrum(opa, calculation='reflected', approximation=approximation, stream=stream)
+
+			allout = start_case.spectrum(opa, calculation='reflected')
 
 			alb = allout['albedo']
 			perror.loc[-1][w] = alb[-1]#(100*(alb[-1]-real_answer.loc[-1][w])/real_answer.loc[-1][w])
 
-	start_case.inputs['test_mode']='constant_tau'
-	start_case.approx(single_phase = 'OTHG') 
 
 	#first test Rayleigh
 	if phase:
@@ -93,7 +96,7 @@ def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=
 				start_case.clouds(df=pd.DataFrame({'opd':sum([[i]*196 for i in 10**np.linspace(-5, 3, nlevel-1)],[]),
 				                                    'w0':np.zeros(196*(nlevel-1)) + w0 ,
 				                                    'g0':np.zeros(196*(nlevel-1)) + g0}))
-				allout = start_case.spectrum(opa, calculation='reflected', approximation=approximation, stream=stream)
+				allout = start_case.spectrum(opa, calculation='reflected')
 
 				alb = allout['albedo']
 				perror.loc[g0][w] = alb[-1]#(100*(alb[-1]-real_answer.loc[-1][w])/real_answer.loc[-1][w])
