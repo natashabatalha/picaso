@@ -1494,7 +1494,7 @@ class inputs():
 
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='pollack',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
-        p_reference=1,method='Toon', stream=2, print_time=False, Toon_coefficients="quadrature"):
+        p_reference=1, method='Toon', stream=2, print_time=False, Toon_coefficients="quadrature"):
         """
         This function sets all the default approximations in the code. It transforms the string specificatons
         into a number so that they can be used in numba nopython routines. 

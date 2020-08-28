@@ -1831,6 +1831,12 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 			b_top = 0.0
 			b_surface = 0. + surf_reflect*ubar0[ng, nt]*F0PI*exp(-tau[-1, :]/ubar0[ng, nt])
 
+			filename = '/Users/crooney/Documents/codes/picaso/docs/notebooks/inputs_%d.pk' % stream
+			pk.dump({'nlayer':nlayer, 'nwno':nwno, 'w0':w0, 'b_top':b_top, 'b_surface':b_surface,
+			    'surf_reflect':surf_reflect, 'F0PI':F0PI, 'ubar0':ubar0[ng,nt], 'ubar1':ubar1[ng,nt],
+			    'dtau':dtau, 'tau':tau, 'w_single':w_single, 'w_multi':w_multi}, 
+			    open(filename,'wb'))
+
 			if stream==2:
 				M, B, A, N, A_int, N_int = setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
 						ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
@@ -1876,7 +1882,6 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 
 			xint_new = xint_temp[0, :]
 			xint_at_top[ng,nt,:] = xint_new
-	filename = 'xint_at_top_%d.pk' % stream
 
 	return xint_at_top
 
@@ -1910,15 +1915,19 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	"""
 
 	print("setup_2_stream_scaled.py not updated for non-transposed version")
-	import sys; sys.exit()
+	#import sys; sys.exit()
 	w0 = W0.T
 	dtau = dtau.T
 	tau = tau.T
+
+	if P is None:
+		def P(mu): # Legendre polynomials
+			return [1, mu, 1/2 * (3*mu**2 - 1), 1/2 * (5*mu**3 - 3*mu), 1/8 * (35*mu**4 - 30*mu**2+3)]
 	
 	a = []; b = []
 	for l in range(2):
-		a.append((((2*l + 1) - w0 * w_multi[l]).T).T)
-		b.append((F0PI * (w0 * w_single[l]).T).T * P(-ubar0)[l] / (4 * np.pi))
+		a.append((2*l + 1) - w0 * w_multi[l].T)
+		b.append((F0PI * (w0 * w_single[l].T).T).T * P(-ubar0)[l] / (4 * np.pi))
 
 	lam = np.sqrt(a[0]*a[1])
 
@@ -2064,7 +2073,7 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	A_int[:,im:iM,jm:jM] = A_int_block(n)
 	N_int[:,im:iM] = N_int_block(n); 
 
-	return M, B, A, N, F, G, A_int, N_int
+	return M, B, A, N, A_int, N_int
 
 def setup_4_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, w_single, w_multi, ubar1, P):
 	"""
@@ -2304,25 +2313,25 @@ def setup_4_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	return M, B, A, N, F, G, A_int, N_int
 
 #@jit(nopython=True, cache=True)
-def setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau, tau, w_single, w_multi, ubar1, P):
+def setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau, tau, w_single, w_multi, ubar1, P=None):
 
-	a = []; b = []
-	for l in range(2):
-		a.append(((2*l + 1) - w0 * w_multi[l]))
-		b.append((F0PI * (w0 * w_single[l])) * P(-ubar0)[l] / (4 * np.pi))
+	if P is None:
+		def P(mu): # Legendre polynomials
+			return [1, mu, 1/2 * (3*mu**2 - 1), 1/2 * (5*mu**3 - 3*mu), 1/8 * (35*mu**4 - 30*mu**2+3)]
+
+	a = [1 - w0 * w_multi[0], 
+		3 - w0 * w_multi[1]]
+	b = [F0PI * (w0 * w_single[0]) * P(-ubar0)[0] / (4 * pi), 
+		F0PI * (w0 * w_single[1]) * P(-ubar0)[1] / (4 * pi)]
 
 	Del = ((1 / ubar0)**2 - a[0]*a[1])
-	Dels = []
-	Dels.append(b[1] /ubar0 - a[1]*b[0])
-	Dels.append(b[0] /ubar0 - a[0]*b[1])
-	eta = []
-	for l in range(2):
-		eta.append(Dels[l]/Del)
+	eta = [b[1] /ubar0 - a[1]*b[0] / Del,
+		b[0] /ubar0 - a[0]*b[1] / Del]
 
-	lam = np.sqrt(a[0]*a[1])
+	lam = sqrt(a[0]*a[1])
 	expo = lam*dtau
 	expo = slice_gt(expo, 35.0) 
-	exptrm = np.exp(-expo)
+	exptrm = exp(-expo)
 
 	#	parameters in matrices
 	q = lam/a[1]
@@ -2332,7 +2341,7 @@ def setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 	Q1mn = Q1*exptrm;  Q2mn = Q2*exptrm
 	Q1pl = Q1/exptrm;  Q2pl = Q2/exptrm
 
-	exptau_u0 = np.exp(-tau/ubar0)
+	exptau_u0 = exp(-tau/ubar0)
 	zmn = 2*pi*(0.5*eta[0] - eta[1]) 
 	zpl = 2*pi*(0.5*eta[0] + eta[1])
 	zmn_up = zmn * exptau_u0[1:,:] 
@@ -2340,18 +2349,20 @@ def setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 	zmn_down = zmn * exptau_u0[:-1,:] 
 	zpl_down = zpl * exptau_u0[:-1,:] 
 
-	alpha = 1/ubar1 + lam;	
-	beta = 1/ubar1 - lam;	
+	alpha = 1/ubar1 + lam
+	beta = 1/ubar1 - lam
 	mus = (ubar1 + ubar0) / (ubar1 * ubar0)
 	expo_alp = slice_gt(alpha * dtau, 35.0)
 	expo_bet = slice_gt(beta * dtau, 35.0) 
 	expo_mus = slice_gt(mus * dtau, 35.0)    
-	exptrm_alp, exptrm_bet, exptrm_mus = exp(-expo_alp), exp(-expo_bet), exp(-expo_mus)
+	exptrm_alp = (1 - exp(-expo_alp)) / alpha 
+	exptrm_bet = (1 - exp(-expo_bet)) / beta
+	exptrm_mus = (1 - exp(-expo_mus)) / mus
 
 	tau_mu = tau[:-1,:] * (mus - 1/ubar1)
 	tau_mu = slice_gt(tau_mu, 35.0)
-	exptau_mu = np.exp(-tau_mu)
-	exp_mu = (1 - exptrm_mus) * exptau_mu / mus
+	exptau_mu = exp(-tau_mu)
+	exp_mu = exptrm_mus * exptau_mu
 
 	#	construct matrices
 	M = zeros((2*nlayer, 2*nlayer, nwno))
@@ -2364,7 +2375,7 @@ def setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 	#   first row: BC 1
 	M[0,0,:] = Q1[0,:]
 	M[0,1,:] = Q2[0,:]
-	B[0,:] = b_top - zmn[0,:]        
+	B[0,:] = b_top = zmn[0,:]
 
 	nn = list(range(0,2*nlayer))
 	M[nn[1:-1:2],nn[:-2:2],:] = Q1mn[:-1,:]
@@ -2387,10 +2398,10 @@ def setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 	N[nn[::2],:] = eta[0] * exptau_u0[1:,:]
 	N[nn[1::2],:] = eta[1] * exptau_u0[1:,:]
 
-	A_int[nn[::2],nn[::2],:] = (1 - exptrm_alp) / alpha 
-	A_int[nn[::2],nn[1::2],:] = (1 - exptrm_bet) / beta  
-	A_int[nn[1::2],nn[::2],:] = -q * (1 - exptrm_alp) / alpha
-	A_int[nn[1::2],nn[1::2],:] = q * (1 - exptrm_bet) / beta 
+	A_int[nn[::2],nn[::2],:] = exptrm_alp
+	A_int[nn[::2],nn[1::2],:] = exptrm_bet
+	A_int[nn[1::2],nn[::2],:] = -q * exptrm_alp
+	A_int[nn[1::2],nn[1::2],:] = q * exptrm_bet
 
 	N_int[nn[::2],:] = eta[0] * exp_mu
 	N_int[nn[1::2],:] = eta[1] * exp_mu
