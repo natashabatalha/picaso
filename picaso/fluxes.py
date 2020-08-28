@@ -2325,26 +2325,38 @@ def setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 		def P(mu): # Legendre polynomials
 			return [1, mu, 1/2 * (3*mu**2 - 1), 1/2 * (5*mu**3 - 3*mu), 1/8 * (35*mu**4 - 30*mu**2+3)]
 
-	#a = [1 - w0 * w_multi[0], 
-	#	3 - w0 * w_multi[1]]
-	#b = [F0PI * (w0 * w_single[0]) * P(-ubar0)[0] / (4 * pi), 
-	#	F0PI * (w0 * w_single[1]) * P(-ubar0)[1] / (4 * pi)]
-	a0 = 1 - w0 * w_multi[0]
-	a1 = 3 - w0 * w_multi[1]
-	b0 = F0PI * (w0 * w_single[0]) * P(-ubar0)[0] / (4 * pi) 
-	b1 = F0PI * (w0 * w_single[1]) * P(-ubar0)[1] / (4 * pi) 
+	a = [1 - w0 * w_multi[0],
+                3 - w0 * w_multi[1]]
+	b = [F0PI * (w0 * w_single[0]) * P(-ubar0)[0] / (4 * pi) ,
+                F0PI * (w0 * w_single[1]) * P(-ubar0)[1] / (4 * pi)]
 
-	Del = ((1 / ubar0)**2 - a0*a1)
-	eta = [b1 /ubar0 - a1*b0 / Del,
-		b0 /ubar0 - a0*b1 / Del]
+	Del = ((1 / ubar0)**2 - a[0]*a[1])
+	eta = [(b[1] /ubar0 - a[1]*b[0]) / Del,
+		(b[0] /ubar0 - a[0]*b[1]) / Del]
 
-	lam = sqrt(a0*a1)
+	#a = []; b = []
+	#for l in range(2):
+	#	a.append((2*l + 1) - w0 * w_multi[l])
+	#	b.append((F0PI * (w0 * w_single[l])) * P(-ubar0)[l] / (4 * np.pi))
+
+	#lam = np.sqrt(a[0]*a[1])
+
+	#Del = ((1 / ubar0)**2 - a[0]*a[1])
+	#Dels = []
+	#Dels.append(b[1] /ubar0 - a[1]*b[0])
+	#Dels.append(b[0] /ubar0 - a[0]*b[1])
+	#
+	#eta = []
+	#for l in range(2):
+	#	eta.append(Dels[l]/Del)
+
+	lam = sqrt(a[0]*a[1])
 	expo = lam*dtau
 	expo = slice_gt(expo, 35.0) 
 	exptrm = exp(-expo)
 
 	#	parameters in matrices
-	q = lam/a1
+	q = lam/a[1]
 	Q1 = 2*pi*(0.5 + q)
 	Q2 = 2*pi*(0.5 - q)
 
