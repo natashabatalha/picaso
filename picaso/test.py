@@ -59,9 +59,8 @@ def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=
 	                                    'H2':np.logspace(-6,3,nlevel)*0+0.99, 
 	                                     'H2O':np.logspace(-6,3,nlevel)*0+0.01}))
 
-	start_case.inputs['approx']['delta_eddington']=True
-	start_case.inputs['test_mode']='constant_tau'
-	start_case.approx(single_phase = 'OTHG', method = method, stream = stream, 
+	start_case.inputs['approx']['delta_eddington']=False
+	start_case.approx(method = method, stream = stream, 
 				Toon_coefficients = Toon_coefficients)
 
 	if rayleigh: 
@@ -82,6 +81,10 @@ def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=
 			alb = allout['albedo']
 			perror.loc[-1][w] = alb[-1]#(100*(alb[-1]-real_answer.loc[-1][w])/real_answer.loc[-1][w])
 
+
+	start_case.inputs['test_mode']='constant_tau'
+	start_case.approx(single_phase = 'OTHG', method = method, stream = stream, 
+				Toon_coefficients = Toon_coefficients)
 
 	#first test Rayleigh
 	if phase:
