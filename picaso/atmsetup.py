@@ -347,6 +347,7 @@ class ATMSETUP():
         gravity = np.zeros(nlevel) 
 
         mmw = self.level['mmw'] * self.c.amu #make sure mmw in grams
+        print(mmw)
         tlevel = self.level['temperature']
         plevel = self.level['pressure']
 
@@ -374,6 +375,9 @@ class ATMSETUP():
         self.level['dz'] = dz
         #for get_column_density calculation below we want gravity at leyers
         self.layer['gravity'] = 0.5*(gravity[0:-1] + gravity[1:])
+        self.layer['gravity'][0] = self.layer['gravity'][1]
+        self.layer['gravity'][-1] = self.layer['gravity'][-2]
+        print(self.layer['gravity'])
         
     def get_column_density(self):
         """
@@ -444,14 +448,14 @@ class ATMSETUP():
             self.layer['cloud']['w0'] = w0  
 
         #if no filepath was given and nothing was given for g0/w0, then assume the run is cloud free and give zeros for all thi stuff         
-        elif ((self.input['clouds']['profile'] == None) and (self.dimension=='1d')):
+        elif (isinstance(self.input['clouds']['profile'] , type(None)) and (self.dimension=='1d')):
 
             zeros = np.zeros((self.c.nlayer,self.c.output_npts_wave))
             self.layer['cloud'] = {'w0': zeros}
             self.layer['cloud']['g0'] = zeros
             self.layer['cloud']['opd'] = zeros
         # 3D without clouds           
-        elif ((self.input['clouds']['profile'] == None) and (self.dimension=='3d')):
+        elif (isinstance(self.input['clouds']['profile'] , type(None)) and (self.dimension=='3d')):
             self.layer['cloud'] = {'w0': np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle))}
             self.layer['cloud']['g0'] = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle))
             self.layer['cloud']['opd'] = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle))
