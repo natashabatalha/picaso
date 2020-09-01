@@ -1129,6 +1129,8 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
             xint_at_top[ng,nt,:] = xint[0,:]
 
+    import IPython; IPython.embed()
+    import sys; sys.exit()
     return xint_at_top
 
 #@jit(nopython=True, cache=True)
@@ -1723,7 +1725,6 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 	
 	nlayer = nlevel - 1 
 
-	
 	#================ START CRAZE LOOP OVER ANGLE #================
 	for ng in range(numg):
 		for nt in range(numt):
@@ -1748,23 +1749,9 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 			
 
 			if single_phase!=1: 
-				g_forward = constant_forward*cosb_og
-				g_back = constant_back*cosb_og
+				g_forward = constant_forward*cosb
+				g_back = constant_back*cosb
 				f = frac_a + frac_b*g_back**frac_c
-
-			#if single_phase==0:#'cahoy':
-			#	g0_s = (ftau_cld + ftau_ray)
-			#	#g0_s = np.zeros((nwno, nlayer)) #+ 2.
-			#	#g1_s = (3*cosb).T 
-			#	g1_s = (3*ftau_cld*cosb)
-			#	g2_s = (5*ftau_cld*(cosb**2)) + 0.5*ftau_ray
-			#	#g3_s = (7*(cosb**3)).T
-			#	g3_s = (7*ftau_cld*(cosb**3))
-
-			#	g0_m = g0_s
-			#	g1_m = g1_s
-			#	g2_m = g2_s
-			#	g3_m = g3_s
 
 			if single_phase==1:#'OTHG':
 				g0_s = np.ones((nlayer, nwno))
@@ -1772,10 +1759,14 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				g2_s = 5*(cosb**2)
 				g3_s = 7*(cosb**3)
 
-				g0_m = g0_s
-				g1_m = g1_s
-				g2_m = g2_s
-				g3_m = g3_s
+				g0_m = np.ones((nlayer, nwno))
+				g1_m = 3*cosb
+				g2_m = 5*(cosb**2)
+				g3_m = 7*(cosb**3)
+				#g0_m = g0_s
+				#g1_m = g1_s
+				#g2_m = g2_s
+				#g3_m = g3_s
 
 				p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 
@@ -1794,7 +1785,9 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				g2_m = 5*(cosb**2)
 				g3_m = 7*(cosb**3)
 
-
+				g_forward = constant_forward*cosb_og
+				g_back = constant_back*cosb_og
+				f = frac_a + frac_b*g_back**frac_c
 				p_single=(f * (1-g_forward**2) /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
 								#second term of TTHG: backward scattering
 								+(1-f)*(1-g_back**2)
@@ -1809,13 +1802,16 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				g1_s = (3*ftau_cld*(f*g_forward + (1-f)*g_back)) 
 				g2_s = (5*ftau_cld*(f*g_forward**2 + (1-f)*g_back**2)) + 0.5*ftau_ray 
 				g3_s = (7*ftau_cld*(f*g_forward**3 + (1-f)*g_back**3))
-				g3_s = (9*ftau_cld*(f*g_forward**4 + (1-f)*g_back**4))
+				#g4_s = (9*ftau_cld*(f*g_forward**4 + (1-f)*g_back**4))
 
-				g0_m = np.ones((nlayer, nwno))
-				g1_m = 3*(ftau_cld*cosb)
-				g2_m = 5*(ftau_cld*cosb**2) + 0.5*ftau_ray
-				g3_m = 7*(ftau_cld*cosb**3)
+				g0_m = g0_s#np.ones((nlayer, nwno))
+				g1_m = g1_s#3*(ftau_cld*cosb)
+				g2_m = g2_s#5*(ftau_cld*cosb**2) + 0.5*ftau_ray
+				g3_m = g3_s#7*(ftau_cld*cosb**3)
 
+				g_forward = constant_forward*cosb_og
+				g_back = constant_back*cosb_og
+				f = frac_a + frac_b*g_back**frac_c
 				p_single=(ftau_cld*(f * (1-g_forward**2)
 							/sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
 							#second term of TTHG: backward scattering
@@ -1862,6 +1858,8 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				#open(filename,'wb'))
 				(X[:,W], intgrl_new[:,W]) = solve_4_stream(M[:,:,W], B[:,W], A[:,:,W], 
 					N[:,W], A_int[:,:,W], N_int[:,W], stream)
+				#(X[:,W], intgrl_new[:,W]) = solve_4_stream(M[W], B[W], A[W], 
+				#	N[W], A_int[W], N_int[W], stream)
 
 			mus = (ubar1[ng,nt] + ubar0[ng,nt]) / (ubar1[ng,nt] * ubar0[ng,nt])
 			expo_mus = mus * dtau 
@@ -1889,6 +1887,8 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 			xint_new = xint_temp[0, :]
 			xint_at_top[ng,nt,:] = xint_new
 
+	import IPython; IPython.embed()
+	import sys; sys.exit()
 	return xint_at_top
 
 def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau, tau, w_single, w_multi, ubar1, P):
@@ -2110,7 +2110,7 @@ def setup_4_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 		Legendre polynomials
 	"""
 	print("setup_4_stream_scaled.py not updated for non-transposed version")
-	import sys; sys.exit()
+	#import sys; sys.exit()
 	w0 = W0.T
 	dtau = dtau.T
 	tau = tau.T
@@ -2259,8 +2259,8 @@ def setup_4_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	nlevel = nlayer+1
 	F = np.zeros((nwno, 4*nlevel, 4*nlayer))
 	G = np.zeros((nwno, 4*nlevel))
-	A = np.zeros((nwno, 4*nlevel, 4*nlayer))
-	N = np.zeros((nwno, 4*nlevel))
+	A = np.zeros((nwno, 4*nlayer, 4*nlayer))
+	N = np.zeros((nwno, 4*nlayer))
 	A_int = np.zeros((nwno, 4*nlayer, 4*nlayer))
 	N_int = np.zeros((nwno, 4*nlayer))
 	
@@ -2271,8 +2271,8 @@ def setup_4_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	#F[:,0:4,0:4] = F_block(0,zero)
 	#G[:,0:4] = Z_block(0,zero)
 
-	A[:,0:4,0:4] = A_block(0,"down")
-	N[:,0:4] = N_block(0,"down")
+	#A[:,0:4,0:4] = A_block(0,"down")
+	#N[:,0:4] = N_block(0,"down")
 
 	#   rows 3 through 4nlayer-2: BCs 2 and 3
 	for n in range(0, nlayer-1):
@@ -2287,10 +2287,10 @@ def setup_4_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 		#F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
 		#G[:,im:iM] = Z_block(n,dtau[:,n])
 
+		im = 4*n; iM = (4*n+3)+1
 		A[:,im:iM,jm:jM] = A_block(n,"up")
 		N[:,im:iM] = N_block(n,"up")
 
-		im = 4*n; iM = (4*n+3)+1
 		A_int[:,im:iM,jm:jM] = A_int_block(n)
 		N_int[:,im:iM] = N_int_block(n)
 
@@ -2308,15 +2308,15 @@ def setup_4_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	#F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
 	#G[:,im:iM] = Z_block(n,dtau[:,n])
 
+	im = 4*nlayer-4; iM = 4*nlayer
+	jm = 4*nlayer-4; jM = 4*nlayer
 	A[:,im:iM,jm:jM] = A_block(n,"up")
 	N[:,im:iM] = N_block(n,"up")
 
-	im = 4*nlayer-4; iM = 4*nlayer
-	jm = 4*nlayer-4; jM = 4*nlayer
 	A_int[:,im:iM,jm:jM] = A_int_block(n)
 	N_int[:,im:iM] = N_int_block(n)
 
-	return M, B, A, N, F, G, A_int, N_int
+	return M, B, A, N, A_int, N_int
 
 #@jit(nopython=True, cache=True)
 def setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau, tau, w_single, w_multi, ubar1, P=None):
