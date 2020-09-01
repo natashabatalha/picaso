@@ -772,16 +772,16 @@ class inputs():
         elif not isinstance(filename, type(None)):
             df = pd.read_csv(filename, **pd_kwargs)
             self.nlevel=df.shape[0] 
-        elif not isinstance(pt_params, type(None)): 
-            self.inputs['atmosphere']['pt_params'] = pt_params
-            self.nlevel=61 #default n of levels for parameterization
-            raise Exception('Pt parameterization not in yet')
+        #elif not isinstance(pt_params, type(None)): 
+        #    self.inputs['atmosphere']['pt_params'] = pt_params
+        #    self.nlevel=61 #default n of levels for parameterization
+        #    raise Exception('Pt parameterization not in yet')
 
         if 'pressure' not in df.keys(): 
             raise Exception("Check column names. `pressure` must be included.")
 
-        if (('temperature' not in df.keys()) and (isinstance(pt_params, type(None)))):
-            raise Exception("`temperature` not specified as a column/key name, and `pt_params` for a parameterized PT profile was not supplied. Please make sure to use one or the other.")
+        if ('temperature' not in df.keys()):
+            raise Exception("`temperature` not specified as a column/key name")
 
         if not isinstance(exclude_mol, type(None)):
             df = df.drop(exclude_mol, axis=1)
@@ -891,7 +891,7 @@ class inputs():
     def channon_grid_high(self,filename=None):
         if isinstance(filename, type(None)):filename=os.path.join(__refdata__,'chemistry','grid75_feh+000_co_100_highP.txt')
         #df = self.inputs['atmosphere']['profile']
-        df = self.inputs['atmosphere']['profile']
+        df = self.inputs['atmosphere']['profile'].sort_values('pressure').reset_index(drop=True)
         self.nlevel = df.shape[0]
         
         player = df['pressure'].values
@@ -933,7 +933,7 @@ class inputs():
         a = pd.read_csv(filename)
         mols = list(a.loc[:, ~a.columns.isin(['Unnamed: 0','pressure','temperature'])].keys())
         #get pt from what users have already input
-        player_tlayer = self.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']]
+        player_tlayer = self.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']].sort_values('pressure').reset_index(drop=True)
         self.nlevel = player_tlayer.shape[0]
 
         #loop through all pressure and temperature layers
