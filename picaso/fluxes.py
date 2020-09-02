@@ -1129,6 +1129,8 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
             xint_at_top[ng,nt,:] = xint[0,:]
 
+    import IPython; IPython.embed()
+    import sys; sys.exit()
     return xint_at_top
 
 #@jit(nopython=True, cache=True)
@@ -1878,8 +1880,6 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 
 			for l in range(stream):
 				xint_temp[-1, :] = xint_temp[-1, :] + (2*l+1) * X[-stream+l, :] * P(ubar1[ng,nt])[l]
-			import IPython; IPython.embed()
-			import sys; sys.exit()
 			for i in range(nlayer-1,-1,-1):
 				xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/ubar1[ng,nt]) 
 							+ intgrl_per_layer[i,:] / ubar1[ng,nt]) 
@@ -1887,8 +1887,8 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 			xint_new = xint_temp[0, :]
 			xint_at_top[ng,nt,:] = xint_new
 
-	#import IPython; IPython.embed()
-	#import sys; sys.exit()
+	import IPython; IPython.embed()
+	import sys; sys.exit()
 	return xint_at_top
 
 def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau, tau, w_single, w_multi, ubar1, P):

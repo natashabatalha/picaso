@@ -41,13 +41,13 @@ def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=
 	"""
 
 	#read in table from reference data with the test values
-	#real_answer = pd.read_csv(os.path.join(__refdata__,'base_cases', 'DLUGACH_TEST.csv'))
-	real_answer = pd.read_csv('new_dlug.csv')
+	real_answer = pd.read_csv(os.path.join(__refdata__,'base_cases', 'DLUGACH_TEST.csv'))
+	#real_answer = pd.read_csv('new_dlug.csv')
 	real_answer = real_answer.set_index('Unnamed: 0')
 
 	perror = real_answer.copy()
 
-	nlevel = 20 
+	nlevel = 20
 
 	opa = opannection(wave_range=[0.3,0.5], resample=10)
 	start_case=inputs()
