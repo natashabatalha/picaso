@@ -1862,7 +1862,7 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				#	N[W], A_int[W], N_int[W], stream)
 
 			mus = (ubar1[ng,nt] + ubar0[ng,nt]) / (ubar1[ng,nt] * ubar0[ng,nt])
-			expo_mus = mus * dtau 
+			expo_mus = mus * dtau_og 
 			expo_mus = slice_gt(expo_mus, 35.0)    
 			exptrm_mus = np.exp(-expo_mus)
 
@@ -1870,9 +1870,9 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				for l in range(stream):
 					sing_scat[i,:] = sing_scat[i,:] + w_multi[l][i,:] * P(ubar1[ng,nt])[l] * intgrl_new[stream*i+l,:]
 
-			intgrl_per_layer = w0 * ( sing_scat 
-						+ F0PI / (4*np.pi) * p_single 
-						* np.exp(-tau[:-1,:]*(mus-1/ubar1[ng,nt])) * (1 - exptrm_mus) / mus)
+			intgrl_per_layer = (w0 *  sing_scat 
+						+ w0_og * F0PI / (4*np.pi) * p_single 
+						* np.exp(-tau_og[:-1,:]*(mus-1/ubar1[ng,nt])) * (1 - exptrm_mus) / mus)
 
 			for i in range(nlayer):
 				j = nlayer-i
