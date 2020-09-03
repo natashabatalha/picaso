@@ -1025,13 +1025,16 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             #use expression for bottom flux to get the flux_plus and flux_minus at last
             #bottom layer
             flux_zero  = positive[-1,:]*exptrm_positive[-1,:] + gama[-1,:]*negative[-1,:]*exptrm_minus[-1,:] + c_plus_down[-1,:]
-            #flux_minus  = gama*positive*exptrm_positive + negative*exptrm_minus + c_minus_down
-            #flux_plus  = positive*exptrm_positive + gama*negative*exptrm_minus + c_plus_down
-            #flux = zeros((2*nlayer, nwno))
-            #flux[::2, :] = flux_minus
-            #flux[1::2, :] = flux_plus
+            flux_minus  = gama*positive*exptrm_positive + negative*exptrm_minus + c_minus_down
+            flux_plus  = positive*exptrm_positive + gama*negative*exptrm_minus + c_plus_down
+            flux = zeros((2*nlayer, nwno))
+            flux[::2, :] = flux_minus
+            flux[1::2, :] = flux_plus
 
             xint = zeros((nlevel,nwno))
+            term1 = zeros((nlevel,nwno))
+            term2 = zeros((nlevel,nwno))
+            term3 = zeros((nlevel,nwno))
             xint[-1,:] = flux_zero/pi
 
             ################################ BEGIN OPTIONS FOR MULTIPLE SCATTERING####################
@@ -1113,21 +1116,25 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
             for i in range(nlayer-1,-1,-1):
                 #direct beam
-                xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/ubar1[ng,nt]) 
+                #xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/ubar1[ng,nt]) 
+                term1[i,:] = xint[i+1,:]*exp(-dtau[i,:]/ubar1[ng,nt]) 
                         #single scattering albedo from sun beam (from ubar0 to ubar1)
-                        +(w0_og[i,:]*F0PI/(4.*pi))
+                term2[i,:] = (w0_og[i,:]*F0PI/(4.*pi)
                         *(p_single[i,:])*exp(-tau_og[i,:]/ubar0[ng,nt])
                         *(1. - exp(-dtau_og[i,:]*(ubar0[ng,nt]+ubar1[ng,nt])
                         /(ubar0[ng,nt]*ubar1[ng,nt])))*
-                        (ubar0[ng,nt]/(ubar0[ng,nt]+ubar1[ng,nt]))
+                        (ubar0[ng,nt]/(ubar0[ng,nt]+ubar1[ng,nt])))
                         #multiple scattering terms p_single
-                        +A[i,:]*(1. - exp(-dtau[i,:] *(ubar0[ng,nt]+1*ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
+                term3[i,:] = (A[i,:]*(1. - exp(-dtau[i,:] *(ubar0[ng,nt]+1*ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
                         (ubar0[ng,nt]/(ubar0[ng,nt]+1*ubar1[ng,nt]))
                         +G[i,:]*(exp(exptrm[i,:]*1-dtau[i,:]/ubar1[ng,nt]) - 1.0)/(lamda[i,:]*1*ubar1[ng,nt] - 1.0)
                         +H[i,:]*(1. - exp(-exptrm[i,:]*1-dtau[i,:]/ubar1[ng,nt]))/(lamda[i,:]*1*ubar1[ng,nt] + 1.0)
                         )
+                xint[i,:] = term1[i,:]+term2[i,:]+term3[i,:]
 
             xint_at_top[ng,nt,:] = xint[0,:]
+            #import IPython; IPython.embed()
+            #import sys; sys.exit()
 
     import IPython; IPython.embed()
     import sys; sys.exit()
@@ -1837,18 +1844,22 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 			#    open(filename,'wb'))
 
 			if stream==2:
-				M, B, A, N, A_int, N_int = setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
+				M, B, A, N, A_int, N_int, F, G = setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
 						ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
 			else:
-				M, B, A, N, A_int, N_int = setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
+				M, B, A, N, A_int, N_int, F, G = setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
 						ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
 
 			X = zeros((stream*nlayer, nwno))
+			flux = zeros((stream*nlayer, nwno))
 			intgrl_new = np.zeros((stream*nlayer, nwno))
 			intgrl_per_layer = np.zeros((nlayer, nwno))
 			full_intgrl = np.zeros((nlayer, nwno))
 			sing_scat = np.zeros((nlayer, nwno))
 			xint_temp = zeros((nlevel, nwno))
+			term1 = zeros((nlevel, nwno))
+			term2 = zeros((nlevel, nwno))
+			term3 = zeros((nlevel, nwno))
 			xint_new = zeros(nwno)
 			#========================= Start loop over wavelength =========================
 			filename = '/Users/crooney/Documents/codes/picaso/docs/notebooks/solver_%d.pk' % stream
@@ -1856,8 +1867,8 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				#pk.dump({'M':M[:,:,W], 'B':B[:,W], 'A':A[:,:,W], 'N':N[:,W], 
 				#	'A_int':A_int[:,:,W], 'N_int':N_int[:,W], 'stream':stream}, 
 				#open(filename,'wb'))
-				(X[:,W], intgrl_new[:,W]) = solve_4_stream(M[:,:,W], B[:,W], A[:,:,W], 
-					N[:,W], A_int[:,:,W], N_int[:,W], stream)
+				(X[:,W], intgrl_new[:,W], flux[:,W]) = solve_4_stream(M[:,:,W], B[:,W], A[:,:,W], 
+					N[:,W], A_int[:,:,W], N_int[:,W], F[:,:,W], G[:,W], stream)
 				#(X[:,W], intgrl_new[:,W]) = solve_4_stream(M[W], B[W], A[W], 
 				#	N[W], A_int[W], N_int[W], stream)
 
@@ -1870,22 +1881,32 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				for l in range(stream):
 					sing_scat[i,:] = sing_scat[i,:] + w_multi[l][i,:] * P(ubar1[ng,nt])[l] * intgrl_new[stream*i+l,:]
 
-			intgrl_per_layer = (w0 *  sing_scat 
-						+ w0_og * F0PI / (4*np.pi) * p_single 
-						* np.exp(-tau_og[:-1,:]*(mus-1/ubar1[ng,nt])) * (1 - exptrm_mus) / mus)
+			#intgrl_per_layer = (w0 *  sing_scat 
+			#			+ w0_og * F0PI / (4*np.pi) * p_single 
+			#			* np.exp(-tau_og[:-1,:]/ubar0[ng,nt]) * (1 - exptrm_mus) / mus)
+			intgrl2 = w0 *  sing_scat 
+			intgrl1 = w0_og * F0PI / (4*np.pi) * p_single * np.exp(-tau_og[:-1,:]/ubar0[ng,nt]) * (1 - exptrm_mus) / mus
 
 			for i in range(nlayer):
 				j = nlayer-i
 				full_intgrl[i] = np.sum(intgrl_per_layer[-j:,:])
 
-			for l in range(stream):
-				xint_temp[-1, :] = xint_temp[-1, :] + (2*l+1) * X[-stream+l, :] * P(ubar1[ng,nt])[l]
+			#for l in range(stream):
+			#	xint_temp[-1, :] = xint_temp[-1, :] + (2*l+1) * X[-stream+l, :] * P(ubar1[ng,nt])[l]
+			indx = int(stream/2); 
+			xint_temp[-1,:] = flux[-indx,:]/pi
 			for i in range(nlayer-1,-1,-1):
-				xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/ubar1[ng,nt]) 
-							+ intgrl_per_layer[i,:] / ubar1[ng,nt]) 
+				term1[i,:] = xint_temp[i+1, :] * np.exp(-dtau[i,:]/ubar1[ng,nt]) 
+				term2[i,:] = intgrl1[i,:]/ubar1[ng,nt]
+				term3[i,:] = intgrl2[i,:]/ubar1[ng,nt]
+				xint_temp[i,:] = term1[i,:]+term2[i,:]+term3[i,:]
+				#xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/ubar1[ng,nt]) 
+				#			+ intgrl_per_layer[i,:] / ubar1[ng,nt]) 
 
 			xint_new = xint_temp[0, :]
 			xint_at_top[ng,nt,:] = xint_new
+			import IPython; IPython.embed()
+			import sys; sys.exit()
 
 	import IPython; IPython.embed()
 	import sys; sys.exit()
@@ -2393,6 +2414,8 @@ def setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 	N = zeros((2*nlayer, nwno))
 	A_int = zeros((2*nlayer, 2*nlayer, nwno))
 	N_int = zeros((2*nlayer, nwno))
+	F = zeros((2*nlayer, 2*nlayer, nwno))
+	G = zeros((2*nlayer, nwno))
 
 	#   first row: BC 1
 	M[0,0,:] = Q1[0,:]
@@ -2428,13 +2451,30 @@ def setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 	N_int[nn[::2],:] = eta[0] * exp_mu
 	N_int[nn[1::2],:] = eta[1] * exp_mu
 
+	F[nn[::2],nn[::2],:] = Q1mn
+	F[nn[::2],nn[1::2],:] = Q2pl
+	F[nn[1::2], nn[::2],:] = Q2mn
+	F[nn[1::2], nn[1::2],:] = Q1pl
+
+	G[nn[::2],:] = zmn_up
+	G[nn[1::2],:] = zpl_up
+
 	#   last row: BC 4
 	n = nlayer-1
 	M[2*nlayer-1, 2*nlayer-2,:] = Q2mn[n,:] - surf_reflect*Q1mn[n,:]
 	M[2*nlayer-1, 2*nlayer-1,:] = Q1pl[n,:] - surf_reflect*Q2pl[n,:]
 	B[2*nlayer-1,:] = b_surface - zpl_up[n,:] + surf_reflect * zmn_up[n,:]
 
-	return M, B, A, N, A_int, N_int
+
+#	X = spsolve(M[:,:,0], B[:,0])
+#	I = A[:,:,0].dot(X) + N[:,0]
+#	flux = F[:,:,0].dot(X) + G[:,0]
+#	intgrl_new = A_int[:,:,0].dot(X) + N_int[:,0]
+
+#	import IPython; IPython.embed()
+#	import sys; sys.exit()
+
+	return M, B, A, N, A_int, N_int, F, G
 
 def setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, w_single, w_multi, ubar1, P):
 
@@ -2502,13 +2542,13 @@ def setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 
 	a00 = exptrm1;	    a01 = 1/exptrm1;	a02 = exptrm2;	    a03 = 1/exptrm2
 	a10 = R1*exptrm1;   a11 = -R1/exptrm1;	a12 = R2*exptrm2;   a13 = -R2/exptrm2
-	a20 = Q1*exptrm1;   a21 = Q1/exptrm1;	a22 = Q1*exptrm2;   a23 = Q1/exptrm2
-	a30 = S1*exptrm1;   a31 = -S1/exptrm1;	a32 = S1*exptrm2;   a33 = -S1/exptrm2
+	a20 = Q1*exptrm1;   a21 = Q1/exptrm1;	a22 = Q2*exptrm2;   a23 = Q2/exptrm2
+	a30 = S1*exptrm1;   a31 = -S1/exptrm1;	a32 = S2*exptrm2;   a33 = -S2/exptrm2
 
-	n0_up = eta[0]*exptau_u0[1:,:]; n0_down = eta[0]*exptau_u0[:-1,:]
-	n1_up = eta[1]*exptau_u0[1:,:]; n1_down = eta[1]*exptau_u0[:-1,:]
-	n2_up = eta[2]*exptau_u0[1:,:]; n2_down = eta[2]*exptau_u0[:-1,:]
-	n3_up = eta[3]*exptau_u0[1:,:]; n3_down = eta[3]*exptau_u0[:-1,:]
+	n0_up = eta[0]*exptau_u0[1:,:] 
+	n1_up = eta[1]*exptau_u0[1:,:] 
+	n2_up = eta[2]*exptau_u0[1:,:] 
+	n3_up = eta[3]*exptau_u0[1:,:]
 
 	alpha1 = 1/ubar1 + lam1;		beta1 = 1/ubar1 - lam1;			mus = (ubar1 + ubar0) / (ubar1 * ubar0)
 	alpha2 = 1/ubar1 + lam2;		beta2 = 1/ubar1 - lam2;
@@ -2536,6 +2576,8 @@ def setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 	N = zeros((4*nlayer, nwno))
 	A_int = zeros((4*nlayer, 4*nlayer, nwno))
 	N_int = zeros((4*nlayer, nwno))
+	F = zeros((4*nlayer, 4*nlayer, nwno))
+	G = zeros((4*nlayer, nwno))
 
 	#   first two rows: BC 1
 	M[0,0,:] = p1mn[0,:]
@@ -2634,6 +2676,28 @@ def setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 	N_int[2::4,:] = N2
 	N_int[3::4,:] = N3
 
+	F[nn[::4],nn[::4],:] = f00
+	F[nn[::4],nn[1::4],:] = f01
+	F[nn[::4],nn[2::4],:] = f02
+	F[nn[::4],nn[3::4],:] = f03
+	F[nn[1::4],nn[::4],:] = f10
+	F[nn[1::4],nn[1::4],:] = f11
+	F[nn[1::4],nn[2::4],:] = f12
+	F[nn[1::4],nn[3::4],:] = f13
+	F[nn[2::4],nn[::4],:] = f20
+	F[nn[2::4],nn[1::4],:] = f21
+	F[nn[2::4],nn[2::4],:] = f22
+	F[nn[2::4],nn[3::4],:] = f23
+	F[nn[3::4],nn[::4],:] = f30
+	F[nn[3::4],nn[1::4],:] = f31
+	F[nn[3::4],nn[2::4],:] = f32
+	F[nn[3::4],nn[3::4],:] = f33
+
+	G[::4,:] = z1mn_up
+	G[1::4,:] = z2mn_up
+	G[2::4,:] = z1pl_up
+	G[3::4,:] = z2pl_up
+
 	n = nlayer-1
 	M[4*nlayer-2, 4*nlayer-4,:] = f20[n,:] - surf_reflect*f00[n,:]
 	M[4*nlayer-2, 4*nlayer-3,:] = f21[n,:] - surf_reflect*f01[n,:]
@@ -2646,12 +2710,18 @@ def setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 
 	B[4*nlayer-2,:] = b_surface - z1pl_up[n,:] + surf_reflect*z1mn_up[n,:]
 	B[4*nlayer-1,:] = b_surface - z2pl_up[n,:] + surf_reflect*z2mn_up[n,:]
-	
-	return M, B, A, N, A_int, N_int
+
+	#X = spsolve(M[:,:,0], B[:,0])
+	#I = A[:,:,0].dot(X) + N[:,0]
+	#intgrl_new = A_int[:,:,0].dot(X) + N_int[:,0]
+	#import IPython; IPython.embed()
+	#import sys; sys.exit()
+
+	return M, B, A, N, A_int, N_int, F, G
 
 #@jit(nopython=False, cache=True)
 #@jit
-def solve_4_stream(M, B, A, N, A_int, N_int, stream):
+def solve_4_stream(M, B, A, N, A_int, N_int, F, G, stream):
 
 	#	find constants
 	X = spsolve(M, B)
@@ -2659,8 +2729,10 @@ def solve_4_stream(M, B, A, N, A_int, N_int, stream):
 	I = A.dot(X) + N
 	#	integral of Iexp(-tau/ubar1) at each level 
 	intgrl_new = A_int.dot(X) + N_int
+	#	flux
+	flux = F.dot(X) + G
 
-	return (I, intgrl_new)
+	return (I, intgrl_new, flux)
 
 #@jit
 def solve_4_stream_numpy(M, B, A, N, A_int, N_int, stream):
