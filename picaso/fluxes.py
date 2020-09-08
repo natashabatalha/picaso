@@ -1136,8 +1136,8 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             #import IPython; IPython.embed()
             #import sys; sys.exit()
 
-    import IPython; IPython.embed()
-    import sys; sys.exit()
+    #import IPython; IPython.embed()
+    #import sys; sys.exit()
     return xint_at_top
 
 #@jit(nopython=True, cache=True)
@@ -1905,11 +1905,11 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 
 			xint_new = xint_temp[0, :]
 			xint_at_top[ng,nt,:] = xint_new
-			import IPython; IPython.embed()
-			import sys; sys.exit()
+			#import IPython; IPython.embed()
+			#import sys; sys.exit()
 
-	import IPython; IPython.embed()
-	import sys; sys.exit()
+	#import IPython; IPython.embed()
+	#import sys; sys.exit()
 	return xint_at_top
 
 def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau, tau, w_single, w_multi, ubar1, P):
@@ -2466,13 +2466,13 @@ def setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 	B[2*nlayer-1,:] = b_surface - zpl_up[n,:] + surf_reflect * zmn_up[n,:]
 
 
-#	X = spsolve(M[:,:,0], B[:,0])
-#	I = A[:,:,0].dot(X) + N[:,0]
-#	flux = F[:,:,0].dot(X) + G[:,0]
-#	intgrl_new = A_int[:,:,0].dot(X) + N_int[:,0]
+	#X = spsolve(M[:,:,0], B[:,0])
+	#I = A[:,:,0].dot(X) + N[:,0]
+	#flux = F[:,:,0].dot(X) + G[:,0]
+	#intgrl_new = A_int[:,:,0].dot(X) + N_int[:,0]
 
-#	import IPython; IPython.embed()
-#	import sys; sys.exit()
+	#import IPython; IPython.embed()
+	#import sys; sys.exit()
 
 	return M, B, A, N, A_int, N_int, F, G
 
@@ -2522,8 +2522,11 @@ def setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 	p2pl = 2*pi*(1/2 + R2 + 5*Q2/8); p2mn = 2*pi*(1/2 - R2 + 5*Q2/8);
 	q1pl = 2*pi*(-1/8 + 5*Q1/8 + S1); q1mn = 2*pi*(-1/8 + 5*Q1/8 - S1)
 	q2pl = 2*pi*(-1/8 + 5*Q2/8 + S2); q2mn = 2*pi*(-1/8 + 5*Q2/8 - S2)
-	z1pl = 2*pi*(eta[0]/2 + eta[1] + 5*eta[2]/8); z1mn = 2*pi*(eta[0]/2 - eta[1] + 5*eta[2]/8);
-	z2pl = 2*pi*(-eta[0]/8 + 5*eta[2]/8 + eta[3]); z2mn = 2*pi*(-eta[0]/8 + 5*eta[2]/8 - eta[3]);
+
+	z1pl = 2*pi*(eta[0]/2 + eta[1] + 5*eta[2]/8); 
+	z1mn = 2*pi*(eta[0]/2 - eta[1] + 5*eta[2]/8);
+	z2pl = 2*pi*(-eta[0]/8 + 5*eta[2]/8 + eta[3]); 
+	z2mn = 2*pi*(-eta[0]/8 + 5*eta[2]/8 - eta[3]);
 	
 	f00 = p1mn*exptrm1; f01 = p1pl/exptrm1;	f02 = p2mn*exptrm2; f03 = p2pl/exptrm2
 	f10 = q1mn*exptrm1; f11 = q1pl/exptrm1;	f12 = q2mn*exptrm2; f13 = q2pl/exptrm2
@@ -2550,19 +2553,32 @@ def setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 	n2_up = eta[2]*exptau_u0[1:,:] 
 	n3_up = eta[3]*exptau_u0[1:,:]
 
-	alpha1 = 1/ubar1 + lam1;		beta1 = 1/ubar1 - lam1;			mus = (ubar1 + ubar0) / (ubar1 * ubar0)
-	alpha2 = 1/ubar1 + lam2;		beta2 = 1/ubar1 - lam2;
-	expo_alp1 = alpha1 * dtau;		expo_bet1 = beta1 * dtau;		expo_mus = mus * dtau 
-	expo_alp2 = alpha2 * dtau;		expo_bet2 = beta2 * dtau;		
-	expo_alp1 = slice_gt(expo_alp1, 35.0);	expo_bet1 = slice_gt(expo_bet1, 35.0);	expo_mus = slice_gt(expo_mus, 35.0)    
-	expo_alp2 = slice_gt(expo_alp2, 35.0);	expo_bet2 = slice_gt(expo_bet2, 35.0);	
-	exptrm_alp1 = exp(-expo_alp1);	exptrm_bet1 = exp(-expo_bet1);	exptrm_mus = exp(-expo_mus)
-	exptrm_alp2 = exp(-expo_alp2);	exptrm_bet2 = exp(-expo_bet2);
+	alpha1 = 1/ubar1 + lam1
+	alpha2 = 1/ubar1 + lam2
+	beta1 = 1/ubar1 - lam1
+	beta2 = 1/ubar1 - lam2
+	mus = (ubar1 + ubar0) / (ubar1 * ubar0)
+	expo_alp1 = alpha1 * dtau
+	expo_alp2 = alpha2 * dtau
+	expo_bet1 = beta1 * dtau
+	expo_bet2 = beta2 * dtau
+	expo_mus = mus * dtau 
+	expo_alp1 = slice_gt(expo_alp1, 35.0)
+	expo_alp2 = slice_gt(expo_alp2, 35.0)
+	expo_bet1 = slice_gt(expo_bet1, 35.0)
+	expo_bet2 = slice_gt(expo_bet2, 35.0)
+	expo_mus = slice_gt(expo_mus, 35.0)    
+	exptrm_alp1 = exp(-expo_alp1)
+	exptrm_alp2 = exp(-expo_alp2)
+	exptrm_bet1 = exp(-expo_bet1)
+	exptrm_bet2 = exp(-expo_bet2)
+	exptrm_mus = exp(-expo_mus)
 
-	A00 = (1-exptrm_alp1)/alpha1;	A01 = (1-exptrm_bet1)/beta1;	A02 = (1-exptrm_alp2)/alpha2;	A03 = (1-exptrm_bet2)/beta2
-	A10 = R1 * A00;			A11 = -R1 * A01;		A12 = R2 * A02;			A13 = -R2 * A03; 
-	A20 = Q1 * A00;			A21 =  Q1 * A01;		A22 = Q2 * A02;			A23 =  Q2 * A03; 
-	A30 = S1 * A00;			A31 = -S1 * A01;		A32 = S2 * A02;			A33 = -S2 * A03; 
+	A00 = (1-exptrm_alp1)/alpha1; A01 = (1-exptrm_bet1)/beta1; 
+	A02 = (1-exptrm_alp2)/alpha2; A03 = (1-exptrm_bet2)/beta2
+	A10 = R1 * A00; A11 = -R1 * A01; A12 = R2 * A02; A13 = -R2 * A03; 
+	A20 = Q1 * A00; A21 =  Q1 * A01; A22 = Q2 * A02; A23 =  Q2 * A03; 
+	A30 = S1 * A00; A31 = -S1 * A01; A32 = S2 * A02; A33 = -S2 * A03; 
 	
 	tau_mu = tau[:-1,:] * (mus - 1/ubar1)
 	tau_mu = slice_gt(tau_mu, 35.0)
@@ -2578,6 +2594,17 @@ def setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 	N_int = zeros((4*nlayer, nwno))
 	F = zeros((4*nlayer, 4*nlayer, nwno))
 	G = zeros((4*nlayer, nwno))
+	M0 = zeros((4*nlayer, nwno))
+	Mpl1 = zeros((4*nlayer, nwno))
+	Mpl2 = zeros((4*nlayer, nwno))
+	Mpl3 = zeros((4*nlayer, nwno))
+	Mpl4 = zeros((4*nlayer, nwno))
+	Mpl5 = zeros((4*nlayer, nwno))
+	Mmn1 = zeros((4*nlayer, nwno))
+	Mmn2 = zeros((4*nlayer, nwno))
+	Mmn3 = zeros((4*nlayer, nwno))
+	Mmn4 = zeros((4*nlayer, nwno))
+	Mmn5 = zeros((4*nlayer, nwno))
 
 	#   first two rows: BC 1
 	M[0,0,:] = p1mn[0,:]
@@ -2588,7 +2615,7 @@ def setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 	M[1,1,:] = q1pl[0,:]
 	M[1,2,:] = q2mn[0,:]
 	M[1,3,:] = q2pl[0,:]
-
+        
 	B[0,:] = b_top - z1mn_down[0,:]
 	B[1,:] = b_top - z2mn_down[0,:]
 
@@ -2698,6 +2725,60 @@ def setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 	G[2::4,:] = z1pl_up
 	G[3::4,:] = z2pl_up
 
+
+	M0[0,:] = p1mn[0,:]
+	M0[1,:] = q1pl[0,:]
+	Mpl1[1,:] = p1pl[0,:]
+	Mpl1[2,:] = q2mn[0,:]
+	Mpl2[2,:] = p2mn[0,:]
+	Mpl2[3,:] = q2pl[0,:]
+	Mpl3[3,:] = p2pl[0,:]
+	Mmn1[0,:] = q1mn[0,:]
+
+	nn = list(range(0,4*nlayer))
+	M0[nn[2:-2:4],:] = f02[:-1,:]
+	M0[nn[3:-2:4],:] = f13[:-1,:]
+	M0[nn[4::4],:] = -p1pl[1:,:]
+	M0[nn[5::4],:] = -q1mn[1:,:]
+	
+	Mpl1[nn[3:-2:4],:] = f03[:-1,:]
+	Mpl1[nn[4::4],:] = -q1mn[1:,:]
+	Mpl1[nn[5::4],:] = -p1mn[1:,:]
+	Mpl1[nn[6:-1:4],:] = -q2pl[1:,:]
+	
+	Mpl2[nn[4::4],:] = -p1mn[1:,:]
+	Mpl2[nn[5::4],:] = -q1pl[1:,:]
+	Mpl2[nn[6:-1:4],:] = -p2pl[1:,:]
+	Mpl2[nn[7::4],:] = -q2mn[1:,:]
+	
+	Mpl3[nn[5::4],:] = -p1pl[1:,:]
+	Mpl3[nn[6:-1:4],:] = -q2mn[1:,:]
+	Mpl3[nn[7::4],:] = -p2mn[1:,:]
+	
+	Mpl4[nn[6:-1:4],:] = -p2mn[1:,:]
+	Mpl4[nn[7::4],:] = -q2pl[1:,:]
+	
+	Mpl5[nn[7::4],:] = -p2pl[1:,:]
+	
+	Mmn1[nn[1:-4:4],:] = f01[:-1,:]
+	Mmn1[nn[2:-2:4],:] = f12[:-1,:]
+	Mmn1[nn[3:-2:4],:] = f23[:-1,:]
+	Mmn1[nn[4::4],:] = -q1pl[1:,:]
+	
+	Mmn2[nn[0:-4:4],:] = f00[:-1,:]
+	Mmn2[nn[1:-4:4],:] = f11[:-1,:]
+	Mmn2[nn[2:-2:4],:] = f22[:-1,:]
+	Mmn2[nn[3:-2:4],:] = f33[:-1,:]
+	
+	Mmn3[nn[0:-4:4],:] = f10[:-1,:]
+	Mmn3[nn[1:-4:4],:] = f21[:-1,:]
+	Mmn3[nn[2:-2:4],:] = f32[:-1,:]
+	
+	Mmn4[nn[0:-4:4],:] = f20[:-1,:]
+	Mmn4[nn[1:-4:4],:] = f31[:-1,:]
+	
+	Mmn5[nn[0:-4:4],:] = f30[:-1,:]
+
 	n = nlayer-1
 	M[4*nlayer-2, 4*nlayer-4,:] = f20[n,:] - surf_reflect*f00[n,:]
 	M[4*nlayer-2, 4*nlayer-3,:] = f21[n,:] - surf_reflect*f01[n,:]
@@ -2708,14 +2789,30 @@ def setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 	M[4*nlayer-1, 4*nlayer-2,:] = f32[n,:] - surf_reflect*f12[n,:]
 	M[4*nlayer-1, 4*nlayer-1,:] = f33[n,:] - surf_reflect*f13[n,:]
 
-	B[4*nlayer-2,:] = b_surface - z1pl_up[n,:] + surf_reflect*z1mn_up[n,:]
-	B[4*nlayer-1,:] = b_surface - z2pl_up[n,:] + surf_reflect*z2mn_up[n,:]
+	M0[4*nlayer-2,:] = f22[n,:] - surf_reflect*f02[n,:]
+	M0[4*nlayer-1,:] = f33[n,:] - surf_reflect*f13[n,:]
+	Mpl1[4*nlayer-2,:] = f23[n,:] - surf_reflect*f03[n,:]
+	Mmn1[4*nlayer-3,:] = f21[n,:] - surf_reflect*f01[n,:]
+	Mmn1[4*nlayer-2,:] = f32[n,:] - surf_reflect*f12[n,:]
+	Mmn2[4*nlayer-4,:] = f20[n,:] - surf_reflect*f00[n,:]
+	Mmn2[4*nlayer-2,:] = f31[n,:] - surf_reflect*f11[n,:]
+	Mmn3[4*nlayer-5,:] = f30[n,:] - surf_reflect*f10[n,:]
 
-	#X = spsolve(M[:,:,0], B[:,0])
+	B[4*nlayer-2,:] = b_surface - z1pl_up[n,:] + surf_reflect*z1mn_up[n,:]
+	#B[4*nlayer-1,:] = b_surface - z2pl_up[n,:] + surf_reflect*z2mn_up[n,:]
+	B[4*nlayer-1,:] = - z2pl_up[n,:] + surf_reflect*z2mn_up[n,:]
+
+	import time
+	t0 = time.time()
+	X = spsolve(M[:,:,0], B[:,0])
+	t1 = time.time()
+
+	import IPython; IPython.embed()
 	#I = A[:,:,0].dot(X) + N[:,0]
 	#intgrl_new = A_int[:,:,0].dot(X) + N_int[:,0]
-	#import IPython; IPython.embed()
-	#import sys; sys.exit()
+	#flux = F[:,:,0].dot(X) + G[:,0]
+	import IPython; IPython.embed()
+	import sys; sys.exit()
 
 	return M, B, A, N, A_int, N_int, F, G
 
