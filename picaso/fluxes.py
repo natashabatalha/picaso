@@ -2680,7 +2680,9 @@ def solve_4_stream(M, B, A, N, A_int, N_int, F, G, stream):
 	intgrl_new = A_int.dot(X) + N_int
 	#	flux
 	flux = F.dot(X) + G
-	return intgrl_new, flux[-1]
+	indx = int(stream/2)
+	flux_bot = flux[-indx]
+	return intgrl_new, flux_bot
 
 #@jit
 def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream):
