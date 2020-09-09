@@ -1896,7 +1896,7 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 			#for l in range(stream):
 			#	xint_temp[-1, :] = xint_temp[-1, :] + (2*l+1) * X[-stream+l, :] * P(ubar1[ng,nt])[l]
 			indx = int(stream/2); 
-			xint_temp[-1,:] = flux[-indx,:]/pi
+			xint_temp[-1,:] = flux_bot/pi
 			for i in range(nlayer-1,-1,-1):
 				term1[i,:] = xint_temp[i+1, :] * exp(-dtau[i,:]/ubar1[ng,nt]) 
 				term2[i,:] = intgrl1[i,:]/ubar1[ng,nt]
