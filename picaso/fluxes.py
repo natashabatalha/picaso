@@ -1870,9 +1870,11 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 			#	pk.dump({'M':M[:,:,W], 'B':B[:,W], #'A':A[:,:,W], 'N':N[:,W], 
 			#	    'A_int':A_int[:,:,W], 'N_int':N_int[:,W], 'F':F[:,W], 'G':G[W],'stream':stream}, 
 			#	open(filename,'wb'))
-				#(intgrl_new[:,W], flux[:,W]) = solve_4_stream(M[:,:,W], B[:,W], A[:,:,W], N[:,W],
-				#	A_int[:,:,W], N_int[:,W], F[:,:,W], G[:,W], stream)
-				(intgrl_new[:,W], flux_bot[W], X) = solve_4_stream_banded(M[:,:,W], B[:,W],  
+				if stream == 2: # still need to rewrite 2-stream in banded form
+					(intgrl_new[:,W], flux_bot[W]) = solve_4_stream(M[:,:,W], B[:,W], A[:,:,W], N[:,W],
+						A_int[:,:,W], N_int[:,W], F[:,:,W], G[:,W], stream)
+				else:
+					(intgrl_new[:,W], flux_bot[W], X) = solve_4_stream_banded(M[:,:,W], B[:,W],  
 					A_int[:,:,W], N_int[:,W], F[:,W], G[W], stream)
 
 			mus = (ubar1[ng,nt] + ubar0[ng,nt]) / (ubar1[ng,nt] * ubar0[ng,nt])
@@ -2041,12 +2043,6 @@ def setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 	M[2*nlayer-1, 2*nlayer-2,:] = Q2mn[n,:] - surf_reflect*Q1mn[n,:]
 	M[2*nlayer-1, 2*nlayer-1,:] = Q1pl[n,:] - surf_reflect*Q2pl[n,:]
 	B[2*nlayer-1,:] = b_surface - zpl_up[n,:] + surf_reflect * zmn_up[n,:]
-
-
-	#X = spsolve(M[:,:,0], B[:,0])
-	#I = A[:,:,0].dot(X) + N[:,0]
-	#flux = F[:,:,0].dot(X) + G[:,0]
-	#intgrl_new = A_int[:,:,0].dot(X) + N_int[:,0]
 
 	#import IPython; IPython.embed()
 	#import sys; sys.exit()
@@ -2517,8 +2513,8 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI
 		B[4*nlayer-1,:] = - z2pl_up[n,:] + surf_reflect*z2mn_up[n,:]
 
 		F_bot = zeros((4*nlayer, nwno))
-		F_bot[-4:,:] = np.array([f30[-1,:], f31[-1,:], f32[-1,:], f33[-1,:]])
-		G_bot = z2pl_up[-1,:]
+		F_bot[-4:,:] = np.array([f20[-1,:], f21[-1,:], f22[-1,:], f23[-1,:]])
+		G_bot = z1pl_up[-1,:]
 
 		return Mb, B, A_int, N_int, F_bot, G_bot
 
@@ -2682,9 +2678,9 @@ def solve_4_stream(M, B, A, N, A_int, N_int, F, G, stream):
 	X = spsolve(M, B)
 	#	integral of Iexp(-tau/ubar1) at each level 
 	intgrl_new = A_int.dot(X) + N_int
+	#	flux
 	flux = F.dot(X) + G
-	I = A.dot(X) + N
-	return intgrl_new, flux
+	return intgrl_new, flux[-1]
 
 #@jit
 def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream):
