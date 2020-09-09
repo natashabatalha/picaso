@@ -1838,22 +1838,22 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 			b_top = 0.0
 			b_surface = 0. + surf_reflect*ubar0[ng, nt]*F0PI*exp(-tau[-1, :]/ubar0[ng, nt])
 
-			filename = '/Users/crooney/Documents/codes/picaso/docs/notebooks/inputs_%d.pk' % stream
-			pk.dump({'nlayer':nlayer, 'nwno':nwno, 'w0':w0, 'b_top':b_top, 'b_surface':b_surface,
-			    'surf_reflect':surf_reflect, 'F0PI':F0PI, 'ubar0':ubar0[ng,nt], 'ubar1':ubar1[ng,nt],
-			    'dtau':dtau, 'tau':tau, 'w_single':w_single, 'w_multi':w_multi}, 
-			    open(filename,'wb'))
+			#filename = '/Users/crooney/Documents/codes/picaso/docs/notebooks/inputs_%d.pk' % stream
+			#pk.dump({'nlayer':nlayer, 'nwno':nwno, 'w0':w0, 'b_top':b_top, 'b_surface':b_surface,
+			#    'surf_reflect':surf_reflect, 'F0PI':F0PI, 'ubar0':ubar0[ng,nt], 'ubar1':ubar1[ng,nt],
+			#    'dtau':dtau, 'tau':tau, 'w_single':w_single, 'w_multi':w_multi}, 
+			#    open(filename,'wb'))
 
 			if stream==2:
 				M, B, A, N, A_int, N_int, F, G = setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
 						ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
 			else:
-				#M, B, A_int, N_int = setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
+				#M, B, A, N, A_int, N_int, F, G = setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
 				M, B, A_int, N_int, F, G = setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
-						ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P, 'full_atmosphere')
+						ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
 
 			#X = zeros((stream*nlayer, nwno))
-			#flux = zeros((stream*nlayer, nwno))
+			flux = zeros((stream*nlayer, nwno))
 			flux_bot = zeros(nwno)
 			intgrl_new = zeros((stream*nlayer, nwno))
 			intgrl_per_layer = zeros((nlayer, nwno))
@@ -1867,10 +1867,11 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 			#========================= Start loop over wavelength =========================
 			#filename = '/Users/crooney/Documents/codes/picaso/docs/notebooks/solver_%d_banded.pk' % stream
 			for W in range(nwno):
-				#pk.dump({'M':M[:,:,W], 'B':B[:,W], 'A':A[:,:,W], 'N':N[:,W], 
-				#	'A_int':A_int[:,:,W], 'N_int':N_int[:,W], 'stream':stream}, 
-				#open(filename,'wb'))
-				#intgrl_new[:,W] = solve_4_stream(M[:,:,W], B[:,W], 
+			#	pk.dump({'M':M[:,:,W], 'B':B[:,W], #'A':A[:,:,W], 'N':N[:,W], 
+			#	    'A_int':A_int[:,:,W], 'N_int':N_int[:,W], 'F':F[:,W], 'G':G[W],'stream':stream}, 
+			#	open(filename,'wb'))
+				#(intgrl_new[:,W], flux[:,W]) = solve_4_stream(M[:,:,W], B[:,W], A[:,:,W], N[:,W],
+				#	A_int[:,:,W], N_int[:,W], F[:,:,W], G[:,W], stream)
 				(intgrl_new[:,W], flux_bot[W], X) = solve_4_stream_banded(M[:,:,W], B[:,W],  
 					A_int[:,:,W], N_int[:,W], F[:,W], G[W], stream)
 
@@ -1897,6 +1898,7 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 			#	xint_temp[-1, :] = xint_temp[-1, :] + (2*l+1) * X[-stream+l, :] * P(ubar1[ng,nt])[l]
 			indx = int(stream/2); 
 			xint_temp[-1,:] = flux_bot/pi
+			#xint_temp[-1,:] = flux[-1,:]/pi
 			for i in range(nlayer-1,-1,-1):
 				term1[i,:] = xint_temp[i+1, :] * exp(-dtau[i,:]/ubar1[ng,nt]) 
 				term2[i,:] = intgrl1[i,:]/ubar1[ng,nt]
@@ -1913,433 +1915,6 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 	#import IPython; IPython.embed()
 	#import sys; sys.exit()
 	return xint_at_top
-
-def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau, tau, w_single, w_multi, ubar1, P):
-	"""
-	Parameters
-	----------
-	nlayer : int 
-		number of layers in the model 
-	nwno : int 
-		number of wavelength points ## need to include this
-	W0: int
-		single scattering albedo 
-	b_top : array 
-		The diffuse radiation into the model at the top of the atmosphere
-	b_surface : arra
-		The diffuse radiation into the model at the bottom. Includes emission, reflection 
-		of the unattenuated portion of the direct beam  
-	surf_reflect : array 
-		Surface reflectivity 
-	F0PI : int  
-		solar radiation
-	ubar0: array
-		cosine of solar incident angle
-	dtau : array 
-		Opacity per layer
-	g : array 
-		asymmety parameters
-	P : array
-		Legendre polynomials
-	"""
-
-	print("setup_2_stream_scaled.py not updated for non-transposed version")
-	#import sys; sys.exit()
-	w0 = W0.T
-	dtau = dtau.T
-	tau = tau.T
-
-	if P is None:
-		def P(mu): # Legendre polynomials
-			return [1, mu, 1/2 * (3*mu**2 - 1), 1/2 * (5*mu**3 - 3*mu), 1/8 * (35*mu**4 - 30*mu**2+3)]
-	
-	a = []; b = []
-	for l in range(2):
-		a.append((2*l + 1) - w0 * w_multi[l].T)
-		b.append((F0PI * (w0 * w_single[l].T).T).T * P(-ubar0)[l] / (4 * pi))
-
-	lam = sqrt(a[0]*a[1])
-
-	Del = ((1 / ubar0)**2 - a[0]*a[1])
-	Dels = []
-	Dels.append(b[1] /ubar0 - a[1]*b[0])
-	Dels.append(b[0] /ubar0 - a[0]*b[1])
-	
-	eta = []
-	for l in range(2):
-		eta.append(Dels[l]/Del)
-
-	expo = lam*dtau
-	#save from overflow 
-	expo = slice_gt(expo, 35.0) 
-	exptrm = exp(-expo)
-
-	q = lam/a[1]
-	Q1 = 2*pi*(0.5 + q)
-	Q2 = 2*pi*(0.5 - q)
-
-	Q1mn = Q1*exptrm;  Q2mn = Q2*exptrm
-	Q1pl = Q1/exptrm;  Q2pl = Q2/exptrm
-	def F_block(n, lev):
-		if lev == "up":
-			block= array([[Q1mn[:,n], Q2mn[:,n]], [Q2pl[:,n], Q1pl[:,n]]]).T
-			return block
-		elif lev == "down":
-			block = array([[Q1[:,n], Q2[:,n]], [Q2[:,n], Q1[:,n]]]).T
-			return block
-
-	exptau_u0 = exp(-tau/ubar0)
-	zmn = 2*pi*(0.5*eta[0] - eta[1]) 
-	zpl = 2*pi*(0.5*eta[0] + eta[1])
-	zmn_up = zmn * exptau_u0[:,1:] 
-	zpl_up = zpl * exptau_u0[:,1:] 
-	zmn_down = zmn * exptau_u0[:,:-1] 
-	zpl_down = zpl * exptau_u0[:,:-1] 
-	def Z_block(n, lev):
-		if lev == "up":
-			return (array([zmn_up[:,n], zpl_up[:,n]])).T
-		elif lev == "down":
-			return (array([zmn_down[:,n], zpl_down[:,n]])).T
-	
-	exptrmpl = 1/exptrm
-	qmn = -q*exptrm; qpl = q/exptrm
-	def A_block(n):
-		return array([[exptrm[:,n], qmn[:,n]], [exptrmpl[:,n], qpl[:,n]]]).T
-	
-	n0_up = eta[0] * exptau_u0[:,1:]
-	n1_up = eta[1] * exptau_u0[:,1:]
-	def N_block(n):
-		return (array([n0_up[:,n], n1_up[:,n]])).T
-
-	alpha = 1/ubar1 + lam;			beta = 1/ubar1 - lam;			mus = (ubar1 + ubar0) / (ubar1 * ubar0)
-	expo_alp = alpha * dtau;		expo_bet = beta * dtau;			expo_mus = mus * dtau 
-	expo_alp = slice_gt(expo_alp, 35.0);	expo_bet = slice_gt(expo_bet, 35.0);	expo_mus = slice_gt(expo_mus, 35.0)    
-	exptrm_alp = exp(-expo_alp);		exptrm_bet = exp(-expo_bet);		exptrm_mus = exp(-expo_mus)
-
-	exp_alp = (1 - exptrm_alp) / alpha 
-	exp_bet = (1 - exptrm_bet) / beta  
-	qexp_alp = -q * exp_alp	
-	qexp_bet = q * exp_bet
-	def A_int_block(n):
-
-		block =  array([[exp_alp[:,n], qexp_alp[:,n]], 
-				    [exp_bet[:,n], qexp_bet[:,n]]])
-		return block.T
-
-	tau_mu = tau[:,:-1] * (mus - 1/ubar1)
-	tau_mu = slice_gt(tau_mu, 35.0)
-	exptau_mu = exp(-tau_mu)
-	exp_mu = (1 - exptrm_mus) * exptau_mu / mus
-	nint0 = eta[0] * exp_mu
-	nint1 = eta[1] * exp_mu
-	def N_int_block(n):
-
-		return (array([nint0[:,n], nint1[:,n]])).T
-	
-	M = zeros((nwno, 2*nlayer, 2*nlayer))
-	B = zeros((nwno, 2*nlayer))
-
-	nlevel = nlayer+1
-	F = zeros((nwno, 2*nlevel, 2*nlayer))
-	G = zeros((nwno, 2*nlevel))
-	A = zeros((nwno, 2*nlayer, 2*nlayer))
-	N = zeros((nwno, 2*nlayer))
-
-	A_int = zeros((nwno, 2*nlayer, 2*nlayer))
-	N_int = zeros((nwno, 2*nlayer))
-
-	zero = zeros(nwno)
-	
-	#   first row: BC 1
-	M[:,0,0:2] = F_block(0,"down")[:,0,]
-
-	B[:,0] = b_top - Z_block(0,"down")[:,0]        
-
-	#F[:,0:2,0:2] = F_block(0,zero)
-	#G[:,0:2] = Z_block(0,zero)
-
-	#   rows 1 through 2*nlayer-1: BCs 2 and 3
-	#   need to get rid of loop to speed things up
-	for n in range(0, nlayer-1):
-		im = 2*n+1; iM = (2*n+2)+1
-		jm = 2*n; j_ = (2*n+1)+1; jM = (2*n+3)+1
-		M[:,im:iM,jm:j_] = F_block(n,"up")
-		M[:,im:iM,j_:jM] = -F_block(n+1,"down")
-
-		B[:,im:iM] = Z_block(n+1,"down") - Z_block(n,"up")
-		
-		im = 2*n+2; iM = (2*n+3)+1
-		jm = 2*n; jM = (2*n+1)+1
-		#F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
-		#G[:,im:iM] = Z_block(n,dtau[:,n])
-
-		im = 2*n; iM = (2*n+1)+1
-		A[:,im:iM,jm:jM] = A_block(n)
-		N[:,im:iM] = N_block(n)
-
-		A_int[:,im:iM,jm:jM] = A_int_block(n)
-		N_int[:,im:iM] = N_int_block(n)
-
-	#   last row: BC 4
-	im = 2*nlayer-1; 
-	jm = 2*nlayer-2; jM = 2*nlayer
-	n = nlayer-1
-	M[:,im,jm:jM] = F_block(n,"up")[:,1,] - surf_reflect*F_block(n,"up")[:,0,]
-	B[:,im] = b_surface - Z_block(n,"up")[:,1] + surf_reflect * Z_block(n,"up")[:,0]
-	
-
-	n = nlayer-1
-	im = 2*nlevel-2; iM = 2*nlevel
-	jm = 2*nlayer-2; jM = 2*nlayer
-	#F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
-	#G[:,im:iM] = Z_block(n,dtau[:,n])
-
-	im = 2*nlayer-2; iM = 2*nlayer
-	jm = 2*nlayer-2; jM = 2*nlayer
-	A[:,im:iM,jm:jM] = A_block(n)
-	N[:,im:iM] = N_block(n)
-
-	A_int[:,im:iM,jm:jM] = A_int_block(n)
-	N_int[:,im:iM] = N_int_block(n); 
-
-	return M, B, A, N, A_int, N_int
-
-def setup_4_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, w_single, w_multi, ubar1, P):
-	"""
-	Parameters
-	----------
-	nlayer : int 
-		number of layers in the model 
-	nwno : int 
-		number of wavelength points ## need to include this
-	W0: int
-		single scattering albedo 
-	b_top : array 
-		The diffuse radiation into the model at the top of the atmosphere
-	b_surface : array
-		The diffuse radiation into the model at the bottom. Includes emission, reflection 
-		of the unattenuated portion of the direct beam  
-	surf_reflect : array 
-		Surface reflectivity 
-	F0PI : int  
-		solar radiation
-	ubar0: array
-		cosine of solar incident angle
-	dtau : array 
-		Opacity per layer
-	g : array 
-		asymmetry parameters
-	P : array
-		Legendre polynomials
-	"""
-	print("setup_4_stream_scaled.py not updated for non-transposed version")
-	#import sys; sys.exit()
-	w0 = W0.T
-	dtau = dtau.T
-	tau = tau.T
-
-	a = []; b = []
-	for l in range(4):
-		a.append((2*l + 1) - w0 * w_multi[l].T)
-		b.append((F0PI * (w0 * w_single[l].T).T).T * P(-ubar0)[l] / (4 * pi))
-
-	beta = a[0]*a[1] + 4*a[0]*a[3]/9 + a[2]*a[3]/9
-	gama = a[0]*a[1]*a[2]*a[3]/9
-	lam2 = sqrt((beta + sqrt(beta**2 - 4*gama)) / 2)
-	lam1 = sqrt((beta - sqrt(beta**2 - 4*gama)) / 2)
-
-	def f(x):
-		return x**4 - beta*x**2 + gama
-	
-	Del = 9 * f(1/ubar0)
-	Dels = []
-	Dels.append((a[1]*b[0] - b[1]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
-		+ 2*(a[3]*b[2] - 2*a[3]*b[0] - 3*b[3]/ubar0)/ubar0**2)
-	Dels.append((a[0]*b[1] - b[0]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
-		- 2*a[0]*(a[3]*b[2] - 3*b[3]/ubar0)/ubar0)
-	Dels.append((a[3]*b[2] - 3*b[3]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
-		- 2*a[3]*(a[0]*b[1] - b[0]/ubar0)/ubar0)
-	Dels.append((a[2]*b[3] - 3*b[2]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
-		+ 2*(3*a[0]*b[1] - 2*a[0]*b[3] - 3*b[0]/ubar0)/ubar0**2)
-	
-	eta = []
-	for l in range(4):
-		eta.append(Dels[l]/Del)
-
-	expo1 = slice_gt(lam1*dtau, 35.0) 
-	expo2 = slice_gt(lam2*dtau, 35.0) 
-	exptrm1 = exp(-expo1)
-	exptrm2 = exp(-expo2)
-
-	R1 = -a[0]/lam1; R2 = -a[0]/lam2
-	Q1 = 1/2 * (a[0]*a[1]/(lam1**2) - 1); Q2 = 1/2 * (a[0]*a[1]/(lam2**2) - 1)
-	S1 = -3/(2*a[3]) * (a[0]*a[1]/lam1 - lam1); S2 = -3/(2*a[3]) * (a[0]*a[1]/lam2 - lam2)
-	
-	p1pl = 2*pi*(1/2 + R1 + 5*Q1/8); p1mn = 2*pi*(1/2 - R1 + 5*Q1/8);
-	p2pl = 2*pi*(1/2 + R2 + 5*Q2/8); p2mn = 2*pi*(1/2 - R2 + 5*Q2/8);
-	q1pl = 2*pi*(-1/8 + 5*Q1/8 + S1); q1mn = 2*pi*(-1/8 + 5*Q1/8 - S1)
-	q2pl = 2*pi*(-1/8 + 5*Q2/8 + S2); q2mn = 2*pi*(-1/8 + 5*Q2/8 - S2)
-	z1pl = 2*pi*(eta[0]/2 + eta[1] + 5*eta[2]/8); z1mn = 2*pi*(eta[0]/2 - eta[1] + 5*eta[2]/8);
-	z2pl = 2*pi*(-eta[0]/8 + 5*eta[2]/8 + eta[3]); z2mn = 2*pi*(-eta[0]/8 + 5*eta[2]/8 - eta[3]);
-	
-	zero = zeros(nwno)
-
-	f00 = p1mn*exptrm1; f01 = p1pl/exptrm1;	f02 = p2mn*exptrm2; f03 = p2pl/exptrm2
-	f10 = q1mn*exptrm1; f11 = q1pl/exptrm1;	f12 = q2mn*exptrm2; f13 = q2pl/exptrm2
-	f20 = p1pl*exptrm1; f21 = p1mn/exptrm1;	f22 = p2pl*exptrm2; f23 = p2mn/exptrm2
-	f30 = q1pl*exptrm1; f31 = q1mn/exptrm1;	f32 = q2pl*exptrm2; f33 = q2mn/exptrm2
-	def F_block(n, lev):
-		if lev == "up":
-			return (array([[f00[:,n], f10[:,n], f20[:,n], f30[:,n]],
-					    [f01[:,n], f11[:,n], f21[:,n], f31[:,n]],
-			    		    [f02[:,n], f12[:,n], f22[:,n], f32[:,n]],
-			    		    [f03[:,n], f13[:,n], f23[:,n], f33[:,n]]])).T
-		elif lev == "down":
-			return (array([[p1mn[:,n], q1mn[:,n], p1pl[:,n], q1pl[:,n]],
-					    [p1pl[:,n], q1pl[:,n], p1mn[:,n], q1mn[:,n]],
-					    [p2mn[:,n], q2mn[:,n], p2pl[:,n], q2pl[:,n]],
-					    [p2pl[:,n], q2pl[:,n], p2mn[:,n], q2mn[:,n]]])).T
-
-	
-	exptau_u0 = exp(-tau/ubar0)
-	z1mn_up = z1mn * exptau_u0[:,1:]
-	z2mn_up = z2mn * exptau_u0[:,1:]
-	z1pl_up = z1pl * exptau_u0[:,1:]
-	z2pl_up = z2pl * exptau_u0[:,1:]
-	z1mn_down = z1mn * exptau_u0[:,:-1]
-	z2mn_down = z2mn * exptau_u0[:,:-1]
-	z1pl_down = z1pl * exptau_u0[:,:-1]
-	z2pl_down = z2pl * exptau_u0[:,:-1]
-
-	def Z_block(n, lev):
-		if lev == "up":
-			return (array([z1mn_up[:,n], z2mn_up[:,n], z1pl_up[:,n], z2pl_up[:,n]])).T
-		elif lev == "down":
-			return (array([z1mn_down[:,n], z2mn_down[:,n], z1pl_down[:,n], z2pl_down[:,n]])).T
-
-	
-	a00 = exptrm1;	    a01 = 1/exptrm1;	a02 = exptrm2;	    a03 = 1/exptrm2
-	a10 = R1*exptrm1;   a11 = -R1/exptrm1;	a12 = R2*exptrm2;   a13 = -R2/exptrm2
-	a20 = Q1*exptrm1;   a21 = Q1/exptrm1;	a22 = Q1*exptrm2;   a23 = Q1/exptrm2
-	a30 = S1*exptrm1;   a31 = -S1/exptrm1;	a32 = S1*exptrm2;   a33 = -S1/exptrm2
-	def A_block(n, lev):
-		if lev == "up":
-			return (array([[a00[:,n], a10[:,n], a20[:,n], a30[:,n]],
-						[a01[:,n], a11[:,n], a21[:,n], a31[:,n]],
-						[a02[:,n], a12[:,n], a22[:,n], a32[:,n]],
-						[a03[:,n], a13[:,n], a23[:,n], a33[:,n]]])).T
-		elif lev == "down":
-			return (array([[ones(nwno), R1[:,n], Q1[:,n], S1[:,n]],
-					    [ones(nwno), -R1[:,n], Q1[:,n], -S1[:,n]],
-					    [ones(nwno),  R2[:,n], Q2[:,n],  S2[:,n]],
-					    [ones(nwno), -R2[:,n], Q2[:,n], -S2[:,n]]])).T
-
-	n0_up = eta[0]*exptau_u0[:,1:]; n0_down = eta[0]*exptau_u0[:,:-1]
-	n1_up = eta[1]*exptau_u0[:,1:]; n1_down = eta[1]*exptau_u0[:,:-1]
-	n2_up = eta[2]*exptau_u0[:,1:]; n2_down = eta[2]*exptau_u0[:,:-1]
-	n3_up = eta[3]*exptau_u0[:,1:]; n3_down = eta[3]*exptau_u0[:,:-1]
-	def N_block(n, lev):
-		if lev == "up":
-			return (array([n0_up[:,n], n1_up[:,n], n2_up[:,n], n3_up[:,n]])).T
-		elif lev == "down":
-			return (array([n0_down[:,n], n1_down[:,n], n2_down[:,n], n3_down[:,n]])).T
-
-
-	alpha1 = 1/ubar1 + lam1;		beta1 = 1/ubar1 - lam1;			mus = (ubar1 + ubar0) / (ubar1 * ubar0)
-	alpha2 = 1/ubar1 + lam2;		beta2 = 1/ubar1 - lam2;
-	expo_alp1 = alpha1 * dtau;		expo_bet1 = beta1 * dtau;		expo_mus = mus * dtau 
-	expo_alp2 = alpha2 * dtau;		expo_bet2 = beta2 * dtau;		
-	expo_alp1 = slice_gt(expo_alp1, 35.0);	expo_bet1 = slice_gt(expo_bet1, 35.0);	expo_mus = slice_gt(expo_mus, 35.0)    
-	expo_alp2 = slice_gt(expo_alp2, 35.0);	expo_bet2 = slice_gt(expo_bet2, 35.0);	
-	exptrm_alp1 = exp(-expo_alp1);	exptrm_bet1 = exp(-expo_bet1);	exptrm_mus = exp(-expo_mus)
-	exptrm_alp2 = exp(-expo_alp2);	exptrm_bet2 = exp(-expo_bet2);
-
-	A00 = (1-exptrm_alp1)/alpha1;	A01 = (1-exptrm_bet1)/beta1;	A02 = (1-exptrm_alp2)/alpha2;	A03 = (1-exptrm_bet2)/beta2
-	A10 = R1 * A00;			A11 = -R1 * A01;		A12 = R2 * A02;			A13 = -R2 * A03; 
-	A20 = Q1 * A00;			A21 =  Q1 * A01;		A22 = Q2 * A02;			A23 =  Q2 * A03; 
-	A30 = S1 * A00;			A31 = -S1 * A01;		A32 = S2 * A02;			A33 = -S2 * A03; 
-	
-	def A_int_block(n):
-
-		return (array([[A00[:,n], A10[:,n], A20[:,n], A30[:,n]],
-					    [A01[:,n], A11[:,n], A21[:,n], A31[:,n]],
-			    		    [A02[:,n], A12[:,n], A22[:,n], A32[:,n]],
-			    		    [A03[:,n], A13[:,n], A23[:,n], A33[:,n]]])).T
-
-	tau_mu = tau[:,:-1] * (mus - 1/ubar1)
-	tau_mu = slice_gt(tau_mu, 35.0)
-	exptau_mu = exp(-tau_mu)
-	exp_mu = (1 - exptrm_mus) * exptau_mu / mus
-	N0 = eta[0] * exp_mu;	N1 = eta[1] * exp_mu;	N2 = eta[2] * exp_mu;	N3 = eta[3] * exp_mu;	
-	def N_int_block(n):
-
-	    return (array([N0[:,n], N1[:,n], N2[:,n], N3[:,n]])).T
-
-
-	M = zeros((nwno, 4*nlayer, 4*nlayer))
-	B = zeros((nwno, 4*nlayer))
-
-	nlevel = nlayer+1
-	F = zeros((nwno, 4*nlevel, 4*nlayer))
-	G = zeros((nwno, 4*nlevel))
-	A = zeros((nwno, 4*nlayer, 4*nlayer))
-	N = zeros((nwno, 4*nlayer))
-	A_int = zeros((nwno, 4*nlayer, 4*nlayer))
-	N_int = zeros((nwno, 4*nlayer))
-	
-	#   first two rows: BC 1
-	M[:,0:2,0:4] = F_block(0,"down")[:,0:2,]
-	B[:,0:2] = b_top - Z_block(0,"down")[:,0:2]        
-
-	#F[:,0:4,0:4] = F_block(0,zero)
-	#G[:,0:4] = Z_block(0,zero)
-
-	#A[:,0:4,0:4] = A_block(0,"down")
-	#N[:,0:4] = N_block(0,"down")
-
-	#   rows 3 through 4nlayer-2: BCs 2 and 3
-	for n in range(0, nlayer-1):
-		im = 4*n+2; iM = (4*n+5)+1
-		jm = 4*n; j_ = (4*n+3)+1; jM = (4*n+7)+1
-		M[:,im:iM,jm:j_] = F_block(n,"up")
-		M[:,im:iM,j_:jM] = -F_block(n+1,"down")
-		B[:,im:iM] = Z_block(n+1,"down") - Z_block(n,"up")
-		
-		im = 4*n+4; iM = (4*n+7)+1
-		jm = 4*n; jM = (4*n+3)+1
-		#F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
-		#G[:,im:iM] = Z_block(n,dtau[:,n])
-
-		im = 4*n; iM = (4*n+3)+1
-		A[:,im:iM,jm:jM] = A_block(n,"up")
-		N[:,im:iM] = N_block(n,"up")
-
-		A_int[:,im:iM,jm:jM] = A_int_block(n)
-		N_int[:,im:iM] = N_int_block(n)
-
-	#   last two rows: BC 4
-	im = 4*nlayer-2; iM = 4*nlayer
-	jm = 4*nlayer-4; jM = 4*nlayer
-	n = nlayer-1
-	M[:,im:iM,jm:jM] = F_block(n,"up")[:,[2,3],] - surf_reflect*F_block(n,"up")[:,[0,1],]
-	B[:,im] = b_surface - Z_block(n,"up")[:,2] + surf_reflect * Z_block(n,"up")[:,0]  
-	B[:,iM-1] = b_surface - Z_block(n,"up")[:,3] + surf_reflect * Z_block(n,"up")[:,1]  
-	## should have b_surface in here but it's zero
-	
-	im = 4*nlevel-4; iM = 4*nlevel
-	jm = 4*nlayer-4; jM = 4*nlayer
-	#F[:,im:iM,jm:jM] = F_block(n,dtau[:,n])
-	#G[:,im:iM] = Z_block(n,dtau[:,n])
-
-	im = 4*nlayer-4; iM = 4*nlayer
-	jm = 4*nlayer-4; jM = 4*nlayer
-	A[:,im:iM,jm:jM] = A_block(n,"up")
-	N[:,im:iM] = N_block(n,"up")
-
-	A_int[:,im:iM,jm:jM] = A_int_block(n)
-	N_int[:,im:iM] = N_int_block(n)
-
-	return M, B, A, N, A_int, N_int
 
 #@jit(nopython=True, cache=True)
 def setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau, tau, w_single, w_multi, ubar1, P=None):
@@ -2735,8 +2310,10 @@ def setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 
 	return M, B, A, N, A_int, N_int, F, G
 
+
+#@jit
 def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, 
-				w_single, w_multi, ubar1, P, calculate):
+				w_single, w_multi, ubar1, P, calculate=0):
 
 	if P is None:
 		def P(mu): # Legendre polynomials
@@ -2803,7 +2380,6 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI
 	z1pl_down = z1pl * exptau_u0[:-1,:]
 	z2pl_down = z2pl * exptau_u0[:-1,:]
 
-
 	alpha1 = 1/ubar1 + lam1
 	alpha2 = 1/ubar1 + lam2
 	beta1 = 1/ubar1 - lam1
@@ -2837,7 +2413,7 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI
 	exp_mu = (1 - exptrm_mus) * exptau_mu / mus
 	N0 = eta[0] * exp_mu;	N1 = eta[1] * exp_mu;	N2 = eta[2] * exp_mu;	N3 = eta[3] * exp_mu;	
 
-	if calculate == 'full_atmosphere':
+	if calculate == 0: # full picaso atmosphere calculation
 		Mb = zeros((11, 4*nlayer, nwno))
 		B = zeros((4*nlayer, nwno))
 		A_int = zeros((4*nlayer, 4*nlayer, nwno))
@@ -2946,7 +2522,7 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI
 
 		return Mb, B, A_int, N_int, F_bot, G_bot
 
-	elif calculate == 'flux':
+	elif calculate == 1: # fluxes per layer
 		F = zeros((4*nlayer, 4*nlayer, nwno))
 		G = zeros((4*nlayer, nwno))
 
@@ -2975,7 +2551,7 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI
 
 		return F, G
 
-	elif calculate == 'intensity_per_layer':
+	elif calculate == 2: # intensity per layer
 		a00 = exptrm1;	    a01 = 1/exptrm1;	a02 = exptrm2;	    a03 = 1/exptrm2
 		a10 = R1*exptrm1;   a11 = -R1/exptrm1;	a12 = R2*exptrm2;   a13 = -R2/exptrm2
 		a20 = Q1*exptrm1;   a21 = Q1/exptrm1;	a22 = Q2*exptrm2;   a23 = Q2/exptrm2
@@ -3100,14 +2676,17 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI
 
 #@jit(nopython=False, cache=True)
 #@jit
-def solve_4_stream(M, B, A_int, N_int, stream):
+def solve_4_stream(M, B, A, N, A_int, N_int, F, G, stream):
 
 	#	find constants
 	X = spsolve(M, B)
 	#	integral of Iexp(-tau/ubar1) at each level 
 	intgrl_new = A_int.dot(X) + N_int
-	return intgrl_new
+	flux = F.dot(X) + G
+	I = A.dot(X) + N
+	return intgrl_new, flux
 
+#@jit
 def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream):
 	#	find constants
 	X = solve_banded((5,5), M, B)#, overwrite_ab=True, overwrite_b=True)
