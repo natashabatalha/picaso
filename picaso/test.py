@@ -94,9 +94,9 @@ def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=
 					w0 = 0.999999
 				else: 
 					w0 = float(w)
-				start_case.inputs['test_mode'] = 'rayleigh'
+				#start_case.inputs['test_mode'] = 'rayleigh'
 
-				start_case.clouds(df=pd.DataFrame({'opd':sum([[i]*196 for i in 10**np.linspace(-5, 3, nlevel-1)],[]),
+				start_case.clouds(df=pd.DataFrame({'opd':sum([[i]*196 for i in 10**np.linspace(-4, 2, nlevel-1)],[]),
 				                                    'w0':np.zeros(196*(nlevel-1)) + w0 ,
 				                                    'g0':np.zeros(196*(nlevel-1)) + g0}))
 				allout = start_case.spectrum(opa, calculation='reflected')
@@ -104,6 +104,7 @@ def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=
 				alb = allout['albedo']
 				perror.loc[g0][w] = alb[-1]#(100*(alb[-1]-real_answer.loc[-1][w])/real_answer.loc[-1][w])#
 	
+	import IPython; IPython.embed()
 	if output_dir!=None: perror.to_csv(os.path.join(output_dir))
 	return perror
 

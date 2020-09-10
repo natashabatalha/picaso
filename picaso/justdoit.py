@@ -1586,7 +1586,7 @@ class inputs():
         except KeyError:
             #I don't make people add this as an input so adding a default here if it hasnt
             #been run 
-            self.inputs['surface_reflect'] = 0 
+            self.inputs['surface_reflect'] = 1 
 
             
         return picaso(self, opacityclass,dimension=dimension,calculation=calculation,
