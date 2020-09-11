@@ -1802,11 +1802,7 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 								/sqrt((1+g_back**2+2*g_back*cos_theta)**3))
 
 			elif single_phase==3:#'TTHG_ray':
-				#Phase function for single scattering albedo frum Solar beam
-				#uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-					  		#first term of TTHG: forward scattering
-
-				ubar2 = 0.767
+				# not happy with Rayleigh, not getting the same inclusion in multiscattering as picaso
 				g0_s = ones((nlayer, nwno))
 				g1_s = (3*ftau_cld*(f*g_forward + (1-f)*g_back)) 
 				g2_s = (5*ftau_cld*(f*g_forward**2 + (1-f)*g_back**2)) + 0.5*ftau_ray
@@ -1815,7 +1811,7 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 
 				g0_m = ones((nlayer, nwno)) 
 				g1_m = 3*(ftau_cld*cosb)
-				g2_m = 5*(ftau_cld*cosb**2) + gcos2
+				g2_m = 5*(ftau_cld*cosb**2) + 0.5*ftau_ray
 				g3_m = 7*(ftau_cld*cosb**3)
 
 				g_forward = constant_forward*cosb_og
@@ -1847,7 +1843,6 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 
 			if stream==2:
 				#M, B, A, N, A_int, N_int, F, G = setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
-				#		ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
 				M, B, A_int, N_int, F, G = setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
 						ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
 			else:
@@ -1855,18 +1850,11 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				M, B, A_int, N_int, F, G = setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
 						ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
 
-			#X = zeros((stream*nlayer, nwno))
-			flux = zeros((stream*nlayer, nwno))
 			flux_bot = zeros(nwno)
 			intgrl_new = zeros((stream*nlayer, nwno))
 			intgrl_per_layer = zeros((nlayer, nwno))
-			#full_intgrl = zeros((nlayer, nwno))
 			sing_scat = zeros((nlayer, nwno))
 			xint_temp = zeros((nlevel, nwno))
-			term1 = zeros((nlevel, nwno))
-			term2 = zeros((nlevel, nwno))
-			term3 = zeros((nlevel, nwno))
-			xint_new = zeros(nwno)
 			#========================= Start loop over wavelength =========================
 			#filename = '/Users/crooney/Documents/codes/picaso/docs/notebooks/solver_%d_banded.pk' % stream
 			for W in range(nwno):
@@ -1885,33 +1873,16 @@ def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau
 				for l in range(stream):
 					sing_scat[i,:] = sing_scat[i,:] + w_multi[l][i,:] * P(ubar1[ng,nt])[l] * intgrl_new[stream*i+l,:]
 
-			#intgrl_per_layer = (w0 *  sing_scat 
-			#			+ w0_og * F0PI / (4*np.pi) * p_single 
-			#			* np.exp(-tau_og[:-1,:]/ubar0[ng,nt]) * (1 - exptrm_mus) / mus)
-			intgrl2 = w0 *  sing_scat 
-			intgrl1 = w0_og * F0PI / (4*pi) * p_single * exp(-tau_og[:-1,:]/ubar0[ng,nt]) * (1 - exptrm_mus) / mus
+			intgrl_per_layer = (w0 *  sing_scat 
+						+ w0_og * F0PI / (4*np.pi) * p_single 
+						* np.exp(-tau_og[:-1,:]/ubar0[ng,nt]) * (1 - exptrm_mus) / mus)
 
-			#for i in range(nlayer):
-			#	j = nlayer-i
-			#	full_intgrl[i] = sum(intgrl_per_layer[-j:,:])
-
-			#for l in range(stream):
-			#	xint_temp[-1, :] = xint_temp[-1, :] + (2*l+1) * X[-stream+l, :] * P(ubar1[ng,nt])[l]
-			indx = int(stream/2); 
 			xint_temp[-1,:] = flux_bot/pi
-			#xint_temp[-1,:] = flux[-1,:]/pi
 			for i in range(nlayer-1,-1,-1):
-				term1[i,:] = xint_temp[i+1, :] * exp(-dtau[i,:]/ubar1[ng,nt]) 
-				term2[i,:] = intgrl1[i,:]/ubar1[ng,nt]
-				term3[i,:] = intgrl2[i,:]/ubar1[ng,nt]
-				xint_temp[i,:] = term1[i,:]+term2[i,:]+term3[i,:]
-				#xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/ubar1[ng,nt]) 
-				#			+ intgrl_per_layer[i,:] / ubar1[ng,nt]) 
+				xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/ubar1[ng,nt]) 
+							+ intgrl_per_layer[i,:] / ubar1[ng,nt]) 
 
-			xint_new = xint_temp[0, :]
-			xint_at_top[ng,nt,:] = xint_new
-			#import IPython; IPython.embed()
-			#import sys; sys.exit()
+			xint_at_top[ng,nt,:] = xint_temp[0, :]
 
 	#import IPython; IPython.embed()
 	#import sys; sys.exit()
@@ -1932,22 +1903,6 @@ def setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 	Del = ((1 / ubar0)**2 - a[0]*a[1])
 	eta = [(b[1] /ubar0 - a[1]*b[0]) / Del,
 		(b[0] /ubar0 - a[0]*b[1]) / Del]
-
-	#a = []; b = []
-	#for l in range(2):
-	#	a.append((2*l + 1) - w0 * w_multi[l])
-	#	b.append((F0PI * (w0 * w_single[l])) * P(-ubar0)[l] / (4 * np.pi))
-
-	#lam = np.sqrt(a[0]*a[1])
-
-	#Del = ((1 / ubar0)**2 - a[0]*a[1])
-	#Dels = []
-	#Dels.append(b[1] /ubar0 - a[1]*b[0])
-	#Dels.append(b[0] /ubar0 - a[0]*b[1])
-	#
-	#eta = []
-	#for l in range(2):
-	#	eta.append(Dels[l]/Del)
 
 	lam = sqrt(a[0]*a[1])
 	expo = lam*dtau
@@ -2672,11 +2627,6 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI
 		a20 = Q1*exptrm1;   a21 = Q1/exptrm1;	a22 = Q2*exptrm2;   a23 = Q2/exptrm2
 		a30 = S1*exptrm1;   a31 = -S1/exptrm1;	a32 = S2*exptrm2;   a33 = -S2/exptrm2
 
-		#n0_up = eta[0]*exptau_u0[1:,:] 
-		#n1_up = eta[1]*exptau_u0[1:,:] 
-		#n2_up = eta[2]*exptau_u0[1:,:] 
-		#n3_up = eta[3]*exptau_u0[1:,:]
-
 		A = zeros((4*nlayer, 4*nlayer, nwno))
 		N = zeros((4*nlayer, nwno))
 
@@ -2722,7 +2672,7 @@ def solve_4_stream(M, B, A, N, A_int, N_int, F, G, stream):
 def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream):
 	#	find constants
 	diag = int(3*stream/2 - 1)
-	X = solve_banded((diag,diag), M, B)#, overwrite_ab=True, overwrite_b=True)
+	X = solve_banded((diag,diag), M, B)
 	#	integral of Iexp(-tau/ubar1) at each level 
 	intgrl_new = A_int.dot(X) + N_int
 	#	flux at bottom
