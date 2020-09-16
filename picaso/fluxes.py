@@ -1117,21 +1117,19 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
             for i in range(nlayer-1,-1,-1):
                 #direct beam
-                #xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/ubar1[ng,nt]) 
-                term1[i,:] = xint[i+1,:]*exp(-dtau[i,:]/ubar1[ng,nt]) 
+                xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/ubar1[ng,nt]) 
                         #single scattering albedo from sun beam (from ubar0 to ubar1)
-                term2[i,:] = (w0_og[i,:]*F0PI/(4.*pi)
+                        +(w0_og[i,:]*F0PI/(4.*pi)
                         *(p_single[i,:])*exp(-tau_og[i,:]/ubar0[ng,nt])
                         *(1. - exp(-dtau_og[i,:]*(ubar0[ng,nt]+ubar1[ng,nt])
                         /(ubar0[ng,nt]*ubar1[ng,nt])))*
                         (ubar0[ng,nt]/(ubar0[ng,nt]+ubar1[ng,nt])))
                         #multiple scattering terms p_single
-                term3[i,:] = (A[i,:]*(1. - exp(-dtau[i,:] *(ubar0[ng,nt]+1*ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
+                        +A[i,:]*(1. - exp(-dtau[i,:] *(ubar0[ng,nt]+1*ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
                         (ubar0[ng,nt]/(ubar0[ng,nt]+1*ubar1[ng,nt]))
                         +G[i,:]*(exp(exptrm[i,:]*1-dtau[i,:]/ubar1[ng,nt]) - 1.0)/(lamda[i,:]*1*ubar1[ng,nt] - 1.0)
                         +H[i,:]*(1. - exp(-exptrm[i,:]*1-dtau[i,:]/ubar1[ng,nt]))/(lamda[i,:]*1*ubar1[ng,nt] + 1.0)
                         )
-                xint[i,:] = term1[i,:]+term2[i,:]+term3[i,:]
 
             xint_at_top[ng,nt,:] = xint[0,:]
             #import IPython; IPython.embed()
@@ -1233,21 +1231,26 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     b0 = all_b[0:-1,:]
     b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
 
-    #hemispheric mean parameters from Tabe 1 toon 
-    alpha = sqrt( (1.-w0) / (1.-w0*cosb) )
-    lamda = alpha*(1.-w0*cosb)/mu1 #eqn 21 toon
-    gama = (1.-alpha)/(1.+alpha) #eqn 22 toon
-    g1_plus_g2 = mu1/(1.-w0*cosb) #effectively 1/(gamma1 + gamma2) .. second half of eqn.27
+    #hemispheric mean parameters from Tabel 1 toon 
+    #**originally written in terms of alpha which isn't in the table. 
+    #**changed to more closely resemble Toon (no change in actual values)
+    #alpha = sqrt( (1.-w0) / (1.-w0*cosb) )
+    g1 = 2 - w0*(1 + cosb)
+    g2 = w0*(1 - cosb)
+    lamda = (g1**2 - g2**2)**0.5 #alpha*(1.-w0*cosb)/mu1 #eqn 21 toon
+    gama = g2 / (g1 + lamda) #(1.-alpha)/(1.+alpha) #eqn 22 toon
+    g1_plus_g2 = 1/(g1 + g2) #mu1/(1.-w0*cosb) #effectively 1/(gamma1 + gamma2) .. second half of eqn.27
 
     #same as with reflected light, compute c_plus and c_minus 
     #these are eqns 27a & b in Toon89
     #_ups are evaluated at lower optical depth, TOA
     #_dows are evaluated at higher optical depth, bottom of atmosphere
-    c_plus_up = b0 + b1* g1_plus_g2
-    c_minus_up = b0 - b1* g1_plus_g2
+    c_plus_up = pi * (b0 + b1* g1_plus_g2) # introduced pi here and removed from expressions for G,H,J,K
+    c_minus_up = pi * (b0 - b1* g1_plus_g2)
 
-    c_plus_down = b0 + b1 * dtau + b1 * g1_plus_g2 
-    c_minus_down = b0 + b1 * dtau - b1 * g1_plus_g2
+    c_plus_down = pi * (b0 + b1 * dtau + b1 * g1_plus_g2)
+    c_minus_down = pi * (b0 + b1 * dtau - b1 * g1_plus_g2)
+    # note there should be a factor of 2mu1 in c expressions, need to include that if mu1 not 0.5
 
     #calculate exponential terms needed for the tridiagonal rotated layered method
     exptrm = lamda*dtau
@@ -1267,11 +1270,6 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
                             c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
                              gama, dtau, 
                             exptrm_positive,  exptrm_minus) 
-    #else:
-    #   A_, B_, C_, D_, E_, F_ = setup_pent_diag(nlayer,nwno,  c_plus_up, c_minus_up, 
-    #                       c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
-    #                        gama, dtau, 
-    #                       exptrm_positive,  exptrm_minus, g1,g2,exptrm,lamda) 
     positive = zeros((nlayer, nwno))
     negative = zeros((nlayer, nwno))
     #========================= Start loop over wavelength =========================
@@ -1283,10 +1281,6 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
             #unmix the coefficients
             positive[:,w] = X[::2] + X[1::2] 
             negative[:,w] = X[::2] - X[1::2]
-        #else:
-        #   X = pent_diag_solve(L, A_[:,w], B_[:,w], C_[:,w], D_[:,w], E_[:,w], F_[:,w])
-        #   positive[:,w] = exptrm_minus[:,w] * (X[::2] + X[1::2])
-        #   negative[:,w] = X[::2] - X[1::2]
 
     #if you stop here this is regular ole 2 stream
     f_up = pi*(positive * exptrm_positive + gama * negative * exptrm_minus + c_plus_up)
@@ -1294,14 +1288,20 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
     #calculate everyting from Table 3 toon
     alphax = ((1.0-w0)/(1.0-w0*cosb))**0.5
-    G = twopi*w0*positive*(1.0+cosb*alphax)/(1.0+alphax)#
-    H = twopi*w0*negative*(1.0-cosb*alphax)/(1.0+alphax)#
-    J = twopi*w0*positive*(1.0-cosb*alphax)/(1.0+alphax)#
-    K = twopi*w0*negative*(1.0+cosb*alphax)/(1.0+alphax)#
+    #G = twopi*w0*positive*(1.0+cosb*alphax)/(1.0+alphax)#
+    #H = twopi*w0*negative*(1.0-cosb*alphax)/(1.0+alphax)#
+    #J = twopi*w0*positive*(1.0-cosb*alphax)/(1.0+alphax)#
+    #K = twopi*w0*negative*(1.0+cosb*alphax)/(1.0+alphax)#
+    G = w0*positive*(1.0+cosb*alphax)/(1.0+alphax)#
+    H = w0*negative*(1.0-cosb*alphax)/(1.0+alphax)#
+    J = w0*positive*(1.0-cosb*alphax)/(1.0+alphax)#
+    K = w0*negative*(1.0+cosb*alphax)/(1.0+alphax)#
     alpha1 = twopi*(b0+ b1*(mu1*w0*cosb/(1.0-w0*cosb)))
     alpha2 = twopi*b1
     sigma1 = twopi*(b0- b1*(mu1*w0*cosb/(1.0-w0*cosb)))
     sigma2 = twopi*b1
+    import IPython; IPython.embed()
+    import sys; sys.exit()
 
     flux_minus = zeros((nlevel,nwno))
     flux_plus = zeros((nlevel,nwno))
