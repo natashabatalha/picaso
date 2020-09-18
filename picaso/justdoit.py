@@ -1,5 +1,5 @@
 from .atmsetup import ATMSETUP
-from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_new, get_transit_1d
+from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_new, get_transit_1d, get_thermal_new
 from .wavelength import get_cld_input_grid
 from .opacity_factory import create_grid
 from .optics import RetrieveOpacities,compute_opacity
@@ -174,7 +174,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
             nlevel = atm.c.nlevel
             if method == 'SH':
-                xint_at_top = get_reflected_new(nlevel, nwno, ng, nt, 
+                xint_at_top = get_reflected_new(nlevel, wno, nwno, ng, nt, 
                                             DTAU, TAU, W0, COSB, GCOS2, ftau_cld, ftau_ray,
                                             DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
                                             atm.surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
@@ -202,9 +202,16 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
             #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
             #the uncorrected raman single scattering 
-            flux_at_top  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
+            if method == 'Toon':
+                flux_at_top  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
                                                     DTAU_OG, W0_no_raman, COSB_OG, atm.level['pressure'],ubar1,
                                                     atm.surf_reflect, tridiagonal)
+            elif method == 'SH':
+                flux_at_top = get_thermal_new(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
+                                            DTAU, TAU, W0, COSB, 
+                                            DTAU_OG, TAU_OG, W0_OG, W0_no_raman, COSB_OG, 
+                                            atm.level['pressure'], ubar1, atm.surf_reflect, 
+                                            single_phase, dimension, stream)
 
             #if full output is requested add in flux at top for 3d plots
             if full_output: 
