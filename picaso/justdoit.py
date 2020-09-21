@@ -210,7 +210,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                 flux_at_top = get_thermal_new(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
                                             DTAU, TAU, W0, COSB, 
                                             DTAU_OG, TAU_OG, W0_OG, W0_no_raman, COSB_OG, 
-                                            atm.level['pressure'], ubar1, atm.surf_reflect, 
+                                            atm.level['pressure'], ubar1, 
+                                            constant_forward,constant_back,frac_a,frac_b,frac_c,
+                                            atm.surf_reflect, 
                                             single_phase, dimension, stream)
 
             #if full output is requested add in flux at top for 3d plots

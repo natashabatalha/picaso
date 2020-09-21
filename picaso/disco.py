@@ -140,7 +140,7 @@ def compress_disco( nwno, cos_theta, xint_at_top, gweight, tweight,F0PI):
     albedo = 0.5 * albedo /F0PI * (cos_theta + 1.0)
     return albedo
 
-@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)
 def compress_thermal(nwno, ubar1, flux_at_top, gweight, tweight): 
     """
     Last step in albedo code. Integrates over phase angle based on the 
