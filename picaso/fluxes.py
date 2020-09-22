@@ -1025,8 +1025,8 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
             #use expression for bottom flux to get the flux_plus and flux_minus at last
             #bottom layer
-            import IPython; IPython.embed()
-            import sys; sys.exit()
+            #import IPython; IPython.embed()
+            #import sys; sys.exit()
             flux_zero  = positive[-1,:]*exptrm_positive[-1,:] + gama[-1,:]*negative[-1,:]*exptrm_minus[-1,:] + c_plus_down[-1,:]
             flux_minus  = gama*positive*exptrm_positive + negative*exptrm_minus + c_minus_down
             flux_plus  = positive*exptrm_positive + gama*negative*exptrm_minus + c_plus_down
@@ -1306,8 +1306,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     alpha2 = twopi*b1
     sigma1 = twopi*(b0- b1*(g1_plus_g2 - mu1))
     sigma2 = twopi*b1
-    import IPython; IPython.embed()
-    import sys; sys.exit()
+    #import IPython; IPython.embed()
+    #import sys; sys.exit()
 
     flux_minus = zeros((nlevel,nwno))
     flux_plus = zeros((nlevel,nwno))
@@ -1884,7 +1884,6 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 						* np.exp(-tau_og[:-1,:]/ubar0[ng,nt]) * (1 - exptrm_mus) / mus)
 
 			xint_temp[-1,:] = flux_bot/pi
-			xint_temp[-1,:] = pi * (b_surface + b1[-1,:] * ubar[ng,nt])
 			for i in range(nlayer-1,-1,-1):
 				xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/ubar1[ng,nt]) 
 							+ intgrl_per_layer[i,:] / ubar1[ng,nt]) 
@@ -1992,14 +1991,14 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 						+ b1 * (ubar1[ng,nt] - (dtau_og + ubar1[ng,nt]) * expdtau)))
 
 			#xint_temp[-1,:] = flux_bot/pi
-			xint_temp[-1,:] = pi * (b_surface + b1[-1,:] * ubar1[ng,nt])
+			xint_temp[-1,:] = (b_surface + b1[-1,:] * ubar1[ng,nt])
 			for i in range(nlayer-1,-1,-1):
 				xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/ubar1[ng,nt]) 
 							+ intgrl_per_layer[i,:] / ubar1[ng,nt]) 
 
 			xint_at_top[ng,nt,:] = xint_temp[0, :]
 	
-	return xint_at_top*(pi/2) #, flux_down# numg x numt x nwno
+	return xint_at_top*2*pi #, flux_down# numg x numt x nwno
 
 #@jit(nopython=True, cache=True)
 def setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau, tau, w_single, w_multi, ubar1, P=None):
@@ -2476,11 +2475,11 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 		F_bot[-2:,:] = np.array([Q2mn[-1,:], Q1pl[-1,:]])
 		G_bot = zpl_up[-1,:]
 
-		diag = int(2)
-		X = solve_banded((diag,diag), Mb[:,:,0], B[:,0])
+		#diag = int(2)
+		#X = solve_banded((diag,diag), Mb[:,:,0], B[:,0])
 		#	integral of Iexp(-tau/ubar1) at each level 
-		import IPython; IPython.embed()
-		import sys; sys.exit()
+		#import IPython; IPython.embed()
+		#import sys; sys.exit()
 
 		return Mb, B, A_int, N_int, F_bot, G_bot
 
