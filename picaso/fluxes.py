@@ -1917,27 +1917,27 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 	f = frac_a + frac_b*g_back**frac_c
 
 	#if single_phase==1:#'OTHG':
-	#g0_s = ones((nlayer, nwno))
-	#g1_s = 3*cosb
-	#g2_s = 5*(cosb**2)
-	#g3_s = 7*(cosb**3)
-
-	#g0_m = ones((nlayer, nwno))
-	#g1_m = 3*cosb
-	#g2_m = 5*(cosb**2)
-	#g3_m = 7*(cosb**3)
-
-	#elif single_phase==2:#'TTHG':
 	g0_s = ones((nlayer, nwno))
-	g1_s = 3*(f*g_forward + (1-f)*g_back)
-	g2_s = 5*(f*g_forward**2 + (1-f)*g_back**2)
-	g3_s = 7*(f*g_forward**3 + (1-f)*g_back**3)
-	g4_s = 9*(f*g_forward**4 + (1-f)*g_back**4)
+	g1_s = 3*cosb
+	g2_s = 5*(cosb**2)
+	g3_s = 7*(cosb**3)
 
 	g0_m = ones((nlayer, nwno))
 	g1_m = 3*cosb
 	g2_m = 5*(cosb**2)
 	g3_m = 7*(cosb**3)
+
+	#elif single_phase==2:#'TTHG':
+	#g0_s = ones((nlayer, nwno))
+	#g1_s = 3*(f*g_forward + (1-f)*g_back)
+	#g2_s = 5*(f*g_forward**2 + (1-f)*g_back**2)
+	#g3_s = 7*(f*g_forward**3 + (1-f)*g_back**3)
+	#g4_s = 9*(f*g_forward**4 + (1-f)*g_back**4)
+
+	#g0_m = ones((nlayer, nwno))
+	#g1_m = 3*cosb
+	#g2_m = 5*(cosb**2)
+	#g3_m = 7*(cosb**3)
 
 	#elif single_phase==3:#'TTHG_ray':
 	#	# not happy with Rayleigh, not getting the same inclusion in multiscattering as picaso
@@ -1998,7 +1998,7 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 
 			xint_at_top[ng,nt,:] = xint_temp[0, :]
 	
-	return xint_at_top*2*pi #, flux_down# numg x numt x nwno
+	return xint_at_top*2 #, flux_down# numg x numt x nwno
 
 #@jit(nopython=True, cache=True)
 def setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau, tau, w_single, w_multi, ubar1, P=None):
