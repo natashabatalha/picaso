@@ -1237,8 +1237,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     #**originally written in terms of alpha which isn't in the table. 
     #**changed to more closely resemble Toon (no change in actual values)
     #alpha = sqrt( (1.-w0) / (1.-w0*cosb) )
-    g1 = (7-w0*(4+3*cosb))/4 #2 - w0*(1 + cosb)
-    g2 = -(1-w0*(4-3*cosb))/4 #w0*(1 - cosb)
+    g1 = 2 - w0*(1 + cosb) # (7-w0*(4+3*cosb))/4 #
+    g2 = w0*(1 - cosb) #-(1-w0*(4-3*cosb))/4 #
     lamda = (g1**2 - g2**2)**0.5 #alpha*(1.-w0*cosb)/mu1 #eqn 21 toon
     gama = g2 / (g1 + lamda) #(1.-alpha)/(1.+alpha) #eqn 22 toon
     g1_plus_g2 = 1/(g1 + g2) #mu1/(1.-w0*cosb) #effectively 1/(gamma1 + gamma2) .. second half of eqn.27
@@ -1997,8 +1997,8 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 							+ intgrl_per_layer[i,:] / ubar1[ng,nt]) 
 
 			xint_at_top[ng,nt,:] = xint_temp[0, :]
-	
-	return xint_at_top*2 #, flux_down# numg x numt x nwno
+
+	return xint_at_top*pi #, flux_down# numg x numt x nwno
 
 #@jit(nopython=True, cache=True)
 def setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau, tau, w_single, w_multi, ubar1, P=None):
