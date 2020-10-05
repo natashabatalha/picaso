@@ -162,14 +162,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             atm, opacityclass, stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
             full_output=full_output, plot_opacity=plot_opacity)
 
-        filename = '/Users/crooney/Documents/codes/picaso/docs/notebooks/jdi_inputs_' + method + '.pk'
-        pk.dump({'nlevel':nlevel, 'wno':wno, 'nwno':nwno, 'ng':ng, 'nt':nt, 
-            'dtau':DTAU, 'tau':TAU, 'w0':W0, 'cosb':COSB, 'gcos2':GCOS2,'ftcld':ftau_cld,'ftray': ftau_ray,
-            'dtau_og':DTAU_OG, 'tau_og':TAU_OG, 'w0_og':W0_OG, 'cosb_og':COSB_OG, 
-            'surf_reflect':atm.surf_reflect, 'ubar0':ubar0, 'ubar1':ubar1, 'costheta':cos_theta, 'F0PI':F0PI, 
-            'single_phase':single_phase, 'multi_phase':multi_phase, 
-            'frac_a':frac_a, 'frac_b':frac_b, 'frac_c':frac_c, 'constant_back':constant_back, 
-            'constant_forward':constant_forward, 'dim':dimension, 'stream':stream}, open(filename,'wb'))
         if  'reflected' in calculation:
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
             nlevel = atm.c.nlevel
@@ -368,6 +360,15 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         else:
             returns['full_output'] = atm
 
+    filename = '/Users/crooney/Documents/codes/picaso/docs/notebooks/input_data.pk'
+    pk.dump({'nlevel':nlevel, 'wno':wno, 'nwno':nwno, 'ng':ng, 'nt':nt, 
+        'dtau':DTAU, 'tau':TAU, 'w0':W0, 'cosb':COSB, 'gcos2':GCOS2,'ftcld':ftau_cld,'ftray': ftau_ray,
+        'dtau_og':DTAU_OG, 'tau_og':TAU_OG, 'w0_og':W0_OG, 'cosb_og':COSB_OG, 
+        'surf_reflect':atm.surf_reflect, 'ubar0':ubar0, 'ubar1':ubar1, 'costheta':cos_theta, 'F0PI':F0PI, 
+        'single_phase':single_phase, 'multi_phase':multi_phase, 
+        'frac_a':frac_a, 'frac_b':frac_b, 'frac_c':frac_c, 'constant_back':constant_back, 
+        'constant_forward':constant_forward, 'dim':dimension, 'stream':stream,
+        'xint_at_top': xint_at_top, 'albedo': albedo}, open(filename,'wb'), protocol=2)
     return returns
 
 def opannection(wave_range = None, filename_db = None, raman_db = None, resample=1):

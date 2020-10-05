@@ -30,7 +30,7 @@
 	},
 	"approx":{
 		"method":"Toon",
-		"Toon_coefficients":"quadrature",
+		"Toon_coefficients":0,
 		"stream":2,
 		"p_reference":1,
 		"single_phase":3,
