@@ -2824,7 +2824,7 @@ def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream):
 	diag = int(3*stream/2 - 1)
 	X = solve_banded((diag,diag), M, B)
 	#	integral of Iexp(-tau/ubar1) at each level 
-	intgrl_new =  A_int.dot(X) + pi*N_int # N_int
+	intgrl_new =  A_int.dot(X) + N_int # pi*N_int
 	#
 	#	flux at bottom
 	flux = F.dot(X) + G
