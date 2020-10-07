@@ -350,7 +350,8 @@ def compute_opacity(atmosphere, opacityclass, stream, delta_eddington=True,test_
         #also see these lecture notes are pretty good
         #http://irina.eas.gatech.edu/EAS8803_SPRING2012/Lec20.pdf
         w0_dedd=W0*(1.-COSB**stream)/(1.0-W0*COSB**stream)
-        cosb_dedd=COSB/(1.+COSB)
+        #cosb_dedd=COSB/(1.+COSB)
+        cosb_dedd=(COSB-COSB**stream)/(1.-COSB**stream)
         dtau_dedd=DTAU*(1.-W0*COSB**stream) 
 
         #sum up taus starting at the top, going to depth
