@@ -36,6 +36,7 @@ def picaso_albedos(single_phase = 'OTHG', output_dir = None, rayleigh=True, phas
 	real_answer = real_answer.set_index('Unnamed: 0')
 
 	perror = real_answer.copy()
+	perror_start = real_answer.copy()
 
 	nlevel = 20
 
@@ -70,7 +71,7 @@ def picaso_albedos(single_phase = 'OTHG', output_dir = None, rayleigh=True, phas
 			if disort_data:
 			    disort_dir_ = disort_dir + 'data_rayleigh_%.3f.pk' % w0
 			    start_case.inputs['approx']['input_dir']=disort_dir_
-			allout = start_case.spectrum(opa, calculation='reflected')
+			allout = start_case.spectrum(opa, calculation='reflected')#, full_output=True)
 
 			alb = allout['albedo']
 			perror.loc[-1][w] = alb[-1]
@@ -82,7 +83,6 @@ def picaso_albedos(single_phase = 'OTHG', output_dir = None, rayleigh=True, phas
 
 	if phase:
 		for g0 in real_answer.index[1:]:
-			g0 = 0.5
 			for w in real_answer.keys():
 				if float(w) ==1.000:
 					w0 = 0.999999
@@ -96,7 +96,7 @@ def picaso_albedos(single_phase = 'OTHG', output_dir = None, rayleigh=True, phas
 				if disort_data:
 				    disort_dir_ = disort_dir + 'data_%.3f_%.3f.pk' % (g0, w0)
 				    start_case.inputs['approx']['input_dir']=disort_dir_
-				allout = start_case.spectrum(opa, calculation='reflected')
+				allout = start_case.spectrum(opa, calculation='reflected')#, full_output=True)
 
 				alb = allout['albedo']
 				perror.loc[g0][w] = alb[-1]
@@ -106,5 +106,6 @@ def picaso_albedos(single_phase = 'OTHG', output_dir = None, rayleigh=True, phas
 	    print('RUN DISORT CODE NOW')
 	else:
 	    print('NO DATA GENERATED FOR DISORT')
+	#import IPython; IPython.embed()
 	return perror
 

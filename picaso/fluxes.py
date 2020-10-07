@@ -2518,6 +2518,7 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 	a = []; b = [] # getting rid of append not faster
 	for l in range(4):
 		a.append((2*l + 1) - w0 * w_multi[l])
+		#a.append(1e-6*ones(w0.shape))
 		b.append((F0PI * (w0 * w_single[l])) * P(-ubar0)[l] / (4 * pi))
 
 	beta = a[0]*a[1] + 4*a[0]*a[3]/9 + a[2]*a[3]/9
