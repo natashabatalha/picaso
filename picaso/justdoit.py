@@ -74,6 +74,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     stream = inputs['approx']['stream']
     approximation = inputs['approx']['Toon_coefficients']
     tridiagonal = 0 
+    input_dir = inputs['approx']['input_dir']
 
 
     #parameters needed for the two term hg phase function. 
@@ -360,15 +361,17 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         else:
             returns['full_output'] = atm
 
-    filename = '/Users/crooney/Documents/codes/picaso/docs/notebooks/input_data.pk'
-    pk.dump({'nlevel':nlevel, 'wno':wno, 'nwno':nwno, 'ng':ng, 'nt':nt, 
-        'dtau':DTAU, 'tau':TAU, 'w0':W0, 'cosb':COSB, 'gcos2':GCOS2,'ftcld':ftau_cld,'ftray': ftau_ray,
-        'dtau_og':DTAU_OG, 'tau_og':TAU_OG, 'w0_og':W0_OG, 'cosb_og':COSB_OG, 
-        'surf_reflect':atm.surf_reflect, 'ubar0':ubar0, 'ubar1':ubar1, 'costheta':cos_theta, 'F0PI':F0PI, 
-        'single_phase':single_phase, 'multi_phase':multi_phase, 
-        'frac_a':frac_a, 'frac_b':frac_b, 'frac_c':frac_c, 'constant_back':constant_back, 
-        'constant_forward':constant_forward, 'dim':dimension, 'stream':stream,
-        'xint_at_top': xint_at_top, 'albedo': albedo}, open(filename,'wb'), protocol=2)
+    if input_dir != None:
+        filename = input_dir #'/Users/crooney/Documents/codes/picaso/docs/notebooks/input_data.pk'
+        pk.dump({'nlevel':nlevel, 'wno':wno, 'nwno':nwno, 'ng':ng, 'nt':nt, 
+            'dtau':DTAU, 'tau':TAU, 'w0':W0, 'cosb':COSB, 'gcos2':GCOS2,'ftcld':ftau_cld,'ftray': ftau_ray,
+            'dtau_og':DTAU_OG, 'tau_og':TAU_OG, 'w0_og':W0_OG, 'cosb_og':COSB_OG, 
+            'surf_reflect':atm.surf_reflect, 'ubar0':ubar0, 'ubar1':ubar1, 'costheta':cos_theta, 'F0PI':F0PI, 
+            'single_phase':single_phase, 'multi_phase':multi_phase, 
+            'frac_a':frac_a, 'frac_b':frac_b, 'frac_c':frac_c, 'constant_back':constant_back, 
+            'constant_forward':constant_forward, 'dim':dimension, 'stream':stream,
+            'xint_at_top': xint_at_top, 'albedo': albedo, 
+            'gweight': gweight, 'tweight': tweight}, open(filename,'wb'), protocol=2)
     return returns
 
 def opannection(wave_range = None, filename_db = None, raman_db = None, resample=1):
@@ -1499,7 +1502,8 @@ class inputs():
 
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='pollack',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
-        p_reference=1, method='Toon', stream=2, Toon_coefficients="quadrature"):
+        p_reference=1, method='Toon', stream=2, Toon_coefficients="quadrature",
+        input_dir=None):
         """
         This function sets all the default approximations in the code. It transforms the string specificatons
         into a number so that they can be used in numba nopython routines. 
@@ -1559,6 +1563,7 @@ class inputs():
         self.inputs['approx']['TTHG_params']['constant_forward']=tthg_forward
 
         self.inputs['approx']['p_reference']= p_reference
+        self.inputs['approx']['input_dir'] = input_dir
 
     def spectrum(self, opacityclass, calculation='reflected', dimension = '1d',  full_output=False, 
         plot_opacity= False, as_dict=True):

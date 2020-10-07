@@ -104,6 +104,7 @@ def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=
 				alb = allout['albedo']
 				perror.loc[g0][w] = alb[-1]#(100*(alb[-1]-real_answer.loc[-1][w])/real_answer.loc[-1][w])#
 	
+	import IPython; IPython.embed()
 	if output_dir!=None: perror.to_csv(os.path.join(output_dir))
 	return perror
 

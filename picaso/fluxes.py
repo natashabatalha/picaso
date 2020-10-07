@@ -1782,10 +1782,6 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 				g1_m = 3*cosb
 				g2_m = 5*(cosb**2)
 				g3_m = 7*(cosb**3)
-				#g0_m = g0_s
-				#g1_m = g1_s
-				#g2_m = g2_s
-				#g3_m = g3_s
 
 				p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 
@@ -1872,7 +1868,7 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 
 			for i in range(nlayer):
 				for l in range(stream):
-					sing_scat[i,:] = sing_scat[i,:] + w_multi[l][i,:] * P(ubar1[ng,nt])[l] * intgrl_new[stream*i+l,:]
+					sing_scat[i,:] = sing_scat[i,:] + w_single[l][i,:] * P(ubar1[ng,nt])[l] * intgrl_new[stream*i+l,:]
 
 			intgrl_per_layer = (w0 *  sing_scat 
 						+ w0_og * F0PI / (4*np.pi) * p_single 

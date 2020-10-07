@@ -108,7 +108,7 @@ def get_angles_3d(num_gangle, num_tangle):
 
     return gangle,gweight,tangle,tweight
 
-@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)
 def compress_disco( nwno, cos_theta, xint_at_top, gweight, tweight,F0PI): 
     """
     Last step in albedo code. Integrates over phase angle based on the 
