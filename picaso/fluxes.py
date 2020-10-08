@@ -953,26 +953,28 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
     #================ START CRAZE LOOP OVER ANGLE #================
     for ng in range(numg):
         for nt in range(numt):
+            u1 = ubar1[ng,nt]
+            u0 = ubar0[ng,nt]
             if approximation == 1 : #eddington
-                g3  = (2-3*cosb*ubar0[ng,nt])/4#0.5*(1.-sq3*cosb*ubar0[ng, nt]) #  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
+                g3  = (2-3*cosb*u0)/4#0.5*(1.-sq3*cosb*ubar0[ng, nt]) #  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
             elif approximation == 0 :#quadrature
-                g3  = 0.5*(1.-sq3*cosb*ubar0[ng, nt]) #  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
+                g3  = 0.5*(1.-sq3*cosb*u0) #  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
     
             # now calculate c_plus and c_minus (equation 23 and 24 toon)
             g4 = 1.0 - g3
-            denominator = lamda**2 - 1.0/ubar0[ng, nt]**2.0
+            denominator = lamda**2 - 1.0/u0**2.0
 
             #everything but the exponential 
-            a_minus = F0PI*w0* (g4*(g1 + 1.0/ubar0[ng, nt]) +g2*g3 ) / denominator
-            a_plus  = F0PI*w0*(g3*(g1-1.0/ubar0[ng, nt]) +g2*g4) / denominator
+            a_minus = F0PI*w0* (g4*(g1 + 1.0/u0) +g2*g3 ) / denominator
+            a_plus  = F0PI*w0*(g3*(g1-1.0/u0) +g2*g4) / denominator
 
             #add in exponential to get full eqn
             #_up is the terms evaluated at lower optical depths (higher altitudes)
             #_down is terms evaluated at higher optical depths (lower altitudes)
-            x = exp(-tau[:-1,:]/ubar0[ng, nt])
+            x = exp(-tau[:-1,:]/u0)
             c_minus_up = a_minus*x #CMM1
             c_plus_up  = a_plus*x #CPM1
-            x = exp(-tau[1:,:]/ubar0[ng, nt])
+            x = exp(-tau[1:,:]/u0)
             c_minus_down = a_minus*x #CM
             c_plus_down  = a_plus*x #CP
 
@@ -988,7 +990,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             #boundary conditions 
             b_top = 0.0                                       
 
-            b_surface = 0. + surf_reflect*ubar0[ng, nt]*F0PI*exp(-tau[-1, :]/ubar0[ng, nt])
+            b_surface = 0. + surf_reflect*u0*F0PI*exp(-tau[-1, :]/u0)
 
             #Now we need the terms for the tridiagonal rotated layered method
             if tridiagonal==0:
@@ -1049,13 +1051,13 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                 #this is a decent assumption because our second order legendre polynomial 
                 #is forced to be equal to the rayleigh phase function
                 ubar2 = 0.767  # 
-                multi_plus = (1.0+1.5*cosb*ubar1[ng,nt] #!was 3
-                                + gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
-                multi_minus = (1.-1.5*cosb*ubar1[ng,nt] 
-                                + gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
+                multi_plus = (1.0+1.5*cosb*u1 #!was 3
+                                + gcos2*(3.0*ubar2*ubar2*u1*u1 - 1.0)/2.0)
+                multi_minus = (1.-1.5*cosb*u1 
+                                + gcos2*(3.0*ubar2*ubar2*u1*u1 - 1.0)/2.0)
             elif multi_phase ==1:#'N=1':
-                multi_plus = 1.0+1.5*cosb*ubar1[ng,nt]  
-                multi_minus = 1.-1.5*cosb*ubar1[ng,nt]
+                multi_plus = 1.0+1.5*cosb*u1  
+                multi_minus = 1.-1.5*cosb*u1
             ################################ END OPTIONS FOR MULTIPLE SCATTERING####################
 
             G=positive*(multi_plus+gama*multi_minus)    *w0
@@ -1119,23 +1121,22 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
             for i in range(nlayer-1,-1,-1):
                 #direct beam
-                xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/ubar1[ng,nt]) 
+                xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/u1) 
                         #single scattering albedo from sun beam (from ubar0 to ubar1)
                         +(w0_og[i,:]*F0PI/(4.*pi)
-                        *(p_single[i,:])*exp(-tau_og[i,:]/ubar0[ng,nt])
-                        *(1. - exp(-dtau_og[i,:]*(ubar0[ng,nt]+ubar1[ng,nt])
-                        /(ubar0[ng,nt]*ubar1[ng,nt])))*
-                        (ubar0[ng,nt]/(ubar0[ng,nt]+ubar1[ng,nt])))
+                        *(p_single[i,:])
+                        *exp(-tau_og[i,:]/u0)
+                        *(1. - exp(-dtau_og[i,:]*(u0+u1)/(u0*u1)))
+                        *(u0/(u0+u1))
+                        )
                         #multiple scattering terms p_single
-                        +A[i,:]*(1. - exp(-dtau[i,:] *(ubar0[ng,nt]+1*ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
-                        (ubar0[ng,nt]/(ubar0[ng,nt]+1*ubar1[ng,nt]))
-                        +G[i,:]*(exp(exptrm[i,:]*1-dtau[i,:]/ubar1[ng,nt]) - 1.0)/(lamda[i,:]*1*ubar1[ng,nt] - 1.0)
-                        +H[i,:]*(1. - exp(-exptrm[i,:]*1-dtau[i,:]/ubar1[ng,nt]))/(lamda[i,:]*1*ubar1[ng,nt] + 1.0)
+                        +A[i,:]*(1. - exp(-dtau[i,:] *(u0+1*u1)/(u0*u1)))*
+                        (u0/(u0+1*u1))
+                        +G[i,:]*(exp(exptrm[i,:]*1-dtau[i,:]/u1) - 1.0)/(lamda[i,:]*1*u1 - 1.0)
+                        +H[i,:]*(1. - exp(-exptrm[i,:]*1-dtau[i,:]/u1))/(lamda[i,:]*1*u1 + 1.0)
                         )
 
             xint_at_top[ng,nt,:] = xint[0,:]
-#            import IPython; IPython.embed()
-#            import sys; sys.exit()
 
     return xint_at_top
 
@@ -1745,6 +1746,8 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 	#================ START CRAZE LOOP OVER ANGLE #================
 	for ng in range(numg):
 		for nt in range(numt):
+			u1 = ubar1[ng,nt]
+			u0 = ubar0[ng,nt]
 			if dim == '3d':
 				#get needed chunk for 3d inputs
 				#should consider thinking of a better method for when doing 1d only
@@ -1771,7 +1774,10 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 				f = frac_a + frac_b*g_back**frac_c
 
 			if single_phase==1:#'OTHG':
-				f = cosb_og**stream
+				if np.array_equal(cosb,cosb_og):
+					f = 0.
+				else:
+					f = cosb_og**stream
 				g0_s = ones((nlayer, nwno))
 				g1_s = 3*cosb_og
 				g2_s = 5*(cosb_og**2)
@@ -1844,23 +1850,29 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 
 			#boundary conditions 
 			b_top = 0.0
-			b_surface = 0. + surf_reflect*ubar0[ng, nt]*F0PI*exp(-tau[-1, :]/ubar0[ng, nt])
+			b_surface = 0. + surf_reflect*u0*F0PI*exp(-tau[-1, :]/u0)
 
 			if stream==2:
 				#M, B, A, N, A_int, N_int, F, G = setup_2_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
 				M, B, A_int, N_int, F, G = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-				surf_reflect, F0PI, ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P) 
+				surf_reflect, F0PI, u0, dtau, tau, w_single, w_multi, u1, P) 
+				A, N = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
+				surf_reflect, F0PI, u0, dtau, tau, w_single, w_multi, u1, P, calculate=2) 
 				F1, G1 = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-				surf_reflect, F0PI, ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P, calculate=1) 
+				surf_reflect, F0PI, u0, dtau, tau, w_single, w_multi, u1, P, calculate=1) 
 			else:
 				#M, B, A, N, A_int, N_int, F, G = setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
 				M, B, A_int, N_int, F, G = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
-						ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P)
+						u0, dtau, tau, w_single, w_multi, u1, P)
+				A, N = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
+				surf_reflect, F0PI, u0, dtau, tau, w_single, w_multi, u1, P, calculate=2) 
 				F1, G1 = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-				surf_reflect, F0PI, ubar0[ng, nt], dtau, tau, w_single, w_multi, ubar1[ng,nt], P, calculate=1) 
+				surf_reflect, F0PI, u0, dtau, tau, w_single, w_multi, u1, P, calculate=1) 
 
 			flux_bot = zeros(nwno)
 			intgrl_new = zeros((stream*nlayer, nwno))
+			I = zeros((stream*nlayer, nwno))
+			flux = zeros((stream*nlayer, nwno))
 			intgrl_per_layer = zeros((nlayer, nwno))
 			sing_scat = zeros((nlayer, nwno))
 			xint_temp = zeros((nlevel, nwno))
@@ -1868,28 +1880,30 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 			for W in range(nwno):
 				(intgrl_new[:,W], flux_bot[W], X) = solve_4_stream_banded(M[:,:,W], B[:,W],  
 				A_int[:,:,W], N_int[:,W], F[:,W], G[W], stream)
+				I[:,W] = intensity_per_layer(A[:,:,W], N[:,W], X)
+				flux[:,W] = calculate_flux(F1[:,:,W], G1[:,W], X)
 
-			mus = (ubar1[ng,nt] + ubar0[ng,nt]) / (ubar1[ng,nt] * ubar0[ng,nt])
+			mus = (u1 + u0) / (u1 * u0)
 			expo_mus = mus * dtau_og 
 			expo_mus = slice_gt(expo_mus, 35.0)    
 			exptrm_mus = exp(-expo_mus)
 
 			for i in range(nlayer):
 				for l in range(stream):
-					sing_scat[i,:] = sing_scat[i,:] + w_single[l][i,:] * P(ubar1[ng,nt])[l] * intgrl_new[stream*i+l,:]
+					sing_scat[i,:] = sing_scat[i,:] + w_single[l][i,:] * P(u1)[l] * intgrl_new[stream*i+l,:]
 
 			intgrl_per_layer = (w0 *  sing_scat 
 						+ w0_og * F0PI / (4*np.pi) * p_single 
-						* np.exp(-tau_og[:-1,:]/ubar0[ng,nt]) * (1 - exptrm_mus) / mus)
+						* np.exp(-tau_og[:-1,:]/u0) * (1 - exptrm_mus) 
+						/ mus
+						)
 
 			xint_temp[-1,:] = flux_bot/pi
 			for i in range(nlayer-1,-1,-1):
-				xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/ubar1[ng,nt]) 
-							+ intgrl_per_layer[i,:] / ubar1[ng,nt]) 
+				xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/u1) 
+							+ intgrl_per_layer[i,:] / u1) 
 
 			xint_at_top[ng,nt,:] = xint_temp[0, :]
-#			import IPython; IPython.embed()
-#			import sys; sys.exit()
 
 	return xint_at_top
 
@@ -2132,8 +2146,6 @@ def setup_2_stream_new(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0
 	intgrl_new = A_int[:,:,0].dot(X) + N_int[:,0]
 	#	flux
 	flux = F[:,:,0].dot(X) + G[:,0]
-	import IPython; IPython.embed()
-	import sys; sys.exit()
 
 
 	return M, B, A, N, A_int, N_int, F, G
@@ -2445,7 +2457,7 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 	exptrm_bet = (1 - exp(-expo_bet)) / beta
 	exptrm_mus = (1 - exp(-expo_mus)) / mus
 
-	tau_mu = tau[:-1,:] * (mus - 1/ubar1)
+	tau_mu = tau[:-1,:] * 1/ubar0
 	tau_mu = slice_gt(tau_mu, 35.0)
 	exptau_mu = exp(-tau_mu)
 	exp_mu = exptrm_mus * exptau_mu
@@ -2517,6 +2529,7 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 		A = zeros((2*nlayer, 2*nlayer, nwno))
 		N = zeros((2*nlayer, nwno))
 
+		nn = list(range(0,2*nlayer))
 		A[nn[::2],nn[::2],:] = exptrm
 		A[nn[::2],nn[1::2],:] = 1/exptrm
 		A[nn[1::2],nn[::2],:] = -q*exptrm
@@ -2633,7 +2646,7 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 	A20 = Q1 * A00; A21 =  Q1 * A01; A22 = Q2 * A02; A23 =  Q2 * A03; 
 	A30 = S1 * A00; A31 = -S1 * A01; A32 = S2 * A02; A33 = -S2 * A03; 
 	
-	tau_mu = tau[:-1,:] * (mus - 1/ubar1)
+	tau_mu = tau[:-1,:] * (1/ubar0)
 	tau_mu = slice_gt(tau_mu, 35.0)
 	exptau_mu = exp(-tau_mu)
 	exp_mu = (1 - exptrm_mus) * exptau_mu / mus
@@ -2795,6 +2808,7 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 		A = zeros((4*nlayer, 4*nlayer, nwno))
 		N = zeros((4*nlayer, nwno))
 
+		nn = list(range(0,4*nlayer))
 		A[nn[::4],nn[::4],:] = a00
 		A[nn[::4],nn[1::4],:] = a01
 		A[nn[::4],nn[2::4],:] = a02
@@ -2812,10 +2826,16 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 		A[nn[3::4],nn[2::4],:] = a32
 		A[nn[3::4],nn[3::4],:] = a33
 
-		N[::4,:] = (1-w0)/a[0] * (B0 + B1 * tau[1:,:]) #eta[0]*exptau_u0[1:,:]
-		N[1::4,:] = (1-w0)/a[0] * B1/a[1] #eta[1]*exptau_u0[1:,:] 
-		N[2::4,:] = zeros(w0.shape) #eta[2]*exptau_u0[1:,:]
-		N[3::4,:] = zeros(w0.shape) #ta[3]*exptau_u0[1:,:]
+		if calculation is 'reflected':
+			N[::4,:] = eta[0]*exptau_u0[1:,:]
+			N[1::4,:] = eta[1]*exptau_u0[1:,:] 
+			N[2::4,:] = eta[2]*exptau_u0[1:,:]
+			N[3::4,:] = eta[3]*exptau_u0[1:,:]
+		else:
+			N[::4,:] = (1-w0)/a[0] * (B0 + B1 * tau[1:,:]) 
+			N[1::4,:] = (1-w0)/a[0] * B1/a[1] 
+			N[2::4,:] = zeros(w0.shape) 
+			N[3::4,:] = zeros(w0.shape)
 
 		return A, N
 
