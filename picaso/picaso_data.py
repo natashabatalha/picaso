@@ -11,7 +11,7 @@ __refdata__ = os.environ.get('picaso_refdata')
  
 def picaso_albedos(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=True, 
 	method="Toon", stream=2, Toon_coefficients="quadrature", delta_eddington=False,
-	disort_data=False):
+	disort_data=False, phangle=0):
 	"""
 	Generate data to compare against DISORT. Must also run picaso_compare.py in pyDISORT
 	Parameters
@@ -34,15 +34,15 @@ def picaso_albedos(single_phase = 'OTHG', output_dir = None, rayleigh=True, phas
 	#read in table from reference data with the test values
 	real_answer = pd.read_csv(os.path.join(__refdata__,'base_cases', 'DLUGACH_TEST.csv'))
 	real_answer = real_answer.set_index('Unnamed: 0')
-
-	perror = real_answer.copy()
-	perror_start = real_answer.copy()
+	df = pd.DataFrame(columns=list(real_answer.keys())+['0.65','0.60','0.55','0.50'], 
+					index=real_answer.index)
+	perror = df.copy()#real_answer.copy()
 
 	nlevel = 20
 
 	opa = opannection(wave_range=[0.3,0.5], resample=100)
 	start_case=inputs()
-	start_case.phase_angle(0) #radians
+	start_case.phase_angle(phangle) #radians
 	start_case.gravity(gravity = 25, gravity_unit=u.Unit('m/(s**2)'))
 	start_case.star(opa, 6000,0.0122,4.437) #kelvin, log metal, log cgs
 	start_case.atmosphere(df=pd.DataFrame({'pressure':np.logspace(-6,3,nlevel),
@@ -52,12 +52,13 @@ def picaso_albedos(single_phase = 'OTHG', output_dir = None, rayleigh=True, phas
 
 	start_case.inputs['approx']['delta_eddington']=delta_eddington
 	start_case.approx(raman='none', method = method, stream = stream, 
-				Toon_coefficients = Toon_coefficients)
+				Toon_coefficients = Toon_coefficients,
+				delta_eddington=delta_eddington)
 
 	disort_dir = '/Users/crooney/Documents/codes/pyDISORT/test/picaso_data/'
 	if rayleigh: 
 		#first test Rayleigh
-		for w in real_answer.keys():
+		for w in df.keys():
 			if float(w) ==1.000:
 				w0 = 0.999999
 			else: 
@@ -79,11 +80,12 @@ def picaso_albedos(single_phase = 'OTHG', output_dir = None, rayleigh=True, phas
 
 	start_case.inputs['test_mode']='constant_tau'
 	start_case.approx(single_phase = 'OTHG', method = method, stream = stream, 
-				Toon_coefficients = Toon_coefficients)
+				Toon_coefficients = Toon_coefficients,
+				delta_eddington=delta_eddington)
 
 	if phase:
-		for g0 in real_answer.index[1:]:
-			for w in real_answer.keys():
+		for g0 in df.index[1:]:
+			for w in df.keys():
 				if float(w) ==1.000:
 					w0 = 0.999999
 				else: 

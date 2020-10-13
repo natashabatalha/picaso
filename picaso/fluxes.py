@@ -1794,6 +1794,8 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 				g3_m = g3_s#7*(cosb**3)
 
 				p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+				COSTHETA = u0*u1
+				#p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*COSTHETA)**3)
 
 			elif single_phase==2:#'TTHG':
 				#Phase function for single scattering albedo frum Solar beam
