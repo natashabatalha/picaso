@@ -4,7 +4,7 @@ from numpy import polynomial
 import json 
 import os 
 
-@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)
 def compute_disco(ng, nt, gangle, tangle, phase_angle):
     """
     Computes ubar0, the incident angle, and ubar1, the outgoing angle from the 

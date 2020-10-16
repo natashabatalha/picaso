@@ -14,7 +14,8 @@ def disort_albedos(output_dir=None, rayleigh=True, phase=True):
     real_answer = pd.read_csv('/Users/crooney/Documents/codes/picaso/docs/notebooks/SH4.csv')
     real_answer = real_answer.set_index('Unnamed: 0')
     perror = real_answer.copy()
-    input_dir = '/Users/crooney/Documents/codes/picaso/docs/notebooks/disort_data/'
+    disort_dir = '/Users/crooney/Documents/codes/picaso/docs/notebooks/disort_data/'
+    picaso_dir = '/Users/crooney/Documents/codes/pyDISORT/test/picaso_data/'
 
     # Rayleigh
     if rayleigh:
@@ -24,31 +25,35 @@ def disort_albedos(output_dir=None, rayleigh=True, phase=True):
             else: 
                 w0 = float(w)
 
-            input_filename = input_dir + 'data_rayleigh_%.3f.pk' % w0
-            inputs = pk.load(open(input_filename,'rb'), encoding = 'bytes')
+            disort_filename = disort_dir + 'data_rayleigh_%.3f.pk' % w0
+            picaso_filename = picaso_dir + 'data_rayleigh_%.3f.pk' % w0
+            disort = pk.load(open(disort_filename,'rb'), encoding = 'bytes')
+            picaso = pk.load(open(picaso_filename,'rb'), encoding = 'bytes')
         
             #for reflected light use compress_disco routine
-            albedo = compress_disco(inputs[b'nwno'], inputs[b'cos_theta'], inputs[b'xint_at_top'],
-            #albedo = compress_disco(1, inputs[b'cos_theta'], inputs[b'xint_at_top'],
-                    inputs[b'gweight'], inputs[b'tweight'], inputs[b'F0PI'])
+            albedo = compress_disco(disort[b'nwno'], disort[b'cos_theta'], disort[b'xint_at_top'],
+            #albedo = compress_disco(1, disort[b'cos_theta'], disort[b'xint_at_top'],
+                    disort[b'gweight'], disort[b'tweight'], disort[b'F0PI'])
                                 
             perror.loc[-1][w] = albedo[-1]
 
     if phase:
-        for g0 in real_answer.index[1:]:
+        for g0 in real_answer.index[2:]:
             for w in real_answer.keys():
                 if float(w) ==1.000:
                     w0 = 0.999999
                 else: 
                     w0 = float(w)
 
-                input_filename = input_dir + 'data_%.3f_%.3f.pk' % (g0, w0)
-                inputs = pk.load(open(input_filename,'rb'), encoding = 'bytes')
+                disort_filename = disort_dir + 'data_%.3f_%.3f.pk' % (g0, w0)
+                picaso_filename = picaso_dir + 'data_%.3f_%.3f.pk' % (g0, w0)
+                disort = pk.load(open(disort_filename,'rb'), encoding = 'bytes')
+                picaso = pk.load(open(picaso_filename,'rb'), encoding = 'bytes')
         
                 #for reflected light use compress_disco routine
-                albedo = compress_disco(inputs[b'nwno'], inputs[b'cos_theta'], inputs[b'xint_at_top'],
-                #albedo = compress_disco(1, inputs[b'cos_theta'], inputs[b'xint_at_top'],
-                        inputs[b'gweight'], inputs[b'tweight'], inputs[b'F0PI'])
+                albedo = compress_disco(disort[b'nwno'], disort[b'cos_theta'], disort[b'xint_at_top'],
+                #albedo = compress_disco(1, disort[b'cos_theta'], disort[b'xint_at_top'],
+                        disort[b'gweight'], disort[b'tweight'], disort[b'F0PI'])
                                     
                 perror.loc[g0][w] = albedo[-1]
     
