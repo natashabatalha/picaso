@@ -282,7 +282,7 @@ class ATMSETUP():
                     molecule_list += [float(i[j])]
                 except: 
                     if i[j].isupper(): molecule_list += [i[j]] 
-                    elif i[j].islower(): molecule_list[j-1] =  molecule_list[j-1] + i[j]
+                    elif i[j].islower(): molecule_list[-1] =  molecule_list[-1] + i[j]
             totmass=0
             for j in range(0,len(molecule_list)): 
                 
