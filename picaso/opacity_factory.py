@@ -556,16 +556,8 @@ def resample_and_insert_molecular(molecule, min_wavelength, max_wavelength, new_
     #min_wno = 1e4/max_wavelength
     #max_wno = 1e4/min_wavelength
 
-    #if not isinstance(new_R,type(None)):
-    #    dwvno_new = 1e4/(min_wavelength**2)*(min_wavelength/new_R)
-    #else: 
-    #    dwvno_new = dwvno_old
-
-    #DEFINE UNIFORM HI-RES GRID THAT EVRYTHING WILL BE INTERPOLATED
-    #ON BEFORE RESAMPLING
-    #trying without this first 
-    #dlambda = (min_1060_grid)/old_R
-    #interp_wvno_grid = np.arange(min_wno, max_wno, dwvno_old)
+    if not isinstance(new_R,type(None)):
+        new_R = 1e6
 
     #BINS = int(dwvno_new/dwvno_old)
     BINS = int(old_R/new_R)
