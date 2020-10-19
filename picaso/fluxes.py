@@ -1335,8 +1335,11 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
                                        alpha1[ibot,:]*(1.-exptrm_angle_mdpt[ibot,:])+
                                        alpha2[ibot,:]*(iubar+0.5*dtau[ibot,:]-(dtau[ibot,:]+iubar)*exptrm_angle_mdpt[ibot,:])  )
 
-            flux_at_top[ng,nt,:] = flux_plus_mdpt[0,:] #nlevel by nwno #flux_plus[0,:]#
-            #flux_down[ng,nt,:] = flux_minus_mdpt[0,:] #nlevel by nwno, Dont really need to compute this for now
+            flux_at_top[ng,nt,:] = flux_plus_mdpt[0,:] #nlevel by nwno 
+
+            #to get the convective heat flux 
+            #flux_minus_mdpt_disco[ng,nt,:,:] = flux_minus_mdpt #nlevel by nwno
+            #flux_plus_mdpt_disco[ng,nt,:,:] = flux_plus_mdpt #nlevel by nwno
 
     return flux_at_top #, flux_down# numg x numt x nwno
 
@@ -1552,6 +1555,7 @@ def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel_3d, dtau_3d, w0_3d,cosb_3d
 
     return flux_at_top #, flux_down# numg x numt x nwno
 
+@jit(nopython=True, cache=True)
 def get_transit_1d(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
                     player, tlayer, colden, DTAU):
     """
@@ -1612,14 +1616,17 @@ def get_transit_1d(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
             
     #remove column density and mmw from DTAU which was calculated in 
     #optics because line of site integration is diff for transit
-    TAU = array([DTAU[:,i]  / colden * mmw  for i in range(nwno)])
+    #TAU = array([DTAU[:,i]  / colden * mmw  for i in range(nwno)])
+    TAU = zeros((nwno, nlevel-1))
+    for i in range(nwno):
+        TAU[i,:] = DTAU[:,i]  / colden * mmw 
 
     transmitted=zeros((nwno, nlevel))+1.0
     for i in range(nlevel):
-        TAUALL=0.
+        TAUALL=zeros(nwno)#0.
         for j in range(i):
             #two because symmetry of sphere
-            TAUALL += 2*TAU[:,i-j-1]*delta_length[i,j]
+            TAUALL = TAUALL + 2*TAU[:,i-j-1]*delta_length[i,j]
         transmitted[:,i]=exp(-TAUALL)
 
     F=(((min(z))/(rstar))**2 + 
