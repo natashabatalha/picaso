@@ -88,7 +88,6 @@ def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=
 					w0 = 0.999999
 				else: 
 					w0 = float(w)
-				start_case.inputs['test_mode'] = 'rayleigh'
 
 				start_case.clouds(df=pd.DataFrame({'opd':sum([[i]*196 for i in 10**np.linspace(-5, 3, nlevel-1)],[]),
 				                                    'w0':np.zeros(196*(nlevel-1)) + w0 ,
