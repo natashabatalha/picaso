@@ -311,6 +311,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
 
     #for reflected light use compress_disco routine
+    #this takes the intensity as a functin of tangle/gangle and creates a 1d spectrum
     if  ('reflected' in calculation):
         albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
         returns['albedo'] = albedo 
@@ -324,21 +325,22 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                 returns['fpfs_reflected'] += ['Planet Radius not supplied. If you want fpfs, add it to `gravity` function with Mass.']
 
     #for thermal light use the compress thermal routine
+    #this takes the intensity as a functin of tangle/gangle and creates a 1d spectrum
     if ('thermal' in calculation):
         thermal = compress_thermal(nwno,ubar1, flux_at_top, gweight, tweight)
         returns['thermal'] = thermal
+        if full_output: atm.thermal_flux_planet = thermal
 
         #only need to return relative flux if not a browndwarf calculation
-        if radius_star != 'nostar':
+        if ((radius_star != 'nostar') & (not np.isnan(atm.planet.radius))):
             fpfs_thermal = thermal/(opacityclass.unshifted_stellar_spec)*(atm.planet.radius/radius_star)**2.0
             returns['fpfs_thermal'] = fpfs_thermal
-            if full_output: atm.thermal_flux_planet = thermal
-
         elif np.isnan(atm.planet.radius): 
             returns['fpfs_thermal'] = ['Planet Radius not supplied. If you want fpfs, add it to `gravity` function with Mass.']
 
+    #return total if users have calculated both thermal and reflected 
     if (('fpfs_reflected' in list(returns.keys())) & ('fpfs_thermal' in list(returns.keys()))): 
-        if (not isinstance(returns['fpfs_reflected'],str)):
+        if ((not isinstance(returns['fpfs_reflected'],list)) & (not isinstance(returns['fpfs_thermal'],list))) :
             returns['fpfs_total'] = returns['fpfs_thermal'] + returns['fpfs_reflected']
 
     if full_output: 
@@ -1312,7 +1314,7 @@ class inputs():
             #loop through all cloud layers and set cloud profile
             for ig, iw, io , ip, idp in zip(g0,w0,opd,p,dp):
                 maxp = 10**ip #max pressure is bottom of cloud deck
-                minp = 10**(ip)-10**(idp) #min pressure 
+                minp = 10**(ip-idp) #min pressure 
                 df.loc[((df['pressure'] >= minp) & (df['pressure'] <= maxp)),'g0']= ig
                 df.loc[((df['pressure'] >= minp) & (df['pressure'] <= maxp)),'w0']= iw
                 df.loc[((df['pressure'] >= minp) & (df['pressure'] <= maxp)),'opd']= io
