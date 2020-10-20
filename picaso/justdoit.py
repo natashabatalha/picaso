@@ -624,7 +624,7 @@ class inputs():
 
     def star(self, opannection,temp=None, metal=None, logg=None ,radius = None, radius_unit=None,
         semi_major=None, semi_major_unit = None,
-        database='ck04models',filename=None, w_units=None, f_units=None):
+        database='ck04models',filename=None, w_unit=None, f_unit=None):
         """
         Get the stellar spectrum using pysynphot and interpolate onto a much finer grid than the 
         planet grid. 
@@ -634,27 +634,33 @@ class inputs():
         opannection : class picaso.RetrieveOpacities
             This is the opacity class and it's needed to get the correct wave info and raman scattering cross sections
         temp : float 
-            Teff of the stellar model 
+            (Optional) Teff of the stellar model if using the stellar database feature. 
+            Not needed for filename option. 
         metal : float 
-            Metallicity of the stellar model 
+            (Optional) Metallicity of the stellar model if using the stellar database feature. 
+            Not needed for filename option. 
         logg : float 
-            Logg cgs of the stellar model
+            (Optional) Logg cgs of the stellar model if using the stellar database feature. 
+            Not needed for filename option. 
         radius : float 
-            Radius of the star 
+            (Optional) Radius of the star. Only needed as input if you want relative flux units (Fp/Fs)
         radius_unit : astropy.unit
-            Any astropy unit (e.g. `radius_unit=astropy.unit.Unit("R_sun")`)
+            (Optional) Any astropy unit (e.g. `radius_unit=astropy.unit.Unit("R_sun")`)
         semi_major : float 
-            (Optional) Semi major axis of the planet. Used to compute fp/fs for albedo calculations. 
+            (Optional) Semi major axis of the planet. Only needed to compute fp/fs for albedo calculations. 
         semi_major_unit : astropy.unit 
             (Optional) Any astropy unit (e.g. `radius_unit=astropy.unit.Unit("au")`)
         database : str 
             (Optional)The database to pull stellar spectrum from. See documentation for pysynphot. 
         filename : str 
-            (Optional) Upload your own stellar spectrum. File format = two column white space (wave, flux)
-        wunits : str 
-            (Optional) Used for stellar file wave units 
-        funits : str 
-            (Optional) Used for stellar file flux units 
+            (Optional) Upload your own stellar spectrum. File format = two column white space (wave, flux). 
+            Must specify w_unit and f_unit 
+        w_unit : str 
+            (Optional) Used for stellar file wave units. Needed for filename input.
+            Pick: 'um', 'nm', 'cm', 'hz', or 'Angs'
+        f_unit : str 
+            (Optional) Used for stellar file flux units. Needed for filename input.
+            Pick: 'FLAM' or 'Jy' or 'erg/cm2/s/Hz'
         """
         #most people will just upload their thing from a database
         if (not isinstance(radius, type(None))):
@@ -672,15 +678,8 @@ class inputs():
             semi_major = np.nan
             semi_major_unit = "Semi Major axis not supplied"        
 
-        if (not isinstance(temp, type(None))):
-            sp = psyn.Icat(database, temp, metal, logg)
-            sp.convert("um")
-            sp.convert('flam') 
-            wno_star = 1e4/sp.wave[::-1] #convert to wave number and flip
-            flux_star = sp.flux[::-1]*1e8    #flip here and convert to ergs/cm3/s to get correct order
-
-        #but you can also upload a stellar spec of your own 
-        elif (not isinstance(filename,type(None))):
+        #upload from file  
+        if (not isinstance(filename,type(None))):
             star = np.genfromtxt(filename, dtype=(float, float), names='w, f')
             flux = star['f']
             wave = star['w']
@@ -718,7 +717,16 @@ class inputs():
             sp.convert('flam') #ergs/cm2/s/ang
             wno_star = 1e4/sp.wave[::-1] #convert to wave number and flip
             flux_star = sp.flux[::-1]*1e8 #flip and convert to ergs/cm3/s here to get correct order         
+        
 
+        elif ((not isinstance(temp, type(None))) & (not isinstance(metal, type(None))) & (not isinstance(logg, type(None)))):
+            sp = psyn.Icat(database, temp, metal, logg)
+            sp.convert("um")
+            sp.convert('flam') 
+            wno_star = 1e4/sp.wave[::-1] #convert to wave number and flip
+            flux_star = sp.flux[::-1]*1e8    #flip here and convert to ergs/cm3/s to get correct order
+        else: 
+            raise Exception("Must enter 1) filename,w_unit & f_unit OR 2)temp, metal & logg ")
 
         wno_planet = opannection.wno
         max_shift = np.max(wno_planet)+6000 #this 6000 is just the max raman shift we could have 
