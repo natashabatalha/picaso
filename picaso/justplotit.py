@@ -224,9 +224,6 @@ def photon_attenuation(full_output, at_tau=0.5,return_output=False, **kwargs):
     ind_cld = find_nearest_2d(taucld, at_tau)
     ind_ray = find_nearest_2d(tauray, at_tau)
 
-    #if (len(taucld[taucld == 0]) == taucld.shape[0]*taucld.shape[1]) : 
-    #   ind_cld = ind_cld*0 + shape[0]
-
     at_pressures_gas = np.zeros(shape[1])
     at_pressures_cld = np.zeros(shape[1])
     at_pressures_ray = np.zeros(shape[1])
