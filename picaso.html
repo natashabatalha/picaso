@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>The Code &mdash; picaso 2.0 documentation</title>
+  <title>The Code &mdash; picaso 2.1 documentation</title>
   
 
   
@@ -38,7 +38,7 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="SQLITE Tutorial" href="notebooks/11_Sqlite3Tutorial.html" /> 
+    <link rel="prev" title="FAQs" href="notebooks/FAQs.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -62,7 +62,7 @@
             
             
               <div class="version">
-                2.0
+                2.1
               </div>
             
           
@@ -264,6 +264,20 @@ flux calculation</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="picaso.atmsetup.ATMSETUP.get_altitude">
+<code class="sig-name descname">get_altitude</code><span class="sig-paren">(</span><em class="sig-param">p_reference=1</em>, <em class="sig-param">constant_gravity=False</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.atmsetup.ATMSETUP.get_altitude" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates z and gravity</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p_reference</strong> (<em>float</em>) – Reference pressure for radius. (bars)</p></li>
+<li><p><strong>constant_gravity</strong> (<em>bool</em>) – creates zero altitude dependence in the height</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
 <dt id="picaso.atmsetup.ATMSETUP.get_clouds">
 <code class="sig-name descname">get_clouds</code><span class="sig-paren">(</span><em class="sig-param">wno</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.atmsetup.ATMSETUP.get_clouds" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get cloud properties from .cld input returned from eddysed. The eddysed file should have the following specifications</p>
@@ -273,15 +287,15 @@ flux calculation</p>
 <li><p>Has to have values for pressure levels (N) and wwavenumbers (M). The row order should go:</p></li>
 </ol>
 <p>level wavenumber opd w0 g0
-1.       1.   … . .
-1.       2.   … . .
-1.       3.   … . .
-.         .     … . .
-.         .     … . .
-1.       M.   … . .
-2.       1.   … . .
-.         .     … . .
-N.       .      … . .</p>
+1.   1.   … . .
+1.   2.   … . .
+1.   3.   … . .
+.     . … . .
+.     . … . .
+1.   M.   … . .
+2.   1.   … . .
+.     . … . .
+N.   .  … . .</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>The order of the rows is very important because each column will be transformed
@@ -721,7 +735,7 @@ and descriptive properties of the elements are stored as instance attributes.</p
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>t</strong> (<em>array</em><em>,</em><em>float</em>) – Temperature (K)</p></li>
-<li><p><strong>w</strong> (<em>array</em><em>, </em><em>float</em>) – Wavelength (cgs)</p></li>
+<li><p><strong>w</strong> (<em>array</em><em>, </em><em>float</em>) – Wavelength (cm)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -733,9 +747,9 @@ and descriptive properties of the elements are stored as instance attributes.</p
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="function">
 <dt id="picaso.fluxes.get_flux_toon">
-<code class="sig-prename descclassname">picaso.fluxes.</code><code class="sig-name descname">get_flux_toon</code><a class="headerlink" href="#picaso.fluxes.get_flux_toon" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">picaso.fluxes.</code><code class="sig-name descname">get_flux_toon</code><span class="sig-paren">(</span><em class="sig-param">nlevel</em>, <em class="sig-param">wno</em>, <em class="sig-param">nwno</em>, <em class="sig-param">tau</em>, <em class="sig-param">dtau</em>, <em class="sig-param">w0</em>, <em class="sig-param">cosbar</em>, <em class="sig-param">surf_reflect</em>, <em class="sig-param">ubar0</em>, <em class="sig-param">F0PI</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.fluxes.get_flux_toon" title="Permalink to this definition">¶</a></dt>
 <dd><div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>Discontinued function. See <cite>get_flux_geom_1d</cite> and <cite>get_flux_geom_3d</cite>.</p>
@@ -777,7 +791,7 @@ Dimensions=# layer by # wave</p></li>
 </div>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">flux_plus</span><span class="p">,</span> <span class="n">flux_minus</span>  <span class="o">=</span> <span class="n">fluxes</span><span class="o">.</span><span class="n">get_flux_toon</span><span class="p">(</span><span class="n">atm</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">nlevel</span><span class="p">,</span> <span class="n">wno</span><span class="p">,</span><span class="n">nwno</span><span class="p">,</span>
-<span class="go">                                                                                                tau_dedd,dtau_dedd, w0_dedd, cosb_dedd, surf_reflect, ubar0, F0PI)</span>
+<span class="go">                                                tau_dedd,dtau_dedd, w0_dedd, cosb_dedd, surf_reflect, ubar0, F0PI)</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -839,6 +853,7 @@ of forward to back scattering (A + B * gcosb^C), Default is : 1 - gcosb^2</p></l
 Remember, the output of A &amp; M code does not separate back and forward scattering.</p></li>
 <li><p><strong>constant_forward</strong> (<em>float</em>) – (Optional), If using the TTHG phase function. Must specify the assymetry of forward scatterer.
 Remember, the output of A &amp; M code does not separate back and forward scattering.</p></li>
+<li><p><strong>tridiagonal</strong> (<em>int</em>) – 0 for tridiagonal, 1 for pentadiagonal</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -910,6 +925,61 @@ of forward to back scattering (A + B * gcosb^C), Default is : 1 - gcosb^2</p></l
 Remember, the output of A &amp; M code does not separate back and forward scattering.</p></li>
 <li><p><strong>constant_forward</strong> (<em>float</em>) – (Optional), If using the TTHG phase function. Must specify the assymetry of forward scatterer.
 Remember, the output of A &amp; M code does not separate back and forward scattering.</p></li>
+<li><p><strong>tridiagonal</strong> (<em>int</em>) – 0 for tridiagonal, 1 for pentadiagonal</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>intensity at the top of the atmosphere for all the different ubar1 and ubar2</em></p></li>
+<li><p><em>To Do</em></p></li>
+<li><p><em>—–</em></p></li>
+<li><p><em>- F0PI Solar flux shouldn’t always be 1.. Follow up to make sure that this isn’t a bad</em> – hardwiring to solar, despite “relative albedo”</p></li>
+<li><p><em>- take delta eddington option out of fluxes and move it all over to optics</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="picaso.fluxes.get_reflected_new">
+<code class="sig-prename descclassname">picaso.fluxes.</code><code class="sig-name descname">get_reflected_new</code><span class="sig-paren">(</span><em class="sig-param">nlevel</em>, <em class="sig-param">nwno</em>, <em class="sig-param">numg</em>, <em class="sig-param">numt</em>, <em class="sig-param">dtau</em>, <em class="sig-param">tau</em>, <em class="sig-param">w0</em>, <em class="sig-param">cosb</em>, <em class="sig-param">gcos2</em>, <em class="sig-param">ftau_cld</em>, <em class="sig-param">ftau_ray</em>, <em class="sig-param">dtau_og</em>, <em class="sig-param">tau_og</em>, <em class="sig-param">w0_og</em>, <em class="sig-param">cosb_og</em>, <em class="sig-param">surf_reflect</em>, <em class="sig-param">ubar0</em>, <em class="sig-param">ubar1</em>, <em class="sig-param">cos_theta</em>, <em class="sig-param">F0PI</em>, <em class="sig-param">single_phase</em>, <em class="sig-param">multi_phase</em>, <em class="sig-param">frac_a</em>, <em class="sig-param">frac_b</em>, <em class="sig-param">frac_c</em>, <em class="sig-param">constant_back</em>, <em class="sig-param">constant_forward</em>, <em class="sig-param">dim</em>, <em class="sig-param">stream</em>, <em class="sig-param">print_time</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.fluxes.get_reflected_new" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes rooney fluxes given tau and everything is 3 dimensional. This is the exact same function
+as <cite>get_flux_geom_1d</cite> but is kept separately so we don’t have to do unecessary indexing for
+retrievals.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nlevel</strong> (<em>int</em>) – Number of levels in the model</p></li>
+<li><p><strong>nwno</strong> (<em>int</em>) – Number of wave points</p></li>
+<li><p><strong>numg</strong> (<em>int</em>) – Number of Gauss angles</p></li>
+<li><p><strong>numt</strong> (<em>int</em>) – Number of Chebyshev angles</p></li>
+<li><p><strong>dtau_3d</strong> (<em>ndarray of float</em>) – This is the opacity contained within each individual layer (defined at midpoints of “levels”)
+WITHOUT D-Eddington Correction
+Dimensions=# layer by # wave</p></li>
+<li><p><strong>tau_3d</strong> (<em>ndarray of float</em>) – This is the cumulative summed opacity
+WITHOUT D-Eddington Correction
+Dimensions=# level by # wave</p></li>
+<li><p><strong>w0_3d</strong> (<em>ndarray of float</em>) – This is the single scattering albedo, from scattering, clouds, raman, etc
+WITHOUT D-Eddington Correction
+Dimensions=# layer by # wave</p></li>
+<li><p><strong>cosb_3d</strong> (<em>ndarray of float</em>) – This is the asymmetry factor
+WITHOUT D-Eddington Correction
+Dimensions=# layer by # wave</p></li>
+<li><p><strong>gcos2_3d</strong> (<em>ndarray of float</em>) – Parameter that allows us to directly include Rayleigh scattering
+= 0.5*tau_rayleigh/(tau_rayleigh + tau_cloud)</p></li>
+<li><p><strong>dtau_og_3d</strong> (<em>ndarray of float</em>) – This is the opacity contained within each individual layer (defined at midpoints of “levels”)
+WITHOUT the delta eddington correction, if it was specified by user
+Dimensions=# layer by # wave</p></li>
+<li><p><strong>tau_og_3d</strong> (<em>ndarray of float</em>) – This is the cumulative summed opacity
+WITHOUT the delta eddington correction, if it was specified by user
+Dimensions=# level by # wave</p></li>
+<li><p><strong>w0_og_3d</strong> (<em>ndarray of float</em>) – Same as w0 but WITHOUT the delta eddington correction, if it was specified by user</p></li>
+<li><p><strong>cosb_og_3d</strong> (<em>ndarray of float</em>) – Same as cosbar buth WITHOUT the delta eddington correction, if it was specified by user</p></li>
+<li><p><strong>surf_reflect</strong> (<em>float</em>) – Surface reflectivity</p></li>
+<li><p><strong>ubar0</strong> (<em>ndarray of float</em>) – matrix of cosine of the incident angle from geometric.json</p></li>
+<li><p><strong>ubar1</strong> (<em>ndarray of float</em>) – matrix of cosine of the observer angles</p></li>
+<li><p><strong>F0PI</strong> (<em>array</em>) – Downward incident solar radiation</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -960,6 +1030,7 @@ that is sometimes included in reflected light calculations.</p></li>
 <li><p><strong>ubar1</strong> (<em>numpy.ndarray</em>) – This is a matrix of ng by nt. This describes the outgoing incident angles and is generally
 computed in <cite>picaso.disco</cite></p></li>
 <li><p><strong>surf_reflect</strong> (<em>numpy.ndarray</em>) – Surface reflectivity as a function of wavenumber.</p></li>
+<li><p><strong>tridiagonal</strong> (<em>int</em>) – 0 for tridiagonal, 1 for pentadiagonal</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1009,6 +1080,7 @@ This 4d matrix has dimensions [nlevel, nwave,ngangle,ntangle].</p></li>
 <li><p><strong>plevel</strong> (<em>numpy.ndarray</em>) – Pressure for each level (not layer, which is midpoints). CGS units (dyne/cm2)</p></li>
 <li><p><strong>ubar1</strong> (<em>numpy.ndarray</em>) – This is a matrix of ng by nt. This describes the outgoing incident angles and is generally
 computed in <cite>picaso.disco</cite></p></li>
+<li><p><strong>tridiagonal</strong> (<em>int</em>) – Zero for tridiagonal solver. 1 for pentadiagonal (not yet implemented)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1022,10 +1094,198 @@ numg x numt x nwno</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="picaso.fluxes.get_transit_1d">
+<code class="sig-prename descclassname">picaso.fluxes.</code><code class="sig-name descname">get_transit_1d</code><a class="headerlink" href="#picaso.fluxes.get_transit_1d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Routine to get the transmission spectrum</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>z</strong> (<em>float</em><em>, </em><em>array</em>) – Altitude in decreasing order (cm)</p></li>
+<li><p><strong>dz</strong> (<em>float</em><em>, </em><em>array</em>) – length of each atmospheric layer</p></li>
+<li><p><strong>nlevel</strong> (<em>int</em>) – Number of levels</p></li>
+<li><p><strong>nwno</strong> (<em>int</em>) – Number of wavelength points</p></li>
+<li><p><strong>rstar</strong> (<em>float</em>) – Radius of star (cm)</p></li>
+<li><p><strong>mmw</strong> (<em>float</em><em>, </em><em>array</em>) – Mean molecular weight</p></li>
+<li><p><strong>k_b</strong> (<em>float</em>) – Boltzman constant cgs</p></li>
+<li><p><strong>amu</strong> (<em>float</em>) – Atomic mass units cgs</p></li>
+<li><p><strong>player</strong> (<em>float</em><em>, </em><em>array</em>) – Pressure at layers (dyn/cm2)</p></li>
+<li><p><strong>tlayer</strong> (<em>float</em><em>, </em><em>array</em>) – Temperature at layers (K)</p></li>
+<li><p><strong>colden</strong> (<em>float</em><em>, </em><em>array</em>) – Column density conputed in atmsetup.get_column_density()</p></li>
+<li><p><strong>DTAU</strong> (<em>float</em><em>, </em><em>array</em>) – Matrix of summed tau opacities from optics. This is
+TAUGAS + TAURAY + TAUCLD</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Rp**2 /Rs**2 as a function of wavelength</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="picaso.fluxes.get_transit_3d">
+<code class="sig-prename descclassname">picaso.fluxes.</code><code class="sig-name descname">get_transit_3d</code><span class="sig-paren">(</span><em class="sig-param">nlevel</em>, <em class="sig-param">nwno</em>, <em class="sig-param">radius</em>, <em class="sig-param">gravity</em>, <em class="sig-param">rstar</em>, <em class="sig-param">mass</em>, <em class="sig-param">mmw</em>, <em class="sig-param">k_b</em>, <em class="sig-param">G</em>, <em class="sig-param">amu</em>, <em class="sig-param">p_reference</em>, <em class="sig-param">plevel</em>, <em class="sig-param">tlevel</em>, <em class="sig-param">player</em>, <em class="sig-param">tlayer</em>, <em class="sig-param">colden</em>, <em class="sig-param">DTAU</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.fluxes.get_transit_3d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Routine to get the 3D transmission spectrum</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="picaso.fluxes.numba_cumsum">
 <code class="sig-prename descclassname">picaso.fluxes.</code><code class="sig-name descname">numba_cumsum</code><a class="headerlink" href="#picaso.fluxes.numba_cumsum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to compute cumsum along axis=0 to bypass numba not allowing kwargs in
 cumsum</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="picaso.fluxes.pent_diag_solve">
+<code class="sig-prename descclassname">picaso.fluxes.</code><code class="sig-name descname">pent_diag_solve</code><span class="sig-paren">(</span><em class="sig-param">l</em>, <em class="sig-param">A</em>, <em class="sig-param">B</em>, <em class="sig-param">C</em>, <em class="sig-param">D</em>, <em class="sig-param">E</em>, <em class="sig-param">F</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.fluxes.pent_diag_solve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pentadiagonal Matrix solver</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>A</strong> (<em>array</em><em> or </em><em>list</em>) – </p></li>
+<li><p><strong>B</strong> (<em>array</em><em> or </em><em>list</em>) – </p></li>
+<li><p><strong>C</strong> (<em>array</em><em> or </em><em>list</em>) – </p></li>
+<li><p><strong>D</strong> (<em>array</em><em> or </em><em>list</em>) – </p></li>
+<li><p><strong>E</strong> (<em>array</em><em> or </em><em>list</em>) – </p></li>
+<li><p><strong>F</strong> (<em>array</em><em> or </em><em>list</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Solution, x</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="picaso.fluxes.setup_2_stream">
+<code class="sig-prename descclassname">picaso.fluxes.</code><code class="sig-name descname">setup_2_stream</code><span class="sig-paren">(</span><em class="sig-param">nlayer</em>, <em class="sig-param">nwno</em>, <em class="sig-param">W0</em>, <em class="sig-param">b_top</em>, <em class="sig-param">b_surface</em>, <em class="sig-param">surf_reflect</em>, <em class="sig-param">F0PI</em>, <em class="sig-param">ubar0</em>, <em class="sig-param">dtau</em>, <em class="sig-param">tau</em>, <em class="sig-param">w_single</em>, <em class="sig-param">w_multi</em>, <em class="sig-param">ubar1</em>, <em class="sig-param">P</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.fluxes.setup_2_stream" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nlayer</strong> (<em>int</em>) – number of layers in the model</p></li>
+<li><p><strong>nwno</strong> (<em>int</em>) – number of wavelength points ## need to include this</p></li>
+<li><p><strong>W0</strong> (<em>int</em>) – single scattering albedo</p></li>
+<li><p><strong>b_top</strong> (<em>array</em>) – The diffuse radiation into the model at the top of the atmosphere</p></li>
+<li><p><strong>b_surface</strong> (<em>arra</em>) – The diffuse radiation into the model at the bottom. Includes emission, reflection
+of the unattenuated portion of the direct beam</p></li>
+<li><p><strong>surf_reflect</strong> (<em>array</em>) – Surface reflectivity</p></li>
+<li><p><strong>F0PI</strong> (<em>int</em>) – solar radiation</p></li>
+<li><p><strong>ubar0</strong> (<em>array</em>) – cosine of solar incident angle</p></li>
+<li><p><strong>dtau</strong> (<em>array</em>) – Opacity per layer</p></li>
+<li><p><strong>g</strong> (<em>array</em>) – asymmety parameters</p></li>
+<li><p><strong>P</strong> (<em>array</em>) – Legendre polynomials</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="picaso.fluxes.setup_2_stream_scaled">
+<code class="sig-prename descclassname">picaso.fluxes.</code><code class="sig-name descname">setup_2_stream_scaled</code><span class="sig-paren">(</span><em class="sig-param">nlayer</em>, <em class="sig-param">nwno</em>, <em class="sig-param">W0</em>, <em class="sig-param">b_top</em>, <em class="sig-param">b_surface</em>, <em class="sig-param">surf_reflect</em>, <em class="sig-param">F0PI</em>, <em class="sig-param">ubar0</em>, <em class="sig-param">dtau</em>, <em class="sig-param">tau</em>, <em class="sig-param">w_single</em>, <em class="sig-param">w_multi</em>, <em class="sig-param">ubar1</em>, <em class="sig-param">P</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.fluxes.setup_2_stream_scaled" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nlayer</strong> (<em>int</em>) – number of layers in the model</p></li>
+<li><p><strong>nwno</strong> (<em>int</em>) – number of wavelength points ## need to include this</p></li>
+<li><p><strong>W0</strong> (<em>int</em>) – single scattering albedo</p></li>
+<li><p><strong>b_top</strong> (<em>array</em>) – The diffuse radiation into the model at the top of the atmosphere</p></li>
+<li><p><strong>b_surface</strong> (<em>arra</em>) – The diffuse radiation into the model at the bottom. Includes emission, reflection
+of the unattenuated portion of the direct beam</p></li>
+<li><p><strong>surf_reflect</strong> (<em>array</em>) – Surface reflectivity</p></li>
+<li><p><strong>F0PI</strong> (<em>int</em>) – solar radiation</p></li>
+<li><p><strong>ubar0</strong> (<em>array</em>) – cosine of solar incident angle</p></li>
+<li><p><strong>dtau</strong> (<em>array</em>) – Opacity per layer</p></li>
+<li><p><strong>g</strong> (<em>array</em>) – asymmety parameters</p></li>
+<li><p><strong>P</strong> (<em>array</em>) – Legendre polynomials</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="picaso.fluxes.setup_4_stream">
+<code class="sig-prename descclassname">picaso.fluxes.</code><code class="sig-name descname">setup_4_stream</code><span class="sig-paren">(</span><em class="sig-param">nlayer</em>, <em class="sig-param">nwno</em>, <em class="sig-param">W0</em>, <em class="sig-param">b_top</em>, <em class="sig-param">b_surface</em>, <em class="sig-param">surf_reflect</em>, <em class="sig-param">F0PI</em>, <em class="sig-param">ubar0</em>, <em class="sig-param">dtau</em>, <em class="sig-param">tau</em>, <em class="sig-param">w_single</em>, <em class="sig-param">w_multi</em>, <em class="sig-param">ubar1</em>, <em class="sig-param">P</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.fluxes.setup_4_stream" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nlayer</strong> (<em>int</em>) – number of layers in the model</p></li>
+<li><p><strong>nwno</strong> (<em>int</em>) – number of wavelength points ## need to include this</p></li>
+<li><p><strong>W0</strong> (<em>int</em>) – single scattering albedo</p></li>
+<li><p><strong>b_top</strong> (<em>array</em>) – The diffuse radiation into the model at the top of the atmosphere</p></li>
+<li><p><strong>b_surface</strong> (<em>array</em>) – The diffuse radiation into the model at the bottom. Includes emission, reflection
+of the unattenuated portion of the direct beam</p></li>
+<li><p><strong>surf_reflect</strong> (<em>array</em>) – Surface reflectivity</p></li>
+<li><p><strong>F0PI</strong> (<em>int</em>) – solar radiation</p></li>
+<li><p><strong>ubar0</strong> (<em>array</em>) – cosine of solar incident angle</p></li>
+<li><p><strong>dtau</strong> (<em>array</em>) – Opacity per layer</p></li>
+<li><p><strong>g</strong> (<em>array</em>) – asymmetry parameters</p></li>
+<li><p><strong>P</strong> (<em>array</em>) – Legendre polynomials</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="picaso.fluxes.setup_4_stream_scaled">
+<code class="sig-prename descclassname">picaso.fluxes.</code><code class="sig-name descname">setup_4_stream_scaled</code><span class="sig-paren">(</span><em class="sig-param">nlayer</em>, <em class="sig-param">nwno</em>, <em class="sig-param">W0</em>, <em class="sig-param">b_top</em>, <em class="sig-param">b_surface</em>, <em class="sig-param">surf_reflect</em>, <em class="sig-param">F0PI</em>, <em class="sig-param">ubar0</em>, <em class="sig-param">dtau</em>, <em class="sig-param">tau</em>, <em class="sig-param">w_single</em>, <em class="sig-param">w_multi</em>, <em class="sig-param">ubar1</em>, <em class="sig-param">P</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.fluxes.setup_4_stream_scaled" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nlayer</strong> (<em>int</em>) – number of layers in the model</p></li>
+<li><p><strong>nwno</strong> (<em>int</em>) – number of wavelength points ## need to include this</p></li>
+<li><p><strong>W0</strong> (<em>int</em>) – single scattering albedo</p></li>
+<li><p><strong>b_top</strong> (<em>array</em>) – The diffuse radiation into the model at the top of the atmosphere</p></li>
+<li><p><strong>b_surface</strong> (<em>array</em>) – The diffuse radiation into the model at the bottom. Includes emission, reflection
+of the unattenuated portion of the direct beam</p></li>
+<li><p><strong>surf_reflect</strong> (<em>array</em>) – Surface reflectivity</p></li>
+<li><p><strong>F0PI</strong> (<em>int</em>) – solar radiation</p></li>
+<li><p><strong>ubar0</strong> (<em>array</em>) – cosine of solar incident angle</p></li>
+<li><p><strong>dtau</strong> (<em>array</em>) – Opacity per layer</p></li>
+<li><p><strong>g</strong> (<em>array</em>) – asymmetry parameters</p></li>
+<li><p><strong>P</strong> (<em>array</em>) – Legendre polynomials</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="picaso.fluxes.setup_pent_diag">
+<code class="sig-prename descclassname">picaso.fluxes.</code><code class="sig-name descname">setup_pent_diag</code><span class="sig-paren">(</span><em class="sig-param">nlayer</em>, <em class="sig-param">nwno</em>, <em class="sig-param">c_plus_up</em>, <em class="sig-param">c_minus_up</em>, <em class="sig-param">c_plus_down</em>, <em class="sig-param">c_minus_down</em>, <em class="sig-param">b_top</em>, <em class="sig-param">b_surface</em>, <em class="sig-param">surf_reflect</em>, <em class="sig-param">gama</em>, <em class="sig-param">dtau</em>, <em class="sig-param">exptrm_positive</em>, <em class="sig-param">exptrm_minus</em>, <em class="sig-param">g1</em>, <em class="sig-param">g2</em>, <em class="sig-param">exptrm</em>, <em class="sig-param">lamda</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.fluxes.setup_pent_diag" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nlayer</strong> (<em>int</em>) – number of layers in the model</p></li>
+<li><p><strong>nwno</strong> (<em>int</em>) – number of wavelength points</p></li>
+<li><p><strong>c_plus_up</strong> (<em>array</em>) – c-plus evaluated at the top of the atmosphere</p></li>
+<li><p><strong>c_minus_up</strong> (<em>array</em>) – c_minus evaluated at the top of the atmosphere</p></li>
+<li><p><strong>c_plus_down</strong> (<em>array</em>) – c_plus evaluated at the bottom of the atmosphere</p></li>
+<li><p><strong>c_minus_down</strong> (<em>array</em>) – c_minus evaluated at the bottom of the atmosphere</p></li>
+<li><p><strong>b_top</strong> (<em>array</em>) – The diffuse radiation into the model at the top of the atmosphere</p></li>
+<li><p><strong>b_surface</strong> (<em>array</em>) – The diffuse radiation into the model at the bottom. Includes emission, reflection
+of the unattenuated portion of the direct beam</p></li>
+<li><p><strong>surf_reflect</strong> (<em>array</em>) – Surface reflectivity</p></li>
+<li><p><strong>g1</strong> (<em>array</em>) – table 1 toon et al 1989</p></li>
+<li><p><strong>g2</strong> (<em>array</em>) – table 1 toon et al 1989</p></li>
+<li><p><strong>g3</strong> (<em>array</em>) – table 1 toon et al 1989</p></li>
+<li><p><strong>lamba</strong> (<em>array</em>) – Eqn 21 toon et al 1989</p></li>
+<li><p><strong>gama</strong> (<em>array</em>) – Eqn 22 toon et al 1989</p></li>
+<li><p><strong>dtau</strong> (<em>array</em>) – Opacity per layer</p></li>
+<li><p><strong>exptrm_positive</strong> (<em>array</em>) – Eqn 44, expoential terms needed for tridiagonal rotated layered, clipped at 35</p></li>
+<li><p><strong>exptrm_minus</strong> (<em>array</em>) – Eqn 44, expoential terms needed for tridiagonal rotated layered, clipped at 35</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>coefficient of the positive exponential term</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>array</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
@@ -1083,6 +1343,11 @@ of the unattenuated portion of the direct beam</p></li>
 <code class="sig-prename descclassname">picaso.fluxes.</code><code class="sig-name descname">slice_lt</code><a class="headerlink" href="#picaso.fluxes.slice_lt" title="Permalink to this definition">¶</a></dt>
 <dd><p>Funciton to replace values with upper or lower limit</p>
 </dd></dl>
+
+<dl class="function">
+<dt id="picaso.fluxes.solve_4_stream">
+<code class="sig-prename descclassname">picaso.fluxes.</code><code class="sig-name descname">solve_4_stream</code><span class="sig-paren">(</span><em class="sig-param">M</em>, <em class="sig-param">B</em>, <em class="sig-param">A</em>, <em class="sig-param">N</em>, <em class="sig-param">F</em>, <em class="sig-param">G</em>, <em class="sig-param">A_int</em>, <em class="sig-param">N_int</em>, <em class="sig-param">stream</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.fluxes.solve_4_stream" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="attribute">
 <dt id="picaso.fluxes.tri_diag_solve">
@@ -1175,6 +1440,26 @@ e.g. {‘wmin’:0.3, ‘wmax’:1, ‘R’:5000} for opacity grid</p></li>
 <dt id="picaso.justdoit.HJ_pt_3d">
 <code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">HJ_pt_3d</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.HJ_pt_3d" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to get Jupiter’s PT profile</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="picaso.justdoit.all_planets">
+<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">all_planets</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.all_planets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load all planets from <a class="reference external" href="https://exoplanetarchive.ipac.caltech.edu">https://exoplanetarchive.ipac.caltech.edu</a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="picaso.justdoit.get_targets">
+<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">get_targets</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.get_targets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to grab available targets</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Dataframe from Exoplanet Archive</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="class">
@@ -1292,7 +1577,7 @@ pressure profile.</p>
 
 <dl class="method">
 <dt>
-<code class="sig-name descname">approx</code><span class="sig-paren">(</span><em class="sig-param">single_phase='TTHG_ray', multi_phase='N=2', delta_eddington=True, raman='pollack', tthg_frac=[1, -1, 2], tthg_back=-0.5, tthg_forward=1</em><span class="sig-paren">)</span></dt>
+<code class="sig-name descname">approx</code><span class="sig-paren">(</span><em class="sig-param">single_phase='TTHG_ray', multi_phase='N=2', delta_eddington=True, raman='pollack', tthg_frac=[1, -1, 2], tthg_back=-0.5, tthg_forward=1, p_reference=1, method='Toon', stream=2</em><span class="sig-paren">)</span></dt>
 <dd><p>This function sets all the default approximations in the code. It transforms the string specificatons
 into a number so that they can be used in numba nopython routines.</p>
 <p>For <cite>str</cite> cases such as <cite>TTHG_ray</cite> users see all the options by using the function <cite>single_phase_options</cite>
@@ -1313,6 +1598,14 @@ See eqn. 6 in picaso paper</p>
 <dt>tthg_back<span class="classifier">float</span></dt><dd><p>Back scattering asymmetry factor gf = g_bar*tthg_back</p>
 </dd>
 <dt>tthg_forward<span class="classifier">float</span></dt><dd><p>Forward scattering asymmetry factor gb = g_bar * tthg_forward</p>
+</dd>
+<dt>p_reference<span class="classifier">float</span></dt><dd><p>Reference pressure (bars) This is an arbitrary pressure that
+corresponds do the user’s input of radius. Usually something “at depth”
+around 1-10 bars.</p>
+</dd>
+<dt>method<span class="classifier">str</span></dt><dd><p>Toon (‘Toon’) or spherical harmonics (‘SH’).</p>
+</dd>
+<dt>stream<span class="classifier">int</span></dt><dd><p>Two stream or four stream (options are 2 or 4). For 4 stream need to set method=’SH’</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1371,24 +1664,22 @@ Must contain pressure and at least one molecule</p></li>
 
 <dl class="method">
 <dt id="picaso.justdoit.inputs.channon_grid_high">
-<code class="sig-name descname">channon_grid_high</code><span class="sig-paren">(</span><em class="sig-param">filename='/Users/nbatalh1/Documents/codes/PICASO/picaso/reference/chemistry/ChannonGrid.csv'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.channon_grid_high" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">channon_grid_high</code><span class="sig-paren">(</span><em class="sig-param">filename=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.channon_grid_high" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="picaso.justdoit.inputs.channon_grid_low">
-<code class="sig-name descname">channon_grid_low</code><span class="sig-paren">(</span><em class="sig-param">filename='/Users/nbatalh1/Documents/codes/PICASO/picaso/reference/chemistry/visscher_abunds_m+0.0_co1.0'</em>, <em class="sig-param">interp_window=11</em>, <em class="sig-param">interp_poly=2</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.channon_grid_low" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">channon_grid_low</code><span class="sig-paren">(</span><em class="sig-param">filename=None</em>, <em class="sig-param">interp_window=11</em>, <em class="sig-param">interp_poly=2</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.channon_grid_low" title="Permalink to this definition">¶</a></dt>
 <dd><p>Interpolate from visscher grid</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="picaso.justdoit.inputs.chemeq">
-<code class="sig-name descname">chemeq</code><span class="sig-paren">(</span><em class="sig-param">CtoO</em>, <em class="sig-param">Met</em>, <em class="sig-param">P=None</em>, <em class="sig-param">T=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.chemeq" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">chemeq</code><span class="sig-paren">(</span><em class="sig-param">CtoO</em>, <em class="sig-param">Met</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.chemeq" title="Permalink to this definition">¶</a></dt>
 <dd><p>This interpolates from a precomputed grid of CEA runs (run by M.R. Line)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>P</strong> (<em>array</em>) – Pressure (bars)</p></li>
-<li><p><strong>T</strong> (<em>array</em>) – Temperature (K)</p></li>
 <li><p><strong>CtoO</strong> (<em>float</em>) – C to O ratio (solar = 0.55)</p></li>
 <li><p><strong>Met</strong> (<em>float</em>) – Metallicity relative to solar (solar = 1)</p></li>
 </ul>
@@ -1524,7 +1815,7 @@ of inverse cm, and bars.</p></li>
 
 <dl class="method">
 <dt id="picaso.justdoit.inputs.guillot_pt">
-<code class="sig-name descname">guillot_pt</code><span class="sig-paren">(</span><em class="sig-param">Teq</em>, <em class="sig-param">T_int</em>, <em class="sig-param">logg1</em>, <em class="sig-param">logKir</em>, <em class="sig-param">alpha=0.5</em>, <em class="sig-param">nlevel=61</em>, <em class="sig-param">p_bottom=1.5</em>, <em class="sig-param">p_top=-6</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.guillot_pt" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">guillot_pt</code><span class="sig-paren">(</span><em class="sig-param">Teq</em>, <em class="sig-param">T_int=100</em>, <em class="sig-param">logg1=-1</em>, <em class="sig-param">logKir=-1.5</em>, <em class="sig-param">alpha=0.5</em>, <em class="sig-param">nlevel=61</em>, <em class="sig-param">p_bottom=1.5</em>, <em class="sig-param">p_top=-6</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.guillot_pt" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates temperature pressure profile given parameterization in Guillot 2010 TP profile
 called in fx()</p>
 <dl class="field-list simple">
@@ -1635,24 +1926,30 @@ developers.</p></li>
 
 <dl class="method">
 <dt>
-<code class="sig-name descname">star</code><span class="sig-paren">(</span><em class="sig-param">opannection</em>, <em class="sig-param">temp=None</em>, <em class="sig-param">metal=None</em>, <em class="sig-param">logg=None</em>, <em class="sig-param">radius=None</em>, <em class="sig-param">radius_unit=None</em>, <em class="sig-param">semi_major=None</em>, <em class="sig-param">semi_major_unit=None</em>, <em class="sig-param">database='ck04models'</em>, <em class="sig-param">filename=None</em>, <em class="sig-param">w_units=None</em>, <em class="sig-param">f_units=None</em><span class="sig-paren">)</span></dt>
+<code class="sig-name descname">star</code><span class="sig-paren">(</span><em class="sig-param">opannection</em>, <em class="sig-param">temp=None</em>, <em class="sig-param">metal=None</em>, <em class="sig-param">logg=None</em>, <em class="sig-param">radius=None</em>, <em class="sig-param">radius_unit=None</em>, <em class="sig-param">semi_major=None</em>, <em class="sig-param">semi_major_unit=None</em>, <em class="sig-param">database='ck04models'</em>, <em class="sig-param">filename=None</em>, <em class="sig-param">w_unit=None</em>, <em class="sig-param">f_unit=None</em><span class="sig-paren">)</span></dt>
 <dd><p>Get the stellar spectrum using pysynphot and interpolate onto a much finer grid than the
 planet grid.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>opannection</strong> (<em>class picaso.RetrieveOpacities</em>) – This is the opacity class and it’s needed to get the correct wave info and raman scattering cross sections</p></li>
-<li><p><strong>temp</strong> (<em>float</em>) – Teff of the stellar model</p></li>
-<li><p><strong>metal</strong> (<em>float</em>) – Metallicity of the stellar model</p></li>
-<li><p><strong>logg</strong> (<em>float</em>) – Logg cgs of the stellar model</p></li>
-<li><p><strong>radius</strong> (<em>float</em>) – Radius of the star</p></li>
-<li><p><strong>radius_unit</strong> (<em>astropy.unit</em>) – Any astropy unit (e.g. <cite>radius_unit=astropy.unit.Unit(“R_sun”)</cite>)</p></li>
-<li><p><strong>semi_major</strong> (<em>float</em>) – (Optional) Semi major axis of the planet. Used to compute fp/fs for albedo calculations.</p></li>
+<li><p><strong>temp</strong> (<em>float</em>) – (Optional) Teff of the stellar model if using the stellar database feature.
+Not needed for filename option.</p></li>
+<li><p><strong>metal</strong> (<em>float</em>) – (Optional) Metallicity of the stellar model if using the stellar database feature.
+Not needed for filename option.</p></li>
+<li><p><strong>logg</strong> (<em>float</em>) – (Optional) Logg cgs of the stellar model if using the stellar database feature.
+Not needed for filename option.</p></li>
+<li><p><strong>radius</strong> (<em>float</em>) – (Optional) Radius of the star. Only needed as input if you want relative flux units (Fp/Fs)</p></li>
+<li><p><strong>radius_unit</strong> (<em>astropy.unit</em>) – (Optional) Any astropy unit (e.g. <cite>radius_unit=astropy.unit.Unit(“R_sun”)</cite>)</p></li>
+<li><p><strong>semi_major</strong> (<em>float</em>) – (Optional) Semi major axis of the planet. Only needed to compute fp/fs for albedo calculations.</p></li>
 <li><p><strong>semi_major_unit</strong> (<em>astropy.unit</em>) – (Optional) Any astropy unit (e.g. <cite>radius_unit=astropy.unit.Unit(“au”)</cite>)</p></li>
 <li><p><strong>database</strong> (<em>str</em>) – (Optional)The database to pull stellar spectrum from. See documentation for pysynphot.</p></li>
-<li><p><strong>filename</strong> (<em>str</em>) – (Optional) Upload your own stellar spectrum. File format = two column white space (wave, flux)</p></li>
-<li><p><strong>wunits</strong> (<em>str</em>) – (Optional) Used for stellar file wave units</p></li>
-<li><p><strong>funits</strong> (<em>str</em>) – (Optional) Used for stellar file flux units</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) – (Optional) Upload your own stellar spectrum. File format = two column white space (wave, flux).
+Must specify w_unit and f_unit</p></li>
+<li><p><strong>w_unit</strong> (<em>str</em>) – (Optional) Used for stellar file wave units. Needed for filename input.
+Pick: ‘um’, ‘nm’, ‘cm’, ‘hz’, or ‘Angs’</p></li>
+<li><p><strong>f_unit</strong> (<em>str</em>) – (Optional) Used for stellar file flux units. Needed for filename input.
+Pick: ‘FLAM’ or ‘Jy’ or ‘erg/cm2/s/Hz’</p></li>
 </ul>
 </dd>
 </dl>
@@ -1671,7 +1968,7 @@ planet grid.</p>
 
 <dl class="method">
 <dt id="picaso.justdoit.inputs.virga">
-<code class="sig-name descname">virga</code><span class="sig-paren">(</span><em class="sig-param">condensates</em>, <em class="sig-param">directory</em>, <em class="sig-param">fsed=1</em>, <em class="sig-param">mh=1</em>, <em class="sig-param">mmw=2.2</em>, <em class="sig-param">kz_min=100000.0</em>, <em class="sig-param">full_output=False</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.virga" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">virga</code><span class="sig-paren">(</span><em class="sig-param">condensates</em>, <em class="sig-param">directory</em>, <em class="sig-param">fsed=1</em>, <em class="sig-param">mh=1</em>, <em class="sig-param">mmw=2.2</em>, <em class="sig-param">kz_min=100000.0</em>, <em class="sig-param">sig=2</em>, <em class="sig-param">full_output=False</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.virga" title="Permalink to this definition">¶</a></dt>
 <dd><p>Runs virga cloud code based on the PT and Kzz profiles
 that have been added to inptus class.</p>
 <dl class="field-list simple">
@@ -1701,6 +1998,24 @@ that have been added to inptus class.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="picaso.justdoit.load_planet">
+<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">load_planet</code><span class="sig-paren">(</span><em class="sig-param">df</em>, <em class="sig-param">opacity</em>, <em class="sig-param">phase_angle=0</em>, <em class="sig-param">stellar_db='phoenix'</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">**planet_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.load_planet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper to simplify PICASO run. This really turns chimera into a black box. This was created
+specifically Sagan School tutorial.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – This is single row from <cite>all_planets()</cite></p></li>
+<li><p><strong>opacity</strong> (<em>np.array</em>) – Opacity loaded from opannection</p></li>
+<li><p><strong>phase_angle</strong> (<em>float</em>) – Observing phase angle (radians)</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em> , </em><em>options</em>) – Print out warnings</p></li>
+<li><p><strong>planet_kwargs</strong> (<em>dict</em>) – List of parameters to supply NexSci database is values don’t exist</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="picaso.justdoit.mean_regrid">
 <code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">mean_regrid</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">newx=None</em>, <em class="sig-param">R=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.mean_regrid" title="Permalink to this definition">¶</a></dt>
 <dd><p>Rebin the spectrum at a minimum R or on a fixed grid</p>
@@ -1720,6 +2035,12 @@ that have been added to inptus class.</p>
 <dd class="field-odd"><p>final x, and final y</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="picaso.justdoit.methodology_options">
+<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">methodology_options</code><span class="sig-paren">(</span><em class="sig-param">printout=True</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.methodology_options" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve all the options for methodology</p>
 </dd></dl>
 
 <dl class="function">
@@ -1789,6 +2110,12 @@ developers.</p></li>
 <dt id="picaso.justdoit.single_phase_options">
 <code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">single_phase_options</code><span class="sig-paren">(</span><em class="sig-param">printout=True</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.single_phase_options" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieve all the options for direct radation</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="picaso.justdoit.stream_options">
+<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">stream_options</code><span class="sig-paren">(</span><em class="sig-param">printout=True</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.stream_options" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve all the options for stream</p>
 </dd></dl>
 
 </div>
@@ -1973,7 +2300,7 @@ cumsum</p>
 
 <dl class="function">
 <dt id="picaso.justplotit.photon_attenuation">
-<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">photon_attenuation</code><span class="sig-paren">(</span><em class="sig-param">full_output</em>, <em class="sig-param">at_tau=0.5</em>, <em class="sig-param">return_all=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.photon_attenuation" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">photon_attenuation</code><span class="sig-paren">(</span><em class="sig-param">full_output</em>, <em class="sig-param">at_tau=0.5</em>, <em class="sig-param">return_output=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.photon_attenuation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot breakdown of gas opacity, cloud opacity,
 Rayleigh scattering opacity at a specified pressure level.</p>
 <dl class="field-list simple">
@@ -1982,16 +2309,16 @@ Rayleigh scattering opacity at a specified pressure level.</p>
 <li><p><strong>full_output</strong> (<em>class</em>) – picaso.atmsetup.ATMSETUP</p></li>
 <li><p><strong>at_tau</strong> (<em>float</em>) – Opacity at which to plot the cumulative opacity.
 Default = 0.5.</p></li>
-<li><p><strong>return_all</strong> (<em>bool</em><em> , </em><em>optional</em>) – Default is False, returns at_tau pressure levels for
-taugas, taucld, and tauray</p></li>
+<li><p><strong>return_output</strong> (<em>bool</em>) – Return photon attenuation plot values</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em>) – Any key word argument for bokeh.plotting.figure()</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>bokeh plot</p>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>if return_output=False</strong> (<em>bokeh plot</em>)</p></li>
+<li><p><strong>else</strong> (<em>bokeh plot,wave,at_pressures_gas,at_pressures_cld,at_pressures_ray</em>)</p></li>
+</ul>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2052,7 +2379,7 @@ opacity is assigned for slabs.</p></li>
 
 <dl class="function">
 <dt id="picaso.justplotit.spectrum">
-<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">spectrum</code><span class="sig-paren">(</span><em class="sig-param">xarray</em>, <em class="sig-param">yarray</em>, <em class="sig-param">legend=None</em>, <em class="sig-param">wno_to_micron=True</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.spectrum" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">spectrum</code><span class="sig-paren">(</span><em class="sig-param">xarray, yarray, legend=None, wno_to_micron=True, palette=['#0072B2', '#E69F00', '#F0E442', '#009E73', '#56B4E9', '#D55E00', '#CC79A7', '#000000'], **kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.spectrum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot formated albedo spectrum</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -2061,6 +2388,8 @@ opacity is assigned for slabs.</p></li>
 <li><p><strong>yarray</strong> (<em>float array</em><em>, </em><em>list of arrays</em>) – albedo or fluxes</p></li>
 <li><p><strong>legend</strong> (<em>list of str</em><em> , </em><em>optional</em>) – legends for plotting</p></li>
 <li><p><strong>wno_to_micron</strong> (<em>bool</em><em> , </em><em>optional</em>) – Converts wavenumber to micron</p></li>
+<li><p><strong>palette</strong> (<em>list</em><em>,</em><em>optional</em>) – List of colors for lines. Default only has 8 colors so if you input more lines, you must
+give a different pallete</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em>) – Any key word argument for bokeh.plotting.figure()</p></li>
 </ul>
 </dd>
@@ -2776,7 +3105,7 @@ multiplication of N_a on return</p>
 
 <dl class="function">
 <dt id="picaso.optics.compute_opacity">
-<code class="sig-prename descclassname">picaso.optics.</code><code class="sig-name descname">compute_opacity</code><span class="sig-paren">(</span><em class="sig-param">atmosphere</em>, <em class="sig-param">opacityclass</em>, <em class="sig-param">delta_eddington=True</em>, <em class="sig-param">test_mode=False</em>, <em class="sig-param">raman=0</em>, <em class="sig-param">plot_opacity=False</em>, <em class="sig-param">full_output=False</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.compute_opacity" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">picaso.optics.</code><code class="sig-name descname">compute_opacity</code><span class="sig-paren">(</span><em class="sig-param">atmosphere</em>, <em class="sig-param">opacityclass</em>, <em class="sig-param">stream</em>, <em class="sig-param">delta_eddington=True</em>, <em class="sig-param">test_mode=False</em>, <em class="sig-param">raman=0</em>, <em class="sig-param">plot_opacity=False</em>, <em class="sig-param">full_output=False</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.compute_opacity" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns total optical depth per slab layer including molecular opacity, continuum opacity.
 It should automatically select the molecules needed</p>
 <dl class="field-list simple">
@@ -3033,7 +3362,7 @@ everything else being in wave numberes</p></li>
 <span id="picaso-test-module"></span><h2>picaso.test module<a class="headerlink" href="#module-picaso.test" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="picaso.test.dlugach_test">
-<code class="sig-prename descclassname">picaso.test.</code><code class="sig-name descname">dlugach_test</code><span class="sig-paren">(</span><em class="sig-param">single_phase='TTHG_ray'</em>, <em class="sig-param">output_dir=None</em>, <em class="sig-param">rayleigh=True</em>, <em class="sig-param">constant_tau=True</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.test.dlugach_test" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">picaso.test.</code><code class="sig-name descname">dlugach_test</code><span class="sig-paren">(</span><em class="sig-param">single_phase='OTHG'</em>, <em class="sig-param">output_dir=None</em>, <em class="sig-param">rayleigh=True</em>, <em class="sig-param">phase=True</em>, <em class="sig-param">approximation='2steam'</em>, <em class="sig-param">stream=2</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.test.dlugach_test" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test the flux against against Dlugach &amp; Yanovitskij
 <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/0019103574901675?via%3Dihub">https://www.sciencedirect.com/science/article/pii/0019103574901675?via%3Dihub</a></p>
 <p>There are two tests: rayleigh and constant_tau. This will run through the entire
@@ -3049,7 +3378,7 @@ error in various realms</p>
 “cahoy”,”TTHG_ray”,”TTHG”, and “OTHG”</p></li>
 <li><p><strong>output_dir</strong> (<em>str</em>) – Output directory for results of test. Default is to just return the dataframe (None).</p></li>
 <li><p><strong>rayleigh</strong> (<em>bool</em>) – Default is True. Turns on and off the rayleigh phase function test</p></li>
-<li><p><strong>constant_tau</strong> (<em>float</em>) – Default=True. Turns on and off the constant tau phase function test</p></li>
+<li><p><strong>phase</strong> (<em>float</em>) – Default=True. Turns on and off the constant g phase function test</p></li>
 <li><p><strong>Retuns</strong> – </p></li>
 <li><p><strong>------</strong> – </p></li>
 <li><p><strong>of % deviation from Dlugach &amp; Yanovitskij Table XXI</strong> (<em>DataFrame</em>) – </p></li>
@@ -3089,7 +3418,7 @@ Madhu and Burrows paper.</p>
 <span id="picaso-wavelength-module"></span><h2>picaso.wavelength module<a class="headerlink" href="#module-picaso.wavelength" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="picaso.wavelength.get_cld_input_grid">
-<code class="sig-prename descclassname">picaso.wavelength.</code><code class="sig-name descname">get_cld_input_grid</code><span class="sig-paren">(</span><em class="sig-param">filename_or_grid</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.wavelength.get_cld_input_grid" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">picaso.wavelength.</code><code class="sig-name descname">get_cld_input_grid</code><span class="sig-paren">(</span><em class="sig-param">filename_or_grid='wave_EGP.dat'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.wavelength.get_cld_input_grid" title="Permalink to this definition">¶</a></dt>
 <dd><p>The albedo code relies on the cloud code input, which is traditionally on a 196 wavelength grid.
 This method is to retrieve that grid. This file should be kept in the package reference data. Alternatively,
 it might be useful to add it directly to the input.cld file.</p>
@@ -3144,7 +3473,7 @@ to a new wave grid.</p>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
       
-        <a href="notebooks/11_Sqlite3Tutorial.html" class="btn btn-neutral float-left" title="SQLITE Tutorial" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="notebooks/FAQs.html" class="btn btn-neutral float-left" title="FAQs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

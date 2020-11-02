@@ -12,24 +12,15 @@
    </div>
    <br/><br/>
 
-``picaso`` enables the computation of reflected light spectroscopy. Check out the use cases below to determine if ``picaso`` is the right tool for your science.
+``picaso`` enables the computation of exoplanet and brown dwarf spectroscopy in transmission, emission or reflected light. Check out the use cases below to determine if ``picaso`` is the right tool for your science.
 
-Use Cases
-=========
+Just a Few Example Use Cases
+============================
 
 .. raw:: html 
 
    <div align="center">
-   <img src="_images/planettype.png" width="300px">
-   </img>
-   <img src="_images/refem.png" width="300px">
-   </img>
-   <br/>
-   </div>
-   <br/><br/>
-
-   <div align="center">
-   <img src="_images/multiphase.png" width="600px">
+   <img src="_images/usecases.png" width="700px">
    </img>
    <br/>
    </div>
