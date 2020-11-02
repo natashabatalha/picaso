@@ -556,7 +556,7 @@ def resample_and_insert_molecular(molecule, min_wavelength, max_wavelength, new_
     #min_wno = 1e4/max_wavelength
     #max_wno = 1e4/min_wavelength
 
-    if not isinstance(new_R,type(None)):
+    if isinstance(new_R,type(None)):
         new_R = 1e6
 
     #BINS = int(dwvno_new/dwvno_old)
@@ -564,6 +564,7 @@ def resample_and_insert_molecular(molecule, min_wavelength, max_wavelength, new_
 
     #new wave grid 
     new_wvno_grid = interp_wvno_grid[::BINS]
+
     #insert to database 
     cur.execute('INSERT INTO header (pressure_unit, temperature_unit, wavenumber_grid, continuum_unit,molecular_unit) values (?,?,?,?,?)', 
                 ('bar','kelvin', np.array(new_wvno_grid), 'cm-1 amagat-2', 'cm2/molecule'))
