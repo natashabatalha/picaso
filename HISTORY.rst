@@ -3,6 +3,14 @@
 History
 -------
 
+2.1 (2020-11-02)
+~~~~~~~~~~~~~~~~~~
+
+* Transit Spectroscopy added 
+* Transit spectroscopy tutorial 
+* FAQ notebook 
+* Minor bug fixes/improvements
+
 2.0.1 (2020-07-21)
 ~~~~~~~~~~~~~~~~~~
 
