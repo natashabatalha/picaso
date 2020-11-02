@@ -7,7 +7,7 @@ import pickle as pk
 import astropy.constants as c
 import scipy.interpolate as sci
 
-def get_cld_input_grid(filename_or_grid):
+def get_cld_input_grid(filename_or_grid='wave_EGP.dat'):
 	"""
 	The albedo code relies on the cloud code input, which is traditionally on a 196 wavelength grid. 
 	This method is to retrieve that grid. This file should be kept in the package reference data. Alternatively, 
