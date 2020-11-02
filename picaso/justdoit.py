@@ -1,5 +1,5 @@
 from .atmsetup import ATMSETUP
-from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_new
+from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_new, get_transit_1d
 from .wavelength import get_cld_input_grid
 from .opacity_factory import create_grid
 from .optics import RetrieveOpacities,compute_opacity
@@ -70,9 +70,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     single_phase = inputs['approx']['single_phase']
     multi_phase = inputs['approx']['multi_phase']
     raman_approx =inputs['approx']['raman']
-    tridiagonal = 0 #pentadiagonal is not yet fully functional 
-    nstream = 2 #number of streams (2 or 4)
-    
+    method = inputs['approx']['method']
+    stream = inputs['approx']['stream']
+    tridiagonal = 0 
+
     #parameters needed for the two term hg phase function. 
     #Defaults are set in config.json
     f = inputs['approx']['TTHG_params']['fraction']
@@ -84,6 +85,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
     #define delta eddington approximinations 
     delta_eddington = inputs['approx']['delta_eddington']
+
+    #pressure assumption
+    p_reference =  inputs['approx']['p_reference']
 
     ############# DEFINE ALL GEOMETRY USED IN CALCULATION #############
     #see class `inputs` attribute `phase_angle`
@@ -102,32 +106,29 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
     #set star parameters
     radius_star = inputs['star']['radius']
-    F0PI = np.zeros(nwno) + 1.0 
+    F0PI = np.zeros(nwno) + 1.
     #semi major axis
     sa = inputs['star']['semi_major']
 
     #begin atm setup
     atm = ATMSETUP(inputs)
 
-
-    #surface albedo from inputs 
+    #Add inputs to class 
     atm.surf_reflect = inputs['surface_reflect']
-
     atm.wavenumber = wno
-
-    ################ From here on out is everything that would go through retrieval or 3d input##############
     atm.planet.gravity = inputs['planet']['gravity']
     atm.planet.radius = inputs['planet']['radius']
+    atm.planet.mass = inputs['planet']['mass']
 
     if dimension == '1d':
         atm.get_profile()
     elif dimension == '3d':
         atm.get_profile_3d()
 
-
     #now can get these 
     atm.get_mmw()
     atm.get_density()
+    atm.get_altitude(p_reference = p_reference)#will calculate altitude if r and m are given (opposed to just g)
     atm.get_column_density()
 
     #gets both continuum and needed rayleigh cross sections 
@@ -145,6 +146,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
     nlevel = atm.c.nlevel
     nlayer = atm.c.nlayer
+    
 
     if dimension == '1d':
         #lastly grab needed opacities for the problem
@@ -155,19 +157,23 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         #We use HG function for single scattering which gets the forward scattering/back scattering peaks 
         #well. We only really want to use delta-edd for multi scattering legendre polynomials. 
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman= compute_opacity(
-            atm, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
+            atm, opacityclass, stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
             full_output=full_output, plot_opacity=plot_opacity)
 
         if  'reflected' in calculation:
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-            #if '4stream' in approximation:
-            #    (xint_at_top, flux)= get_reflected_new(nlevel, nwno, ng, nt, 
-            #                                DTAU, TAU, W0, COSB, GCOS2, 
-            #                                DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
-            #                                atm.surf_reflect, ubar0, ubar1, F0PI, dimension, stream)
+            nlevel = atm.c.nlevel
+            if method == 'SH':
+                xint_at_top = get_reflected_new(nlevel, nwno, ng, nt, 
+                                            DTAU, TAU, W0, COSB, GCOS2, ftau_cld, ftau_ray,
+                                            DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
+                                            atm.surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
+                                            single_phase, multi_phase, 
+	                                    frac_a, frac_b, frac_c, constant_back, constant_forward, 
+                                            dimension, stream, print_time)
 
-            #else:
-            xint_at_top = get_reflected_1d(nlevel, wno,nwno,ng,nt,
+            else:
+                xint_at_top = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                                     DTAU, TAU, W0, COSB,GCOS2,ftau_cld,ftau_ray,
                                                     DTAU_OG, TAU_OG, W0_OG, COSB_OG ,
                                                     atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
@@ -191,7 +197,12 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             #if full output is requested add in flux at top for 3d plots
             if full_output: 
                 atm.flux_at_top = flux_at_top
-            
+        
+        if 'transmission' in calculation:
+            rprs2 = get_transit_1d(atm.level['z'],atm.level['dz'],
+                                  nlevel, nwno, radius_star, atm.layer['mmw'], 
+                                  atm.c.k_b, atm.c.amu, atm.level['pressure'], 
+                                  atm.level['temperature'], atm.layer['colden'],DTAU_OG)
     elif dimension == '3d':
 
         #setup zero array to fill with opacities
@@ -295,9 +306,12 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     returns = {}
     returns['wavenumber'] = wno
     #returns['flux'] = flux
+    if 'transmission' in calculation: 
+        returns['transit_depth'] = rprs2
 
 
     #for reflected light use compress_disco routine
+    #this takes the intensity as a functin of tangle/gangle and creates a 1d spectrum
     if  ('reflected' in calculation):
         albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
         returns['albedo'] = albedo 
@@ -311,21 +325,22 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                 returns['fpfs_reflected'] += ['Planet Radius not supplied. If you want fpfs, add it to `gravity` function with Mass.']
 
     #for thermal light use the compress thermal routine
+    #this takes the intensity as a functin of tangle/gangle and creates a 1d spectrum
     if ('thermal' in calculation):
         thermal = compress_thermal(nwno,ubar1, flux_at_top, gweight, tweight)
         returns['thermal'] = thermal
+        if full_output: atm.thermal_flux_planet = thermal
 
         #only need to return relative flux if not a browndwarf calculation
-        if radius_star != 'nostar':
+        if ((radius_star != 'nostar') & (not np.isnan(atm.planet.radius))):
             fpfs_thermal = thermal/(opacityclass.unshifted_stellar_spec)*(atm.planet.radius/radius_star)**2.0
             returns['fpfs_thermal'] = fpfs_thermal
-            if full_output: atm.thermal_flux_planet = thermal
-
         elif np.isnan(atm.planet.radius): 
             returns['fpfs_thermal'] = ['Planet Radius not supplied. If you want fpfs, add it to `gravity` function with Mass.']
 
+    #return total if users have calculated both thermal and reflected 
     if (('fpfs_reflected' in list(returns.keys())) & ('fpfs_thermal' in list(returns.keys()))): 
-        if (not isinstance(returns['fpfs_reflected'],str)):
+        if ((not isinstance(returns['fpfs_reflected'],list)) & (not isinstance(returns['fpfs_thermal'],list))) :
             returns['fpfs_total'] = returns['fpfs_thermal'] + returns['fpfs_reflected']
 
     if full_output: 
@@ -586,6 +601,8 @@ class inputs():
             self.inputs['planet']['gravity_unit'] = 'cm/(s**2)'
             self.inputs['planet']['radius'] = np.nan
             self.inputs['planet']['radius_unit'] = 'Radius not specified'
+            self.inputs['planet']['mass'] = np.nan
+            self.inputs['planet']['mass_unit'] = 'Mass not specified'
         else: 
             raise Exception('Need to specify gravity or radius and mass + additional units')
 
@@ -607,7 +624,7 @@ class inputs():
 
     def star(self, opannection,temp=None, metal=None, logg=None ,radius = None, radius_unit=None,
         semi_major=None, semi_major_unit = None,
-        database='ck04models',filename=None, w_units=None, f_units=None):
+        database='ck04models',filename=None, w_unit=None, f_unit=None):
         """
         Get the stellar spectrum using pysynphot and interpolate onto a much finer grid than the 
         planet grid. 
@@ -617,27 +634,33 @@ class inputs():
         opannection : class picaso.RetrieveOpacities
             This is the opacity class and it's needed to get the correct wave info and raman scattering cross sections
         temp : float 
-            Teff of the stellar model 
+            (Optional) Teff of the stellar model if using the stellar database feature. 
+            Not needed for filename option. 
         metal : float 
-            Metallicity of the stellar model 
+            (Optional) Metallicity of the stellar model if using the stellar database feature. 
+            Not needed for filename option. 
         logg : float 
-            Logg cgs of the stellar model
+            (Optional) Logg cgs of the stellar model if using the stellar database feature. 
+            Not needed for filename option. 
         radius : float 
-            Radius of the star 
+            (Optional) Radius of the star. Only needed as input if you want relative flux units (Fp/Fs)
         radius_unit : astropy.unit
-            Any astropy unit (e.g. `radius_unit=astropy.unit.Unit("R_sun")`)
+            (Optional) Any astropy unit (e.g. `radius_unit=astropy.unit.Unit("R_sun")`)
         semi_major : float 
-            (Optional) Semi major axis of the planet. Used to compute fp/fs for albedo calculations. 
+            (Optional) Semi major axis of the planet. Only needed to compute fp/fs for albedo calculations. 
         semi_major_unit : astropy.unit 
             (Optional) Any astropy unit (e.g. `radius_unit=astropy.unit.Unit("au")`)
         database : str 
             (Optional)The database to pull stellar spectrum from. See documentation for pysynphot. 
         filename : str 
-            (Optional) Upload your own stellar spectrum. File format = two column white space (wave, flux)
-        wunits : str 
-            (Optional) Used for stellar file wave units 
-        funits : str 
-            (Optional) Used for stellar file flux units 
+            (Optional) Upload your own stellar spectrum. File format = two column white space (wave, flux). 
+            Must specify w_unit and f_unit 
+        w_unit : str 
+            (Optional) Used for stellar file wave units. Needed for filename input.
+            Pick: 'um', 'nm', 'cm', 'hz', or 'Angs'
+        f_unit : str 
+            (Optional) Used for stellar file flux units. Needed for filename input.
+            Pick: 'FLAM' or 'Jy' or 'erg/cm2/s/Hz'
         """
         #most people will just upload their thing from a database
         if (not isinstance(radius, type(None))):
@@ -655,15 +678,8 @@ class inputs():
             semi_major = np.nan
             semi_major_unit = "Semi Major axis not supplied"        
 
-        if (not isinstance(temp, type(None))):
-            sp = psyn.Icat(database, temp, metal, logg)
-            sp.convert("um")
-            sp.convert('flam') 
-            wno_star = 1e4/sp.wave[::-1] #convert to wave number and flip
-            flux_star = sp.flux[::-1]*1e8    #flip here and convert to ergs/cm3/s to get correct order
-
-        #but you can also upload a stellar spec of your own 
-        elif (not isinstance(filename,type(None))):
+        #upload from file  
+        if (not isinstance(filename,type(None))):
             star = np.genfromtxt(filename, dtype=(float, float), names='w, f')
             flux = star['f']
             wave = star['w']
@@ -701,7 +717,16 @@ class inputs():
             sp.convert('flam') #ergs/cm2/s/ang
             wno_star = 1e4/sp.wave[::-1] #convert to wave number and flip
             flux_star = sp.flux[::-1]*1e8 #flip and convert to ergs/cm3/s here to get correct order         
+        
 
+        elif ((not isinstance(temp, type(None))) & (not isinstance(metal, type(None))) & (not isinstance(logg, type(None)))):
+            sp = psyn.Icat(database, temp, metal, logg)
+            sp.convert("um")
+            sp.convert('flam') 
+            wno_star = 1e4/sp.wave[::-1] #convert to wave number and flip
+            flux_star = sp.flux[::-1]*1e8    #flip here and convert to ergs/cm3/s to get correct order
+        else: 
+            raise Exception("Must enter 1) filename,w_unit & f_unit OR 2)temp, metal & logg ")
 
         wno_planet = opannection.wno
         max_shift = np.max(wno_planet)+6000 #this 6000 is just the max raman shift we could have 
@@ -757,16 +782,16 @@ class inputs():
         elif not isinstance(filename, type(None)):
             df = pd.read_csv(filename, **pd_kwargs)
             self.nlevel=df.shape[0] 
-        elif not isinstance(pt_params, type(None)): 
-            self.inputs['atmosphere']['pt_params'] = pt_params
-            self.nlevel=61 #default n of levels for parameterization
-            raise Exception('Pt parameterization not in yet')
+        #elif not isinstance(pt_params, type(None)): 
+        #    self.inputs['atmosphere']['pt_params'] = pt_params
+        #    self.nlevel=61 #default n of levels for parameterization
+        #    raise Exception('Pt parameterization not in yet')
 
         if 'pressure' not in df.keys(): 
             raise Exception("Check column names. `pressure` must be included.")
 
-        if (('temperature' not in df.keys()) and (isinstance(pt_params, type(None)))):
-            raise Exception("`temperature` not specified as a column/key name, and `pt_params` for a parameterized PT profile was not supplied. Please make sure to use one or the other.")
+        if ('temperature' not in df.keys()):
+            raise Exception("`temperature` not specified as a column/key name")
 
         if not isinstance(exclude_mol, type(None)):
             df = df.drop(exclude_mol, axis=1)
@@ -826,7 +851,7 @@ class inputs():
 
         self.inputs['atmosphere']['profile'] = ptchem.loc[:,['pressure','temperature']]
         if chem == 'high':
-            self.channon_grid_high(filename=os.path.join(__refdata__, 'chemistry','ChannonGrid.csv'))
+            self.channon_grid_high(filename=os.path.join(__refdata__, 'chemistry','grid75_feh+000_co_100_highP.txt'))
         elif chem == 'low':
             self.channon_grid_low(filename=os.path.join(__refdata__,'chemistry','visscher_abunds_m+0.0_co1.0' ))
         self.inputs['atmosphere']['sonora_filename'] = build_filename
@@ -873,9 +898,10 @@ class inputs():
         self.inputs['atmosphere']['profile'] = df
         return 
 
-    def channon_grid_high(self,filename=os.path.join(__refdata__,'chemistry','ChannonGrid.csv')):
+    def channon_grid_high(self,filename=None):
+        if isinstance(filename, type(None)):filename=os.path.join(__refdata__,'chemistry','grid75_feh+000_co_100_highP.txt')
         #df = self.inputs['atmosphere']['profile']
-        df = self.inputs['atmosphere']['profile']
+        df = self.inputs['atmosphere']['profile'].sort_values('pressure').reset_index(drop=True)
         self.nlevel = df.shape[0]
         
         player = df['pressure'].values
@@ -909,14 +935,15 @@ class inputs():
         
         self.inputs['atmosphere']['profile'] = df
 
-    def channon_grid_low(self, filename = os.path.join(__refdata__,'chemistry','visscher_abunds_m+0.0_co1.0'), interp_window = 11, interp_poly=2):
+    def channon_grid_low(self, filename = None, interp_window = 11, interp_poly=2):
         """
         Interpolate from visscher grid
         """
+        if isinstance(filename, type(None)):filename= os.path.join(__refdata__,'chemistry','visscher_abunds_m+0.0_co1.0')
         a = pd.read_csv(filename)
         mols = list(a.loc[:, ~a.columns.isin(['Unnamed: 0','pressure','temperature'])].keys())
         #get pt from what users have already input
-        player_tlayer = self.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']]
+        player_tlayer = self.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']].sort_values('pressure').reset_index(drop=True)
         self.nlevel = player_tlayer.shape[0]
 
         #loop through all pressure and temperature layers
@@ -1295,7 +1322,7 @@ class inputs():
             #loop through all cloud layers and set cloud profile
             for ig, iw, io , ip, idp in zip(g0,w0,opd,p,dp):
                 maxp = 10**ip #max pressure is bottom of cloud deck
-                minp = 10**(ip)-10**(idp) #min pressure 
+                minp = 10**(ip-idp) #min pressure 
                 df.loc[((df['pressure'] >= minp) & (df['pressure'] <= maxp)),'g0']= ig
                 df.loc[((df['pressure'] >= minp) & (df['pressure'] <= maxp)),'w0']= iw
                 df.loc[((df['pressure'] >= minp) & (df['pressure'] <= maxp)),'opd']= io
@@ -1459,7 +1486,8 @@ class inputs():
         self.inputs['clouds']['profile'] = df
 
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
-        raman='pollack',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1):
+        raman='pollack',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
+        p_reference=1,method='Toon', stream=2):
         """
         This function sets all the default approximations in the code. It transforms the string specificatons
         into a number so that they can be used in numba nopython routines. 
@@ -1483,13 +1511,23 @@ class inputs():
             Back scattering asymmetry factor gf = g_bar*tthg_back
         tthg_forward : float 
             Forward scattering asymmetry factor gb = g_bar * tthg_forward 
+        p_reference : float 
+            Reference pressure (bars) This is an arbitrary pressure that 
+            corresponds do the user's input of radius. Usually something "at depth"
+            around 1-10 bars. 
+        method : str
+            Toon ('Toon') or spherical harmonics ('SH'). 
+        stream : int 
+            Two stream or four stream (options are 2 or 4). For 4 stream need to set method='SH'
         """
 
         self.inputs['approx']['single_phase'] = single_phase_options(printout=False).index(single_phase)
         self.inputs['approx']['multi_phase'] = multi_phase_options(printout=False).index(multi_phase)
         self.inputs['approx']['delta_eddington'] = delta_eddington
         self.inputs['approx']['raman'] =  raman_options().index(raman)
-
+        self.inputs['approx']['method'] = method
+        self.inputs['approx']['stream'] = stream
+ 
         if isinstance(tthg_frac, (list, np.ndarray)):
             if len(tthg_frac) == 3:
                 self.inputs['approx']['TTHG_params']['fraction'] = tthg_frac
@@ -1501,8 +1539,10 @@ class inputs():
         self.inputs['approx']['TTHG_params']['constant_back'] = tthg_back
         self.inputs['approx']['TTHG_params']['constant_forward']=tthg_forward
 
-    def spectrum(self,opacityclass,calculation='reflected',dimension = '1d',  full_output=False, 
-        plot_opacity= False,as_dict=True):
+        self.inputs['approx']['p_reference']= p_reference
+
+    def spectrum(self, opacityclass, calculation='reflected', dimension = '1d',  full_output=False, 
+        plot_opacity= False, as_dict=True):
         """Run Spectrum
 
         Parameters
@@ -1542,6 +1582,38 @@ class inputs():
             
         return picaso(self, opacityclass,dimension=dimension,calculation=calculation,
             full_output=full_output, plot_opacity=plot_opacity, as_dict=as_dict)
+
+def get_targets():
+    """Function to grab available targets
+
+    Returns
+    -------
+    Dataframe from Exoplanet Archive
+    """
+    default_query = "https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=exoplanets&format=csv"
+    all_planets =  requests.get(default_query)  
+    all_planets = all_planets.text.replace(' ','').split('\n')
+
+    # default data doesn't come with all the parameters we need so let's 
+    # add those in 
+    add_few_elements = '&select='+all_planets[0]+','.join(
+        [',pl_trandur','pl_eqt','st_logg','st_metfe','st_j','st_h','st_k&'])
+
+    # use requests to grab the csv formatted data and split by the commas 
+    all_planets =  requests.get(default_query.split('&')[0] 
+                                + add_few_elements + default_query.split('&')[1] )  
+    all_planets = all_planets.text.replace(' ','').split('\n')
+
+    # get into useful pandas dataframe format
+    planets_df = pd.DataFrame(columns=all_planets[0].split(','), 
+                             data = [i.split(',') for i in all_planets[1:-1]])
+    planets_df = planets_df.replace(to_replace='', value=np.nan)
+
+    # convert to float when possible
+    for i in planets_df.columns: 
+        planets_df[i] = planets_df[i].astype(float,errors='ignore') 
+
+    return planets_df
 
 def load_planet(df, opacity, phase_angle = 0, stellar_db='phoenix', verbose=False,  **planet_kwargs):
     """
@@ -1717,6 +1789,7 @@ def raman_options():
     return ["oklopcic","pollack","none"]
 
 
+
 def all_planets():
     """
     Load all planets from https://exoplanetarchive.ipac.caltech.edu
@@ -1747,3 +1820,13 @@ def all_planets():
         planets_df[i] = planets_df[i].astype(float,errors='ignore')
 
     return planets_df
+
+def methodology_options(printout=True):
+    """Retrieve all the options for methodology"""
+    if printout: print("Can calculate spectrum using Toon 1989 methodology or sperhical harmonics")
+    return ['Toon','SH']
+def stream_options(printout=True):
+    """Retrieve all the options for stream"""
+    if printout: print("Can use 2-stream or 4-stream sperhical harmonics")
+    return [2,4]
+

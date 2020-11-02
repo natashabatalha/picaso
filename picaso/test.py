@@ -9,7 +9,7 @@ import astropy.units as u
 
 __refdata__ = os.environ.get('picaso_refdata')
  
-def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=True):
+def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=True, approximation='2steam', stream=2):
 	"""
 	Test the flux against against Dlugach & Yanovitskij 
 	https://www.sciencedirect.com/science/article/pii/0019103574901675?via%3Dihub
@@ -72,7 +72,7 @@ def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=
 			start_case.clouds(df=pd.DataFrame({'opd':sum([[i]*196 for i in 10**np.linspace(-5, 3, nlevel-1)],[]),
 			                                    'w0':np.zeros(196*(nlevel-1)) + w0 ,
 			                                    'g0':np.zeros(196*(nlevel-1)) + 0}))
-			allout = start_case.spectrum(opa, calculation='reflected')
+			allout = start_case.spectrum(opa, calculation='reflected', approximation=approximation, stream=stream)
 
 			alb = allout['albedo']
 			perror.loc[-1][w] = alb[-1]#(100*(alb[-1]-real_answer.loc[-1][w])/real_answer.loc[-1][w])
@@ -88,12 +88,11 @@ def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=
 					w0 = 0.999999
 				else: 
 					w0 = float(w)
-				start_case.inputs['test_mode'] = 'rayleigh'
 
 				start_case.clouds(df=pd.DataFrame({'opd':sum([[i]*196 for i in 10**np.linspace(-5, 3, nlevel-1)],[]),
 				                                    'w0':np.zeros(196*(nlevel-1)) + w0 ,
 				                                    'g0':np.zeros(196*(nlevel-1)) + g0}))
-				allout = start_case.spectrum(opa, calculation='reflected')
+				allout = start_case.spectrum(opa, calculation='reflected', approximation=approximation, stream=stream)
 
 				alb = allout['albedo']
 				perror.loc[g0][w] = alb[-1]#(100*(alb[-1]-real_answer.loc[-1][w])/real_answer.loc[-1][w])
