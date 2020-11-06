@@ -167,16 +167,18 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
             nlevel = atm.c.nlevel
             if method == 'SH':
-                xint_at_top = get_reflected_new(nlevel, wno, nwno, ng, nt, 
+                (xint_at_top, flux, intensity) = get_reflected_new(nlevel, wno, nwno, ng, nt, 
                                             DTAU, TAU, W0, COSB, GCOS2, ftau_cld, ftau_ray,
                                             DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
                                             atm.surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
                                             single_phase, multi_phase, 
                                            frac_a, frac_b, frac_c, constant_back, constant_forward, 
                                             dimension, stream)
+                if full_output: 
+                    atm.int_layer = intensity
 
             else:
-                xint_at_top = get_reflected_1d(nlevel, wno,nwno,ng,nt,
+                (xint_at_top, flux) = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                                     DTAU, TAU, W0, COSB,GCOS2,ftau_cld,ftau_ray,
                                                     DTAU_OG, TAU_OG, W0_OG, COSB_OG ,
                                                     atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
@@ -188,6 +190,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             #if full output is requested add in xint at top for 3d plots
             if full_output: 
                 atm.xint_at_top = xint_at_top
+                atm.flux= flux
 
 
         if 'thermal' in calculation:
