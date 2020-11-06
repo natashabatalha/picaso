@@ -1900,7 +1900,7 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 			expo_mus = slice_gt(expo_mus, 35.0)    
 			exptrm_mus = exp(-expo_mus)
 
-			p_single = 0.
+			#p_single = 0.
 			for i in range(nlayer):
 				for l in range(stream):
 					multi_scat[i,:] = multi_scat[i,:] + w_multi[l][i,:] * P(u1)[l] * intgrl_new[stream*i+l,:]
