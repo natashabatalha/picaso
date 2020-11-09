@@ -363,6 +363,11 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
         This input dict is built by loading the input = `justdoit.load_inputs()` 
     opacityclass : class
         Opacity class from `justdoit.opannection`
+    at_tau : float 
+        (Optional) Default = 1, This is to compute the pressure level at which cumulative opacity reaches 
+        at_tau. Usually users want to know when the cumulative opacity reaches a tau of 1. 
+    dimension : str 
+        (Optional) Default = '1d'. Currently only 1d is supported. 
 
     Return
     ------
