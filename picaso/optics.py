@@ -13,7 +13,7 @@ import math
 
 #@jit(nopython=True)
 def compute_opacity(atmosphere, opacityclass, stream, delta_eddington=True,test_mode=False,raman=0, plot_opacity=False,
-    full_output=False):
+    full_output=False, return_mode=False):
     """
     Returns total optical depth per slab layer including molecular opacity, continuum opacity. 
     It should automatically select the molecules needed
@@ -41,7 +41,10 @@ def compute_opacity(atmosphere, opacityclass, stream, delta_eddington=True,test_
         This is done so that the users can debug, plot, etc. 
     plot_opacity : bool 
         (Optional) Default = False. If true, Will create a pop up plot of the weighted of each absorber 
-        at the middle layer.
+        at the middle layer
+    return_mode : bool 
+        (Optional) Default = False, If true, will only return matrices for all the weighted opacity 
+        contributions
 
     Returns
     -------
@@ -108,6 +111,9 @@ def compute_opacity(atmosphere, opacityclass, stream, delta_eddington=True,test_
     nlayer = atm.c.nlayer
     nwno = opacityclass.nwno
 
+    if return_mode:
+        taus_by_species = {}
+
     if plot_opacity: 
         plot_layer=int(nlayer/1.5)#np.size(tlayer)-1
         opt_figure = figure(x_axis_label = 'Wavelength', y_axis_label='TAUGAS in optics.py', 
@@ -148,7 +154,7 @@ def compute_opacity(atmosphere, opacityclass, stream, delta_eddington=True,test_
             TAUGAS += ADDTAU
             if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
             muted_color=colors[c], muted_alpha=0.2)
-
+            if return_mode: taus_by_species[m[0]+m[1]] = ADDTAU
         #H- Free-Free
         elif (m[0] == "H-") and (m[1] == "ff"):
             ADDTAU = (opacityclass.continuum_opa['H-ff']*(                               #[(nwno x nlayer) *(
@@ -160,6 +166,7 @@ def compute_opacity(atmosphere, opacityclass, stream, delta_eddington=True,test_
             TAUGAS += ADDTAU
             if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
             muted_color=colors[c], muted_alpha=0.2)
+            if return_mode: taus_by_species[m[0]+m[1]] = ADDTAU
 
         #H2- 
         elif (m[0] == "H2-") and (m[1] == ""): 
@@ -177,6 +184,7 @@ def compute_opacity(atmosphere, opacityclass, stream, delta_eddington=True,test_
             TAUGAS += ADDTAU
             if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
             muted_color=colors[c], muted_alpha=0.2)
+            if return_mode: taus_by_species[m[0]+m[1]] = ADDTAU
         #everything else.. e.g. H2-H2, H2-CH4. Automatically determined by which molecules were requested
         else:
 
@@ -189,6 +197,7 @@ def compute_opacity(atmosphere, opacityclass, stream, delta_eddington=True,test_
             TAUGAS += ADDTAU
             if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
             muted_color=colors[c], muted_alpha=0.2)
+            if return_mode: taus_by_species[m[0]+m[1]] = ADDTAU
         c+=1
     
     #====================== ADD MOLECULAR OPACITY====================== 
@@ -209,6 +218,7 @@ def compute_opacity(atmosphere, opacityclass, stream, delta_eddington=True,test_
         #testing[m] = ADDTAU
         if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m, line_width=3, color=colors[c],
             muted_color=colors[c], muted_alpha=0.2)
+        if return_mode: taus_by_species[m] = ADDTAU
         c+=1
 
     #====================== ADD RAYLEIGH OPACITY======================  
@@ -230,23 +240,10 @@ def compute_opacity(atmosphere, opacityclass, stream, delta_eddington=True,test_
                     atm.layer['mixingratios'][m].values/ #removing this bc of opa unit change *atm.weights[m].values[0]/ 
                     atm.layer['mmw'])).T 
         TAURAY += ADDTAU 
-        
-    """
-    #old 3 
-    lam = np.zeros((len(opacityclass.wno),1))
-    lam[:,0] = 1e4/opacityclass.wno
-    nam1=1E-8*(8342.13+2406030./(130.-lam**(-2))+15997./(38.9-lam**(-2)))
-    ff=1.05
-    Na0=2.55E19*100.**3
-    ray_matrix=np.zeros((len(opacityclass.wno), nlayer))+32.*np.pi**3./(3.*Na0**2)*(nam1**2)*ff/((lam*1E-6)**4.)
-    TAURAY = (6.02214086e+23 * 1e4 * ray_matrix * ( #[(nwno x nlayer) *(
-                    atm.layer['colden']*
-                    atm.layer['mixingratios']['N2'].values/ #removing this bc of opa unit change *atm.weights[m].values[0]/ 
-                    atm.layer['mmw'])).T 
-    """
+
     if plot_opacity: opt_figure.line(1e4/opacityclass.wno, TAURAY[plot_layer,:], alpha=0.7,legend_label='Rayleigh', line_width=3, color=colors[c],
             muted_color=colors[c], muted_alpha=0.2) 
-
+    if return_mode: taus_by_species['rayleigh'] = ADDTAU
 
     #====================== ADD RAMAN OPACITY======================
     #OKLOPCIC OPACITY
@@ -273,7 +270,10 @@ def compute_opacity(atmosphere, opacityclass, stream, delta_eddington=True,test_
     TAUCLD = atm.layer['cloud']['opd'] #TAUCLD is the total extinction from cloud = (abs + scattering)
     asym_factor_cld = atm.layer['cloud']['g0']
     single_scattering_cld = atm.layer['cloud']['w0'] 
-
+    if return_mode: 
+        taus_by_species['cloud'] = TAUCLD*single_scattering_cld
+        return taus_by_species
+        
     #====================== If user requests full output, add Tau's to atmosphere class=====
     if full_output:
         atmosphere.taugas = TAUGAS

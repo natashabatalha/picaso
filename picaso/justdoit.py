@@ -4,6 +4,7 @@ from .wavelength import get_cld_input_grid
 from .opacity_factory import create_grid
 from .optics import RetrieveOpacities,compute_opacity
 from .disco import get_angles_1d, get_angles_3d, compute_disco, compress_disco, compress_thermal
+from .justplotit import numba_cumsum, find_nearest_2d, mean_regrid
 
 from virga import justdoit as vj
 from scipy.signal import savgol_filter
@@ -350,6 +351,144 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             returns['full_output'] = atm
 
     return returns
+
+
+def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
+    """
+    Currently top level program to run albedo code 
+
+    Parameters 
+    ----------
+    bundle : dict 
+        This input dict is built by loading the input = `justdoit.load_inputs()` 
+    opacityclass : class
+        Opacity class from `justdoit.opannection`
+
+    Return
+    ------
+    dictionary with albedos or fluxes or both (depending on what calculation type)
+    """
+    inputs = bundle.inputs
+
+    wno = opacityclass.wno
+    nwno = opacityclass.nwno
+
+    #check to see if we are running in test mode
+    test_mode = inputs['test_mode']
+
+    ############# DEFINE ALL APPROXIMATIONS USED IN CALCULATION #############
+    #see class `inputs` attribute `approx`
+
+    #set approx numbers options (to be used in numba compiled functions)
+    single_phase = inputs['approx']['single_phase']
+    multi_phase = inputs['approx']['multi_phase']
+    method = inputs['approx']['method']
+    stream = inputs['approx']['stream']
+    tridiagonal = 0 
+    raman_approx = 2
+
+    #parameters needed for the two term hg phase function. 
+    #Defaults are set in config.json
+    f = inputs['approx']['TTHG_params']['fraction']
+    frac_a = f[0]
+    frac_b = f[1]
+    frac_c = f[2]
+    constant_back = inputs['approx']['TTHG_params']['constant_back']
+    constant_forward = inputs['approx']['TTHG_params']['constant_forward']
+
+    #define delta eddington approximinations 
+    delta_eddington = inputs['approx']['delta_eddington']
+
+    #pressure assumption
+    p_reference =  inputs['approx']['p_reference']
+
+    ############# DEFINE ALL GEOMETRY USED IN CALCULATION #############
+    #see class `inputs` attribute `phase_angle`
+    
+
+    #phase angle 
+    phase_angle = inputs['phase_angle']
+    #get geometry
+    geom = inputs['disco']
+
+    ng, nt = geom['num_gangle'], geom['num_tangle']
+    gangle,gweight,tangle,tweight = geom['gangle'], geom['gweight'],geom['tangle'], geom['tweight']
+    lat, lon = geom['latitude'], geom['longitude']
+    cos_theta = geom['cos_theta']
+    ubar0, ubar1 = geom['ubar0'], geom['ubar1']
+
+    #set star parameters
+    radius_star = inputs['star']['radius']
+    F0PI = np.zeros(nwno) + 1.
+    #semi major axis
+    sa = inputs['star']['semi_major']
+
+    #begin atm setup
+    atm = ATMSETUP(inputs)
+
+    #Add inputs to class 
+    atm.wavenumber = wno
+    atm.planet.gravity = inputs['planet']['gravity']
+    atm.planet.radius = inputs['planet']['radius']
+    atm.planet.mass = inputs['planet']['mass']
+
+    if dimension == '1d':
+        atm.get_profile()
+    elif dimension == '3d':
+        atm.get_profile_3d()
+
+    #now can get these 
+    atm.get_mmw()
+    atm.get_density()
+    atm.get_altitude(p_reference = p_reference)#will calculate altitude if r and m are given (opposed to just g)
+    atm.get_column_density()
+
+    #gets both continuum and needed rayleigh cross sections 
+    #relies on continuum molecules are added into the opacity 
+    #database. Rayleigh molecules are all in `rayleigh.py` 
+    atm.get_needed_continuum(opacityclass.rayleigh_molecules)
+
+    #get cloud properties, if there are any and put it on current grid 
+    atm.get_clouds(wno)
+
+    #Make sure that all molecules are in opacityclass. If not, remove them and add warning
+    no_opacities = [i for i in atm.molecules if i not in opacityclass.molecules]
+    atm.add_warnings('No computed opacities for: '+','.join(no_opacities))
+    atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
+
+    nlevel = atm.c.nlevel
+    nlayer = atm.c.nlayer
+    
+    #lastly grab needed opacities for the problem
+    opacityclass.get_opacities(atm)
+    #only need to get opacities for one pt profile
+
+    #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
+    #We use HG function for single scattering which gets the forward scattering/back scattering peaks 
+    #well. We only really want to use delta-edd for multi scattering legendre polynomials. 
+    taus_by_species= compute_opacity(atm, opacityclass, stream,raman=raman_approx, return_mode=True)
+
+    cumsum_taus = {}
+    for i in taus_by_species.keys(): 
+        shape = taus_by_species[i].shape
+        taugas = np.zeros((shape[0]+1, shape[1]))
+        taugas[1:,:]=numba_cumsum(taus_by_species[i])
+        cumsum_taus[i] = taugas
+
+    pressure = atm.level['pressure']/atm.c.pconv
+
+    at_pressure_array = {}
+    for i in taus_by_species.keys(): 
+        at_pressures = np.zeros(shape[1])
+        ind_gas = find_nearest_2d(cumsum_taus[i] , at_tau)
+
+        for iw in range(shape[1]):
+            at_pressures[iw] = pressure[ind_gas[iw]]
+
+        at_pressure_array[i] = at_pressures
+
+    return taus_by_species, cumsum_taus, at_pressure_array
+
 
 def opannection(wave_range = None, filename_db = None, raman_db = None, resample=1):
     """
@@ -1728,39 +1867,6 @@ def load_planet(df, opacity, phase_angle = 0, stellar_db='phoenix', verbose=Fals
 
     return start_case
 
-def mean_regrid(x, y, newx=None, R=None):
-    """
-    Rebin the spectrum at a minimum R or on a fixed grid 
-
-    Parameters
-    ----------
-    x : array 
-        Wavenumbers
-    y : array 
-        Anything (e.g. albedo, flux)
-    newx : array 
-        new array to regrid on. 
-    R : float 
-        create grid with constant R
-
-    Returns
-    -------
-    final x, and final y
-    """
-    if (isinstance(newx, type(None)) & (not isinstance(R, type(None)))) :
-        newx = create_grid(1e4/max(x), 1e4/min(x), R)
-    elif (not isinstance(newx, type(None)) & (isinstance(R, type(None)))) :  
-        d = np.diff(newx)
-        binedges = np.array([newx[0]-d[0]/2] + list(newx[0:-1]+d/2.0) + [newx[-1]+d[-1]/2])
-        newx = binedges
-    else: 
-        raise Exception('Please either enter a newx or a R') 
-
-    y, edges, binnum = binned_statistic(x,y,bins=newx)
-    newx = (edges[0:-1]+edges[1:])/2.0
-
-    return newx, y
-
 def jupiter_pt():
     """Function to get Jupiter's PT profile"""
     return os.path.join(__refdata__, 'base_cases','jupiter.pt')
@@ -1829,4 +1935,3 @@ def stream_options(printout=True):
     """Retrieve all the options for stream"""
     if printout: print("Can use 2-stream or 4-stream sperhical harmonics")
     return [2,4]
-

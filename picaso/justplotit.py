@@ -23,7 +23,39 @@ from scipy.stats.stats import pearsonr
 
 from .fluxes import blackbody
 from .opacity_factory import *
-from .justdoit import mean_regrid
+
+def mean_regrid(x, y, newx=None, R=None):
+    """
+    Rebin the spectrum at a minimum R or on a fixed grid 
+
+    Parameters
+    ----------
+    x : array 
+        Wavenumbers
+    y : array 
+        Anything (e.g. albedo, flux)
+    newx : array 
+        new array to regrid on. 
+    R : float 
+        create grid with constant R
+
+    Returns
+    -------
+    final x, and final y
+    """
+    if (isinstance(newx, type(None)) & (not isinstance(R, type(None)))) :
+        newx = create_grid(1e4/max(x), 1e4/min(x), R)
+    elif (not isinstance(newx, type(None)) & (isinstance(R, type(None)))) :  
+        d = np.diff(newx)
+        binedges = np.array([newx[0]-d[0]/2] + list(newx[0:-1]+d/2.0) + [newx[-1]+d[-1]/2])
+        newx = binedges
+    else: 
+        raise Exception('Please either enter a newx or a R') 
+
+    y, edges, binnum = binned_statistic(x,y,bins=newx)
+    newx = (edges[0:-1]+edges[1:])/2.0
+
+    return newx, y
 
 def plot_errorbar(x,y,e,plot,**kwargs):
     """
