@@ -366,7 +366,22 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
 
     Return
     ------
-    dictionary with albedos or fluxes or both (depending on what calculation type)
+    taus_by_species : dict
+        Each dictionary entry is a nlayer x nwave that represents the 
+        per layer optical depth for that molecule. If you do not see 
+        a molecule that you have added as input, check to make sure it is
+        propertly formatted (e.g. Sodium must be Na not NA, Titanium Oxide must be TiO not TIO)
+    cumsum_taus : dict
+        Each dictionary entry is a nlevel x nwave that represents the cumulative summed opacity
+        for that molecule. If you do not see a molecule that you have added as input, check to make sure it is
+        propertly formatted (e.g. Sodium must be Na not NA, Titanium Oxide must be TiO not TIO)
+    at_pressure_array : dict 
+        Each dictionary entry is a nwave array that represents the 
+        pressure level where the cumulative opacity reaches the value specieid by the user through `at_tau`.
+        If you do not see a molecule that you have added as input, check to make sure it is
+        a molecule that you have added as input, check to make sure it is
+        propertly formatted (e.g. Sodium must be Na not NA, Titanium Oxide must be TiO not TIO)
+        
     """
     inputs = bundle.inputs
 
