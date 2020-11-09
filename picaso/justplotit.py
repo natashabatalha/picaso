@@ -20,6 +20,7 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 
 from scipy.stats.stats import pearsonr  
+from scipy.stats import binned_statistic
 
 from .fluxes import blackbody
 from .opacity_factory import *

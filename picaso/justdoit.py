@@ -11,7 +11,6 @@ from scipy.signal import savgol_filter
 from scipy.interpolate import RegularGridInterpolator
 import scipy as sp
 from scipy import special
-from scipy.stats import binned_statistic
 
 import requests
 import os
