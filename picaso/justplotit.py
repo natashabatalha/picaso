@@ -1439,7 +1439,7 @@ def error_lines_plot(data,rayleigh=False):
         })
     df_new.plot_bokeh.line(
         x='w0', 
-        y=list(df_new.columns[1:]),
+        y=list(df_new.columns[2:]),
         figsize=(900, 500),
     #     ylim=(5000, 20000),
         zooming=False,

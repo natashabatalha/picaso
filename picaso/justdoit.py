@@ -166,8 +166,22 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         if  'reflected' in calculation:
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
             nlevel = atm.c.nlevel
+            #nwno = 1
+            #wno = wno[0:nwno]
+            #TAU = TAU[0:nlevel,0:nwno]
+            #DTAU = DTAU[0:nlevel-1,0:nwno]
+            #W0 = W0[0:nlevel-1,0:nwno]
+            #COSB = COSB[0:nlevel-1,0:nwno]
+            #GCOS2 = GCOS2[0:nlevel-1,0:nwno]
+            #ftau_cld = ftau_cld[0:nlevel-1,0:nwno]
+            #ftau_ray = ftau_ray[0:nlevel-1,0:nwno]
+            #TAU_OG = TAU_OG[0:nlevel-1,0:nwno]
+            #DTAU_OG = DTAU_OG[0:nlevel-1,0:nwno]
+            #W0_OG = W0_OG[0:nlevel-1,0:nwno]
+            #COSB_OG = COSB_OG[0:nlevel-1,0:nwno]
+            #F0PI = F0PI[0:nwno]
             if method == 'SH':
-                (xint_at_top, flux, intensity) = get_reflected_new(nlevel, wno, nwno, ng, nt, 
+                (xint_at_top, flux_out, intensity) = get_reflected_new(nlevel, wno, nwno, ng, nt, 
                                             DTAU, TAU, W0, COSB, GCOS2, ftau_cld, ftau_ray,
                                             DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
                                             atm.surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
@@ -178,7 +192,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                     atm.int_layer = intensity
 
             else:
-                (xint_at_top, flux) = get_reflected_1d(nlevel, wno,nwno,ng,nt,
+                (xint_at_top, flux_out) = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                                     DTAU, TAU, W0, COSB,GCOS2,ftau_cld,ftau_ray,
                                                     DTAU_OG, TAU_OG, W0_OG, COSB_OG ,
                                                     atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
@@ -190,7 +204,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             #if full output is requested add in xint at top for 3d plots
             if full_output: 
                 atm.xint_at_top = xint_at_top
-                atm.flux= flux
+                atm.flux= flux_out
 
 
         if 'thermal' in calculation:
