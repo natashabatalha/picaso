@@ -16,7 +16,7 @@ def single_layer(w0_og, F0PI, u0, dtau_og,tau_og, cosb_og, u1, P):
     nlevel = nlayer+1
     F0PI = F0PI[0]
     w0_og = w0_og[0,0]
-    cosb_og = cosb_og[0,0]
+    cosb_og = 0#cosb_og[0,0]
     tau_og = tau_og[-1,0]
     b_top = 1
     if DE:
@@ -46,7 +46,7 @@ def single_layer(w0_og, F0PI, u0, dtau_og,tau_og, cosb_og, u1, P):
         w4.append((2*l+1) * (cosb_og**l - f4) / (1 - f4))
         a2.append((2*l + 1) -  w02 * w2[l])
         a4.append((2*l + 1) -  w04 * w4[l])
-        if l < 1:
+        if l < 0:
             b2.append(( F0PI * (w02 * w2[l])) * P(-u0)[l] / (4*pi))
             b4.append(( F0PI * (w04 * w4[l])) * P(-u0)[l] / (4*pi))
         else:
@@ -141,6 +141,14 @@ def single_layer(w0_og, F0PI, u0, dtau_og,tau_og, cosb_og, u1, P):
     Flux2 = F2.dot(X2)+G2
 
     Int2 = A2.dot(X2)+N2
+
+    lamdas = [lam, -lam]
+    temp = 0
+    for l in range(2):
+        temp2 = 0   
+        for i in range(2):
+            temp2 = temp2 + X2[i] * (1-exp(-dtau*(lamdas[i]+1/u1))) / (u1*lamdas[i]+1)
+        temp = temp + w02*w2[l]*P(u1)[l] * temp2
 
     
     # 4-stream
@@ -358,17 +366,97 @@ def single_layer(w0_og, F0PI, u0, dtau_og,tau_og, cosb_og, u1, P):
 
 
     Intensity2 = zeros(nlevel)
+    Flux2_up = zeros(nlevel)
+    Flux2_dwn = zeros(nlevel)
     for i in range(nlevel):
+        Flux2_up[i] = 2*pi*(Int2[2*i]/2 + Int2[2*i+1] )
+        Flux2_dwn[i] = 2*pi*(Int2[2*i]/2 - Int2[2*i+1])
         for l in range(2):
             Intensity2[i] = Intensity2[i] + (2*l+1)*Int2[2*i+l]*P(u1)[l]
     Intensity4 = zeros(nlevel)
     Flux4_up = zeros(nlevel)
     Flux4_dwn = zeros(nlevel)
+    HFlux4_up = zeros(nlevel)
+    HFlux4_dwn = zeros(nlevel)
     for i in range(nlevel):
         Flux4_up[i] = 2*pi*(Int4[4*i]/2 + Int4[4*i+1]  + 5*Int4[4*i+2]/8)
         Flux4_dwn[i] = 2*pi*(Int4[4*i]/2 - Int4[4*i+1] + 5*Int4[4*i+2]/8)
+        HFlux4_up[i] = 2*pi*(-Int4[4*i]/8 + 5*Int4[4*i+2]/8 + Int4[4*i+3])
+        HFlux4_dwn[i] = 2*pi*(-Int4[4*i]/8 + 5*Int4[4*i+2]/8 - Int4[4*i+3])
         for l in range(4):
             Intensity4[i] = Intensity4[i] + (2*l+1)*Int4[4*i+l]*P(u1)[l]
+        #Intensity4[i] = (Intensity4[i] + 7*Int4[4*i+l]*(P(u1)[3] + 1.6*sqrt(7)*P(u1)[4] 
+        #                    + 3*sqrt(7)*(1-u1)**4))
+
+    lamdas = [lam1, -lam1, lam2, -lam2]
+    temp_ = 0
+    for l in range(4):
+        temp2 = 0   
+        for i in range(4):
+            temp2 = temp2 + X4[i] * (1-exp(-dtau*(lamdas[i]+1/u1))) / (u1*lamdas[i]+1)
+        temp_ = temp_ + w04*w4[l]*P(u1)[l] * temp2
+
+    import IPython; IPython.embed()
+    import sys; sys.exit()
+
+    def w(g,l):
+        return (2*l+1) * g**l
+
+    def w_(g,l,st):
+        return (2*l+1) * (g**l - g**st) / (1 - g**st)
+
+    def P2(g):
+        temp = 0
+        for l in range(2):
+            temp = temp + w(g,l) * P(u1)[l]
+        return temp
+
+    def P2_(g):
+        temp = 0
+        for l in range(2):
+            temp = temp + w_(g,l,2) * P(u1)[l]
+        return temp
+
+    def P4(g):
+        temp = 0
+        for l in range(4):
+            temp = temp + w(g,l) * P(u1)[l]
+        return temp
+
+    def P4_(g):
+        temp = 0
+        for l in range(4):
+            temp = temp + w_(g,l,4) * P(u1)[l]
+        return temp
+
+    def P6(g):
+        temp = 0
+        for l in range(6):
+            temp = temp + w(g,l) * P(u1)[l]
+        return temp
+
+    def P6_(g):
+        temp = 0
+        for l in range(6):
+            temp = temp + w_(g,l,6) * P(u1)[l]
+        return temp
+
+    def phase(g):
+        return (1-g**2)/(sqrt((1+g**2-2*g*u1)**3))
+
+    g = np.linspace(0,.999,100)
+
+
+    import matplotlib.pyplot as plt
+    plt.plot(g, phase(g), ':', color='k')
+    plt.plot(g, P2(g), '-', color='r')
+    plt.plot(g, P4(g), '-', color='b')
+    #plt.loglog(g, P6(g), '-', color='g')
+    plt.plot(g, P2_(g), '--', color='r')
+    plt.plot(g, P4_(g), '--', color='b')
+    #plt.loglog(g, P6_(g), '--', color='g')
+    plt.show()
+
     import IPython; IPython.embed()
     import sys; sys.exit()
 

@@ -1842,12 +1842,17 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 			#w_multi = [g0_m, g1_m, g2_m, g3_m]
 			
 			def P(mu): # Legendre polynomials
-				return [1, mu, (3*mu**2 - 1)/2, (5*mu**3 - 3*mu)/2]
+				return [1, mu, (3*mu**2 - 1)/2, (5*mu**3 - 3*mu)/2,
+					(35*mu**4 - 30*mu**2 + 3)/8, 
+					(63*mu**5 - 70*mu**3 + 15*mu)/8, 
+					(231*mu**6 - 315*mu**4 + 105*mu**2 - 5)/16 ]
 
-			#from single_layer import single_layer
-			#from two_layers import two_layers
+			from single_layer import single_layer
+			from two_layers import two_layers
+			#from six_stream import six_stream
 			#single_layer(w0_og, F0PI, u0, dtau_og,tau_og, cosb_og, u1, P) 
 			#two_layers(w0_og, F0PI, u0, dtau_og,tau_og, cosb_og, u1, P) 
+			#six_stream(w0_og, F0PI, u0, dtau_og,tau_og, cosb_og, u1, P) 
 
 			a = []; b = [] 
 			w_single = []; w_multi = [] 

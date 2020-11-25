@@ -14,11 +14,11 @@ def two_layers(w0_og, F0PI, u0, dtau_og,tau_og, cosb_og, u1, P):
     DE = True
     nlayer = 2
     nlevel = nlayer+1
-    F0PI = F0PI[-1]
-    w0_og = w0_og[:,-1]
-    cosb_og = cosb_og[:,-1]
-    tau_og = tau_og[:,-1]
-    dtau_og = dtau_og[:,-1]
+    F0PI = F0PI[0]
+    w0_og = w0_og[:,0]
+    cosb_og = cosb_og[:,0]
+    tau_og = tau_og[:,0]
+    dtau_og = dtau_og[:,0]
     b_top = 0
     if DE:
         f2 = cosb_og**2
@@ -35,11 +35,11 @@ def two_layers(w0_og, F0PI, u0, dtau_og,tau_og, cosb_og, u1, P):
         f2 = 0.
         w02 = w0_og
         tau2 = tau_og
-        dtau2 = tau2
+        dtau2 = dtau_og
         f4 = 0.
         w04 = w0_og
         tau4 = tau_og
-        dtau4 = tau4
+        dtau4 = dtau_og
     
     a2 = []; b2 = []
     a4 = []; b4 = []
@@ -49,7 +49,7 @@ def two_layers(w0_og, F0PI, u0, dtau_og,tau_og, cosb_og, u1, P):
         w4.append((2*l+1) * (cosb_og**l - f4) / (1 - f4))
         a2.append((2*l + 1) -  w02 * w2[l])
         a4.append((2*l + 1) -  w04 * w4[l])
-        if l < 3:
+        if l < 4:
             b2.append(( F0PI * (w02 * w2[l])) * P(-u0)[l] / (4*pi))
             b4.append(( F0PI * (w04 * w4[l])) * P(-u0)[l] / (4*pi))
         else:
@@ -145,7 +145,7 @@ def two_layers(w0_og, F0PI, u0, dtau_og,tau_og, cosb_og, u1, P):
     A2[3,1] = a11[0]*e1[0]
 
     N2[2] = eta[0][0]*exptau[1]
-    N2[3] = eta[1][0]*exptau[0]
+    N2[3] = eta[1][0]*exptau[1]
 
     # bottom of atmosphere
     F2[4,2] = f00[1]*e0[1]
@@ -485,7 +485,7 @@ def two_layers(w0_og, F0PI, u0, dtau_og,tau_og, cosb_og, u1, P):
     # upward other flux
     G[11] = z3[1]*exptau[2]
     B[7] = - z3[1]*exptau[2]
-    N[10] = eta[3][1]*exptau[2]
+    N[11] = eta[3][1]*exptau[2]
 
     X4 = spsolve(M, B)
 
@@ -495,7 +495,11 @@ def two_layers(w0_og, F0PI, u0, dtau_og,tau_og, cosb_og, u1, P):
 
 
     Intensity2 = zeros(nlevel)
+    Flux2_up = zeros(nlevel)
+    Flux2_dwn = zeros(nlevel)
     for i in range(nlevel):
+        Flux2_up[i] = 2*pi*(Int2[2*i]/2 + Int2[2*i+1] ) 
+        Flux2_dwn[i] = 2*pi*(Int2[2*i]/2 - Int2[2*i+1]) 
         for l in range(2):
             Intensity2[i] = Intensity2[i] + (2*l+1)*Int2[2*i+l]*P(u1)[l]
     Intensity4 = zeros(nlevel)
