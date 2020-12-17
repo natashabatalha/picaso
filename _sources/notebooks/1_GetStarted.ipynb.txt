@@ -2,16 +2,6 @@
  "cells": [
   {
    "cell_type": "markdown",
-   "metadata": {
-    "toc": true
-   },
-   "source": [
-    "<h1>Table of Contents<span class=\"tocSkip\"></span></h1>\n",
-    "<div class=\"toc\"><ul class=\"toc-item\"><li><span><a href=\"#Getting-Started-:-Basic-Inputs-and-Outputs\" data-toc-modified-id=\"Getting-Started-:-Basic-Inputs-and-Outputs-1\"><span class=\"toc-item-num\">1&nbsp;&nbsp;</span>Getting Started : Basic Inputs and Outputs</a></span><ul class=\"toc-item\"><li><span><a href=\"#Connect-to-Opacity-Database\" data-toc-modified-id=\"Connect-to-Opacity-Database-1.1\"><span class=\"toc-item-num\">1.1&nbsp;&nbsp;</span>Connect to Opacity Database</a></span></li><li><span><a href=\"#Load-blank-slate\" data-toc-modified-id=\"Load-blank-slate-1.2\"><span class=\"toc-item-num\">1.2&nbsp;&nbsp;</span>Load blank slate</a></span></li><li><span><a href=\"#Set-Planet-&amp;-Star-Properties\" data-toc-modified-id=\"Set-Planet-&amp;-Star-Properties-1.3\"><span class=\"toc-item-num\">1.3&nbsp;&nbsp;</span>Set Planet &amp; Star Properties</a></span></li><li><span><a href=\"#Set-Atmospheric-Composition\" data-toc-modified-id=\"Set-Atmospheric-Composition-1.4\"><span class=\"toc-item-num\">1.4&nbsp;&nbsp;</span>Set Atmospheric Composition</a></span></li><li><span><a href=\"#Create-1D-Reflected-Light-Spectrum\" data-toc-modified-id=\"Create-1D-Reflected-Light-Spectrum-1.5\"><span class=\"toc-item-num\">1.5&nbsp;&nbsp;</span>Create 1D Reflected Light Spectrum</a></span></li><li><span><a href=\"#Regrid-Opacities-to-Constant-Resolution\" data-toc-modified-id=\"Regrid-Opacities-to-Constant-Resolution-1.6\"><span class=\"toc-item-num\">1.6&nbsp;&nbsp;</span>Regrid Opacities to Constant Resolution</a></span></li></ul></li></ul></div>"
-   ]
-  },
-  {
-   "cell_type": "markdown",
    "metadata": {},
    "source": [
     "# Getting Started : Basic Inputs and Outputs\n",

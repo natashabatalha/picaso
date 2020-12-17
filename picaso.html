@@ -1449,6 +1449,40 @@ e.g. {‘wmin’:0.3, ‘wmax’:1, ‘R’:5000} for opacity grid</p></li>
 </dd></dl>
 
 <dl class="function">
+<dt id="picaso.justdoit.get_contribution">
+<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">get_contribution</code><span class="sig-paren">(</span><em class="sig-param">bundle</em>, <em class="sig-param">opacityclass</em>, <em class="sig-param">at_tau=1</em>, <em class="sig-param">dimension='1d'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.get_contribution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Currently top level program to run albedo code</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bundle</strong> (<em>dict</em>) – This input dict is built by loading the input = <cite>justdoit.load_inputs()</cite></p></li>
+<li><p><strong>opacityclass</strong> (<em>class</em>) – Opacity class from <cite>justdoit.opannection</cite></p></li>
+<li><p><strong>at_tau</strong> (<em>float</em>) – (Optional) Default = 1, This is to compute the pressure level at which cumulative opacity reaches
+at_tau. Usually users want to know when the cumulative opacity reaches a tau of 1.</p></li>
+<li><p><strong>dimension</strong> (<em>str</em>) – (Optional) Default = ‘1d’. Currently only 1d is supported.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>taus_by_species</strong> (<em>dict</em>) – Each dictionary entry is a nlayer x nwave that represents the
+per layer optical depth for that molecule. If you do not see
+a molecule that you have added as input, check to make sure it is
+propertly formatted (e.g. Sodium must be Na not NA, Titanium Oxide must be TiO not TIO)</p></li>
+<li><p><strong>cumsum_taus</strong> (<em>dict</em>) – Each dictionary entry is a nlevel x nwave that represents the cumulative summed opacity
+for that molecule. If you do not see a molecule that you have added as input, check to make sure it is
+propertly formatted (e.g. Sodium must be Na not NA, Titanium Oxide must be TiO not TIO)</p></li>
+<li><p><strong>at_pressure_array</strong> (<em>dict</em>) – Each dictionary entry is a nwave array that represents the
+pressure level where the cumulative opacity reaches the value specieid by the user through <cite>at_tau</cite>.
+If you do not see a molecule that you have added as input, check to make sure it is
+a molecule that you have added as input, check to make sure it is
+propertly formatted (e.g. Sodium must be Na not NA, Titanium Oxide must be TiO not TIO)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="picaso.justdoit.get_targets">
 <code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">get_targets</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.get_targets" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to grab available targets</p>
@@ -2016,28 +2050,6 @@ specifically Sagan School tutorial.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="picaso.justdoit.mean_regrid">
-<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">mean_regrid</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">newx=None</em>, <em class="sig-param">R=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.mean_regrid" title="Permalink to this definition">¶</a></dt>
-<dd><p>Rebin the spectrum at a minimum R or on a fixed grid</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>array</em>) – Wavenumbers</p></li>
-<li><p><strong>y</strong> (<em>array</em>) – Anything (e.g. albedo, flux)</p></li>
-<li><p><strong>newx</strong> (<em>array</em>) – new array to regrid on.</p></li>
-<li><p><strong>R</strong> (<em>float</em>) – create grid with constant R</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>final x, and final y</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
 <dt id="picaso.justdoit.methodology_options">
 <code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">methodology_options</code><span class="sig-paren">(</span><em class="sig-param">printout=True</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.methodology_options" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieve all the options for methodology</p>
@@ -2273,6 +2285,28 @@ also supply a single wavelength.</p></li>
 <li><p><strong>float</strong><strong>, </strong><strong>optional</strong> (<em>wavelength</em><em>,</em>) – This allows users to plot maps of things that are wavelength dependent, like
 <cite>taugas</cite> and <cite>taucld</cite>.</p></li>
 </ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="picaso.justplotit.mean_regrid">
+<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">mean_regrid</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">newx=None</em>, <em class="sig-param">R=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.mean_regrid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rebin the spectrum at a minimum R or on a fixed grid</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array</em>) – Wavenumbers</p></li>
+<li><p><strong>y</strong> (<em>array</em>) – Anything (e.g. albedo, flux)</p></li>
+<li><p><strong>newx</strong> (<em>array</em>) – new array to regrid on.</p></li>
+<li><p><strong>R</strong> (<em>float</em>) – create grid with constant R</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>final x, and final y</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3105,7 +3139,7 @@ multiplication of N_a on return</p>
 
 <dl class="function">
 <dt id="picaso.optics.compute_opacity">
-<code class="sig-prename descclassname">picaso.optics.</code><code class="sig-name descname">compute_opacity</code><span class="sig-paren">(</span><em class="sig-param">atmosphere</em>, <em class="sig-param">opacityclass</em>, <em class="sig-param">stream</em>, <em class="sig-param">delta_eddington=True</em>, <em class="sig-param">test_mode=False</em>, <em class="sig-param">raman=0</em>, <em class="sig-param">plot_opacity=False</em>, <em class="sig-param">full_output=False</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.compute_opacity" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">picaso.optics.</code><code class="sig-name descname">compute_opacity</code><span class="sig-paren">(</span><em class="sig-param">atmosphere</em>, <em class="sig-param">opacityclass</em>, <em class="sig-param">stream</em>, <em class="sig-param">delta_eddington=True</em>, <em class="sig-param">test_mode=False</em>, <em class="sig-param">raman=0</em>, <em class="sig-param">plot_opacity=False</em>, <em class="sig-param">full_output=False</em>, <em class="sig-param">return_mode=False</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.compute_opacity" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns total optical depth per slab layer including molecular opacity, continuum opacity.
 It should automatically select the molecules needed</p>
 <dl class="field-list simple">
@@ -3125,7 +3159,9 @@ delta tau at 0.5.</p></li>
 <li><p><strong>full_output</strong> (<em>bool</em>) – (Optional) Default = False. If true, This will add taugas, taucld, tauray to the atmosphere class.
 This is done so that the users can debug, plot, etc.</p></li>
 <li><p><strong>plot_opacity</strong> (<em>bool</em>) – (Optional) Default = False. If true, Will create a pop up plot of the weighted of each absorber
-at the middle layer.</p></li>
+at the middle layer</p></li>
+<li><p><strong>return_mode</strong> (<em>bool</em>) – (Optional) Default = False, If true, will only return matrices for all the weighted opacity
+contributions</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
