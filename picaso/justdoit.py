@@ -246,7 +246,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                 opacityclass.get_opacities(atm_1d)
 
                 dtau, tau, w0, cosb,ftau_cld, ftau_ray, gcos2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, WO_no_raman = compute_opacity(
-                    atm_1d, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx, full_output=full_output)
+                    atm_1d, opacityclass,stream, delta_eddington=delta_eddington,
+                    test_mode=test_mode,raman=raman_approx, full_output=full_output)
                 DTAU_3d[:,:,g,t] = dtau
                 TAU_3d[:,:,g,t] = tau
                 W0_3d[:,:,g,t] = w0 

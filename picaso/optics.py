@@ -141,6 +141,7 @@ def compute_opacity(atmosphere, opacityclass, stream, delta_eddington=True,test_
             2./3.)*(plevel[1:]**3 - plevel[:-1]**3) ) / (
         1.01325**2 *gravity*tlayer*atm.layer['mmw']) 
 
+
     #go through every molecule in the continuum first 
     for m in atm.continuum_molecules:
 
@@ -152,8 +153,9 @@ def compute_opacity(atmosphere, opacityclass, stream, delta_eddington=True,test_
                             (atm.layer['mmw']*atm.c.amu))   ).T      #nlayer)].T
 
             TAUGAS += ADDTAU
-            if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
-            muted_color=colors[c], muted_alpha=0.2)
+            if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], 
+                alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
+                muted_color=colors[c], muted_alpha=0.2)
             if return_mode: taus_by_species[m[0]+m[1]] = ADDTAU
         #H- Free-Free
         elif (m[0] == "H-") and (m[1] == "ff"):
@@ -164,8 +166,9 @@ def compute_opacity(atmosphere, opacityclass, stream, delta_eddington=True,test_
                             (tlayer*atm.layer['mmw']*atm.c.amu*atm.c.k_b))  ).T          #nlayer)].T
             #testing['H-ff'] = ADDTAU
             TAUGAS += ADDTAU
-            if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
-            muted_color=colors[c], muted_alpha=0.2)
+            if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], 
+                alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
+                muted_color=colors[c], muted_alpha=0.2)
             if return_mode: taus_by_species[m[0]+m[1]] = ADDTAU
 
         #H2- 
@@ -182,8 +185,9 @@ def compute_opacity(atmosphere, opacityclass, stream, delta_eddington=True,test_
 
 
             TAUGAS += ADDTAU
-            if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
-            muted_color=colors[c], muted_alpha=0.2)
+            if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], 
+                alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
+                muted_color=colors[c], muted_alpha=0.2)
             if return_mode: taus_by_species[m[0]+m[1]] = ADDTAU
         #everything else.. e.g. H2-H2, H2-CH4. Automatically determined by which molecules were requested
         else:
@@ -195,8 +199,9 @@ def compute_opacity(atmosphere, opacityclass, stream, delta_eddington=True,test_
                                 atm.layer['mixingratios'][m[1]].values )  ).T           #nlayer)].T
 
             TAUGAS += ADDTAU
-            if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
-            muted_color=colors[c], muted_alpha=0.2)
+            if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], 
+                alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
+                muted_color=colors[c], muted_alpha=0.2)
             if return_mode: taus_by_species[m[0]+m[1]] = ADDTAU
         c+=1
     

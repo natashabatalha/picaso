@@ -340,15 +340,15 @@ class ATMSETUP():
         if np.isnan(self.planet.radius):
             constant_gravity = True
 
-        #set zero arays of things we want out 
-        nlevel = self.c.nlevel
-        z = np.zeros(nlevel) + self.planet.radius
-        dz = np.zeros(nlevel) 
-        gravity = np.zeros(nlevel) 
-
         mmw = self.level['mmw'] * self.c.amu #make sure mmw in grams
         tlevel = self.level['temperature']
         plevel = self.level['pressure']
+
+        #set zero arays of things we want out 
+        #nlevel = self.c.nlevel
+        z = np.zeros(plevel.shape) + self.planet.radius
+        dz = np.zeros(plevel.shape) 
+        gravity = np.zeros(plevel.shape) 
 
         for i in np.where(plevel>p_reference)[0]-1:
             if constant_gravity:
@@ -372,7 +372,7 @@ class ATMSETUP():
 
         self.level['z'] = z
         self.level['dz'] = dz
-        #for get_column_density calculation below we want gravity at leyers
+        #for get_column_density calculation below we want gravity at layers
         self.layer['gravity'] = 0.5*(gravity[0:-1] + gravity[1:])
         self.layer['gravity'][0] = self.layer['gravity'][1]
         self.layer['gravity'][-1] = self.layer['gravity'][-2]
