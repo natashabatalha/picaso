@@ -1,0 +1,405 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Contributing to PICASO &mdash; picaso 2.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="The Code" href="picaso.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> picaso
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                2.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">The Tutorials</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://arxiv.org/abs/1904.09355">The Paper</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Contributing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pep-8-style-guide">PEP 8 Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#github-workflow">Github Workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#clone-the-repository">1) Clone the repository</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#create-a-branch-off-of-dev-with-a-useful-name">2) Create a branch off of <code class="docutils literal notranslate"><span class="pre">dev</span></code> with a useful name</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#work-work-work-work">3) Work work work work…</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#final-merge-to-master">4) Final merge to <code class="docutils literal notranslate"><span class="pre">master</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#using-conda-enviornments">Using Conda Enviornments</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#create-your-own-environment">Create your own environment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#export-your-environment">Export your environment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#create-enviornment-from-a-yml-file">Create enviornment from a <code class="docutils literal notranslate"><span class="pre">.yml</span></code> file</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">picaso</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Contributing to <code class="docutils literal notranslate"><span class="pre">PICASO</span></code></li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/contribution.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="contributing-to-picaso">
+<h1>Contributing to <code class="docutils literal notranslate"><span class="pre">PICASO</span></code><a class="headerlink" href="#contributing-to-picaso" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="pep-8-style-guide">
+<h2>PEP 8 Style Guide<a class="headerlink" href="#pep-8-style-guide" title="Permalink to this headline">¶</a></h2>
+<p>We generally follow <a class="reference external" href="https://www.python.org/dev/peps/pep-0008/#descriptive-naming-styles">PEP 8</a> styling. Below we emphasize the “must haves” of our code.</p>
+<ul class="simple">
+<li><p>Your code should read like a book. If you have ~10 lines of code without a comment you are commenting too infrequently.</p></li>
+<li><p>It is really important to style function headers uniformly using <a class="reference external" href="https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_numpy.html#example-numpy">NumPy style Python Docstrings</a>. This enables <a class="reference external" href="http://www.sphinx-doc.org/en/master/">sphinx</a> to auto read function headers. Below is an example, but <a class="reference external" href="https://numpydoc.readthedocs.io/en/latest/format.html#sections">look here</a> for a full list of headers.</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">foo</span><span class="p">(</span><span class="n">in1</span><span class="p">,</span> <span class="n">in2</span><span class="p">,</span><span class="n">in3</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Describe function thoroughly.</span>
+
+<span class="sd">    Add any relevant citations.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    in1 : int</span>
+<span class="sd">        This variable is for something cool.</span>
+<span class="sd">    in2 : list of float</span>
+<span class="sd">        This variable is for something else cool.</span>
+<span class="sd">    in3 : str,optional</span>
+<span class="sd">        (Optional) Default=None, this variable is options.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    int</span>
+<span class="sd">        Cool output</span>
+<span class="sd">    float</span>
+<span class="sd">        Other cool output</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    This is how to use this.</span>
+
+<span class="sd">    &gt;&gt;a = foo(5,[5.0,4.0],in3=&#39;hello&#39;)</span>
+
+
+<span class="sd">    Warnings</span>
+<span class="sd">    --------</span>
+<span class="sd">    Garbage in garbage out</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Variable names should explain what the variable is. Avoid undescriptive names like <cite>thing1</cite> or <cite>thing2</cite></p></li>
+<li><p>If you have an equation in your code it should be referenced with a paper and equation number. For example:</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#now define terms of Toon et al 1989 quadrature Table 1</span>
+<span class="c1">#https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JD094iD13p16287</span>
+<span class="c1">#see table of terms</span>
+<span class="n">sq3</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="mf">3.</span><span class="p">)</span>
+<span class="n">g1</span>      <span class="o">=</span> <span class="p">(</span><span class="n">sq3</span><span class="o">*</span><span class="mf">0.5</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mf">2.</span> <span class="o">-</span> <span class="n">w0</span><span class="o">*</span><span class="p">(</span><span class="mf">1.</span><span class="o">+</span><span class="n">cosbar</span><span class="p">))</span>       <span class="c1">#table 1</span>
+<span class="n">g2</span>      <span class="o">=</span> <span class="p">(</span><span class="n">sq3</span><span class="o">*</span><span class="n">w0</span><span class="o">*</span><span class="mf">0.5</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mf">1.</span><span class="o">-</span><span class="n">cosbar</span><span class="p">)</span>                 <span class="c1">#table 1</span>
+<span class="n">g3</span>      <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="mf">1.</span><span class="o">-</span><span class="n">sq3</span><span class="o">*</span><span class="n">cosbar</span><span class="o">*</span><span class="n">ubar0</span><span class="p">)</span>               <span class="c1">#table 1</span>
+<span class="n">lamda</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">g1</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="n">g2</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>                                      <span class="c1">#eqn 21</span>
+<span class="n">gama</span>  <span class="o">=</span> <span class="p">(</span><span class="n">g1</span><span class="o">-</span><span class="n">lamda</span><span class="p">)</span><span class="o">/</span><span class="n">g2</span>                                                     <span class="c1">#eqn 22</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="github-workflow">
+<h2>Github Workflow<a class="headerlink" href="#github-workflow" title="Permalink to this headline">¶</a></h2>
+<p>Before contributing, consider submitting an issue request. Sometimes we may already be aware of an issue and can help you fix something faster.</p>
+<div class="section" id="clone-the-repository">
+<h3>1) Clone the repository<a class="headerlink" href="#clone-the-repository" title="Permalink to this headline">¶</a></h3>
+<p>Clond the repository that you are interested in working on.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/natashabatalha/picaso.git
+</pre></div>
+</div>
+<p>This will download a copy of the code to your computer. You will automatically be in the <code class="docutils literal notranslate"><span class="pre">master</span></code> branch upon downloading.</p>
+<p><strong>Side note: Important distinction between ``master`` and ``dev``</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">master</span></code> always represents the released production code. Here is the workflow we will follow. All major development will be done on branches off of <code class="docutils literal notranslate"><span class="pre">dev</span></code>. The only exceptions are what we call “hotfixes”, which can go directly from the fixed branch to master, and minor bugs that can be directly fixed on <code class="docutils literal notranslate"><span class="pre">dev</span></code>. See the overall schematic below.</p>
+<img alt="_images/github_flow.jpg" src="_images/github_flow.jpg" />
+</div>
+<div class="section" id="create-a-branch-off-of-dev-with-a-useful-name">
+<h3>2) Create a branch off of <code class="docutils literal notranslate"><span class="pre">dev</span></code> with a useful name<a class="headerlink" href="#create-a-branch-off-of-dev-with-a-useful-name" title="Permalink to this headline">¶</a></h3>
+<p>It’s likely you will be working on a specific subset of a bigger code project. Any changes you make on a new branch will not affect <code class="docutils literal notranslate"><span class="pre">master</span></code> or <code class="docutils literal notranslate"><span class="pre">dev</span></code>, so you can feel free to beat up the code without damaging anything that is fully tested.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git checkout -b myfeature dev
+</pre></div>
+</div>
+</div>
+<div class="section" id="work-work-work-work">
+<h3>3) Work work work work…<a class="headerlink" href="#work-work-work-work" title="Permalink to this headline">¶</a></h3>
+<p>Let’s pretend that <code class="docutils literal notranslate"><span class="pre">myfeature</span></code> entails working on <code class="docutils literal notranslate"><span class="pre">file1.py</span></code> and <code class="docutils literal notranslate"><span class="pre">file2.py</span></code>. After you are happy with an initial change, commit and push your changes.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1">#commit changes</span>
+git add file1.py file2.py
+git commit -m <span class="s1">&#39;added cool thing&#39;</span>
+
+<span class="c1">#switch to dev branch</span>
+git checkout dev
+
+<span class="c1">#merge your changes</span>
+git merge --no-ff myfeature
+
+<span class="c1">#delete old branch</span>
+git branch -d myfeature
+
+<span class="c1">#push to dev</span>
+git push origin dev
+</pre></div>
+</div>
+<p>Many people ask: “How often should I commit??”. Choose something that works for you and stick to it. I try and work on smaller, individual tasks and commit when I feel I have finished something. If you try and do too much at once, your commit comments won’t make too much sense with what you have actually done. Remember, eventually someone will have to review your commits. If they are hard to parse, it will delay the merge of your work.</p>
+</div>
+<div class="section" id="final-merge-to-master">
+<h3>4) Final merge to <code class="docutils literal notranslate"><span class="pre">master</span></code><a class="headerlink" href="#final-merge-to-master" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">master</span></code> is generally a protected branch, so talk to the admin or the team before proceeding. In general, merges to master are easiest done through <a class="reference external" href="https://github.com/natashabatalha/picaso">Github Online</a>. Near where the branches are listed, go to “New Pull Request”. Write a description of the new dev capability, and request a merge to master. And if all good then, done!!!</p>
+</div>
+</div>
+<div class="section" id="using-conda-enviornments">
+<h2>Using Conda Enviornments<a class="headerlink" href="#using-conda-enviornments" title="Permalink to this headline">¶</a></h2>
+<p>Package control and version control is a pain. To make sure everyone is running on the same enviornment it will be beneficial if we are all work in the same environment. Here are the most pertinent commands you need to know.</p>
+<div class="section" id="create-your-own-environment">
+<h3>Create your own environment<a class="headerlink" href="#create-your-own-environment" title="Permalink to this headline">¶</a></h3>
+<p>To create your own environment with a specific name and python package:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda create --name your_env_name <span class="nv">python</span><span class="o">=</span><span class="m">3</span>.7 -y
+</pre></div>
+</div>
+<p>If you have specific environment variables that need to be tied to here, then you can specify them. For example, in PICASO there is the environment variable <code class="docutils literal notranslate"><span class="pre">picaso_refdata</span></code> and <code class="docutils literal notranslate"><span class="pre">PYSYN_CDBS</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda activate your_env_name
+<span class="nb">cd</span> <span class="nv">$CONDA_PREFIX</span>
+mkdir -p ./etc/conda/activate.d
+mkdir -p ./etc/conda/deactivate.d
+touch ./etc/conda/activate.d/env_vars.sh
+touch ./etc/conda/deactivate.d/env_vars.sh
+</pre></div>
+</div>
+<p>Edit <code class="docutils literal notranslate"><span class="pre">./etc/conda/activate.d/env_vars.sh</span></code></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/sh</span>
+
+<span class="nb">export</span> <span class="nv">MY_VAR</span><span class="o">=</span><span class="s1">&#39;path/to/wherever/you/need&#39;</span>
+</pre></div>
+</div>
+<p>And edit <code class="docutils literal notranslate"><span class="pre">./etc/conda/deactivate.d/env_vars.sh</span></code></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/sh</span>
+
+<span class="nb">unset</span> MY_VAR
+</pre></div>
+</div>
+<p>No whenever you activate your environment, your variable name will be there. Whenever you deactivate your environment, it will go away.</p>
+</div>
+<div class="section" id="export-your-environment">
+<h3>Export your environment<a class="headerlink" href="#export-your-environment" title="Permalink to this headline">¶</a></h3>
+<p>Another great aspect of conda enviornments is that they can be passed to one another.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda env <span class="nb">export</span> &gt; my_environment.yml
+</pre></div>
+</div>
+</div>
+<div class="section" id="create-enviornment-from-a-yml-file">
+<h3>Create enviornment from a <code class="docutils literal notranslate"><span class="pre">.yml</span></code> file<a class="headerlink" href="#create-enviornment-from-a-yml-file" title="Permalink to this headline">¶</a></h3>
+<p>If someone passes you an environment file, you can easily create an environment from it !</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda env create -f environment.yml
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="picaso.html" class="btn btn-neutral float-left" title="The Code" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

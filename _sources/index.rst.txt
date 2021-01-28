@@ -64,5 +64,5 @@ Resources
    The Code <picaso>
    Github <https://github.com/natashabatalha/picaso>
    The Paper <https://arxiv.org/abs/1904.09355>
-
+   Contributing <contribution>
 
