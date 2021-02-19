@@ -579,6 +579,9 @@ class ATMSETUP():
         df['latitude'] = self.latitude
         df['longitude'] = self.longitude
 
+        df['star'] = {}
+        df['star']['flux_unit'] = 'erg/cm2/s/cm'
+
         try: 
             x =  self.xint_at_top
             df['albedo_3d'] = x

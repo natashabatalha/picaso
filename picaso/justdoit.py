@@ -156,10 +156,13 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
         #We use HG function for single scattering which gets the forward scattering/back scattering peaks 
         #well. We only really want to use delta-edd for multi scattering legendre polynomials. 
+        #import time 
+        #s1 = time.time()
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman= compute_opacity(
             atm, opacityclass, stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
             full_output=full_output, plot_opacity=plot_opacity)
-
+        #print("opacities", s1-time.time())
+        #s1 = time.time()
         if  'reflected' in calculation:
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
             nlevel = atm.c.nlevel
@@ -179,7 +182,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                                     atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
                                                     single_phase,multi_phase,
                                                     frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)
-
+            #print('RT REF',s1-time.time())
+            #s1 = time.time()
             #if full output is requested add in xint at top for 3d plots
             if full_output: 
                 atm.xint_at_top = xint_at_top
@@ -193,7 +197,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             flux_at_top  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
                                                     DTAU_OG, W0_no_raman, COSB_OG, atm.level['pressure'],ubar1,
                                                     atm.surf_reflect, tridiagonal)
-
+            #print('RT THERM',s1-time.time())
             #if full output is requested add in flux at top for 3d plots
             if full_output: 
                 atm.flux_at_top = flux_at_top
@@ -315,6 +319,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     if  ('reflected' in calculation):
         albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
         returns['albedo'] = albedo 
+        #see equation 18 Batalha+2019 PICASO 
+        returns['bond_albedo'] = (np.trapz(x=1/wno, y=albedo*opacityclass.unshifted_stellar_spec)/
+                                    np.trapz(x=1/wno, y=opacityclass.unshifted_stellar_spec))
+
         if ((not np.isnan(sa ) and (not np.isnan(atm.planet.radius))) ):
             returns['fpfs_reflected'] = albedo*(atm.planet.radius/sa)**2.0
         else: 
@@ -322,21 +330,30 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             if np.isnan(sa ):
                 returns['fpfs_reflected'] += ['Semi-major axis not supplied. If you want fpfs, add it to `star` function. ']
             if np.isnan(atm.planet.radius): 
-                returns['fpfs_reflected'] += ['Planet Radius not supplied. If you want fpfs, add it to `gravity` function with Mass.']
+                returns['fpfs_reflected'] += ['Planet Radius not supplied. If you want fpfs, add it to `gravity` function with a mass.']
 
     #for thermal light use the compress thermal routine
     #this takes the intensity as a functin of tangle/gangle and creates a 1d spectrum
     if ('thermal' in calculation):
         thermal = compress_thermal(nwno,ubar1, flux_at_top, gweight, tweight)
         returns['thermal'] = thermal
-        if full_output: atm.thermal_flux_planet = thermal
+        returns['effective_temperature'] = (np.trapz(x=1/wno[::-1], y=thermal[::-1])/5.67e-5)**0.25
+
+        if full_output: 
+            atm.thermal_flux_planet = thermal
+            
 
         #only need to return relative flux if not a browndwarf calculation
-        if ((radius_star != 'nostar') & (not np.isnan(atm.planet.radius))):
+        if ((radius_star != 'nostar') & (not np.isnan(atm.planet.radius)) & (not np.isnan(radius_star))) :
             fpfs_thermal = thermal/(opacityclass.unshifted_stellar_spec)*(atm.planet.radius/radius_star)**2.0
             returns['fpfs_thermal'] = fpfs_thermal
-        elif np.isnan(atm.planet.radius): 
-            returns['fpfs_thermal'] = ['Planet Radius not supplied. If you want fpfs, add it to `gravity` function with Mass.']
+        else:
+            returns['fpfs_thermal'] =[]
+            if np.isnan(atm.planet.radius): 
+                returns['fpfs_thermal'] += ['Planet Radius not supplied. If you want fpfs, add it to `gravity` function with radius.']
+            if np.isnan(radius_star): 
+                returns['fpfs_thermal'] += ['Stellar Radius not supplied. If you want fpfs, add it to `stellar` function.']
+
 
     #return total if users have calculated both thermal and reflected 
     if (('fpfs_reflected' in list(returns.keys())) & ('fpfs_thermal' in list(returns.keys()))): 
@@ -346,6 +363,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     if full_output: 
         if as_dict:
             returns['full_output'] = atm.as_dict()
+            returns['full_output']['star']['flux'] = opacityclass.unshifted_stellar_spec
         else:
             returns['full_output'] = atm
 
