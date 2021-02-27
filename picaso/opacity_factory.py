@@ -575,7 +575,7 @@ def insert_molecular_1060(molecule, min_wavelength, max_wavelength, new_R,
         numw = [200000]*ngrid
         delwn = [(33340 - 200)/(numw[0]-1)]*ngrid
         start = [200]*ngrid 
-    else: 
+    elif molecule not in ['CH3D']: 
         # Get Richard's READ ME information
         f = os.path.join(og_directory,molecule,'readomni.fits')
         hdulist = fits.open(f)
@@ -595,23 +595,23 @@ def insert_molecular_1060(molecule, min_wavelength, max_wavelength, new_R,
         #path to richard's data
         fdata = os.path.join(og_directory,molecule,'p_'+str(int(i)))
 
-        #EHSAN, put an elif here so that you can read in your 1060 files 
-        #however you want to 
-        #Grab 1060 format data
+
+        #Grab 1060 in various format data
         if molecule in ['Cs','K','Li','Na','Rb']:
             openf=FortranFile(fdata,'r')
             dset = openf.read_ints(dtype=np.float)
+            og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1] 
+        elif molecule =='CH3D':
+            df = pd.read_csv(os.path.join(og_directory,molecule,'fort.{0}.bz2'.format(int(i)))
+                             ,delim_whitespace=True, skiprows=23,header=None)
+            dset=df[1].values
+            og_wvno_grid=df[0].values
         else: 
             dset = np.fromfile(fdata, dtype=float) 
-
-
-        #EHSAN, this is where you will have to edit in your own wavenumber grid for 
-        #each 1060 point
-        og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]      
+            og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1] 
 
         #interp on high res grid
-        #EHSAN, I am doing a really basic interpolation here onto a new wavegrid that 
-        #I have created at the top.. maybe you want something greater than 1e6
+        #basic interpolation here onto a new wavegrid that 
         dset = np.interp(interp_wvno_grid,og_wvno_grid, dset,right=1e-50, left=1e-50)
 
         #resample evenly
@@ -624,8 +624,7 @@ def insert_molecular_1060(molecule, min_wavelength, max_wavelength, new_R,
         if ((molecule == 'O3') & (isinstance(dir_optical_o3, str)) & (t<500)):
             opa_o3 = get_optical_o3(dir_optical_o3,new_wvno_grid)
             y = y + opa_o3     
-
-        cur.execute('INSERT INTO molecular (ptid, molecule, temperature, pressure,opacity) values (?,?,?,?,?)', (i,molecule,float(t),float(p), y))
+        cur.execute('INSERT INTO molecular (ptid, molecule, temperature, pressure,opacity) values (?,?,?,?,?)', (int(i),molecule,float(t),float(p), y))
     conn.commit()
     conn.close()
     return new_wvno_grid
@@ -676,25 +675,27 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength, new_R,
     new_wvno_grid = interp_wvno_grid[::BINS]
 
 
-    s1060 = pd.read_csv(os.path.join(og_directory,'grid1060.csv'),dtype=str)
-    s1460 = pd.read_csv(os.path.join(og_directory,'grid1460.csv'),dtype=str)
+    s1060 = pd.read_csv(os.path.join(og_directory,'grid1060.csv'))
+    s1460 = pd.read_csv(os.path.join(og_directory,'grid1460.csv'))
 
     #all pressures 
     pres=s1060['pressure_bar'].values.astype(float)
     #all temperatures 
     temp=s1060['temperature_K'].values.astype(float)
+    #file_num
+    ifile=s1060['file_number'].values.astype(int)
+    for i1060,p,t in zip(ifile, pres,temp):
+        idf = s1460.loc[(s1460['pressure_bar']==p)].reset_index()
 
-    for p,t in zip(pres,temp):  
-
-        i = s1460.loc[(s1460['temperature_K']==t) & (s1460['pressure_bar']==p)].values[0]
-        numw = g1460.loc[(s1460['temperature_K']==t) & (s1460['pressure_bar']==p)].values[0]
-        delwn = g1460.loc[(s1460['temperature_K']==t) & (s1460['pressure_bar']==p)].values[0]
-        start = g1460.loc[(s1460['temperature_K']==t) & (s1460['pressure_bar']==p)].values[0]
+        i = int(idf.loc[(idf['temperature_K']-t).abs().argsort()[0],'file_number'])
+        numw = idf.loc[(idf['temperature_K']-t).abs().argsort()[0],'number_wave_pts']
+        delwn = idf.loc[(idf['temperature_K']-t).abs().argsort()[0],'delta_wavenumber']
+        start = idf.loc[(idf['temperature_K']-t).abs().argsort()[0],'start_wavenumber']
 
         fdata = os.path.join(og_directory,molecule,'p_'+str(int(i)))
         dset = np.fromfile(fdata, dtype=float) 
         #get original grid 
-        og_wvno_grid=np.arange(numw)*delwn+start   
+        og_wvno_grid=np.arange(int(numw))*float(delwn)+float(start)   
 
         #interp on high res grid
         dset = np.interp(interp_wvno_grid,og_wvno_grid, dset,right=1e-50, left=1e-50)
@@ -710,7 +711,7 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength, new_R,
             opa_o3 = get_optical_o3(dir_optical_o3,new_wvno_grid)
             y = y + opa_o3     
 
-        cur.execute('INSERT INTO molecular (ptid, molecule, temperature, pressure,opacity) values (?,?,?,?,?)', (i,molecule,float(t),float(p), y))
+        cur.execute('INSERT INTO molecular (ptid, molecule, temperature, pressure,opacity) values (?,?,?,?,?)', (int(i1060),molecule,float(t),float(p), y))
     conn.commit()
     conn.close()
     return new_wvno_grid
@@ -1040,8 +1041,6 @@ def get_molecular(db_file, species, temperature,pressure):
     for i in restruct.keys():
         for t in temp_nearest:
             restruct[i][t] = {}
-
-    
     for im, iid,ip,it, dat in data : restruct[im][it][ip] = dat
 
     cur.execute('SELECT wavenumber_grid FROM header')

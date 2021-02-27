@@ -344,7 +344,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             
 
         #only need to return relative flux if not a browndwarf calculation
-        if ((radius_star != 'nostar') & (not np.isnan(atm.planet.radius)) & (not np.isnan(radius_star))) :
+        if radius_star == 'nostar': 
+            returns['fpfs_thermal'] = ['No star mode for Brown Dwarfs was used']
+        elif ((not np.isnan(atm.planet.radius)) & (not np.isnan(radius_star))) :
             fpfs_thermal = thermal/(opacityclass.unshifted_stellar_spec)*(atm.planet.radius/radius_star)**2.0
             returns['fpfs_thermal'] = fpfs_thermal
         else:
@@ -363,7 +365,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     if full_output: 
         if as_dict:
             returns['full_output'] = atm.as_dict()
-            returns['full_output']['star']['flux'] = opacityclass.unshifted_stellar_spec
+            if radius_star != 'nostar':returns['full_output']['star']['flux'] = opacityclass.unshifted_stellar_spec
         else:
             returns['full_output'] = atm
 
