@@ -2,7 +2,7 @@ from .atmsetup import ATMSETUP
 from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_new, get_transit_1d
 from .wavelength import get_cld_input_grid
 from .opacity_factory import create_grid
-from .optics import RetrieveOpacities,compute_opacity
+from .optics import RetrieveOpacities,compute_opacity,RetrieveCKs
 from .disco import get_angles_1d, get_angles_3d, compute_disco, compress_disco, compress_thermal
 from .justplotit import numba_cumsum, find_nearest_2d, mean_regrid
 
@@ -25,6 +25,8 @@ import astropy.constants as c
 import math
 
 __refdata__ = os.environ.get('picaso_refdata')
+if not os.path.exists(os.path.join(__refdata__)): 
+    raise Exception('You have not downloaded the reference data. You can find it on github here: https://github.com/natashabatalha/picaso/tree/master/reference . If you think you have already downloaded it then you likely just need to set your environment variable. See instructions here: https://natashabatalha.github.io/picaso/installation.html#download-and-link-reference-documentation')
 
 def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_output=False, 
     plot_opacity= False, as_dict=True):
@@ -59,6 +61,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
     wno = opacityclass.wno
     nwno = opacityclass.nwno
+    ngauss = opacityclass.ngauss
+    gauss_wts = opacityclass.gauss_wts #for opacity
 
     #check to see if we are running in test mode
     test_mode = inputs['test_mode']
@@ -156,86 +160,96 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
         #We use HG function for single scattering which gets the forward scattering/back scattering peaks 
         #well. We only really want to use delta-edd for multi scattering legendre polynomials. 
-        #import time 
-        #s1 = time.time()
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman= compute_opacity(
-            atm, opacityclass, stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
+            atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
             full_output=full_output, plot_opacity=plot_opacity)
-        #print("opacities", s1-time.time())
-        #s1 = time.time()
+
+
         if  'reflected' in calculation:
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-            nlevel = atm.c.nlevel
-            if method == 'SH':
-                xint_at_top = get_reflected_new(nlevel, nwno, ng, nt, 
-                                            DTAU, TAU, W0, COSB, GCOS2, ftau_cld, ftau_ray,
-                                            DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
-                                            atm.surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
-                                            single_phase, multi_phase, 
-	                                    frac_a, frac_b, frac_c, constant_back, constant_forward, 
-                                            dimension, stream, print_time)
+            xint_at_top = 0 
+            for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
+                nlevel = atm.c.nlevel
+                if method == 'SH':
+                    xint = get_reflected_new(nlevel, nwno, ng, nt, 
+                                    DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig], 
+                                    GCOS2[:,:,ig], ftau_cld[:,:,ig], ftau_ray[:,:,ig],
+                                    DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig], 
+                                    atm.surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
+                                    single_phase, multi_phase, 
+                                    frac_a, frac_b, frac_c, constant_back, constant_forward, 
+                                    dimension, stream, print_time)
+                else:
+                    xint = get_reflected_1d(nlevel, wno,nwno,ng,nt,
+                                    DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
+                                    GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
+                                    DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
+                                    atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
+                                    single_phase,multi_phase,
+                                    frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)
 
-            else:
-                xint_at_top = get_reflected_1d(nlevel, wno,nwno,ng,nt,
-                                                    DTAU, TAU, W0, COSB,GCOS2,ftau_cld,ftau_ray,
-                                                    DTAU_OG, TAU_OG, W0_OG, COSB_OG ,
-                                                    atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
-                                                    single_phase,multi_phase,
-                                                    frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)
-            #print('RT REF',s1-time.time())
-            #s1 = time.time()
+                xint_at_top += xint*gauss_wts[ig]
             #if full output is requested add in xint at top for 3d plots
             if full_output: 
                 atm.xint_at_top = xint_at_top
 
 
         if 'thermal' in calculation:
-            #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
 
-            #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
-            #the uncorrected raman single scattering 
-            flux_at_top  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
-                                                    DTAU_OG, W0_no_raman, COSB_OG, atm.level['pressure'],ubar1,
-                                                    atm.surf_reflect, tridiagonal)
-            #print('RT THERM',s1-time.time())
+            #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
+            flux_at_top = 0 
+            for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
+                
+                #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
+                #the uncorrected raman single scattering 
+                flux  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
+                                            DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
+                                            atm.level['pressure'],ubar1,
+                                            atm.surf_reflect, tridiagonal)
+                flux_at_top += flux*gauss_wts[ig]
+                
             #if full output is requested add in flux at top for 3d plots
             if full_output: 
                 atm.flux_at_top = flux_at_top
         
         if 'transmission' in calculation:
-            rprs2 = get_transit_1d(atm.level['z'],atm.level['dz'],
+            rprs2 = 0 
+            for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
+
+                rprs2_g = get_transit_1d(atm.level['z'],atm.level['dz'],
                                   nlevel, nwno, radius_star, atm.layer['mmw'], 
                                   atm.c.k_b, atm.c.amu, atm.level['pressure'], 
-                                  atm.level['temperature'], atm.layer['colden'],DTAU_OG)
+                                  atm.level['temperature'], atm.layer['colden'],
+                                  DTAU_OG[:,:,ig])
+                rprs2 += rprs2_g*gauss_wts[ig]
     elif dimension == '3d':
-
         #setup zero array to fill with opacities
-        TAU_3d = np.zeros((nlevel, nwno, ng, nt))
-        DTAU_3d = np.zeros((nlayer, nwno, ng, nt))
-        W0_3d = np.zeros((nlayer, nwno, ng, nt))
-        COSB_3d = np.zeros((nlayer, nwno, ng, nt))
-        GCOS2_3d = np.zeros((nlayer, nwno, ng, nt))
-        FTAU_CLD_3d = np.zeros((nlayer, nwno, ng, nt))
-        FTAU_RAY_3d = np.zeros((nlayer, nwno, ng, nt))
+        TAU_3d = np.zeros((nlevel, nwno, ng, nt, ngauss))
+        DTAU_3d = np.zeros((nlayer, nwno, ng, n, ngausst))
+        W0_3d = np.zeros((nlayer, nwno, ng, nt, ngauss))
+        COSB_3d = np.zeros((nlayer, nwno, ng, nt, ngauss))
+        GCOS2_3d = np.zeros((nlayer, nwno, ng, nt, ngauss))
+        FTAU_CLD_3d = np.zeros((nlayer, nwno, ng, nt, ngauss))
+        FTAU_RAY_3d = np.zeros((nlayer, nwno, ng, nt, ngauss))
 
         #these are the unchanged values from delta-eddington
-        TAU_OG_3d = np.zeros((nlevel, nwno, ng, nt))
-        DTAU_OG_3d = np.zeros((nlayer, nwno, ng, nt))
-        W0_OG_3d = np.zeros((nlayer, nwno, ng, nt))
-        COSB_OG_3d = np.zeros((nlayer, nwno, ng, nt))
+        TAU_OG_3d = np.zeros((nlevel, nwno, ng, nt, ngauss))
+        DTAU_OG_3d = np.zeros((nlayer, nwno, ng, nt, ngauss))
+        W0_OG_3d = np.zeros((nlayer, nwno, ng, nt, ngauss))
+        COSB_OG_3d = np.zeros((nlayer, nwno, ng, nt, ngauss))
         #this is the single scattering without the raman correction 
         #used for the thermal caclulation
-        W0_no_raman_3d = np.zeros((nlayer, nwno, ng, nt))
+        W0_no_raman_3d = np.zeros((nlayer, nwno, ng, nt, ngauss))
 
         #pressure and temperature 
-        TLEVEL_3d = np.zeros((nlevel, ng, nt))
-        PLEVEL_3d = np.zeros((nlevel, ng, nt))
+        TLEVEL_3d = np.zeros((nlevel, ng, nt, ngauss))
+        PLEVEL_3d = np.zeros((nlevel, ng, nt, ngauss))
 
         #if users want to retain all the individual opacity info they can here 
         if full_output:
-            TAUGAS_3d = np.zeros((nlayer, nwno, ng, nt))
-            TAUCLD_3d = np.zeros((nlayer, nwno, ng, nt))
-            TAURAY_3d = np.zeros((nlayer, nwno, ng, nt))  
+            TAUGAS_3d = np.zeros((nlayer, nwno, ng, nt, ngauss))
+            TAUCLD_3d = np.zeros((nlayer, nwno, ng, nt, ngauss))
+            TAURAY_3d = np.zeros((nlayer, nwno, ng, nt, ngauss))  
 
         #get opacities at each facet
         for g in range(ng):
@@ -250,30 +264,31 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                 opacityclass.get_opacities(atm_1d)
 
                 dtau, tau, w0, cosb,ftau_cld, ftau_ray, gcos2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, WO_no_raman = compute_opacity(
-                    atm_1d, opacityclass,delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx, full_output=full_output)
-                DTAU_3d[:,:,g,t] = dtau
-                TAU_3d[:,:,g,t] = tau
-                W0_3d[:,:,g,t] = w0 
-                COSB_3d[:,:,g,t] = cosb
-                GCOS2_3d[:,:,g,t]= gcos2 
-                FTAU_CLD_3d[:,:,g,t]= ftau_cld
-                FTAU_RAY_3d[:,:,g,t]= ftau_ray
+                    atm_1d, opacityclass, ngauss=ngauss, stream=stream,delta_eddington=delta_eddington,
+                    test_mode=test_mode,raman=raman_approx, full_output=full_output)
+                DTAU_3d[:,:,g,t,:] = dtau
+                TAU_3d[:,:,g,t,:] = tau
+                W0_3d[:,:,g,t,:] = w0 
+                COSB_3d[:,:,g,t,:] = cosb
+                GCOS2_3d[:,:,g,t,:]= gcos2 
+                FTAU_CLD_3d[:,:,g,t,:]= ftau_cld
+                FTAU_RAY_3d[:,:,g,t,:]= ftau_ray
 
                 #these are the unchanged values from delta-eddington
-                TAU_OG_3d[:,:,g,t] = TAU_OG
-                DTAU_OG_3d[:,:,g,t] = DTAU_OG
-                W0_OG_3d[:,:,g,t] = W0_OG
-                COSB_OG_3d[:,:,g,t] = COSB_OG
-                W0_no_raman_3d[:,:,g,t] = WO_no_raman
+                TAU_OG_3d[:,:,g,t,:] = TAU_OG
+                DTAU_OG_3d[:,:,g,t,:] = DTAU_OG
+                W0_OG_3d[:,:,g,t,:] = W0_OG
+                COSB_OG_3d[:,:,g,t,:] = COSB_OG
+                W0_no_raman_3d[:,:,g,t,:] = WO_no_raman
 
                 #temp and pressure on 3d grid
                 TLEVEL_3d[:,g,t] = atm_1d.level['temperature']
                 PLEVEL_3d[:,g,t] = atm_1d.level['pressure']
 
                 if full_output:
-                    TAUGAS_3d[:,:,g,t] = atm_1d.taugas
-                    TAUCLD_3d[:,:,g,t] = atm_1d.taucld
-                    TAURAY_3d[:,:,g,t] = atm_1d.tauray
+                    TAUGAS_3d[:,:,g,t,:] = atm_1d.taugas
+                    TAUCLD_3d[:,:,g,t,:] = atm_1d.taucld
+                    TAURAY_3d[:,:,g,t,:] = atm_1d.tauray
 
         if full_output:
             atm.taugas = TAUGAS_3d
@@ -281,23 +296,27 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             atm.tauray = TAURAY_3d
 
         if  'reflected' in calculation:
-            #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-            xint_at_top  = get_reflected_3d(nlevel, wno,nwno,ng,nt,
-                                            DTAU_3d, TAU_3d, W0_3d, COSB_3d,GCOS2_3d, FTAU_CLD_3d,FTAU_RAY_3d,
-                                            DTAU_OG_3d, TAU_OG_3d, W0_OG_3d, COSB_OG_3d,
-                                            atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
-                                            single_phase,multi_phase,
-                                            frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)
-            #if full output is requested add in xint at top for 3d plots
+
+            for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
+                #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
+                xint_at_top  = get_reflected_3d(nlevel, wno,nwno,ng,nt,
+                                                DTAU_3d[:,:,:,:,ig], TAU_3d[:,:,:,:,ig], W0_3d[:,:,:,:,ig], COSB_3d[:,:,:,:,ig],GCOS2_3d[:,:,:,:,ig],
+                                                FTAU_CLD_3d[:,:,:,:,ig],FTAU_RAY_3d[:,:,:,:,ig],
+                                                DTAU_OG_3d[:,:,:,:,ig], TAU_OG_3d[:,:,:,:,ig], W0_OG_3d[:,:,:,:,ig], COSB_OG_3d[:,:,:,:,ig],
+                                                atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
+                                                single_phase,multi_phase,
+                                                frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)
+                #if full output is requested add in xint at top for 3d plots
             if full_output: 
                 atm.xint_at_top = xint_at_top
 
         elif 'thermal' in calculation:
-
-            #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
-            #the uncorrected raman single scattering 
-            flux_at_top  = get_thermal_3d(nlevel, wno,nwno,ng,nt,TLEVEL_3d,
-                                                    DTAU_OG_3d, W0_no_raman_3d, COSB_OG_3d, PLEVEL_3d,ubar1, tridiagonal)
+            for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
+                #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
+                #the uncorrected raman single scattering 
+                flux_at_top  = get_thermal_3d(nlevel, wno,nwno,ng,nt,TLEVEL_3d,
+                                            DTAU_OG_3d[:,:,:,:,ig], W0_no_raman_3d[:,:,:,:,ig], COSB_OG_3d[:,:,:,:,ig], 
+                                            PLEVEL_3d,ubar1, tridiagonal)
 
             #if full output is requested add in flux at top for 3d plots
             if full_output: 
@@ -505,7 +524,7 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
     #We use HG function for single scattering which gets the forward scattering/back scattering peaks 
     #well. We only really want to use delta-edd for multi scattering legendre polynomials. 
-    taus_by_species= compute_opacity(atm, opacityclass, stream,raman=raman_approx, return_mode=True)
+    taus_by_species= compute_opacity(atm, opacityclass, ngauss=ngauss,  stream=stream,raman=raman_approx, return_mode=True)
 
     cumsum_taus = {}
     for i in taus_by_species.keys(): 
@@ -528,13 +547,15 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
 
     return taus_by_species, cumsum_taus, at_pressure_array
 
-
-def opannection(wave_range = None, filename_db = None, raman_db = None, resample=1):
+def opannection(ck=False, wave_range = None, filename_db = None, raman_db = None, 
+                resample=1, ck_db=None):
     """
     Sets up database connection to opacities. 
 
     Parameters
     ----------
+    ck : bool 
+        Use premixed ck tables (beta)
     wave_range : list of float 
         Subset of wavelength range for which to run models for 
         Default : None, which pulls entire grid 
@@ -549,28 +570,36 @@ def opannection(wave_range = None, filename_db = None, raman_db = None, resample
         This effectively takes opacity[::BINS] depending on what the 
         sampling requested is. Consult your local theorist before 
         using this. 
+    ck_db : str 
+        ASCII filename of ck file
     """
-
     inputs = json.load(open(os.path.join(__refdata__,'config.json')))
 
-    if isinstance(filename_db,type(None) ): 
-        filename_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['opacity'])
-        if not os.path.isfile(filename_db):
-            raise Exception('The opacity file does not exist: '  + filename_db+' The default is to a file opacities.db in reference/opacity/. If you have an older version of PICASO your file might be called opacity.db. Consider just adding the correct path to filename_db=')
-    elif not isinstance(filename_db,type(None) ): 
-        if not os.path.isfile(filename_db):
-            raise Exception('The opacity file youve entered does not exist: '  + filename_db)
+    if not ck: 
+        #only allow raman if no correlated ck is used 
+        if isinstance(raman_db,type(None) ): raman_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['raman'])
+        
+        if isinstance(filename_db,type(None) ): 
+            filename_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['opacity'])
+            if not os.path.isfile(filename_db):
+                raise Exception('The opacity file does not exist: '  + filename_db+' The default is to a file opacities.db in reference/opacity/. If you have an older version of PICASO your file might be called opacity.db. Consider just adding the correct path to filename_db=')
+        elif not isinstance(filename_db,type(None) ): 
+            if not os.path.isfile(filename_db):
+                raise Exception('The opacity file you have entered does not exist: '  + filename_db)
 
-           
-    if isinstance(raman_db,type(None) ): raman_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['raman'])
+        if resample != 1:
+            print("YOU ARE REQUESTING RESAMPLING!!")
 
-    if resample != 1:
-        print("YOU ARE REQUESTING RESAMPLING!!")
+        opacityclass=RetrieveOpacities(
+                    filename_db, 
+                    raman_db,
+                    wave_range = wave_range, resample = resample)
+    else: 
+        opacityclass=RetrieveCKs(
+                    ck_db, 
+                    filename_db, 
+                    wave_range = wave_range)
 
-    opacityclass=RetrieveOpacities(
-                filename_db, 
-                raman_db,
-                wave_range = wave_range, resample = resample)
     return opacityclass
 
 class inputs():
@@ -960,10 +989,6 @@ class inputs():
         elif not isinstance(filename, type(None)):
             df = pd.read_csv(filename, **pd_kwargs)
             self.nlevel=df.shape[0] 
-        #elif not isinstance(pt_params, type(None)): 
-        #    self.inputs['atmosphere']['pt_params'] = pt_params
-        #    self.nlevel=61 #default n of levels for parameterization
-        #    raise Exception('Pt parameterization not in yet')
 
         if 'pressure' not in df.keys(): 
             raise Exception("Check column names. `pressure` must be included.")
@@ -986,6 +1011,66 @@ class inputs():
             if df['H2'].min() < 0.7: 
                 print("Turning off Raman for Non-H2 atmosphere")
                 self.approx(raman='none')
+
+    def premix_atmosphere(self, opa, df=None, filename=None, **pd_kwargs):
+        """
+        Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
+        Sets number of layers in model.  
+
+        Parameters
+        ----------
+        opa : class 
+            Opacity class from opannection : RetrieveCks() 
+        df : pandas.DataFrame or dict
+            (Optional) Dataframe with volume mixing ratios and pressure, temperature profile. 
+            Must contain pressure (bars) at least one molecule
+        filename : str 
+            (Optional) Filename with pressure, temperature and volume mixing ratios.
+            Must contain pressure at least one molecule
+        exclude_mol : list of str 
+            (Optional) List of molecules to ignore from file
+        pd_kwargs : kwargs 
+            Key word arguments for pd.read_csv to read in supplied atmosphere file 
+        """
+        if not isinstance(df, type(None)):
+            if ((not isinstance(df, dict )) & (not isinstance(df, pd.core.frame.DataFrame ))): 
+                raise Exception("df must be pandas DataFrame or dictionary")
+            else:
+                self.nlevel=df.shape[0] 
+        elif not isinstance(filename, type(None)):
+            df = pd.read_csv(filename, **pd_kwargs)
+            self.nlevel=df.shape[0] 
+
+        if 'pressure' not in df.keys(): 
+            raise Exception("Check column names. `pressure` must be included.")
+
+        if ('temperature' not in df.keys()):
+            raise Exception("`temperature` not specified as a column/key name")
+
+        self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
+
+        #Turn off raman for 196 premix calculations 
+        self.approx(raman='none')
+
+        plevel = self.inputs['atmosphere']['profile']['pressure'].values
+        tlevel =self.inputs['atmosphere']['profile']['temperature'].values
+        
+        pt_pairs = []
+        i=0
+        for ip,it,p,t in zip(np.concatenate([list(range(opa.max_pc))*opa.max_tc]), 
+                        np.concatenate([[it]*opa.max_pc for it in range(opa.max_tc)]),
+                        opa.pressures, 
+                        np.concatenate([[it]*opa.max_pc for it in opa.temps])):
+            
+            if p!=0 : pt_pairs += [[i,ip,it,p/1e3,t]];i+=1
+
+        ind_pt_log = np.array([min(pt_pairs, 
+                    key=lambda c: math.hypot(np.log(c[-2])- np.log(coordinate[0]), 
+                                             c[-1]-coordinate[1]))[0:3] 
+                        for coordinate in  zip(plevel,tlevel)])           
+        ind_chem = ind_pt_log[:,0]
+
+        self.inputs['atmosphere']['profile'][opa.full_abunds.keys()] = opa.full_abunds.iloc[ind_chem,:].reset_index(drop=True)
 
     def sonora(self, sonora_path, teff, chem='low'):
         """

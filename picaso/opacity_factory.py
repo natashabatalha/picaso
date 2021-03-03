@@ -478,9 +478,9 @@ def insert_wno_grid(wno_grid, cur, con):
     """
     cur.execute('INSERT INTO header (pressure_unit, temperature_unit, wavenumber_grid, continuum_unit,molecular_unit) values (?,?,?,?,?)', 
                 ('bar','kelvin', np.array(wno_grid), 'cm-1 amagat-2', 'cm2/molecule'))
-    conn.commit()
+    con.commit()
 
-    conn.close()
+    con.close()
 
 def create_grid_minR(min_wavelength, max_wavelength, minimum_R):
     """Simple function to create a wavelength grid defined with a minimum R. 
