@@ -1005,11 +1005,10 @@ def get_molecular(db_file, species, temperature,pressure):
     cur.execute('SELECT ptid, pressure, temperature FROM molecular')
     data= cur.fetchall()    
     pt_pairs = sorted(list(set(data)),key=lambda x: (x[0]) )
-
+    print(pt_pairs) 
     #here's a little code to get out the correct pair (so we dont have to worry about getting the exact number right)
     ind_pt = [min(pt_pairs, key=lambda c: math.hypot(c[1]- coordinate[0], c[2]-coordinate[1]))[0]
               for coordinate in  zip(pressure,temperature)]
-
     if ((len(species) ==1 )& (len(ind_pt) >1)):
         cur.execute("""SELECT molecule,ptid,pressure,temperature,opacity
                 FROM molecular
@@ -1041,6 +1040,7 @@ def get_molecular(db_file, species, temperature,pressure):
     for i in restruct.keys():
         for t in temp_nearest:
             restruct[i][t] = {}
+    print(restruct,data)
     for im, iid,ip,it, dat in data : restruct[im][it][ip] = dat
 
     cur.execute('SELECT wavenumber_grid FROM header')

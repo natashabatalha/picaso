@@ -430,7 +430,8 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
 
     wno = opacityclass.wno
     nwno = opacityclass.nwno
-
+    ngauss = opacityclass.ngauss
+    gauss_wts = opacityclass.gauss_wts #for opacity
     #check to see if we are running in test mode
     test_mode = inputs['test_mode']
 
