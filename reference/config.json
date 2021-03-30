@@ -1,4 +1,5 @@
 {
+	"calculation":"spectrum_only",
 	"phase":0,
 	"planet":{
 		"gravity":null,

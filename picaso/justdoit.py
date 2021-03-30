@@ -609,9 +609,10 @@ class inputs():
     ----------
     calculation: str 
         (Optional) Controls planet or brown dwarf calculation. Default = 'planet'. Other option is "browndwarf".
-    chemeq : bool 
-        (Optional) If true, loads in full chemical equilibrium grid, which will take a little bit of time. 
-        Default = False
+    climate : bool 
+        (Optional) If true, this do a thorough iterative calculation to compute 
+        a temperature pressure profile.
+
 
     Attributes
     ----------
@@ -623,16 +624,16 @@ class inputs():
     approx()  : set approximation
     spectrum() : create spectrum
     """
-    def __init__(self, calculation='planet', chemeq=False):
+    def __init__(self, calculation='planet', climate=False):
 
         self.inputs = json.load(open(os.path.join(__refdata__,'config.json')))
 
         if 'brown' in calculation:
-            self.nostar()
-
-        #if runnng chemical equilibrium, need to load chemeq grid
-        if chemeq: self.chemeq_pic = pk.load(open(os.path.join(__refdata__,'chemistry','chem_full.pic'),'rb'), encoding='latin1')
-
+            self.setup_nostar()
+        
+        if climate: 
+            self.setup_climate()
+            
 
     def phase_angle(self, phase=0,num_gangle=10, num_tangle=1,symmetry=False):
         """Define phase angle and number of gauss and tchebychev angles to compute. 
@@ -812,8 +813,17 @@ class inputs():
             self.inputs['planet']['mass_unit'] = 'Mass not specified'
         else: 
             raise Exception('Need to specify gravity or radius and mass + additional units')
+    
+    def setup_climate(self):
+        """
+        Turns off planet specific things, so program can run as usual
+        """
+        self.inputs['approx']['raman'] = 2 #turning off raman scattering
+        self.phase_angle(0) #auto turn on zero phase
+        self.inputs['calculation']='climate'
 
-    def nostar(self):
+
+    def setup_nostar(self):
         """
         Turns off planet specific things, so program can run as usual
         """
@@ -948,7 +958,7 @@ class inputs():
             opannection.compute_stellar_shits(fine_wno_star, fine_flux_star)
         else :
             fine_wno_star = wno_planet
-            fine_flux_star = np.interp(wno_planet,wno_star, flux_star)  
+            _x,fine_flux_star = mean_regrid(wno_star, flux_star,newx=wno_planet)  
             opannection.unshifted_stellar_spec =fine_flux_star
 
         self.inputs['star']['database'] = database
