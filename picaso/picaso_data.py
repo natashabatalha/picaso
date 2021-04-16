@@ -55,7 +55,14 @@ def picaso_albedos(single_phase = 'OTHG', output_dir = None, rayleigh=True, phas
 				Toon_coefficients = Toon_coefficients,
 				delta_eddington=delta_eddington)
 
-	disort_dir = '/Users/crooney/Documents/codes/pyDISORT/test/picaso_data/'
+	if method=="Toon":
+		disort_dir = '/Users/crooney/Documents/codes/pyDISORT/test/picaso_data/'
+	else:
+		if stream==2:
+			disort_dir = '/Users/crooney/Documents/codes/pyDISORT/test/picaso_data/SH2/'
+		elif stream==4:
+			disort_dir = '/Users/crooney/Documents/codes/pyDISORT/test/picaso_data/SH4/'
+
 	if rayleigh: 
 		#first test Rayleigh
 		for w in df.keys():

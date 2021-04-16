@@ -14,7 +14,7 @@ from bokeh.models import LinearColorMapper, LogTicker,BasicTicker, ColorBar,LogC
 from bokeh.models import ColumnDataSource,LinearAxis,Range1d
 from bokeh.palettes import magma,RdBu11
 from bokeh.layouts import row,column
-import pandas_bokeh
+#import pandas_bokeh
 import os 
 from numba import jit
 from mpl_toolkits.mplot3d import Axes3D
