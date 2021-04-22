@@ -51,8 +51,7 @@
 		"wnogrid":null,
 		"files":{
 			"opacity":"opacities.db",
-			"continuum":"continuum.json",
-			"molecular":"molecular.json",
+			"ktable_continuum":"ck_cx_cont_opacities.db",
 			"h2minus":"h2minus.csv",
 			"raman":"raman.txt"
 		}

@@ -641,6 +641,19 @@ class RetrieveCKs():
     This will be the class to retrieve correlated-k tables from the database. 
     Right now this is in beta mode and is retrieving the direct heritage 
     196 grid files. 
+
+    Parameters
+    ----------
+    ck_dir : str 
+        Directory of the pre-mixed correlated k table data. Check that you are pointing to a 
+        directory with the files "ascii_data" and "full_abunds". 
+    cont_dir : str 
+        This should be in the references directory on Github. This has all the continuum opacity 
+        that you need (e.g. H2H2). It also has some extra cross sections that you may want to add 
+        in like Karkoschka methane and the optical ozone band. 
+    wave_range : list 
+        NOT FUNCTIONAL YET. 
+        Wavelength range to compuate in the format [min micron, max micron]
     """
     def __init__(self, ck_dir, cont_dir, wave_range=None):
         self.ck_filename = ck_dir
@@ -842,7 +855,6 @@ class RetrieveOpacities():
     """
     This will be the class that will retrieve the opacities from the sqlite3 database. Right 
     now we are just employing nearest neighbors to grab the respective opacities. 
-    Eventually, we will switch to correlated K. 
     
     Parameters
     ----------
