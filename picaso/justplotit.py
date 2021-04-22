@@ -52,7 +52,6 @@ def mean_regrid(x, y, newx=None, R=None):
         newx = binedges
     else: 
         raise Exception('Please either enter a newx or a R') 
-
     y, edges, binnum = binned_statistic(x,y,bins=newx)
     newx = (edges[0:-1]+edges[1:])/2.0
 
@@ -589,6 +588,7 @@ def disco(full_output,wavelength,calculation='reflected'):
         Must be a list, must be in microns. 
     calculation : str, optional 
         Default is to plot 'reflected' light but can also switch to 'thermal' if it has been computed
+
     """
     if calculation=='reflected':to_plot='albedo_3d'
     elif calculation=='thermal':to_plot='thermal_3d'
@@ -604,6 +604,7 @@ def disco(full_output,wavelength,calculation='reflected'):
         wave = 1e4/full_output['wavenumber']
         indw = find_nearest_1d(wave,w)
         #[umg, numt, nwno] this is xint_at_top
+
         xint_at_top = full_output[to_plot][:,:,indw]
 
         latitude = full_output['latitude']  #tangle
@@ -636,7 +637,7 @@ def disco(full_output,wavelength,calculation='reflected'):
     plt.subplots_adjust(wspace=0.3, hspace=0.3)
     plt.show()
 
-def map(full_output,pressure=[0.1], plot='temperature', wavelength = None):
+def map(full_output,pressure=[0.1], plot='temperature', wavelength = None,igauss=0):
     """
     Plot disco ball with facets. Bokeh is not good with 3D things. So this is in matplotlib
 
@@ -656,7 +657,9 @@ def map(full_output,pressure=[0.1], plot='temperature', wavelength = None):
     wavelength, float, optional
         This allows users to plot maps of things that are wavelength dependent, like 
         `taugas` and `taucld`. 
-        
+    igauss : int 
+        Gauss point to plot if using ktables this can be greater than 0 up to ngauss-1. Otherwise, 
+        This must be zero for monochromatic opacities.  
     """
     
     to_plot = explore(full_output, plot)
@@ -666,10 +669,16 @@ def map(full_output,pressure=[0.1], plot='temperature', wavelength = None):
             raise Exception("The key you are search for is not a 3D matrix. This function \
                 is used to plot out a map of a matrix that is [nlayer, nlong, nlat] or \
                 [nlayer, nwave, nlong, nlat, ].")
+        #here the four dimentions are nlayer, nwave, nlong, nlat
         elif len(to_plot.shape) == 4: 
             wave = 1e4/full_output['wavenumber']
             indw = find_nearest_1d(wave,wavelength)
             to_plot= to_plot[:,indw,:,:]
+        #here the five dimentions are nlayer, nwave, nlong, nlat, gauss
+        elif len(to_plot.shape) == 5: 
+            wave = 1e4/full_output['wavenumber']
+            indw = find_nearest_1d(wave,wavelength)
+            to_plot= to_plot[:,indw,:,:,igauss]
     else:
         raise Exception ("The key you are search for is not an np.ndarray. This function \
                 is used to plot out a map of an numpy.ndarray matrix that is [nlayer, nlong, nlat] or \
@@ -888,7 +897,7 @@ def explore(df, key):
     if True not in check: 
             raise Exception ('The key that was entered cloud not be found within three layers of the specified dictionary')
 
-def taumap(full_output, at_tau=1, wavelength=1):
+def taumap(full_output, at_tau=1, wavelength=1,igauss=0):
     """
     Plot breakdown of gas opacity, cloud opacity, 
     Rayleigh scattering opacity at a specified pressure level. 
@@ -896,10 +905,13 @@ def taumap(full_output, at_tau=1, wavelength=1):
     Parameters
     ----------
     full_output : class 
-        picaso.atmsetup.ATMSETUP
+        full_output from dictionary picaso output
     at_tau : float 
         Opacity at which to plot the cumulative opacity. 
         Default = 0.5. 
+    igauss : int 
+        Gauss point to plot if using ktables this can be greater than 0 up to ngauss-1. Otherwise, 
+        This must be zero for monochromatic opacities. 
     **kwargs : dict 
         Any key word argument for bokeh.plotting.figure()
 
@@ -907,9 +919,9 @@ def taumap(full_output, at_tau=1, wavelength=1):
     -------
     bokeh plot
     """ 
-    all_dtau_gas = full_output['taugas']
-    all_dtau_cld = full_output['taucld']*full_output['layer']['cloud']['w0']
-    all_dtau_ray = full_output['tauray']
+    all_dtau_gas = full_output['taugas'][:,:,:,:,igauss]
+    all_dtau_cld = full_output['taucld'][:,:,:,:,igauss]*full_output['layer']['cloud']['w0'][:,:,:,:]
+    all_dtau_ray = full_output['tauray'][:,:,:,:,igauss]
 
     ng = all_dtau_gas.shape[2]
     nt = all_dtau_gas.shape[3]

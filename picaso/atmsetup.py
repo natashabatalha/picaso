@@ -340,15 +340,16 @@ class ATMSETUP():
         if np.isnan(self.planet.radius):
             constant_gravity = True
 
+        #set zero arays of things we want out 
+        nlevel = self.c.nlevel
+
         mmw = self.level['mmw'] * self.c.amu #make sure mmw in grams
         tlevel = self.level['temperature']
         plevel = self.level['pressure']
 
-        #set zero arays of things we want out 
-        #nlevel = self.c.nlevel
-        z = np.zeros(plevel.shape) + self.planet.radius
-        dz = np.zeros(plevel.shape) 
-        gravity = np.zeros(plevel.shape) 
+        z = np.zeros(np.shape(tlevel)) + self.planet.radius
+        dz = np.zeros(np.shape(tlevel)) 
+        gravity = np.zeros(np.shape(tlevel))  
 
         for i in np.where(plevel>p_reference)[0]-1:
             if constant_gravity:
@@ -578,6 +579,9 @@ class ATMSETUP():
 
         df['latitude'] = self.latitude
         df['longitude'] = self.longitude
+
+        df['star'] = {}
+        df['star']['flux_unit'] = 'erg/cm2/s/cm'
 
         try: 
             x =  self.xint_at_top

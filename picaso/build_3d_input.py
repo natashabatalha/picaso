@@ -100,7 +100,7 @@ def rebin_mitgcm_pt(ng, nt, phase_angle, input_file, output_file,p_unit='Pa', kz
 
 
 	outfile = open(output_file,'w')
-	if run_chem == True: case = inputs(chemeq=True)
+	if run_chem == True: case = inputs()
 	
 	for ipos in range(0,ng*nt):
 		
@@ -110,7 +110,7 @@ def rebin_mitgcm_pt(ng, nt, phase_angle, input_file, output_file,p_unit='Pa', kz
 
 		if run_chem:
 			case.inputs['atmosphere']['profile'] = pd.DataFrame({'temperature':new_t[ipos,0:nz], 'pressure':new_p[ipos,0:nz], 'kzz':new_kzz[ipos,0:nz]})
-			case.chemeq(CtoO, MH)
+			case.channon_grid_high() #solar metallicity/solar C/O
 			data = case.inputs['atmosphere']['profile']
 		else : 
 			data = pd.DataFrame({'temperature':new_t[ipos,0:nz], 'pressure':new_p[ipos,0:nz], 'kzz':new_kzz[ipos,0:nz]})

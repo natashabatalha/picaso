@@ -970,7 +970,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             exptrm = slice_gt (exptrm, 35.0) 
 
             exptrm_positive = exp(exptrm) #EP
-            exptrm_minus = 1.0/exptrm_positive#exp(-exptrm) #EM
+            exptrm_minus = 1.0/exptrm_positive#EM
 
 
             #boundary conditions 
