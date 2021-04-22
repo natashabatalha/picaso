@@ -151,6 +151,7 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
             2./3.)*(plevel[1:]**3 - plevel[:-1]**3) ) / (
         1.01325**2 *gravity*tlayer*atm.layer['mmw']) 
 
+
     #go through every molecule in the continuum first 
     colden = atm.layer['colden'][:,np.newaxis]
     mmw = atm.layer['mmw'][:,np.newaxis]
@@ -183,6 +184,7 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
 
             if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
             muted_color=colors[c], muted_alpha=0.2)
+
             if return_mode: taus_by_species[m[0]+m[1]] = ADDTAU
 
         #H2- 

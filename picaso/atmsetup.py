@@ -342,6 +342,7 @@ class ATMSETUP():
 
         #set zero arays of things we want out 
         nlevel = self.c.nlevel
+
         mmw = self.level['mmw'] * self.c.amu #make sure mmw in grams
         tlevel = self.level['temperature']
         plevel = self.level['pressure']
@@ -372,7 +373,7 @@ class ATMSETUP():
 
         self.level['z'] = z
         self.level['dz'] = dz
-        #for get_column_density calculation below we want gravity at leyers
+        #for get_column_density calculation below we want gravity at layers
         self.layer['gravity'] = 0.5*(gravity[0:-1] + gravity[1:])
         self.layer['gravity'][0] = self.layer['gravity'][1]
         self.layer['gravity'][-1] = self.layer['gravity'][-2]
