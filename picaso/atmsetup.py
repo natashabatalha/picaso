@@ -342,13 +342,13 @@ class ATMSETUP():
 
         #set zero arays of things we want out 
         nlevel = self.c.nlevel
-        z = np.zeros(nlevel) + self.planet.radius
-        dz = np.zeros(nlevel) 
-        gravity = np.zeros(nlevel) 
-
         mmw = self.level['mmw'] * self.c.amu #make sure mmw in grams
         tlevel = self.level['temperature']
         plevel = self.level['pressure']
+
+        z = np.zeros(np.shape(tlevel)) + self.planet.radius
+        dz = np.zeros(np.shape(tlevel)) 
+        gravity = np.zeros(np.shape(tlevel))  
 
         for i in np.where(plevel>p_reference)[0]-1:
             if constant_gravity:

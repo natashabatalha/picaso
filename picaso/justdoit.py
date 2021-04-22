@@ -225,7 +225,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     elif dimension == '3d':
         #setup zero array to fill with opacities
         TAU_3d = np.zeros((nlevel, nwno, ng, nt, ngauss))
-        DTAU_3d = np.zeros((nlayer, nwno, ng, n, ngausst))
+        DTAU_3d = np.zeros((nlayer, nwno, ng, nt, ngauss))
         W0_3d = np.zeros((nlayer, nwno, ng, nt, ngauss))
         COSB_3d = np.zeros((nlayer, nwno, ng, nt, ngauss))
         GCOS2_3d = np.zeros((nlayer, nwno, ng, nt, ngauss))
@@ -242,8 +242,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         W0_no_raman_3d = np.zeros((nlayer, nwno, ng, nt, ngauss))
 
         #pressure and temperature 
-        TLEVEL_3d = np.zeros((nlevel, ng, nt, ngauss))
-        PLEVEL_3d = np.zeros((nlevel, ng, nt, ngauss))
+        TLEVEL_3d = np.zeros((nlevel, ng, nt))
+        PLEVEL_3d = np.zeros((nlevel, ng, nt))
 
         #if users want to retain all the individual opacity info they can here 
         if full_output:
@@ -282,6 +282,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                 W0_no_raman_3d[:,:,g,t,:] = WO_no_raman
 
                 #temp and pressure on 3d grid
+                
                 TLEVEL_3d[:,g,t] = atm_1d.level['temperature']
                 PLEVEL_3d[:,g,t] = atm_1d.level['pressure']
 
@@ -578,9 +579,9 @@ def opannection(ck=False, wave_range = None, filename_db = None, raman_db = None
 
     if not ck: 
         #only allow raman if no correlated ck is used 
-        if isinstance(raman_db,type(None) ): raman_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['raman'])
+        if isinstance(raman_db,type(None)): raman_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['raman'])
         
-        if isinstance(filename_db,type(None) ): 
+        if isinstance(filename_db,type(None)): 
             filename_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['opacity'])
             if not os.path.isfile(filename_db):
                 raise Exception('The opacity file does not exist: '  + filename_db+' The default is to a file opacities.db in reference/opacity/. If you have an older version of PICASO your file might be called opacity.db. Consider just adding the correct path to filename_db=')
@@ -596,6 +597,8 @@ def opannection(ck=False, wave_range = None, filename_db = None, raman_db = None
                     raman_db,
                     wave_range = wave_range, resample = resample)
     else: 
+        if isinstance(filename_db,type(None)): 
+            filename_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['ktable_continuum'])
         opacityclass=RetrieveCKs(
                     ck_db, 
                     filename_db, 
@@ -821,7 +824,7 @@ class inputs():
         """
         self.inputs['approx']['raman'] = 2 #turning off raman scattering
         self.phase_angle(0) #auto turn on zero phase
-        self.inputs['calculation']='climate'
+        self.inputs['calculation'] ='climate'
 
 
     def setup_nostar(self):
@@ -957,10 +960,21 @@ class inputs():
             fine_wno_star = np.linspace(min_shift, max_shift, len(wno_planet)*5)
             fine_flux_star = np.interp(fine_wno_star,wno_star, flux_star)
             opannection.compute_stellar_shits(fine_wno_star, fine_flux_star)
+        elif 'climate' in self.inputs['calculation']: 
+            #stellar flux of star 
+            nrg_flux = 0.5*np.diff(1/wno_planet)*(flux_star[0:-1]+flux_star[1:])
+            nrg_flux 
+            fine_wno_star = wno_planet
+            _x,fine_flux_star = mean_regrid(wno_star, flux_star,newx=wno_planet)  
+            opannection.unshifted_stellar_spec = fine_flux_star            
         else :
+            #unshifted stellar spectrum, not rescaled for radii or semi major
             fine_wno_star = wno_planet
             _x,fine_flux_star = mean_regrid(wno_star, flux_star,newx=wno_planet)  
             opannection.unshifted_stellar_spec =fine_flux_star
+
+        
+
 
         self.inputs['star']['database'] = database
         self.inputs['star']['temp'] = temp
