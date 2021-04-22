@@ -950,12 +950,11 @@ class inputs():
             raise Exception("Must enter 1) filename,w_unit & f_unit OR 2)temp, metal & logg ")
 
         wno_planet = opannection.wno
-        max_shift = np.max(wno_planet)+6000 #this 6000 is just the max raman shift we could have 
-        min_shift = np.min(wno_planet) -2000 #it is just to make sure we cut off the right wave ranges
-
         #this adds stellar shifts 'self.raman_stellar_shifts' to the opacity class
         #the cross sections are computed later 
         if self.inputs['approx']['raman'] == 0: 
+            max_shift = np.max(wno_planet)+6000 #this 6000 is just the max raman shift we could have 
+            min_shift = np.min(wno_planet) -2000 #it is just to make sure we cut off the right wave ranges
             #do a fail safe to make sure that star is on a fine enough grid for planet case 
             fine_wno_star = np.linspace(min_shift, max_shift, len(wno_planet)*5)
             fine_flux_star = np.interp(fine_wno_star,wno_star, flux_star)
@@ -968,13 +967,13 @@ class inputs():
             _x,fine_flux_star = mean_regrid(wno_star, flux_star,newx=wno_planet)  
             opannection.unshifted_stellar_spec = fine_flux_star            
         else :
-            #unshifted stellar spectrum, not rescaled for radii or semi major
-            fine_wno_star = wno_planet
-            _x,fine_flux_star = mean_regrid(wno_star, flux_star,newx=wno_planet)  
+            max_shift = np.max(wno_planet)+1  
+            min_shift = np.min(wno_planet) -1 
+            #gaurd against nans bcause stellar spectrum is too low res
+            fine_wno_star = np.linspace(min_shift, max_shift, len(wno_planet)*5)
+            fine_flux_star = np.interp(fine_wno_star, wno_star, flux_star)
+            _x,fine_flux_star = mean_regrid(fine_wno_star, fine_flux_star,newx=wno_planet)  
             opannection.unshifted_stellar_spec =fine_flux_star
-
-        
-
 
         self.inputs['star']['database'] = database
         self.inputs['star']['temp'] = temp

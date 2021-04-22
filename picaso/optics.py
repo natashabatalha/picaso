@@ -272,7 +272,7 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
     if raman == 0 :
         raman_db = opacityclass.raman_db
         raman_factor[:,:,0] = compute_raman(nwno, nlayer,opacityclass.wno, 
-            opacityclass.raman_stellar_shifts, tlayer, raman_db['c'].values,
+            opacityclass.raman_stellar_shifts, atm.layer['temperature'], raman_db['c'].values,
                 raman_db['ji'].values, raman_db['deltanu'].values)
         if plot_opacity: opt_figure.line(1e4/opacityclass.wno, raman_factor[plot_layer,:,0]*TAURAY[plot_layer,:,0], alpha=0.7,legend_label='Shifted Raman', line_width=3, color=colors[c],
                 muted_color=colors[c], muted_alpha=0.2)

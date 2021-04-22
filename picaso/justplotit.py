@@ -52,7 +52,6 @@ def mean_regrid(x, y, newx=None, R=None):
         newx = binedges
     else: 
         raise Exception('Please either enter a newx or a R') 
-
     y, edges, binnum = binned_statistic(x,y,bins=newx)
     newx = (edges[0:-1]+edges[1:])/2.0
 
