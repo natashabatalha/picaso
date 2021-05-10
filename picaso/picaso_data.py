@@ -103,8 +103,8 @@ def picaso_albedos(single_phase = 'OTHG', output_dir = None, rayleigh=True, phas
 				                                    'g0':np.zeros(196*(nlevel-1)) + g0}))
 
 				if disort_data:
-				    disort_dir_ = disort_dir + 'data_%.3f_%.3f.pk' % (g0, w0)
-				    start_case.inputs['approx']['input_dir']=disort_dir_
+					disort_dir_ = disort_dir + 'data_%.3f_%.3f.pk' % (g0, w0)
+					start_case.inputs['approx']['input_dir']=disort_dir_
 				allout = start_case.spectrum(opa, calculation='reflected')#, full_output=True)
 
 				alb = allout['albedo']

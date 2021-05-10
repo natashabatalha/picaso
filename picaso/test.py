@@ -47,7 +47,7 @@ def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=
 
 	perror = real_answer.copy()
 
-	nlevel = 20
+	nlevel = 60
 
 	opa = opannection(wave_range=[0.3,0.5], resample=10)
 	start_case=inputs()

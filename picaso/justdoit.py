@@ -75,6 +75,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     approximation = inputs['approx']['Toon_coefficients']
     tridiagonal = 0 
     input_dir = inputs['approx']['input_dir']
+    #input_dir=None
 
 
     #parameters needed for the two term hg phase function. 
@@ -106,6 +107,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     lat, lon = geom['latitude'], geom['longitude']
     cos_theta = geom['cos_theta']
     ubar0, ubar1 = geom['ubar0'], geom['ubar1']
+   # ubar1 = np.array([[-.99999],[-0.5],[0.5],[1.]])
+   # ubar0 = np.array([[1/np.sqrt(2)],[1/np.sqrt(2)],[1/np.sqrt(2)],[1/np.sqrt(2)]])
+   # ng = 4; nt = 1
 
     #set star parameters
     radius_star = inputs['star']['radius']
@@ -192,7 +196,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                     atm.int_layer = intensity
 
             else:
-                (xint_at_top, flux_out) = get_reflected_1d(nlevel, wno,nwno,ng,nt,
+                (xint_at_top, flux_out, intensity) = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                                     DTAU, TAU, W0, COSB,GCOS2,ftau_cld,ftau_ray,
                                                     DTAU_OG, TAU_OG, W0_OG, COSB_OG ,
                                                     atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
@@ -380,15 +384,16 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
     if input_dir != None:
         filename = input_dir #'/Users/crooney/Documents/codes/picaso/docs/notebooks/input_data.pk'
-        pk.dump({'nlevel':nlevel, 'wno':wno, 'nwno':nwno, 'ng':ng, 'nt':nt, 
+        pk.dump({'pressure': atm.level['pressure'], 'temperature': atm.level['temperature'], 
+            'nlevel':nlevel, 'wno':wno, 'nwno':nwno, 'ng':ng, 'nt':nt, 
             'dtau':DTAU, 'tau':TAU, 'w0':W0, 'cosb':COSB, 'gcos2':GCOS2,'ftcld':ftau_cld,'ftray': ftau_ray,
             'dtau_og':DTAU_OG, 'tau_og':TAU_OG, 'w0_og':W0_OG, 'cosb_og':COSB_OG, 
             'surf_reflect':atm.surf_reflect, 'ubar0':ubar0, 'ubar1':ubar1, 'costheta':cos_theta, 'F0PI':F0PI, 
             'single_phase':single_phase, 'multi_phase':multi_phase, 
             'frac_a':frac_a, 'frac_b':frac_b, 'frac_c':frac_c, 'constant_back':constant_back, 
             'constant_forward':constant_forward, 'dim':dimension, 'stream':stream,
-            'xint_at_top': xint_at_top, 'albedo': albedo, 
-            'gweight': gweight, 'tweight': tweight}, open(filename,'wb'), protocol=2)
+            'xint_at_top': xint_at_top, 'albedo': albedo, 'flux': flux_out, 'xint': intensity,
+            'gweight': gweight, 'tweight': tweight, 'gangle': gangle, 'tangle': tangle}, open(filename,'wb'), protocol=2)
     return returns
 
 def opannection(wave_range = None, filename_db = None, raman_db = None, resample=1):

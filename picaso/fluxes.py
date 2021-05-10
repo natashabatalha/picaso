@@ -932,8 +932,10 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
     #what we want : intensity at the top as a function of all the different angles
 
     xint_at_top = zeros((numg, numt, nwno))
+    intensity = zeros((numg, numt, nlevel, nwno))
 
     nlayer = nlevel - 1 
+    flux_out = zeros((numg, numt, 2*nlayer, nwno))
 
     #now define terms of Toon et al 1989 quadrature Table 1 
     #https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JD094iD13p16287
@@ -1033,6 +1035,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             flux = zeros((2*nlayer, nwno))
             flux[::2, :] = flux_minus
             flux[1::2, :] = flux_plus
+            flux_out[ng,nt,:,:] = flux
 
             xint = zeros((nlevel,nwno))
             term1 = zeros((nlevel,nwno))
@@ -1135,10 +1138,11 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                         )
 
             xint_at_top[ng,nt,:] = xint[0,:]
+            intensity[ng,nt,:,:] = xint
 #    import IPython; IPython.embed()
 #    import sys; sys.exit()
 
-    return xint_at_top, flux
+    return xint_at_top, flux_out, intensity
 
 #@jit(nopython=True, cache=True)
 def blackbody(t,w):
@@ -1736,6 +1740,7 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 	
 	nlayer = nlevel - 1 
 	xint_at_top = zeros((numg, numt, nwno))
+	xint_out = zeros((numg, numt, nlevel, nwno))
 	xint_at_top_new = zeros((numg, numt, nwno))
 	if stream is 2:
 		flux = zeros((numg, numt, stream*nlevel, nwno))
@@ -1954,11 +1959,12 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 							+ intgrl_per_layer[i,:] / u1) 
 
 			xint_at_top[ng,nt,:] = xint_temp[0, :]
+			xint_out[ng,nt,:,:] = xint_temp
 			flux[ng,nt,:,:] = flux_temp
 #	import IPython; IPython.embed()
 #	import sys; sys.exit()
 
-	return xint_at_top, flux, I
+	return xint_at_top, flux, xint_out
 
 def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb, 
 			dtau_og, tau_og, w0_og, w0_no_raman, cosb_og, plevel, ubar1,

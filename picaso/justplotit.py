@@ -174,7 +174,7 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind
 			if isinstance(legend,type(None)):
 				fig.line(conv(xarray), yarray,  color=palette[i], line_width=3)
 			else:
-				fig.line(conv(xarray), yarray, legend_label=legend, color=palette[i], line_width=3)
+				fig.line(conv(xarray), yarray, legend_label=legend[i], color=palette[i], line_width=3)
 		i = i+1
 	plot_format(fig)
 	return fig
