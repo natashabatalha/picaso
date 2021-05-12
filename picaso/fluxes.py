@@ -833,7 +833,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
     frac_a, frac_b, frac_c, constant_back, constant_forward,
-    approximation=0, tridiagonal=0):
+    approximation=0, tridiagonal=0, b_top=0):
     """
     Computes toon fluxes given tau and everything is 1 dimensional. This is the exact same function 
     as `get_flux_geom_3d` but is kept separately so we don't have to do unecessary indexing for fast
@@ -933,6 +933,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
     xint_at_top = zeros((numg, numt, nwno))
     intensity = zeros((numg, numt, nlevel, nwno))
+    direct_flux = zeros((numg, numt, nlevel, nwno))
 
     nlayer = nlevel - 1 
     flux_out = zeros((numg, numt, 2*nlayer, nwno))
@@ -990,7 +991,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
 
             #boundary conditions 
-            b_top = 0.0                                       
+            #b_top = 0.0                                       
 
             b_surface = 0. + surf_reflect*u0*F0PI*exp(-tau[-1, :]/u0)
 
@@ -1122,14 +1123,15 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
             for i in range(nlayer-1,-1,-1):
                 #direct beam
-                xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/u1) 
-                        #single scattering albedo from sun beam (from ubar0 to ubar1)
-                        +(w0_og[i,:]*F0PI/(4.*pi)
+                #single scattering albedo from sun beam (from ubar0 to ubar1)
+                direct_flux[ng,nt,i,:] = (w0_og[i,:]*F0PI/(4.*pi)
                         *(p_single[i,:])
                         *exp(-tau_og[i,:]/u0)
                         *(1. - exp(-dtau_og[i,:]*(u0+u1)/(u0*u1)))
                         *(u0/(u0+u1))
                         )
+                xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/u1) 
+                        + direct_flux[ng,nt,i,:]
                         #multiple scattering terms p_single
                         +A[i,:]*(1. - exp(-dtau[i,:] *(u0+1*u1)/(u0*u1)))*
                         (u0/(u0+1*u1))
@@ -1142,7 +1144,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 #    import IPython; IPython.embed()
 #    import sys; sys.exit()
 
-    return xint_at_top, flux_out, intensity
+    return xint_at_top, flux_out, intensity, direct_flux
 
 #@jit(nopython=True, cache=True)
 def blackbody(t,w):
@@ -1670,7 +1672,7 @@ def get_transit_3d(nlevel, nwno, radius, gravity,rstar, mass, mmw, k_b, G,amu,
 def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_cld, ftau_ray,
 	dtau_og, tau_og, w0_og, cosb_og, 
 	surf_reflect, ubar0, ubar1, cos_theta, F0PI, single_phase, multi_phase, 
-	frac_a, frac_b, frac_c, constant_back, constant_forward, dim, stream):
+	frac_a, frac_b, frac_c, constant_back, constant_forward, dim, stream, b_top=0):
 	"""
 	Computes rooney fluxes given tau and everything is 3 dimensional. This is the exact same function 
 	as `get_flux_geom_1d` but is kept separately so we don't have to do unecessary indexing for 
@@ -1742,10 +1744,11 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 	xint_at_top = zeros((numg, numt, nwno))
 	xint_out = zeros((numg, numt, nlevel, nwno))
 	xint_at_top_new = zeros((numg, numt, nwno))
-	if stream is 2:
-		flux = zeros((numg, numt, stream*nlevel, nwno))
-	else:
-		flux = zeros((numg, numt, stream*nlayer, nwno))
+	#if stream is 2:
+	flux = zeros((numg, numt, stream*nlevel, nwno))
+	direct_flux = zeros((numg, numt, nlayer, nwno))
+	#else:
+	#	flux = zeros((numg, numt, stream*nlayer, nwno))
 	
 	stream3 = False
 	if stream == 3:
@@ -1885,7 +1888,7 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 				b[1] = (b[1]*a[2])/(a[2]+4*a[0]) + (4*b[0]-2*b[2])/(a[2]+4*a[0])
 				print('here')
 			#boundary conditions 
-			b_top = 0.0
+			#b_top = 0.0
 			b_surface = 0. + surf_reflect*u0*F0PI*exp(-tau[-1, :]/u0)
 
 			if stream==2:
@@ -1915,10 +1918,10 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 			flux_bot = zeros(nwno)
 			intgrl_new = zeros((stream*nlayer, nwno))
 			I = zeros((stream*nlayer, nwno))
-			if stream is 2:
-				flux_temp = zeros((stream*nlevel, nwno))
-			else:
-				flux_temp = zeros((stream*nlayer, nwno))
+			#if stream is 2:
+			flux_temp = zeros((stream*nlevel, nwno))
+			#else:
+			#	flux_temp = zeros((stream*nlayer, nwno))
 			intgrl_per_layer = zeros((nlayer, nwno))
 			multi_scat = zeros((nlayer, nwno))
 			xint_temp = zeros((nlevel, nwno))
@@ -1947,6 +1950,8 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 					#p_single = p_single + w_single[l][i,:] * P(cos_theta)[l] 
 					intensity[i,:] = intensity[i,:] + (2*l+1) * I[i*stream+l,:] * P(u1)[l]
 
+			direct_flux[ng,nt,:,:] = ( w0_og * F0PI / (4*np.pi) * p_single 
+											* np.exp(-tau_og[:-1,:]/u0) * (1 - exptrm_mus) / mus) / u1
 			intgrl_per_layer = (w0 *  multi_scat 
 						+ w0_og * F0PI / (4*np.pi) * p_single 
 						* np.exp(-tau_og[:-1,:]/u0) * (1 - exptrm_mus) 
@@ -1964,7 +1969,7 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 #	import IPython; IPython.embed()
 #	import sys; sys.exit()
 
-	return xint_at_top, flux, xint_out
+	return xint_at_top, flux, xint_out, direct_flux
 
 def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb, 
 			dtau_og, tau_og, w0_og, w0_no_raman, cosb_og, plevel, ubar1,
@@ -2341,7 +2346,7 @@ def setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 	M[1,3,:] = q2pl[0,:]
         
 	B[0,:] = b_top - z1mn_down[0,:]
-	B[1,:] = b_top - z2mn_down[0,:]
+	B[1,:] = - z2mn_down[0,:]
 
 	nn = list(range(0,4*nlayer))
 	M[nn[2:-2:4],nn[:-4:4],:] = f00[:-1,:]
@@ -2732,7 +2737,7 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 		Mb[6,0,:] = q1mn[0,:]
 
 		B[0,:] = b_top - z1mn_down[0,:]
-		B[1,:] = - z2mn_down[0,:]
+		B[1,:] = -b_top/4 - z2mn_down[0,:]
 
 		nn = list(range(0,4*nlayer))
 		Mb[5,nn[2:-4:4],:] = f02[:-1,:]
@@ -2826,31 +2831,54 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 		return Mb, B, A_int, N_int, F_bot, G_bot
 
 	elif calculate == 1: # fluxes per layer
-		F = zeros((4*nlayer, 4*nlayer, nwno))
-		G = zeros((4*nlayer, nwno))
+		nlevel = nlayer+1
+		F = zeros((4*nlevel, 4*nlayer, nwno))
+		G = zeros((4*nlevel, nwno))
+
+		F[0,0,:] = p1mn[0,:]
+		F[0,1,:] = p1pl[0,:]
+		F[0,2,:] = p2mn[0,:]
+		F[0,3,:] = p2pl[0,:]
+		F[1,0,:] = q1mn[0,:]
+		F[1,1,:] = q1pl[0,:]
+		F[1,2,:] = q2mn[0,:]
+		F[1,3,:] = q2pl[0,:]
+		F[2,0,:] = p1pl[0,:]
+		F[2,1,:] = p1mn[0,:]
+		F[2,2,:] = p2pl[0,:]
+		F[2,3,:] = p2mn[0,:]
+		F[3,0,:] = q1pl[0,:]
+		F[3,1,:] = q1mn[0,:]
+		F[3,2,:] = q2pl[0,:]
+		F[3,3,:] = q2mn[0,:]
 
 		nn = list(range(0,4*nlayer))
-		F[nn[::4],nn[::4],:] = f00
-		F[nn[::4],nn[1::4],:] = f01
-		F[nn[::4],nn[2::4],:] = f02
-		F[nn[::4],nn[3::4],:] = f03
-		F[nn[1::4],nn[::4],:] = f10
-		F[nn[1::4],nn[1::4],:] = f11
-		F[nn[1::4],nn[2::4],:] = f12
-		F[nn[1::4],nn[3::4],:] = f13
-		F[nn[2::4],nn[::4],:] = f20
-		F[nn[2::4],nn[1::4],:] = f21
-		F[nn[2::4],nn[2::4],:] = f22
-		F[nn[2::4],nn[3::4],:] = f23
-		F[nn[3::4],nn[::4],:] = f30
-		F[nn[3::4],nn[1::4],:] = f31
-		F[nn[3::4],nn[2::4],:] = f32
-		F[nn[3::4],nn[3::4],:] = f33
+		NN = list(range(0,4*nlevel))
+		F[NN[4::4],nn[::4],:] = f00
+		F[NN[4::4],nn[1::4],:] = f01
+		F[NN[4::4],nn[2::4],:] = f02
+		F[NN[4::4],nn[3::4],:] = f03
+		F[NN[5::4],nn[::4],:] = f10
+		F[NN[5::4],nn[1::4],:] = f11
+		F[NN[5::4],nn[2::4],:] = f12
+		F[NN[5::4],nn[3::4],:] = f13
+		F[NN[6::4],nn[::4],:] = f20
+		F[NN[6::4],nn[1::4],:] = f21
+		F[NN[6::4],nn[2::4],:] = f22
+		F[NN[6::4],nn[3::4],:] = f23
+		F[NN[7::4],nn[::4],:] = f30
+		F[NN[7::4],nn[1::4],:] = f31
+		F[NN[7::4],nn[2::4],:] = f32
+		F[NN[7::4],nn[3::4],:] = f33
 
-		G[::4,:] = z1mn_up
-		G[1::4,:] = z2mn_up
-		G[2::4,:] = z1pl_up
-		G[3::4,:] = z2pl_up
+		G[0,:] = z1mn[0,:]
+		G[1,:] = z2mn[0,:]
+		G[2,:] = z1pl[0,:]
+		G[3,:] = z2pl[0,:]
+		G[4::4,:] = z1mn_up
+		G[5::4,:] = z2mn_up
+		G[6::4,:] = z1pl_up
+		G[7::4,:] = z2pl_up
 
 		return F, G
 
