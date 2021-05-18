@@ -539,11 +539,15 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
 
     at_pressure_array = {}
     for i in taus_by_species.keys(): 
-        at_pressures = np.zeros(shape[1])
-        ind_gas = find_nearest_2d(cumsum_taus[i] , at_tau)
-
-        for iw in range(shape[1]):
-            at_pressures[iw] = pressure[ind_gas[iw]]
+        #at_pressures = np.zeros(shape[1])
+        #ind_gas = find_nearest_2d(cumsum_taus[i] , at_tau)
+        
+        #for iw in range(shape[1]):
+        #    at_pressures[iw] = pressure[ind_gas[iw]]
+        at_pressures=[]
+        for iw in range(shape[1]): 
+            at_pressures += [np.interp([at_tau],cumsum_taus[i][:,iw],
+                                pressure )[0]]
 
         at_pressure_array[i] = at_pressures
 
@@ -2042,7 +2046,94 @@ def raman_options():
     """Retrieve options for raman scattering approximtions"""
     return ["oklopcic","pollack","none"]
 
+def evolution_track(mass=1, age='all'):
+    """
+    Plot or grab an effective temperature for a certain age and mass planet. 
 
+    Parameters
+    ----------
+    mass : int or str, optional
+        (Optional) Mass of planet, in Jupiter Masses. Only valid options = 1, 2, 4, 6, 8, 10,'all'
+        If another value is entered, it will find the nearest option. 
+    plot : bool, optional
+        (Optional) Default=True. If True, function will return a figure. Else will return None. 
+    age : float or str, optional
+        (Optional) Age of planet, in years or 'all' to return full model 
+
+
+    Return 
+    ------
+    if age=None: data = {'cold':all_data_cold_start, 'hot':all_data_hot_start}
+    if age=float: data = {'cold':data_at_age, 'hot':data_at_age}
+    
+    if plot=False: returns data 
+    else: returns data, plot
+    
+
+    """
+    cols_return = ['age_years','Teff','grav_cgs'] #be careful when changing these as they are used to build all_cols
+    valid_options = np.array([1,2,4,6,8,10]) # jupiter masses
+
+    if mass == 'all':
+        all_cols = np.concatenate([[cols_return[0]]]+[[f'{cols_return[1]}{iv}Mj',f'{cols_return[2]}{iv}Mj'] for iv in valid_options])
+        for imass in valid_options:
+            mass = f'00{imass}0'            
+            if len(mass)==5:mass=mass[1:]
+            cold = pd.read_csv(os.path.join(__refdata__, 'evolution','cold_start',f'model_seq.{mass}'),skiprows=12,delim_whitespace=True,
+                    header=None,names=['age_years','log L','R_cm','Ts','Teff',
+                                       'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
+            hot = pd.read_csv(os.path.join(__refdata__, 'evolution','hot_start',f'model_seq.{mass}'),skiprows=12,delim_whitespace=True,
+                    header=None,names=['age_years','log L','R_cm','Ts','Teff',
+                                       'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
+            if imass==1 :
+                all_cold = pd.DataFrame(columns=all_cols,index=range(cold.shape[0]))
+                all_cold['age_years'] = cold['age_years'].values
+                all_hot = pd.DataFrame(columns=all_cols,index=range(hot.shape[0]))
+                all_hot['age_years'] = hot['age_years'].values
+            #add teff for this mass
+            all_cold.loc[:,f'{cols_return[1]}{imass}Mj'] = cold.loc[:,f'{cols_return[1]}'].values
+            #add gravity for this mass
+            all_cold.loc[:,f'{cols_return[2]}{imass}Mj'] = cold.loc[:,f'{cols_return[2]}'].values
+            #add teff for this mass
+            all_hot.loc[:,f'{cols_return[1]}{imass}Mj'] = hot.loc[:,f'{cols_return[1]}'].values
+            #add gravity for this mass
+            all_hot.loc[:,f'{cols_return[2]}{imass}Mj'] = hot.loc[:,f'{cols_return[2]}'].values
+        
+
+        #grab the desired age, if the user asks for it
+        if not isinstance(age, str):
+            #returning to just hot and cold names so that they can be returned below 
+            all_hot = (all_hot.iloc[(all_hot['age_years']-age).abs().argsort()[0:1]]).to_dict('records')[0]
+            all_cold = (all_cold.iloc[(all_cold['age_years']-age).abs().argsort()[0:1]]).to_dict('records')[0]
+
+        to_return = {'hot': all_hot, 
+                'cold': all_cold}
+    else:   
+        
+        idx = np.argmin(abs(valid_options - mass))
+        mass = int(valid_options[idx])
+        mass = f'00{mass}0'
+        if len(mass)==5:mass=mass[1:]
+        cold = pd.read_csv(os.path.join(__refdata__, 'evolution','cold_start',f'model_seq.{mass}'),skiprows=12,delim_whitespace=True,
+                    header=None,names=['age_years','log L','R_cm','Ts','Teff',
+                                       'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
+        hot = pd.read_csv(os.path.join(__refdata__, 'evolution','hot_start',f'model_seq.{mass}'),skiprows=12,delim_whitespace=True,
+                    header=None,names=['age_years','log L','R_cm','Ts','Teff',
+                                       'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
+        #return only what we want
+        hot = hot.loc[:,cols_return]
+        cold = cold.loc[:,cols_return]
+
+        #grab the desired age, if the user asks for it
+        if not isinstance(age, type(None)):
+            hot = (hot.iloc[(hot['age_years']-age).abs().argsort()[0:1]]).to_dict('records')[0]
+            cold = (cold.iloc[(cold['age_years']-age).abs().argsort()[0:1]]).to_dict('records')[0]
+
+        to_return = {'hot': hot, 
+                    'cold': cold}
+
+
+    return to_return
 
 def all_planets():
     """
@@ -2083,3 +2174,4 @@ def stream_options(printout=True):
     """Retrieve all the options for stream"""
     if printout: print("Can use 2-stream or 4-stream sperhical harmonics")
     return [2,4]
+
