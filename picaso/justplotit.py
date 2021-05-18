@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 from bokeh.layouts import column,row
 import numpy as np
-from bokeh.palettes import magma as colfun1
-from bokeh.palettes import viridis as colfun2
+from bokeh.palettes import magma 
+from bokeh.palettes import viridis
 from bokeh.palettes import gray as colfun3
 from bokeh.palettes import Spectral11
 from bokeh.models import HoverTool
@@ -13,6 +13,7 @@ from bokeh.models import LinearColorMapper, LogTicker,BasicTicker, ColorBar,LogC
 from bokeh.models import ColumnDataSource,LinearAxis,Range1d
 from bokeh.palettes import magma,RdBu11
 from bokeh.layouts import row,column
+from bokeh.io import output_notebook
 import os 
 from numba import jit
 from mpl_toolkits.mplot3d import Axes3D
@@ -70,13 +71,16 @@ def plot_errorbar(x,y,e,plot,**kwargs):
     plot.multi_line(x_err, y_err, **kwargs)
     return
 
-def mixing_ratio(full_output,**kwargs):
+def mixing_ratio(full_output,limit=50, **kwargs):
     """Returns plot of mixing ratios 
 
     Parameters
     ----------
     full_output : class
         picaso.atmsetup.ATMSETUP
+    limit : int
+        Limits the number of curves to 20. Will plot the top 20 molecules 
+        with highest max(abundance). Limit must be >=3. 
     **kwargs : dict 
         Any key word argument for bokeh.figure() 
     """
@@ -94,13 +98,18 @@ def mixing_ratio(full_output,**kwargs):
     kwargs['y_range'] = kwargs.get('y_range',[np.max(pressure),np.min(pressure)])
     kwargs['x_range'] = kwargs.get('x_range',[1e-20, 1e2])
 
+    #to plot (incl limit)
+    to_plot=full_output['layer']['mixingratios'].max().sort_values(ascending=False)[0:limit].keys()
 
     fig = figure(**kwargs)
     if len(molecules) < 3: ncol = 5
     else: ncol = len(molecules)
-    cols = colfun1(ncol)
+    if limit<3: 
+        cols = magma(5) #magma needs at least 5 colors
+    else: 
+        cols = magma(min([ncol,limit]))
     legend_it=[]    
-    for mol , c in zip(molecules,cols):
+    for mol , c in zip(to_plot,cols):
         ind = np.where(mol==np.array(molecules))[0][0]
         f = fig.line(full_output['layer']['mixingratios'][mol],pressure, color=c, line_width=3,
                     muted_color=c, muted_alpha=0.2)
@@ -370,7 +379,7 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
         wavelength_label = 'Wavelength (units by user)'
     else: 
         wavelength_label = 'Wavenumber Grid'
-    cols = colfun1(200)
+    cols = magma(200)
     color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
 
     if not isinstance(filename,type(None)):
@@ -399,7 +408,7 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
     scat01 = np.flip(np.reshape(dat01['opd'].values,(nlayer,nwno)),0)
 
     xr, yr = scat01.shape
-    cols = colfun2(200)[::-1]
+    cols = viridis(200)[::-1]
     color_mapper = LogColorMapper(palette=cols, low=1e-3, high=10)
 
 
@@ -477,7 +486,7 @@ def cloud(full_output):
     -------
     A row of two bokeh plots with the single scattering and optical depth map
     """
-    cols = colfun1(200)
+    cols = magma(200)
     color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
 
     dat01 = full_output['layer']['cloud']
@@ -504,7 +513,7 @@ def cloud(full_output):
     scat01 = np.flip(dat01['opd']+1e-60,0)
 
     xr, yr = scat01.shape
-    cols = colfun2(200)[::-1]
+    cols = viridis(200)[::-1]
     color_mapper = LogColorMapper(palette=cols, low=1e-3, high=10)
 
 
@@ -842,7 +851,7 @@ def flux_at_top(full_output, plot_bb = True, R=None, pressures = [1e-1,1e-2,1e-3
     fig = figure(**kwargs)
     if len(pressures) < 3: ncol = 5
     else: ncol = len(pressures)
-    cols = colfun1(ncol)
+    cols = magma(ncol)
 
     wno = full_output['wavenumber']
     if isinstance(R,(int, float)): 
@@ -1391,3 +1400,51 @@ def corr_molecular(atm,filename_db, wavenumber , residual, max_plot,threshold):
     p.outline_line_color = None
 
     return column(p,spec)
+
+def plot_evolution(evo):
+    """
+    Plot evolution of tracks. Requires input from justdoit: 
+
+    evo = justdoit.evolution_track(mass='all',age='all')
+
+    """
+
+    f = figure(x_axis_type='log',plot_height=300, plot_width=500,
+                  x_axis_label='Age(years)', y_axis_label='Teff')
+
+    evo_hot=evo['hot']
+    evo_cold=evo['cold']
+    source_hot = ColumnDataSource(data=dict(
+        evo_hot))
+    source_cold = ColumnDataSource(data=dict(
+        evo_cold))
+
+    colors = viridis(int((evo_cold.shape[1])))
+    for i, ikey in enumerate(list(evo_hot.keys())[1:]):
+        if 'Teff' in ikey:
+            mass = int(ikey[ikey.rfind('f')+1:ikey.find('M')])
+            icolor = mass -1
+            f1 = f.line(x='age_years',y=ikey,line_width=2,
+                   color=colors[icolor]
+                  ,legend_label='Hot Start', source = source_hot)
+            f.add_tools(HoverTool(renderers=[f1], tooltips=[('Teff',f'@{ikey} K'),
+                                                            ('Age','@age_years Yrs'),
+                                                            ('Gravity' , f'@grav_cgs{ikey[4:]} cm/s2'),
+                                                           ('Mass',str(mass)+" Mj")]
+                                  ))#,mode='vline'
+            f2 = f.line('age_years',ikey,line_width=2,
+                   color=colors[icolor],
+                  line_dash='dashed',legend_label='Cold Start' , source = source_cold)
+            f.add_tools(HoverTool(renderers=[f2], tooltips=[('Teff',f'@{ikey} K'),
+                                                            ('Age','@age_years Yrs'),
+                                                            ('Gravity', f'@grav_cgs{ikey[4:]} cm/s2'),
+                                                           ('Mass',str(mass)+" Mj")]))
+
+    color_bar = ColorBar(title='Mass (Mj)',
+        color_mapper=LinearColorMapper(palette="Viridis256", 
+                     low=1, high=13), 
+        label_standoff=12,location=(0,0))
+
+    f.add_layout(color_bar, 'right')
+    return f
+        
