@@ -1141,8 +1141,6 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
             xint_at_top[ng,nt,:] = xint[0,:]
             intensity[ng,nt,:,:] = xint
-#    import IPython; IPython.embed()
-#    import sys; sys.exit()
 
     return xint_at_top, flux_out, intensity, direct_flux
 
@@ -1746,7 +1744,8 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 	xint_at_top_new = zeros((numg, numt, nwno))
 	#if stream is 2:
 	flux = zeros((numg, numt, stream*nlevel, nwno))
-	direct_flux = zeros((numg, numt, nlayer, nwno))
+	multiple_scat = zeros((numg, numt, nlayer, nwno))
+	single_scat = zeros((numg, numt, nlayer, nwno))
 	#else:
 	#	flux = zeros((numg, numt, stream*nlayer, nwno))
 	
@@ -1792,12 +1791,14 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 				g2_m = 5*(cosb_og**2 - cosb_og**stream) / (1 - cosb_og**stream)
 				g3_m = 7*(cosb_og**3 - cosb_og**stream) / (1 - cosb_og**stream)
 
-				g0_s = ones((nlayer, nwno))
-				g1_s = 3*cosb_og
-				g2_s = 5*(cosb_og**2)
-				g3_s = 7*(cosb_og**3)
+				g0_s = g0_m#ones((nlayer, nwno))
+				g1_s = g1_m#3*cosb_og
+				g2_s = g1_m#5*(cosb_og**2)
+				g3_s = g1_m#7*(cosb_og**3)
 
-				p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+				#cos_theta = u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
+				#print(cos_theta)
+				p_single=(1-cosb**2)/sqrt((1+cosb**2+2*cosb*cos_theta)**3) 
 
 			elif single_phase==2:#'TTHG':
 				#Phase function for single scattering albedo frum Solar beam
@@ -1939,37 +1940,37 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 			#	import IPython; IPython.embed()
 			#	import sys; sys.exit()
 			mus = (u1 + u0) / (u1 * u0)
-			expo_mus = mus * dtau_og 
+			expo_mus = mus * dtau 
 			expo_mus = slice_gt(expo_mus, 35.0)    
 			exptrm_mus = exp(-expo_mus)
 
-			#p_single = 0.
+			#p_single = 1.
 			for i in range(nlayer):
 				for l in range(stream):
 					multi_scat[i,:] = multi_scat[i,:] + w_multi[l][i,:] * P(u1)[l] * intgrl_new[stream*i+l,:]
 					#p_single = p_single + w_single[l][i,:] * P(cos_theta)[l] 
 					intensity[i,:] = intensity[i,:] + (2*l+1) * I[i*stream+l,:] * P(u1)[l]
 
-			direct_flux[ng,nt,:,:] = ( w0_og * F0PI / (4*np.pi) * p_single 
-											* np.exp(-tau_og[:-1,:]/u0) * (1 - exptrm_mus) / mus) / u1
 			intgrl_per_layer = (w0 *  multi_scat 
-						+ w0_og * F0PI / (4*np.pi) * p_single 
-						* np.exp(-tau_og[:-1,:]/u0) * (1 - exptrm_mus) 
+						+ w0 * F0PI / (4*np.pi) * p_single 
+						* np.exp(-tau[:-1,:]/u0) * (1 - exptrm_mus) 
 						/ mus
 						)
 
 			xint_temp[-1,:] = flux_bot/pi
 			for i in range(nlayer-1,-1,-1):
-				xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/u1) 
+				xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/u1)
 							+ intgrl_per_layer[i,:] / u1) 
 
 			xint_at_top[ng,nt,:] = xint_temp[0, :]
 			xint_out[ng,nt,:,:] = xint_temp
 			flux[ng,nt,:,:] = flux_temp
+			multiple_scat[ng,nt,:,:,] = w0 * multi_scat
+			single_scat[ng,nt,:,:,] = intgrl_per_layer
 #	import IPython; IPython.embed()
 #	import sys; sys.exit()
 
-	return xint_at_top, flux, xint_out, direct_flux
+	return xint_at_top, flux, xint_out, multiple_scat, single_scat
 
 def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb, 
 			dtau_og, tau_og, w0_og, w0_no_raman, cosb_og, plevel, ubar1,
@@ -2660,6 +2661,9 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 	f30 = q1pl*exptrm1; f31 = q1mn/exptrm1;	f32 = q2pl*exptrm2; f33 = q2mn/exptrm2
 
 	exptau_u0 = exp(-slice_gt(tau/ubar0, 35.0))
+	dtau_ = np.zeros(tau.shape)
+	dtau_[1:,:] = dtau
+	#exptau_u0 = exp(-slice_gt(dtau_/ubar0, 35.0))
 	if calculation is 'reflected':
 		z1mn_up = z1mn * exptau_u0[1:,:]
 		z2mn_up = z2mn * exptau_u0[1:,:]

@@ -74,8 +74,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     stream = inputs['approx']['stream']
     approximation = inputs['approx']['Toon_coefficients']
     tridiagonal = 0 
-    input_dir = inputs['approx']['input_dir']
-    #input_dir=None
+    #input_dir = inputs['approx']['input_dir']
+    input_dir=None
 
 
     #parameters needed for the two term hg phase function. 
@@ -114,6 +114,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     #set star parameters
     radius_star = inputs['star']['radius']
     F0PI = np.zeros(nwno) + 1.
+    b_top = 0.
     #semi major axis
     sa = inputs['star']['semi_major']
 
@@ -185,24 +186,24 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             #COSB_OG = COSB_OG[0:nlevel-1,0:nwno]
             #F0PI = F0PI[0:nwno]
             if method == 'SH':
-                (xint_at_top, flux_out, intensity) = get_reflected_new(nlevel, wno, nwno, ng, nt, 
+                (xint_at_top, flux_out, intensity, direct_flux) = get_reflected_new(nlevel, wno, nwno, ng, nt, 
                                             DTAU, TAU, W0, COSB, GCOS2, ftau_cld, ftau_ray,
                                             DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
                                             atm.surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
                                             single_phase, multi_phase, 
                                            frac_a, frac_b, frac_c, constant_back, constant_forward, 
-                                            dimension, stream)
+                                            dimension, stream, b_top=b_top)
                 if full_output: 
                     atm.int_layer = intensity
 
             else:
-                (xint_at_top, flux_out, intensity) = get_reflected_1d(nlevel, wno,nwno,ng,nt,
+                (xint_at_top, flux_out, intensity, direct_flux) = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                                     DTAU, TAU, W0, COSB,GCOS2,ftau_cld,ftau_ray,
                                                     DTAU_OG, TAU_OG, W0_OG, COSB_OG ,
                                                     atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
                                                     single_phase,multi_phase,
                                                     frac_a,frac_b,frac_c,constant_back,constant_forward,
-                                                    approximation)
+                                                    approximation, b_top=b_top)
 
 
             #if full output is requested add in xint at top for 3d plots
@@ -392,7 +393,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             'single_phase':single_phase, 'multi_phase':multi_phase, 
             'frac_a':frac_a, 'frac_b':frac_b, 'frac_c':frac_c, 'constant_back':constant_back, 
             'constant_forward':constant_forward, 'dim':dimension, 'stream':stream,
-            'xint_at_top': xint_at_top, 'albedo': albedo, 'flux': flux_out, 'xint': intensity,
+            'xint_at_top': xint_at_top, 'albedo': albedo, 'flux': flux_out, 'xint': intensity, 'direct_flux': direct_flux, 'b_top': b_top,
             'gweight': gweight, 'tweight': tweight, 'gangle': gangle, 'tangle': tangle}, open(filename,'wb'), protocol=2)
     return returns
 
