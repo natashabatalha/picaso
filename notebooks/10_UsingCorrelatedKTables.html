@@ -1,0 +1,958 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Switching to Pre-Mixed Correlated K-Tables &mdash; picaso 2.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> picaso
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                2.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">The Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://arxiv.org/abs/1904.09355">The Paper</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">picaso</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Switching to Pre-Mixed Correlated K-Tables</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/notebooks/10_UsingCorrelatedKTables.ipynb.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container,
+div.nbinput.container div.prompt,
+div.nbinput.container div.input_area,
+div.nbinput.container div[class*=highlight],
+div.nbinput.container div[class*=highlight] pre,
+div.nboutput.container,
+div.nboutput.container div.prompt,
+div.nboutput.container div.output_area,
+div.nboutput.container div[class*=highlight],
+div.nboutput.container div[class*=highlight] pre {
+    background: none;
+    border: none;
+    padding: 0 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    min-width: 5ex;
+    padding-top: 0.3rem;
+    padding-right: 0.3rem;
+    text-align: right;
+    flex: 0;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    background: #f5f5f5;
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 0.3rem;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt a.copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+div.rendered_html th {
+  font-weight: bold;
+}
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/10_UsingCorrelatedKTables.ipynb">Download full notebook here</a></p>
+</div>
+<div class="section" id="Switching-to-Pre-Mixed-Correlated-K-Tables">
+<h1>Switching to Pre-Mixed Correlated K-Tables<a class="headerlink" href="#Switching-to-Pre-Mixed-Correlated-K-Tables" title="Permalink to this headline">¶</a></h1>
+<p>We are currently working on building out the k-table functionality. Currently, the only available functionality is to use the pre-mixed correlated k-tables provided by our group. You can find these k-tables on Zenodo and details are included in Marley et al. 2020.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
+
+<span class="c1">#picaso</span>
+<span class="kn">from</span> <span class="nn">picaso</span> <span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
+<span class="kn">from</span> <span class="nn">picaso</span> <span class="kn">import</span> <span class="n">justplotit</span> <span class="k">as</span> <span class="n">jpi</span>
+<span class="c1">#plotting</span>
+<span class="kn">from</span> <span class="nn">bokeh.io</span> <span class="kn">import</span> <span class="n">output_notebook</span>
+<span class="n">output_notebook</span><span class="p">()</span>
+<span class="kn">from</span> <span class="nn">bokeh.plotting</span> <span class="kn">import</span> <span class="n">show</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div class="bk-root">
+    <a href="https://bokeh.org" target="_blank" class="bk-logo bk-logo-small bk-logo-notebook"></a>
+    <span id="1003">Loading BokehJS ...</span>
+</div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+
+(function(root) {
+  function now() {
+    return new Date();
+  }
+
+  var force = true;
+
+  if (typeof root._bokeh_onload_callbacks === "undefined" || force === true) {
+    root._bokeh_onload_callbacks = [];
+    root._bokeh_is_loading = undefined;
+  }
+
+  var JS_MIME_TYPE = 'application/javascript';
+  var HTML_MIME_TYPE = 'text/html';
+  var EXEC_MIME_TYPE = 'application/vnd.bokehjs_exec.v0+json';
+  var CLASS_NAME = 'output_bokeh rendered_html';
+
+  /**
+   * Render data to the DOM node
+   */
+  function render(props, node) {
+    var script = document.createElement("script");
+    node.appendChild(script);
+  }
+
+  /**
+   * Handle when an output is cleared or removed
+   */
+  function handleClearOutput(event, handle) {
+    var cell = handle.cell;
+
+    var id = cell.output_area._bokeh_element_id;
+    var server_id = cell.output_area._bokeh_server_id;
+    // Clean up Bokeh references
+    if (id != null && id in Bokeh.index) {
+      Bokeh.index[id].model.document.clear();
+      delete Bokeh.index[id];
+    }
+
+    if (server_id !== undefined) {
+      // Clean up Bokeh references
+      var cmd = "from bokeh.io.state import curstate; print(curstate().uuid_to_server['" + server_id + "'].get_sessions()[0].document.roots[0]._id)";
+      cell.notebook.kernel.execute(cmd, {
+        iopub: {
+          output: function(msg) {
+            var id = msg.content.text.trim();
+            if (id in Bokeh.index) {
+              Bokeh.index[id].model.document.clear();
+              delete Bokeh.index[id];
+            }
+          }
+        }
+      });
+      // Destroy server and session
+      var cmd = "import bokeh.io.notebook as ion; ion.destroy_server('" + server_id + "')";
+      cell.notebook.kernel.execute(cmd);
+    }
+  }
+
+  /**
+   * Handle when a new output is added
+   */
+  function handleAddOutput(event, handle) {
+    var output_area = handle.output_area;
+    var output = handle.output;
+
+    // limit handleAddOutput to display_data with EXEC_MIME_TYPE content only
+    if ((output.output_type != "display_data") || (!output.data.hasOwnProperty(EXEC_MIME_TYPE))) {
+      return
+    }
+
+    var toinsert = output_area.element.find("." + CLASS_NAME.split(' ')[0]);
+
+    if (output.metadata[EXEC_MIME_TYPE]["id"] !== undefined) {
+      toinsert[toinsert.length - 1].firstChild.textContent = output.data[JS_MIME_TYPE];
+      // store reference to embed id on output_area
+      output_area._bokeh_element_id = output.metadata[EXEC_MIME_TYPE]["id"];
+    }
+    if (output.metadata[EXEC_MIME_TYPE]["server_id"] !== undefined) {
+      var bk_div = document.createElement("div");
+      bk_div.innerHTML = output.data[HTML_MIME_TYPE];
+      var script_attrs = bk_div.children[0].attributes;
+      for (var i = 0; i < script_attrs.length; i++) {
+        toinsert[toinsert.length - 1].firstChild.setAttribute(script_attrs[i].name, script_attrs[i].value);
+        toinsert[toinsert.length - 1].firstChild.textContent = bk_div.children[0].textContent
+      }
+      // store reference to server id on output_area
+      output_area._bokeh_server_id = output.metadata[EXEC_MIME_TYPE]["server_id"];
+    }
+  }
+
+  function register_renderer(events, OutputArea) {
+
+    function append_mime(data, metadata, element) {
+      // create a DOM node to render to
+      var toinsert = this.create_output_subarea(
+        metadata,
+        CLASS_NAME,
+        EXEC_MIME_TYPE
+      );
+      this.keyboard_manager.register_events(toinsert);
+      // Render to node
+      var props = {data: data, metadata: metadata[EXEC_MIME_TYPE]};
+      render(props, toinsert[toinsert.length - 1]);
+      element.append(toinsert);
+      return toinsert
+    }
+
+    /* Handle when an output is cleared or removed */
+    events.on('clear_output.CodeCell', handleClearOutput);
+    events.on('delete.Cell', handleClearOutput);
+
+    /* Handle when a new output is added */
+    events.on('output_added.OutputArea', handleAddOutput);
+
+    /**
+     * Register the mime type and append_mime function with output_area
+     */
+    OutputArea.prototype.register_mime_type(EXEC_MIME_TYPE, append_mime, {
+      /* Is output safe? */
+      safe: true,
+      /* Index of renderer in `output_area.display_order` */
+      index: 0
+    });
+  }
+
+  // register the mime type if in Jupyter Notebook environment and previously unregistered
+  if (root.Jupyter !== undefined) {
+    var events = require('base/js/events');
+    var OutputArea = require('notebook/js/outputarea').OutputArea;
+
+    if (OutputArea.prototype.mime_types().indexOf(EXEC_MIME_TYPE) == -1) {
+      register_renderer(events, OutputArea);
+    }
+  }
+
+
+  if (typeof (root._bokeh_timeout) === "undefined" || force === true) {
+    root._bokeh_timeout = Date.now() + 5000;
+    root._bokeh_failed_load = false;
+  }
+
+  var NB_LOAD_WARNING = {'data': {'text/html':
+     "<div style='background-color: #fdd'>\n"+
+     "<p>\n"+
+     "BokehJS does not appear to have successfully loaded. If loading BokehJS from CDN, this \n"+
+     "may be due to a slow or bad network connection. Possible fixes:\n"+
+     "</p>\n"+
+     "<ul>\n"+
+     "<li>re-rerun `output_notebook()` to attempt to load from CDN again, or</li>\n"+
+     "<li>use INLINE resources instead, as so:</li>\n"+
+     "</ul>\n"+
+     "<code>\n"+
+     "from bokeh.resources import INLINE\n"+
+     "output_notebook(resources=INLINE)\n"+
+     "</code>\n"+
+     "</div>"}};
+
+  function display_loaded() {
+    var el = document.getElementById("1003");
+    if (el != null) {
+      el.textContent = "BokehJS is loading...";
+    }
+    if (root.Bokeh !== undefined) {
+      if (el != null) {
+        el.textContent = "BokehJS " + root.Bokeh.version + " successfully loaded.";
+      }
+    } else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(display_loaded, 100)
+    }
+  }
+
+
+  function run_callbacks() {
+    try {
+      root._bokeh_onload_callbacks.forEach(function(callback) {
+        if (callback != null)
+          callback();
+      });
+    } finally {
+      delete root._bokeh_onload_callbacks
+    }
+    console.debug("Bokeh: all callbacks have finished");
+  }
+
+  function load_libs(css_urls, js_urls, callback) {
+    if (css_urls == null) css_urls = [];
+    if (js_urls == null) js_urls = [];
+
+    root._bokeh_onload_callbacks.push(callback);
+    if (root._bokeh_is_loading > 0) {
+      console.debug("Bokeh: BokehJS is being loaded, scheduling callback at", now());
+      return null;
+    }
+    if (js_urls == null || js_urls.length === 0) {
+      run_callbacks();
+      return null;
+    }
+    console.debug("Bokeh: BokehJS not loaded, scheduling load and callback at", now());
+    root._bokeh_is_loading = css_urls.length + js_urls.length;
+
+    function on_load() {
+      root._bokeh_is_loading--;
+      if (root._bokeh_is_loading === 0) {
+        console.debug("Bokeh: all BokehJS libraries/stylesheets loaded");
+        run_callbacks()
+      }
+    }
+
+    function on_error() {
+      console.error("failed to load " + url);
+    }
+
+    for (var i = 0; i < css_urls.length; i++) {
+      var url = css_urls[i];
+      const element = document.createElement("link");
+      element.onload = on_load;
+      element.onerror = on_error;
+      element.rel = "stylesheet";
+      element.type = "text/css";
+      element.href = url;
+      console.debug("Bokeh: injecting link tag for BokehJS stylesheet: ", url);
+      document.body.appendChild(element);
+    }
+
+    const hashes = {"https://cdn.bokeh.org/bokeh/release/bokeh-2.0.1.min.js": "JpP8FXbgAZLkfur7LiK3j9AGBhHNIvF742meBJrjO2ShJDhCG2I1uVvW+0DUtrmc", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.0.1.min.js": "xZlADit0Q04ISQEdKg2k3L4W9AwQBAuDs9nJL9fM/WwzL1tEU9VPNezOFX0nLEAz", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.0.1.min.js": "4BuPRZkdMKSnj3zoxiNrQ86XgNw0rYmBOxe7nshquXwwcauupgBF2DHLVG1WuZlV", "https://cdn.bokeh.org/bokeh/release/bokeh-gl-2.0.1.min.js": "Dv1SQ87hmDqK6S5OhBf0bCuwAEvL5QYL0PuR/F1SPVhCS/r/abjkbpKDYL2zeM19"};
+
+    for (var i = 0; i < js_urls.length; i++) {
+      var url = js_urls[i];
+      var element = document.createElement('script');
+      element.onload = on_load;
+      element.onerror = on_error;
+      element.async = false;
+      element.src = url;
+      if (url in hashes) {
+        element.crossOrigin = "anonymous";
+        element.integrity = "sha384-" + hashes[url];
+      }
+      console.debug("Bokeh: injecting script tag for BokehJS library: ", url);
+      document.head.appendChild(element);
+    }
+  };var element = document.getElementById("1003");
+  if (element == null) {
+    console.error("Bokeh: ERROR: autoload.js configured with elementid '1003' but no matching script tag was found. ")
+    return false;
+  }
+
+  function inject_raw_css(css) {
+    const element = document.createElement("style");
+    element.appendChild(document.createTextNode(css));
+    document.body.appendChild(element);
+  }
+
+
+  var js_urls = ["https://cdn.bokeh.org/bokeh/release/bokeh-2.0.1.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.0.1.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.0.1.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-gl-2.0.1.min.js"];
+  var css_urls = [];
+
+
+  var inline_js = [
+    function(Bokeh) {
+      Bokeh.set_log_level("info");
+    },
+    function(Bokeh) {
+
+
+    }
+  ];
+
+  function run_inline_js() {
+
+    if (root.Bokeh !== undefined || force === true) {
+
+    for (var i = 0; i < inline_js.length; i++) {
+      inline_js[i].call(root, root.Bokeh);
+    }
+    if (force === true) {
+        display_loaded();
+      }} else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(run_inline_js, 100);
+    } else if (!root._bokeh_failed_load) {
+      console.log("Bokeh: BokehJS failed to load within specified timeout.");
+      root._bokeh_failed_load = true;
+    } else if (force !== true) {
+      var cell = $(document.getElementById("1003")).parents('.cell').data().cell;
+      cell.output_area.append_execute_result(NB_LOAD_WARNING)
+    }
+
+  }
+
+  if (root._bokeh_is_loading === 0) {
+    console.debug("Bokeh: BokehJS loaded, going straight to plotting");
+    run_inline_js();
+  } else {
+    load_libs(css_urls, js_urls, function() {
+      console.debug("Bokeh: BokehJS plotting callback run at", now());
+      run_inline_js();
+    });
+  }
+}(window));
+</script></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1">#let&#39;s do two calculations</span>
+<span class="c1">#first, the regular monochromatic opacities</span>
+<span class="n">opacity_mono</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">14</span><span class="p">])</span> <span class="c1">#lets just use all defaults</span>
+
+</pre></div>
+</div>
+</div>
+<p>Notice that when we call the <code class="docutils literal notranslate"><span class="pre">opannection</span></code> with the <code class="docutils literal notranslate"><span class="pre">ck=True</span></code>, we must also pass it one of the directories from Zenodo. The directory name describes the chemistry that this has been calculated for. In this case it is 1xSolar, Solar C/O.</p>
+<p><strong>Inside that directory there should be at least two files: ascii_data, and full_abunds</strong></p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1">#second the correlated k table</span>
+<span class="n">opacity_ck</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">ck</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                             <span class="n">ck_db</span><span class="o">=</span><span class="s1">&#39;m+0.0_co0.5.data.196&#39;</span>
+                            <span class="p">)</span>
+
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1">#lets use the same example Jupiter PT profile</span>
+<span class="n">pt</span><span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_pt</span><span class="p">(),</span> <span class="n">delim_whitespace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<p>You should already be familiar with the following code block. Here we are loading the input class, setting the gravity, stellar parameters, and sonora profile.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">calc</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;ck&#39;</span><span class="p">:</span><span class="n">opacity_ck</span><span class="p">,</span><span class="s1">&#39;mono&#39;</span><span class="p">:</span><span class="n">opacity_mono</span><span class="p">}</span>
+<span class="n">cases</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">calc</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+<span class="n">cases</span><span class="p">[</span><span class="s1">&#39;mono&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="n">raman</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+<span class="c1">#phase angle</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">calc</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span> <span class="n">cases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c1">#radians</span>
+
+<span class="c1">#define gravity</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">calc</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span> <span class="n">cases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                    <span class="n">radius_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_jup&#39;</span><span class="p">),</span>
+                                    <span class="n">mass</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                    <span class="n">mass_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;M_jup&#39;</span><span class="p">))</span> <span class="c1">#any astropy units available</span>
+
+<span class="c1">#define star</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">calc</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span> <span class="n">cases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">calc</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mi">5000</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mf">4.0</span><span class="p">,</span>
+                                   <span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                   <span class="n">radius_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_sun&#39;</span><span class="p">),</span>
+                                   <span class="n">semi_major</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+                                   <span class="n">semi_major_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;au&#39;</span><span class="p">))</span> <span class="c1">#opacity db, pysynphot database, temp, metallicity, logg</span>
+
+<span class="n">sonora_profile_db</span> <span class="o">=</span> <span class="s1">&#39;/Users/nbatalh1/Documents/data/sonora_profile/&#39;</span>
+<span class="c1">#just grabbing any Teff so we can use a sonora pressure-temperature profile</span>
+<span class="n">Teff</span> <span class="o">=</span> <span class="mi">1500</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">calc</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span><span class="n">cases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">sonora</span><span class="p">(</span><span class="n">sonora_profile_db</span><span class="p">,</span> <span class="n">Teff</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>The differences between the two procedures comes in when we specify the chemistry. Here we introduce a new function called <code class="docutils literal notranslate"><span class="pre">premix_atmosphere</span></code>. This is going to pull the precomputed chemistry that was used to compute the correlated k tables.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">cases</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">premix_atmosphere</span><span class="p">(</span><span class="n">opacity_ck</span><span class="p">,</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">cases</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;atmosphere&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,[</span><span class="s1">&#39;pressure&#39;</span><span class="p">,</span><span class="s1">&#39;temperature&#39;</span><span class="p">]])</span>
+
+<span class="c1">#now let&#39;s pass that to the monochromatic opacities for consistency</span>
+<span class="n">cases</span><span class="p">[</span><span class="s1">&#39;mono&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">cases</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;atmosphere&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">])</span>
+
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">df</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">calc</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="n">df</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">cases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">calc</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                              <span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="Compare-Monochromatic-Opacities-with-Pre-Mixed-K-Tables">
+<h2>Compare Monochromatic Opacities with Pre-Mixed K-Tables<a class="headerlink" href="#Compare-Monochromatic-Opacities-with-Pre-Mixed-K-Tables" title="Permalink to this headline">¶</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">compare</span> <span class="o">=</span> <span class="s1">&#39;thermal&#39;</span>
+<span class="n">wno_ck</span><span class="p">,</span> <span class="n">therm_ck</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">][</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">][</span><span class="n">compare</span><span class="p">]</span>
+<span class="n">wno_mon1</span><span class="p">,</span> <span class="n">therm_mon1</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;mono&#39;</span><span class="p">][</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span>
+                                       <span class="n">df</span><span class="p">[</span><span class="s1">&#39;mono&#39;</span><span class="p">][</span><span class="n">compare</span><span class="p">]</span> <span class="p">,</span> <span class="n">newx</span><span class="o">=</span><span class="n">wno_ck</span><span class="p">)</span>
+<span class="n">wno_mon2</span><span class="p">,</span> <span class="n">therm_mon2</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;mono&#39;</span><span class="p">][</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span>
+                                       <span class="n">df</span><span class="p">[</span><span class="s1">&#39;mono&#39;</span><span class="p">][</span><span class="n">compare</span><span class="p">]</span> <span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">([</span><span class="n">wno_ck</span><span class="p">,</span><span class="n">wno_mon1</span><span class="p">],</span>
+                  <span class="p">[</span><span class="n">therm_ck</span><span class="p">,</span><span class="n">therm_mon1</span><span class="p">],</span>
+                  <span class="n">legend</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;monochromatic&#39;</span><span class="p">,</span><span class="s1">&#39;k table&#39;</span><span class="p">],</span> <span class="n">plot_width</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+                  <span class="n">y_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span>
+                 <span class="p">,</span><span class="n">x_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div class="bk-root" id="203df8af-3d02-48ac-a29c-726701a1da5e" data-root-id="1141"></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+(function(root) {
+  function embed_document(root) {
+
+  var docs_json = {"8d74a16b-835f-410a-98e1-44dbba7f410b":{"roots":{"references":[{"attributes":{"below":[{"id":"1150"}],"center":[{"id":"1153"},{"id":"1157"},{"id":"1184"}],"left":[{"id":"1154"}],"plot_height":345,"plot_width":500,"renderers":[{"id":"1175"},{"id":"1189"}],"title":{"id":"1178"},"toolbar":{"id":"1165"},"x_range":{"id":"1142"},"x_scale":{"id":"1146"},"y_range":{"id":"1144"},"y_scale":{"id":"1148"}},"id":"1141","subtype":"Figure","type":"Plot"},{"attributes":{},"id":"1142","type":"DataRange1d"},{"attributes":{"data":{"x":{"__ndarray__":"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","dtype":"float64","shape":[196]},"y":{"__ndarray__":"RUcvITg9+0CFMtfrvF0lQT8V72XZZ0RBsuiE8BlpXUEFUhfefH94QXSckzvnL49Buz3dXpnMnUGCXob8BpCuQQEsxukI771BWAYSVMIwykFbcQ63BS/TQQl8zCIlethBquUmZSe830FJzsXTNTLlQXm+3Hn4jOxBONrQgRE880HNKsYX9Bb5QXdMqLswhwBCbpwg+PNJBUJnqjLzkIMJQmuABu8S/A9CfqTolyiSEkJ4AVyvvWATQppwWFdHxRRC9RIEw1WPFUKs2Ou19rYVQmQ1U1hKqRZCYJKwJvy0FkJaMjpFOiwXQgxGAhBbyhlCBZ26HiqwG0LX492b9KEeQmBckQC63yBCAHISQP9MIUJ31rbAQiMjQg1+FeSbwSpC3R4qwJbOK0KXiZbaNLgqQheSNox1kSxCFmrlSgLWL0IGKGm37WgyQsZJmecVQTRCebe/T2JiNUJa0NTXqdY2QiSylFq4mzdCunkkmk03OEKtd5aYuOE3QnqGCV1CsjhCKix3JsA+OkJFx06p+CY7QquoO8EFQzlCl3oPbocpOkKL9EuqnX89QvDbDy/2mkBCoBcqAWV0SEIhZJJCac1RQhi9UQMbTFdCSdUFGxBTWEJevibB7uJWQtnS5LE3PVRCGLGVimBTUUIvc1hfzihOQhHYocyaQUxCPbZsB7jCRkIg0w1DFU5IQkdxzdj7f01C6cZSaZNUSEIO61r0u4RGQtX/YP7u/kZC63D0v2ZFSULQpaoJ9n5JQi0LaDqYHUpCUylo7ViTSEINwHD9djNGQnxnqIqPFEVCYJ3JI+PnQ0KwunPDhsNDQq6ZGK7poUNCx62s5o6cREKfDT6ds5RHQnCF79thoERCXdVQH0khR0JrAFKtXMtQQt9O8oETOldCgENt/7QTXkIj1s6X5iBhQnbqJhlV1mNCDZ/d6c0eaULFHwuglbdrQoUlVzwWomxCuPnOiNRFbkJZoKH16+duQvv6qRr64m1CUa3DKTyqbUIRFX6FbPJrQn/gLR5vTGpCrpAKkp4VZ0IikCNrneJjQs8xgtGpiGFCGSA0rexPXkK5f99/hqtZQrplsRTqF1dCjAv4EqhTVkLi0U+XCF1ZQlsc2hC2b1dCwM1Cu5OVUkLDif8et2BWQuk40UW3v1lCGM5knYTCYEKS7ZqOHqNmQghN1zf9uW9C0oqvnnlfdkLa5kSoXhV8QgPSNNRJRnxCxzRBmsNJe0Lur4x2lSJ6QqC9X9/0RXhC953QN2lKdUKooX3RIyNyQq10F5s8yG5Cnx+bjAuiaUJGE+oFO/VkQsC+6/WdmmJCgfNHR/BtXkJ1k+1Shl1YQgFlYbzSplRCUnPR4MacUkJJTt26iRJLQvB68pmjjkpCZJl7Qkx9UELy+pLU32tSQpgFg8INU1BCu1RXzDkFUkKbBCDXSvRgQu50os94439CXCTp+KQTg0IR+xpTW2iEQuz0/FcxhYFCnQnERIhygELiZ/3WxWd+QtZD+WsbV3dCv4E5eHM8c0LrYMJptTZwQo6vxmmLSnBCUyyfW/I1cULh0yAE2jh1QvqsO95qzX5Cc2ogIhVIdkI4PTFcchF1Qoqv6agEU3BCCKWZiT1iaEIhPseirAxqQp/G+YbC6WhCNjZCY38vZUL6IapdNStgQosDjXCVo2tCM0dy4+H1Z0KfBsH4ft1iQuc4g70VPF9CG+K2gyLnWULuhfWaXURaQsc/HpbYmFhCgT24tUFOUkIK4t8wJw5GQl7cn0Nadi9CdBFU7s6TCUIUeZsQG4DnQcW8IN7eqhdCJEPdm9WyJ0ILc0MJvXsxQhjOBLCnDCxC6f4YsId0LEKb31ZvIsQmQorkursjGBhCiryKNu+NA0Le4XJe9pbjQavE5PjPmsFBuroDYaYglkFZJfHGOkJHQXJdB5idWGdBDS4a6tdWh0GcWzn9vIyeQXxka5AsUbRBlIFOw8t2w0E0q9h//u7XQexkQOkTWfFBLJpUv/kL70HKixP0jnDoQZwL6uK4OuhBCUi78WLk70HrsAKO420QQvXhYypp/ghCP1M3KOc70kEoicOkW0aiQRSPjtW8fzdBsWnorE5AwUA=","dtype":"float64","shape":[196]}},"selected":{"id":"1198"},"selection_policy":{"id":"1197"}},"id":"1172","type":"ColumnDataSource"},{"attributes":{"label":{"value":"monochromatic"},"renderers":[{"id":"1175"}]},"id":"1185","type":"LegendItem"},{"attributes":{},"id":"1221","type":"Selection"},{"attributes":{"line_alpha":0.1,"line_color":"#0072B2","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1174","type":"Line"},{"attributes":{"text":""},"id":"1178","type":"Title"},{"attributes":{"line_alpha":0.1,"line_color":"#E69F00","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1188","type":"Line"},{"attributes":{"bottom_units":"screen","fill_alpha":0.5,"fill_color":"lightgrey","left_units":"screen","level":"overlay","line_alpha":1.0,"line_color":"black","line_dash":[4,4],"line_width":2,"render_mode":"css","right_units":"screen","top_units":"screen"},"id":"1164","type":"BoxAnnotation"},{"attributes":{},"id":"1144","type":"DataRange1d"},{"attributes":{},"id":"1159","type":"WheelZoomTool"},{"attributes":{"items":[{"id":"1185"},{"id":"1200"}]},"id":"1184","type":"Legend"},{"attributes":{"source":{"id":"1172"}},"id":"1176","type":"CDSView"},{"attributes":{"axis_label":"Wavelength [\u03bcm]","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","formatter":{"id":"1181"},"major_label_text_font":"times","major_label_text_font_size":"14pt","ticker":{"id":"1151"}},"id":"1150","type":"LogAxis"},{"attributes":{},"id":"1162","type":"ResetTool"},{"attributes":{"axis":{"id":"1154"},"dimension":1,"ticker":null},"id":"1157","type":"Grid"},{"attributes":{"source":{"id":"1186"}},"id":"1190","type":"CDSView"},{"attributes":{},"id":"1220","type":"UnionRenderers"},{"attributes":{"ticker":null},"id":"1179","type":"LogTickFormatter"},{"attributes":{"line_color":"#E69F00","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1187","type":"Line"},{"attributes":{},"id":"1158","type":"PanTool"},{"attributes":{"num_minor_ticks":10},"id":"1155","type":"LogTicker"},{"attributes":{},"id":"1197","type":"UnionRenderers"},{"attributes":{},"id":"1148","type":"LogScale"},{"attributes":{"active_drag":"auto","active_inspect":"auto","active_multi":null,"active_scroll":"auto","active_tap":"auto","tools":[{"id":"1158"},{"id":"1159"},{"id":"1160"},{"id":"1161"},{"id":"1162"},{"id":"1163"}]},"id":"1165","type":"Toolbar"},{"attributes":{},"id":"1163","type":"HelpTool"},{"attributes":{"axis":{"id":"1150"},"ticker":null},"id":"1153","type":"Grid"},{"attributes":{"overlay":{"id":"1164"}},"id":"1160","type":"BoxZoomTool"},{"attributes":{"label":{"value":"k table"},"renderers":[{"id":"1189"}]},"id":"1200","type":"LegendItem"},{"attributes":{"data_source":{"id":"1172"},"glyph":{"id":"1173"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"1174"},"selection_glyph":null,"view":{"id":"1176"}},"id":"1175","type":"GlyphRenderer"},{"attributes":{},"id":"1146","type":"LogScale"},{"attributes":{"ticker":null},"id":"1181","type":"LogTickFormatter"},{"attributes":{},"id":"1198","type":"Selection"},{"attributes":{"data_source":{"id":"1186"},"glyph":{"id":"1187"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"1188"},"selection_glyph":null,"view":{"id":"1190"}},"id":"1189","type":"GlyphRenderer"},{"attributes":{"line_color":"#0072B2","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1173","type":"Line"},{"attributes":{"num_minor_ticks":10},"id":"1151","type":"LogTicker"},{"attributes":{"axis_label":"Spectrum","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","formatter":{"id":"1179"},"major_label_text_font":"times","major_label_text_font_size":"14pt","ticker":{"id":"1155"}},"id":"1154","type":"LogAxis"},{"attributes":{},"id":"1161","type":"SaveTool"},{"attributes":{"data":{"x":{"__ndarray__":"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","dtype":"float64","shape":[196]},"y":{"__ndarray__":"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","dtype":"float64","shape":[196]}},"selected":{"id":"1221"},"selection_policy":{"id":"1220"}},"id":"1186","type":"ColumnDataSource"}],"root_ids":["1141"]},"title":"Bokeh Application","version":"2.0.1"}};
+  var render_items = [{"docid":"8d74a16b-835f-410a-98e1-44dbba7f410b","root_ids":["1141"],"roots":{"1141":"203df8af-3d02-48ac-a29c-726701a1da5e"}}];
+  root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    var attempts = 0;
+    var timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        clearInterval(timer);
+        embed_document(root);
+      } else {
+        attempts++;
+        if (attempts > 100) {
+          clearInterval(timer);
+          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        }
+      }
+    }, 10, root)
+  }
+})(window);
+</script></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

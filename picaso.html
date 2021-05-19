@@ -38,6 +38,7 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Contributing to PICASO" href="contribution.html" />
     <link rel="prev" title="FAQs" href="notebooks/FAQs.html" /> 
 </head>
 
@@ -89,7 +90,6 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html">The Tutorials</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">The Code</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-picaso.atmsetup">picaso.atmsetup module</a></li>
@@ -110,6 +110,9 @@
 <li class="toctree-l2"><a class="reference internal" href="#module-picaso">Module contents</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://arxiv.org/abs/1904.09355">The Paper</a></li>
 </ul>
@@ -1449,6 +1452,65 @@ e.g. {‘wmin’:0.3, ‘wmax’:1, ‘R’:5000} for opacity grid</p></li>
 </dd></dl>
 
 <dl class="function">
+<dt id="picaso.justdoit.evolution_track">
+<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">evolution_track</code><span class="sig-paren">(</span><em class="sig-param">mass=1</em>, <em class="sig-param">age='all'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.evolution_track" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot or grab an effective temperature for a certain age and mass planet.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mass</strong> (<em>int</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – (Optional) Mass of planet, in Jupiter Masses. Only valid options = 1, 2, 4, 6, 8, 10,’all’
+If another value is entered, it will find the nearest option.</p></li>
+<li><p><strong>plot</strong> (<em>bool</em><em>, </em><em>optional</em>) – (Optional) Default=True. If True, function will return a figure. Else will return None.</p></li>
+<li><p><strong>age</strong> (<em>float</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – (Optional) Age of planet, in years or ‘all’ to return full model</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>if age=None</strong> (<em>data = {‘cold’:all_data_cold_start, ‘hot’:all_data_hot_start}</em>)</p></li>
+<li><p><strong>if age=float</strong> (<em>data = {‘cold’:data_at_age, ‘hot’:data_at_age}</em>)</p></li>
+<li><p><strong>if plot=False</strong> (<em>returns data</em>)</p></li>
+<li><p><strong>else</strong> (<em>returns data, plot</em>)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="picaso.justdoit.get_contribution">
+<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">get_contribution</code><span class="sig-paren">(</span><em class="sig-param">bundle</em>, <em class="sig-param">opacityclass</em>, <em class="sig-param">at_tau=1</em>, <em class="sig-param">dimension='1d'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.get_contribution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Currently top level program to run albedo code</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bundle</strong> (<em>dict</em>) – This input dict is built by loading the input = <cite>justdoit.load_inputs()</cite></p></li>
+<li><p><strong>opacityclass</strong> (<em>class</em>) – Opacity class from <cite>justdoit.opannection</cite></p></li>
+<li><p><strong>at_tau</strong> (<em>float</em>) – (Optional) Default = 1, This is to compute the pressure level at which cumulative opacity reaches
+at_tau. Usually users want to know when the cumulative opacity reaches a tau of 1.</p></li>
+<li><p><strong>dimension</strong> (<em>str</em>) – (Optional) Default = ‘1d’. Currently only 1d is supported.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>taus_by_species</strong> (<em>dict</em>) – Each dictionary entry is a nlayer x nwave that represents the
+per layer optical depth for that molecule. If you do not see
+a molecule that you have added as input, check to make sure it is
+propertly formatted (e.g. Sodium must be Na not NA, Titanium Oxide must be TiO not TIO)</p></li>
+<li><p><strong>cumsum_taus</strong> (<em>dict</em>) – Each dictionary entry is a nlevel x nwave that represents the cumulative summed opacity
+for that molecule. If you do not see a molecule that you have added as input, check to make sure it is
+propertly formatted (e.g. Sodium must be Na not NA, Titanium Oxide must be TiO not TIO)</p></li>
+<li><p><strong>at_pressure_array</strong> (<em>dict</em>) – Each dictionary entry is a nwave array that represents the
+pressure level where the cumulative opacity reaches the value specieid by the user through <cite>at_tau</cite>.
+If you do not see a molecule that you have added as input, check to make sure it is
+a molecule that you have added as input, check to make sure it is
+propertly formatted (e.g. Sodium must be Na not NA, Titanium Oxide must be TiO not TIO)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="picaso.justdoit.get_targets">
 <code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">get_targets</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.get_targets" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to grab available targets</p>
@@ -1464,15 +1526,15 @@ e.g. {‘wmin’:0.3, ‘wmax’:1, ‘R’:5000} for opacity grid</p></li>
 
 <dl class="class">
 <dt id="picaso.justdoit.inputs">
-<em class="property">class </em><code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">inputs</code><span class="sig-paren">(</span><em class="sig-param">calculation='planet'</em>, <em class="sig-param">chemeq=False</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">inputs</code><span class="sig-paren">(</span><em class="sig-param">calculation='planet'</em>, <em class="sig-param">climate=False</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Class to setup planet to run</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>calculation</strong> (<em>str</em>) – (Optional) Controls planet or brown dwarf calculation. Default = ‘planet’. Other option is “browndwarf”.</p></li>
-<li><p><strong>chemeq</strong> (<em>bool</em>) – (Optional) If true, loads in full chemical equilibrium grid, which will take a little bit of time.
-Default = False</p></li>
+<li><p><strong>climate</strong> (<em>bool</em>) – (Optional) If true, this do a thorough iterative calculation to compute
+a temperature pressure profile.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1688,6 +1750,35 @@ Must contain pressure and at least one molecule</p></li>
 </dd></dl>
 
 <dl class="method">
+<dt id="picaso.justdoit.inputs.chemeq_visscher">
+<code class="sig-name descname">chemeq_visscher</code><span class="sig-paren">(</span><em class="sig-param">c_o</em>, <em class="sig-param">log_mh</em>, <em class="sig-param">interp_window=11</em>, <em class="sig-param">interp_poly=2</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.chemeq_visscher" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find nearest neighbor from visscher grid</p>
+<p>JUNE 2015
+MODELS BASED ON 1060-POINT MARLEY GRID</p>
+<p>GRAPHITE ACTIVITY ADDED IN TEXT FILES (AFTER OCS)
+“ABUNDANCE” INDICATES CONDENSATION CONDITION (O OR 1)</p>
+<p>CURRENT GRID
+FE/H: 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
+C/O: 0.5X, 1.0X, 1.5X, 2.0X, 2.5X</p>
+<p>C/O RATIO IS RELATIVE TO SOLAR C/O RATIO OF
+CARBON = 7.19E6 ATOMS
+OXYGEN = 1.57E7 ATOMS</p>
+<p>NOTE THAT THE C/O RATIO IS ADJUSTED BY SIMPLY MULTIPLYING BY C/O FACTOR
+THIS MAY YIELD EFFECTIVE METALLICITIES SLIGHTLY HIGHER THAN THE DEFINED METALLICITY</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>co</strong> (<em>int</em>) – carbon to oxygen ratio relative to solar.
+Solar = 1</p></li>
+<li><p><strong>log_mh</strong> (<em>int</em>) – metallicity (relative to solar)
+Will find the nearest value to 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
+Solar = 0</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
 <dt>
 <code class="sig-name descname">clouds</code><span class="sig-paren">(</span><em class="sig-param">filename=None</em>, <em class="sig-param">g0=None</em>, <em class="sig-param">w0=None</em>, <em class="sig-param">opd=None</em>, <em class="sig-param">p=None</em>, <em class="sig-param">dp=None</em>, <em class="sig-param">df=None</em>, <em class="sig-param">**pd_kwargs</em><span class="sig-paren">)</span></dt>
 <dd><p>Cloud specification for the model. Clouds are parameterized by a single scattering albedo (w0),
@@ -1843,12 +1934,6 @@ called in fx()</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="picaso.justdoit.inputs.nostar">
-<code class="sig-name descname">nostar</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.nostar" title="Permalink to this definition">¶</a></dt>
-<dd><p>Turns off planet specific things, so program can run as usual</p>
-</dd></dl>
-
-<dl class="method">
 <dt>
 <code class="sig-name descname">phase_angle</code><span class="sig-paren">(</span><em class="sig-param">phase=0</em>, <em class="sig-param">num_gangle=10</em>, <em class="sig-param">num_tangle=1</em>, <em class="sig-param">symmetry=False</em><span class="sig-paren">)</span></dt>
 <dd><p>Define phase angle and number of gauss and tchebychev angles to compute.
@@ -1879,6 +1964,38 @@ FT calculations, it will only run 5x5 = 25 (or a quarter of the sphere).</p></li
 </ul>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="picaso.justdoit.inputs.premix_atmosphere">
+<code class="sig-name descname">premix_atmosphere</code><span class="sig-paren">(</span><em class="sig-param">opa</em>, <em class="sig-param">df=None</em>, <em class="sig-param">filename=None</em>, <em class="sig-param">**pd_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.premix_atmosphere" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
+Sets number of layers in model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>opa</strong> (<em>class</em>) – Opacity class from opannection : RetrieveCks()</p></li>
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>dict</em>) – (Optional) Dataframe with volume mixing ratios and pressure, temperature profile.
+Must contain pressure (bars) at least one molecule</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) – (Optional) Filename with pressure, temperature and volume mixing ratios.
+Must contain pressure at least one molecule</p></li>
+<li><p><strong>exclude_mol</strong> (<em>list of str</em>) – (Optional) List of molecules to ignore from file</p></li>
+<li><p><strong>pd_kwargs</strong> (<em>kwargs</em>) – Key word arguments for pd.read_csv to read in supplied atmosphere file</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="picaso.justdoit.inputs.setup_climate">
+<code class="sig-name descname">setup_climate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.setup_climate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Turns off planet specific things, so program can run as usual</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="picaso.justdoit.inputs.setup_nostar">
+<code class="sig-name descname">setup_nostar</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.setup_nostar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Turns off planet specific things, so program can run as usual</p>
 </dd></dl>
 
 <dl class="method">
@@ -2016,28 +2133,6 @@ specifically Sagan School tutorial.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="picaso.justdoit.mean_regrid">
-<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">mean_regrid</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">newx=None</em>, <em class="sig-param">R=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.mean_regrid" title="Permalink to this definition">¶</a></dt>
-<dd><p>Rebin the spectrum at a minimum R or on a fixed grid</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>array</em>) – Wavenumbers</p></li>
-<li><p><strong>y</strong> (<em>array</em>) – Anything (e.g. albedo, flux)</p></li>
-<li><p><strong>newx</strong> (<em>array</em>) – new array to regrid on.</p></li>
-<li><p><strong>R</strong> (<em>float</em>) – create grid with constant R</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>final x, and final y</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
 <dt id="picaso.justdoit.methodology_options">
 <code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">methodology_options</code><span class="sig-paren">(</span><em class="sig-param">printout=True</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.methodology_options" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieve all the options for methodology</p>
@@ -2051,11 +2146,12 @@ specifically Sagan School tutorial.</p>
 
 <dl class="function">
 <dt id="picaso.justdoit.opannection">
-<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">opannection</code><span class="sig-paren">(</span><em class="sig-param">wave_range=None</em>, <em class="sig-param">filename_db=None</em>, <em class="sig-param">raman_db=None</em>, <em class="sig-param">resample=1</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.opannection" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">opannection</code><span class="sig-paren">(</span><em class="sig-param">ck=False</em>, <em class="sig-param">wave_range=None</em>, <em class="sig-param">filename_db=None</em>, <em class="sig-param">raman_db=None</em>, <em class="sig-param">resample=1</em>, <em class="sig-param">ck_db=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.opannection" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets up database connection to opacities.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>ck</strong> (<em>bool</em>) – Use premixed ck tables (beta)</p></li>
 <li><p><strong>wave_range</strong> (<em>list of float</em>) – Subset of wavelength range for which to run models for
 Default : None, which pulls entire grid</p></li>
 <li><p><strong>filename_db</strong> (<em>str</em>) – Filename of opacity database to query from
@@ -2066,6 +2162,7 @@ Default is none which pulls opacity file that comes with distribution</p></li>
 This effectively takes opacity[::BINS] depending on what the
 sampling requested is. Consult your local theorist before
 using this.</p></li>
+<li><p><strong>ck_db</strong> (<em>str</em>) – ASCII filename of ck file</p></li>
 </ul>
 </dd>
 </dl>
@@ -2257,7 +2354,7 @@ radius R</p>
 
 <dl class="function">
 <dt id="picaso.justplotit.map">
-<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">map</code><span class="sig-paren">(</span><em class="sig-param">full_output, pressure=[0.1], plot='temperature', wavelength=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.map" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">map</code><span class="sig-paren">(</span><em class="sig-param">full_output, pressure=[0.1], plot='temperature', wavelength=None, igauss=0</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.map" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot disco ball with facets. Bokeh is not good with 3D things. So this is in matplotlib</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -2272,19 +2369,45 @@ If you are plotting something that is ALSO wavelength dependent you have to
 also supply a single wavelength.</p></li>
 <li><p><strong>float</strong><strong>, </strong><strong>optional</strong> (<em>wavelength</em><em>,</em>) – This allows users to plot maps of things that are wavelength dependent, like
 <cite>taugas</cite> and <cite>taucld</cite>.</p></li>
+<li><p><strong>igauss</strong> (<em>int</em>) – Gauss point to plot if using ktables this can be greater than 0 up to ngauss-1. Otherwise,
+This must be zero for monochromatic opacities.</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="function">
+<dt id="picaso.justplotit.mean_regrid">
+<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">mean_regrid</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">newx=None</em>, <em class="sig-param">R=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.mean_regrid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rebin the spectrum at a minimum R or on a fixed grid</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array</em>) – Wavenumbers</p></li>
+<li><p><strong>y</strong> (<em>array</em>) – Anything (e.g. albedo, flux)</p></li>
+<li><p><strong>newx</strong> (<em>array</em>) – new array to regrid on.</p></li>
+<li><p><strong>R</strong> (<em>float</em>) – create grid with constant R</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>final x, and final y</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="picaso.justplotit.mixing_ratio">
-<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">mixing_ratio</code><span class="sig-paren">(</span><em class="sig-param">full_output</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.mixing_ratio" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">mixing_ratio</code><span class="sig-paren">(</span><em class="sig-param">full_output</em>, <em class="sig-param">limit=50</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.mixing_ratio" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns plot of mixing ratios</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>full_output</strong> (<em>class</em>) – picaso.atmsetup.ATMSETUP</p></li>
+<li><p><strong>limit</strong> (<em>int</em>) – Limits the number of curves to 20. Will plot the top 20 molecules
+with highest max(abundance). Limit must be &gt;=3.</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em>) – Any key word argument for bokeh.figure()</p></li>
 </ul>
 </dd>
@@ -2353,8 +2476,15 @@ opacity is assigned for slabs.</p></li>
 
 <dl class="function">
 <dt id="picaso.justplotit.plot_errorbar">
-<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">plot_errorbar</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">e</em>, <em class="sig-param">plot</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.plot_errorbar" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">plot_errorbar</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">e</em>, <em class="sig-param">plot</em>, <em class="sig-param">point_kwargs={}</em>, <em class="sig-param">error_kwargs={}</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.plot_errorbar" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot error bars in bokeh plot</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="picaso.justplotit.plot_evolution">
+<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">plot_evolution</code><span class="sig-paren">(</span><em class="sig-param">evo</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.plot_evolution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot evolution of tracks. Requires input from justdoit:</p>
+<p>evo = justdoit.evolution_track(mass=’all’,age=’all’)</p>
 </dd></dl>
 
 <dl class="function">
@@ -2426,15 +2556,17 @@ give a different pallete</p></li>
 
 <dl class="function">
 <dt id="picaso.justplotit.taumap">
-<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">taumap</code><span class="sig-paren">(</span><em class="sig-param">full_output</em>, <em class="sig-param">at_tau=1</em>, <em class="sig-param">wavelength=1</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.taumap" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">taumap</code><span class="sig-paren">(</span><em class="sig-param">full_output</em>, <em class="sig-param">at_tau=1</em>, <em class="sig-param">wavelength=1</em>, <em class="sig-param">igauss=0</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.taumap" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot breakdown of gas opacity, cloud opacity,
 Rayleigh scattering opacity at a specified pressure level.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>full_output</strong> (<em>class</em>) – picaso.atmsetup.ATMSETUP</p></li>
+<li><p><strong>full_output</strong> (<em>class</em>) – full_output from dictionary picaso output</p></li>
 <li><p><strong>at_tau</strong> (<em>float</em>) – Opacity at which to plot the cumulative opacity.
 Default = 0.5.</p></li>
+<li><p><strong>igauss</strong> (<em>int</em>) – Gauss point to plot if using ktables this can be greater than 0 up to ngauss-1. Otherwise,
+This must be zero for monochromatic opacities.</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em>) – Any key word argument for bokeh.plotting.figure()</p></li>
 </ul>
 </dd>
@@ -2721,6 +2853,50 @@ cia database</p></li>
 </dd></dl>
 
 <dl class="function">
+<dt id="picaso.opacity_factory.insert_molecular_1060">
+<code class="sig-prename descclassname">picaso.opacity_factory.</code><code class="sig-name descname">insert_molecular_1060</code><span class="sig-paren">(</span><em class="sig-param">molecule</em>, <em class="sig-param">min_wavelength</em>, <em class="sig-param">max_wavelength</em>, <em class="sig-param">new_R</em>, <em class="sig-param">og_directory</em>, <em class="sig-param">new_db</em>, <em class="sig-param">dir_kark_ch4=None</em>, <em class="sig-param">dir_optical_o3=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.insert_molecular_1060" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to resample 1060 grid data onto lower resolution grid. The general procedure
+in this function is to interpolate original 1060 data onto very high resolution
+grid (R=1e6). Then, determine number of bins to take given input ‘new_R’. The final
+opacity grid will be : original_opacity[::BINS]</p>
+<p>NOTE: From several tests “new_R” should be at least 100x higher than the ultimate
+planet spectrum you want to bin down to.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>molecule</strong> (<em>str</em>) – Name of molecule (should match a directory with 1060 files)</p></li>
+<li><p><strong>min_wavelength</strong> (<em>float</em>) – Minimum wavelength in database in units of micron</p></li>
+<li><p><strong>max_wavelength</strong> (<em>float</em>) – Maximum wavelength in database in units of micron</p></li>
+<li><p><strong>new_R</strong> (<em>float</em>) – New R to regrid to. If new_R=None, it will retain the original 1e6 million resolution
+of the lbl grid.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="picaso.opacity_factory.insert_molecular_1460">
+<code class="sig-prename descclassname">picaso.opacity_factory.</code><code class="sig-name descname">insert_molecular_1460</code><span class="sig-paren">(</span><em class="sig-param">molecule</em>, <em class="sig-param">min_wavelength</em>, <em class="sig-param">max_wavelength</em>, <em class="sig-param">new_R</em>, <em class="sig-param">og_directory</em>, <em class="sig-param">new_db</em>, <em class="sig-param">dir_kark_ch4=None</em>, <em class="sig-param">dir_optical_o3=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.insert_molecular_1460" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to resample Ehsan’s 1460 grid data onto lower resolution grid, 1060 grid. The general procedure
+in this function is to interpolate original 1060 data onto very high resolution
+grid (R=1e6). Then, determine number of bins to take given input ‘new_R’. The final
+opacity grid will be : original_opacity[::BINS]</p>
+<p>NOTE: From several tests “new_R” should be at least 100x higher than the ultimate
+planet spectrum you want to bin down to.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>molecule</strong> (<em>str</em>) – Name of molecule (should match a directory with 1060 files)</p></li>
+<li><p><strong>min_wavelength</strong> (<em>float</em>) – Minimum wavelength in database in units of micron</p></li>
+<li><p><strong>max_wavelength</strong> (<em>float</em>) – Maximum wavelength in database in units of micron</p></li>
+<li><p><strong>new_R</strong> (<em>float</em>) – New R to regrid to. If new_R=None, it will retain the original 1e6 million resolution
+of the lbl grid.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="picaso.opacity_factory.insert_wno_grid">
 <code class="sig-prename descclassname">picaso.opacity_factory.</code><code class="sig-name descname">insert_wno_grid</code><span class="sig-paren">(</span><em class="sig-param">wno_grid</em>, <em class="sig-param">cur</em>, <em class="sig-param">con</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.insert_wno_grid" title="Permalink to this definition">¶</a></dt>
 <dd><p>Inserts basics into the header file. This puts all the units to the database.</p>
@@ -2740,28 +2916,6 @@ cia database</p></li>
 <dt id="picaso.opacity_factory.open_local">
 <code class="sig-prename descclassname">picaso.opacity_factory.</code><code class="sig-name descname">open_local</code><span class="sig-paren">(</span><em class="sig-param">db_f</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.open_local" title="Permalink to this definition">¶</a></dt>
 <dd><p>Code needed to open up local database, interpret arrays from bytes and return cursor</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.opacity_factory.resample_and_insert_molecular">
-<code class="sig-prename descclassname">picaso.opacity_factory.</code><code class="sig-name descname">resample_and_insert_molecular</code><span class="sig-paren">(</span><em class="sig-param">molecule</em>, <em class="sig-param">min_wavelength</em>, <em class="sig-param">max_wavelength</em>, <em class="sig-param">new_R</em>, <em class="sig-param">og_directory</em>, <em class="sig-param">new_db</em>, <em class="sig-param">dir_kark_ch4=None</em>, <em class="sig-param">dir_optical_o3=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.resample_and_insert_molecular" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function to resample 1060 grid data onto lower resolution grid. The general procedure
-in this function is to interpolate original 1060 data onto very high resolution
-grid (R=1e6). Then, determine number of bins to take given input ‘new_R’. The final
-opacity grid will be : original_opacity[::BINS]</p>
-<p>NOTE: From several tests “new_R” should be at least 100x higher than the ultimate
-planet spectrum you want to bin down to.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>molecule</strong> (<em>str</em>) – Name of molecule (should match a directory with 1060 files)</p></li>
-<li><p><strong>min_wavelength</strong> (<em>float</em>) – Minimum wavelength in database in units of micron</p></li>
-<li><p><strong>max_wavelength</strong> (<em>float</em>) – Maximum wavelength in database in units of micron</p></li>
-<li><p><strong>new_R</strong> (<em>float</em>) – New R to regrid to. If new_R=None, it will retain the original 1e6 million resolution
-of the lbl grid.</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="function">
@@ -2823,12 +2977,84 @@ So dont bother using this unless there is something specific to try.</p>
 <div class="section" id="module-picaso.optics">
 <span id="picaso-optics-module"></span><h2>picaso.optics module<a class="headerlink" href="#module-picaso.optics" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
+<dt id="picaso.optics.RetrieveCKs">
+<em class="property">class </em><code class="sig-prename descclassname">picaso.optics.</code><code class="sig-name descname">RetrieveCKs</code><span class="sig-paren">(</span><em class="sig-param">ck_dir</em>, <em class="sig-param">cont_dir</em>, <em class="sig-param">wave_range=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveCKs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This will be the class to retrieve correlated-k tables from the database.
+Right now this is in beta mode and is retrieving the direct heritage
+196 grid files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ck_dir</strong> (<em>str</em>) – Directory of the pre-mixed correlated k table data. Check that you are pointing to a
+directory with the files “ascii_data” and “full_abunds”.</p></li>
+<li><p><strong>cont_dir</strong> (<em>str</em>) – This should be in the references directory on Github. This has all the continuum opacity
+that you need (e.g. H2H2). It also has some extra cross sections that you may want to add
+in like Karkoschka methane and the optical ozone band.</p></li>
+<li><p><strong>wave_range</strong> (<em>list</em>) – NOT FUNCTIONAL YET.
+Wavelength range to compuate in the format [min micron, max micron]</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="picaso.optics.RetrieveCKs.adapt_array">
+<code class="sig-name descname">adapt_array</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveCKs.adapt_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>needed to interpret bytes to array</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="picaso.optics.RetrieveCKs.convert_array">
+<code class="sig-name descname">convert_array</code><span class="sig-paren">(</span><em class="sig-param">text</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveCKs.convert_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>needed to interpret bytes to array</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="picaso.optics.RetrieveCKs.get_available_continuum">
+<code class="sig-name descname">get_available_continuum</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveCKs.get_available_continuum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the pressures and temperatures that are available for the continuum and molecules</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="picaso.optics.RetrieveCKs.get_available_rayleigh">
+<code class="sig-name descname">get_available_rayleigh</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveCKs.get_available_rayleigh" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="picaso.optics.RetrieveCKs.get_continuum">
+<code class="sig-name descname">get_continuum</code><span class="sig-paren">(</span><em class="sig-param">atmosphere</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveCKs.get_continuum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="picaso.optics.RetrieveCKs.get_legacy_data">
+<code class="sig-name descname">get_legacy_data</code><span class="sig-paren">(</span><em class="sig-param">wave_range</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveCKs.get_legacy_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="picaso.optics.RetrieveCKs.get_opacities">
+<code class="sig-name descname">get_opacities</code><span class="sig-paren">(</span><em class="sig-param">atmosphere</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveCKs.get_opacities" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="picaso.optics.RetrieveCKs.get_pre_mix_ck">
+<code class="sig-name descname">get_pre_mix_ck</code><span class="sig-paren">(</span><em class="sig-param">atmosphere</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveCKs.get_pre_mix_ck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes in atmosphere profile and returns an array which is
+nlayer by ngauss by nwno</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="picaso.optics.RetrieveCKs.open_local">
+<code class="sig-name descname">open_local</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveCKs.open_local" title="Permalink to this definition">¶</a></dt>
+<dd><p>Code needed to open up local database, interpret arrays from bytes and return cursor</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="picaso.optics.RetrieveOpacities">
 <em class="property">class </em><code class="sig-prename descclassname">picaso.optics.</code><code class="sig-name descname">RetrieveOpacities</code><span class="sig-paren">(</span><em class="sig-param">db_filename</em>, <em class="sig-param">raman_data</em>, <em class="sig-param">wave_range=None</em>, <em class="sig-param">location='local'</em>, <em class="sig-param">resample=1</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacities" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>This will be the class that will retrieve the opacities from the sqlite3 database. Right
-now we are just employing nearest neighbors to grab the respective opacities.
-Eventually, we will switch to correlated K.</p>
+now we are just employing nearest neighbors to grab the respective opacities.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -3035,46 +3261,6 @@ number grid</p>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="picaso.optics.RetrieveOpacities.get_continuum_opac">
-<code class="sig-name descname">get_continuum_opac</code><span class="sig-paren">(</span><em class="sig-param">temperature</em>, <em class="sig-param">molecule</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacities.get_continuum_opac" title="Permalink to this definition">¶</a></dt>
-<dd><p>DISCONTINUED.
-Based on a temperature, this retrieves the continuum opacity for</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>temperature</strong> (<em>float array</em>) – An array of temperatures to retrieve the continuum opacity at</p></li>
-<li><p><strong>molecule</strong> (<em>str</em>) – Which opacity source to query. currently available: ‘h2h2’,’h2he’,’h2h’,’h2ch4’,’h2n2’</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>number of layers by number of wave points</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>matrix</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="picaso.optics.RetrieveOpacities.get_molecular_opac">
-<code class="sig-name descname">get_molecular_opac</code><span class="sig-paren">(</span><em class="sig-param">temperature</em>, <em class="sig-param">pressure</em>, <em class="sig-param">molecule</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacities.get_molecular_opac" title="Permalink to this definition">¶</a></dt>
-<dd><p>DISCONTINUED.
-Based on temperature, and pressure, retrieves the molecular opacity for
-certain molecule</p>
-<p>Molecular opacity should be in cm2/molecule units. That is why there is an
-multiplication of N_a on return</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>temperature</strong> (<em>array of float</em>) – An array of temperatures to retrieve the continuum opacity at</p></li>
-<li><p><strong>pressure</strong> (<em>array of float</em>) – Pressures (IN BARS) to retrieve the continuum opacity at</p></li>
-<li><p><strong>molecule</strong> (<em>str</em>) – Which opacity source to query. Will get error if not in the db</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
 <dt>
 <code class="sig-name descname">get_opacities</code><span class="sig-paren">(</span><em class="sig-param">atmosphere</em>, <em class="sig-param">dimension='1d'</em><span class="sig-paren">)</span></dt>
 <dd><p>Get’s opacities using the atmosphere class</p>
@@ -3086,6 +3272,12 @@ multiplication of N_a on return</p>
 <dd><p>Code needed to open up local database, interpret arrays from bytes and return cursor</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="function">
+<dt id="picaso.optics.adapt_array">
+<code class="sig-prename descclassname">picaso.optics.</code><code class="sig-name descname">adapt_array</code><span class="sig-paren">(</span><em class="sig-param">arr</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.adapt_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>needed to interpret bytes to array</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -3105,7 +3297,7 @@ multiplication of N_a on return</p>
 
 <dl class="function">
 <dt id="picaso.optics.compute_opacity">
-<code class="sig-prename descclassname">picaso.optics.</code><code class="sig-name descname">compute_opacity</code><span class="sig-paren">(</span><em class="sig-param">atmosphere</em>, <em class="sig-param">opacityclass</em>, <em class="sig-param">stream</em>, <em class="sig-param">delta_eddington=True</em>, <em class="sig-param">test_mode=False</em>, <em class="sig-param">raman=0</em>, <em class="sig-param">plot_opacity=False</em>, <em class="sig-param">full_output=False</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.compute_opacity" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">picaso.optics.</code><code class="sig-name descname">compute_opacity</code><span class="sig-paren">(</span><em class="sig-param">atmosphere</em>, <em class="sig-param">opacityclass</em>, <em class="sig-param">ngauss=1</em>, <em class="sig-param">stream=2</em>, <em class="sig-param">delta_eddington=True</em>, <em class="sig-param">test_mode=False</em>, <em class="sig-param">raman=0</em>, <em class="sig-param">plot_opacity=False</em>, <em class="sig-param">full_output=False</em>, <em class="sig-param">return_mode=False</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.compute_opacity" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns total optical depth per slab layer including molecular opacity, continuum opacity.
 It should automatically select the molecules needed</p>
 <dl class="field-list simple">
@@ -3114,6 +3306,9 @@ It should automatically select the molecules needed</p>
 <li><p><strong>atmosphere</strong> (<em>class ATMSETUP</em>) – This inherets the class from atmsetup.py</p></li>
 <li><p><strong>opacityclass</strong> (<em>class opacity</em>) – This inherets the class from optics.py. It is done this way so that the opacity db doesnt have
 to be reloaded in a retrieval</p></li>
+<li><p><strong>ngauss</strong> (<em>int</em>) – Number of gauss angles if using correlated-k. If using monochromatic opacites,
+ngauss should one.</p></li>
+<li><p><strong>stream</strong> (<em>int</em>) – Number of streams (only affects detal eddington approximation)</p></li>
 <li><p><strong>delta_eddington</strong> (<em>bool</em>) – (Optional) Default=True, With Delta-eddington on, it incorporates the forward peak
 contribution by adjusting optical properties such that the fraction of scattered energy
 in the forward direction is removed from the scattering parameters</p></li>
@@ -3125,7 +3320,9 @@ delta tau at 0.5.</p></li>
 <li><p><strong>full_output</strong> (<em>bool</em>) – (Optional) Default = False. If true, This will add taugas, taucld, tauray to the atmosphere class.
 This is done so that the users can debug, plot, etc.</p></li>
 <li><p><strong>plot_opacity</strong> (<em>bool</em>) – (Optional) Default = False. If true, Will create a pop up plot of the weighted of each absorber
-at the middle layer.</p></li>
+at the middle layer</p></li>
+<li><p><strong>return_mode</strong> (<em>bool</em>) – (Optional) Default = False, If true, will only return matrices for all the weighted opacity
+contributions</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -3201,6 +3398,12 @@ Number of J levels is hard coded to 10 !</p>
 </ul>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="picaso.optics.convert_array">
+<code class="sig-prename descclassname">picaso.optics.</code><code class="sig-name descname">convert_array</code><span class="sig-paren">(</span><em class="sig-param">clas</em>, <em class="sig-param">text</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.convert_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>needed to interpret bytes to array</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -3471,6 +3674,8 @@ to a new wave grid.</p>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="contribution.html" class="btn btn-neutral float-right" title="Contributing to PICASO" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="notebooks/FAQs.html" class="btn btn-neutral float-left" title="FAQs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
