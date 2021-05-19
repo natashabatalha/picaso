@@ -58,7 +58,7 @@ def mean_regrid(x, y, newx=None, R=None):
 
     return newx, y
 
-def plot_errorbar(x,y,e,plot,**kwargs):
+def plot_errorbar(x,y,e,plot,point_kwargs={}, error_kwargs={}):
     """
     Plot error bars in bokeh plot
     """
@@ -68,7 +68,8 @@ def plot_errorbar(x,y,e,plot,**kwargs):
         np.array(x_err.append((px, px)))
         np.array(y_err.append((py - yerr, py + yerr)))
 
-    plot.multi_line(x_err, y_err, **kwargs)
+    plot.multi_line(x_err, y_err, **error_kwargs)
+    plot.circle(x, y, **point_kwargs)
     return
 
 def mixing_ratio(full_output,limit=50, **kwargs):

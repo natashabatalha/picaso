@@ -6,8 +6,8 @@ Early Release Workshop 2021
 
 Coming soon! 
 
-Sagan School 2021: Spectroscopy of Young Planets 
-------------------------------------------------
+Sagan School 2021 (beta): Spectroscopy of Young Planets 
+-------------------------------------------------------
 
 .. toctree::
    :maxdepth: 2

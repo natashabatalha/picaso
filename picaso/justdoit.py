@@ -1225,6 +1225,89 @@ class inputs():
         df['ptid'] = ind_pt
         
         self.inputs['atmosphere']['profile'] = df
+    def chemeq_visscher(self, c_o, log_mh, interp_window = 11, interp_poly=2):
+        """
+        Find nearest neighbor from visscher grid
+
+        JUNE 2015
+        MODELS BASED ON 1060-POINT MARLEY GRID
+
+        GRAPHITE ACTIVITY ADDED IN TEXT FILES (AFTER OCS)
+        "ABUNDANCE" INDICATES CONDENSATION CONDITION (O OR 1)
+
+        CURRENT GRID
+        FE/H: 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
+        C/O: 0.5X, 1.0X, 1.5X, 2.0X, 2.5X
+
+        C/O RATIO IS RELATIVE TO SOLAR C/O RATIO OF
+        CARBON = 7.19E6 ATOMS
+        OXYGEN = 1.57E7 ATOMS
+
+        NOTE THAT THE C/O RATIO IS ADJUSTED BY SIMPLY MULTIPLYING BY C/O FACTOR
+        THIS MAY YIELD EFFECTIVE METALLICITIES SLIGHTLY HIGHER THAN THE DEFINED METALLICITY
+        
+        Parameters
+        ----------
+        co : int 
+            carbon to oxygen ratio relative to solar.
+            Solar = 1
+        log_mh : int 
+            metallicity (relative to solar)
+            Will find the nearest value to 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
+            Solar = 0
+        """
+        #allowable cos 
+        cos = np.array([0.5,1.0,1.5,2.0,2.5])
+        #allowable fehs
+        fehs = np.array([0.0,0.5,1.0,1.5,1.7,2.0])
+
+        if log_mh > max(fehs): 
+            raise Exception('Choose a log metallicity less than 2.0')
+        if c_o > max(cos): 
+            raise Exception('Choose a C/O less than 2.5xSolar')
+
+        grid_co = cos[np.argmin(np.abs(cos-c_o))]
+        grid_feh = fehs[np.argmin(np.abs(fehs-log_mh))]
+        str_co = str(grid_feh).replace('.','')
+        str_fe = str(grid_co).replace('.','')
+
+        filename = os.path.join(__refdata__,'chemistry','visscher_grid',
+            f'2015_06_1060grid_feh_{str_co}_co_{str_fe}.txt')
+
+        header = pd.read_csv(filename).keys()[0]
+        cols = header.replace('T (K)','temperature').replace('P (bar)','pressure').split()
+        a = pd.read_csv(filename,delim_whitespace=True,skiprows=1,header=None, names=cols)
+        a['pressure']=10**a['pressure']
+
+        mols = list(a.loc[:, ~a.columns.isin(['Unnamed: 0','pressure','temperature'])].keys())
+        #get pt from what users have already input
+        player_tlayer = self.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']].sort_values('pressure').reset_index(drop=True)
+        self.nlevel = player_tlayer.shape[0]
+
+        #loop through all pressure and temperature layers
+        for i in player_tlayer.index:
+            p,t = player_tlayer.loc[i,['pressure','temperature']]
+            #at each layer compute the distance to each point in the visscher table
+            #create a weight that is 1/d**2
+            a['weight'] = (1/((np.log10(a['pressure']) - np.log10(p))**2 + 
+                                       (a['temperature'] - t)**2))
+            #sort by the weight and only pick the TWO nearest neighbors. 
+            #Note, there was a sensitivity study to determine how many nearest neighbors to choose 
+            #It was determined that no more than 2 is best. 
+            w = a.sort_values(by='weight',ascending=False).iloc[0:2,:]
+            #now loop through all the molecules
+            for im in mols:
+                #compute the weighted mean of the mixing ratio
+                weighted_mean = (np.sum(w['weight']*(w.loc[:,im]))/np.sum(w['weight']))
+                player_tlayer.loc[i,im] = weighted_mean
+        #now pass through everything and use savgol filter to average 
+        for im in mols:
+            y = np.log10(player_tlayer.loc[:,im])
+            s = savgol_filter(y , interp_window, interp_poly)
+            player_tlayer.loc[:,im] = 10**s #
+
+        self.inputs['atmosphere']['profile'] = player_tlayer
+
 
     def channon_grid_low(self, filename = None, interp_window = 11, interp_poly=2):
         """
@@ -1881,28 +1964,10 @@ def get_targets():
     -------
     Dataframe from Exoplanet Archive
     """
-    default_query = "https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=exoplanets&format=csv"
-    all_planets =  requests.get(default_query)  
-    all_planets = all_planets.text.replace(' ','').split('\n')
-
-    # default data doesn't come with all the parameters we need so let's 
-    # add those in 
-    add_few_elements = '&select='+all_planets[0]+','.join(
-        [',pl_trandur','pl_eqt','st_logg','st_metfe','st_j','st_h','st_k&'])
-
-    # use requests to grab the csv formatted data and split by the commas 
-    all_planets =  requests.get(default_query.split('&')[0] 
-                                + add_few_elements + default_query.split('&')[1] )  
-    all_planets = all_planets.text.replace(' ','').split('\n')
-
-    # get into useful pandas dataframe format
-    planets_df = pd.DataFrame(columns=all_planets[0].split(','), 
-                             data = [i.split(',') for i in all_planets[1:-1]])
-    planets_df = planets_df.replace(to_replace='', value=np.nan)
-
+    planets_df =  pd.read_csv('https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+*+from+PSCompPars&format=csv')
     # convert to float when possible
     for i in planets_df.columns: 
-        planets_df[i] = planets_df[i].astype(float,errors='ignore') 
+        planets_df[i] = planets_df[i].astype(float,errors='ignore')
 
     return planets_df
 
@@ -1925,6 +1990,7 @@ def load_planet(df, opacity, phase_angle = 0, stellar_db='phoenix', verbose=Fals
         List of parameters to supply NexSci database is values don't exist 
     """
     if len(df.index)>1: raise Exception("Dataframe consists of more than 1 row. Make sure to select single planet")
+    if len(df.index)==0: raise Exception("No planets found in database. Check name.")
 
     for i in df.index:
 
@@ -2140,26 +2206,7 @@ def all_planets():
     Load all planets from https://exoplanetarchive.ipac.caltech.edu
     """
     # use this default URL to start out with 
-    default_query = "https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=exoplanets&format=csv"
-    all_planets =  requests.get(default_query)  
-    all_planets = all_planets.text.replace(' ','').split('\n')
-
-    # default data doesn't come with all the parameters we need so let's 
-    # add those in 
-    add_few_elements = '&select='+all_planets[0]+','.join(
-        [',pl_trandur','pl_eqt','st_logg','st_metfe','st_j','st_h','st_k&'])
-
-    # use requests to grab the csv formatted data and split by the commas 
-    all_planets =  requests.get(default_query.split('&')[0] 
-                                + add_few_elements + default_query.split('&')[1] )  
-    all_planets = all_planets.text.replace(' ','').split('\n')
-
-    # get into useful pandas dataframe format
-    planets_df = pd.DataFrame(columns=all_planets[0].split(','), 
-                             data = [i.split(',') for i in all_planets[1:-1]])
-    planets_df = planets_df.replace(to_replace='', value=np.nan)    
-
-
+    planets_df =  pd.read_csv('https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+*+from+PSCompPars&format=csv')
     # convert to float when possible
     for i in planets_df.columns: 
         planets_df[i] = planets_df[i].astype(float,errors='ignore')
