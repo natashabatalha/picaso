@@ -694,7 +694,6 @@ class inputs():
 
 
             gangle, gweight, tangle, tweight = get_angles_1d(num_gangle) 
-
             ng = len(gangle)
             nt = len(tangle)
 

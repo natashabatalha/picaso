@@ -220,7 +220,7 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind
     return fig
 
 
-def photon_attenuation(full_output, at_tau=0.5,return_output=False, **kwargs):
+def photon_attenuation(full_output, at_tau=0.5,return_output=False,igauss=0, **kwargs):
     """
     Plot breakdown of gas opacity, cloud opacity, 
     Rayleigh scattering opacity at a specified pressure level. 
@@ -234,6 +234,8 @@ def photon_attenuation(full_output, at_tau=0.5,return_output=False, **kwargs):
         Default = 0.5. 
     return_output : bool 
         Return photon attenuation plot values 
+    igauss : int 
+        Gauss angle to plot if using correlated-k method. If not, should always be 0.
     **kwargs : dict 
         Any key word argument for bokeh.plotting.figure()
 
@@ -244,9 +246,9 @@ def photon_attenuation(full_output, at_tau=0.5,return_output=False, **kwargs):
     """
     wave = 1e4/full_output['wavenumber']
 
-    dtaugas = full_output['taugas']
-    dtaucld = full_output['taucld']*full_output['layer']['cloud']['w0']
-    dtauray = full_output['tauray']
+    dtaugas = full_output['taugas'][:,:,igauss]
+    dtaucld = full_output['taucld'][:,:,igauss]*full_output['layer']['cloud']['w0']
+    dtauray = full_output['tauray'][:,:,igauss]
     shape = dtauray.shape
     taugas = np.zeros((shape[0]+1, shape[1]))
     taucld = np.zeros((shape[0]+1, shape[1]))
