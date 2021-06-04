@@ -1320,7 +1320,10 @@ class inputs():
             self.inputs['clouds']['profile'] = df
 
     def virga(self, condensates, directory,
-        fsed=1, mh=1, mmw=2.2,kz_min=1e5,sig=2, full_output=False): 
+        fsed=1, b=1, eps=1e-2, param='const', 
+        mh=1, mmw=2.2, kz_min=1e5, sig=2, 
+        full_output=False, Teff=None, alpha_pressure=None, supsat=0,
+        gas_mmr=None): 
         """
         Runs virga cloud code based on the PT and Kzz profiles 
         that have been added to inptus class.
@@ -1330,15 +1333,34 @@ class inputs():
         condensates : str 
             Condensates to run in cloud model 
         fsed : float 
-            Sedimentation efficiency 
+            Sedimentation efficiency coefficient
+        b : float
+            Denominator of exponential in sedimentation efficiency  (if param is 'exp')
+        eps: float
+            Minimum value of fsed function (if param=exp)
+        param : str
+            fsed parameterisation
+            'const' (constant), 'exp' (exponential density derivation), 'pow' (power-law)
         mh : float 
             Metallicity 
         mmw : float 
             Atmospheric mean molecular weight  
+        kz_min : float
+            Minimum kzz value
+        sig : float 
+            Width of the log normal distribution for the particle sizes 
+        Teff : float, optional
+            Effective temperature. If None, Teff set to temperature at 1 bar
+        alpha_pressure: float, optional
+            Pressure at which we want fsed=alpha for variable fsed calculation.
+            If None, pressure set to the top of the atmosphere
+        gas_mmr : float, optional
+            Temporary option to set gas_mmr of single condensate (this needs updated)
         """
         
         cloud_p = vj.Atmosphere(condensates,fsed=fsed,mh=mh,
-                 mmw = mmw, sig =sig) 
+                 mmw = mmw, sig =sig, b=b, eps=eps, param=param, supsat=supsat,
+                 gas_mmr=gas_mmr) 
 
         if 'kz' not in self.inputs['atmosphere']['profile'].keys():
             raise Exception ("Must supply kz to atmosphere/chemistry DataFrame, \
@@ -1351,7 +1373,7 @@ class inputs():
         cloud_p.gravity(gravity=self.inputs['planet']['gravity'],
                  gravity_unit=u.Unit(self.inputs['planet']['gravity_unit']))#
         
-        cloud_p.ptk(df =df, kz_min = kz_min)
+        cloud_p.ptk(df =df, kz_min = kz_min, Teff = Teff, alpha_pressure = alpha_pressure)
         out = vj.compute(cloud_p, as_dict=full_output,
                           directory=directory)
 
