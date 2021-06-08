@@ -426,7 +426,8 @@ div.rendered_html tbody tr:hover {
 <p>What you will learn</p>
 <ol class="arabic simple">
 <li><p>What do formation models predict for the effective temperatures of young planets across different masses?</p></li>
-<li><p>How do you analyze two different spectra with identical masses and ages, but different formation scenarios?</p></li>
+<li><p>Given identical mass and age, what might two different formation scenarios lead the spectra to look like?</p></li>
+<li><p>How do we dissect spectroscopy of planet atmospheres in order to infer atmospheric physical properties such as abundance and climate profiles?</p></li>
 </ol>
 <p>What you should already know:</p>
 <ol class="arabic simple">
@@ -1418,10 +1419,11 @@ var element = document.currentScript.previousSibling.previousSibling;
 })(window);
 </script></div>
 </div>
-<p>Make sure you understand these components:</p>
+<p>Let’s think through these main points:</p>
 <ul class="simple">
-<li><p>Is there a difference with the dominant continuum species? Does that make sense given intuition of the temperature pressure profiles? <em>insert more reading on hydrogen continuum</em></p></li>
+<li><p>Is there a difference between the continuum species? Does that make sense given your intuition of the temperature pressure profiles? <em>insert more reading on basic hydrogen continuum</em></p></li>
 <li><p>How has the interplay of H2O/CO2/CH4/CO changed between the two models? Does this check out given chemical equilibrium tables : <em>insert more reading on basic chemical equilibrium tables</em></p></li>
+<li><p>Focus on the CH4 <span class="math notranslate nohighlight">\(\tau\)</span>~1 pressure curve for both cases. What can you deduce about the vertical abundance profile of CH4 in the hot start case? <em>Hint: What distinguishes this curve H2O, for instance?</em> What major chemical transition is this indicative of? What does that tell you about the pressure-temperature profile of the hot start case?</p></li>
 </ul>
 </div>
 <div class="section" id="Step-3:-Compare-the-flux-of-the-system-with-basic-blackbody-curves-to-build-understanding-of-the-climate-structure">
@@ -1484,8 +1486,24 @@ var element = document.currentScript.previousSibling.previousSibling;
 })(window);
 </script></div>
 </div>
-<p>What can you take away from this plot? - At 1 micron, where is the flux emanating from for the hot vs. cold start? - At 4.5 micron, where is the flux emanating from for the hot vs. cold start?</p>
-<p>Given what you learned by inspecting the opacity contribution figures, what is causing the pressure difference at 1 micron? The pressure similarity at 4.5 micron?</p>
+<p>What can you take away from this plot?</p>
+<ol class="arabic simple">
+<li><p>What is opacity contribution is absent at 1 micron from the cold start case that gives you access to comparatively high pressures?</p></li>
+<li><p>Where is the flux emanating from across the 4-5 micron region for these two cases? How are they different? Referring back to your opacity contribution plot, what is causing this?</p></li>
+<li><p>What is the range of pressures you will be sensitive to if conducting a 1-5 micron spectrum?</p></li>
+<li><p>J, H, and K bands are popular bands for spectroscopy. What pressure ranges each of these bands sensitive to? Cross reference this against your opacity contribution plot. What molecules are dominating these different regions?</p></li>
+<li><p>If you were limited to differential photometry (e.g. J-H, J-K, H-K) what two bands might you pick to maximize information from this system?</p></li>
+<li><p>In addition to the two photometric bands you’ve chosen, what third ~0.5 micron photometric band might you choose in this wavelength region? Assume there are no observational constraints across this 1-5 micron region.</p></li>
+</ol>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span>
+</pre></div>
+</div>
+</div>
 </div>
 </div>
 </div>

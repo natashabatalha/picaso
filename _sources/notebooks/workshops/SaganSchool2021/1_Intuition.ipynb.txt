@@ -9,7 +9,8 @@
     "What you will learn\n",
     "\n",
     "1. What do formation models predict for the effective temperatures of young planets across different masses? \n",
-    "2. How do you analyze two different spectra with identical masses and ages, but different formation scenarios?\n",
+    "2. Given identical mass and age, what might two different formation scenarios lead the spectra to look like? \n",
+    "3. How do we dissect spectroscopy of planet atmospheres in order to infer atmospheric physical properties such as abundance and climate profiles?\n",
     "\n",
     "What you should already know:\n",
     "\n",
@@ -1193,10 +1194,11 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "Make sure you understand these components:\n",
+    "Let's think through these main points:\n",
     "\n",
-    "- Is there a difference with the dominant continuum species? Does that make sense given intuition of the temperature pressure profiles? *insert more reading on hydrogen continuum* \n",
-    "- How has the interplay of H2O/CO2/CH4/CO changed between the two models? Does this check out given chemical equilibrium tables : *insert more reading on basic chemical equilibrium tables* \n"
+    "- Is there a difference between the continuum species? Does that make sense given your intuition of the temperature pressure profiles? *insert more reading on basic hydrogen continuum* \n",
+    "- How has the interplay of H2O/CO2/CH4/CO changed between the two models? Does this check out given chemical equilibrium tables : *insert more reading on basic chemical equilibrium tables* \n",
+    "- Focus on the CH4 $\\tau$~1 pressure curve for both cases. What can you deduce about the vertical abundance profile of CH4 in the hot start case? *Hint: What distinguishes this curve H2O, for instance?* What major chemical transition is this indicative of? What does that tell you about the pressure-temperature profile of the hot start case?\n"
    ]
   },
   {
@@ -1284,11 +1286,21 @@
    "metadata": {},
    "source": [
     "What can you take away from this plot? \n",
-    "- At 1 micron, where is the flux emanating from for the hot vs. cold start? \n",
-    "- At 4.5 micron, where is the flux emanating from for the hot vs. cold start? \n",
     "\n",
-    "Given what you learned by inspecting the opacity contribution figures, what is causing the pressure difference at 1 micron? The pressure similarity at 4.5 micron?  "
+    "1. What is opacity contribution is absent at 1 micron from the cold start case that gives you access to comparatively high pressures? \n",
+    "2. Where is the flux emanating from across the 4-5 micron region for these two cases? How are they different? Referring back to your opacity contribution plot, what is causing this?\n",
+    "3. What is the range of pressures you will be sensitive to if conducting a 1-5 micron spectrum?  \n",
+    "4. J, H, and K bands are popular bands for spectroscopy. What pressure ranges each of these bands sensitive to? Cross reference this against your opacity contribution plot. What molecules are dominating these different regions?\n",
+    "5. If you were limited to differential photometry (e.g. J-H, J-K, H-K) what two bands might you pick to maximize information from this system? \n",
+    "6. In addition to the two photometric bands you've chosen, what third ~0.5 micron photometric band might you choose in this wavelength region? Assume there are no observational constraints across this 1-5 micron region. "
    ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
   }
  ],
  "metadata": {

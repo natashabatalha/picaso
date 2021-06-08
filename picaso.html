@@ -2423,7 +2423,7 @@ cumsum</p>
 
 <dl class="function">
 <dt id="picaso.justplotit.photon_attenuation">
-<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">photon_attenuation</code><span class="sig-paren">(</span><em class="sig-param">full_output</em>, <em class="sig-param">at_tau=0.5</em>, <em class="sig-param">return_output=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.photon_attenuation" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">photon_attenuation</code><span class="sig-paren">(</span><em class="sig-param">full_output</em>, <em class="sig-param">at_tau=0.5</em>, <em class="sig-param">return_output=False</em>, <em class="sig-param">igauss=0</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.photon_attenuation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot breakdown of gas opacity, cloud opacity,
 Rayleigh scattering opacity at a specified pressure level.</p>
 <dl class="field-list simple">
@@ -2433,6 +2433,7 @@ Rayleigh scattering opacity at a specified pressure level.</p>
 <li><p><strong>at_tau</strong> (<em>float</em>) – Opacity at which to plot the cumulative opacity.
 Default = 0.5.</p></li>
 <li><p><strong>return_output</strong> (<em>bool</em>) – Return photon attenuation plot values</p></li>
+<li><p><strong>igauss</strong> (<em>int</em>) – Gauss angle to plot if using correlated-k method. If not, should always be 0.</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em>) – Any key word argument for bokeh.plotting.figure()</p></li>
 </ul>
 </dd>
