@@ -2120,8 +2120,6 @@ def evolution_track(mass=1, age='all'):
     mass : int or str, optional
         (Optional) Mass of planet, in Jupiter Masses. Only valid options = 1, 2, 4, 6, 8, 10,'all'
         If another value is entered, it will find the nearest option. 
-    plot : bool, optional
-        (Optional) Default=True. If True, function will return a figure. Else will return None. 
     age : float or str, optional
         (Optional) Age of planet, in years or 'all' to return full model 
 
@@ -2190,7 +2188,7 @@ def evolution_track(mass=1, age='all'):
         cold = cold.loc[:,cols_return]
 
         #grab the desired age, if the user asks for it
-        if not isinstance(age, type(None)):
+        if not isinstance(age, str):
             hot = (hot.iloc[(hot['age_years']-age).abs().argsort()[0:1]]).to_dict('records')[0]
             cold = (cold.iloc[(cold['age_years']-age).abs().argsort()[0:1]]).to_dict('records')[0]
 

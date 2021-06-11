@@ -4,14 +4,13 @@ import numpy as np
 import pandas as pd
 from bokeh.layouts import column,row
 import numpy as np
-from bokeh.palettes import magma 
-from bokeh.palettes import viridis
+
 from bokeh.palettes import gray as colfun3
-from bokeh.palettes import Spectral11
+from bokeh.palettes import Spectral11,Category20,viridis,magma,RdBu11
 from bokeh.models import HoverTool
 from bokeh.models import LinearColorMapper, LogTicker,BasicTicker, ColorBar,LogColorMapper,Legend
 from bokeh.models import ColumnDataSource,LinearAxis,Range1d
-from bokeh.palettes import magma,RdBu11
+
 from bokeh.layouts import row,column
 from bokeh.io import output_notebook
 import os 
