@@ -53,9 +53,13 @@ Download and Link Pysynphot Stellar Data
 
 In order to get stellar spectra you will have to download the stellar spectra here from PySynphot: 
 
-1) Download the `stellar spectra from here <https://pysynphot.readthedocs.io/en/latest/appendixa.html>`_. The Defulat for `PICASO` is Castelli-Kurucz Atlas: `ck04models <https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/>`_. 
+1) PICASO uses the `Pysynphot package <https://pysynphot.readthedocs.io/en/latest/appendixa.html>`_ which has several download options for stellar spectra. The Defulat for `PICASO` is Castelli-Kurucz Atlas: `ck04models <https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/>`_. 
 
-2) Create environment variable
+.. code-block:: bash
+
+	wget -r https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/
+
+2) Create environment variable via bash 
 
 .. code-block:: bash
 
@@ -76,3 +80,7 @@ Should look something like this
 	grid
 
 Where `grid` contains whatever `pysynphot` data files you have downloaded (e.g. a folder called `ck04models`). 
+
+.. note::
+
+	1. STScI serves these files in a few different places, with a few different file structures. **PySynphot only cares that the environment variable points to a path with a folder called `grid`. So do not worry if `grp/hst/cdbs` appears different.** 

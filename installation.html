@@ -232,8 +232,13 @@ base_cases      config.json     opacities
 <h2>Download and Link Pysynphot Stellar Data<a class="headerlink" href="#download-and-link-pysynphot-stellar-data" title="Permalink to this headline">¶</a></h2>
 <p>In order to get stellar spectra you will have to download the stellar spectra here from PySynphot:</p>
 <ol class="arabic simple">
-<li><p>Download the <a class="reference external" href="https://pysynphot.readthedocs.io/en/latest/appendixa.html">stellar spectra from here</a>. The Defulat for <cite>PICASO</cite> is Castelli-Kurucz Atlas: <a class="reference external" href="https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/">ck04models</a>.</p></li>
-<li><p>Create environment variable</p></li>
+<li><p>PICASO uses the <a class="reference external" href="https://pysynphot.readthedocs.io/en/latest/appendixa.html">Pysynphot package</a> which has several download options for stellar spectra. The Defulat for <cite>PICASO</cite> is Castelli-Kurucz Atlas: <a class="reference external" href="https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/">ck04models</a>.</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget -r https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Create environment variable via bash</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>vi ~/.bash_profle
 </pre></div>
@@ -249,6 +254,12 @@ grid
 </pre></div>
 </div>
 <p>Where <cite>grid</cite> contains whatever <cite>pysynphot</cite> data files you have downloaded (e.g. a folder called <cite>ck04models</cite>).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ol class="arabic simple">
+<li><p>STScI serves these files in a few different places, with a few different file structures. <strong>PySynphot only cares that the environment variable points to a path with a folder called `grid`. So do not worry if `grp/hst/cdbs` appears different.</strong></p></li>
+</ol>
+</div>
 </div>
 </div>
 
