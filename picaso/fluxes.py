@@ -1315,7 +1315,7 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
                                      sigma1[itop,:]*(1.-exptrm_angle[itop,:])+
                                      sigma2[itop,:]*(iubar*exptrm_angle[itop,:]+dtau[itop,:]-iubar) )
 
-                flux_minus_mdpt[itop,:]=(flux_minus[itop,:]*exptrm_angle_mdpt[itop,:]+
+                flux_minus_mdpt[itop+1,:]=(flux_minus[itop,:]*exptrm_angle_mdpt[itop,:]+
                                         (J[itop,:]/(lamda[itop,:]*iubar+1.0))*(exptrm_positive_mdpt[itop,:]-exptrm_angle_mdpt[itop,:])+
                                         (K[itop,:]/(-lamda[itop,:]*iubar+1.0))*(exptrm_minus_mdpt[itop,:]-exptrm_angle_mdpt[itop,:])+
                                         sigma1[itop,:]*(1.-exptrm_angle_mdpt[itop,:])+
