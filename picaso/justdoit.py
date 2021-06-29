@@ -2134,7 +2134,7 @@ def evolution_track(mass=1, age='all'):
     
 
     """
-    cols_return = ['age_years','Teff','grav_cgs'] #be careful when changing these as they are used to build all_cols
+    cols_return = ['age_years','Teff','grav_cgs','logL','R_cm'] #be careful when changing these as they are used to build all_cols
     valid_options = np.array([1,2,4,6,8,10]) # jupiter masses
 
     if mass == 'all':
@@ -2143,10 +2143,10 @@ def evolution_track(mass=1, age='all'):
             mass = f'00{imass}0'            
             if len(mass)==5:mass=mass[1:]
             cold = pd.read_csv(os.path.join(__refdata__, 'evolution','cold_start',f'model_seq.{mass}'),skiprows=12,delim_whitespace=True,
-                    header=None,names=['age_years','log L','R_cm','Ts','Teff',
+                    header=None,names=['age_years','logL','R_cm','Ts','Teff',
                                        'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
             hot = pd.read_csv(os.path.join(__refdata__, 'evolution','hot_start',f'model_seq.{mass}'),skiprows=12,delim_whitespace=True,
-                    header=None,names=['age_years','log L','R_cm','Ts','Teff',
+                    header=None,names=['age_years','logL','R_cm','Ts','Teff',
                                        'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
             if imass==1 :
                 all_cold = pd.DataFrame(columns=all_cols,index=range(cold.shape[0]))
@@ -2157,11 +2157,18 @@ def evolution_track(mass=1, age='all'):
             all_cold.loc[:,f'{cols_return[1]}{imass}Mj'] = cold.loc[:,f'{cols_return[1]}'].values
             #add gravity for this mass
             all_cold.loc[:,f'{cols_return[2]}{imass}Mj'] = cold.loc[:,f'{cols_return[2]}'].values
-            #add teff for this mass
+            #add luminosity
+            all_cold.loc[:,f'{cols_return[3]}{imass}Mj'] = cold.loc[:,f'{cols_return[3]}'].values
+            #add radius
+            all_cold.loc[:,f'{cols_return[4]}{imass}Mj'] = cold.loc[:,f'{cols_return[4]}'].values#add teff for this mass
+            
             all_hot.loc[:,f'{cols_return[1]}{imass}Mj'] = hot.loc[:,f'{cols_return[1]}'].values
             #add gravity for this mass
             all_hot.loc[:,f'{cols_return[2]}{imass}Mj'] = hot.loc[:,f'{cols_return[2]}'].values
-        
+            #add luminosity for this mass
+            all_hot.loc[:,f'{cols_return[3]}{imass}Mj'] = hot.loc[:,f'{cols_return[3]}'].values
+            #add luminosity for this mass
+            all_hot.loc[:,f'{cols_return[4]}{imass}Mj'] = hot.loc[:,f'{cols_return[4]}'].values
 
         #grab the desired age, if the user asks for it
         if not isinstance(age, str):
@@ -2208,6 +2215,12 @@ def all_planets():
     for i in planets_df.columns: 
         planets_df[i] = planets_df[i].astype(float,errors='ignore')
 
+    return planets_df
+def young_planets(): 
+    """
+    Load planets from ZJ's paper
+    """    
+    planets_df = pd.read_csv(os.path.join(__refdata__, 'evolution','benchmarks_age_lbol.csv'))
     return planets_df
 
 def methodology_options(printout=True):
