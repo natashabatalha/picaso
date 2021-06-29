@@ -1957,7 +1957,7 @@ class inputs():
             full_output=full_output, plot_opacity=plot_opacity, as_dict=as_dict)
 
 def get_targets():
-    """Function to grab available targets
+    """Function to grab available targets using exoplanet archive data. 
 
     Returns
     -------
@@ -1972,8 +1972,9 @@ def get_targets():
 
 def load_planet(df, opacity, phase_angle = 0, stellar_db='phoenix', verbose=False,  **planet_kwargs):
     """
-    Wrapper to simplify PICASO run. This really turns chimera into a black box. This was created 
-    specifically Sagan School tutorial. 
+    Wrapper to simplify PICASO run. This really turns picaso into a black box. This was created 
+    specifically Sagan School tutorial. It grabs planet parameters from the user supplied df, then 
+    adds a parametric PT profile (Guillot et al. 2010). The user still has to add chemistry. 
 
     Parameters
     -----------
@@ -2142,10 +2143,12 @@ def evolution_track(mass=1, age='all'):
         for imass in valid_options:
             mass = f'00{imass}0'            
             if len(mass)==5:mass=mass[1:]
-            cold = pd.read_csv(os.path.join(__refdata__, 'evolution','cold_start',f'model_seq.{mass}'),skiprows=12,delim_whitespace=True,
+            cold = pd.read_csv(os.path.join(__refdata__, 'evolution','cold_start',f'model_seq.{mass}'),
+                skiprows=12,delim_whitespace=True,
                     header=None,names=['age_years','logL','R_cm','Ts','Teff',
                                        'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
-            hot = pd.read_csv(os.path.join(__refdata__, 'evolution','hot_start',f'model_seq.{mass}'),skiprows=12,delim_whitespace=True,
+            hot = pd.read_csv(os.path.join(__refdata__, 'evolution','hot_start',f'model_seq.{mass}'),
+                skiprows=12,delim_whitespace=True,
                     header=None,names=['age_years','logL','R_cm','Ts','Teff',
                                        'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
             if imass==1 :
@@ -2160,8 +2163,8 @@ def evolution_track(mass=1, age='all'):
             #add luminosity
             all_cold.loc[:,f'{cols_return[3]}{imass}Mj'] = cold.loc[:,f'{cols_return[3]}'].values
             #add radius
-            all_cold.loc[:,f'{cols_return[4]}{imass}Mj'] = cold.loc[:,f'{cols_return[4]}'].values#add teff for this mass
-            
+            all_cold.loc[:,f'{cols_return[4]}{imass}Mj'] = cold.loc[:,f'{cols_return[4]}'].values
+            #add teff for this mass
             all_hot.loc[:,f'{cols_return[1]}{imass}Mj'] = hot.loc[:,f'{cols_return[1]}'].values
             #add gravity for this mass
             all_hot.loc[:,f'{cols_return[2]}{imass}Mj'] = hot.loc[:,f'{cols_return[2]}'].values

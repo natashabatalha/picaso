@@ -145,7 +145,7 @@ def pt(full_output,ng=None, nt=None, **kwargs):
     kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
     kwargs['x_axis_label'] = kwargs.get('x_axis_label','Temperature (K)')
     kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
-    kwargs['x_axis_type'] = kwargs.get('x_axis_type','log') 
+    #kwargs['x_axis_type'] = kwargs.get('x_axis_type','log') 
     kwargs['y_range'] = kwargs.get('y_range',[np.max(pressure),np.min(pressure)])
 
     fig = figure(**kwargs)
@@ -1403,17 +1403,32 @@ def corr_molecular(atm,filename_db, wavenumber , residual, max_plot,threshold):
 
     return column(p,spec)
 
-def plot_evolution(evo):
+def plot_evolution(evo, y = "Teff",**kwargs):
     """
     Plot evolution of tracks. Requires input from justdoit: 
 
     evo = justdoit.evolution_track(mass='all',age='all')
 
+    Parameters 
+    ----------
+    evo : dict 
+        Output from the function justdoit.evolution_track(mass='all',age='all')
+    y : str 
+        What to plot on the y axis. Can be anything in the pandas that as the mass 
+        attached to the end. E.g. "Teff" is an option because there exists "Teff1Mj". 
+        But, age_years is not an option as it is not a function of mass. 
+        Current options : [logL, Teff, grav_cgs]
     """
+    kwargs['plot_height'] = kwargs.get('plot_height',300)
+    kwargs['plot_width'] = kwargs.get('plot_width',400)
+    kwargs['title'] = kwargs.get('title','Outgoing Thermal Radiation')
+    kwargs['y_axis_label'] = kwargs.get('y_axis_label',y)
+    kwargs['x_axis_label'] = kwargs.get('x_axis_label','Age(years)')
+    kwargs['x_axis_type'] = kwargs.get('x_axis_type','log') 
 
-    f = figure(x_axis_type='log',plot_height=300, plot_width=500,
-                  x_axis_label='Age(years)', y_axis_label='Teff')
+    f = figure(**kwargs)
 
+    lp = len(y)#used to find where mass tag starts
     evo_hot=evo['hot']
     evo_cold=evo['cold']
     source_hot = ColumnDataSource(data=dict(
@@ -1421,30 +1436,30 @@ def plot_evolution(evo):
     source_cold = ColumnDataSource(data=dict(
         evo_cold))
 
-    colors = viridis(int((evo_cold.shape[1])))
+    colors = viridis(10)
     for i, ikey in enumerate(list(evo_hot.keys())[1:]):
-        if 'Teff' in ikey:
-            mass = int(ikey[ikey.rfind('f')+1:ikey.find('M')])
+        if y in ikey:
+            mass = int(ikey[ikey.rfind(y[-1])+1:ikey.find('M')])
             icolor = mass -1
             f1 = f.line(x='age_years',y=ikey,line_width=2,
                    color=colors[icolor]
                   ,legend_label='Hot Start', source = source_hot)
-            f.add_tools(HoverTool(renderers=[f1], tooltips=[('Teff',f'@{ikey} K'),
+            f.add_tools(HoverTool(renderers=[f1], tooltips=[('Teff',f'@Teff{ikey[lp:]} K'),
                                                             ('Age','@age_years Yrs'),
-                                                            ('Gravity' , f'@grav_cgs{ikey[4:]} cm/s2'),
+                                                            ('Gravity' , f'@grav_cgs{ikey[lp:]} cm/s2'),
                                                            ('Mass',str(mass)+" Mj")]
                                   ))#,mode='vline'
             f2 = f.line('age_years',ikey,line_width=2,
                    color=colors[icolor],
                   line_dash='dashed',legend_label='Cold Start' , source = source_cold)
-            f.add_tools(HoverTool(renderers=[f2], tooltips=[('Teff',f'@{ikey} K'),
+            f.add_tools(HoverTool(renderers=[f2], tooltips=[('Teff',f'@Teff{ikey[lp:]} K'),
                                                             ('Age','@age_years Yrs'),
-                                                            ('Gravity', f'@grav_cgs{ikey[4:]} cm/s2'),
+                                                            ('Gravity', f'@grav_cgs{ikey[lp:]} cm/s2'),
                                                            ('Mass',str(mass)+" Mj")]))
 
     color_bar = ColorBar(title='Mass (Mj)',
         color_mapper=LinearColorMapper(palette="Viridis256", 
-                     low=1, high=13), 
+                     low=1, high=10), 
         label_standoff=12,location=(0,0))
 
     f.add_layout(color_bar, 'right')
