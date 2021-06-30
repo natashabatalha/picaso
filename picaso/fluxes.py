@@ -1264,7 +1264,7 @@ def blackbody(t,w):
     return ((2.0*h*c**2.0)/(w**5.0))*(1.0/(exp((h*c)/outer(t, w*k)) - 1.0))
 
 @jit(nopython=True, cache=True)
-def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,surf_reflect, tridiagonal):
+def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,surf_reflect, tridiagonal, calc_type):
     """
     This function uses the source function method, which is outlined here : 
     https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JD094iD13p16287
@@ -1316,14 +1316,29 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
         Surface reflectivity as a function of wavenumber. 
     tridiagonal : int 
         0 for tridiagonal, 1 for pentadiagonal
+    calc_type : int 
+        0 for outgoing flux at top level output, 1 for upward and downward layer and level flux outputs
 
     Returns
     -------
     numpy.ndarray
         Thermal flux in CGS units (erg/cm3/s) in a matrix that is 
-        numg x numt x nwno
+        numg x numt x nwno if calc_type=0
+    
+    numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray
+        Thermal flux in CGS units (erg/cm3/s) in four matrices if calc_type=0: that is 
+        level downward flux and level upward flux numg x numt x nlevel x nwno and then
+        layer downward flux and layer upward flux numg x numt x nlayer x nwno  
     """
     nlayer = nlevel - 1 #nlayers 
+
+    # Initialising Output Arrays
+    flux_at_top = zeros((numg, numt, nwno)) # output when calc_type=0
+    # outputs when calc_type =1
+    flux_minus_all = zeros((numg, numt,nlevel, nwno)) ## level downwelling fluxes
+    flux_plus_all = zeros((numg, numt, nlevel, nwno)) ## level upwelling fluxes
+    flux_minus_midpt_all = zeros((numg, numt, nlayer, nwno)) ##  layer downwelling fluxes
+    flux_plus_midpt_all = zeros((numg, numt, nlayer, nwno))  ## layer upwelling fluxes
 
     mu1 = 0.5#0.88#0.5 #from Table 1 Toon  
     twopi = pi#+pi #NEB REMOVING A PI FROM HERE BECAUSE WE ASSUME NO SYMMETRY! 
@@ -1412,8 +1427,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     exptrm_minus_mdpt = 1/exptrm_positive_mdpt 
 
     #================ START CRAZE LOOP OVER ANGLE #================
-    flux_at_top = zeros((numg, numt, nwno))
-    flux_down = zeros((numg, numt, nwno))
+    
+    
 
     #work through building eqn 55 in toon (tons of bookeeping exponentials)
     for ng in range(numg):
@@ -1457,12 +1472,20 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
                                        alpha2[ibot,:]*(iubar+0.5*dtau[ibot,:]-(dtau[ibot,:]+iubar)*exptrm_angle_mdpt[ibot,:])  )
 
             flux_at_top[ng,nt,:] = flux_plus_mdpt[0,:] #nlevel by nwno 
+            
+            flux_minus_all[ng,nt,:,:]=flux_minus[:,:]
+            flux_plus_all[ng,nt,:,:]=flux_plus[:,:]
+
+            flux_minus_midpt_all[ng,nt,:,:]=flux_minus_mdpt[:,:]
+            flux_plus_midpt_all[ng,nt,:,:]=flux_plus_mdpt[:,:]
 
             #to get the convective heat flux 
             #flux_minus_mdpt_disco[ng,nt,:,:] = flux_minus_mdpt #nlevel by nwno
             #flux_plus_mdpt_disco[ng,nt,:,:] = flux_plus_mdpt #nlevel by nwno
-
-    return flux_at_top #, flux_down# numg x numt x nwno
+    if calc_type == 0:
+        return flux_at_top #, flux_down# numg x numt x nwno
+    elif calc_type == 1:
+        return flux_minus_all, flux_plus_all, flux_minus_midpt_all, flux_plus_midpt_all
 
 
 
