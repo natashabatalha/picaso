@@ -1798,7 +1798,7 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 
 				#cos_theta = u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
 				#print(cos_theta)
-				p_single=(1-cosb**2)/sqrt((1+cosb**2+2*cosb*cos_theta)**3) 
+				p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 
 			elif single_phase==2:#'TTHG':
 				#Phase function for single scattering albedo frum Solar beam
@@ -1877,7 +1877,7 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 			for l in range(4):
 				w_multi.append((2*l+1) * (cosb_og**l - ff) / (1 - ff))
 				#w_single.append((2*l+1) * (cosb_og**l -  ff) / (1-ff))
-				w_single.append((2*l+1) * cosb_og**l )
+				w_single.append((2*l+1) * cosb_og**l)
 				a.append((2*l + 1) -  w0 * w_multi[l])
 				#b.append((F0PI * (w0 * w_single[l])) * P(-u0)[l] / (4*pi))
 				if l < 4:
@@ -1904,15 +1904,14 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 				F1, G1 = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
 				surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P, calculate=1) 
 			else:
-				M, B, A_int, N_int, F, G = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, 
-						u0, dtau, tau, dtau_og, tau_og, a, b, u1, P)
+				M, B, A_int, N_int, F, G = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u0, dtau, tau_og, a, b, u1, P)
 #				M, B, A, N, A_int, N_int, F, G = setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P)
 #
 				A, N = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-				surf_reflect, F0PI, u0, dtau, tau, dtau_og, tau_og, a, b, u1, P, calculate=2) 
+				surf_reflect, F0PI, u0, dtau, tau_og, a, b, u1, P, calculate=2) 
 
 				F1, G1 = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-				surf_reflect, F0PI, u0, dtau, tau, dtau_og, tau_og, a, b, u1, P, calculate=1) 
+				surf_reflect, F0PI, u0, dtau, tau_og, a, b, u1, P, calculate=1) 
 
 				#from new_fluxes import testing_4_stream
 				#testing_4_stream(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u0, dtau,tau, a, b, u1,F1, G1, M, B, A, N)
@@ -1941,7 +1940,7 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 			#	import IPython; IPython.embed()
 			#	import sys; sys.exit()
 			mus = (u1 + u0) / (u1 * u0)
-			expo_mus = mus * dtau 
+			expo_mus = mus * dtau_og 
 			expo_mus = slice_gt(expo_mus, 35.0)    
 			exptrm_mus = exp(-expo_mus)
 
@@ -1953,8 +1952,8 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 					intensity[i,:] = intensity[i,:] + (2*l+1) * I[i*stream+l,:] * P(u1)[l]
 
 			intgrl_per_layer = (w0 *  multi_scat 
-						+ w0 * F0PI / (4*np.pi) * p_single 
-						* np.exp(-tau[:-1,:]/u0) * (1 - exptrm_mus) 
+						+ w0_og * F0PI / (4*np.pi) * p_single 
+						* np.exp(-tau_og[:-1,:]/u0) * (1 - exptrm_mus) 
 						/ mus
 						)
 
@@ -2611,7 +2610,7 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 
 #@jit
 def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, 
-        dtau_og, tau_og, a, b, ubar1, P, B0=0., B1=0., calculate=0,calculation='reflected'):
+        a, b, ubar1, P, B0=0., B1=0., calculate=0,calculation='reflected'):
 
 	beta = a[0]*a[1] + 4*a[0]*a[3]/9 + a[2]*a[3]/9
 	gama = a[0]*a[1]*a[2]*a[3]/9
@@ -2661,7 +2660,7 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 	f20 = p1pl*exptrm1; f21 = p1mn/exptrm1;	f22 = p2pl*exptrm2; f23 = p2mn/exptrm2
 	f30 = q1pl*exptrm1; f31 = q1mn/exptrm1;	f32 = q2pl*exptrm2; f33 = q2mn/exptrm2
 
-	exptau_u0 = exp(-slice_gt(tau_og/ubar0, 35.0))
+	exptau_u0 = exp(-slice_gt(tau/ubar0, 35.0))
 	if calculation is 'reflected':
 		z1mn_up = z1mn * exptau_u0[1:,:]
 		z2mn_up = z2mn * exptau_u0[1:,:]
@@ -2708,7 +2707,7 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 	A20 = Q1 * A00; A21 =  Q1 * A01; A22 = Q2 * A02; A23 =  Q2 * A03; 
 	A30 = S1 * A00; A31 = -S1 * A01; A32 = S2 * A02; A33 = -S2 * A03; 
 	
-	tau_mu = tau_og[:-1,:] * (1/ubar0)
+	tau_mu = tau[:-1,:] * (1/ubar0)
 	tau_mu = slice_gt(tau_mu, 35.0)
 	exptau_mu = exp(-tau_mu)
 	exp_mu = (1 - exptrm_mus) * exptau_mu / mus
