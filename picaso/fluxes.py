@@ -935,15 +935,15 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
     nlayer = nlevel - 1 
     
     # creating the output arrays
-    if calc_type == 0:
-        xint_at_top = zeros((numg, numt, nlevel, nwno))
     
-    elif calc_type == 1:
+    xint_at_top = zeros((numg, numt, nlevel, nwno))
+    
+    
 
-        flux_minus_all = zeros((numg, numt,nlevel, nwno)) ## level downwelling fluxes
-        flux_plus_all = zeros((numg, numt, nlevel, nwno)) ## level upwelling fluxes
-        flux_minus_midpt_all = zeros((numg, numt, nlayer, nwno)) ##  layer downwelling fluxes
-        flux_plus_midpt_all = zeros((numg, numt, nlayer, nwno))  ## layer upwelling fluxes
+    flux_minus_all = zeros((numg, numt,nlevel, nwno)) ## level downwelling fluxes
+    flux_plus_all = zeros((numg, numt, nlevel, nwno)) ## level upwelling fluxes
+    flux_minus_midpt_all = zeros((numg, numt, nlayer, nwno)) ##  layer downwelling fluxes
+    flux_plus_midpt_all = zeros((numg, numt, nlayer, nwno))  ## layer upwelling fluxes
 
     #now define terms of Toon et al 1989 quadrature Table 1 
     #https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JD094iD13p16287
@@ -1028,328 +1028,214 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             #========================= End loop over wavelength =========================
             # diverging the two options here because calculating layer+level fluxes stuff can add time  
             # because this function is often used in retrievals
+            #  BC for level calculations
+            #  downward BC at top
+            flux_0_minus  = positive[0,:]*gama[0,:] + negative[0,:] + c_minus_up[0,:] # upper BC for downwelling
 
-            if calc_type == 0 : # will just give outgoing flux at top
-                
-                #use expression for bottom flux to get the flux_plus and flux_minus at last
-                #bottom layer
-                flux_zero  = positive[-1,:]*exptrm_positive[-1,:] + gama[-1,:]*negative[-1,:]*exptrm_minus[-1,:] + c_plus_down[-1,:]
-                #flux_minus  = gama*positive*exptrm_positive + negative*exptrm_minus + c_minus_down
-                #flux_plus  = positive*exptrm_positive + gama*negative*exptrm_minus + c_plus_down
-                #flux = zeros((2*nlayer, nwno))
-                #flux[::2, :] = flux_minus
-                #flux[1::2, :] = flux_plus
+            # upward BC at bottom
+            flux_n_plus  = positive[-1,:]*exptrm_positive[-1,:] + gama[-1,:]*negative[-1,:]*exptrm_minus[-1,:] + c_plus_down[-1,:]
 
-                xint = zeros((nlevel,nwno))
-                xint[-1,:] = flux_zero/pi
-
-                ################################ BEGIN OPTIONS FOR MULTIPLE SCATTERING####################
-
-                #Legendre polynomials for the Phase function due to multiple scatterers 
-                if multi_phase ==0:#'N=2':
-                    #ubar2 is defined to deal with the integration over the second moment of the 
-                    #intensity. It is FIT TO PURE RAYLEIGH LIMIT, ~(1/sqrt(3))^(1/2)
-                    #this is a decent assumption because our second order legendre polynomial 
-                    #is forced to be equal to the rayleigh phase function
-                    ubar2 = 0.767  # 
-                    multi_plus = (1.0+1.5*cosb*ubar1[ng,nt] #!was 3
-                                    + gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
-                    multi_minus = (1.-1.5*cosb*ubar1[ng,nt] 
-                                    + gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
-                elif multi_phase ==1:#'N=1':
-                    multi_plus = 1.0+1.5*cosb*ubar1[ng,nt]  
-                    multi_minus = 1.-1.5*cosb*ubar1[ng,nt]
-                ################################ END OPTIONS FOR MULTIPLE SCATTERING####################
-
-                G=positive*(multi_plus+gama*multi_minus)    *w0
-                H=negative*(gama*multi_plus+multi_minus)    *w0
-                A=(multi_plus*c_plus_up+multi_minus*c_minus_up) *w0
-
-                G=G*0.5/pi
-                H=H*0.5/pi
-                A=A*0.5/pi
-
-                ################################ BEGIN OPTIONS FOR DIRECT SCATTERING####################
-                #define f (fraction of forward to back scattering), 
-                #g_forward (forward asymmetry), g_back (backward asym)
-                #needed for everything except the OTHG
-                if single_phase!=1: 
-                    g_forward = constant_forward*cosb_og
-                    g_back = constant_back*cosb_og#-
-                    f = frac_a + frac_b*g_back**frac_c
-
-                # NOTE ABOUT HG function: we are translating to the frame of the downward propagating beam
-                # Therefore our HG phase function becomes:
-                # p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
-                # as opposed to the traditional:
-                # p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2-2*cosb_og*cos_theta)**3) (NOTICE NEGATIVE)
-
-                if single_phase==0:#'cahoy':
-                    #Phase function for single scattering albedo frum Solar beam
-                    #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-                          #first term of TTHG: forward scattering
-                    p_single=(f * (1-g_forward**2)
-                                    /sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
-                                    #second term of TTHG: backward scattering
-                                    +(1-f)*(1-g_back**2)
-                                    /sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3)+
-                                    #rayleigh phase function
-                                    (gcos2))
-                elif single_phase==1:#'OTHG':
-                    p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
-                elif single_phase==2:#'TTHG':
-                    #Phase function for single scattering albedo frum Solar beam
-                    #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-                          #first term of TTHG: forward scattering
-                    p_single=(f * (1-g_forward**2)
-                                    /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
-                                    #second term of TTHG: backward scattering
-                                    +(1-f)*(1-g_back**2)
-                                    /sqrt((1+g_back**2+2*g_back*cos_theta)**3))
-                elif single_phase==3:#'TTHG_ray':
-                    #Phase function for single scattering albedo frum Solar beam
-                    #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-                                #first term of TTHG: forward scattering
-                    p_single=(ftau_cld*(f * (1-g_forward**2)
-                                                    /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
-                                                    #second term of TTHG: backward scattering
-                                                    +(1-f)*(1-g_back**2)
-                                                    /sqrt((1+g_back**2+2*g_back*cos_theta)**3))+            
-                                    #rayleigh phase function
-                                    ftau_ray*(0.75*(1+cos_theta**2.0)))
-
-                ################################ END OPTIONS FOR DIRECT SCATTERING####################
-
-                for i in range(nlayer-1,-1,-1):
-                    #direct beam
-                    xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/ubar1[ng,nt]) 
-                            #single scattering albedo from sun beam (from ubar0 to ubar1)
-                            +(w0_og[i,:]*F0PI/(4.*pi))
-                            *(p_single[i,:])*exp(-tau_og[i,:]/ubar0[ng,nt])
-                            *(1. - exp(-dtau_og[i,:]*(ubar0[ng,nt]+ubar1[ng,nt])
-                            /(ubar0[ng,nt]*ubar1[ng,nt])))*
-                            (ubar0[ng,nt]/(ubar0[ng,nt]+ubar1[ng,nt]))
-                            #multiple scattering terms p_single
-                            +A[i,:]*(1. - exp(-dtau[i,:] *(ubar0[ng,nt]+1*ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
-                            (ubar0[ng,nt]/(ubar0[ng,nt]+1*ubar1[ng,nt]))
-                            +G[i,:]*(exp(exptrm[i,:]*1-dtau[i,:]/ubar1[ng,nt]) - 1.0)/(lamda[i,:]*1*ubar1[ng,nt] - 1.0)
-                            +H[i,:]*(1. - exp(-exptrm[i,:]*1-dtau[i,:]/ubar1[ng,nt]))/(lamda[i,:]*1*ubar1[ng,nt] + 1.0)
-                            )
-
-                xint_at_top[ng,nt,:] = xint[0,:]
+            # add in flux due to the Downward incident solar radiation
+            flux_0_minus+=ubar0[ng, nt]*F0PI*exp(-tau[0,:]/ubar0[ng, nt])
             
+
+
+
+            # now BCs for the midpoint calculations
+
+            exptrm_positive_midpt = exp(0.5*exptrm) #EP
+            exptrm_minus_midpt = 1.0/exptrm_positive_midpt#EM
+
+            taumid=tau[:-1]+0.5*dtau
+            taumid_og=tau[:-1]+0.5*dtau_og
+
+            x = exp(-taumid/ubar0[ng, nt])
+            c_plus_mid= a_plus*x
+            c_minus_mid=a_minus*x
             
-            elif calc_type == 1 :   # start flux calculation for climate part
-
-      
-                #  BC for level calculations
-                #  downward BC at top
-                flux_0_minus  = positive[0,:]*gama[0,:] + negative[0,:] + c_minus_up[0,:] # upper BC for downwelling
-
-                # upward BC at bottom
-                flux_n_plus  = positive[-1,:]*exptrm_positive[-1,:] + gama[-1,:]*negative[-1,:]*exptrm_minus[-1,:] + c_plus_down[-1,:]
-
-                # add in flux due to the Downward incident solar radiation
-                flux_0_minus+=ubar0[ng, nt]*F0PI*exp(-tau[0,:]/ubar0[ng, nt])
-                
+            # midpt downward BC at top
+            flux_0_minus_midpt= gama[0,:]*positive[0,:]*exptrm_positive_midpt[0,:] + negative[0,:]*exptrm_minus_midpt[0,:] + c_minus_mid[0,:]
+            
+            # midpt upward BC at bottom
+            flux_n_plus_midpt= positive[-1,:]*exptrm_positive_midpt[-1,:] + gama[-1,:]*negative[-1,:]*exptrm_minus_midpt[-1,:] + c_plus_mid[-1,:]
+            
+            # add in flux due to the Downward incident solar radiation
+            flux_0_minus_midpt += ubar0[ng, nt]*F0PI*exp(-taumid[0,:]/ubar0[ng, nt])
 
 
+            # going to level and layer intensities
 
-                # now BCs for the midpoint calculations
-
-                exptrm_positive_midpt = exp(0.5*exptrm) #EP
-                exptrm_minus_midpt = 1.0/exptrm_positive_midpt#EM
-
-                taumid=tau[:-1]+0.5*dtau
-                taumid_og=tau[:-1]+0.5*dtau_og
-
-                x = exp(-taumid/ubar0[ng, nt])
-                c_plus_mid= a_plus*x
-                c_minus_mid=a_minus*x
-                
-                # midpt downward BC at top
-                flux_0_minus_midpt= gama[0,:]*positive[0,:]*exptrm_positive_midpt[0,:] + negative[0,:]*exptrm_minus_midpt[0,:] + c_minus_mid[0,:]
-                
-                # midpt upward BC at bottom
-                flux_n_plus_midpt= positive[-1,:]*exptrm_positive_midpt[-1,:] + gama[-1,:]*negative[-1,:]*exptrm_minus_midpt[-1,:] + c_plus_mid[-1,:]
-                
-                # add in flux due to the Downward incident solar radiation
-                flux_0_minus_midpt += ubar0[ng, nt]*F0PI*exp(-taumid[0,:]/ubar0[ng, nt])
-
-
-                # going to level and layer intensities
-
-                # starting layer and level intensity arrays for upwelling part
-                xint_up = zeros((nlevel,nwno))
-                xint_up_layer=zeros((nlayer,nwno))
-                
-                #convert fluxe BCs to intensities
-                xint_up[-1,:] = flux_n_plus/pi  ## BC
-                xint_up_layer[-1,:] = flux_n_plus_midpt/pi ##BC
+            # starting layer and level intensity arrays for upwelling part
+            xint_up = zeros((nlevel,nwno))
+            xint_up_layer=zeros((nlayer,nwno))
+            
+            #convert fluxe BCs to intensities
+            xint_up[-1,:] = flux_n_plus/pi  ## BC
+            xint_up_layer[-1,:] = flux_n_plus_midpt/pi ##BC
 
 
 
-                # starting layer and level intensity arrays for downwelling part
-                xint_down=zeros((nlevel,nwno))
-                xint_down_layer=zeros((nlayer,nwno))
+            # starting layer and level intensity arrays for downwelling part
+            xint_down=zeros((nlevel,nwno))
+            xint_down_layer=zeros((nlayer,nwno))
 
-                xint_down[0,:] = flux_0_minus/pi  ## BC
-                xint_down_layer[0,:] = flux_0_minus_midpt/pi #BC
+            xint_down[0,:] = flux_0_minus/pi  ## BC
+            xint_down_layer[0,:] = flux_0_minus_midpt/pi #BC
 
 
 
-            ################################ BEGIN OPTIONS FOR MULTIPLE SCATTERING####################
+        ################################ BEGIN OPTIONS FOR MULTIPLE SCATTERING####################
 
-            #Legendre polynomials for the Phase function due to multiple scatterers 
-                if multi_phase ==0:#'N=2':
-                #ubar2 is defined to deal with the integration over the second moment of the 
-                #intensity. It is FIT TO PURE RAYLEIGH LIMIT, ~(1/sqrt(3))^(1/2)
-                #this is a decent assumption because our second order legendre polynomial 
-                #is forced to be equal to the rayleigh phase function
-                    ubar2 = 0.767  # 
-                    multi_plus = (1.0+1.5*cosb*ubar1[ng,nt] #!was 3
-                                + gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
-                    multi_minus = (1.-1.5*cosb*ubar1[ng,nt] 
-                                + gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
-                elif multi_phase ==1:#'N=1':
-                    multi_plus = 1.0+1.5*cosb*ubar1[ng,nt]  
-                    multi_minus = 1.-1.5*cosb*ubar1[ng,nt]
-            ################################ END OPTIONS FOR MULTIPLE SCATTERING####################
+        #Legendre polynomials for the Phase function due to multiple scatterers 
+            if multi_phase ==0:#'N=2':
+            #ubar2 is defined to deal with the integration over the second moment of the 
+            #intensity. It is FIT TO PURE RAYLEIGH LIMIT, ~(1/sqrt(3))^(1/2)
+            #this is a decent assumption because our second order legendre polynomial 
+            #is forced to be equal to the rayleigh phase function
+                ubar2 = 0.767  # 
+                multi_plus = (1.0+1.5*cosb*ubar1[ng,nt] #!was 3
+                            + gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
+                multi_minus = (1.-1.5*cosb*ubar1[ng,nt] 
+                            + gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
+            elif multi_phase ==1:#'N=1':
+                multi_plus = 1.0+1.5*cosb*ubar1[ng,nt]  
+                multi_minus = 1.-1.5*cosb*ubar1[ng,nt]
+        ################################ END OPTIONS FOR MULTIPLE SCATTERING####################
 
-                G=positive*(multi_plus+gama*multi_minus)    *w0
-                H=negative*(gama*multi_plus+multi_minus)    *w0
-                A=(multi_plus*c_plus_up+multi_minus*c_minus_up) *w0
+            G=positive*(multi_plus+gama*multi_minus)    *w0
+            H=negative*(gama*multi_plus+multi_minus)    *w0
+            A=(multi_plus*c_plus_up+multi_minus*c_minus_up) *w0
 
-                G=G*0.5/pi
-                H=H*0.5/pi
-                A=A*0.5/pi
+            G=G*0.5/pi
+            H=H*0.5/pi
+            A=A*0.5/pi
 
-            ################################ BEGIN OPTIONS FOR DIRECT SCATTERING####################
-            #define f (fraction of forward to back scattering), 
-            #g_forward (forward asymmetry), g_back (backward asym)
-            #needed for everything except the OTHG
-                if single_phase!=1: 
-                    g_forward = constant_forward*cosb_og
-                    g_back = constant_back*cosb_og#-
-                    f = frac_a + frac_b*g_back**frac_c
+        ################################ BEGIN OPTIONS FOR DIRECT SCATTERING####################
+        #define f (fraction of forward to back scattering), 
+        #g_forward (forward asymmetry), g_back (backward asym)
+        #needed for everything except the OTHG
+            if single_phase!=1: 
+                g_forward = constant_forward*cosb_og
+                g_back = constant_back*cosb_og#-
+                f = frac_a + frac_b*g_back**frac_c
 
-            # NOTE ABOUT HG function: we are translating to the frame of the downward propagating beam
-            # Therefore our HG phase function becomes:
-            # p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
-            # as opposed to the traditional:
-            # p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2-2*cosb_og*cos_theta)**3) (NOTICE NEGATIVE)
-            # SM -- a bit confused since I thought this function was initially for the upward propagating beam till the top
-            # SM -- will the phase function be different for the downward and upward post-processing?
+        # NOTE ABOUT HG function: we are translating to the frame of the downward propagating beam
+        # Therefore our HG phase function becomes:
+        # p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+        # as opposed to the traditional:
+        # p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2-2*cosb_og*cos_theta)**3) (NOTICE NEGATIVE)
+        # SM -- a bit confused since I thought this function was initially for the upward propagating beam till the top
+        # SM -- will the phase function be different for the downward and upward post-processing?
 
-                if single_phase==0:#'cahoy':
-                #Phase function for single scattering albedo frum Solar beam
-                #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-                      #first term of TTHG: forward scattering
-                    p_single=(f * (1-g_forward**2)
-                                    /sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
-                                #second term of TTHG: backward scattering
-                                    +(1-f)*(1-g_back**2)
-                                    /sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3)+
-                                #rayleigh phase function
-                                    (gcos2))
-                elif single_phase==1:#'OTHG':
-                    p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
-                elif single_phase==2:#'TTHG':
-                #Phase function for single scattering albedo frum Solar beam
-                #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-                      #first term of TTHG: forward scattering
-                    p_single=(f * (1-g_forward**2)
-                                    /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
-                                #second term of TTHG: backward scattering
-                                    +(1-f)*(1-g_back**2)
-                                    /sqrt((1+g_back**2+2*g_back*cos_theta)**3))
-                elif single_phase==3:#'TTHG_ray':
-                #Phase function for single scattering albedo frum Solar beam
-                #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-                            #first term of TTHG: forward scattering
-                    p_single=(ftau_cld*(f * (1-g_forward**2)
-                                                    /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
-                                                #second term of TTHG: backward scattering
-                                                    +(1-f)*(1-g_back**2)
-                                                    /sqrt((1+g_back**2+2*g_back*cos_theta)**3))+            
-                                #rayleigh phase function
-                                    ftau_ray*(0.75*(1+cos_theta**2.0)))
+            if single_phase==0:#'cahoy':
+            #Phase function for single scattering albedo frum Solar beam
+            #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
+                    #first term of TTHG: forward scattering
+                p_single=(f * (1-g_forward**2)
+                                /sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+                            #second term of TTHG: backward scattering
+                                +(1-f)*(1-g_back**2)
+                                /sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3)+
+                            #rayleigh phase function
+                                (gcos2))
+            elif single_phase==1:#'OTHG':
+                p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+            elif single_phase==2:#'TTHG':
+            #Phase function for single scattering albedo frum Solar beam
+            #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
+                    #first term of TTHG: forward scattering
+                p_single=(f * (1-g_forward**2)
+                                /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
+                            #second term of TTHG: backward scattering
+                                +(1-f)*(1-g_back**2)
+                                /sqrt((1+g_back**2+2*g_back*cos_theta)**3))
+            elif single_phase==3:#'TTHG_ray':
+            #Phase function for single scattering albedo frum Solar beam
+            #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
+                        #first term of TTHG: forward scattering
+                p_single=(ftau_cld*(f * (1-g_forward**2)
+                                                /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
+                                            #second term of TTHG: backward scattering
+                                                +(1-f)*(1-g_back**2)
+                                                /sqrt((1+g_back**2+2*g_back*cos_theta)**3))+            
+                            #rayleigh phase function
+                                ftau_ray*(0.75*(1+cos_theta**2.0)))
 
-            ################################ END OPTIONS FOR DIRECT SCATTERING####################
+        ################################ END OPTIONS FOR DIRECT SCATTERING####################
 
-                for i in range(nlayer):
-                #direct beam
-                    ibottom=nlayer-i-1
-                    itop=i
-                    xint_up[ibottom,:] =( xint_up[ibottom+1,:]*exp(-dtau[ibottom,:]/ubar1[ng,nt]) 
-                        #single scattering albedo from sun beam (from ubar0 to ubar1)
-                            +(w0_og[ibottom,:]*F0PI/(4.*pi))
-                            *(p_single[ibottom,:])*exp(-tau_og[ibottom,:]/ubar0[ng,nt])
-                            *(1. - exp(-dtau_og[ibottom,:]*(ubar0[ng,nt]+ubar1[ng,nt])
-                            /(ubar0[ng,nt]*ubar1[ng,nt])))*
-                            (ubar0[ng,nt]/(ubar0[ng,nt]+ubar1[ng,nt]))
-                        #multiple scattering terms p_single
-                            +A[ibottom,:]*(1. - exp(-dtau[ibottom,:] *(ubar0[ng,nt]+1*ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
-                            (ubar0[ng,nt]/(ubar0[ng,nt]+1*ubar1[ng,nt]))
-                            +G[ibottom,:]*(exp(exptrm[ibottom,:]*1-dtau[ibottom,:]/ubar1[ng,nt]) - 1.0)/(lamda[ibottom,:]*1*ubar1[ng,nt] - 1.0)
-                            +H[ibottom,:]*(1. - exp(-exptrm[ibottom,:]*1-dtau[ibottom,:]/ubar1[ng,nt]))/(lamda[ibottom,:]*1*ubar1[ng,nt] + 1.0)
-                            )
-                    
-                    xint_up_layer[ibottom,:] =( xint_up[ibottom+1,:]*exp(-0.5*dtau[ibottom,:]/ubar1[ng,nt]) 
+            for i in range(nlayer):
+            #direct beam
+                ibottom=nlayer-i-1
+                itop=i
+                xint_up[ibottom,:] =( xint_up[ibottom+1,:]*exp(-dtau[ibottom,:]/ubar1[ng,nt]) 
                     #single scattering albedo from sun beam (from ubar0 to ubar1)
-                            +(w0_og[ibottom,:]*F0PI/(4.*pi))
-                            *(p_single[ibottom,:])*exp(-taumid_og[ibottom,:]/ubar0[ng,nt])
-                            *(1. - exp(-0.5*dtau_og[ibottom,:]*(ubar0[ng,nt]+ubar1[ng,nt])
-                            /(ubar0[ng,nt]*ubar1[ng,nt])))*
-                            (ubar0[ng,nt]/(ubar0[ng,nt]+ubar1[ng,nt]))
-                        #multiple scattering terms p_single
-                            +A[ibottom,:]*(1. - exp(-0.5*dtau[ibottom,:] *(ubar0[ng,nt]+1*ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
-                            (ubar0[ng,nt]/(ubar0[ng,nt]+1*ubar1[ng,nt]))
-                            +G[ibottom,:]*(exp(0.5*exptrm[ibottom,:]*1-0.5*dtau[ibottom,:]/ubar1[ng,nt]) - 1.0)/(lamda[ibottom,:]*1*ubar1[ng,nt] - 1.0)
-                            +H[ibottom,:]*(1. - exp(-0.5*exptrm[ibottom,:]*1-0.5*dtau[ibottom,:]/ubar1[ng,nt]))/(lamda[ibottom,:]*1*ubar1[ng,nt] + 1.0)
-                            )
-
-
-                  
-                    xint_down[itop+1,:] =( xint_down[itop,:]*exp(-dtau[itop,:]/ubar1[ng,nt]) 
-                        #single scattering albedo from sun beam (from ubar0 to ubar1)
-                            +(w0_og[itop,:]*F0PI/(4.*pi))
-                            *(p_single[itop,:])*exp(-tau_og[itop,:]/ubar0[ng,nt])
-                            *(1. - exp(-dtau_og[itop,:]*(ubar0[ng,nt]+ubar1[ng,nt])
-                            /(ubar0[ng,nt]*ubar1[ng,nt])))*
-                            (ubar0[ng,nt]/(ubar0[ng,nt]+ubar1[ng,nt]))
-                            #multiple scattering terms p_single
-                            +A[itop,:]*(1. - exp(-dtau[itop,:] *(ubar0[ng,nt]+1*ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
-                            (ubar0[ng,nt]/(ubar0[ng,nt]+1*ubar1[ng,nt]))
-                            +G[itop,:]*(exp(exptrm[itop,:]*1-dtau[itop,:]/ubar1[ng,nt]) - 1.0)/(lamda[itop,:]*1*ubar1[ng,nt] - 1.0)
-                            +H[itop,:]*(1. - exp(-exptrm[itop,:]*1-dtau[itop,:]/ubar1[ng,nt]))/(lamda[itop,:]*1*ubar1[ng,nt] + 1.0)
-                            )
-                    #print(itop+1)
-                    xint_down_layer[itop,:] =( xint_down[itop,:]*exp(-0.5*dtau[itop,:]/ubar1[ng,nt]) 
-                        #single scattering albedo from sun beam (from ubar0 to ubar1)
-                            +(w0_og[itop,:]*F0PI/(4.*pi))
-                            *(p_single[itop,:])*exp(-taumid_og[itop,:]/ubar0[ng,nt])
-                            *(1. - exp(-0.5*dtau_og[itop,:]*(ubar0[ng,nt]+ubar1[ng,nt])
-                            /(ubar0[ng,nt]*ubar1[ng,nt])))*
-                            (ubar0[ng,nt]/(ubar0[ng,nt]+ubar1[ng,nt]))
-                            #multiple scattering terms p_single
-                            +A[itop,:]*(1. - exp(-0.5*dtau[itop,:] *(ubar0[ng,nt]+1*ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
-                            (ubar0[ng,nt]/(ubar0[ng,nt]+1*ubar1[ng,nt]))
-                            +G[itop,:]*(exp(0.5*exptrm[itop,:]*1-0.5*dtau[itop,:]/ubar1[ng,nt]) - 1.0)/(lamda[itop,:]*1*ubar1[ng,nt] - 1.0)
-                            +H[itop,:]*(1. - exp(-0.5*exptrm[itop,:]*1-0.5*dtau[itop,:]/ubar1[ng,nt]))/(lamda[itop,:]*1*ubar1[ng,nt] + 1.0)
-                            )
-
+                        +(w0_og[ibottom,:]*F0PI/(4.*pi))
+                        *(p_single[ibottom,:])*exp(-tau_og[ibottom,:]/ubar0[ng,nt])
+                        *(1. - exp(-dtau_og[ibottom,:]*(ubar0[ng,nt]+ubar1[ng,nt])
+                        /(ubar0[ng,nt]*ubar1[ng,nt])))*
+                        (ubar0[ng,nt]/(ubar0[ng,nt]+ubar1[ng,nt]))
+                    #multiple scattering terms p_single
+                        +A[ibottom,:]*(1. - exp(-dtau[ibottom,:] *(ubar0[ng,nt]+1*ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
+                        (ubar0[ng,nt]/(ubar0[ng,nt]+1*ubar1[ng,nt]))
+                        +G[ibottom,:]*(exp(exptrm[ibottom,:]*1-dtau[ibottom,:]/ubar1[ng,nt]) - 1.0)/(lamda[ibottom,:]*1*ubar1[ng,nt] - 1.0)
+                        +H[ibottom,:]*(1. - exp(-exptrm[ibottom,:]*1-dtau[ibottom,:]/ubar1[ng,nt]))/(lamda[ibottom,:]*1*ubar1[ng,nt] + 1.0)
+                        )
+                
+                xint_up_layer[ibottom,:] =( xint_up[ibottom+1,:]*exp(-0.5*dtau[ibottom,:]/ubar1[ng,nt]) 
+                #single scattering albedo from sun beam (from ubar0 to ubar1)
+                        +(w0_og[ibottom,:]*F0PI/(4.*pi))
+                        *(p_single[ibottom,:])*exp(-taumid_og[ibottom,:]/ubar0[ng,nt])
+                        *(1. - exp(-0.5*dtau_og[ibottom,:]*(ubar0[ng,nt]+ubar1[ng,nt])
+                        /(ubar0[ng,nt]*ubar1[ng,nt])))*
+                        (ubar0[ng,nt]/(ubar0[ng,nt]+ubar1[ng,nt]))
+                    #multiple scattering terms p_single
+                        +A[ibottom,:]*(1. - exp(-0.5*dtau[ibottom,:] *(ubar0[ng,nt]+1*ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
+                        (ubar0[ng,nt]/(ubar0[ng,nt]+1*ubar1[ng,nt]))
+                        +G[ibottom,:]*(exp(0.5*exptrm[ibottom,:]*1-0.5*dtau[ibottom,:]/ubar1[ng,nt]) - 1.0)/(lamda[ibottom,:]*1*ubar1[ng,nt] - 1.0)
+                        +H[ibottom,:]*(1. - exp(-0.5*exptrm[ibottom,:]*1-0.5*dtau[ibottom,:]/ubar1[ng,nt]))/(lamda[ibottom,:]*1*ubar1[ng,nt] + 1.0)
+                        )
 
 
                 
+                xint_down[itop+1,:] =( xint_down[itop,:]*exp(-dtau[itop,:]/ubar1[ng,nt]) 
+                    #single scattering albedo from sun beam (from ubar0 to ubar1)
+                        +(w0_og[itop,:]*F0PI/(4.*pi))
+                        *(p_single[itop,:])*exp(-tau_og[itop,:]/ubar0[ng,nt])
+                        *(1. - exp(-dtau_og[itop,:]*(ubar0[ng,nt]+ubar1[ng,nt])
+                        /(ubar0[ng,nt]*ubar1[ng,nt])))*
+                        (ubar0[ng,nt]/(ubar0[ng,nt]+ubar1[ng,nt]))
+                        #multiple scattering terms p_single
+                        +A[itop,:]*(1. - exp(-dtau[itop,:] *(ubar0[ng,nt]+1*ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
+                        (ubar0[ng,nt]/(ubar0[ng,nt]+1*ubar1[ng,nt]))
+                        +G[itop,:]*(exp(exptrm[itop,:]*1-dtau[itop,:]/ubar1[ng,nt]) - 1.0)/(lamda[itop,:]*1*ubar1[ng,nt] - 1.0)
+                        +H[itop,:]*(1. - exp(-exptrm[itop,:]*1-dtau[itop,:]/ubar1[ng,nt]))/(lamda[itop,:]*1*ubar1[ng,nt] + 1.0)
+                        )
+                #print(itop+1)
+                xint_down_layer[itop,:] =( xint_down[itop,:]*exp(-0.5*dtau[itop,:]/ubar1[ng,nt]) 
+                    #single scattering albedo from sun beam (from ubar0 to ubar1)
+                        +(w0_og[itop,:]*F0PI/(4.*pi))
+                        *(p_single[itop,:])*exp(-taumid_og[itop,:]/ubar0[ng,nt])
+                        *(1. - exp(-0.5*dtau_og[itop,:]*(ubar0[ng,nt]+ubar1[ng,nt])
+                        /(ubar0[ng,nt]*ubar1[ng,nt])))*
+                        (ubar0[ng,nt]/(ubar0[ng,nt]+ubar1[ng,nt]))
+                        #multiple scattering terms p_single
+                        +A[itop,:]*(1. - exp(-0.5*dtau[itop,:] *(ubar0[ng,nt]+1*ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
+                        (ubar0[ng,nt]/(ubar0[ng,nt]+1*ubar1[ng,nt]))
+                        +G[itop,:]*(exp(0.5*exptrm[itop,:]*1-0.5*dtau[itop,:]/ubar1[ng,nt]) - 1.0)/(lamda[itop,:]*1*ubar1[ng,nt] - 1.0)
+                        +H[itop,:]*(1. - exp(-0.5*exptrm[itop,:]*1-0.5*dtau[itop,:]/ubar1[ng,nt]))/(lamda[itop,:]*1*ubar1[ng,nt] + 1.0)
+                        )
 
-                flux_minus_all[ng,nt,:,:]=xint_down[:,:]*pi
-                flux_plus_all[ng,nt,:,:]=xint_up[:,:]*pi
 
-                flux_minus_midpt_all[ng,nt,:,:]=xint_down_layer[:,:]*pi
-                flux_plus_midpt_all[ng,nt,:,:]=xint_up_layer[:,:]*pi
 
             
+
+            flux_minus_all[ng,nt,:,:]=xint_down[:,:]*pi
+            flux_plus_all[ng,nt,:,:]=xint_up[:,:]*pi
+
+            flux_minus_midpt_all[ng,nt,:,:]=xint_down_layer[:,:]*pi
+            flux_plus_midpt_all[ng,nt,:,:]=xint_up_layer[:,:]*pi
+
+    xint_at_top[ng,nt,:] = flux_plus_all[0,0,0,:] /pi      ## Upward Intensity at top       
     if calc_type == 0:        
         return xint_at_top
     elif calc_type == 1:
