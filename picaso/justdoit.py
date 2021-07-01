@@ -2188,10 +2188,10 @@ def evolution_track(mass=1, age='all'):
         mass = f'00{mass}0'
         if len(mass)==5:mass=mass[1:]
         cold = pd.read_csv(os.path.join(__refdata__, 'evolution','cold_start',f'model_seq.{mass}'),skiprows=12,delim_whitespace=True,
-                    header=None,names=['age_years','log L','R_cm','Ts','Teff',
+                    header=None,names=['age_years','logL','R_cm','Ts','Teff',
                                        'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
         hot = pd.read_csv(os.path.join(__refdata__, 'evolution','hot_start',f'model_seq.{mass}'),skiprows=12,delim_whitespace=True,
-                    header=None,names=['age_years','log L','R_cm','Ts','Teff',
+                    header=None,names=['age_years','logL','R_cm','Ts','Teff',
                                        'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
         #return only what we want
         hot = hot.loc[:,cols_return]
