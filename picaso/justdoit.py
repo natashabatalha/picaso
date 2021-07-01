@@ -2223,7 +2223,7 @@ def young_planets():
     """
     Load planets from ZJ's paper
     """    
-    planets_df = pd.read_csv(os.path.join(__refdata__, 'evolution','benchmarks_age_lbol.csv'))
+    planets_df = pd.read_csv(os.path.join(__refdata__, 'evolution','benchmarks_age_lbol.csv'),skiprows=11)
     return planets_df
 
 def methodology_options(printout=True):
