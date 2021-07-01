@@ -39,13 +39,12 @@ extensions = ['sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
     'sphinx.ext.githubpages',
     'sphinx.ext.napoleon',
-    'nbsphinx',
-    'sphinxcontrib.bibtex']
+    'nbsphinx']
 
 nbsphinx_allow_errors = True
 nbsphinx_execute = 'never'
 
-bibtex_bibfiles = ['refs.bib']
+#bibtex_bibfiles = ['refs.bib']
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
