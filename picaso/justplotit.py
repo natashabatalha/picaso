@@ -59,18 +59,85 @@ def mean_regrid(x, y, newx=None, R=None):
 
 def plot_errorbar(x,y,e,plot,point_kwargs={}, error_kwargs={}):
     """
-    Plot error bars in bokeh plot
+    Plot only symmetric y error bars in bokeh plot
+
+    Parameters
+    ----------
+    x : array 
+        x data 
+    y : array 
+        y data 
+    e : array 
+        +- error for y which will be distributed as y+e, y-e on data point
+    plot : bokeh.figure 
+        Bokeh figure to add error bars to 
+    point_kwargs : dict 
+        formatting for circles 
+    error_kwargs : dict 
+        formatting for error bar lines
     """
+
     y_err = []
     x_err = []
-    for px, py, yerr in zip(x, y, e):
-        np.array(x_err.append((px, px)))
+    for px, py, yerr, xerr in zip(x, y, e):
+        np.array(x_err.append((px , px )))
         np.array(y_err.append((py - yerr, py + yerr)))
 
     plot.multi_line(x_err, y_err, **error_kwargs)
     plot.circle(x, y, **point_kwargs)
     return
 
+def plot_multierror(x,y,plot, dx_up=0, dx_low=0, dy_up=0, dy_low=0, 
+    point_kwargs={}, error_kwargs={}):
+    """
+    Plot non-symmetric x and y error bars in bokeh plot
+
+    Parameters
+    ----------
+    x : array 
+        x data 
+    y : array 
+        y data 
+    dx_up : array or int or float 
+        upper error bar to be distributed as x + dx_up
+    dx_low : array or int or float 
+        lower error bar to be distributed as x + dx_low 
+    dy_up : array or int or float 
+        upper error bar to be distributed as y + dy_up
+    dy_low : array or int or float 
+        lower error bar to be distributed as y + dy_low 
+    plot : bokeh.figure 
+        Bokeh figure to add error bars to 
+    point_kwargs : dict 
+        formatting for circles 
+    error_kwargs : dict 
+        formatting for error bar lines
+    """
+    #first turn everything into lists 
+    for i in [dx_up, dx_low, dy_up, dy_low]:
+        if isinstance(i, (float, int)):
+            i = [i]*len(x)
+
+    #first x error
+    y_err = []
+    x_err = []
+    for px, py, x_up, x_low in zip(x, y, dx_up, dx_low):
+        np.array(x_err.append((px - x_low, px + x_up)))
+        np.array(y_err.append((py, py )))
+
+    plot.multi_line(x_err, y_err, **error_kwargs)
+
+    #first y error
+    y_err = []
+    x_err = []
+    for px, py, y_up, y_low in zip(x, y, dy_up, dy_low):
+        np.array(x_err.append((px , px )))
+        np.array(y_err.append((py - y_low, py + y_up)))
+
+    plot.multi_line(x_err, y_err, **error_kwargs)
+
+    plot.circle(x, y, **point_kwargs)
+    return
 def mixing_ratio(full_output,limit=50, **kwargs):
     """Returns plot of mixing ratios 
 
@@ -1419,9 +1486,9 @@ def plot_evolution(evo, y = "Teff",**kwargs):
         But, age_years is not an option as it is not a function of mass. 
         Current options : [logL, Teff, grav_cgs]
     """
-    kwargs['plot_height'] = kwargs.get('plot_height',300)
-    kwargs['plot_width'] = kwargs.get('plot_width',400)
-    kwargs['title'] = kwargs.get('title','Outgoing Thermal Radiation')
+    kwargs['plot_height'] = kwargs.get('plot_height',400)
+    kwargs['plot_width'] = kwargs.get('plot_width',500)
+    kwargs['title'] = kwargs.get('title','Thermal Evolution')
     kwargs['y_axis_label'] = kwargs.get('y_axis_label',y)
     kwargs['x_axis_label'] = kwargs.get('x_axis_label','Age(years)')
     kwargs['x_axis_type'] = kwargs.get('x_axis_type','log') 
@@ -1465,3 +1532,38 @@ def plot_evolution(evo, y = "Teff",**kwargs):
     f.add_layout(color_bar, 'right')
     return f
         
+def heatmap_taus(out, R=0):
+    """
+    Plots a heatmap of the tau fields (taugas, taucld, tauray)
+
+    Parameters
+    ----------
+    out : dict 
+        full_ouput dictionary
+    R : int 
+        Resolution to bin to (if zero, no binning)
+    """
+
+    for it, itau in enumerate(['taugas','taucld','tauray']):
+
+        tau_bin = []
+        for i in range(out[itau].shape[0]):
+            if R == 0 : 
+                x,y = out['wavenumber'], out['full_output'][itau][i,:,0]
+            else: 
+                x,y = jdi.mean_regrid(out['wavenumber'],
+                                  out['full_output'][itau][i,:,0], R=150)
+            tau_bin += [[y]]
+
+        tau_bin = np.array(np.log10(tau_bin))[:,0,:]
+        X,Y = np.meshgrid(1e4/x,cldy_hot_output[ikey]['full_output']['layer']['pressure'])
+        Z = tau_bin
+        pcm=ax[it].pcolormesh(X, Y, Z)
+        cbar=fig.colorbar(pcm, ax=ax[it])
+        pcm.set_clim(-3.0, 3.0)
+        ax[it].set_title(itau)
+        ax[it].set_yscale('log')
+        ax[it].set_ylim([1e2,1e-3])
+        ax[it].set_ylabel('Pressure(bars)')
+        ax[it].set_ylabel('Wavelength(um)')
+        cbar.set_label('log Opacity')
