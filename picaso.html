@@ -1512,7 +1512,7 @@ propertly formatted (e.g. Sodium must be Na not NA, Titanium Oxide must be TiO n
 <dl class="function">
 <dt id="picaso.justdoit.get_targets">
 <code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">get_targets</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.get_targets" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function to grab available targets</p>
+<dd><p>Function to grab available targets using exoplanet archive data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p></p>
@@ -2116,8 +2116,9 @@ that have been added to inptus class.</p>
 <dl class="function">
 <dt id="picaso.justdoit.load_planet">
 <code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">load_planet</code><span class="sig-paren">(</span><em class="sig-param">df</em>, <em class="sig-param">opacity</em>, <em class="sig-param">phase_angle=0</em>, <em class="sig-param">stellar_db='phoenix'</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">**planet_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.load_planet" title="Permalink to this definition">¶</a></dt>
-<dd><p>Wrapper to simplify PICASO run. This really turns chimera into a black box. This was created
-specifically Sagan School tutorial.</p>
+<dd><p>Wrapper to simplify PICASO run. This really turns picaso into a black box. This was created
+specifically Sagan School tutorial. It grabs planet parameters from the user supplied df, then
+adds a parametric PT profile (Guillot et al. 2010). The user still has to add chemistry.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -2212,6 +2213,12 @@ developers.</p></li>
 <dt id="picaso.justdoit.stream_options">
 <code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">stream_options</code><span class="sig-paren">(</span><em class="sig-param">printout=True</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.stream_options" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieve all the options for stream</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="picaso.justdoit.young_planets">
+<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">young_planets</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.young_planets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load planets from ZJ’s paper</p>
 </dd></dl>
 
 </div>
@@ -2339,6 +2346,20 @@ separate lists and returns the indecies of the bad bands in list form.</p>
 <li><p><strong>residual</strong> (<em>np.array</em>) – Model 1 - model 2</p></li>
 <li><p><strong>sensitivity</strong> (<em>float</em>) – This will pick out anything that is worse than stdev(residual)/sensitivity. Larger
 numbers pick out more problems.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="picaso.justplotit.heatmap_taus">
+<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">heatmap_taus</code><span class="sig-paren">(</span><em class="sig-param">out</em>, <em class="sig-param">R=0</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.heatmap_taus" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots a heatmap of the tau fields (taugas, taucld, tauray)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out</strong> (<em>dict</em>) – full_ouput dictionary</p></li>
+<li><p><strong>R</strong> (<em>int</em>) – Resolution to bin to (if zero, no binning)</p></li>
 </ul>
 </dd>
 </dl>
@@ -2477,20 +2498,64 @@ opacity is assigned for slabs.</p></li>
 <dl class="function">
 <dt id="picaso.justplotit.plot_errorbar">
 <code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">plot_errorbar</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">e</em>, <em class="sig-param">plot</em>, <em class="sig-param">point_kwargs={}</em>, <em class="sig-param">error_kwargs={}</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.plot_errorbar" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot error bars in bokeh plot</p>
+<dd><p>Plot only symmetric y error bars in bokeh plot</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array</em>) – x data</p></li>
+<li><p><strong>y</strong> (<em>array</em>) – y data</p></li>
+<li><p><strong>e</strong> (<em>array</em>) – +- error for y which will be distributed as y+e, y-e on data point</p></li>
+<li><p><strong>plot</strong> (<em>bokeh.figure</em>) – Bokeh figure to add error bars to</p></li>
+<li><p><strong>point_kwargs</strong> (<em>dict</em>) – formatting for circles</p></li>
+<li><p><strong>error_kwargs</strong> (<em>dict</em>) – formatting for error bar lines</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="picaso.justplotit.plot_evolution">
-<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">plot_evolution</code><span class="sig-paren">(</span><em class="sig-param">evo</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.plot_evolution" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">plot_evolution</code><span class="sig-paren">(</span><em class="sig-param">evo</em>, <em class="sig-param">y='Teff'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.plot_evolution" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot evolution of tracks. Requires input from justdoit:</p>
 <p>evo = justdoit.evolution_track(mass=’all’,age=’all’)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>evo</strong> (<em>dict</em>) – Output from the function justdoit.evolution_track(mass=’all’,age=’all’)</p></li>
+<li><p><strong>y</strong> (<em>str</em>) – What to plot on the y axis. Can be anything in the pandas that as the mass
+attached to the end. E.g. “Teff” is an option because there exists “Teff1Mj”.
+But, age_years is not an option as it is not a function of mass.
+Current options : [logL, Teff, grav_cgs]</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="picaso.justplotit.plot_format">
 <code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">plot_format</code><span class="sig-paren">(</span><em class="sig-param">df</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.plot_format" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to reformat plots</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="picaso.justplotit.plot_multierror">
+<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">plot_multierror</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">plot</em>, <em class="sig-param">dx_up=0</em>, <em class="sig-param">dx_low=0</em>, <em class="sig-param">dy_up=0</em>, <em class="sig-param">dy_low=0</em>, <em class="sig-param">point_kwargs={}</em>, <em class="sig-param">error_kwargs={}</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.plot_multierror" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot non-symmetric x and y error bars in bokeh plot</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array</em>) – x data</p></li>
+<li><p><strong>y</strong> (<em>array</em>) – y data</p></li>
+<li><p><strong>dx_up</strong> (<em>array</em><em> or </em><em>int</em><em> or </em><em>float</em>) – upper error bar to be distributed as x + dx_up</p></li>
+<li><p><strong>dx_low</strong> (<em>array</em><em> or </em><em>int</em><em> or </em><em>float</em>) – lower error bar to be distributed as x + dx_low</p></li>
+<li><p><strong>dy_up</strong> (<em>array</em><em> or </em><em>int</em><em> or </em><em>float</em>) – upper error bar to be distributed as y + dy_up</p></li>
+<li><p><strong>dy_low</strong> (<em>array</em><em> or </em><em>int</em><em> or </em><em>float</em>) – lower error bar to be distributed as y + dy_low</p></li>
+<li><p><strong>plot</strong> (<em>bokeh.figure</em>) – Bokeh figure to add error bars to</p></li>
+<li><p><strong>point_kwargs</strong> (<em>dict</em>) – formatting for circles</p></li>
+<li><p><strong>error_kwargs</strong> (<em>dict</em>) – formatting for error bar lines</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
