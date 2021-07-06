@@ -53,10 +53,7 @@ Download and Link Pysynphot Stellar Data
 
 In order to get stellar spectra you will have to download the stellar spectra here from PySynphot: 
 
-<<<<<<< Updated upstream
-1) PICASO uses the `Pysynphot package <https://pysynphot.readthedocs.io/en/latest/appendixa.html>`_ which has several download options for stellar spectra. The Defulat for `PICASO` is Castelli-Kurucz Atlas: `ck04models <https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/>`_. 
-=======
-1) Download the `stellar spectra <https://pysynphot.readthedocs.io/en/latest/appendixa.html>`_. The Defulat for `PICASO` is Castelli-Kurucz Atlas: `ck04models <https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/>`_. 
+1) PICASO uses the `Pysynphot package <https://pysynphot.readthedocs.io/en/latest/appendixa.html>`_ which has several download options for stellar spectra. The Defulat for ``PICASO`` is Castelli-Kurucz Atlas: `ck04models <https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/>`_. 
 
 You can download them by doing this: 
 
