@@ -96,11 +96,12 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html">The Tutorials</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://arxiv.org/abs/1904.09355">The Paper</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contribution.html">Contributing</a></li>
 </ul>
 
             
@@ -230,16 +231,20 @@ base_cases      config.json     opacities
 <div class="section" id="download-and-link-pysynphot-stellar-data">
 <h2>Download and Link Pysynphot Stellar Data<a class="headerlink" href="#download-and-link-pysynphot-stellar-data" title="Permalink to this headline">¶</a></h2>
 <p>In order to get stellar spectra you will have to download the stellar spectra here from PySynphot:</p>
-<ol class="arabic simple">
-<li><p>Download the <a class="reference external" href="https://pysynphot.readthedocs.io/en/latest/appendixa.html">stellar spectra</a>. The Defulat for <cite>PICASO</cite> is Castelli-Kurucz Atlas: <a class="reference external" href="https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/">ck04models</a>.</p></li>
-</ol>
+<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; Updated upstream
+1) PICASO uses the <a class="reference external" href="https://pysynphot.readthedocs.io/en/latest/appendixa.html">Pysynphot package</a> which has several download options for stellar spectra. The Defulat for <cite>PICASO</cite> is Castelli-Kurucz Atlas: <a class="reference external" href="https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/">ck04models</a>.
+=======
+1) Download the <a class="reference external" href="https://pysynphot.readthedocs.io/en/latest/appendixa.html">stellar spectra</a>. The Defulat for <cite>PICASO</cite> is Castelli-Kurucz Atlas: <a class="reference external" href="https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/">ck04models</a>.</p>
 <p>You can download them by doing this:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget http://ssb.stsci.edu/trds/tarfiles/synphot3.tar.gz
 </pre></div>
 </div>
 <p>When you untar this you should get a directory structure that looks like this <code class="docutils literal notranslate"><span class="pre">&lt;path&gt;/grp/redcat/trds/grid/ck04models</span></code>. Some other people have reported a directory structure that looks like this <code class="docutils literal notranslate"><span class="pre">&lt;path&gt;/grp/redcat/trds/grid/ck04models</span></code>. <strong>The full directory structure does not matter</strong>. Only the last portion <code class="docutils literal notranslate"><span class="pre">grid/ck04models</span></code>. You will need to create an enviornment variable that points to where <code class="docutils literal notranslate"><span class="pre">grid/</span></code> is located. See below.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget -r https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/
+</pre></div>
+</div>
 <ol class="arabic simple" start="2">
-<li><p>Create environment variable</p></li>
+<li><p>Create environment variable via bash</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>vi ~/.bash_profle
 </pre></div>
@@ -259,6 +264,12 @@ grid
 </pre></div>
 </div>
 <p>Where the folder <code class="docutils literal notranslate"><span class="pre">grid/</span></code> contains whatever <code class="docutils literal notranslate"><span class="pre">pysynphot</span></code> data files you have downloaded (e.g. a folder called <code class="docutils literal notranslate"><span class="pre">ck04models/</span></code>).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ol class="arabic simple">
+<li><p>STScI serves these files in a few different places, with a few different file structures. <strong>PySynphot only cares that the environment variable points to a path with a folder called `grid`. So do not worry if `grp/hst/cdbs` appears different.</strong></p></li>
+</ol>
+</div>
 </div>
 </div>
 
