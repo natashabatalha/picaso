@@ -96,12 +96,11 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html">The Tutorials</a></li>
-<li class="toctree-l1"><a class="reference internal" href="picaso.html">The Code</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contribution.html">Contributing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="workshops.html">Workshop Material</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="picaso.html">The Code</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://arxiv.org/abs/1904.09355">The Paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribution.html">Contributing</a></li>
 </ul>
 
             
@@ -232,34 +231,34 @@ base_cases      config.json     opacities
 <h2>Download and Link Pysynphot Stellar Data<a class="headerlink" href="#download-and-link-pysynphot-stellar-data" title="Permalink to this headline">¶</a></h2>
 <p>In order to get stellar spectra you will have to download the stellar spectra here from PySynphot:</p>
 <ol class="arabic simple">
-<li><p>PICASO uses the <a class="reference external" href="https://pysynphot.readthedocs.io/en/latest/appendixa.html">Pysynphot package</a> which has several download options for stellar spectra. The Defulat for <cite>PICASO</cite> is Castelli-Kurucz Atlas: <a class="reference external" href="https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/">ck04models</a>.</p></li>
+<li><p>Download the <a class="reference external" href="https://pysynphot.readthedocs.io/en/latest/appendixa.html">stellar spectra</a>. The Defulat for <cite>PICASO</cite> is Castelli-Kurucz Atlas: <a class="reference external" href="https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/">ck04models</a>.</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget -r https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/
+<p>You can download them by doing this:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget http://ssb.stsci.edu/trds/tarfiles/synphot3.tar.gz
 </pre></div>
 </div>
+<p>When you untar this you should get a directory structure that looks like this <cite>&lt;path&gt;/grp/redcat/trds/grid/ck04models</cite>. Some other people have reported a directory structure that looks like this <cite>&lt;path&gt;/grp/redcat/trds/grid/ck04models</cite>. <a href="#id1"><span class="problematic" id="id2">**</span></a>The full directory structure does not matter. Only the last portion <cite>grid/ck04models</cite>. You will need to create an enviornment variable that points to where <cite>grid/</cite> is located. See below.</p>
 <ol class="arabic simple" start="2">
-<li><p>Create environment variable via bash</p></li>
+<li><p>Create environment variable</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>vi ~/.bash_profle
 </pre></div>
 </div>
 <p>Add add this line:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">PYSYN_CDBS</span><span class="o">=</span><span class="s2">&quot;/path/to/data/files/grp/hst/cdbs&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">PYSYN_CDBS</span><span class="o">=</span><span class="s2">&quot;&lt;your_path&gt;/grp/redcat/trds&quot;</span>
 </pre></div>
 </div>
-<p>Should look something like this</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> /path/to/data/files/grp/hst/cdbs
+<p>Then always make sure to source your bash profile after you make changes.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> ~/.bash_profile
+</pre></div>
+</div>
+<p>Now you should be able to check the path:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$PYSYN_CDBS</span>
 ls
 grid
 </pre></div>
 </div>
-<p>Where <cite>grid</cite> contains whatever <cite>pysynphot</cite> data files you have downloaded (e.g. a folder called <cite>ck04models</cite>).</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<ol class="arabic simple">
-<li><p>STScI serves these files in a few different places, with a few different file structures. <strong>PySynphot only cares that the environment variable points to a path with a folder called `grid`. So do not worry if `grp/hst/cdbs` appears different.</strong></p></li>
-</ol>
-</div>
+<p>Where the folder <cite>grid</cite> contains whatever <cite>pysynphot</cite> data files you have downloaded (e.g. a folder called <cite>ck04models</cite>).</p>
 </div>
 </div>
 

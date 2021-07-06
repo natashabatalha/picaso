@@ -90,10 +90,11 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html">The Tutorials</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">The Code</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-picaso.atmsetup">picaso.atmsetup module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-picaso.build_3d_input">picaso.build_3d_input module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#picaso-build-3d-input-module">picaso.build_3d_input module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-picaso.disco">picaso.disco module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-picaso.elements">picaso.elements module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#requirements">Requirements</a></li>
@@ -101,20 +102,18 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#module-picaso.fluxes">picaso.fluxes module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-picaso.io_utils">picaso.io_utils module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-picaso.justdoit">picaso.justdoit module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#picaso-justdoit-module">picaso.justdoit module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-picaso.justplotit">picaso.justplotit module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-picaso.opacity_factory">picaso.opacity_factory module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-picaso.optics">picaso.optics module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-picaso.test">picaso.test module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#picaso-test-module">picaso.test module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-picaso.wavelength">picaso.wavelength module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-picaso">Module contents</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="contribution.html">Contributing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="workshops.html">Workshop Material</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://arxiv.org/abs/1904.09355">The Paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribution.html">Contributing</a></li>
 </ul>
 
             
@@ -422,165 +421,8 @@ user inputs case sensitive molecules i.e. TiO instead of TIO.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-picaso.build_3d_input">
-<span id="picaso-build-3d-input-module"></span><h2>picaso.build_3d_input module<a class="headerlink" href="#module-picaso.build_3d_input" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="picaso.build_3d_input.lon_lat_to_cartesian">
-<code class="sig-prename descclassname">picaso.build_3d_input.</code><code class="sig-name descname">lon_lat_to_cartesian</code><span class="sig-paren">(</span><em class="sig-param">lon</em>, <em class="sig-param">lat</em>, <em class="sig-param">R=1</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.build_3d_input.lon_lat_to_cartesian" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculates lon, lat coordinates of a point on a sphere with
-radius R</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>lon</strong> (<em>array</em>) – Longitude</p></li>
-<li><p><strong>lat</strong> (<em>array</em>) – Latitude</p></li>
-<li><p><strong>R</strong> (<em>float</em>) – radius of sphere</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>x, y, z</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.build_3d_input.make_3d_cld_input">
-<code class="sig-prename descclassname">picaso.build_3d_input.</code><code class="sig-name descname">make_3d_cld_input</code><span class="sig-paren">(</span><em class="sig-param">ng</em>, <em class="sig-param">nt</em>, <em class="sig-param">phase_angle</em>, <em class="sig-param">input_file</em>, <em class="sig-param">output_file</em>, <em class="sig-param">lat_range=None</em>, <em class="sig-param">lon_range=None</em>, <em class="sig-param">rand_coverage=1</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.build_3d_input.make_3d_cld_input" title="Permalink to this definition">¶</a></dt>
-<dd><p>Discontinued
-Program to create 3d CLOUD input. Used to feed GCM input into disco ball.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>ng</strong> (<em>int</em>) – Number of gauss angles</p></li>
-<li><p><strong>nt</strong> (<em>int</em>) – Number of Tchebysehv angles</p></li>
-<li><p><strong>phase_angle</strong> (<em>float</em>) – Geometry of phase angle</p></li>
-<li><p><strong>input_file</strong> (<em>str</em>) – CLD input file you want to create the 3d grid from. Currently takes in a single 1d CLD profile.
-Input file must be structured with the following columns in the correct order: [‘lvl’, ‘wv’,’opd’,’g0’,’w0’,’sigma’]
-input file</p></li>
-<li><p><strong>output_file</strong> (<em>str</em>) – Output file location</p></li>
-<li><p><strong>lat_range</strong> (<em>list</em>) – (Optional)Range of latitudes to exclude in the CLD file</p></li>
-<li><p><strong>lon_range</strong> (<em>list</em>) – (Optional)Range of longitudes to exclud in the CLD file</p></li>
-<li><p><strong>rand_coverage</strong> (<em>float</em>) – (Optional)Fractional cloud coverage. rand_cov=1 introduces full cloud coverage. rand_cov=0 has no
-coverage.</p></li>
-<li><p><strong>**kwargs</strong> (<em>dict</em>) – Key word arguments used for <cite>panads.read_csv</cite></p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>Creates output file. No other returns.</p>
-</dd>
-</dl>
-<p class="rubric">Examples</p>
-<p>Basic use of creating a 3D file:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">phase_angle</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">number_gauss_angles</span> <span class="o">=</span> <span class="mi">2</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">number_tcheby_angles</span> <span class="o">=</span> <span class="mi">3</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">phase_angle</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">input_file</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_cld</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">output_file</span><span class="o">=</span><span class="s1">&#39;jupiter3D.hdf5&#39;</span>
-<span class="go">&gt;&gt;&gt;make_3d_pt_input(number_gauss_angles, number_tcheby_angles,</span>
-<span class="gp">&gt;&gt;&gt; </span>        <span class="n">phase_angle</span><span class="p">,</span> <span class="n">input_file</span><span class="p">,</span><span class="n">output_file</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.build_3d_input.make_3d_pt_input">
-<code class="sig-prename descclassname">picaso.build_3d_input.</code><code class="sig-name descname">make_3d_pt_input</code><span class="sig-paren">(</span><em class="sig-param">ng</em>, <em class="sig-param">nt</em>, <em class="sig-param">phase_angle</em>, <em class="sig-param">input_file</em>, <em class="sig-param">output_file</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.build_3d_input.make_3d_pt_input" title="Permalink to this definition">¶</a></dt>
-<dd><p>Discontinued
-Program to create 3d PT input. Used to feed GCM input into disco ball.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>ng</strong> (<em>int</em>) – Number of gauss angles</p></li>
-<li><p><strong>nt</strong> (<em>int</em>) – Number of Tchebysehv angles</p></li>
-<li><p><strong>phase_angle</strong> (<em>float</em>) – Geometry of phase angle</p></li>
-<li><p><strong>input_file</strong> (<em>str</em>) – PT input file you want to create the 3d grid from. Currently takes in a single 1d PT profile.
-Must have labeled, whitespace delimeted columns. In the columns, must have <cite>temperature</cite>,
-<cite>pressure</cite>, and at least some molecular species (which are ALL case-sensitive)</p></li>
-<li><p><strong>output_file</strong> (<em>str</em>) – Output file location</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>Creates output file. No other returns.</p>
-</dd>
-</dl>
-<p class="rubric">Examples</p>
-<p>Basic use of creating a 3D file:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">phase_angle</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">number_gauss_angles</span> <span class="o">=</span> <span class="mi">2</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">number_tcheby_angles</span> <span class="o">=</span> <span class="mi">3</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">phase_angle</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">input_file</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_pt</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">output_file</span><span class="o">=</span><span class="s1">&#39;jupiter3D.hdf5&#39;</span>
-<span class="go">&gt;&gt;&gt;make_3d_pt_input(number_gauss_angles, number_tcheby_angles,</span>
-<span class="gp">&gt;&gt;&gt; </span>        <span class="n">phase_angle</span><span class="p">,</span> <span class="n">input_file</span><span class="p">,</span><span class="n">output_file</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Can also use <cite>**kwargs</cite> to control how pandas reads in input file</p>
-<p>&gt;&gt;&gt;make_3d_pt_input(number_gauss_angles, number_tcheby_angles,
-&gt;&gt;&gt;         phase_angle, input_file,output_file,usecols=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,20,21])</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.build_3d_input.rebin_mitgcm_cld">
-<code class="sig-prename descclassname">picaso.build_3d_input.</code><code class="sig-name descname">rebin_mitgcm_cld</code><span class="sig-paren">(</span><em class="sig-param">ng, nt, phase_angle, input_file, output_file, names=['i', 'j', 'opd', 'g0', 'w0']</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.build_3d_input.rebin_mitgcm_cld" title="Permalink to this definition">¶</a></dt>
-<dd><p>Rebin post processed GCM cloud grid to a smaller grid. This function creates a pickle file
-that can be directly input into <cite>clouds_3d</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>ng</strong> (<em>int</em>) – Number of gauss angles</p></li>
-<li><p><strong>nt</strong> (<em>int</em>) – Number of Tchebysehv angles</p></li>
-<li><p><strong>phase_angle</strong> (<em>float</em>) – Geometry of phase angle (radians)</p></li>
-<li><p><strong>input_file</strong> (<em>str</em>) – PT input file you want to create the 3d grid from. Currently takes in a single 1d PT profile.
-Must have labeled, whitespace delimeted columns. In the columns, must have <cite>temperature</cite>,
-<cite>pressure</cite>, and at least some molecular species (which are ALL case-sensitive)</p></li>
-<li><p><strong>output_file</strong> (<em>str</em>) – output file location</p></li>
-<li><p><strong>names</strong> (<em>list</em><em>,</em><em>str</em><em>,</em><em>optional</em>) – List of names for the post processed file. The Default value is what generallly
-comes out of A&amp;M code.. But double check before running!!</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.build_3d_input.rebin_mitgcm_pt">
-<code class="sig-prename descclassname">picaso.build_3d_input.</code><code class="sig-name descname">rebin_mitgcm_pt</code><span class="sig-paren">(</span><em class="sig-param">ng</em>, <em class="sig-param">nt</em>, <em class="sig-param">phase_angle</em>, <em class="sig-param">input_file</em>, <em class="sig-param">output_file</em>, <em class="sig-param">p_unit='Pa'</em>, <em class="sig-param">kzz_unit='m*m/s'</em>, <em class="sig-param">run_chem=False</em>, <em class="sig-param">MH=None</em>, <em class="sig-param">CtoO=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.build_3d_input.rebin_mitgcm_pt" title="Permalink to this definition">¶</a></dt>
-<dd><p>Rebin GCM grid to a smaller grid. This function creates a pickle file
-that can be directly input into <cite>atmosphere_3d</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>ng</strong> (<em>int</em>) – Number of gauss angles</p></li>
-<li><p><strong>nt</strong> (<em>int</em>) – Number of Tchebysehv angles</p></li>
-<li><p><strong>phase_angle</strong> (<em>float</em>) – Geometry of phase angle (radians)</p></li>
-<li><p><strong>input_file</strong> (<em>str</em>) – PT input file you want to create the 3d grid from. Currently takes in a single 1d PT profile.
-Must have labeled, whitespace delimeted columns. In the columns, must have <cite>temperature</cite>,
-<cite>pressure</cite>, and at least some molecular species (which are ALL case-sensitive)</p></li>
-<li><p><strong>output_file</strong> (<em>str</em>) – output file location</p></li>
-<li><p><strong>p_unit</strong> (<em>str</em><em>,</em><em>optional</em>) – Pressure Unit (default Pascal)</p></li>
-<li><p><strong>kzz_unit</strong> (<em>str</em><em>,</em><em>optional</em>) – Kzz Unit (default is m*m/s)</p></li>
-<li><p><strong>run_chem</strong> (<em>bool</em><em> , </em><em>optional</em>) – (Optional) runs chemistry and adds to json file</p></li>
-<li><p><strong>run_chem</strong> – (Optional) MIT gcm output doesn’t usually come with chemistry in the files
-If this is the case then you can post process chemistry by setting this to True.</p></li>
-<li><p><strong>MH</strong> (<em>float</em><em> , </em><em>optional</em>) – (Optional) This is only used if run_chem is set to True. It is the Metallicity of
-the planet in NON log units. MH = 1 is solar.</p></li>
-<li><p><strong>CtoO</strong> (<em>float</em><em> , </em><em>optional</em>) – (Optional) This is the C/O ratio of the planet also in NON log units.
-CtoO = 0.55 is solar.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
+<div class="section" id="picaso-build-3d-input-module">
+<h2>picaso.build_3d_input module<a class="headerlink" href="#picaso-build-3d-input-module" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-picaso.disco">
 <span id="picaso-disco-module"></span><h2>picaso.disco module<a class="headerlink" href="#module-picaso.disco" title="Permalink to this headline">¶</a></h2>
@@ -857,11 +699,12 @@ Remember, the output of A &amp; M code does not separate back and forward scatte
 <li><p><strong>constant_forward</strong> (<em>float</em>) – (Optional), If using the TTHG phase function. Must specify the assymetry of forward scatterer.
 Remember, the output of A &amp; M code does not separate back and forward scattering.</p></li>
 <li><p><strong>tridiagonal</strong> (<em>int</em>) – 0 for tridiagonal, 1 for pentadiagonal</p></li>
+<li><p><strong>calc_type</strong> (<em>int</em>) – 0 for Outgoing Intensity on Top, 1 for layer and level upwelling and downwelling fluxes</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><em>intensity at the top of the atmosphere for all the different ubar1 and ubar2</em></p></li>
+<li><p><em>intensity at the top of the atmosphere for all the different ubar1 and ubar2 if calc_type is 0 and</em> – layer and level upwelling and downwelling fluxes if calc_type is 1</p></li>
 <li><p><em>To Do</em></p></li>
 <li><p><em>—–</em></p></li>
 <li><p><em>- F0PI Solar flux shouldn’t always be 1.. Follow up to make sure that this isn’t a bad</em> – hardwiring to solar, despite “relative albedo”</p></li>
@@ -1034,14 +877,18 @@ that is sometimes included in reflected light calculations.</p></li>
 computed in <cite>picaso.disco</cite></p></li>
 <li><p><strong>surf_reflect</strong> (<em>numpy.ndarray</em>) – Surface reflectivity as a function of wavenumber.</p></li>
 <li><p><strong>tridiagonal</strong> (<em>int</em>) – 0 for tridiagonal, 1 for pentadiagonal</p></li>
+<li><p><strong>calc_type</strong> (<em>int</em>) – 0 for outgoing flux at top level output, 1 for upward and downward layer and level flux outputs</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Thermal flux in CGS units (erg/cm3/s) in a matrix that is
-numg x numt x nwno</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>numpy.ndarray</p>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>numpy.ndarray</em> – Thermal flux in CGS units (erg/cm3/s) in a matrix that is
+numg x numt x nwno if calc_type=0</p></li>
+<li><p><em>numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray</em> – Thermal flux in CGS units (erg/cm3/s) in four matrices if calc_type=0: that is
+level downward flux and level upward flux numg x numt x nlevel x nwno and then
+layer downward flux and layer upward flux numg x numt x nlayer x nwno</p></li>
+</ul>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1425,802 +1272,8 @@ e.g. {‘wmin’:0.3, ‘wmax’:1, ‘R’:5000} for opacity grid</p></li>
 </dd></dl>
 
 </div>
-<div class="section" id="module-picaso.justdoit">
-<span id="picaso-justdoit-module"></span><h2>picaso.justdoit module<a class="headerlink" href="#module-picaso.justdoit" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="picaso.justdoit.HJ_cld">
-<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">HJ_cld</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.HJ_cld" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function to get rough Jupiter Cloud model with fsed=3</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.justdoit.HJ_pt">
-<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">HJ_pt</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.HJ_pt" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function to get Jupiter’s PT profile</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.justdoit.HJ_pt_3d">
-<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">HJ_pt_3d</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.HJ_pt_3d" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function to get Jupiter’s PT profile</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.justdoit.all_planets">
-<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">all_planets</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.all_planets" title="Permalink to this definition">¶</a></dt>
-<dd><p>Load all planets from <a class="reference external" href="https://exoplanetarchive.ipac.caltech.edu">https://exoplanetarchive.ipac.caltech.edu</a></p>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.justdoit.evolution_track">
-<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">evolution_track</code><span class="sig-paren">(</span><em class="sig-param">mass=1</em>, <em class="sig-param">age='all'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.evolution_track" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot or grab an effective temperature for a certain age and mass planet.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>mass</strong> (<em>int</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – (Optional) Mass of planet, in Jupiter Masses. Only valid options = 1, 2, 4, 6, 8, 10,’all’
-If another value is entered, it will find the nearest option.</p></li>
-<li><p><strong>age</strong> (<em>float</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – (Optional) Age of planet, in years or ‘all’ to return full model</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>if age=None</strong> (<em>data = {‘cold’:all_data_cold_start, ‘hot’:all_data_hot_start}</em>)</p></li>
-<li><p><strong>if age=float</strong> (<em>data = {‘cold’:data_at_age, ‘hot’:data_at_age}</em>)</p></li>
-<li><p><strong>if plot=False</strong> (<em>returns data</em>)</p></li>
-<li><p><strong>else</strong> (<em>returns data, plot</em>)</p></li>
-</ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.justdoit.get_contribution">
-<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">get_contribution</code><span class="sig-paren">(</span><em class="sig-param">bundle</em>, <em class="sig-param">opacityclass</em>, <em class="sig-param">at_tau=1</em>, <em class="sig-param">dimension='1d'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.get_contribution" title="Permalink to this definition">¶</a></dt>
-<dd><p>Currently top level program to run albedo code</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>bundle</strong> (<em>dict</em>) – This input dict is built by loading the input = <cite>justdoit.load_inputs()</cite></p></li>
-<li><p><strong>opacityclass</strong> (<em>class</em>) – Opacity class from <cite>justdoit.opannection</cite></p></li>
-<li><p><strong>at_tau</strong> (<em>float</em>) – (Optional) Default = 1, This is to compute the pressure level at which cumulative opacity reaches
-at_tau. Usually users want to know when the cumulative opacity reaches a tau of 1.</p></li>
-<li><p><strong>dimension</strong> (<em>str</em>) – (Optional) Default = ‘1d’. Currently only 1d is supported.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>taus_by_species</strong> (<em>dict</em>) – Each dictionary entry is a nlayer x nwave that represents the
-per layer optical depth for that molecule. If you do not see
-a molecule that you have added as input, check to make sure it is
-propertly formatted (e.g. Sodium must be Na not NA, Titanium Oxide must be TiO not TIO)</p></li>
-<li><p><strong>cumsum_taus</strong> (<em>dict</em>) – Each dictionary entry is a nlevel x nwave that represents the cumulative summed opacity
-for that molecule. If you do not see a molecule that you have added as input, check to make sure it is
-propertly formatted (e.g. Sodium must be Na not NA, Titanium Oxide must be TiO not TIO)</p></li>
-<li><p><strong>at_pressure_array</strong> (<em>dict</em>) – Each dictionary entry is a nwave array that represents the
-pressure level where the cumulative opacity reaches the value specieid by the user through <cite>at_tau</cite>.
-If you do not see a molecule that you have added as input, check to make sure it is
-a molecule that you have added as input, check to make sure it is
-propertly formatted (e.g. Sodium must be Na not NA, Titanium Oxide must be TiO not TIO)</p></li>
-</ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.justdoit.get_targets">
-<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">get_targets</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.get_targets" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function to grab available targets using exoplanet archive data.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p></p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>Dataframe from Exoplanet Archive</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="class">
-<dt id="picaso.justdoit.inputs">
-<em class="property">class </em><code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">inputs</code><span class="sig-paren">(</span><em class="sig-param">calculation='planet'</em>, <em class="sig-param">climate=False</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Class to setup planet to run</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>calculation</strong> (<em>str</em>) – (Optional) Controls planet or brown dwarf calculation. Default = ‘planet’. Other option is “browndwarf”.</p></li>
-<li><p><strong>climate</strong> (<em>bool</em>) – (Optional) If true, this do a thorough iterative calculation to compute
-a temperature pressure profile.</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="attribute">
-<dt id="picaso.justdoit.inputs.phase_angle">
-<code class="sig-name descname">phase_angle</code><a class="headerlink" href="#picaso.justdoit.inputs.phase_angle" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>set phase angle</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="picaso.justdoit.inputs.gravity">
-<code class="sig-name descname">gravity</code><a class="headerlink" href="#picaso.justdoit.inputs.gravity" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>set gravity</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="picaso.justdoit.inputs.star">
-<code class="sig-name descname">star</code><a class="headerlink" href="#picaso.justdoit.inputs.star" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>set stellar spec</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="picaso.justdoit.inputs.atmosphere">
-<code class="sig-name descname">atmosphere</code><a class="headerlink" href="#picaso.justdoit.inputs.atmosphere" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>set atmosphere composition and PT</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="picaso.justdoit.inputs.clouds">
-<code class="sig-name descname">clouds</code><a class="headerlink" href="#picaso.justdoit.inputs.clouds" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>set cloud profile</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="picaso.justdoit.inputs.approx">
-<code class="sig-name descname">approx</code><a class="headerlink" href="#picaso.justdoit.inputs.approx" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>set approximation</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="picaso.justdoit.inputs.spectrum">
-<code class="sig-name descname">spectrum</code><a class="headerlink" href="#picaso.justdoit.inputs.spectrum" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>create spectrum</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="picaso.justdoit.inputs.TP_line_earth">
-<code class="sig-name descname">TP_line_earth</code><span class="sig-paren">(</span><em class="sig-param">P</em>, <em class="sig-param">Tsfc=294.0</em>, <em class="sig-param">Psfc=1.0</em>, <em class="sig-param">gam_trop=0.18</em>, <em class="sig-param">Ptrop=0.199</em>, <em class="sig-param">gam_strat=-0.045</em>, <em class="sig-param">Pstrat=0.001</em>, <em class="sig-param">nlevel=150</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.TP_line_earth" title="Permalink to this definition">¶</a></dt>
-<dd><p>Author: Mike R. Line</p>
-<p>Estimates Earth’s pressure-temperature profile. All default
-values have been tuned to semi reproduce Earth’s temperature
-pressure profile.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>P</strong> (<em>array</em>) – Pressure array usually np.logspace(-6,2,nlevel)</p></li>
-<li><p><strong>Tsfc</strong> (<em>float</em><em>,</em><em>optional</em>) – Surface Temperature (K). Earth is 294 K</p></li>
-<li><p><strong>Psfc</strong> (<em>float</em><em> ,</em><em>optional</em>) – Surface Pressure (bar). Earth is 1 bar.</p></li>
-<li><p><strong>gam_trop</strong> (<em>float</em><em> ,</em><em>optional</em>) – Tropospheric dry lapse rate. Earth is ~0.18</p></li>
-<li><p><strong>Ptrop</strong> (<em>float</em><em> ,</em><em>optional</em>) – Tropospheric pressure. Earth 0.199 bar.</p></li>
-<li><p><strong>gam_strat</strong> (<em>float</em><em> ,</em><em>optional</em>) – Stratospheric lapse rate. Earth is -0.045</p></li>
-<li><p><strong>Pstrat</strong> (<em>float</em><em> ,</em><em>optional</em>) – Stratospheric pressure (bars). Earth is 0.001 bar. /</p></li>
-<li><p><strong>nlevel</strong> (<em>int</em><em> ,</em><em>optional</em>) – Number of grid levels</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Temperature array (K)Psfc</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>array</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="sig-name descname">approx</code><span class="sig-paren">(</span><em class="sig-param">single_phase='TTHG_ray', multi_phase='N=2', delta_eddington=True, raman='pollack', tthg_frac=[1, -1, 2], tthg_back=-0.5, tthg_forward=1, p_reference=1, method='Toon', stream=2</em><span class="sig-paren">)</span></dt>
-<dd><p>This function sets all the default approximations in the code. It transforms the string specificatons
-into a number so that they can be used in numba nopython routines.</p>
-<p>For <cite>str</cite> cases such as <cite>TTHG_ray</cite> users see all the options by using the function <cite>single_phase_options</cite>
-or <cite>multi_phase_options</cite>, etc.</p>
-<dl class="simple">
-<dt>single_phase<span class="classifier">str</span></dt><dd><p>Single scattering phase function approximation</p>
-</dd>
-<dt>multi_phase<span class="classifier">str</span></dt><dd><p>Multiple scattering phase function approximation</p>
-</dd>
-<dt>delta_eddington<span class="classifier">bool</span></dt><dd><p>Turns delta-eddington on and off</p>
-</dd>
-<dt>raman<span class="classifier">str</span></dt><dd><p>Uses various versions of raman scattering</p>
-</dd>
-<dt>tthg_frac<span class="classifier">list</span></dt><dd><p>Functional of forward to back scattering with the form of polynomial :
-tthg_frac[0] + tthg_frac[1]*g_b^tthg_frac[2]
-See eqn. 6 in picaso paper</p>
-</dd>
-<dt>tthg_back<span class="classifier">float</span></dt><dd><p>Back scattering asymmetry factor gf = g_bar*tthg_back</p>
-</dd>
-<dt>tthg_forward<span class="classifier">float</span></dt><dd><p>Forward scattering asymmetry factor gb = g_bar * tthg_forward</p>
-</dd>
-<dt>p_reference<span class="classifier">float</span></dt><dd><p>Reference pressure (bars) This is an arbitrary pressure that
-corresponds do the user’s input of radius. Usually something “at depth”
-around 1-10 bars.</p>
-</dd>
-<dt>method<span class="classifier">str</span></dt><dd><p>Toon (‘Toon’) or spherical harmonics (‘SH’).</p>
-</dd>
-<dt>stream<span class="classifier">int</span></dt><dd><p>Two stream or four stream (options are 2 or 4). For 4 stream need to set method=’SH’</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="sig-name descname">atmosphere</code><span class="sig-paren">(</span><em class="sig-param">df=None</em>, <em class="sig-param">filename=None</em>, <em class="sig-param">exclude_mol=None</em>, <em class="sig-param">**pd_kwargs</em><span class="sig-paren">)</span></dt>
-<dd><p>Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
-Sets number of layers in model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>dict</em>) – (Optional) Dataframe with volume mixing ratios and pressure, temperature profile.
-Must contain pressure (bars) at least one molecule</p></li>
-<li><p><strong>filename</strong> (<em>str</em>) – (Optional) Filename with pressure, temperature and volume mixing ratios.
-Must contain pressure at least one molecule</p></li>
-<li><p><strong>exclude_mol</strong> (<em>list of str</em>) – (Optional) List of molecules to ignore from file</p></li>
-<li><p><strong>pd_kwargs</strong> (<em>kwargs</em>) – Key word arguments for pd.read_csv to read in supplied atmosphere file</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="picaso.justdoit.inputs.atmosphere_3d">
-<code class="sig-name descname">atmosphere_3d</code><span class="sig-paren">(</span><em class="sig-param">dictionary=None</em>, <em class="sig-param">filename=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.atmosphere_3d" title="Permalink to this definition">¶</a></dt>
-<dd><p>Builds a dataframe and makes sure that minimum necessary parameters have been suplied.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>df</strong> (<em>dict</em>) – (Optional) Dataframe with volume mixing ratios and pressure, temperature profile.
-Must contain pressure (bars) and at least one molecule</p></li>
-<li><p><strong>filename</strong> (<em>str</em>) – (Optional) Pickle filename that is a dictionary structured:
-dictionary[int(lat) in degrees][int(lon) in degrees] = pd.DataFrame({‘pressure’:[], ‘temperature’: [],
-‘H2O’:[]….}). As well as df[‘phase_angle’] = 0 (in radians).
-Therefore, the latitude and longitude keys should be INTEGERS taken from the lat/longs calculated in
-inputs.phase_angle! Any other meta data should be  represented by a string.
-Must contain pressure and at least one molecule</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Examples</p>
-<p>&gt;&gt;import picaso.justdoit as jdi
-&gt;&gt;new = jdi.inputs()
-&gt;&gt;new.phase_angle(0) #loads the geometry you need to get your 3d model on
-&gt;&gt;lats= new.inputs[‘disco’][‘latitude’]*180/np.pi).astype(int)
-&gt;&gt;&gt;lons = (new.inputs[‘disco’][‘longitude’]*180/np.pi).astype(int)</p>
-<p>Build an empty dictionary to be filled later</p>
-<p>&gt;&gt;dict_3d = {la: {lo : [] for lo in lons} for la in lats} #build empty one
-&gt;&gt;dict_3d[‘phase_angle’] = 0 #this is a double check for consistency</p>
-<p>Now you need to bin your GCM output on this grid and fill the dictionary with the necessary dataframes. For example:</p>
-<p>&gt;&gt;dict_3d[lats[0]][lons[0]] = pd.DataFrame({‘pressure’:[], ‘temperature’: [],’H2O’:[]})</p>
-<p>Once this is filled you can add it to this function</p>
-<p>&gt;&gt;new.atmosphere_3d(dictionary=dict_3d)</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="picaso.justdoit.inputs.channon_grid_high">
-<code class="sig-name descname">channon_grid_high</code><span class="sig-paren">(</span><em class="sig-param">filename=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.channon_grid_high" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="picaso.justdoit.inputs.channon_grid_low">
-<code class="sig-name descname">channon_grid_low</code><span class="sig-paren">(</span><em class="sig-param">filename=None</em>, <em class="sig-param">interp_window=11</em>, <em class="sig-param">interp_poly=2</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.channon_grid_low" title="Permalink to this definition">¶</a></dt>
-<dd><p>Interpolate from visscher grid</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="picaso.justdoit.inputs.chemeq">
-<code class="sig-name descname">chemeq</code><span class="sig-paren">(</span><em class="sig-param">CtoO</em>, <em class="sig-param">Met</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.chemeq" title="Permalink to this definition">¶</a></dt>
-<dd><p>This interpolates from a precomputed grid of CEA runs (run by M.R. Line)</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>CtoO</strong> (<em>float</em>) – C to O ratio (solar = 0.55)</p></li>
-<li><p><strong>Met</strong> (<em>float</em>) – Metallicity relative to solar (solar = 1)</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="picaso.justdoit.inputs.chemeq_visscher">
-<code class="sig-name descname">chemeq_visscher</code><span class="sig-paren">(</span><em class="sig-param">c_o</em>, <em class="sig-param">log_mh</em>, <em class="sig-param">interp_window=11</em>, <em class="sig-param">interp_poly=2</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.chemeq_visscher" title="Permalink to this definition">¶</a></dt>
-<dd><p>Find nearest neighbor from visscher grid</p>
-<p>JUNE 2015
-MODELS BASED ON 1060-POINT MARLEY GRID</p>
-<p>GRAPHITE ACTIVITY ADDED IN TEXT FILES (AFTER OCS)
-“ABUNDANCE” INDICATES CONDENSATION CONDITION (O OR 1)</p>
-<p>CURRENT GRID
-FE/H: 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
-C/O: 0.5X, 1.0X, 1.5X, 2.0X, 2.5X</p>
-<p>C/O RATIO IS RELATIVE TO SOLAR C/O RATIO OF
-CARBON = 7.19E6 ATOMS
-OXYGEN = 1.57E7 ATOMS</p>
-<p>NOTE THAT THE C/O RATIO IS ADJUSTED BY SIMPLY MULTIPLYING BY C/O FACTOR
-THIS MAY YIELD EFFECTIVE METALLICITIES SLIGHTLY HIGHER THAN THE DEFINED METALLICITY</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>co</strong> (<em>int</em>) – carbon to oxygen ratio relative to solar.
-Solar = 1</p></li>
-<li><p><strong>log_mh</strong> (<em>int</em>) – metallicity (relative to solar)
-Will find the nearest value to 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
-Solar = 0</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="sig-name descname">clouds</code><span class="sig-paren">(</span><em class="sig-param">filename=None</em>, <em class="sig-param">g0=None</em>, <em class="sig-param">w0=None</em>, <em class="sig-param">opd=None</em>, <em class="sig-param">p=None</em>, <em class="sig-param">dp=None</em>, <em class="sig-param">df=None</em>, <em class="sig-param">**pd_kwargs</em><span class="sig-paren">)</span></dt>
-<dd><p>Cloud specification for the model. Clouds are parameterized by a single scattering albedo (w0),
-an assymetry parameter (g0), and a total extinction per layer (opd).</p>
-<p>g0,w0, and opd are both wavelength and pressure dependent. Our cloud models come
-from eddysed. Their output look something like this where
-pressure is in bars and wavenumber is inverse cm. We will sort pressure and wavenumber before we reshape
-so the exact order doesn’t matter</p>
-<p>pressure wavenumber opd w0 g0
-1.   1.   … . .
-1.   2.   … . .
-1.   3.   … . .
-.     . … . .
-.     . … . .
-1.   M.   … . .
-2.   1.   … . .
-.     . … . .
-N.   .  … . .</p>
-<p>If you are creating your own file you have to make sure that you have a
-<strong>pressure</strong> (bars) and <a href="#id6"><span class="problematic" id="id7">**</span></a>wavenumber**(inverse cm) column. We will use this to make sure that your cloud
-and atmospheric profiles are on the same grid. <a href="#id8"><span class="problematic" id="id9">**</span></a>If there is no pressure or wavelength parameter
-we will assume that you are on the same grid as your atmospheric input, and on the
-eddysed wavelength grid! **</p>
-<p>Users can also input their own fixed cloud parameters, by specifying a single value
-for g0,w0,opd and defining the thickness and location of the cloud.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> (<em>str</em>) – (Optional) Filename with info on the wavelength and pressure-dependent single scattering
-albedo, asymmetry factor, and total extinction per layer. Input associated pd_kwargs
-so that the resultant output has columns named : <cite>g0</cite>, <cite>w0</cite> and <cite>opd</cite>. If you are not
-using the eddysed output, you will also need a <cite>wavenumber</cite> and <cite>pressure</cite> column in units
-of inverse cm, and bars.</p></li>
-<li><p><strong>g0</strong> (<em>float</em><em>, </em><em>list of float</em>) – (Optional) Asymmetry factor. Can be a single float for a single cloud. Or a list of floats
-for two different cloud layers</p></li>
-<li><p><strong>w0</strong> (<em>list of float</em>) – (Optional) Single Scattering Albedo. Can be a single float for a single cloud. Or a list of floats
-for two different cloud layers</p></li>
-<li><p><strong>opd</strong> (<em>list of float</em>) – (Optional) Total Extinction in <cite>dp</cite>. Can be a single float for a single cloud. Or a list of floats
-for two different cloud layers</p></li>
-<li><p><strong>p</strong> (<em>list of float</em>) – (Optional) Bottom location of cloud deck (LOG10 bars). Can be a single float for a single cloud. Or a list of floats
-for two different cloud layers</p></li>
-<li><p><strong>dp</strong> (<em>list of float</em>) – (Optional) Total thickness cloud deck above p (LOG10 bars).
-Can be a single float for a single cloud or a list of floats
-for two different cloud layers
-Cloud will span 10**(np.log10(p-dp))</p></li>
-<li><p><strong>df</strong> (<em>pd.DataFrame</em><em>, </em><em>dict</em>) – (Optional) Same as what would be included in the file, but in DataFrame or dict form</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="picaso.justdoit.inputs.clouds_3d">
-<code class="sig-name descname">clouds_3d</code><span class="sig-paren">(</span><em class="sig-param">filename=None</em>, <em class="sig-param">dictionary=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.clouds_3d" title="Permalink to this definition">¶</a></dt>
-<dd><p>Cloud specification for the model. Clouds are parameterized by a single scattering albedo (w0),
-an assymetry parameter (g0), and a total extinction per layer (opd).</p>
-<p>g0,w0, and opd are both wavelength and pressure dependent. Our cloud models come
-from eddysed. Their output looks like this (where level 1=TOA, and wavenumber1=Smallest number)</p>
-<p>level wavenumber opd w0 g0
-1.   1.   … . .
-1.   2.   … . .
-1.   3.   … . .
-.     . … . .
-.     . … . .
-1.   M.   … . .
-2.   1.   … . .
-.     . … . .
-N.   .  … . .</p>
-<p>If you are creating your own file you have to make sure that you have a
-<strong>pressure</strong> (bars) and <a href="#id10"><span class="problematic" id="id11">**</span></a>wavenumber**(inverse cm) column. We will use this to make sure that your cloud
-and atmospheric profiles are on the same grid. <a href="#id12"><span class="problematic" id="id13">**</span></a>If there is no pressure or wavelength parameter
-we will assume that you are on the same grid as your atmospheric input, and on the
-eddysed wavelength grid! **</p>
-<p>Users can also input their own fixed cloud parameters, by specifying a single value
-for g0,w0,opd and defining the thickness and location of the cloud.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> (<em>str</em>) – (Optional) Filename with info on the wavelength and pressure-dependent single scattering
-albedo, asymmetry factor, and total extinction per layer. Input associated pd_kwargs
-so that the resultant output has columns named : <cite>g0</cite>, <cite>w0</cite> and <cite>opd</cite>. If you are not
-using the eddysed output, you will also need a <cite>wavenumber</cite> and <cite>pressure</cite> column in units
-of inverse cm, and bars.</p></li>
-<li><p><strong>dictionary</strong> (<em>dict</em>) – (Optional) Same as what would be included in the file, but in dict form</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Examples</p>
-<p>&gt;&gt;import picaso.justdoit as jdi
-&gt;&gt;new = jdi.inputs()
-&gt;&gt;new.phase_angle(0) #loads the geometry you need to get your 3d model on
-&gt;&gt;lats, lons = int(new.inputs[‘disco’][‘latitude’]*180/np.pi), int(new.inputs[‘disco’][‘longitude’]*180/np.pi)</p>
-<p>Build an empty dictionary to be filled later</p>
-<p>&gt;&gt;dict_3d = {la: {lo : for lo in lons} for la in lats} #build empty one
-&gt;&gt;dict_3d[‘phase_angle’] = 0 #add this for a consistensy check</p>
-<p>Now you need to bin your 3D clouds GCM output on this grid and fill the dictionary with the necessary dataframes. For example:</p>
-<p>&gt;&gt;dict_3d[lats[0]][lons[0]] = pd.DataFrame({‘pressure’:[], ‘temperature’: [],’H2O’:[]})</p>
-<p>Once this is filled you can add it to this function</p>
-<p>&gt;&gt;new.clouds_3d(dictionary=dict_3d)</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="picaso.justdoit.inputs.clouds_reset">
-<code class="sig-name descname">clouds_reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.clouds_reset" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reset cloud dict to zeros</p>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="sig-name descname">gravity</code><span class="sig-paren">(</span><em class="sig-param">gravity=None</em>, <em class="sig-param">gravity_unit=None</em>, <em class="sig-param">radius=None</em>, <em class="sig-param">radius_unit=None</em>, <em class="sig-param">mass=None</em>, <em class="sig-param">mass_unit=None</em><span class="sig-paren">)</span></dt>
-<dd><p>Get gravity based on mass and radius, or gravity inputs</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>gravity</strong> (<em>float</em>) – (Optional) Gravity of planet</p></li>
-<li><p><strong>gravity_unit</strong> (<em>astropy.unit</em>) – (Optional) Unit of Gravity</p></li>
-<li><p><strong>radius</strong> (<em>float</em>) – (Optional) radius of planet MUST be specified for thermal emission!</p></li>
-<li><p><strong>radius_unit</strong> (<em>astropy.unit</em>) – (Optional) Unit of radius</p></li>
-<li><p><strong>mass</strong> (<em>float</em>) – (Optional) mass of planet</p></li>
-<li><p><strong>mass_unit</strong> (<em>astropy.unit</em>) – (Optional) Unit of mass</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="picaso.justdoit.inputs.guillot_pt">
-<code class="sig-name descname">guillot_pt</code><span class="sig-paren">(</span><em class="sig-param">Teq</em>, <em class="sig-param">T_int=100</em>, <em class="sig-param">logg1=-1</em>, <em class="sig-param">logKir=-1.5</em>, <em class="sig-param">alpha=0.5</em>, <em class="sig-param">nlevel=61</em>, <em class="sig-param">p_bottom=1.5</em>, <em class="sig-param">p_top=-6</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.guillot_pt" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates temperature pressure profile given parameterization in Guillot 2010 TP profile
-called in fx()</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>Teq</strong> (<em>float</em>) – equilibrium temperature</p></li>
-<li><p><strong>T_int</strong> (<em>float</em>) – Internal temperature, if low (100) currently set to 100 for everything</p></li>
-<li><p><strong>kv1</strong> (<em>float</em>) – see parameterization Guillot 2010 (10.**(logg1+logKir))</p></li>
-<li><p><strong>kv2</strong> (<em>float</em>) – see parameterization Guillot 2010 (10.**(logg1+logKir))</p></li>
-<li><p><strong>kth</strong> (<em>float</em>) – see parameterization Guillot 2010 (10.**logKir)</p></li>
-<li><p><strong>alpha</strong> (<em>float</em><em> , </em><em>optional</em>) – set to 0.5</p></li>
-<li><p><strong>nlevel</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of atmospheric layers</p></li>
-<li><p><strong>p_bottom</strong> (<em>float</em><em>, </em><em>optional</em>) – Log pressure (bars) of the lower bound pressure</p></li>
-<li><p><strong>p_top</strong> (<em>float</em><em> , </em><em>optional</em>) – Log pressure (bars) of the TOA</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>T</strong> (<em>numpy.array</em>) – Temperature grid</p></li>
-<li><p><strong>P</strong> (<em>numpy.array</em>) – Pressure grid</p></li>
-</ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="sig-name descname">phase_angle</code><span class="sig-paren">(</span><em class="sig-param">phase=0</em>, <em class="sig-param">num_gangle=10</em>, <em class="sig-param">num_tangle=1</em>, <em class="sig-param">symmetry=False</em><span class="sig-paren">)</span></dt>
-<dd><p>Define phase angle and number of gauss and tchebychev angles to compute.
-Controls all geometry of the calculation. Computes latitude and longitudes.
-Computes cos theta and incoming and outgoing angles. Adds everything to class.</p>
-<p>Please see geometry notebook for a deep dive into how these angles are incorporated
-into the calculation.</p>
-<p>Typical numbers:
-- 1D Thermal: num_gangle = 10, num_tangle=1
-- 1D Reflected light with zero phase : num_gangle = 10, num_tangle=1
-- 1D Reflected light with non zero phase : num_gangle = 8, num_tangle=8
-- 3D Thermal or Reflected : angles will depend on 3D features interested in resolving.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>phase</strong> (<em>float</em><em>,</em><em>int</em>) – Phase angle in radians</p></li>
-<li><p><strong>num_gangle</strong> (<em>int</em>) – Number of Gauss angles to integrate over facets (Default is 10). This
-is defined as angles over the full sphere. So 10 as the default compute the RT
-with 5 points on the west hemisphere and 5 points on the west.
-Higher numbers will slow down code.</p></li>
-<li><p><strong>num_tangle</strong> (<em>int</em>) – Number of Tchebyshev angles to integrate over facets (Default is 1, which automatically
-assumes symmetry).
-Must be even if considering symmetry.</p></li>
-<li><p><strong>symmetry</strong> (<em>bool</em>) – Default is False. Note, if num_tangle=1 you are automatically considering symmetry.
-This will only compute the unique incoming angles so that the calculation
-isn’t doing repetetive models. E.g. if num_tangles=10, num_gangles=10. Instead of running a 10x10=100
-FT calculations, it will only run 5x5 = 25 (or a quarter of the sphere).</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="picaso.justdoit.inputs.premix_atmosphere">
-<code class="sig-name descname">premix_atmosphere</code><span class="sig-paren">(</span><em class="sig-param">opa</em>, <em class="sig-param">df=None</em>, <em class="sig-param">filename=None</em>, <em class="sig-param">**pd_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.premix_atmosphere" title="Permalink to this definition">¶</a></dt>
-<dd><p>Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
-Sets number of layers in model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>opa</strong> (<em>class</em>) – Opacity class from opannection : RetrieveCks()</p></li>
-<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>dict</em>) – (Optional) Dataframe with volume mixing ratios and pressure, temperature profile.
-Must contain pressure (bars) at least one molecule</p></li>
-<li><p><strong>filename</strong> (<em>str</em>) – (Optional) Filename with pressure, temperature and volume mixing ratios.
-Must contain pressure at least one molecule</p></li>
-<li><p><strong>exclude_mol</strong> (<em>list of str</em>) – (Optional) List of molecules to ignore from file</p></li>
-<li><p><strong>pd_kwargs</strong> (<em>kwargs</em>) – Key word arguments for pd.read_csv to read in supplied atmosphere file</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="picaso.justdoit.inputs.setup_climate">
-<code class="sig-name descname">setup_climate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.setup_climate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Turns off planet specific things, so program can run as usual</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="picaso.justdoit.inputs.setup_nostar">
-<code class="sig-name descname">setup_nostar</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.setup_nostar" title="Permalink to this definition">¶</a></dt>
-<dd><p>Turns off planet specific things, so program can run as usual</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="picaso.justdoit.inputs.sonora">
-<code class="sig-name descname">sonora</code><span class="sig-paren">(</span><em class="sig-param">sonora_path</em>, <em class="sig-param">teff</em>, <em class="sig-param">chem='low'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.sonora" title="Permalink to this definition">¶</a></dt>
-<dd><p>This queries Sonora temperature profile that can be downloaded from profiles.tar on
-Zenodo: [profile.tar file](<a class="reference external" href="https://zenodo.org/record/1309035#.Xo5GbZNKjGJ">https://zenodo.org/record/1309035#.Xo5GbZNKjGJ</a>)</p>
-<p>Note gravity is not an input because it grabs gravity from self.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>sonora_path</strong> (<em>str</em>) – Path to the untarred profile.tar file from sonora grid</p></li>
-<li><p><strong>teff</strong> (<em>float</em>) – teff to query. does not have to be exact (it will query one the nearest neighbor)</p></li>
-<li><p><strong>chem</strong> (<em>str</em>) – Default = ‘low’. There are two sonora chemistry grids. the default is use low.
-There is sublety to this that is going to be explained at length in the sonora grid paper.
-Until then, ONLY use chem=’low’ unless you have reached out to one of the developers.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="sig-name descname">spectrum</code><span class="sig-paren">(</span><em class="sig-param">opacityclass</em>, <em class="sig-param">calculation='reflected'</em>, <em class="sig-param">dimension='1d'</em>, <em class="sig-param">full_output=False</em>, <em class="sig-param">plot_opacity=False</em>, <em class="sig-param">as_dict=True</em><span class="sig-paren">)</span></dt>
-<dd><p>Run Spectrum</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>opacityclass</strong> (<em>class</em>) – Opacity class from <cite>justdoit.opannection</cite></p></li>
-<li><p><strong>calculation</strong> (<em>str</em>) – Either ‘reflected’ or ‘thermal’ for reflected light or thermal emission.
-If running a brown dwarf, this will automatically default to thermal</p></li>
-<li><p><strong>dimension</strong> (<em>str</em>) – (Optional) Dimensions of the calculation. Default = ‘1d’. But ‘3d’ is also accepted.
-In order to run ‘3d’ calculations, user must build 3d input (see tutorials)</p></li>
-<li><p><strong>full_output</strong> (<em>bool</em>) – (Optional) Default = False. Returns atmosphere class, which enables several
-plotting capabilities.</p></li>
-<li><p><strong>plot_opacity</strong> (<em>bool</em>) – (Optional) Default = False, Creates pop up of the weighted opacity</p></li>
-<li><p><strong>as_dict</strong> (<em>bool</em>) – (Optional) Default = True. If true, returns a condensed dictionary to the user.
-If false, returns the atmosphere class, which can be used for debugging.
-The class is clunky to navigate so if you are consiering navigating through this, ping one of the
-developers.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="sig-name descname">star</code><span class="sig-paren">(</span><em class="sig-param">opannection</em>, <em class="sig-param">temp=None</em>, <em class="sig-param">metal=None</em>, <em class="sig-param">logg=None</em>, <em class="sig-param">radius=None</em>, <em class="sig-param">radius_unit=None</em>, <em class="sig-param">semi_major=None</em>, <em class="sig-param">semi_major_unit=None</em>, <em class="sig-param">database='ck04models'</em>, <em class="sig-param">filename=None</em>, <em class="sig-param">w_unit=None</em>, <em class="sig-param">f_unit=None</em><span class="sig-paren">)</span></dt>
-<dd><p>Get the stellar spectrum using pysynphot and interpolate onto a much finer grid than the
-planet grid.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>opannection</strong> (<em>class picaso.RetrieveOpacities</em>) – This is the opacity class and it’s needed to get the correct wave info and raman scattering cross sections</p></li>
-<li><p><strong>temp</strong> (<em>float</em>) – (Optional) Teff of the stellar model if using the stellar database feature.
-Not needed for filename option.</p></li>
-<li><p><strong>metal</strong> (<em>float</em>) – (Optional) Metallicity of the stellar model if using the stellar database feature.
-Not needed for filename option.</p></li>
-<li><p><strong>logg</strong> (<em>float</em>) – (Optional) Logg cgs of the stellar model if using the stellar database feature.
-Not needed for filename option.</p></li>
-<li><p><strong>radius</strong> (<em>float</em>) – (Optional) Radius of the star. Only needed as input if you want relative flux units (Fp/Fs)</p></li>
-<li><p><strong>radius_unit</strong> (<em>astropy.unit</em>) – (Optional) Any astropy unit (e.g. <cite>radius_unit=astropy.unit.Unit(“R_sun”)</cite>)</p></li>
-<li><p><strong>semi_major</strong> (<em>float</em>) – (Optional) Semi major axis of the planet. Only needed to compute fp/fs for albedo calculations.</p></li>
-<li><p><strong>semi_major_unit</strong> (<em>astropy.unit</em>) – (Optional) Any astropy unit (e.g. <cite>radius_unit=astropy.unit.Unit(“au”)</cite>)</p></li>
-<li><p><strong>database</strong> (<em>str</em>) – (Optional)The database to pull stellar spectrum from. See documentation for pysynphot.</p></li>
-<li><p><strong>filename</strong> (<em>str</em>) – (Optional) Upload your own stellar spectrum. File format = two column white space (wave, flux).
-Must specify w_unit and f_unit</p></li>
-<li><p><strong>w_unit</strong> (<em>str</em>) – (Optional) Used for stellar file wave units. Needed for filename input.
-Pick: ‘um’, ‘nm’, ‘cm’, ‘hz’, or ‘Angs’</p></li>
-<li><p><strong>f_unit</strong> (<em>str</em>) – (Optional) Used for stellar file flux units. Needed for filename input.
-Pick: ‘FLAM’ or ‘Jy’ or ‘erg/cm2/s/Hz’</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="picaso.justdoit.inputs.surface_reflect">
-<code class="sig-name descname">surface_reflect</code><span class="sig-paren">(</span><em class="sig-param">albedo</em>, <em class="sig-param">wavenumber</em>, <em class="sig-param">old_wavenumber=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.surface_reflect" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set atmospheric surface reflectivity</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>albedo</strong> (<em>float</em>) – Set constant albedo for surface reflectivity</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="picaso.justdoit.inputs.virga">
-<code class="sig-name descname">virga</code><span class="sig-paren">(</span><em class="sig-param">condensates</em>, <em class="sig-param">directory</em>, <em class="sig-param">fsed=1</em>, <em class="sig-param">mh=1</em>, <em class="sig-param">mmw=2.2</em>, <em class="sig-param">kz_min=100000.0</em>, <em class="sig-param">sig=2</em>, <em class="sig-param">full_output=False</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.virga" title="Permalink to this definition">¶</a></dt>
-<dd><p>Runs virga cloud code based on the PT and Kzz profiles
-that have been added to inptus class.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>condensates</strong> (<em>str</em>) – Condensates to run in cloud model</p></li>
-<li><p><strong>fsed</strong> (<em>float</em>) – Sedimentation efficiency</p></li>
-<li><p><strong>mh</strong> (<em>float</em>) – Metallicity</p></li>
-<li><p><strong>mmw</strong> (<em>float</em>) – Atmospheric mean molecular weight</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.justdoit.jupiter_cld">
-<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">jupiter_cld</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.jupiter_cld" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function to get rough Jupiter Cloud model with fsed=3</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.justdoit.jupiter_pt">
-<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">jupiter_pt</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.jupiter_pt" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function to get Jupiter’s PT profile</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.justdoit.load_planet">
-<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">load_planet</code><span class="sig-paren">(</span><em class="sig-param">df</em>, <em class="sig-param">opacity</em>, <em class="sig-param">phase_angle=0</em>, <em class="sig-param">stellar_db='phoenix'</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">**planet_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.load_planet" title="Permalink to this definition">¶</a></dt>
-<dd><p>Wrapper to simplify PICASO run. This really turns picaso into a black box. This was created
-specifically Sagan School tutorial. It grabs planet parameters from the user supplied df, then
-adds a parametric PT profile (Guillot et al. 2010). The user still has to add chemistry.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – This is single row from <cite>all_planets()</cite></p></li>
-<li><p><strong>opacity</strong> (<em>np.array</em>) – Opacity loaded from opannection</p></li>
-<li><p><strong>phase_angle</strong> (<em>float</em>) – Observing phase angle (radians)</p></li>
-<li><p><strong>verbose</strong> (<em>bool</em><em> , </em><em>options</em>) – Print out warnings</p></li>
-<li><p><strong>planet_kwargs</strong> (<em>dict</em>) – List of parameters to supply NexSci database is values don’t exist</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.justdoit.methodology_options">
-<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">methodology_options</code><span class="sig-paren">(</span><em class="sig-param">printout=True</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.methodology_options" title="Permalink to this definition">¶</a></dt>
-<dd><p>Retrieve all the options for methodology</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.justdoit.multi_phase_options">
-<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">multi_phase_options</code><span class="sig-paren">(</span><em class="sig-param">printout=True</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.multi_phase_options" title="Permalink to this definition">¶</a></dt>
-<dd><p>Retrieve all the options for multiple scattering radiation</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.justdoit.opannection">
-<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">opannection</code><span class="sig-paren">(</span><em class="sig-param">ck=False</em>, <em class="sig-param">wave_range=None</em>, <em class="sig-param">filename_db=None</em>, <em class="sig-param">raman_db=None</em>, <em class="sig-param">resample=1</em>, <em class="sig-param">ck_db=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.opannection" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sets up database connection to opacities.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>ck</strong> (<em>bool</em>) – Use premixed ck tables (beta)</p></li>
-<li><p><strong>wave_range</strong> (<em>list of float</em>) – Subset of wavelength range for which to run models for
-Default : None, which pulls entire grid</p></li>
-<li><p><strong>filename_db</strong> (<em>str</em>) – Filename of opacity database to query from
-Default is none which pulls opacity file that comes with distribution</p></li>
-<li><p><strong>raman_db</strong> (<em>str</em>) – Filename of raman opacity cross section
-Default is none which pulls opacity file that comes with distribution</p></li>
-<li><p><strong>resample</strong> (<em>int</em>) – Default=1 (no resampling) PROCEED WITH CAUTION!!!!!This will resample your opacites.
-This effectively takes opacity[::BINS] depending on what the
-sampling requested is. Consult your local theorist before
-using this.</p></li>
-<li><p><strong>ck_db</strong> (<em>str</em>) – ASCII filename of ck file</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.justdoit.picaso">
-<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">picaso</code><span class="sig-paren">(</span><em class="sig-param">bundle</em>, <em class="sig-param">opacityclass</em>, <em class="sig-param">dimension='1d'</em>, <em class="sig-param">calculation='reflected'</em>, <em class="sig-param">full_output=False</em>, <em class="sig-param">plot_opacity=False</em>, <em class="sig-param">as_dict=True</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.picaso" title="Permalink to this definition">¶</a></dt>
-<dd><p>Currently top level program to run albedo code</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>bundle</strong> (<em>dict</em>) – This input dict is built by loading the input = <cite>justdoit.load_inputs()</cite></p></li>
-<li><p><strong>opacityclass</strong> (<em>class</em>) – Opacity class from <cite>justdoit.opannection</cite></p></li>
-<li><p><strong>dimension</strong> (<em>str</em>) – (Optional) Dimensions of the calculation. Default = ‘1d’. But ‘3d’ is also accepted.
-In order to run ‘3d’ calculations, user must build 3d input (see tutorials)</p></li>
-<li><p><strong>full_output</strong> (<em>bool</em>) – (Optional) Default = False. Returns atmosphere class, which enables several
-plotting capabilities.</p></li>
-<li><p><strong>plot_opacity</strong> (<em>bool</em>) – (Optional) Default = False, Creates pop up of the weighted opacity</p></li>
-<li><p><strong>as_dict</strong> (<em>bool</em>) – (Optional) Default = True. If true, returns a condensed dictionary to the user.
-If false, returns the atmosphere class, which can be used for debugging.
-The class is clunky to navigate so if you are consiering navigating through this, ping one of the
-developers.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>dictionary with albedos or fluxes or both (depending on what calculation type)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.justdoit.raman_options">
-<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">raman_options</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.raman_options" title="Permalink to this definition">¶</a></dt>
-<dd><p>Retrieve options for raman scattering approximtions</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.justdoit.single_phase_options">
-<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">single_phase_options</code><span class="sig-paren">(</span><em class="sig-param">printout=True</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.single_phase_options" title="Permalink to this definition">¶</a></dt>
-<dd><p>Retrieve all the options for direct radation</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.justdoit.stream_options">
-<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">stream_options</code><span class="sig-paren">(</span><em class="sig-param">printout=True</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.stream_options" title="Permalink to this definition">¶</a></dt>
-<dd><p>Retrieve all the options for stream</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.justdoit.young_planets">
-<code class="sig-prename descclassname">picaso.justdoit.</code><code class="sig-name descname">young_planets</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.young_planets" title="Permalink to this definition">¶</a></dt>
-<dd><p>Load planets from ZJ’s paper</p>
-</dd></dl>
-
+<div class="section" id="picaso-justdoit-module">
+<h2>picaso.justdoit module<a class="headerlink" href="#picaso-justdoit-module" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-picaso.justplotit">
 <span id="picaso-justplotit-module"></span><h2>picaso.justplotit module<a class="headerlink" href="#module-picaso.justplotit" title="Permalink to this headline">¶</a></h2>
@@ -2352,20 +1405,6 @@ numbers pick out more problems.</p></li>
 </dd></dl>
 
 <dl class="function">
-<dt id="picaso.justplotit.heatmap_taus">
-<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">heatmap_taus</code><span class="sig-paren">(</span><em class="sig-param">out</em>, <em class="sig-param">R=0</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.heatmap_taus" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plots a heatmap of the tau fields (taugas, taucld, tauray)</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>out</strong> (<em>dict</em>) – full_ouput dictionary</p></li>
-<li><p><strong>R</strong> (<em>int</em>) – Resolution to bin to (if zero, no binning)</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
 <dt id="picaso.justplotit.lon_lat_to_cartesian">
 <code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">lon_lat_to_cartesian</code><span class="sig-paren">(</span><em class="sig-param">lon_r</em>, <em class="sig-param">lat_r</em>, <em class="sig-param">R=1</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.lon_lat_to_cartesian" title="Permalink to this definition">¶</a></dt>
 <dd><p>calculates lon, lat coordinates of a point on a sphere with
@@ -2420,14 +1459,12 @@ This must be zero for monochromatic opacities.</p></li>
 
 <dl class="function">
 <dt id="picaso.justplotit.mixing_ratio">
-<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">mixing_ratio</code><span class="sig-paren">(</span><em class="sig-param">full_output</em>, <em class="sig-param">limit=50</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.mixing_ratio" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">mixing_ratio</code><span class="sig-paren">(</span><em class="sig-param">full_output</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.mixing_ratio" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns plot of mixing ratios</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>full_output</strong> (<em>class</em>) – picaso.atmsetup.ATMSETUP</p></li>
-<li><p><strong>limit</strong> (<em>int</em>) – Limits the number of curves to 20. Will plot the top 20 molecules
-with highest max(abundance). Limit must be &gt;=3.</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em>) – Any key word argument for bokeh.figure()</p></li>
 </ul>
 </dd>
@@ -2443,7 +1480,7 @@ cumsum</p>
 
 <dl class="function">
 <dt id="picaso.justplotit.photon_attenuation">
-<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">photon_attenuation</code><span class="sig-paren">(</span><em class="sig-param">full_output</em>, <em class="sig-param">at_tau=0.5</em>, <em class="sig-param">return_output=False</em>, <em class="sig-param">igauss=0</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.photon_attenuation" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">photon_attenuation</code><span class="sig-paren">(</span><em class="sig-param">full_output</em>, <em class="sig-param">at_tau=0.5</em>, <em class="sig-param">return_output=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.photon_attenuation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot breakdown of gas opacity, cloud opacity,
 Rayleigh scattering opacity at a specified pressure level.</p>
 <dl class="field-list simple">
@@ -2453,7 +1490,6 @@ Rayleigh scattering opacity at a specified pressure level.</p>
 <li><p><strong>at_tau</strong> (<em>float</em>) – Opacity at which to plot the cumulative opacity.
 Default = 0.5.</p></li>
 <li><p><strong>return_output</strong> (<em>bool</em>) – Return photon attenuation plot values</p></li>
-<li><p><strong>igauss</strong> (<em>int</em>) – Gauss angle to plot if using correlated-k method. If not, should always be 0.</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em>) – Any key word argument for bokeh.plotting.figure()</p></li>
 </ul>
 </dd>
@@ -2497,65 +1533,14 @@ opacity is assigned for slabs.</p></li>
 
 <dl class="function">
 <dt id="picaso.justplotit.plot_errorbar">
-<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">plot_errorbar</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">e</em>, <em class="sig-param">plot</em>, <em class="sig-param">point_kwargs={}</em>, <em class="sig-param">error_kwargs={}</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.plot_errorbar" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot only symmetric y error bars in bokeh plot</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>array</em>) – x data</p></li>
-<li><p><strong>y</strong> (<em>array</em>) – y data</p></li>
-<li><p><strong>e</strong> (<em>array</em>) – +- error for y which will be distributed as y+e, y-e on data point</p></li>
-<li><p><strong>plot</strong> (<em>bokeh.figure</em>) – Bokeh figure to add error bars to</p></li>
-<li><p><strong>point_kwargs</strong> (<em>dict</em>) – formatting for circles</p></li>
-<li><p><strong>error_kwargs</strong> (<em>dict</em>) – formatting for error bar lines</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.justplotit.plot_evolution">
-<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">plot_evolution</code><span class="sig-paren">(</span><em class="sig-param">evo</em>, <em class="sig-param">y='Teff'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.plot_evolution" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot evolution of tracks. Requires input from justdoit:</p>
-<p>evo = justdoit.evolution_track(mass=’all’,age=’all’)</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>evo</strong> (<em>dict</em>) – Output from the function justdoit.evolution_track(mass=’all’,age=’all’)</p></li>
-<li><p><strong>y</strong> (<em>str</em>) – What to plot on the y axis. Can be anything in the pandas that as the mass
-attached to the end. E.g. “Teff” is an option because there exists “Teff1Mj”.
-But, age_years is not an option as it is not a function of mass.
-Current options : [logL, Teff, grav_cgs]</p></li>
-</ul>
-</dd>
-</dl>
+<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">plot_errorbar</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">e</em>, <em class="sig-param">plot</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.plot_errorbar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot error bars in bokeh plot</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="picaso.justplotit.plot_format">
 <code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">plot_format</code><span class="sig-paren">(</span><em class="sig-param">df</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.plot_format" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to reformat plots</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.justplotit.plot_multierror">
-<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">plot_multierror</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">plot</em>, <em class="sig-param">dx_up=0</em>, <em class="sig-param">dx_low=0</em>, <em class="sig-param">dy_up=0</em>, <em class="sig-param">dy_low=0</em>, <em class="sig-param">point_kwargs={}</em>, <em class="sig-param">error_kwargs={}</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.plot_multierror" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot non-symmetric x and y error bars in bokeh plot</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>array</em>) – x data</p></li>
-<li><p><strong>y</strong> (<em>array</em>) – y data</p></li>
-<li><p><strong>dx_up</strong> (<em>array</em><em> or </em><em>int</em><em> or </em><em>float</em>) – upper error bar to be distributed as x + dx_up</p></li>
-<li><p><strong>dx_low</strong> (<em>array</em><em> or </em><em>int</em><em> or </em><em>float</em>) – lower error bar to be distributed as x + dx_low</p></li>
-<li><p><strong>dy_up</strong> (<em>array</em><em> or </em><em>int</em><em> or </em><em>float</em>) – upper error bar to be distributed as y + dy_up</p></li>
-<li><p><strong>dy_low</strong> (<em>array</em><em> or </em><em>int</em><em> or </em><em>float</em>) – lower error bar to be distributed as y + dy_low</p></li>
-<li><p><strong>plot</strong> (<em>bokeh.figure</em>) – Bokeh figure to add error bars to</p></li>
-<li><p><strong>point_kwargs</strong> (<em>dict</em>) – formatting for circles</p></li>
-<li><p><strong>error_kwargs</strong> (<em>dict</em>) – formatting for error bar lines</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="function">
@@ -3428,7 +2413,7 @@ It has dimensions: # layer by # wavelength
 <p>This was baselined against jupiter with the old fortran code. It matches 100% for all cases
 except for hotter cases where Na &amp; K are present. This differences is not a product of the code
 but a product of the different opacities (1060 grid versus old 736 grid)</p>
-<div class="admonition-todo admonition" id="id14">
+<div class="admonition-todo admonition" id="id6">
 <p class="admonition-title">Todo</p>
 <p>Add a better approximation than delta-scale (e.g. M.Marley suggests a paper by Cuzzi that has
 a better methodology)</p>
@@ -3626,61 +2611,8 @@ everything else being in wave numberes</p></li>
 </dd></dl>
 
 </div>
-<div class="section" id="module-picaso.test">
-<span id="picaso-test-module"></span><h2>picaso.test module<a class="headerlink" href="#module-picaso.test" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="picaso.test.dlugach_test">
-<code class="sig-prename descclassname">picaso.test.</code><code class="sig-name descname">dlugach_test</code><span class="sig-paren">(</span><em class="sig-param">single_phase='OTHG'</em>, <em class="sig-param">output_dir=None</em>, <em class="sig-param">rayleigh=True</em>, <em class="sig-param">phase=True</em>, <em class="sig-param">approximation='2steam'</em>, <em class="sig-param">stream=2</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.test.dlugach_test" title="Permalink to this definition">¶</a></dt>
-<dd><p>Test the flux against against Dlugach &amp; Yanovitskij
-<a class="reference external" href="https://www.sciencedirect.com/science/article/pii/0019103574901675?via%3Dihub">https://www.sciencedirect.com/science/article/pii/0019103574901675?via%3Dihub</a></p>
-<p>There are two tests: rayleigh and constant_tau. This will run through the entire
-table of values (XXI). Users can run both or specify one. Constant_tau picks
-single value for the asymmetry factors g = [0.5,0.75,0.8,0.85,0.9] and tests
-single scattering abled. Rayleigh only varies the ssa (with rayleigh phase fun)</p>
-<p>This routine contains the functionality to reproduce table XXI and determine the %
-error in various realms</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>single_phase</strong> (<em>str</em>) – Single phase function to test with the constant_tau test. Can either be:
-“cahoy”,”TTHG_ray”,”TTHG”, and “OTHG”</p></li>
-<li><p><strong>output_dir</strong> (<em>str</em>) – Output directory for results of test. Default is to just return the dataframe (None).</p></li>
-<li><p><strong>rayleigh</strong> (<em>bool</em>) – Default is True. Turns on and off the rayleigh phase function test</p></li>
-<li><p><strong>phase</strong> (<em>float</em>) – Default=True. Turns on and off the constant g phase function test</p></li>
-<li><p><strong>Retuns</strong> – </p></li>
-<li><p><strong>------</strong> – </p></li>
-<li><p><strong>of % deviation from Dlugach &amp; Yanovitskij Table XXI</strong> (<em>DataFrame</em>) – </p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="picaso.test.madhu_test">
-<code class="sig-prename descclassname">picaso.test.</code><code class="sig-name descname">madhu_test</code><span class="sig-paren">(</span><em class="sig-param">rayleigh=True</em>, <em class="sig-param">isotropic=True</em>, <em class="sig-param">asymmetric=True</em>, <em class="sig-param">single_phase='TTHG_ray'</em>, <em class="sig-param">output_dir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.test.madhu_test" title="Permalink to this definition">¶</a></dt>
-<dd><p>Test the flux against against Madhu and Burrows
-<a class="reference external" href="https://arxiv.org/pdf/1112.4476.pdf">https://arxiv.org/pdf/1112.4476.pdf</a></p>
-<p>There are three tests: rayleigh, isotropic, and lambert. Reproduces Figure 2 of
-Madhu and Burrows paper.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>rayleigh</strong> (<em>bool</em>) – Tests rayleigh phase function</p></li>
-<li><p><strong>isotropic</strong> (<em>bool</em>) – Tests isotropic phase function</p></li>
-<li><p><strong>single_phase</strong> (<em>str</em>) – Single phase function to test with the constant_tau test. Can either be:
-“cahoy”,”TTHG_ray”,”TTHG”, and “OTHG”</p></li>
-<li><p><strong>output_dir</strong> (<em>str</em>) – Output directory for results of test. Default is to just return the dataframe (None).</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>DataFrame of % deviation from Dlugach &amp; Yanovitskij Table XXI</p>
-</dd>
-</dl>
-</dd></dl>
-
+<div class="section" id="picaso-test-module">
+<h2>picaso.test module<a class="headerlink" href="#picaso-test-module" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-picaso.wavelength">
 <span id="picaso-wavelength-module"></span><h2>picaso.wavelength module<a class="headerlink" href="#module-picaso.wavelength" title="Permalink to this headline">¶</a></h2>
