@@ -225,7 +225,7 @@ ls
 base_cases      config.json     opacities
 </pre></div>
 </div>
-<p>Your opacities folder shown above should include the file <cite>opacities.db</cite> <a class="reference external" href="https://doi.org/10.5281/zenodo.3759675">file downloaded from zenodo</a>. This is mostly a matter of preference, as PICASO allows you to point to an opacity directory. Personally, I like to store something with the reference data so that I don’t have to constantly specify a folder path when running the code.</p>
+<p>Your opacities folder shown above should include the file <code class="docutils literal notranslate"><span class="pre">opacities.db</span></code> <a class="reference external" href="https://doi.org/10.5281/zenodo.3759675">file downloaded from zenodo</a>. This is mostly a matter of preference, as PICASO allows you to point to an opacity directory. Personally, I like to store something with the reference data so that I don’t have to constantly specify a folder path when running the code.</p>
 </div>
 <div class="section" id="download-and-link-pysynphot-stellar-data">
 <h2>Download and Link Pysynphot Stellar Data<a class="headerlink" href="#download-and-link-pysynphot-stellar-data" title="Permalink to this headline">¶</a></h2>
@@ -237,7 +237,7 @@ base_cases      config.json     opacities
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget http://ssb.stsci.edu/trds/tarfiles/synphot3.tar.gz
 </pre></div>
 </div>
-<p>When you untar this you should get a directory structure that looks like this <cite>&lt;path&gt;/grp/redcat/trds/grid/ck04models</cite>. Some other people have reported a directory structure that looks like this <cite>&lt;path&gt;/grp/redcat/trds/grid/ck04models</cite>. <a href="#id1"><span class="problematic" id="id2">**</span></a>The full directory structure does not matter. Only the last portion <cite>grid/ck04models</cite>. You will need to create an enviornment variable that points to where <cite>grid/</cite> is located. See below.</p>
+<p>When you untar this you should get a directory structure that looks like this <code class="docutils literal notranslate"><span class="pre">&lt;path&gt;/grp/redcat/trds/grid/ck04models</span></code>. Some other people have reported a directory structure that looks like this <code class="docutils literal notranslate"><span class="pre">&lt;path&gt;/grp/redcat/trds/grid/ck04models</span></code>. <strong>The full directory structure does not matter</strong>. Only the last portion <code class="docutils literal notranslate"><span class="pre">grid/ck04models</span></code>. You will need to create an enviornment variable that points to where <code class="docutils literal notranslate"><span class="pre">grid/</span></code> is located. See below.</p>
 <ol class="arabic simple" start="2">
 <li><p>Create environment variable</p></li>
 </ol>
@@ -258,7 +258,7 @@ ls
 grid
 </pre></div>
 </div>
-<p>Where the folder <cite>grid</cite> contains whatever <cite>pysynphot</cite> data files you have downloaded (e.g. a folder called <cite>ck04models</cite>).</p>
+<p>Where the folder <code class="docutils literal notranslate"><span class="pre">grid/</span></code> contains whatever <code class="docutils literal notranslate"><span class="pre">pysynphot</span></code> data files you have downloaded (e.g. a folder called <code class="docutils literal notranslate"><span class="pre">ck04models/</span></code>).</p>
 </div>
 </div>
 

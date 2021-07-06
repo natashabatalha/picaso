@@ -46,7 +46,7 @@ Should look something like this
 	ls
 	base_cases	config.json	opacities
 
-Your opacities folder shown above should include the file `opacities.db` `file downloaded from zenodo <https://doi.org/10.5281/zenodo.3759675>`_. This is mostly a matter of preference, as PICASO allows you to point to an opacity directory. Personally, I like to store something with the reference data so that I don't have to constantly specify a folder path when running the code. 
+Your opacities folder shown above should include the file ``opacities.db`` `file downloaded from zenodo <https://doi.org/10.5281/zenodo.3759675>`_. This is mostly a matter of preference, as PICASO allows you to point to an opacity directory. Personally, I like to store something with the reference data so that I don't have to constantly specify a folder path when running the code. 
 
 Download and Link Pysynphot Stellar Data
 ----------------------------------------
@@ -61,7 +61,7 @@ You can download them by doing this:
 
 	wget http://ssb.stsci.edu/trds/tarfiles/synphot3.tar.gz
 
-When you untar this you should get a directory structure that looks like this `<path>/grp/redcat/trds/grid/ck04models`. Some other people have reported a directory structure that looks like this `<path>/grp/redcat/trds/grid/ck04models`. **The full directory structure does not matter. Only the last portion `grid/ck04models`. You will need to create an enviornment variable that points to where `grid/` is located. See below.
+When you untar this you should get a directory structure that looks like this ``<path>/grp/redcat/trds/grid/ck04models``. Some other people have reported a directory structure that looks like this ``<path>/grp/redcat/trds/grid/ck04models``. **The full directory structure does not matter**. Only the last portion ``grid/ck04models``. You will need to create an enviornment variable that points to where ``grid/`` is located. See below.
 
 2) Create environment variable
 
@@ -89,4 +89,4 @@ Now you should be able to check the path:
 	ls
 	grid
 
-Where the folder `grid` contains whatever `pysynphot` data files you have downloaded (e.g. a folder called `ck04models`). 
+Where the folder ``grid/`` contains whatever ``pysynphot`` data files you have downloaded (e.g. a folder called ``ck04models/``). 
