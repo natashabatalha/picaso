@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import astropy.units as u
 import pickle
-import os,sys
+import os, sys
 from scipy import interpolate
 import virga.justdoit as vd
 import virga.justplotit as vp
@@ -18,17 +18,12 @@ import matplotlib.pyplot as plt
 import math
 
 import warnings
+
 warnings.filterwarnings('ignore')
 import astropy.units as u
 
-#picaso
 from picaso import justdoit as jdi
 from picaso import justplotit as jpi
-#plotting
-from bokeh.io import output_notebook
-from bokeh.resources import INLINE
-output_notebook(INLINE)
-from bokeh.plotting import show, figure
 
 import sys
 
@@ -37,14 +32,408 @@ from operator import itemgetter
 
 from picaso.disco import get_angles_3d
 
-from spectrum_3d import spectrum_3D
-from regrid_chem import regrid_and_chem_3D
-from virga_3d import virga_3D
 
 
-#### Functions for stellar flux and wavelengths ####
+def regrid_and_chem_3D(planet=None, input_file=None, orb_phase=None, time_after_pa=None,
+                       n_gauss_angles=None, n_chebychev_angles=None, nlon=None, nlat=None, nz=None, CtoO=None, mh=None):
+    '''
+    Function to regrid MITgcm input data into the chosen low resolution grid in PICASO. Selects the visiblle hemisphere
+    at each point in the orbit by rotating the grid. It computes the 3D chemistry for the full planet.
+
+    Parameters
+    ----------
+    planet: str
+        Name of planet
+    input_file: str
+        input MITgcm file, see necessary format at https://natashabatalha.github.io/picaso/notebooks/9_Adding3DFunctionality.htm
+    chempath: str
+        Path to store chemistry files
+    newpt_path: str
+        Path to store regridded PTK data
+    orb_phase: float
+        orbital phase angle (Earth facing longitude), in degrees from -180 to 180, for planet rotation
+    time_after_pa: float
+        Time after periapse, for eccentric planets
+    n_gauss_angles: int
+        number of Gauss angles
+    n_chebychev_angles: int
+        number of Chebyshev angles
+    nlon: int
+        number of longitude points in MITgcm grid
+    nlat: int
+        number of latitude points in MITgcm grid
+    nz: int
+        number of pressure layers in MITgcm grid
+    CtoO: float
+        C to O ratio
+    mh: int
+        metallicity, in NON log units (1 is solar)
+
+    Returns
+    -------
+    newdat: dict
+        Dictionary with regridded pressure-temperature-kzz profiles
+    chem3d: dict
+        Dictionary with computed chemistry, to be added into 3D atmosphere
+    '''
+
+    if time_after_pa != None:  # for eccentric planets
+        infile = open(input_file, 'r')
+
+        # skip headers and blank line -- see GCM output
+        line0 = infile.readline().split()
+        line1 = infile.readline().split()
+
+    else:
+        infile = open(input_file, 'r')
+
+    gangle, gweight, tangle, tweight = disco.get_angles_3d(n_gauss_angles, n_chebychev_angles)
+    ubar0, ubar1, cos_theta, latitude, longitude = disco.compute_disco(n_gauss_angles, n_chebychev_angles, gangle, tangle, phase_angle=0)
+
+    all_lon = np.zeros(nlon * nlat)  # 128 x 64 -- first, check size of GCM output
+    all_lat = np.zeros(nlon * nlat)
+    p = np.zeros(nz)
+    t = np.zeros((nlon, nlat, nz))
+    kzz = np.zeros((nlon, nlat, nz))
+
+    total_pts = nlon * nlat
+
+    ctr = -1
+
+    for ilon in range(0, nlon):
+        for ilat in range(0, nlat):
+            ctr += 1
+
+            # skip blank line -- check GCM output formatting
+
+            temp = infile.readline().split()
+
+            if planet == 'wasp-43b':
+                all_lon[ctr] = float(temp[0]) + orb_phase - 45  # this is hard coded for rotated WASP-43b grid from TK, remove later
+            else:
+                all_lon[ctr] = float(temp[0]) + orb_phase
+
+            all_lat[ctr] = float(temp[1])
+
+            # read in data for each grid point
+            for iz in range(0, nz):
+                temp = infile.readline().split()
+                # print(temp)
+                p[iz] = float(temp[0])
+
+                t[ilon, ilat, iz] = float(temp[1])
+
+                # print(t)
+
+                kzz[ilon, ilat, iz] = float(temp[2])
+            temp = infile.readline()
+
+    lon = np.unique(all_lon)
+    lat = np.unique(all_lat)
+
+    # REGRID PTK
+
+    lon2d, lat2d = np.meshgrid(longitude, latitude)
+    lon2d = lon2d.flatten() * 180 / 3.141592
+    lat2d = lat2d.flatten() * 180 / 3.141592
+
+    xs, ys, zs = jpi.lon_lat_to_cartesian(np.radians(all_lon), np.radians(all_lat))
+    xt, yt, zt = jpi.lon_lat_to_cartesian(np.radians(lon2d), np.radians(lat2d))
+
+    nn = int(total_pts / (n_gauss_angles * n_chebychev_angles))
+
+    tree = cKDTree(list(zip(xs, ys, zs)))              # these are the original 128x64 angles
+    d, inds = tree.query(list(zip(xt, yt, zt)), k=nn)  # this grid is for ngxnt angles, regridding done here
+
+    new_t = np.zeros((n_gauss_angles * n_chebychev_angles, nz))
+    new_kzz = np.zeros((n_gauss_angles * n_chebychev_angles, nz))
+
+    for iz in range(0, nz):
+        new_t[:, iz] = np.sum(t[:, :, iz].flatten()[inds], axis=1) / nn
+        new_kzz[:, iz] = np.sum(kzz[:, :, iz].flatten()[inds], axis=1) / nn
+
+    newdat = {'lon': lon2d, 'lat': lat2d, 'temp': new_t, 'P': p, 'kzz': new_kzz}
+
+    print('T, Kzz ready')
+
+    # START CHEMISTRY
+
+    input3d = {i: {} for i in latitude}
+
+    print('starting chem')
+    for ilat in range(n_chebychev_angles):
+        for ilon in range(n_gauss_angles):
+            case1 = jdi.inputs(chemeq=True)
+            df = pd.DataFrame({'temperature': new_t[ilat * n_chebychev_angles + ilon, :], 'pressure': p})
+            case1.inputs['atmosphere']['profile'] = df
+            case1.chemeq(CtoO, mh)
+
+            # Save as df within dictionary
+            df2 = case1.inputs['atmosphere']['profile']
+            df2['kzz'] = new_kzz[ilat * n_chebychev_angles + ilon, :]
+
+            input3d[latitude[ilat]][longitude[ilon]] = df2
+
+    print('chem ready')
+
+    return (newdat, input3d)
+
+
+# CLOUDS WITH VIRGA
+
+def virga_calc(optics_dir=None, mmw=None, fsed=None, radius=None, mass=None, p=None, t=None, kz=None, metallicity=1):
+
+    '''
+
+    Compute 1D cloud profile and optical properties given a 1D pressure temperature ad kzz profile
+
+    Parameters
+    ----------
+
+    optics_dir: directory for virga optical properties files
+    mmw: float
+        mean molecular weight of atm
+    fsed: float
+        sedimentation efficiency
+    radius: float
+        radius of planet in Rjup
+    mass:  float
+        mass of planet in Mjup
+    p: array
+        pressure (1D)
+    t: array
+        temperature (1D)
+    kz: array
+        mixing coefficient (1D)
+    metallicity:
+        metallicity in NON log units, default 1 (solar)
+
+    Returns
+    -------
+    all_out: dict
+        1D cloud profile and optical properties
+    '''
+
+    mean_molecular_weight = mmw
+    gases = vd.recommend_gas(p, t, metallicity, mean_molecular_weight)
+
+    if 'KCl' in gases:
+        gases.remove('KCl')
+    print('Virga Gases:', gases)
+
+    sum_planet = vd.Atmosphere(gases, fsed=fsed, mh=metallicity, mmw=mean_molecular_weight)
+    sum_planet.gravity(radius=radius, radius_unit=u.Unit('R_jup'), mass=mass, mass_unit=u.Unit('M_jup'))
+    sum_planet.ptk(df=pd.DataFrame({'pressure': p, 'temperature': t, 'kz': kz}))  # will add to this dict from MITgcm file
+
+    all_out = sum_planet.compute(as_dict=True, directory=optics_dir)
+    return (all_out)
+
+
+def virga_3D(optics_dir=None, mmw=None, fsed=None, radius=None, mass=None, ptk_dat=None):
+    '''
+
+    This function runs Virga for a 3D atmosphere, by computing cloud profiles for every 1D column in the atmosphere.
+    It formats the result to be compatible with picaso, and outputs a dictionary with all the necessary cloud
+    parameters in 3D. Written by Danica Adams (Caltech)
+
+    Parameters
+    ----------
+
+    optics_dir: str
+        directory for Virga optical properties files
+    mmw: float
+        mean molecular weight
+    fsed: float
+        sedimentation efficiency
+    radius: float
+        planet radius in Jupiter radius
+    mass: float
+        planet mass in Jupiter mass
+    ptk_dat: dictionary
+        input PTK profile database or dict, use regridded by PICASO.
+
+    Returns
+    -------
+    cld3d: dict
+        3D dictionary with cloud properties that can be added to 3D atmosphere in PICASO
+    '''
+
+    shortdat = ptk_dat
+
+    # CREATE EMPTY DICTIONARY
+    cld3d = {i: {} for i in np.unique(shortdat['lat'])}  # dict for each lat, all lons,
+
+    for ilat in np.unique(shortdat['lat']):
+
+        #for each lon/lat, will take outputs from virga run
+
+        cld3d[ilat] = {i: {} for i in np.unique(shortdat['lon'])}  # and make a 3D dictionary, cld3d, with them
+
+    # VIRGA CALCULATIONS
+
+    for ipos in range(0, len(shortdat['lat'])):
+        outdat = virga_calc(optics_dir, mmw, fsed, radius, mass, shortdat['P'], shortdat['temp'][ipos, :],
+                            shortdat['kzz'][ipos, :])
+        cld3d[shortdat['lat'][ipos]][shortdat['lon'][ipos]] = outdat  # add results from virga run to dict
+        cld3d[shortdat['lat'][ipos]][shortdat['lon'][ipos]]['g0'] = cld3d[shortdat['lat'][ipos]][
+            shortdat['lon'][ipos]].pop('asymmetry')
+        cld3d[shortdat['lat'][ipos]][shortdat['lon'][ipos]]['opd'] = cld3d[shortdat['lat'][ipos]][
+            shortdat['lon'][ipos]].pop('opd_per_layer')
+        cld3d[shortdat['lat'][ipos]][shortdat['lon'][ipos]]['w0'] = cld3d[shortdat['lat'][ipos]][
+            shortdat['lon'][ipos]].pop('single_scattering')
+        cld3d[shortdat['lat'][ipos]][shortdat['lon'][ipos]]['wavenumber'] = cld3d[shortdat['lat'][ipos]][
+            shortdat['lon'][ipos]].pop('wave')
+
+    return (cld3d)
+
+
+# THERMAL SPECTRUM
+
+def spectrum_3D(calc=None, res=None, ng=None, nt=None, waverange=None,
+                radius=None, mass=None, s_radius=None, sma=None, chemdata=None, starfile=None,
+                s_w_units=None, s_f_units=None, logg=None, s_temp=None, s_met=None, clouds_dat=None, fsed=None):
+    '''
+    Parameters
+    ----------
+
+    planet: str
+        name of planet
+    orb_phase: float
+        orbital phase determining visible hemisphere
+    calc: str
+        thermal or reflected
+    time_after_pa: float
+        time after periapse, for eccentric planets
+    res: int
+        resample opacities for higher speed, default is 0.1
+    ng: int
+        number of gauss angles
+    nt: int
+        number of cheby angles
+    waverange: list of floats
+        wavelength range, must be [wv1,wv2]
+    radius: float
+        radius of planet in units Rjup
+    mass: float
+        mass of planet in units Mjup
+    s_temp: float
+        temperature of star
+    logg: float
+        log g of star
+    s_met: float
+        metallicity of star
+    sma: float
+        semi-major axis
+    chempath: str
+        path to 3D chemistry file, if reusing chemistry for increased speed
+    outpath: str
+        path to output spectrum, saving disabled for now
+    outfile: str
+        name of output file where spectrum is stored, saving disabled for now
+    save: bool
+        if True, save spectrum to file, disabled for now
+    starfile: str
+        path to input stellar file (if you want to use your own), units must be erg/cm2/s/Hz and um
+    chemdata: dict
+        dictionary containing chemistry, if None, use file containing chemistry
+    clouds: bool
+        if True, adds Virga clouds to atmosphere, names of Virga files depend on phase and is hardcoded here
+    fsed: float
+        sedimentation efficiency for clouds
+
+    Returns
+    -------
+    out: dict
+        1D planet spectrum and 3d thermal flux
+    '''
+
+    t1 = time.time()
+
+    # Initialize dictionary where spectral data will be stored
+    star_dict = defaultdict(dict)
+
+    opacity = jdi.opannection(wave_range=waverange, resample=res)  # change for each run depending on instrument/spectrum type
+
+    # Planet properties, star properties
+
+    start_case = jdi.inputs()
+    start_case.phase_angle(phase=0, num_tangle=nt, num_gangle=ng)  # radians
+    start_case.gravity(radius=radius, radius_unit=u.Unit('R_jup'), mass=mass, mass_unit=u.Unit('M_jup'))  # any astropy units available
+
+    if starfile != None:
+        start_case.star(opacity, radius=s_radius, radius_unit=u.Unit('R_sun'), semi_major=sma,
+                        semi_major_unit=u.Unit('au'), database=None, filename=starfile, w_unit=s_w_units,
+                        f_unit=s_f_units)
+        print('Using input stellar file')
+    else:
+        print('Using CK04 stellar model database')
+        start_case.star(opacity, s_temp, s_met, logg, radius=s_radius, radius_unit=u.Unit('R_sun'), semi_major=sma,
+                        semi_major_unit=u.Unit('au'))  # opacity db, pysynphot database, temp, metallicity, logg
+
+    # Create stellar flux dictionary and file
+
+    star_flux = start_case.inputs['star']['flux']
+    star_wno = start_case.inputs['star']['wno']
+
+    star_dict['flux'] = star_flux
+    star_dict['wno'] = star_wno
+    
+    # Add rebinned PTK
+
+    df = chemdata
+
+    # This makes sure that all lons and lats are on the same grid
+
+    lats = sorted([int(i * 180 / np.pi) for i in start_case.inputs['disco']['latitude']])
+    lons = sorted([int(i * 180 / np.pi) for i in start_case.inputs['disco']['longitude']])
+
+    new_df = {}
+    k = list(df.keys())
+    for i in range(0, len(k)):
+        if type(k[i]) == str:
+            del df[k[i]]
+
+    for i, new_la in zip(sorted(list(df.keys())), lats):
+        new_df[new_la] = {}
+        for j, new_lo in zip(sorted(list(df[i].keys())), lons):
+            new_df[new_la][new_lo] = df[i][j]
+
+    start_case.atmosphere_3d(dictionary=new_df)
+
+    # Add Virga clouds to atmosphere
+
+    if clouds_dat != None:
+
+        df = clouds_dat
+
+        lats = sorted([int(i * 180 / np.pi) for i in start_case.inputs['disco']['latitude']])
+        lons = sorted([int(i * 180 / np.pi) for i in start_case.inputs['disco']['longitude']])
+
+        new_df = {}
+        for i, new_la in zip(sorted(list(df.keys())), lats):
+            new_df[new_la] = {}
+            # print(new_df)
+            for j, new_lo in zip(sorted(list(df[i].keys())), lons):
+                dicttemp = vd.picaso_format(df[i][j]['opd'], df[i][j]['g0'], df[i][j]['g0'])
+                new_df[new_la][new_lo] = dicttemp
+
+        start_case.clouds_3d(dictionary=new_df)
+
+    # Compute spectrum
+
+    print('Computing spectrum')
+
+    out = start_case.spectrum(opacity, dimension='3d', calculation=calc, full_output=True)
+
+    print('Spectrum done')
+
+    t2 = time.time()
+
+    return (out, star_dict)
+
 
 def correct_star_units(star_model, w_unit, f_unit):
+
     '''
     Correct from stellar units of original input file into PICASO units of ergs/cm3/s without regridding
 
@@ -64,12 +453,13 @@ def correct_star_units(star_model, w_unit, f_unit):
     ndarray
         Stellar flux in corrected units
     '''
-    
+
     # Correct from stellar units of original file into PICASO units of ergs/cm3/s
-    
+
     star = np.genfromtxt(star_model, dtype=(float, float), names='w, f')
     flux = star['f']
     wave = star['w']
+
     # sort if not in ascending order
     sort = np.array([wave, flux]).T
     sort = sort[sort[:, 0].argsort()]
@@ -104,24 +494,10 @@ def correct_star_units(star_model, w_unit, f_unit):
     sp.convert("um")
     sp.convert('flam')  # ergs/cm2/s/ang
     wno_star = 1e4 / sp.wave[::-1]  # convert to wave number and flip
-    wv_star = 1e4/wno_star
+    wv_star = 1e4 / wno_star
     flux_star = sp.flux[::-1] * 1e8  # flip and convert to ergs/cm3/s here to get correct order
-    
-    return(wv_star, flux_star)
 
-
-def interpolate_star(star_model, wno, w_unit, f_unit):
-    
-    # Interpolate stellar grid onto planet grid
-    # wno: planet wavenumber array
-    
-    wno_star, flux_star = correct_star_units(star_model, w_unit, f_unit)
-   
-    wno_planet = wno
-    fine_wno_star = wno_planet
-    fine_flux_star = np.interp(wno_planet, wno_star, flux_star)
-
-    return (fine_wno_star, fine_flux_star)
+    return (wv_star, flux_star)
 
 
 def mask_star(wv_star, flux_star, choose_wave):
@@ -148,14 +524,12 @@ def mask_star(wv_star, flux_star, choose_wave):
 
     l1 = choose_wave[0]
     l2 = choose_wave[1]
-    
+
     mask_s = [(wv_star > l1) & (wv_star < l2)]
-    print('mask', len(mask_s), len(mask_s[0]))
     wv_star_masked = wv_star[mask_s]
     flux_star_masked = flux_star[mask_s]
-    print('wv', len(wv_star), 'flux', len(flux_star))
 
-    return(wv_star_masked, flux_star_masked)
+    return (wv_star_masked, flux_star_masked)
 
 
 def interpolate_filter(filter_file, wv_star):
@@ -175,26 +549,25 @@ def interpolate_filter(filter_file, wv_star):
         Interpolated response function, onto higher resolution stellar wavelength grid
     '''
 
-    wv_filter = np.genfromtxt(filter_file, usecols=0)*1e6
+    wv_filter = np.genfromtxt(filter_file, usecols=0) * 1e6
     sns_filter = np.genfromtxt(filter_file, usecols=1)
-    
+
     interpfunc = interpolate.interp1d(wv_filter, sns_filter, bounds_error=False, fill_value=0)
     resp = interpfunc(wv_star)
 
     ########## Make transmission 0 where is is supposed to be 0 #############
     start = wv_filter[0]
-    end = wv_filter[len(wv_filter)-1]
+    end = wv_filter[len(wv_filter) - 1]
 
-    wws=np.where(wv_star <= start)
-    wwe=np.where(wv_star >= end)
-    resp[wwe]=0.0
-    resp[wws]=0.0
-    
-    return(resp)
+    wws = np.where(wv_star <= start)
+    wwe = np.where(wv_star >= end)
+    resp[wwe] = 0.0
+    resp[wws] = 0.0
+
+    return (resp)
 
 
 def transmitted_fpfs(planet_flux, star_flux, wv_star, resp, rprs, R):
-    
     '''
     Calculate fraction of flux transmitted by instrument response.
 
@@ -219,20 +592,19 @@ def transmitted_fpfs(planet_flux, star_flux, wv_star, resp, rprs, R):
         Transmitted stellar flux
     '''
 
-    h=6.626e-27
-    c=2.998e14  #dist. units=microns
+    h = 6.626e-27
+    c = 2.998e14  # dist. units=microns
 
     diff = np.diff(wv_star)
-    diff = (np.append(diff,diff[-1:]) + np.append(diff[1:],diff[-2:]))/2
-    
-    planet_trans = planet_flux*resp*diff*wv_star/(h*c)  # apply weighting factor (filter) to every flux
-    star_trans = star_flux*resp*diff*wv_star/(h*c)
-    
-    return(planet_trans, star_trans)
-    
+    diff = (np.append(diff, diff[-1:]) + np.append(diff[1:], diff[-2:])) / 2
+
+    planet_trans = planet_flux * resp * diff * wv_star / (h * c)  # apply weighting factor (filter) to every flux
+    star_trans = star_flux * resp * diff * wv_star / (h * c)
+
+    return (planet_trans, star_trans)
+
 
 def whitelight_flux(planet_trans, star_trans, resp):
-
     '''
     Sum up fluxes from each wavelength band to obtain white light flux
 
@@ -258,22 +630,24 @@ def whitelight_flux(planet_trans, star_trans, resp):
     sum_pflux = 0
     sum_sflux = 0
     sum_weights = 0
-    
+
     for j in range(len(planet_trans)):  # planet_trans is array of len = # wavelengths
-            
+
         sum_pflux += planet_trans[j]
         sum_sflux += star_trans[j]
         sum_weights += resp[j]
-        
-    return(sum_pflux, sum_sflux, sum_weights)
-    
+
+    return (sum_pflux, sum_sflux, sum_weights)
+
 
 ##### Main Function to compute 3D fluxes at different phases (e.g. phase curves) #####
 
-def thermal_phasecurve(planet=None, in_ptk=None, chempath=None, newpt_path=None, filt_path=None, wv_range=None, res=None, nphases=None,
-                              p_range=None, ng=None, nt=None, nlon=None, nlat=None, nz=None, CtoO=None, mh=None, mmw=None, rp=None, mp=None, rs=None, rprs=None, sma=None, R=None,
-                              save_spect = False, sw_units=None, sf_units=None, in_star=None, Ts=None,
-                              logg_s=None, met_s=None, cloudy = False, fsed = None, cld_path = None, optics_dir = None, reuse_pt = False, reuse_cld = False):
+def thermal_phasecurve(planet=None, in_ptk=None, filt_path=None, wv_range=None,
+                       res=None, nphases=None,
+                       p_range=None, ng=None, nt=None, nlon=None, nlat=None, nz=None, CtoO=None, mh=None, mmw=None,
+                       rp=None, mp=None, rs=None, rprs=None, sma=None, R=None,
+                       sw_units=None, sf_units=None, in_star=None, Ts=None,
+                       logg_s=None, met_s=None, cloudy=False, fsed=None, optics_dir=None):
     
     '''
     Compute thermal phase curves from 3D pressure-temperature input (MITgcm). This function rotates the input 3D grid to select the visible hemisphere at each orbital phase angle, it computes the 3D chemistry profile and thermal spectrum at each orbital point. If clouds are turned on, it will also run virga to compute the 3D cloud profile, and use it to compute the spectrum.
@@ -357,10 +731,10 @@ def thermal_phasecurve(planet=None, in_ptk=None, chempath=None, newpt_path=None,
     '''
 
     phases360 = np.linspace(p_range[0], p_range[1], nphases)
-    phases = phases360 - 180 # go from 0-360 to -180-180
-    
+    phases = phases360 - 180  # go from 0-360 to -180-180
+
     print('THERMAL PHASE CURVE')
-    print('Resolution: ', ng,'x',nt)
+    print('Resolution: ', ng, 'x', nt)
 
     flag = 0
     fluxes = defaultdict(dict)  # inititate dictionary where phase curve data will be stored
@@ -368,236 +742,98 @@ def thermal_phasecurve(planet=None, in_ptk=None, chempath=None, newpt_path=None,
     all_phases = np.zeros(nphases)
 
     for iphase in range(0, nphases):
+
         # Regrid data and compute chemistry
-    
+
         phase360 = phases360[iphase]
         phase = phases[iphase]
-        deg = 0.5*phase360/180
-        print('PHASE:', round(phase360,1))
 
-        if reuse_pt == False:
-            newptk, chem = regrid_and_chem_3D(planet=planet, input_file=in_ptk, chempath=chempath, newpt_path=newpt_path, orb_phase=phase, n_gauss_angles=ng, n_chebychev_angles=nt, nlon=nlon, nlat=nlat, nz=nz, CtoO=CtoO, mh=mh)
-        else:
-            chem = None
-            newptk = None
+        print('PHASE:', round(phase360, 1))
+
+        newptk, chem = regrid_and_chem_3D(planet=planet, input_file=in_ptk, orb_phase=phase, n_gauss_angles=ng,
+                                              n_chebychev_angles=nt, nlon=nlon, nlat=nlat, nz=nz, CtoO=CtoO, mh=mh)
+
         # Compute cloud profiles with Virga
-        
+
         if cloudy == True:
-            print('Adding clouds')
-            
-            if reuse_cld == True:
-                
-                # this filename should be changed here and in virga_3d.py, it is rewritten for every phase
-
-                cld_file = cld_path+planet+'-Virga-NewOptics_' + str(ng).strip() + 'x' + str(nt).strip() + '_' + str(fsed[0]) + '_' + str(round(deg, 2)) + '.pickle'
-                
-                with open(cld_file, 'rb') as handle:
-                    cld_dat = pickle.load(handle)
-
-            elif reuse_pt == True:
-                cld_dat = virga_3D(planet=planet, virgapath=cld_path, optics_dir=optics_dir, mmw=mmw, fsed=fsed, radius=rp, mass=mp, hemisphere=phase, gangle=ng, tangle = nt, ptk_path = newpt_path) 
-            else:
-                cld_dat = virga_3D(planet=planet, virgapath=cld_path, optics_dir=optics_dir, mmw=mmw, fsed=fsed, radius=rp, mass=mp, hemisphere=phase, gangle=ng, tangle = nt, ptk_dat = newptk)
+            cld_dat = virga_3D(optics_dir=optics_dir, mmw=mmw, fsed=fsed,
+                                radius=rp, mass=mp, ptk_dat=newptk)
 
         else:
             cld_dat = None
 
         # Compute spectrum
 
-        spectrum, star_dict = spectrum_3D(planet=planet, orb_phase=phase, calc='thermal', res=res, ng=ng, nt=nt, waverange=wv_range, radius=rp, mass=mp, s_radius=rs, logg=logg_s, s_temp=Ts, s_met=met_s, sma=sma, chemdata=chem, chempath=chempath, starfile=in_star, s_w_units=sw_units, s_f_units=sf_units, clouds_dat=cld_dat, fsed = fsed, save=save_spect)
+        spectrum, star_dict = spectrum_3D(calc='thermal', res=res, ng=ng, nt=nt,
+                                          waverange=wv_range, radius=rp, mass=mp, s_radius=rs, logg=logg_s, s_temp=Ts,
+                                          s_met=met_s, sma=sma, chemdata=chem, starfile=in_star,
+                                          s_w_units=sw_units, s_f_units=sf_units, clouds_dat=cld_dat, fsed=fsed)
 
-        # Compute average flux over hemisphere 
-        
+        # Compute average flux over hemisphere
+
         thermal_3d = spectrum['full_output']['thermal_3d']
         fpfs_pic = spectrum['fpfs_thermal']
         wno = spectrum['wavenumber']
         wvl_pic = 1e4 / wno  # in microns
 
         if flag == 0:
-
             # write stellar flux into file only once
             fluxes['star_flux_picaso'] = star_dict['flux']
 
-        ###### Calculate Fp/Fs for each phase and wavelength ###
+        ### Calculate Fp/Fs for each phase and wavelength ###
 
-        pflux = spectrum['thermal'] # get directly from picaso output spectrum
-        ws, fs = 1e4/star_dict['wno'], star_dict['flux']
-
-        ##### Apply mask with wavelengths of interest ######
+        pflux = spectrum['thermal']  # get directly from picaso output spectrum
         
+        #ws, fs = 1e4 / star_dict['wno'], star_dict['flux']
+        
+        # get stellar flux directly from the star file, but need to make sure units are in erg/cm2/s/cm
+
+        ws, fs = correct_star_units(in_star, sw_units, fs_units)
+        print('STAR WVL:', len(ws))
+
+        ### Apply mask with wavelengths of interest ###
+
         wv_star, flux_star = mask_star(ws, fs, wv_range)
 
-        ######### WFC3 sensitivity function, interpolate over stellar wavelength #########
+        ### WFC3 sensitivity function, interpolate over stellar wavelength ###
 
         wfc3 = filt_path
         resp = interpolate_filter(wfc3, wv_star)
-        
-        ######## Calculate transmission #######
-        
-        avg_pflux = np.zeros(len(all_phases)) # to plot phase curves
-        avg_sflux = np.zeros(len(all_phases)) # to plot phase curves
-        
-        # Interpolate planet flux onto stellar flux
 
+        ######## Calculate transmission #######
+
+        avg_pflux = np.zeros(len(all_phases))  # to plot phase curves
+        avg_sflux = np.zeros(len(all_phases))  # to plot phase curves
+
+        # Interpolate planet flux onto stellar grid
         interpfunc = interpolate.interp1d(wvl_pic, pflux, bounds_error=False, fill_value=0)
         fplan = interpfunc(wv_star)
-        
-        # Calculate transmission in the filter band and FpFs for every phase
-        
-        planet_trans, star_trans = transmitted_fpfs(fplan, flux_star, wv_star, resp, rprs=rprs, R=R)
-                                        
-        ##### integrate flux over wavelength for white light phasecurve ######
-        
-        sum_pflux, sum_sflux, sum_weights =  whitelight_flux(planet_trans, star_trans, resp)
 
-        avg_pflux[flag] = sum_pflux #array with weighted average planet flux
-        avg_sflux[flag] = sum_sflux #array with weighted average stellar flux
-        
-        fpfs_pc = (avg_pflux/avg_sflux)*(rprs**2)
-        print('FpFs', fpfs_pc[flag])
+        # Calculate transmission in the filter band and FpFs for every phase
+
+        planet_trans, star_trans = transmitted_fpfs(fplan, flux_star, wv_star, resp, rprs=rprs, R=R)
+
+        ### integrate flux over wavelength for white light phasecurve ###
+
+        sum_pflux, sum_sflux, sum_weights = whitelight_flux(planet_trans, star_trans, resp)
+
+        avg_pflux[flag] = sum_pflux  # array with weighted average planet flux
+        avg_sflux[flag] = sum_sflux  # array with weighted average stellar flux
+
+        fpfs_pc = (avg_pflux / avg_sflux) * (rprs ** 2)
+        print('FpFs=', fpfs_pc)
         all_fpfs[flag] = fpfs_pc[flag]
-        all_phases[flag] = round(phase360,2)        
-        
-        fluxes[round(phase360,2)] = {'fpfs_spect': fpfs_pic, 'pflux_trans':planet_trans, 'sflux_trans':star_trans, 'wavelength':wv_star, 'thermal_3d': thermal_3d}
+        all_phases[flag] = round(phase360, 2)
+
+        fluxes[round(phase360, 2)] = {'fpfs_spect': fpfs_pic, 'thermal': pflux, 'pflux_trans': planet_trans, 'sflux_trans': star_trans, 'wavelength': wv_star, 'thermal_3d': thermal_3d}
 
         print('Thermal flux added to phasecurve dictionary')
-        print('Phases:', all_phases) 
+        
         flag += 1
 
     # Write into file
-    print('All FpFs', all_fpfs)
+
     fluxes['all_fpfs'] = all_fpfs
-    fluxes['all_phases'] = all_phases 
-    
-    return(fluxes) # this is a dictionary
+    fluxes['all_phases'] = all_phases
 
-
-### PLOTTING ###
-
-from bokeh.palettes import Colorblind8
-from bokeh.plotting import figure
-
-def phasecurve(xarray, yarray,legend=None, degrees = False, palette = Colorblind8, **kwargs):
-    
-    """
-    Plot formated thermal phase curve
-    
-    Parameters
-    ----------
-    xarray : float array, list of arrays
-        phase angle
-    yarray : float array, list of arrays 
-        Fp/Fs 
-    legend : list of str , optional
-        legends for plotting 
-    degrees : just to change label of x axis
-    palette : list,optional
-        List of colors for lines. Default only has 8 colors so if you input more lines, you must
-        give a different pallete 
-    **kwargs : dict     
-        Any key word argument for bokeh.plotting.figure()
-        
-    Returns
-    -------
-    bokeh plot
-    """ 
-    
-    if len(yarray)==len(xarray):
-        Y = [yarray]
-    else:
-        Y = yarray
-
-    if degrees == True: 
-        x_axis_label = r'Degrees After Transit'
-
-    else: 
-        x_axis_label = 'Orbital Phase'
-        
-    prange = [np.min(xarray[0]), np.max(xarray[0])]
-
-    kwargs['plot_height'] = kwargs.get('plot_height',345)
-    kwargs['plot_width'] = kwargs.get('plot_width',1000)
-    kwargs['y_axis_label'] = kwargs.get('y_axis_label','Planet/Star Flux Ratio')
-    kwargs['x_axis_label'] = kwargs.get('x_axis_label',x_axis_label)
-    kwargs['x_range'] = prange
-
-    fig = figure(**kwargs)
-
-    i = 0
-    for yarray in Y:
-        if isinstance(xarray, list):
-            if isinstance(legend,type(None)): legend=[None]*len(xarray[0])
-            for ph, a,i,l in zip(xarray, yarray, range(len(xarray)), legend):
-                if l == None:
-                    fig.line(ph,  a,  color=palette[np.mod(i, len(palette))], line_width=3)
-                else:
-                    fig.line(ph, a, legend_label=l, color=palette[np.mod(i, len(palette))], line_width=3)
-        else: 
-            if isinstance(legend,type(None)):
-                fig.line(xarray, yarray,  color=palette[i], line_width=3)
-            else:
-                fig.line(xarray, yarray, legend_label=legend, color=palette[i], line_width=3)
-                
-        i = i+1
-    jpi.plot_format(fig)
-    return fig
-
-
-def plot_3d_disco_flux(full_output,wavelength,calculation='thermal'):
-    """
-    Plot disco ball with facets. Bokeh is not good with 3D things. So this is in matplotlib
-    Parameters
-    ----------
-    full_output : class 
-        Full output from picaso
-    wavelength : list 
-        Where to plot 3d facets. Can input as many wavelengths as wanted. 
-        Must be a list, must be in microns. 
-    calculation : str, optional 
-        Default is to plot 'reflected' light but can also switch to 'thermal' if it has been computed
-    """
-    if calculation=='reflected':to_plot='albedo_3d'
-    elif calculation=='thermal':to_plot='thermal_3d'
-
-    if isinstance(wavelength,(float,int)): wavelength = [wavelength]
-
-    nrow = int(np.ceil(len(wavelength)/3))
-    ncol = int(np.min([3,len(wavelength)])) #at most 3 columns
-    fig = plt.figure(figsize=(6*ncol,4*nrow))
-    for i,w in zip(range(len(wavelength)),wavelength):
-        ax = fig.add_subplot(nrow,ncol,i+1, projection='3d')
-        #else:ax = fig.gca(projection='3d')
-        wave = 1e4/spect['wavenumber']
-        indw = jpi.find_nearest_1d(wave,w)
-        #[umg, numt, nwno] this is xint_at_top
-        xint_at_top = full_output[to_plot][:,:,indw]
-
-        longitude = spect['full_output']['longitude']
-        latitude = spect['full_output']['latitude']
-
-        cm = plt.cm.get_cmap('plasma')
-        u, v = np.meshgrid(longitude, latitude)
-        
-        x,y,z = jpi.lon_lat_to_cartesian(u, v)
-
-        ax.plot_wireframe(x, y, z, color="gray")
-
-        sc = ax.scatter(x,y,z, c = xint_at_top.T.ravel(),cmap=cm,s=150)
-
-        fig.colorbar(sc)
-        ax.set_zlim3d(-1, 1)                    # viewrange for z-axis should be [-4,4]
-        ax.set_ylim3d(-1, 1)                    # viewrange for y-axis should be [-2,2]
-        ax.set_xlim3d(-1, 1)
-        ax.view_init(0, 0)
-        ax.set_title(str(wave[indw])+' Microns')
-        # Hide grid lines
-        ax.grid(False)
-
-        # Hide axes ticks
-        ax.set_xticks([])
-        ax.set_yticks([])
-        ax.set_zticks([])
-        plt.axis('off')
-
-    plt.subplots_adjust(wspace=0.3, hspace=0.3)
-    plt.show()
+    return (fluxes)  # this is a dictionary
