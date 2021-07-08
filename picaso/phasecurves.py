@@ -788,9 +788,14 @@ def thermal_phasecurve(planet=None, in_ptk=None, filt_path=None, wv_range=None,
         
         # get stellar flux directly from the star file, but need to make sure units are in erg/cm2/s/cm
 
-        ws, fs = correct_star_units(in_star, sw_units, fs_units)
-        print('STAR WVL:', len(ws))
+# Grab stellar flux directly from stellar file if provided
 
+        if in_star != None:
+            ws, fs = correct_star_units(in_star, sw_units, sf_units)
+
+        else:
+            ws, fs = 1e4 / star_dict['wno'], star_dict['flux']
+                                   
         ### Apply mask with wavelengths of interest ###
 
         wv_star, flux_star = mask_star(ws, fs, wv_range)
