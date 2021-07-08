@@ -268,6 +268,7 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind
     fig = figure(**kwargs)
 
     i = 0
+    legend_it=[] 
     for yarray in Y:
         if isinstance(xarray, list):
             if isinstance(legend,type(None)): legend=[None]*len(xarray[0])
@@ -275,13 +276,23 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind
                 if l == None: 
                     fig.line(conv(w),  a,  color=palette[np.mod(i, len(palette))], line_width=3)
                 else:
-                    fig.line(conv(w), a, legend_label=l, color=palette[np.mod(i, len(palette))], line_width=3)
+                    f = fig.line(conv(w), a, color=palette[np.mod(i, len(palette))], line_width=3,
+                                muted_color=palette[np.mod(i, len(palette))], muted_alpha=0.2)
+                    legend_it.append((l, [f]))
         else: 
             if isinstance(legend,type(None)):
                 fig.line(conv(xarray), yarray,  color=palette[i], line_width=3)
             else:
-                fig.line(conv(xarray), yarray, legend_label=legend, color=palette[i], line_width=3)
+                f = fig.line(conv(xarray), yarray, color=palette[i], line_width=3,
+                                muted_color=palette[np.mod(i, len(palette))], muted_alpha=0.2)
+                legend_it.append((l, [f]))
         i = i+1
+
+    if not isinstance(legend,type(None)):
+        plt_legend = Legend(items=legend_it, location=(0, 0))
+        plt_legend.click_policy="mute"
+        fig.add_layout(plt_legend, 'left')
+
     plot_format(fig)
     return fig
 
