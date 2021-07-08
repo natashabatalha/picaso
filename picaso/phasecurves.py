@@ -801,7 +801,7 @@ def thermal_phasecurve(planet=None, in_ptk=None, filt_path=None, wv_range=None,
         wfc3 = filt_path
         resp = interpolate_filter(wfc3, wv_star)
 
-        ######## Calculate transmission #######
+        ### Calculate transmission ###
 
         avg_pflux = np.zeros(len(all_phases))  # to plot phase curves
         avg_sflux = np.zeros(len(all_phases))  # to plot phase curves
@@ -831,8 +831,6 @@ def thermal_phasecurve(planet=None, in_ptk=None, filt_path=None, wv_range=None,
         print('Thermal flux added to phasecurve dictionary')
         
         flag += 1
-
-    # Write into file
 
     fluxes['all_fpfs'] = all_fpfs
     fluxes['all_phases'] = all_phases
