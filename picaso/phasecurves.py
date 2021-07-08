@@ -783,12 +783,8 @@ def thermal_phasecurve(planet=None, in_ptk=None, filt_path=None, wv_range=None,
         ### Calculate Fp/Fs for each phase and wavelength ###
 
         pflux = spectrum['thermal']  # get directly from picaso output spectrum
-        
-        #ws, fs = 1e4 / star_dict['wno'], star_dict['flux']
-        
+               
         # get stellar flux directly from the star file, but need to make sure units are in erg/cm2/s/cm
-
-# Grab stellar flux directly from stellar file if provided
 
         if in_star != None:
             ws, fs = correct_star_units(in_star, sw_units, sf_units)
