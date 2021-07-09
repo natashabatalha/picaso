@@ -4,15 +4,15 @@ import numpy as np
 import pandas as pd
 from bokeh.layouts import column,row
 import numpy as np
-from bokeh.palettes import magma as colfun1
-from bokeh.palettes import viridis as colfun2
+
 from bokeh.palettes import gray as colfun3
-from bokeh.palettes import Spectral11
+from bokeh.palettes import Spectral11,Category20,viridis,magma,RdBu11
 from bokeh.models import HoverTool
 from bokeh.models import LinearColorMapper, LogTicker,BasicTicker, ColorBar,LogColorMapper,Legend
 from bokeh.models import ColumnDataSource,LinearAxis,Range1d
-from bokeh.palettes import magma,RdBu11
+
 from bokeh.layouts import row,column
+from bokeh.io import output_notebook
 import os 
 from numba import jit
 from mpl_toolkits.mplot3d import Axes3D
@@ -57,26 +57,97 @@ def mean_regrid(x, y, newx=None, R=None):
 
     return newx, y
 
-def plot_errorbar(x,y,e,plot,**kwargs):
+def plot_errorbar(x,y,e,plot,point_kwargs={}, error_kwargs={}):
     """
-    Plot error bars in bokeh plot
+    Plot only symmetric y error bars in bokeh plot
+
+    Parameters
+    ----------
+    x : array 
+        x data 
+    y : array 
+        y data 
+    e : array 
+        +- error for y which will be distributed as y+e, y-e on data point
+    plot : bokeh.figure 
+        Bokeh figure to add error bars to 
+    point_kwargs : dict 
+        formatting for circles 
+    error_kwargs : dict 
+        formatting for error bar lines
     """
+
     y_err = []
     x_err = []
-    for px, py, yerr in zip(x, y, e):
-        np.array(x_err.append((px, px)))
+    for px, py, yerr, xerr in zip(x, y, e):
+        np.array(x_err.append((px , px )))
         np.array(y_err.append((py - yerr, py + yerr)))
 
-    plot.multi_line(x_err, y_err, **kwargs)
+    plot.multi_line(x_err, y_err, **error_kwargs)
+    plot.circle(x, y, **point_kwargs)
     return
 
-def mixing_ratio(full_output,**kwargs):
+def plot_multierror(x,y,plot, dx_up=0, dx_low=0, dy_up=0, dy_low=0, 
+    point_kwargs={}, error_kwargs={}):
+    """
+    Plot non-symmetric x and y error bars in bokeh plot
+
+    Parameters
+    ----------
+    x : array 
+        x data 
+    y : array 
+        y data 
+    dx_up : array or int or float 
+        upper error bar to be distributed as x + dx_up
+    dx_low : array or int or float 
+        lower error bar to be distributed as x + dx_low 
+    dy_up : array or int or float 
+        upper error bar to be distributed as y + dy_up
+    dy_low : array or int or float 
+        lower error bar to be distributed as y + dy_low 
+    plot : bokeh.figure 
+        Bokeh figure to add error bars to 
+    point_kwargs : dict 
+        formatting for circles 
+    error_kwargs : dict 
+        formatting for error bar lines
+    """
+    #first turn everything into lists 
+    for i in [dx_up, dx_low, dy_up, dy_low]:
+        if isinstance(i, (float, int)):
+            i = [i]*len(x)
+
+    #first x error
+    y_err = []
+    x_err = []
+    for px, py, x_up, x_low in zip(x, y, dx_up, dx_low):
+        np.array(x_err.append((px - x_low, px + x_up)))
+        np.array(y_err.append((py, py )))
+
+    plot.multi_line(x_err, y_err, **error_kwargs)
+
+    #first y error
+    y_err = []
+    x_err = []
+    for px, py, y_up, y_low in zip(x, y, dy_up, dy_low):
+        np.array(x_err.append((px , px )))
+        np.array(y_err.append((py - y_low, py + y_up)))
+
+    plot.multi_line(x_err, y_err, **error_kwargs)
+
+    plot.circle(x, y, **point_kwargs)
+    return
+def mixing_ratio(full_output,limit=50, **kwargs):
     """Returns plot of mixing ratios 
 
     Parameters
     ----------
     full_output : class
         picaso.atmsetup.ATMSETUP
+    limit : int
+        Limits the number of curves to 20. Will plot the top 20 molecules 
+        with highest max(abundance). Limit must be >=3. 
     **kwargs : dict 
         Any key word argument for bokeh.figure() 
     """
@@ -94,13 +165,18 @@ def mixing_ratio(full_output,**kwargs):
     kwargs['y_range'] = kwargs.get('y_range',[np.max(pressure),np.min(pressure)])
     kwargs['x_range'] = kwargs.get('x_range',[1e-20, 1e2])
 
+    #to plot (incl limit)
+    to_plot=full_output['layer']['mixingratios'].max().sort_values(ascending=False)[0:limit].keys()
 
     fig = figure(**kwargs)
     if len(molecules) < 3: ncol = 5
     else: ncol = len(molecules)
-    cols = colfun1(ncol)
+    if limit<3: 
+        cols = magma(5) #magma needs at least 5 colors
+    else: 
+        cols = magma(min([ncol,limit]))
     legend_it=[]    
-    for mol , c in zip(molecules,cols):
+    for mol , c in zip(to_plot,cols):
         ind = np.where(mol==np.array(molecules))[0][0]
         f = fig.line(full_output['layer']['mixingratios'][mol],pressure, color=c, line_width=3,
                     muted_color=c, muted_alpha=0.2)
@@ -136,7 +212,7 @@ def pt(full_output,ng=None, nt=None, **kwargs):
     kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
     kwargs['x_axis_label'] = kwargs.get('x_axis_label','Temperature (K)')
     kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
-    kwargs['x_axis_type'] = kwargs.get('x_axis_type','log') 
+    #kwargs['x_axis_type'] = kwargs.get('x_axis_type','log') 
     kwargs['y_range'] = kwargs.get('y_range',[np.max(pressure),np.min(pressure)])
 
     fig = figure(**kwargs)
@@ -192,6 +268,7 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind
     fig = figure(**kwargs)
 
     i = 0
+    legend_it=[] 
     for yarray in Y:
         if isinstance(xarray, list):
             if isinstance(legend,type(None)): legend=[None]*len(xarray[0])
@@ -199,18 +276,28 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind
                 if l == None: 
                     fig.line(conv(w),  a,  color=palette[np.mod(i, len(palette))], line_width=3)
                 else:
-                    fig.line(conv(w), a, legend_label=l, color=palette[np.mod(i, len(palette))], line_width=3)
+                    f = fig.line(conv(w), a, color=palette[np.mod(i, len(palette))], line_width=3,
+                                muted_color=palette[np.mod(i, len(palette))], muted_alpha=0.2)
+                    legend_it.append((l, [f]))
         else: 
             if isinstance(legend,type(None)):
                 fig.line(conv(xarray), yarray,  color=palette[i], line_width=3)
             else:
-                fig.line(conv(xarray), yarray, legend_label=legend, color=palette[i], line_width=3)
+                f = fig.line(conv(xarray), yarray, color=palette[i], line_width=3,
+                                muted_color=palette[np.mod(i, len(palette))], muted_alpha=0.2)
+                legend_it.append((l, [f]))
         i = i+1
+
+    if not isinstance(legend,type(None)):
+        plt_legend = Legend(items=legend_it, location=(0, 0))
+        plt_legend.click_policy="mute"
+        fig.add_layout(plt_legend, 'left')
+
     plot_format(fig)
     return fig
 
 
-def photon_attenuation(full_output, at_tau=0.5,return_output=False, **kwargs):
+def photon_attenuation(full_output, at_tau=0.5,return_output=False,igauss=0, **kwargs):
     """
     Plot breakdown of gas opacity, cloud opacity, 
     Rayleigh scattering opacity at a specified pressure level. 
@@ -224,6 +311,8 @@ def photon_attenuation(full_output, at_tau=0.5,return_output=False, **kwargs):
         Default = 0.5. 
     return_output : bool 
         Return photon attenuation plot values 
+    igauss : int 
+        Gauss angle to plot if using correlated-k method. If not, should always be 0.
     **kwargs : dict 
         Any key word argument for bokeh.plotting.figure()
 
@@ -234,9 +323,9 @@ def photon_attenuation(full_output, at_tau=0.5,return_output=False, **kwargs):
     """
     wave = 1e4/full_output['wavenumber']
 
-    dtaugas = full_output['taugas']
-    dtaucld = full_output['taucld']*full_output['layer']['cloud']['w0']
-    dtauray = full_output['tauray']
+    dtaugas = full_output['taugas'][:,:,igauss]
+    dtaucld = full_output['taucld'][:,:,igauss]*full_output['layer']['cloud']['w0']
+    dtauray = full_output['tauray'][:,:,igauss]
     shape = dtauray.shape
     taugas = np.zeros((shape[0]+1, shape[1]))
     taucld = np.zeros((shape[0]+1, shape[1]))
@@ -370,7 +459,7 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
         wavelength_label = 'Wavelength (units by user)'
     else: 
         wavelength_label = 'Wavenumber Grid'
-    cols = colfun1(200)
+    cols = magma(200)
     color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
 
     if not isinstance(filename,type(None)):
@@ -399,7 +488,7 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
     scat01 = np.flip(np.reshape(dat01['opd'].values,(nlayer,nwno)),0)
 
     xr, yr = scat01.shape
-    cols = colfun2(200)[::-1]
+    cols = viridis(200)[::-1]
     color_mapper = LogColorMapper(palette=cols, low=1e-3, high=10)
 
 
@@ -477,7 +566,7 @@ def cloud(full_output):
     -------
     A row of two bokeh plots with the single scattering and optical depth map
     """
-    cols = colfun1(200)
+    cols = magma(200)
     color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
 
     dat01 = full_output['layer']['cloud']
@@ -504,7 +593,7 @@ def cloud(full_output):
     scat01 = np.flip(dat01['opd']+1e-60,0)
 
     xr, yr = scat01.shape
-    cols = colfun2(200)[::-1]
+    cols = viridis(200)[::-1]
     color_mapper = LogColorMapper(palette=cols, low=1e-3, high=10)
 
 
@@ -842,7 +931,7 @@ def flux_at_top(full_output, plot_bb = True, R=None, pressures = [1e-1,1e-2,1e-3
     fig = figure(**kwargs)
     if len(pressures) < 3: ncol = 5
     else: ncol = len(pressures)
-    cols = colfun1(ncol)
+    cols = magma(ncol)
 
     wno = full_output['wavenumber']
     if isinstance(R,(int, float)): 
@@ -1391,3 +1480,101 @@ def corr_molecular(atm,filename_db, wavenumber , residual, max_plot,threshold):
     p.outline_line_color = None
 
     return column(p,spec)
+
+def plot_evolution(evo, y = "Teff",**kwargs):
+    """
+    Plot evolution of tracks. Requires input from justdoit: 
+
+    evo = justdoit.evolution_track(mass='all',age='all')
+
+    Parameters 
+    ----------
+    evo : dict 
+        Output from the function justdoit.evolution_track(mass='all',age='all')
+    y : str 
+        What to plot on the y axis. Can be anything in the pandas that as the mass 
+        attached to the end. E.g. "Teff" is an option because there exists "Teff1Mj". 
+        But, age_years is not an option as it is not a function of mass. 
+        Current options : [logL, Teff, grav_cgs]
+    """
+    kwargs['plot_height'] = kwargs.get('plot_height',400)
+    kwargs['plot_width'] = kwargs.get('plot_width',500)
+    kwargs['title'] = kwargs.get('title','Thermal Evolution')
+    kwargs['y_axis_label'] = kwargs.get('y_axis_label',y)
+    kwargs['x_axis_label'] = kwargs.get('x_axis_label','Age(years)')
+    kwargs['x_axis_type'] = kwargs.get('x_axis_type','log') 
+
+    f = figure(**kwargs)
+
+    lp = len(y)#used to find where mass tag starts
+    evo_hot=evo['hot']
+    evo_cold=evo['cold']
+    source_hot = ColumnDataSource(data=dict(
+        evo_hot))
+    source_cold = ColumnDataSource(data=dict(
+        evo_cold))
+
+    colors = viridis(10)
+    for i, ikey in enumerate(list(evo_hot.keys())[1:]):
+        if y in ikey:
+            mass = int(ikey[ikey.rfind(y[-1])+1:ikey.find('M')])
+            icolor = mass -1
+            f1 = f.line(x='age_years',y=ikey,line_width=2,
+                   color=colors[icolor]
+                  ,legend_label='Hot Start', source = source_hot)
+            f.add_tools(HoverTool(renderers=[f1], tooltips=[('Teff',f'@Teff{ikey[lp:]} K'),
+                                                            ('Age','@age_years Yrs'),
+                                                            ('Gravity' , f'@grav_cgs{ikey[lp:]} cm/s2'),
+                                                           ('Mass',str(mass)+" Mj")]
+                                  ))#,mode='vline'
+            f2 = f.line('age_years',ikey,line_width=2,
+                   color=colors[icolor],
+                  line_dash='dashed',legend_label='Cold Start' , source = source_cold)
+            f.add_tools(HoverTool(renderers=[f2], tooltips=[('Teff',f'@Teff{ikey[lp:]} K'),
+                                                            ('Age','@age_years Yrs'),
+                                                            ('Gravity', f'@grav_cgs{ikey[lp:]} cm/s2'),
+                                                           ('Mass',str(mass)+" Mj")]))
+
+    color_bar = ColorBar(title='Mass (Mj)',
+        color_mapper=LinearColorMapper(palette="Viridis256", 
+                     low=1, high=10), 
+        label_standoff=12,location=(0,0))
+
+    f.add_layout(color_bar, 'right')
+    return f
+        
+def heatmap_taus(out, R=0):
+    """
+    Plots a heatmap of the tau fields (taugas, taucld, tauray)
+
+    Parameters
+    ----------
+    out : dict 
+        full_ouput dictionary
+    R : int 
+        Resolution to bin to (if zero, no binning)
+    """
+
+    for it, itau in enumerate(['taugas','taucld','tauray']):
+
+        tau_bin = []
+        for i in range(out[itau].shape[0]):
+            if R == 0 : 
+                x,y = out['wavenumber'], out['full_output'][itau][i,:,0]
+            else: 
+                x,y = jdi.mean_regrid(out['wavenumber'],
+                                  out['full_output'][itau][i,:,0], R=150)
+            tau_bin += [[y]]
+
+        tau_bin = np.array(np.log10(tau_bin))[:,0,:]
+        X,Y = np.meshgrid(1e4/x,cldy_hot_output[ikey]['full_output']['layer']['pressure'])
+        Z = tau_bin
+        pcm=ax[it].pcolormesh(X, Y, Z)
+        cbar=fig.colorbar(pcm, ax=ax[it])
+        pcm.set_clim(-3.0, 3.0)
+        ax[it].set_title(itau)
+        ax[it].set_yscale('log')
+        ax[it].set_ylim([1e2,1e-3])
+        ax[it].set_ylabel('Pressure(bars)')
+        ax[it].set_ylabel('Wavelength(um)')
+        cbar.set_label('log Opacity')
