@@ -676,7 +676,7 @@ class inputs():
             isn't doing repetetive models. E.g. if num_tangles=10, num_gangles=10. Instead of running a 10x10=100
             FT calculations, it will only run 5x5 = 25 (or a quarter of the sphere).
         """
-        if (phase > 2*np.pi) & (phase<0): raise Exception('Oops! you input a phase angle greater than 2*pi or less than 0. Please make sure your inputs are in radian units: 0<phase<2pi')
+        if (phase > 2*np.pi) or (phase<0): raise Exception('Oops! you input a phase angle greater than 2*pi or less than 0. Please make sure your inputs are in radian units: 0<phase<2pi')
         if ((num_tangle==1) or (num_gangle==1)): 
             #this is here so that we can compare to older models 
             #this model only works for full phase calculations
@@ -1948,6 +1948,14 @@ class inputs():
                 calculation = 'thermal' 
         except KeyError: 
             pass
+
+        try: 
+            a = self.inputs['phase_angle']
+        except KeyError: 
+            if calculation != 'reflected':
+                self.phase_angle(0)
+            else: 
+                raise Exception("Phase angle not specified. It is needed for "+calculation)
         
         try:
             a = self.inputs['surface_reflect']
