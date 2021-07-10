@@ -733,9 +733,6 @@ def thermal_phasecurve(planet=None, in_ptk=None, filt_path=None, wv_range=None,
     phases360 = np.linspace(p_range[0], p_range[1], nphases)
     phases = phases360 - 180  # go from 0-360 to -180-180
 
-    print('THERMAL PHASE CURVE')
-    print('Resolution: ', ng, 'x', nt)
-
     flag = 0
     fluxes = defaultdict(dict)  # inititate dictionary where phase curve data will be stored
     all_fpfs = np.zeros(nphases)
@@ -826,7 +823,7 @@ def thermal_phasecurve(planet=None, in_ptk=None, filt_path=None, wv_range=None,
         all_fpfs[flag] = fpfs_pc[flag]
         all_phases[flag] = round(phase360, 2)
 
-        fluxes[round(phase360, 2)] = {'fpfs_spect': fpfs_pic, 'thermal': pflux, 'pflux_trans': planet_trans, 'sflux_trans': star_trans, 'wavelength': wv_star, 'thermal_3d': thermal_3d}
+        fluxes[round(phase360, 2)] = {'fpfs_spect': fpfs_pic, 'thermal': pflux, 'pflux_trans': planet_trans, 'sflux_trans': star_trans, 'wvl_spect': wvl_pic, 'wvl_star_masked':wv_star, 'thermal_3d': thermal_3d}
 
         print('Thermal flux added to phasecurve dictionary')
         
