@@ -28,7 +28,7 @@ cz_or_rad[-1] = 1 #flip botton layer to convective
 max_temp_step = np.sqrt(np.sum([temp[i]**2 for i in range(nlevel) if cz_or_rad[i] == 0]))
 
 @jit(nopython=True, cache=True)
-def did_grad( t, p, t_table, p_table, grad):
+def did_grad_cp( t, p, t_table, p_table, grad, cp, calc_type):
     """
     Parameters
     ----------
@@ -42,11 +42,17 @@ def did_grad( t, p, t_table, p_table, grad):
         array of Pressure value with 26 entries
     grad : array 
         array of gradients of dimension 53*26
+    cp : array 
+        array of cp of dimension 53*26
+    calc_type : int 
+        if 0 will return both gradx,cpx , if 1 will return only gradx, if 2 will return only cpx
     
     Returns
     -------
     float 
-        grad_x 
+        if calc_type= 0 grad_x,cp_x
+        if calc_type= 1 grad_x 
+        if calc_type= 2 cp_x
     
     """
     # Python version of DIDGRAD function in convec.f in EGP
@@ -88,11 +94,25 @@ def did_grad( t, p, t_table, p_table, grad):
     gp2 = grad[pos_t+1,pos_p]
     gp3 = grad[pos_t+1,pos_p+1]
     gp4 = grad[pos_t,pos_p+1]
+
+    cp1 = cp[pos_t,pos_p]
+    cp2 = cp[pos_t+1,pos_p]
+    cp3 = cp[pos_t+1,pos_p+1]
+    cp4 = cp[pos_t,pos_p+1]
+
+
     
 
     grad_x = (1.0-factkt)*(1.0-factkp)*gp1 + factkt*(1.0-factkp)*gp2 + factkt*factkp*gp3 + (1.0-factkt)*factkp*gp4
-
-    return grad_x
+    cp_x= (1.0-factkt)*(1.0-factkp)*cp1 + factkt*(1.0-factkp)*cp2 + factkt*factkp*cp3 + (1.0-factkt)*factkp*cp4
+    cp_x= 10**cp_x
+    
+    if calc_type == 0:
+        return grad_x,cp_x
+    elif calc_type == 1:
+        return grad_x
+    elif calc_type == 2 :
+        return cp_x
 
 
 @jit(nopython=True, cache=True)
