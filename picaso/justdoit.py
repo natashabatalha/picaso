@@ -539,11 +539,15 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
 
     at_pressure_array = {}
     for i in taus_by_species.keys(): 
-        at_pressures = np.zeros(shape[1])
-        ind_gas = find_nearest_2d(cumsum_taus[i] , at_tau)
-
-        for iw in range(shape[1]):
-            at_pressures[iw] = pressure[ind_gas[iw]]
+        #at_pressures = np.zeros(shape[1])
+        #ind_gas = find_nearest_2d(cumsum_taus[i] , at_tau)
+        
+        #for iw in range(shape[1]):
+        #    at_pressures[iw] = pressure[ind_gas[iw]]
+        at_pressures=[]
+        for iw in range(shape[1]): 
+            at_pressures += [np.interp([at_tau],cumsum_taus[i][:,iw],
+                                pressure )[0]]
 
         at_pressure_array[i] = at_pressures
 
@@ -672,6 +676,7 @@ class inputs():
             isn't doing repetetive models. E.g. if num_tangles=10, num_gangles=10. Instead of running a 10x10=100
             FT calculations, it will only run 5x5 = 25 (or a quarter of the sphere).
         """
+        if (phase > 2*np.pi) & (phase<0): raise Exception('Oops! you input a phase angle greater than 2*pi or less than 0. Please make sure your inputs are in radian units: 0<phase<2pi')
         if ((num_tangle==1) or (num_gangle==1)): 
             #this is here so that we can compare to older models 
             #this model only works for full phase calculations
@@ -690,7 +695,6 @@ class inputs():
 
 
             gangle, gweight, tangle, tweight = get_angles_1d(num_gangle) 
-
             ng = len(gangle)
             nt = len(tangle)
 
@@ -1121,6 +1125,9 @@ class inputs():
                 run the gravity function to set gravity')
 
         flist = os.listdir(os.path.join(sonora_path))
+        if ((len(flist)<300) & ('t400g3160nc_m0.0.cmp.gz' not in flist)):
+            raise Exception('Oops! Looks like the sonora path you specified does not contain the ~390 .gz model files from Zenodo. Please untar the profile.tar file here https://zenodo.org/record/1309035#.Xo5GbZNKjGJ and point to this file path as your input.')
+
         flist = [i.split('/')[-1] for i in flist if 'gz' in i]
         ts = [i.split('g')[0][1:] for i in flist if 'gz' in i]
         gs = [i.split('g')[1].split('nc')[0] for i in flist]
@@ -1221,6 +1228,89 @@ class inputs():
         df['ptid'] = ind_pt
         
         self.inputs['atmosphere']['profile'] = df
+    def chemeq_visscher(self, c_o, log_mh, interp_window = 11, interp_poly=2):
+        """
+        Find nearest neighbor from visscher grid
+
+        JUNE 2015
+        MODELS BASED ON 1060-POINT MARLEY GRID
+
+        GRAPHITE ACTIVITY ADDED IN TEXT FILES (AFTER OCS)
+        "ABUNDANCE" INDICATES CONDENSATION CONDITION (O OR 1)
+
+        CURRENT GRID
+        FE/H: 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
+        C/O: 0.5X, 1.0X, 1.5X, 2.0X, 2.5X
+
+        C/O RATIO IS RELATIVE TO SOLAR C/O RATIO OF
+        CARBON = 7.19E6 ATOMS
+        OXYGEN = 1.57E7 ATOMS
+
+        NOTE THAT THE C/O RATIO IS ADJUSTED BY SIMPLY MULTIPLYING BY C/O FACTOR
+        THIS MAY YIELD EFFECTIVE METALLICITIES SLIGHTLY HIGHER THAN THE DEFINED METALLICITY
+        
+        Parameters
+        ----------
+        co : int 
+            carbon to oxygen ratio relative to solar.
+            Solar = 1
+        log_mh : int 
+            metallicity (relative to solar)
+            Will find the nearest value to 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
+            Solar = 0
+        """
+        #allowable cos 
+        cos = np.array([0.5,1.0,1.5,2.0,2.5])
+        #allowable fehs
+        fehs = np.array([0.0,0.5,1.0,1.5,1.7,2.0])
+
+        if log_mh > max(fehs): 
+            raise Exception('Choose a log metallicity less than 2.0')
+        if c_o > max(cos): 
+            raise Exception('Choose a C/O less than 2.5xSolar')
+
+        grid_co = cos[np.argmin(np.abs(cos-c_o))]
+        grid_feh = fehs[np.argmin(np.abs(fehs-log_mh))]
+        str_co = str(grid_feh).replace('.','')
+        str_fe = str(grid_co).replace('.','')
+
+        filename = os.path.join(__refdata__,'chemistry','visscher_grid',
+            f'2015_06_1060grid_feh_{str_co}_co_{str_fe}.txt')
+
+        header = pd.read_csv(filename).keys()[0]
+        cols = header.replace('T (K)','temperature').replace('P (bar)','pressure').split()
+        a = pd.read_csv(filename,delim_whitespace=True,skiprows=1,header=None, names=cols)
+        a['pressure']=10**a['pressure']
+
+        mols = list(a.loc[:, ~a.columns.isin(['Unnamed: 0','pressure','temperature'])].keys())
+        #get pt from what users have already input
+        player_tlayer = self.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']].sort_values('pressure').reset_index(drop=True)
+        self.nlevel = player_tlayer.shape[0]
+
+        #loop through all pressure and temperature layers
+        for i in player_tlayer.index:
+            p,t = player_tlayer.loc[i,['pressure','temperature']]
+            #at each layer compute the distance to each point in the visscher table
+            #create a weight that is 1/d**2
+            a['weight'] = (1/((np.log10(a['pressure']) - np.log10(p))**2 + 
+                                       (a['temperature'] - t)**2))
+            #sort by the weight and only pick the TWO nearest neighbors. 
+            #Note, there was a sensitivity study to determine how many nearest neighbors to choose 
+            #It was determined that no more than 2 is best. 
+            w = a.sort_values(by='weight',ascending=False).iloc[0:2,:]
+            #now loop through all the molecules
+            for im in mols:
+                #compute the weighted mean of the mixing ratio
+                weighted_mean = (np.sum(w['weight']*(w.loc[:,im]))/np.sum(w['weight']))
+                player_tlayer.loc[i,im] = weighted_mean
+        #now pass through everything and use savgol filter to average 
+        for im in mols:
+            y = np.log10(player_tlayer.loc[:,im])
+            s = savgol_filter(y , interp_window, interp_poly)
+            player_tlayer.loc[:,im] = 10**s #
+
+        self.inputs['atmosphere']['profile'] = player_tlayer
+
 
     def channon_grid_low(self, filename = None, interp_window = 11, interp_poly=2):
         """
@@ -1871,41 +1961,24 @@ class inputs():
             full_output=full_output, plot_opacity=plot_opacity, as_dict=as_dict)
 
 def get_targets():
-    """Function to grab available targets
+    """Function to grab available targets using exoplanet archive data. 
 
     Returns
     -------
     Dataframe from Exoplanet Archive
     """
-    default_query = "https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=exoplanets&format=csv"
-    all_planets =  requests.get(default_query)  
-    all_planets = all_planets.text.replace(' ','').split('\n')
-
-    # default data doesn't come with all the parameters we need so let's 
-    # add those in 
-    add_few_elements = '&select='+all_planets[0]+','.join(
-        [',pl_trandur','pl_eqt','st_logg','st_metfe','st_j','st_h','st_k&'])
-
-    # use requests to grab the csv formatted data and split by the commas 
-    all_planets =  requests.get(default_query.split('&')[0] 
-                                + add_few_elements + default_query.split('&')[1] )  
-    all_planets = all_planets.text.replace(' ','').split('\n')
-
-    # get into useful pandas dataframe format
-    planets_df = pd.DataFrame(columns=all_planets[0].split(','), 
-                             data = [i.split(',') for i in all_planets[1:-1]])
-    planets_df = planets_df.replace(to_replace='', value=np.nan)
-
+    planets_df =  pd.read_csv('https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+*+from+PSCompPars&format=csv')
     # convert to float when possible
     for i in planets_df.columns: 
-        planets_df[i] = planets_df[i].astype(float,errors='ignore') 
+        planets_df[i] = planets_df[i].astype(float,errors='ignore')
 
     return planets_df
 
 def load_planet(df, opacity, phase_angle = 0, stellar_db='phoenix', verbose=False,  **planet_kwargs):
     """
-    Wrapper to simplify PICASO run. This really turns chimera into a black box. This was created 
-    specifically Sagan School tutorial. 
+    Wrapper to simplify PICASO run. This really turns picaso into a black box. This was created 
+    specifically Sagan School tutorial. It grabs planet parameters from the user supplied df, then 
+    adds a parametric PT profile (Guillot et al. 2010). The user still has to add chemistry. 
 
     Parameters
     -----------
@@ -1921,6 +1994,7 @@ def load_planet(df, opacity, phase_angle = 0, stellar_db='phoenix', verbose=Fals
         List of parameters to supply NexSci database is values don't exist 
     """
     if len(df.index)>1: raise Exception("Dataframe consists of more than 1 row. Make sure to select single planet")
+    if len(df.index)==0: raise Exception("No planets found in database. Check name.")
 
     for i in df.index:
 
@@ -2042,37 +2116,118 @@ def raman_options():
     """Retrieve options for raman scattering approximtions"""
     return ["oklopcic","pollack","none"]
 
+def evolution_track(mass=1, age='all'):
+    """
+    Plot or grab an effective temperature for a certain age and mass planet. 
 
+    Parameters
+    ----------
+    mass : int or str, optional
+        (Optional) Mass of planet, in Jupiter Masses. Only valid options = 1, 2, 4, 6, 8, 10,'all'
+        If another value is entered, it will find the nearest option. 
+    age : float or str, optional
+        (Optional) Age of planet, in years or 'all' to return full model 
+
+
+    Return 
+    ------
+    if age=None: data = {'cold':all_data_cold_start, 'hot':all_data_hot_start}
+    if age=float: data = {'cold':data_at_age, 'hot':data_at_age}
+    
+    if plot=False: returns data 
+    else: returns data, plot
+    
+
+    """
+    cols_return = ['age_years','Teff','grav_cgs','logL','R_cm'] #be careful when changing these as they are used to build all_cols
+    valid_options = np.array([1,2,4,6,8,10]) # jupiter masses
+
+    if mass == 'all':
+        all_cols = np.concatenate([[cols_return[0]]]+[[f'{cols_return[1]}{iv}Mj',f'{cols_return[2]}{iv}Mj'] for iv in valid_options])
+        for imass in valid_options:
+            mass = f'00{imass}0'            
+            if len(mass)==5:mass=mass[1:]
+            cold = pd.read_csv(os.path.join(__refdata__, 'evolution','cold_start',f'model_seq.{mass}'),
+                skiprows=12,delim_whitespace=True,
+                    header=None,names=['age_years','logL','R_cm','Ts','Teff',
+                                       'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
+            hot = pd.read_csv(os.path.join(__refdata__, 'evolution','hot_start',f'model_seq.{mass}'),
+                skiprows=12,delim_whitespace=True,
+                    header=None,names=['age_years','logL','R_cm','Ts','Teff',
+                                       'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
+            if imass==1 :
+                all_cold = pd.DataFrame(columns=all_cols,index=range(cold.shape[0]))
+                all_cold['age_years'] = cold['age_years'].values
+                all_hot = pd.DataFrame(columns=all_cols,index=range(hot.shape[0]))
+                all_hot['age_years'] = hot['age_years'].values
+            #add teff for this mass
+            all_cold.loc[:,f'{cols_return[1]}{imass}Mj'] = cold.loc[:,f'{cols_return[1]}'].values
+            #add gravity for this mass
+            all_cold.loc[:,f'{cols_return[2]}{imass}Mj'] = cold.loc[:,f'{cols_return[2]}'].values
+            #add luminosity
+            all_cold.loc[:,f'{cols_return[3]}{imass}Mj'] = cold.loc[:,f'{cols_return[3]}'].values
+            #add radius
+            all_cold.loc[:,f'{cols_return[4]}{imass}Mj'] = cold.loc[:,f'{cols_return[4]}'].values
+            #add teff for this mass
+            all_hot.loc[:,f'{cols_return[1]}{imass}Mj'] = hot.loc[:,f'{cols_return[1]}'].values
+            #add gravity for this mass
+            all_hot.loc[:,f'{cols_return[2]}{imass}Mj'] = hot.loc[:,f'{cols_return[2]}'].values
+            #add luminosity for this mass
+            all_hot.loc[:,f'{cols_return[3]}{imass}Mj'] = hot.loc[:,f'{cols_return[3]}'].values
+            #add luminosity for this mass
+            all_hot.loc[:,f'{cols_return[4]}{imass}Mj'] = hot.loc[:,f'{cols_return[4]}'].values
+
+        #grab the desired age, if the user asks for it
+        if not isinstance(age, str):
+            #returning to just hot and cold names so that they can be returned below 
+            all_hot = (all_hot.iloc[(all_hot['age_years']-age).abs().argsort()[0:1]]).to_dict('records')[0]
+            all_cold = (all_cold.iloc[(all_cold['age_years']-age).abs().argsort()[0:1]]).to_dict('records')[0]
+
+        to_return = {'hot': all_hot, 
+                'cold': all_cold}
+    else:   
+        
+        idx = np.argmin(abs(valid_options - mass))
+        mass = int(valid_options[idx])
+        mass = f'00{mass}0'
+        if len(mass)==5:mass=mass[1:]
+        cold = pd.read_csv(os.path.join(__refdata__, 'evolution','cold_start',f'model_seq.{mass}'),skiprows=12,delim_whitespace=True,
+                    header=None,names=['age_years','logL','R_cm','Ts','Teff',
+                                       'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
+        hot = pd.read_csv(os.path.join(__refdata__, 'evolution','hot_start',f'model_seq.{mass}'),skiprows=12,delim_whitespace=True,
+                    header=None,names=['age_years','logL','R_cm','Ts','Teff',
+                                       'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
+        #return only what we want
+        hot = hot.loc[:,cols_return]
+        cold = cold.loc[:,cols_return]
+
+        #grab the desired age, if the user asks for it
+        if not isinstance(age, str):
+            hot = (hot.iloc[(hot['age_years']-age).abs().argsort()[0:1]]).to_dict('records')[0]
+            cold = (cold.iloc[(cold['age_years']-age).abs().argsort()[0:1]]).to_dict('records')[0]
+
+        to_return = {'hot': hot, 
+                    'cold': cold}
+
+
+    return to_return
 
 def all_planets():
     """
     Load all planets from https://exoplanetarchive.ipac.caltech.edu
     """
     # use this default URL to start out with 
-    default_query = "https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=exoplanets&format=csv"
-    all_planets =  requests.get(default_query)  
-    all_planets = all_planets.text.replace(' ','').split('\n')
-
-    # default data doesn't come with all the parameters we need so let's 
-    # add those in 
-    add_few_elements = '&select='+all_planets[0]+','.join(
-        [',pl_trandur','pl_eqt','st_logg','st_metfe','st_j','st_h','st_k&'])
-
-    # use requests to grab the csv formatted data and split by the commas 
-    all_planets =  requests.get(default_query.split('&')[0] 
-                                + add_few_elements + default_query.split('&')[1] )  
-    all_planets = all_planets.text.replace(' ','').split('\n')
-
-    # get into useful pandas dataframe format
-    planets_df = pd.DataFrame(columns=all_planets[0].split(','), 
-                             data = [i.split(',') for i in all_planets[1:-1]])
-    planets_df = planets_df.replace(to_replace='', value=np.nan)    
-
-
+    planets_df =  pd.read_csv('https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+*+from+PSCompPars&format=csv')
     # convert to float when possible
     for i in planets_df.columns: 
         planets_df[i] = planets_df[i].astype(float,errors='ignore')
 
+    return planets_df
+def young_planets(): 
+    """
+    Load planets from ZJ's paper
+    """    
+    planets_df = pd.read_csv(os.path.join(__refdata__, 'evolution','benchmarks_age_lbol.csv'),skiprows=11)
     return planets_df
 
 def methodology_options(printout=True):
@@ -2083,3 +2238,4 @@ def stream_options(printout=True):
     """Retrieve all the options for stream"""
     if printout: print("Can use 2-stream or 4-stream sperhical harmonics")
     return [2,4]
+

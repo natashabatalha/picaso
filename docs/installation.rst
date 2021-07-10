@@ -46,16 +46,28 @@ Should look something like this
 	ls
 	base_cases	config.json	opacities
 
-Your opacities folder shown above should include the file `opacities.db` `file downloaded from zenodo <https://doi.org/10.5281/zenodo.3759675>`_. This is mostly a matter of preference, as PICASO allows you to point to an opacity directory. Personally, I like to store something with the reference data so that I don't have to constantly specify a folder path when running the code. 
+Your opacities folder shown above should include the file ``opacities.db`` `file downloaded from zenodo <https://doi.org/10.5281/zenodo.3759675>`_. This is mostly a matter of preference, as PICASO allows you to point to an opacity directory. Personally, I like to store something with the reference data so that I don't have to constantly specify a folder path when running the code. 
 
 Download and Link Pysynphot Stellar Data
 ----------------------------------------
 
 In order to get stellar spectra you will have to download the stellar spectra here from PySynphot: 
 
-1) Download the `stellar spectra from here <https://pysynphot.readthedocs.io/en/latest/appendixa.html>`_. The Defulat for `PICASO` is Castelli-Kurucz Atlas: `ck04models <https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/>`_. 
+1) PICASO uses the `Pysynphot package <https://pysynphot.readthedocs.io/en/latest/appendixa.html>`_ which has several download options for stellar spectra. The Defulat for ``PICASO`` is Castelli-Kurucz Atlas: `ck04models <https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/>`_. 
 
-2) Create environment variable
+You can download them by doing this: 
+
+.. code-block:: bash
+
+	wget http://ssb.stsci.edu/trds/tarfiles/synphot3.tar.gz
+
+When you untar this you should get a directory structure that looks like this ``<path>/grp/redcat/trds/grid/ck04models``. Some other people have reported a directory structure that looks like this ``<path>/grp/redcat/trds/grid/ck04models``. **The full directory structure does not matter**. Only the last portion ``grid/ck04models``. You will need to create an enviornment variable that points to where ``grid/`` is located. See below.
+
+.. code-block:: bash
+
+	wget -r https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/
+
+2) Create environment variable via bash 
 
 .. code-block:: bash
 
@@ -65,14 +77,25 @@ Add add this line:
 
 .. code-block:: bash
 
-	export PYSYN_CDBS="/path/to/data/files/grp/hst/cdbs"
+	export PYSYN_CDBS="<your_path>/grp/redcat/trds"
 
-Should look something like this 
+Then always make sure to source your bash profile after you make changes. 
 
 .. code-block:: bash
 
-	cd /path/to/data/files/grp/hst/cdbs
+	source ~/.bash_profile
+
+Now you should be able to check the path:
+
+.. code-block:: bash
+
+	cd $PYSYN_CDBS
 	ls
 	grid
 
-Where `grid` contains whatever `pysynphot` data files you have downloaded (e.g. a folder called `ck04models`). 
+Where the folder ``grid/`` contains whatever ``pysynphot`` data files you have downloaded (e.g. a folder called ``ck04models/``). 
+
+.. note::
+
+	1. STScI serves these files in a few different places, with a few different file structures. **PySynphot only cares that the environment variable points to a path with a folder called `grid`. So do not worry if `grp/hst/cdbs` appears different.** 
+

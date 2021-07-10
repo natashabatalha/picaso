@@ -1374,7 +1374,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
     tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
     b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
-    b_surface = all_b[-1,:] + b1[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
+    #b_surface = all_b[-1,:] #for terrestrial, hard surface  
+    b_surface=all_b[-1,:] + b1[-1,:]*mu1 #(for non terrestrial)
 
     #Now we need the terms for the tridiagonal rotated layered method
     if tridiagonal==0:
@@ -1436,7 +1437,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
             iubar = ubar1[ng,nt]
 
-            flux_plus[-1,:] = twopi * (b_surface + b1[-1,:] * iubar)
+            #flux_plus[-1,:] = twopi * (b_surface )# terrestrial
+            flux_plus[-1,:] = twopi*( all_b[-1,:] + b1[-1,:] * iubar) #no hard surface
             flux_minus[0,:] = twopi * (1 - exp(-tau_top / iubar)) * all_b[0,:]
             
             exptrm_angle = exp( - dtau / iubar)
