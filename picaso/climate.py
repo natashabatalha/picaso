@@ -1,4 +1,5 @@
 import numpy as np 
+from numba import jit, vectorize
 from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh, min, dot, array,log,log10
 
 
@@ -26,6 +27,7 @@ cz_or_rad[-1] = 1 #flip botton layer to convective
 #need to get initial maximum T step size 
 max_temp_step = np.sqrt(np.sum([temp[i]**2 for i in range(nlevel) if cz_or_rad[i] == 0]))
 
+@jit(nopython=True, cache=True)
 def did_grad( t, p, t_table, p_table, grad):
     """
     Parameters
@@ -92,6 +94,8 @@ def did_grad( t, p, t_table, p_table, grad):
 
     return grad_x
 
+
+@jit(nopython=True, cache=True)
 def locate(array,value):
     """
     Parameters
