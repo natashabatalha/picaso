@@ -1904,14 +1904,14 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 				F1, G1 = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
 				surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P, calculate=1) 
 			else:
-				M, B, A_int, N_int, F, G = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P)
+				M, B, A_int, N_int, F, G = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P, w0_og, tau_og, dtau_og)
 #				M, B, A, N, A_int, N_int, F, G = setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P)
 #
 				A, N = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-				surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P, calculate=2) 
+				surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P, w0_og, tau_og, dtau_og, calculate=2) 
 
 				F1, G1 = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-				surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P, calculate=1) 
+				surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P, w0_og, tau_og, dtau_og, calculate=1) 
 
 				#from new_fluxes import testing_4_stream
 				#testing_4_stream(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u0, dtau,tau, a, b, u1,F1, G1, M, B, A, N)
@@ -1940,13 +1940,13 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 			#	import IPython; IPython.embed()
 			#	import sys; sys.exit()
 			mus = (u1 + u0) / (u1 * u0)
-			expo_mus = mus * dtau 
+			expo_mus = mus * dtau_og 
 			expo_mus = slice_gt(expo_mus, 35.0)    
 			exptrm_mus = exp(-expo_mus)
 
 			#p_single = 1.
 			#cos_theta = u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
-			p_single=(1-cosb**2)/(sqrt(1+cosb**2+2*cosb*cos_theta)**3)
+			p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3)
 			for i in range(nlayer):
 				for l in range(stream):
 					multi_scat[i,:] = multi_scat[i,:] + w_multi[l][i,:] * P(u1)[l] * intgrl_new[stream*i+l,:]
@@ -1954,8 +1954,8 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 					intensity[i,:] = intensity[i,:] + (2*l+1) * I[i*stream+l,:] * P(u1)[l]
 
 			intgrl_per_layer = (w0 *  multi_scat 
-						+ w0 * F0PI / (4*np.pi) * p_single 
-						* (1 - exptrm_mus) 
+						+ w0_og * F0PI / (4*np.pi) * p_single 
+						* (1 - exptrm_mus) * exp(-tau_og[:-1,:]/u0)
 						/ mus
 						)
 
@@ -2612,7 +2612,7 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 
 #@jit
 def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, 
-        a, b, ubar1, P, B0=0., B1=0., calculate=0,calculation='reflected'):
+        a, b, ubar1, P, w0_og, tau_og, dtau_og, B0=0., B1=0., calculate=0,calculation='reflected'):
 
 	beta = a[0]*a[1] + 4*a[0]*a[3]/9 + a[2]*a[3]/9
 	gama = a[0]*a[1]*a[2]*a[3]/9
