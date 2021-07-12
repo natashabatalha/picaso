@@ -202,6 +202,7 @@
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install picaso
 </pre></div>
 </div>
+<p>Note with a pip install you will need to download the <a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/reference">Reference Folder from Github</a> (explained below). This can simply be done by downloading a zip of the <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> code from Github (which does not require git setup).</p>
 </div>
 <div class="section" id="install-with-git">
 <h2>Install with Git<a class="headerlink" href="#install-with-git" title="Permalink to this headline">¶</a></h2>
@@ -214,7 +215,7 @@ python setup.py install
 <div class="section" id="download-and-link-reference-documentation">
 <h2>Download and Link Reference Documentation<a class="headerlink" href="#download-and-link-reference-documentation" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic simple">
-<li><p>Download the <a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/reference">Reference Folder from Github</a>. You may have this already if you did a Git clone. <strong>Make sure that your reference folder matches the version number of ``PICAOS``</strong>. Check the version number in the file <code class="docutils literal notranslate"><span class="pre">reference/version.md</span></code>.</p></li>
+<li><p>With pip, download the <a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/reference">Reference Folder from Github</a>. You should already this if you did a Git clone. <strong>Make sure that your reference folder matches the version number of ``PICASO``</strong>. Check the version number in the file <code class="docutils literal notranslate"><span class="pre">reference/version.md</span></code>.</p></li>
 <li><p>Download the <a class="reference external" href="https://doi.org/10.5281/zenodo.3759675">Resampled Opacity File from Zenodo</a>. Place in the <a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/reference">Opacities reference Folder you downloaded from Github</a> (see below in step 3)</p></li>
 <li><p>Now you can create an environment variable:</p></li>
 </ol>
@@ -226,9 +227,9 @@ python setup.py install
 </pre></div>
 </div>
 <p>Should look something like this</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> /path/to/picaso/reference/data
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> /path/to/picaso/reference/
 ls
-base_cases      config.json     opacities
+base_cases chemistry config.json evolution opacities version.md
 </pre></div>
 </div>
 <p>Your opacities folder shown above should include the file <code class="docutils literal notranslate"><span class="pre">opacities.db</span></code> <a class="reference external" href="https://doi.org/10.5281/zenodo.3759675">file downloaded from zenodo</a>. This is mostly a matter of preference, as PICASO allows you to point to an opacity directory. Personally, I like to store something with the reference data so that I don’t have to constantly specify a folder path when running the code.</p>
@@ -243,10 +244,7 @@ base_cases      config.json     opacities
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget http://ssb.stsci.edu/trds/tarfiles/synphot3.tar.gz
 </pre></div>
 </div>
-<p>When you untar this you should get a directory structure that looks like this <code class="docutils literal notranslate"><span class="pre">&lt;path&gt;/grp/redcat/trds/grid/ck04models</span></code>. Some other people have reported a directory structure that looks like this <code class="docutils literal notranslate"><span class="pre">&lt;path&gt;/grp/redcat/trds/grid/ck04models</span></code>. <strong>The full directory structure does not matter</strong>. Only the last portion <code class="docutils literal notranslate"><span class="pre">grid/ck04models</span></code>. You will need to create an enviornment variable that points to where <code class="docutils literal notranslate"><span class="pre">grid/</span></code> is located. See below.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget -r https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/
-</pre></div>
-</div>
+<p>When you untar this you should get a directory structure that looks like this <code class="docutils literal notranslate"><span class="pre">&lt;path&gt;/grp/redcat/trds/grid/ck04models</span></code>. Some other people have reported a directory structure that looks like this <code class="docutils literal notranslate"><span class="pre">&lt;path&gt;/grp/hst/cdbs/grid/ck04models</span></code>. <strong>The full directory structure does not matter</strong>. Only the last portion <code class="docutils literal notranslate"><span class="pre">grid/ck04models</span></code>. You will need to create an enviornment variable that points to where <code class="docutils literal notranslate"><span class="pre">grid/</span></code> is located. See below.</p>
 <ol class="arabic simple" start="2">
 <li><p>Create environment variable via bash</p></li>
 </ol>
