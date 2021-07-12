@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Installation &mdash; picaso 2.1 documentation</title>
+  <title>Installation &mdash; picaso 2.2 documentation</title>
   
 
   
@@ -63,7 +63,7 @@
             
             
               <div class="version">
-                2.1
+                2.2
               </div>
             
           
@@ -89,6 +89,7 @@
             
               <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#python-version">Python Version</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#install-with-pip">Install with Pip</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#install-with-git">Install with Git</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#download-and-link-reference-documentation">Download and Link Reference Documentation</a></li>
@@ -192,6 +193,10 @@
 </style>
 <div class="section" id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="python-version">
+<h2>Python Version<a class="headerlink" href="#python-version" title="Permalink to this headline">¶</a></h2>
+<p>Right now <cite>PICASO</cite> is only supported via Travis CI on Python 3.7 because of it’s dependency on the STScI routine <cite>photutils</cite>.</p>
+</div>
 <div class="section" id="install-with-pip">
 <h2>Install with Pip<a class="headerlink" href="#install-with-pip" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install picaso
@@ -209,7 +214,7 @@ python setup.py install
 <div class="section" id="download-and-link-reference-documentation">
 <h2>Download and Link Reference Documentation<a class="headerlink" href="#download-and-link-reference-documentation" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic simple">
-<li><p>Download the <a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/reference">Reference Folder from Github</a>. You may have this already if you did a Git clone.</p></li>
+<li><p>Download the <a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/reference">Reference Folder from Github</a>. You may have this already if you did a Git clone. <strong>Make sure that your reference folder matches the version number of ``PICAOS``</strong>. Check the version number in the file <code class="docutils literal notranslate"><span class="pre">reference/version.md</span></code>.</p></li>
 <li><p>Download the <a class="reference external" href="https://doi.org/10.5281/zenodo.3759675">Resampled Opacity File from Zenodo</a>. Place in the <a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/reference">Opacities reference Folder you downloaded from Github</a> (see below in step 3)</p></li>
 <li><p>Now you can create an environment variable:</p></li>
 </ol>

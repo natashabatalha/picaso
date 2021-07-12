@@ -378,7 +378,9 @@
     "#double check that your reference file path has been set \n",
     "import os\n",
     "refdata = os.getenv(\"picaso_refdata\")\n",
-    "print(refdata)"
+    "print(refdata)\n",
+    "#if you are having trouble setting this you can do it right here in the command line\n",
+    "#os.environ[\"picaso_refdata\"]= add your path here"
    ]
   },
   {

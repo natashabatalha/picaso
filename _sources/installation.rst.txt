@@ -1,6 +1,11 @@
 Installation
 ============
 
+Python Version
+--------------
+
+Right now `PICASO` is only supported via Travis CI on Python 3.7 because of it's dependency on the STScI routine `photutils`. 
+
 Install with Pip
 ----------------
 
@@ -21,7 +26,7 @@ Install with Git
 Download and Link Reference Documentation
 -----------------------------------------
 
-1) Download the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_. You may have this already if you did a Git clone.
+1) Download the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_. You may have this already if you did a Git clone. **Make sure that your reference folder matches the version number of ``PICAOS``**. Check the version number in the file ``reference/version.md``. 
 
 2) Download the `Resampled Opacity File from Zenodo <https://doi.org/10.5281/zenodo.3759675>`_. Place in the `Opacities reference Folder you downloaded from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ (see below in step 3)
 
