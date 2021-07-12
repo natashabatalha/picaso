@@ -69,9 +69,6 @@ You can download them by doing this:
 
 When you untar this you should get a directory structure that looks like this ``<path>/grp/redcat/trds/grid/ck04models``. Some other people have reported a directory structure that looks like this ``<path>/grp/hst/cdbs/grid/ck04models``. **The full directory structure does not matter**. Only the last portion ``grid/ck04models``. You will need to create an enviornment variable that points to where ``grid/`` is located. See below.
 
-.. code-block:: bash
-
-	wget -r https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/
 
 2) Create environment variable via bash 
 
