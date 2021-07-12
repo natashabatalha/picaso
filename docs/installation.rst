@@ -4,7 +4,7 @@ Installation
 Python Version
 --------------
 
-Right now `PICASO` is only supported via Travis CI on Python 3.7 because of it's dependency on the STScI routine `photutils`. 
+Python >= 3.7 
 
 Install with Pip
 ----------------
