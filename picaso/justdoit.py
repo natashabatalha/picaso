@@ -119,6 +119,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
     #Add inputs to class 
     atm.surf_reflect = inputs['surface_reflect']
+    atm.hard_surface = inputs['hard_surface']#0=no hard surface, 1=hard surface
     atm.wavenumber = wno
     atm.planet.gravity = inputs['planet']['gravity']
     atm.planet.radius = inputs['planet']['radius']
@@ -205,7 +206,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                 flux  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
                                             DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                             atm.level['pressure'],ubar1,
-                                            atm.surf_reflect, tridiagonal)
+                                            atm.surf_reflect, atm.hard_surface, tridiagonal)
                 flux_at_top += flux*gauss_wts[ig]
                 
             #if full output is requested add in flux at top for 3d plots
@@ -990,7 +991,7 @@ class inputs():
         self.inputs['star']['semi_major'] = semi_major 
         self.inputs['star']['semi_major_unit'] = semi_major_unit 
 
-    def atmosphere(self, df=None, filename=None, exclude_mol=None, **pd_kwargs):
+    def atmosphere(self, df=None, filename=None, exclude_mol=None, verbose=True, **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
         Sets number of layers in model.  
@@ -1005,6 +1006,8 @@ class inputs():
             Must contain pressure at least one molecule
         exclude_mol : list of str 
             (Optional) List of molecules to ignore from file
+        verbose : bool 
+            (Optional) prints out warnings. Default set to True
         pd_kwargs : kwargs 
             Key word arguments for pd.read_csv to read in supplied atmosphere file 
         """
@@ -1033,12 +1036,12 @@ class inputs():
         #lastly check to see if the atmosphere is non-H2 dominant. 
         #if it is, let's turn off Raman scattering for the user. 
         if (("H2" not in df.keys()) and (self.inputs['approx']['raman'] != 2)):
-            print("Turning off Raman for Non-H2 atmosphere")
-            self.approx(raman='none')
+            if verbose: print("Turning off Raman for Non-H2 atmosphere")
+            self.inputs['approx']['raman'] = 2
         elif (("H2" in df.keys()) and (self.inputs['approx']['raman'] != 2)): 
             if df['H2'].min() < 0.7: 
-                print("Turning off Raman for Non-H2 atmosphere")
-                self.approx(raman='none')
+                if verbose: print("Turning off Raman for Non-H2 atmosphere")
+                self.inputs['approx']['raman'] = 2
 
     def premix_atmosphere(self, opa, df=None, filename=None, **pd_kwargs):
         """
@@ -1078,7 +1081,7 @@ class inputs():
         self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
 
         #Turn off raman for 196 premix calculations 
-        self.approx(raman='none')
+        self.inputs['approx']['raman'] = 2
 
         plevel = self.inputs['atmosphere']['profile']['pressure'].values
         tlevel =self.inputs['atmosphere']['profile']['temperature'].values
@@ -1555,7 +1558,9 @@ class inputs():
 
     def surface_reflect(self, albedo, wavenumber, old_wavenumber = None):
         """
-        Set atmospheric surface reflectivity
+        Set atmospheric surface reflectivity. This preps the code to run a terrestrial 
+        planet. This will automatically change the run to "hardsurface", which alters 
+        the lower boundary condition of the thermal_1d flux calculation.
 
         Parameters
         ----------
@@ -1569,7 +1574,8 @@ class inputs():
                 self.inputs['surface_reflect'] = albedo
             else: 
                 self.inputs['surface_reflect'] = np.interp(wavenumber, old_wavenumber, albedo)
-    
+        self.inputs['hard_surface'] = 1 #let's the code know you have a hard surface at depth
+
     def clouds_reset(self):
         """Reset cloud dict to zeros"""
         df = self.inputs['clouds']['profile']
@@ -1944,12 +1950,14 @@ class inputs():
             developers. 
         """
         try: 
+            #if there is not star, the only picaso option to run is thermal emission
             if self.inputs['star']['radius'] == 'nostar':
                 calculation = 'thermal' 
         except KeyError: 
             pass
 
         try: 
+            #phase angles dont need to be specified for thermal emission or transmission
             a = self.inputs['phase_angle']
         except KeyError: 
             if calculation != 'reflected':
@@ -1963,6 +1971,7 @@ class inputs():
             #I don't make people add this as an input so adding a default here if it hasnt
             #been run 
             self.inputs['surface_reflect'] = 0 
+            self.inputs['hard_surface'] = 0 
 
             
         return picaso(self, opacityclass,dimension=dimension,calculation=calculation,

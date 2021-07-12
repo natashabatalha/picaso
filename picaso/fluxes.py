@@ -1143,7 +1143,8 @@ def blackbody(t,w):
     return ((2.0*h*c**2.0)/(w**5.0))*(1.0/(exp((h*c)/outer(t, w*k)) - 1.0))
 
 @jit(nopython=True, cache=True)
-def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,surf_reflect, tridiagonal):
+def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,
+    surf_reflect, hard_surface, tridiagonal):
     """
     This function uses the source function method, which is outlined here : 
     https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JD094iD13p16287
@@ -1193,6 +1194,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
         computed in `picaso.disco`
     surf_reflect : numpy.ndarray    
         Surface reflectivity as a function of wavenumber. 
+    hard_surface : int
+        0 for no hard surface (e.g. Jupiter/Neptune), 1 for hard surface (terrestrial)
     tridiagonal : int 
         0 for tridiagonal, 1 for pentadiagonal
 
@@ -1238,8 +1241,10 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
     tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
     b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
-    #b_surface = all_b[-1,:] #for terrestrial, hard surface  
-    b_surface=all_b[-1,:] + b1[-1,:]*mu1 #(for non terrestrial)
+    if hard_surface:
+        b_surface = all_b[-1,:] #for terrestrial, hard surface  
+    else: 
+        b_surface=all_b[-1,:] + b1[-1,:]*mu1 #(for non terrestrial)
 
     #Now we need the terms for the tridiagonal rotated layered method
     if tridiagonal==0:
@@ -1301,8 +1306,11 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
             iubar = ubar1[ng,nt]
 
-            #flux_plus[-1,:] = twopi * (b_surface )# terrestrial
-            flux_plus[-1,:] = twopi*( all_b[-1,:] + b1[-1,:] * iubar) #no hard surface
+            if hard_surface:
+                flux_plus[-1,:] = twopi * (b_surface ) # terrestrial
+            else:
+                flux_plus[-1,:] = twopi*( all_b[-1,:] + b1[-1,:] * iubar) #no hard surface
+                
             flux_minus[0,:] = twopi * (1 - exp(-tau_top / iubar)) * all_b[0,:]
             
             exptrm_angle = exp( - dtau / iubar)
