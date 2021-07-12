@@ -1047,7 +1047,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             exptrm_minus_midpt = 1.0/exptrm_positive_midpt#EM
 
             taumid=tau[:-1]+0.5*dtau
-            taumid_og=tau[:-1]+0.5*dtau_og
+            taumid_og=tau_og[:-1]+0.5*dtau_og
 
             x = exp(-taumid/ubar0[ng, nt])
             c_plus_mid= a_plus*x
