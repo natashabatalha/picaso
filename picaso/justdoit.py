@@ -32,7 +32,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     plot_opacity= False, as_dict=True):
     """
     Currently top level program to run albedo code 
-
     Parameters 
     ----------
     bundle : dict 
@@ -52,7 +51,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         If false, returns the atmosphere class, which can be used for debugging. 
         The class is clunky to navigate so if you are consiering navigating through this, ping one of the 
         developers. 
-
     Return
     ------
     dictionary with albedos or fluxes or both (depending on what calculation type)
@@ -390,7 +388,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             returns['full_output'] = atm
 
     return returns
-
 
 def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     """
@@ -2239,3 +2236,257 @@ def stream_options(printout=True):
     if printout: print("Can use 2-stream or 4-stream sperhical harmonics")
     return [2,4]
 
+def picaso_climate(bundle,opacityclass, pressure, temperature, dimension = '1d',calculation='reflected', climate = False, full_output=False, 
+    plot_opacity= False, as_dict=True):
+    """
+    Currently top level program to run RT for climate calculations.
+    If opacities need to change while
+    calling this function one has to make those changes in bundle and opacityclass
+
+    Parameters 
+    ----------
+    bundle : dict 
+        This input dict is built by loading the input = `justdoit.load_inputs()` 
+    opacityclass : class
+        Opacity class from `justdoit.opannection`
+    dimension : str 
+        (Optional) Dimensions of the calculation. Default = '1d'. But '3d' is also accepted. 
+        In order to run '3d' calculations, user must build 3d input (see tutorials)
+    climate: bool 
+        (Optional) if True then module is used for climate calculation
+    full_output : bool 
+        (Optional) Default = False. Returns atmosphere class, which enables several 
+        plotting capabilities. 
+    plot_opacity : bool 
+        (Optional) Default = False, Creates pop up of the weighted opacity
+    as_dict : bool 
+        (Optional) Default = True. If true, returns a condensed dictionary to the user. 
+        If false, returns the atmosphere class, which can be used for debugging. 
+        The class is clunky to navigate so if you are consiering navigating through this, ping one of the 
+        developers. 
+
+    Return
+    ------
+    dictionary with albedos or fluxes or both (depending on what calculation type)
+    """
+    inputs = bundle.inputs
+
+    wno = opacityclass.wno
+    nwno = opacityclass.nwno
+    ngauss = opacityclass.ngauss
+    gauss_wts = opacityclass.gauss_wts #for opacity
+
+    #check to see if we are running in test mode
+    test_mode = inputs['test_mode']
+
+    ############# DEFINE ALL APPROXIMATIONS USED IN CALCULATION #############
+    #see class `inputs` attribute `approx`
+
+    #set approx numbers options (to be used in numba compiled functions)
+    single_phase = inputs['approx']['single_phase']
+    multi_phase = inputs['approx']['multi_phase']
+    raman_approx =inputs['approx']['raman']
+    method = inputs['approx']['method']
+    stream = inputs['approx']['stream']
+    tridiagonal = 0 
+
+    #parameters needed for the two term hg phase function. 
+    #Defaults are set in config.json
+    f = inputs['approx']['TTHG_params']['fraction']
+    frac_a = f[0]
+    frac_b = f[1]
+    frac_c = f[2]
+    constant_back = inputs['approx']['TTHG_params']['constant_back']
+    constant_forward = inputs['approx']['TTHG_params']['constant_forward']
+
+    #define delta eddington approximinations 
+    delta_eddington = inputs['approx']['delta_eddington']
+
+    #pressure assumption
+    p_reference =  inputs['approx']['p_reference']
+
+    ############# DEFINE ALL GEOMETRY USED IN CALCULATION #############
+    #see class `inputs` attribute `phase_angle`
+    
+
+    #phase angle 
+    phase_angle = inputs['phase_angle']
+    #get geometry
+    geom = inputs['disco']
+
+    ng, nt = geom['num_gangle'], geom['num_tangle']
+    gangle,gweight,tangle,tweight = geom['gangle'], geom['gweight'],geom['tangle'], geom['tweight']
+    lat, lon = geom['latitude'], geom['longitude']
+    cos_theta = geom['cos_theta']
+    ubar0, ubar1 = geom['ubar0'], geom['ubar1']
+
+    #set star parameters
+    radius_star = inputs['star']['radius']
+    F0PI = np.zeros(nwno) + 1.
+    #semi major axis
+    sa = inputs['star']['semi_major']
+
+    #begin atm setup
+    atm = ATMSETUP(inputs)
+
+    #Add inputs to class 
+    atm.surf_reflect = inputs['surface_reflect']
+    atm.wavenumber = wno
+    atm.planet.gravity = inputs['planet']['gravity']
+    atm.planet.radius = inputs['planet']['radius']
+    atm.planet.mass = inputs['planet']['mass']
+
+    if dimension == '1d':
+        atm.get_profile()
+    elif dimension == '3d':
+        atm.get_profile_3d()
+
+    #now can get these 
+    atm.get_mmw()
+    atm.get_density()
+    atm.get_altitude(p_reference = p_reference)#will calculate altitude if r and m are given (opposed to just g)
+    atm.get_column_density()
+
+    #gets both continuum and needed rayleigh cross sections 
+    #relies on continuum molecules are added into the opacity 
+    #database. Rayleigh molecules are all in `rayleigh.py` 
+    atm.get_needed_continuum(opacityclass.rayleigh_molecules)
+
+    #get cloud properties, if there are any and put it on current grid 
+    atm.get_clouds(wno)
+
+    #Make sure that all molecules are in opacityclass. If not, remove them and add warning
+    no_opacities = [i for i in atm.molecules if i not in opacityclass.molecules]
+    atm.add_warnings('No computed opacities for: '+','.join(no_opacities))
+    atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
+
+    nlevel = atm.c.nlevel
+    nlayer = atm.c.nlayer
+    
+
+    if dimension == '1d':
+        #lastly grab needed opacities for the problem
+        opacityclass.get_opacities(atm)
+        #only need to get opacities for one pt profile
+
+        #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
+        #We use HG function for single scattering which gets the forward scattering/back scattering peaks 
+        #well. We only really want to use delta-edd for multi scattering legendre polynomials. 
+        DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman= compute_opacity(
+            atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
+            full_output=full_output, plot_opacity=plot_opacity)
+
+
+        if  'reflected' in calculation:
+            #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
+            
+            
+
+            flux_net_v = np.zeros(ng,nt,nlevel) #net level visible fluxes
+            flux_net_v_layer=np.zeros(ng,nt,nlevel) #net layer visible fluxes
+        
+            flux_plus_v= np.zeros(ng,nt,nlevel,nwno) # level plus visible fluxes
+            flux_minus_v= np.zeros(ng,nt,nlevel,nwno) # level minus visible fluxes
+       
+               
+            for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
+                nlevel = atm.c.nlevel
+                
+                
+                calc_type=1
+                    # this line might change depending on Natasha's new function
+                flux_minus_all, flux_plus_all, flux_minus_midpt_all, flux_plus_midpt_all = get_reflected_1d(nlevel, wno,nwno,ng,nt,
+                                DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
+                                GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
+                                DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
+                                atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
+                                single_phase,multi_phase,
+                                frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal,calc_type)
+               
+                
+                
+
+                flux_net_v_layer += (np.sum(flux_plus_midpt_all,axis=3)-np.sum(flux_minus_midpt_all,axis=3))*gauss_wts[ig]
+                flux_net_v += (np.sum(flux_plus_all,axis=3)-np.sum(flux_minus_all,axis=3))*gauss_wts[ig]
+                
+                flux_plus_v += flux_plus_all*gauss_wts[ig]
+                flux_minus_v += flux_minus_all*gauss_wts[ig]
+                
+            #if full output is requested add in xint at top for 3d plots
+            
+
+        if 'thermal' in calculation:
+
+            #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
+             
+            
+                # total corr gauss weighted fluxes
+            flux_plus_midpt = np.zeros(ng,nt,nlevel,nwno)
+            flux_minus_midpt = np.zeros(ng,nt,nlevel,nwno)
+            
+            flux_plus = np.zeros(ng,nt,nlevel,nwno)
+            flux_minus = np.zeros(ng,nt,nlevel,nwno)
+
+            # outputs needed for climate
+            flux_net_ir = np.zeros(ng,nt,nlevel) #net level visible fluxes
+            flux_net_ir_layer=np.zeros(ng,nt,nlevel) #net layer visible fluxes
+        
+            flux_plus_ir= np.zeros(ng,nt,nlevel,nwno) # level plus visible fluxes
+            flux_minus_ir= np.zeros(ng,nt,nlevel,nwno) # level minus visible fluxes
+        
+
+            for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
+                
+                #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
+                #the uncorrected raman single scattering 
+                
+                calc_type=1
+                    # this line might change depending on Natasha's new function
+                flux_minus_all, flux_plus_all, flux_minus_midpt_all, flux_plus_midpt_all= get_thermal_1d(nlevel, wno,nwno,ng,nt,temperature,
+                                        DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
+                                        pressure,ubar1,
+                                        atm.surf_reflect, tridiagonal,calc_type)
+                
+                
+                flux_plus += flux_plus_all*gauss_wts[ig]
+                flux_minus += flux_minus_all*gauss_wts[ig]
+
+                flux_plus_midpt += flux_plus_midpt*gauss_wts[ig]
+                flux_minus_midpt += flux_minus_midpt*gauss_wts[ig]
+                
+                    
+            
+            # SM - What is this dwni interval correction ?
+            for wvi in range(nwno):
+                flux_net_ir_layer += (flux_plus_midpt_all[:,:,:,wvi]-flux_minus_midpt_all[:,:,:,wvi]) * dwni[wvi]
+                flux_net_ir += (flux_plus_all[:,:,:,wvi]-flux_minus_all[:,:,:,wvi]) * dwni[wvi]
+            
+                flux_plus_ir += flux_plus_all[:,wvi] * dwni[wvi]
+                flux_minus_ir += flux_minus_all[:,wvi] * dwni[wvi]
+                
+            #if full output is requested add in flux at top for 3d plots
+            
+        
+        
+
+
+    #COMPRESS FULL TANGLE-GANGLE FLUX OUTPUT ONTO 1D FLUX GRID
+
+    #set up initial returns
+    returns = {}
+    returns['wavenumber'] = wno
+    
+
+        
+    if ((dimension == '1d') & ('reflected' in calculation)):
+        returns['flux_vis_net_layer'] = flux_net_v_layer
+        returns['flux_vis_net_level'] = flux_net_v
+        returns['flux_vis_plus_level'] = flux_plus_v
+        returns['flux_vis_minus_level'] = flux_minus_v
+    if ((dimension == '1d') & ('thermal' in calculation)):
+        returns['flux_ir_net_layer'] = flux_net_ir_layer
+        returns['flux_ir_net_level'] = flux_net_ir
+        returns['flux_ir_plus_level'] = flux_plus_ir
+        returns['flux_ir_minus_level'] = flux_minus_ir
+
+    return returns
