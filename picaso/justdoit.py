@@ -2236,7 +2236,7 @@ def stream_options(printout=True):
     if printout: print("Can use 2-stream or 4-stream sperhical harmonics")
     return [2,4]
 
-def picaso_climate(bundle,opacityclass, pressure, temperature, dimension = '1d',calculation='reflected', climate = False, full_output=False, 
+def climate(bundle,opacityclass, pressure, temperature, dimension = '1d',calculation='reflected', climate = False, full_output=False, 
     plot_opacity= False, as_dict=True):
     """
     Currently top level program to run RT for climate calculations.
