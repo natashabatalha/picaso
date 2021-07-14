@@ -2236,7 +2236,7 @@ def stream_options(printout=True):
     if printout: print("Can use 2-stream or 4-stream sperhical harmonics")
     return [2,4]
 
-def climate(bundle,opacityclass, pressure, temperature, dimension = '1d',calculation='reflected', climate = False, full_output=False, 
+def climate(bundle,opacityclass, pressure, temperature, dwni , dimension = '1d',calculation='reflected', climate = False, full_output=False, 
     plot_opacity= False, as_dict=True):
     """
     Currently top level program to run RT for climate calculations.
@@ -2330,7 +2330,9 @@ def climate(bundle,opacityclass, pressure, temperature, dimension = '1d',calcula
     atm = ATMSETUP(inputs)
 
     #Add inputs to class 
-    atm.surf_reflect = inputs['surface_reflect']
+    ##############################
+    atm.surf_reflect = 0#inputs['surface_reflect']
+    ##############################
     atm.wavenumber = wno
     atm.planet.gravity = inputs['planet']['gravity']
     atm.planet.radius = inputs['planet']['radius']
@@ -2382,15 +2384,17 @@ def climate(bundle,opacityclass, pressure, temperature, dimension = '1d',calcula
             
             
 
-            flux_net_v = np.zeros(ng,nt,nlevel) #net level visible fluxes
-            flux_net_v_layer=np.zeros(ng,nt,nlevel) #net layer visible fluxes
+            flux_net_v = np.zeros(shape=(ng,nt,nlevel)) #net level visible fluxes
+            flux_net_v_layer=np.zeros(shape=(ng,nt,nlevel)) #net layer visible fluxes
         
-            flux_plus_v= np.zeros(ng,nt,nlevel,nwno) # level plus visible fluxes
-            flux_minus_v= np.zeros(ng,nt,nlevel,nwno) # level minus visible fluxes
+            flux_plus_v= np.zeros(shape=(ng,nt,nlevel,nwno)) # level plus visible fluxes
+            flux_minus_v= np.zeros(shape=(ng,nt,nlevel,nwno)) # level minus visible fluxes
        
                
             for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
                 nlevel = atm.c.nlevel
+                
+                
                 
                 
                 calc_type=1
@@ -2421,18 +2425,18 @@ def climate(bundle,opacityclass, pressure, temperature, dimension = '1d',calcula
              
             
                 # total corr gauss weighted fluxes
-            flux_plus_midpt = np.zeros(ng,nt,nlevel,nwno)
-            flux_minus_midpt = np.zeros(ng,nt,nlevel,nwno)
+            flux_plus_midpt = np.zeros(shape=(ng,nt,nlevel,nwno))
+            flux_minus_midpt = np.zeros(shape=(ng,nt,nlevel,nwno))
             
-            flux_plus = np.zeros(ng,nt,nlevel,nwno)
-            flux_minus = np.zeros(ng,nt,nlevel,nwno)
+            flux_plus = np.zeros(shape=(ng,nt,nlevel,nwno))
+            flux_minus = np.zeros(shape=(ng,nt,nlevel,nwno))
 
             # outputs needed for climate
-            flux_net_ir = np.zeros(ng,nt,nlevel) #net level visible fluxes
-            flux_net_ir_layer=np.zeros(ng,nt,nlevel) #net layer visible fluxes
+            flux_net_ir = np.zeros(shape=(ng,nt,nlevel)) #net level visible fluxes
+            flux_net_ir_layer=np.zeros(shape=(ng,nt,nlevel)) #net layer visible fluxes
         
-            flux_plus_ir= np.zeros(ng,nt,nlevel,nwno) # level plus visible fluxes
-            flux_minus_ir= np.zeros(ng,nt,nlevel,nwno) # level minus visible fluxes
+            flux_plus_ir= np.zeros(shape=(ng,nt,nlevel,nwno)) # level plus visible fluxes
+            flux_minus_ir= np.zeros(shape=(ng,nt,nlevel,nwno)) # level minus visible fluxes
         
 
             for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
@@ -2461,8 +2465,8 @@ def climate(bundle,opacityclass, pressure, temperature, dimension = '1d',calcula
                 flux_net_ir_layer += (flux_plus_midpt_all[:,:,:,wvi]-flux_minus_midpt_all[:,:,:,wvi]) * dwni[wvi]
                 flux_net_ir += (flux_plus_all[:,:,:,wvi]-flux_minus_all[:,:,:,wvi]) * dwni[wvi]
             
-                flux_plus_ir += flux_plus_all[:,wvi] * dwni[wvi]
-                flux_minus_ir += flux_minus_all[:,wvi] * dwni[wvi]
+                flux_plus_ir[:,:,:,wvi] += flux_plus_all[:,:,:,wvi] * dwni[wvi]
+                flux_minus_ir[:,:,:,wvi] += flux_minus_all[:,:,:,wvi] * dwni[wvi]
                 
             #if full output is requested add in flux at top for 3d plots
             
