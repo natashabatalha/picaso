@@ -800,8 +800,8 @@ def thermal_phasecurve(planet=None, in_ptk=None, filt_path=None, wv_range=None,
 
         ### Calculate transmission ###
 
-        avg_pflux = np.zeros(len(all_phases))  # to plot phase curves
-        avg_sflux = np.zeros(len(all_phases))  # to plot phase curves
+        #avg_pflux = np.zeros(len(all_phases))  # to plot phase curves
+        #avg_sflux = np.zeros(len(all_phases))  # to plot phase curves
 
         # Interpolate planet flux onto stellar grid
         interpfunc = interpolate.interp1d(wvl_pic, pflux, bounds_error=False, fill_value=0)
@@ -815,12 +815,13 @@ def thermal_phasecurve(planet=None, in_ptk=None, filt_path=None, wv_range=None,
 
         sum_pflux, sum_sflux, sum_weights = whitelight_flux(planet_trans, star_trans, resp)
 
-        avg_pflux[flag] = sum_pflux  # array with weighted average planet flux
-        avg_sflux[flag] = sum_sflux  # array with weighted average stellar flux
+        #avg_pflux[flag] = sum_pflux  # array with weighted average planet flux
+        #avg_sflux[flag] = sum_sflux  # array with weighted average stellar flux
 
-        fpfs_pc = (avg_pflux / avg_sflux) * (rprs ** 2)
-        print('FpFs=', fpfs_pc)
-        all_fpfs[flag] = fpfs_pc[flag]
+        #fpfs_pc = (avg_pflux / avg_sflux) * (rprs ** 2)
+        
+        all_fpfs[flag] = (sum_pflux/sum_sflux)*(rprs**2)
+        print('fpfs', all_fpfs[flag])
         all_phases[flag] = round(phase360, 2)
 
         fluxes[round(phase360, 2)] = {'fpfs_spect': fpfs_pic, 'thermal': pflux, 'pflux_trans': planet_trans, 'sflux_trans': star_trans, 'wvl_spect': wvl_pic, 'wvl_star_masked':wv_star, 'thermal_3d': thermal_3d}
