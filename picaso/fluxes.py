@@ -1879,11 +1879,8 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 				w_single.append((2*l+1) * (cosb_og**l -  ff) / (1-ff))
 				#w_single.append((2*l+1) * cosb_og**l)
 				a.append((2*l + 1) -  w0 * w_multi[l])
-				#b.append((F0PI * (w0 * w_single[l])) * P(-u0)[l] / (4*pi))
-				if l < 4:
-					b.append(( F0PI * (w0 * w_single[l])) * P(-u0)[l] / (4*pi))
-				else:
-					b.append((0*w0))
+				b.append(( F0PI * (w0 * w_single[l])) * P(-u0)[l] / (4*pi))
+				#b.append((0*w0))
 
 			if stream3:
 				a[1] = (a[1]*a[2])/(a[2]+4*a[0])
@@ -1946,7 +1943,7 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 
 			#p_single = 1.
 			#cos_theta = u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
-			p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3)
+			p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 			for i in range(nlayer):
 				for l in range(stream):
 					multi_scat[i,:] = multi_scat[i,:] + w_multi[l][i,:] * P(u1)[l] * intgrl_new[stream*i+l,:]
@@ -1968,7 +1965,7 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 			xint_out[ng,nt,:,:] = xint_temp
 			flux[ng,nt,:,:] = flux_temp
 			multiple_scat[ng,nt,:,:,] = w0 * multi_scat
-			single_scat[ng,nt,:,:,] = intgrl_per_layer
+			single_scat[ng,nt,:,:,] = intgrl_per_layer - w0 * multi_scat
 #	import IPython; IPython.embed()
 #	import sys; sys.exit()
 
