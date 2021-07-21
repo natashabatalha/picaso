@@ -1343,7 +1343,35 @@ class inputs():
             player_tlayer.loc[:,im] = 10**s #
 
         self.inputs['atmosphere']['profile'] = player_tlayer
+    def add_pt(self, T, P, nlevel=61):
+        """
+        Adds temperature pressure profile to atmosphere
+        Parameters
+        ----------
+        T : array
+            Temperature Array
+        P : array 
+            Pressure Array 
+        nlevel : int
+            # of atmospheric levels
+        
+            
+        Returns
+        -------
+        T : numpy.array 
+            Temperature grid 
+        P : numpy.array
+            Pressure grid
+                
+        """
+        
+        self.nlevel=nlevel 
+        
 
+        self.inputs['atmosphere']['profile']  = pd.DataFrame({'temperature': T, 'pressure': P})
+
+        # Return TP profile
+        return self.inputs['atmosphere']['profile'] 
     def guillot_pt(self, Teq, T_int=100, logg1=-1, logKir=-1.5, alpha=0.5,nlevel=61, p_bottom = 1.5, p_top = -6):
         """
         Creates temperature pressure profile given parameterization in Guillot 2010 TP profile
@@ -2236,7 +2264,7 @@ def stream_options(printout=True):
     if printout: print("Can use 2-stream or 4-stream sperhical harmonics")
     return [2,4]
 
-def climate(bundle,opacityclass, pressure, temperature, dwni , dimension = '1d',calculation='reflected', climate = False, full_output=False, 
+def climate(bundle,opacityclass, pressure, temperature, dwni,  bb , y2, tp, tmin, tmax , dimension = '1d',calculation='reflected', climate = False, full_output=False, 
     plot_opacity= False, as_dict=True):
     """
     Currently top level program to run RT for climate calculations.
@@ -2446,27 +2474,28 @@ def climate(bundle,opacityclass, pressure, temperature, dwni , dimension = '1d',
                 
                 calc_type=1
                     # this line might change depending on Natasha's new function
-                flux_minus_all, flux_plus_all, flux_minus_midpt_all, flux_plus_midpt_all= get_thermal_1d(nlevel, wno,nwno,ng,nt,temperature,
-                                        DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
-                                        pressure,ubar1,
-                                        atm.surf_reflect, tridiagonal,calc_type)
+                flux_minus_all, flux_plus_all, flux_minus_midpt_all, flux_plus_midpt_all=get_thermal_1d(nlevel,wno,nwno,ng,nt,temperature,DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], pressure,ubar1,atm.surf_reflect, tridiagonal,calc_type, bb , y2, tp, tmin, tmax)
                 
                 
                 flux_plus += flux_plus_all*gauss_wts[ig]
                 flux_minus += flux_minus_all*gauss_wts[ig]
 
-                flux_plus_midpt += flux_plus_midpt*gauss_wts[ig]
-                flux_minus_midpt += flux_minus_midpt*gauss_wts[ig]
+                flux_plus_midpt += flux_plus_midpt_all*gauss_wts[ig]
+                flux_minus_midpt += flux_minus_midpt_all*gauss_wts[ig]
                 
                     
             
-            # SM - What is this dwni interval correction ?
-            for wvi in range(nwno):
-                flux_net_ir_layer += (flux_plus_midpt_all[:,:,:,wvi]-flux_minus_midpt_all[:,:,:,wvi]) * dwni[wvi]
-                flux_net_ir += (flux_plus_all[:,:,:,wvi]-flux_minus_all[:,:,:,wvi]) * dwni[wvi]
             
-                flux_plus_ir[:,:,:,wvi] += flux_plus_all[:,:,:,wvi] * dwni[wvi]
-                flux_minus_ir[:,:,:,wvi] += flux_minus_all[:,:,:,wvi] * dwni[wvi]
+            
+            for wvi in range(nwno):
+                flux_net_ir_layer += (flux_plus_midpt[:,:,:,wvi]-flux_minus_midpt[:,:,:,wvi]) * dwni[wvi]
+                flux_net_ir += (flux_plus[:,:,:,wvi]-flux_minus[:,:,:,wvi]) * dwni[wvi]
+
+                flux_plus_ir[:,:,:,wvi] += flux_plus[:,:,:,wvi] * dwni[wvi]
+                flux_minus_ir[:,:,:,wvi] += flux_minus[:,:,:,wvi] * dwni[wvi]
+                
+            #if full output is requested add in flux at top for 3d plots
+            
                 
             #if full output is requested add in flux at top for 3d plots
             
@@ -2494,3 +2523,5 @@ def climate(bundle,opacityclass, pressure, temperature, dwni , dimension = '1d',
         returns['flux_ir_minus_level'] = flux_minus_ir
 
     return returns
+
+

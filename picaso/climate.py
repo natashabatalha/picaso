@@ -1,8 +1,9 @@
 import numpy as np 
 from numba import jit, vectorize
 from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh, min, dot, array,log,log10
-
-
+from .justdoit import picaso, climate, 
+from .fluxes import tidal_flux
+'''
 # compute initial net fluxes 
 tidal = 
 
@@ -26,8 +27,10 @@ cz_or_rad[-1] = 1 #flip botton layer to convective
 
 #need to get initial maximum T step size 
 max_temp_step = np.sqrt(np.sum([temp[i]**2 for i in range(nlevel) if cz_or_rad[i] == 0]))
+'''
 
-@jit(nopython=True, cache=True)
+
+#@jit(nopython=True, cache=True)
 def did_grad_cp( t, p, t_table, p_table, grad, cp, calc_type):
     """
     Parameters
@@ -114,6 +117,23 @@ def did_grad_cp( t, p, t_table, p_table, grad, cp, calc_type):
     elif calc_type == 2 :
         return cp_x
 
+def convec(temp,pressure, t_table, p_table, grad, cp):
+    """
+    Calculates convec array from profiles and tables
+    """
+    # layer profile arrays
+    tbar= np.zeros(shape=(len(temp)-1))
+    pbar= np.zeros(shape=(len(temp)-1))
+    
+    grad_x, cp_x = np.zeros(shape=(len(temp)-1)), np.zeros(shape=(len(temp)-1))
+
+    for j in range(len(temp)-1):
+        tbar[j] = 0.5*(temp[j]+temp[j+1])
+        pbar[j] = sqrt(pressure[j]*pressure[j+1])
+        calc_type = 0
+        grad_x[j], cp_x[j] =  did_grad_cp( tbar[j], pbar[j], t_table, p_table, grad, cp, calc_type)
+
+    return grad_x, cp_x
 
 @jit(nopython=True, cache=True)
 def locate(array,value):
@@ -132,7 +152,7 @@ def locate(array,value):
         location of nearest point by bisection method 
     
     """
-    
+    # this is from numerical recipes
     
     n = len(array)
     
@@ -163,7 +183,7 @@ def mat_sol(a, nlevel, nstrat, dflux):
     nlevel : int 
         # of levels (not layers)
     nstrat : int 
-        
+        tropopause level
     dflux : array 
         dimension is nlevel
     
@@ -307,6 +327,1107 @@ def lu_backsubs(a, n, ntot, indx, b):
         b[i]=sum/a[i,i]
 
     return b
+
+
+#### find f2 trace in here which is not allowing tstart to use jit.
+#### jit + get_reflected and get_thermal do not allow different dimension outputs
+
+def t_start(nofczns,nstr,it_max,conv,x_max_mult, bundle, opacityclass, 
+            rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
+            grad, cp, tidal, tmin,tmax, dwni , bb , y2, tp):
+    """
+    Parameters
+    ----------
+    nofczns : int
+        # of convective zones 
+    nstr : array
+        dimension of 20
+        NSTR vector describes state of the atmosphere:
+        0   is top layer
+        1   is top layer of top convective region
+        2   is bottom layer of top convective region
+        3   is top layer of lower radiative region
+        4   is top layer of lower convective region
+        5   is bottom layer of lower convective region
+    it_max : int 
+        # of maximum iterations allowed
+    conv: 
+        
+    x_max_mult: 
+
+    bundle : dict 
+        This input dict is built by loading the input = `justdoit.load_inputs()` 
+    opacityclass : class
+        Opacity class from `justdoit.opannection`
+    rfaci : float 
+        IR flux addition fraction 
+    rfacv : float
+        Visible flux addition fraction
+    nlevel : int
+        # of levels
+    temp : array
+        Guess Temperature array, dimension is nlevel
+    pressure : array
+        Pressure array
+    p_table : array
+        Tabulated pressure array for convection calculations
+
+    t_table : array
+        Tabulated Temperature array for convection calculations
+
+    grad : array
+        Tabulated grad array for convection calculations
+    
+    cp : array
+        Tabulated cp array for convection calculations
+
+    tidal : array
+        Tidal Fluxes dimension = nlevel
+
+    tmin : float
+        Minimum allwed Temp in the profile
+
+    tmax : float
+        Maximum allowed Temp in the profile
+
+    dwni : array
+        Spectral interval corrections (dimension= nwvno)   
+        
+    Returns
+    -------
+    array 
+        Temperature array and lapse ratio array if converged
+        else Temperature array twice
+    """
+    #     Routine to iteratively solve for T(P) profile.  Uses a Newton-
+    #     Raphson iteration to zero out the net flux in the radiative
+    #     zone above NSTRAT.  Repeats until average temperature change
+    #     is less than CONV or until ITMAX is reached.
+
+    # -- SM -- needs a lot of documentation
+
+    # -- SM -- lots of array indexing so fortran to python conversion might not
+    # be perfect. check that while benchmarking. 
+    #  will have to debug by running line by line and printing indices between f an py
+
+    eps=1e-4
+
+    n_top_r=nstr[0]-1
+
+    # here are other  convergence and tolerance criterias
+
+    step_max = 0.03e0 # scaled maximum step size in line searches
+    alf = 1.e-4    # ? 
+    alam2 = 0.0   # ? 
+    tolmin=1.e-5   # ?
+    tolf = 5e-3    # tolerance in fractional Flux we are aiming for
+    tolx = tolf    # tolerance in fractional T change we are aiming for
+
+    # first we need a call to toon modules to get RT fluxes
+    # using climate = True and calculation = ['reflected','thermal'] is
+    # equivalent to calling SFLUXI and SFLUXV
+    returns= climate(bundle,opacityclass, pressure, temp, dwni, bb , y2, tp, tmin, tmax ,dimension = '1d',calculation=['reflected','thermal'], climate = True,full_output=False, plot_opacity= False, as_dict=True)
+
+    
+    # extract visible fluxes
+    flux_net_v_layer = returns['flux_vis_net_layer'][0,0,:]  #fmnetv
+    flux_net_v = returns['flux_vis_net_level'][0,0,:]#fnetv
+    flux_plus_v = returns['flux_vis_plus_level'][0,0,:,:]
+    flux_minus_v = returns['flux_vis_minus_level'][0,0,:,:]
+
+    # extract ir fluxes
+
+    flux_net_ir_layer = returns['flux_ir_net_layer'][0,0,:] #fmneti
+    flux_net_ir = returns['flux_ir_net_level'][0,0,:]     #fneti
+    flux_plus_ir = returns['flux_ir_plus_level'][0,0,:,:]  
+    flux_minus_ir = returns['flux_ir_minus_level'][0,0,:,:]
+    
+   
+    
+    # arrays for total net fluxes = optical+ir + tidal
+    flux_net=np.zeros(shape=(nlevel))
+    flux_net_midpt=np.zeros(shape=(nlevel))
+    dflux=np.zeros(shape=(nlevel))
+    f_vec=np.zeros(shape=(nlevel)) #fvec
+    p=np.zeros(shape=(nlevel)) #p
+    g=np.zeros(shape=(nlevel))
+    
+    #--SM-- jacobian?
+    A= np.zeros(shape=(nlevel,nlevel)) 
+    
+
+    
+    for its in range(it_max):
+        
+        # the total net flux = optical + ir + tidal component
+        flux_net = rfaci* flux_net_ir + rfacv* flux_net_v +tidal #fnet
+        flux_net_midpt = rfaci* flux_net_ir_layer + rfacv* flux_net_v_layer +tidal #fmnet
+        beta= temp # beta vector
+        
+       
+        # store old fluxes and temp before iteration
+        # do not store the ir+vis flux because we are going to perturb only thermal structure
+
+        
+        temp_old= temp.copy() 
+        flux_net_old = flux_net_ir.copy() #fnetip
+        flux_net_midpt_old= flux_net_ir_layer.copy()  #fmip
+
+        nao = n_top_r
+        n_total = 0#0 #ntotl
+
+        sum = 0.0
+        sum_1 = 0.0 # sum1
+        test = 0.0
+        
+        flag_nao = 0
+        if nao < 0 :
+            nao_temporary = nao
+            nao = 0 # to avoid negative of negative index leading to wrong indexing, fort vs. py
+            flag_nao = 1 # so that it can be reversed back to previous value after loop
+
+        for nca in range(0, 3*nofczns, 3): 
+            
+            # first fill in the dflux  vector
+            # contains flux ant top and midpt fluxes for nstrat -1 layers in stratosphere
+
+            n_top_a= nstr[nca] #ntopa -- top of atmosphere or top of other rad zones
+
+            n_strt_a = nstr[nca+1] #nstrta -- top of top conv zone
+            
+            
+            # n_top_a to n_strt_a is a radiative zone
+            # n_bot_a is the top of the next rad zone than this
+            
+            n_bot_a= nstr[nca+2] +1 #nbota -- top of lower rad zone
+
+            if n_top_a == n_top_r+1 : # if the rad zone is also top of atmos
+                dflux[0] = flux_net[n_top_r+1]
+                f_vec[0] = dflux[0]
+
+                sum += f_vec[0]**2
+                sum_1 += temp[0]**2
+
+                if abs(f_vec[0]) > test :
+                    test = abs(dflux[0])
+                n_total += 1
+            
+            # +1 to include last element
+            for j in range(n_top_a+1, n_strt_a+1):
+                
+                dflux[j-nao] = flux_net_midpt[j-1] 
+
+                f_vec[j-nao] = dflux[j-nao] 
+
+                sum += f_vec[j-nao]**2 
+
+                sum_1 += temp[j-nao]**2 
+
+                if abs(f_vec[j-nao]) > test : 
+                    test = abs(dflux[j-nao]) 
+                n_total += 1
+            
+            if flag_nao == 1 :
+                nao= nao_temporary
+                flag_nao = 0
+
+            
+            
+            nao += n_bot_a - n_strt_a
+
+        
+        f = 0.5*sum # used in linesearch, defined in NR function fmin
+
+        # test if we are already at a root
+        if (test/abs(tidal[0])) < 0.01*tolf :
+            print(" We are already at a root, tolf , test = " +str(tolf)+", " + str(test))
+            flag_converge = 2
+            dtdp=np.zeros(shape=(nlevel-1))
+            for j in range(nlevel -1):
+                dtdp[j] = (log( temp[j]) - log( temp[j+1]))/(log(pressure[j]) - log(pressure[j+1]))
+            
+            return   temp,  dtdp, flag_converge 
+            
+        
+        # define maximum T step size
+        step_max *= np.max([sqrt(sum_1),float(n_total)])
+
+        no =n_top_r
+        
+        i_count= 1 #icount
+        
+        flag_no = 0
+        if no < 0 :
+            no_temporary = no
+            no = 0 # to avoid negative of negative index leading to wrong indexing, fort vs. py
+            flag_no = 1 # so that it can be reversed back to previous value after loop
+       
+        for nz in range(0, 3*nofczns, 3):
+
+            n_top = nstr[nz] +1 #ntop
+            n_strt = nstr[nz+1] #nstrt
+            n_conv_top = n_strt + 1 #ncnvtop
+            n_conv_bot= nstr[nz+2] +1 #ncnvbot
+
+            if nz == 0 :
+                n_top -= 1
+            
+            
+            
+        # begin jacobian calculation here
+        # +1 to include last element
+            for jm in range(n_top, n_strt+1):
+
+                # chose perturbation for each level
+
+                i_count += 1
+
+                del_t = eps * temp_old[jm] # perturbation
+
+                beta[jm] += del_t # perturb
+
+                
+                # now reconstruct Temp profile
+
+                for nb in range(0, 3*nofczns, 3):
+
+                    n_top_b = nstr[nb] + 1 # ntopb
+                    
+                    if nb == 0:
+                        n_top_b -= 1 #ntopb
+                    
+                    n_strt_b = nstr[nb+1] # nstrtb
+                    
+                    n_conv_top_b = n_strt_b + 1 #nctopb
+
+                    n_bot_b = nstr[nb+2] +1 #nbotb
+
+                    
+                    # +1 to include last element   
+                    for j1 in range(n_top_b,n_strt_b+1):
+                        temp[j1] = beta[j1]
+                    
+                    # +1 to include last element
+                    for j1 in range(n_conv_top_b, n_bot_b+1): 
+                        
+                        press = sqrt(pressure[j1-1]*pressure[j1])
+                        calc_type =  1 # only need grad_x in return
+                        grad_x = did_grad_cp( beta[j1-1], press, t_table, p_table, grad, cp, calc_type)
+                        
+                        temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
+                
+                
+
+                # temperature has been perturbed
+                # now recalculate the IR fluxes, so call picaso with only thermal
+
+                returns= climate(bundle,opacityclass, pressure, temp, dwni, bb , y2, tp, tmin, tmax , dimension = '1d',calculation=['thermal'], climate = True,full_output=False, plot_opacity= False, as_dict=True)
+                
+                # new_fluxes after perturbations (old are stored in diff array)
+                # extract ir fluxes
+
+                flux_net_ir_layer = returns['flux_ir_net_layer'][0,0,:] #fmneti
+                flux_net_ir = returns['flux_ir_net_level'][0,0,:]     #fneti
+                flux_plus_ir = returns['flux_ir_plus_level'][0,0,:,:]  
+                flux_minus_ir = returns['flux_ir_minus_level'][0,0,:,:]
+     
+                
+                # now calculate jacobian terms in the same way as dflux
+                nco = n_top_r
+                
+                # -ve nco and no will mess indexing
+                # so we want to set them to 0 temporarily if that occurs
+                flag_nco = 0 
+                if nco < 0 :
+                    nco_temporary = nco
+                    nco = 0 # to avoid negative of negative index leading to wrong indexing, fort vs. py
+                    flag_nco = 1 # so that it can be reversed back to previous value after loop
+
+                for nc in range(0,3*nofczns, 3):
+                    
+                    n_top_c = nstr[nc] +1 # ntopc
+
+                    if nc ==0:
+                        n_top_c -= 1
+                    n_strt_c = nstr[nc+1]
+                    n_bot_c = nstr[nc+2] +1
+                    
+                    
+                        
+                    
+                   
+                    if n_top_c == n_top_r+1 :
+                        
+                        A[n_top_c-nco,jm-no] = (flux_net_ir[n_top_c]-flux_net_old[n_top_c])/del_t
+                        
+                    else:
+                        
+                        A[n_top_c-nco,jm-no] = (flux_net_ir_layer[n_top_c-1]-flux_net_midpt_old[n_top_c-1])/del_t
+                        
+                    
+                    
+                    # omitted -1 to include last element 
+                    
+                    for im in range(n_top_c,n_strt_c):
+                        #print(im+1-nco,jm-no, "3rd",jm,no)
+                        A[im+1-nco,jm-no] = (flux_net_ir_layer[im]-flux_net_midpt_old[im])/del_t
+                        
+                    # changing them back to what they were
+                    
+                    if flag_nco == 1 :
+                        nco= nco_temporary
+                        flag_nco = 0
+                    
+                    
+                       
+
+                    nco+= n_bot_c-n_strt_c
+                
+
+                # undo beta vector perturbation
+                beta[jm] = beta[jm] - del_t
+            
+            if flag_no == 1 :
+                no= no_temporary
+                flag_no = 0
+            
+            no += n_conv_bot-n_strt
+        
+        # a long print statement here in original. dont know if needed
+
+        
+        for i in range(n_total):
+            sum=0.0
+            for j in range(n_total):
+                sum += A[j,i]*f_vec[j]
+            
+            g[i] = sum
+
+            p[i] = -f_vec[i]
+        
+        f_old = f #fold
+        
+        A, p = mat_sol(A, nlevel, n_total, p)
+        
+        #print(np.max(p),np.min(p))
+        
+
+        check = False
+
+        sum = 0.0
+        # Now we are in the "line search" routine
+        # we ignore the first two points since they are flaky
+        # start from 2 (3rd array pos in fortran), so changing loop initial
+        
+        for i in range(2,n_total):
+            sum += p[i]**2
+        sum = sqrt(sum)
+        
+        
+        # scale if attempted step is too big
+        if sum > step_max:
+            for i in range(n_total):
+                p[i] *= step_max/sum
+
+                dflux[i] = -p[i]
+        
+        slope = 0.0
+
+        for i in range(n_total):
+            slope += g[i]*p[i]
+        if slope >= 0.0 :
+            raise ValueError("roundoff problem in linen search")
+        
+        ## checked till here -- SM
+        test = 0.0
+        
+        for i in range(n_total):
+            tmp = abs(p[i])/temp_old[i]
+            if tmp > test :
+                test= tmp 
+
+        alamin = tolx/test
+        alam = 1.0
+        
+        #f2= f #################### to avoid call before assignment and run using numba
+        #print(alamin)
+
+        ## stick a while loop here maybe for the weird fortran goto 1
+        # you have in tstart.
+        flag_converge = 0
+        # instead of the goto statement here
+        while flag_converge == 0 :
+            
+            err = 0.0
+            dmx = 0.0
+            scalt = 1.0
+            slow =8.0/scalt
+
+            for j in range(n_total):
+                dzx= abs(p[j])
+
+                if dzx > dmx :
+                    dmx = dzx
+                    jmx = j+ n_top_r
+                err += dzx
+            
+            err= err/(n_total*scalt)
+
+            if jmx > nstr[1] :
+                jmx+= nstr[2]-nstr[1]
+            
+            ndo = n_top_r
+            flag_ndo = 0 
+            if ndo < 0 :
+                ndo_temporary = ndo
+                ndo = 0 # to avoid negative of negative index leading to wrong indexing, fort vs. py
+                flag_ndo = 1 # so that it can be reversed back to previous value after loop
+            
+            for nd in range(0,3*nofczns, 3):
+                n_top_d = nstr[nd] +1
+                if nd == 0:
+                    n_top_d -= 1
+
+                n_strt_d = nstr[nd+1]
+
+                n_bot_d= nstr[nd+2] +1
+                
+                
+                   
+                #+1 for fort to py
+                
+                for j in range(n_top_d,n_strt_d+1):
+                    temp[j]= beta[j]+ alam*p[j-ndo]
+                    #print(p[j-ndo],beta[j])
+                #+1 for fort to py
+                for j1 in range(n_strt_d+1, n_bot_d+1):
+
+                    press = sqrt(pressure[j1-1]*pressure[j1])
+                    calc_type =  1 # only need grad_x in return
+                    grad_x = did_grad_cp( temp[j1-1], press, t_table, p_table, grad, cp, calc_type)
+                            
+                    temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
+                
+                if flag_ndo == 1 :
+                        ndo= ndo_temporary
+                        flag_ndo = 0
+
+                ndo += n_bot_d - n_strt_d
+            
+            # artificial damper
+
+            for j1 in range(n_top_r+1, nlevel):
+                if temp[j1] < tmin:
+                    temp[j1] = tmin+ 0.1
+                elif temp[j1] > tmax:
+                    temp[j1] = tmax- 0.1
+            
+            # re calculate thermal flux
+            returns= climate(bundle,opacityclass, pressure, temp, dwni, bb , y2, tp, tmin, tmax, dimension = '1d',calculation=['thermal'], climate = True, full_output=False, plot_opacity= False, as_dict=True)                    
+              # new_fluxes after perturbations (old are stored in diff array)
+            # extract ir fluxes
+
+            flux_net_ir_layer = returns['flux_ir_net_layer'][0,0,:] #fmneti
+            flux_net_ir = returns['flux_ir_net_level'][0,0,:]     #fneti
+            flux_plus_ir = returns['flux_ir_plus_level'][0,0,:,:]  
+            flux_minus_ir = returns['flux_ir_minus_level'][0,0,:,:]
+    
+            # re calculate net fluxes
+            flux_net = rfaci* flux_net_ir + rfacv* flux_net_v +tidal #fnet
+            flux_net_midpt = rfaci* flux_net_ir_layer + rfacv* flux_net_v_layer +tidal #fmnet
+            
+            sum = 0.0
+            nao = n_top_r
+            flag_nao = 0
+            if nao < 0 :
+                nao_temporary = nao
+                nao = 0 # to avoid negative of negative index leading to wrong indexing, fort vs. py
+                flag_nao = 1 # so that it can be reversed back to previous value after loop
+
+            for nca in range(0,3*nofczns,3):
+                n_top_a = nstr[nca] + 1
+                if nca ==0 :
+                    n_top_a -= 1
+                
+                n_strt_a=nstr[nca+1]
+                n_bot_a = nstr[nca+2] + 1
+                
+                
+                   
+
+                if n_top_a == n_top_r +1 :
+                    
+                    f_vec[0]= flux_net[n_top_r +1]
+                    sum += f_vec[0]**2
+                else:
+                    f_vec[n_top_a-nao] = flux_net_midpt[n_top_a -1]
+                    sum += f_vec[n_top_a - nao]**2
+                
+                for j in range(n_top_a+1,n_strt_a+1):
+                    #print(j-1)
+                    f_vec[j-nao] = flux_net_midpt[j -1]
+                    sum += f_vec[j-nao]**2
+                
+                if flag_nao == 1 :
+                        nao= nao_temporary
+                        flag_nao = 0
+                
+                nao+= n_bot_a - n_strt_a
+            
+            f= 0.5*sum
+            # check_convergence is fortran from line indexed 9995 till next line of 19
+            if alam < alamin :
+                #print(alam, alamin)
+                check = True
+                #print(' CONVERGED ON SMALL T STEP')
+                #print("1st if")
+                #print(alam, alamin)
+                flag_converge, check = check_convergence(f_vec, n_total, tolf, check, f, dflux, tolmin, temp, temp_old, g , tolx)
+ 
+            
+            elif f <= f_old + alf*alam*slope :
+                #print("2nd if")
+                
+                
+                #print ('Exit with decreased f')
+                flag_converge, check = check_convergence(f_vec, n_total, tolf, check, f, dflux, tolmin, temp, temp_old, g , tolx)
+
+                
+            else:
+                
+                # we backtrack
+                #print("3rd if")
+                #print(' Now backtracking, f, fold, alf, alam, slope', f, f_old, alf, alam, slope)
+                if alam == 1.0:
+                    
+                    tmplam= -slope/ (2*(f-f_old-slope))
+                else:
+                    
+                    rhs_1 = f- f_old - alam*slope
+                    rhs_2 = f2 - f_old - alam2*slope
+                    anr= ((rhs_1/alam**2)-(rhs_2/alam2**2))/(alam-alam2)
+                    b= (-alam2*rhs_1/alam**2+alam*rhs_2/alam2**2)/(alam-alam2)
+                    
+
+                    if anr == 0 :
+                        tmplam= -slope/(2*b)
+                        
+                        
+                    else:
+                        disc= b*b - 3.0*anr*slope
+                        
+                        if disc < 0.0 :
+                            tmplam= 0.5*alam
+                           
+                        elif b <= 0.0:
+                            tmplam=(-b + sqrt(disc))/(3*anr)
+                            
+
+                        else:
+                            tmplam= -slope/(b+sqrt(disc))
+                            
+                    if tmplam > 0.5*alam:
+                        
+                        tmplam= 0.5*alam
+            if ((flag_converge != 2) & (flag_converge != 1)):
+                alam2=alam
+                f2=f
+                
+                alam = np.max([tmplam,0.1*alam])
+        print("Iteration number ", its, min(temp), flux_net[0]/abs(tidal[0]))
+        #print(f, f_old, tolf, np.max((temp-temp_old)/temp_old), tolx)
+        if flag_converge == 2 : # converged
+            # calculate  lapse rate
+            dtdp=np.zeros(shape=(nlevel-1))
+            for j in range(nlevel -1):
+                dtdp[j] = (log( temp[j]) - log( temp[j+1]))/(log(pressure[j]) - log(pressure[j+1]))
+            
+            print("Converged Solution in iterations ",its)
+            
+           
+           
+            return   temp,  dtdp, flag_converge 
+        
+    print("Iterations exceeded it_max ! sorry ")#,np.max(dflux/tidal), tolf, np.max((temp-temp_old)/temp_old), tolx)
+    dtdp=np.zeros(shape=(nlevel-1))
+    for j in range(nlevel -1):
+        dtdp[j] = (log( temp[j]) - log( temp[j+1]))/(log(pressure[j]) - log(pressure[j+1]))
+
+
+    return temp, dtdp, flag_converge  
+
+
+
+#@jit(nopython=True, cache=True)
+def check_convergence(f_vec, n_total, tolf, check, f, dflux, tolmin, temp, temp_old, g , tolx):
+
+    test = 0.0
+    for i in range(n_total):
+        if abs(f_vec[i]) > test:
+            test=abs(f_vec[i])
+    
+    if test < tolf :
+        check = False
+        
+        flag_converge = 2
+        return flag_converge , check
+    if check == True :
+        test = 0.0
+        den1 = np.max([f,0.5*(n_total)])
+        
+        for i in range(n_total):
+            tmp= abs(g[i])*dflux[i]/den1
+            if tmp > test:
+                test= tmp
+        
+        if test < tolmin :
+            check= True
+        else :
+            check= False
+        
+
+        flag_converge = 2
+        return flag_converge, check
+    
+    test = 0.0
+    
+    for i in range(n_total):
+        tmp = (abs(temp[i]-temp_old[i]))/temp_old[i]
+        if tmp > test:
+            test=tmp
+    if test < tolx :
+        
+        
+        flag_converge = 2
+
+        return flag_converge, check
+    
+
+    flag_converge = 1
+    return flag_converge , check
+
+
+#@jit(nopython=True, cache=True)
+def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
+            temp,pressure, t_table, p_table, grad, cp, opacityclass, grav, 
+             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp):
+    """
+    Function iterating on the TP profile by calling tstart and changing opacities as well
+    Parameters
+    ----------
+    it_max : int
+        Maximum iterations allowed in the inner no opa change loop
+    itmx : int
+        Maximum iterations allowed in the outer opa change loop
+    conv : float
+        
+    convt: float
+        Convergence criteria , if max avg change in temp is less than this then outer loop converges
+        
+    nofczns: int
+        # of conv zones 
+    nstr : array 
+        dimension of 20
+        NSTR vector describes state of the atmosphere:
+        0   is top layer
+        1   is top layer of top convective region
+        2   is bottom layer of top convective region
+        3   is top layer of lower radiative region
+        4   is top layer of lower convective region
+        5   is bottom layer of lower convective region
+    xmaxmult : 
+        
+    temp : array 
+        Guess temperatures to start with
+    pressure : array
+        Atmospheric pressure
+    t_table : array
+        Visible flux addition fraction
+    nlevel : int
+        # of levels
+    temp : array
+        Guess Temperature array, dimension is nlevel
+    pressure : array
+        Pressure array
+    t_table : array
+        Tabulated Temperature array for convection calculations
+    p_table : array
+        Tabulated pressure array for convection calculations
+    grad : array
+        Tabulated grad array for convection calculations
+    cp : array
+        Tabulated cp array for convection calculations
+    opacityclass : class
+        Opacity class created with jdi.oppanection
+    grav : float
+        Gravity of planet in SI
+    rfaci : float 
+        IR flux addition fraction 
+    rfacv : float
+        Visible flux addition fraction
+    nlevel : int
+        # of levels, not layers
+    tidal : array
+        Tidal Fluxes dimension = nlevel
+    tmin : float
+        Minimum allwed Temp in the profile
+
+    tmax : float
+        Maximum allowed Temp in the profile
+
+    dwni : array
+        Spectral interval corrections (dimension= nwvno)   
+        
+    Returns
+    -------
+    array 
+        Temperature array and lapse ratio array if converged
+        else Temperature array twice
+    """
+    # taudif is fixed to be 0 here since it is needed only for clouds
+    taudif = 0.0
+    
+    # first calculate the convective zones
+    for nb in range(0,3*nofczns,3):
+        
+        n_strt_b= nstr[nb+1]
+        n_ctop_b= n_strt_b+1
+        n_bot_b= nstr[nb+2] +1
+
+        for j1 in range(n_ctop_b,n_bot_b+1): 
+            press = sqrt(pressure[j1-1]*pressure[j1])
+            calc_type =  1 # only need grad_x in return
+            grad_x = did_grad_cp( temp[j1-1], press, t_table, p_table, grad, cp, calc_type)
+            temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
+                
+    temp_old= np.copy(temp)
+    
+    bundle = jdi.inputs(calculation='brown')
+    bundle.phase_angle(0)
+    bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
+    bundle.add_pt( temp, pressure, nlevel= nlevel)
+    bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+    
+    ## begin bigger loop which gets opacities
+    for iii in range(itmx):
+        temp, dtdp, flag_converge = t_start(nofczns,nstr,it_max,conv,x_max_mult,bundle, opacityclass, 
+            rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
+            grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp)
+
+        bundle = jdi.inputs(calculation='brown')
+        bundle.phase_angle(0)
+        bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
+        bundle.add_pt( temp, pressure, nlevel= nlevel)
+        bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+
+        ert = 0.0 # avg temp change
+        scalt= 1.5
+
+        dtx= abs(temp-temp_old)
+        ert = np.sum(dtx)
+        temp_old= np.copy(temp)
+        
+        ert = ert/(float(nlevel)*scalt)
+        
+        if ((iii > 0) & (ert < convt) & (taudif < 0.1)) :
+            print("Profile converged")
+            return pressure, temp , dtdp
+        
+        print("Big iteration is ",min(temp), iii)
+        
+    print("Not converged")
+    return pressure, temp, dtdp
+    
+def find_strat(pressure, temp, dtdp , nofczns,nstr,x_max_mult,
+             t_table, p_table, grad, cp, opacityclass, grav, 
+             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp):
+    """
+    Function iterating on the TP profile by calling tstart and changing opacities as well
+    Parameters
+    ----------
+    it_max : int
+        Maximum iterations allowed in the inner no opa change loop
+    itmx : int
+        Maximum iterations allowed in the outer opa change loop
+    conv : float
+        
+    convt: float
+        Convergence criteria , if max avg change in temp is less than this then outer loop converges
+        
+    nofczns: int
+        # of conv zones 
+    nstr : array 
+        dimension of 20
+        NSTR vector describes state of the atmosphere:
+        0   is top layer
+        1   is top layer of top convective region
+        2   is bottom layer of top convective region
+        3   is top layer of lower radiative region
+        4   is top layer of lower convective region
+        5   is bottom layer of lower convective region
+    xmaxmult : 
+        
+    temp : array 
+        Guess temperatures to start with
+    pressure : array
+        Atmospheric pressure
+    t_table : array
+        Visible flux addition fraction
+    nlevel : int
+        # of levels
+    temp : array
+        Guess Temperature array, dimension is nlevel
+    pressure : array
+        Pressure array
+    t_table : array
+        Tabulated Temperature array for convection calculations
+    p_table : array
+        Tabulated pressure array for convection calculations
+    grad : array
+        Tabulated grad array for convection calculations
+    cp : array
+        Tabulated cp array for convection calculations
+    opacityclass : class
+        Opacity class created with jdi.oppanection
+    grav : float
+        Gravity of planet in SI
+    rfaci : float 
+        IR flux addition fraction 
+    rfacv : float
+        Visible flux addition fraction
+    nlevel : int
+        # of levels, not layers
+    tidal : array
+        Tidal Fluxes dimension = nlevel
+    tmin : float
+        Minimum allwed Temp in the profile
+
+    tmax : float
+        Maximum allowed Temp in the profile
+
+    dwni : array
+        Spectral interval corrections (dimension= nwvno)   
+        
+    Returns
+    -------
+    array 
+        Temperature array and lapse ratio array if converged
+        else Temperature array twice
+    """
+    # new conditions for this routine
+    itmx_strat = 5 #itmx
+    it_max_strat = 8 # its
+    conv_strat = 5.0 # conv
+    convt_strat = 3.0 # convt 
+    ip2 = -10 #?
+    subad = 0.98 # degree to which layer can be subadiabatic and
+                    # we still make it adiabatic
+    ifirst = 10-1  # start looking after this many layers from top for a conv zone
+                   # -1 is for python referencing
+    iend = 0 #?
+    final = False
+
+    grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp)
+    # grad_x = 
+    while dtdp[nstr[1]-1] >= subad*grad_x[nstr[1]-1] :
+        ratio = dtdp[nstr[1]-1]/grad_x[nstr[1]-1]
+
+        if ratio > 2 :
+            print("Move up two levels")
+            ngrow = 2
+            pressure,temp = growup( 1, nstr , ngrow)
+        else :
+            ngrow = 1
+            pressure,temp = growup( 1, nstr , ngrow)
+        
+        if nstr[1] < 6 :
+            raise ValueError( "Convection zone grew to Top of atmosphere, Need to Stop")
+        
+        pressure, temp, dtdp = profile(it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
+            temp,pressure, t_table, p_table, grad, cp, opacityclass, grav, 
+             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp)
+
+    # now for the 2nd convection zone
+    dt_max = 0.0 #DTMAX
+    i_max = 0 #IMAX
+    # -1 in ifirst to include ifirst index
+    flag_super = 0
+    for i in range(nstr[1]-1, ifirst-1, -1):
+        add = dtdp[i] - grad_x[i]
+        if add/grad_x[i] >= 0.02 : # neglegibel super-adiabaticity
+            i_max =i
+            break
+    
+    flag_final_convergence =0
+    if i_max == 0: # no superadiabaticity, we are done
+        flag_final_convergence = 1
+
+    if flag_final_convergence  == 0:
+        print(" convection zone status")
+        print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
+        print(nofczns)
+
+        nofczns = 2
+        nstr[4]= nstr[1]
+        nstr[5]= nstr[2]
+        nstr[1]= i_max
+        nstr[2] = i_max
+        nstr[3] = i_max +1
+
+        if nstr[3] >= nstr[4] :
+            #print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
+            #print(nofczns)
+            raise ValueError("Overlap happened !")
+        pressure, temp, dtdp = profile(it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
+            temp,pressure, t_table, p_table, grad, cp, opacityclass, grav, 
+             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp)
+
+        i_change = 1
+        while i_change == 1 :
+            print("Grow Phase : Upper Zone")
+            i_change = 0
+
+            d1 = dtdp[nstr[1]-1]
+            d2 = dtdp[nstr[3]]
+            c1 = grad_x[nstr[1]-1]
+            c2 = grad_x[nstr[3]]
+
+            while ((d1 > subad*c1) or (d2 > subad*c2)):
+
+                if (((d1-c1)>= (d2-c2)) or nofczns == 1) :
+                    ngrow = 1
+                    pressure,temp = growup( 1, nstr , ngrow)
+
+                    if nstr[1] < 3 :
+                        raise ValueError( "Convection zone grew to Top of atmosphere, Need to Stop")
+                else :
+                    ngrow = 1
+                    pressure,temp = growdown( 1, nstr , ngrow)
+
+                    if nstr[2] == nstr[4]: # one conv zone
+                        nofczns =1
+                        nstr[2] = nstr[5]
+                        nstr[3] = 0
+                        i_change = 1
+                
+                pressure, temp, dtdp = profile(it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
+            temp,pressure, t_table, p_table, grad, cp, opacityclass, grav, 
+             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp)
+
+                d1 = dtdp[nstr[1]-1]
+                d2 = dtdp[nstr[3]]
+                c1 = grad_x[nstr[1]-1]
+                c2 = grad_x[nstr[3]]
+            #Now grow the lower zone.
+            while ((dtdp[nstr[4]-1] >= subad*grad_x[nstr[5]-1]) and nofczns > 1):
+                
+                ngrow = 1
+                pressure,temp = growup( 2, nstr , ngrow)
+                #Now check to see if two zones have merged and stop further searching if so.
+                if nstr[2] == nstr[4] :
+                    nofczns = 1
+                    nstr[2] = nstr[5]
+                    nstr[3] = 0
+                    i_change =1
+                
+                pressure, temp, dtdp = profile(it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
+                    temp,pressure, t_table, p_table, grad, cp, opacityclass, grav, 
+                    rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp)
+            
+
+            flag_final_convergence = 1
+    if flag_final_convergence == 1 :    
+        itmx_strat =6
+        it_max_strat = 10
+        convt_strat = 2.0
+        convt_strat = 2.0
+        x_max_mult = 2.0
+        ip2 = -10
+
+        final = True
+
+        pressure, temp, dtdp = profile(it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
+                    temp,pressure, t_table, p_table, grad, cp, opacityclass, grav, 
+                    rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp)
+
+    else :
+        raise ValueError("Some problem here with goto 125")
+    
+    return pressure, temp, dtdp
+
+
+def growup(nlv, nstr, ngrow) :
+    n = 2+3*(nlv-1) -1 # -1 for the py referencing
+    nstr[n]= nstr[n]-1*ngrow
+
+    return nstr
+
+def growdown(nlv,nstr, ngrow) :
+
+    n = 3+3*(nlv-1) -1 # -1 for the py referencing
+    nstr[n] = nstr[n] + 1*ngrow
+    nstr[n+1] = nstr[n+1] + 1*ngrow
+
+    return nstr
+
+
+        
+            
+
+    
+
+
+    
+
+
+
+
+
+            
+
+        
+
+
+
+
+
+
+
+            
+
+
+
+        
+
+
+
+
+
+        
+
+        
+
+
+
+
+
+
+
+
+
+
+
+            
+
+
+
+
+
+        
+
+
+
+
 
 
 

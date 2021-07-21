@@ -942,8 +942,8 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
     flux_minus_all = zeros((numg, numt,nlevel, nwno)) ## level downwelling fluxes
     flux_plus_all = zeros((numg, numt, nlevel, nwno)) ## level upwelling fluxes
-    flux_minus_midpt_all = zeros((numg, numt, nlayer, nwno)) ##  layer downwelling fluxes
-    flux_plus_midpt_all = zeros((numg, numt, nlayer, nwno))  ## layer upwelling fluxes
+    flux_minus_midpt_all = zeros((numg, numt, nlevel, nwno)) ##  layer downwelling fluxes
+    flux_plus_midpt_all = zeros((numg, numt, nlevel, nwno))  ## layer upwelling fluxes
 
     #now define terms of Toon et al 1989 quadrature Table 1 
     #https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JD094iD13p16287
@@ -1264,7 +1264,8 @@ def blackbody(t,w):
     return ((2.0*h*c**2.0)/(w**5.0))*(1.0/(exp((h*c)/outer(t, w*k)) - 1.0))
 
 @jit(nopython=True, cache=True)
-def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,surf_reflect, tridiagonal, calc_type):
+@jit(nopython=True, cache=True)
+def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,surf_reflect, tridiagonal, calc_type , bb , y2, tp, tmin, tmax):
     """
     This function uses the source function method, which is outlined here : 
     https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JD094iD13p16287
@@ -1337,14 +1338,15 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     # outputs when calc_type =1
     flux_minus_all = zeros((numg, numt,nlevel, nwno)) ## level downwelling fluxes
     flux_plus_all = zeros((numg, numt, nlevel, nwno)) ## level upwelling fluxes
-    flux_minus_midpt_all = zeros((numg, numt, nlayer, nwno)) ##  layer downwelling fluxes
-    flux_plus_midpt_all = zeros((numg, numt, nlayer, nwno))  ## layer upwelling fluxes
+    flux_minus_midpt_all = zeros((numg, numt, nlevel, nwno)) ##  layer downwelling fluxes
+    flux_plus_midpt_all = zeros((numg, numt, nlevel, nwno))  ## layer upwelling fluxes
 
     mu1 = 0.5#0.88#0.5 #from Table 1 Toon  
     twopi = pi#+pi #NEB REMOVING A PI FROM HERE BECAUSE WE ASSUME NO SYMMETRY! 
 
     #get matrix of blackbodies 
-    all_b = blackbody(tlevel, 1/wno) #returns nlevel by nwave   
+    all_b = blackbody_climate(wno, tlevel, bb, y2, tp, tmin, tmax) #returns nlevel by nwave 
+    #print(all_b)
     b0 = all_b[0:-1,:]
     b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
 
@@ -1484,12 +1486,10 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
             #to get the convective heat flux 
             #flux_minus_mdpt_disco[ng,nt,:,:] = flux_minus_mdpt #nlevel by nwno
             #flux_plus_mdpt_disco[ng,nt,:,:] = flux_plus_mdpt #nlevel by nwno
-    if calc_type == 0:
-        return flux_at_top #, flux_down# numg x numt x nwno
-    elif calc_type == 1:
-        return flux_minus_all, flux_plus_all, flux_minus_midpt_all, flux_plus_midpt_all
-
-
+    #if calc_type == 0:
+     #   return flux_at_top #, flux_down# numg x numt x nwno
+    
+    return flux_minus_all, flux_plus_all, flux_minus_midpt_all, flux_plus_midpt_all
 
 @jit(nopython=True, cache=True)
 def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel_3d, dtau_3d, w0_3d,cosb_3d,plevel_3d, ubar1, tridiagonal):
@@ -2950,3 +2950,296 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	N_int[:,im:iM] = N_int_block(n)
 
 	return M, B, A, N, F, G, A_int, N_int
+
+def tidal_flux(T_e, wave_in,nlevel, pressure, pm, hratio, col_den):
+    """
+    Computes Tidal Fluxes in all levels. Py of TIDALWAVE subroutine. 
+	
+    Parameters
+	----------
+	T_e : float 
+		Temperature (internal?)
+	wave_in : float
+		what is this?
+	nlevel : int 
+		# of levels
+	pressure : array 
+		pressure array 
+	pm : float
+		Some pressure (?)
+    hratio : float
+		Ratio of Scale Height over Chapman Scale Height
+    col_den : array
+        Column density array
+    Returns
+	-------
+	Tidal Fluxes and DE/DM in ergs/g sec
+    
+    """
+
+    sigma_sb = 0.56687e-4 # stefan-boltzmann constant
+
+    tide = -sigma_sb* (T_e**4)
+
+    T_tot= 0.0 #TTOT
+
+    tidal=np.zeros(shape=(nlevel))
+
+    dedm=np.zeros(shape=(nlevel-1))
+
+    for j in range(nlevel):
+        if j > 1 :
+            tidal[j] = tidal[j-1] - chapman(pressure[j],pm,hratio)*col_den[j-1]
+            T_tot += tidal[j] -tidal[j-1]
+    
+    tidal = (tidal*wave_in/T_tot) + tide - (tidal[-1]*wave_in/T_tot)
+    
+    for j in range(nlevel-1):
+        # dE/dM (ergs/g sec)
+        dedm[j]= eff_g0*(tidal[j+1]-tidal[j])/(1e6*(pressure[j+1]-pressure[j]))
+    
+    return tidal, dedm
+
+def chapman(pressure, pm, hratio):
+    """
+    Computes Chapman function for use in tidal routine
+    
+    Parameters
+	----------
+    pressure : float 
+		pressure 
+    pm : float
+        Some pressure (?)
+    hratio : float
+        Ratio of Scale Height over Chapman Scale Height
+    
+    Returns
+	-------
+	Chapman function
+    
+    """
+
+    chapman_func = exp(1.0+ hratio*log(pressure/pm)- (pressure/pm)**hratio) 
+    return chapman_func
+
+def set_bb(wvno,dwni,ntmps,nspeci):
+    """
+    Computes and interpolates BB table with spline
+    
+    Parameters
+	----------
+	wvno : array
+		wavenumber in cm-1
+	dwni : array
+		wavenumber interval correction
+	ntmps : int
+		# of temp pts for interpolation, 2000
+    nspeci : int
+        # of wavenumber , 196
+    
+    
+        
+    Returns
+	-------
+	BB , y2 , tp and pass0 tables
+    
+    """
+
+    dt = 3.00
+    tmin = 40.0
+    tmax= tmin + dt*(ntmps-1.0)
+
+    bb=np.zeros(shape=(ntmps,nspeci))
+    tp= np.zeros(shape=(ntmps))
+    y2=np.zeros(shape=(ntmps,nspeci))
+    for it in range(ntmps):
+        temp_bb = tmin +(it)*dt
+        tp[it]= temp_bb
+        
+        for ik in range(nspeci):
+            x= planck_cgs(wvno[ik],temp_bb,dwni[ik])
+            if x > 0.0 :
+                bb[it,ik] = log(x)
+            else:
+                bb[it,ik] = -700.0
+    
+    dts = 0.02
+    for ik in range(nspeci):
+        yp_n= (-bb[ntmps-1,ik]+log(planck_cgs(wvno[ik],tmax+dts,dwni[ik])))/dts
+        yp_0 = (-bb[0,ik]+log(planck_cgs(wvno[ik],tmax+dts,dwni[ik])))/dts
+        
+        pass0=bb[:,ik]
+
+        y2x = spline(tp,pass0,ntmps,yp_0,yp_n)
+        
+        
+        y2[:,ik] = y2x
+    
+    return bb , y2 , tp, pass0
+
+   
+
+@jit(nopython=True, cache=True)
+def spline(x , y, n, yp0, ypn):
+    """
+    Spline interpolation function for set_bb
+    
+    """
+    
+    u=np.zeros(shape=(n))
+    y2 = np.zeros(shape=(n))
+
+    if yp0 > 0.99 :
+        y2[0] = 0.0
+        u[0] =0.0
+    else:
+        y2[0]=-0.5
+        u[0] = (3.0/(x[1]-x[0]))*((y[1]-y[0])/(x[1]-x[0])-yp0)
+
+    for i in range(1,n-1):
+        sig=(x[i]-x[i-1])/(x[i+1]-x[i-1])
+        p=sig*y2[i-1]+2.
+        y2[i]=(sig-1.)/p
+        u[i]=(6.0*((y[i+1]-y[i])/(x[i+1]-x[i])-(y[i]-y[i-1])/(x[i]-x[i-1]))/(x[i+1]-x[i-1])-sig*u[i-1])/p
+
+    if ypn > 0.99 :
+        qn = 0.0
+        un = 0.0
+    else:
+        qn =0.5
+        un = (3.0/(x[n-1]-x[n-2]))*(ypn-(y[n-1]-y[n-2])/(x[n-1]-x[n-2]))
+    
+    y2[n-1] = (un - qn*u[n-2])/(qn*y2[n-2]+1.0)
+
+    for k in range(n-2, -1, -1):
+        y2[k] = y2[k] * y2[k+1] +u[k]
+    
+    return y2
+
+
+
+@jit(nopython=True, cache=True)
+def planck_cgs(wave, T , dwave):
+    """
+    Computes cgs BB flux
+    
+    Parameters
+	----------
+	wave : float
+		wavenumber in cm-1
+	T : float
+		Temperature in K
+	dwave : float
+		Wavenumber interval correction
+    
+    
+        
+    Returns
+	-------
+	BB flux in cgs
+    
+    """
+    nbb = 4
+
+    planck_sum = 0.0
+
+    for i in range(-nbb, nbb+1, 1):
+        wavenum = wave + i*dwave/(2.0*nbb)
+        planck_sum += 1.191e-5*(wavenum**3)*exp(-1.438769* wavenum/T ) / ( 1.0 - exp(-1.4387690 * wavenum/T ) )  
+    planck_sum = planck_sum/(2*nbb +1.0)
+    if planck_sum <= 1e-300:
+        planck_sum = 1e-300
+
+
+    return planck_sum
+
+@jit(nopython=True, cache=True)
+def planck_rad(iw, T, dT ,  tmin, tmax, bb , y2, tp):
+    """
+    Computes interpolated Fluxes from BB table
+    
+    Parameters
+	----------
+	iw : int
+		index of wavenumber 
+	T : float
+		Temperature of interpolation
+	dT : float
+		Temperature increment used in set_bb
+    tmin : float
+		Min temp of tabulated BB fluxes
+    tmax : float
+        Max temp of tabulated BB fluxes
+	bb : array 
+		output of set_bb function
+	y2 : array 
+        output of set_bb function
+	tp : array
+		output of set_bb function
+    
+        
+    Returns
+	-------
+	Interpolated BB flux.
+    
+    """
+
+    if T < tmin :
+       # itchx = 1
+        T= tmax
+    elif T > tmax :
+       # itchx = 1
+        T=tmax
+    
+    k_low = int((T-tmin)/dT)
+    k_high = k_low+1
+    h= dT
+    a= (tp[k_high]-T)/h
+    b= (T-tp[k_low])/h
+    
+    planck_rad = a*bb[k_low,iw]+b*bb[k_high,iw]+((a**3-a)*y2[k_low,iw]+(b**3-b)* y2[k_high,iw])*(h**2)/6.0
+    
+    planck_rad = exp(planck_rad)
+
+    return planck_rad
+
+
+
+@jit(nopython=True, cache=True)
+def blackbody_climate(wave,temp, bb, y2, tp, tmin, tmax):
+    """
+    Creates the blackbody fluxes in an nlevel*wvno shaped array for RT
+    
+    Parameters
+	----------
+	wave : array 
+		wavenumber array
+	temp : array
+		Temperature array
+	bb : array 
+		output of set_bb function
+	y2 : array 
+        output of set_bb function
+	tp : array
+		output of set_bb function
+    tmin : float
+		Min temp of tabulated BB fluxes
+    tmax : float
+        Max temp of tabulated BB fluxes
+        
+    Returns
+	-------
+	BB fluxes for get_thermal_1d
+    
+    """
+
+    blackbody_array = np.zeros(shape=(len(temp),len(wave)))
+    dT= 3.0
+
+    for itemp in range(len(temp)):
+        for iwave in range(len(wave)):
+            blackbody_array[itemp, iwave] = planck_rad(iwave, temp[itemp], dT ,  tmin, tmax, bb , y2, tp)
+
+    return blackbody_array
+
+
