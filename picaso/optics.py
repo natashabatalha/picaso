@@ -7,10 +7,11 @@ import os
 from numba import jit
 from bokeh.plotting import figure, show, output_file
 from bokeh.palettes import inferno
+from astropy.io import fits
 import io 
 import sqlite3
 import math
-
+__refdata__ = os.environ.get('picaso_refdata')
 #@jit(nopython=True)
 def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddington=True,
     test_mode=False,raman=0, plot_opacity=False,full_output=False, return_mode=False):
@@ -663,6 +664,7 @@ class RetrieveCKs():
         self.get_legacy_data(wave_range) #wave_range not used yet
         self.get_available_continuum()
         self.get_available_rayleigh()
+        self.run_cia_spline()
         return
 
     def get_legacy_data(self,wave_range):
@@ -757,7 +759,35 @@ class RetrieveCKs():
         #get temps
         cur.execute('SELECT temperature FROM continuum')
         self.cia_temps = np.unique(cur.fetchall())
+    
+    def run_cia_spline(self):
         
+        
+        
+        temps = self.cia_temps
+        
+
+        
+        
+                
+        cia_mol = [['H2', 'H2'], ['H2', 'He'], ['H2', 'N2'], ['H2', 'H'], ['H2', 'CH4'], ['H-', 'bf'], ['H-', 'ff'], ['H2-', '']]
+        cia_names = {key[0]+key[1]  for key in cia_mol}
+          
+
+        cia_names = list(key[0]+key[1]  for key in cia_mol)
+        
+        self.cia_splines = {}
+        for i in cia_names :
+            hdul = fits.open(os.path.join(__refdata__,'climate_INPUTS/'+i+'.fits'))
+            data= hdul[0].data
+            self.cia_splines[i] = data
+            
+        
+            
+    
+
+
+
     def get_pre_mix_ck(self,atmosphere):
         """
         Takes in atmosphere profile and returns an array which is 
@@ -776,16 +806,189 @@ class RetrieveCKs():
             
             if p!=0 : pt_pairs += [[i,ip,it,p/1e3,t]];i+=1
 
-        ind_pt_log = np.array([min(pt_pairs, 
-                    key=lambda c: math.hypot(np.log(c[-2])- np.log(coordinate[0]), 
-                                             c[-1]-coordinate[1]))[0:3] 
-                        for coordinate in  zip(player,tlayer)])
+        #ind_pt_log = np.array([min(pt_pairs, 
+        #            key=lambda c: math.hypot(np.log(c[-2])- np.log(coordinate[0]), 
+        #                                     c[-1]-coordinate[1]))[0:3] 
+        #                for coordinate in  zip(player,tlayer)])
 
-        ind_p = ind_pt_log[:,1]
-        ind_t = ind_pt_log[:,2]
+        #ind_p = ind_pt_log[:,1]
+        #ind_t = ind_pt_log[:,2]
+        
+        p_record =np.array(self.pressures)
+        t_record = np.concatenate([[it]*self.max_pc for it in self.temps])
+        
+        
+                         
+        temp_lows = []
+        temp_highs = []
+        for coordinate in  zip(player,tlayer):
+            
+            ind_pt = min(pt_pairs, key= lambda c: np.abs(c[-1]-coordinate[1]))
+        	
+            if ind_pt[-1] <= coordinate[1]:
+                if coordinate[1] > max(t_record):
+                    temp_lows.append(sorted(list(set(t_record)))[-2])
+                    temp_highs.append(sorted(list(set(t_record)))[-1])
+                elif coordinate[1] < min(t_record):
+                    temp_lows.append(sorted(list(set(t_record)))[0])
+                    temp_highs.append(sorted(list(set(t_record)))[1])
+                else:
+                    
 
-        self.molecular_opa = np.exp(self.kappa[ind_p, ind_t, :, :])*6.02214086e+23  #avogadro constant!
+                    temp_lows.append(ind_pt[-1])
+                    temporary_list = [x if x > ind_pt[-1] else 9999 for x in t_record]
+                
+                    temp_highs.append(min(temporary_list))
+            if ind_pt[-1] > coordinate[1]:
+                if coordinate[1] > max(t_record):
+                    temp_lows.append(sorted(list(set(t_record)))[-2])
+                    temp_highs.append(sorted(list(set(t_record)))[-1])
+                elif coordinate[1] < min(t_record):
+                    temp_lows.append(sorted(list(set(t_record)))[0])
+                    temp_highs.append(sorted(list(set(t_record)))[1])
+                else:
 
+                    temp_highs.append(ind_pt[-1])
+                    temporary_list = [x if x < ind_pt[-1] else -9999 for x in t_record]
+
+                    temp_lows.append(max(temporary_list))
+        
+        p_low_temp_low = []
+        p_high_temp_low = []
+        
+        p_low_temp_high =[]
+        p_high_temp_high =[]
+        
+        
+        for coordinate in  zip(player,tlayer,temp_lows,temp_highs):
+            low_pts=[]
+            high_pts=[]
+            for pt_pair_ele in pt_pairs:
+            	if pt_pair_ele[-1]  == coordinate[2]:
+            	    low_pts += [pt_pair_ele]
+            	if pt_pair_ele[-1] == coordinate[3]:
+            	    high_pts += [pt_pair_ele]
+            
+            ind_p_lowT = min(low_pts, key= lambda c: np.abs(np.log(c[-2])-np.log(coordinate[0])))
+            
+            if ind_p_lowT[-2] <= coordinate[0]:
+                
+                if coordinate[0] > max(p_record)/1e3:
+                    p_low_temp_low.append(sorted(list(set(p_record)))[-2]/1e3)
+                    p_high_temp_low.append(sorted(list(set(p_record)))[-1]/1e3)
+                    
+                elif coordinate[0] < min(p_record)/1e3:
+                    p_low_temp_low.append(sorted(list(set(p_record)))[0]/1e3)
+                    p_high_temp_low.append(sorted(list(set(p_record)))[1]/1e3)
+                else:
+                    p_low_temp_low.append(ind_p_lowT[-2])
+                    temporary_list = [x/1e3 if x /1e3> ind_p_lowT[-2] else 9999 for x in p_record]
+					
+                    p_high_temp_low.append(min(temporary_list))
+            if ind_p_lowT[-2] > coordinate[0]:
+                if coordinate[0] > max(p_record)/1e3:
+                    p_low_temp_low.append(sorted(list(set(p_record)))[-2]/1e3)
+                    p_high_temp_low.append(sorted(list(set(p_record)))[-1]/1e3)
+                    
+                elif coordinate[0] < min(p_record)/1e3:
+                    p_low_temp_low.append(sorted(list(set(p_record)))[0]/1e3)
+                    p_high_temp_low.append(sorted(list(set(p_record)))[1]/1e3)
+                else :
+                    p_high_temp_low.append(ind_p_lowT[-2])
+                    temporary_list = [x/1e3 if x/1e3 < ind_p_lowT[-2] else -9999 for x in p_record]
+
+                    p_low_temp_low.append(max(temporary_list))
+            
+            ind_p_highT = min(high_pts, key= lambda c: np.abs(np.log(c[-2])-np.log(coordinate[0])))
+            if ind_p_highT[-2] <= coordinate[0]:
+
+                if coordinate[0] > max(p_record)/1e3:
+                    p_low_temp_high.append(sorted(list(set(p_record)))[-2]/1e3)
+                    p_high_temp_high.append(sorted(list(set(p_record)))[-1]/1e3)
+                    
+                elif coordinate[0] < min(p_record)/1e3:
+                    p_low_temp_high.append(sorted(list(set(p_record)))[0]/1e3)
+                    p_high_temp_high.append(sorted(list(set(p_record)))[1]/1e3)
+
+                else:
+                    p_low_temp_high.append(ind_p_highT[-2])
+                    temporary_list = [x/1e3 if x /1e3> ind_p_highT[-2] else 9999 for x in p_record]
+					
+                    p_high_temp_high.append(min(temporary_list))
+            if ind_p_highT[-2] > coordinate[0]:
+                if coordinate[0] > max(p_record)/1e3:
+                    p_low_temp_high.append(sorted(list(set(p_record)))[-2]/1e3)
+                    p_high_temp_high.append(sorted(list(set(p_record)))[-1]/1e3)
+                    
+                elif coordinate[0] < min(p_record)/1e3:
+                    p_low_temp_high.append(sorted(list(set(p_record)))[0]/1e3)
+                    p_high_temp_high.append(sorted(list(set(p_record)))[1]/1e3)
+
+                else:
+        		
+                    p_high_temp_high.append(ind_p_highT[-2])
+                    temporary_list = [x/1e3 if x/1e3 < ind_p_highT[-2] else -9999 for x in p_record]
+                    
+                    p_low_temp_high.append(max(temporary_list))        	    
+ 			                       	    
+            		
+            
+        
+        ind_lowP_lowT_list , ind_highP_lowT_list, ind_lowP_highT_list, ind_highP_highT_list= [], [], [], []
+        
+        for coordinate in zip(temp_lows, p_low_temp_low , p_high_temp_low, temp_highs, p_low_temp_high, p_high_temp_high):
+            ind_p1 = min(pt_pairs, key= lambda c: math.hypot(c[-1]-coordinate[0],np.log(c[-2])-np.log(coordinate[1])))
+            ind_p2 = min(pt_pairs, key= lambda c: math.hypot(c[-1]-coordinate[0],np.log(c[-2])-np.log(coordinate[2]))) 
+            ind_p3 = min(pt_pairs, key= lambda c: math.hypot(c[-1]-coordinate[3],np.log(c[-2])-np.log(coordinate[4])))
+            ind_p4 = min(pt_pairs, key= lambda c: math.hypot(c[-1]-coordinate[3],np.log(c[-2])-np.log(coordinate[5])))
+            
+            if ind_p1[-2] != ind_p3[-2] :
+                dummy_p = min(ind_p1[-2],ind_p3[-2])
+                if dummy_p == ind_p1[-2]:
+                    ind_p2 = [ind_p1[0]+1, ind_p1[1]+1,ind_p2[2],ind_p3[-2],ind_p2[4]]
+                    ind_p3 = [ind_p3[0]-1, ind_p3[1]-1,ind_p3[2],dummy_p,ind_p3[4]]
+                    ind_p4 = [ind_p3[0]+1, ind_p3[1]+1,ind_p4[2],ind_p2[3],ind_p4[4]]
+                elif dummy_p == ind_p3[-2]:
+                    ind_p4 = [ind_p3[0]+1, ind_p3[1]+1,ind_p4[2],ind_p1[-2],ind_p4[4]]
+                    ind_p1 = [ind_p1[0]-1, ind_p1[1]-1,ind_p1[2],dummy_p,ind_p1[4]]
+                    ind_p2 = [ind_p1[0]+1, ind_p1[1]+1,ind_p2[2],ind_p4[3],ind_p2[4]]
+            if ind_p1[-2] == ind_p2[-2]:
+                ind_p2 = [ind_p1[0]+1, ind_p1[1]+1,ind_p2[2],ind_p4[-2],ind_p2[4]]
+
+            ind_lowP_lowT_list += [ind_p1]
+            ind_highP_lowT_list += [ind_p2]
+            ind_lowP_highT_list += [ind_p3]
+            ind_highP_highT_list += [ind_p4]
+        ind_lowP_lowT , ind_highP_lowT, ind_lowP_highT, ind_highP_highT = np.array(ind_lowP_lowT_list) , np.array(ind_highP_lowT_list), np.array(ind_lowP_highT_list), np.array(ind_highP_highT_list)
+        
+        tinv = 1.0/tlayer
+        plogx = np.log(player*1e3) # in mbars
+        
+        tcinv_low = 1.0/ ind_lowP_lowT[:,-1]
+        tcinv_high  = 1.0/ ind_lowP_highT[:,-1]
+        
+        log_low_pc_lowT = np.log(ind_lowP_lowT[:,-2]*1e3)
+        log_high_pc_lowT = np.log(ind_highP_lowT[:,-2]*1e3)
+        
+        tt = (tinv - tcinv_low)/(tcinv_high - tcinv_low)
+        u = (plogx - log_low_pc_lowT)/( log_high_pc_lowT-log_low_pc_lowT )
+        
+        
+
+        kappa_lowp_lowt = self.kappa[ind_lowP_lowT[:,1].astype(int),ind_lowP_lowT[:,2].astype(int),:,:]
+        kappa_highp_lowt = self.kappa[ind_highP_lowT[:,1].astype(int),ind_highP_lowT[:,2].astype(int),:,:]
+        kappa_lowp_hight = self.kappa[ind_lowP_highT[:,1].astype(int),ind_lowP_highT[:,2].astype(int),:,:]
+        kappa_highp_hight = self.kappa[ind_highP_highT[:,1].astype(int),ind_highP_highT[:,2].astype(int),:,:]
+
+        log_kappa_interpolated = np.zeros_like(kappa_lowp_lowt)
+        
+        for i in range(nlayer):
+            log_kappa_interpolated[i,:,:] = (1.-tt[i])*(1.-u[i])*kappa_lowp_lowt[i,:,:] + tt[i]*(1.-u[i])*kappa_lowp_hight[i,:,:] +tt[i]*u[i]*kappa_highp_hight[i,:,:]+ (1.-tt[i])*u[i]*kappa_highp_lowt[i,:,:]
+        
+        
+        self.molecular_opa = np.exp(log_kappa_interpolated)*6.02214086e+23  #avogadro constant!
+        #self.molecular_opa = np.exp(self.kappa[ind_p, ind_t, :, :])*6.02214086e+23  #avogadro constant!
+    
     def get_continuum(self, atmosphere):
         #open connection 
         cur, conn = self.open_local()
@@ -795,19 +998,42 @@ class RetrieveCKs():
         player = atmosphere.layer['pressure']/atmosphere.c.pconv
 
         cia_molecules = atmosphere.continuum_molecules
-
+       
 
         self.continuum_opa = {key[0]+key[1]:np.zeros((nlayer,self.nwno)) for key in cia_molecules}
 
         #continuum
         #find nearest temp for cia grid
-        tcia = [np.unique(self.cia_temps)[find_nearest(np.unique(self.cia_temps),i)] for i in tlayer]
-
+        
+        #tcia = [np.unique(self.cia_temps)[find_nearest(np.unique(self.cia_temps),i)] for i in tlayer]
+        sorted_cia_temps = np.sort(self.cia_temps)
+        tcia_low = np.zeros_like(tlayer)
+        tcia_high = np.zeros_like(tlayer)
+        for t,i in zip(tlayer,range(len(tlayer))) :
+            diff = sorted_cia_temps -t
+            if t <= sorted_cia_temps[0]:
+                tcia_low[i] = sorted_cia_temps[0]
+                tcia_high[i] = sorted_cia_temps[1]
+            elif t >= sorted_cia_temps[-1]:
+                tcia_low[i] = sorted_cia_temps[-2]
+                tcia_high[i] = sorted_cia_temps[-1]
+            else :
+                templow = max(diff[np.where(diff <= 0)])
+                temphigh = min(diff[np.where(diff > 0)])
+                tcia_low[i], tcia_high[i] = t+templow,t+temphigh
+        
+        
+        
         #if user only runs a single molecule or temperature
-        if len(tcia) ==1: 
-            query_temp = """AND temperature= '{}' """.format(str(tcia[0]))
+        if len(tcia_low) ==1: 
+            query_temp_low = """AND temperature= '{}' """.format(str(tcia_low[0]))
         else:
-            query_temp = 'AND temperature in '+str(tuple(tcia) )
+            query_temp_low = 'AND temperature in '+str(tuple(tcia_low) )
+        if len(tcia_high) ==1: 
+            query_temp_high= """AND temperature= '{}' """.format(str(tcia_high[0]))
+        else:
+            query_temp_high = 'AND temperature in '+str(tuple(tcia_high) )
+        
         cia_mol = list(self.continuum_opa.keys())
         if len(cia_mol) ==1: 
             query_mol = """WHERE molecule= '{}' """.format(str(cia_mol[0]))
@@ -817,15 +1043,40 @@ class RetrieveCKs():
         cur.execute("""SELECT molecule,temperature,opacity 
                     FROM continuum 
                     {} 
-                    {}""".format(query_mol, query_temp))
+                    {}""".format(query_mol, query_temp_low))
 
-        data = cur.fetchall()
-        data = dict((x+'_'+str(y), dat) for x, y,dat in data)
+        data_low = cur.fetchall()
+        data_low = dict((x+'_'+str(y), dat) for x, y,dat in data_low)
+
+        cur.execute("""SELECT molecule,temperature,opacity 
+                    FROM continuum 
+                    {} 
+                    {}""".format(query_mol, query_temp_high))
+
+        data_high = cur.fetchall()
+        data_high = dict((x+'_'+str(y), dat) for x, y,dat in data_high)
+        
+        
         for i in self.continuum_opa.keys():
-            for j,ind in zip(tcia,range(nlayer)):
-                self.continuum_opa[i][ind,:] = data[i+'_'+str(j)]
+            y2_array = self.cia_splines[i]
+            
+            for jlow, jhigh,ind in zip(tcia_low, tcia_high,range(nlayer)):
+                h = tcia_high[ind] - tcia_low[ind]
+                a = (tcia_high[ind] - tlayer[ind])/h
+                b = (tlayer[ind]- tcia_low[ind])/h
 
+                whlow= np.where(jlow == self.cia_temps)
+                whhigh = np.where(jhigh == self.cia_temps)
+                
+        
+                interpolated = a*data_low[i+'_'+str(jlow)]+b*data_high[i+'_'+str(jhigh)]+((a**3-a)*y2_array[whlow[0][0],:]+(b**3-b)*y2_array[whhigh[0][0]])*(h**2)/6.0
+                
+                
+                  
+                self.continuum_opa[i][ind,:] = interpolated#data[i+'_'+str(j)]
+        
         conn.close()
+        
 
     def open_local(self):
         """Code needed to open up local database, interpret arrays from bytes and return cursor"""
@@ -1121,6 +1372,40 @@ def find_nearest(array,value):
     #small program to find the nearest neighbor in temperature  
     idx = (np.abs(array-value)).argmin()
     return idx
+
+@jit(nopython=True, cache=True)
+def spline(x , y, n, yp0, ypn):
+    
+    u=np.zeros(shape=(n))
+    y2 = np.zeros(shape=(n))
+
+    if yp0 > 0.99 :
+        y2[0] = 0.0
+        u[0] =0.0
+    else:
+        y2[0]=-0.5
+        u[0] = (3.0/(x[1]-x[0]))*((y[1]-y[0])/(x[1]-x[0])-yp0)
+
+    for i in range(1,n-1):
+        sig=(x[i]-x[i-1])/(x[i+1]-x[i-1])
+        p=sig*y2[i-1]+2.
+        y2[i]=(sig-1.)/p
+        u[i]=(6.0*((y[i+1]-y[i])/(x[i+1]-x[i])-(y[i]-y[i-1])/(x[i]-x[i-1]))/(x[i+1]-x[i-1])-sig*u[i-1])/p
+
+    if ypn > 0.99 :
+        qn = 0.0
+        un = 0.0
+    else:
+        qn =0.5
+        un = (3.0/(x[n-1]-x[n-2]))*(ypn-(y[n-1]-y[n-2])/(x[n-1]-x[n-2]))
+    
+    y2[n-1] = (un - qn*u[n-2])/(qn*y2[n-2]+1.0)
+
+    for k in range(n-2, -1, -1):
+        y2[k] = y2[k] * y2[k+1] +u[k]
+    
+    return y2
+
 @jit(nopython=True, cache=True)
 def numba_cumsum(mat):
     """Function to compute cumsum along axis=0 to bypass numba not allowing kwargs in 
