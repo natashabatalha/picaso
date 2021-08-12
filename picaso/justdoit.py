@@ -640,7 +640,7 @@ class inputs():
             self.setup_nostar()
         
         if climate: 
-            self.setup_climate(calculation)
+            self.setup_climate()
             self.setup_climate_data()
 
     def phase_angle(self, phase=0,num_gangle=10, num_tangle=1,symmetry=False):
@@ -837,7 +837,7 @@ class inputs():
         else :
             self.inputs['planet']['T_eff'] = 0
 
-    def setup_climate(self, calculation_type):
+    def setup_climate(self):
         """
         Turns off planet specific things, so program can run as usual
         """
@@ -863,12 +863,6 @@ class inputs():
         self.inputs['climate']['grad'] = grad
         self.inputs['climate']['cp'] = cp
 
-        bwni= np.loadtxt(os.path.join(__refdata__,'climate_INPUTS/INTERVALS.IR'),usecols=[0],unpack=True)
-
-
-        dwni=np.zeros(shape=(196))
-        for i in range(196):
-            dwni[i]=bwni[i+1]-bwni[i]
         ntmps = 2000
         nspeci= 196
 
@@ -876,7 +870,6 @@ class inputs():
         tmin = 40.0
         tmax= tmin + dt*(ntmps-1.0)
 
-        self.inputs['climate']['dwni'] = dwni
         self.inputs['climate']['ntmps'] = ntmps
         self.inputs['climate']['nspeci'] = nspeci
         self.inputs['climate']['dt'] = dt
@@ -944,7 +937,7 @@ class inputs():
         
         # first calculate the BB grid
         wvno = opacityclass.wno
-        dwni = self.inputs['climate']['dwni']
+        dwni = opacityclass.delta_wno
         ntmps = self.inputs['climate']['ntmps']
         nspeci = self.inputs['climate']['nspeci']
 
@@ -991,7 +984,6 @@ class inputs():
         #tidal = tidal_flux(Teff, wave_in,nlevel, pressure, pm, hratio, col_den)
         tidal = np.zeros_like(pressure) - sigma_sb *(Teff**4)
         
-        dwni = self.inputs['climate']['dwni']
         cloudy = self.inputs['climate']['cloudy']
         cld_species = self.inputs['climate']['cld_species']
         fsed = self.inputs['climate']['fsed']
