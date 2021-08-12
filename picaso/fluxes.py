@@ -3371,9 +3371,9 @@ def spline(x , y, n, yp0, ypn):
 
 
 def planck_cgs(wave, T , dwave):
-# PLANCK FUNCTION RETURNS B IN CGS UNITS, ERGS CM-2 WAVENUMBER-1
-# wave IS WAVENUMBER IN CM-1
-# T IS IN KELVIN
+    # PLANCK FUNCTION RETURNS B IN CGS UNITS, ERGS CM-2 WAVENUMBER-1
+    # wave IS WAVENUMBER IN CM-1
+    # T IS IN KELVIN
     nbb = 4
 
     planck_sum = 0.0
@@ -3478,15 +3478,15 @@ def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,
     for iz in range(nz-1-1,-1,-1):
         chf[iz] = fsum - flux_net_ir_layer[iz]
         ratio_min = (1./3.)*p[iz]/p[iz+1]
-#     set the minimum allowed heat flux in a layer by assuming some overshoot
-#     the 1/3 is arbitrary, allowing convective flux to fall faster than
-#     pressure scale height
+    #     set the minimum allowed heat flux in a layer by assuming some overshoot
+    #     the 1/3 is arbitrary, allowing convective flux to fall faster than
+    #     pressure scale height
 
         if chf[iz] < ratio_min*chf[iz+1]:
             chf[iz]= ratio_min*chf[iz+1]
-#     Now we adjust so that the convective flux is equal to the3
-#     target convective flux to see if this helps with the
-#     convergence.
+    #     Now we adjust so that the convective flux is equal to the3
+    #     target convective flux to see if this helps with the
+    #     convergence.
     f_target = tidal[0]
     f_actual = chf[nz]
     ratio = f_target/f_actual
@@ -3517,19 +3517,6 @@ def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,
     scalef_kz = 1./3.
 
     kz = scalef_kz * scale_h * (mixl/scale_h)**(4./3.) *( ( r_atmos*chf ) / ( rho_atmos*c_p ) )**(1./3.)
-    
-    
-        
-
-
-    
-
-    
-   
-
-    
-    
-        
     
     gc_kzz = ((1./3.) * scale_h * (mixl/scale_h)**(4./3.) * 
                 ( ( r_atmos*chf ) / ( rho_atmos*c_p  ) )**(1./3.)) 

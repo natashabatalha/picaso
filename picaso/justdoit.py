@@ -974,16 +974,6 @@ class inputs():
             fine_flux_star  = self.inputs['star']['flux']  # erg/s/cm^2
             FOPI = fine_flux_star * ((r_star/semi_major)**2)
             
-          
-        
-        
-            
-
-
-
-        
-
-
 
         TEMP1 = self.inputs['climate']['guess_temp']
         pressure = self.inputs['climate']['pressure']
@@ -1789,6 +1779,7 @@ class inputs():
             player_tlayer.loc[:,im] = 10**s #
 
         self.inputs['atmosphere']['profile'] = player_tlayer
+    
     def add_pt(self, T, P, nlevel=61):
         """
         Adds temperature pressure profile to atmosphere
@@ -1818,6 +1809,7 @@ class inputs():
 
         # Return TP profile
         return self.inputs['atmosphere']['profile'] 
+
     def guillot_pt(self, Teq, T_int=100, logg1=-1, logKir=-1.5, alpha=0.5,nlevel=61, p_bottom = 1.5, p_top = -6):
         """
         Creates temperature pressure profile given parameterization in Guillot 2010 TP profile
@@ -2586,7 +2578,6 @@ def multi_phase_options(printout=True):
 def raman_options():
     """Retrieve options for raman scattering approximtions"""
     return ["oklopcic","pollack","none"]
-
 def evolution_track(mass=1, age='all'):
     """
     Plot or grab an effective temperature for a certain age and mass planet. 
@@ -2682,7 +2673,6 @@ def evolution_track(mass=1, age='all'):
 
 
     return to_return
-
 def all_planets():
     """
     Load all planets from https://exoplanetarchive.ipac.caltech.edu
@@ -2700,7 +2690,6 @@ def young_planets():
     """    
     planets_df = pd.read_csv(os.path.join(__refdata__, 'evolution','benchmarks_age_lbol.csv'),skiprows=11)
     return planets_df
-
 def methodology_options(printout=True):
     """Retrieve all the options for methodology"""
     if printout: print("Can calculate spectrum using Toon 1989 methodology or sperhical harmonics")
@@ -2709,6 +2698,7 @@ def stream_options(printout=True):
     """Retrieve all the options for stream"""
     if printout: print("Can use 2-stream or 4-stream sperhical harmonics")
     return [2,4]
+
 
 def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             temp,pressure,FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
@@ -2786,6 +2776,7 @@ def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         Temperature array and lapse ratio array if converged
         else Temperature array twice
     """
+
     # taudif is fixed to be 0 here since it is needed only for clouds
     taudif = 0.0
     
@@ -3043,6 +3034,7 @@ def find_strat(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
         else Temperature array twice
     """
     # new conditions for this routine
+
     itmx_strat = 5 #itmx
     it_max_strat = 8 # its
     conv_strat = 5.0 # conv
@@ -3178,8 +3170,8 @@ def find_strat(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
                 temp,pressure, FOPI, t_table, p_table, grad, cp,opacityclass, grav, 
                 rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species,mh,fsed)
 
-#    else :
-#        raise ValueError("Some problem here with goto 125")
+    #    else :
+    #        raise ValueError("Some problem here with goto 125")
         
     if profile_flag == 0:
         print("ENDING WITHOUT CONVERGING")
@@ -3197,7 +3189,7 @@ def find_strat(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
     flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = climate(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
             ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
-            wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, dimension = '1d',calculation=['thermal'])
+            wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, False, True) #false for reflected, true for thermal
         
     
     return pressure, temp, dtdp, nstr , flux_plus_ir_full

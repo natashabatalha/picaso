@@ -6,33 +6,6 @@ from .atmsetup import ATMSETUP
 from .optics import compute_opacity
 
 
-'''
-# compute initial net fluxes 
-tidal = 
-
-flux_net_i, flux_mid_net_i = get_thermal_1d()
-flux_net_v, flux_mid_net_v = get_reflected_1d()
-
-flux_net = flux_net_i*rfaci + flux_net_v*rfacv + tidal 
-flux_net_mid = flux_mid_net_i*rfaci + flux_mid_net_v*rfacv + tidal 
-
-#store value of the flux calculated before the perturbation
-old_flux_net = flux_net # FNETIP
-old_flux_net_mid = flux_net_mid # FMIP
-old_temp = temp #beta
-
-#start cz at the very bottom and have it grow upward 
-
-itop_cz = nlayer # NSTRTA 
-ibot_cz = nlayer+1 # NBOTA
-cz_or_rad = np.zeros(nlevel)#zero=radiative, 1=convective
-cz_or_rad[-1] = 1 #flip botton layer to convective
-
-#need to get initial maximum T step size 
-max_temp_step = np.sqrt(np.sum([temp[i]**2 for i in range(nlevel) if cz_or_rad[i] == 0]))
-'''
-
-
 @jit(nopython=True, cache=True)
 def did_grad_cp( t, p, t_table, p_table, grad, cp, calc_type):
     """
@@ -114,7 +87,6 @@ def did_grad_cp( t, p, t_table, p_table, grad, cp, calc_type):
     
     return grad_x,cp_x
     
-
 @jit(nopython=True, cache=True)
 def convec(temp,pressure, t_table, p_table, grad, cp):
     """
@@ -190,7 +162,6 @@ def locate(array,value):
     
     return jl
 
-
 @jit(nopython=True, cache=True)
 def mat_sol(a, nlevel, nstrat, dflux):
     """
@@ -212,17 +183,15 @@ def mat_sol(a, nlevel, nstrat, dflux):
         anew (nlevel*nlevel) and bnew(nstrat)
     
     """
-#      Numerical Recipes Matrix inversion solution.
-#  Utilizes LU decomposition and iterative improvement.
-# This is a py version of the MATSOL routine of the fortran version
+    #      Numerical Recipes Matrix inversion solution.
+    #  Utilizes LU decomposition and iterative improvement.
+    # This is a py version of the MATSOL routine of the fortran version
 
     anew , indx = lu_decomp(a , nstrat, nlevel)
 
     bnew = lu_backsubs(anew, nstrat, nlevel, indx, dflux) 
 
     return anew, bnew       
-
-
 
 @jit(nopython=True, cache=True)
 def lu_decomp(a, n, ntot):
@@ -321,7 +290,7 @@ def lu_backsubs(a, n, ntot, indx, b):
 
     """
 
-# Numerical Recipe routine of back substitution
+    # Numerical Recipe routine of back substitution
 
     ii = -1
 
@@ -347,9 +316,6 @@ def lu_backsubs(a, n, ntot, indx, b):
         
     
     return b
-
-
-
 
 @jit(nopython=True, cache=True)
 def t_start(nofczns,nstr,it_max,conv,x_max_mult, 
@@ -436,7 +402,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
 
     # -- SM -- needs a lot of documentation
 
-    
+    #Climate default is to run both reflected and thermal. Though sometimes, in most cases we only want thermal.
     eps=1e-4
 
     n_top_r=nstr[0]-1
@@ -450,12 +416,11 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
     tolf = 5e-3    # tolerance in fractional Flux we are aiming for
     tolx = tolf    # tolerance in fractional T change we are aiming for
 
-    
+    #both reflected and thermal
     flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = climate(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
             ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
-            wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, dimension = '1d',calculation=['reflected','thermal'])
-
+            wno,nwno,ng,nt, nlevel, ngauss, gauss_wts,True, True)#True for reflected, True for thermal
     
     # extract visible fluxes
     flux_net_v_layer = flux_net_v_layer_full[0,0,:]  #fmnetv
@@ -654,7 +619,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                 flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = climate(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
             ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
-            wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, dimension = '1d',calculation=['thermal'])
+            wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, False, True) #false for reflected, True for thermal
 
     
            
@@ -864,7 +829,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
             flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = climate(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
             ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
-            wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, dimension = '1d',calculation=['thermal'])
+            wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, False, True) #false reflected, True thermal
 
     
            
@@ -1000,8 +965,6 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
 
     return temp, dtdp, flag_converge  , flux_net_ir_layer, flux_plus_ir[0,:]
 
-
-
 @jit(nopython=True, cache=True)
 def check_convergence(f_vec, n_total, tolf, check, f, dflux, tolmin, temp, temp_old, g , tolx):
     """
@@ -1054,12 +1017,6 @@ def check_convergence(f_vec, n_total, tolf, check, f, dflux, tolmin, temp, temp_
     flag_converge = 1
     return flag_converge , check
 
-
-
-    
-
-
-
 @jit(nopython=True, cache=True)
 def growup(nlv, nstr, ngrow) :
     """
@@ -1071,6 +1028,7 @@ def growup(nlv, nstr, ngrow) :
     nstr[n]= nstr[n]-1*ngrow
 
     return nstr
+
 @jit(nopython=True, cache=True)
 def growdown(nlv,nstr, ngrow) :
     """
@@ -1085,12 +1043,11 @@ def growdown(nlv,nstr, ngrow) :
 
     return nstr
 
-
 @jit(nopython=True, cache=True)
 def climate( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU, W0, 
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
             ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
-            wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, dimension = '1d',calculation= ['reflected']):
+            wno,nwno,ng,nt, nlevel, ngauss, gauss_wts,reflected, thermal):
     """
     Program to run RT for climate calculations. Runs the thermal and reflected module.
     And combines the results with wavenumber widths.
@@ -1114,6 +1071,12 @@ def climate( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU, W
     tmax : float
         Maximum temp upto which interpolation has been done.
     
+
+    reflected : bool 
+        Run reflected light
+    thermal : bool 
+        Run thermal emission
+
         
     Return
     ------
@@ -1121,7 +1084,7 @@ def climate( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU, W
         Visible and IR -- net (layer and level), upward (level) and downward (level)  fluxes
     """
     
-    
+    #print('enter climate')
     # for visible
     flux_net_v = np.zeros(shape=(ng,nt,nlevel)) #net level visible fluxes
     flux_net_v_layer=np.zeros(shape=(ng,nt,nlevel)) #net layer visible fluxes
@@ -1149,7 +1112,7 @@ def climate( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU, W
     #ugauss_angles = np.array([0.66666])
     #ugauss_weights = np.array([0.5])
 
-    if  'reflected' in calculation:
+    if reflected:
         #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
 
         b_top = 0.0
@@ -1164,22 +1127,20 @@ def climate( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU, W
             
             delta_approx = 0 # assuming delta approx is already applied on opds 
                         
-            flux_minus_all, flux_plus_all, flux_minus_midpt_all, flux_plus_midpt_all = get_reflected_1d_gfluxv(nlevel, wno,nwno, ng,nt, DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
-            surf_reflect,b_top,b_surface,ubar0, FOPI,tridiagonal, delta_approx)
+            flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v = get_reflected_1d_gfluxv(nlevel, wno,nwno, ng,nt, DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
+                                                                                       surf_reflect,b_top,b_surface,ubar0, FOPI,tridiagonal, delta_approx)
             
 
+            flux_net_v_layer += (np.sum(flux_plus_midpt_all_v,axis=3)-np.sum(flux_minus_midpt_all_v,axis=3))*gauss_wts[ig]
+            flux_net_v += (np.sum(flux_plus_all_v,axis=3)-np.sum(flux_minus_all_v,axis=3))*gauss_wts[ig]
 
-
-            flux_net_v_layer += (np.sum(flux_plus_midpt_all,axis=3)-np.sum(flux_minus_midpt_all,axis=3))*gauss_wts[ig]
-            flux_net_v += (np.sum(flux_plus_all,axis=3)-np.sum(flux_minus_all,axis=3))*gauss_wts[ig]
-
-            flux_plus_v += flux_plus_all*gauss_wts[ig]
-            flux_minus_v += flux_minus_all*gauss_wts[ig]
+            flux_plus_v += flux_plus_all_v*gauss_wts[ig]
+            flux_minus_v += flux_minus_all_v*gauss_wts[ig]
 
         #if full output is requested add in xint at top for 3d plots
 
-
-    if 'thermal' in calculation:
+    #thermal=1
+    if thermal:
 
         #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
         
@@ -1192,19 +1153,16 @@ def climate( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU, W
             #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
             #the uncorrected raman single scattering 
 
-            calc_type=1
-                # this line might change depending on Natasha's new function
+            calc_type=1 # this line might change depending on Natasha's new function
             
             #for iubar,weights in zip(ugauss_angles,ugauss_weights):
-            flux_minus_all, flux_plus_all, flux_minus_midpt_all, flux_plus_midpt_all=get_thermal_1d_gfluxi(nlevel,wno,nwno,ng,nt,temperature,DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], pressure,ubar1,surf_reflect, ugauss_angles,ugauss_weights, tridiagonal,calc_type, bb , y2, tp, tmin, tmax)
+            flux_minus_all_i, flux_plus_all_i, flux_minus_midpt_all_i, flux_plus_midpt_all_i=get_thermal_1d_gfluxi(nlevel,wno,nwno,ng,nt,temperature,DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], pressure,ubar1,surf_reflect, ugauss_angles,ugauss_weights, tridiagonal,calc_type, bb , y2, tp, tmin, tmax)
 
-            
+            flux_plus += flux_plus_all_i*gauss_wts[ig]#*weights
+            flux_minus += flux_minus_all_i*gauss_wts[ig]#*weights
 
-            flux_plus += flux_plus_all*gauss_wts[ig]#*weights
-            flux_minus += flux_minus_all*gauss_wts[ig]#*weights
-
-            flux_plus_midpt += flux_plus_midpt_all*gauss_wts[ig]#*weights
-            flux_minus_midpt += flux_minus_midpt_all*gauss_wts[ig]#*weights
+            flux_plus_midpt += flux_plus_midpt_all_i*gauss_wts[ig]#*weights
+            flux_minus_midpt += flux_minus_midpt_all_i*gauss_wts[ig]#*weights
 
 
 
@@ -1221,15 +1179,8 @@ def climate( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU, W
 
 
         #if full output is requested add in flux at top for 3d plots
-            
-        
-        
 
-
-    
-    
     return flux_net_v_layer, flux_net_v, flux_plus_v, flux_minus_v , flux_net_ir_layer, flux_net_ir, flux_plus_ir, flux_minus_ir
-
 
 def calculate_atm(bundle, opacityclass):
 
@@ -1346,95 +1297,4 @@ def calculate_atm(bundle, opacityclass):
     mmw = np.mean(atm.layer['mmw'])
 
     return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw
-
-
-
-        
-            
-
-    
-
-
-    
-
-
-
-
-
-            
-
-        
-
-
-
-
-
-
-
-            
-
-
-
-        
-
-
-
-
-
-        
-
-        
-
-
-
-
-
-
-
-
-
-
-
-            
-
-
-
-
-
-        
-
-
-
-
-
-
-
-
-
-            
-                 
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
