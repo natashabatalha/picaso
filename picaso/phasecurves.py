@@ -109,7 +109,7 @@ def regrid_and_chem_3D(planet=None, input_file=None, orb_phase=None, time_after_
             temp = infile.readline().split()
 
             if planet == 'wasp-43b':
-                all_lon[ctr] = float(temp[0]) + orb_phase - 45  # this is hard coded for rotated WASP-43b grid from TK, remove later
+                all_lon[ctr] = float(temp[0]) + orb_phase #- 45  # this is hard coded for rotated WASP-43b grid from TK, remove later
             else:
                 all_lon[ctr] = float(temp[0]) + orb_phase
 
@@ -595,11 +595,11 @@ def transmitted_fpfs(planet_flux, star_flux, wv_star, resp, rprs, R):
     h = 6.626e-27
     c = 2.998e14  # dist. units=microns
 
-    diff = np.diff(wv_star)
-    diff = (np.append(diff, diff[-1:]) + np.append(diff[1:], diff[-2:])) / 2
+    #diff = np.diff(wv_star)
+    #diff = (np.append(diff, diff[-1:]) + np.append(diff[1:], diff[-2:])) / 2
 
-    planet_trans = planet_flux * resp * diff * wv_star / (h * c)  # apply weighting factor (filter) to every flux
-    star_trans = star_flux * resp * diff * wv_star / (h * c)
+    planet_trans = planet_flux * resp * wv_star / (h * c)  # apply weighting factor (filter) to every flux
+    star_trans = star_flux * resp * wv_star / (h * c)
 
     return (planet_trans, star_trans)
 
