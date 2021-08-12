@@ -10,7 +10,6 @@
 		"mass_unit":null
 	},
 	"climate":{
-		"object":null,
 		"t_table":null,
 		"p_table":null,
 		"grad":null,

@@ -842,9 +842,9 @@ class inputs():
         Turns off planet specific things, so program can run as usual
         """
         self.inputs['approx']['raman'] = 2 #turning off raman scattering
-        self.phase_angle(0) #auto turn on zero phase
+        #auto turn on zero phase for now there is no use giving users a choice in disk gauss angle 
+        self.phase_angle(0,num_gangle=10,num_tangle=1) 
         self.inputs['calculation'] ='climate'
-        self.inputs['climate']['object'] = calculation_type
 
     def setup_climate_data(self):
         
@@ -882,10 +882,6 @@ class inputs():
         self.inputs['climate']['dt'] = dt
         self.inputs['climate']['tmin'] = tmin
         self.inputs['climate']['tmax'] = tmax
-
-
-
-
 
     def inputs_climate(self, temp_guess= None, pressure= None, nstr = None, nofczns = None , rfacv = None, rfaci = None, cloudy = False, mh = None, CtoO = None, species = None, fsed = None):
         """
@@ -959,12 +955,13 @@ class inputs():
 
         rfaci= self.inputs['climate']['rfaci']
         
-        if self.inputs['climate']['object'] == 'brown':
+        #turn off stellar radiation if user has run "setup_nostar() function"
+        if 'nostar' in self.inputs['star'].values():
             rfacv=0.0 
             FOPI = np.zeros(len(wvno)) + 1.0
-        elif self.inputs['climate']['object'] == 'planet' :
+        #otherwise assume that there is stellar irradiation 
+        else:
             rfacv = self.inputs['climate']['rfacv']
-            
             r_star = self.inputs['star']['radius'] 
             r_star_unit = self.inputs['star']['radius_unit'] 
             semi_major = self.inputs['star']['semi_major']
@@ -1031,8 +1028,6 @@ class inputs():
         
         return pressure , temp, dtdp, nstr_new, flux_plus_final
    
-
-
     def setup_nostar(self):
         """
         Turns off planet specific things, so program can run as usual
