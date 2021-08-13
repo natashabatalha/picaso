@@ -641,7 +641,6 @@ class inputs():
         
         if climate: 
             self.setup_climate()
-            self.setup_climate_data()
 
     def phase_angle(self, phase=0,num_gangle=10, num_tangle=1,symmetry=False):
         """Define phase angle and number of gauss and tchebychev angles to compute. 
@@ -841,13 +840,15 @@ class inputs():
         """
         Turns off planet specific things, so program can run as usual
         """
-        self.inputs['approx']['raman'] = 2 #turning off raman scattering
-        #auto turn on zero phase for now there is no use giving users a choice in disk gauss angle 
-        self.phase_angle(0,num_gangle=10,num_tangle=1) 
         self.inputs['calculation'] ='climate'
 
-    def setup_climate_data(self):
+        self.inputs['approx']['raman'] = 2 #turning off raman scattering
         
+        #auto turn on zero phase for now there is no use giving users a choice in disk gauss angle 
+        self.phase_angle(0,num_gangle=10,num_tangle=1) 
+
+
+        #set didier raw data -- NEED TO CHECK WHAT THIS IS
         t_table=np.loadtxt(os.path.join(__refdata__,'climate_INPUTS/tlog'),usecols=[0],unpack=True)
         p_table=np.loadtxt(os.path.join(__refdata__,'climate_INPUTS/plog'),usecols=[0],unpack=True)
 
@@ -863,16 +864,10 @@ class inputs():
         self.inputs['climate']['grad'] = grad
         self.inputs['climate']['cp'] = cp
 
-        ntmps = 2000
-        nspeci= 196
 
-        dt = 3.00
         tmin = 40.0
         tmax= tmin + dt*(ntmps-1.0)
 
-        self.inputs['climate']['ntmps'] = ntmps
-        self.inputs['climate']['nspeci'] = nspeci
-        self.inputs['climate']['dt'] = dt
         self.inputs['climate']['tmin'] = tmin
         self.inputs['climate']['tmax'] = tmax
 
@@ -933,15 +928,25 @@ class inputs():
         -----------
         
         """
+        #get necessary parameters from opacity ck-tables 
+        wno = opacityclass.wno
+        delta_wno = opacityclass.delta_wno
+        nwno = opacityclass.nwno
+        min_temp = min(opacityclass.temps)
+        max_temp = max(opacityclass.temps)
+
         
         
         # first calculate the BB grid
-        wvno = opacityclass.wno
-        dwni = opacityclass.delta_wno
-        ntmps = self.inputs['climate']['ntmps']
-        nspeci = self.inputs['climate']['nspeci']
+        ntmps = self.inputs['climate']['ntemp_bb_grid']
+        dt = self.inputs['climate']['dt_bb_grid']
+        #we will extend the black body grid 30% beyond the min and max temp of the 
+        #opacity grid just to be safe with the spline
+        extension = 0.3 
+        mint = min_temp*(1-extension)
+        maxt = max_temp*(1+extension)
 
-        bb , y2 , tp, pass0 = set_bb(wvno,dwni,ntmps,nspeci)
+        bb , y2 , tp = set_bb(wno,delta_wno,nwno,ntmps,dt,mint,maxt)
 
         nofczns = self.inputs['climate']['nofczns']
         nstr= self.inputs['climate']['nstr']
@@ -951,7 +956,7 @@ class inputs():
         #turn off stellar radiation if user has run "setup_nostar() function"
         if 'nostar' in self.inputs['star'].values():
             rfacv=0.0 
-            FOPI = np.zeros(len(wvno)) + 1.0
+            FOPI = np.zeros(nwno) + 1.0
         #otherwise assume that there is stellar irradiation 
         else:
             rfacv = self.inputs['climate']['rfacv']
@@ -963,7 +968,7 @@ class inputs():
 
             fine_flux_star  = self.inputs['star']['flux']  # erg/s/cm^2
             FOPI = fine_flux_star * ((r_star/semi_major)**2)
-            
+
 
         TEMP1 = self.inputs['climate']['guess_temp']
         pressure = self.inputs['climate']['pressure']
@@ -997,7 +1002,7 @@ class inputs():
         final = False
         pressure, temperature, dtdp, profile_flag = profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             TEMP1,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
-            rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final , cloudy, cld_species,mh,fsed )
+            rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , cloudy, cld_species,mh,fsed )
 
         # second convergence call
         it_max= 7
@@ -1011,11 +1016,11 @@ class inputs():
         final = False
         pressure, temperature, dtdp, profile_flag = profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                     temperature,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
-                    rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed )   
+                    rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final, cloudy, cld_species, mh,fsed )   
         
         pressure, temp, dtdp, nstr_new, flux_plus_final =find_strat(pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                              t_table, p_table, grad, cp, opacityclass, grav, 
-                             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp , cloudy, cld_species, mh,fsed)
+                             rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed)
 
         
         return pressure , temp, dtdp, nstr_new, flux_plus_final
