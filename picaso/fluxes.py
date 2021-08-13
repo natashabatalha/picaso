@@ -3302,30 +3302,58 @@ def chapman(pressure, pm, hratio):
     chapman_func = exp(1.0+ hratio*log(pressure/pm)- (pressure/pm)**hratio) 
     return chapman_func
 
-def set_bb(wvno,dwni,ntmps,nspeci):
+def set_bb(wno,delta_wno,nwno,ntmps,dt,tmin,tmax):
+    """
+    Function to compute a grid of black bodies before the code runs. 
+    This allows us to interpolate on a blackbody instead of computing the planck 
+    function repetitively. This was done because historically computing the 
+    planck function was a bottleneck in speed. 
 
-    dt = 3.00
-    tmin = 40.0
-    tmax= tmin + dt*(ntmps-1.0)
+    Parameters
+    ----------
+    wno : array, float 
+        Wavenumber array cm-1 
+    delta_wno : array, float 
+        Wavenumber bins cm-1
+    nwno : int 
+        Number of wavenumbers (len(wno))
+    ntmps : int 
+        Number of temperature points to compute. Default number is set in config.json
+    dt : float    
+        Spacing in temperature to compute. Default number is set in config.json
+    tmin : float 
+        Minimum temperature to compute the grid 
+    tmax : float 
+        Maximum temperature to compute the grid 
 
-    bb=np.zeros(shape=(ntmps,nspeci))
+    Returns 
+    -------
+    array
+        black body grid (CGS), number of temperatures x number of wavenumbers
+    array 
+        spline values for interpolation, number of temperatures x number of wavenumbers
+    array 
+        temperature grid
+    """
+
+    bb=np.zeros(shape=(ntmps,nwno))
     tp= np.zeros(shape=(ntmps))
-    y2=np.zeros(shape=(ntmps,nspeci))
+    y2=np.zeros(shape=(ntmps,nwno))
     for it in range(ntmps):
         temp_bb = tmin +(it)*dt
         tp[it]= temp_bb
-        
-        for ik in range(nspeci):
-            x= planck_cgs(wvno[ik],temp_bb,dwni[ik])
+    #GET RID OF PLACK CGS     
+        for ik in range(nwno):
+            x= planck_cgs(wno[ik],temp_bb,delta_wno[ik])
             if x > 0.0 :
                 bb[it,ik] = log(x)
             else:
                 bb[it,ik] = -700.0
     
     dts = 0.02
-    for ik in range(nspeci):
-        yp_n= (-bb[ntmps-1,ik]+log(planck_cgs(wvno[ik],tmax+dts,dwni[ik])))/dts
-        yp_0 = (-bb[0,ik]+log(planck_cgs(wvno[ik],tmax+dts,dwni[ik])))/dts
+    for ik in range(nwno):
+        yp_n= (-bb[ntmps-1,ik]+log(planck_cgs(wno[ik],tmax+dts,delta_wno[ik])))/dts
+        yp_0 = (-bb[0,ik]+log(planck_cgs(wno[ik],tmin+dts,delta_wno[ik])))/dts
         
         pass0=bb[:,ik]
 
@@ -3334,7 +3362,7 @@ def set_bb(wvno,dwni,ntmps,nspeci):
         
         y2[:,ik] = y2x
     
-    return bb , y2 , tp, pass0
+    return bb , y2 , tp
 
 def spline(x , y, n, yp0, ypn):
     
@@ -3409,9 +3437,6 @@ def planck_rad(iw, T, dT ,  tmin, tmax, bb , y2, tp):
     planck_rad = exp(planck_rad)
 
     return planck_rad
-
-
-
 
 @jit(nopython=True, cache=True)
 def blackbody_climate(wave,temp, bb, y2, tp, tmin, tmax):
