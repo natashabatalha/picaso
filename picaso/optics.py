@@ -660,20 +660,39 @@ class RetrieveCKs():
     """
     def __init__(self, ck_dir, cont_dir, wave_range=None):
         self.ck_filename = ck_dir
+        #read in the full abundance file sot hat we can check the number of kcoefficient layers 
+        #this should either be 1460 or 1060
+        self.full_abunds =  pd.read_csv(os.path.join(self.ck_filename,'full_abunds'),
+            delim_whitespace=True)
+        self.kcoeff_layers = self.full_abunds.shape[0]
+
+        #choose get data function based on layer number
+        if self.kcoeff_layers==1060: 
+            self.get_legacy_data_1060(wave_range) #wave_range not used yet
+        elif self.kcoeff_layers==1460:
+            self.get_legacy_data_1460(wave_range) #wave_range not used yet
+        else: 
+            raise Exception(f"There are {self.kcoeff_layers} in the full_abunds file. Currently only the 1060 or 1460 grids are supported. Please check your file input.")
+        
         self.db_filename = cont_dir
-        self.get_legacy_data(wave_range) #wave_range not used yet
+        
         self.get_available_continuum()
         self.get_available_rayleigh()
         self.run_cia_spline()
         return
 
-    def get_legacy_data(self,wave_range):
+    def get_legacy_data_1060(self,wave_range):
+        """
+        Function to read the legacy data of the 1060 grid computed by Roxana Lupu. 
+
+        Note
+        ----
+        This function is **highly** sensitive to the file format. You cannot edit the ascii file and then 
+        run this function. Each specific line is accounted for.
+        """
         data = pd.read_csv(os.path.join(self.ck_filename,'ascii_data'), 
                   delim_whitespace=True,header=None, 
                   names=list(range(9)),dtype=str)
-
-        self.full_abunds =  pd.read_csv(os.path.join(self.ck_filename,'full_abunds'),
-            delim_whitespace=True)
 
         num_species = int(data.iloc[0,0])
         max_ele = 35 
@@ -741,7 +760,85 @@ class RetrieveCKs():
         kappa = kappa.swapaxes(0,2)
         self.kappa = kappa[:, :, 0:self.nwno, 0:self.ngauss] 
 
+
+    def get_legacy_data_1460(self,wave_range):
+        """
+        Function to read the legacy data of the 1060 grid computed by Roxana Lupu. 
+
+        Note
+        ----
+        This function is **highly** sensitive to the file format. You cannot edit the ascii file and then 
+        run this function. Each specific line is accounted for.
+        """
+        data = pd.read_csv(os.path.join(self.ck_filename,'ascii_data'), 
+                  delim_whitespace=True,header=None, 
+                  names=list(range(9)),dtype=str)
+
+        num_species = int(data.iloc[0,0])
+        max_ele = 35 
+        self.max_tc = 73 
+        self.max_pc = 20
+        max_windows = 200 
+
+        self.molecules = [str(data.iloc[i,j]) for i in [0,1,2] 
+           for j in range(9)][1:num_species+1]
+
+        last = [float(data.iloc[int(max_ele*self.max_pc*self.max_tc/3)+3,0])]
+
+        end_abunds = 3+int(max_ele*self.max_pc*self.max_tc/3)
+        abunds = list(np.array(
+            data.iloc[3:end_abunds,0:3].astype(float)
+            ).ravel())
+        abunds = abunds + last
+        abunds = np.reshape(abunds,(self.max_pc,self.max_tc,max_ele),order='F')
+
+        self.nwno = int(data.iloc[end_abunds,1])
+
+        end_window = int(max_windows/3)
+        self.wno = (data.iloc[end_abunds:end_abunds+end_window,0:3].astype(float)).values.ravel()[2:]
+        self.delta_wno = (data.iloc[end_abunds+end_window+1:1+end_abunds+2*end_window,0:3].astype(float)).values.ravel()[1:-1]
+        end_windows =2+end_abunds+2*end_window
+
+        nc_t=int(data.iloc[end_windows,0])
+        nc_p = np.array(data.iloc[end_windows:1+end_windows+int(self.max_tc/6),0:6].astype(int
+                    )).ravel()[1:-4]
+        end_npt = 1+end_windows+int(self.max_tc/6) + 11 #11 dummy rows
+
+        first = list(data.iloc[end_npt,4:5].astype(float))
+
+        self.pressures = first+list(np.array(data.iloc[end_npt+1:end_npt + int(self.max_pc*self.max_tc/3) + 2,0:3]
+                         .astype(float))
+                         .ravel()[0:-2])
+
+        end_ps = end_npt + int(self.max_pc*self.max_tc/3)
+
+        self.temps = list(np.array(data.iloc[end_ps+1:2+int(end_ps+nc_t/3),0:3]
+                        .astype(float))
+                        .ravel()[1:-1])
+        end_temps = int(end_ps+nc_t/3)+1
+
+        ngauss1, ngauss2,  =data.iloc[end_temps,2:4].astype(int)
+        gfrac = float(data.iloc[end_temps+1,0])
+        self.ngauss = int(data.iloc[end_temps+1,1])
+
+        assert self.ngauss == 8, 'Legacy code uses 8 gauss points not {0}. Check read in statements'.format(self.ngauss)
+
+        gpts_wts = np.reshape(np.array(data.iloc[end_temps+1:2+end_temps+int(2*self.ngauss/3),0:3]
+         .astype(float)).ravel()[2:], (self.ngauss,2))
+
+        self.gauss_pts = [i[0] for i in gpts_wts]
+        self.gauss_wts = [i[1] for i in gpts_wts]
         
+        kappa = np.array(
+            data.iloc[3+end_temps+int(2*self.ngauss/3):-2,0:3]
+                     .astype(float)).ravel()[0:-2]
+        kappa = np.reshape(kappa, 
+                           (max_windows,self.ngauss*2,self.max_pc,self.max_tc),order='F')
+
+        #want the axes to be [npressure, ntemperature, nwave, ngauss ]
+        kappa = kappa.swapaxes(1,3)
+        kappa = kappa.swapaxes(0,2)
+        self.kappa = kappa[:, :, 0:self.nwno, 0:self.ngauss]    
     
     def get_available_rayleigh(self):
         data = Rayleigh(self.wno)
@@ -761,15 +858,9 @@ class RetrieveCKs():
         self.cia_temps = np.unique(cur.fetchall())
     
     def run_cia_spline(self):
-        
-        
-        
+ 
         temps = self.cia_temps
-        
-
-        
-        
-                
+   
         cia_mol = [['H2', 'H2'], ['H2', 'He'], ['H2', 'N2'], ['H2', 'H'], ['H2', 'CH4'], ['H-', 'bf'], ['H-', 'ff'], ['H2-', '']]
         cia_names = {key[0]+key[1]  for key in cia_mol}
           
@@ -783,10 +874,6 @@ class RetrieveCKs():
             self.cia_splines[i] = data
             
         
-            
-    
-
-
 
     def get_pre_mix_ck(self,atmosphere):
         """
