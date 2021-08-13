@@ -793,10 +793,9 @@ def thermal_phasecurve(planet=None, in_ptk=None, filt_path=None, wv_range=None,
 
         wv_star, flux_star = mask_star(ws, fs, wv_range)
 
-        ### WFC3 sensitivity function, interpolate over stellar wavelength ###
+        ### sensitivity function, interpolate over stellar wavelength ###
 
-        wfc3 = filt_path
-        resp = interpolate_filter(wfc3, wv_star)
+        resp = interpolate_filter(filt_path, wv_star)
 
         ### Calculate transmission ###
 
