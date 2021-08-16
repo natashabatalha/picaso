@@ -869,11 +869,11 @@ class inputs():
         self.inputs['climate']['cp'] = cp
 
 
-        tmin = 40.0
-        tmax= tmin + dt*(ntmps-1.0)
+        #tmin = 40.0
+        #tmax= tmin + dt*(ntmps-1.0)
 
-        self.inputs['climate']['tmin'] = tmin
-        self.inputs['climate']['tmax'] = tmax
+        #self.inputs['climate']['tmin'] = tmin
+        #self.inputs['climate']['tmax'] = tmax
 
     def inputs_climate(self, temp_guess= None, pressure= None, nstr = None, nofczns = None , rfacv = None, rfaci = None, cloudy = False, mh = None, CtoO = None, species = None, fsed = None):
         """
@@ -947,10 +947,10 @@ class inputs():
         #we will extend the black body grid 30% beyond the min and max temp of the 
         #opacity grid just to be safe with the spline
         extension = 0.3 
-        mint = min_temp*(1-extension)
-        maxt = max_temp*(1+extension)
+        tmin = min_temp*(1-extension)
+        tmax = max_temp*(1+extension)
 
-        bb , y2 , tp = set_bb(wno,delta_wno,nwno,ntmps,dt,mint,maxt)
+        bb , y2 , tp = set_bb(wno,delta_wno,nwno,ntmps,dt,tmin,tmax)
 
         nofczns = self.inputs['climate']['nofczns']
         nstr= self.inputs['climate']['nstr']
@@ -980,8 +980,7 @@ class inputs():
         p_table = self.inputs['climate']['p_table']
         grad = self.inputs['climate']['grad']
         cp = self.inputs['climate']['cp']
-        tmin = self.inputs['climate']['tmin']
-        tmax = self.inputs['climate']['tmax']
+
 
         Teff = self.inputs['planet']['T_eff']
         grav = 0.01*self.inputs['planet']['gravity'] # cgs to si
@@ -1850,7 +1849,7 @@ class inputs():
         str_fe = str(grid_co).replace('.','')
 
         filename = os.path.join(__refdata__,'chemistry','visscher_grid',
-            f'2015_06_1060grid_feh_{str_co}_co_{str_fe}.txt')
+            f'2015_06_1060grid_feh_{str_fe}_co_{str_co}.txt')
 
         header = pd.read_csv(filename).keys()[0]
         cols = header.replace('T (K)','temperature').replace('P (bar)','pressure').split()
@@ -1885,8 +1884,6 @@ class inputs():
             player_tlayer.loc[:,im] = 10**s #
 
         self.inputs['atmosphere']['profile'] = player_tlayer
-
-
     def channon_grid_low(self, filename = None, interp_window = 11, interp_poly=2):
         """
         Interpolate from visscher grid
@@ -1922,6 +1919,64 @@ class inputs():
 
         self.inputs['atmosphere']['profile'] = player_tlayer
     
+    def chem_interp(self, chem_grid):
+        """
+        Interpolates chemistry based on dataframe input of either 1460 or 1060 grid
+        This particular function needs to have all molecules as columns as well as 
+        pressure and temperature
+        """
+        #from user input
+        plevel = self.inputs['atmosphere']['profile']['pressure'].values
+        tlevel =self.inputs['atmosphere']['profile']['temperature'].values
+        t_inv = 1/tlevel
+        p_log = np.log10(plevel)
+
+        nc_p = chem_grid.groupby('temperature').size().values
+        pressures = chem_grid['pressure'].unique()
+        temps = chem_grid['temperature'].unique()
+        log_abunds = np.log10(chem_grid.drop(['pressure','temperature'],axis=1))
+        species = log_abunds.keys()
+
+        #make sure to interp on log and inv array
+        p_log_grid = np.unique(pressures)
+        p_log_grid =np.log10(p_log_grid[p_log_grid>0])
+        t_inv_grid = 1/np.array(temps)
+
+        #We want the pressure points on either side of our atmo grid point
+        p_low_ind = np.array([np.where(p_log_grid<=i)[0][-1] for i in p_log])
+        p_hi_ind = p_low_ind + 1 #[np.where(p_log_grid>i)[0][0] for i in p_log]
+
+        p_log_low =  np.array([p_log_grid[i] for i in p_low_ind])
+        p_log_hi = np.array([p_log_grid[i] for i in p_hi_ind])
+
+        #Now for the temp point on either side of our atmo grid
+        t_low_ind = np.array([np.where(t_inv_grid>i)[0][-1] for i in t_inv])
+        t_hi_ind = t_low_ind + 1 #np.array([np.where(t_inv_grid<=i)[0][0] for i in t_inv])
+
+        t_inv_low =  np.array([t_inv_grid[i] for i in t_low_ind])
+        t_inv_hi = np.array([t_inv_grid[i] for i in t_hi_ind])
+
+        #translate to full 1060/1460 account for potentially disparate number of pressures per grid point
+        t_low_1060 = np.array([sum(opa.nc_p[0:i]) for i in t_low_ind])
+        t_hi_1060 = np.array([sum(opa.nc_p[0:i]) for i in t_hi_ind])
+
+        i_t_low_p_low =  t_low_1060 + p_low_ind #(opa.max_pc*t_low_ind)
+        i_t_hi_p_low =  t_hi_1060 + p_low_ind #(opa.max_pc*t_hi_ind)
+        i_t_low_p_hi = t_low_1060 + p_hi_ind
+        i_t_hi_p_hi = t_hi_1060 + p_hi_ind
+
+        t_interp = ((t_inv - t_inv_low) / (t_inv_hi - t_inv_low))[:,np.newaxis]
+        p_interp = ((p_log - p_log_low) / (p_log_hi - p_log_low))[:,np.newaxis]
+
+        log_abunds = np.log10(log_abunds.values)
+
+        abunds = 10**(((1-t_interp)* (1-p_interp) * log_abunds[i_t_low_p_low,:]) +
+                     ((t_interp)  * (1-p_interp) * log_abunds[i_t_hi_p_low,:]) + 
+                     ((t_interp)  * (p_interp)   * log_abunds[i_t_hi_p_hi,:]) + 
+                     ((1-t_interp)* (p_interp)   * log_abunds[i_t_low_p_hi,:]) ) 
+
+        self.inputs['atmosphere']['profile'][species] = pd.DataFrame(abunds)
+
     def add_pt(self, T, P, nlevel=61):
         """
         Adds temperature pressure profile to atmosphere
