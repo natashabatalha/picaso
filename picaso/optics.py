@@ -725,15 +725,17 @@ class RetrieveCKs():
         end_windows =2+end_abunds+2*end_window
 
         nc_t=int(data.iloc[end_windows,0])
-        nc_p = np.array(data.iloc[end_windows:1+end_windows+int(self.max_tc/6),0:6].astype(int
+        #this defines the number of pressure points per temperature grid
+        #sometimes not all pressures are run for all temperatures
+        self.nc_p = np.array(data.iloc[end_windows:1+end_windows+int(self.max_tc/6),0:6].astype(int
                     )).ravel()[1:-5]
         end_npt = 1+end_windows+int(self.max_tc/6) + 9 #9 dummy rows
 
         first = list(data.iloc[end_npt,2:4].astype(float))
 
-        self.pressures = first+list(np.array(data.iloc[end_npt+1:end_npt + int(self.max_pc*self.max_tc/3) + 1,0:3]
-                 .astype(float))
-                 .ravel()[0:-2])
+        self.pressures = np.array(first+list(np.array(data.iloc[end_npt+1:end_npt + int(self.max_pc*self.max_tc/3) + 1,0:3]
+                         .astype(float))
+                         .ravel()[0:-2]))/1e3
         #pressures = np.array(pressures)[np.where(np.array(pressures)>0)]
         end_ps = end_npt + int(self.max_pc*self.max_tc/3)
 
@@ -800,15 +802,19 @@ class RetrieveCKs():
         end_windows =2+end_abunds+2*end_window
 
         nc_t=int(data.iloc[end_windows,0])
-        nc_p = np.array(data.iloc[end_windows:1+end_windows+int(self.max_tc/6),0:6].astype(int
+        #this defines the number of pressure points per temperature grid
+        #historically not all pressures are run for all temperatures
+        #though in 1460 there are always 20
+        self.nc_p = np.array(data.iloc[end_windows:1+end_windows+int(self.max_tc/6),0:6].astype(int
                     )).ravel()[1:-4]
         end_npt = 1+end_windows+int(self.max_tc/6) + 11 #11 dummy rows
 
         first = list(data.iloc[end_npt,4:5].astype(float))
 
-        self.pressures = first+list(np.array(data.iloc[end_npt+1:end_npt + int(self.max_pc*self.max_tc/3) + 2,0:3]
-                         .astype(float))
-                         .ravel()[0:-2])
+        #convert to bars
+        self.pressures = np.array(first+list(np.array(data.iloc[end_npt+1:end_npt + int(self.max_pc*self.max_tc/3) + 2,0:3]
+                                 .astype(float))
+                                 .ravel()[0:-2]))/1e3
 
         end_ps = end_npt + int(self.max_pc*self.max_tc/3)
 
@@ -872,10 +878,90 @@ class RetrieveCKs():
             hdul = fits.open(os.path.join(__refdata__,'climate_INPUTS/'+i+'.fits'))
             data= hdul[0].data
             self.cia_splines[i] = data
-            
-        
 
     def get_pre_mix_ck(self,atmosphere):
+        """
+        Takes in atmosphere profile and returns an array which is 
+        nlayer by ngauss by nwno
+        """
+        #
+        p = atmosphere.layer['pressure']/atmosphere.c.pconv
+        t = atmosphere.layer['temperature']
+
+        t_inv = 1/t
+        p_log = np.log10(p)
+
+        #make sure to interp on log and inv array
+        p_log_grid = np.unique(self.pressures)
+        p_log_grid =np.log10(p_log_grid[p_log_grid>0])
+        t_inv_grid = 1/np.array(self.temps)
+
+        #We want the pressure points on either side of our atmo grid point
+        p_low_ind = np.array([np.where(p_log_grid<=i)[0][-1] for i in p_log])
+        p_hi_ind = p_low_ind + 1 #[np.where(p_log_grid>i)[0][0] for i in p_log]
+
+        p_log_low =  np.array([p_log_grid[i] for i in p_low_ind])
+        p_log_hi = np.array([p_log_grid[i] for i in p_hi_ind])
+
+        #Now for the temp point on either side of our atmo grid
+        t_low_ind = np.array([np.where(t_inv_grid>i)[0][-1] for i in t_inv])
+        t_hi_ind = t_low_ind + 1 #np.array([np.where(t_inv_grid<=i)[0][0] for i in t_inv])
+
+        t_inv_low =  np.array([t_inv_grid[i] for i in t_low_ind])
+        t_inv_hi = np.array([t_inv_grid[i] for i in t_hi_ind])
+
+        #translate to full 1060/1460 account for potentially disparate number of pressures per grid point
+        # not needed for kappa
+        #t_low_1060 = np.array([sum(self.nc_p[0:i]) for i in t_low_ind])
+        #t_hi_1060 = np.array([sum(self.nc_p[0:i]) for i in t_hi_ind])
+
+        #i_t_low_p_low =  t_low_1060 + p_low_ind #(opa.max_pc*t_low_ind)
+        #i_t_hi_p_low =  t_hi_1060 + p_low_ind #(opa.max_pc*t_hi_ind)
+        #i_t_low_p_hi = t_low_1060 + p_hi_ind
+        #i_t_hi_p_hi = t_hi_1060 + p_hi_ind
+
+        t_interp = ((t_inv - t_inv_low) / (t_inv_hi - t_inv_low))[:,np.newaxis,np.newaxis]
+        p_interp = ((p_log - p_log_low) / (p_log_hi - p_log_low))[:,np.newaxis,np.newaxis]
+
+        #log_abunds = np.log10(self.full_abunds.values)
+        ln_kappa = self.kappa
+        ln_kappa = np.exp(((1-t_interp)* (1-p_interp) * ln_kappa[p_low_ind,t_low_ind,:,:]) +
+                     ((t_interp)  * (1-p_interp) * ln_kappa[p_low_ind,t_hi_ind,:,:]) + 
+                     ((t_interp)  * (p_interp)   * ln_kappa[p_hi_ind,t_hi_ind,:,:]) + 
+                     ((1-t_interp)* (p_interp)   * ln_kappa[p_hi_ind,t_low_ind,:,:]) )
+
+        self.molecular_opa = ln_kappa*6.02214086e+23  #avogadro constant!        
+
+            
+    def get_pre_mix_ck_nearest(self,atmosphere):
+        """
+        Takes in atmosphere profile and returns an array which is 
+        nlayer by ngauss by nwno
+        """
+        nlayer =atmosphere.c.nlayer
+        tlayer =atmosphere.layer['temperature']
+        player = atmosphere.layer['pressure']/atmosphere.c.pconv
+
+        pt_pairs = []
+        i=0
+        for ip,it,p,t in zip(np.concatenate([list(range(self.max_pc))*self.max_tc]), 
+                        np.concatenate([[it]*self.max_pc for it in range(self.max_tc)]),
+                        self.pressures, 
+                        np.concatenate([[it]*self.max_pc for it in self.temps])):
+            
+            if p!=0 : pt_pairs += [[i,ip,it,p,t]];i+=1
+
+        ind_pt_log = np.array([min(pt_pairs, 
+                    key=lambda c: math.hypot(np.log(c[-2])- np.log(coordinate[0]), 
+                                             c[-1]-coordinate[1]))[0:3] 
+                        for coordinate in  zip(player,tlayer)])
+
+        ind_p = ind_pt_log[:,1]
+        ind_t = ind_pt_log[:,2]
+
+        self.molecular_opa = np.exp(self.kappa[ind_p, ind_t, :, :])*6.02214086e+23  #avogadro constant!        
+
+    def get_pre_mix_ck_sm(self,atmosphere):
         """
         Takes in atmosphere profile and returns an array which is 
         nlayer by ngauss by nwno
