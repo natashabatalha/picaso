@@ -1262,7 +1262,6 @@ class inputs():
             if df['H2'].min() < 0.7: 
                 if verbose: print("Turning off Raman for Non-H2 atmosphere")
                 self.inputs['approx']['raman'] = 2
-
     def premix_atmosphere(self, opa, df=None, filename=None, **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
@@ -1302,53 +1301,8 @@ class inputs():
         #Turn off raman for 196 premix calculations 
         self.inputs['approx']['raman'] = 2
 
-        plevel = self.inputs['atmosphere']['profile']['pressure'].values
-        tlevel =self.inputs['atmosphere']['profile']['temperature'].values
-        t_inv = 1/tlevel
-        p_log = np.log10(plevel)
-
-        #make sure to interp on log and inv array
-        p_log_grid = np.unique(opa.pressures)
-        p_log_grid =np.log10(p_log_grid[p_log_grid>0])
-        t_inv_grid = 1/np.array(opa.temps)
-
-        #We want the pressure points on either side of our atmo grid point
-        p_low_ind = np.array([np.where(p_log_grid<=i)[0][-1] for i in p_log])
-        p_hi_ind = p_low_ind + 1 #[np.where(p_log_grid>i)[0][0] for i in p_log]
-
-        p_log_low =  np.array([p_log_grid[i] for i in p_low_ind])
-        p_log_hi = np.array([p_log_grid[i] for i in p_hi_ind])
-
-        #Now for the temp point on either side of our atmo grid
-        t_low_ind = np.array([np.where(t_inv_grid>i)[0][-1] for i in t_inv])
-        t_hi_ind = t_low_ind + 1 #np.array([np.where(t_inv_grid<=i)[0][0] for i in t_inv])
-
-        t_inv_low =  np.array([t_inv_grid[i] for i in t_low_ind])
-        t_inv_hi = np.array([t_inv_grid[i] for i in t_hi_ind])
-
-        #translate to full 1060/1460 account for potentially disparate number of pressures per grid point
-        t_low_1060 = np.array([sum(opa.nc_p[0:i]) for i in t_low_ind])
-        t_hi_1060 = np.array([sum(opa.nc_p[0:i]) for i in t_hi_ind])
-
-        i_t_low_p_low =  t_low_1060 + p_low_ind #(opa.max_pc*t_low_ind)
-        i_t_hi_p_low =  t_hi_1060 + p_low_ind #(opa.max_pc*t_hi_ind)
-        i_t_low_p_hi = t_low_1060 + p_hi_ind
-        i_t_hi_p_hi = t_hi_1060 + p_hi_ind
-
-        t_interp = ((t_inv - t_inv_low) / (t_inv_hi - t_inv_low))[:,np.newaxis]
-        p_interp = ((p_log - p_log_low) / (p_log_hi - p_log_low))[:,np.newaxis]
-
-        log_abunds = np.log10(opa.full_abunds.values)
-
-        abunds = 10**(((1-t_interp)* (1-p_interp) * log_abunds[i_t_low_p_low,:]) +
-                     ((t_interp)  * (1-p_interp) * log_abunds[i_t_hi_p_low,:]) + 
-                     ((t_interp)  * (p_interp)   * log_abunds[i_t_hi_p_hi,:]) + 
-                     ((1-t_interp)* (p_interp)   * log_abunds[i_t_low_p_hi,:]) ) 
-
-        self.inputs['atmosphere']['profile'][opa.full_abunds.keys()] = pd.DataFrame(abunds)
-
-
-    def premix_atmosphere_nearest(self, opa, df=None, filename=None, **pd_kwargs):
+        self.chem_interp(opa.full_abunds)
+    def premix_atmosphere_nearest_old(self, opa, df=None, filename=None, **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
         Sets number of layers in model.  
@@ -1406,8 +1360,7 @@ class inputs():
         ind_chem = ind_pt_log[:,0]
 
         self.inputs['atmosphere']['profile'][opa.full_abunds.keys()] = opa.full_abunds.iloc[ind_chem,:].reset_index(drop=True)
-
-    def premix_atmosphere_fortran(self, opa, df=None, filename=None, **pd_kwargs):
+    def premix_atmosphere_fortran_old(self, opa, df=None, filename=None, **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
         Sets number of layers in model.  
@@ -1672,8 +1625,7 @@ class inputs():
         
         #self.inputs['atmosphere']['profile'][opa.full_abunds.keys()] = opa.full_abunds.iloc[ind_chem,:].reset_index(drop=True)
         
-        self.inputs['atmosphere']['profile'][opa.full_abunds.keys()] = final_abun_df.reset_index(drop=True)
-        
+        self.inputs['atmosphere']['profile'][opa.full_abunds.keys()] = final_abun_df.reset_index(drop=True)        
     def sonora(self, sonora_path, teff, chem='low'):
         """
         This queries Sonora temperature profile that can be downloaded from profiles.tar on 
@@ -1722,9 +1674,11 @@ class inputs():
             self.channon_grid_high(filename=os.path.join(__refdata__, 'chemistry','grid75_feh+000_co_100_highP.txt'))
         elif chem == 'low':
             self.channon_grid_low(filename=os.path.join(__refdata__,'chemistry','visscher_abunds_m+0.0_co1.0' ))
+        elif chem=='grid':
+            #solar C/O and M/H 
+            self.chemeq_visscher(c_o=1.0,log_mh=0.0)
         self.inputs['atmosphere']['sonora_filename'] = build_filename
         self.nlevel = ptchem.shape[0]
-
     def chemeq(self, CtoO, Met):
         """
         This interpolates from a precomputed grid of CEA runs (run by M.R. Line)
@@ -1765,44 +1719,22 @@ class inputs():
                            'pressure': P})
         self.inputs['atmosphere']['profile'] = df
         return 
-
     def channon_grid_high(self,filename=None):
         if isinstance(filename, type(None)):filename=os.path.join(__refdata__,'chemistry','grid75_feh+000_co_100_highP.txt')
-        #df = self.inputs['atmosphere']['profile']
         df = self.inputs['atmosphere']['profile'].sort_values('pressure').reset_index(drop=True)
+
+        #sort pressure
+        self.inputs['atmosphere']['profile'] = df
         self.nlevel = df.shape[0]
         
-        player = df['pressure'].values
-        tlayer  = df['temperature'].values
+        #player = df['pressure'].values
+        #tlayer  = df['temperature'].values
         
-        channon = pd.read_csv(filename,delim_whitespace=True)
-        #get molecules list from channon db
-        mols = list(channon.keys())
-        mols.pop(mols.index('pressure'))
-        mols.pop(mols.index('temperature'))
-        
-        #add molecules to df
-        df = df.reindex(columns = ['pressure','temperature']+mols) 
+        grid = pd.read_csv(filename,delim_whitespace=True)
+        grid['pressure'] = 10**grid['pressure']
 
-        #add pt_ids so we can grab the right points
-        pt_pairs = channon.loc[:,['pressure','temperature']]
-        pt_pairs['pt_id'] = np.arange(pt_pairs.shape[0])
-        channon['pt_id'] = pt_pairs['pt_id']
-
-        pt_pairs = pt_pairs.values#p,t,id
-        
-        #find index corresponding to each pair
-        ind_pt=[min(pt_pairs, 
-                    key=lambda c: math.hypot(c[0]- coordinate[0], c[1]-coordinate[1]))[2] 
-                        for coordinate in  zip(np.log10(player),tlayer)]
-        #build dataframe with chemistry
-        for i in range(df.shape[0]):
-            pair_for_layer = ind_pt[i]
-            df.loc[i,mols] = channon.loc[channon['pt_id'] == pair_for_layer,mols].values
-        df['ptid'] = ind_pt
-        
-        self.inputs['atmosphere']['profile'] = df
-    def chemeq_visscher(self, c_o, log_mh, interp_window = 11, interp_poly=2):
+        self.chem_interp(grid)
+    def chemeq_visscher(self, c_o, log_mh):#, interp_window = 11, interp_poly=2):
         """
         Find nearest neighbor from visscher grid
 
@@ -1845,8 +1777,8 @@ class inputs():
 
         grid_co = cos[np.argmin(np.abs(cos-c_o))]
         grid_feh = fehs[np.argmin(np.abs(fehs-log_mh))]
-        str_co = str(grid_feh).replace('.','')
-        str_fe = str(grid_co).replace('.','')
+        str_co = str(grid_co).replace('.','')
+        str_fe = str(grid_feh).replace('.','')
 
         filename = os.path.join(__refdata__,'chemistry','visscher_grid',
             f'2015_06_1060grid_feh_{str_fe}_co_{str_co}.txt')
@@ -1856,69 +1788,15 @@ class inputs():
         a = pd.read_csv(filename,delim_whitespace=True,skiprows=1,header=None, names=cols)
         a['pressure']=10**a['pressure']
 
-        mols = list(a.loc[:, ~a.columns.isin(['Unnamed: 0','pressure','temperature'])].keys())
-        #get pt from what users have already input
-        player_tlayer = self.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']].sort_values('pressure').reset_index(drop=True)
-        self.nlevel = player_tlayer.shape[0]
-
-        #loop through all pressure and temperature layers
-        for i in player_tlayer.index:
-            p,t = player_tlayer.loc[i,['pressure','temperature']]
-            #at each layer compute the distance to each point in the visscher table
-            #create a weight that is 1/d**2
-            a['weight'] = (1/((np.log10(a['pressure']) - np.log10(p))**2 + 
-                                       (a['temperature'] - t)**2))
-            #sort by the weight and only pick the TWO nearest neighbors. 
-            #Note, there was a sensitivity study to determine how many nearest neighbors to choose 
-            #It was determined that no more than 2 is best. 
-            w = a.sort_values(by='weight',ascending=False).iloc[0:2,:]
-            #now loop through all the molecules
-            for im in mols:
-                #compute the weighted mean of the mixing ratio
-                weighted_mean = (np.sum(w['weight']*(w.loc[:,im]))/np.sum(w['weight']))
-                player_tlayer.loc[i,im] = weighted_mean
-        #now pass through everything and use savgol filter to average 
-        for im in mols:
-            y = np.log10(player_tlayer.loc[:,im])
-            s = savgol_filter(y , interp_window, interp_poly)
-            player_tlayer.loc[:,im] = 10**s #
-
-        self.inputs['atmosphere']['profile'] = player_tlayer
-    def channon_grid_low(self, filename = None, interp_window = 11, interp_poly=2):
+        self.chem_interp(a)
+    def channon_grid_low(self, filename = None):
         """
         Interpolate from visscher grid
         """
         if isinstance(filename, type(None)):filename= os.path.join(__refdata__,'chemistry','visscher_abunds_m+0.0_co1.0')
         a = pd.read_csv(filename)
-        mols = list(a.loc[:, ~a.columns.isin(['Unnamed: 0','pressure','temperature'])].keys())
-        #get pt from what users have already input
-        player_tlayer = self.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']].sort_values('pressure').reset_index(drop=True)
-        self.nlevel = player_tlayer.shape[0]
-
-        #loop through all pressure and temperature layers
-        for i in player_tlayer.index:
-            p,t = player_tlayer.loc[i,['pressure','temperature']]
-            #at each layer compute the distance to each point in the visscher table
-            #create a weight that is 1/d**2
-            a['weight'] = (1/((np.log10(a['pressure']) - np.log10(p))**2 + 
-                                       (a['temperature'] - t)**2))
-            #sort by the weight and only pick the TWO nearest neighbors. 
-            #Note, there was a sensitivity study to determine how many nearest neighbors to choose 
-            #It was determined that no more than 2 is best. 
-            w = a.sort_values(by='weight',ascending=False).iloc[0:2,:]
-            #now loop through all the molecules
-            for im in mols:
-                #compute the weighted mean of the mixing ratio
-                weighted_mean = (np.sum(w['weight']*(w.loc[:,im]))/np.sum(w['weight']))
-                player_tlayer.loc[i,im] = weighted_mean
-        #now pass through everything and use savgol filter to average 
-        for im in mols:
-            y = np.log10(player_tlayer.loc[:,im])
-            s = savgol_filter(y , interp_window, interp_poly)
-            player_tlayer.loc[:,im] = 10**s #
-
-        self.inputs['atmosphere']['profile'] = player_tlayer
-    
+        a = a.iloc[:,1:]
+        self.chem_interp(a)
     def chem_interp(self, chem_grid):
         """
         Interpolates chemistry based on dataframe input of either 1460 or 1060 grid
@@ -1942,23 +1820,60 @@ class inputs():
         p_log_grid =np.log10(p_log_grid[p_log_grid>0])
         t_inv_grid = 1/np.array(temps)
 
-        #We want the pressure points on either side of our atmo grid point
-        p_low_ind = np.array([np.where(p_log_grid<=i)[0][-1] for i in p_log])
-        p_hi_ind = p_low_ind + 1 #[np.where(p_log_grid>i)[0][0] for i in p_log]
-
-        p_log_low =  np.array([p_log_grid[i] for i in p_low_ind])
-        p_log_hi = np.array([p_log_grid[i] for i in p_hi_ind])
-
         #Now for the temp point on either side of our atmo grid
-        t_low_ind = np.array([np.where(t_inv_grid>i)[0][-1] for i in t_inv])
-        t_hi_ind = t_low_ind + 1 #np.array([np.where(t_inv_grid<=i)[0][0] for i in t_inv])
+        #first the lower interp temp
+        t_low_ind = []
+        for i in t_inv:
+            find = np.where(t_inv_grid>i)[0]
+            if len(find)==0:
+                #IF T GOES BELOW THE GRID
+                t_low_ind +=[0]
+            else:    
+                t_low_ind += [find[-1]]
+        t_low_ind = np.array(t_low_ind)
+        #IF T goes above the grid
+        t_low_ind[t_low_ind==(len(t_inv_grid)-1)]=len(t_inv_grid)-2
+        #get upper interp temp
+        t_hi_ind = t_low_ind + 1 
 
+        #now get associated temps
         t_inv_low =  np.array([t_inv_grid[i] for i in t_low_ind])
         t_inv_hi = np.array([t_inv_grid[i] for i in t_hi_ind])
 
+
+        #We want the pressure points on either side of our atmo grid point
+        #first the lower interp pressure
+        p_low_ind = [] 
+        for i in p_log:
+            find = np.where(p_log_grid<=i)[0]
+            if len(find)==0:
+                #If P GOES BELOW THE GRID
+                p_low_ind += [0]
+            else: 
+                p_low_ind += [find[-1]]
+        p_low_ind = np.array(p_low_ind)
+
+        #IF pressure GOES ABOVE THE GRID
+        p_log_low = []
+        for i in range(len(p_low_ind)): 
+            ilo = p_low_ind[i]
+            it = t_hi_ind[i]
+            max_avail_p = np.min([ilo, nc_p[it]-3])#3 b/c using len instead of where as was done with t above
+            p_low_ind[i] = max_avail_p
+            p_log_low += [p_log_grid[max_avail_p]]
+            
+        p_log_low = np.array(p_log_low)
+
+        #get higher pressure vals
+        p_hi_ind = p_low_ind + 1 
+
+        #now get associated pressures 
+        #p_log_low =  np.array([p_log_grid[i] for i in p_low_ind])
+        p_log_hi = np.array([p_log_grid[i] for i in p_hi_ind])
+
         #translate to full 1060/1460 account for potentially disparate number of pressures per grid point
-        t_low_1060 = np.array([sum(opa.nc_p[0:i]) for i in t_low_ind])
-        t_hi_1060 = np.array([sum(opa.nc_p[0:i]) for i in t_hi_ind])
+        t_low_1060 = np.array([sum(nc_p[0:i]) for i in t_low_ind])
+        t_hi_1060 = np.array([sum(nc_p[0:i]) for i in t_hi_ind])
 
         i_t_low_p_low =  t_low_1060 + p_low_ind #(opa.max_pc*t_low_ind)
         i_t_hi_p_low =  t_hi_1060 + p_low_ind #(opa.max_pc*t_hi_ind)
@@ -1968,7 +1883,7 @@ class inputs():
         t_interp = ((t_inv - t_inv_low) / (t_inv_hi - t_inv_low))[:,np.newaxis]
         p_interp = ((p_log - p_log_low) / (p_log_hi - p_log_low))[:,np.newaxis]
 
-        log_abunds = np.log10(log_abunds.values)
+        log_abunds = log_abunds.values
 
         abunds = 10**(((1-t_interp)* (1-p_interp) * log_abunds[i_t_low_p_low,:]) +
                      ((t_interp)  * (1-p_interp) * log_abunds[i_t_hi_p_low,:]) + 
@@ -1976,7 +1891,6 @@ class inputs():
                      ((1-t_interp)* (p_interp)   * log_abunds[i_t_low_p_hi,:]) ) 
 
         self.inputs['atmosphere']['profile'][species] = pd.DataFrame(abunds)
-
     def add_pt(self, T, P, nlevel=61):
         """
         Adds temperature pressure profile to atmosphere

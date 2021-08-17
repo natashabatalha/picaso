@@ -762,6 +762,9 @@ class RetrieveCKs():
         kappa = kappa.swapaxes(0,2)
         self.kappa = kappa[:, :, 0:self.nwno, 0:self.ngauss] 
 
+        #finally add pressure/temperature scale to abundances
+        self.full_abunds['pressure']= self.pressures[self.pressures>0]
+        self.full_abunds['temperature'] = np.concatenate([[i]*max(self.nc_p) for i in self.temps])[self.pressures>0]
 
     def get_legacy_data_1460(self,wave_range):
         """
@@ -844,8 +847,13 @@ class RetrieveCKs():
         #want the axes to be [npressure, ntemperature, nwave, ngauss ]
         kappa = kappa.swapaxes(1,3)
         kappa = kappa.swapaxes(0,2)
-        self.kappa = kappa[:, :, 0:self.nwno, 0:self.ngauss]    
-    
+        self.kappa = kappa[:, :, 0:self.nwno, 0:self.ngauss] 
+
+        #finally add pressure/temperature scale to abundances
+        self.full_abunds['pressure']= self.pressures[self.pressures>0]
+        self.full_abunds['temperature'] = np.concatenate([[i]*max(self.nc_p) for i in self.temps])[self.pressures>0]
+
+
     def get_available_rayleigh(self):
         data = Rayleigh(self.wno)
         self.rayleigh_molecules = data.rayleigh_molecules
@@ -896,29 +904,57 @@ class RetrieveCKs():
         p_log_grid =np.log10(p_log_grid[p_log_grid>0])
         t_inv_grid = 1/np.array(self.temps)
 
-        #We want the pressure points on either side of our atmo grid point
-        p_low_ind = np.array([np.where(p_log_grid<=i)[0][-1] for i in p_log])
-        p_hi_ind = p_low_ind + 1 #[np.where(p_log_grid>i)[0][0] for i in p_log]
-
-        p_log_low =  np.array([p_log_grid[i] for i in p_low_ind])
-        p_log_hi = np.array([p_log_grid[i] for i in p_hi_ind])
-
         #Now for the temp point on either side of our atmo grid
-        t_low_ind = np.array([np.where(t_inv_grid>i)[0][-1] for i in t_inv])
-        t_hi_ind = t_low_ind + 1 #np.array([np.where(t_inv_grid<=i)[0][0] for i in t_inv])
+        #first the lower interp temp
+        t_low_ind = []
+        for i in t_inv:
+            find = np.where(t_inv_grid>i)[0]
+            if len(find)==0:
+                #IF T GOES BELOW THE GRID
+                t_low_ind +=[0]
+            else:    
+                t_low_ind += [find[-1]]
+        t_low_ind = np.array(t_low_ind)
+        #IF T goes above the grid
+        t_low_ind[t_low_ind==(len(t_inv_grid)-1)]=len(t_inv_grid)-2
+        #get upper interp temp
+        t_hi_ind = t_low_ind + 1 
 
+        #now get associated temps
         t_inv_low =  np.array([t_inv_grid[i] for i in t_low_ind])
         t_inv_hi = np.array([t_inv_grid[i] for i in t_hi_ind])
 
-        #translate to full 1060/1460 account for potentially disparate number of pressures per grid point
-        # not needed for kappa
-        #t_low_1060 = np.array([sum(self.nc_p[0:i]) for i in t_low_ind])
-        #t_hi_1060 = np.array([sum(self.nc_p[0:i]) for i in t_hi_ind])
 
-        #i_t_low_p_low =  t_low_1060 + p_low_ind #(opa.max_pc*t_low_ind)
-        #i_t_hi_p_low =  t_hi_1060 + p_low_ind #(opa.max_pc*t_hi_ind)
-        #i_t_low_p_hi = t_low_1060 + p_hi_ind
-        #i_t_hi_p_hi = t_hi_1060 + p_hi_ind
+        #We want the pressure points on either side of our atmo grid point
+        #first the lower interp pressure
+        p_low_ind = [] 
+        for i in p_log:
+            find = np.where(p_log_grid<=i)[0]
+            if len(find)==0:
+                #If P GOES BELOW THE GRID
+                p_low_ind += [0]
+            else: 
+                p_low_ind += [find[-1]]
+        p_low_ind = np.array(p_low_ind)
+
+        #IF pressure GOES ABOVE THE GRID
+        p_log_low = []
+        for i in range(len(p_low_ind)): 
+            ilo = p_low_ind[i]
+            it = t_hi_ind[i]
+            max_avail_p = np.min([ilo, self.nc_p[it]-3])#3 b/c using len instead of where as was done with t above
+            p_low_ind[i] = max_avail_p
+            p_log_low += [p_log_grid[max_avail_p]]
+            
+        p_log_low = np.array(p_log_low)
+
+        #get higher pressure vals
+        p_hi_ind = p_low_ind + 1 
+
+        #now get associated pressures 
+        #p_log_low =  np.array([p_log_grid[i] for i in p_low_ind])
+        p_log_hi = np.array([p_log_grid[i] for i in p_hi_ind])
+
 
         t_interp = ((t_inv - t_inv_low) / (t_inv_hi - t_inv_low))[:,np.newaxis,np.newaxis]
         p_interp = ((p_log - p_log_low) / (p_log_hi - p_log_low))[:,np.newaxis,np.newaxis]
