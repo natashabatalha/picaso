@@ -8,7 +8,7 @@ import time
 import pickle as pk
 from scipy.sparse.linalg import spsolve
 
-#@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True,fastmath=True)
 def get_flux_toon(nlevel, wno, nwno, tau, dtau, w0, cosbar, surf_reflect, ubar0, F0PI):
     """
     Warning
@@ -198,7 +198,7 @@ def get_flux_toon(nlevel, wno, nwno, tau, dtau, w0, cosbar, surf_reflect, ubar0,
 
     return flux_plus, flux_minus
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def slice_eq(array, lim, value):
     """Funciton to replace values with upper or lower limit
     """
@@ -208,7 +208,7 @@ def slice_eq(array, lim, value):
         array[i,:] = new     
     return array
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def slice_lt(array, lim):
     """Funciton to replace values with upper or lower limit
     """
@@ -218,7 +218,7 @@ def slice_lt(array, lim):
         array[i,:] = new     
     return array
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def slice_gt(array, lim):
     """Funciton to replace values with upper or lower limit
     """
@@ -228,7 +228,7 @@ def slice_gt(array, lim):
         array[i,:] = new     
     return array
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def numba_cumsum(mat):
     """Function to compute cumsum along axis=0 to bypass numba not allowing kwargs in 
     cumsum 
@@ -238,7 +238,7 @@ def numba_cumsum(mat):
         new_mat[:,i] = cumsum(mat[:,i])
     return new_mat
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True, fastmath=True)
 def setup_tri_diag(nlayer,nwno ,c_plus_up, c_minus_up, 
     c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
     gama, dtau, exptrm_positive,  exptrm_minus):
@@ -338,7 +338,7 @@ def setup_tri_diag(nlayer,nwno ,c_plus_up, c_minus_up,
 
     return A, B, C, D
 
-#@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True,fastmath=True)
 def setup_pent_diag(nlayer,nwno ,c_plus_up, c_minus_up, 
     c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
     gama, dtau, exptrm_positive,  exptrm_minus, g1, g2, exptrm, lamda):
@@ -443,7 +443,7 @@ def setup_pent_diag(nlayer,nwno ,c_plus_up, c_minus_up,
     return A, B, C, D, E, F
 
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True, fastmath=True)
 def tri_diag_solve(l, a, b, c, d):
     """
     Tridiagonal Matrix Algorithm solver, a b c d can be NumPy array type or Python list type.
@@ -484,7 +484,7 @@ def tri_diag_solve(l, a, b, c, d):
         XK[i] = DS[i] - AS[i] * XK[i-1]
     return XK
 
-#@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True,fastmath=True)
 def pent_diag_solve(l, A, B, C, D, E, F):
     """
     Pentadiagonal Matrix solver
@@ -515,7 +515,7 @@ def pent_diag_solve(l, A, B, C, D, E, F):
 
     return X
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3d,gcos2_3d, ftau_cld_3d,ftau_ray_3d,
     dtau_og_3d, tau_og_3d, w0_og_3d, cosb_og_3d, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
@@ -825,7 +825,7 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             xint_at_top[ng,nt,:] = xint[0,:]    
     return xint_at_top
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
@@ -1119,7 +1119,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
     return xint_at_top
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def get_reflected_1d_gfluxv(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,
     surf_reflect,b_top,b_surface,ubar0, F0PI,tridiagonal, delta_approx):
     """
@@ -1319,7 +1319,7 @@ def get_reflected_1d_gfluxv(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,
     
     return flux_minus_all, flux_plus_all, flux_minus_midpt_all, flux_plus_midpt_all 
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def blackbody(t,w):
     """
     Blackbody flux in cgs units in per unit wavelength
@@ -1341,7 +1341,7 @@ def blackbody(t,w):
 
     return ((2.0*h*c**2.0)/(w**5.0))*(1.0/(exp((h*c)/outer(t, w*k)) - 1.0))
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True, fastmath=True)
 def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,
     surf_reflect, hard_surface, tridiagonal):
     """
@@ -1547,7 +1547,7 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
     return flux_at_top #, flux_down# numg x numt x nwno
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def get_thermal_1d_gfluxi(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,surf_reflect,ugauss_angles,ugauss_weights, tridiagonal, calc_type , bb , y2, tp, tmin, tmax):
     """
     This function uses the source function method, which is outlined here : 
@@ -1771,7 +1771,7 @@ def get_thermal_1d_gfluxi(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plev
     
     return flux_minus_all, flux_plus_all, flux_minus_midpt_all, flux_plus_midpt_all
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel_3d, dtau_3d, w0_3d,cosb_3d,plevel_3d, ubar1, tridiagonal):
     """
     This function uses the source function method, which is outlined here : 
@@ -1981,7 +1981,7 @@ def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel_3d, dtau_3d, w0_3d,cosb_3d
 
     return flux_at_top #, flux_down# numg x numt x nwno
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def get_transit_1d(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
                     player, tlayer, colden, DTAU):
     """
@@ -2067,7 +2067,6 @@ def get_transit_3d(nlevel, nwno, radius, gravity,rstar, mass, mmw, k_b, G,amu,
     Routine to get the 3D transmission spectrum 
     """
     return 
-
 
 def setup_4_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, w_single, w_multi, ubar1, P):
 	"""
@@ -2581,7 +2580,7 @@ def solve_4_stream(M, B, A, N, F, G, A_int, N_int, stream):
 	return (I, intgrl_new)
 
 
-#@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True,fastmath=True)
 def get_reflected_new(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_cld, ftau_ray,
 	dtau_og, tau_og, w0_og, cosb_og, 
 	surf_reflect, ubar0, ubar1, cos_theta, F0PI, single_phase, multi_phase, 
@@ -3396,8 +3395,6 @@ def spline(x , y, n, yp0, ypn):
     
     return y2
 
-
-
 def planck_cgs(wave, T , dwave):
     # PLANCK FUNCTION RETURNS B IN CGS UNITS, ERGS CM-2 WAVENUMBER-1
     # wave IS WAVENUMBER IN CM-1
@@ -3416,7 +3413,7 @@ def planck_cgs(wave, T , dwave):
     return planck_sum
 
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def planck_rad(iw, T, dT ,  tmin, tmax, bb , y2, tp):
 
     if T < tmin :
@@ -3438,7 +3435,7 @@ def planck_rad(iw, T, dT ,  tmin, tmax, bb , y2, tp):
 
     return planck_rad
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def blackbody_climate(wave,temp, bb, y2, tp, tmin, tmax):
 
     blackbody_array = np.zeros(shape=(len(temp),len(wave)))
@@ -3451,7 +3448,7 @@ def blackbody_climate(wave,temp, bb, y2, tp, tmin, tmax):
     return blackbody_array
 
 # still not developed fully. virga has a function already maybe just use that
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type):
 
     grav_cgs = grav*1e2
