@@ -42,38 +42,38 @@ def regrid_and_chem_3D(planet=None, input_file=None, orb_phase=None, time_after_
 
     Parameters
     ----------
-    planet: str
+    planet : str
         Name of planet
-    input_file: str
+    input_file : str
         input MITgcm file, see necessary format at https://natashabatalha.github.io/picaso/notebooks/9_Adding3DFunctionality.htm
-    chempath: str
+    chempath : str
         Path to store chemistry files
-    newpt_path: str
+    newpt_path : str
         Path to store regridded PTK data
-    orb_phase: float
+    orb_phase : float
         orbital phase angle (Earth facing longitude), in degrees from -180 to 180, for planet rotation
-    time_after_pa: float
+    time_after_pa : float
         Time after periapse, for eccentric planets
-    n_gauss_angles: int
+    n_gauss_angles : int
         number of Gauss angles
-    n_chebychev_angles: int
+    n_chebychev_angles : int
         number of Chebyshev angles
-    nlon: int
+    nlon : int
         number of longitude points in MITgcm grid
-    nlat: int
+    nlat : int
         number of latitude points in MITgcm grid
-    nz: int
+    nz : int
         number of pressure layers in MITgcm grid
-    CtoO: float
+    CtoO : float
         C to O ratio
-    mh: int
+    mh : int
         metallicity, in NON log units (1 is solar)
 
     Returns
     -------
-    newdat: dict
+    newdat : dict
         Dictionary with regridded pressure-temperature-kzz profiles
-    chem3d: dict
+    chem3d : dict
         Dictionary with computed chemistry, to be added into 3D atmosphere
     '''
 
@@ -190,27 +190,27 @@ def virga_calc(optics_dir=None, mmw=None, fsed=None, radius=None, mass=None, p=N
     Parameters
     ----------
 
-    optics_dir: directory for virga optical properties files
-    mmw: float
+    optics_dir : directory for virga optical properties files
+    mmw : float
         mean molecular weight of atm
-    fsed: float
+    fsed : float
         sedimentation efficiency
-    radius: float
+    radius : float
         radius of planet in Rjup
-    mass:  float
+    mass :  float
         mass of planet in Mjup
-    p: array
+    p : ndarray
         pressure (1D)
-    t: array
+    t : ndarray
         temperature (1D)
-    kz: array
+    kz : ndarray
         mixing coefficient (1D)
-    metallicity:
+    metallicity : int
         metallicity in NON log units, default 1 (solar)
 
     Returns
     -------
-    all_out: dict
+    all_out : dict
         1D cloud profile and optical properties
     '''
 
@@ -239,22 +239,22 @@ def virga_3D(optics_dir=None, mmw=None, fsed=None, radius=None, mass=None, ptk_d
     Parameters
     ----------
 
-    optics_dir: str
+    optics_dir : str
         directory for Virga optical properties files
-    mmw: float
+    mmw : float
         mean molecular weight
-    fsed: float
+    fsed : float
         sedimentation efficiency
-    radius: float
+    radius : float
         planet radius in Jupiter radius
-    mass: float
+    mass : float
         planet mass in Jupiter mass
-    ptk_dat: dictionary
+    ptk_dat : dictionary
         input PTK profile database or dict, use regridded by PICASO.
 
     Returns
     -------
-    cld3d: dict
+    cld3d : dict
         3D dictionary with cloud properties that can be added to 3D atmosphere in PICASO
     '''
 
@@ -296,49 +296,49 @@ def spectrum_3D(calc=None, res=None, ng=None, nt=None, waverange=None,
     Parameters
     ----------
 
-    planet: str
+    planet : str
         name of planet
-    orb_phase: float
+    orb_phase : float
         orbital phase determining visible hemisphere
-    calc: str
+    calc : str
         thermal or reflected
-    time_after_pa: float
+    time_after_pa : float
         time after periapse, for eccentric planets
-    res: int
+    res : int
         resample opacities for higher speed, default is 0.1
-    ng: int
+    ng : int
         number of gauss angles
-    nt: int
+    nt : int
         number of cheby angles
-    waverange: list of floats
+    waverange : list of floats
         wavelength range, must be [wv1,wv2]
-    radius: float
+    radius : float
         radius of planet in units Rjup
-    mass: float
+    mass : float
         mass of planet in units Mjup
-    s_temp: float
+    s_temp : float
         temperature of star
-    logg: float
+    logg : float
         log g of star
-    s_met: float
+    s_met : float
         metallicity of star
-    sma: float
+    sma : float
         semi-major axis
-    chempath: str
+    chempath : str
         path to 3D chemistry file, if reusing chemistry for increased speed
-    outpath: str
+    outpath : str
         path to output spectrum, saving disabled for now
-    outfile: str
+    outfile : str
         name of output file where spectrum is stored, saving disabled for now
-    save: bool
+    save : bool
         if True, save spectrum to file, disabled for now
-    starfile: str
+    starfile : str
         path to input stellar file (if you want to use your own), units must be erg/cm2/s/Hz and um
-    chemdata: dict
+    chemdata : dict
         dictionary containing chemistry, if None, use file containing chemistry
     clouds: bool
         if True, adds Virga clouds to atmosphere, names of Virga files depend on phase and is hardcoded here
-    fsed: float
+    fsed : float
         sedimentation efficiency for clouds
 
     Returns
@@ -448,9 +448,9 @@ def correct_star_units(star_model, w_unit, f_unit):
 
     Returns
     -------
-    ndarray
+    wv_star : ndarray
         Stellar wavelength in corrected units
-    ndarray
+    flux_star : ndarray
         Stellar flux in corrected units
     '''
 
@@ -623,7 +623,7 @@ def whitelight_flux(planet_trans, star_trans, resp):
         White light planetary thermal flux
     sum_sflux : float
         White light stellar flux
-    sum_weights :
+    sum_weights : float
         Sum of filter response weighting function
     '''
 
@@ -655,73 +655,73 @@ def thermal_phasecurve(planet=None, in_ptk=None, filt_path=None, wv_range=None,
 
     Parameters
     ----------
-    planet: str
+    planet : str
         Name of planet
-    in_ptk: str
+    in_ptk : str
         Path to MITgcm pressure-temperature-Kzz profile file
-    newpt_path: str
+    newpt_path : str
         Path to store regridded P-T-Kzz profiles
-    filt_path: str
+    filt_path : str
         Path to instrument response function
-    wv_range: list
+    wv_range : list
         Wavelength range of interest in microns (e.g. [0.95, 1.77] for HST WFC3 G141
-    res: int
+    res : int
         Resampling value, default=1(increasing values reduce wavelength resolution)
-    nphases: int
+    nphases : int
         Number of phases around the orbit (orbital phase resolution)
-    p_range: list of floats
+    p_range : list of floats
         Orbital phase range, in degrees from 0 to 360
-    ng: int
+    ng : int
         Number of Gauss angles
-    nt: int
+    nt : int
          Number of Chebyshev angles
-    nlon: int
+    nlon : int
         Number of longitude points in MITgcm input file
-    nlat: int
+    nlat : int
         Number of latitude points in MITgcm input file
-    nz: int
+    nz : int
         Number of pressure layers in MITgcm input file
-    CtoO: float
+    CtoO : float
         Carbon to Oxygen ratio
-    mh: float
+    mh : float
         Metallicity of planet
-    mmw: float
+    mmw : float
         Atmospheric mean molecular weight
-    rp: float
+    rp : float
         Radius of planet in Jupiter radius
-    mp: float
+    mp : float
         Mass of planet in Jupiter mass
-    rs: float
+    rs : float
         Radius of star in Sun radius
-    rprs: float
+    rprs : float
         Planet to star radius ratio
-    sma: float
+    sma : float
         Semi-major axis
-    R: int
+    R : int
         Final wavelength resolution for plotting spectrum
-    sw_units: str
+    sw_units : str
         Stellar wavelength units from input stellar file (e.g. 'microns')
-    sf_units: str
+    sf_units : str
         Stellar flux units from input stellar file (e.g. erg/cm2/Hz/s)
-    in_star: str
+    in_star : str
         Path to input stellar file
-    Ts: float
+    Ts : float
         Star temperature
-    logg_s: float
+    logg_s : float
         Star Log G
-    met_s: float
+    met_s : float
         Star metallicity
-    cloudy: bool
+    cloudy : bool
         If True, clouds added into the calculation. Default = False
-    fsed: float
+    fsed : float
         Sedimentation efficiency for cloud calculation (Virga)
-    cld_path: str
+    cld_path : str
         Path to save Virga cloud dictionaries
-    optics_dir: str
+    optics_dir : str
         Path to virga Mie parameters and refractive indices for all species
-    reuse_pt: bool
+    reuse_pt : bool
         If True, this function will search existing regridded chemistry (with the same resolution) in chempath to save time. Default=False
-    reuse_cld: bool
+    reuse_cld : bool
         If True, this function will search existing Virga cloud files (with the same resolution) in cld_path to save time. Default=False
 
     Returns
