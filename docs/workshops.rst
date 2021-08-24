@@ -1,6 +1,14 @@
 Tutorials
 =========
 
+ESO ATMO 2021
+-------------
+
+.. toctree::
+   :maxdepth: 2
+   
+   Tutorial </notebooks/workshops/ESO2021/ESO_Tutorial.ipynb>
+
 Early Release Workshop 2021
 ---------------------------
 
