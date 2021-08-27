@@ -1582,14 +1582,21 @@ class RetrieveOpacities():
 
         #interp data for molecular opacity 
         #DELETE
-        self.data =  dict((x+'_'+str(y), dat[::self.resample][self.loc]) for x,y,dat in data)
+        data =  dict((x+'_'+str(y), dat[::self.resample][self.loc]) for x,y,dat in data)
 
         for i in self.molecular_opa.keys():
             for ind in range(nlayer): # multiply by avogadro constant
-                log_abunds1 = np.log10(self.data[i+'_'+str(1+i_t_low_p_low[ind])])
-                log_abunds2 = np.log10(self.data[i+'_'+str(1+i_t_hi_p_low[ind])])
-                log_abunds3 = np.log10(self.data[i+'_'+str(1+i_t_hi_p_hi[ind])])
-                log_abunds4 = np.log10(self.data[i+'_'+str(1+i_t_low_p_hi[ind])])
+            #these where statements are used for non zero arrays 
+            #however they should ultimately be put into opacity factory so it doesnt slow 
+            #this down
+                log_abunds1 = data[i+'_'+str(1+i_t_low_p_low[ind])]
+                log_abunds1 = np.log10(np.where(log_abunds1!=0,log_abunds1,1e-50))
+                log_abunds2 = data[i+'_'+str(1+i_t_hi_p_low[ind])]
+                log_abunds2 = np.log10(np.where(log_abunds2!=0,log_abunds2,1e-50))
+                log_abunds3 = data[i+'_'+str(1+i_t_hi_p_hi[ind])]
+                log_abunds3 = np.log10(np.where(log_abunds3!=0,log_abunds3,1e-50))
+                log_abunds4 = data[i+'_'+str(1+i_t_low_p_hi[ind])]
+                log_abunds4 = np.log10(np.where(log_abunds4!=0,log_abunds4,1e-50))
                 #nlayer x nwno
                 cx = 10**(((1-t_interp[ind])* (1-p_interp[ind]) * log_abunds1) +
                      ((t_interp[ind])  * (1-p_interp[ind]) * log_abunds2) + 
