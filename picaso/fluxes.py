@@ -934,6 +934,8 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
     xint_at_top = zeros((numg, numt, nwno))
     intensity = zeros((numg, numt, nlevel, nwno))
     direct_flux = zeros((numg, numt, nlevel, nwno))
+    single_scat = zeros((numg, numt, nlevel, nwno))
+    multi_scat = zeros((numg, numt, nlevel, nwno))
 
     nlayer = nlevel - 1 
     flux_out = zeros((numg, numt, 2*nlayer, nwno))
@@ -1124,6 +1126,17 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             for i in range(nlayer-1,-1,-1):
                 #direct beam
                 #single scattering albedo from sun beam (from ubar0 to ubar1)
+                single_scat[ng,nt,i,:] = single_scat[ng,nt,i+1,:]*exp(-dtau[i,:]/u1) + (
+                        w0_og[i,:]*F0PI/(4.*pi) * p_single[i,:]
+                        * exp(-tau_og[i,:]/u0)
+                        *(1. - exp(-dtau_og[i,:]*(u0+u1)/(u0*u1)))
+                        *(u0/(u0+u1)))
+                multi_scat[ng,nt,i,:] = multi_scat[ng,nt,i+1,:]*exp(-dtau[i,:]/u1) + (
+                        +A[i,:]*(1. - exp(-dtau[i,:] *(u0+1*u1)/(u0*u1)))*
+                        (u0/(u0+1*u1))
+                        +G[i,:]*(exp(exptrm[i,:]*1-dtau[i,:]/u1) - 1.0)/(lamda[i,:]*1*u1 - 1.0)
+                        +H[i,:]*(1. - exp(-exptrm[i,:]*1-dtau[i,:]/u1))/(lamda[i,:]*1*u1 + 1.0))
+
                 direct_flux[ng,nt,i,:] = (w0_og[i,:]*F0PI/(4.*pi)
                         *(p_single[i,:])
                         *exp(-tau_og[i,:]/u0)
@@ -1142,7 +1155,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             xint_at_top[ng,nt,:] = xint[0,:]
             intensity[ng,nt,:,:] = xint
 
-    return xint_at_top, flux_out, intensity, direct_flux
+    return xint_at_top, flux_out, intensity, multi_scat, single_scat
 
 #@jit(nopython=True, cache=True)
 def blackbody(t,w):
@@ -1746,6 +1759,8 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 	flux = zeros((numg, numt, stream*nlevel, nwno))
 	multiple_scat = zeros((numg, numt, nlayer, nwno))
 	single_scat = zeros((numg, numt, nlayer, nwno))
+	multi_atten = zeros((numg, numt, nlevel, nwno))
+	sing_atten= zeros((numg, numt, nlevel, nwno))
 	#else:
 	#	flux = zeros((numg, numt, stream*nlayer, nwno))
 	
@@ -1924,6 +1939,8 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 			multi_scat = zeros((nlayer, nwno))
 			xint_temp = zeros((nlevel, nwno))
 			intensity = zeros((nlevel, nwno))
+			multi_atten_temp = zeros((nlevel, nwno))
+			sing_atten_temp = zeros((nlevel, nwno))
 			#========================= Start loop over wavelength =========================
 			for W in range(nwno):
 				(intgrl_new[:,W], flux_bot[W], X) = solve_4_stream_banded(M[:,:,W], B[:,W],  
@@ -1948,20 +1965,30 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 				for l in range(stream):
 					multi_scat[i,:] = multi_scat[i,:] + w_multi[l][i,:] * P(u1)[l] * intgrl_new[stream*i+l,:]
 					#p_single = p_single + w_single[l][i,:] * P(cos_theta)[l] 
-					intensity[i,:] = intensity[i,:] + (2*l+1) * I[i*stream+l,:] * P(u1)[l]
+					#intensity[i,:] = intensity[i,:] + (2*l+1) * I[i*stream+l,:] * P(u1)[l]
 
 			intgrl_per_layer = (w0 *  multi_scat 
 						+ w0_og * F0PI / (4*np.pi) * p_single 
 						* (1 - exptrm_mus) * exp(-tau_og[:-1,:]/u0)
 						/ mus
 						)
+			multiple = w0 *  multi_scat 
+			single = (w0_og * F0PI / (4*np.pi) * p_single * (1 - exptrm_mus) 
+						* exp(-tau_og[:-1,:]/u0) / mus)
 
 			xint_temp[-1,:] = flux_bot/pi
 			for i in range(nlayer-1,-1,-1):
+				multi_atten_temp[i, :] = multi_atten_temp[i+1, :] * np.exp(-dtau[i,:]/u1) + multiple[i,:] / u1 
+				sing_atten_temp[i, :] = sing_atten_temp[i+1, :] * np.exp(-dtau_og[i,:]/u1) + single[i,:] / u1  
+							
 				xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/u1)
 							+ intgrl_per_layer[i,:] / u1) 
 
+			xint_new = multi_atten_temp + sing_atten_temp
+
 			xint_at_top[ng,nt,:] = xint_temp[0, :]
+			multi_atten[ng,nt,:,:] = multi_atten_temp
+			sing_atten[ng,nt,:,:] = sing_atten_temp
 			xint_out[ng,nt,:,:] = xint_temp
 			flux[ng,nt,:,:] = flux_temp
 			multiple_scat[ng,nt,:,:,] = w0 * multi_scat
@@ -1969,7 +1996,7 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 #	import IPython; IPython.embed()
 #	import sys; sys.exit()
 
-	return xint_at_top, flux, xint_out, multiple_scat, single_scat
+	return xint_at_top, flux, xint_out, multi_atten, sing_atten
 
 def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb, 
 			dtau_og, tau_og, w0_og, w0_no_raman, cosb_og, plevel, ubar1,
