@@ -684,10 +684,14 @@ class inputs():
             #this is here so that we can compare to older models 
             #this model only works for full phase calculations
 
-            if phase!=0: raise Exception('This method is faster because it makes use of symmetry \
-                and only computs one fourth of the sphere. ')
-            if num_gangle==1:  raise Exception('Please resubmit your run with num_tangle=1. \
-                Chebyshev angles are used for 3d implementation only.')
+            if phase!=0: raise Exception("""The default PICASO disk integration 
+                is to use num_tangle=1 and num_gangle>1. This method is faster because 
+                it makes use of symmetry and only computs one fourth of the sphere. 
+                However, it looks like you would like to compute non-zero phase functions. 
+                In this case, we can no longer utilize symmetry in our disk integration. Therefore, 
+                please resubmit phase_angle with num_tange>10 and num_gangle>10.""")
+            if num_gangle==1:  raise Exception("""num_gangle cannot be 1. 
+                Please resubmit your run with num_tangle=1, and increase number of Gauss points""")
 
             num_gangle = int(num_gangle/2) #utilizing symmetry
 

@@ -1,6 +1,6 @@
 from math import fsum, tau
 from numba import jit, vectorize
-from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh, min, dot, array,log
+from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh, min, dot, array,log,cos
 
 import numpy as np
 #import pentapy as pp
@@ -238,7 +238,7 @@ def numba_cumsum(mat):
         new_mat[:,i] = cumsum(mat[:,i])
     return new_mat
 
-@jit(nopython=True, cache=True, fastmath=True)
+@jit(nopython=True, cache=True)#, fastmath=True)
 def setup_tri_diag(nlayer,nwno ,c_plus_up, c_minus_up, 
     c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
     gama, dtau, exptrm_positive,  exptrm_minus):
@@ -443,7 +443,7 @@ def setup_pent_diag(nlayer,nwno ,c_plus_up, c_minus_up,
     return A, B, C, D, E, F
 
 
-@jit(nopython=True, cache=True, fastmath=True)
+@jit(nopython=True, cache=True)#, fastmath=True)
 def tri_diag_solve(l, a, b, c, d):
     """
     Tridiagonal Matrix Algorithm solver, a b c d can be NumPy array type or Python list type.
@@ -1052,6 +1052,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             #define f (fraction of forward to back scattering), 
             #g_forward (forward asymmetry), g_back (backward asym)
             #needed for everything except the OTHG
+            #the default values in conjig.json are from Cahoy+2010
             if single_phase!=1: 
                 g_forward = constant_forward*cosb_og
                 g_back = constant_back*cosb_og#-
@@ -1063,40 +1064,65 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             # as opposed to the traditional:
             # p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2-2*cosb_og*cos_theta)**3) (NOTICE NEGATIVE)
 
+            #original phase function of Cahoy+2010, which apporximates the rayleigh with gcos2
             if single_phase==0:#'cahoy':
-                #Phase function for single scattering albedo frum Solar beam
-                #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-                      #first term of TTHG: forward scattering
-                p_single=(f * (1-g_forward**2)
-                                /sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
-                                #second term of TTHG: backward scattering
-                                +(1-f)*(1-g_back**2)
-                                /sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3)+
-                                #rayleigh phase function
-                                (gcos2))
+                HG_forward = (1-g_forward**2) / sqrt((1+g_forward**2 + 2*g_forward*cos_theta)**3) 
+                HG_backward =(1-g_back**2) / sqrt((1+g_back**2 + 2*g_back*cos_theta)**3)
+
+                p_single=(f * HG_forward #first term of TTHG: forward scattering
+                        +(1-f)*HG_backward #second term of TTHG: backward scattering
+                        + (gcos2)) #rayleigh phase function
+
+            #single term HG phase function. Does not separate forward and back scattering. Does not have Rayleigh direct.  
             elif single_phase==1:#'OTHG':
                 p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+
+            #Two HG phase function. Separate forward and back scattering based on parameters above
+            #Does not have Rayleigh direct. 
             elif single_phase==2:#'TTHG':
-                #Phase function for single scattering albedo frum Solar beam
-                #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-                      #first term of TTHG: forward scattering
-                p_single=(f * (1-g_forward**2)
-                                /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
-                                #second term of TTHG: backward scattering
-                                +(1-f)*(1-g_back**2)
-                                /sqrt((1+g_back**2+2*g_back*cos_theta)**3))
+                HG_forward = (1-g_forward**2) / sqrt((1+g_forward**2 + 2*g_forward*cos_theta)**3) 
+                HG_backward = (1-g_back**2) / sqrt((1+g_back**2 + 2*g_back*cos_theta)**3)
+                p_single=(f * HG_forward #first term of TTHG: forward scattering
+                         +(1-f)* HG_backward) #second term of TTHG: backward scattering
+            
+            #Two HG phase function. Separate forward and back scattering based on parameters above
+            #Same as above except now is weighted by the fractional contribution of both 
+            #rayleigh vs. cloud scattering
             elif single_phase==3:#'TTHG_ray':
                 #Phase function for single scattering albedo frum Solar beam
                 #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-                            #first term of TTHG: forward scattering
-                p_single=(ftau_cld*(f * (1-g_forward**2)
-                                                /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
-                                                #second term of TTHG: backward scattering
-                                                +(1-f)*(1-g_back**2)
-                                                /sqrt((1+g_back**2+2*g_back*cos_theta)**3))+            
-                                #rayleigh phase function
-                                ftau_ray*(0.75*(1+cos_theta**2.0)))
+                            
+                HG_forward =  (1-g_forward**2) /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3)    
+                HG_back = (1-g_back**2)/sqrt((1+g_back**2+2*g_back*cos_theta)**3)
+                
+                p_single=(
+                        ftau_cld * (          #opacity of cloud / total opacity
+                            f * HG_forward  + #first term of TTHG: forward scattering
+                            (1-f) * HG_back  #second term of TTHG: backward scattering  
+                            )+  
+                        ftau_ray * (
+                            0.75*(1+cos_theta**2.0) #rayleigh phase function
+                            )
+                        )
+            #exploring.... 
+            elif single_phase==4:#'P(HG) exact w/ approx costheta'
+                deltaphi=0
+                cos_theta_approx = (-ubar0[ng,nt])*ubar1[ng,nt] + sqrt(1-ubar1[ng,nt]**2)*sqrt(1-ubar0[ng,nt]**2)*cos(deltaphi)
+                
+                HG_forward =  (1-g_forward**2) /sqrt((1+g_forward**2+2*g_forward*cos_theta_approx)**3)    
+                HG_back = (1-g_back**2)/sqrt((1+g_back**2+2*g_back*cos_theta_approx)**3)
 
+                p_single=(
+                        ftau_cld * (          #opacity of cloud / total opacity
+                            f * HG_forward  + #first term of TTHG: forward scattering
+                            (1-f) * HG_back   #second term of TTHG: backward scattering  
+                            )+  
+                        ftau_ray * (
+                            0.75*(1+cos_theta_approx**2.0) #rayleigh phase function
+                            )
+                        )
+
+            
             ################################ END OPTIONS FOR DIRECT SCATTERING####################
 
             for i in range(nlayer-1,-1,-1):
@@ -1341,7 +1367,7 @@ def blackbody(t,w):
 
     return ((2.0*h*c**2.0)/(w**5.0))*(1.0/(exp((h*c)/outer(t, w*k)) - 1.0))
 
-@jit(nopython=True, cache=True, fastmath=True)
+#@jit(nopython=True, cache=True, fastmath=True)
 def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,
     surf_reflect, hard_surface, tridiagonal):
     """

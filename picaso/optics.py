@@ -1528,13 +1528,13 @@ class RetrieveOpacities():
         p_log_hi = np.array([p_log_grid[i] for i in p_hi_ind])
 
         #translate to full 1060/1460 account for potentially disparate number of pressures per grid point
-        t_low_1060 = np.array([sum(nc_p[0:i]) for i in t_low_ind])
-        t_hi_1060 = np.array([sum(nc_p[0:i]) for i in t_hi_ind])
+        t_low_10XX = np.array([sum(nc_p[0:i]) for i in t_low_ind])
+        t_hi_10XX= np.array([sum(nc_p[0:i]) for i in t_hi_ind])
 
-        i_t_low_p_low =  t_low_1060 + p_low_ind #(opa.max_pc*t_low_ind)
-        i_t_hi_p_low =  t_hi_1060 + p_low_ind #(opa.max_pc*t_hi_ind)
-        i_t_low_p_hi = t_low_1060 + p_hi_ind
-        i_t_hi_p_hi = t_hi_1060 + p_hi_ind    
+        i_t_low_p_low =  t_low_10XX + p_low_ind #(opa.max_pc*t_low_ind)
+        i_t_hi_p_low =  t_hi_10XX + p_low_ind #(opa.max_pc*t_hi_ind)
+        i_t_low_p_hi = t_low_10XX + p_hi_ind
+        i_t_hi_p_hi = t_hi_10XX + p_hi_ind    
 
         t_interp = ((t_inv - t_inv_low) / (t_inv_hi - t_inv_low))[:,np.newaxis]
         p_interp = ((p_log - p_log_low) / (p_log_hi - p_log_low))[:,np.newaxis]
