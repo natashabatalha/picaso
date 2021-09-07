@@ -1954,13 +1954,21 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 			#	import IPython; IPython.embed()
 			#	import sys; sys.exit()
 			mus = (u1 + u0) / (u1 * u0)
-			expo_mus = mus * dtau_og 
+			expo_mus = mus * dtau 
 			expo_mus = slice_gt(expo_mus, 35.0)    
 			exptrm_mus = exp(-expo_mus)
 
 			#p_single = 1.
-			#cos_theta = u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
-			p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+			#cos_theta = -u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
+			#p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+			p_single = 0
+			maxterm = 4
+			for l in range(maxterm):
+				from scipy.special import legendre
+				ff = cosb_og**maxterm
+				w_temp = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
+				Pn = legendre(l)
+				p_single = p_single + w_temp[0,0] * Pn(-u0)*Pn(u1)
 			for i in range(nlayer):
 				for l in range(stream):
 					multi_scat[i,:] = multi_scat[i,:] + w_multi[l][i,:] * P(u1)[l] * intgrl_new[stream*i+l,:]
@@ -1968,18 +1976,18 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 					#intensity[i,:] = intensity[i,:] + (2*l+1) * I[i*stream+l,:] * P(u1)[l]
 
 			intgrl_per_layer = (w0 *  multi_scat 
-						+ w0_og * F0PI / (4*np.pi) * p_single 
-						* (1 - exptrm_mus) * exp(-tau_og[:-1,:]/u0)
+						+ w0 * F0PI / (4*np.pi) * p_single 
+						* (1 - exptrm_mus) * exp(-tau[:-1,:]/u0)
 						/ mus
 						)
 			multiple = w0 *  multi_scat 
-			single = (w0_og * F0PI / (4*np.pi) * p_single * (1 - exptrm_mus) 
-						* exp(-tau_og[:-1,:]/u0) / mus)
+			single = (w0 * F0PI / (4*np.pi) * p_single * (1 - exptrm_mus) 
+						* exp(-tau[:-1,:]/u0) / mus)
 
 			xint_temp[-1,:] = flux_bot/pi
 			for i in range(nlayer-1,-1,-1):
 				multi_atten_temp[i, :] = multi_atten_temp[i+1, :] * np.exp(-dtau[i,:]/u1) + multiple[i,:] / u1 
-				sing_atten_temp[i, :] = sing_atten_temp[i+1, :] * np.exp(-dtau_og[i,:]/u1) + single[i,:] / u1  
+				sing_atten_temp[i, :] = sing_atten_temp[i+1, :] * np.exp(-dtau[i,:]/u1) + single[i,:] / u1  
 							
 				xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/u1)
 							+ intgrl_per_layer[i,:] / u1) 
@@ -1988,7 +1996,7 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 
 			xint_at_top[ng,nt,:] = xint_temp[0, :]
 			multi_atten[ng,nt,:,:] = multi_atten_temp
-			sing_atten[ng,nt,:,:] = sing_atten_temp
+			sing_atten[ng,nt,:,:] = sing_atten_temp 
 			xint_out[ng,nt,:,:] = xint_temp
 			flux[ng,nt,:,:] = flux_temp
 			multiple_scat[ng,nt,:,:,] = w0 * multi_scat
