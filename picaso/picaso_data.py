@@ -56,12 +56,14 @@ def picaso_albedos(single_phase = 'OTHG', output_dir = None, rayleigh=True, phas
 				delta_eddington=delta_eddington)
 
 	if method=="Toon":
-		disort_dir = '/Users/crooney/Documents/codes/pyDISORT/test/picaso_data/'
+		#disort_dir = '/Users/crooney/Documents/codes/pyDISORT/test/picaso_data/'
+		disort_dir = '/Users/crooney/Documents/codes/picaso/picaso/cdisort_comparison/picaso_data/'
 	else:
 		if stream==2:
 			disort_dir = '/Users/crooney/Documents/codes/pyDISORT/test/picaso_data/SH2/'
 		elif stream==4:
-			disort_dir = '/Users/crooney/Documents/codes/pyDISORT/test/picaso_data/SH4/'
+			#disort_dir = '/Users/crooney/Documents/codes/pyDISORT/test/picaso_data/SH4/'
+			disort_dir = '/Users/crooney/Documents/codes/picaso/picaso/cdisort_comparison/picaso_data/SH4/'
 
 	if rayleigh: 
 		#first test Rayleigh
@@ -77,6 +79,7 @@ def picaso_albedos(single_phase = 'OTHG', output_dir = None, rayleigh=True, phas
 			                                    'g0':np.zeros(196*(nlevel-1)) + 0}))
 
 			if disort_data:
+			    #disort_dir_ = disort_dir + 'data_rayleigh_%.3f.pk' % w0
 			    disort_dir_ = disort_dir + 'data_rayleigh_%.3f.pk' % w0
 			    start_case.inputs['approx']['input_dir']=disort_dir_
 			allout = start_case.spectrum(opa, calculation='reflected')#, full_output=True)

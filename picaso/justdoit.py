@@ -74,8 +74,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     stream = inputs['approx']['stream']
     approximation = inputs['approx']['Toon_coefficients']
     tridiagonal = 0 
-    #input_dir = inputs['approx']['input_dir']
-    input_dir=None
+    input_dir = inputs['approx']['input_dir']
+    #input_dir=None
 
 
     #parameters needed for the two term hg phase function. 
@@ -393,7 +393,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             'single_phase':single_phase, 'multi_phase':multi_phase, 
             'frac_a':frac_a, 'frac_b':frac_b, 'frac_c':frac_c, 'constant_back':constant_back, 
             'constant_forward':constant_forward, 'dim':dimension, 'stream':stream,
-            'xint_at_top': xint_at_top, 'albedo': albedo, 'flux': flux_out, 'xint': intensity, 'direct_flux': direct_flux, 'b_top': b_top,
+            'xint_at_top': xint_at_top, 'albedo': albedo, 'flux': flux_out, 'xint': intensity, 'b_top': b_top,
             'gweight': gweight, 'tweight': tweight, 'gangle': gangle, 'tangle': tangle}, open(filename,'wb'), protocol=2)
     return returns
 

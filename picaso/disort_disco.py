@@ -8,14 +8,15 @@ import json
 
 __refdata__ = os.environ.get('picaso_refdata')
 
-def disort_albedos(output_dir=None, rayleigh=True, phase=True):
+def disort_albedos(output_dir=None, rayleigh=False, phase=True):
     print('DID YOU RUN DISORT CODE TO GET UP-TO-DATE DATA?')
     #real_answer = pd.read_csv(os.path.join(__refdata__,'base_cases', 'DLUGACH_TEST.csv'))
     real_answer = pd.read_csv('/Users/crooney/Documents/codes/picaso/docs/notebooks/SH4.csv')
     real_answer = real_answer.set_index('Unnamed: 0')
     perror = real_answer.copy()
-    disort_dir = '/Users/crooney/Documents/codes/picaso/docs/notebooks/disort_data/'
-    picaso_dir = '/Users/crooney/Documents/codes/pyDISORT/test/picaso_data/'
+    directory = '/Users/crooney/Documents/codes/picaso/picaso/cdisort_comparison/'
+    disort_dir = directory + 'cdisort_data/'
+    picaso_dir = directory + 'picaso_data/'
 
     # Rayleigh
     if rayleigh:

@@ -1099,7 +1099,14 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                                 #rayleigh phase function
                                 (gcos2))
             elif single_phase==1:#'OTHG':
-                p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+                p_single=0*(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+                maxterm = 7
+                for l in range(maxterm):
+                    from scipy.special import legendre
+                    ff = cosb_og**maxterm
+                    w_temp = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
+                    Pn = legendre(l)
+                    p_single = p_single + w_temp * Pn(-u0)*Pn(u1)
             elif single_phase==2:#'TTHG':
                 #Phase function for single scattering albedo frum Solar beam
                 #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
@@ -1127,9 +1134,9 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                 #direct beam
                 #single scattering albedo from sun beam (from ubar0 to ubar1)
                 single_scat[ng,nt,i,:] = single_scat[ng,nt,i+1,:]*exp(-dtau[i,:]/u1) + (
-                        w0_og[i,:]*F0PI/(4.*pi) * p_single[i,:]
-                        * exp(-tau_og[i,:]/u0)
-                        *(1. - exp(-dtau_og[i,:]*(u0+u1)/(u0*u1)))
+                        w0[i,:]*F0PI/(4.*pi) * p_single[i,:]
+                        * exp(-tau[i,:]/u0)
+                        *(1. - exp(-dtau[i,:]*(u0+u1)/(u0*u1)))
                         *(u0/(u0+u1)))
                 multi_scat[ng,nt,i,:] = multi_scat[ng,nt,i+1,:]*exp(-dtau[i,:]/u1) + (
                         +A[i,:]*(1. - exp(-dtau[i,:] *(u0+1*u1)/(u0*u1)))*
@@ -1139,8 +1146,8 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
                 direct_flux[ng,nt,i,:] = (w0_og[i,:]*F0PI/(4.*pi)
                         *(p_single[i,:])
-                        *exp(-tau_og[i,:]/u0)
-                        *(1. - exp(-dtau_og[i,:]*(u0+u1)/(u0*u1)))
+                        *exp(-tau[i,:]/u0)
+                        *(1. - exp(-dtau[i,:]*(u0+u1)/(u0*u1)))
                         *(u0/(u0+u1))
                         )
                 xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/u1) 
@@ -1962,9 +1969,12 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 			#cos_theta = -u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
 			#p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 			p_single = 0
-			maxterm = 4
+			maxterm = 7
 			for l in range(maxterm):
 				from scipy.special import legendre
+				#gama = (0.85/cosb_og)**maxterm
+				#beta = ((1 + gama * (1. + .5*u0**2 * (1-w0**(1/2))**(1/8)))
+				#			/ (u0**((1-(1-w0**8)**(1/8))/(1+2*u0)) + gama))
 				ff = cosb_og**maxterm
 				w_temp = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
 				Pn = legendre(l)
