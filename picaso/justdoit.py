@@ -11,6 +11,7 @@ from scipy.interpolate import RegularGridInterpolator
 import scipy as sp
 from scipy import special
 from scipy.stats import binned_statistic
+from .get_cdisort import get_cdisort
 
 import requests
 import os
@@ -196,7 +197,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                 if full_output: 
                     atm.int_layer = intensity
 
-            else:
+            elif method == "Toon":
                 (xint_at_top, flux_out, intensity, multi_scat, single_scat) = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                                     DTAU, TAU, W0, COSB,GCOS2,ftau_cld,ftau_ray,
                                                     DTAU_OG, TAU_OG, W0_OG, COSB_OG ,
@@ -204,6 +205,18 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                                     single_phase,multi_phase,
                                                     frac_a,frac_b,frac_c,constant_back,constant_forward,
                                                     approximation, b_top=b_top)
+            elif method == "cdisort":
+                print("MAKE SURE YOU'VE RUN CDISORT FOR CORRECT DATA")
+                cdisort_filename = '/Users/crooney/Documents/codes/picaso/picaso/cdisort_comparison/cdisort_data/spectra/data.pk'
+                cdisort_data = pk.load(open(cdisort_filename,'rb'), encoding = 'bytes')
+
+                xint_at_top = cdisort_data[b'xint_at_top']
+                intensity = cdisort_data[b'xint']
+                multi_scat = cdisort_data[b'xint']
+                single_scat = cdisort_data[b'xint']
+                flux_out = np.zeros((ng, nt, 2*nlevel, nwno))
+                flux_out[:,:,::2,:] = cdisort_data[b'flux_down']
+                flux_out[:,:,1::2,:] = cdisort_data[b'flux_up']
 
 
             #if full output is requested add in xint at top for 3d plots

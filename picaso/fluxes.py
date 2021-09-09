@@ -1965,7 +1965,6 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 			expo_mus = slice_gt(expo_mus, 35.0)    
 			exptrm_mus = exp(-expo_mus)
 
-			#p_single = 1.
 			#cos_theta = -u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
 			#p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 			p_single = 0
