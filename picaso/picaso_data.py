@@ -60,7 +60,8 @@ def picaso_albedos(single_phase = 'OTHG', output_dir = None, rayleigh=True, phas
 		disort_dir = '/Users/crooney/Documents/codes/picaso/picaso/cdisort_comparison/picaso_data/'
 	else:
 		if stream==2:
-			disort_dir = '/Users/crooney/Documents/codes/pyDISORT/test/picaso_data/SH2/'
+			#disort_dir = '/Users/crooney/Documents/codes/pyDISORT/test/picaso_data/SH2/'
+			disort_dir = '/Users/crooney/Documents/codes/picaso/picaso/cdisort_comparison/picaso_data/SH2/'
 		elif stream==4:
 			#disort_dir = '/Users/crooney/Documents/codes/pyDISORT/test/picaso_data/SH4/'
 			disort_dir = '/Users/crooney/Documents/codes/picaso/picaso/cdisort_comparison/picaso_data/SH4/'

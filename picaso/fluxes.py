@@ -10,7 +10,7 @@ from numpy.linalg import solve
 from numpy.linalg import inv as npinv
 from scipy.linalg import inv as spinv
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_flux_toon(nlevel, wno, nwno, tau, dtau, w0, cosbar, surf_reflect, ubar0, F0PI):
     """
     Warning
@@ -200,7 +200,7 @@ def get_flux_toon(nlevel, wno, nwno, tau, dtau, w0, cosbar, surf_reflect, ubar0,
 
     return flux_plus, flux_minus
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def slice_eq(array, lim, value):
     """Funciton to replace values with upper or lower limit
     """
@@ -210,7 +210,7 @@ def slice_eq(array, lim, value):
         array[i,:] = new     
     return array
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def slice_lt(array, lim):
     """Funciton to replace values with upper or lower limit
     """
@@ -220,7 +220,7 @@ def slice_lt(array, lim):
         array[i,:] = new     
     return array
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def slice_gt(array, lim):
     """Funciton to replace values with upper or lower limit
     """
@@ -231,7 +231,7 @@ def slice_gt(array, lim):
         array[i,:] = new     
     return array
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def numba_cumsum(mat):
     """Function to compute cumsum along axis=0 to bypass numba not allowing kwargs in 
     cumsum 
@@ -241,7 +241,7 @@ def numba_cumsum(mat):
         new_mat[:,i] = cumsum(mat[:,i])
     return new_mat
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def setup_tri_diag(nlayer,nwno ,c_plus_up, c_minus_up, 
     c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
     gama, dtau, exptrm_positive,  exptrm_minus):
@@ -446,7 +446,7 @@ def setup_pent_diag(nlayer,nwno ,c_plus_up, c_minus_up,
     return A, B, C, D, E, F
 
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def tri_diag_solve(l, a, b, c, d):
     """
     Tridiagonal Matrix Algorithm solver, a b c d can be NumPy array type or Python list type.
@@ -518,7 +518,7 @@ def pent_diag_solve(l, A, B, C, D, E, F):
 
     return X
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3d,gcos2_3d, ftau_cld_3d,ftau_ray_3d,
     dtau_og_3d, tau_og_3d, w0_og_3d, cosb_og_3d, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
@@ -828,7 +828,7 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             xint_at_top[ng,nt,:] = xint[0,:]    
     return xint_at_top
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
@@ -1100,13 +1100,19 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                                 (gcos2))
             elif single_phase==1:#'OTHG':
                 p_single=0*(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
-                maxterm = 7
+                def P(mu): # Legendre polynomials
+                    return [1, mu, (3*mu**2 - 1)/2, (5*mu**3 - 3*mu)/2,
+                            (35*mu**4 - 30*mu**2 + 3)/8, 
+                            (63*mu**5 - 70*mu**3 + 15*mu)/8, 
+                            (231*mu**6 - 315*mu**4 + 105*mu**2 - 5)/16 ]
+                maxterm = 2
                 for l in range(maxterm):
-                    from scipy.special import legendre
+                    #from scipy.special import legendre
                     ff = cosb_og**maxterm
                     w_temp = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
-                    Pn = legendre(l)
-                    p_single = p_single + w_temp * Pn(-u0)*Pn(u1)
+                    #Pn = legendre(l)
+                    #p_single = p_single + w_temp * Pn(-u0)*Pn(u1)
+                    p_single = p_single + w_temp * P(-u0)[l]*P(u1)[l]
             elif single_phase==2:#'TTHG':
                 #Phase function for single scattering albedo frum Solar beam
                 #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
@@ -1134,9 +1140,9 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                 #direct beam
                 #single scattering albedo from sun beam (from ubar0 to ubar1)
                 single_scat[ng,nt,i,:] = single_scat[ng,nt,i+1,:]*exp(-dtau[i,:]/u1) + (
-                        w0[i,:]*F0PI/(4.*pi) * p_single[i,:]
-                        * exp(-tau[i,:]/u0)
-                        *(1. - exp(-dtau[i,:]*(u0+u1)/(u0*u1)))
+                        w0_og[i,:]*F0PI/(4.*pi) * p_single[i,:]
+                        * exp(-tau_og[i,:]/u0)
+                        *(1. - exp(-dtau_og[i,:]*(u0+u1)/(u0*u1)))
                         *(u0/(u0+u1)))
                 multi_scat[ng,nt,i,:] = multi_scat[ng,nt,i+1,:]*exp(-dtau[i,:]/u1) + (
                         +A[i,:]*(1. - exp(-dtau[i,:] *(u0+1*u1)/(u0*u1)))*
@@ -1146,8 +1152,8 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
                 direct_flux[ng,nt,i,:] = (w0_og[i,:]*F0PI/(4.*pi)
                         *(p_single[i,:])
-                        *exp(-tau[i,:]/u0)
-                        *(1. - exp(-dtau[i,:]*(u0+u1)/(u0*u1)))
+                        *exp(-tau_og[i,:]/u0)
+                        *(1. - exp(-dtau_og[i,:]*(u0+u1)/(u0*u1)))
                         *(u0/(u0+u1))
                         )
                 xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/u1) 
@@ -1164,7 +1170,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
     return xint_at_top, flux_out, intensity, multi_scat, single_scat
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def blackbody(t,w):
     """
     Blackbody flux in cgs units in per unit wavelength
@@ -1186,7 +1192,7 @@ def blackbody(t,w):
 
     return ((2.0*h*c**2.0)/(w**5.0))*(1.0/(exp((h*c)/outer(t, w*k)) - 1.0))
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,surf_reflect, tridiagonal):
     """
     This function uses the source function method, which is outlined here : 
@@ -1393,7 +1399,7 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
 
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel_3d, dtau_3d, w0_3d,cosb_3d,plevel_3d, ubar1, tridiagonal):
     """
     This function uses the source function method, which is outlined here : 
@@ -1968,16 +1974,14 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 			#cos_theta = -u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
 			#p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 			p_single = 0
-			maxterm = 7
+			maxterm = stream
 			for l in range(maxterm):
-				from scipy.special import legendre
-				#gama = (0.85/cosb_og)**maxterm
-				#beta = ((1 + gama * (1. + .5*u0**2 * (1-w0**(1/2))**(1/8)))
-				#			/ (u0**((1-(1-w0**8)**(1/8))/(1+2*u0)) + gama))
+				#from scipy.special import legendre
 				ff = cosb_og**maxterm
 				w_temp = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
-				Pn = legendre(l)
-				p_single = p_single + w_temp[0,0] * Pn(-u0)*Pn(u1)
+				#Pn = legendre(l)
+				#p_single = p_single + w_temp[0,0] * Pn(-u0)*Pn(u1)
+				p_single = p_single + w_temp[0,0] * P(-u0)[l]*P(u1)[l]
 			for i in range(nlayer):
 				for l in range(stream):
 					multi_scat[i,:] = multi_scat[i,:] + w_multi[l][i,:] * P(u1)[l] * intgrl_new[stream*i+l,:]
