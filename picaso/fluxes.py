@@ -200,7 +200,7 @@ def get_flux_toon(nlevel, wno, nwno, tau, dtau, w0, cosbar, surf_reflect, ubar0,
 
     return flux_plus, flux_minus
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def slice_eq(array, lim, value):
     """Funciton to replace values with upper or lower limit
     """
@@ -210,7 +210,7 @@ def slice_eq(array, lim, value):
         array[i,:] = new     
     return array
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def slice_lt(array, lim):
     """Funciton to replace values with upper or lower limit
     """
@@ -220,7 +220,7 @@ def slice_lt(array, lim):
         array[i,:] = new     
     return array
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def slice_gt(array, lim):
     """Funciton to replace values with upper or lower limit
     """
@@ -231,7 +231,7 @@ def slice_gt(array, lim):
         array[i,:] = new     
     return array
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def numba_cumsum(mat):
     """Function to compute cumsum along axis=0 to bypass numba not allowing kwargs in 
     cumsum 
@@ -241,7 +241,7 @@ def numba_cumsum(mat):
         new_mat[:,i] = cumsum(mat[:,i])
     return new_mat
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def setup_tri_diag(nlayer,nwno ,c_plus_up, c_minus_up, 
     c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
     gama, dtau, exptrm_positive,  exptrm_minus):
@@ -446,7 +446,7 @@ def setup_pent_diag(nlayer,nwno ,c_plus_up, c_minus_up,
     return A, B, C, D, E, F
 
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def tri_diag_solve(l, a, b, c, d):
     """
     Tridiagonal Matrix Algorithm solver, a b c d can be NumPy array type or Python list type.
@@ -828,7 +828,7 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             xint_at_top[ng,nt,:] = xint[0,:]    
     return xint_at_top
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
@@ -1170,7 +1170,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
     return xint_at_top, flux_out, intensity, multi_scat, single_scat
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def blackbody(t,w):
     """
     Blackbody flux in cgs units in per unit wavelength
@@ -1692,7 +1692,7 @@ def get_transit_3d(nlevel, nwno, radius, gravity,rstar, mass, mmw, k_b, G,amu,
     """
     return 
 
-#@jit(nopython=True, cache=True, debug=True)
+@jit(nopython=True, cache=True, debug=True)
 def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_cld, ftau_ray,
 	dtau_og, tau_og, w0_og, cosb_og, 
 	surf_reflect, ubar0, ubar1, cos_theta, F0PI, single_phase, multi_phase, 
@@ -1894,24 +1894,24 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 			#b_top = 0.0
 			b_surface = 0. + surf_reflect*u0*F0PI*exp(-tau[-1, :]/u0)
 
-			if stream==2:
-				M, B, A_int, N_int, F, G, qq, ll = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-				surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P) 
-
-				#A, N = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-				#surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P, calculate=2) 
-
-				F1, G1 = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-				surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P, calculate=1) 
+#			if stream==2:
+#				M, B, A_int, N_int, F, G, qq, ll = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
+#				surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P) 
+#
+#				#A, N = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
+#				#surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P, calculate=2) 
+#
+#				F1, G1 = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
+#				surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P, calculate=1) 
 			if stream==4:
 				M, B, A_int, N_int, F, G = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P, w0_og, tau_og, dtau_og)
 #
-				A, N = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-				surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P, w0_og, tau_og, dtau_og, calculate=2) 
-
-				F1, G1 = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-				surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P, w0_og, tau_og, dtau_og, calculate=1) 
-
+#				A, N = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
+#				surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P, w0_og, tau_og, dtau_og, calculate=2) 
+#
+#				F1, G1 = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
+#				surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P, w0_og, tau_og, dtau_og, calculate=1) 
+#
 			flux_bot = zeros(nwno)
 			intgrl_new = zeros((stream*nlayer, nwno))
 			#I = zeros((stream*nlayer, nwno))
@@ -1930,7 +1930,7 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 				(intgrl_new[:,W], flux_bot[W], X) = solve_4_stream_banded(M[:,:,W], B[:,W],  
 				A_int[:,:,W], N_int[:,W], F[:,W], G[W], stream)
 				#I[:,W] = intensity_per_layer(A[:,:,W], N[:,W], X)
-				flux_temp[:,W] = calculate_flux(F1[:,:,W], G1[:,W], X)
+				#flux_temp[:,W] = calculate_flux(F1[:,:,W], G1[:,W], X)
 
 			##if stream==4:
 			##	import IPython; IPython.embed()
@@ -2490,7 +2490,7 @@ def setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, u
 
 	return M, B, A, N, A_int, N_int, F, G
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, 
 				a, b, ubar1, P, B0=0., B1=0., calculate=0,calculation='reflected'):
 
@@ -2626,7 +2626,7 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 
 		return A, N
 
-#@jit(nopython=True, cache=True, debug=True)
+@jit(nopython=True, cache=True, debug=True)
 def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, 
         a, b, ubar1, P, w0_og, tau_og, dtau_og, B0=0., B1=0., calculate=0,calculation='reflected'):
 
@@ -2911,152 +2911,161 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 		B[4*nlayer-1,:] = - z2pl_up[n,:] + surf_reflect*z2mn_up[n,:]
 
 		F_bot = zeros((4*nlayer, nwno))
+		G_bot = zeros(nwno)
 		#F_bot[-4:,:] = np.array([f20[-1,:], f21[-1,:], f22[-1,:], f23[-1,:]])
 		F_bot[-4,:] = f20[-1,:]
 		F_bot[-3,:] = f21[-1,:]
 		F_bot[-2,:] = f22[-1,:]
 		F_bot[-1,:] = f23[-1,:]
 		G_bot = z1pl_up[-1,:]
+		#import IPython; IPython.embed()
+		#import sys; sys.exit()
 
+#		output = (Mb, B, A_int, N_int, F_bot, G_bot)
 		return Mb, B, A_int, N_int, F_bot, G_bot
+#
+#	elif calculate == 1: # fluxes per layer
+#		nlevel = nlayer+1
+#		F = zeros((4*nlevel, 4*nlayer, nwno))
+#		G = zeros((4*nlevel, nwno))
+#
+#		F[0,0,:] = p1mn[0,:]
+#		F[0,1,:] = p1pl[0,:]
+#		F[0,2,:] = p2mn[0,:]
+#		F[0,3,:] = p2pl[0,:]
+#		F[1,0,:] = q1mn[0,:]
+#		F[1,1,:] = q1pl[0,:]
+#		F[1,2,:] = q2mn[0,:]
+#		F[1,3,:] = q2pl[0,:]
+#		F[2,0,:] = p1pl[0,:]
+#		F[2,1,:] = p1mn[0,:]
+#		F[2,2,:] = p2pl[0,:]
+#		F[2,3,:] = p2mn[0,:]
+#		F[3,0,:] = q1pl[0,:]
+#		F[3,1,:] = q1mn[0,:]
+#		F[3,2,:] = q2pl[0,:]
+#		F[3,3,:] = q2mn[0,:]
+#
+#		#nn = list(range(0,4*nlayer))
+#		#NN = list(range(0,4*nlevel))
+#		#F[NN[4::4],nn[::4],:] = f00
+#		#F[NN[4::4],nn[1::4],:] = f01
+#		#F[NN[4::4],nn[2::4],:] = f02
+#		#F[NN[4::4],nn[3::4],:] = f03
+#		#F[NN[5::4],nn[::4],:] = f10
+#		#F[NN[5::4],nn[1::4],:] = f11
+#		#F[NN[5::4],nn[2::4],:] = f12
+#		#F[NN[5::4],nn[3::4],:] = f13
+#		#F[NN[6::4],nn[::4],:] = f20
+#		#F[NN[6::4],nn[1::4],:] = f21
+#		#F[NN[6::4],nn[2::4],:] = f22
+#		#F[NN[6::4],nn[3::4],:] = f23
+#		#F[NN[7::4],nn[::4],:] = f30
+#		#F[NN[7::4],nn[1::4],:] = f31
+#		#F[NN[7::4],nn[2::4],:] = f32
+#		#F[NN[7::4],nn[3::4],:] = f33
+#
+#		nn = np.arange(4*nlayer)
+#		indcs = nn[::4]
+#		k = 0
+#		for i in indcs:
+#			F[i+4,i,:] = f00[k,:]
+#			F[i+4,i+1,:] = f01[k,:]
+#			F[i+4,i+2,:] = f02[k,:]
+#			F[i+4,i+3,:] = f03[k,:]
+#			F[i+5,i,:] = f10[k,:]
+#			F[i+5,i+1,:] = f11[k,:]
+#			F[i+5,i+2,:] = f12[k,:]
+#			F[i+5,i+3,:] = f13[k,:]
+#			F[i+6,i,:] = f20[k,:]
+#			F[i+6,i+1,:] = f21[k,:]
+#			F[i+6,i+2,:] = f22[k,:]
+#			F[i+6,i+3,:] = f23[k,:]
+#			F[i+7,i,:] = f30[k,:]
+#			F[i+7,i+1,:] = f31[k,:]
+#			F[i+7,i+2,:] = f32[k,:]
+#			F[i+7,i+3,:] = f33[k,:]
+#			k = k+1
+#                             
+#		G[0,:] = z1mn[0,:]
+#		G[1,:] = z2mn[0,:]
+#		G[2,:] = z1pl[0,:]
+#		G[3,:] = z2pl[0,:]
+#		G[4::4,:] = z1mn_up
+#		G[5::4,:] = z2mn_up
+#		G[6::4,:] = z1pl_up
+#		G[7::4,:] = z2pl_up
+##		import IPython; IPython.embed()
+##		import sys; sys.exit()
+#
+#		output = (F, G)
+#		return F, G
 
-	elif calculate == 1: # fluxes per layer
-		nlevel = nlayer+1
-		F = zeros((4*nlevel, 4*nlayer, nwno))
-		G = zeros((4*nlevel, nwno))
+#	elif calculate == 2: # intensity per layer
+#		a00 = exptrm1;	    a01 = 1/exptrm1;	a02 = exptrm2;	    a03 = 1/exptrm2
+#		a10 = R1*exptrm1;   a11 = -R1/exptrm1;	a12 = R2*exptrm2;   a13 = -R2/exptrm2
+#		a20 = Q1*exptrm1;   a21 = Q1/exptrm1;	a22 = Q2*exptrm2;   a23 = Q2/exptrm2
+#		a30 = S1*exptrm1;   a31 = -S1/exptrm1;	a32 = S2*exptrm2;   a33 = -S2/exptrm2
+#
+#		A = zeros((4*nlayer, 4*nlayer, nwno))
+#		N = zeros((4*nlayer, nwno))
+#
+#		#nn = list(range(0,4*nlayer))
+#		#r = range(4*nlayer)
+#		#nn = [*r]
+#		#A[nn[::4],nn[::4],:] = a00
+#		#A[nn[::4],nn[1::4],:] = a01
+#		#A[nn[::4],nn[2::4],:] = a02
+#		#A[nn[::4],nn[3::4],:] = a03
+#		#A[nn[1::4],nn[::4],:] = a10
+#		#A[nn[1::4],nn[1::4],:] = a11
+#		#A[nn[1::4],nn[2::4],:] = a12
+#		#A[nn[1::4],nn[3::4],:] = a13
+#		#A[nn[2::4],nn[::4],:] = a20
+#		#A[nn[2::4],nn[1::4],:] = a21
+#		#A[nn[2::4],nn[2::4],:] = a22
+#		#A[nn[2::4],nn[3::4],:] = a23
+#		#A[nn[3::4],nn[::4],:] = a30
+#		#A[nn[3::4],nn[1::4],:] = a31
+#		#A[nn[3::4],nn[2::4],:] = a32
+#		#A[nn[3::4],nn[3::4],:] = a33
+#
+#		nn = np.arange(4*nlayer)
+#		indcs = nn[::4]
+#		k = 0
+#		for i in indcs:
+#			A[i,i,:] = a00[k,:]
+#			A[i,i+1,:] = a01[k,:]
+#			A[i,i+2,:] = a02[k,:]
+#			A[i,i+3,:] = a03[k,:]
+#			A[i+1,i,:] = a10[k,:]
+#			A[i+1,i+1,:] = a11[k,:]
+#			A[i+1,i+2,:] = a12[k,:]
+#			A[i+1,i+3,:] = a13[k,:]
+#			A[i+2,i,:] = a20[k,:]
+#			A[i+2,i+1,:] = a21[k,:]
+#			A[i+2,i+2,:] = a22[k,:]
+#			A[i+2,i+3,:] = a23[k,:]
+#			A[i+3,i,:] = a30[k,:]
+#			A[i+3,i+1,:] = a31[k,:]
+#			A[i+3,i+2,:] = a32[k,:]
+#			A[i+3,i+3,:] = a33[k,:]
+#			k = k+1
+#
+#		if calculation is 'reflected':
+#			N[::4,:] = eta[0]*exptau_u0[1:,:]
+#			N[1::4,:] = eta[1]*exptau_u0[1:,:] 
+#			N[2::4,:] = eta[2]*exptau_u0[1:,:]
+#			N[3::4,:] = eta[3]*exptau_u0[1:,:]
+#		else:
+#			N[::4,:] = (1-w0)/a[0] * (B0 + B1 * tau[1:,:]) 
+#			N[1::4,:] = (1-w0)/a[0] * B1/a[1] 
+#			N[2::4,:] = zeros(w0.shape) 
+#			N[3::4,:] = zeros(w0.shape)
+#
+#		return A, N
 
-		F[0,0,:] = p1mn[0,:]
-		F[0,1,:] = p1pl[0,:]
-		F[0,2,:] = p2mn[0,:]
-		F[0,3,:] = p2pl[0,:]
-		F[1,0,:] = q1mn[0,:]
-		F[1,1,:] = q1pl[0,:]
-		F[1,2,:] = q2mn[0,:]
-		F[1,3,:] = q2pl[0,:]
-		F[2,0,:] = p1pl[0,:]
-		F[2,1,:] = p1mn[0,:]
-		F[2,2,:] = p2pl[0,:]
-		F[2,3,:] = p2mn[0,:]
-		F[3,0,:] = q1pl[0,:]
-		F[3,1,:] = q1mn[0,:]
-		F[3,2,:] = q2pl[0,:]
-		F[3,3,:] = q2mn[0,:]
-
-		#nn = list(range(0,4*nlayer))
-		#NN = list(range(0,4*nlevel))
-		#F[NN[4::4],nn[::4],:] = f00
-		#F[NN[4::4],nn[1::4],:] = f01
-		#F[NN[4::4],nn[2::4],:] = f02
-		#F[NN[4::4],nn[3::4],:] = f03
-		#F[NN[5::4],nn[::4],:] = f10
-		#F[NN[5::4],nn[1::4],:] = f11
-		#F[NN[5::4],nn[2::4],:] = f12
-		#F[NN[5::4],nn[3::4],:] = f13
-		#F[NN[6::4],nn[::4],:] = f20
-		#F[NN[6::4],nn[1::4],:] = f21
-		#F[NN[6::4],nn[2::4],:] = f22
-		#F[NN[6::4],nn[3::4],:] = f23
-		#F[NN[7::4],nn[::4],:] = f30
-		#F[NN[7::4],nn[1::4],:] = f31
-		#F[NN[7::4],nn[2::4],:] = f32
-		#F[NN[7::4],nn[3::4],:] = f33
-
-		nn = np.arange(4*nlayer)
-		indcs = nn[::4]
-		k = 0
-		for i in indcs:
-			F[i+4,i,:] = f00[k,:]
-			F[i+4,i+1,:] = f01[k,:]
-			F[i+4,i+2,:] = f02[k,:]
-			F[i+4,i+3,:] = f03[k,:]
-			F[i+5,i,:] = f10[k,:]
-			F[i+5,i+1,:] = f11[k,:]
-			F[i+5,i+2,:] = f12[k,:]
-			F[i+5,i+3,:] = f13[k,:]
-			F[i+6,i,:] = f20[k,:]
-			F[i+6,i+1,:] = f21[k,:]
-			F[i+6,i+2,:] = f22[k,:]
-			F[i+6,i+3,:] = f23[k,:]
-			F[i+7,i,:] = f30[k,:]
-			F[i+7,i+1,:] = f31[k,:]
-			F[i+7,i+2,:] = f32[k,:]
-			F[i+7,i+3,:] = f33[k,:]
-			k = k+1
-                              
-		G[0,:] = z1mn[0,:]
-		G[1,:] = z2mn[0,:]
-		G[2,:] = z1pl[0,:]
-		G[3,:] = z2pl[0,:]
-		G[4::4,:] = z1mn_up
-		G[5::4,:] = z2mn_up
-		G[6::4,:] = z1pl_up
-		G[7::4,:] = z2pl_up
-
-		return F, G
-
-	elif calculate == 2: # intensity per layer
-		a00 = exptrm1;	    a01 = 1/exptrm1;	a02 = exptrm2;	    a03 = 1/exptrm2
-		a10 = R1*exptrm1;   a11 = -R1/exptrm1;	a12 = R2*exptrm2;   a13 = -R2/exptrm2
-		a20 = Q1*exptrm1;   a21 = Q1/exptrm1;	a22 = Q2*exptrm2;   a23 = Q2/exptrm2
-		a30 = S1*exptrm1;   a31 = -S1/exptrm1;	a32 = S2*exptrm2;   a33 = -S2/exptrm2
-
-		A = zeros((4*nlayer, 4*nlayer, nwno))
-		N = zeros((4*nlayer, nwno))
-
-		#nn = list(range(0,4*nlayer))
-		r = range(4*nlayer)
-		nn = [*r]
-		A[nn[::4],nn[::4],:] = a00
-		A[nn[::4],nn[1::4],:] = a01
-		A[nn[::4],nn[2::4],:] = a02
-		A[nn[::4],nn[3::4],:] = a03
-		A[nn[1::4],nn[::4],:] = a10
-		A[nn[1::4],nn[1::4],:] = a11
-		A[nn[1::4],nn[2::4],:] = a12
-		A[nn[1::4],nn[3::4],:] = a13
-		A[nn[2::4],nn[::4],:] = a20
-		A[nn[2::4],nn[1::4],:] = a21
-		A[nn[2::4],nn[2::4],:] = a22
-		A[nn[2::4],nn[3::4],:] = a23
-		A[nn[3::4],nn[::4],:] = a30
-		A[nn[3::4],nn[1::4],:] = a31
-		A[nn[3::4],nn[2::4],:] = a32
-		A[nn[3::4],nn[3::4],:] = a33
-
-		nn = np.arange(4*nlayer)
-		indcs = nn[::4]
-		k = 0
-		for i in indcs:
-			A[i,i,:] = a00[k,:]
-			A[i,i+1,:] = a01[k,:]
-			A[i,i+2,:] = a02[k,:]
-			A[i,i+3,:] = a03[k,:]
-			A[i+1,i,:] = a10[k,:]
-			A[i+1,i+1,:] = a11[k,:]
-			A[i+1,i+2,:] = a12[k,:]
-			A[i+1,i+3,:] = a13[k,:]
-			A[i+2,i,:] = a20[k,:]
-			A[i+2,i+1,:] = a21[k,:]
-			A[i+2,i+2,:] = a22[k,:]
-			A[i+2,i+3,:] = a23[k,:]
-			A[i+3,i,:] = a30[k,:]
-			A[i+3,i+1,:] = a31[k,:]
-			A[i+3,i+2,:] = a32[k,:]
-			A[i+3,i+3,:] = a33[k,:]
-			k = k+1
-
-		if calculation is 'reflected':
-			N[::4,:] = eta[0]*exptau_u0[1:,:]
-			N[1::4,:] = eta[1]*exptau_u0[1:,:] 
-			N[2::4,:] = eta[2]*exptau_u0[1:,:]
-			N[3::4,:] = eta[3]*exptau_u0[1:,:]
-		else:
-			N[::4,:] = (1-w0)/a[0] * (B0 + B1 * tau[1:,:]) 
-			N[1::4,:] = (1-w0)/a[0] * B1/a[1] 
-			N[2::4,:] = zeros(w0.shape) 
-			N[3::4,:] = zeros(w0.shape)
-
-		return A, N
+#	return output
 
 #@jit(nopython=True, cache=True)
 def solve_4_stream(M, B, A_int, N_int, F, G, stream):
@@ -3071,13 +3080,13 @@ def solve_4_stream(M, B, A_int, N_int, F, G, stream):
 	flux_bot = flux[-indx]
 	return intgrl_new, flux_bot, X
 
-#@njit
+@njit
 def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream):
 	#	find constants
 	diag = int(3*stream/2 - 1)
 	#B = np.ones(B.shape)
-	#with objmode(X='float64[:]'):
-	X = solve_banded((diag,diag), M, B)
+	with objmode(X='float64[:]'):
+		X = solve_banded((diag,diag), M, B)
 	#	integral of Iexp(-tau/ubar1) at each level 
 	intgrl_new =  A_int.dot(X) + N_int # pi*N_int
 	#
@@ -3085,7 +3094,7 @@ def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream):
 	flux = F.dot(X) + G
 	return (intgrl_new, flux, X)
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def calculate_flux(F, G, X):
 	return F.dot(X) + G
 
