@@ -3080,19 +3080,22 @@ def solve_4_stream(M, B, A_int, N_int, F, G, stream):
 	flux_bot = flux[-indx]
 	return intgrl_new, flux_bot, X
 
-@njit
+@jit(nopython=True, cache=True)
 def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream):
 	#	find constants
 	diag = int(3*stream/2 - 1)
-	#B = np.ones(B.shape)
-	with objmode(X='float64[:]'):
-		X = solve_banded((diag,diag), M, B)
+	X = numba_solve_banded(diag, M, B)
 	#	integral of Iexp(-tau/ubar1) at each level 
-	intgrl_new =  A_int.dot(X) + N_int # pi*N_int
-	#
+	intgrl_new =  A_int.dot(X) + N_int 
 	#	flux at bottom
 	flux = F.dot(X) + G
 	return (intgrl_new, flux, X)
+
+@njit
+def numba_solve_banded(diag, M, B):
+	with objmode(X='float64[:]'):
+		X = solve_banded((diag,diag), M, B)
+	return X
 
 @jit(nopython=True, cache=True)
 def calculate_flux(F, G, X):
