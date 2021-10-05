@@ -187,18 +187,18 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             #COSB_OG = COSB_OG[0:nlevel-1,0:nwno]
             #F0PI = F0PI[0:nwno]
             if method == 'SH':
-                (xint_at_top, flux_out, intensity, multi_scat, single_scat) = get_reflected_new(nlevel, wno, nwno, ng, nt, 
+                (xint_at_top, flux_out, intensity) = get_reflected_new(nlevel, wno, nwno, ng, nt, 
                                             DTAU, TAU, W0, COSB, GCOS2, ftau_cld, ftau_ray,
                                             DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
                                             atm.surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
                                             single_phase, multi_phase, 
                                            frac_a, frac_b, frac_c, constant_back, constant_forward, 
-                                            dimension, stream, b_top=b_top)
+                                            1, stream, b_top=b_top)
                 if full_output: 
                     atm.int_layer = intensity
 
             elif method == "Toon":
-                (xint_at_top, flux_out, intensity, multi_scat, single_scat) = get_reflected_1d(nlevel, wno,nwno,ng,nt,
+                (xint_at_top, flux_out, intensity) = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                                     DTAU, TAU, W0, COSB,GCOS2,ftau_cld,ftau_ray,
                                                     DTAU_OG, TAU_OG, W0_OG, COSB_OG ,
                                                     atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
