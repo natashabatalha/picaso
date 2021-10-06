@@ -1885,7 +1885,7 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
             #========================= Start loop over wavelength =========================
             for W in range(nwno):
                 (intgrl_new[:,W], flux_bot[W], X) = solve_4_stream_banded(M[:,:,W], B[:,W],  
-                A_int[:,:,W], N_int[:,W], F_bot[:,W], G_bot[W], stream)
+                A_int[:,:,W], N_int[:,W], F_bot[:,W], G_bot[W], stream, nlayer)
                 if flx==1:
                     flux_temp[:,W] = calculate_flux(F[:,:,W], G[:,W], X)
 
@@ -2568,20 +2568,35 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
         return x**4 - beta*x**2 + gama
     
     Del = 9 * f(1/ubar0)
-    Dels = []
-    Dels.append((a[1]*b[0] - b[1]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
+    #Dels = []
+    #Dels.append((a[1]*b[0] - b[1]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
+    #    + 2*(a[3]*b[2] - 2*a[3]*b[0] - 3*b[3]/ubar0)/ubar0**2)
+    #Dels.append((a[0]*b[1] - b[0]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
+    #    - 2*a[0]*(a[3]*b[2] - 3*b[3]/ubar0)/ubar0)
+    #Dels.append((a[3]*b[2] - 3*b[3]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
+    #    - 2*a[3]*(a[0]*b[1] - b[0]/ubar0)/ubar0)
+    #Dels.append((a[2]*b[3] - 3*b[2]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
+    #    + 2*(3*a[0]*b[1] - 2*a[0]*b[3] - 3*b[0]/ubar0)/ubar0**2)
+    Dels = zeros((4, nlayer, nwno))
+    Dels[0,:,:] = ((a[1]*b[0] - b[1]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
         + 2*(a[3]*b[2] - 2*a[3]*b[0] - 3*b[3]/ubar0)/ubar0**2)
-    Dels.append((a[0]*b[1] - b[0]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
+    Dels[1,:,:] = ((a[0]*b[1] - b[0]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
         - 2*a[0]*(a[3]*b[2] - 3*b[3]/ubar0)/ubar0)
-    Dels.append((a[3]*b[2] - 3*b[3]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
+    Dels[2,:,:] = ((a[3]*b[2] - 3*b[3]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
         - 2*a[3]*(a[0]*b[1] - b[0]/ubar0)/ubar0)
-    Dels.append((a[2]*b[3] - 3*b[2]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
+    Dels[3,:,:] = ((a[2]*b[3] - 3*b[2]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
         + 2*(3*a[0]*b[1] - 2*a[0]*b[3] - 3*b[0]/ubar0)/ubar0**2)
+    
+    print("Dels=",Dels)
 
     
-    eta = []
+    #eta = []
+    eta = zeros((4, nlayer, nwno))
     for l in range(4):
-        eta.append(Dels[l]/Del)
+        #eta.append(Dels[l]/Del)
+        eta[l,:,:] = (Dels[l]/Del)
+
+    print("eta=",eta)
 
     expo1 = slice_gt(lam1*dtau, 35.0) 
     expo2 = slice_gt(lam2*dtau, 35.0) 
@@ -2917,21 +2932,28 @@ def solve_4_stream(M, B, A_int, N_int, F, G, stream):
 
 #@jit(nopython=True, cache=True)
 @njit
-def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream):
+def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream, nlayer):
+    #filename = '/Users/crooney/Documents/codes/picaso/picaso/input_data.pk'
+    #pk.dump({'M': M, 'B': B, 'A_int':A_int, 'N_int':N_int, 'F':F, 'G':G, 'stream':stream, 'nlayer':nlayer},
+    #        open(filename,'wb'), protocol=2)
     #   find constants
     diag = int(3*stream/2 - 1)
-    with objmode(X='float64[:]'):
-        X = numba_solve_banded(diag, M, B)
-        print(X)
+    X = zeros(stream*nlayer)
+    with objmode(y='float64[:]'):
+        y = numba_solve_banded(diag, M, B)
+        #print(y)
     #   integral of Iexp(-tau/ubar1) at each level 
-    intgrl_new =  A_int.dot(X) + N_int 
+    intgrl_new =  A_int.dot(y) + N_int 
     #   flux at bottom
-    flux = F.dot(X) + G
-    return (intgrl_new, flux, X)
+    flux = F.dot(y) + G
+    return (intgrl_new, flux, y)
 
 #@njit
 #@jit(nopython=True, cache=True)
 def numba_solve_banded(diag, M, B):
+    #print("diag=",diag)
+    #print("M=",M)
+    #print("B=",B)
     return solve_banded((diag,diag), M, B)
 
 @jit(nopython=True, cache=True)
