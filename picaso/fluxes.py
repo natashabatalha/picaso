@@ -1768,6 +1768,11 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
     xint_at_top = zeros((numg, numt, nwno))
     xint_out = zeros((numg, numt, nlevel, nwno))
     flux = zeros((numg, numt, stream*nlevel, nwno))
+    def P(mu): # Legendre polynomials
+        return [1, mu, (3*mu**2 - 1)/2, (5*mu**3 - 3*mu)/2,
+            (35*mu**4 - 30*mu**2 + 3)/8, 
+            (63*mu**5 - 70*mu**3 + 15*mu)/8, 
+            (231*mu**6 - 315*mu**4 + 105*mu**2 - 5)/16 ]
     
     #================ START CRAZE LOOP OVER ANGLE #================
     for ng in range(numg):
@@ -1775,93 +1780,104 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
             u1 = ubar1[ng,nt]
             u0 = ubar0[ng,nt]
 
-            if single_phase!=1: 
-                g_forward = constant_forward*cosb
-                g_back = constant_back*cosb
-                f = frac_a + frac_b*g_back**frac_c
-
-            if single_phase==1:#'OTHG':
-                g0_m = ones((nlayer, nwno))
-                g1_m = 3*(cosb_og - cosb_og**stream) / (1 - cosb_og**stream)
-                g2_m = 5*(cosb_og**2 - cosb_og**stream) / (1 - cosb_og**stream)
-                g3_m = 7*(cosb_og**3 - cosb_og**stream) / (1 - cosb_og**stream)
-
-                g0_s = g0_m#ones((nlayer, nwno))
-                g1_s = g1_m#3*cosb_og
-                g2_s = g1_m#5*(cosb_og**2)
-                g3_s = g1_m#7*(cosb_og**3)
-
-                #cos_theta = u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
-                #print(cos_theta)
-                #p_single=(1-cosb**2)/sqrt((1+cosb**2+2*cosb*cos_theta)**3) 
-
-            elif single_phase==2:#'TTHG':
-                #Phase function for single scattering albedo frum Solar beam
-                #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-                      #first term of TTHG: forward scattering
-                g0_s = ones((nlayer, nwno))
-                g1_s = 3*(f*g_forward + (1-f)*g_back)
-                g2_s = 5*(f*g_forward**2 + (1-f)*g_back**2)
-                g3_s = 7*(f*g_forward**3 + (1-f)*g_back**3)
-                g4_s = 9*(f*g_forward**4 + (1-f)*g_back**4)
-
-                g0_m = ones((nlayer, nwno))
-                g1_m = 3*cosb
-                g2_m = 5*(cosb**2)
-                g3_m = 7*(cosb**3)
-
-                g_forward = constant_forward*cosb_og
-                g_back = constant_back*cosb_og
-                f = frac_a + frac_b*g_back**frac_c
-                p_single=(f * (1-g_forward**2) /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
-                                #second term of TTHG: backward scattering
-                                +(1-f)*(1-g_back**2)
-                                /sqrt((1+g_back**2+2*g_back*cos_theta)**3))
-
-            elif single_phase==3:#'TTHG_ray':
-                # not happy with Rayleigh, not getting the same inclusion in multiscattering as picaso
-                g0_s = ones((nlayer, nwno))
-                g1_s = (3*ftau_cld*(f*g_forward + (1-f)*g_back)) 
-                g2_s = (5*ftau_cld*(f*g_forward**2 + (1-f)*g_back**2)) + 0.5*ftau_ray
-                g3_s = (7*ftau_cld*(f*g_forward**3 + (1-f)*g_back**3))
-                #g4_s = (9*ftau_cld*(f*g_forward**4 + (1-f)*g_back**4))
-
-                g0_m = ones((nlayer, nwno)) 
-                g1_m = 3*(ftau_cld*cosb)
-                g2_m = 5*(ftau_cld*cosb**2) + 0.5*ftau_ray
-                g3_m = 7*(ftau_cld*cosb**3)
-
-                g_forward = constant_forward*cosb_og
-                g_back = constant_back*cosb_og
-                f = frac_a + frac_b*g_back**frac_c
-                p_single=(ftau_cld*(f * (1-g_forward**2)
-                            /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
-                            #second term of TTHG: backward scattering
-                            +(1-f)*(1-g_back**2)
-                            /sqrt((1+g_back**2+2*g_back*cos_theta)**3))+
-                                #rayleigh phase function
-                                ftau_ray*(0.75*(1+cos_theta**2.0)))
-            
-            def P(mu): # Legendre polynomials
-                return [1, mu, (3*mu**2 - 1)/2, (5*mu**3 - 3*mu)/2,
-                    (35*mu**4 - 30*mu**2 + 3)/8, 
-                    (63*mu**5 - 70*mu**3 + 15*mu)/8, 
-                    (231*mu**6 - 315*mu**4 + 105*mu**2 - 5)/16 ]
-
             a = zeros((stream, nlayer, nwno))
             b = zeros((stream, nlayer, nwno))
             w_single = zeros((stream, nlayer, nwno))
             w_multi = zeros(((stream, nlayer, nwno)))
-
             if array_equal(cosb,cosb_og):
                 ff = 0.*cosb_og
             else:
                 ff = cosb_og**stream
-            for l in range(stream):
-                w_multi[l,:,:] = (2*l+1) * (cosb_og**l - ff) / (1 - ff)
-                w_single[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
-                a[l,:,:] = (2*l + 1) -  w0 * w_multi[l,:,:]
-                b[l,:,:] = ( F0PI * (w0 * w_single[l,:,:])) * P(-u0)[l] / (4*pi)
+            p_single = zeros(cosb_og.shape)
+
+            if single_phase!=1: 
+                g_forward = constant_forward*cosb_og
+                g_back = constant_back*cosb_og
+                f = frac_a + frac_b*g_back**frac_c
+
+            if single_phase==1:#'OTHG':
+                for l in range(stream):
+                    w_multi[l,:,:] = (2*l+1) * (cosb_og**l - ff) / (1 - ff)
+                    w_single[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
+                    a[l,:,:] = (2*l + 1) -  w0 * w_multi[l,:,:]
+                    b[l,:,:] = ( F0PI * (w0 * w_single[l,:,:])) * P(-u0)[l] / (4*pi)
+
+                    #cos_theta = -u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
+                    #p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+                    p_single = p_single + w_single[l,:,:] * P(-u0)[l]*P(u1)[l]
+
+            elif single_phase==2:#'TTHG':
+                #Phase function for single scattering albedo frum Solar beam
+                #uses the Two term Henyey-Greenstein function
+                #g0_s = ones((nlayer, nwno))
+                #g1_s = 3*(f*g_forward + (1-f)*g_back)
+                #g2_s = 5*(f*g_forward**2 + (1-f)*g_back**2)
+                #g3_s = 7*(f*g_forward**3 + (1-f)*g_back**3)
+                #g4_s = 9*(f*g_forward**4 + (1-f)*g_back**4)
+
+                #g0_m = ones((nlayer, nwno))
+                #g1_m = 3*cosb
+                #g2_m = 5*(cosb**2)
+                #g3_m = 7*(cosb**3)
+                    
+                for l in range(stream):
+                    w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff) + (1-f)*(g_back**l - ff)) / (1 - ff)
+                    #w_single[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
+                    w_single[l,:,:] = (2*l+1) * (f*(g_forward**l - ff) + (1-f)*(g_back**l - ff)) / (1 - ff)
+                    w_multi[l,:,:] = (2*l+1) * (cosb_og**l - ff) / (1 - ff)
+                    w_single[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
+                    a[l,:,:] = (2*l + 1) -  w0 * w_multi[l,:,:]
+                    b[l,:,:] = ( F0PI * (w0 * w_single[l,:,:])) * P(-u0)[l] / (4*pi)
+
+                    #cos_theta = -u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
+                    #p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+                    p_single = p_single + w_single[l,:,:] * P(-u0)[l]*P(u1)[l]
+
+                #g_forward = constant_forward*cosb_og
+                #g_back = constant_back*cosb_og
+                #f = frac_a + frac_b*g_back**frac_c
+                #p_single=(f * (1-g_forward**2) /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
+                #                #second term of TTHG: backward scattering
+                #                +(1-f)*(1-g_back**2)
+                #                /sqrt((1+g_back**2+2*g_back*cos_theta)**3))
+
+            elif single_phase==3:#'TTHG_ray':
+                # not happy with Rayleigh, not getting the same inclusion in multiscattering as picaso
+                #g0_s = ones((nlayer, nwno))
+                #g1_s = (3*ftau_cld*(f*g_forward + (1-f)*g_back)) 
+                #g2_s = (5*ftau_cld*(f*g_forward**2 + (1-f)*g_back**2)) + 0.5*ftau_ray
+                #g3_s = (7*ftau_cld*(f*g_forward**3 + (1-f)*g_back**3))
+                ##g4_s = (9*ftau_cld*(f*g_forward**4 + (1-f)*g_back**4))
+
+                #g0_m = ones((nlayer, nwno)) 
+                #g1_m = 3*(ftau_cld*cosb)
+                #g2_m = 5*(ftau_cld*cosb**2) + 0.5*ftau_ray
+                #g3_m = 7*(ftau_cld*cosb**3)
+                for l in range(stream):
+                    w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff) + (1-f)*(g_back**l - ff)) / (1 - ff)
+                    #w_single[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
+                    w_single[l,:,:] = (2*l+1) * (f*(g_forward**l - ff) + (1-f)*(g_back**l - ff)) / (1 - ff)
+                    if l==2:
+                        w_single[2] = w_single[2] + 0.5*ftau_ray
+                        w_multi[2] = w_multi[2] + 0.5*ftau_ray
+                    a[l,:,:] = (2*l + 1) -  w0 * w_multi[l,:,:]
+                    b[l,:,:] = ( F0PI * (w0 * w_single[l,:,:])) * P(-u0)[l] / (4*pi)
+
+                    #cos_theta = -u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
+                    #p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+                    p_single = p_single + w_single[l,:,:] * P(-u0)[l]*P(u1)[l]
+
+                #g_forward = constant_forward*cosb_og
+                #g_back = constant_back*cosb_og
+                #f = frac_a + frac_b*g_back**frac_c
+                #p_single=(ftau_cld*(f * (1-g_forward**2)
+                #            /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
+                #            #second term of TTHG: backward scattering
+                #            +(1-f)*(1-g_back**2)
+                #            /sqrt((1+g_back**2+2*g_back*cos_theta)**3))+
+                #                #rayleigh phase function
+                #                ftau_ray*(0.75*(1+cos_theta**2.0)))
+            
 
             #boundary conditions 
             b_surface = 0. + surf_reflect*u0*F0PI*exp(-tau[-1, :]/u0)
@@ -1894,14 +1910,6 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
             expo_mus = slice_gt(expo_mus, 35.0)    
             exptrm_mus = exp(-expo_mus)
 
-            ##cos_theta = -u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
-            ##p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
-            p_single = 0
-            maxterm = stream
-            for l in range(maxterm):
-                ff = cosb_og**maxterm
-                w_temp = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
-                p_single = p_single + w_temp[0,0] * P(-u0)[l]*P(u1)[l]
             for i in range(nlayer):
                 for l in range(stream):
                     multi_scat[i,:] = multi_scat[i,:] + w_multi[l,i,:] * P(u1)[l] * intgrl_new[stream*i+l,:]
@@ -2057,377 +2065,8 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     return xint_at_top #, flux_down# numg x numt x nwno
 
 @jit(nopython=True, cache=True)
-def setup_2_stream_new(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau, tau, w_single, w_multi, ubar1, P=None):
-
-    if P is None:
-        def P(mu): # Legendre polynomials
-            return [1, mu, 1/2 * (3*mu**2 - 1), 1/2 * (5*mu**3 - 3*mu), 1/8 * (35*mu**4 - 30*mu**2+3)]
-
-    a = [1 - w0 * w_multi[0],
-                3 - w0 * w_multi[1]]
-    b = [F0PI * (w0 * w_single[0]) * P(-ubar0)[0] / (4 * pi) ,
-                F0PI * (w0 * w_single[1]) * P(-ubar0)[1] / (4 * pi)]
-
-    Del = ((1 / ubar0)**2 - a[0]*a[1])
-    eta = [(b[1] /ubar0 - a[1]*b[0]) / Del,
-        (b[0] /ubar0 - a[0]*b[1]) / Del]
-
-    lam = sqrt(a[0]*a[1])
-    expo = lam*dtau
-    expo = slice_gt(expo, 35.0) 
-    exptrm = exp(-expo)
-
-    #   parameters in matrices
-    q = lam/a[1]
-    Q1 = 2*pi*(0.5 + q)
-    Q2 = 2*pi*(0.5 - q)
-
-    Q1mn = Q1*exptrm;  Q2mn = Q2*exptrm
-    Q1pl = Q1/exptrm;  Q2pl = Q2/exptrm
-
-    exptau_u0 = exp(-tau/ubar0)
-    zmn = 2*pi*(0.5*eta[0] - eta[1]) 
-    zpl = 2*pi*(0.5*eta[0] + eta[1])
-    zmn_up = zmn * exptau_u0[1:,:] 
-    zpl_up = zpl * exptau_u0[1:,:] 
-    zmn_down = zmn * exptau_u0[:-1,:] 
-    zpl_down = zpl * exptau_u0[:-1,:] 
-
-    alpha = 1/ubar1 + lam
-    beta = 1/ubar1 - lam
-    mus = (ubar1 + ubar0) / (ubar1 * ubar0)
-    expo_alp = slice_gt(alpha * dtau, 35.0)
-    expo_bet = slice_gt(beta * dtau, 35.0) 
-    expo_mus = slice_gt(mus * dtau, 35.0)    
-    exptrm_alp = (1 - exp(-expo_alp)) / alpha 
-    exptrm_bet = (1 - exp(-expo_bet)) / beta
-    exptrm_mus = (1 - exp(-expo_mus)) / mus
-
-    tau_mu = tau[:-1,:] * (mus - 1/ubar1)
-    tau_mu = slice_gt(tau_mu, 35.0)
-    exptau_mu = exp(-tau_mu)
-    exp_mu = exptrm_mus * exptau_mu
-
-    #   construct matrices
-    M = zeros((2*nlayer, 2*nlayer, nwno))
-    B = zeros((2*nlayer, nwno))
-    A = zeros((2*nlayer, 2*nlayer, nwno))
-    N = zeros((2*nlayer, nwno))
-    A_int = zeros((2*nlayer, 2*nlayer, nwno))
-    N_int = zeros((2*nlayer, nwno))
-    F = zeros((2*nlayer, 2*nlayer, nwno))
-    G = zeros((2*nlayer, nwno))
-
-    #   first row: BC 1
-    M[0,0,:] = Q1[0,:]
-    M[0,1,:] = Q2[0,:]
-    B[0,:] = b_top - zmn[0,:]
-
-    nn = list(range(0,2*nlayer))
-    M[nn[1:-1:2],nn[:-2:2],:] = Q1mn[:-1,:]
-    M[nn[1:-1:2],nn[1:-1:2],:] = Q2pl[:-1,:]
-    M[nn[2::2], nn[:-2:2],:] = Q2mn[:-1,:]
-    M[nn[2::2], nn[1:-1:2],:] = Q1pl[:-1,:]
-    M[nn[1:-1:2],nn[2::2],:] = -Q1[1:,:]
-    M[nn[1:-1:2],nn[3::2],:] = -Q2[1:,:]
-    M[nn[2::2], nn[2::2],:] = -Q2[1:,:]
-    M[nn[2::2], nn[3::2],:] = -Q1[1:,:]
-
-    B[nn[1:-1:2],:] = zmn_down[1:,:] - zmn_up[:-1,:]
-    B[nn[2::2],:] = zpl_down[1:,:] - zpl_up[:-1,:]
-
-    A[nn[::2],nn[::2],:] = exptrm
-    A[nn[::2],nn[1::2],:] = 1/exptrm
-    A[nn[1::2],nn[::2],:] = -q*exptrm
-    A[nn[1::2],nn[1::2],:] = q/exptrm
-
-    N[nn[::2],:] = eta[0] * exptau_u0[1:,:]
-    N[nn[1::2],:] = eta[1] * exptau_u0[1:,:]
-
-    A_int[nn[::2],nn[::2],:] = exptrm_alp
-    A_int[nn[::2],nn[1::2],:] = exptrm_bet
-    A_int[nn[1::2],nn[::2],:] = -q * exptrm_alp
-    A_int[nn[1::2],nn[1::2],:] = q * exptrm_bet
-
-    N_int[nn[::2],:] = eta[0] * exp_mu
-    N_int[nn[1::2],:] = eta[1] * exp_mu
-
-    F[nn[::2],nn[::2],:] = Q1mn
-    F[nn[::2],nn[1::2],:] = Q2pl
-    F[nn[1::2], nn[::2],:] = Q2mn
-    F[nn[1::2], nn[1::2],:] = Q1pl
-
-    G[nn[::2],:] = zmn_up
-    G[nn[1::2],:] = zpl_up
-
-    #   last row: BC 4
-    n = nlayer-1
-    M[2*nlayer-1, 2*nlayer-2,:] = Q2mn[n,:] - surf_reflect*Q1mn[n,:]
-    M[2*nlayer-1, 2*nlayer-1,:] = Q1pl[n,:] - surf_reflect*Q2pl[n,:]
-
-    B[2*nlayer-1,:] = b_surface - zpl_up[n,:] + surf_reflect * zmn_up[n,:]
-
-    X = spsolve(M[:,:,0], B[:,0])
-    #   integral of Iexp(-tau/ubar1) at each level 
-    intgrl_new = A_int[:,:,0].dot(X) + N_int[:,0]
-    #   flux
-    flux = F[:,:,0].dot(X) + G[:,0]
-
-
-    return M, B, A, N, A_int, N_int, F, G
-
-def setup_4_stream_new(nlayer, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, a, b, ubar1, P):
-
-    beta = a[0]*a[1] + 4*a[0]*a[3]/9 + a[2]*a[3]/9
-    gama = a[0]*a[1]*a[2]*a[3]/9
-    lam2 = sqrt((beta + sqrt(beta**2 - 4*gama)) / 2)
-    lam1 = sqrt((beta - sqrt(beta**2 - 4*gama)) / 2)
-
-    def f(x):
-        return x**4 - beta*x**2 + gama
-    
-    Del = 9 * f(1/ubar0)
-    Dels = []
-    Dels.append((a[1]*b[0] - b[1]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
-        + 2*(a[3]*b[2] - 2*a[3]*b[0] - 3*b[3]/ubar0)/ubar0**2)
-    Dels.append((a[0]*b[1] - b[0]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
-        - 2*a[0]*(a[3]*b[2] - 3*b[3]/ubar0)/ubar0)
-    Dels.append((a[3]*b[2] - 3*b[3]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
-        - 2*a[3]*(a[0]*b[1] - b[0]/ubar0)/ubar0)
-    Dels.append((a[2]*b[3] - 3*b[2]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
-        + 2*(3*a[0]*b[1] - 2*a[0]*b[3] - 3*b[0]/ubar0)/ubar0**2)
-    
-    eta = []
-    for l in range(4):
-        eta.append(Dels[l]/Del)
-
-    expo1 = slice_gt(lam1*dtau, 35.0) 
-    expo2 = slice_gt(lam2*dtau, 35.0) 
-    exptrm1 = exp(-expo1)
-    exptrm2 = exp(-expo2)
-
-    R1 = -a[0]/lam1; R2 = -a[0]/lam2
-    Q1 = 1/2 * (a[0]*a[1]/(lam1**2) - 1); Q2 = 1/2 * (a[0]*a[1]/(lam2**2) - 1)
-    S1 = -3/(2*a[3]) * (a[0]*a[1]/lam1 - lam1); S2 = -3/(2*a[3]) * (a[0]*a[1]/lam2 - lam2)
-    
-    p1pl = 2*pi*(1/2 + R1 + 5*Q1/8); p1mn = 2*pi*(1/2 - R1 + 5*Q1/8);
-    p2pl = 2*pi*(1/2 + R2 + 5*Q2/8); p2mn = 2*pi*(1/2 - R2 + 5*Q2/8);
-    q1pl = 2*pi*(-1/8 + 5*Q1/8 + S1); q1mn = 2*pi*(-1/8 + 5*Q1/8 - S1)
-    q2pl = 2*pi*(-1/8 + 5*Q2/8 + S2); q2mn = 2*pi*(-1/8 + 5*Q2/8 - S2)
-
-    z1pl = 2*pi*(eta[0]/2 + eta[1] + 5*eta[2]/8); 
-    z1mn = 2*pi*(eta[0]/2 - eta[1] + 5*eta[2]/8);
-    z2pl = 2*pi*(-eta[0]/8 + 5*eta[2]/8 + eta[3]); 
-    z2mn = 2*pi*(-eta[0]/8 + 5*eta[2]/8 - eta[3]);
-    
-    f00 = p1mn*exptrm1; f01 = p1pl/exptrm1; f02 = p2mn*exptrm2; f03 = p2pl/exptrm2
-    f10 = q1mn*exptrm1; f11 = q1pl/exptrm1; f12 = q2mn*exptrm2; f13 = q2pl/exptrm2
-    f20 = p1pl*exptrm1; f21 = p1mn/exptrm1; f22 = p2pl*exptrm2; f23 = p2mn/exptrm2
-    f30 = q1pl*exptrm1; f31 = q1mn/exptrm1; f32 = q2pl*exptrm2; f33 = q2mn/exptrm2
-
-    exptau_u0 = exp(-tau/ubar0)
-    z1mn_up = z1mn * exptau_u0[1:,:]
-    z2mn_up = z2mn * exptau_u0[1:,:]
-    z1pl_up = z1pl * exptau_u0[1:,:]
-    z2pl_up = z2pl * exptau_u0[1:,:]
-    z1mn_down = z1mn * exptau_u0[:-1,:]
-    z2mn_down = z2mn * exptau_u0[:-1,:]
-    z1pl_down = z1pl * exptau_u0[:-1,:]
-    z2pl_down = z2pl * exptau_u0[:-1,:]
-
-    a00 = exptrm1;      a01 = 1/exptrm1;    a02 = exptrm2;      a03 = 1/exptrm2
-    a10 = R1*exptrm1;   a11 = -R1/exptrm1;  a12 = R2*exptrm2;   a13 = -R2/exptrm2
-    a20 = Q1*exptrm1;   a21 = Q1/exptrm1;   a22 = Q2*exptrm2;   a23 = Q2/exptrm2
-    a30 = S1*exptrm1;   a31 = -S1/exptrm1;  a32 = S2*exptrm2;   a33 = -S2/exptrm2
-
-    n0_up = eta[0]*exptau_u0[1:,:] 
-    n1_up = eta[1]*exptau_u0[1:,:] 
-    n2_up = eta[2]*exptau_u0[1:,:] 
-    n3_up = eta[3]*exptau_u0[1:,:]
-
-    alpha1 = 1/ubar1 + lam1
-    alpha2 = 1/ubar1 + lam2
-    beta1 = 1/ubar1 - lam1
-    beta2 = 1/ubar1 - lam2
-    mus = (ubar1 + ubar0) / (ubar1 * ubar0)
-    expo_alp1 = alpha1 * dtau
-    expo_alp2 = alpha2 * dtau
-    expo_bet1 = beta1 * dtau
-    expo_bet2 = beta2 * dtau
-    expo_mus = mus * dtau 
-    expo_alp1 = slice_gt(expo_alp1, 35.0)
-    expo_alp2 = slice_gt(expo_alp2, 35.0)
-    expo_bet1 = slice_gt(expo_bet1, 35.0)
-    expo_bet2 = slice_gt(expo_bet2, 35.0)
-    expo_mus = slice_gt(expo_mus, 35.0)    
-    exptrm_alp1 = exp(-expo_alp1)
-    exptrm_alp2 = exp(-expo_alp2)
-    exptrm_bet1 = exp(-expo_bet1)
-    exptrm_bet2 = exp(-expo_bet2)
-    exptrm_mus = exp(-expo_mus)
-
-    A00 = (1-exptrm_alp1)/alpha1; A01 = (1-exptrm_bet1)/beta1; 
-    A02 = (1-exptrm_alp2)/alpha2; A03 = (1-exptrm_bet2)/beta2
-    A10 = R1 * A00; A11 = -R1 * A01; A12 = R2 * A02; A13 = -R2 * A03; 
-    A20 = Q1 * A00; A21 =  Q1 * A01; A22 = Q2 * A02; A23 =  Q2 * A03; 
-    A30 = S1 * A00; A31 = -S1 * A01; A32 = S2 * A02; A33 = -S2 * A03; 
-    
-    tau_mu = tau[:-1,:] * (mus - 1/ubar1)
-    tau_mu = slice_gt(tau_mu, 35.0)
-    exptau_mu = exp(-tau_mu)
-    exp_mu = (1 - exptrm_mus) * exptau_mu / mus
-    N0 = eta[0] * exp_mu;   N1 = eta[1] * exp_mu;   N2 = eta[2] * exp_mu;   N3 = eta[3] * exp_mu;   
-
-    M = zeros((4*nlayer, 4*nlayer, nwno))
-    B = zeros((4*nlayer, nwno))
-    A = zeros((4*nlayer, 4*nlayer, nwno))
-    N = zeros((4*nlayer, nwno))
-    A_int = zeros((4*nlayer, 4*nlayer, nwno))
-    N_int = zeros((4*nlayer, nwno))
-    F = zeros((4*nlayer, 4*nlayer, nwno))
-    G = zeros((4*nlayer, nwno))
-
-    #   first two rows: BC 1
-    M[0,0,:] = p1mn[0,:]
-    M[0,1,:] = p1pl[0,:]
-    M[0,2,:] = p2mn[0,:]
-    M[0,3,:] = p2pl[0,:]
-    M[1,0,:] = q1mn[0,:]
-    M[1,1,:] = q1pl[0,:]
-    M[1,2,:] = q2mn[0,:]
-    M[1,3,:] = q2pl[0,:]
-        
-    B[0,:] = b_top - z1mn_down[0,:]
-    B[1,:] = - z2mn_down[0,:]
-
-    #nn = list(range(0,4*nlayer))
-    r = range(4*nlayer)
-    nn = [*r]
-    M[nn[2:-2:4],nn[:-4:4],:] = f00[:-1,:]
-    M[nn[2:-2:4],nn[1:-4:4],:] = f01[:-1,:]
-    M[nn[2:-2:4],nn[2:-4:4],:] = f02[:-1,:]
-    M[nn[2:-2:4],nn[3:-4:4],:] = f03[:-1,:]
-    M[nn[3:-2:4],nn[:-4:4],:] = f10[:-1,:]
-    M[nn[3:-2:4],nn[1:-4:4],:] = f11[:-1,:]
-    M[nn[3:-2:4],nn[2:-4:4],:] = f12[:-1,:]
-    M[nn[3:-2:4],nn[3:-4:4],:] = f13[:-1,:]
-    M[nn[4::4],nn[:-4:4],:] = f20[:-1,:]
-    M[nn[4::4],nn[1:-4:4],:] = f21[:-1,:]
-    M[nn[4::4],nn[2:-4:4],:] = f22[:-1,:]
-    M[nn[4::4],nn[3:-4:4],:] = f23[:-1,:]
-    M[nn[5::4],nn[:-4:4],:] = f30[:-1,:]
-    M[nn[5::4],nn[1:-4:4],:] = f31[:-1,:]
-    M[nn[5::4],nn[2:-4:4],:] = f32[:-1,:]
-    M[nn[5::4],nn[3:-4:4],:] = f33[:-1,:]
-
-    M[nn[2:-2:4],nn[4::4],:] = -p1mn[1:,:]
-    M[nn[2:-2:4],nn[5::4],:] = -p1pl[1:,:]
-    M[nn[2:-2:4],nn[6::4],:] = -p2mn[1:,:]
-    M[nn[2:-2:4],nn[7::4],:] = -p2pl[1:,:]
-    M[nn[3:-2:4],nn[4::4],:] = -q1mn[1:,:]
-    M[nn[3:-2:4],nn[5::4],:] = -q1pl[1:,:]
-    M[nn[3:-2:4],nn[6::4],:] = -q2mn[1:,:]
-    M[nn[3:-2:4],nn[7::4],:] = -q2pl[1:,:]
-    M[nn[4::4],nn[4::4],:] = -p1pl[1:,:]
-    M[nn[4::4],nn[5::4],:] = -p1mn[1:,:]
-    M[nn[4::4],nn[6::4],:] = -p2pl[1:,:]
-    M[nn[4::4],nn[7::4],:] = -p2mn[1:,:]
-    M[nn[5::4],nn[4::4],:] = -q1pl[1:,:]
-    M[nn[5::4],nn[5::4],:] = -q1mn[1:,:]
-    M[nn[5::4],nn[6::4],:] = -q2pl[1:,:]
-    M[nn[5::4],nn[7::4],:] = -q2mn[1:,:]
-
-    B[2:-2:4,:] = z1mn_down[1:,:] - z1mn_up[:-1,:]
-    B[3:-2:4,:] = z2mn_down[1:,:] - z2mn_up[:-1,:]
-    B[4::4,:] = z1pl_down[1:,:] - z1pl_up[:-1,:]
-    B[5::4,:] = z2pl_down[1:,:] - z2pl_up[:-1,:]
-
-    A[nn[::4],nn[::4],:] = a00
-    A[nn[::4],nn[1::4],:] = a01
-    A[nn[::4],nn[2::4],:] = a02
-    A[nn[::4],nn[3::4],:] = a03
-    A[nn[1::4],nn[::4],:] = a10
-    A[nn[1::4],nn[1::4],:] = a11
-    A[nn[1::4],nn[2::4],:] = a12
-    A[nn[1::4],nn[3::4],:] = a13
-    A[nn[2::4],nn[::4],:] = a20
-    A[nn[2::4],nn[1::4],:] = a21
-    A[nn[2::4],nn[2::4],:] = a22
-    A[nn[2::4],nn[3::4],:] = a23
-    A[nn[3::4],nn[::4],:] = a30
-    A[nn[3::4],nn[1::4],:] = a31
-    A[nn[3::4],nn[2::4],:] = a32
-    A[nn[3::4],nn[3::4],:] = a33
-
-    N[::4,:] = n0_up
-    N[1::4,:] = n1_up
-    N[2::4,:] = n2_up
-    N[3::4,:] = n3_up
-
-    A_int[nn[::4],nn[::4],:] = A00
-    A_int[nn[::4],nn[1::4],:] = A01
-    A_int[nn[::4],nn[2::4],:] = A02
-    A_int[nn[::4],nn[3::4],:] = A03
-    A_int[nn[1::4],nn[::4],:] = A10
-    A_int[nn[1::4],nn[1::4],:] = A11
-    A_int[nn[1::4],nn[2::4],:] = A12
-    A_int[nn[1::4],nn[3::4],:] = A13
-    A_int[nn[2::4],nn[::4],:] = A20
-    A_int[nn[2::4],nn[1::4],:] = A21
-    A_int[nn[2::4],nn[2::4],:] = A22
-    A_int[nn[2::4],nn[3::4],:] = A23
-    A_int[nn[3::4],nn[::4],:] = A30
-    A_int[nn[3::4],nn[1::4],:] = A31
-    A_int[nn[3::4],nn[2::4],:] = A32
-    A_int[nn[3::4],nn[3::4],:] = A33
-
-    N_int[::4,:] = N0
-    N_int[1::4,:] = N1
-    N_int[2::4,:] = N2
-    N_int[3::4,:] = N3
-
-    F[nn[::4],nn[::4],:] = f00
-    F[nn[::4],nn[1::4],:] = f01
-    F[nn[::4],nn[2::4],:] = f02
-    F[nn[::4],nn[3::4],:] = f03
-    F[nn[1::4],nn[::4],:] = f10
-    F[nn[1::4],nn[1::4],:] = f11
-    F[nn[1::4],nn[2::4],:] = f12
-    F[nn[1::4],nn[3::4],:] = f13
-    F[nn[2::4],nn[::4],:] = f20
-    F[nn[2::4],nn[1::4],:] = f21
-    F[nn[2::4],nn[2::4],:] = f22
-    F[nn[2::4],nn[3::4],:] = f23
-    F[nn[3::4],nn[::4],:] = f30
-    F[nn[3::4],nn[1::4],:] = f31
-    F[nn[3::4],nn[2::4],:] = f32
-    F[nn[3::4],nn[3::4],:] = f33
-
-    G[::4,:] = z1mn_up
-    G[1::4,:] = z2mn_up
-    G[2::4,:] = z1pl_up
-    G[3::4,:] = z2pl_up
-
-    n = nlayer-1
-    M[4*nlayer-2, 4*nlayer-4,:] = f20[n,:] - surf_reflect*f00[n,:]
-    M[4*nlayer-2, 4*nlayer-3,:] = f21[n,:] - surf_reflect*f01[n,:]
-    M[4*nlayer-2, 4*nlayer-2,:] = f22[n,:] - surf_reflect*f02[n,:]
-    M[4*nlayer-2, 4*nlayer-1,:] = f23[n,:] - surf_reflect*f03[n,:]
-    M[4*nlayer-1, 4*nlayer-4,:] = f30[n,:] - surf_reflect*f10[n,:]
-    M[4*nlayer-1, 4*nlayer-3,:] = f31[n,:] - surf_reflect*f11[n,:]
-    M[4*nlayer-1, 4*nlayer-2,:] = f32[n,:] - surf_reflect*f12[n,:]
-    M[4*nlayer-1, 4*nlayer-1,:] = f33[n,:] - surf_reflect*f13[n,:]
-
-    B[4*nlayer-2,:] = b_surface - z1pl_up[n,:] + surf_reflect*z1mn_up[n,:]
-    #B[4*nlayer-1,:] = b_surface - z2pl_up[n,:] + surf_reflect*z2mn_up[n,:]
-    B[4*nlayer-1,:] = - z2pl_up[n,:] + surf_reflect*z2mn_up[n,:]
-#   import IPython; IPython.embed()
-
-    return M, B, A, N, A_int, N_int, F, G
-
-@jit(nopython=True, cache=True)
 def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, 
-                a, b, ubar1, P, B0=0., B1=0., fluxes=0, calculation='reflected'):
+        a, b, ubar1, P, B0=0., B1=0., fluxes=0, calculation=0):#'reflected'):
 
     Del = ((1 / ubar0)**2 - a[0]*a[1])
     eta = [(b[1] /ubar0 - a[1]*b[0]) / Del,
@@ -2447,7 +2086,7 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
     Q1pl = Q1/exptrm;  Q2pl = Q2/exptrm
 
     exptau_u0 = exp(-tau/ubar0)
-    if calculation is "reflected":
+    if calculation == 0: # is "reflected":
         zmn = 2*pi*(0.5*eta[0] - eta[1]) 
         zpl = 2*pi*(0.5*eta[0] + eta[1])
         zmn_up = zmn * exptau_u0[1:,:] 
@@ -2510,7 +2149,7 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
         A_int[i+1,i+1,:] = (q * exptrm_bet)[k,:]
         k = k+1
 
-    if calculation is 'reflected':
+    if calculation == 0: #is 'reflected':
         N_int[::2,:] = eta[0] * exp_mu
         N_int[1::2,:] = eta[1] * exp_mu
     else:
@@ -2846,116 +2485,20 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
         G[6::4,:] = z1pl_up
         G[7::4,:] = z2pl_up
 
-#   elif calculate == 2: # intensity per layer
-#       a00 = exptrm1;      a01 = 1/exptrm1;    a02 = exptrm2;      a03 = 1/exptrm2
-#       a10 = R1*exptrm1;   a11 = -R1/exptrm1;  a12 = R2*exptrm2;   a13 = -R2/exptrm2
-#       a20 = Q1*exptrm1;   a21 = Q1/exptrm1;   a22 = Q2*exptrm2;   a23 = Q2/exptrm2
-#       a30 = S1*exptrm1;   a31 = -S1/exptrm1;  a32 = S2*exptrm2;   a33 = -S2/exptrm2
-#
-#       A = zeros((4*nlayer, 4*nlayer, nwno))
-#       N = zeros((4*nlayer, nwno))
-#
-#       #nn = list(range(0,4*nlayer))
-#       #r = range(4*nlayer)
-#       #nn = [*r]
-#       #A[nn[::4],nn[::4],:] = a00
-#       #A[nn[::4],nn[1::4],:] = a01
-#       #A[nn[::4],nn[2::4],:] = a02
-#       #A[nn[::4],nn[3::4],:] = a03
-#       #A[nn[1::4],nn[::4],:] = a10
-#       #A[nn[1::4],nn[1::4],:] = a11
-#       #A[nn[1::4],nn[2::4],:] = a12
-#       #A[nn[1::4],nn[3::4],:] = a13
-#       #A[nn[2::4],nn[::4],:] = a20
-#       #A[nn[2::4],nn[1::4],:] = a21
-#       #A[nn[2::4],nn[2::4],:] = a22
-#       #A[nn[2::4],nn[3::4],:] = a23
-#       #A[nn[3::4],nn[::4],:] = a30
-#       #A[nn[3::4],nn[1::4],:] = a31
-#       #A[nn[3::4],nn[2::4],:] = a32
-#       #A[nn[3::4],nn[3::4],:] = a33
-#
-#       nn = np.arange(4*nlayer)
-#       indcs = nn[::4]
-#       k = 0
-#       for i in indcs:
-#           A[i,i,:] = a00[k,:]
-#           A[i,i+1,:] = a01[k,:]
-#           A[i,i+2,:] = a02[k,:]
-#           A[i,i+3,:] = a03[k,:]
-#           A[i+1,i,:] = a10[k,:]
-#           A[i+1,i+1,:] = a11[k,:]
-#           A[i+1,i+2,:] = a12[k,:]
-#           A[i+1,i+3,:] = a13[k,:]
-#           A[i+2,i,:] = a20[k,:]
-#           A[i+2,i+1,:] = a21[k,:]
-#           A[i+2,i+2,:] = a22[k,:]
-#           A[i+2,i+3,:] = a23[k,:]
-#           A[i+3,i,:] = a30[k,:]
-#           A[i+3,i+1,:] = a31[k,:]
-#           A[i+3,i+2,:] = a32[k,:]
-#           A[i+3,i+3,:] = a33[k,:]
-#           k = k+1
-#
-#       if calculation is 'reflected':
-#           N[::4,:] = eta[0]*exptau_u0[1:,:]
-#           N[1::4,:] = eta[1]*exptau_u0[1:,:] 
-#           N[2::4,:] = eta[2]*exptau_u0[1:,:]
-#           N[3::4,:] = eta[3]*exptau_u0[1:,:]
-#       else:
-#           N[::4,:] = (1-w0)/a[0] * (B0 + B1 * tau[1:,:]) 
-#           N[1::4,:] = (1-w0)/a[0] * B1/a[1] 
-#           N[2::4,:] = zeros(w0.shape) 
-#           N[3::4,:] = zeros(w0.shape)
-#
-#       return A, N
-
     return Mb, B, A_int, N_int, F_bot, G_bot, F, G
 
-#@jit(nopython=True, cache=True)
-def solve_4_stream(M, B, A_int, N_int, F, G, stream):
-
-    #   find constants
-    X = spsolve(M, B)
-    #   integral of Iexp(-tau/ubar1) at each level 
-    intgrl_new = A_int.dot(X) + N_int
-    #   flux
-    flux = F.dot(X) + G
-    indx = int(stream/2)
-    flux_bot = flux[-indx]
-    return intgrl_new, flux_bot, X
-
 @jit(nopython=True, cache=True)
-#@njit
 def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream, nlayer):
-    #filename = '/Users/crooney/Documents/codes/picaso/picaso/input_data.pk'
-    #pk.dump({'M': M, 'B': B, 'A_int':A_int, 'N_int':N_int, 'F':F, 'G':G, 'stream':stream, 'nlayer':nlayer},
-    #        open(filename,'wb'), protocol=2)
     #   find constants
     diag = int(3*stream/2 - 1)
-    X = zeros(stream*nlayer)
-    with objmode(y='float64[:]'):
-        y = solve_banded((diag,diag), M, B)
-        #print(y)
+    with objmode(X='float64[:]'):
+        X = solve_banded((diag,diag), M, B)
     #   integral of Iexp(-tau/ubar1) at each level 
-    intgrl_new =  A_int.dot(y) + N_int 
+    intgrl_new =  A_int.dot(X) + N_int 
     #   flux at bottom
-    flux = F.dot(y) + G
-    return (intgrl_new, flux, y)
-
-#@njit
-#@jit(nopython=True, cache=True)
-def numba_solve_banded(diag, M, B):
-    #print("diag=",diag)
-    #print("M=",M)
-    #print("B=",B)
-    return solve_banded((diag,diag), M, B)
+    flux = F.dot(X) + G
+    return (intgrl_new, flux, X)
 
 @jit(nopython=True, cache=True)
 def calculate_flux(F, G, X):
     return F.dot(X) + G
-
-#@jit(nopython=True, cache=True)
-def intensity_per_layer(A, N, X):
-    return A.dot(X) + N
-
