@@ -2557,7 +2557,7 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 
 @jit(nopython=True, cache=True, debug=True)
 def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, 
-        a, b, ubar1, P, B0=0., B1=0., fluxes=0, calculation='reflected'):
+        a, b, ubar1, P, B0=0., B1=0., fluxes=0, calculation=0):#'reflected'):
 
     beta = a[0]*a[1] + 4*a[0]*a[3]/9 + a[2]*a[3]/9
     gama = a[0]*a[1]*a[2]*a[3]/9
@@ -2586,17 +2586,12 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
         - 2*a[3]*(a[0]*b[1] - b[0]/ubar0)/ubar0)
     Dels[3,:,:] = ((a[2]*b[3] - 3*b[2]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
         + 2*(3*a[0]*b[1] - 2*a[0]*b[3] - 3*b[0]/ubar0)/ubar0**2)
-    
-    print("Dels=",Dels)
 
-    
     #eta = []
     eta = zeros((4, nlayer, nwno))
     for l in range(4):
         #eta.append(Dels[l]/Del)
         eta[l,:,:] = (Dels[l]/Del)
-
-    print("eta=",eta)
 
     expo1 = slice_gt(lam1*dtau, 35.0) 
     expo2 = slice_gt(lam2*dtau, 35.0) 
@@ -2623,7 +2618,7 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
     f30 = q1pl*exptrm1; f31 = q1mn/exptrm1; f32 = q2pl*exptrm2; f33 = q2mn/exptrm2
 
     exptau_u0 = exp(-slice_gt(tau/ubar0, 35.0))
-    if calculation is 'reflected':
+    if calculation == 0:# 'reflected':
         z1mn_up = z1mn * exptau_u0[1:,:]
         z2mn_up = z2mn * exptau_u0[1:,:]
         z1pl_up = z1pl * exptau_u0[1:,:]
@@ -2673,7 +2668,7 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
     tau_mu = slice_gt(tau_mu, 35.0)
     exptau_mu = exp(-tau_mu)
     exp_mu = (1 - exptrm_mus) * exptau_mu / mus
-    if calculation is 'reflected':
+    if calculation == 0:#is 'reflected':
         N0 = eta[0] * exp_mu;   N1 = eta[1] * exp_mu;   N2 = eta[2] * exp_mu;   N3 = eta[3] * exp_mu;   
     else:
         #expdtau = exp(-tau[:-1,:]/ubar1)
@@ -2930,8 +2925,8 @@ def solve_4_stream(M, B, A_int, N_int, F, G, stream):
     flux_bot = flux[-indx]
     return intgrl_new, flux_bot, X
 
-#@jit(nopython=True, cache=True)
-@njit
+@jit(nopython=True, cache=True)
+#@njit
 def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream, nlayer):
     #filename = '/Users/crooney/Documents/codes/picaso/picaso/input_data.pk'
     #pk.dump({'M': M, 'B': B, 'A_int':A_int, 'N_int':N_int, 'F':F, 'G':G, 'stream':stream, 'nlayer':nlayer},
@@ -2940,7 +2935,7 @@ def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream, nlayer):
     diag = int(3*stream/2 - 1)
     X = zeros(stream*nlayer)
     with objmode(y='float64[:]'):
-        y = numba_solve_banded(diag, M, B)
+        y = solve_banded((diag,diag), M, B)
         #print(y)
     #   integral of Iexp(-tau/ubar1) at each level 
     intgrl_new =  A_int.dot(y) + N_int 
