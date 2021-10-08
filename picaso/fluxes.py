@@ -200,7 +200,7 @@ def get_flux_toon(nlevel, wno, nwno, tau, dtau, w0, cosbar, surf_reflect, ubar0,
 
     return flux_plus, flux_minus
 
-@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)
 def slice_eq(array, lim, value):
     """Funciton to replace values with upper or lower limit
     """
@@ -210,7 +210,7 @@ def slice_eq(array, lim, value):
         array[i,:] = new     
     return array
 
-@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)
 def slice_lt(array, lim):
     """Funciton to replace values with upper or lower limit
     """
@@ -220,7 +220,7 @@ def slice_lt(array, lim):
         array[i,:] = new     
     return array
 
-@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)
 def slice_gt(array, lim):
     """Funciton to replace values with upper or lower limit
     """
@@ -231,7 +231,7 @@ def slice_gt(array, lim):
         array[i,:] = new     
     return array
 
-@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)
 def numba_cumsum(mat):
     """Function to compute cumsum along axis=0 to bypass numba not allowing kwargs in 
     cumsum 
@@ -241,7 +241,7 @@ def numba_cumsum(mat):
         new_mat[:,i] = cumsum(mat[:,i])
     return new_mat
 
-@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)
 def setup_tri_diag(nlayer,nwno ,c_plus_up, c_minus_up, 
     c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
     gama, dtau, exptrm_positive,  exptrm_minus):
@@ -446,7 +446,7 @@ def setup_pent_diag(nlayer,nwno ,c_plus_up, c_minus_up,
     return A, B, C, D, E, F
 
 
-@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)
 def tri_diag_solve(l, a, b, c, d):
     """
     Tridiagonal Matrix Algorithm solver, a b c d can be NumPy array type or Python list type.
@@ -828,7 +828,7 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             xint_at_top[ng,nt,:] = xint[0,:]    
     return xint_at_top
 
-@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)
 def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
@@ -1170,7 +1170,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
     return xint_at_top, flux_out, intensity
 
-@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)
 def blackbody(t,w):
     """
     Blackbody flux in cgs units in per unit wavelength
@@ -1692,7 +1692,7 @@ def get_transit_3d(nlevel, nwno, radius, gravity,rstar, mass, mmw, k_b, G,amu,
     """
     return 
 
-@jit(nopython=True, cache=True, debug=True)
+#@jit(nopython=True, cache=True, debug=True)
 def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect, ubar0, ubar1, cos_theta, F0PI, single_phase, multi_phase, 
@@ -1794,6 +1794,12 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
                 g_forward = constant_forward*cosb_og
                 g_back = constant_back*cosb_og
                 f = frac_a + frac_b*g_back**frac_c
+                if array_equal(cosb,cosb_og):
+                    ff1 = 0.*cosb_og
+                    ff2 = 0.*cosb_og
+                else:
+                    ff1 = (constant_forward*cosb_og)**stream
+                    ff2 = (constant_back*cosb_og)**stream
 
             if single_phase==1:#'OTHG':
                 for l in range(stream):
@@ -1821,11 +1827,11 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
                 #g3_m = 7*(cosb**3)
                     
                 for l in range(stream):
-                    w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff) + (1-f)*(g_back**l - ff)) / (1 - ff)
+                    w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
+                                        + (1-f)*(g_back**l - ff2) / (1 - ff))
                     #w_single[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
-                    w_single[l,:,:] = (2*l+1) * (f*(g_forward**l - ff) + (1-f)*(g_back**l - ff)) / (1 - ff)
-                    w_multi[l,:,:] = (2*l+1) * (cosb_og**l - ff) / (1 - ff)
-                    w_single[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
+                    w_single[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
+                                        + (1-f)*(g_back**l - ff2) / (1 - ff))
                     a[l,:,:] = (2*l + 1) -  w0 * w_multi[l,:,:]
                     b[l,:,:] = ( F0PI * (w0 * w_single[l,:,:])) * P(-u0)[l] / (4*pi)
 
@@ -1854,9 +1860,12 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
                 #g2_m = 5*(ftau_cld*cosb**2) + 0.5*ftau_ray
                 #g3_m = 7*(ftau_cld*cosb**3)
                 for l in range(stream):
-                    w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff) + (1-f)*(g_back**l - ff)) / (1 - ff)
-                    #w_single[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
-                    w_single[l,:,:] = (2*l+1) * (f*(g_forward**l - ff) + (1-f)*(g_back**l - ff)) / (1 - ff)
+                    #w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
+                    #                    + (1-f)*(g_back**l - ff2) / (1 - ff))
+                    w_multi[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
+                    w_single[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
+                    #w_single[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
+                    #                    + (1-f)*(g_back**l - ff2) / (1 - ff))
                     if l==2:
                         w_single[2] = w_single[2] + 0.5*ftau_ray
                         w_multi[2] = w_multi[2] + 0.5*ftau_ray
@@ -1865,7 +1874,15 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 
                     #cos_theta = -u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
                     #p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
-                    p_single = p_single + w_single[l,:,:] * P(-u0)[l]*P(u1)[l]
+                    #p_single = p_single + w_single[l,:,:] * P(-u0)[l]*P(u1)[l]
+
+                p_single=(ftau_cld*(f * (1-g_forward**2)
+                                                /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
+                                                #second term of TTHG: backward scattering
+                                                +(1-f)*(1-g_back**2)
+                                                /sqrt((1+g_back**2+2*g_back*cos_theta)**3))+            
+                                #rayleigh phase function
+                                ftau_ray*(0.75*(1+cos_theta**2.0)))
 
                 #g_forward = constant_forward*cosb_og
                 #g_back = constant_back*cosb_og
@@ -2064,7 +2081,7 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 
     return xint_at_top #, flux_down# numg x numt x nwno
 
-@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)
 def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, 
         a, b, ubar1, P, B0=0., B1=0., fluxes=0, calculation=0):#'reflected'):
 
@@ -2194,7 +2211,7 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 
     return Mb, B, A_int, N_int, F_bot, G_bot, F, G
 
-@jit(nopython=True, cache=True, debug=True)
+#@jit(nopython=True, cache=True, debug=True)
 def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, 
         a, b, ubar1, P, B0=0., B1=0., fluxes=0, calculation=0):#'reflected'):
 
@@ -2487,7 +2504,7 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 
     return Mb, B, A_int, N_int, F_bot, G_bot, F, G
 
-@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)
 def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream, nlayer):
     #   find constants
     diag = int(3*stream/2 - 1)
@@ -2499,6 +2516,6 @@ def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream, nlayer):
     flux = F.dot(X) + G
     return (intgrl_new, flux, X)
 
-@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)
 def calculate_flux(F, G, X):
     return F.dot(X) + G
