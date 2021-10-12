@@ -1782,13 +1782,13 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 
             a = zeros((stream, nlayer, nwno))
             b = zeros((stream, nlayer, nwno))
-            w_single = zeros((stream, nlayer, nwno))
-            w_multi = zeros(((stream, nlayer, nwno)))
+            w_single = ones((stream, nlayer, nwno))
+            w_multi = ones(((stream, nlayer, nwno)))
             if array_equal(cosb,cosb_og):
                 ff = 0.*cosb_og
             else:
                 ff = cosb_og**stream
-            p_single = zeros(cosb_og.shape)
+            p_single = ones(cosb_og.shape)
 
             if single_phase!=1: 
                 g_forward = constant_forward*cosb_og
@@ -1802,15 +1802,14 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
                     ff2 = (constant_back*cosb_og)**stream
 
             if single_phase==1:#'OTHG':
-                for l in range(stream):
+                for l in range(1,stream):
                     w_multi[l,:,:] = (2*l+1) * (cosb_og**l - ff) / (1 - ff)
                     w_single[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
-                    a[l,:,:] = (2*l + 1) -  w0 * w_multi[l,:,:]
-                    b[l,:,:] = ( F0PI * (w0 * w_single[l,:,:])) * P(-u0)[l] / (4*pi)
 
                     #cos_theta = -u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
                     #p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
                     p_single = p_single + w_single[l,:,:] * P(-u0)[l]*P(u1)[l]
+                #p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 
             elif single_phase==2:#'TTHG':
                 #Phase function for single scattering albedo frum Solar beam
@@ -1826,26 +1825,24 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
                 #g2_m = 5*(cosb**2)
                 #g3_m = 7*(cosb**3)
                     
-                for l in range(stream):
+                for l in range(1,stream):
                     w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
                                         + (1-f)*(g_back**l - ff2) / (1 - ff))
                     #w_single[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
                     w_single[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
                                         + (1-f)*(g_back**l - ff2) / (1 - ff))
-                    a[l,:,:] = (2*l + 1) -  w0 * w_multi[l,:,:]
-                    b[l,:,:] = ( F0PI * (w0 * w_single[l,:,:])) * P(-u0)[l] / (4*pi)
 
                     #cos_theta = -u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
                     #p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
-                    p_single = p_single + w_single[l,:,:] * P(-u0)[l]*P(u1)[l]
+                    #p_single = p_single + w_single[l,:,:] * P(-u0)[l]*P(u1)[l]
 
                 #g_forward = constant_forward*cosb_og
                 #g_back = constant_back*cosb_og
                 #f = frac_a + frac_b*g_back**frac_c
-                #p_single=(f * (1-g_forward**2) /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
-                #                #second term of TTHG: backward scattering
-                #                +(1-f)*(1-g_back**2)
-                #                /sqrt((1+g_back**2+2*g_back*cos_theta)**3))
+                p_single=(f * (1-g_forward**2) /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
+                                #second term of TTHG: backward scattering
+                                +(1-f)*(1-g_back**2)
+                                /sqrt((1+g_back**2+2*g_back*cos_theta)**3))
 
             elif single_phase==3:#'TTHG_ray':
                 # not happy with Rayleigh, not getting the same inclusion in multiscattering as picaso
@@ -1859,18 +1856,16 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
                 #g1_m = 3*(ftau_cld*cosb)
                 #g2_m = 5*(ftau_cld*cosb**2) + 0.5*ftau_ray
                 #g3_m = 7*(ftau_cld*cosb**3)
-                for l in range(stream):
+                for l in range(1,stream):
                     #w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
                     #                    + (1-f)*(g_back**l - ff2) / (1 - ff))
-                    w_multi[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
-                    w_single[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
+                    w_multi[l,:,:] = ftau_cld * (2*l+1) * (cosb_og**l -  ff) / (1-ff)
+                    w_single[l,:,:] = ftau_cld * (2*l+1) * (cosb_og**l -  ff) / (1-ff)
                     #w_single[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
                     #                    + (1-f)*(g_back**l - ff2) / (1 - ff))
                     if l==2:
                         w_single[2] = w_single[2] + 0.5*ftau_ray
                         w_multi[2] = w_multi[2] + 0.5*ftau_ray
-                    a[l,:,:] = (2*l + 1) -  w0 * w_multi[l,:,:]
-                    b[l,:,:] = ( F0PI * (w0 * w_single[l,:,:])) * P(-u0)[l] / (4*pi)
 
                     #cos_theta = -u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
                     #p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
@@ -1895,6 +1890,10 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
                 #                #rayleigh phase function
                 #                ftau_ray*(0.75*(1+cos_theta**2.0)))
             
+
+            for l in range(stream):
+                a[l,:,:] = (2*l + 1) -  w0 * w_multi[l,:,:]
+                b[l,:,:] = ( F0PI * (w0 * w_single[l,:,:])) * P(-u0)[l] / (4*pi)
 
             #boundary conditions 
             b_surface = 0. + surf_reflect*u0*F0PI*exp(-tau[-1, :]/u0)
