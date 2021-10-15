@@ -16,6 +16,7 @@ import linecache
 import matplotlib
 import matplotlib.pyplot as plt
 import math
+import xarray as xr
 
 import warnings
 
@@ -31,8 +32,6 @@ from collections import defaultdict
 from operator import itemgetter
 
 from picaso.disco import get_angles_3d
-
-
 
 def regrid_and_chem_3D(planet=None, input_file=None, orb_phase=None, time_after_pa=None,
                        n_gauss_angles=None, n_chebychev_angles=None, nlon=None, nlat=None, nz=None, CtoO=None, mh=None):
@@ -134,8 +133,8 @@ def regrid_and_chem_3D(planet=None, input_file=None, orb_phase=None, time_after_
     # REGRID PTK
 
     lon2d, lat2d = np.meshgrid(longitude, latitude)
-    lon2d = lon2d.flatten() * 180 / 3.141592
-    lat2d = lat2d.flatten() * 180 / 3.141592
+    lon2d = lon2d.flatten() * 180 / np.pi
+    lat2d = lat2d.flatten() * 180 / np.pi
 
     xs, ys, zs = jpi.lon_lat_to_cartesian(np.radians(all_lon), np.radians(all_lat))
     xt, yt, zt = jpi.lon_lat_to_cartesian(np.radians(lon2d), np.radians(lat2d))
@@ -650,8 +649,14 @@ def thermal_phasecurve(planet=None, in_ptk=None, filt_path=None, wv_range=None,
                        logg_s=None, met_s=None, cloudy=False, fsed=None, optics_dir=None):
     
     '''
-    Compute thermal phase curves from 3D pressure-temperature input (MITgcm). This function rotates the input 3D grid to select the visible hemisphere at each orbital phase angle, it computes the 3D chemistry profile and thermal spectrum at each orbital point. If clouds are turned on, it will also run virga to compute the 3D cloud profile, and use it to compute the spectrum.
-    The 3D flux at each orbital point is then integrated vertically and for all angles, and then integrated for desired wavelength range to obtain one flux value per orbital phase.
+    Compute thermal phase curves from 3D pressure-temperature input (MITgcm). 
+    This function rotates the input 3D grid to select the visible hemisphere at 
+    each orbital phase angle, it computes the 3D chemistry profile and thermal spectrum 
+    at each orbital point. If clouds are turned on, it will also run virga to compute 
+    the 3D cloud profile, and use it to compute the spectrum.
+    The 3D flux at each orbital point is then integrated vertically and for all angles,
+    and then integrated for desired wavelength range to obtain one flux value per orbital 
+    phase.
 
     Parameters
     ----------

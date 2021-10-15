@@ -1,18 +1,16 @@
 from .atmsetup import ATMSETUP
 from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_new, get_transit_1d
 from .wavelength import get_cld_input_grid
-from .opacity_factory import create_grid
 from .optics import RetrieveOpacities,compute_opacity,RetrieveCKs
 from .disco import get_angles_1d, get_angles_3d, compute_disco, compress_disco, compress_thermal
-from .justplotit import numba_cumsum, find_nearest_2d, mean_regrid
+from .justplotit import numba_cumsum, mean_regrid
+from .build_3d_input import regrid_xarray
 
 from virga import justdoit as vj
 from scipy.signal import savgol_filter
 from scipy.interpolate import RegularGridInterpolator
-import scipy as sp
 from scipy import special
 
-import requests
 import os
 import pickle as pk
 import numpy as np
@@ -23,6 +21,9 @@ import pysynphot as psyn
 import astropy.units as u
 import astropy.constants as c
 import math
+import xarray as xr
+from joblib import Parallel, delayed, cpu_count
+import warnings
 
 __refdata__ = os.environ.get('picaso_refdata')
 if not os.path.exists(__refdata__): 
@@ -647,7 +648,8 @@ class inputs():
             self.setup_climate()
             
 
-    def phase_angle(self, phase=0,num_gangle=10, num_tangle=1,symmetry=False):
+    def phase_angle(self, phase=0,num_gangle=10, num_tangle=1,symmetry=False, 
+        phase_grid=None, calculation=None):
         """Define phase angle and number of gauss and tchebychev angles to compute. 
         Controls all geometry of the calculation. Computes latitude and longitudes. 
         Computes cos theta and incoming and outgoing angles. Adds everything to class. 
@@ -679,7 +681,19 @@ class inputs():
             This will only compute the unique incoming angles so that the calculation 
             isn't doing repetetive models. E.g. if num_tangles=10, num_gangles=10. Instead of running a 10x10=100
             FT calculations, it will only run 5x5 = 25 (or a quarter of the sphere).
+        phase_grid : array 
+            This is ONLY for computing phase curves and ONLY can be used 
+        calculation : str 
+            Used for phase curve calculation. Needs to be specified in order 
+            to determine integrable angles correctly.
         """
+        #phase curve requested?? 
+        if not isinstance(phase_grid,type(None)):
+            if isinstance(calculation, type(None)):
+                raise Exception("Phase curve calculation activated because phase_grid is supplied. However, 'calculation' needs to be specified to either 'reflected' or 'thermal'")
+            self.phase_curve_geometry(calculation, phase_grid, num_gangle=num_gangle, num_tangle=num_tangle)
+            return #no need to continue if compute a phase curve
+        
         if (phase > 2*np.pi) or (phase<0): raise Exception('Oops! you input a phase angle greater than 2*pi or less than 0. Please make sure your inputs are in radian units: 0<phase<2pi')
         if ((num_tangle==1) or (num_gangle==1)): 
             #this is here so that we can compare to older models 
@@ -784,6 +798,61 @@ class inputs():
                 full_geom['symmetry'] = 'false'
                 self.inputs['disco'] = full_geom
 
+    def phase_curve_geometry(self, calculation, phase_grid, num_gangle=10, num_tangle=10): 
+        """
+        Geometry setup for phase curve calculation. This computes all the 
+        necessary 
+
+        Parameters 
+        ----------
+        calculation : str 
+            'reflected' or 'thermal'
+        phase_grid : float 
+            phase angle grid to compute phase curve in radians
+        num_gangle : int 
+            number of gauss angles, equivalent to longitude 
+        num_tangle : int 
+            number of tchebychev angles, equivalent to latitude 
+        """
+        if min(phase_grid)<0:raise Exception('Input minimum of phase grid less than 0. Input phase_grid such that there are only values between 0-2pi')
+        if max(phase_grid)>np.pi*2:raise Exception('Input maximum of phase grid is greater than 2pi. Input phase_grid such that there are only values between 0-2pi')
+        self.inputs['phase_angle'] = phase_grid
+        
+        ng = int(num_gangle)
+        nt = int(num_tangle)
+
+        gangle,gweight,tangle,tweight = get_angles_3d(ng, nt) 
+        def compute_angles(phase):
+            out = {}
+            #planet disk is divided into gaussian and chebyshev angles and weights for perfoming the 
+            #intensity as a function of planetary phase angle 
+            ubar0, ubar1, cos_theta,lat,lon = compute_disco(ng, nt, gangle, tangle, phase)
+
+            #build dictionary
+            out['num_gangle'] = ng
+            out['num_tangle'] = nt 
+            out['gangle'], out['gweight'],out['tangle'], out['tweight'] = gangle,gweight,tangle,tweight
+            out['latitude'], out['longitude']  = lat, lon 
+            out['cos_theta'] = cos_theta 
+            out['ubar0'], out['ubar1'] = ubar0, ubar1 
+            out['symmetry'] = 'false'
+            return out 
+
+        full_geom = {}
+        for iphase in self.inputs['phase_angle'] :  
+            if calculation == 'thermal': 
+                #this may seem odd but for thermal emission, flux 
+                #emits at all angles. 
+                #so for all phases we need the same integrable geometry
+                full_geom[iphase] = compute_angles(0)
+            elif calculation == 'reflected': 
+                full_geom[iphase] = compute_angles(iphase)
+            else: 
+                raise Exception('Phase curve setup only works for calculation=thermal or reflected')
+
+
+        self.inputs['disco'] = full_geom
+        self.inputs['disco']['calculation'] = calculation
     def gravity(self, gravity=None, gravity_unit=None, 
         radius=None, radius_unit=None, mass = None, mass_unit=None):
         """
@@ -850,7 +919,6 @@ class inputs():
         self.inputs['star']['wno'] = 'nostar' 
         self.inputs['star']['semi_major'] = 'nostar' 
         self.inputs['star']['semi_major_unit'] = 'nostar' 
-
     def star(self, opannection,temp=None, metal=None, logg=None ,radius = None, radius_unit=None,
         semi_major=None, semi_major_unit = None,
         database='ck04models',filename=None, w_unit=None, f_unit=None):
@@ -993,7 +1061,6 @@ class inputs():
         self.inputs['star']['wno'] = fine_wno_star 
         self.inputs['star']['semi_major'] = semi_major 
         self.inputs['star']['semi_major_unit'] = semi_major_unit 
-
     def atmosphere(self, df=None, filename=None, exclude_mol=None, verbose=True, **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
@@ -1045,7 +1112,6 @@ class inputs():
             if df['H2'].min() < 0.7: 
                 if verbose: print("Turning off Raman for Non-H2 atmosphere")
                 self.inputs['approx']['raman'] = 2
-
     def premix_atmosphere(self, opa, df=None, filename=None, **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
@@ -1105,7 +1171,6 @@ class inputs():
         ind_chem = ind_pt_log[:,0]
 
         self.inputs['atmosphere']['profile'][opa.full_abunds.keys()] = opa.full_abunds.iloc[ind_chem,:].reset_index(drop=True)
-
     def sonora(self, sonora_path, teff, chem='low'):
         """
         This queries Sonora temperature profile that can be downloaded from profiles.tar on 
@@ -1156,7 +1221,6 @@ class inputs():
             self.channon_grid_low(filename=os.path.join(__refdata__,'chemistry','visscher_abunds_m+0.0_co1.0' ))
         self.inputs['atmosphere']['sonora_filename'] = build_filename
         self.nlevel = ptchem.shape[0]
-
     def chemeq(self, CtoO, Met):
         """
         This interpolates from a precomputed grid of CEA runs (run by M.R. Line)
@@ -1197,7 +1261,6 @@ class inputs():
                            'pressure': P})
         self.inputs['atmosphere']['profile'] = df
         return 
-
     def channon_grid_high(self,filename=None):
         if isinstance(filename, type(None)):filename=os.path.join(__refdata__,'chemistry','grid75_feh+000_co_100_highP.txt')
         #df = self.inputs['atmosphere']['profile']
@@ -1316,8 +1379,6 @@ class inputs():
             player_tlayer.loc[:,im] = 10**s #
 
         self.inputs['atmosphere']['profile'] = player_tlayer
-
-
     def channon_grid_low(self, filename = None, interp_window = 11, interp_poly=2):
         """
         Interpolate from visscher grid
@@ -1352,7 +1413,6 @@ class inputs():
             player_tlayer.loc[:,im] = 10**s #
 
         self.inputs['atmosphere']['profile'] = player_tlayer
-
     def guillot_pt(self, Teq, T_int=100, logg1=-1, logKir=-1.5, alpha=0.5,nlevel=61, p_bottom = 1.5, p_top = -6):
         """
         Creates temperature pressure profile given parameterization in Guillot 2010 TP profile
@@ -1406,8 +1466,8 @@ class inputs():
 
         #computing temperature
         T4ir = 0.75*(Teff**(4.))*(tau+(2.0/3.0))
-        f1 = 2.0/3.0 + 2.0/(3.0*gamma1)*(1.+(gamma1*tau/2.0-1.0)*sp.exp(-gamma1*tau))+2.0*gamma1/3.0*(1.0-tau**2.0/2.0)*special.expn(2.0,gamma1*tau)
-        f2 = 2.0/3.0 + 2.0/(3.0*gamma2)*(1.+(gamma2*tau/2.0-1.0)*sp.exp(-gamma2*tau))+2.0*gamma2/3.0*(1.0-tau**2.0/2.0)*special.expn(2.0,gamma2*tau)
+        f1 = 2.0/3.0 + 2.0/(3.0*gamma1)*(1.+(gamma1*tau/2.0-1.0)*np.exp(-gamma1*tau))+2.0*gamma1/3.0*(1.0-tau**2.0/2.0)*special.expn(2.0,gamma1*tau)
+        f2 = 2.0/3.0 + 2.0/(3.0*gamma2)*(1.+(gamma2*tau/2.0-1.0)*np.exp(-gamma2*tau))+2.0*gamma2/3.0*(1.0-tau**2.0/2.0)*special.expn(2.0,gamma2*tau)
         T4v1=f*0.75*T0**4.0*(1.0-alpha)*f1
         T4v2=f*0.75*T0**4.0*alpha*f2
         T=(T4ir+T4v1+T4v2)**(0.25)
@@ -1421,7 +1481,6 @@ class inputs():
 
         # Return TP profile
         return self.inputs['atmosphere']['profile'] 
-
     def TP_line_earth(self,P,Tsfc=294.0, Psfc=1.0, gam_trop=0.18, Ptrop=0.199, 
         gam_strat=-0.045,Pstrat=0.001,nlevel=150):
         """
@@ -1487,9 +1546,241 @@ class inputs():
 
         # Return TP profile
         return self.inputs['atmosphere']['profile'] 
+    def atmosphere_3d(self, ds, regrid=True, plot=True, verbose=True): 
+        """
+        Checks your xarray input to make sure the necessary elements are included. If 
+        requested, it will regrid your output according to what you have specified in 
+        phase_angle() routine. If you have not requested a regrid, it will check to make 
+        sure that the latitude/longitude grid that you have specified in your xarray
+        is the same one that you have set in the phase_angle() routine. 
+        
+        Parameters
+        ----------
+        ds : xarray.DataArray
+            xarray input grid (see GCM 3D input tutorials)
+        regrid : bool
+            If True, this will auto regrid your data, based on the input to the 
+            phase_angle function you have supllied
+            If False, it will skip regridding. However, this assumes that you have already 
+            regridded your data to the necessary gangles and tangles. PICASO will double check 
+            for you by comparing latitude/longitudes of what is in your xarray to what was computed 
+            in the phase_angle function. 
+        plot : bool 
+            If True, this will auto output a regridded plot 
+        verbose : bool 
+            If True, this will plot out messages, letting you know if your input data is being transformed 
+        """
+        #check 
+        if not isinstance(ds, xr.core.dataset.Dataset): 
+            raise Exception('PICASO has moved to only accept xarray input. Please see GCM 3D input tutorials to learn how to reformat your input. ')
+
+        #check for temperature and pressure
+        if 'temperature' not in ds: raise Exception('Must include temperature as data component')
+        
+        #check for pressure and change units if needed
+        if 'pressure' not in ds.coords: 
+            raise Exception("Must include pressure in coords and units")
+        else: 
+            self.nlevel = len(ds.coords['pressure'].values)
+            #CONVERT PRESSURE UNIT
+            unit_old = ds.coords['pressure'].attrs['units'] 
+            unit_reqd = 'bar'
+            if unit_old != unit_reqd: 
+                if verbose: print(f'verbose=True; Converting pressure grid from {unit_old} to required unit of {unit_reqd}.')
+                ds.coords['pressure'] = (
+                    ds.coords['pressure'].values*u.Unit(
+                        unit_old)).to('bar').value
+
+        
+        #check for latitude and longitude 
+        if (('lat' not in ds.coords) or ('lon' not in ds.coords)): 
+            raise Exception("""Must include "lat" and "lon" as coordinates. 
+                  Please see GCM 3D input tutorials to learn how to reformat your input.""")
+        else :
+            lat = ds.coords['lat'].values
+            len_lat = len(lat)
+            lon = ds.coords['lon'].values
+            len_lon = len(lon)
+            nt = self.inputs['disco']['num_tangle']
+            ng = self.inputs['disco']['num_gangle']
+            phase = self.inputs['phase_angle']
 
 
-    def atmosphere_3d(self, dictionary=None, filename=None):
+        if regrid: 
+            #cannot regrid from a course grid to a high one
+            assert nt <= len(lat), f'Cannot regrid from a course grid. num_tangle={nt} and input grid has len(lat)={len_lat}'
+            assert ng <= len(lon), f'Cannot regrid from a course grid. num_gangle={nt} and input grid has len(lon)={len_lon}'
+            #call regridder to get to gauss angle chevychev angle grid
+            if verbose: print(f'verbose=True;regrid=True; Regridding 3D output to ngangle={ng}, ntangle={nt}, with phase={phase}.')
+            ds = regrid_xarray(ds, num_gangle=ng, num_tangle=nt, phase_angle=phase)
+        else: 
+            #check lat and lons match up
+            assert np.array_equal(self.inputs['disco']['latitude']*180/np.pi,
+                lat), f"""Latitudes from the GCM do not match the PICASO grid even 
+                          though the number of grid points are the same. 
+                          Most likely this could be that the input phase of {phase}, is 
+                          different from what the regridder used prior to this function. 
+                          A simple fix is to provide this function with the native 
+                          GCM xarray, turn regrid=True and it will ensure the grids are 
+                          the same."""
+            assert np.array_equal(self.inputs['disco']['longitude']*180/np.pi,
+                lon), f"""Longitude from the GCM do not match the PICASO grid even 
+                          though the number of grid points are the same. 
+                          Most likely this could be that the input phase of {phase}, is 
+                          different from what the regridder used prior to this function. 
+                          A simple fix is to provide this function with the native  
+                          GCM xarray, turn regrid=True and it will ensure the grids are 
+                          the same."""
+        
+        #if there is only one data field through a warning to the user 
+        #that they need to add in chemistry before running specturm
+        if len(ds.keys()) ==1: 
+            if verbose: print('verbose=True;Only one data variable included. Make sure to add in chemical abundances before trying to run spectra.')
+
+        if plot: 
+            if ((ng>1) & (nt>1)):
+                ds['temperature'].isel(z=0).plot(x='lon', y ='lat')
+            elif ((ng==1) & (nt>1)):
+                ds['temperature'].isel(z=0).plot(y ='lat')
+            elif ((ng>1) & (nt==1)):
+                ds['temperature'].isel(z=0).plot(x ='lon')
+
+        self.inputs['atmosphere']['profile'] = ds 
+    def chemeq_3d(self,n_cpu=1): 
+        """
+        You must have already ran atmosphere_3d or pre-defined an xarray gcm 
+        before running this function. 
+
+        This function will post-process sonora chemical equillibrium 
+        chemistry onto your 3D grid. 
+
+        Parameters
+        ----------
+        n_cpu : int 
+            Number of cpu to use for parallelization of chemistry
+        """
+        pt_3d_ds = self.inputs['atmosphere']['profile']
+        nt = self.inputs['disco']['num_tangle']
+        ng = self.inputs['disco']['num_gangle']
+        lon = self.inputs['disco']['longitude']*180/np.pi
+        lat = self.inputs['disco']['latitude']*180/np.pi
+        pres = pt_3d_ds.coords['pressure'].values
+        self.nlevel = len(pres)
+        def run_chem(ilon,ilat):
+            warnings.filterwarnings("ignore")
+            df = pt_3d_ds.isel(x=ilon,y=ilat).to_pandas(
+                    ).reset_index(
+                    ).drop(['lat','lon','z'],axis=1
+                    ).sort_values('pressure')
+            #convert to 1d format
+            self.inputs['atmosphere']['profile']=df
+            #run chemistry, which adds chem to inputs['atmosphere']['profile']
+            self.channon_grid_low(filename=os.path.join(__refdata__,'chemistry','visscher_abunds_m+0.0_co1.0' ))
+            df_w_chem = self.inputs['atmosphere']['profile']            
+            return df_w_chem
+
+        results = Parallel(n_jobs=n_cpu)(delayed(run_chem)(ilon,ilat) for ilon in range(ng) for ilat in range(nt))
+        
+        all_out = {imol:np.zeros((ng,nt,self.nlevel)) for imol in results[0].keys() if imol not in ['temperature','pressure']}
+
+        i = -1
+        for ilon in range(ng):
+            for ilat in range(nt):
+                i+=1
+                for imol in all_out.keys():
+                    if imol not in ['temperature','pressure']:
+                        all_out[imol][ilon, ilat,:] = results[i][imol].values
+
+        data_vars = {imol:(["x", "y","z"], all_out[imol],{'units': 'v/v'}) for imol in results[0].keys() if imol not in ['temperature','pressure']}
+        # put data into a dataset
+        ds_chem = xr.Dataset(
+            data_vars=data_vars,
+            coords=dict(
+                lon=(["x"], lon,{'units': 'degrees'}),#required
+                lat=(["y"], lat,{'units': 'degrees'}),#required
+                pressure=(["z"], pres,{'units': 'bar'})#required*
+            ),
+            attrs=dict(description="coords with vectors"),
+        )
+
+        #append input
+        self.inputs['atmosphere']['profile'] = pt_3d_ds.update(ds_chem)
+
+    def atmosphere_phase(self, ds, shift=None, plot=True, verbose=True): 
+        """
+        Regrids xarray 
+        
+        Parameters
+        ----------
+        ds : xarray.DataArray
+            xarray input grid (see GCM 3D input tutorials)
+        shift : array 
+            For each orbital `phase`, `picaso` will rotate the longitude grid `phase_i`+`shift_i`. 
+            For example, for tidally locked planets, `shift`=0 at all phase angles. 
+            Therefore, `shift` must be input as an array of length `n_phase`, set by phase_angle() routine. 
+            Use plot=True to understand how your grid is being shifted.
+        plot : bool 
+            If True, this will auto output a regridded plot 
+        verbose : bool 
+            If True, this will plot out messages, letting you know if your input data is being transformed 
+        """ 
+        if not isinstance(ds, xr.core.dataset.Dataset): 
+            raise Exception('PICASO has moved to only accept xarray input. Please see GCM 3D input tutorials to learn how to reformat your input. ')
+
+        #check for temperature and pressure
+        if 'temperature' not in ds: raise Exception('Must include temperature as data component')
+        
+
+        #check for pressure and change units if needed
+        if 'pressure' not in ds.coords: 
+            raise Exception("Must include pressure in coords and units")
+        else: 
+            self.nlevel = len(ds.coords['pressure'].values)
+            #CONVERT PRESSURE UNIT
+            unit_old = ds.coords['pressure'].attrs['units'] 
+            unit_reqd = 'bar'
+            if unit_old != unit_reqd: 
+                if verbose: print(f'verbose=True; Converting pressure grid from {unit_old} to required unit of {unit_reqd}.')
+                ds.coords['pressure'] = (
+                    ds.coords['pressure'].values*u.Unit(
+                        unit_old)).to('bar').value
+
+        
+        #check for latitude and longitude 
+        if (('lat' not in ds.coords) or ('lon' not in ds.coords)): 
+            raise Exception("""Must include "lat" and "lon" as coordinates. 
+                  Please see GCM 3D input tutorials to learn how to reformat your input.""")
+        else :
+            og_lat = ds.coords['lat'].values #degrees
+            og_lon = ds.coords['lon'].values #degrees
+
+        #store so we can rotate
+        data_vars_og = {i:ds[i].values for i in ds.keys()}
+        #run through phases and regrid each one
+        shifted_grids = {}
+        for i,iphase in enumerate(self.inputs['phase_angle']): 
+            new_lat = self.inputs['disco'][iphase]['latitude']*180/np.pi#to degrees
+            new_lon = self.inputs['disco'][iphase]['longitude']*180/np.pi#to degrees
+            total_shift = (iphase*180/np.pi + shift[i]) % 360 
+            change_zero_pt = og_lon +  total_shift
+            change_zero_pt[change_zero_pt>360]=change_zero_pt[change_zero_pt>360]%360 #such that always between -180 and 180
+            change_zero_pt[change_zero_pt>180]=change_zero_pt[change_zero_pt>180]%180-180 #such that always between -180 and 180
+            #ds.coords['lon'].values = change_zero_pt
+            split = np.argmin(abs(change_zero_pt + 180)) #find point where we should shift the grid
+            for idata in data_vars_og.keys():
+                swap1 = data_vars_og[idata][0:split,:,:]
+                swap2 = data_vars_og[idata][split:,:,:]
+                data = np.concatenate((swap2,swap1))
+                ds[idata].values = data
+            shifted_grids[iphase] = regrid_xarray(ds, latitude=new_lat, longitude=new_lon)
+        new_phase_grid=xr.concat(list(shifted_grids.values()), pd.Index(list(shifted_grids.keys()), name='phase'))
+
+        if plot: 
+            new_phase_grid['temperature'].isel(z=52).plot(x='lon', y ='lat', col='phase',col_wrap=4)
+        
+        self.inputs['atmosphere']['profile'] = new_phase_grid
+
+    def atmosphere_3d_old(self, dictionary=None, filename=None):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied. 
 
@@ -1558,7 +1849,6 @@ class inputs():
             np.testing.assert_almost_equal(int(ilon) ,nlon , decimal=0,err_msg='Longitudes from dictionary(units degrees) are not the same as longitudes computed in inputs.phase_angle', verbose=True)
         
         self.inputs['atmosphere']['profile'] = df3d
-
     def surface_reflect(self, albedo, wavenumber, old_wavenumber = None):
         """
         Set atmospheric surface reflectivity. This preps the code to run a terrestrial 
@@ -1578,7 +1868,6 @@ class inputs():
             else: 
                 self.inputs['surface_reflect'] = np.interp(wavenumber, old_wavenumber, albedo)
         self.inputs['hard_surface'] = 1 #let's the code know you have a hard surface at depth
-
     def clouds_reset(self):
         """Reset cloud dict to zeros"""
         df = self.inputs['clouds']['profile']
@@ -1926,6 +2215,38 @@ class inputs():
         self.inputs['approx']['TTHG_params']['constant_forward']=tthg_forward
 
         self.inputs['approx']['p_reference']= p_reference
+    
+    def phase_curve(self, opacityclass,  full_output=False, 
+        plot_opacity= False,n_cpu =1 ): 
+        """
+        Run phase curve 
+
+        Parameters
+        -----------
+        opacityclass : class
+            Opacity class from `justdoit.opannection`
+        full_output : bool 
+            (Optional) Default = False. Returns atmosphere class, which enables several 
+            plotting capabilities. 
+        n_cpu : int 
+            (Optional) Default = 1 (no parallelization). Number of cpu to parallelize calculation.
+        """
+        phases = self.inputs['phase_angle']
+        calculation = self.inputs['disco']['calculation']
+        all_geom = self.inputs['disco']
+        all_profiles = self.inputs['atmosphere']['profile']
+
+        def run_phases(iphase):
+            self.inputs['phase_angle'] = iphase[1]
+            self.inputs['atmosphere']['profile'] = all_profiles.isel(phase=iphase[0])
+            self.inputs['disco'] = all_geom[iphase[1]]
+            return self.spectrum(opacityclass,calculation=calculation,dimension='3d',full_output=full_output)
+        
+        results = Parallel(n_jobs=n_cpu)(delayed(run_phases)(iphase) for iphase in enumerate(phases))
+        
+        #return dict such that each key is a different phase 
+        return {iphase:results[i] for i,iphase in enumerate(phases)}
+
 
     def spectrum(self, opacityclass, calculation='reflected', dimension = '1d',  full_output=False, 
         plot_opacity= False, as_dict=True):
@@ -1952,27 +2273,34 @@ class inputs():
             The class is clunky to navigate so if you are consiering navigating through this, ping one of the 
             developers. 
         """
+        #CHECKS 
+
+        #if there is not star, the only picaso option to run is thermal emission
         try: 
-            #if there is not star, the only picaso option to run is thermal emission
             if self.inputs['star']['radius'] == 'nostar':
                 calculation = 'thermal' 
         except KeyError: 
             pass
 
+        #make sure phase angle has been run for reflected light
         try: 
             #phase angles dont need to be specified for thermal emission or transmission
-            a = self.inputs['phase_angle']
+            phase = self.inputs['phase_angle']
         except KeyError: 
-            if calculation != 'reflected':
+            if 'reflected' not in calculation:
                 self.phase_angle(0)
             else: 
-                raise Exception("Phase angle not specified. It is needed for "+calculation)
+                raise Exception("Phase angle not specified. It is needed for reflected light. Please run the jdi.inputs().phase_angle() routine.")
         
+        #make sure no one is running a nonzero phase with thermal emission in 1d
+        if ((phase != 0) & ('thermal' in calculation) & (dimension=='1d')):
+            raise Exception("Non-zero phase is not an option for this type of calculation. This includes a thermal calculation in 1 dimensions.  Unlike reflected light, thermal flux emanates from the planet in all directions regardless of phase. Thermal phase curves are computed by rotating 3D temperature maps, which can be done in PICASO using the 3d functionality.")
+        
+        #I don't make people add this as an input so adding a default here if it hasnt
+        #been run 
         try:
             a = self.inputs['surface_reflect']
         except KeyError:
-            #I don't make people add this as an input so adding a default here if it hasnt
-            #been run 
             self.inputs['surface_reflect'] = 0 
             self.inputs['hard_surface'] = 0 
 
@@ -2118,9 +2446,71 @@ def jupiter_cld():
 def HJ_pt():
     """Function to get Jupiter's PT profile"""
     return os.path.join(__refdata__, 'base_cases','HJ.pt')
-def HJ_pt_3d():
-    """Function to get Jupiter's PT profile"""
-    return os.path.join(__refdata__, 'base_cases','HJ_3d.pt')
+def HJ_pt_3d(as_xarray=False):
+    """Function to get Jupiter's PT profile
+    
+    Parameters
+    ----------
+    as_xarray : bool 
+        Returns as xarray, instead of dictionary
+    """
+    input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')
+    threed_grid = pd.read_csv(input_file,delim_whitespace=True,names=['p','t','k'])
+    all_lon= threed_grid.loc[np.isnan(threed_grid['k'])]['p'].values
+    all_lat=  threed_grid.loc[np.isnan(threed_grid['k'])]['t'].values
+    latlong_ind = np.concatenate((np.array(threed_grid.loc[np.isnan(threed_grid['k'])].index),[threed_grid.shape[0]] ))
+    threed_grid = threed_grid.dropna() 
+
+    lon = np.unique(all_lon)
+    lat = np.unique(all_lat)
+
+    nlon = len(lon)
+    nlat = len(lat)
+    total_pts = nlon*nlat
+    nz = latlong_ind[1] - 1 
+
+    p = np.zeros((nlon,nlat,nz))
+    t = np.zeros((nlon,nlat,nz))
+    kzz = np.zeros((nlon,nlat,nz))
+
+    for i in range(len(latlong_ind)-1):
+
+        ilon = list(lon).index(all_lon[i])
+        ilat = list(lat).index(all_lat[i])
+
+        p[ilon, ilat, :] = threed_grid.loc[latlong_ind[i]:latlong_ind[i+1]]['p'].values
+        t[ilon, ilat, :] = threed_grid.loc[latlong_ind[i]:latlong_ind[i+1]]['t'].values
+        kzz[ilon, ilat, :] = threed_grid.loc[latlong_ind[i]:latlong_ind[i+1]]['k'].values
+    
+    gcm_out = {'pressure':p, 'temperature':t, 'kzz':kzz, 'latitude':lat, 'longitude':lon}
+    if as_xarray:
+        # create data
+        data = gcm_out['temperature']
+
+        # create coords
+        lon = gcm_out['longitude']
+        lat = gcm_out['latitude']
+        pres = gcm_out['pressure'][0,0,:]
+
+        # put data into a dataset
+        ds = xr.Dataset(
+            data_vars=dict(
+                temperature=(["x", "y","z"], data,{'units': 'Kelvin'})#, required
+                #kzz = (["x", "y","z"], gcm_out['kzz'])#could add other data components if wanted
+            ),
+            coords=dict(
+                lon=(["x"], lon,{'units': 'degrees'}),#required
+                lat=(["y"], lat,{'units': 'degrees'}),#required
+                pressure=(["z"], pres,{'units': 'bar'})#required*
+            ),
+            attrs=dict(description="coords with vectors"),
+        )
+        return  ds
+    else: 
+        return gcm_out
+
+
+
 def HJ_cld():
     """Function to get rough Jupiter Cloud model with fsed=3"""
     return os.path.join(__refdata__, 'base_cases','HJ.cld')
