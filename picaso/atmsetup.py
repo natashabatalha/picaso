@@ -84,9 +84,10 @@ class ATMSETUP():
         #SET DIMENSIONALITY
         self.dimension = '3d'
         latitude, longitude = self.latitude*180/np.pi, self.longitude*180/np.pi
+
         read_3d = self.input['atmosphere']['profile'] #huge dictionary with [lat][lon][bundle]
 
-        self.c.nlevel = read_3d[int(latitude[0])][int(longitude[0])].shape[0]
+        self.c.nlevel = self.input['atmosphere']['profile'].dims['z']
         self.c.nlayer = self.c.nlevel - 1  
         ng , nt = self.c.ngangle, self.c.ntangle
 
@@ -109,8 +110,10 @@ class ATMSETUP():
         electrons = False
         for g in range(ng):
             for t in range(nt):
-                read = read_3d[int(latitude[t])][int(longitude[g])].sort_values('pressure').reset_index(drop=True)
-
+                ilat = list(read_3d.coords['lat'].values.astype(np.float32)).index(np.float32(latitude[t]))
+                ilon = list(read_3d.coords['lon'].values.astype(np.float32)).index(np.float32(longitude[g]))
+                #read = read_3d[int(latitude[t])][int(longitude[g])].sort_values('pressure').reset_index(drop=True)
+                read = read_3d.isel(x=ilon,y=ilat).to_pandas().reset_index().drop(['lat','lon','z'],axis=1).sort_values('pressure')
                 #on the first pass look through all the molecules, parse out the electrons and 
                 #add warnings for molecules that aren't recognized
                 if first:
