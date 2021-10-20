@@ -18,7 +18,8 @@ import pandas as pd
 import copy
 import json
 import warnings
-with warnings.catch_warnings():
+with warnings.catch_warnings():#
+
     warnings.filterwarnings("ignore")
     import pysynphot as psyn
 import astropy.units as u
@@ -1795,6 +1796,106 @@ class inputs():
         
         self.inputs['atmosphere']['profile'] = new_phase_grid
 
+    def clouds_4d(self, ds=None, shift=None,  plot=True, iz_plot=0,iw_plot=0,verbose=True): 
+        """
+        Regrids xarray 
+        
+        Parameters
+        ----------
+        ds : xarray.DataArray
+            xarray input grid (see GCM 3D input tutorials)
+            Only optional if you have already defined your dataframe to 
+            self.inputs['clouds']['profile'] 
+        shift : array 
+            For each orbital `phase`, `picaso` will rotate the longitude grid `phase_i`+`shift_i`. 
+            For example, for tidally locked planets, `shift`=0 at all phase angles. 
+            Therefore, `shift` must be input as an array of length `n_phase`, set by phase_angle() routine. 
+            Use plot=True to understand how your grid is being shifted.
+        plot : bool 
+            If True, this will auto output a regridded plot
+        iz_plot : bool 
+            pressure index to plot  
+        iw_plot : bool 
+            wavelength index to plot 
+        verbose : bool 
+            If True, this will plot out messages, letting you know if your input data is being transformed 
+        """ 
+        if isinstance(ds, type(None)):
+            ds = self.inputs['clouds']['profile']
+            if isinstance(ds, type(None)):
+                raise Except("Need to submit an xarray.DataArray because there is no input attached to self.inputs['clouds']['profile']")
+
+        if not isinstance(ds, xr.core.dataset.Dataset): 
+            raise Exception('PICASO has moved to only accept xarray input. Please see GCM 3D input tutorials to learn how to reformat your input. ')
+
+        #check for temperature and pressure
+        if 'opd' not in ds: raise Exception('Must include opd as data component')
+        if 'g0' not in ds: raise Exception('Must include g0 as data component')
+        if 'w0' not in ds: raise Exception('Must include w0 as data component')
+        
+
+        #check for pressure and change units if needed
+        if 'pressure' not in ds.coords: 
+            raise Exception("Must include pressure in coords and units")
+        else: 
+            self.nlevel = len(ds.coords['pressure'].values)
+            #CONVERT PRESSURE UNIT
+            unit_old = ds.coords['pressure'].attrs['units'] 
+            unit_reqd = 'bar'
+            if unit_old != unit_reqd: 
+                if verbose: print(f'verbose=True; Converting pressure grid from {unit_old} to required unit of {unit_reqd}.')
+                ds.coords['pressure'] = (
+                    ds.coords['pressure'].values*u.Unit(
+                        unit_old)).to('bar').value
+
+        #check for wavenumber coordinates 
+        if 'wno' not in ds.coords: 
+            raise Exception("Must include 'wno' (wavenumber) in coords and units")
+        else:
+            #CONVERT wavenumber UNIT if not the right units
+            unit_old = ds.coords['wno'].attrs['units'] 
+            unit_reqd = 'cm^(-1)'
+            if unit_old != unit_reqd: 
+                if verbose: print(f'verbose=True; Converting wno grid from {unit_old} to required unit of {unit_reqd}.')
+                ds.coords['wno'] = (
+                    ds.coords['wno'].values*u.Unit(
+                        unit_old)).to('cm^(-1)').value 
+
+        #check for latitude and longitude 
+        if (('lat' not in ds.coords) or ('lon' not in ds.coords)): 
+            raise Exception("""Must include "lat" and "lon" as coordinates. 
+                  Please see GCM 3D input tutorials to learn how to reformat your input.""")
+        else :
+            og_lat = ds.coords['lat'].values #degrees
+            og_lon = ds.coords['lon'].values #degrees
+
+        #store so we can rotate
+        data_vars_og = {i:ds[i].values for i in ds.keys()}
+        #run through phases and regrid each one
+        shifted_grids = {}
+        for i,iphase in enumerate(self.inputs['phase_angle']): 
+            new_lat = self.inputs['disco'][iphase]['latitude']*180/np.pi#to degrees
+            new_lon = self.inputs['disco'][iphase]['longitude']*180/np.pi#to degrees
+            total_shift = (iphase*180/np.pi + shift[i]) % 360 
+            change_zero_pt = og_lon +  total_shift
+            change_zero_pt[change_zero_pt>360]=change_zero_pt[change_zero_pt>360]%360 #such that always between -180 and 180
+            change_zero_pt[change_zero_pt>180]=change_zero_pt[change_zero_pt>180]%180-180 #such that always between -180 and 180
+            #ds.coords['lon'].values = change_zero_pt
+            split = np.argmin(abs(change_zero_pt + 180)) #find point where we should shift the grid
+            for idata in data_vars_og.keys():
+                swap1 = data_vars_og[idata][0:split,:,:]
+                swap2 = data_vars_og[idata][split:,:,:]
+                data = np.concatenate((swap2,swap1))
+                ds[idata].values = data
+            shifted_grids[iphase] = regrid_xarray(ds, latitude=new_lat, longitude=new_lon)
+        new_phase_grid=xr.concat(list(shifted_grids.values()), pd.Index(list(shifted_grids.keys()), name='phase'))
+
+        if plot: 
+            new_phase_grid['opd'].isel(pressure=iz_plot,wno=iw_plot).plot(x='lon', y ='lat', col='phase',col_wrap=4)
+        
+        self.inputs['clouds']['profile'] = new_phase_grid
+        self.inputs['clouds']['wavenumber'] = ds.coords['wno'].values
+
     def atmosphere_3d_old(self, dictionary=None, filename=None):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied. 
@@ -2092,11 +2193,11 @@ class inputs():
             If true, it uses the min_kz value and does a UnivariateSpline
             accross the kz values to smooth out the profile
         """
-        lat =self.inputs['disco']['latitude']*180/np.pi
-        lon = self.inputs['disco']['longitude']*180/np.pi
-        nt = self.inputs['disco']['num_tangle']
-        ng = self.inputs['disco']['num_gangle']
-        self.nlevel = self.inputs['atmosphere']['profile'].coords
+        lat =self.inputs['atmosphere']['profile'].coords['lat'].values
+        lon = self.inputs['atmosphere']['profile'].coords['lon'].values
+        nt = len(lat)
+        ng = len(lon)
+        self.nlevel = len(self.inputs['atmosphere']['profile'].coords['pressure'].values)
         nlayer = self.nlevel-1
 
         
@@ -2172,9 +2273,12 @@ class inputs():
             ),
             attrs=dict(description="coords with vectors"),
         )
-        self.clouds_3d(ds_virga, plot=False, verbose=False,regrid=False)
-        
+
+        self.inputs['clouds']['profile'] = ds_virga 
+        self.inputs['clouds']['wavenumber'] = ds_virga.coords['wno'].values
+
         if full_output:    return all_out 
+
     def clouds_3d(self, ds, regrid=True, plot=True, iz_plot=0, iw_plot=0,
         verbose=True):
         """
@@ -2479,12 +2583,16 @@ class inputs():
         calculation = self.inputs['disco']['calculation']
         all_geom = self.inputs['disco']
         all_profiles = self.inputs['atmosphere']['profile']
+        all_cld_profiles = self.inputs['clouds']['profile']
 
         def run_phases(iphase):
             self.inputs['phase_angle'] = iphase[1]
             self.inputs['atmosphere']['profile'] = all_profiles.isel(phase=iphase[0])
             self.inputs['disco'] = all_geom[iphase[1]]
-            return self.spectrum(opacityclass,calculation=calculation,dimension='3d',full_output=full_output)
+            if not isinstance(all_cld_profiles, type(None)):
+                self.inputs['clouds']['profile'] = all_cld_profiles.isel(phase=iphase[0])
+            out = self.spectrum(opacityclass,calculation=calculation,dimension='3d',full_output=full_output)
+            return out
         
         results = Parallel(n_jobs=n_cpu)(delayed(run_phases)(iphase) for iphase in enumerate(phases))
         
