@@ -8,7 +8,7 @@ from .build_3d_input import regrid_xarray
 
 from virga import justdoit as vj
 from scipy.signal import savgol_filter
-from scipy.interpolate import RegularGridInterpolator
+from scipy.interpolate import RegularGridInterpolator,UnivariateSpline
 from scipy import special
 
 import os
@@ -17,7 +17,10 @@ import numpy as np
 import pandas as pd
 import copy
 import json
-import pysynphot as psyn
+import warnings
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore")
+    import pysynphot as psyn
 import astropy.units as u
 import astropy.constants as c
 import math
@@ -1546,7 +1549,7 @@ class inputs():
 
         # Return TP profile
         return self.inputs['atmosphere']['profile'] 
-    def atmosphere_3d(self, ds, regrid=True, plot=True, verbose=True): 
+    def atmosphere_3d(self, ds, regrid=True, plot=True, iz_plot=0,verbose=True): 
         """
         Checks your xarray input to make sure the necessary elements are included. If 
         requested, it will regrid your output according to what you have specified in 
@@ -1567,6 +1570,8 @@ class inputs():
             in the phase_angle function. 
         plot : bool 
             If True, this will auto output a regridded plot 
+        iz_plot : int 
+            Altitude index to plot if it is requested
         verbose : bool 
             If True, this will plot out messages, letting you know if your input data is being transformed 
         """
@@ -1639,11 +1644,11 @@ class inputs():
 
         if plot: 
             if ((ng>1) & (nt>1)):
-                ds['temperature'].isel(z=0).plot(x='lon', y ='lat')
+                ds['temperature'].isel(pressure=iz_plot).plot(x='lon', y ='lat')
             elif ((ng==1) & (nt>1)):
-                ds['temperature'].isel(z=0).plot(y ='lat')
+                ds['temperature'].isel(pressure=iz_plot).plot(y ='lat')
             elif ((ng>1) & (nt==1)):
-                ds['temperature'].isel(z=0).plot(x ='lon')
+                ds['temperature'].isel(pressure=iz_plot).plot(x ='lon')
 
         self.inputs['atmosphere']['profile'] = ds 
     def chemeq_3d(self,n_cpu=1): 
@@ -1660,17 +1665,18 @@ class inputs():
             Number of cpu to use for parallelization of chemistry
         """
         pt_3d_ds = self.inputs['atmosphere']['profile']
-        nt = self.inputs['disco']['num_tangle']
-        ng = self.inputs['disco']['num_gangle']
-        lon = self.inputs['disco']['longitude']*180/np.pi
-        lat = self.inputs['disco']['latitude']*180/np.pi
+        lon = pt_3d_ds.coords['lon'].values
+        lat = pt_3d_ds.coords['lat'].values
+        nt = len(lat)
+        ng = len(lon)
+
         pres = pt_3d_ds.coords['pressure'].values
         self.nlevel = len(pres)
         def run_chem(ilon,ilat):
             warnings.filterwarnings("ignore")
-            df = pt_3d_ds.isel(x=ilon,y=ilat).to_pandas(
+            df = pt_3d_ds.isel(lon=ilon,lat=ilat).to_pandas(
                     ).reset_index(
-                    ).drop(['lat','lon','z'],axis=1
+                    ).drop(['lat','lon'],axis=1
                     ).sort_values('pressure')
             #convert to 1d format
             self.inputs['atmosphere']['profile']=df
@@ -1691,14 +1697,14 @@ class inputs():
                     if imol not in ['temperature','pressure']:
                         all_out[imol][ilon, ilat,:] = results[i][imol].values
 
-        data_vars = {imol:(["x", "y","z"], all_out[imol],{'units': 'v/v'}) for imol in results[0].keys() if imol not in ['temperature','pressure']}
+        data_vars = {imol:(["lon", "lat","pressure"], all_out[imol],{'units': 'v/v'}) for imol in results[0].keys() if imol not in ['temperature','pressure']}
         # put data into a dataset
         ds_chem = xr.Dataset(
             data_vars=data_vars,
             coords=dict(
-                lon=(["x"], lon,{'units': 'degrees'}),#required
-                lat=(["y"], lat,{'units': 'degrees'}),#required
-                pressure=(["z"], pres,{'units': 'bar'})#required*
+                lon=(["lon"], lon,{'units': 'degrees'}),#required
+                lat=(["lat"], lat,{'units': 'degrees'}),#required
+                pressure=(["pressure"], pres,{'units': 'bar'})#required*
             ),
             attrs=dict(description="coords with vectors"),
         )
@@ -1706,7 +1712,7 @@ class inputs():
         #append input
         self.inputs['atmosphere']['profile'] = pt_3d_ds.update(ds_chem)
 
-    def atmosphere_phase(self, ds, shift=None, plot=True, verbose=True): 
+    def atmosphere_4d(self, ds=None, shift=None,  plot=True, iz_plot=0,verbose=True): 
         """
         Regrids xarray 
         
@@ -1714,16 +1720,25 @@ class inputs():
         ----------
         ds : xarray.DataArray
             xarray input grid (see GCM 3D input tutorials)
+            Only optional if you have already defined your dataframe to 
+            self.inputs['atmosphere']['profile'] 
         shift : array 
             For each orbital `phase`, `picaso` will rotate the longitude grid `phase_i`+`shift_i`. 
             For example, for tidally locked planets, `shift`=0 at all phase angles. 
             Therefore, `shift` must be input as an array of length `n_phase`, set by phase_angle() routine. 
             Use plot=True to understand how your grid is being shifted.
         plot : bool 
-            If True, this will auto output a regridded plot 
+            If True, this will auto output a regridded plot
+        iz_plot : bool 
+            pressure index to plot  
         verbose : bool 
             If True, this will plot out messages, letting you know if your input data is being transformed 
         """ 
+        if isinstance(ds, type(None)):
+            ds = self.inputs['atmosphere']['profile']
+            if isinstance(ds, type(None)):
+                raise Except("Need to submit an xarray.DataArray because there is no input attached to self.inputs['atmosphere']['profile']")
+
         if not isinstance(ds, xr.core.dataset.Dataset): 
             raise Exception('PICASO has moved to only accept xarray input. Please see GCM 3D input tutorials to learn how to reformat your input. ')
 
@@ -1776,7 +1791,7 @@ class inputs():
         new_phase_grid=xr.concat(list(shifted_grids.values()), pd.Index(list(shifted_grids.keys()), name='phase'))
 
         if plot: 
-            new_phase_grid['temperature'].isel(z=52).plot(x='lon', y ='lat', col='phase',col_wrap=4)
+            new_phase_grid['temperature'].isel(pressure=iz_plot).plot(x='lon', y ='lat', col='phase',col_wrap=4)
         
         self.inputs['atmosphere']['profile'] = new_phase_grid
 
@@ -2047,11 +2062,240 @@ class inputs():
             opd, w0, g0 = out['opd_per_layer'],out['single_scattering'],out['asymmetry']
             df = vj.picaso_format(opd, w0, g0)
 
+        #only pass through clouds 1d if clouds are one dimension 
         self.clouds(df=df)
 
         if full_output : return out
 
-    def clouds_3d(self, filename = None, dictionary =None):
+    def virga_3d(self, condensates, directory,
+        fsed=1, mh=1, mmw=2.2,kz_min=1e5,sig=2, full_output=False,
+        n_cpu=1,verbose=True,smooth_kz=False):
+        """
+        Runs virga cloud code based on the PT and Kzz profiles 
+        that have been added to inptus class.
+
+        Parameters
+        ----------
+        condensates : str 
+            Condensates to run in cloud model 
+        fsed : float 
+            Sedimentation efficiency 
+        mh : float 
+            Metallicity 
+        mmw : float 
+            Atmospheric mean molecular weight  
+        n_cpu : int 
+            number cpu to parallelize
+        verbose : bool 
+            Print statements to help user
+        smooth_kz : bool 
+            If true, it uses the min_kz value and does a UnivariateSpline
+            accross the kz values to smooth out the profile
+        """
+        lat =self.inputs['disco']['latitude']*180/np.pi
+        lon = self.inputs['disco']['longitude']*180/np.pi
+        nt = self.inputs['disco']['num_tangle']
+        ng = self.inputs['disco']['num_gangle']
+        self.nlevel = self.inputs['atmosphere']['profile'].coords
+        nlayer = self.nlevel-1
+
+        
+        
+        if 'kz' not in self.inputs['atmosphere']['profile']: 
+            raise Exception("Must include 'kzz' (vertical mixing) as data component")
+        else:
+            #CONVERT wavenumber UNIT if not the right units
+            unit_old = self.inputs['atmosphere']['profile']['kz'].units 
+            unit_reqd = 'cm^2/s'
+            if unit_old != unit_reqd: 
+                if verbose: print(f'verbose=True; Converting wno grid from {unit_old} to required unit of {unit_reqd}.')
+                self.inputs['atmosphere']['profile']['kz'].values = (
+                    self.inputs['atmosphere']['profile']['kz'].values*u.Unit(
+                        unit_old)).to('cm^2/s').value
+                self.inputs['atmosphere']['profile'].kz.attrs['units'] = unit_reqd
+
+        ptk_3d = self.inputs['atmosphere']['profile'][['temperature','kz']] 
+        def run_virga(ilon,ilat): 
+            cloud_p = vj.Atmosphere(condensates,fsed=fsed,mh=mh,
+                     mmw = mmw, sig =sig,verbose=verbose) 
+            cloud_p.gravity(gravity=self.inputs['planet']['gravity'],
+                     gravity_unit=u.Unit(self.inputs['planet']['gravity_unit']))#
+            df = ptk_3d.isel(lon=ilon, lat=ilat
+                            ).to_pandas(
+                            ).reset_index(
+                            ).drop(
+                            ['lat','lon'],axis=1
+                            ).sort_values('pressure')
+            if smooth_kz: 
+                x=np.log10(df['pressure'].values)
+                y = np.log10(df['kz'].values)
+                x=x[y>np.log10(kz_min)]
+                y = y[y>np.log10(kz_min)]
+                if len(y)<2: 
+                    raise Exception(f'Not enough kz values above kz_min of {kz_min} to perform spline smoothing')
+                spl = UnivariateSpline(x, y,ext=3)
+                df['kz'] = spl(np.log10(df['pressure'].values))
+            cloud_p.ptk(df =df, kz_min = kz_min)
+            out = vj.compute(cloud_p, as_dict=True,
+                              directory=directory)
+            return out 
+
+        results = Parallel(n_jobs=n_cpu)(delayed(run_virga)(ilon,ilat) for ilon in range(ng) for ilat in range(nt))
+        
+        wno_grid = 1e4/results[0]['wave']
+        nwno = len(wno_grid)
+        pres = results[0]['pressure']
+
+        data_vars=dict(
+                opd=(["pressure","wno","lon", "lat"], np.zeros((nlayer,nwno,ng,nt)),{'units': 'depth per layer'}),
+                g0=(["pressure","wno","lon", "lat"], np.zeros((nlayer,nwno,ng,nt)),{'units': 'none'}),
+                w0=(["pressure","wno","lon", "lat"], np.zeros((nlayer,nwno,ng,nt)),{'units': 'none'}),
+            )
+
+        i=0
+        if full_output: all_out = {f'lat{i}':{} for i in range(ng)}
+        for ig in range(ng):
+            for it in range(nt):
+                out = results[i];i+=1
+                data_vars['opd'][1][:,:,ig,it]= out['opd_per_layer']
+                data_vars['g0'][1][:,:,ig,it] = out['asymmetry']
+                data_vars['w0'][1][:,:,ig,it] = out['single_scattering']
+                if full_output: all_out[f'lat{it}'][f'lon{ig}'] = out
+
+        ds_virga= xr.Dataset(
+            data_vars=data_vars,
+            coords=dict(
+                lon=(["lon"], lon,{'units': 'degrees'}),#required
+                lat=(["lat"], lat,{'units': 'degrees'}),#required
+                pressure=(["pressure"], pres,{'units': 'bar'}),#required
+                wno=(["wno"], wno_grid,{'units': 'cm^(-1)'})#required for clouds
+            ),
+            attrs=dict(description="coords with vectors"),
+        )
+        self.clouds_3d(ds_virga, plot=False, verbose=False,regrid=False)
+        
+        if full_output:    return all_out 
+    def clouds_3d(self, ds, regrid=True, plot=True, iz_plot=0, iw_plot=0,
+        verbose=True):
+        """
+        Checks your cloud xarray input to make sure the necessary elements are included. If 
+        requested, it will regrid your output according to what you have specified in 
+        phase_angle() routine. If you have not requested a regrid, it will check to make 
+        sure that the latitude/longitude grid that you have specified in your xarray
+        is the same one that you have set in the phase_angle() routine. 
+        
+        Parameters
+        ----------
+        ds : xarray.DataArray
+            xarray input grid (see cloud GCM 3D input tutorials)
+        regrid : bool
+            If True, this will auto regrid your data, based on the input to the 
+            phase_angle function you have supllied
+            If False, it will skip regridding. However, this assumes that you have already 
+            regridded your data to the necessary gangles and tangles. PICASO will double check 
+            for you by comparing latitude/longitudes of what is in your xarray to what was computed 
+            in the phase_angle function. 
+        plot : bool 
+            If True, this will auto output a regridded plot 
+        iz_plot : int 
+            Altitude index to plot if a plot is requested
+        iw_plot : int 
+            Wavelength index to plot if plot is requested
+        verbose : bool 
+            If True, this will plot out messages, letting you know if your input data is being transformed 
+        """
+        #tell program that clouds are 3 dimensional 
+        self.inputs['clouds']['dims']='3d'
+
+        #check 
+        if not isinstance(ds, xr.core.dataset.Dataset): 
+            raise Exception('PICASO has moved to only accept xarray input. Please see GCM 3D input tutorials to learn how to reformat your input. ')
+
+        #check for cloud properties
+        if 'opd' not in ds: raise Exception("Must include 'opd' (optical detph) as data component")
+        if 'g0' not in ds: raise Exception("Must include 'g0' (assymetry) as data component")
+        if 'w0' not in ds: raise Exception("Must include 'w0' (single scattering) as data component")
+        
+        #check for wavenumber coordinates 
+        if 'wno' not in ds.coords: 
+            raise Exception("Must include 'wno' (wavenumber) in coords and units")
+        else:
+            #CONVERT wavenumber UNIT if not the right units
+            unit_old = ds.coords['wno'].attrs['units'] 
+            unit_reqd = 'cm^(-1)'
+            if unit_old != unit_reqd: 
+                if verbose: print(f'verbose=True; Converting wno grid from {unit_old} to required unit of {unit_reqd}.')
+                ds.coords['wno'] = (
+                    ds.coords['wno'].values*u.Unit(
+                        unit_old)).to('cm^(-1)').value 
+
+        #check for pressure and change units if needed
+        if 'pressure' not in ds.coords: 
+            raise Exception("Must include pressure in coords and units")
+        else: 
+            self.nlevel = len(ds.coords['pressure'].values)
+            #CONVERT PRESSURE UNIT
+            unit_old = ds.coords['pressure'].attrs['units'] 
+            unit_reqd = 'bar'
+            if unit_old != unit_reqd: 
+                if verbose: print(f'verbose=True; Converting pressure grid from {unit_old} to required unit of {unit_reqd}.')
+                ds.coords['pressure'] = (
+                    ds.coords['pressure'].values*u.Unit(
+                        unit_old)).to('bar').value
+
+        
+        #check for latitude and longitude 
+        if (('lat' not in ds.coords) or ('lon' not in ds.coords)): 
+            raise Exception("""Must include "lat" and "lon" as coordinates. 
+                  Please see GCM 3D input tutorials to learn how to reformat your input.""")
+        else :
+            lat = ds.coords['lat'].values
+            len_lat = len(lat)
+            lon = ds.coords['lon'].values
+            len_lon = len(lon)
+            nt = self.inputs['disco']['num_tangle']
+            ng = self.inputs['disco']['num_gangle']
+            phase = self.inputs['phase_angle']
+
+
+        if regrid: 
+            #cannot regrid from a course grid to a high one
+            assert nt <= len(lat), f'Cannot regrid from a course grid. num_tangle={nt} and input grid has len(lat)={len_lat}'
+            assert ng <= len(lon), f'Cannot regrid from a course grid. num_gangle={nt} and input grid has len(lon)={len_lon}'
+            #call regridder to get to gauss angle chevychev angle grid
+            if verbose: print(f'verbose=True;regrid=True; Regridding 3D output to ngangle={ng}, ntangle={nt}, with phase={phase}.')
+            ds = regrid_xarray(ds, num_gangle=ng, num_tangle=nt, phase_angle=phase)
+        else: 
+            #check lat and lons match up
+            assert np.array_equal(self.inputs['disco']['latitude']*180/np.pi,
+                lat), f"""Latitudes from the GCM do not match the PICASO grid even 
+                          though the number of grid points are the same. 
+                          Most likely this could be that the input phase of {phase}, is 
+                          different from what the regridder used prior to this function. 
+                          A simple fix is to provide this function with the native 
+                          GCM xarray, turn regrid=True and it will ensure the grids are 
+                          the same."""
+            assert np.array_equal(self.inputs['disco']['longitude']*180/np.pi,
+                lon), f"""Longitude from the GCM do not match the PICASO grid even 
+                          though the number of grid points are the same. 
+                          Most likely this could be that the input phase of {phase}, is 
+                          different from what the regridder used prior to this function. 
+                          A simple fix is to provide this function with the native  
+                          GCM xarray, turn regrid=True and it will ensure the grids are 
+                          the same."""
+
+        if plot: 
+            if ((ng>1) & (nt>1)):
+                ds['opd'].isel(pressure=iz_plot,wno=iw_plot).plot(x='lon', y ='lat')
+            elif ((ng==1) & (nt>1)):
+                ds['opd'].isel(pressure=iz_plot,wno=iw_plot).plot(y ='lat')
+            elif ((ng>1) & (nt==1)):
+                ds['opd'].isel(pressure=iz_plot,wno=iw_plot).plot(x ='lon')
+
+        self.inputs['clouds']['profile'] = ds 
+        self.inputs['clouds']['wavenumber'] = ds.coords['wno'].values
+
+    def clouds_3d_old(self, filename = None, dictionary =None):
         """
         Cloud specification for the model. Clouds are parameterized by a single scattering albedo (w0), 
         an assymetry parameter (g0), and a total extinction per layer (opd).
@@ -2446,13 +2690,15 @@ def jupiter_cld():
 def HJ_pt():
     """Function to get Jupiter's PT profile"""
     return os.path.join(__refdata__, 'base_cases','HJ.pt')
-def HJ_pt_3d(as_xarray=False):
+def HJ_pt_3d(as_xarray=False,add_kz=False):
     """Function to get Jupiter's PT profile
     
     Parameters
     ----------
     as_xarray : bool 
         Returns as xarray, instead of dictionary
+    add_kz : bool 
+        Returns kzz along with PT info
     """
     input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')
     threed_grid = pd.read_csv(input_file,delim_whitespace=True,names=['p','t','k'])
@@ -2493,23 +2739,26 @@ def HJ_pt_3d(as_xarray=False):
         pres = gcm_out['pressure'][0,0,:]
 
         # put data into a dataset
+        if add_kz:
+            data_vars = dict(
+                temperature=(["lon", "lat","pressure"], data,{'units': 'Kelvin'}),#, required
+                kz = (["lon", "lat","pressure"], kzz,{'units': 'm^2/s'})
+            )
+        else: 
+            data_vars = dict(temperature=(["lon", "lat","pressure"], data,{'units': 'Kelvin'}))
+
         ds = xr.Dataset(
-            data_vars=dict(
-                temperature=(["x", "y","z"], data,{'units': 'Kelvin'})#, required
-                #kzz = (["x", "y","z"], gcm_out['kzz'])#could add other data components if wanted
-            ),
+            data_vars=data_vars,
             coords=dict(
-                lon=(["x"], lon,{'units': 'degrees'}),#required
-                lat=(["y"], lat,{'units': 'degrees'}),#required
-                pressure=(["z"], pres,{'units': 'bar'})#required*
+                lon=(["lon"], lon,{'units': 'degrees'}),#required
+                lat=(["lat"], lat,{'units': 'degrees'}),#required
+                pressure=(["pressure"], pres,{'units': 'bar'})#required*
             ),
             attrs=dict(description="coords with vectors"),
         )
         return  ds
     else: 
         return gcm_out
-
-
 
 def HJ_cld():
     """Function to get rough Jupiter Cloud model with fsed=3"""

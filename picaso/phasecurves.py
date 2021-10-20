@@ -18,9 +18,6 @@ import matplotlib.pyplot as plt
 import math
 import xarray as xr
 
-import warnings
-
-warnings.filterwarnings('ignore')
 import astropy.units as u
 
 from picaso import justdoit as jdi

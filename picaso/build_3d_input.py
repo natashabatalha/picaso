@@ -49,8 +49,8 @@ def regrid_xarray(xarray_original, num_gangle=None, num_tangle=None,phase_angle=
     else: 
         raise Exception('Need to either supply (num_tangle, num_gangle,phase_angle) OR (latitude and longitude)')
 
-    ds_out = xr.Dataset({'lon': (['x'], longitude),
-                     'lat': (['y'], latitude),
+    ds_out = xr.Dataset({'lon': (['lon'], longitude),
+                     'lat': (['lat'], latitude),
                     }
                    )
 
@@ -428,3 +428,27 @@ def lon_lat_to_cartesian(lon, lat, R = 1):
     y = R * np.cos(lat) * np.sin(lon)
     z = R * np.sin(lat)
     return x,y,z
+
+def variable_pressure_example(): 
+    # create coords
+    longitude = np.linspace(-180,177,10)
+    latitude = np.linspace(-90, 90,10)
+    pressure =  np.logspace(-6,2,50)
+    lon3d,lat3d, pres3d = np.meshgrid(longitude,latitude,pressure, indexing='ij')
+
+    # create fake data for example 
+    data = pres3d*0 + 1800#
+
+    # put data into a dataset
+    ds_variable_pressure = xr.Dataset(
+        data_vars=dict(
+            temperature=(["x","y",'z'], data,{'units': 'Kelvin'})
+        ),
+        coords=dict(
+            lon=(["x","y",'z'], lon3d,{'units': 'degrees'}),
+            lat=(["x","y",'z'], lat3d,{'units': 'degrees'}),
+            pressure=(["x","y",'z'], pres3d,{'units': 'bar'}),
+        ),
+        attrs=dict(description="coords with matrices"),
+    )    
+    return ds_variable_pressure
