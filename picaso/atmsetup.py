@@ -114,6 +114,8 @@ class ATMSETUP():
                 ilon = list(read_3d.coords['lon'].values.astype(np.float32)).index(np.float32(longitude[g]))
                 #read = read_3d[int(latitude[t])][int(longitude[g])].sort_values('pressure').reset_index(drop=True)
                 read = read_3d.isel(lon=ilon,lat=ilat).to_pandas().reset_index().drop(['lat','lon'],axis=1).sort_values('pressure')
+                if 'phase' in read.keys():
+                    read=read.drop('phase',axis=1)
                 #on the first pass look through all the molecules, parse out the electrons and 
                 #add warnings for molecules that aren't recognized
                 if first:
@@ -125,7 +127,7 @@ class ATMSETUP():
                         except:
                             if i == 'e-':
                                 electrons = True
-                            else:                   #don't raise exception, instead add user warning that a column has been automatically skipped
+                            else: #don't raise exception, instead add user warning that a column has been automatically skipped
                                 self.add_warnings("Ignoring %s in input file, not recognized molecule" % i)
                                 warnings.warn("Ignoring %s in input file, not a recognized molecule" % i, UserWarning)
                     
@@ -471,16 +473,14 @@ class ATMSETUP():
             cld_input = self.input['clouds']['profile'] 
 
             if regrid: cld_input = cld_input.interp(wno = wno)
-
+            cld_input = cld_input.sortby('wno').sortby('pressure')
             opd = cld_input['opd'].transpose("pressure","wno","lon", "lat").values
             g0 = cld_input['g0'].transpose("pressure","wno","lon", "lat").values
             w0 = cld_input['w0'].transpose("pressure","wno","lon", "lat").values
-                    
             self.layer['cloud'] = {'opd': opd}
             self.layer['cloud']['g0'] = g0
             self.layer['cloud']['w0'] = w0  
         else:
-
             raise Exception("CLD input not recognized. Either input a filepath, or input None")
 
         return
