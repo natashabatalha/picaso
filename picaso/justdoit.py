@@ -930,27 +930,27 @@ class inputs():
 
 
         #set didier raw data -- NEED TO CHECK WHAT THIS IS
-        t_table=np.loadtxt(os.path.join(__refdata__,'climate_INPUTS/tlog'),usecols=[0],unpack=True)
-        p_table=np.loadtxt(os.path.join(__refdata__,'climate_INPUTS/plog'),usecols=[0],unpack=True)
+        #t_table=np.loadtxt(os.path.join(__refdata__,'climate_INPUTS/tlog'),usecols=[0],unpack=True)
+        #p_table=np.loadtxt(os.path.join(__refdata__,'climate_INPUTS/plog'),usecols=[0],unpack=True)
 
-        grad=np.zeros(shape=(53,26))
-        cp = np.zeros(shape=(53,26))
+        #grad=np.zeros(shape=(53,26))
+        #cp = np.zeros(shape=(53,26))
         
-        grad_inp, i_inp, j_inp = np.loadtxt(os.path.join(__refdata__,'climate_INPUTS/GRAD_FOR_PY_Y28'),usecols=[0,1,2],unpack=True)
-        for i in range(len(grad_inp)):
-            grad[int(i_inp[i]-1),int(j_inp[i]-1)]=grad_inp[i]
+        #grad_inp, i_inp, j_inp = np.loadtxt(os.path.join(__refdata__,'climate_INPUTS/GRAD_FOR_PY_Y28'),usecols=[0,1,2],unpack=True)
+        #for i in range(len(grad_inp)):
+        #    grad[int(i_inp[i]-1),int(j_inp[i]-1)]=grad_inp[i]
         
-        self.inputs['climate']['t_table'] = t_table
-        self.inputs['climate']['p_table'] = p_table
-        self.inputs['climate']['grad'] = grad
-        self.inputs['climate']['cp'] = cp
+        cp_grad = json.load(open(os.path.join(__refdata__,'climate_INPUTS','specific_heat_p_adiabat_grad.json')))
 
+        #log10 base temperature Kelvin 
+        self.inputs['climate']['t_table'] = np.array(cp_grad['temperature'])
+        #log10 base pressure bars 
+        self.inputs['climate']['p_table'] = np.array(cp_grad['pressure'])
+        #\nabla_ad = d ln T/ d ln P |_S (at constant entropy)
+        self.inputs['climate']['grad'] = np.array(cp_grad['adiabat_grad'])
+        #log Cp (erg/g/K);Specific heat at constant pressure for the same H/He 
+        self.inputs['climate']['cp'] = np.array(cp_grad['specific_heat'])
 
-        #tmin = 40.0
-        #tmax= tmin + dt*(ntmps-1.0)
-
-        #self.inputs['climate']['tmin'] = tmin
-        #self.inputs['climate']['tmax'] = tmax
 
     def inputs_climate(self, temp_guess= None, pressure= None, nstr = None, nofczns = None , rfacv = None, rfaci = None, cloudy = False, mh = None, CtoO = None, species = None, fsed = None):
         """
