@@ -18,6 +18,7 @@ from numba import jit
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 
 from scipy.stats.stats import pearsonr  
 from scipy.stats import binned_statistic
@@ -1562,7 +1563,7 @@ def heatmap_taus(out, R=0):
             if R == 0 : 
                 x,y = out['wavenumber'], out['full_output'][itau][i,:,0]
             else: 
-                x,y = jdi.mean_regrid(out['wavenumber'],
+                x,y = mean_regrid(out['wavenumber'],
                                   out['full_output'][itau][i,:,0], R=150)
             tau_bin += [[y]]
 
@@ -1578,3 +1579,213 @@ def heatmap_taus(out, R=0):
         ax[it].set_ylabel('Pressure(bars)')
         ax[it].set_ylabel('Wavelength(um)')
         cbar.set_label('log Opacity')
+
+def phase_snaps(allout, x = 'longitude', y = 'pressure', z='temperature',palette='RdBu_r',
+    y_log=True, x_log=False,z_log=False,
+    col_wrap = 3,collapse='np.mean',igauss=0):
+    """
+
+    Parameters
+    ----------
+    x : str 
+        What to plot on the x axis options = ('longitude' or 'latitude' or 'pressure')
+    y : str 
+        What to plot on the y axis ('longitude' or 'latitude' or 'pressure')
+    z : str 
+        What to plot in the heatmap ('temperature','taugas','taucld','tauray','w0','g0','opd') 
+    y_log : bool 
+        Makes y axis log
+    x_log : bool 
+        Makes x axis log
+    z_log : bool 
+        Makes z axis log (colorbar)
+    palette : str 
+        Color pallete 
+    col_wrap : int 
+        Column wrap, determines number of columns to split runs into
+    collapse : str or int
+        Collapse lets us know how to collapse the axis, not used. For instance, if plotting 
+        x=longitude, and y=pressure, with collapse=mean, it will take an average along the latitude 
+        axis. If collapse=0, it will take the 0th latitude point. 
+        Allowed collapse functions = np.mean, np.median, np.min, np.max
+    igauss : int 
+        If using k-coeff gauss points, this can be changed to get different 
+        gauss quadrature points. 
+    """
+    allowed_xy = ['longitude','latitude','pressure']
+    if x not in allowed_xy:
+        raise Exception(f'Allowable x options are {allowed_xy}')
+
+    if y not in allowed_xy:
+        raise Exception(f'Allowable y options are {allowed_xy}')
+
+    allowed_z = ['temperature','taugas','taucld','tauray','w0','g0','opd']
+    if z not in allowed_z:
+        raise Exception(f'Allowable z options are {allowed_z}')
+
+    phases = list(allout.keys())
+        
+    nrows=int(np.ceil(len(phases) / col_wrap))
+    #gs = gridspec.GridSpec(nrows, col_wrap)
+    fig = plt.figure(figsize=(4*nrows, 3*col_wrap), dpi=80)
+
+    for ind in range(len(phases)):
+        
+        iphase = phases[ind]
+        full_output = allout[iphase]['full_output']
+
+        xd = explore(full_output,x)#returns either longitude or latitude or pressure grid
+        yd = explore(full_output,y)
+        #one dimension means user has selected long/lat
+        #convert to degrees
+        #or in the case of pressure grab one axis for the meshgrid
+        if len(xd.shape)==1:
+            x_1d=xd*180/np.pi
+        else: 
+            x_1d=xd[:,0,0]
+        #same with y 
+        if len(yd.shape)==1:
+            y_1d=yd*180/np.pi  
+        else: 
+            y_1d=yd[:,0,0]
+
+        x_mesh,y_mesh = np.meshgrid(x_1d, y_1d)
+
+
+        zd = explore(full_output,z)
+        len_zd = len(zd.shape)
+        #now to collapse zd to only the axes we need 
+        if len_zd==3:
+            #indicates [pressure x longitude x latitude ]
+            to_collapse = [i for i,key in enumerate(['pressure','longitude','latitude']) if key not in [x,y]]
+        elif len_zd==4:
+            #indicates [pressure x wavelength x longitude x latitude ]]
+            to_collapse = [i for i,key in enumerate(['pressure','wavelength','longitude','latitude']) if key not in [x,y]]
+        elif len_zd==5:
+            zd = zd[:,:,:,:,igauss]
+            #indicates [pressure x wavelength x longitude x latitude x gauss]
+            to_collapse = [i for i,key in enumerate(['pressure','wavelength','longitude','latitude']) if key not in [x,y]]
+
+         
+        allowed_collapse = ['np.mean','np.max', 'np.min', 'np.median']
+        #allow users to collapse different axes with different methods
+        if ((len(to_collapse)>=1) & (not isinstance(collapse, list))): 
+            collapse = [collapse]*len(to_collapse)
+        else: 
+            assert len(collapse) == len(to_collapse), 'A list was give to collapse but it is not the same size as the number of axes that need to be collapsed.'
+
+        count = 0
+        for i,method in zip(to_collapse,collapse): 
+            if ((isinstance(method , str)) & (method in allowed_collapse)):
+                foo = eval(method)
+                zd = foo(zd, axis=i-count);count+=1
+            elif isinstance(method , int):
+                #zd = zd[i-count];count+=1
+                select = [':']*len(zd.shape)
+                select[i-count] = str(method);count+=1
+                #take the right axis if user asks for int
+                zd = eval('zd['+','.join(select)+']')
+            else: 
+                raise Exception(f'Collapse not allowed. Choose an int or {allowed_collapse}')
+
+        minmax = {  'z':[zd.min(), zd.max()],
+                    'x': [x_mesh.min(), x_mesh.max()],
+                    'y': [y_mesh.min(), y_mesh.max()]}
+        #flip pressure axis
+        if x=='pressure': minmax['x'] = minmax['x'][::-1]
+        if y=='pressure': minmax['y'] = minmax['y'][::-1]
+        
+        ax = fig.add_subplot(col_wrap,nrows, ind+1)
+        if z_log: 
+            c = ax.pcolormesh(x_mesh, y_mesh, zd, cmap=palette, 
+                          norm=colors.LogNorm(vmin=minmax['z'][0], vmax=minmax['z'][1]))#,
+        else: 
+            c = ax.pcolormesh(x_mesh, y_mesh, zd, cmap=palette, 
+                          vmin=minmax['z'][0], vmax=minmax['z'][1])
+
+        ax.set_title(f'Phase={int(iphase*180/np.pi)}')
+        # set the limits of the plot to the limits of the data
+
+        ax.axis([minmax['x'][0], minmax['x'][1], minmax['y'][0], minmax['y'][1]])
+
+        cbar = fig.colorbar(c, ax=ax)
+        cbar.set_label(z)
+        if y_log: ax.set_yscale('log')
+        if x_log: ax.set_xscale('log')
+        ax.set_xlabel(x)
+        ax.set_ylabel(y)
+
+    fig.tight_layout()
+    return fig
+def phase_curve(allout, to_plot, collapse=None, R=100, palette=Spectral11, **kwargs):
+    """
+    Plots phase curves
+    
+    Parameters
+    ----------
+    allouts : dict
+        picaso allouts element that comes from jdi.phase_curve
+    to_plot : str 
+        either fpfs_reflected, fpfs_thermal, or thermal, or albedo 
+    collapse : str or float or list of float
+        Allowable options to collapse wavelength axis:
+        - `'np.mean'` or `np.sum`
+        - float or list of float: wavelength(s) in microns (will find the nearest value to this wavelength). Must be in wavenumber range. 
+    R : float 
+        Resolution to regrid before finding nearest wavelength element
+    palette : list
+        list of hex from bokeh or other palette 
+    """
+    kwargs['plot_height'] = kwargs.get('plot_height',400)
+    kwargs['plot_width'] = kwargs.get('plot_width',600)
+    kwargs['title'] = kwargs.get('title','Phase Curves')
+    kwargs['y_axis_label'] = kwargs.get('y_axis_label',to_plot)
+    kwargs['x_axis_label'] = kwargs.get('x_axis_label','Orbital Phase')
+    kwargs['y_axis_type'] = kwargs.get('y_axis_type','linear')
+    kwargs['x_axis_type'] = kwargs.get('x_axis_type','linear') 
+
+    fig = figure(**kwargs)
+
+    #check collapse
+    if (isinstance(collapse, (float,int)) or isinstance(collapse, str)):
+        collapse = [collapse]
+    elif isinstance(collapse, list): 
+        for i in collapse : assert isinstance(i,(float,int)), 'Can only suply list if it is a list of floats that represent the wavelength in micron.'
+    else: 
+        raise Exception('Collapse must either be float, str or list')
+    if len(collapse)>len(palette): 
+        if verbose: pring('Switched color palette to accomodate more collase input options')
+        palette = magma(len(collapse))
+
+    all_curves = np.zeros((len(allout.keys()), len(collapse)))
+    all_ws = np.zeros(len(collapse))
+    phases = np.array(list(allout.keys()))
+    
+    for i,iphase in enumerate(phases):
+        for j,icol in enumerate(collapse): 
+            if icol in ['np.mean', 'np.sum']:
+                w,f =eval(icol)(allout[iphase]['wavenumber']), eval(icol)(allout[iphase][to_plot])
+                all_curves[i,j] = f 
+                all_ws[j] = w
+            else: 
+                w,f = mean_regrid(allout[iphase]['wavenumber'],
+                                   allout[iphase][to_plot],R=R)
+                iw = np.argmin(abs(1e4/w-icol)) 
+                w,f = w[iw],f[iw]
+                all_curves[i,j] = f
+                all_ws[j] = w
+    legend_it=[]  
+    for i in range(len(collapse)): 
+        f = fig.line(phases*180/np.pi,all_curves[:,i],line_width=3,color=palette[i],
+                )
+        
+        legend_it.append((str(int(1e4/all_ws[i]*100)/100)+'um', [f]))
+
+    legend = Legend(items=legend_it, location=(0, -20))
+    legend.click_policy="mute"
+    fig.add_layout(legend, 'left') 
+        
+    fig.xgrid.grid_line_alpha=0
+    fig.ygrid.grid_line_alpha=0
+    plot_format(fig)
+    return phases, all_curves, all_ws, fig
