@@ -1260,8 +1260,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     #get matrix of blackbodies 
     all_b = blackbody(tlevel, 1/wno) #returns nlevel by nwave   
     b0 = all_b[0:-1,:]
-    b0 = zeros(b0.shape)
     b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
+    b0 = zeros(b0.shape)
     b1 = zeros(b1.shape)
 
     #hemispheric mean parameters from Tabel 1 toon 
@@ -1917,7 +1917,7 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb, 
             dtau_og, tau_og, w0_og, w0_no_raman, cosb_og, plevel, ubar1,
             constant_forward, constant_back, frac_a, frac_b, frac_c,
-            surf_reflect, single_phase, dimension, stream):
+            surf_reflect, single_phase, dimension, stream, flx=0):
     nlayer = nlevel - 1 #nlayers 
 
     mu1 = 0.5#0.88#0.5 #from Table 1 Toon  
@@ -1931,9 +1931,10 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     #get matrix of blackbodies 
     all_b = blackbody(tlevel, 1/wno) #returns nlevel by nwave   
     b0 = all_b[0:-1,:]
-    b0 = zeros(b0.shape)
+    b0 = zeros(b0.shape) + 1e-10
     b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
-    b1 = zeros(b1.shape)
+    b1 = zeros(b1.shape) + 1e-10
+    f0 = -1/dtau * log(b1/b0)
     
     tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
     b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
@@ -1941,38 +1942,36 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     
     #if single_phase==1:#'OTHG':
     if np.array_equal(cosb,cosb_og):
-        f = 0.
+        ff = 0.
     else:
-        f = cosb_og**stream
+        ff = cosb_og**stream
 
     w_single = ones((stream, nlayer, nwno))
     w_multi = ones(((stream, nlayer, nwno)))
+    a = zeros(((stream, nlayer, nwno)))
     for l in range(1,stream):
         w_multi[l,:,:] = (2*l+1) * (cosb_og**l - ff) / (1 - ff)
         w_single[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
-
-        #cos_theta = -u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
-        #p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
-        #p_single = p_single + w_single[l,:,:] * P(-u0)[l]*P(u1)[l]
-    p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+    for l in range(stream):
+        a[l,:,:] = (2*l + 1) -  w0 * w_multi[l,:,:]
 
     xint_at_top = zeros((numg, numt, nwno))
     for ng in range(numg):
         for nt in range(numt):
             if stream==2:
                 M, B, A_int, N_int, F_bot, G_bot, F, G = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-                surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P, fluxes=flx, calculation=1) #calculation=1="thermal"
+                surf_reflect, None, None, dtau, tau, a, None, ubar1[ng,nt], P, fluxes=flx, calculation=1) #calculation=1="thermal"
 
             if stream==4:
                 M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-                surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P, fluxes=flx, calculation=1) #calculation=1="thermal" 
+                surf_reflect, None, None, dtau, tau, a, None, ubar1[ng,nt], P, B0=b0, B1=b1, f0=f0, fluxes=flx, calculation=1) #calculation=1="thermal" 
                 # F and G will be nonzero if fluxes=1
 
             flux_bot = zeros(nwno)
             intgrl_new = zeros((stream*nlayer, nwno))
             X = zeros((stream*nlayer, nwno))
             intgrl_per_layer = zeros((nlayer, nwno))
-            sing_scat = zeros((nlayer, nwno))
+            multi_scat = zeros((nlayer, nwno))
             xint_temp = zeros((nlevel, nwno))
             flux_temp = zeros((nlevel, nwno))
             #========================= Start loop over wavelength =========================
@@ -1985,14 +1984,14 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 
             for i in range(nlayer):
                 for l in range(stream):
-                    multi_scat[i,:] = multi_scat[i,:] + w_multi[l,i,:] * P(u1)[l] * intgrl_new[stream*i+l,:]
+                    multi_scat[i,:] = multi_scat[i,:] + w_multi[l,i,:] * P(ubar1[ng,nt])[l] * intgrl_new[stream*i+l,:]
 
             f0mu = f0 + 1/ubar1[ng,nt]
             expo = slice_gt(dtau * f0mu, 35.0)
-            exptrm_thermal = exp(-expo_mus)
+            exptrm_thermal = exp(-expo)
 
-            intgrl_per_layer = (w0 *  multi_scat * pi # not sure why I'm multiplyin gthis by pi
-                        + (1-w0) * B0 * (1 - exptrm_thermal) / f0mu
+            intgrl_per_layer = (w0 *  multi_scat * pi # not sure why I'm multiplying this by pi
+                        + (1-w0) * b0 * (1 - exptrm_thermal) / f0mu
                         )
 
             xint_temp[-1,:] = flux_bot/pi
@@ -2000,7 +1999,7 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
                 xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/ubar1[ng,nt])
                             + intgrl_per_layer[i,:] / ubar1[ng,nt]) 
 
-            xint_temp = xint_temp * pi # not sure why I'm multiplyin gthis by pi
+            xint_temp = xint_temp * pi # not sure why I'm multiplying this by pi
             xint_at_top[ng,nt,:] = xint_temp[0, :]
 
     return xint_at_top #, flux_down# numg x numt x nwno
@@ -2137,8 +2136,9 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 
 #@jit(nopython=True, cache=True, debug=True)
 def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, 
-        a, b, ubar1, P, B0=0., B1=0., fluxes=0, calculation=0):#'reflected'):
+        a, b, ubar1, P, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
 
+    nlevel = nlayer+1
     beta = a[0]*a[1] + 4*a[0]*a[3]/9 + a[2]*a[3]/9
     gama = a[0]*a[1]*a[2]*a[3]/9
     lam1 = sqrt((beta + sqrt(beta**2 - 4*gama)) / 2)
@@ -2148,7 +2148,7 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
         return x**4 - beta*x**2 + gama
     
     Dels = zeros((4, nlayer, nwno))
-    if calculation=0:
+    if calculation==0:
         Del = 9 * f(1/ubar0)
         Dels[0,:,:] = ((a[1]*b[0] - b[1]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
             + 2*(a[3]*b[2] - 2*a[3]*b[0] - 3*b[3]/ubar0)/ubar0**2)
@@ -2200,7 +2200,8 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
     if calculation == 0:# 'reflected':
         exptau_u0 = exp(-slice_gt(tau/ubar0, 35.0))
     else:
-        exptau_u0 = exp(-slice_gt(tau * f0, 35.0))
+        exptau_u0 = ones((nlevel, nwno))
+        exptau_u0[1:,:] = exp(-slice_gt(tau[1:,:] * f0, 35.0))
     z1mn_up = z1mn * exptau_u0[1:,:]
     z2mn_up = z2mn * exptau_u0[1:,:]
     z1pl_up = z1pl * exptau_u0[1:,:]
@@ -2271,7 +2272,6 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
     N_int = zeros((4*nlayer, nwno))
     F_bot = zeros((4*nlayer, nwno))
     G_bot = zeros(nwno)
-    nlevel = nlayer+1
     F = zeros((4*nlevel, 4*nlayer, nwno))
     G = zeros((4*nlevel, nwno))
 

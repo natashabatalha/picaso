@@ -75,8 +75,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     stream = inputs['approx']['stream']
     approximation = inputs['approx']['Toon_coefficients']
     tridiagonal = 0 
-    input_dir = inputs['approx']['input_dir']
-    #input_dir=None
+    #input_dir = inputs['approx']['input_dir']
+    input_dir=None
 
 
     #parameters needed for the two term hg phase function. 
