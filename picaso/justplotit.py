@@ -79,7 +79,7 @@ def plot_errorbar(x,y,e,plot,point_kwargs={}, error_kwargs={}):
 
     y_err = []
     x_err = []
-    for px, py, yerr, xerr in zip(x, y, e):
+    for px, py, yerr in zip(x, y, e):
         np.array(x_err.append((px , px )))
         np.array(y_err.append((py - yerr, py + yerr)))
 
