@@ -1261,8 +1261,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     all_b = blackbody(tlevel, 1/wno) #returns nlevel by nwave   
     b0 = all_b[0:-1,:]
     b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
-    b0 = zeros(b0.shape)
-    b1 = zeros(b1.shape)
+    #b0 = zeros(b0.shape)
+    #b1 = zeros(b1.shape)
 
     #hemispheric mean parameters from Tabel 1 toon 
     #**originally written in terms of alpha which isn't in the table. 
@@ -1931,9 +1931,9 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     #get matrix of blackbodies 
     all_b = blackbody(tlevel, 1/wno) #returns nlevel by nwave   
     b0 = all_b[0:-1,:]
-    b0 = zeros(b0.shape) + 1e-10
+    #b0 = zeros(b0.shape) + 1e-10
     b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
-    b1 = zeros(b1.shape) + 1e-10
+    #b1 = zeros(b1.shape) + 1e-10
     f0 = -1/dtau * log(b1/b0)
     
     tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
@@ -2009,8 +2009,6 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
         a, b, ubar1, P, B0=0., B1=0., fluxes=0, calculation=0):#'reflected'):
 
     Del = ((1 / ubar0)**2 - a[0]*a[1])
-    eta = [(b[1] /ubar0 - a[1]*b[0]) / Del,
-        (b[0] /ubar0 - a[0]*b[1]) / Del]
 
     lam = sqrt(a[0]*a[1])
     expo = lam*dtau
@@ -2027,6 +2025,8 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 
     exptau_u0 = exp(-tau/ubar0)
     if calculation == 0: # is "reflected":
+        eta = [(b[1] /ubar0 - a[1]*b[0]) / Del,
+            (b[0] /ubar0 - a[0]*b[1]) / Del]
         zmn = 2*pi*(0.5*eta[0] - eta[1]) 
         zpl = 2*pi*(0.5*eta[0] + eta[1])
         zmn_up = zmn * exptau_u0[1:,:] 
