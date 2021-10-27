@@ -1917,7 +1917,7 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb, 
             dtau_og, tau_og, w0_og, w0_no_raman, cosb_og, plevel, ubar1,
             constant_forward, constant_back, frac_a, frac_b, frac_c,
-            surf_reflect, single_phase, dimension, stream, flx=0):
+            surf_reflect, single_phase, dimension, stream, flx=0, calculation=1):
     nlayer = nlevel - 1 #nlayers 
 
     mu1 = 0.5#0.88#0.5 #from Table 1 Toon  
@@ -1931,10 +1931,12 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     #get matrix of blackbodies 
     all_b = blackbody(tlevel, 1/wno) #returns nlevel by nwave   
     b0 = all_b[0:-1,:]
-    #b0 = zeros(b0.shape) + 1e-10
-    b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
-    #b1 = zeros(b1.shape) + 1e-10
-    f0 = -1/dtau * log(b1/b0)
+    if calculation == 1: # linear thermal
+        b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
+        f0 = 0.
+    elif calculation == 2: # exponential thermal
+        b1 = all_b[1:,:] 
+        f0 = -1/dtau * log(b1/b0)
     
     tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
     b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
@@ -1946,25 +1948,25 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     else:
         ff = cosb_og**stream
 
-    w_single = ones((stream, nlayer, nwno))
-    w_multi = ones(((stream, nlayer, nwno)))
+    w_single = zeros((stream, nlayer, nwno))
+    w_multi = zeros(((stream, nlayer, nwno)))
     a = zeros(((stream, nlayer, nwno)))
-    for l in range(1,stream):
-        w_multi[l,:,:] = (2*l+1) * (cosb_og**l - ff) / (1 - ff)
-        w_single[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
+    b = zeros(((stream, nlayer, nwno)))
     for l in range(stream):
+        w_multi[l,:,:] = (2*l+1) * (cosb_og**l - ff) / (1 - ff)
         a[l,:,:] = (2*l + 1) -  w0 * w_multi[l,:,:]
+    b[0] = (1-w0) * b0
 
     xint_at_top = zeros((numg, numt, nwno))
     for ng in range(numg):
         for nt in range(numt):
             if stream==2:
                 M, B, A_int, N_int, F_bot, G_bot, F, G = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-                surf_reflect, None, None, dtau, tau, a, None, ubar1[ng,nt], P, fluxes=flx, calculation=1) #calculation=1="thermal"
+                surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, ubar1[ng,nt], P, b0, b1, f0, fluxes=flx, calculation=calculation)
 
-            if stream==4:
+            elif stream==4:
                 M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-                surf_reflect, None, None, dtau, tau, a, None, ubar1[ng,nt], P, B0=b0, B1=b1, f0=f0, fluxes=flx, calculation=1) #calculation=1="thermal" 
+                surf_reflect, None, None, dtau, tau, a, None, ubar1[ng,nt], P, B0=b0, B1=b1, f0=f0, fluxes=flx, calculation=1) 
                 # F and G will be nonzero if fluxes=1
 
             flux_bot = zeros(nwno)
@@ -1973,7 +1975,6 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
             intgrl_per_layer = zeros((nlayer, nwno))
             multi_scat = zeros((nlayer, nwno))
             xint_temp = zeros((nlevel, nwno))
-            flux_temp = zeros((nlevel, nwno))
             #========================= Start loop over wavelength =========================
             for W in range(nwno):
                 (intgrl_new[:,W], flux_bot[W], X) = solve_4_stream_banded(M[:,:,W], B[:,W],  
@@ -1981,34 +1982,53 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
                 if flx==1:
                     flux_temp[:,W] = calculate_flux(F[:,:,W], G[:,W], X)
 
-
             for i in range(nlayer):
                 for l in range(stream):
                     multi_scat[i,:] = multi_scat[i,:] + w_multi[l,i,:] * P(ubar1[ng,nt])[l] * intgrl_new[stream*i+l,:]
 
-            f0mu = f0 + 1/ubar1[ng,nt]
-            expo = slice_gt(dtau * f0mu, 35.0)
-            exptrm_thermal = exp(-expo)
+            if calculation==1:
+                expo = dtau_og / ubar1[ng,nt] 
+                expo_mus = slice_gt(expo, 35.0)    
+                expdtau = exp(-expo)
 
-            intgrl_per_layer = (w0 *  multi_scat * pi # not sure why I'm multiplying this by pi
-                        + (1-w0) * b0 * (1 - exptrm_thermal) / f0mu
-                        )
+                intgrl_per_layer = (w0 *  multi_scat * pi 
+                            + (1-w0_og) * ubar1[ng,nt] *
+                            (b0 * (1 - expdtau)
+                            + b1 * (ubar1[ng,nt] - (dtau_og + ubar1[ng,nt]) * expdtau)))
 
-            xint_temp[-1,:] = flux_bot/pi
+            elif calculation==2:
+                expo = dtau * (f0 + 1/ubar1[ng,nt])
+                expo = slice_gt(expo, 35.0)    
+                expdtau = exp(-expo)
+
+                intgrl_per_layer = (w0 *  multi_scat * pi
+                            + (1-w0) 
+                            * b0 * (1 - expdtau)
+                            / (f0 + 1/ubar1[ng,nt]) )
+
+
+            xint_temp[-1,:] = pi*(b_surface + b1[-1,:] * ubar1[ng,nt])#zeros(flux_bot.shape)#
             for i in range(nlayer-1,-1,-1):
-                xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/ubar1[ng,nt])
+                xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/ubar1[ng,nt]) 
                             + intgrl_per_layer[i,:] / ubar1[ng,nt]) 
 
-            xint_temp = xint_temp * pi # not sure why I'm multiplying this by pi
+            xint_temp = xint_temp * pi
             xint_at_top[ng,nt,:] = xint_temp[0, :]
 
-    return xint_at_top #, flux_down# numg x numt x nwno
+    return xint_at_top 
 
 #@jit(nopython=True, cache=True)
 def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, 
-        a, b, ubar1, P, B0=0., B1=0., fluxes=0, calculation=0):#'reflected'):
+        a, b, ubar1, P, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
 
-    Del = ((1 / ubar0)**2 - a[0]*a[1])
+    if calculation==0:
+        Del = ((1 / ubar0)**2 - a[0]*a[1])
+        eta = [(b[1] /ubar0 - a[1]*b[0]) / Del,
+            (b[0] /ubar0 - a[0]*b[1]) / Del]
+    elif calculation==2:
+        Del = f0**2 - a[0]*a[1]
+        eta = [f0 * b[0],
+                -a[0] * b[0]]
 
     lam = sqrt(a[0]*a[1])
     expo = lam*dtau
@@ -2024,16 +2044,14 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
     Q1pl = Q1/exptrm;  Q2pl = Q2/exptrm
 
     exptau_u0 = exp(-tau/ubar0)
-    if calculation == 0: # is "reflected":
-        eta = [(b[1] /ubar0 - a[1]*b[0]) / Del,
-            (b[0] /ubar0 - a[0]*b[1]) / Del]
+    if calculation == 0 or calculation == 2: # reflected or exponential thermal
         zmn = 2*pi*(0.5*eta[0] - eta[1]) 
         zpl = 2*pi*(0.5*eta[0] + eta[1])
         zmn_up = zmn * exptau_u0[1:,:] 
         zpl_up = zpl * exptau_u0[1:,:] 
         zmn_down = zmn * exptau_u0[:-1,:] 
         zpl_down = zpl * exptau_u0[:-1,:] 
-    else:
+    elif calculation == 1: # linear thermal
         zmn_down = 2*pi * (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*tau[:-1,:]/2)
         zmn_up = 2*pi * (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*tau[:-1,:]/2)
         zpl_down = 2*pi * (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*tau[1:,:]/2)
@@ -2041,18 +2059,24 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 
     alpha = 1/ubar1 + lam
     beta = 1/ubar1 - lam
-    mus = (ubar1 + ubar0) / (ubar1 * ubar0)
     expo_alp = slice_gt(alpha * dtau, 35.0)
     expo_bet = slice_gt(beta * dtau, 35.0) 
-    expo_mus = slice_gt(mus * dtau, 35.0)    
     exptrm_alp = (1 - exp(-expo_alp)) / alpha 
     exptrm_bet = (1 - exp(-expo_bet)) / beta
-    exptrm_mus = (1 - exp(-expo_mus)) / mus
 
-    tau_mu = tau[:-1,:] * 1/ubar0
-    tau_mu = slice_gt(tau_mu, 35.0)
-    exptau_mu = exp(-tau_mu)
-    exp_mu = exptrm_mus * exptau_mu
+    if calculation == 0:
+        mus = (ubar1 + ubar0) / (ubar1 * ubar0)
+        expo_mus = slice_gt(mus * dtau, 35.0)    
+        exptrm_mus = (1 - exp(-expo_mus)) / mus
+        tau_mu = tau[:-1,:] * 1/ubar0
+        tau_mu = slice_gt(tau_mu, 35.0)
+        exptau_mu = exp(-tau_mu)
+        exp_mu = exptrm_mus * exptau_mu
+    elif calculation == 2:
+        f0_ubar = f0 + 1/ubar1
+        expo_f0 = slice_gt(f0_ubar * dtau, 35.0)
+        exptrm_f0 = (1 - exp(-expo_f0)) / f0_ubar
+        exp_mu = exptrm_f0
 
     #   construct matrices
     Mb = zeros((5, 2*nlayer, nwno))
@@ -2089,10 +2113,10 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
         A_int[i+1,i+1,:] = (q * exptrm_bet)[k,:]
         k = k+1
 
-    if calculation == 0: #is 'reflected':
+    if calculation == 0 or calculation == 2: # reflected or exponential thermal
         N_int[::2,:] = eta[0] * exp_mu
         N_int[1::2,:] = eta[1] * exp_mu
-    else:
+    elif calculation == 1: # linear thermal
         expdtau = exp(-dtau/ubar1)
         N_int[::2,:] = (1-w0) * ubar1 / a[0] * ((B0 + B1*tau[:-1,:])*(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau))
         N_int[1::2,:] = (1-w0) * ubar1 / a[0] * ( B1*(1-expdtau) / a[1])

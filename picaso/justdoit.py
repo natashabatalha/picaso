@@ -235,13 +235,14 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                                     DTAU_OG, W0_no_raman, COSB_OG, atm.level['pressure'],ubar1,
                                                     atm.surf_reflect, tridiagonal)
             elif method == 'SH':
+                thermal_calculation = inputs['approx']['thermal_calculation']
                 flux_at_top = get_thermal_new(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
                                             DTAU, TAU, W0, COSB, 
                                             DTAU_OG, TAU_OG, W0_OG, W0_no_raman, COSB_OG, 
                                             atm.level['pressure'], ubar1, 
                                             constant_forward,constant_back,frac_a,frac_b,frac_c,
                                             atm.surf_reflect, 
-                                            single_phase, dimension, stream)
+                                            single_phase, dimension, stream, thermal_calculation)
 
             #if full output is requested add in flux at top for 3d plots
             if full_output: 
@@ -1538,7 +1539,7 @@ class inputs():
 
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='pollack',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
-        p_reference=1, method='Toon', stream=2, Toon_coefficients="quadrature",
+        p_reference=1, method='Toon', stream=2, thermal_calculation=1, Toon_coefficients="quadrature",
         input_dir=None):
         """
         This function sets all the default approximations in the code. It transforms the string specificatons
@@ -1600,6 +1601,7 @@ class inputs():
 
         self.inputs['approx']['p_reference']= p_reference
         self.inputs['approx']['input_dir'] = input_dir
+        self.inputs['approx']['thermal_calculation'] = thermal_calculation
 
     def spectrum(self, opacityclass, calculation='reflected', dimension = '1d',  full_output=False, 
         plot_opacity= False, as_dict=True):
