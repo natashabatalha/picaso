@@ -242,7 +242,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                             atm.level['pressure'], ubar1, 
                                             constant_forward,constant_back,frac_a,frac_b,frac_c,
                                             atm.surf_reflect, 
-                                            single_phase, dimension, stream, thermal_calculation)
+                                            single_phase, dimension, stream, 
+                                            calculation=thermal_calculation)
 
             #if full output is requested add in flux at top for 3d plots
             if full_output: 
