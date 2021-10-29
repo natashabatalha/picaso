@@ -1267,12 +1267,12 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     #hemispheric mean parameters from Tabel 1 toon 
     #**originally written in terms of alpha which isn't in the table. 
     #**changed to more closely resemble Toon (no change in actual values)
-    #alpha = sqrt( (1.-w0) / (1.-w0*cosb) )
-    g1 = 2 - w0*(1 + cosb) # (7-w0*(4+3*cosb))/4  # 
-    g2 = w0*(1 - cosb)     # -(1-w0*(4-3*cosb))/4 # 
-    lamda = (g1**2 - g2**2)**0.5 #alpha*(1.-w0*cosb)/mu1 #eqn 21 toon
-    gama = g2 / (g1 + lamda) #(1.-alpha)/(1.+alpha) #eqn 22 toon
-    g1_plus_g2 = 1/(g1 + g2) #mu1/(1.-w0*cosb) #effectively 1/(gamma1 + gamma2) .. second half of eqn.27
+    alpha = sqrt( (1.-w0) / (1.-w0*cosb) )
+    g1 = (7-w0*(4+3*cosb))/4  # 2 - w0*(1 + cosb) # 
+    g2 = -(1-w0*(4-3*cosb))/4 # w0*(1 - cosb)     # 
+    lamda = alpha*(1.-w0*cosb)/mu1 #(g1**2 - g2**2)**0.5 #eqn 21 toon
+    gama = (1.-alpha)/(1.+alpha) #g2 / (g1 + lamda) #eqn 22 toon
+    g1_plus_g2 = mu1/(1.-w0*cosb) #1/(g1 + g2) #effectively 1/(gamma1 + gamma2) .. second half of eqn.27
 
     #same as with reflected light, compute c_plus and c_minus 
     #these are eqns 27a & b in Toon89
@@ -1321,22 +1321,22 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
     #calculate everyting from Table 3 toon
     alphax = ((1.0-w0)/(1.0-w0*cosb))**0.5
-    G = twopi*w0*positive*(1.0+cosb*alphax)/(1.0+alphax)#
-    H = twopi*w0*negative*(1.0-cosb*alphax)/(1.0+alphax)#
-    J = twopi*w0*positive*(1.0-cosb*alphax)/(1.0+alphax)#
-    K = twopi*w0*negative*(1.0+cosb*alphax)/(1.0+alphax)#
-    alpha1 = twopi*(b0+ b1*(mu1*w0*cosb/(1.0-w0*cosb)))
-    alpha2 = twopi*b1
-    sigma1 = twopi*(b0- b1*(mu1*w0*cosb/(1.0-w0*cosb)))
-    sigma2 = twopi*b1
-    #G = positive*(1.0/mu1 - lamda)
-    #H = negative*gama*(1.0/mu1 + lamda)
-    #J = positive*gama*(1.0/mu1 + lamda)
-    #K = negative*(1.0/mu1 - lamda)
-    #alpha1 = twopi*(b0+ b1*w0*(g1_plus_g2 - mu1))
+    #G = twopi*w0*positive*(1.0+cosb*alphax)/(1.0+alphax)#
+    #H = twopi*w0*negative*(1.0-cosb*alphax)/(1.0+alphax)#
+    #J = twopi*w0*positive*(1.0-cosb*alphax)/(1.0+alphax)#
+    #K = twopi*w0*negative*(1.0+cosb*alphax)/(1.0+alphax)#
+    #alpha1 = twopi*(b0+ b1*(mu1*w0*cosb/(1.0-w0*cosb)))
     #alpha2 = twopi*b1
-    #sigma1 = twopi*(b0- b1*(g1_plus_g2 - mu1))
+    #sigma1 = twopi*(b0- b1*(mu1*w0*cosb/(1.0-w0*cosb)))
     #sigma2 = twopi*b1
+    G = positive*(1.0/mu1 - lamda)
+    H = negative*gama*(1.0/mu1 + lamda)
+    J = positive*gama*(1.0/mu1 + lamda)
+    K = negative*(1.0/mu1 - lamda)
+    alpha1 = twopi*(b0+ b1*w0*(g1_plus_g2 - mu1))
+    alpha2 = twopi*b1
+    sigma1 = twopi*(b0- b1*(g1_plus_g2 - mu1))
+    sigma2 = twopi*b1
 
     flux_minus = zeros((nlevel,nwno))
     flux_plus = zeros((nlevel,nwno))
