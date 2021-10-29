@@ -1937,10 +1937,12 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     elif calculation == 2: # exponential thermal
         b1 = all_b[1:,:] 
         f0 = -1/dtau * log(b1/b0)
+
     
     tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
     b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
-    b_surface = all_b[-1,:] + b1[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
+    #b_surface = all_b[-1,:] + b1[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
+    b_surface = all_b[-1,:] + (all_b[1:,:]-b0)[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
     
     #if single_phase==1:#'OTHG':
     if np.array_equal(cosb,cosb_og):
@@ -1966,7 +1968,7 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 
             elif stream==4:
                 M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-                surf_reflect, None, None, dtau, tau, a, None, ubar1[ng,nt], P, B0=b0, B1=b1, f0=f0, fluxes=flx, calculation=calculation) 
+                surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, ubar1[ng,nt], P, b0, b1, f0, fluxes=flx, calculation=calculation) 
                 # F and G will be nonzero if fluxes=1
 
             flux_bot = zeros(nwno)
@@ -2014,7 +2016,7 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 
             xint_temp = xint_temp * pi
             xint_at_top[ng,nt,:] = xint_temp[0, :]
-
+    
     return xint_at_top 
 
 #@jit(nopython=True, cache=True)
@@ -2027,8 +2029,8 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
             (b[0] /ubar0 - a[0]*b[1]) / Del]
     elif calculation==2:
         Del = f0**2 - a[0]*a[1]
-        eta = [f0 * b[0],
-                -a[0] * b[0]]
+        eta = [(-a[1] * b[0]) / Del,
+                (f0 * b[0]) / Del]
 
     lam = sqrt(a[0]*a[1])
     expo = lam*dtau
@@ -2043,7 +2045,7 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
     Q1mn = Q1*exptrm;  Q2mn = Q2*exptrm
     Q1pl = Q1/exptrm;  Q2pl = Q2/exptrm
 
-    if calculation == 0 or calculation == 2: # reflected or exponential thermal
+    if calculation != 1:
         zmn = 2*pi*(0.5*eta[0] - eta[1]) 
         zpl = 2*pi*(0.5*eta[0] + eta[1])
         if calculation == 0:
@@ -2053,7 +2055,7 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
             zmn_down = zmn * expon[:-1,:] 
             zpl_down = zpl * expon[:-1,:] 
         elif calculation == 2:
-            expon = exp(-dtau*f0)
+            expon = exp(-slice_gt(dtau*f0, 35.0))
             zmn_up = zmn * expon
             zpl_up = zpl * expon
             zmn_down = zmn 
@@ -2178,33 +2180,38 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
     def f(x):
         return x**4 - beta*x**2 + gama
     
-    Dels = zeros((4, nlayer, nwno))
-    if calculation==0:
-        Del = 9 * f(1/ubar0)
-        Dels[0,:,:] = ((a[1]*b[0] - b[1]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
-            + 2*(a[3]*b[2] - 2*a[3]*b[0] - 3*b[3]/ubar0)/ubar0**2)
-        Dels[1,:,:] = ((a[0]*b[1] - b[0]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
-            - 2*a[0]*(a[3]*b[2] - 3*b[3]/ubar0)/ubar0)
-        Dels[2,:,:] = ((a[3]*b[2] - 3*b[3]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
-            - 2*a[3]*(a[0]*b[1] - b[0]/ubar0)/ubar0)
-        Dels[3,:,:] = ((a[2]*b[3] - 3*b[2]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
-            + 2*(3*a[0]*b[1] - 2*a[0]*b[3] - 3*b[0]/ubar0)/ubar0**2)
-    elif calculation==2:
-        print('first')
-        b0 = (1-w0) * B0
-        Del = 9 * f(f0)
-        Dels[0,:,:] = a[1]*b0 * (a[2]*a[3] - 9*f0**2) - 4*a[3]*b0*f0**2
-        Dels[1,:,:] = b0*f0 * (9*f0**2 - a[2]*a[3])
-        Dels[2,:,:] = 2*a[3]*b0*f0**2
-        Dels[3,:,:] = -6*b0*f0**3
+    if calculation != 1:
+        Dels = zeros((4, nlayer, nwno))
+        if calculation==0:
+            Del = 9 * f(1/ubar0)
+            Dels[0,:,:] = ((a[1]*b[0] - b[1]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
+                + 2*(a[3]*b[2] - 2*a[3]*b[0] - 3*b[3]/ubar0)/ubar0**2)
+            Dels[1,:,:] = ((a[0]*b[1] - b[0]/ubar0) * (a[2]*a[3] - 9/ubar0**2) 
+                - 2*a[0]*(a[3]*b[2] - 3*b[3]/ubar0)/ubar0)
+            Dels[2,:,:] = ((a[3]*b[2] - 3*b[3]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
+                - 2*a[3]*(a[0]*b[1] - b[0]/ubar0)/ubar0)
+            Dels[3,:,:] = ((a[2]*b[3] - 3*b[2]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
+                + 2*(3*a[0]*b[1] - 2*a[0]*b[3] - 3*b[0]/ubar0)/ubar0**2)
+        elif calculation==2:
+            b0 = (1-w0) * B0
+            Del = 9 * f(f0)
+            Dels[0,:,:] = a[1]*b0 * (a[2]*a[3] - 9*f0**2) - 4*a[3]*b0*f0**2
+            Dels[1,:,:] = b0*f0 * (9*f0**2 - a[2]*a[3])
+            Dels[2,:,:] = 2*a[3]*b0*f0**2
+            Dels[3,:,:] = -6*b0*f0**3
 
 
-    #eta = []
-    eta = zeros((4, nlayer, nwno))
-    for l in range(4):
-        #eta.append(Dels[l]/Del)
-        eta[l,:,:] = (Dels[l]/Del)
+        #eta = []
+        eta = zeros((4, nlayer, nwno))
+        for l in range(4):
+            #eta.append(Dels[l]/Del)
+            eta[l,:,:] = (Dels[l]/Del)
 
+        z1pl = 2*pi*(eta[0]/2 + eta[1] + 5*eta[2]/8); 
+        z1mn = 2*pi*(eta[0]/2 - eta[1] + 5*eta[2]/8);
+        z2pl = 2*pi*(-eta[0]/8 + 5*eta[2]/8 + eta[3]); 
+        z2mn = 2*pi*(-eta[0]/8 + 5*eta[2]/8 - eta[3]);
+    
     expo1 = slice_gt(lam1*dtau, 35.0) 
     expo2 = slice_gt(lam2*dtau, 35.0) 
     exptrm1 = exp(-expo1)
@@ -2219,11 +2226,6 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
     q1pl = 2*pi*(-1/8 + 5*Q1/8 + S1); q1mn = 2*pi*(-1/8 + 5*Q1/8 - S1)
     q2pl = 2*pi*(-1/8 + 5*Q2/8 + S2); q2mn = 2*pi*(-1/8 + 5*Q2/8 - S2)
 
-    z1pl = 2*pi*(eta[0]/2 + eta[1] + 5*eta[2]/8); 
-    z1mn = 2*pi*(eta[0]/2 - eta[1] + 5*eta[2]/8);
-    z2pl = 2*pi*(-eta[0]/8 + 5*eta[2]/8 + eta[3]); 
-    z2mn = 2*pi*(-eta[0]/8 + 5*eta[2]/8 - eta[3]);
-    
     f00 = p1mn*exptrm1; f01 = p1pl/exptrm1; f02 = p2mn*exptrm2; f03 = p2pl/exptrm2
     f10 = q1mn*exptrm1; f11 = q1pl/exptrm1; f12 = q2mn*exptrm2; f13 = q2pl/exptrm2
     f20 = p1pl*exptrm1; f21 = p1mn/exptrm1; f22 = p2pl*exptrm2; f23 = p2mn/exptrm2
@@ -2240,7 +2242,6 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
         z1pl_down = z1pl * expon[:-1,:]
         z2pl_down = z2pl * expon[:-1,:]
     elif calculation == 2: # exponential thermal
-        print('second')
         expon = exp(-slice_gt(dtau * f0, 35.0))
         z1mn_up = z1mn * expon
         z2mn_up = z2mn * expon
@@ -2294,7 +2295,6 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
             exptau_mu = exp(-tau_mu)
             expon1 = (1 - exptrm_mus) * exptau_mu / mus
         elif calculation == 2: # exponential thermal
-            print('third')
             expo_thermal = dtau * (f0 + 1/ubar1)
             expon1 = (1 - exp(-slice_gt(expo_thermal, 35.0))) / (f0 + 1/ubar1)
         N0 = eta[0] * expon1;   
