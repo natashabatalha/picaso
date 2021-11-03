@@ -226,6 +226,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
 
         if 'thermal' in calculation:
+            print("here")
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
 
             #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 

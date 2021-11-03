@@ -1168,6 +1168,8 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             xint_at_top[ng,nt,:] = xint[0,:]
             intensity[ng,nt,:,:] = xint
 
+    import IPython; IPython.embed()
+    import sys; sys.exit()
     return xint_at_top, flux_out, intensity
 
 #@jit(nopython=True, cache=True)
@@ -1272,7 +1274,9 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     g2 = -(1-w0*(4-3*cosb))/4 # w0*(1 - cosb)     # 
     lamda = alpha*(1.-w0*cosb)/mu1 #(g1**2 - g2**2)**0.5 #eqn 21 toon
     gama = (1.-alpha)/(1.+alpha) #g2 / (g1 + lamda) #eqn 22 toon
-    g1_plus_g2 = mu1/(1.-w0*cosb) #1/(g1 + g2) #effectively 1/(gamma1 + gamma2) .. second half of eqn.27
+    lamda = sqrt(g1**2 - g2**2)         #eqn 21
+    gama  = (g1-lamda)/g2               #eqn 22
+    g1_plus_g2 = 1/(g1 + g2) #mu1/(1.-w0*cosb) #effectively 1/(gamma1 + gamma2) .. second half of eqn.27
 
     #same as with reflected light, compute c_plus and c_minus 
     #these are eqns 27a & b in Toon89
@@ -1294,8 +1298,10 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     exptrm_minus = 1.0/exptrm_positive
 
     tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
-    b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
-    b_surface = all_b[-1,:] + b1[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
+    b_top = 0*(1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
+    b_surface = 0*all_b[-1,:] + 0*b1[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
+    print("b_top=",b_top)
+    print("b_surface=",b_surface)
 
     #Now we need the terms for the tridiagonal rotated layered method
     if tridiagonal==0:
@@ -1316,7 +1322,9 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
             negative[:,w] = X[::2] - X[1::2]
 
     #if you stop here this is regular ole 2 stream
-    f_up = pi*(positive * exptrm_positive + gama * negative * exptrm_minus + c_plus_up)
+    f_up = 0*pi*(positive * exptrm_positive + gama * negative * exptrm_minus + c_plus_up)
+    import IPython; IPython.embed()
+    import sys; sys.exit()
 
 
     #calculate everyting from Table 3 toon
@@ -1866,7 +1874,7 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
             b_surface = 0. + surf_reflect*u0*F0PI*exp(-tau[-1, :]/u0)
 
             if stream==2:
-                M, B, A_int, N_int, F_bot, G_bot, F, G = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
+                M, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2 = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
                 surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P, fluxes=flx) 
 
             if stream==4:
@@ -1940,9 +1948,11 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 
     
     tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
-    b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
+    b_top = 0*(1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
     #b_surface = all_b[-1,:] + b1[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
-    b_surface = all_b[-1,:] + (all_b[1:,:]-b0)[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
+    b_surface = 0*all_b[-1,:] + 0*(all_b[1:,:]-b0)[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
+    print("b_top=", b_top)
+    print("b_surface=", b_surface)
     
     #if single_phase==1:#'OTHG':
     if np.array_equal(cosb,cosb_og):
@@ -1963,7 +1973,7 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     for ng in range(numg):
         for nt in range(numt):
             if stream==2:
-                M, B, A_int, N_int, F_bot, G_bot, F, G = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
+                M, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2 = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
                 surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, ubar1[ng,nt], P, b0, b1, f0, fluxes=flx, calculation=calculation)
 
             elif stream==4:
@@ -2003,18 +2013,18 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
                 expo = slice_gt(expo, 35.0)    
                 expdtau = exp(-expo)
 
-                intgrl_per_layer = (w0 *  multi_scat * pi
+                intgrl_per_layer = (w0 *  multi_scat #* pi
                             + (1-w0) 
                             * b0 * (1 - expdtau)
                             / (f0 + 1/ubar1[ng,nt]) )
 
 
-            xint_temp[-1,:] = pi*(b_surface + b1[-1,:] * ubar1[ng,nt])#zeros(flux_bot.shape)#
+            xint_temp[-1,:] = 0*(b_surface + b1[-1,:] * ubar1[ng,nt])#zeros(flux_bot.shape)#
             for i in range(nlayer-1,-1,-1):
                 xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/ubar1[ng,nt]) 
                             + intgrl_per_layer[i,:] / ubar1[ng,nt]) 
 
-            xint_temp = xint_temp * pi
+            xint_temp = xint_temp #* pi/2 
             xint_at_top[ng,nt,:] = xint_temp[0, :]
     
     return xint_at_top 
@@ -2061,10 +2071,10 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
             zmn_down = zmn 
             zpl_down = zpl 
     elif calculation == 1: # linear thermal
-        zmn_down = 2*pi * (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*tau[:-1,:]/2)
-        zmn_up = 2*pi * (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*tau[:-1,:]/2)
-        zpl_down = 2*pi * (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*tau[1:,:]/2)
-        zpl_up = 2*pi * (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*tau[1:,:]/2)
+        zmn_down = 2*pi * (1-w0)/a[0] * (B0/2 - B1/a[1])#+ B1*dtau/2)
+        zmn_up = 2*pi * (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2)
+        zpl_down = 2*pi * (1-w0)/a[0] * (B0/2 + B1/a[1])# + B1*dtau/2)
+        zpl_up = 2*pi * (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2)
 
     alpha = 1/ubar1 + lam
     beta = 1/ubar1 - lam
@@ -2165,7 +2175,7 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
         G[2::2,:] = zmn_up
         G[3::2,:] = zpl_up
 
-    return Mb, B, A_int, N_int, F_bot, G_bot, F, G
+    return Mb, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2
 
 #@jit(nopython=True, cache=True, debug=True)
 def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, 
