@@ -1012,8 +1012,6 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
             positive = zeros((nlayer, nwno))
             negative = zeros((nlayer, nwno))
-            import IPython; IPython.embed()
-            import sys; sys.exit()
             #========================= Start loop over wavelength =========================
             L = 2*nlayer
             for w in range(nwno):
@@ -1360,7 +1358,7 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
             iubar = ubar1[ng,nt]
 
-            flux_plus[-1,:] = 0*twopi * (b_surface + b1[-1,:] * iubar)
+            flux_plus[-1,:] = twopi * (b_surface + b1[-1,:] * iubar)
             #flux_plus[-1,:] = zeros(flux_plus[-1,:].shape)
             flux_minus[0,:] = twopi * (1 - exp(-tau_top / iubar)) * all_b[0,:]
             
@@ -1399,8 +1397,6 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
             flux_at_top[ng,nt,:] = flux_plus[0,:]#flux_plus_mdpt[0,:] #nlevel by nwno #
             #flux_down[ng,nt,:] = flux_minus_mdpt[0,:] #nlevel by nwno, Dont really need to compute this for now
 
-    import IPython; IPython.embed()
-    import sys; sys.exit()
     return flux_at_top #, flux_down# numg x numt x nwno
 
 
@@ -1918,8 +1914,6 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
             xint_out[ng,nt,:,:] = xint_temp
             flux[ng,nt,:,:] = flux_temp
     
-    import IPython; IPython.embed()
-    import sys; sys.exit()
     return xint_at_top, flux, xint_out
 
 def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb, 
@@ -2017,7 +2011,7 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
                             / (f0 + 1/ubar1[ng,nt]) )
 
 
-            xint_temp[-1,:] = 0*(b_surface + b1[-1,:] * ubar1[ng,nt])#zeros(flux_bot.shape)#
+            xint_temp[-1,:] = pi * (b_surface + b1[-1,:] * ubar1[ng,nt])#zeros(flux_bot.shape)#
             for i in range(nlayer-1,-1,-1):
                 xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/ubar1[ng,nt]) 
                             + intgrl_per_layer[i,:] / ubar1[ng,nt]) 
@@ -2025,8 +2019,6 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
             xint_temp = xint_temp #* pi/2 
             xint_at_top[ng,nt,:] = xint_temp[0, :]
     
-    import IPython; IPython.embed()
-    import sys; sys.exit()
     return xint_at_top 
 
 #@jit(nopython=True, cache=True)
