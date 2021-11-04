@@ -1270,8 +1270,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     #**originally written in terms of alpha which isn't in the table. 
     #**changed to more closely resemble Toon (no change in actual values)
     alpha = sqrt( (1.-w0) / (1.-w0*cosb) )
-    g1 = (7-w0*(4+3*cosb))/4  # 2 - w0*(1 + cosb) # 
-    g2 = -(1-w0*(4-3*cosb))/4 # w0*(1 - cosb)     # 
+    g1 = 2 - w0*(1 + cosb) # (7-w0*(4+3*cosb))/4  # 
+    g2 = w0*(1 - cosb)     # -(1-w0*(4-3*cosb))/4 # 
     lamda = alpha*(1.-w0*cosb)/mu1 #(g1**2 - g2**2)**0.5 #eqn 21 toon
     gama = (1.-alpha)/(1.+alpha) #g2 / (g1 + lamda) #eqn 22 toon
     lamda = sqrt(g1**2 - g2**2)         #eqn 21
@@ -1321,8 +1321,6 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
     #if you stop here this is regular ole 2 stream
     f_up = 0*pi*(positive * exptrm_positive + gama * negative * exptrm_minus + c_plus_up)
-    import IPython; IPython.embed()
-    import sys; sys.exit()
 
 
     #calculate everyting from Table 3 toon
@@ -1362,7 +1360,7 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
             iubar = ubar1[ng,nt]
 
-            flux_plus[-1,:] = twopi * (b_surface + b1[-1,:] * iubar)
+            flux_plus[-1,:] = 0*twopi * (b_surface + b1[-1,:] * iubar)
             #flux_plus[-1,:] = zeros(flux_plus[-1,:].shape)
             flux_minus[0,:] = twopi * (1 - exp(-tau_top / iubar)) * all_b[0,:]
             
@@ -1401,6 +1399,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
             flux_at_top[ng,nt,:] = flux_plus[0,:]#flux_plus_mdpt[0,:] #nlevel by nwno #
             #flux_down[ng,nt,:] = flux_minus_mdpt[0,:] #nlevel by nwno, Dont really need to compute this for now
 
+    import IPython; IPython.embed()
+    import sys; sys.exit()
     return flux_at_top #, flux_down# numg x numt x nwno
 
 
@@ -1991,8 +1991,6 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
                 A_int[:,:,W], N_int[:,W], F_bot[:,W], G_bot[W], stream, nlayer)
                 if flx==1:
                     flux_temp[:,W] = calculate_flux(F[:,:,W], G[:,W], X)
-                import IPython; IPython.embed()
-                import sys; sys.exit()
 
             for i in range(nlayer):
                 for l in range(stream):
@@ -2003,17 +2001,17 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
                 expo_mus = slice_gt(expo, 35.0)    
                 expdtau = exp(-expo)
 
-                intgrl_per_layer = (w0 *  multi_scat * pi 
-                            + (1-w0_og) * ubar1[ng,nt] *
+                intgrl_per_layer = (w0 *  multi_scat 
+                            + pi * ((1-w0_og) * ubar1[ng,nt] *
                             (b0 * (1 - expdtau)
-                            + b1 * (ubar1[ng,nt] - (dtau_og + ubar1[ng,nt]) * expdtau)))
+                            + b1 * (ubar1[ng,nt] - (dtau_og + ubar1[ng,nt]) * expdtau))))
 
             elif calculation==2:
                 expo = dtau * (f0 + 1/ubar1[ng,nt])
                 expo = slice_gt(expo, 35.0)    
                 expdtau = exp(-expo)
 
-                intgrl_per_layer = (w0 *  multi_scat #* pi
+                intgrl_per_layer = (w0 *  multi_scat 
                             + (1-w0) 
                             * b0 * (1 - expdtau)
                             / (f0 + 1/ubar1[ng,nt]) )
@@ -2073,10 +2071,10 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
             zmn_down = zmn 
             zpl_down = zpl 
     elif calculation == 1: # linear thermal
-        zmn_down = 2*pi * (1-w0)/a[0] * (B0/2 - B1/a[1])#+ B1*dtau/2)
-        zmn_up = 2*pi * (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2)
-        zpl_down = 2*pi * (1-w0)/a[0] * (B0/2 + B1/a[1])# + B1*dtau/2)
-        zpl_up = 2*pi * (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2)
+        zmn_down = 2*pi**2 * (1-w0)/a[0] * (B0/2 - B1/a[1])#+ B1*dtau/2)
+        zmn_up = 2*pi**2 * (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2)
+        zpl_down = 2*pi**2 * (1-w0)/a[0] * (B0/2 + B1/a[1])# + B1*dtau/2)
+        zpl_up = 2*pi**2 * (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2)
 
     alpha = 1/ubar1 + lam
     beta = 1/ubar1 - lam
@@ -2139,8 +2137,8 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
         N_int[1::2,:] = eta[1] * expon1
     elif calculation == 1: # linear thermal
         expdtau = exp(-dtau/ubar1)
-        N_int[::2,:] = (1-w0) * ubar1 / a[0] * ((B0 + B1*tau[:-1,:])*(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau))
-        N_int[1::2,:] = (1-w0) * ubar1 / a[0] * ( B1*(1-expdtau) / a[1])
+        N_int[::2,:] = pi * (1-w0) * ubar1 / a[0] * ((B0 + B1*tau[:-1,:])*(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau))
+        N_int[1::2,:] = pi * (1-w0) * ubar1 / a[0] * ( B1*(1-expdtau) / a[1])
 
     #   last row: BC 4
     n = nlayer-1
