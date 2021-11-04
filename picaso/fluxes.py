@@ -1012,6 +1012,8 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
             positive = zeros((nlayer, nwno))
             negative = zeros((nlayer, nwno))
+            import IPython; IPython.embed()
+            import sys; sys.exit()
             #========================= Start loop over wavelength =========================
             L = 2*nlayer
             for w in range(nwno):
@@ -1168,8 +1170,6 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             xint_at_top[ng,nt,:] = xint[0,:]
             intensity[ng,nt,:,:] = xint
 
-    import IPython; IPython.embed()
-    import sys; sys.exit()
     return xint_at_top, flux_out, intensity
 
 #@jit(nopython=True, cache=True)
@@ -1262,7 +1262,7 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     #get matrix of blackbodies 
     all_b = blackbody(tlevel, 1/wno) #returns nlevel by nwave   
     b0 = all_b[0:-1,:]
-    b1 = 0*(all_b[1:,:] - b0) / dtau # eqn 26 toon 89
+    b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
     #b0 = zeros(b0.shape)
     #b1 = zeros(b1.shape)
 
@@ -1321,6 +1321,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
     #if you stop here this is regular ole 2 stream
     f_up = 0*pi*(positive * exptrm_positive + gama * negative * exptrm_minus + c_plus_up)
+    import IPython; IPython.embed()
+    import sys; sys.exit()
 
 
     #calculate everyting from Table 3 toon
@@ -1399,8 +1401,6 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
             flux_at_top[ng,nt,:] = flux_plus[0,:]#flux_plus_mdpt[0,:] #nlevel by nwno #
             #flux_down[ng,nt,:] = flux_minus_mdpt[0,:] #nlevel by nwno, Dont really need to compute this for now
 
-    import IPython; IPython.embed()
-    import sys; sys.exit()
     return flux_at_top #, flux_down# numg x numt x nwno
 
 
@@ -1940,17 +1940,17 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     all_b = blackbody(tlevel, 1/wno) #returns nlevel by nwave   
     b0 = all_b[0:-1,:]
     if calculation == 1: # linear thermal
-        b1 = 0*(all_b[1:,:] - b0) / dtau # eqn 26 toon 89
+        b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
         f0 = 0.
     elif calculation == 2: # exponential thermal
-        b1 = 0*all_b[1:,:] 
+        b1 = all_b[1:,:] 
         f0 = -1/dtau * log(b1/b0)
 
     
     tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
     b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
     #b_surface = all_b[-1,:] + b1[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
-    b_surface = all_b[-1,:] + 0*(all_b[1:,:]-b0)[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
+    b_surface = all_b[-1,:] + (all_b[1:,:]-b0)[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
     
     #if single_phase==1:#'OTHG':
     if np.array_equal(cosb,cosb_og):
@@ -1991,6 +1991,8 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
                 A_int[:,:,W], N_int[:,W], F_bot[:,W], G_bot[W], stream, nlayer)
                 if flx==1:
                     flux_temp[:,W] = calculate_flux(F[:,:,W], G[:,W], X)
+                import IPython; IPython.embed()
+                import sys; sys.exit()
 
             for i in range(nlayer):
                 for l in range(stream):
@@ -2175,8 +2177,6 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
         G[2::2,:] = zmn_up
         G[3::2,:] = zpl_up
 
-    import IPython; IPython.embed()
-    import sys; sys.exit()
     return Mb, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2
 
 #@jit(nopython=True, cache=True, debug=True)
