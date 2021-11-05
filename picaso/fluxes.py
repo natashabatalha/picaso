@@ -1259,8 +1259,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
     #get matrix of blackbodies 
     all_b = blackbody(tlevel, 1/wno) #returns nlevel by nwave   
-    b0 = all_b[0:-1,:]
-    b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
+    b0 = 0*all_b[0:-1,:]
+    b1 = 0*(all_b[1:,:] - b0) / dtau # eqn 26 toon 89
     #b0 = zeros(b0.shape)
     #b1 = zeros(b1.shape)
 
@@ -1322,7 +1322,7 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
 
     #calculate everyting from Table 3 toon
-    alphax = ((1.0-w0)/(1.0-w0*cosb))**0.5
+    #alphax = ((1.0-w0)/(1.0-w0*cosb))**0.5
     #G = twopi*w0*positive*(1.0+cosb*alphax)/(1.0+alphax)#
     #H = twopi*w0*negative*(1.0-cosb*alphax)/(1.0+alphax)#
     #J = twopi*w0*positive*(1.0-cosb*alphax)/(1.0+alphax)#
@@ -1397,6 +1397,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
             flux_at_top[ng,nt,:] = flux_plus[0,:]#flux_plus_mdpt[0,:] #nlevel by nwno #
             #flux_down[ng,nt,:] = flux_minus_mdpt[0,:] #nlevel by nwno, Dont really need to compute this for now
 
+    import IPython; IPython.embed()
+    import sys; sys.exit()
     return flux_at_top #, flux_down# numg x numt x nwno
 
 
@@ -1932,9 +1934,9 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     
     #get matrix of blackbodies 
     all_b = blackbody(tlevel, 1/wno) #returns nlevel by nwave   
-    b0 = all_b[0:-1,:]
+    b0 = 0*all_b[0:-1,:]
     if calculation == 1: # linear thermal
-        b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
+        b1 = 0*(all_b[1:,:] - b0) / dtau # eqn 26 toon 89
         f0 = 0.
     elif calculation == 2: # exponential thermal
         b1 = all_b[1:,:] 
@@ -1944,7 +1946,7 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
     b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
     #b_surface = all_b[-1,:] + b1[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
-    b_surface = all_b[-1,:] + (all_b[1:,:]-b0)[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
+    b_surface = all_b[-1,:] + 0*(all_b[1:,:]-b0)[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
     
     #if single_phase==1:#'OTHG':
     if np.array_equal(cosb,cosb_og):
@@ -2019,6 +2021,8 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
             xint_temp = xint_temp #* pi/2 
             xint_at_top[ng,nt,:] = xint_temp[0, :]
     
+    import IPython; IPython.embed()
+    import sys; sys.exit()
     return xint_at_top 
 
 #@jit(nopython=True, cache=True)
