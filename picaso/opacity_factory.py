@@ -708,7 +708,7 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
     #alkalis are created using the sep.alkali from a fortran file 
     alks = ['Na','K','Rb','Cs','Li']
     if molecule in alks: 
-        if alkali_dir == 'alkalis'
+        if alkali_dir == 'alkalis':
             mol_dir = os.path.join(og_directory,alkali_dir)
         else: 
             mol_dir = alkali_dir    
