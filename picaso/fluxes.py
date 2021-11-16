@@ -1259,8 +1259,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
     #get matrix of blackbodies 
     all_b = blackbody(tlevel, 1/wno) #returns nlevel by nwave   
-    b0 = 0*all_b[0:-1,:]
-    b1 = 0*(all_b[1:,:] - b0) / dtau # eqn 26 toon 89
+    b0 = all_b[0:-1,:]
+    b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
     #b0 = zeros(b0.shape)
     #b1 = zeros(b1.shape)
 
@@ -1272,19 +1272,17 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     g2 = w0*(1 - cosb)     # -(1-w0*(4-3*cosb))/4 # 
     lamda = alpha*(1.-w0*cosb)/mu1 #(g1**2 - g2**2)**0.5 #eqn 21 toon
     gama = (1.-alpha)/(1.+alpha) #g2 / (g1 + lamda) #eqn 22 toon
-    lamda = sqrt(g1**2 - g2**2)         #eqn 21
-    gama  = (g1-lamda)/g2               #eqn 22
-    g1_plus_g2 = 1/(g1 + g2) #mu1/(1.-w0*cosb) #effectively 1/(gamma1 + gamma2) .. second half of eqn.27
+    g1_plus_g2 = mu1/(1.-w0*cosb) #effectively 1/(gamma1 + gamma2) .. second half of eqn.27
 
     #same as with reflected light, compute c_plus and c_minus 
     #these are eqns 27a & b in Toon89
     #_ups are evaluated at lower optical depth, TOA
     #_dows are evaluated at higher optical depth, bottom of atmosphere
-    c_plus_up = (b0 + b1* g1_plus_g2)*pi # introduced pi here and removed from expressions for G,H,J,K
-    c_minus_up = (b0 - b1* g1_plus_g2)*pi
+    c_plus_up = (b0 + b1* g1_plus_g2) # introduced pi here and removed from expressions for G,H,J,K
+    c_minus_up = (b0 - b1* g1_plus_g2)
 
-    c_plus_down = (b0 + b1 * dtau + b1 * g1_plus_g2)*pi
-    c_minus_down = (b0 + b1 * dtau - b1 * g1_plus_g2)*pi
+    c_plus_down = (b0 + b1 * dtau + b1 * g1_plus_g2)
+    c_minus_down = (b0 + b1 * dtau - b1 * g1_plus_g2)
     # note there should be a factor of 2mu1 in c expressions, need to include that if mu1 not 0.5
 
     #calculate exponential terms needed for the tridiagonal rotated layered method
@@ -1318,28 +1316,28 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
             negative[:,w] = X[::2] - X[1::2]
 
     #if you stop here this is regular ole 2 stream
-    f_up = 0*pi*(positive * exptrm_positive + gama * negative * exptrm_minus + c_plus_up)
+    f_up = pi*(positive * exptrm_positive + gama * negative * exptrm_minus + c_plus_up)
 
 
     #calculate everyting from Table 3 toon
-    #alphax = ((1.0-w0)/(1.0-w0*cosb))**0.5
-    #G = twopi*w0*positive*(1.0+cosb*alphax)/(1.0+alphax)#
-    #H = twopi*w0*negative*(1.0-cosb*alphax)/(1.0+alphax)#
-    #J = twopi*w0*positive*(1.0-cosb*alphax)/(1.0+alphax)#
-    #K = twopi*w0*negative*(1.0+cosb*alphax)/(1.0+alphax)#
-    #alpha1 = twopi*(b0+ b1*(mu1*w0*cosb/(1.0-w0*cosb)))
-    #alpha2 = twopi*b1
-    #sigma1 = twopi*(b0- b1*(mu1*w0*cosb/(1.0-w0*cosb)))
-    #sigma2 = twopi*b1
-    G = positive*(1.0/mu1 - lamda)
-    H = negative*gama*(1.0/mu1 + lamda)
-    J = positive*gama*(1.0/mu1 + lamda)
-    K = negative*(1.0/mu1 - lamda)
-    alpha1 = twopi*(b0+ b1*w0*(g1_plus_g2 - mu1))
+    alphax = ((1.0-w0)/(1.0-w0*cosb))**0.5
+    G = twopi*w0*positive*(1.0+cosb*alphax)/(1.0+alphax)#
+    H = twopi*w0*negative*(1.0-cosb*alphax)/(1.0+alphax)#
+    J = twopi*w0*positive*(1.0-cosb*alphax)/(1.0+alphax)#
+    K = twopi*w0*negative*(1.0+cosb*alphax)/(1.0+alphax)#
+    alpha1 = twopi*(b0+ b1*(mu1*w0*cosb/(1.0-w0*cosb)))
     alpha2 = twopi*b1
-    sigma1 = twopi*(b0- b1*(g1_plus_g2 - mu1))
+    sigma1 = twopi*(b0- b1*(mu1*w0*cosb/(1.0-w0*cosb)))
     sigma2 = twopi*b1
-
+    #G = positive*(1.0/mu1 - lamda)
+    #H = negative*gama*(1.0/mu1 + lamda)
+    #J = positive*gama*(1.0/mu1 + lamda)
+    #K = negative*(1.0/mu1 - lamda)
+    #alpha1 = twopi*(b0+ b1*w0*(g1_plus_g2 - mu1))
+    #alpha2 = twopi*b1
+    #sigma1 = twopi*(b0- b1*(g1_plus_g2 - mu1))
+    #sigma2 = twopi*b1
+    #
     flux_minus = zeros((nlevel,nwno))
     flux_plus = zeros((nlevel,nwno))
     flux_minus_mdpt = zeros((nlevel,nwno))
@@ -1397,8 +1395,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
             flux_at_top[ng,nt,:] = flux_plus[0,:]#flux_plus_mdpt[0,:] #nlevel by nwno #
             #flux_down[ng,nt,:] = flux_minus_mdpt[0,:] #nlevel by nwno, Dont really need to compute this for now
 
-    import IPython; IPython.embed()
-    import sys; sys.exit()
+#    import IPython; IPython.embed()
+#    import sys; sys.exit()
     return flux_at_top #, flux_down# numg x numt x nwno
 
 
@@ -1925,6 +1923,7 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     nlayer = nlevel - 1 #nlayers 
 
     mu1 = 0.5#0.88#0.5 #from Table 1 Toon  
+    twopi = pi#+pi
 
     def P(mu): # Legendre polynomials
         return [1, mu, (3*mu**2 - 1)/2, (5*mu**3 - 3*mu)/2,
@@ -1934,19 +1933,18 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     
     #get matrix of blackbodies 
     all_b = blackbody(tlevel, 1/wno) #returns nlevel by nwave   
-    b0 = 0*all_b[0:-1,:]
+    b0 = all_b[0:-1,:]
     if calculation == 1: # linear thermal
-        b1 = 0*(all_b[1:,:] - b0) / dtau # eqn 26 toon 89
+        b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
         f0 = 0.
     elif calculation == 2: # exponential thermal
         b1 = all_b[1:,:] 
         f0 = -1/dtau * log(b1/b0)
-
     
     tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
-    b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
+    b_top = twopi*mu1 * (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
     #b_surface = all_b[-1,:] + b1[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
-    b_surface = all_b[-1,:] + 0*(all_b[1:,:]-b0)[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
+    b_surface = twopi*mu1 * (all_b[-1,:] + (all_b[1:,:]-b0)[-1,:]*mu1) #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
     
     #if single_phase==1:#'OTHG':
     if np.array_equal(cosb,cosb_og):
@@ -1968,7 +1966,7 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
         for nt in range(numt):
             if stream==2:
                 M, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2 = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-                surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, ubar1[ng,nt], P, b0, b1, f0, fluxes=flx, calculation=calculation)
+                surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, ubar1[ng,nt], P, b0, b1, f0, twopi=twopi, fluxes=flx, calculation=calculation)
 
             elif stream==4:
                 M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
@@ -1998,9 +1996,9 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
                 expdtau = exp(-expo)
 
                 intgrl_per_layer = (w0 *  multi_scat 
-                            + pi * ((1-w0_og) * ubar1[ng,nt] *
+                            + twopi * (1-w0_og) * ubar1[ng,nt] *
                             (b0 * (1 - expdtau)
-                            + b1 * (ubar1[ng,nt] - (dtau_og + ubar1[ng,nt]) * expdtau))))
+                            + b1 * (ubar1[ng,nt] - (dtau_og + ubar1[ng,nt]) * expdtau)))
 
             elif calculation==2:
                 expo = dtau * (f0 + 1/ubar1[ng,nt])
@@ -2013,7 +2011,7 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
                             / (f0 + 1/ubar1[ng,nt]) )
 
 
-            xint_temp[-1,:] = pi * (b_surface + b1[-1,:] * ubar1[ng,nt])#zeros(flux_bot.shape)#
+            xint_temp[-1,:] = twopi * (b_surface + b1[-1,:] * ubar1[ng,nt])#zeros(flux_bot.shape)#
             for i in range(nlayer-1,-1,-1):
                 xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/ubar1[ng,nt]) 
                             + intgrl_per_layer[i,:] / ubar1[ng,nt]) 
@@ -2021,13 +2019,13 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
             xint_temp = xint_temp #* pi/2 
             xint_at_top[ng,nt,:] = xint_temp[0, :]
     
-    import IPython; IPython.embed()
-    import sys; sys.exit()
+#    import IPython; IPython.embed()
+#    import sys; sys.exit()
     return xint_at_top 
 
 #@jit(nopython=True, cache=True)
 def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, 
-        a, b, ubar1, P, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
+        a, b, ubar1, P, B0=0., B1=0., f0=0., twopi=2*pi, fluxes=0, calculation=0):#'reflected'):
 
     if calculation==0:
         Del = ((1 / ubar0)**2 - a[0]*a[1])
@@ -2067,10 +2065,10 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
             zmn_down = zmn 
             zpl_down = zpl 
     elif calculation == 1: # linear thermal
-        zmn_down = 2*pi**2 * (1-w0)/a[0] * (B0/2 - B1/a[1])#+ B1*dtau/2)
-        zmn_up = 2*pi**2 * (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2)
-        zpl_down = 2*pi**2 * (1-w0)/a[0] * (B0/2 + B1/a[1])# + B1*dtau/2)
-        zpl_up = 2*pi**2 * (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2)
+        zmn_down = 2*pi * (twopi*(1-w0)/a[0] * (B0/2 - B1/a[1]))#+ B1*dtau/2)
+        zmn_up = 2*pi * (twopi*(1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2))
+        zpl_down = 2*pi * (twopi*(1-w0)/a[0] * (B0/2 + B1/a[1]))# + B1*dtau/2)
+        zpl_up = 2*pi * (twopi*(1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2))
 
     alpha = 1/ubar1 + lam
     beta = 1/ubar1 - lam
@@ -2133,8 +2131,8 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
         N_int[1::2,:] = eta[1] * expon1
     elif calculation == 1: # linear thermal
         expdtau = exp(-dtau/ubar1)
-        N_int[::2,:] = pi * (1-w0) * ubar1 / a[0] * ((B0 + B1*tau[:-1,:])*(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau))
-        N_int[1::2,:] = pi * (1-w0) * ubar1 / a[0] * ( B1*(1-expdtau) / a[1])
+        N_int[::2,:] = twopi*(1-w0) * ubar1 / a[0] * ((B0 + B1*tau[:-1,:])*(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau))
+        N_int[1::2,:] = twopi*(1-w0) * ubar1 / a[0] * ( B1*(1-expdtau) / a[1])
 
     #   last row: BC 4
     n = nlayer-1
