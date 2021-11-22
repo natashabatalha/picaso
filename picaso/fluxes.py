@@ -1295,7 +1295,11 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
     tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
     b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
-    b_surface = all_b[-1,:] + b1[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
+    hard_surface = True
+    if hard_surface:
+        b_surface = all_b[-1,:] #for terrestrial, hard surface
+    else:
+        b_surface=all_b[-1,:] + b1[-1,:]*mu1 #(for non terrestrial)
 
     #Now we need the terms for the tridiagonal rotated layered method
     if tridiagonal==0:
@@ -1359,6 +1363,10 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
             flux_plus[-1,:] = twopi * (b_surface + b1[-1,:] * iubar)
             #flux_plus[-1,:] = zeros(flux_plus[-1,:].shape)
             flux_minus[0,:] = twopi * (1 - exp(-tau_top / iubar)) * all_b[0,:]
+            if hard_surface:
+                flux_plus[-1,:] = twopi * b_surface # terrestrial
+            else:
+                flux_plus[-1,:] = twopi * (all_b[-1,:] + b1[-1,:] * iubar) #no hard surface
             
             exptrm_angle = exp( - dtau / iubar)
             exptrm_angle_mdpt = exp( -0.5 * dtau / iubar) 
@@ -1943,8 +1951,12 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     
     tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
     b_top = twopi*mu1 * (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
-    #b_surface = all_b[-1,:] + b1[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
-    b_surface = twopi*mu1 * (all_b[-1,:] + (all_b[1:,:]-b0)[-1,:]*mu1) #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
+
+    hard_surface = True
+    if hard_surface:
+        b_surface = all_b[-1,:] #for terrestrial, hard surface
+    else:
+        b_surface = (all_b[-1,:] + b1[-1,:]*mu1) #(for non terrestrial)
     
     #if single_phase==1:#'OTHG':
     if np.array_equal(cosb,cosb_og):
@@ -1979,6 +1991,8 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
             intgrl_per_layer = zeros((nlayer, nwno))
             multi_scat = zeros((nlayer, nwno))
             xint_temp = zeros((nlevel, nwno))
+            scat = zeros((nlevel, nwno))
+            source = zeros((nlevel, nwno))
             #========================= Start loop over wavelength =========================
             for W in range(nwno):
                 (intgrl_new[:,W], flux_bot[W], X) = solve_4_stream_banded(M[:,:,W], B[:,W],  
@@ -2011,17 +2025,18 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
                             / (f0 + 1/ubar1[ng,nt]) )
 
 
-            #xint_temp[-1,:] = twopi * (b_surface + b1[-1,:] * ubar1[ng,nt])#zeros(flux_bot.shape)#
-            xint_temp[-1,:] = b_surface/mu1 + twopi * b1[-1,:] * ubar1[ng,nt]#zeros(flux_bot.shape)#
+            if hard_surface:
+                xint_temp[-1,:] = twopi * b_surface # terrestrial
+            else:
+                xint_temp[-1,:] = twopi * (all_b[-1,:] + b1[-1,:] * ubar1[ng,nt]) # no hard surface
+
             for i in range(nlayer-1,-1,-1):
                 xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/ubar1[ng,nt]) 
                             + intgrl_per_layer[i,:] / ubar1[ng,nt]) 
 
-            xint_temp = xint_temp #* pi/2 
+            xint_temp = xint_temp 
             xint_at_top[ng,nt,:] = xint_temp[0, :]
     
-#    import IPython; IPython.embed()
-#    import sys; sys.exit()
     return xint_at_top 
 
 #@jit(nopython=True, cache=True)
