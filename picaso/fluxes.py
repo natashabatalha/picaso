@@ -2011,7 +2011,8 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
                             / (f0 + 1/ubar1[ng,nt]) )
 
 
-            xint_temp[-1,:] = twopi * (b_surface + b1[-1,:] * ubar1[ng,nt])#zeros(flux_bot.shape)#
+            #xint_temp[-1,:] = twopi * (b_surface + b1[-1,:] * ubar1[ng,nt])#zeros(flux_bot.shape)#
+            xint_temp[-1,:] = b_surface/mu1 + twopi * b1[-1,:] * ubar1[ng,nt]#zeros(flux_bot.shape)#
             for i in range(nlayer-1,-1,-1):
                 xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/ubar1[ng,nt]) 
                             + intgrl_per_layer[i,:] / ubar1[ng,nt]) 
