@@ -190,13 +190,15 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                     frac_a, frac_b, frac_c, constant_back, constant_forward, 
                                     dimension, stream, print_time)
                 else:
-                    xint = get_reflected_1d(nlevel, wno,nwno,ng,nt,
+                    #getting intensities, not fluxes (which is why second return is null)
+                    xint ,_= get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                     DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
                                     GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
                                     DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
                                     atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
                                     single_phase,multi_phase,
-                                    frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)
+                                    frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal,
+                                    get_toa_intensity=1, get_lvl_flux=0)
 
                 xint_at_top += xint*gauss_wts[ig]
             #if full output is requested add in xint at top for 3d plots
@@ -930,27 +932,27 @@ class inputs():
 
 
         #set didier raw data -- NEED TO CHECK WHAT THIS IS
-        t_table=np.loadtxt(os.path.join(__refdata__,'climate_INPUTS/tlog'),usecols=[0],unpack=True)
-        p_table=np.loadtxt(os.path.join(__refdata__,'climate_INPUTS/plog'),usecols=[0],unpack=True)
+        #t_table=np.loadtxt(os.path.join(__refdata__,'climate_INPUTS/tlog'),usecols=[0],unpack=True)
+        #p_table=np.loadtxt(os.path.join(__refdata__,'climate_INPUTS/plog'),usecols=[0],unpack=True)
 
-        grad=np.zeros(shape=(53,26))
-        cp = np.zeros(shape=(53,26))
+        #grad=np.zeros(shape=(53,26))
+        #cp = np.zeros(shape=(53,26))
         
-        grad_inp, i_inp, j_inp = np.loadtxt(os.path.join(__refdata__,'climate_INPUTS/GRAD_FOR_PY_Y28'),usecols=[0,1,2],unpack=True)
-        for i in range(len(grad_inp)):
-            grad[int(i_inp[i]-1),int(j_inp[i]-1)]=grad_inp[i]
+        #grad_inp, i_inp, j_inp = np.loadtxt(os.path.join(__refdata__,'climate_INPUTS/GRAD_FOR_PY_Y28'),usecols=[0,1,2],unpack=True)
+        #for i in range(len(grad_inp)):
+        #    grad[int(i_inp[i]-1),int(j_inp[i]-1)]=grad_inp[i]
         
-        self.inputs['climate']['t_table'] = t_table
-        self.inputs['climate']['p_table'] = p_table
-        self.inputs['climate']['grad'] = grad
-        self.inputs['climate']['cp'] = cp
+        cp_grad = json.load(open(os.path.join(__refdata__,'climate_INPUTS','specific_heat_p_adiabat_grad.json')))
 
+        #log10 base temperature Kelvin 
+        self.inputs['climate']['t_table'] = np.array(cp_grad['temperature'])
+        #log10 base pressure bars 
+        self.inputs['climate']['p_table'] = np.array(cp_grad['pressure'])
+        #\nabla_ad = d ln T/ d ln P |_S (at constant entropy)
+        self.inputs['climate']['grad'] = np.array(cp_grad['adiabat_grad'])
+        #log Cp (erg/g/K);Specific heat at constant pressure for the same H/He 
+        self.inputs['climate']['cp'] = np.array(cp_grad['specific_heat'])
 
-        #tmin = 40.0
-        #tmax= tmin + dt*(ntmps-1.0)
-
-        #self.inputs['climate']['tmin'] = tmin
-        #self.inputs['climate']['tmax'] = tmax
 
     def inputs_climate(self, temp_guess= None, pressure= None, nstr = None, nofczns = None , rfacv = None, rfaci = None, cloudy = False, mh = None, CtoO = None, species = None, fsed = None):
         """
@@ -1037,7 +1039,7 @@ class inputs():
         #turn off stellar radiation if user has run "setup_nostar() function"
         if 'nostar' in self.inputs['star'].values():
             rfacv=0.0 
-            FOPI = np.zeros(nwno) + 1.0
+            F0PI = np.zeros(nwno) #+ 1.0
         #otherwise assume that there is stellar irradiation 
         else:
             rfacv = self.inputs['climate']['rfacv']
@@ -1048,7 +1050,7 @@ class inputs():
             
 
             fine_flux_star  = self.inputs['star']['flux']  # erg/s/cm^2
-            FOPI = fine_flux_star * ((r_star/semi_major)**2)
+            F0PI = fine_flux_star * ((r_star/semi_major)**2)
 
 
         TEMP1 = self.inputs['climate']['guess_temp']
@@ -1079,9 +1081,10 @@ class inputs():
         convt=5.0
         x_max_mult=7.0
         
+        print('NEB FIRST PROFILE RUN')
         final = False
         pressure, temperature, dtdp, profile_flag = profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
-            TEMP1,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
+            TEMP1,pressure, F0PI, t_table, p_table, grad, cp, opacityclass, grav, 
             rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , cloudy, cld_species,mh,fsed )
 
         # second convergence call
@@ -1092,13 +1095,13 @@ class inputs():
         x_max_mult=7.0
 
 
-        
+        print('NEB SECOND PROFILE RUN')
         final = False
         pressure, temperature, dtdp, profile_flag = profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
-                    temperature,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
+                    temperature,pressure, F0PI, t_table, p_table, grad, cp, opacityclass, grav, 
                     rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final, cloudy, cld_species, mh,fsed )   
         
-        pressure, temp, dtdp, nstr_new, flux_plus_final =find_strat(pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
+        pressure, temp, dtdp, nstr_new, flux_plus_final =find_strat(pressure, temperature, dtdp ,F0PI, nofczns,nstr,x_max_mult,
                              t_table, p_table, grad, cp, opacityclass, grav, 
                              rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed)
 
@@ -3588,7 +3591,7 @@ def stream_options(printout=True):
 
 
 def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
-            temp,pressure,FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
+            temp,pressure,F0PI, t_table, p_table, grad, cp, opacityclass, grav, 
              rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species,mh,fsed):
     """
     Function iterating on the TP profile by calling tstart and changing opacities as well
@@ -3669,11 +3672,14 @@ def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     
     # first calculate the convective zones
     for nb in range(0,3*nofczns,3):
-        
+        #top layer of top convective region
         n_strt_b= nstr[nb+1]
+        #evaluate at level immediately above wher we at
         n_ctop_b= n_strt_b+1
+        #bottom layer of top convective region
         n_bot_b= nstr[nb+2] +1
 
+        #print(f'Adjust the temperature in the convective zone found at: {n_ctop_b}-{n_bot_b}')
         for j1 in range(n_ctop_b,n_bot_b+1): 
             press = sqrt(pressure[j1-1]*pressure[j1])
             calc_type =  0 # only need grad_x in return
@@ -3706,11 +3712,12 @@ def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw =  calculate_atm(bundle, opacityclass )
     
     ## begin bigger loop which gets opacities
+    print('NEB : START BIG LOOP THAT GETS OPACITIES- Calls T_START')
     for iii in range(itmx):
         
         temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop = t_start(nofczns,nstr,it_max,conv,x_max_mult, 
             rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
-            grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts)
+            grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, F0PI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts)
 
         bundle = inputs(calculation='brown')
         bundle.phase_angle(0)
@@ -3779,7 +3786,7 @@ def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                 
                 temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop = t_start(nofczns,nstr,it_max,conv,x_max_mult, 
             rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
-            grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts)
+            grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, F0PI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts)
 
                 ert = 0.0 # avg temp change
                 scalt= 1.0
@@ -3825,7 +3832,7 @@ def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         
         temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop = t_start(nofczns,nstr,it_max,conv,x_max_mult, 
     rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
-    grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts)
+    grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, F0PI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts)
 
         ert = 0.0 # avg temp change
         scalt= 1.0
@@ -3844,7 +3851,7 @@ def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         print("Profile converged")
     return pressure, temp, dtdp, conv_flag
 
-def find_strat(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
+def find_strat(pressure, temp, dtdp , F0PI, nofczns,nstr,x_max_mult,
              t_table, p_table, grad, cp, opacityclass, grav, 
              rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, cloudy, cld_species,mh,fsed):
     """
@@ -3951,7 +3958,7 @@ def find_strat(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
             raise ValueError( "Convection zone grew to Top of atmosphere, Need to Stop")
         
         pressure, temp, dtdp, profile_flag = profile(it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
-            temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
+            temp,pressure, F0PI, t_table, p_table, grad, cp, opacityclass, grav, 
              rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed)
 
     # now for the 2nd convection zone
@@ -3986,7 +3993,7 @@ def find_strat(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
             #print(nofczns)
             raise ValueError("Overlap happened !")
         pressure, temp, dtdp, profile_flag = profile(it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
-            temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
+            temp,pressure, F0PI, t_table, p_table, grad, cp, opacityclass, grav, 
              rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species,mh, fsed)
 
         i_change = 1
@@ -4018,7 +4025,7 @@ def find_strat(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
                         i_change = 1
                 print(nstr)
                 pressure, temp, dtdp, profile_flag = profile(it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
-            temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
+            temp,pressure, F0PI, t_table, p_table, grad, cp, opacityclass, grav, 
              rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed)
 
                 d1 = dtdp[nstr[1]-1]
@@ -4038,7 +4045,7 @@ def find_strat(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
                     i_change =1
                 print(nstr)
                 pressure, temp, dtdp, profile_flag = profile(it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
-                    temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
+                    temp,pressure, F0PI, t_table, p_table, grad, cp, opacityclass, grav, 
                     rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed)
             
 
@@ -4054,7 +4061,7 @@ def find_strat(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
     final = True
     print("final",nstr)
     pressure, temp, dtdp, profile_flag = profile(it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
-                temp,pressure, FOPI, t_table, p_table, grad, cp,opacityclass, grav, 
+                temp,pressure, F0PI, t_table, p_table, grad, cp,opacityclass, grav, 
                 rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species,mh,fsed)
 
     #    else :
@@ -4075,7 +4082,7 @@ def find_strat(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
     
     flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = climate(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
+            ubar0,ubar1,cos_theta, F0PI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
             wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, False, True) #false for reflected, true for thermal
         
     
