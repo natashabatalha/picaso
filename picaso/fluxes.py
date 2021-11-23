@@ -1950,7 +1950,9 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
         f0 = -1/dtau * log(b1/b0)
     
     tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
-    b_top = twopi*mu1 * (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
+    b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
+    #b_surface = all_b[-1,:] + b1[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
+    #b_surface = twopi*mu1 * (all_b[-1,:] + (all_b[1:,:]-b0)[-1,:]*mu1) #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
 
     hard_surface = True
     if hard_surface:
@@ -2034,9 +2036,17 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
                 xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/ubar1[ng,nt]) 
                             + intgrl_per_layer[i,:] / ubar1[ng,nt]) 
 
-            xint_temp = xint_temp 
+                scat[i,:] = (scat[i+1,:] * np.exp(-dtau[i,:]/ubar1[ng,nt]) 
+                            + (w0 * multi_scat* twopi * mu1)[i,:]/ubar1[ng,nt])
+                source[i,:] = (source[i+1,:] * np.exp(-dtau[i,:]/ubar1[ng,nt]) 
+                            + twopi * ((1-w0_og) * ubar1[ng,nt] * (b0 * (1 - expdtau)
+                                    + b1 * (ubar1[ng,nt] - (dtau_og + ubar1[ng,nt]) * expdtau)))[i,:] / ubar1[ng,nt])
+
+            #xint_temp = scat 
             xint_at_top[ng,nt,:] = xint_temp[0, :]
     
+#    import IPython; IPython.embed()
+#    import sys; sys.exit()
     return xint_at_top 
 
 #@jit(nopython=True, cache=True)
@@ -2059,15 +2069,15 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 
     #   parameters in matrices
     q = lam/a[1]
-    Q1 = 2*pi*(0.5 + q)
-    Q2 = 2*pi*(0.5 - q)
+    Q1 = (0.5 + q)#*2*pi
+    Q2 = (0.5 - q)#*2*pi
 
     Q1mn = Q1*exptrm;  Q2mn = Q2*exptrm
     Q1pl = Q1/exptrm;  Q2pl = Q2/exptrm
 
     if calculation != 1:
-        zmn = 2*pi*(0.5*eta[0] - eta[1]) 
-        zpl = 2*pi*(0.5*eta[0] + eta[1])
+        zmn = (0.5*eta[0] - eta[1])#*2*pi
+        zpl = (0.5*eta[0] + eta[1])#*2*pi
         if calculation == 0:
             expon = exp(-tau/ubar0)
             zmn_up = zmn * expon[1:,:] 
@@ -2081,10 +2091,10 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
             zmn_down = zmn 
             zpl_down = zpl 
     elif calculation == 1: # linear thermal
-        zmn_down = 2*pi * (twopi*(1-w0)/a[0] * (B0/2 - B1/a[1]))#+ B1*dtau/2)
-        zmn_up = 2*pi * (twopi*(1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2))
-        zpl_down = 2*pi * (twopi*(1-w0)/a[0] * (B0/2 + B1/a[1]))# + B1*dtau/2)
-        zpl_up = 2*pi * (twopi*(1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2))
+        zmn_down = twopi * ((1-w0)/a[0] * (B0/2 - B1/a[1]))#+ B1*dtau/2)#*2*pi
+        zmn_up = twopi * ((1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2))#*2*pi
+        zpl_down = twopi * ((1-w0)/a[0] * (B0/2 + B1/a[1]))# + B1*dtau/2)#*2*pi
+        zpl_up = twopi * ((1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2))#*2*pi
 
     alpha = 1/ubar1 + lam
     beta = 1/ubar1 - lam
@@ -2119,7 +2129,7 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
     #   first row: BC 1
     Mb[2,0,:] = Q1[0,:]
     Mb[1,1,:] = Q2[0,:]
-    B[0,:] = b_top - zmn_down[0,:]
+    B[0,:] = twopi/2*b_top - zmn_down[0,:]
 
     Mb[0,3::2,:] = -Q2[1:,:]
     Mb[1,2::2,:] = -Q1[1:,:]
@@ -2154,7 +2164,7 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
     n = nlayer-1
     Mb[3, 2*nlayer-2,:] = Q2mn[n,:] - surf_reflect*Q1mn[n,:]
     Mb[2, 2*nlayer-1,:] = Q1pl[n,:] - surf_reflect*Q2pl[n,:]
-    B[2*nlayer-1,:] = b_surface - zpl_up[n,:] + surf_reflect * zmn_up[n,:]
+    B[2*nlayer-1,:] = twopi/2*b_surface - zpl_up[n,:] + surf_reflect * zmn_up[n,:]
 
     F_bot = zeros((2*nlayer, nwno))
     G_bot = zeros(nwno)
