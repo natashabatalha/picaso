@@ -139,6 +139,33 @@ def plot_multierror(x,y,plot, dx_up=0, dx_low=0, dy_up=0, dy_low=0,
 
     plot.circle(x, y, **point_kwargs)
     return
+
+def bin_errors(newx, oldx, dy):
+    """
+    Bin errors properly to account for reduction in noise 
+    
+    Parameters
+    ----------
+    newx : array 
+        New x axis (either micron or wavenumber)
+    oldx : array 
+        Old x axis (either micron or wavenumber) 
+    dy : array 
+        Error bars 
+
+    Returns
+    -------
+    array
+        new dy
+    """
+    newx =[newx[0] -  np.diff(newx)[0]/2] +  list(newx[0:-1] + np.diff(newx)/2) + [newx[-1] +  np.diff(newx)[-1]/2]
+    err = []
+    for i in range(len(newx)-1):
+        loc = np.where(((oldx>newx[i]) & (oldx<=newx[i+1])))[0]
+        err += [np.sqrt(np.sum(dy[loc]**2.0))/len(dy[loc])]
+    return err
+
+
 def mixing_ratio(full_output,limit=50, **kwargs):
     """Returns plot of mixing ratios 
 
