@@ -210,14 +210,17 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
             flux_at_top = 0 
-            for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
+            for ig in range(ngauss): # correlated-k - loop (which is different from gauss-tchevychev angle)
                 
                 #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
                 #the uncorrected raman single scattering 
-                flux  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
+                #here we only care about the flux outgoing at top layers so not 
+                #returning layer fluxes
+                flux,_  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
                                             DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                             atm.level['pressure'],ubar1,
                                             atm.surf_reflect, atm.hard_surface, tridiagonal)
+                
                 flux_at_top += flux*gauss_wts[ig]
                 
             #if full output is requested add in flux at top for 3d plots
@@ -367,8 +370,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     #for thermal light use the compress thermal routine
     #this takes the intensity as a functin of tangle/gangle and creates a 1d spectrum
     if ('thermal' in calculation):
-        thermal = compress_thermal(nwno,ubar1, flux_at_top, gweight, tweight)
+        thermal = compress_thermal(nwno,flux_at_top, gweight, tweight)
         returns['thermal'] = thermal
+        returns['thermal_unit'] = 'erg/s/(cm^2)/(cm)'#'erg/s/(cm^2)/(cm^(-1))'
         returns['effective_temperature'] = (np.trapz(x=1/wno[::-1], y=thermal[::-1])/5.67e-5)**0.25
 
         if full_output: 
@@ -1229,6 +1233,9 @@ class inputs():
         else: 
             raise Exception("Must enter 1) filename,w_unit & f_unit OR 2)temp, metal & logg ")
 
+        #now convert to erg/cm2/s/wavenumber
+        #flux_star = flux_star/wno_star**2
+
         wno_planet = opannection.wno
         #this adds stellar shifts 'self.raman_stellar_shifts' to the opacity class
         #the cross sections are computed later 
@@ -1236,10 +1243,19 @@ class inputs():
             max_shift = np.max(wno_planet)+6000 #this 6000 is just the max raman shift we could have 
             min_shift = np.min(wno_planet) -2000 #it is just to make sure we cut off the right wave ranges
             #do a fail safe to make sure that star is on a fine enough grid for planet case 
-            fine_wno_star = np.linspace(min_shift, max_shift, len(wno_planet)*5)
+            fine_wno_star = np.logspace(np.log10(min_shift), np.log10(max_shift), len(wno_planet)*5)
             fine_flux_star = np.interp(fine_wno_star,wno_star, flux_star)
             
             opannection.compute_stellar_shits(fine_wno_star, fine_flux_star)
+        else :
+            max_shift = np.max(wno_planet)+1  
+            min_shift = np.min(wno_planet) -1 
+            #gaurd against nans bcause stellar spectrum is too low res
+            fine_wno_star = np.logspace(np.log10(min_shift), np.log10(max_shift), len(wno_planet)*10)
+            fine_flux_star = np.interp(fine_wno_star, wno_star, flux_star)
+            _x,fine_flux_star = mean_regrid(fine_wno_star, fine_flux_star,newx=wno_planet)  
+            opannection.unshifted_stellar_spec =fine_flux_star
+        """    
         elif 'climate' in self.inputs['calculation']: 
             #stellar flux of star 
             #print(len(wno_planet),len(flux_star[0:-1]),len(flux_star[1:]))
@@ -1269,15 +1285,9 @@ class inputs():
             
             #fine_flux_star[where_are_NaNs] = 0   
             
-            opannection.unshifted_stellar_spec = fine_flux_star            
-        else :
-            max_shift = np.max(wno_planet)+1  
-            min_shift = np.min(wno_planet) -1 
-            #gaurd against nans bcause stellar spectrum is too low res
-            fine_wno_star = np.linspace(min_shift, max_shift, len(wno_planet)*5)
-            fine_flux_star = np.interp(fine_wno_star, wno_star, flux_star)
-            _x,fine_flux_star = mean_regrid(fine_wno_star, fine_flux_star,newx=wno_planet)  
-            opannection.unshifted_stellar_spec =fine_flux_star
+            opannection.unshifted_stellar_spec = fine_flux_star   
+        """         
+        
 
         self.inputs['star']['database'] = database
         self.inputs['star']['temp'] = temp
@@ -2284,7 +2294,7 @@ class inputs():
                     if imol not in ['temperature','pressure']:
                         all_out[imol][ilon, ilat,:] = results[i][imol].values
 
-        data_vars = {imol:(["lon", "lat","pressure"], all_out[imol],{'units': 'v/v'}) for imol in results[0].keys() if imol not in ['temperature','pressure']}
+        data_vars = {imol:(["lon", "lat","pressure"], all_out[imol],{'units': 'v/v'}) for imol in results[0].keys() if imol not in ['temperature','pressure','kz']}
         # put data into a dataset
         ds_chem = xr.Dataset(
             data_vars=data_vars,
@@ -2325,6 +2335,8 @@ class inputs():
             ds = self.inputs['atmosphere']['profile']
             if isinstance(ds, type(None)):
                 raise Except("Need to submit an xarray.DataArray because there is no input attached to self.inputs['atmosphere']['profile']")
+        #make sure in right order 
+        ds = ds.transpose("lon", "lat","pressure")
 
         if not isinstance(ds, xr.core.dataset.Dataset): 
             raise Exception('PICASO has moved to only accept xarray input. Please see GCM 3D input tutorials to learn how to reformat your input. ')
