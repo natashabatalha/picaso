@@ -1211,7 +1211,8 @@ def get_reflected_1d_gfluxv(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,
 @jit(nopython=True, cache=True,fastmath=True)
 def blackbody(t,w):
     """
-    Blackbody flux in cgs units in per unit wavelength
+    Blackbody flux in cgs units in per unit wavenumber
+    erg/cm2/s/wavenumber
 
     Parameters
     ----------
@@ -1228,7 +1229,7 @@ def blackbody(t,w):
     c = 2.99792458e+10 # cm/s
     k = 1.38064852e-16 #erg / K
 
-    return ((2.0*h*c**2.0)/(w**5.0))*(1.0/(exp((h*c)/outer(t, w*k)) - 1.0))
+    return ((2.0*h*c**2.0)/(w**5.0))*(1.0/(exp((h*c)/outer(t, w*k)) - 1.0)) #* (w*w)
 
 @jit(nopython=True, cache=True, fastmath=True)
 def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,
@@ -1371,10 +1372,10 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     sigma1 = twopi*(b0- b1*(mu1*w0*cosb/(1.0-w0*cosb)))
     sigma2 = twopi*b1
 
-    flux_minus = zeros((nlevel,nwno))
-    flux_plus = zeros((nlevel,nwno))
-    flux_minus_mdpt = zeros((nlevel,nwno))
-    flux_plus_mdpt = zeros((nlevel,nwno))
+    flux_minus = zeros((numg, numt,nlevel,nwno))
+    flux_plus = zeros((numg, numt,nlevel,nwno))
+    flux_minus_mdpt = zeros((numg, numt,nlevel,nwno))
+    flux_plus_mdpt = zeros((numg, numt,nlevel,nwno))
 
     exptrm_positive_mdpt = exp(0.5*exptrm) 
     exptrm_minus_mdpt = 1/exptrm_positive_mdpt 
@@ -1390,11 +1391,11 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
             iubar = ubar1[ng,nt]
 
             if hard_surface:
-                flux_plus[-1,:] = twopi * (b_surface ) # terrestrial
+                flux_plus[ng,nt,-1,:] = twopi * (b_surface ) # terrestrial
             else:
-                flux_plus[-1,:] = twopi*( all_b[-1,:] + b1[-1,:] * iubar) #no hard surface
+                flux_plus[ng,nt,-1,:] = twopi*( all_b[-1,:] + b1[-1,:] * iubar) #no hard surface
                 
-            flux_minus[0,:] = twopi * (1 - exp(-tau_top / iubar)) * all_b[0,:]
+            flux_minus[ng,nt,0,:] = twopi * (1 - exp(-tau_top / iubar)) * all_b[0,:]
             
             exptrm_angle = exp( - dtau / iubar)
             exptrm_angle_mdpt = exp( -0.5 * dtau / iubar) 
@@ -1402,13 +1403,13 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
             for itop in range(nlayer):
 
                 #disbanning this for now because we dont need it in the thermal emission code
-                flux_minus[itop+1,:]=(flux_minus[itop,:]*exptrm_angle[itop,:]+
+                flux_minus[ng,nt,itop+1,:]=(flux_minus[ng,nt,itop,:]*exptrm_angle[itop,:]+
                                      (J[itop,:]/(lamda[itop,:]*iubar+1.0))*(exptrm_positive[itop,:]-exptrm_angle[itop,:])+
                                      (K[itop,:]/(lamda[itop,:]*iubar-1.0))*(exptrm_angle[itop,:]-exptrm_minus[itop,:])+
                                      sigma1[itop,:]*(1.-exptrm_angle[itop,:])+
                                      sigma2[itop,:]*(iubar*exptrm_angle[itop,:]+dtau[itop,:]-iubar) )
 
-                flux_minus_mdpt[itop,:]=(flux_minus[itop,:]*exptrm_angle_mdpt[itop,:]+
+                flux_minus_mdpt[ng,nt,itop,:]=(flux_minus[ng,nt,itop,:]*exptrm_angle_mdpt[itop,:]+
                                         (J[itop,:]/(lamda[itop,:]*iubar+1.0))*(exptrm_positive_mdpt[itop,:]-exptrm_angle_mdpt[itop,:])+
                                         (K[itop,:]/(-lamda[itop,:]*iubar+1.0))*(exptrm_minus_mdpt[itop,:]-exptrm_angle_mdpt[itop,:])+
                                         sigma1[itop,:]*(1.-exptrm_angle_mdpt[itop,:])+
@@ -1416,25 +1417,25 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
                 ibot=nlayer-1-itop
 
-                flux_plus[ibot,:]=(flux_plus[ibot+1,:]*exptrm_angle[ibot,:]+
+                flux_plus[ng,nt,ibot,:]=(flux_plus[ng,nt,ibot+1,:]*exptrm_angle[ibot,:]+
                                   (G[ibot,:]/(lamda[ibot,:]*iubar-1.0))*(exptrm_positive[ibot,:]*exptrm_angle[ibot,:]-1.0)+
                                   (H[ibot,:]/(lamda[ibot,:]*iubar+1.0))*(1.0-exptrm_minus[ibot,:] * exptrm_angle[ibot,:])+
                                   alpha1[ibot,:]*(1.-exptrm_angle[ibot,:])+
                                   alpha2[ibot,:]*(iubar-(dtau[ibot,:]+iubar)*exptrm_angle[ibot,:]) )
 
-                flux_plus_mdpt[ibot,:]=(flux_plus[ibot+1,:]*exptrm_angle_mdpt[ibot,:]+
+                flux_plus_mdpt[ng,nt,ibot,:]=(flux_plus[ng,nt,ibot+1,:]*exptrm_angle_mdpt[ibot,:]+
                                        (G[ibot,:]/(lamda[ibot,:]*iubar-1.0))*(exptrm_positive[ibot,:]*exptrm_angle_mdpt[ibot,:]-exptrm_positive_mdpt[ibot,:])-
                                        (H[ibot,:]/(lamda[ibot,:]*iubar+1.0))*(exptrm_minus[ibot,:]*exptrm_angle_mdpt[ibot,:]-exptrm_minus_mdpt[ibot,:])+
                                        alpha1[ibot,:]*(1.-exptrm_angle_mdpt[ibot,:])+
                                        alpha2[ibot,:]*(iubar+0.5*dtau[ibot,:]-(dtau[ibot,:]+iubar)*exptrm_angle_mdpt[ibot,:])  )
 
-            flux_at_top[ng,nt,:] = flux_plus_mdpt[0,:] #nlevel by nwno 
+            flux_at_top[ng,nt,:] = flux_plus_mdpt[ng,nt,0,:] #nlevel by nwno 
 
             #to get the convective heat flux 
             #flux_minus_mdpt_disco[ng,nt,:,:] = flux_minus_mdpt #nlevel by nwno
             #flux_plus_mdpt_disco[ng,nt,:,:] = flux_plus_mdpt #nlevel by nwno
 
-    return flux_at_top #, flux_down# numg x numt x nwno
+    return flux_at_top , (flux_minus, flux_plus, flux_minus_mdpt, flux_plus_mdpt)
 
 @jit(nopython=True, cache=True,fastmath=True)
 def get_thermal_1d_gfluxi(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, 
@@ -1520,8 +1521,8 @@ def get_thermal_1d_gfluxi(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plev
     twopi = 2*pi#+pi #NEB REMOVING A PI FROM HERE BECAUSE WE ASSUME NO SYMMETRY!  ############
 
     #get matrix of blackbodies 
-    #all_b = blackbody(tlevel, 1/wno)
-    all_b = blackbody_climate(wno, tlevel, bb, y2, tp, tmin, tmax)#
+    all_b = blackbody(tlevel, 1/wno)
+    #all_b = blackbody_climate(wno, tlevel, bb, y2, tp, tmin, tmax)#
     #legacy: use of table to compuate black bodies: 
     # #returns nlevel by nwave 
     
