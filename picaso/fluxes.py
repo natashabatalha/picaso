@@ -1294,12 +1294,12 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     exptrm_minus = 1.0/exptrm_positive
 
     tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
-    b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
+    b_top = 0*(1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
     hard_surface = False
     if hard_surface:
-        b_surface = all_b[-1,:] #for terrestrial, hard surface
+        b_surface = 0*all_b[-1,:] #for terrestrial, hard surface
     else:
-        b_surface=all_b[-1,:] + b1[-1,:]*mu1 #(for non terrestrial)
+        b_surface=0*(all_b[-1,:] + b1[-1,:]*mu1) #(for non terrestrial)
 
     #Now we need the terms for the tridiagonal rotated layered method
     if tridiagonal==0:
@@ -1966,15 +1966,15 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
         f0 = -1/dtau * log(b1/b0)
     
     tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
-    b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
+    b_top = 0*(1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
     #b_surface = all_b[-1,:] + b1[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
     #b_surface = twopi*mu1 * (all_b[-1,:] + (all_b[1:,:]-b0)[-1,:]*mu1) #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
 
     hard_surface = False
     if hard_surface:
-        b_surface = all_b[-1,:] #for terrestrial, hard surface
+        b_surface = 0*all_b[-1,:] #for terrestrial, hard surface
     else:
-        b_surface = (all_b[-1,:] + b1[-1,:]*mu1) #(for non terrestrial)
+        b_surface = 0*(all_b[-1,:] + b1[-1,:]*mu1) #(for non terrestrial)
     
     #if single_phase==1:#'OTHG':
     if np.array_equal(cosb,cosb_og):
@@ -2086,15 +2086,15 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 
     #   parameters in matrices
     q = lam/a[1]
-    Q1 = (0.5 + q)#*2*pi
-    Q2 = (0.5 - q)#*2*pi
+    Q1 = (0.5 + q)*2*pi
+    Q2 = (0.5 - q)*2*pi
 
     Q1mn = Q1*exptrm;  Q2mn = Q2*exptrm
     Q1pl = Q1/exptrm;  Q2pl = Q2/exptrm
 
     if calculation != 1:
-        zmn = (0.5*eta[0] - eta[1])#*2*pi
-        zpl = (0.5*eta[0] + eta[1])#*2*pi
+        zmn = (0.5*eta[0] - eta[1])*2*pi
+        zpl = (0.5*eta[0] + eta[1])*2*pi
         if calculation == 0:
             expon = exp(-tau/ubar0)
             zmn_up = zmn * expon[1:,:] 
@@ -2108,10 +2108,10 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
             zmn_down = zmn 
             zpl_down = zpl 
     elif calculation == 1: # linear thermal
-        zmn_down = 2 * ((1-w0)/a[0] * (B0/2 - B1/a[1]))#+ B1*dtau/2)#
-        zmn_up = 2 * ((1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2))#*2*pi
-        zpl_down = 2 * ((1-w0)/a[0] * (B0/2 + B1/a[1]))# + B1*dtau/2)#*2*pi
-        zpl_up = 2 * ((1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2))#*2*pi
+        zmn_down = 2*pi* 2 * ((1-w0)/a[0] * (B0/2 - B1/a[1]))#+ B1*dtau/2)#
+        zmn_up = 2*pi* 2 * ((1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2))#*2*pi
+        zpl_down = 2*pi* 2 * ((1-w0)/a[0] * (B0/2 + B1/a[1]))# + B1*dtau/2)#*2*pi
+        zpl_up = 2*pi* 2 * ((1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2))#*2*pi
 
     alpha = 1/ubar1 + lam
     beta = 1/ubar1 - lam
