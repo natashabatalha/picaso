@@ -2086,15 +2086,15 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 
     #   parameters in matrices
     q = lam/a[1]
-    Q1 = (0.5 + q)*2*pi
-    Q2 = (0.5 - q)*2*pi
+    Q1 = (0.5 + q)#*2*pi
+    Q2 = (0.5 - q)#*2*pi
 
     Q1mn = Q1*exptrm;  Q2mn = Q2*exptrm
     Q1pl = Q1/exptrm;  Q2pl = Q2/exptrm
 
     if calculation != 1:
-        zmn = (0.5*eta[0] - eta[1])*2*pi
-        zpl = (0.5*eta[0] + eta[1])*2*pi
+        zmn = (0.5*eta[0] - eta[1])#*2*pi
+        zpl = (0.5*eta[0] + eta[1])#*2*pi
         if calculation == 0:
             expon = exp(-tau/ubar0)
             zmn_up = zmn * expon[1:,:] 
@@ -2108,10 +2108,10 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
             zmn_down = zmn 
             zpl_down = zpl 
     elif calculation == 1: # linear thermal
-        zmn_down = 2*pi* 2 * ((1-w0)/a[0] * (B0/2 - B1/a[1]))#+ B1*dtau/2)#
-        zmn_up = 2*pi* 2 * ((1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2))#*2*pi
-        zpl_down = 2*pi* 2 * ((1-w0)/a[0] * (B0/2 + B1/a[1]))# + B1*dtau/2)#*2*pi
-        zpl_up = 2*pi* 2 * ((1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2))#*2*pi
+        zmn_down = twopi * ((1-w0)/a[0] * (B0/2 - B1/a[1]))#+ B1*dtau/2)#
+        zmn_up = twopi * ((1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2))#*2*pi
+        zpl_down = twopi * ((1-w0)/a[0] * (B0/2 + B1/a[1]))# + B1*dtau/2)#*2*pi
+        zpl_up = twopi * ((1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2))#*2*pi
 
     alpha = 1/ubar1 + lam
     beta = 1/ubar1 - lam
