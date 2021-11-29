@@ -1294,12 +1294,12 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     exptrm_minus = 1.0/exptrm_positive
 
     tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
-    b_top = 0*(1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
-    hard_surface = False
+    b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
+    hard_surface = True
     if hard_surface:
-        b_surface = 0*all_b[-1,:] #for terrestrial, hard surface
+        b_surface = all_b[-1,:] #for terrestrial, hard surface
     else:
-        b_surface=0*(all_b[-1,:] + b1[-1,:]*mu1) #(for non terrestrial)
+        b_surface=(all_b[-1,:] + b1[-1,:]*mu1) #(for non terrestrial)
 
     #Now we need the terms for the tridiagonal rotated layered method
     if tridiagonal==0:
@@ -1359,6 +1359,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     flux_down = zeros((numg, numt, nwno))
     scat = zeros((nlevel, nwno))
     source = zeros((nlevel, nwno))
+    term1 = zeros((nlevel, nwno))
+    term2 = zeros((nlevel, nwno))
 
     #work through building eqn 55 in toon (tons of bookeeping exponentials)
     for ng in range(numg):
@@ -1414,6 +1416,15 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
                 source[ibot,:] = (source[ibot+1,:]*exptrm_angle[ibot,:]+
                                   SIGMA1[ibot,:]*(1.-exptrm_angle[ibot,:])+
                                   SIGMA2[ibot,:]*(iubar-(dtau[ibot,:]+iubar)*exptrm_angle[ibot,:]) )
+
+                term1[ibot,:] = (scat[ibot+1,:]*exptrm_angle[ibot,:]+
+                                  (G[ibot,:]/(lamda[ibot,:]*iubar-1.0))*(exptrm_positive[ibot,:]*exptrm_angle[ibot,:]-1.0)+
+                                  (H[ibot,:]/(lamda[ibot,:]*iubar+1.0))*(1.0-exptrm_minus[ibot,:] * exptrm_angle[ibot,:]))
+                term2[ibot,:] = (source[ibot+1,:]*exptrm_angle[ibot,:]+
+                                  ALPHA1[ibot,:]*(1.-exptrm_angle[ibot,:])+
+                                  ALPHA2[ibot,:]*(iubar-(dtau[ibot,:]+iubar)*exptrm_angle[ibot,:]) +
+                                  SIGMA1[ibot,:]*(1.-exptrm_angle[ibot,:])+
+                                  SIGMA2[ibot,:]*(iubar-(dtau[ibot,:]+iubar)*exptrm_angle[ibot,:]) )
                                 
 
 
@@ -1422,7 +1433,7 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
 #    import IPython; IPython.embed()
 #    import sys; sys.exit()
-    return flux_at_top #, flux_down# numg x numt x nwno
+    return flux_at_top#, flux_down# numg x numt x nwno
 
 
 #@jit(nopython=True, cache=True)
@@ -1948,6 +1959,7 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 
     mu1 = 0.5#0.88#0.5 #from Table 1 Toon  
     twopi = pi#+pi
+    w0_og = w0_no_raman
 
     def P(mu): # Legendre polynomials
         return [1, mu, (3*mu**2 - 1)/2, (5*mu**3 - 3*mu)/2,
@@ -1966,15 +1978,18 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
         f0 = -1/dtau * log(b1/b0)
     
     tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
-    b_top = 0*(1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
+    b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
     #b_surface = all_b[-1,:] + b1[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
     #b_surface = twopi*mu1 * (all_b[-1,:] + (all_b[1:,:]-b0)[-1,:]*mu1) #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
 
-    hard_surface = False
+    hard_surface = True
     if hard_surface:
-        b_surface = 0*all_b[-1,:] #for terrestrial, hard surface
+        b_surface = all_b[-1,:] #for terrestrial, hard surface
     else:
-        b_surface = 0*(all_b[-1,:] + b1[-1,:]*mu1) #(for non terrestrial)
+        b_surface = (all_b[-1,:] + b1[-1,:]*mu1) #(for non terrestrial)
+
+    b_top = b_top * twopi*mu1
+    b_surface = b_surface * twopi*mu1
     
     #if single_phase==1:#'OTHG':
     if np.array_equal(cosb,cosb_og):
@@ -2005,15 +2020,20 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 
             flux_bot = zeros(nwno)
             intgrl_new = zeros((stream*nlayer, nwno))
+            AdotX = zeros((stream*nlayer, nwno))
             X = zeros((stream*nlayer, nwno))
             intgrl_per_layer = zeros((nlayer, nwno))
             multi_scat = zeros((nlayer, nwno))
+            TERM1 = zeros((nlayer, nwno))
+            TERM2 = zeros((nlayer, nwno))
             xint_temp = zeros((nlevel, nwno))
             scat = zeros((nlevel, nwno))
             source = zeros((nlevel, nwno))
+            term1 = zeros((nlevel, nwno))
+            term2 = zeros((nlevel, nwno))
             #========================= Start loop over wavelength =========================
             for W in range(nwno):
-                (intgrl_new[:,W], flux_bot[W], X) = solve_4_stream_banded(M[:,:,W], B[:,W],  
+                (intgrl_new[:,W], flux_bot[W], X, AdotX[:,W]) = solve_4_stream_banded(M[:,:,W], B[:,W],  
                 A_int[:,:,W], N_int[:,W], F_bot[:,W], G_bot[W], stream, nlayer)
                 if flx==1:
                     flux_temp[:,W] = calculate_flux(F[:,:,W], G[:,W], X)
@@ -2021,6 +2041,8 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
             for i in range(nlayer):
                 for l in range(stream):
                     multi_scat[i,:] = multi_scat[i,:] + w_multi[l,i,:] * P(ubar1[ng,nt])[l] * intgrl_new[stream*i+l,:]
+                    TERM1[i,:] = TERM1[i,:] + w_multi[l,i,:] * P(ubar1[ng,nt])[l] * AdotX[stream*i+l]
+                    TERM2[i,:] = TERM2[i,:] + w_multi[l,i,:] * P(ubar1[ng,nt])[l] * N_int[stream*i+l,:]
 
             if calculation==1:
                 expo = dtau / ubar1[ng,nt] 
@@ -2044,7 +2066,7 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 
 
             if hard_surface:
-                xint_temp[-1,:] = twopi * b_surface # terrestrial
+                xint_temp[-1,:] = b_surface/mu1 # twopi * b_surface # terrestrial
             else:
                 xint_temp[-1,:] = twopi * (all_b[-1,:] + b1[-1,:] * ubar1[ng,nt]) # no hard surface
             source[-1,:] = xint_temp[-1,:]
@@ -2056,6 +2078,13 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
                 scat[i,:] = (scat[i+1,:] * np.exp(-dtau[i,:]/ubar1[ng,nt]) 
                             + (w0 * multi_scat)[i,:]/ubar1[ng,nt])
                 source[i,:] = (source[i+1,:] * np.exp(-dtau_og[i,:]/ubar1[ng,nt]) 
+                            + twopi * ((1-w0) * ubar1[ng,nt] * (b0 * (1 - expdtau)
+                                    + b1 * (ubar1[ng,nt] - (dtau + ubar1[ng,nt]) * expdtau)))[i,:] / ubar1[ng,nt])
+
+                term1[i,:] = (term1[i+1,:] * np.exp(-dtau[i,:]/ubar1[ng,nt]) 
+                            + (w0 * TERM1)[i,:]/ubar1[ng,nt])
+                term2[i,:] = (term2[i+1,:] * np.exp(-dtau_og[i,:]/ubar1[ng,nt]) 
+                            + (w0 * TERM2)[i,:]/ubar1[ng,nt]
                             + twopi * ((1-w0) * ubar1[ng,nt] * (b0 * (1 - expdtau)
                                     + b1 * (ubar1[ng,nt] - (dtau + ubar1[ng,nt]) * expdtau)))[i,:] / ubar1[ng,nt])
 
@@ -2086,15 +2115,15 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 
     #   parameters in matrices
     q = lam/a[1]
-    Q1 = (0.5 + q)#*2*pi
-    Q2 = (0.5 - q)#*2*pi
+    Q1 = (0.5 + q)*2*pi
+    Q2 = (0.5 - q)*2*pi
 
     Q1mn = Q1*exptrm;  Q2mn = Q2*exptrm
     Q1pl = Q1/exptrm;  Q2pl = Q2/exptrm
 
     if calculation != 1:
-        zmn = (0.5*eta[0] - eta[1])#*2*pi
-        zpl = (0.5*eta[0] + eta[1])#*2*pi
+        zmn = (0.5*eta[0] - eta[1])*2*pi
+        zpl = (0.5*eta[0] + eta[1])*2*pi
         if calculation == 0:
             expon = exp(-tau/ubar0)
             zmn_up = zmn * expon[1:,:] 
@@ -2108,10 +2137,10 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
             zmn_down = zmn 
             zpl_down = zpl 
     elif calculation == 1: # linear thermal
-        zmn_down = twopi * ((1-w0)/a[0] * (B0/2 - B1/a[1]))#+ B1*dtau/2)#
-        zmn_up = twopi * ((1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2))#*2*pi
-        zpl_down = twopi * ((1-w0)/a[0] * (B0/2 + B1/a[1]))# + B1*dtau/2)#*2*pi
-        zpl_up = twopi * ((1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2))#*2*pi
+        zmn_down = 2*pi*((1-w0)/a[0] * (B0/2 - B1/a[1])) * twopi # + B1*dtau/2)
+        zmn_up = 2*pi*((1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2)) * twopi  #*2*pi
+        zpl_down = 2*pi*((1-w0)/a[0] * (B0/2 + B1/a[1])) * twopi # + B1*dtau/2)#*2*pi
+        zpl_up = 2*pi*((1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2)) * twopi # * 2*pi
 
     alpha = 1/ubar1 + lam
     beta = 1/ubar1 - lam
@@ -2531,10 +2560,12 @@ def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream, nlayer):
     with objmode(X='float64[:]'):
         X = solve_banded((diag,diag), M, B)
     #   integral of Iexp(-tau/ubar1) at each level 
+    #X = pi/2 * X
     intgrl_new =  A_int.dot(X) + N_int 
     #   flux at bottom
     flux = F.dot(X) + G
-    return (intgrl_new, flux, X)
+    AdotX = A_int.dot(X)
+    return (intgrl_new, flux, X, AdotX)
 
 #@jit(nopython=True, cache=True)
 def calculate_flux(F, G, X):
