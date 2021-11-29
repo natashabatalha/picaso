@@ -1979,8 +1979,6 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     
     tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
     b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
-    #b_surface = all_b[-1,:] + b1[-1,:]*mu1 #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
-    #b_surface = twopi*mu1 * (all_b[-1,:] + (all_b[1:,:]-b0)[-1,:]*mu1) #Bsurf=B[-1] #    bottom=Bsurf+B1[-1]*ubari
 
     hard_surface = True
     if hard_surface:
@@ -1988,7 +1986,7 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     else:
         b_surface = (all_b[-1,:] + b1[-1,:]*mu1) #(for non terrestrial)
 
-    b_top = b_top * twopi*mu1
+    b_top = b_top * twopi*mu1 # this is to make sure we're solving same problem as picaso
     b_surface = b_surface * twopi*mu1
     
     #if single_phase==1:#'OTHG':
@@ -2004,7 +2002,7 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     for l in range(stream):
         w_multi[l,:,:] = (2*l+1) * (cosb_og**l - ff) / (1 - ff)
         a[l,:,:] = (2*l + 1) -  w0 * w_multi[l,:,:]
-    b[0] = (1-w0) * b0
+    b[0] = twopi*(1-w0) * b0
 
     xint_at_top = zeros((numg, numt, nwno))
     for ng in range(numg):
@@ -2045,14 +2043,14 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
                     TERM2[i,:] = TERM2[i,:] + w_multi[l,i,:] * P(ubar1[ng,nt])[l] * N_int[stream*i+l,:]
 
             if calculation==1:
-                expo = dtau / ubar1[ng,nt] 
+                expo = dtau_og / ubar1[ng,nt] 
                 expo_mus = slice_gt(expo, 35.0)    
                 expdtau = exp(-expo)
 
                 intgrl_per_layer = (w0 *  multi_scat 
-                            + twopi * (1-w0) * ubar1[ng,nt] *
+                            + twopi * (1-w0_og) * ubar1[ng,nt] *
                             (b0 * (1 - expdtau)
-                            + b1 * (ubar1[ng,nt] - (dtau + ubar1[ng,nt]) * expdtau)))
+                            + b1 * (ubar1[ng,nt] - (dtau_og + ubar1[ng,nt]) * expdtau)))
 
             elif calculation==2:
                 expo = dtau * (f0 + 1/ubar1[ng,nt])
@@ -2203,7 +2201,8 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
         N_int[1::2,:] = eta[1] * expon1
     elif calculation == 1: # linear thermal
         expdtau = exp(-dtau/ubar1)
-        N_int[::2,:] = twopi*(1-w0) * ubar1 / a[0] * ((B0 + B1*tau[:-1,:])*(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau))
+        #N_int[::2,:] = twopi*(1-w0) * ubar1 / a[0] * ((B0 + B1*tau[:-1,:])*(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau))
+        N_int[::2,:] = twopi*(1-w0) * ubar1 / a[0] * (B0 * (1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau))
         N_int[1::2,:] = twopi*(1-w0) * ubar1 / a[0] * ( B1*(1-expdtau) / a[1])
 
     #   last row: BC 4
