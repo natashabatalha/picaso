@@ -1975,7 +1975,7 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 
             elif stream==4:
                 M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-                surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, ubar1[ng,nt], P, b0, b1, f0, fluxes=flx, calculation=calculation) 
+                surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, ubar1[ng,nt], P, b0, b1, f0, twopi=twopi, fluxes=flx, calculation=calculation) 
                 # F and G will be nonzero if fluxes=1
 
             flux_bot = zeros(nwno)
@@ -2181,7 +2181,7 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 
 #@jit(nopython=True, cache=True, debug=True)
 def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, 
-        a, b, ubar1, P, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
+        a, b, ubar1, P, B0=0., B1=0., f0=0., twopi=2*pi, fluxes=0, calculation=0):#'reflected'):
 
     nlevel = nlayer+1
     beta = a[0]*a[1] + 4*a[0]*a[3]/9 + a[2]*a[3]/9
@@ -2205,7 +2205,7 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
             Dels[3,:,:] = ((a[2]*b[3] - 3*b[2]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
                 + 2*(3*a[0]*b[1] - 2*a[0]*b[3] - 3*b[0]/ubar0)/ubar0**2)
         elif calculation==2:
-            b0 = (1-w0) * B0
+            b0 = twopi * (1-w0) * B0
             Del = 9 * f(f0)
             Dels[0,:,:] = a[1]*b0 * (a[2]*a[3] - 9*f0**2) - 4*a[3]*b0*f0**2
             Dels[1,:,:] = b0*f0 * (9*f0**2 - a[2]*a[3])
@@ -2264,14 +2264,14 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
         z1pl_down = z1pl 
         z2pl_down = z2pl 
     elif calculation == 1: # linear thermal
-        z1mn_up = 2*pi * (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*tau[1:,:]/2) 
-        z2mn_up = -pi * (1-w0) / (4*a[0]) * (B0 + B1*tau[1:,:]) 
-        z1pl_up = 2*pi * (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*tau[1:,:]/2) 
-        z2pl_up = -pi * (1-w0) / (4*a[0]) * (B0 + B1*tau[1:,:]) 
-        z1mn_down = 2*pi * (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*tau[:-1,:]/2) 
-        z2mn_down = -pi * (1-w0) / (4*a[0]) * (B0 + B1*tau[:-1,:]) 
-        z1pl_down = 2*pi * (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*tau[:-1,:]/2) 
-        z2pl_down = -pi * (1-w0) / (4*a[0]) * (B0 + B1*tau[:-1,:]) 
+        z1mn_up = 2*pi * twopi * (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*tau[1:,:]/2) 
+        z2mn_up = -pi * twopi * (1-w0) / (4*a[0]) * (B0 + B1*tau[1:,:]) 
+        z1pl_up = 2*pi * twopi * (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*tau[1:,:]/2) 
+        z2pl_up = -pi * twopi * (1-w0) / (4*a[0]) * (B0 + B1*tau[1:,:]) 
+        z1mn_down = 2*pi * twopi * (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*tau[:-1,:]/2) 
+        z2mn_down = -pi * twopi * (1-w0) / (4*a[0]) * (B0 + B1*tau[:-1,:]) 
+        z1pl_down = 2*pi * twopi * (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*tau[:-1,:]/2) 
+        z2pl_down = -pi * twopi * (1-w0) / (4*a[0]) * (B0 + B1*tau[:-1,:]) 
 
     alpha1 = 1/ubar1 + lam1
     alpha2 = 1/ubar1 + lam2
@@ -2316,9 +2316,9 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
     elif calculation == 1:
         #expdtau = exp(-tau[:-1,:]/ubar1)
         expdtau = exp(-dtau/ubar1)
-        N0 = (1-w0) * ubar1 / a[0] * ( (B0+B1*tau[:-1,:])*(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau))
-        #N0 = (1-w0) * ubar1 / a[0] * ( B0*(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau))
-        N1 = (1-w0) * ubar1 / a[0] * ( B1*(1-expdtau) / a[1])
+        #N0 = (1-w0) * ubar1 / a[0] * ( (B0+B1*tau[:-1,:])*(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau))
+        N0 = twopi * (1-w0) * ubar1 / a[0] * ( B0*(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau))
+        N1 = twopi * (1-w0) * ubar1 / a[0] * ( B1*(1-expdtau) / a[1])
         N2 = zeros(w0.shape)
         N3 = zeros(w0.shape)
 
