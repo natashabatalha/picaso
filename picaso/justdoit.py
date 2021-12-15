@@ -10,6 +10,7 @@ from virga import justdoit as vj
 from scipy.signal import savgol_filter
 from scipy.interpolate import RegularGridInterpolator,UnivariateSpline
 from scipy import special
+from numba import njit
 
 import os
 import pickle as pk
@@ -553,14 +554,21 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
         
         #for iw in range(shape[1]):
         #    at_pressures[iw] = pressure[ind_gas[iw]]
-        at_pressures=[]
-        for iw in range(shape[1]): 
-            at_pressures += [np.interp([at_tau],cumsum_taus[i][:,iw],
-                                pressure )[0]]
+        #at_pressures=[]
+        #for iw in range(shape[1]): 
+        #    at_pressures += [np.interp([at_tau],cumsum_taus[i][:,iw],
+        #                        pressure )[0]]
 
-        at_pressure_array[i] = at_pressures
+        at_pressure_array[i] = find_press(at_tau, cumsum_taus[i], shape[1], pressure)
 
     return taus_by_species, cumsum_taus, at_pressure_array
+
+@njit()
+def find_press(at_tau, a, b, c):
+    at_press = []
+    for iw in range(b): 
+        at_press.append(np.interp([at_tau],a[:,iw],c)[0])
+    return at_press
 
 def opannection(ck=False, wave_range = None, filename_db = None, raman_db = None, 
                 resample=1, ck_db=None):
