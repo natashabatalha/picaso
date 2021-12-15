@@ -1128,387 +1128,6 @@ def taumap(full_output, at_tau=1, wavelength=1,igauss=0):
     plt.subplots_adjust(wspace=0.3, hspace=0.3)
     plt.show()  
 
-def get_bad_bands(residual, sensitivity=3):
-    """
-    Given a set of residuals, this program separates out the bad bands into 
-    separate lists and returns the indecies of the bad bands in list form. 
-
-    Parameters
-    ----------
-    residual : np.array 
-        Model 1 - model 2
-    sensitivity : float 
-        This will pick out anything that is worse than stdev(residual)/sensitivity. Larger 
-        numbers pick out more problems. 
-    """
-    problem_loc = np.where((abs(residual) > np.std(residual)/sensitivity))[0]
-    problem_bands = list(chunk(problem_loc, spacing))
-    return problem_bands
-
-def corr_continuum(atm,filename_db, wavenumber , residual, max_plot,threshold):
-
-    #get available data and grab needed cross sections
-
-    mols,pt_pairs = molecular_avail(filename_db)
-    cmols, tcia = continuum_avail(filename_db)
-    Ts =[]
-    Ps =[]
-    for i in np.unique(atm.layer['pt_opa_index']):
-        Ps +=[pt_pairs[i-1][1]]
-        Ts +=[pt_pairs[i-1][2]]
-
-    grab_c = get_continuum(filename_db,list(cmols), Ts)
-
-    #rebin contimuum and compute correlations
-
-    cont = []
-    mol_t_pairs = []
-    counts = []
-    for i in cmols:
-        for j in grab_c[i].keys():
-            cx = grab_c[i][j]
-            x, cx_bi =  mean_regrid(grab_c['wavenumber'], 
-                              cx, newx=wavenumber)
-            grab_c[i][j] = cx_bi
-            mol_t_pairs += [(str(i),str(j))]
-            pr = pearsonr(cx_bi,residual)[0]
-            if np.isnan(pr):
-                counts += [0]
-            else:
-                counts += [pr]
-    grab_c['wavenumber'] = x
-
-    #reformat the data to be in dictionary form so that we can tack in bokeh chart
-
-    #POSITIVE CORRELATIONS
-    data_p = {str(i):[] for i in grab_c[cmols[0]].keys()}
-
-    #NEGATIVE CORRELATIONS
-    data_n = {str(i):[] for i in grab_c[cmols[0]].keys()}
-    temp_strs = [str(i) for i in grab_c[cmols[0]].keys()]
-    i = 0 
-    for ii in cmols:
-        for jj in temp_strs:
-            if counts[i] >= 0: 
-                data_p[jj] += [counts[i]]
-                data_n[jj] += [0]
-            else :
-                data_p[jj] += [0]
-                data_n[jj] += [counts[i]]
-            i += 1
-    data_p['molecules'] =cmols
-    data_n['molecules'] =cmols
-
-
-    #get molecules pairs with highest correlations for the negative (df_n) and 
-    #the positive (df_c) correlations
-
-    df_n = pd.DataFrame(data_n, index = range(len(cmols)))
-    cols = list(df_n.keys())
-    cols.pop(cols.index('molecules'))
-    df_n = df_n[(df_n[cols].T < -threshold).any()]
-
-    if df_n.shape[0]>0:
-        mol_to_plot_n = df_n.sum(axis=1).sort_values(ascending=True)
-        mol_to_plot_n = mol_to_plot_n.loc[mol_to_plot_n!=0].index.values[0:max_plot]
-
-        t_to_plot_n = {}
-        for i in mol_to_plot_n:
-            top_ts_n = df_n.loc[i,cols].sort_values().index.values[0]
-            t_to_plot_n[cmols[i]] = top_ts_n
-    else:
-        t_to_plot_n="none"
-
-    df_p = pd.DataFrame(data_p, index = range(len(cmols)))
-    cols = list(df_p.keys())
-    cols.pop(cols.index('molecules'))
-    df_p = df_p[(df_p[cols].T > threshold).any()]
-
-    if df_p.shape[0]>0:
-        mol_to_plot_p = df_p.sum(axis=1).sort_values(ascending=False)
-        mol_to_plot_p = mol_to_plot_p.loc[mol_to_plot_p!=0].index.values[0:max_plot]
-
-        t_to_plot_p = {}
-        for i in mol_to_plot_p:
-            top_ts_p = df_p.loc[i,cols].sort_values(ascending=False).index.values[0]
-            t_to_plot_p[cmols[i]] = top_ts_p
-    else:
-        t_to_plot_p="none"
-
-
-    #finally MAKE BIG ASS double PLOT
-
-    #first stack of correlations
-    color_mapper = LinearColorMapper(palette="Magma256", low=min(Ts), high=max(Ts))
-
-    p = figure(y_range=cmols, plot_height=200,plot_width=600,
-               x_range=(-1*len(temp_strs), len(temp_strs)),
-               title="Correlations with Continuum")
-
-    p.hbar_stack(temp_strs, y='molecules', height=0.9, color=magma(len(temp_strs)),
-                 source=ColumnDataSource(data_p))
-
-    p.hbar_stack(temp_strs, y='molecules', height=0.9, color=magma(len(temp_strs)), 
-                 source=ColumnDataSource(data_n))
-
-    color_bar = ColorBar(color_mapper=color_mapper, ticker=BasicTicker(),
-                         label_standoff=12, border_line_color=None, location=(0,0))
-
-    p.add_layout(color_bar, 'right')
-
-    #second take top correlated and plot it with the residuals
-    spec = figure(plot_height=200,plot_width=650,
-               x_axis_type='log',
-               title="Residuals w/ Continuum",y_range=[min(residual), max(residual)])
-    legend_it = []
-
-    spec.extra_y_ranges = {"cxs": Range1d()}
-    new_range = [0,-100]
-    spec.add_layout(LinearAxis(y_range_name="cxs"), 'right')
-
-
-    spec.line(1e4/grab_c['wavenumber'], residual,color='black',line_width=3)
-
-    icolor = 0 
-
-    if t_to_plot_n != "none":
-        i = 0
-        for im in t_to_plot_n.keys():
-            logcx = np.log10(grab_c[im][float(t_to_plot_n[im])])
-            c = spec.line(1e4/grab_c['wavenumber'], logcx
-                      ,color=Colorblind8[icolor],y_range_name="cxs",line_width=3)
-            new_range[0] = np.min([new_range[0],min(logcx)])
-            new_range[1] = np.max([new_range[1],max(logcx)])
-            legend_it.append((im+"_"+t_to_plot_n[im], [c]))
-            i += 1 
-            icolor +=1
-            
-    if t_to_plot_p != "none": 
-        i = -1
-        for im in t_to_plot_p.keys():
-            logcx = np.log10(grab_c[im][float(t_to_plot_p[im])])
-            c = spec.line(1e4/grab_c['wavenumber'], logcx
-                      ,color=Colorblind8[icolor],y_range_name="cxs",line_width=3)
-            new_range[0] = np.min([new_range[0],min(logcx)])
-            new_range[1] = np.max([new_range[1],max(logcx)])
-            legend_it.append((im+"_"+t_to_plot_p[im], [c]))
-            i -= 1
-            icolor += 1
-            
-    if ((t_to_plot_n != "none") | (t_to_plot_p != "none")):
-        legend = Legend(items=legend_it, location=(0, 0))
-        legend.click_policy="mute"
-        spec.add_layout(legend, 'right')
-        
-    spec.extra_y_ranges = {"cxs": Range1d(start=new_range[0]*1.1, end=new_range[1]*.9)}#
-
-    p.y_range.range_padding = 0.1
-    p.ygrid.grid_line_color = None
-    p.axis.minor_tick_line_color = None
-    p.outline_line_color = None
-
-    return column(p,spec)
-
-
-def chunk(loc,spacing):
-    """
-    Given a list of index output from np.where, this function 
-    separates the list into sequential indexes. For example,
-    [1,2,3,10,11,12] would be returned as [[1,2,3],[10,11,12]
-    
-    loc : np.array
-        Set of indecies from np.where 
-    spacing : int 
-        Sets the minimum distance between the chunks. E.g. if spacing = 4 then 
-        [1,2,3,5] would not be chunked because the spacing is only 2. 
-    """
-    grid = np.array(list(np.diff(loc)) +[1])
-    sub = []
-    for i in range(len(grid)): 
-        sub += [loc[i]]
-        if grid[i]>spacing:
-            yield sub
-            sub = []
-        elif i == len(grid)-1:
-            yield sub
-
-def corr_molecular(atm,filename_db, wavenumber , residual, max_plot,threshold):
-
-    #get available data and grab needed cross sections
-    mols,pt_pairs = molecular_avail(filename_db)
-    Ts =[]
-    Ps =[]
-    for i in np.unique(atm.layer['pt_opa_index']):
-        Ps +=[pt_pairs[i-1][1]]
-        Ts +=[pt_pairs[i-1][2]]
-
-    #GET UNIQUE TEMPERATURES SO WE JUST HAVE ON PRESSURE FOR EACH TEMP
-    Ts_u, Ps_u = [],[]
-    for i , j in zip(Ts, Ps):
-        if i not in Ts_u:
-            Ts_u += [i]
-            Ps_u += [j]
-    Ts = Ts_u
-    Ps = Ps_u
-
-    grab_m = get_molecular(filename_db,list(mols), Ts,Ps)
-
-    #rebin contimuum and compute correlations
-
-    cont = []
-    mol_t_pairs = []
-    counts = []
-    for i in mols:
-        for jt, jp in zip(Ts, Ps):
-            cx = grab_m[i][jt][jp]
-            x, cx_bi =  mean_regrid(grab_m['wavenumber'], 
-                              cx, newx=wavenumber)
-            grab_m[i][jt][jp] = cx_bi
-            mol_t_pairs += [(str(i),str(jt))]
-            pr = pearsonr(cx_bi,residual)[0]
-            if np.isnan(pr):
-                counts += [0]
-            else:
-                counts += [pr]
-    grab_m['wavenumber'] = x
-
-    #reformat the data to be in dictionary form so that we can tack in bokeh chart
-
-    #POSITIVE CORRELATIONS
-    data_p = {i[1]:[] for i in mol_t_pairs}
-
-    #NEGATIVE CORRELATIONS
-    data_n = {i[1]:[] for i in mol_t_pairs}
-
-    temp_strs = [str(i) for i in Ts]
-    i = 0 
-    for ii in mols:
-        for jj in temp_strs:    
-            if counts[i] >= 0: 
-                data_p[jj] += [counts[i]]
-                data_n[jj] += [0]
-            else :
-                data_p[jj] += [0]
-                data_n[jj] += [counts[i]]
-            i += 1
-    data_p['molecules'] =mols
-    data_n['molecules'] =mols
-
-    #get molecules pairs with highest correlations for the negative (df_n) and 
-    #the positive (df_c) correlations
-
-    df_n = pd.DataFrame(data_n, index = range(len(mols)))
-    cols = list(df_n.keys())
-    cols.pop(cols.index('molecules'))
-    df_n = df_n[(df_n[cols].T < -threshold).any()]
-
-    if df_n.shape[0]>0:
-        mol_to_plot_n = df_n.sum(axis=1).sort_values(ascending=True)
-        mol_to_plot_n = mol_to_plot_n.loc[mol_to_plot_n!=0].index.values[0:max_plot]
-
-        t_to_plot_n = {}
-        for i in mol_to_plot_n:
-            top_ts_n = df_n.loc[i,cols].sort_values().index.values[0]
-            t_to_plot_n[mols[i]] = top_ts_n
-    else:
-        t_to_plot_n="none"
-
-    df_p = pd.DataFrame(data_p, index = range(len(mols)))
-    cols = list(df_p.keys())
-    cols.pop(cols.index('molecules'))
-    df_p = df_p[(df_p[cols].T > threshold).any()]
-
-    if df_p.shape[0]>0:
-        mol_to_plot_p = df_p.sum(axis=1).sort_values(ascending=False)
-        mol_to_plot_p = mol_to_plot_p.loc[mol_to_plot_p!=0].index.values[0:max_plot]
-
-        t_to_plot_p = {}
-        for i in mol_to_plot_p:
-            top_ts_p = df_p.loc[i,cols].sort_values(ascending=False).index.values[0]
-            t_to_plot_p[mols[i]] = top_ts_p
-    else:
-        t_to_plot_p="none"
-
-
-    #finally MAKE BIG ASS double PLOT
-
-    #first stack of correlations
-    color_mapper = LinearColorMapper(palette="Magma256", low=min(Ts), high=max(Ts))
-
-    p = figure(y_range=mols, plot_height=300,plot_width=600,
-               x_range=(-1*len(temp_strs), len(temp_strs)),
-               title="Correlations with Molecules")
-
-    p.hbar_stack(temp_strs, y='molecules', height=0.9, color=magma(len(temp_strs)),
-                 source=ColumnDataSource(data_p))
-
-    p.hbar_stack(temp_strs, y='molecules', height=0.9, color=magma(len(temp_strs)), 
-                 source=ColumnDataSource(data_n))
-
-    color_bar = ColorBar(color_mapper=color_mapper, ticker=BasicTicker(),
-                         label_standoff=12, border_line_color=None, location=(0,0))
-
-    p.add_layout(color_bar, 'right')
-
-    #second take top correlated and plot it with the residuals
-    spec = figure(plot_height=300,plot_width=650,
-               x_axis_type='log',
-               title="Residuals w/ Molecular Opacity",y_range=[min(residual), max(residual)])
-    legend_it = []
-
-    spec.extra_y_ranges = {"cxs": Range1d()}
-    new_range = [0,-100]
-    spec.add_layout(LinearAxis(y_range_name="cxs"), 'right')
-
-
-    spec.line(1e4/grab_m['wavenumber'], residual,color='black',line_width=3)
-
-    icolor = 0 
-
-    if t_to_plot_n != "none":
-        i = 0
-        for im in t_to_plot_n.keys():
-            ip = Ps[Ts.index(float(t_to_plot_n[im]))]
-            cx = grab_m[im][float(t_to_plot_n[im])][ip]
-            loc =np.where(cx!=0)
-            logcx = np.log10(cx[loc])
-            c = spec.line(1e4/grab_m['wavenumber'][loc], logcx
-                      ,color=Colorblind8[icolor],y_range_name="cxs",line_width=3)
-            new_range[0] = np.min([new_range[0],min(logcx)])
-            new_range[1] = np.max([new_range[1],max(logcx)])
-            legend_it.append((im+"_"+t_to_plot_n[im], [c]))
-            i += 1 
-            icolor +=1
-
-    if t_to_plot_p != "none": 
-        i = -1
-        for im in list(t_to_plot_p.keys()):
-            ip = Ps[Ts.index(float(t_to_plot_p[im]))]
-            cx = grab_m[im][float(t_to_plot_p[im])][ip]
-            loc = np.where(cx!=0)
-            logcx = np.log10(cx[loc])
-            c = spec.line(1e4/grab_m['wavenumber'][loc], logcx
-                      ,color=Colorblind8[icolor],y_range_name="cxs",line_width=3)
-            new_range[0] = np.min([new_range[0],min(logcx)])
-            new_range[1] = np.max([new_range[1],max(logcx)])
-            legend_it.append((im+"_"+t_to_plot_p[im], [c]))
-            i -= 1
-            icolor += 1
-
-    if ((t_to_plot_n != "none") | (t_to_plot_p != "none")):
-        legend = Legend(items=legend_it, location=(0, 0))
-        legend.click_policy="mute"
-        spec.add_layout(legend, 'right')
-
-    spec.extra_y_ranges = {"cxs": Range1d(start=new_range[0]*1.1, end=new_range[1]*.9)}#
-
-    p.y_range.range_padding = 0.1
-    p.ygrid.grid_line_color = None
-    p.axis.minor_tick_line_color = None
-    p.outline_line_color = None
-
-    return column(p,spec)
-
 def plot_evolution(evo, y = "Teff",**kwargs):
     """
     Plot evolution of tracks. Requires input from justdoit: 
@@ -1582,29 +1201,32 @@ def heatmap_taus(out, R=0):
     R : int 
         Resolution to bin to (if zero, no binning)
     """
-
+    nrow = 1
+    ncol = 3 #at most 3 columns
+    fig = plt.figure(figsize=(6*ncol,4*nrow))
     for it, itau in enumerate(['taugas','taucld','tauray']):
-
+        ax = fig.add_subplot(nrow,ncol,it+1)
         tau_bin = []
-        for i in range(out[itau].shape[0]):
+        for i in range(out['full_output'][itau].shape[0]):
             if R == 0 : 
                 x,y = out['wavenumber'], out['full_output'][itau][i,:,0]
             else: 
                 x,y = mean_regrid(out['wavenumber'],
-                                  out['full_output'][itau][i,:,0], R=150)
+                                  out['full_output'][itau][i,:,0], R=R)
             tau_bin += [[y]]
-
-        tau_bin = np.array(np.log10(tau_bin))[:,0,:]
-        X,Y = np.meshgrid(1e4/x,cldy_hot_output[ikey]['full_output']['layer']['pressure'])
+        tau_bin = np.array(tau_bin)
+        tau_bin[tau_bin==0]=1e-100
+        tau_bin = np.log10(tau_bin)[:,0,:]
+        X,Y = np.meshgrid(1e4/x,out['full_output']['layer']['pressure'])
         Z = tau_bin
-        pcm=ax[it].pcolormesh(X, Y, Z)
-        cbar=fig.colorbar(pcm, ax=ax[it])
+        pcm=ax.pcolormesh(X, Y, Z,shading='auto',cmap='RdBu_r')
+        cbar=fig.colorbar(pcm, ax=ax)
         pcm.set_clim(-3.0, 3.0)
-        ax[it].set_title(itau)
-        ax[it].set_yscale('log')
-        ax[it].set_ylim([1e2,1e-3])
-        ax[it].set_ylabel('Pressure(bars)')
-        ax[it].set_ylabel('Wavelength(um)')
+        ax.set_title(itau)
+        ax.set_yscale('log')
+        ax.set_ylim([1e2,1e-3])
+        ax.set_ylabel('Pressure(bars)')
+        ax.set_ylabel('Wavelength(um)')
         cbar.set_label('log Opacity')
 
 def phase_snaps(allout, x = 'longitude', y = 'pressure', z='temperature',palette='RdBu_r',
@@ -1744,7 +1366,7 @@ def phase_snaps(allout, x = 'longitude', y = 'pressure', z='temperature',palette
 
     fig.tight_layout()
     return fig
-def phase_curve(allout, to_plot, collapse=None, R=100, palette=Spectral11, **kwargs):
+def phase_curve(allout, to_plot, collapse=None, R=100, palette=Spectral11,verbose=True, **kwargs):
     """
     Plots phase curves
     
@@ -1762,6 +1384,10 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=Spectral11, **kwa
         Resolution to regrid before finding nearest wavelength element
     palette : list
         list of hex from bokeh or other palette 
+    verbose : bool 
+        Print out low level warnings 
+    kwargs : dict 
+        Bokeh plotting kwargs for bokeh.Figure
     """
     kwargs['plot_height'] = kwargs.get('plot_height',400)
     kwargs['plot_width'] = kwargs.get('plot_width',600)
@@ -1777,11 +1403,11 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=Spectral11, **kwa
     if (isinstance(collapse, (float,int)) or isinstance(collapse, str)):
         collapse = [collapse]
     elif isinstance(collapse, list): 
-        for i in collapse : assert isinstance(i,(float,int)), 'Can only suply list if it is a list of floats that represent the wavelength in micron.'
+        for i in collapse : assert isinstance(i,(float,int)), 'Can only supply list if it is a list of floats that represent the wavelength in micron.'
     else: 
         raise Exception('Collapse must either be float, str or list')
     if len(collapse)>len(palette): 
-        if verbose: pring('Switched color palette to accomodate more collase input options')
+        if verbose: print('Switched color palette to accomodate more collapse input options')
         palette = magma(len(collapse))
 
     all_curves = np.zeros((len(allout.keys()), len(collapse)))
