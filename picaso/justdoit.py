@@ -10,6 +10,7 @@ from virga import justdoit as vj
 from scipy.signal import savgol_filter
 from scipy.interpolate import RegularGridInterpolator,UnivariateSpline
 from scipy import special
+from numba import njit
 
 import os
 import pickle as pk
@@ -187,7 +188,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                     atm.surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
                                     single_phase, multi_phase, 
                                     frac_a, frac_b, frac_c, constant_back, constant_forward, 
-                                    dimension, stream, print_time)
+                                    dimension, stream, print_time) #LCM is carrying this bug
                 else:
                     xint = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                     DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
@@ -553,14 +554,21 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
         
         #for iw in range(shape[1]):
         #    at_pressures[iw] = pressure[ind_gas[iw]]
-        at_pressures=[]
-        for iw in range(shape[1]): 
-            at_pressures += [np.interp([at_tau],cumsum_taus[i][:,iw],
-                                pressure )[0]]
+        #at_pressures=[]
+        #for iw in range(shape[1]): 
+        #    at_pressures += [np.interp([at_tau],cumsum_taus[i][:,iw],
+        #                        pressure )[0]]
 
-        at_pressure_array[i] = at_pressures
+        at_pressure_array[i] = find_press(at_tau, cumsum_taus[i], shape[1], pressure)
 
     return taus_by_species, cumsum_taus, at_pressure_array
+
+@njit()
+def find_press(at_tau, a, b, c):
+    at_press = []
+    for iw in range(b): 
+        at_press.append(np.interp([at_tau],a[:,iw],c)[0])
+    return at_press
 
 def opannection(ck=False, wave_range = None, filename_db = None, raman_db = None, 
                 resample=1, ck_db=None):
@@ -1738,7 +1746,7 @@ class inputs():
         if isinstance(ds, type(None)):
             ds = self.inputs['atmosphere']['profile']
             if isinstance(ds, type(None)):
-                raise Except("Need to submit an xarray.DataArray because there is no input attached to self.inputs['atmosphere']['profile']")
+                raise Exception("Need to submit an xarray.DataArray because there is no input attached to self.inputs['atmosphere']['profile']")
 
         if not isinstance(ds, xr.core.dataset.Dataset): 
             raise Exception('PICASO has moved to only accept xarray input. Please see GCM 3D input tutorials to learn how to reformat your input. ')
@@ -1823,7 +1831,7 @@ class inputs():
         if isinstance(ds, type(None)):
             ds = self.inputs['clouds']['profile']
             if isinstance(ds, type(None)):
-                raise Except("Need to submit an xarray.DataArray because there is no input attached to self.inputs['clouds']['profile']")
+                raise Exception("Need to submit an xarray.DataArray because there is no input attached to self.inputs['clouds']['profile']")
 
         if not isinstance(ds, xr.core.dataset.Dataset): 
             raise Exception('PICASO has moved to only accept xarray input. Please see GCM 3D input tutorials to learn how to reformat your input. ')
@@ -2121,7 +2129,7 @@ class inputs():
             self.inputs['clouds']['profile'] = df
 
     def virga(self, condensates, directory,
-        fsed=1, mh=1, mmw=2.2,kz_min=1e5,sig=2, full_output=False): 
+        fsed=1, mh=1, mmw=2.2,kz_min=1e5,sig=2, full_output=False, do_virtual=False): 
         """
         Runs virga cloud code based on the PT and Kzz profiles 
         that have been added to inptus class.
@@ -2154,7 +2162,7 @@ class inputs():
         
         cloud_p.ptk(df =df, kz_min = kz_min)
         out = vj.compute(cloud_p, as_dict=full_output,
-                          directory=directory)
+                          directory=directory, do_virtual=do_virtual)
 
         if not full_output:
             opd, w0, g0 = out
