@@ -72,7 +72,8 @@ setup(
           'pysynphot',
           'sphinx',
           'scipy',
-          'virga-exo'
+          'virga-exo',
+          'xarray'
           ], 
     zip_safe = False,
 )
