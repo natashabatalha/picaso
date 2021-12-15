@@ -187,7 +187,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                     atm.surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
                                     single_phase, multi_phase, 
                                     frac_a, frac_b, frac_c, constant_back, constant_forward, 
-                                    dimension, stream, print_time)
+                                    dimension, stream, print_time) #LCM is carrying this bug
                 else:
                     xint = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                     DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
@@ -1738,7 +1738,7 @@ class inputs():
         if isinstance(ds, type(None)):
             ds = self.inputs['atmosphere']['profile']
             if isinstance(ds, type(None)):
-                raise Except("Need to submit an xarray.DataArray because there is no input attached to self.inputs['atmosphere']['profile']")
+                raise Exception("Need to submit an xarray.DataArray because there is no input attached to self.inputs['atmosphere']['profile']")
 
         if not isinstance(ds, xr.core.dataset.Dataset): 
             raise Exception('PICASO has moved to only accept xarray input. Please see GCM 3D input tutorials to learn how to reformat your input. ')
@@ -1823,7 +1823,7 @@ class inputs():
         if isinstance(ds, type(None)):
             ds = self.inputs['clouds']['profile']
             if isinstance(ds, type(None)):
-                raise Except("Need to submit an xarray.DataArray because there is no input attached to self.inputs['clouds']['profile']")
+                raise Exception("Need to submit an xarray.DataArray because there is no input attached to self.inputs['clouds']['profile']")
 
         if not isinstance(ds, xr.core.dataset.Dataset): 
             raise Exception('PICASO has moved to only accept xarray input. Please see GCM 3D input tutorials to learn how to reformat your input. ')
@@ -2121,7 +2121,7 @@ class inputs():
             self.inputs['clouds']['profile'] = df
 
     def virga(self, condensates, directory,
-        fsed=1, mh=1, mmw=2.2,kz_min=1e5,sig=2, full_output=False): 
+        fsed=1, mh=1, mmw=2.2,kz_min=1e5,sig=2, full_output=False, do_virtual=False): 
         """
         Runs virga cloud code based on the PT and Kzz profiles 
         that have been added to inptus class.
@@ -2154,7 +2154,7 @@ class inputs():
         
         cloud_p.ptk(df =df, kz_min = kz_min)
         out = vj.compute(cloud_p, as_dict=full_output,
-                          directory=directory)
+                          directory=directory, do_virtual=do_virtual)
 
         if not full_output:
             opd, w0, g0 = out
