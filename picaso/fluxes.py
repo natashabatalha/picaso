@@ -2073,10 +2073,10 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
             zmn_down = zmn 
             zpl_down = zpl 
     elif calculation == 1: # linear thermal
-        zmn_down = 2*pi*((1-w0)/a[0] * (B0/2 - B1/a[1])) * twopi 
-        zmn_up = 2*pi*((1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2)) * twopi  
-        zpl_down = 2*pi*((1-w0)/a[0] * (B0/2 + B1/a[1])) * twopi 
-        zpl_up = 2*pi*((1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2)) * twopi 
+        zmn_down = ((1-w0)/a[0] * (B0/2 - B1/a[1])) * twopi #*2*pi
+        zmn_up = ((1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2)) * twopi  #*2*pi
+        zpl_down = ((1-w0)/a[0] * (B0/2 + B1/a[1])) * twopi #*2*pi
+        zpl_up = ((1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2)) * twopi #*2*pi
 
     alpha = 1/ubar1 + lam
     beta = 1/ubar1 - lam
@@ -2171,12 +2171,13 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
             F[i+3,i+1,:] = Q1pl[k,:]
             k = k+1
 
-        G[0,:] = zmn[0,:]
-        G[1,:] = zpl[0,:]
+        G[0,:] = zmn_down[0,:]
+        G[1,:] = zpl_down[0,:]
 
         G[2::2,:] = zmn_up
         G[3::2,:] = zpl_up
 
+#    import IPython; IPython.embed()
     return Mb, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2
 
 #@jit(nopython=True, cache=True, debug=True)
@@ -2264,14 +2265,14 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
         z1pl_down = z1pl 
         z2pl_down = z2pl 
     elif calculation == 1: # linear thermal
-        z1mn_up = 2*pi * twopi * (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*tau[1:,:]/2) 
-        z2mn_up = -pi * twopi * (1-w0) / (4*a[0]) * (B0 + B1*tau[1:,:]) 
-        z1pl_up = 2*pi * twopi * (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*tau[1:,:]/2) 
-        z2pl_up = -pi * twopi * (1-w0) / (4*a[0]) * (B0 + B1*tau[1:,:]) 
-        z1mn_down = 2*pi * twopi * (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*tau[:-1,:]/2) 
-        z2mn_down = -pi * twopi * (1-w0) / (4*a[0]) * (B0 + B1*tau[:-1,:]) 
-        z1pl_down = 2*pi * twopi * (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*tau[:-1,:]/2) 
-        z2pl_down = -pi * twopi * (1-w0) / (4*a[0]) * (B0 + B1*tau[:-1,:]) 
+        z1mn_up = twopi * (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*tau[1:,:]/2) 
+        z2mn_up = -0.5 * twopi * (1-w0) / (4*a[0]) * (B0 + B1*tau[1:,:]) 
+        z1pl_up = twopi * (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*tau[1:,:]/2) 
+        z2pl_up = -0.5 * twopi * (1-w0) / (4*a[0]) * (B0 + B1*tau[1:,:]) 
+        z1mn_down = twopi * (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*tau[:-1,:]/2) 
+        z2mn_down = -0.5 * twopi * (1-w0) / (4*a[0]) * (B0 + B1*tau[:-1,:]) 
+        z1pl_down = twopi * (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*tau[:-1,:]/2) 
+        z2pl_down = -0.5 * twopi * (1-w0) / (4*a[0]) * (B0 + B1*tau[:-1,:]) 
 
     alpha1 = 1/ubar1 + lam1
     alpha2 = 1/ubar1 + lam2
