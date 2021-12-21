@@ -1948,8 +1948,8 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     else:
         b_surface = (all_b[-1,:] + b1[-1,:]*mu1) #(for non terrestrial)
 
-    b_top = b_top * twopi*mu1 # this is to make sure we're solving same problem as picaso
-    b_surface = b_surface * twopi*mu1
+    b_top = b_top * twopi**2 #*mu1 # this is to make sure we're solving same problem as picaso
+    b_surface = b_surface * twopi**2 #*mu1
     
     #if single_phase==1:#'OTHG':
     if np.array_equal(cosb,cosb_og):
@@ -2017,7 +2017,7 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 
 
             if hard_surface:
-                xint_temp[-1,:] = b_surface/mu1 # twopi * b_surface # terrestrial
+                xint_temp[-1,:] = b_surface/twopi #mu1 # twopi * b_surface # terrestrial
             else:
                 xint_temp[-1,:] = twopi * (all_b[-1,:] + b1[-1,:] * ubar1[ng,nt]) # no hard surface
 
@@ -2073,10 +2073,10 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
             zmn_down = zmn 
             zpl_down = zpl 
     elif calculation == 1: # linear thermal
-        zmn_down = ((1-w0)/a[0] * (B0/2 - B1/a[1])) * twopi #*2*pi
-        zmn_up = ((1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2)) * twopi  #*2*pi
-        zpl_down = ((1-w0)/a[0] * (B0/2 + B1/a[1])) * twopi #*2*pi
-        zpl_up = ((1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2)) * twopi #*2*pi
+        zmn_down = ((1-w0)/a[0] * (B0/2 - B1/a[1])) * twopi *2*pi
+        zmn_up = ((1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2)) * twopi  *2*pi
+        zpl_down = ((1-w0)/a[0] * (B0/2 + B1/a[1])) * twopi *2*pi
+        zpl_up = ((1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2)) * twopi *2*pi
 
     alpha = 1/ubar1 + lam
     beta = 1/ubar1 - lam
@@ -2265,14 +2265,14 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
         z1pl_down = z1pl 
         z2pl_down = z2pl 
     elif calculation == 1: # linear thermal
-        z1mn_up = twopi * (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*tau[1:,:]/2) 
-        z2mn_up = -0.5 * twopi * (1-w0) / (4*a[0]) * (B0 + B1*tau[1:,:]) 
-        z1pl_up = twopi * (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*tau[1:,:]/2) 
-        z2pl_up = -0.5 * twopi * (1-w0) / (4*a[0]) * (B0 + B1*tau[1:,:]) 
-        z1mn_down = twopi * (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*tau[:-1,:]/2) 
-        z2mn_down = -0.5 * twopi * (1-w0) / (4*a[0]) * (B0 + B1*tau[:-1,:]) 
-        z1pl_down = twopi * (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*tau[:-1,:]/2) 
-        z2pl_down = -0.5 * twopi * (1-w0) / (4*a[0]) * (B0 + B1*tau[:-1,:]) 
+        z1mn_up = twopi * (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*tau[1:,:]/2) *2*pi
+        z2mn_up = -0.5 * twopi * (1-w0) / (4*a[0]) * (B0 + B1*tau[1:,:]) *2*pi
+        z1pl_up = twopi * (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*tau[1:,:]/2) *2*pi
+        z2pl_up = -0.5 * twopi * (1-w0) / (4*a[0]) * (B0 + B1*tau[1:,:]) *2*pi
+        z1mn_down = twopi * (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*tau[:-1,:]/2) *2*pi
+        z2mn_down = -0.5 * twopi * (1-w0) / (4*a[0]) * (B0 + B1*tau[:-1,:]) *2*pi
+        z1pl_down = twopi * (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*tau[:-1,:]/2) *2*pi
+        z2pl_down = -0.5 * twopi * (1-w0) / (4*a[0]) * (B0 + B1*tau[:-1,:]) *2*pi
 
     alpha1 = 1/ubar1 + lam1
     alpha2 = 1/ubar1 + lam2
