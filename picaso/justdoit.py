@@ -327,7 +327,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                 #the uncorrected raman single scattering 
                 flux_at_top  = get_thermal_3d(nlevel, wno,nwno,ng,nt,TLEVEL_3d,
                                             DTAU_OG_3d[:,:,:,:,ig], W0_no_raman_3d[:,:,:,:,ig], COSB_OG_3d[:,:,:,:,ig], 
-                                            PLEVEL_3d,ubar1, tridiagonal)
+                                            PLEVEL_3d,ubar1, atm.surf_reflect, atm.hard_surface, tridiagonal)
 
             #if full output is requested add in flux at top for 3d plots
             if full_output: 
