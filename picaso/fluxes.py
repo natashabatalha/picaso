@@ -2224,7 +2224,7 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
                 expdtau = exp(-expo)
 
                 intgrl_per_layer = (w0 *  multi_scat 
-                            + (1-w0) * ubar1[ng,nt] *
+                            + 2*pi*(1-w0) * ubar1[ng,nt] *
                             (b0 * (1 - expdtau)
                             + b1 * (ubar1[ng,nt] - (dtau + ubar1[ng,nt]) * expdtau)))
 
@@ -2298,10 +2298,10 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
             zmn_down = zmn 
             zpl_down = zpl 
     elif calculation == 1: # linear thermal
-        zmn_down = ((1-w0)/a[0] * (B0/2 - B1/a[1])) *2*pi
-        zmn_up = ((1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2)) *2*pi
-        zpl_down = ((1-w0)/a[0] * (B0/2 + B1/a[1])) *2*pi
-        zpl_up = ((1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2)) *2*pi
+        zmn_down = ((1-w0)/a[0] * (B0/2 - B1/a[1])) *2*pi * 2*pi
+        zmn_up = ((1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2)) *2*pi * 2*pi
+        zpl_down = ((1-w0)/a[0] * (B0/2 + B1/a[1])) *2*pi * 2*pi
+        zpl_up = ((1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2)) *2*pi * 2*pi
 
     alpha = 1/ubar1 + lam
     beta = 1/ubar1 - lam
@@ -2364,8 +2364,8 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
         N_int[1::2,:] = eta[1] * expon1
     elif calculation == 1: # linear thermal
         expdtau = exp(-dtau/ubar1)
-        N_int[::2,:] = (1-w0) * ubar1 / a[0] * (B0 *(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau))
-        N_int[1::2,:] = (1-w0) * ubar1 / a[0] * ( B1*(1-expdtau) / a[1])
+        N_int[::2,:] = (1-w0) * ubar1 / a[0] * (B0 *(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau)) * 2*pi
+        N_int[1::2,:] = (1-w0) * ubar1 / a[0] * ( B1*(1-expdtau) / a[1]) * 2*pi
 
     #   last row: BC 4
     n = nlayer-1
@@ -2490,14 +2490,14 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, b_surface_SH4
         z1pl_down = z1pl 
         z2pl_down = z2pl 
     elif calculation == 1: # linear thermal
-        z1mn_up = (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*tau[1:,:]/2) *2*pi
-        z2mn_up = -0.5 * (1-w0) / (4*a[0]) * (B0 + B1*tau[1:,:]) *2*pi
-        z1pl_up = (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*tau[1:,:]/2) *2*pi
-        z2pl_up = -0.5 * (1-w0) / (4*a[0]) * (B0 + B1*tau[1:,:]) *2*pi
-        z1mn_down = (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*tau[:-1,:]/2) *2*pi
-        z2mn_down = -0.5 * (1-w0) / (4*a[0]) * (B0 + B1*tau[:-1,:]) *2*pi
-        z1pl_down = (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*tau[:-1,:]/2) *2*pi
-        z2pl_down = -0.5 * (1-w0) / (4*a[0]) * (B0 + B1*tau[:-1,:]) *2*pi
+        z1mn_up = (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*tau[1:,:]/2) *2*pi * 2*pi
+        z2mn_up = -0.5 * (1-w0) / (4*a[0]) * (B0 + B1*tau[1:,:]) *2*pi * 2*pi
+        z1pl_up = (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*tau[1:,:]/2) *2*pi * 2*pi
+        z2pl_up = -0.5 * (1-w0) / (4*a[0]) * (B0 + B1*tau[1:,:]) *2*pi * 2*pi
+        z1mn_down = (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*tau[:-1,:]/2) *2*pi * 2*pi
+        z2mn_down = -0.5 * (1-w0) / (4*a[0]) * (B0 + B1*tau[:-1,:]) *2*pi * 2*pi
+        z1pl_down = (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*tau[:-1,:]/2) *2*pi * 2*pi
+        z2pl_down = -0.5 * (1-w0) / (4*a[0]) * (B0 + B1*tau[:-1,:]) *2*pi * 2*pi
 
     alpha1 = 1/ubar1 + lam1
     alpha2 = 1/ubar1 + lam2
@@ -2543,8 +2543,8 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, b_surface_SH4
         #expdtau = exp(-tau[:-1,:]/ubar1)
         expdtau = exp(-dtau/ubar1)
         #N0 = (1-w0) * ubar1 / a[0] * ( (B0+B1*tau[:-1,:])*(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau))
-        N0 = (1-w0) * ubar1 / a[0] * ( B0*(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau))
-        N1 = (1-w0) * ubar1 / a[0] * ( B1*(1-expdtau) / a[1])
+        N0 = (1-w0) * ubar1 / a[0] * ( B0*(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau)) * 2*pi
+        N1 = (1-w0) * ubar1 / a[0] * ( B1*(1-expdtau) / a[1]) * 2*pi
         N2 = zeros(w0.shape)
         N3 = zeros(w0.shape)
 
