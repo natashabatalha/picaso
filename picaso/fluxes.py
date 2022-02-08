@@ -1455,12 +1455,18 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     exptrm_positive = exp(exptrm) 
     exptrm_minus = 1.0/exptrm_positive
 
+    #for flux heating calculations, the energy balance solver 
+    #does not like a fixed zero at the TOA. 
+    #to avoid a discontinuous kink at the last atmospher
+    #layer we create this "fake" boundary condition
+    #we imagine that the atmosphere continus up at an isothermal T and that 
+    #there is optical depth from above the top to infinity 
     tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
-    b_top = pi*(1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
+    b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:] * pi #  Btop=(1.-np.exp(-tautop/ubari))*B[0]
     if hard_surface:
-        b_surface = pi*all_b[-1,:] #for terrestrial, hard surface  
+        b_surface = all_b[-1,:]*pi #for terrestrial, hard surface  
     else: 
-        b_surface= pi*(all_b[-1,:] + b1[-1,:]*mu1) #(for non terrestrial)
+        b_surface= (all_b[-1,:] + b1[-1,:]*mu1)*pi #(for non terrestrial)
 
     #Now we need the terms for the tridiagonal rotated layered method
     if tridiagonal==0:
@@ -1522,12 +1528,12 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
             iubar = ubar1[ng,nt]
 
+            #intensity boundary conditions
             if hard_surface:
-                int_plus[-1,:] = pi * (b_surface ) # terrestrial
+                int_plus[-1,:] = all_b[-1,:] *2*pi  # terrestrial flux /pi = intensity
             else:
-                int_plus[-1,:] = pi * ( all_b[-1,:] + b1[-1,:] * iubar) #no hard surface
-                
-            int_minus[0,:] = pi * (1 - exp(-tau_top / iubar)) * all_b[0,:]
+                int_plus[-1,:] = ( all_b[-1,:] + b1[-1,:] * iubar)*2*pi #no hard surface   
+            int_minus[0,:] =  (1 - exp(-tau_top / iubar)) * all_b[0,:] *2*pi
             
             exptrm_angle = exp( - dtau / iubar)
             exptrm_angle_mdpt = exp( -0.5 * dtau / iubar) 
