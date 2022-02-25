@@ -972,6 +972,22 @@ class inputs():
 
         Parameters
         -----------
+        opacityclass : class
+            Opacity class from `justdoit.opannection`
+        save_all_profiles : bool
+            If you want to save and return all iterations in the T(P) profile,True/False
+        save_all_kzz : bool
+            If you want to save and return all iterations in the kzz profile,True/False
+        diseq_chem : bool
+            If you want to run `on-the-fly' mixing (takes longer),True/False
+        self_consistent_kzz : bool
+            If you want to run MLT in convective zones and Moses in the radiative zones
+        kz : array
+            Kzz input array if user wants constant or whatever input profile (cgs)
+        vulcan_run : bool
+            If you want to run vulcan on the fly (takes longer),True/False
+        photochem : bool
+            If you want to run photochemistry in vulcan on the fly (takes much longer),True/False
         
         """
         #get necessary parameters from opacity ck-tables 
