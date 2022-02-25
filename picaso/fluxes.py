@@ -1,6 +1,6 @@
 from math import fsum, tau
 from numba import jit, vectorize
-from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh, min, dot, array,log
+from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh, min, dot, array,log, log10
 
 import numpy as np
 #import pentapy as pp
@@ -3302,30 +3302,58 @@ def chapman(pressure, pm, hratio):
     chapman_func = exp(1.0+ hratio*log(pressure/pm)- (pressure/pm)**hratio) 
     return chapman_func
 
-def set_bb(wvno,dwni,ntmps,nspeci):
+def set_bb(wno,delta_wno,nwno,ntmps,dt,tmin,tmax):
+    """
+    Function to compute a grid of black bodies before the code runs. 
+    This allows us to interpolate on a blackbody instead of computing the planck 
+    function repetitively. This was done because historically computing the 
+    planck function was a bottleneck in speed. 
 
-    dt = 3.00
-    tmin = 40.0
-    tmax= tmin + dt*(ntmps-1.0)
+    Parameters
+    ----------
+    wno : array, float 
+        Wavenumber array cm-1 
+    delta_wno : array, float 
+        Wavenumber bins cm-1
+    nwno : int 
+        Number of wavenumbers (len(wno))
+    ntmps : int 
+        Number of temperature points to compute. Default number is set in config.json
+    dt : float    
+        Spacing in temperature to compute. Default number is set in config.json
+    tmin : float 
+        Minimum temperature to compute the grid 
+    tmax : float 
+        Maximum temperature to compute the grid 
 
-    bb=np.zeros(shape=(ntmps,nspeci))
+    Returns 
+    -------
+    array
+        black body grid (CGS), number of temperatures x number of wavenumbers
+    array 
+        spline values for interpolation, number of temperatures x number of wavenumbers
+    array 
+        temperature grid
+    """
+
+    bb=np.zeros(shape=(ntmps,nwno))
     tp= np.zeros(shape=(ntmps))
-    y2=np.zeros(shape=(ntmps,nspeci))
+    y2=np.zeros(shape=(ntmps,nwno))
     for it in range(ntmps):
         temp_bb = tmin +(it)*dt
         tp[it]= temp_bb
-        
-        for ik in range(nspeci):
-            x= planck_cgs(wvno[ik],temp_bb,dwni[ik])
+    #GET RID OF PLACK CGS     
+        for ik in range(nwno):
+            x= planck_cgs(wno[ik],temp_bb,delta_wno[ik])
             if x > 0.0 :
                 bb[it,ik] = log(x)
             else:
                 bb[it,ik] = -700.0
     
     dts = 0.02
-    for ik in range(nspeci):
-        yp_n= (-bb[ntmps-1,ik]+log(planck_cgs(wvno[ik],tmax+dts,dwni[ik])))/dts
-        yp_0 = (-bb[0,ik]+log(planck_cgs(wvno[ik],tmax+dts,dwni[ik])))/dts
+    for ik in range(nwno):
+        yp_n= (-bb[ntmps-1,ik]+log(planck_cgs(wno[ik],tmax+dts,delta_wno[ik])))/dts
+        yp_0 = (-bb[0,ik]+log(planck_cgs(wno[ik],tmin+dts,delta_wno[ik])))/dts
         
         pass0=bb[:,ik]
 
@@ -3334,7 +3362,7 @@ def set_bb(wvno,dwni,ntmps,nspeci):
         
         y2[:,ik] = y2x
     
-    return bb , y2 , tp, pass0
+    return bb , y2 , tp
 
 def spline(x , y, n, yp0, ypn):
     
@@ -3371,9 +3399,9 @@ def spline(x , y, n, yp0, ypn):
 
 
 def planck_cgs(wave, T , dwave):
-# PLANCK FUNCTION RETURNS B IN CGS UNITS, ERGS CM-2 WAVENUMBER-1
-# wave IS WAVENUMBER IN CM-1
-# T IS IN KELVIN
+    # PLANCK FUNCTION RETURNS B IN CGS UNITS, ERGS CM-2 WAVENUMBER-1
+    # wave IS WAVENUMBER IN CM-1
+    # T IS IN KELVIN
     nbb = 4
 
     planck_sum = 0.0
@@ -3410,14 +3438,11 @@ def planck_rad(iw, T, dT ,  tmin, tmax, bb , y2, tp):
 
     return planck_rad
 
-
-
-
 @jit(nopython=True, cache=True)
 def blackbody_climate(wave,temp, bb, y2, tp, tmin, tmax):
 
     blackbody_array = np.zeros(shape=(len(temp),len(wave)))
-    dT= 3.0
+    dT= 2.5
 
     for itemp in range(len(temp)):
         for iwave in range(len(wave)):
@@ -3427,17 +3452,20 @@ def blackbody_climate(wave,temp, bb, y2, tp, tmin, tmax):
 
 # still not developed fully. virga has a function already maybe just use that
 @jit(nopython=True, cache=True)
-def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type):
+def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr):
 
     grav_cgs = grav*1e2
     p_cgs = pressure *1e6
     
     nlevel = len(temp)
-    for i in range(len(p_cgs)-1,-1,-1):
-        i2= i+1
-        
     
-    r_atmos = 8.3143e7/mmw
+    
+    if len(mmw) == len(temp)-1:
+        r_atmos = 8.3143e7/mmw
+    else:
+        r_atmos = 8.3143e7/mmw[:-1]
+
+    
     nz= nlevel -1
     p = np.zeros_like(p_cgs)
     t = np.zeros_like(p_cgs)
@@ -3452,7 +3480,7 @@ def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,
         dtdlnp = (temp[itop]-temp[ibot])/dlnp
 
         t[iz] = temp[ibot] +np.log(p_cgs[ibot]/p[iz])*dtdlnp
-        scale_h =  r_atmos*t[iz]/grav_cgs
+        #scale_h =  r_atmos[iz]*t[iz]/grav_cgs
     
     
     # flux_plux_ir is already summed up with dwni in climate routine
@@ -3460,11 +3488,13 @@ def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,
 
     f_sum = np.sum(flux_plus_ir_attop)
 
-    sigmab =  .56687e-4 #cgs
+    sigmab =  0.56687e-4 #cgs
 
     teff_now = (f_sum/sigmab)**0.25
-
-    flx_min = tidal[0]
+    target_teff = (abs(tidal[0])/sigmab)**0.25
+    flx_min = sigmab*((target_teff*0.05)**4)
+    
+    
 
     #     we explictly assume that the bottom layer is 100%
     #     convective energy transport.  This helps with
@@ -3476,21 +3506,25 @@ def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,
     chf[nz-1] = f_sum
     
     for iz in range(nz-1-1,-1,-1):
-        chf[iz] = fsum - flux_net_ir_layer[iz]
+        chf[iz] = f_sum - flux_net_ir_layer[iz]
         ratio_min = (1./3.)*p[iz]/p[iz+1]
+        
 #     set the minimum allowed heat flux in a layer by assuming some overshoot
 #     the 1/3 is arbitrary, allowing convective flux to fall faster than
 #     pressure scale height
-
+        
         if chf[iz] < ratio_min*chf[iz+1]:
             chf[iz]= ratio_min*chf[iz+1]
 #     Now we adjust so that the convective flux is equal to the3
 #     target convective flux to see if this helps with the
 #     convergence.
-    f_target = tidal[0]
-    f_actual = chf[nz]
+    f_target = abs(tidal[0])
+    f_actual = chf[nz-1]
+    
     ratio = f_target/f_actual
+    
     for iz in range(nz-1,-1,-1):
+        
         chf[iz] = max(chf[iz]*ratio,flx_min) 
     
     player, tlayer = np.zeros(len(pressure)-1), np.zeros(len(pressure)-1)
@@ -3505,36 +3539,157 @@ def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,
         # weirdly layer routine of eddysed uses did_grad with pressures in cgs
         # supposed to be used with pressure in bars
         grad_x,cp_x = did_grad_cp(tbar, pbar/1e6, t_table, p_table, grad, cp, calc_type)
-        lapse_ratio[j] = max(0.1,min(1.0, -dtdp/grad_x))
+        lapse_ratio[j] = max(0.1,min(np.array([1.0, -dtdp/grad_x])))
     
     
     rho_atmos = player/ (r_atmos * tlayer)
+    
     c_p = (7./2.)*r_atmos
     scale_h = r_atmos * tlayer / (grav_cgs)
     
-    mixl = lapse_ratio *scale_h
-
+    #0.1 just to explore was not here 
+    mixl = scale_h*0.01 #lapse_ratio*scale_h*1e-1
+    
     scalef_kz = 1./3.
-
-    kz = scalef_kz * scale_h * (mixl/scale_h)**(4./3.) *( ( r_atmos*chf ) / ( rho_atmos*c_p ) )**(1./3.)
     
     
-        
+    kz = scalef_kz * scale_h * (mixl/scale_h)**(4./3.) *( ( r_atmos*chf[:-1] ) / ( rho_atmos*c_p ) )**(1./3.)
+    
+    
+    kz = np.append(kz,kz[-1])
+    
+    #### julien moses 2021
+    logp = np.log10(pressure)
+    wh = np.where(np.absolute(logp-(-3)) == np.min(np.absolute(logp-(-3))))
+    
+    kzrad1 = (5e8/np.sqrt(pressure[nstr[0]:nstr[1]]))*(scale_h[wh]/(620*1e5))*((target_teff/1450)**4)
+    kzrad2 = (5e8/np.sqrt(pressure[nstr[3]:nstr[4]]))*(scale_h[wh]/(620*1e5))*((target_teff/1450)**4)
+    #
+    if nstr[3] != 0:
+        kz[nstr[0]:nstr[1]] = kzrad1/100 #*10#kz[nstr[0]:nstr[1]]/1.0
+        kz[nstr[3]:nstr[4]] = kzrad2/100 #*10 #kz[nstr[3]:nstr[4]]/1.0
+    else:
+        kz[nstr[0]:nstr[1]] = kzrad1/100
+    return kz
+
+@jit(nopython=True, cache=True)
+def did_grad_cp( t, p, t_table, p_table, grad, cp, calc_type):
+    """
+    Parameters
+    ----------
+    t : float
+        Temperature  value
+    p : float 
+        Pressure value
+    t_table : array 
+        array of Temperature values with 53 entries
+    p_table : array 
+        array of Pressure value with 26 entries
+    grad : array 
+        array of gradients of dimension 53*26
+    cp : array 
+        array of cp of dimension 53*26
+    calc_type : int 
+        not used to make compatible with nopython. 
+    
+    Returns
+    -------
+    float 
+        grad_x,cp_x
+    
+    """
+    # Python version of DIDGRAD function in convec.f in EGP
+    # This has been benchmarked with the fortran version
+    
+       
+    temp_log= log10(t)
+    pres_log= log10(p)
+    
+    pos_t = locate(t_table, temp_log)
+    pos_p = locate(p_table, pres_log)
+
+    ipflag=0
+    if pos_p ==0: ## lowest pressure point
+        factkp= 0.0
+        ipflag=1
+    elif pos_p ==25 : ## highest pressure point
+        factkp= 1.0
+        pos_p=24  ## use highest point
+        ipflag=1
+
+    itflag=0
+    if pos_t ==0: ## lowest pressure point
+        factkt= 0.0
+        itflag=1
+    elif pos_t == 52 : ## highest temp point
+        factkt= 1.0
+        pos_t=51 ## use highest point
+        itflag=1
+    
+    if (pos_p > 0) and (pos_p < 26) and (ipflag == 0):
+        factkp= (-p_table[pos_p]+pres_log)/(p_table[pos_p+1]-p_table[pos_p])
+    
+    if (pos_t > 0) and (pos_t < 53) and (itflag == 0):
+        factkt= (-t_table[pos_t]+temp_log)/(t_table[pos_t+1]-t_table[pos_t])
+
+    
+    gp1 = grad[pos_t,pos_p]
+    gp2 = grad[pos_t+1,pos_p]
+    gp3 = grad[pos_t+1,pos_p+1]
+    gp4 = grad[pos_t,pos_p+1]
+
+    cp1 = cp[pos_t,pos_p]
+    cp2 = cp[pos_t+1,pos_p]
+    cp3 = cp[pos_t+1,pos_p+1]
+    cp4 = cp[pos_t,pos_p+1]
 
 
     
 
+    grad_x = (1.0-factkt)*(1.0-factkp)*gp1 + factkt*(1.0-factkp)*gp2 + factkt*factkp*gp3 + (1.0-factkt)*factkp*gp4
+    cp_x= (1.0-factkt)*(1.0-factkp)*cp1 + factkt*(1.0-factkp)*cp2 + factkt*factkp*cp3 + (1.0-factkt)*factkp*cp4
+    cp_x= 10**cp_x
     
-   
+    
+    return grad_x,cp_x
 
+@jit(nopython=True, cache=True)
+def locate(array,value):
+    """
+    Parameters
+    ----------
+    array : array
+        Array to be searched.
+    value : float 
+        Value to be searched for.
     
     
-        
+    Returns
+    -------
+    int 
+        location of nearest point by bisection method 
     
-    gc_kzz = ((1./3.) * scale_h * (mixl/scale_h)**(4./3.) * 
-                ( ( r_atmos*chf ) / ( rho_atmos*c_p  ) )**(1./3.)) 
+    """
+    # this is from numerical recipes
+    
+    n = len(array)
+    
+    
+    jl = 0
+    ju = n
+    while (ju-jl > 1):
+        jm=int(0.5*(ju+jl)) 
+        if (value >= array[jm]):
+            jl=jm
+        else:
+            ju=jm
+    
+    if (value <= array[0]): # if value lower than first point
+        jl=0
+    elif (value >= array[-1]): # if value higher than first point
+        jl= n-1
+    
+    return jl
 
-
-    return chf
 
 
