@@ -902,10 +902,34 @@ class inputs():
             3   is top layer of lower radiative region
             4   is top layer of lower convective region
             5   is bottom layer of lower convective region [nlayer-1]
+        nofczns : integer
+            Number of guessed Convective Zones. 1 or 2
         rfacv : float
             Fractional contribution of reflected light in net flux
         rfaci : float
             Fractional contribution of thermal light in net flux
+        cloudy : bool
+            Include Clouds or not (True or False)
+        mh : string
+            Metallicity string for 1060 grid, '+0.5','0.0','-0.5'.
+        CtoO : string
+            C/O ratio string for 1060 grid
+        species : string
+            Cloud species to be included if cloudy
+        fsed : float
+            Sedimentation Efficiency (f_sed) if cloudy
+        T_star : float
+            Star effective temperature if irradiated
+        logg : float
+            Star log(g)
+        metal : float
+            Star Metallicity
+        r_star : float
+            Stellar Radius in R_sun
+        semi_major : float
+            Semi-major axis of Planet (AU)
+        r_planet : planet radius
+            Radius of Planet (Rj)
 
         
         """
