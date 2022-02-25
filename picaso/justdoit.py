@@ -1057,12 +1057,10 @@ class inputs():
         
         if diseq_chem == True:
 
-            # first change the nstr vector
-            # need to check that it still rises up
-            if grav < 500 :
-            	del_zone = 4
-            else:
-            	del_zone =4 # was earlier 5 ;tune this to stop crashing
+            # first change the nstr vector because need to check if they grow or not
+            # delete upper convective zone if one develops
+            
+            del_zone =4 # move 4 levels deeper
             if (nstr[1] > 0) & (nstr[4] > 0) & (nstr[3] > 0) :
                 nstr[1] = nstr[4]+del_zone
                 nstr[2] = 89
@@ -1075,15 +1073,15 @@ class inputs():
                 else:
                     nstr[1] += del_zone #5#15  
                     nstr[3], nstr[4] ,nstr[5] = 0,0,0#6#16
-                print("1 conv Zone, so making large adjustment to check if 2nd conv zone exists or not")
-            if nstr[1] >= nlevel -2 :
+                print("1 conv Zone, so making small adjustment")
+            if nstr[1] >= nlevel -2 : # making sure we haven't pushed zones too deep
                 nstr[1] = nlevel -4
             if nstr[4] >= nlevel -2:
                 nstr[4] = nlevel -3
-            #nstr[1],nstr[2],nstr[3],nstr[4],nstr[5] = nlevel-12, nlevel-2, 0,0,0 
+            
             print("New NSTR status is ", nstr)
 
-           #was for check SM 
+            #was for check SM 
             #pressure,temp =np.loadtxt("/data/users/samukher/Disequilibrium-picaso/picaso/tstart_800_562.dat",usecols=[1,2],unpack=True) 
             #temp+=300            
             bundle = inputs(calculation='brown')
@@ -1104,7 +1102,7 @@ class inputs():
                 save_kzz = 0
             
             
-            if self_consistent_kzz == True :
+            if self_consistent_kzz == True : # MLT plus some prescription in radiative zone
 
                 
                 
@@ -1116,18 +1114,18 @@ class inputs():
                 flux_net_ir_layer = flux_net_ir_layer_full[:]
                 flux_plus_ir_attop = flux_plus_ir_full[0,:] 
                 calc_type = 0
-            
+                # use mixing length theory to calculate Kzz profile
                 kz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
             
             
             
             
             # shift everything to the 661 grid now.
-            mh = '+0.0'
-            CtoO = '1.0'
+            mh = '+0.0'  #don't change these as the opacities you are using are based on these 
+            CtoO = '1.0' # don't change these as the opacities you are using are based on these #
             filename_db=os.path.join(__refdata__, 'climate_INPUTS/ck_cx_cont_opacities_661.db')
             ck_db=os.path.join(__refdata__, 'climate_INPUTS/m'+mh+'_co'+CtoO+'.data.196')
-	    # deq = True does things for the 661 grid and loads the 4-5 kappa matrices.
+	    
             opacityclass = opannection(ck=True, ck_db=ck_db,filename_db=filename_db,deq = True)
 
             
@@ -1153,11 +1151,11 @@ class inputs():
                 FOPI = self.star(opacityclass, temp =T_star,metal =metal, logg =logg, radius = r_star, radius_unit=u.R_sun,semi_major= semi_major , semi_major_unit = u.AU, deq= True)
 
             if vulcan_run == False :
-                quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale= True)
+                quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale= True) # determine quench levels
 
-                all_kzz = np.append(all_kzz, t_mix)
+                all_kzz = np.append(all_kzz, t_mix) # save kzz
 
-                print("Quench Levels are CO, CO2, NH3, HCN ", quench_levels)
+                print("Quench Levels are CO, CO2, NH3, HCN ", quench_levels) # print quench levels
                 
                 final = False
                 #finall = False #### what is this thing?
@@ -1175,12 +1173,12 @@ class inputs():
                     
                     if quench_levels[3] > nlevel -2 :
                         quench_levels[3] = nlevel -2 
-                ## need to automate this
+                
                 
                 
                 
 
-                # quench ch4/co/h2o abundances above quench level
+                # determine the chemistry now
 
                 qvmrs, qvmrs2= bundle.premix_atmosphere_diseq(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']], quench_levels= quench_levels)
                 #was for check SM
