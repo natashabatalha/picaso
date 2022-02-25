@@ -1086,9 +1086,6 @@ class inputs():
         pressure, temperature, dtdp, profile_flag, all_profiles = profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                     temperature,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
                     rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack,save_profile,all_profiles )   
-        
-        if Teff > 1450 and Teff < 1750 :
-            flag_hack = True
 
         pressure, temp, dtdp, nstr_new, flux_plus_final, df, all_profiles =find_strat(pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                              t_table, p_table, grad, cp, opacityclass, grav, 
