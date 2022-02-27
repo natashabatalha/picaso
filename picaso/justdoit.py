@@ -3653,7 +3653,8 @@ def find_strat(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
         Maximum allowed Temp in the profile
 
     dwni : array
-        Spectral interval corrections (dimension= nwvno)   
+        Spectral interval corrections (dimension= nwvno)
+       
         
     Returns
     -------
