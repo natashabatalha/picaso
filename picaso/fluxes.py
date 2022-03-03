@@ -1168,6 +1168,8 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             xint_at_top[ng,nt,:] = xint[0,:]
             intensity[ng,nt,:,:] = xint
 
+#    import IPython; IPython.embed()
+#    import sys; sys.exit()
     return xint_at_top, flux_out, intensity
 
 #@jit(nopython=True, cache=True)
@@ -1555,6 +1557,7 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     int_plus = zeros((nlevel,nwno))
     int_minus_mdpt = zeros((nlevel,nwno))
     int_plus_mdpt = zeros((nlevel,nwno))
+    intensity = zeros((numg, numt, nlevel, nwno))
 
     exptrm_positive_mdpt = exp(0.5*exptrm) 
     exptrm_minus_mdpt = 1/exptrm_positive_mdpt 
@@ -1572,6 +1575,7 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
             if hard_surface:
                 #int_plus[-1,:] = pi * (b_surface ) # terrestrial
                 int_plus[-1,:] = b_surface / pi
+                #int_plus[-1,:] = all_b[-1,:] *2*pi
             else:
                 #int_plus[-1,:] = pi * ( all_b[-1,:] + b1[-1,:] * iubar) #no hard surface
                 int_plus[-1,:] = (all_b[-1,:] + b1[-1,:] * iubar) # no hard surface
@@ -1612,14 +1616,15 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
                                        alpha2[ibot,:]*(iubar+0.5*dtau[ibot,:]-(dtau[ibot,:]+iubar)*exptrm_angle_mdpt[ibot,:])  )
 
             int_at_top[ng,nt,:] = int_plus[0,:]#_mdpt[0,:] #nlevel by nwno 
+            intensity[ng,nt,:,:] = int_plus
 
             #to get the convective heat flux 
             #flux_minus_mdpt_disco[ng,nt,:,:] = flux_minus_mdpt #nlevel by nwno
             #flux_plus_mdpt_disco[ng,nt,:,:] = int_plus_mdpt #nlevel by nwno
-    import IPython; IPython.embed()
-    import sys; sys.exit()
+#    import IPython; IPython.embed()
+#    import sys; sys.exit()
 
-    return int_at_top #, int_down# numg x numt x nwno
+    return int_at_top, intensity #, int_down# numg x numt x nwno
 
 #@jit(nopython=True, cache=True)
 def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel_3d, dtau_3d, w0_3d,cosb_3d,plevel_3d, ubar1,
@@ -1919,7 +1924,7 @@ def get_transit_3d(nlevel, nwno, radius, gravity,rstar, mass, mmw, k_b, G,amu,
 def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect, ubar0, ubar1, cos_theta, F0PI, single_phase, multi_phase, 
-    frac_a, frac_b, frac_c, constant_back, constant_forward, dim, stream, b_top=0, flx=0):
+    frac_a, frac_b, frac_c, constant_back, constant_forward, dim, stream, b_top=0, flx=1):
     """
     Computes rooney fluxes given tau and everything is 3 dimensional. This is the exact same function 
     as `get_flux_geom_1d` but is kept separately so we don't have to do unecessary indexing for 
@@ -2135,6 +2140,8 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
             xint_out[ng,nt,:,:] = xint_temp
             flux[ng,nt,:,:] = flux_temp
     
+#    import IPython; IPython.embed()
+#    import sys; sys.exit()
     return xint_at_top, flux, xint_out
 
 def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb, 
@@ -2170,9 +2177,9 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     if hard_surface:
         b_surface = pi*all_b[-1,:] #for terrestrial, hard surface
     else:
-        b_surface = pi*(all_b[-1,:] + b1[-1,:]*mu1) #(for non terrestrial)
+        b_surface = pi*(all_b[-1,:] + b1[-1,:]*mu1)  #(for non terrestrial)
 
-    b_surface_SH4 = -pi*all_b[-1,:]/4
+    b_surface_SH4 = -pi*all_b[-1,:]/4 
 
     #if single_phase==1:#'OTHG':
     if np.array_equal(cosb,cosb_og):
@@ -2190,6 +2197,7 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     #b[0] = twopi*(1-w0) * b0
 
     xint_at_top = zeros((numg, numt, nwno))
+    xint_out = zeros((numg, numt, nlevel, nwno))
     for ng in range(numg):
         for nt in range(numt):
             if stream==2:
@@ -2251,10 +2259,11 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
                             + intgrl_per_layer[i,:] / ubar1[ng,nt]) 
 
             xint_at_top[ng,nt,:] = xint_temp[0, :]
+            intensity[ng,nt,:,:] = xint_temp
     
-    import IPython; IPython.embed()
-    import sys; sys.exit()
-    return xint_at_top 
+#    import IPython; IPython.embed()
+#    import sys; sys.exit()
+    return xint_at_top, intensity 
 
 #@jit(nopython=True, cache=True)
 def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, 
@@ -2276,15 +2285,15 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 
     #   parameters in matrices
     q = lam/a[1]
-    Q1 = (0.5 + q)*2*pi
-    Q2 = (0.5 - q)*2*pi
+    Q1 = (0.5 + q)#*2*pi
+    Q2 = (0.5 - q)#*2*pi
 
     Q1mn = Q1*exptrm;  Q2mn = Q2*exptrm
     Q1pl = Q1/exptrm;  Q2pl = Q2/exptrm
 
     if calculation != 1:
-        zmn = (0.5*eta[0] - eta[1])*2*pi
-        zpl = (0.5*eta[0] + eta[1])*2*pi
+        zmn = (0.5*eta[0] - eta[1])#*2*pi
+        zpl = (0.5*eta[0] + eta[1])#*2*pi
         if calculation == 0:
             expon = exp(-tau/ubar0)
             zmn_up = zmn * expon[1:,:] 
@@ -2298,10 +2307,10 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
             zmn_down = zmn 
             zpl_down = zpl 
     elif calculation == 1: # linear thermal
-        zmn_down = ((1-w0)/a[0] * (B0/2 - B1/a[1])) *2*pi * 2*pi
-        zmn_up = ((1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2)) *2*pi * 2*pi
-        zpl_down = ((1-w0)/a[0] * (B0/2 + B1/a[1])) *2*pi * 2*pi
-        zpl_up = ((1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2)) *2*pi * 2*pi
+        zmn_down = ((1-w0)/a[0] * (B0/2 - B1/a[1])) *2*pi #* 2*pi
+        zmn_up = ((1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2)) *2*pi #* 2*pi
+        zpl_down = ((1-w0)/a[0] * (B0/2 + B1/a[1])) *2*pi #* 2*pi
+        zpl_up = ((1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2)) *2*pi #* 2*pi
 
     alpha = 1/ubar1 + lam
     beta = 1/ubar1 - lam

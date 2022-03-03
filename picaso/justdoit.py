@@ -232,12 +232,12 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
             #the uncorrected raman single scattering 
             if method == 'Toon':
-                flux_at_top  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
+                (flux_at_top, intensity)  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
                                                     DTAU_OG, W0_no_raman, COSB_OG, atm.level['pressure'],ubar1,
                                                     atm.surf_reflect, tridiagonal)
             elif method == 'SH':
                 thermal_calculation = inputs['approx']['thermal_calculation']
-                flux_at_top = get_thermal_new(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
+                (flux_at_top, intensity) = get_thermal_new(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
                                             DTAU, TAU, W0, COSB, 
                                             DTAU_OG, TAU_OG, W0_OG, W0_no_raman, COSB_OG, 
                                             atm.level['pressure'], ubar1, 
@@ -249,6 +249,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             #if full output is requested add in flux at top for 3d plots
             if full_output: 
                 atm.flux_at_top = flux_at_top
+                atm.intensity = intensity
+
         
         if 'transmission' in calculation:
             rprs2 = get_transit_1d(atm.level['z'],atm.level['dz'],
@@ -366,6 +368,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     if  ('reflected' in calculation):
         albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
         returns['albedo'] = albedo 
+        returns['xint_at_top'] = xint_at_top 
+        returns['intensity'] = intensity 
         if ((not np.isnan(sa ) and (not np.isnan(atm.planet.radius))) ):
             returns['fpfs_reflected'] = albedo*(atm.planet.radius/sa)**2.0
         else: 
@@ -379,6 +383,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     if ('thermal' in calculation):
         thermal = compress_thermal(nwno,ubar1, flux_at_top, gweight, tweight)
         returns['thermal'] = thermal
+        returns['xint_at_top'] = flux_at_top 
+        returns['intensity'] = intensity 
 
         #only need to return relative flux if not a browndwarf calculation
         if radius_star != 'nostar':
