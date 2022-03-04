@@ -2197,7 +2197,7 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     #b[0] = twopi*(1-w0) * b0
 
     xint_at_top = zeros((numg, numt, nwno))
-    xint_out = zeros((numg, numt, nlevel, nwno))
+    intensity = zeros((numg, numt, nlevel, nwno))
     for ng in range(numg):
         for nt in range(numt):
             if stream==2:
