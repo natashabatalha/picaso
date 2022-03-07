@@ -224,19 +224,20 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                 #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
                 #the uncorrected raman single scattering 
                 if method == 'Toon':
-                    (flux_at_top, intensity)  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
+                    (flux, intensity, flux_out)  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
                                                         DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                                         atm.level['pressure'],ubar1,
                                                         atm.surf_reflect, atm.hard_surface, tridiagonal)
                 elif method == 'SH':
                     thermal_calculation = inputs['approx']['thermal_calculation']
-                    (flux_at_top, intensity) = get_thermal_new(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
-                                                DTAU, TAU, W0, COSB, 
-                                                DTAU_OG, TAU_OG, W0_OG, W0_no_raman, COSB_OG, 
+                    (flux, intensity, flux_out) = get_thermal_new(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
+                                                DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig], 
+                                                DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], 
+                                                W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                                 atm.level['pressure'], ubar1, 
                                                 constant_forward,constant_back,frac_a,frac_b,frac_c,
                                                 atm.surf_reflect, 
-                                                single_phase, dimension, stream, 
+                                                single_phase, dimension, stream, atm.hard_surface, 
                                                 calculation=thermal_calculation)
 
                 flux_at_top += flux*gauss_wts[ig]
@@ -396,6 +397,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         returns['thermal'] = thermal
         returns['xint_at_top'] = flux_at_top 
         returns['intensity'] = intensity 
+        returns['flux'] = flux_out 
+        returns['tau'] = TAU 
         returns['effective_temperature'] = (np.trapz(x=1/wno[::-1], y=thermal[::-1])/5.67e-5)**0.25
 
         if full_output: 
@@ -2658,7 +2661,6 @@ class inputs():
         #return dict such that each key is a different phase 
         return {iphase:results[i] for i,iphase in enumerate(phases)}
 
->>>>>>> dev
 
     def spectrum(self, opacityclass, calculation='reflected', dimension = '1d',  full_output=False, 
         plot_opacity= False, as_dict=True):
