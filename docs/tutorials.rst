@@ -1,8 +1,8 @@
 Tutorials
 =========
 
-Basics Reflected Light
-----------------------
+Basics of Reflected Light
+-------------------------
 
 .. toctree::
    :maxdepth: 2
@@ -12,6 +12,13 @@ Basics Reflected Light
    Adding Surface Reflectivity </notebooks/3_AddingSurfaceReflectivity.ipynb>
    Plot Diagnostics </notebooks/4_PlotDiagnostics.ipynb>
 
+Basics of Transmisison
+----------------------
+
+.. toctree::
+   :maxdepth: 2
+   
+   Transmission Spectroscopy Exoplanets </notebooks/5_AddingTransitSpectrum.ipynb>
 
 Basics of Thermal Emission
 --------------------------
@@ -48,11 +55,10 @@ Opacities & Approximatons
    Investigating Approximations  </notebooks/10_AnalyzingApproximations.ipynb>
    SQLITE Tutorial </notebooks/11_Sqlite3Tutorial.ipynb>
 
-
-Retrievals (tutorials coming soon)
-----------------------------------
+Miscellaneous
+-------------
 
 .. toctree::
    :maxdepth: 2
 
-   Retrievals </notebooks/9_Retrievals.ipynb>
+   FAQs </notebooks/FAQs.ipynb>

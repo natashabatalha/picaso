@@ -7,9 +7,9 @@ import astropy.constants as c
 import pandas as pd
 import warnings 
 import numpy as np
-from .wavelength import get_cld_input_grid, regrid
+from .wavelength import get_cld_input_grid
+from .wavelength import regrid as regrid_cld
 from numba import jit
-import pysynphot as psyn
 import math 
 
 __refdata__ = os.environ.get('picaso_refdata')
@@ -84,9 +84,10 @@ class ATMSETUP():
         #SET DIMENSIONALITY
         self.dimension = '3d'
         latitude, longitude = self.latitude*180/np.pi, self.longitude*180/np.pi
+
         read_3d = self.input['atmosphere']['profile'] #huge dictionary with [lat][lon][bundle]
 
-        self.c.nlevel = read_3d[int(latitude[0])][int(longitude[0])].shape[0]
+        self.c.nlevel = self.input['atmosphere']['profile'].dims['pressure']
         self.c.nlayer = self.c.nlevel - 1  
         ng , nt = self.c.ngangle, self.c.ntangle
 
@@ -109,8 +110,12 @@ class ATMSETUP():
         electrons = False
         for g in range(ng):
             for t in range(nt):
-                read = read_3d[int(latitude[t])][int(longitude[g])].sort_values('pressure').reset_index(drop=True)
-
+                ilat = list(read_3d.coords['lat'].values.astype(np.float32)).index(np.float32(latitude[t]))
+                ilon = list(read_3d.coords['lon'].values.astype(np.float32)).index(np.float32(longitude[g]))
+                #read = read_3d[int(latitude[t])][int(longitude[g])].sort_values('pressure').reset_index(drop=True)
+                read = read_3d.isel(lon=ilon,lat=ilat).to_pandas().reset_index().drop(['lat','lon'],axis=1).sort_values('pressure')
+                if 'phase' in read.keys():
+                    read=read.drop('phase',axis=1)
                 #on the first pass look through all the molecules, parse out the electrons and 
                 #add warnings for molecules that aren't recognized
                 if first:
@@ -122,7 +127,7 @@ class ATMSETUP():
                         except:
                             if i == 'e-':
                                 electrons = True
-                            else:                   #don't raise exception, instead add user warning that a column has been automatically skipped
+                            else: #don't raise exception, instead add user warning that a column has been automatically skipped
                                 self.add_warnings("Ignoring %s in input file, not recognized molecule" % i)
                                 warnings.warn("Ignoring %s in input file, not a recognized molecule" % i, UserWarning)
                     
@@ -282,7 +287,7 @@ class ATMSETUP():
                     molecule_list += [float(i[j])]
                 except: 
                     if i[j].isupper(): molecule_list += [i[j]] 
-                    elif i[j].islower(): molecule_list[j-1] =  molecule_list[j-1] + i[j]
+                    elif i[j].islower(): molecule_list[-1] =  molecule_list[-1] + i[j]
             totmass=0
             for j in range(0,len(molecule_list)): 
                 
@@ -342,13 +347,14 @@ class ATMSETUP():
 
         #set zero arays of things we want out 
         nlevel = self.c.nlevel
-        z = np.zeros(nlevel) + self.planet.radius
-        dz = np.zeros(nlevel) 
-        gravity = np.zeros(nlevel) 
 
         mmw = self.level['mmw'] * self.c.amu #make sure mmw in grams
         tlevel = self.level['temperature']
         plevel = self.level['pressure']
+
+        z = np.zeros(np.shape(tlevel)) + self.planet.radius
+        dz = np.zeros(np.shape(tlevel)) 
+        gravity = np.zeros(np.shape(tlevel))  
 
         for i in np.where(plevel>p_reference)[0]-1:
             if constant_gravity:
@@ -372,8 +378,10 @@ class ATMSETUP():
 
         self.level['z'] = z
         self.level['dz'] = dz
-        #for get_column_density calculation below we want gravity at leyers
+        #for get_column_density calculation below we want gravity at layers
         self.layer['gravity'] = 0.5*(gravity[0:-1] + gravity[1:])
+        self.layer['gravity'][0] = self.layer['gravity'][1]
+        self.layer['gravity'][-1] = self.layer['gravity'][-2]
         
     def get_column_density(self):
         """
@@ -419,6 +427,9 @@ class ATMSETUP():
         - Take regridding out of here and add it to `justdoit`
         """
         self.input_wno = self.input['clouds']['wavenumber']
+        #check to see if regridding is necessary
+        regrid = True 
+        if np.array_equal(self.input_wno, wno): regrid = False
 
         self.c.output_npts_wave = np.size(wno)
         
@@ -432,26 +443,26 @@ class ATMSETUP():
             #then reshape and regrid inputs to be a nice matrix that is nlayer by nwave
             #total extinction optical depth 
             opd = np.reshape(cld_input['opd'].values, (self.c.nlayer,self.c.input_npts_wave))
-            opd = regrid(opd, self.input_wno, wno)
+            if regrid: opd = regrid_cld(opd, self.input_wno, wno)
             self.layer['cloud'] = {'opd': opd}
             #cloud assymetry parameter
             g0 = np.reshape(cld_input['g0'].values, (self.c.nlayer,self.c.input_npts_wave))
-            g0 = regrid(g0, self.input_wno, wno)
+            if regrid: g0 = regrid_cld(g0, self.input_wno, wno)
             self.layer['cloud']['g0'] = g0
             #cloud single scattering albedo 
             w0 = np.reshape(cld_input['w0'].values, (self.c.nlayer,self.c.input_npts_wave))
-            w0 = regrid(w0, self.input_wno, wno)
+            if regrid: w0 = regrid_cld(w0, self.input_wno, wno)
             self.layer['cloud']['w0'] = w0  
 
         #if no filepath was given and nothing was given for g0/w0, then assume the run is cloud free and give zeros for all thi stuff         
-        elif ((self.input['clouds']['profile'] == None) and (self.dimension=='1d')):
+        elif (isinstance(self.input['clouds']['profile'] , type(None)) and (self.dimension=='1d')):
 
             zeros = np.zeros((self.c.nlayer,self.c.output_npts_wave))
             self.layer['cloud'] = {'w0': zeros}
             self.layer['cloud']['g0'] = zeros
             self.layer['cloud']['opd'] = zeros
         # 3D without clouds           
-        elif ((self.input['clouds']['profile'] == None) and (self.dimension=='3d')):
+        elif (isinstance(self.input['clouds']['profile'] , type(None)) and (self.dimension=='3d')):
             self.layer['cloud'] = {'w0': np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle))}
             self.layer['cloud']['g0'] = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle))
             self.layer['cloud']['opd'] = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle))
@@ -461,38 +472,15 @@ class ATMSETUP():
             latitude, longitude = self.latitude*180/np.pi, self.longitude*180/np.pi
             cld_input = self.input['clouds']['profile'] 
 
-            opd = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle))
-            g0 = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle)) 
-            w0 = np.zeros((self.c.nlayer,self.c.output_npts_wave,self.c.ngangle,self.c.ntangle))
-
-            #stick in clouds that are gangle and tangle dependent 
-            for g in range(self.c.ngangle):
-                for t in range(self.c.ntangle):
-
-                    data = cld_input[int(latitude[t])][int(longitude[g])]
-
-                    #make sure cloud input has the correct number of waves and PT points
-                    assert data.shape[0] == self.c.nlayer*self.c.input_npts_wave, "Cloud input file is not on the same grid as the input PT/Angles profile:"
-
-                    #Then, reshape and regrid inputs to be a nice matrix that is nlayer by nwave
-                    #total extinction optical depth 
-                    opd_lowres = np.reshape(data['opd'].values, (self.c.nlayer,self.c.input_npts_wave))
-                    opd[:,:,g,t] = regrid(opd_lowres, self.input_wno, wno)
-
-                    #cloud assymetry parameter
-                    g0_lowres = np.reshape(data['g0'].values, (self.c.nlayer,self.c.input_npts_wave))
-                    g0[:,:,g,t] = regrid(g0_lowres, self.input_wno, wno)
-                    
-
-                    #cloud single scattering albedo 
-                    w0_lowres = np.reshape(data['w0'].values, (self.c.nlayer,self.c.input_npts_wave))
-                    w0[:,:,g,t] = regrid(w0_lowres, self.input_wno, wno)
-                    
+            if regrid: cld_input = cld_input.interp(wno = wno)
+            cld_input = cld_input.sortby('wno').sortby('pressure')
+            opd = cld_input['opd'].transpose("pressure","wno","lon", "lat").values
+            g0 = cld_input['g0'].transpose("pressure","wno","lon", "lat").values
+            w0 = cld_input['w0'].transpose("pressure","wno","lon", "lat").values
             self.layer['cloud'] = {'opd': opd}
             self.layer['cloud']['g0'] = g0
             self.layer['cloud']['w0'] = w0  
         else:
-
             raise Exception("CLD input not recognized. Either input a filepath, or input None")
 
         return
@@ -576,6 +564,9 @@ class ATMSETUP():
 
         df['latitude'] = self.latitude
         df['longitude'] = self.longitude
+
+        df['star'] = {}
+        df['star']['flux_unit'] = 'erg/cm2/s/cm'
 
         try: 
             x =  self.xint_at_top

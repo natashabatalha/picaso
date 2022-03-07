@@ -478,9 +478,9 @@ def insert_wno_grid(wno_grid, cur, con):
     """
     cur.execute('INSERT INTO header (pressure_unit, temperature_unit, wavenumber_grid, continuum_unit,molecular_unit) values (?,?,?,?,?)', 
                 ('bar','kelvin', np.array(wno_grid), 'cm-1 amagat-2', 'cm2/molecule'))
-    conn.commit()
+    con.commit()
 
-    conn.close()
+    con.close()
 
 def create_grid_minR(min_wavelength, max_wavelength, minimum_R):
     """Simple function to create a wavelength grid defined with a minimum R. 
@@ -521,7 +521,7 @@ def create_grid(min_wavelength, max_wavelength, constant_R):
     
     return 1e4/newwl[::-1]
     
-def resample_and_insert_molecular(molecule, min_wavelength, max_wavelength, new_R, 
+def insert_molecular_1060(molecule, min_wavelength, max_wavelength, new_R, 
             og_directory, new_db,dir_kark_ch4=None, dir_optical_o3=None):
     """
     Function to resample 1060 grid data onto lower resolution grid. The general procedure 
@@ -556,22 +556,15 @@ def resample_and_insert_molecular(molecule, min_wavelength, max_wavelength, new_
     #min_wno = 1e4/max_wavelength
     #max_wno = 1e4/min_wavelength
 
-    #if not isinstance(new_R,type(None)):
-    #    dwvno_new = 1e4/(min_wavelength**2)*(min_wavelength/new_R)
-    #else: 
-    #    dwvno_new = dwvno_old
-
-    #DEFINE UNIFORM HI-RES GRID THAT EVRYTHING WILL BE INTERPOLATED
-    #ON BEFORE RESAMPLING
-    #trying without this first 
-    #dlambda = (min_1060_grid)/old_R
-    #interp_wvno_grid = np.arange(min_wno, max_wno, dwvno_old)
+    if isinstance(new_R,type(None)):
+        new_R = 1e6
 
     #BINS = int(dwvno_new/dwvno_old)
     BINS = int(old_R/new_R)
 
     #new wave grid 
     new_wvno_grid = interp_wvno_grid[::BINS]
+
     #insert to database 
     cur.execute('INSERT INTO header (pressure_unit, temperature_unit, wavenumber_grid, continuum_unit,molecular_unit) values (?,?,?,?,?)', 
                 ('bar','kelvin', np.array(new_wvno_grid), 'cm-1 amagat-2', 'cm2/molecule'))
@@ -582,7 +575,7 @@ def resample_and_insert_molecular(molecule, min_wavelength, max_wavelength, new_
         numw = [200000]*ngrid
         delwn = [(33340 - 200)/(numw[0]-1)]*ngrid
         start = [200]*ngrid 
-    else: 
+    elif molecule not in ['CH3D']: 
         # Get Richard's READ ME information
         f = os.path.join(og_directory,molecule,'readomni.fits')
         hdulist = fits.open(f)
@@ -591,35 +584,252 @@ def resample_and_insert_molecular(molecule, min_wavelength, max_wavelength, new_
         delwn = sfits['Delta Wavenum'] #defines constant delta wavenumber for each 1060 layer
         start = sfits['Start Wavenum'] #defines starting wave number for each 1060 layer
 
-    s = pd.read_csv(os.path.join(og_directory,'PTgrid1060.txt'),delim_whitespace=True,skiprows=1,
-                        header=None, names=['i','pressure','temperature'],dtype=str)
+    s1060 = pd.read_csv(os.path.join(og_directory,'grid1060.csv'),dtype=str)
     #all pressures 
-    pres=s['pressure'].values.astype(float)
+    pres=s1060['pressure_bar'].values.astype(float)
     #all temperatures 
-    temp=s['temperature'].values.astype(float)
-
-    for i,p,t in zip(list(range(1,ngrid+1)),pres,temp):  
+    temp=s1060['temperature_K'].values.astype(float)
+    #file_num
+    ifile=s1060['file_number'].values.astype(int)
+    for i,p,t in zip(ifile,pres,temp):  
         #path to richard's data
         fdata = os.path.join(og_directory,molecule,'p_'+str(int(i)))
 
 
-        #EHSAN, put an elif here so that you can read in your 1060 files 
-        #however you want to 
-        #Grab 1060 format data
+        #Grab 1060 in various format data
         if molecule in ['Cs','K','Li','Na','Rb']:
             openf=FortranFile(fdata,'r')
             dset = openf.read_ints(dtype=np.float)
+            og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1] 
+        elif molecule =='CH3D':
+            df = pd.read_csv(os.path.join(og_directory,molecule,'fort.{0}.bz2'.format(int(i)))
+                             ,delim_whitespace=True, skiprows=23,header=None)
+            dset=df[1].values
+            og_wvno_grid=df[0].values
         else: 
             dset = np.fromfile(fdata, dtype=float) 
-
-
-        #EHSAN, this is where you will have to edit in your own wavenumber grid for 
-        #each 1060 point
-        og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]      
+            og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1] 
 
         #interp on high res grid
-        #EHSAN, I am doing a really basic interpolation here onto a new wavegrid that 
-        #I have created at the top.. maybe you want something greater than 1e6
+        #basic interpolation here onto a new wavegrid that 
+        dset = np.interp(interp_wvno_grid,og_wvno_grid, dset,right=1e-50, left=1e-50)
+
+        #resample evenly
+        y = dset[::BINS]
+
+
+        if ((molecule == 'CH4') & (isinstance(dir_kark_ch4, str)) & (t<500)):
+            opa_k,loc = get_kark_CH4(dir_kark_ch4,new_wvno_grid, t)
+            y[loc] = opa_k
+        if ((molecule == 'O3') & (isinstance(dir_optical_o3, str)) & (t<500)):
+            opa_o3 = get_optical_o3(dir_optical_o3,new_wvno_grid)
+            y = y + opa_o3     
+        cur.execute('INSERT INTO molecular (ptid, molecule, temperature, pressure,opacity) values (?,?,?,?,?)', (int(i),molecule,float(t),float(p), y))
+    conn.commit()
+    conn.close()
+    return new_wvno_grid
+
+def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory, new_db,
+                          new_R=None,new_dwno=None, 
+                          old_R=1e6, old_dwno=0.0035,
+                        alkali_dir='alkalis', dir_kark_ch4=None, dir_optical_o3=None):
+    """
+    DEVELOPER USE ONLY. 
+    Function to resample 1060 grid data onto lower resolution grid. The general procedure 
+    in this function is to interpolate original 1060 data onto very high resolution 
+    grid (R=1e6). Then, determine number of bins to take given input 'new_R'. The final 
+    opacity grid will be : original_opacity[::BINS]
+
+    NOTE: From several tests "new_R" should be at least 100x higher than the ultimate 
+    planet spectrum you want to bin down to. 
+
+    Parameters 
+    ----------
+    molecule : str 
+        Name of molecule (should match a directory with 1060 files)
+    min_wavelength : float 
+        Minimum wavelength in database in units of micron 
+    max_wavelength : float 
+        Maximum wavelength in database in units of micron 
+    new_R : int,float , optional
+        Optional, new R to regrid to. This will create a new wavelength solution that is 
+        constant in R. The other option (new_dwno is to do constant wavenumber bin) 
+        This must be smaller than old_R, which is default to 1e6. 
+    old_R : int,float, optional
+        This is set to match the approximate cross sections that are computed LBL. If you do not 
+        want any resampling, then you need to set new_R=old_R
+    new_dwno : float, optional 
+        Optional, new constant wavenumber bin to create wavelength solution. This must be bigger 
+        than old_dwno. 
+    old_dwno : float, optional 
+        This is set to 0.0035 to match the smallest wavenumber than we compute in our grid. 
+        If you do not want any resampling, then you need to set new_dwno=old_dwno
+    og_directory : str 
+        Directory of all the cross sections that include folders e.g. "H2O", "CH4"
+    alkali_dir : str 
+        Alakalis directory 
+    new_db : str 
+        New database name 
+    dir_kark_ch4 : str 
+        Karkoschka methane to hack in 
+    dir_optical_o3 : str 
+        optical ozone to hack in 
+    """
+    #open database connection 
+    ngrid = 1460
+    cur,conn = open_local(new_db)
+    
+    if isinstance(new_R,(float, int)):
+        interp_wvno_grid = create_grid(min_wavelength, max_wavelength, old_R)
+        BINS = int(old_R/new_R)
+    elif isinstance(new_dwno,(float, int)):
+        interp_wvno_grid = np.arange(1e4/max_wavelength,1e4/min_wavelength,  old_dwno)          
+        BINS = int(new_dwno/old_dwno)
+    else: 
+        raise Exception('Need to either input a new constant R (new_R) or constant delta wno (new_dwno)')
+
+    #new wave grid 
+    new_wvno_grid = interp_wvno_grid[::BINS]
+
+    #insert to database 
+    cur.execute('INSERT INTO header (pressure_unit, temperature_unit, wavenumber_grid, continuum_unit,molecular_unit) values (?,?,?,?,?)', 
+                ('bar','kelvin', np.array(new_wvno_grid), 'cm-1 amagat-2', 'cm2/molecule'))
+    conn.commit()
+
+    s1460 = pd.read_csv(os.path.join(og_directory,'grid1460.csv'),dtype=str)
+    #all pressures 
+    pres=s1460['pressure_bar'].values.astype(float)
+    #all temperatures 
+    temp=s1460['temperature_K'].values.astype(float)
+    
+    #file_num
+    ifile=s1460['file_number'].values.astype(int)
+    
+    #alkalis are created using the sep.alkali from a fortran file 
+    alks = ['Na','K','Rb','Cs','Li']
+    if molecule in alks: 
+        if alkali_dir == 'alkalis':
+            mol_dir = os.path.join(og_directory,alkali_dir)
+        else: 
+            mol_dir = alkali_dir    
+    else:
+        mol_dir = os.path.join(og_directory,molecule)
+        
+    read_fits = os.path.join(mol_dir,'readomni.fits' )
+    if os.path.exists(read_fits):
+        # Get Richard's READ ME information
+        hdulist = fits.open(read_fits)
+        sfits = hdulist[1].data
+        numw = sfits['Valid rows'] #defines number of wavelength points for each 1060 layer
+        delwn = sfits['Delta Wavenum'] #defines constant delta wavenumber for each 1060 layer
+        start = sfits['Start Wavenum'] #defines starting wave number for each 1060 layer
+    else: 
+        #ehsan makes his opacities on uniform 
+        numw = s1460['number_wave_pts'].values.astype(int)
+        delwn = s1460['delta_wavenumber'].values.astype(float)
+        start = s1460['start_wavenumber'].values.astype(float)
+        
+    
+    for i,p,t in zip(ifile,pres,temp):  
+        #path to richard's data
+        fdata = os.path.join(mol_dir, 'p_'+str(int(i)))
+
+        #Grab 1060 in various format data
+        if molecule in alks:
+            dset = pd.read_csv(fdata)
+            og_wvno_grid = dset['wno'].values.astype(float)
+            dset = dset[molecule].values.astype(float)
+        else: 
+            dset = np.fromfile(fdata, dtype=float) 
+            og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1] 
+            
+        #interp on high res grid
+        #basic interpolation here onto a new wavegrid that 
+        dset = np.interp(interp_wvno_grid,og_wvno_grid, dset,right=1e-50, left=1e-50)
+        dset[dset<1e-200] = 1e-200 
+        #resample evenly
+        y = dset[::BINS]
+
+
+        if ((molecule == 'CH4') & (isinstance(dir_kark_ch4, str)) & (t<500)):
+            opa_k,loc = get_kark_CH4(dir_kark_ch4,new_wvno_grid, t)
+            y[loc] = opa_k
+        if ((molecule == 'O3') & (isinstance(dir_optical_o3, str)) & (t<500)):
+            opa_o3 = get_optical_o3(dir_optical_o3,new_wvno_grid)
+            y = y + opa_o3     
+        cur.execute('INSERT INTO molecular (ptid, molecule, temperature, pressure,opacity) values (?,?,?,?,?)', (int(i),molecule,float(t),float(p), y))
+    conn.commit()
+    conn.close()
+    return new_wvno_grid
+
+def insert_molecular_1460_old(molecule, min_wavelength, max_wavelength, new_R, 
+            og_directory, new_db,dir_kark_ch4=None, dir_optical_o3=None):
+    """
+    Function to resample Ehsan's 1460 grid data onto lower resolution grid, 1060 grid. The general procedure 
+    in this function is to interpolate original 1060 data onto very high resolution 
+    grid (R=1e6). Then, determine number of bins to take given input 'new_R'. The final 
+    opacity grid will be : original_opacity[::BINS]
+
+    NOTE: From several tests "new_R" should be at least 100x higher than the ultimate 
+    planet spectrum you want to bin down to. 
+
+    Parameters 
+    ----------
+    molecule : str 
+        Name of molecule (should match a directory with 1060 files)
+    min_wavelength : float 
+        Minimum wavelength in database in units of micron 
+    max_wavelength : float 
+        Maximum wavelength in database in units of micron 
+    new_R : float 
+        New R to regrid to. If new_R=None, it will retain the original 1e6 million resolution 
+        of the lbl grid. 
+    """
+    #open database connection 
+    ngrid = 1060
+    old_R = 1e6 #hard coding this initial resolution to roughly match's wvno gird
+    #min_1060_grid = 0.3 #hard coding this also to match 1060 grid
+    #dwvno_old = 1e4/(min_1060_grid**2)*(min_1060_grid/old_R)
+    interp_wvno_grid = create_grid(min_wavelength, max_wavelength, old_R)
+
+    cur,conn = open_local(new_db)
+
+    #min_wno = 1e4/max_wavelength
+    #max_wno = 1e4/min_wavelength
+
+    if isinstance(new_R,type(None)):
+        new_R = 1e6
+
+    #BINS = int(dwvno_new/dwvno_old)
+    BINS = int(old_R/new_R)
+
+    #new wave grid 
+    new_wvno_grid = interp_wvno_grid[::BINS]
+
+
+    s1060 = pd.read_csv(os.path.join(og_directory,'grid1060.csv'))
+    s1460 = pd.read_csv(os.path.join(og_directory,'grid1460.csv'))
+
+    #all pressures 
+    pres=s1060['pressure_bar'].values.astype(float)
+    #all temperatures 
+    temp=s1060['temperature_K'].values.astype(float)
+    #file_num
+    ifile=s1060['file_number'].values.astype(int)
+    for i1060,p,t in zip(ifile, pres,temp):
+        idf = s1460.loc[(s1460['pressure_bar']==p)].reset_index()
+
+        i = int(idf.loc[(idf['temperature_K']-t).abs().argsort()[0],'file_number'])
+        numw = idf.loc[(idf['temperature_K']-t).abs().argsort()[0],'number_wave_pts']
+        delwn = idf.loc[(idf['temperature_K']-t).abs().argsort()[0],'delta_wavenumber']
+        start = idf.loc[(idf['temperature_K']-t).abs().argsort()[0],'start_wavenumber']
+
+        fdata = os.path.join(og_directory,molecule,'p_'+str(int(i)))
+        dset = np.fromfile(fdata, dtype=float) 
+        #get original grid 
+        og_wvno_grid=np.arange(int(numw))*float(delwn)+float(start)   
+
+        #interp on high res grid
         dset = np.interp(interp_wvno_grid,og_wvno_grid, dset,right=1e-50, left=1e-50)
 
         #resample evenly
@@ -633,10 +843,11 @@ def resample_and_insert_molecular(molecule, min_wavelength, max_wavelength, new_
             opa_o3 = get_optical_o3(dir_optical_o3,new_wvno_grid)
             y = y + opa_o3     
 
-        cur.execute('INSERT INTO molecular (ptid, molecule, temperature, pressure,opacity) values (?,?,?,?,?)', (i,molecule,float(t),float(p), y))
+        cur.execute('INSERT INTO molecular (ptid, molecule, temperature, pressure,opacity) values (?,?,?,?,?)', (int(i1060),molecule,float(t),float(p), y))
     conn.commit()
     conn.close()
     return new_wvno_grid
+
 
 def get_kark_CH4_noTdependence(kark_dir,new_wave, temperature):
     """
@@ -926,11 +1137,9 @@ def get_molecular(db_file, species, temperature,pressure):
     cur.execute('SELECT ptid, pressure, temperature FROM molecular')
     data= cur.fetchall()    
     pt_pairs = sorted(list(set(data)),key=lambda x: (x[0]) )
-
     #here's a little code to get out the correct pair (so we dont have to worry about getting the exact number right)
     ind_pt = [min(pt_pairs, key=lambda c: math.hypot(c[1]- coordinate[0], c[2]-coordinate[1]))[0]
               for coordinate in  zip(pressure,temperature)]
-
     if ((len(species) ==1 )& (len(ind_pt) >1)):
         cur.execute("""SELECT molecule,ptid,pressure,temperature,opacity
                 FROM molecular
@@ -962,8 +1171,6 @@ def get_molecular(db_file, species, temperature,pressure):
     for i in restruct.keys():
         for t in temp_nearest:
             restruct[i][t] = {}
-
-    
     for im, iid,ip,it, dat in data : restruct[im][it][ip] = dat
 
     cur.execute('SELECT wavenumber_grid FROM header')

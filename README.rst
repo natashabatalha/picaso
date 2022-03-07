@@ -56,3 +56,7 @@ Math
 
 .. image:: https://zenodo.org/badge/113474583.svg
    :target: https://zenodo.org/badge/latestdoi/113474583
+   
+.. image:: https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg 
+   :target: code_of_conduct.md
+

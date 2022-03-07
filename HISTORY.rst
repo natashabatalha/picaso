@@ -3,6 +3,25 @@
 History
 -------
 
+2.2 (2021-7-12)
+~~~~~~~~~~~~~~~~~~
+* Add evolution tracks 
+* Add ability to use pre mixed c-k tables 
+* Expand chemistry to include new Visscher tables 
+* Add ability to pull out contribution from individual species without running full RT
+* Yount planet table from ZJ Zhang. 
+* Separate workshop notebooks for Sagan School 2020, 2021 and ERS 
+* Add explicit "hard surface" term for thermal flux boundary condition for terrestrial calculations
+* Minor bug fixes/improvements 
+
+2.1 (2020-11-02)
+~~~~~~~~~~~~~~~~~~
+
+* Transit Spectroscopy added 
+* Transit spectroscopy tutorial 
+* FAQ notebook 
+* Minor bug fixes/improvements
+
 2.0.1 (2020-07-21)
 ~~~~~~~~~~~~~~~~~~
 
