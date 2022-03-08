@@ -2056,8 +2056,8 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 
                     #cos_theta = -u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
                     #p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
-                    #p_single = p_single + w_single[l,:,:] * P(-u0)[l]*P(u1)[l]
-                p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+                    p_single = p_single + w_single[l,:,:] * P(-u0)[l]*P(u1)[l]
+                #p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 
             elif single_phase==2:#'TTHG':
                 #Phase function for single scattering albedo frum Solar beam
@@ -2112,14 +2112,14 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 
             #boundary conditions 
             b_surface = 0. + surf_reflect*u0*F0PI*exp(-tau[-1, :]/u0)
+            b_surface_SH4 = 0. + surf_reflect*u0*F0PI*exp(-tau[-1, :]/u0)# need to double check BCs
 
             if stream==2:
                 M, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2 = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
                 surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P, fluxes=flx) 
 
             if stream==4:
-                M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-                surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P, fluxes=flx) 
+                M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, b_surface_SH4, surf_reflect, F0PI, u0, dtau, tau, a, b, u1, P, fluxes=flx) 
                 # F and G will be nonzero if fluxes=1
 
             flux_bot = zeros(nwno)
@@ -2308,15 +2308,15 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 
     #   parameters in matrices
     q = lam/a[1]
-    Q1 = (0.5 + q)#*2*pi
-    Q2 = (0.5 - q)#*2*pi
+    Q1 = (0.5 + q)*2*pi
+    Q2 = (0.5 - q)*2*pi
 
     Q1mn = Q1*exptrm;  Q2mn = Q2*exptrm
     Q1pl = Q1/exptrm;  Q2pl = Q2/exptrm
 
     if calculation != 1:
-        zmn = (0.5*eta[0] - eta[1])#*2*pi
-        zpl = (0.5*eta[0] + eta[1])#*2*pi
+        zmn = (0.5*eta[0] - eta[1])*2*pi
+        zpl = (0.5*eta[0] + eta[1])*2*pi
         if calculation == 0:
             expon = exp(-tau/ubar0)
             zmn_up = zmn * expon[1:,:] 
@@ -2330,10 +2330,10 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
             zmn_down = zmn 
             zpl_down = zpl 
     elif calculation == 1: # linear thermal
-        zmn_down = ((1-w0)/a[0] * (B0/2 - B1/a[1])) *2*pi #* 2*pi
-        zmn_up = ((1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2)) *2*pi #* 2*pi
-        zpl_down = ((1-w0)/a[0] * (B0/2 + B1/a[1])) *2*pi #* 2*pi
-        zpl_up = ((1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2)) *2*pi #* 2*pi
+        zmn_down = ((1-w0)/a[0] * (B0/2 - B1/a[1])) *2*pi           * 2*pi
+        zmn_up = ((1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2)) *2*pi * 2*pi
+        zpl_down = ((1-w0)/a[0] * (B0/2 + B1/a[1])) *2*pi           * 2*pi
+        zpl_up = ((1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2)) *2*pi * 2*pi
 
     alpha = 1/ubar1 + lam
     beta = 1/ubar1 - lam
@@ -2477,10 +2477,10 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, b_surface_SH4
             #eta.append(Dels[l]/Del)
             eta[l,:,:] = (Dels[l]/Del)
 
-        z1pl = (eta[0]/2 + eta[1] + 5*eta[2]/8) #*2*pi
-        z1mn = (eta[0]/2 - eta[1] + 5*eta[2]/8) #*2*pi
-        z2pl = (-eta[0]/8 + 5*eta[2]/8 + eta[3])#*2*pi 
-        z2mn = (-eta[0]/8 + 5*eta[2]/8 - eta[3])#*2*pi
+        z1pl = (eta[0]/2 + eta[1] + 5*eta[2]/8) *2*pi
+        z1mn = (eta[0]/2 - eta[1] + 5*eta[2]/8) *2*pi
+        z2pl = (-eta[0]/8 + 5*eta[2]/8 + eta[3])*2*pi 
+        z2mn = (-eta[0]/8 + 5*eta[2]/8 - eta[3])*2*pi
     
     expo1 = slice_gt(lam1*dtau, 35.0) 
     expo2 = slice_gt(lam2*dtau, 35.0) 
@@ -2491,10 +2491,10 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, b_surface_SH4
     Q1 = 1/2 * (a[0]*a[1]/(lam1**2) - 1); Q2 = 1/2 * (a[0]*a[1]/(lam2**2) - 1)
     S1 = -3/(2*a[3]) * (a[0]*a[1]/lam1 - lam1); S2 = -3/(2*a[3]) * (a[0]*a[1]/lam2 - lam2)
     
-    p1pl = (1/2 + R1 + 5*Q1/8);  p1mn = (1/2 - R1 + 5*Q1/8); #*2*pi
-    p2pl = (1/2 + R2 + 5*Q2/8);  p2mn = (1/2 - R2 + 5*Q2/8); #*2*pi
-    q1pl = (-1/8 + 5*Q1/8 + S1); q1mn = (-1/8 + 5*Q1/8 - S1) #*2*pi
-    q2pl = (-1/8 + 5*Q2/8 + S2); q2mn = (-1/8 + 5*Q2/8 - S2) #*2*pi
+    p1pl = (1/2 + R1 + 5*Q1/8)  *2*pi;  p1mn = (1/2 - R1 + 5*Q1/8)  *2*pi
+    p2pl = (1/2 + R2 + 5*Q2/8)  *2*pi;  p2mn = (1/2 - R2 + 5*Q2/8)  *2*pi
+    q1pl = (-1/8 + 5*Q1/8 + S1) *2*pi;  q1mn = (-1/8 + 5*Q1/8 - S1) *2*pi
+    q2pl = (-1/8 + 5*Q2/8 + S2) *2*pi;  q2mn = (-1/8 + 5*Q2/8 - S2) *2*pi
 
     f00 = p1mn*exptrm1; f01 = p1pl/exptrm1; f02 = p2mn*exptrm2; f03 = p2pl/exptrm2
     f10 = q1mn*exptrm1; f11 = q1pl/exptrm1; f12 = q2mn*exptrm2; f13 = q2pl/exptrm2
@@ -2522,14 +2522,14 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, b_surface_SH4
         z1pl_down = z1pl 
         z2pl_down = z2pl 
     elif calculation == 1: # linear thermal
-        z1mn_up = (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2) *2*pi #* 2*pi
-        z2mn_up = -0.5 * (1-w0) / (4*a[0]) * (B0 + B1*dtau) *2*pi  #* 2*pi
-        z1pl_up = (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2) *2*pi #* 2*pi
-        z2pl_up = -0.5 * (1-w0) / (4*a[0]) * (B0 + B1*dtau) *2*pi  #* 2*pi
-        z1mn_down = (1-w0)/a[0] * (B0/2 - B1/a[1]) *2*pi #* 2*pi
-        z2mn_down = -0.5 * (1-w0) / (4*a[0]) * (B0) *2*pi  #* 2*pi
-        z1pl_down = (1-w0)/a[0] * (B0/2 + B1/a[1]) *2*pi #* 2*pi
-        z2pl_down = -0.5 * (1-w0) / (4*a[0]) * (B0) *2*pi  #* 2*pi
+        z1mn_up = (1-w0)/a[0] * (B0/2 - B1/a[1] + B1*dtau/2) *2*pi * 2*pi
+        z2mn_up = -0.5 * (1-w0) / (4*a[0]) * (B0 + B1*dtau) *2*pi  * 2*pi
+        z1pl_up = (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2) *2*pi * 2*pi
+        z2pl_up = -0.5 * (1-w0) / (4*a[0]) * (B0 + B1*dtau) *2*pi  * 2*pi
+        z1mn_down = (1-w0)/a[0] * (B0/2 - B1/a[1]) *2*pi   * 2*pi
+        z2mn_down = -0.5 * (1-w0) / (4*a[0]) * (B0) *2*pi  * 2*pi
+        z1pl_down = (1-w0)/a[0] * (B0/2 + B1/a[1]) *2*pi   * 2*pi
+        z2pl_down = -0.5 * (1-w0) / (4*a[0]) * (B0) *2*pi  * 2*pi
 
     alpha1 = 1/ubar1 + lam1
     alpha2 = 1/ubar1 + lam2
