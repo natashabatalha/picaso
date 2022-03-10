@@ -1775,6 +1775,7 @@ class inputs():
         n_cpu : int 
             Number of cpu to use for parallelization of chemistry
         """
+        not_molecules = ['temperature','pressure','kz']
         pt_3d_ds = self.inputs['atmosphere']['profile']
         lon = pt_3d_ds.coords['lon'].values
         lat = pt_3d_ds.coords['lat'].values
@@ -1798,17 +1799,17 @@ class inputs():
 
         results = Parallel(n_jobs=n_cpu)(delayed(run_chem)(ilon,ilat) for ilon in range(ng) for ilat in range(nt))
         
-        all_out = {imol:np.zeros((ng,nt,self.nlevel)) for imol in results[0].keys() if imol not in ['temperature','pressure','kz']}
+        all_out = {imol:np.zeros((ng,nt,self.nlevel)) for imol in results[0].keys() if imol not in not_molecules}
 
         i = -1
         for ilon in range(ng):
             for ilat in range(nt):
                 i+=1
                 for imol in all_out.keys():
-                    if imol not in ['temperature','pressure','kz']:
+                    if imol not in not_molecules:
                         all_out[imol][ilon, ilat,:] = results[i][imol].values
 
-        data_vars = {imol:(["lon", "lat","pressure"], all_out[imol],{'units': 'v/v'}) for imol in results[0].keys() if imol not in ['temperature','pressure']}
+        data_vars = {imol:(["lon", "lat","pressure"], all_out[imol],{'units': 'v/v'}) for imol in results[0].keys() if imol not in not_molecules}
         # put data into a dataset
         ds_chem = xr.Dataset(
             data_vars=data_vars,
