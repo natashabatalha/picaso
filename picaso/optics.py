@@ -1090,35 +1090,33 @@ class RetrieveCKs():
         self.molecular_opa = ln_kappa*6.02214086e+23  #avogadro constant!        
     
     def mix_my_opacities(self,bundle,atmosphere):
-        mix_co =   bundle.inputs['atmosphere']['profile']['CO'] # will mix now
-        mix_h2o =  bundle.inputs['atmosphere']['profile']['H2O'] # will mix now
-        mix_ch4 =  bundle.inputs['atmosphere']['profile']['CH4'] # will mix now
-        mix_nh3 =  bundle.inputs['atmosphere']['profile']['NH3'] # will mix now
+        """
+        Top Function to perform "on-the-fly" mixing and then interpolating of 5 opacity sources from Amundsen et al. (2017)
+        """
+        mix_co =   bundle.inputs['atmosphere']['profile']['CO'] # mixing ratio of CO
+        mix_h2o =  bundle.inputs['atmosphere']['profile']['H2O'] # mixing ratio of H2O
+        mix_ch4 =  bundle.inputs['atmosphere']['profile']['CH4'] # mixing ratio of CH4
+        mix_nh3 =  bundle.inputs['atmosphere']['profile']['NH3'] # mixing ratio of NH3
         '''
         mix_co2 =  bundle.inputs['atmosphere']['profile']['CO2'] # will mix now
         mix_n2 =   bundle.inputs['atmosphere']['profile']['N2']
         mix_hcn =   bundle.inputs['atmosphere']['profile']['HCN']
         '''
-        mix_rest= np.zeros_like(mix_co)
-        #arr = bundle.inputs['atmosphere']['profile'].keys()
+        mix_rest= np.zeros_like(mix_co) #mixing ratio of the rest of the atmosphere
+        
         
         mix_rest = 1.0- (mix_co+mix_h2o+mix_ch4+mix_nh3)#+mix_co2+mix_n2+mix_hcn)
 
-        #for i in arr:
-        #    if i != 'pressure' and i != 'temperature' and i != 'CH4' and i != 'NH3' and i != 'H2O' and i != 'CO':
-        #        mix_rest+=bundle.inputs['atmosphere']['profile'][i]
+        indices, t_interp,p_interp = self.get_mixing_indices(atmosphere) # gets nearest neighbor indices
 
-        # now will do the mixing with two species at a time
-        #pressure = self.inputs['atmosphere']['profile']['pressure']
-        #temp = self.inputs['atmosphere']['profile']['temperature']
-        indices, t_interp,p_interp = self.get_mixing_indices(atmosphere)
-
-        
+        # Mix all opacities in the four nearest neighbors of your T(P) profile
+        # these nearest neighbors will be used for interpolation
         kappa_mixed = mix_all_gases(np.array(self.kappa_ch4),np.array(self.kappa_nh3),np.array(self.kappa_h2o),
                                     np.array(self.kappa_co),np.array(self.kappa_back),np.array(mix_ch4),np.array(mix_nh3),np.array(mix_h2o),
                                     np.array(mix_co),np.array(mix_rest),
                                     np.array(self.gauss_pts),np.array(self.gauss_wts),indices)
         kappa = np.zeros(shape=(len(mix_co)-1,self.nwno,self.ngauss))
+        # now perform the old nearest neighbor interpolation to produce final opacities
         for i in range(len(mix_co)-1):
             kappa[i,:,:] = (((1-t_interp[i])* (1-p_interp[i]) * kappa_mixed[i,:,:,0]) +
                         ((t_interp[i])  * (1-p_interp[i]) * kappa_mixed[i,:,:,1]) + 

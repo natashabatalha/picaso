@@ -1853,7 +1853,7 @@ class inputs():
         player = np.zeros(shape=(len(plevel)))
         for j in range(len(tlevel)-1):
         	tlayer[j]=0.5*(tlevel[j]+tlevel[j+1])
-        	player[j]=np.sqrt(plevel[j]*plevel[j+1])
+            player[j]=np.sqrt(plevel[j]*plevel[j+1])
         
         tlayer[-1], player[-1] = tlevel[-1], plevel[-1]
         pt_pairs = []
