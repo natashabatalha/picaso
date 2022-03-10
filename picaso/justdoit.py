@@ -7,8 +7,7 @@ from .justplotit import numba_cumsum, mean_regrid
 from .build_3d_input import regrid_xarray
 
 from virga import justdoit as vj
-from scipy.signal import savgol_filter
-#MERfrom scipy.interpolate import RegularGridInterpolator,UnivariateSpline
+from scipy.interpolate import UnivariateSpline
 from scipy import special
 from numba import njit
 
@@ -1799,14 +1798,14 @@ class inputs():
 
         results = Parallel(n_jobs=n_cpu)(delayed(run_chem)(ilon,ilat) for ilon in range(ng) for ilat in range(nt))
         
-        all_out = {imol:np.zeros((ng,nt,self.nlevel)) for imol in results[0].keys() if imol not in ['temperature','pressure']}
+        all_out = {imol:np.zeros((ng,nt,self.nlevel)) for imol in results[0].keys() if imol not in ['temperature','pressure','kz']}
 
         i = -1
         for ilon in range(ng):
             for ilat in range(nt):
                 i+=1
                 for imol in all_out.keys():
-                    if imol not in ['temperature','pressure']:
+                    if imol not in ['temperature','pressure','kz']:
                         all_out[imol][ilon, ilat,:] = results[i][imol].values
 
         data_vars = {imol:(["lon", "lat","pressure"], all_out[imol],{'units': 'v/v'}) for imol in results[0].keys() if imol not in ['temperature','pressure']}
