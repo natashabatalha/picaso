@@ -2235,7 +2235,7 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     for ng in range(numg):
         for nt in range(numt):
             if stream==2:
-                M, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2 = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
+                M, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2 = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top*2*pi, b_surface*2*pi, 
                 surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, ubar1[ng,nt], P, b0, b1, f0, fluxes=flx, calculation=calculation)
 
             elif stream==4:
@@ -2283,11 +2283,11 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 
 
             if hard_surface:
-                xint_temp[-1,:] = 2*pi * b_surface # NB BC
-                #xint_temp[-1,:] = b_surface / pi # before merge
+                xint_temp[-1,:] = all_b[-1,:] *2*pi  # terrestrial flux /pi = intensity
+                #int_plus[-1,:] = b_surface / pi # before merge
             else:
-                xint_temp[-1,:] = ( all_b[-1,:] + b1[-1,:] * ubar1[ng,nt])*2*pi # NB BC
-                #xint_temp[-1,:] = (all_b[-1,:] + b1[-1,:] * ubar1[ng,nt]) # before merge
+                xint_temp[-1,:] = ( all_b[-1,:] + b1[-1,:] * ubar1[ng,nt])*2*pi #no hard surface   
+                #int_plus[-1,:] = (all_b[-1,:] + b1[-1,:] * ubar1[ng,nt]) # before merge
 
             for i in range(nlayer-1,-1,-1):
                 xint_temp[i, :] = (xint_temp[i+1, :] * np.exp(-dtau[i,:]/ubar1[ng,nt]) 
@@ -2379,7 +2379,7 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
     #   first row: BC 1
     Mb[2,0,:] = Q1[0,:]
     Mb[1,1,:] = Q2[0,:]
-    B[0,:] = b_top/pi/2 - zmn_down[0,:]
+    B[0,:] = b_top - zmn_down[0,:]
 
     Mb[0,3::2,:] = -Q2[1:,:]
     Mb[1,2::2,:] = -Q1[1:,:]
@@ -2541,10 +2541,10 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, b_surface_SH4
         z2mn_up = -0.5 * (1-w0) / (4*a[0]) * (B0 + B1*dtau) *2*pi  * 2*pi
         z1pl_up = (1-w0)/a[0] * (B0/2 + B1/a[1] + B1*dtau/2) *2*pi * 2*pi
         z2pl_up = -0.5 * (1-w0) / (4*a[0]) * (B0 + B1*dtau) *2*pi  * 2*pi
-        z1mn_down = (1-w0)/a[0] * (B0/2 - B1/a[1]) *2*pi   * 2*pi
-        z2mn_down = -0.5 * (1-w0) / (4*a[0]) * (B0) *2*pi  * 2*pi
-        z1pl_down = (1-w0)/a[0] * (B0/2 + B1/a[1]) *2*pi   * 2*pi
-        z2pl_down = -0.5 * (1-w0) / (4*a[0]) * (B0) *2*pi  * 2*pi
+        z1mn_down = (1-w0)/a[0] * (B0/2 - B1/a[1]) *2*pi           * 2*pi
+        z2mn_down = -0.5 * (1-w0) / (4*a[0]) * (B0) *2*pi          * 2*pi
+        z1pl_down = (1-w0)/a[0] * (B0/2 + B1/a[1]) *2*pi           * 2*pi
+        z2pl_down = -0.5 * (1-w0) / (4*a[0]) * (B0) *2*pi          * 2*pi
 
     alpha1 = 1/ubar1 + lam1
     alpha2 = 1/ubar1 + lam2
