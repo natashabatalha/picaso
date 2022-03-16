@@ -1259,11 +1259,18 @@ class RetrieveCKs():
                 t_inv_hi = 1/tcia_high[ind]
                 
                 t_interp = ((t_inv - t_inv_low) / (t_inv_hi - t_inv_low))
-
-                ln_kappa = np.exp(((1-t_interp) * np.log(data_low[i+'_'+str(jlow)]) ) +
-                                  ((t_interp)   * np.log(data_high[i+'_'+str(jhigh)])))
                 
-                self.continuum_opa[i][ind,:] = ln_kappa
+                log_abunds1 = data_low[i+'_'+str(jlow)]
+                log_abunds1 = np.log10(np.where(log_abunds1!=0,log_abunds1,1e-50))
+                log_abunds2 = data_high[i+'_'+str(jhigh)]
+                log_abunds2 = np.log10(np.where(log_abunds2!=0,log_abunds2,1e-50))
+
+                
+
+                kappa = 10**(((1-t_interp) * log_abunds1 ) +
+                                  ((t_interp) * log_abunds2))
+                
+                self.continuum_opa[i][ind,:] = kappa
         
         conn.close()
         
