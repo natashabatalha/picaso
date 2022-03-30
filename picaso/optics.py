@@ -7,10 +7,13 @@ import os
 from numba import jit
 from bokeh.plotting import figure, show, output_file
 from bokeh.palettes import inferno
+from astropy.io import fits
 import io 
 import sqlite3
 import math
-
+from scipy.io import FortranFile
+from .deq_chem import mix_all_gases
+__refdata__ = os.environ.get('picaso_refdata')
 #@jit(nopython=True)
 def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddington=True,
     test_mode=False,raman=0, plot_opacity=False,full_output=False, return_mode=False):
@@ -657,21 +660,65 @@ class RetrieveCKs():
         NOT FUNCTIONAL YET. 
         Wavelength range to compuate in the format [min micron, max micron]
     """
-    def __init__(self, ck_dir, cont_dir, wave_range=None):
+    def __init__(self, ck_dir, cont_dir, wave_range=None, deq=False, first_deq=False):
         self.ck_filename = ck_dir
-        self.db_filename = cont_dir
-        self.get_legacy_data(wave_range) #wave_range not used yet
-        self.get_available_continuum()
-        self.get_available_rayleigh()
+        #read in the full abundance file sot hat we can check the number of kcoefficient layers 
+        #this should either be 1460 or 1060
+        self.full_abunds =  pd.read_csv(os.path.join(self.ck_filename,'full_abunds'),
+            delim_whitespace=True)
+        self.kcoeff_layers = self.full_abunds.shape[0]
+        if deq == False :
+        #choose get data function based on layer number
+            if self.kcoeff_layers==1060: 
+                self.get_legacy_data_1060(wave_range) #wave_range not used yet
+            elif self.kcoeff_layers==1460:
+                self.get_legacy_data_1460(wave_range) #wave_range not used yet
+            else: 
+                raise Exception(f"There are {self.kcoeff_layers} in the full_abunds file. Currently only the 1060 or 1460 grids are supported. Please check your file input.")
+            
+            self.db_filename = cont_dir
+            
+            self.get_available_continuum()
+            self.get_available_rayleigh()
+            self.run_cia_spline()
+            
+        
+        elif (deq == True) and (first_deq == False) :
+            self.get_gauss_pts_661()
+            self.get_new_wvno_grid_661()
+            
+            opa_filepath  = os.path.join(__refdata__, 'climate_INPUTS/661')#'/Users/sagnickmukherjee/Documents/GitHub/Disequilibrium-Picaso/reference/climate_INPUTS/661'
+            self.load_kcoeff_arrays(opa_filepath)
+            self.db_filename = cont_dir
+            self.get_available_continuum()
+            self.get_available_rayleigh()
+            self.run_cia_spline_661()
+        
+        elif (deq == True) and (first_deq == True) :
+            self.get_gauss_pts_661()
+            self.get_new_wvno_grid_661()
+            
+            opa_filepath  = os.path.join(__refdata__, 'climate_INPUTS/661')#'/Users/sagnickmukherjee/Documents/GitHub/Disequilibrium-Picaso/reference/climate_INPUTS/661'
+            self.load_kcoeff_arrays_first(opa_filepath)
+            self.db_filename = cont_dir
+            self.get_available_continuum()
+            self.get_available_rayleigh()
+            self.run_cia_spline_661()
+            
         return
 
-    def get_legacy_data(self,wave_range):
+    def get_legacy_data_1060(self,wave_range):
+        """
+        Function to read the legacy data of the 1060 grid computed by Roxana Lupu. 
+
+        Note
+        ----
+        This function is **highly** sensitive to the file format. You cannot edit the ascii file and then 
+        run this function. Each specific line is accounted for.
+        """
         data = pd.read_csv(os.path.join(self.ck_filename,'ascii_data'), 
                   delim_whitespace=True,header=None, 
                   names=list(range(9)),dtype=str)
-
-        self.full_abunds =  pd.read_csv(os.path.join(self.ck_filename,'full_abunds'),
-            delim_whitespace=True)
 
         num_species = int(data.iloc[0,0])
         max_ele = 35 
@@ -704,15 +751,17 @@ class RetrieveCKs():
         end_windows =2+end_abunds+2*end_window
 
         nc_t=int(data.iloc[end_windows,0])
-        nc_p = np.array(data.iloc[end_windows:1+end_windows+int(self.max_tc/6),0:6].astype(int
+        #this defines the number of pressure points per temperature grid
+        #sometimes not all pressures are run for all temperatures
+        self.nc_p = np.array(data.iloc[end_windows:1+end_windows+int(self.max_tc/6),0:6].astype(int
                     )).ravel()[1:-5]
         end_npt = 1+end_windows+int(self.max_tc/6) + 9 #9 dummy rows
 
         first = list(data.iloc[end_npt,2:4].astype(float))
 
-        self.pressures = first+list(np.array(data.iloc[end_npt+1:end_npt + int(self.max_pc*self.max_tc/3) + 1,0:3]
-                 .astype(float))
-                 .ravel()[0:-2])
+        self.pressures = np.array(first+list(np.array(data.iloc[end_npt+1:end_npt + int(self.max_pc*self.max_tc/3) + 1,0:3]
+                         .astype(float))
+                         .ravel()[0:-2]))/1e3
         #pressures = np.array(pressures)[np.where(np.array(pressures)>0)]
         end_ps = end_npt + int(self.max_pc*self.max_tc/3)
 
@@ -739,8 +788,176 @@ class RetrieveCKs():
         kappa = kappa.swapaxes(0,2)
         self.kappa = kappa[:, :, 0:self.nwno, 0:self.ngauss] 
 
+        #finally add pressure/temperature scale to abundances
+        self.full_abunds['pressure']= self.pressures[self.pressures>0]
+        self.full_abunds['temperature'] = np.concatenate([[i]*max(self.nc_p) for i in self.temps])[self.pressures>0]
+
+    def get_legacy_data_1460(self,wave_range):
+        """
+        Function to read the legacy data of the 1060 grid computed by Roxana Lupu. 
+
+        Note
+        ----
+        This function is **highly** sensitive to the file format. You cannot edit the ascii file and then 
+        run this function. Each specific line is accounted for.
+        """
+        data = pd.read_csv(os.path.join(self.ck_filename,'ascii_data'), 
+                  delim_whitespace=True,header=None, 
+                  names=list(range(9)),dtype=str)
+
+        num_species = int(data.iloc[0,0])
+        max_ele = 35 
+        self.max_tc = 73 
+        self.max_pc = 20
+        max_windows = 200 
+
+        self.molecules = [str(data.iloc[i,j]) for i in [0,1,2] 
+           for j in range(9)][1:num_species+1]
+
+        last = [float(data.iloc[int(max_ele*self.max_pc*self.max_tc/3)+3,0])]
+
+        end_abunds = 3+int(max_ele*self.max_pc*self.max_tc/3)
+        abunds = list(np.array(
+            data.iloc[3:end_abunds,0:3].astype(float)
+            ).ravel())
+        abunds = abunds + last
+        abunds = np.reshape(abunds,(self.max_pc,self.max_tc,max_ele),order='F')
+
+        self.nwno = int(data.iloc[end_abunds,1])
+
+        end_window = int(max_windows/3)
+        self.wno = (data.iloc[end_abunds:end_abunds+end_window,0:3].astype(float)).values.ravel()[2:]
+        self.delta_wno = (data.iloc[end_abunds+end_window+1:1+end_abunds+2*end_window,0:3].astype(float)).values.ravel()[1:-1]
+        end_windows =2+end_abunds+2*end_window
+
+        nc_t=int(data.iloc[end_windows,0])
+        #this defines the number of pressure points per temperature grid
+        #historically not all pressures are run for all temperatures
+        #though in 1460 there are always 20
+        self.nc_p = np.array(data.iloc[end_windows:1+end_windows+int(self.max_tc/6),0:6].astype(int
+                    )).ravel()[1:-4]
+        end_npt = 1+end_windows+int(self.max_tc/6) + 11 #11 dummy rows
+
+        first = list(data.iloc[end_npt,4:5].astype(float))
+
+        #convert to bars
+        self.pressures = np.array(first+list(np.array(data.iloc[end_npt+1:end_npt + int(self.max_pc*self.max_tc/3) + 2,0:3]
+                                 .astype(float))
+                                 .ravel()[0:-2]))/1e3
+
+        end_ps = end_npt + int(self.max_pc*self.max_tc/3)
+
+        self.temps = list(np.array(data.iloc[end_ps+1:2+int(end_ps+nc_t/3),0:3]
+                        .astype(float))
+                        .ravel()[1:-1])
+        end_temps = int(end_ps+nc_t/3)+1
+
+        ngauss1, ngauss2,  =data.iloc[end_temps,2:4].astype(int)
+        gfrac = float(data.iloc[end_temps+1,0])
+        self.ngauss = int(data.iloc[end_temps+1,1])
+
+        assert self.ngauss == 8, 'Legacy code uses 8 gauss points not {0}. Check read in statements'.format(self.ngauss)
+
+        gpts_wts = np.reshape(np.array(data.iloc[end_temps+1:2+end_temps+int(2*self.ngauss/3),0:3]
+         .astype(float)).ravel()[2:], (self.ngauss,2))
+
+        self.gauss_pts = [i[0] for i in gpts_wts]
+        self.gauss_wts = [i[1] for i in gpts_wts]
         
-    
+        kappa = np.array(
+            data.iloc[3+end_temps+int(2*self.ngauss/3):-2,0:3]
+                     .astype(float)).ravel()[0:-2]
+        kappa = np.reshape(kappa, 
+                           (max_windows,self.ngauss*2,self.max_pc,self.max_tc),order='F')
+
+        #want the axes to be [npressure, ntemperature, nwave, ngauss ]
+        kappa = kappa.swapaxes(1,3)
+        kappa = kappa.swapaxes(0,2)
+        self.kappa = kappa[:, :, 0:self.nwno, 0:self.ngauss] 
+
+        #finally add pressure/temperature scale to abundances
+        self.full_abunds['pressure']= self.pressures[self.pressures>0]
+        self.full_abunds['temperature'] = np.concatenate([[i]*max(self.nc_p) for i in self.temps])[self.pressures>0]
+
+    def get_gauss_pts_661(self):
+        """
+        Function to read the legacy data of the 1060 grid computed by Roxana Lupu. 
+
+        Note
+        ----
+        This function is **highly** sensitive to the file format. You cannot edit the ascii file and then 
+        run this function. Each specific line is accounted for.
+        """
+        data = pd.read_csv(os.path.join(self.ck_filename,'ascii_data'), 
+                  delim_whitespace=True,header=None, 
+                  names=list(range(9)),dtype=str)
+
+        num_species = int(data.iloc[0,0])
+        max_ele = 35 
+        self.max_tc = 60 
+        self.max_pc = 18
+        max_windows = 200 
+
+        self.molecules = [str(data.iloc[i,j]) for i in [0,1,2] 
+           for j in range(9)][1:num_species+1]
+
+        first = [float(i) for i in data.iloc[2,2:4]]
+        last = [float(data.iloc[int(max_ele*self.max_pc*self.max_tc/3)+2,0])]
+
+        end_abunds = 2+int(max_ele*self.max_pc*self.max_tc/3)
+        abunds = list(np.array(
+            data.iloc[3:end_abunds,0:3].astype(float)
+            ).ravel())
+        abunds = first + abunds + last
+
+        #abundances for elements as a funtion of pressure, temp, and element
+        #self.abunds = np.reshape(abunds,(self.max_pc,self.max_tc,max_ele),order='F')
+
+        #self.nwno = int(data.iloc[end_abunds,1])
+
+        end_window = int(max_windows/3)
+        #self.wno = (data.iloc[end_abunds:end_abunds+end_window,0:3].astype(float)).values.ravel(
+        #)[2:]
+        #self.delta_wno = (data.iloc[end_abunds+end_window+1:1+end_abunds+2*end_window,0:3].astype(float)).values.ravel(
+        #)[1:-1]
+        end_windows =2+end_abunds+2*end_window
+
+        nc_t=int(data.iloc[end_windows,0])
+        #this defines the number of pressure points per temperature grid
+        #sometimes not all pressures are run for all temperatures
+        self.nc_p = np.array(data.iloc[end_windows:1+end_windows+int(self.max_tc/6),0:6].astype(int
+                    )).ravel()[1:-5]
+        end_npt = 1+end_windows+int(self.max_tc/6) + 9 #9 dummy rows
+
+        first = list(data.iloc[end_npt,2:4].astype(float))
+
+        self.pressures = np.array(first+list(np.array(data.iloc[end_npt+1:end_npt + int(self.max_pc*self.max_tc/3) + 1,0:3]
+                         .astype(float))
+                         .ravel()[0:-2]))/1e3
+        #pressures = np.array(pressures)[np.where(np.array(pressures)>0)]
+        end_ps = end_npt + int(self.max_pc*self.max_tc/3)
+
+        self.temps = list(np.array(data.iloc[end_ps:1+int(end_ps+nc_t/3),0:3]
+                .astype(float))
+                .ravel()[1:-2])
+        end_temps = int(end_ps+nc_t/3)
+
+        ngauss1, ngauss2, gfrac =data.iloc[end_temps,1:4].astype(float)
+        self.ngauss = int(data.iloc[end_temps+1,0])
+
+        assert self.ngauss == 8, 'Legacy code uses 8 gauss points not {0}. Check read in statements'.format(self.ngauss)
+
+        gpts_wts = np.reshape(np.array(data.iloc[end_temps+1:2+end_temps+int(2*self.ngauss/3),0:3]
+                 .astype(float)).ravel()[1:-1], (self.ngauss,2))
+
+        self.gauss_pts = [i[0] for i in gpts_wts]
+        self.gauss_wts = [i[1] for i in gpts_wts]
+
+        #finally add pressure/temperature scale to abundances
+        self.full_abunds['pressure']= self.pressures[self.pressures>0]
+        self.full_abunds['temperature'] = np.concatenate([[i]*max(self.nc_p) for i in self.temps])[self.pressures>0]
+
+
     def get_available_rayleigh(self):
         data = Rayleigh(self.wno)
         self.rayleigh_molecules = data.rayleigh_molecules
@@ -758,7 +975,259 @@ class RetrieveCKs():
         cur.execute('SELECT temperature FROM continuum')
         self.cia_temps = np.unique(cur.fetchall())
         
+    
+    def run_cia_spline(self):
+ 
+        temps = self.cia_temps
+   
+        cia_mol = [['H2', 'H2'], ['H2', 'He'], ['H2', 'N2'], ['H2', 'H'], ['H2', 'CH4'], ['H-', 'bf'], ['H-', 'ff'], ['H2-', '']]
+        cia_names = {key[0]+key[1]  for key in cia_mol}
+          
+
+        cia_names = list(key[0]+key[1]  for key in cia_mol)
+        
+        self.cia_splines = {}
+        for i in cia_names :
+            hdul = fits.open(os.path.join(__refdata__,'climate_INPUTS/'+i+'.fits'))
+            data= hdul[0].data
+            self.cia_splines[i] = data
+    
+    def run_cia_spline_661(self):
+        path =os.path.join(__refdata__, 'climate_INPUTS/')# '/Users/sagnickmukherjee/Documents/GitHub/Disequilibrium-Picaso/reference/climate_INPUTS/'
+        temps = self.cia_temps
+   
+        cia_mol = [['H2', 'H2'], ['H2', 'He'], ['H2', 'N2'], ['H2', 'H'], ['H2', 'CH4'], ['H-', 'bf'], ['H-', 'ff'], ['H2-', '']]
+        cia_names = {key[0]+key[1]  for key in cia_mol}
+          
+
+        cia_names = list(key[0]+key[1]  for key in cia_mol)
+        
+        self.cia_splines = {}
+        for i in cia_names :
+            hdul = fits.open(path+i+'661.fits')
+            data= hdul[0].data
+            self.cia_splines[i] = data
+
     def get_pre_mix_ck(self,atmosphere):
+        """
+        Takes in atmosphere profile and returns an array which is 
+        nlayer by ngauss by nwno
+        """
+        #
+        p = atmosphere.layer['pressure']/atmosphere.c.pconv
+        t = atmosphere.layer['temperature']
+
+        t_inv = 1/t
+        p_log = np.log10(p)
+
+        #make sure to interp on log and inv array
+        p_log_grid = np.unique(self.pressures)
+        p_log_grid =np.log10(p_log_grid[p_log_grid>0])
+        t_inv_grid = 1/np.array(self.temps)
+
+        #Now for the temp point on either side of our atmo grid
+        #first the lower interp temp
+        t_low_ind = []
+        for i in t_inv:
+            find = np.where(t_inv_grid>i)[0]
+            if len(find)==0:
+                #IF T GOES BELOW THE GRID
+                t_low_ind +=[0]
+            else:    
+                t_low_ind += [find[-1]]
+        t_low_ind = np.array(t_low_ind)
+        #IF T goes above the grid
+        t_low_ind[t_low_ind==(len(t_inv_grid)-1)]=len(t_inv_grid)-2
+        #get upper interp temp
+        t_hi_ind = t_low_ind + 1 
+
+        #now get associated temps
+        t_inv_low =  np.array([t_inv_grid[i] for i in t_low_ind])
+        t_inv_hi = np.array([t_inv_grid[i] for i in t_hi_ind])
+
+
+        #We want the pressure points on either side of our atmo grid point
+        #first the lower interp pressure
+        p_low_ind = [] 
+        for i in p_log:
+            find = np.where(p_log_grid<=i)[0]
+            if len(find)==0:
+                #If P GOES BELOW THE GRID
+                p_low_ind += [0]
+            else: 
+                p_low_ind += [find[-1]]
+        p_low_ind = np.array(p_low_ind)
+
+        #IF pressure GOES ABOVE THE GRID
+        p_log_low = []
+        for i in range(len(p_low_ind)): 
+            ilo = p_low_ind[i]
+            it = t_hi_ind[i]
+            max_avail_p = np.min([ilo, self.nc_p[it]-3])#3 b/c using len instead of where as was done with t above
+            p_low_ind[i] = max_avail_p
+            p_log_low += [p_log_grid[max_avail_p]]
+            
+        p_log_low = np.array(p_log_low)
+
+        #get higher pressure vals
+        p_hi_ind = p_low_ind + 1 
+
+        #now get associated pressures 
+        #p_log_low =  np.array([p_log_grid[i] for i in p_low_ind])
+        p_log_hi = np.array([p_log_grid[i] for i in p_hi_ind])
+
+
+        t_interp = ((t_inv - t_inv_low) / (t_inv_hi - t_inv_low))[:,np.newaxis,np.newaxis]
+        p_interp = ((p_log - p_log_low) / (p_log_hi - p_log_low))[:,np.newaxis,np.newaxis]
+
+        #log_abunds = np.log10(self.full_abunds.values)
+        ln_kappa = self.kappa
+        ln_kappa = np.exp(((1-t_interp)* (1-p_interp) * ln_kappa[p_low_ind,t_low_ind,:,:]) +
+                     ((t_interp)  * (1-p_interp) * ln_kappa[p_low_ind,t_hi_ind,:,:]) + 
+                     ((t_interp)  * (p_interp)   * ln_kappa[p_hi_ind,t_hi_ind,:,:]) + 
+                     ((1-t_interp)* (p_interp)   * ln_kappa[p_hi_ind,t_low_ind,:,:]) )
+        
+        self.molecular_opa = ln_kappa*6.02214086e+23  #avogadro constant!        
+    
+    def mix_my_opacities(self,bundle,atmosphere):
+        """
+        Top Function to perform "on-the-fly" mixing and then interpolating of 5 opacity sources from Amundsen et al. (2017)
+        """
+        mix_co =   bundle.inputs['atmosphere']['profile']['CO'] # mixing ratio of CO
+        mix_h2o =  bundle.inputs['atmosphere']['profile']['H2O'] # mixing ratio of H2O
+        mix_ch4 =  bundle.inputs['atmosphere']['profile']['CH4'] # mixing ratio of CH4
+        mix_nh3 =  bundle.inputs['atmosphere']['profile']['NH3'] # mixing ratio of NH3
+        '''
+        mix_co2 =  bundle.inputs['atmosphere']['profile']['CO2'] # will mix now
+        mix_n2 =   bundle.inputs['atmosphere']['profile']['N2']
+        mix_hcn =   bundle.inputs['atmosphere']['profile']['HCN']
+        '''
+        mix_rest= np.zeros_like(mix_co) #mixing ratio of the rest of the atmosphere
+        
+        
+        mix_rest = 1.0- (mix_co+mix_h2o+mix_ch4+mix_nh3)#+mix_co2+mix_n2+mix_hcn)
+
+        indices, t_interp,p_interp = self.get_mixing_indices(atmosphere) # gets nearest neighbor indices
+
+        # Mix all opacities in the four nearest neighbors of your T(P) profile
+        # these nearest neighbors will be used for interpolation
+        kappa_mixed = mix_all_gases(np.array(self.kappa_ch4),np.array(self.kappa_nh3),np.array(self.kappa_h2o),
+                                    np.array(self.kappa_co),np.array(self.kappa_back),np.array(mix_ch4),np.array(mix_nh3),np.array(mix_h2o),
+                                    np.array(mix_co),np.array(mix_rest),
+                                    np.array(self.gauss_pts),np.array(self.gauss_wts),indices)
+        kappa = np.zeros(shape=(len(mix_co)-1,self.nwno,self.ngauss))
+        # now perform the old nearest neighbor interpolation to produce final opacities
+        for i in range(len(mix_co)-1):
+            kappa[i,:,:] = (((1-t_interp[i])* (1-p_interp[i]) * kappa_mixed[i,:,:,0]) +
+                        ((t_interp[i])  * (1-p_interp[i]) * kappa_mixed[i,:,:,1]) + 
+                        ((t_interp[i])  * (p_interp[i])   * kappa_mixed[i,:,:,3]) + 
+                        ((1-t_interp[i])* (p_interp[i])   * kappa_mixed[i,:,:,2]) )
+        self.molecular_opa = np.exp(kappa)*6.02214086e+23
+
+    def get_mixing_indices(self,atmosphere):
+        """
+        Takes in atmosphere profile and returns an array which is 
+        nlayer by ngauss by nwno
+        """
+        #
+        
+        p = atmosphere.layer['pressure']/atmosphere.c.pconv
+        t = atmosphere.layer['temperature']
+        
+
+        t_inv = 1/t
+        p_log = np.log10(p)
+
+        #make sure to interp on log and inv array
+        p_log_grid = np.unique(self.pressures)
+        p_log_grid =np.log10(p_log_grid[p_log_grid>0])
+        t_inv_grid = 1/np.array(self.temps)
+
+        #Now for the temp point on either side of our atmo grid
+        #first the lower interp temp
+        t_low_ind = []
+        for i in t_inv:
+            find = np.where(t_inv_grid>i)[0]
+            if len(find)==0:
+                #IF T GOES BELOW THE GRID
+                t_low_ind +=[0]
+            else:    
+                t_low_ind += [find[-1]]
+        t_low_ind = np.array(t_low_ind)
+        #IF T goes above the grid
+        t_low_ind[t_low_ind==(len(t_inv_grid)-1)]=len(t_inv_grid)-2
+        #get upper interp temp
+        t_hi_ind = t_low_ind + 1 
+
+        #now get associated temps
+        t_inv_low =  np.array([t_inv_grid[i] for i in t_low_ind])
+        t_inv_hi = np.array([t_inv_grid[i] for i in t_hi_ind])
+
+
+        #We want the pressure points on either side of our atmo grid point
+        #first the lower interp pressure
+        p_low_ind = [] 
+        for i in p_log:
+            find = np.where(p_log_grid<=i)[0]
+            if len(find)==0:
+                #If P GOES BELOW THE GRID
+                p_low_ind += [0]
+            else: 
+                p_low_ind += [find[-1]]
+        p_low_ind = np.array(p_low_ind)
+
+        #IF pressure GOES ABOVE THE GRID
+        p_log_low = []
+        for i in range(len(p_low_ind)): 
+            ilo = p_low_ind[i]
+            it = t_hi_ind[i]
+            max_avail_p = np.min([ilo, self.nc_p[it]-3])#3 b/c using len instead of where as was done with t above
+            p_low_ind[i] = max_avail_p
+            p_log_low += [p_log_grid[max_avail_p]]
+            
+        p_log_low = np.array(p_log_low)
+
+        #get higher pressure vals
+        p_hi_ind = p_low_ind + 1 
+        p_log_hi = np.array([p_log_grid[i] for i in p_hi_ind])
+
+        
+        t_interp = ((t_inv - t_inv_low) / (t_inv_hi - t_inv_low))#[:,np.newaxis,np.newaxis]
+        p_interp = ((p_log - p_log_low) / (p_log_hi - p_log_low))#[:,np.newaxis,np.newaxis]
+        
+        #now get associated pressures 
+        #p_log_low =  np.array([p_log_grid[i] for i in p_low_ind])
+        return [p_low_ind, p_hi_ind, t_low_ind, t_hi_ind], t_interp,p_interp
+            
+    def get_pre_mix_ck_nearest(self,atmosphere):
+        """
+        Takes in atmosphere profile and returns an array which is 
+        nlayer by ngauss by nwno
+        """
+        nlayer =atmosphere.c.nlayer
+        tlayer =atmosphere.layer['temperature']
+        player = atmosphere.layer['pressure']/atmosphere.c.pconv
+
+        pt_pairs = []
+        i=0
+        for ip,it,p,t in zip(np.concatenate([list(range(self.max_pc))*self.max_tc]), 
+                        np.concatenate([[it]*self.max_pc for it in range(self.max_tc)]),
+                        self.pressures, 
+                        np.concatenate([[it]*self.max_pc for it in self.temps])):
+            
+            if p!=0 : pt_pairs += [[i,ip,it,p,t]];i+=1
+
+        ind_pt_log = np.array([min(pt_pairs, 
+                    key=lambda c: math.hypot(np.log(c[-2])- np.log(coordinate[0]), 
+                                             c[-1]-coordinate[1]))[0:3] 
+                        for coordinate in  zip(player,tlayer)])
+
+        ind_p = ind_pt_log[:,1]
+        ind_t = ind_pt_log[:,2]
+
+        self.molecular_opa = np.exp(self.kappa[ind_p, ind_t, :, :])*6.02214086e+23  #avogadro constant!        
+
+    def get_pre_mix_ck_sm(self,atmosphere):
         """
         Takes in atmosphere profile and returns an array which is 
         nlayer by ngauss by nwno
@@ -776,15 +1245,349 @@ class RetrieveCKs():
             
             if p!=0 : pt_pairs += [[i,ip,it,p/1e3,t]];i+=1
 
-        ind_pt_log = np.array([min(pt_pairs, 
-                    key=lambda c: math.hypot(np.log(c[-2])- np.log(coordinate[0]), 
-                                             c[-1]-coordinate[1]))[0:3] 
-                        for coordinate in  zip(player,tlayer)])
+        #ind_pt_log = np.array([min(pt_pairs, 
+        #            key=lambda c: math.hypot(np.log(c[-2])- np.log(coordinate[0]), 
+        #                                     c[-1]-coordinate[1]))[0:3] 
+        #                for coordinate in  zip(player,tlayer)])
 
-        ind_p = ind_pt_log[:,1]
-        ind_t = ind_pt_log[:,2]
+        #ind_p = ind_pt_log[:,1]
+        #ind_t = ind_pt_log[:,2]
+        
+        p_record =np.array(self.pressures)
+        t_record = np.concatenate([[it]*self.max_pc for it in self.temps])
+        
+        
+                         
+        temp_lows = []
+        temp_highs = []
+        for coordinate in  zip(player,tlayer):
+            
+            ind_pt = min(pt_pairs, key= lambda c: np.abs(c[-1]-coordinate[1]))
+        	
+            if ind_pt[-1] <= coordinate[1]:
+                if coordinate[1] > max(t_record):
+                    temp_lows.append(sorted(list(set(t_record)))[-2])
+                    temp_highs.append(sorted(list(set(t_record)))[-1])
+                elif coordinate[1] < min(t_record):
+                    temp_lows.append(sorted(list(set(t_record)))[0])
+                    temp_highs.append(sorted(list(set(t_record)))[1])
+                else:
+                    
 
-        self.molecular_opa = np.exp(self.kappa[ind_p, ind_t, :, :])*6.02214086e+23  #avogadro constant!
+                    temp_lows.append(ind_pt[-1])
+                    temporary_list = [x if x > ind_pt[-1] else 9999 for x in t_record]
+                
+                    temp_highs.append(min(temporary_list))
+            if ind_pt[-1] > coordinate[1]:
+                if coordinate[1] > max(t_record):
+                    temp_lows.append(sorted(list(set(t_record)))[-2])
+                    temp_highs.append(sorted(list(set(t_record)))[-1])
+                elif coordinate[1] < min(t_record):
+                    temp_lows.append(sorted(list(set(t_record)))[0])
+                    temp_highs.append(sorted(list(set(t_record)))[1])
+                else:
+
+                    temp_highs.append(ind_pt[-1])
+                    temporary_list = [x if x < ind_pt[-1] else -9999 for x in t_record]
+
+                    temp_lows.append(max(temporary_list))
+        
+        p_low_temp_low = []
+        p_high_temp_low = []
+        
+        p_low_temp_high =[]
+        p_high_temp_high =[]
+        
+        
+        for coordinate in  zip(player,tlayer,temp_lows,temp_highs):
+            low_pts=[]
+            high_pts=[]
+            for pt_pair_ele in pt_pairs:
+            	if pt_pair_ele[-1]  == coordinate[2]:
+            	    low_pts += [pt_pair_ele]
+            	if pt_pair_ele[-1] == coordinate[3]:
+            	    high_pts += [pt_pair_ele]
+            
+            ind_p_lowT = min(low_pts, key= lambda c: np.abs(np.log(c[-2])-np.log(coordinate[0])))
+            
+            if ind_p_lowT[-2] <= coordinate[0]:
+                
+                if coordinate[0] > max(p_record)/1e3:
+                    p_low_temp_low.append(sorted(list(set(p_record)))[-2]/1e3)
+                    p_high_temp_low.append(sorted(list(set(p_record)))[-1]/1e3)
+                    
+                elif coordinate[0] < min(p_record)/1e3:
+                    p_low_temp_low.append(sorted(list(set(p_record)))[0]/1e3)
+                    p_high_temp_low.append(sorted(list(set(p_record)))[1]/1e3)
+                else:
+                    p_low_temp_low.append(ind_p_lowT[-2])
+                    temporary_list = [x/1e3 if x /1e3> ind_p_lowT[-2] else 9999 for x in p_record]
+					
+                    p_high_temp_low.append(min(temporary_list))
+            if ind_p_lowT[-2] > coordinate[0]:
+                if coordinate[0] > max(p_record)/1e3:
+                    p_low_temp_low.append(sorted(list(set(p_record)))[-2]/1e3)
+                    p_high_temp_low.append(sorted(list(set(p_record)))[-1]/1e3)
+                    
+                elif coordinate[0] < min(p_record)/1e3:
+                    p_low_temp_low.append(sorted(list(set(p_record)))[0]/1e3)
+                    p_high_temp_low.append(sorted(list(set(p_record)))[1]/1e3)
+                else :
+                    p_high_temp_low.append(ind_p_lowT[-2])
+                    temporary_list = [x/1e3 if x/1e3 < ind_p_lowT[-2] else -9999 for x in p_record]
+
+                    p_low_temp_low.append(max(temporary_list))
+            
+            ind_p_highT = min(high_pts, key= lambda c: np.abs(np.log(c[-2])-np.log(coordinate[0])))
+            if ind_p_highT[-2] <= coordinate[0]:
+
+                if coordinate[0] > max(p_record)/1e3:
+                    p_low_temp_high.append(sorted(list(set(p_record)))[-2]/1e3)
+                    p_high_temp_high.append(sorted(list(set(p_record)))[-1]/1e3)
+                    
+                elif coordinate[0] < min(p_record)/1e3:
+                    p_low_temp_high.append(sorted(list(set(p_record)))[0]/1e3)
+                    p_high_temp_high.append(sorted(list(set(p_record)))[1]/1e3)
+
+                else:
+                    p_low_temp_high.append(ind_p_highT[-2])
+                    temporary_list = [x/1e3 if x /1e3> ind_p_highT[-2] else 9999 for x in p_record]
+					
+                    p_high_temp_high.append(min(temporary_list))
+            if ind_p_highT[-2] > coordinate[0]:
+                if coordinate[0] > max(p_record)/1e3:
+                    p_low_temp_high.append(sorted(list(set(p_record)))[-2]/1e3)
+                    p_high_temp_high.append(sorted(list(set(p_record)))[-1]/1e3)
+                    
+                elif coordinate[0] < min(p_record)/1e3:
+                    p_low_temp_high.append(sorted(list(set(p_record)))[0]/1e3)
+                    p_high_temp_high.append(sorted(list(set(p_record)))[1]/1e3)
+
+                else:
+        		
+                    p_high_temp_high.append(ind_p_highT[-2])
+                    temporary_list = [x/1e3 if x/1e3 < ind_p_highT[-2] else -9999 for x in p_record]
+                    
+                    p_low_temp_high.append(max(temporary_list))        	    
+ 			                       	    
+            		
+            
+        
+        ind_lowP_lowT_list , ind_highP_lowT_list, ind_lowP_highT_list, ind_highP_highT_list= [], [], [], []
+        
+        for coordinate in zip(temp_lows, p_low_temp_low , p_high_temp_low, temp_highs, p_low_temp_high, p_high_temp_high):
+            ind_p1 = min(pt_pairs, key= lambda c: math.hypot(c[-1]-coordinate[0],np.log(c[-2])-np.log(coordinate[1])))
+            ind_p2 = min(pt_pairs, key= lambda c: math.hypot(c[-1]-coordinate[0],np.log(c[-2])-np.log(coordinate[2]))) 
+            ind_p3 = min(pt_pairs, key= lambda c: math.hypot(c[-1]-coordinate[3],np.log(c[-2])-np.log(coordinate[4])))
+            ind_p4 = min(pt_pairs, key= lambda c: math.hypot(c[-1]-coordinate[3],np.log(c[-2])-np.log(coordinate[5])))
+            
+            if ind_p1[-2] != ind_p3[-2] :
+                dummy_p = min(ind_p1[-2],ind_p3[-2])
+                if dummy_p == ind_p1[-2]:
+                    ind_p2 = [ind_p1[0]+1, ind_p1[1]+1,ind_p2[2],ind_p3[-2],ind_p2[4]]
+                    ind_p3 = [ind_p3[0]-1, ind_p3[1]-1,ind_p3[2],dummy_p,ind_p3[4]]
+                    ind_p4 = [ind_p3[0]+1, ind_p3[1]+1,ind_p4[2],ind_p2[3],ind_p4[4]]
+                elif dummy_p == ind_p3[-2]:
+                    ind_p4 = [ind_p3[0]+1, ind_p3[1]+1,ind_p4[2],ind_p1[-2],ind_p4[4]]
+                    ind_p1 = [ind_p1[0]-1, ind_p1[1]-1,ind_p1[2],dummy_p,ind_p1[4]]
+                    ind_p2 = [ind_p1[0]+1, ind_p1[1]+1,ind_p2[2],ind_p4[3],ind_p2[4]]
+            if ind_p1[-2] == ind_p2[-2]:
+                ind_p2 = [ind_p1[0]+1, ind_p1[1]+1,ind_p2[2],ind_p4[-2],ind_p2[4]]
+
+            ind_lowP_lowT_list += [ind_p1]
+            ind_highP_lowT_list += [ind_p2]
+            ind_lowP_highT_list += [ind_p3]
+            ind_highP_highT_list += [ind_p4]
+        ind_lowP_lowT , ind_highP_lowT, ind_lowP_highT, ind_highP_highT = np.array(ind_lowP_lowT_list) , np.array(ind_highP_lowT_list), np.array(ind_lowP_highT_list), np.array(ind_highP_highT_list)
+        
+        tinv = 1.0/tlayer
+        plogx = np.log(player*1e3) # in mbars
+        
+        tcinv_low = 1.0/ ind_lowP_lowT[:,-1]
+        tcinv_high  = 1.0/ ind_lowP_highT[:,-1]
+        
+        log_low_pc_lowT = np.log(ind_lowP_lowT[:,-2]*1e3)
+        log_high_pc_lowT = np.log(ind_highP_lowT[:,-2]*1e3)
+        
+        tt = (tinv - tcinv_low)/(tcinv_high - tcinv_low)
+        u = (plogx - log_low_pc_lowT)/( log_high_pc_lowT-log_low_pc_lowT )
+        
+        
+
+        kappa_lowp_lowt = self.kappa[ind_lowP_lowT[:,1].astype(int),ind_lowP_lowT[:,2].astype(int),:,:]
+        kappa_highp_lowt = self.kappa[ind_highP_lowT[:,1].astype(int),ind_highP_lowT[:,2].astype(int),:,:]
+        kappa_lowp_hight = self.kappa[ind_lowP_highT[:,1].astype(int),ind_lowP_highT[:,2].astype(int),:,:]
+        kappa_highp_hight = self.kappa[ind_highP_highT[:,1].astype(int),ind_highP_highT[:,2].astype(int),:,:]
+
+        log_kappa_interpolated = np.zeros_like(kappa_lowp_lowt)
+        
+        for i in range(nlayer):
+            log_kappa_interpolated[i,:,:] = (1.-tt[i])*(1.-u[i])*kappa_lowp_lowt[i,:,:] + tt[i]*(1.-u[i])*kappa_lowp_hight[i,:,:] +tt[i]*u[i]*kappa_highp_hight[i,:,:]+ (1.-tt[i])*u[i]*kappa_highp_lowt[i,:,:]
+        
+        
+        self.molecular_opa = np.exp(log_kappa_interpolated)*6.02214086e+23  #avogadro constant!
+        #self.molecular_opa = np.exp(self.kappa[ind_p, ind_t, :, :])*6.02214086e+23  #avogadro constant!
+    
+    
+    def load_kcoeff_arrays(self,path):
+ # this loads and returns the kappa tables from Theodora's bin_mol files
+ # will have this very hardcoded.
+ # use this func only once before run begins
+        max_wind = 670 # this can change as well but hopefully not
+        n_windows = 661 # wait for 196 , then this is 196
+        npres = 18 # max pres grid #
+        ntemp = 60 # max temp grid #
+
+        f = FortranFile( path+'/bin_CO', 'r' )
+
+        dummy1= f.read_record(dtype='float32')
+        dummy2 = f.read_reals( dtype='float32' )
+        k_co = f.read_reals( dtype='float' )
+        dummy3 = f.read_reals( dtype='float' )
+        dummy4 = f.read_reals( dtype='int16' )
+
+        kco = np.reshape(k_co,(ntemp,npres,16,max_wind))
+        
+
+        f = FortranFile( path+'/bin_CH4', 'r' )
+
+        dummy1= f.read_record(dtype='float32')
+        dummy2 = f.read_reals( dtype='float32' )
+        k_ch4 = f.read_reals( dtype='float' )
+        dummy3 = f.read_reals( dtype='float' )
+        dummy4 = f.read_reals( dtype='int16' )
+        
+        kch4 = np.reshape(k_ch4,(ntemp,npres,16,max_wind))
+
+        f = FortranFile( path+'/bin_NH3', 'r' )
+
+        dummy1= f.read_record(dtype='float32')
+        dummy2 = f.read_reals( dtype='float32' )
+        k_nh3 = f.read_reals( dtype='float' )
+        dummy3 = f.read_reals( dtype='float' )
+        dummy4 = f.read_reals( dtype='int16' )
+
+        knh3 = np.reshape(k_nh3,(ntemp,npres,16,max_wind))
+
+        f = FortranFile( path+'/bin_H2O', 'r' )
+
+        dummy1= f.read_record(dtype='float32')
+        dummy2 = f.read_reals( dtype='float32' )
+        k_h2o = f.read_reals( dtype='float' )
+        dummy3 = f.read_reals( dtype='float' )
+        dummy4 = f.read_reals( dtype='int16' )
+
+        kh2o = np.reshape(k_h2o,(ntemp,npres,16,max_wind))
+        '''
+        f = FortranFile( path+'/bin_CO2', 'r' )
+
+        dummy1= f.read_record(dtype='float32')
+        dummy2 = f.read_reals( dtype='float32' )
+        k_co2 = f.read_reals( dtype='float' )
+        dummy3 = f.read_reals( dtype='float' )
+        dummy4 = f.read_reals( dtype='int16' )
+
+        kco2 = np.reshape(k_co2,(ntemp,npres,16,max_wind))
+
+        f = FortranFile( path+'/bin_HCN', 'r' )
+
+        dummy1= f.read_record(dtype='float32')
+        dummy2 = f.read_reals( dtype='float32' )
+        k_hcn = f.read_reals( dtype='float' )
+        dummy3 = f.read_reals( dtype='float' )
+        dummy4 = f.read_reals( dtype='int16' )
+
+        khcn = np.reshape(k_hcn,(ntemp,npres,16,max_wind))
+
+        f = FortranFile( path+'/bin_N2', 'r' )
+
+        dummy1= f.read_record(dtype='float32')
+        dummy2 = f.read_reals( dtype='float32' )
+        k_n2 = f.read_reals( dtype='float' )
+        dummy3 = f.read_reals( dtype='float' )
+        dummy4 = f.read_reals( dtype='int16' )
+
+        kn2 = np.reshape(k_n2,(ntemp,npres,16,max_wind))
+        '''
+        f = FortranFile( path+'/bin_deq_rst_4', 'r' )
+
+        dummy1= f.read_record(dtype='float32')
+        dummy2 = f.read_reals( dtype='float32' )
+        k_back = f.read_reals( dtype='float' )
+        dummy3 = f.read_reals( dtype='float' )
+        dummy4 = f.read_reals( dtype='int16' )
+        
+        kback = np.reshape(k_back,(ntemp,npres,16,max_wind))
+
+        kback = kback.swapaxes(0,1)
+        kback = kback.swapaxes(2,3)
+
+        kh2o = kh2o.swapaxes(0,1)
+        kh2o = kh2o.swapaxes(2,3)
+
+        kch4 = kch4.swapaxes(0,1)
+        kch4 = kch4.swapaxes(2,3)
+
+        knh3 = knh3.swapaxes(0,1)
+        knh3 = knh3.swapaxes(2,3)
+
+        kco = kco.swapaxes(0,1)
+        kco = kco.swapaxes(2,3)
+        '''
+        kco2 = kco2.swapaxes(0,1)
+        kco2 = kco2.swapaxes(2,3)
+
+        kn2 = kn2.swapaxes(0,1)
+        kn2 = kn2.swapaxes(2,3)
+
+        khcn = khcn.swapaxes(0,1)
+        khcn = khcn.swapaxes(2,3)
+        '''
+
+        self.kappa_back = kback[:,:,0:self.nwno,0:self.ngauss]
+        self.kappa_h2o = kh2o[:,:,0:self.nwno,0:self.ngauss]
+        self.kappa_co = kco[:,:,0:self.nwno,0:self.ngauss]
+        self.kappa_nh3 = knh3[:,:,0:self.nwno,0:self.ngauss]
+        self.kappa_ch4 = kch4[:,:,0:self.nwno,0:self.ngauss]
+        '''
+        self.kappa_co2 = kco2[:,:,0:self.nwno,0:self.ngauss]
+        self.kappa_n2 = kn2[:,:,0:self.nwno,0:self.ngauss]
+        self.kappa_hcn = khcn[:,:,0:self.nwno,0:self.ngauss]
+        '''
+    def load_kcoeff_arrays_first(self,path):
+ # this loads and returns the kappa tables from Theodora's bin_mol files
+ # will have this very hardcoded.
+ # use this func only once before run begins
+        max_wind = 670 # this can change as well but hopefully not
+        n_windows = 661 # wait for 196 , then this is 196
+        npres = 18 # max pres grid #
+        ntemp = 60 # max temp grid #
+
+        f = FortranFile( path+'/bin_sol', 'r' )
+
+        dummy1= f.read_record(dtype='float32')
+        dummy2 = f.read_reals( dtype='float32' )
+        k_full = f.read_reals( dtype='float' )
+        dummy3 = f.read_reals( dtype='float' )
+        dummy4 = f.read_reals( dtype='int16' )
+
+        kfull = np.reshape(k_full,(ntemp,npres,16,max_wind))
+        
+
+        
+        kfull = kfull.swapaxes(0,1)
+        kfull = kfull.swapaxes(2,3)
+        
+        self.kappa = kfull[:,:,0:self.nwno,0:self.ngauss]
+        
+        
+    def get_new_wvno_grid_661(self):
+        path = os.path.join(__refdata__, 'climate_INPUTS/')#'/Users/sagnickmukherjee/Documents/GitHub/Disequilibrium-Picaso/reference/climate_INPUTS/'
+        wvno_new,dwni_new = np.loadtxt(path+"wvno_661",usecols=[0,1],unpack=True)
+        self.wno = wvno_new
+        self.delta_wno = dwni_new
+        self.nwno = len(wvno_new)
+
 
     def get_continuum(self, atmosphere):
         #open connection 
@@ -795,19 +1598,42 @@ class RetrieveCKs():
         player = atmosphere.layer['pressure']/atmosphere.c.pconv
 
         cia_molecules = atmosphere.continuum_molecules
-
+       
 
         self.continuum_opa = {key[0]+key[1]:np.zeros((nlayer,self.nwno)) for key in cia_molecules}
 
         #continuum
         #find nearest temp for cia grid
-        tcia = [np.unique(self.cia_temps)[find_nearest(np.unique(self.cia_temps),i)] for i in tlayer]
-
+        
+        #tcia = [np.unique(self.cia_temps)[find_nearest(np.unique(self.cia_temps),i)] for i in tlayer]
+        sorted_cia_temps = np.sort(self.cia_temps)
+        tcia_low = np.zeros_like(tlayer)
+        tcia_high = np.zeros_like(tlayer)
+        for t,i in zip(tlayer,range(len(tlayer))) :
+            diff = sorted_cia_temps -t
+            if t <= sorted_cia_temps[0]:
+                tcia_low[i] = sorted_cia_temps[0]
+                tcia_high[i] = sorted_cia_temps[1]
+            elif t >= sorted_cia_temps[-1]:
+                tcia_low[i] = sorted_cia_temps[-2]
+                tcia_high[i] = sorted_cia_temps[-1]
+            else :
+                templow = max(diff[np.where(diff <= 0)])
+                temphigh = min(diff[np.where(diff > 0)])
+                tcia_low[i], tcia_high[i] = t+templow,t+temphigh
+        
+        
+        
         #if user only runs a single molecule or temperature
-        if len(tcia) ==1: 
-            query_temp = """AND temperature= '{}' """.format(str(tcia[0]))
+        if len(tcia_low) ==1: 
+            query_temp_low = """AND temperature= '{}' """.format(str(tcia_low[0]))
         else:
-            query_temp = 'AND temperature in '+str(tuple(tcia) )
+            query_temp_low = 'AND temperature in '+str(tuple(tcia_low) )
+        if len(tcia_high) ==1: 
+            query_temp_high= """AND temperature= '{}' """.format(str(tcia_high[0]))
+        else:
+            query_temp_high = 'AND temperature in '+str(tuple(tcia_high) )
+        
         cia_mol = list(self.continuum_opa.keys())
         if len(cia_mol) ==1: 
             query_mol = """WHERE molecule= '{}' """.format(str(cia_mol[0]))
@@ -817,15 +1643,41 @@ class RetrieveCKs():
         cur.execute("""SELECT molecule,temperature,opacity 
                     FROM continuum 
                     {} 
-                    {}""".format(query_mol, query_temp))
+                    {}""".format(query_mol, query_temp_low))
 
-        data = cur.fetchall()
-        data = dict((x+'_'+str(y), dat) for x, y,dat in data)
+        data_low = cur.fetchall()
+        data_low = dict((x+'_'+str(y), dat) for x, y,dat in data_low)
+
+        cur.execute("""SELECT molecule,temperature,opacity 
+                    FROM continuum 
+                    {} 
+                    {}""".format(query_mol, query_temp_high))
+
+        data_high = cur.fetchall()
+        data_high = dict((x+'_'+str(y), dat) for x, y,dat in data_high)
+        
+        
         for i in self.continuum_opa.keys():
-            for j,ind in zip(tcia,range(nlayer)):
-                self.continuum_opa[i][ind,:] = data[i+'_'+str(j)]
+            y2_array = self.cia_splines[i]
+            
+            for jlow, jhigh,ind in zip(tcia_low, tcia_high,range(nlayer)):
+                h = tcia_high[ind] - tcia_low[ind]
+                a = (tcia_high[ind] - tlayer[ind])/h
+                b = (tlayer[ind]- tcia_low[ind])/h
 
+                whlow= np.where(jlow == self.cia_temps)
+                whhigh = np.where(jhigh == self.cia_temps)
+                
+        
+                interpolated = a*data_low[i+'_'+str(jlow)]+b*data_high[i+'_'+str(jhigh)]+((a**3-a)*y2_array[whlow[0][0],:]+(b**3-b)*y2_array[whhigh[0][0]])*(h**2)/6.0
+                
+                
+                  
+                self.continuum_opa[i][ind,:] = interpolated#data[i+'_'+str(j)]
+                
+        
         conn.close()
+        
 
     def open_local(self):
         """Code needed to open up local database, interpret arrays from bytes and return cursor"""
@@ -839,6 +1691,10 @@ class RetrieveCKs():
     def get_opacities(self, atmosphere):
         self.get_continuum(atmosphere)
         self.get_pre_mix_ck(atmosphere)
+    
+    def get_opacities_deq(self, bundle, atmosphere):
+        self.get_continuum(atmosphere)
+        self.mix_my_opacities(bundle , atmosphere)
 
     def adapt_array(arr):
         """needed to interpret bytes to array"""
@@ -1121,6 +1977,40 @@ def find_nearest(array,value):
     #small program to find the nearest neighbor in temperature  
     idx = (np.abs(array-value)).argmin()
     return idx
+
+@jit(nopython=True, cache=True)
+def spline(x , y, n, yp0, ypn):
+    
+    u=np.zeros(shape=(n))
+    y2 = np.zeros(shape=(n))
+
+    if yp0 > 0.99 :
+        y2[0] = 0.0
+        u[0] =0.0
+    else:
+        y2[0]=-0.5
+        u[0] = (3.0/(x[1]-x[0]))*((y[1]-y[0])/(x[1]-x[0])-yp0)
+
+    for i in range(1,n-1):
+        sig=(x[i]-x[i-1])/(x[i+1]-x[i-1])
+        p=sig*y2[i-1]+2.
+        y2[i]=(sig-1.)/p
+        u[i]=(6.0*((y[i+1]-y[i])/(x[i+1]-x[i])-(y[i]-y[i-1])/(x[i]-x[i-1]))/(x[i+1]-x[i-1])-sig*u[i-1])/p
+
+    if ypn > 0.99 :
+        qn = 0.0
+        un = 0.0
+    else:
+        qn =0.5
+        un = (3.0/(x[n-1]-x[n-2]))*(ypn-(y[n-1]-y[n-2])/(x[n-1]-x[n-2]))
+    
+    y2[n-1] = (un - qn*u[n-2])/(qn*y2[n-2]+1.0)
+
+    for k in range(n-2, -1, -1):
+        y2[k] = y2[k] * y2[k+1] +u[k]
+    
+    return y2
+
 @jit(nopython=True, cache=True)
 def numba_cumsum(mat):
     """Function to compute cumsum along axis=0 to bypass numba not allowing kwargs in 

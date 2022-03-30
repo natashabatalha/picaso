@@ -83,10 +83,11 @@ def get_original_data(original_file,colnames,new_db, overwrite=False):
         cia database 
    """
     og_opacity = pd.read_csv(original_file,delim_whitespace=True,names=colnames)
-
+    
     temperatures = og_opacity['wno'].loc[np.isnan(og_opacity[colnames[1]])].values
 
     og_opacity = og_opacity.dropna()
+    print(og_opacity)
     old_wno = og_opacity['wno'].unique()
     #define units
     w_unit = 'cm-1'
@@ -1005,7 +1006,6 @@ def get_molecular(db_file, species, temperature,pressure):
     cur.execute('SELECT ptid, pressure, temperature FROM molecular')
     data= cur.fetchall()    
     pt_pairs = sorted(list(set(data)),key=lambda x: (x[0]) )
-    print(pt_pairs) 
     #here's a little code to get out the correct pair (so we dont have to worry about getting the exact number right)
     ind_pt = [min(pt_pairs, key=lambda c: math.hypot(c[1]- coordinate[0], c[2]-coordinate[1]))[0]
               for coordinate in  zip(pressure,temperature)]
@@ -1040,7 +1040,6 @@ def get_molecular(db_file, species, temperature,pressure):
     for i in restruct.keys():
         for t in temp_nearest:
             restruct[i][t] = {}
-    print(restruct,data)
     for im, iid,ip,it, dat in data : restruct[im][it][ip] = dat
 
     cur.execute('SELECT wavenumber_grid FROM header')
