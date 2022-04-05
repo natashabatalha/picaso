@@ -87,8 +87,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     stream = inputs['approx']['stream']
     approximation = inputs['approx']['Toon_coefficients']
     tridiagonal = 0 
-    #input_dir = inputs['approx']['input_dir']
-    input_dir=None
+    input_dir = inputs['approx']['input_dir']
+    #input_dir=None
 
 
     #parameters needed for the two term hg phase function. 
@@ -230,6 +230,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                                         atm.surf_reflect, atm.hard_surface, tridiagonal)
                 elif method == 'SH':
                     thermal_calculation = inputs['approx']['thermal_calculation']
+                    SH4_BC = inputs['approx']['SH4_BC']
                     (flux, intensity, flux_out) = get_thermal_new(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
                                                 DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig], 
                                                 DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], 
@@ -238,7 +239,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                                 constant_forward,constant_back,frac_a,frac_b,frac_c,
                                                 atm.surf_reflect, 
                                                 single_phase, dimension, stream, atm.hard_surface, 
-                                                calculation=thermal_calculation)
+                                                calculation=thermal_calculation, SH4_BC=SH4_BC)
 
                 flux_at_top += flux*gauss_wts[ig]
                 
@@ -432,7 +433,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             returns['full_output'] = atm
 
     if input_dir != None:
-        filename = input_dir #'/Users/crooney/Documents/codes/picaso/docs/notebooks/input_data.pk'
+        filename = input_dir + 'output.pk' #/Users/crooney/Documents/codes/picaso/docs/notebooks/input_data.pk'
         pk.dump({'pressure': atm.level['pressure'], 'temperature': atm.level['temperature'], 
             'nlevel':nlevel, 'wno':wno, 'nwno':nwno, 'ng':ng, 'nt':nt, 
             'dtau':DTAU, 'tau':TAU, 'w0':W0, 'cosb':COSB, 'gcos2':GCOS2,'ftcld':ftau_cld,'ftray': ftau_ray,
@@ -441,7 +442,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             'single_phase':single_phase, 'multi_phase':multi_phase, 
             'frac_a':frac_a, 'frac_b':frac_b, 'frac_c':frac_c, 'constant_back':constant_back, 
             'constant_forward':constant_forward, 'dim':dimension, 'stream':stream,
-            'xint_at_top': xint_at_top, 'albedo': albedo, 'flux': flux_out, 'xint': intensity, 'b_top': b_top,
+            #'xint_at_top': xint_at_top, 'albedo': albedo, 'flux': flux_out, 'xint': intensity, 'b_top': b_top,
+            'xint_at_top': flux_at_top, 'flux': flux_out, 'xint': intensity, 'b_top': b_top,
             'gweight': gweight, 'tweight': tweight, 'gangle': gangle, 'tangle': tangle}, open(filename,'wb'), protocol=2)
     return returns
 
@@ -2563,7 +2565,7 @@ class inputs():
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='pollack',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
         p_reference=1, method='Toon', stream=2, thermal_calculation=1, Toon_coefficients="quadrature",
-        input_dir=None):
+        input_dir=None, SH4_BC=0):
         """
         This function sets all the default approximations in the code. It transforms the string specificatons
         into a number so that they can be used in numba nopython routines. 
@@ -2625,6 +2627,7 @@ class inputs():
         self.inputs['approx']['p_reference']= p_reference
         self.inputs['approx']['input_dir'] = input_dir
         self.inputs['approx']['thermal_calculation'] = thermal_calculation
+        self.inputs['approx']['SH4_BC'] = SH4_BC
     
     def phase_curve(self, opacityclass,  full_output=False, 
         plot_opacity= False,n_cpu =1 ): 
