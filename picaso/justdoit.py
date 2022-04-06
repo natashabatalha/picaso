@@ -1046,21 +1046,20 @@ class inputs():
             fine_wno_star = np.linspace(min_shift, max_shift, len(wno_planet)*5)
             fine_flux_star = np.interp(fine_wno_star,wno_star, flux_star)
             opannection.compute_stellar_shits(fine_wno_star, fine_flux_star)
+            bin_flux_star = opannection.unshifted_stellar_spec
         elif 'climate' in self.inputs['calculation']: 
             #stellar flux of star 
             nrg_flux = 0.5*np.diff(1/wno_planet)*(flux_star[0:-1]+flux_star[1:])
-            nrg_flux 
-            fine_wno_star = wno_planet
-            _x,fine_flux_star = mean_regrid(wno_star, flux_star,newx=wno_planet)  
-            opannection.unshifted_stellar_spec = fine_flux_star            
+            _x,bin_flux_star = mean_regrid(wno_star, flux_star,newx=wno_planet)  
+            opannection.unshifted_stellar_spec = bin_flux_star            
         else :
-            max_shift = np.max(wno_planet)+1  
-            min_shift = np.min(wno_planet) -1 
-            #gaurd against nans bcause stellar spectrum is too low res
-            fine_wno_star = np.linspace(min_shift, max_shift, len(wno_planet)*5)
-            fine_flux_star = np.interp(fine_wno_star, wno_star, flux_star)
-            _x,fine_flux_star = mean_regrid(fine_wno_star, fine_flux_star,newx=wno_planet)  
-            opannection.unshifted_stellar_spec =fine_flux_star
+            flux_star_interp = np.interp(wno_planet, wno_star, flux_star)
+            _x,bin_flux_star = mean_regrid(wno_star, flux_star,newx=wno_planet)
+            #where the star wasn't high enough resolution  
+            idx_nobins = np.where(np.isnan(bin_flux_star))[0]
+            #replace no bins with interpolated values 
+            bin_flux_star[idx_nobins] = flux_star_interp[idx_nobins]
+            opannection.unshifted_stellar_spec =bin_flux_star
 
         self.inputs['star']['database'] = database
         self.inputs['star']['temp'] = temp
@@ -1068,8 +1067,8 @@ class inputs():
         self.inputs['star']['metal'] = metal
         self.inputs['star']['radius'] = r 
         self.inputs['star']['radius_unit'] = radius_unit 
-        self.inputs['star']['flux'] = fine_flux_star 
-        self.inputs['star']['wno'] = fine_wno_star 
+        self.inputs['star']['flux'] = bin_flux_star
+        self.inputs['star']['wno'] = wno_planet
         self.inputs['star']['semi_major'] = semi_major 
         self.inputs['star']['semi_major_unit'] = semi_major_unit 
     def atmosphere(self, df=None, filename=None, exclude_mol=None, verbose=True, **pd_kwargs):
@@ -2888,6 +2887,7 @@ def load_planet(df, opacity, phase_angle = 0, stellar_db='phoenix', verbose=Fals
 
         #setup picaso
         start_case = inputs()
+        start_case.approx(raman="none")
         start_case.phase_angle(phase_angle) #radians 
 
         #define gravity
