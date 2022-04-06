@@ -1246,8 +1246,8 @@ class inputs():
                 run the gravity function to set gravity')
 
         flist = os.listdir(os.path.join(sonora_path))
-        if ((len(flist)<300) & ('t400g3160nc_m0.0.cmp.gz' not in flist)):
-            raise Exception('Oops! Looks like the sonora path you specified does not contain the ~390 .gz model files from Zenodo. Please untar the profile.tar file here https://zenodo.org/record/1309035#.Xo5GbZNKjGJ and point to this file path as your input.')
+        if ('cmp.gz' not in str(flist)):
+            raise Exception('Oops! Looks like the sonora path you specified does not contain any files that end in .cmp.gz. Please untar the profile.tar file here https://zenodo.org/record/1309035#.Xo5GbZNKjGJ and point to this file path as your input. There should be around 390 files that end in cmp.gz. No need to unzip then individually.')
 
         flist = [i.split('/')[-1] for i in flist if 'gz' in i]
         ts = [i.split('g')[0][1:] for i in flist if 'gz' in i]
@@ -1259,6 +1259,8 @@ class inputs():
         get_ind = min(pairs, key=lambda c: math.hypot(c[1]- coordinate[0], c[2]-coordinate[1]))[0]
 
         build_filename = 't'+ts[get_ind]+'g'+gs[get_ind]+'nc_m0.0.cmp.gz'
+        if build_filename not in flist: 
+            raise Exception(f"The Sonora file you are looking for {build_filename} does not exist in your specified directory {sonora_path}. Please check that it is in there.")
         ptchem = pd.read_csv(os.path.join(sonora_path,build_filename),delim_whitespace=True,compression='gzip')
         ptchem = ptchem.rename(columns={'P(BARS)':'pressure',
                                         'TEMP':'temperature',
