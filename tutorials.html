@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Tutorials &mdash; picaso 2.2 documentation</title>
+  <title>Tutorials &mdash; picaso 2.3 documentation</title>
   
 
   
@@ -63,7 +63,7 @@
             
             
               <div class="version">
-                2.2
+                2.3
               </div>
             
           
@@ -112,11 +112,17 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#moving-to-3-dimensions">Moving to 3 Dimensions</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/8_SphericalIntegration.html">Non-Zero Phase and Spherical Integration</a></li>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/9_Adding3DFunctionality.html">From 1D to 3D</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/9a_3DInputsWithPICASOandXarray.html">Basics of a 3D Calculation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/9b_PostProcess3Dinput-Chemistry.html">What is post-processing?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/9b_PostProcess3Dinput-Chemistry.html#Post-Process-3D-Chemistry-Input">Post-Process 3D Chemistry Input</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/9c_PostProcess3Dinput-Clouds.html">Post-Processing Clouds for 3D runs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/9d_3DSpectra.html">Modeling a 3D Spectrum (Adams et al. 2022)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/9e_PhaseCurves.html">Modeling a Phase Curve pt 1 (Robbins-Blanch et al. 2022)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/9f_PhaseCurves-wChemEq.html">Modeling a Phase Curve pt 2 (Robbins-Blanch et al. 2022)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#opacities-approximatons">Opacities &amp; Approximatons</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/9_SwappingOpacities.html">Opacity Factory</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/10_SwappingOpacities.html">Opacity Factory</a></li>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html">Investigating Approximations</a></li>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/11_Sqlite3Tutorial.html">SQLITE Tutorial</a></li>
 </ul>
@@ -132,7 +138,7 @@
 <li class="toctree-l1"><a class="reference internal" href="workshops.html">Workshop Material</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://arxiv.org/abs/1904.09355">The Paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="credit.html">The Papers</a></li>
 </ul>
 
             
@@ -309,6 +315,7 @@
 </div>
 <div class="section" id="moving-to-3-dimensions">
 <h2>Moving to 3 Dimensions<a class="headerlink" href="#moving-to-3-dimensions" title="Permalink to this headline">¶</a></h2>
+<p>Relevant Citatons: <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2022ApJ...926..157A/abstract">Adams et al. 2022</a> for 3D spectra and <a class="reference external" href="https://arxiv.org/">Robbins-Blanch et al. 2022</a> for Phase Curves.</p>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/8_SphericalIntegration.html">Non-Zero Phase and Spherical Integration</a><ul>
@@ -316,16 +323,41 @@
 <li class="toctree-l2"><a class="reference internal" href="notebooks/8_SphericalIntegration.html#Geometry-with-Reflectivity-and-Non-Zero-Phase">Geometry with Reflectivity and Non-Zero Phase</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/9_Adding3DFunctionality.html">From 1D to 3D</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/9_Adding3DFunctionality.html#Same-procedure-as-normal">Same procedure as normal</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/9_Adding3DFunctionality.html#Build-3D-Chemistry-and-PT-Input">Build 3D Chemistry and PT Input</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/9_Adding3DFunctionality.html#1)-MIT-GCM">1) MIT GCM</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/9_Adding3DFunctionality.html#2)-Building-Generic-Input">2) Building Generic Input</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/9_Adding3DFunctionality.html#Create-1D-Thermal-Emission-Spectrum-from-3D-Output">Create 1D Thermal Emission Spectrum from 3D Output</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/9_Adding3DFunctionality.html#Analyze-3D-Output">Analyze 3D Output</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/9_Adding3DFunctionality.html#Compare-flux-to-blackbodies">Compare flux to blackbodies</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/9_Adding3DFunctionality.html#3D-Map-of-Flux">3D Map of Flux</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/9_Adding3DFunctionality.html#More-3D-Mapping-Functions">More 3D Mapping Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/9a_3DInputsWithPICASOandXarray.html">Basics of a 3D Calculation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9a_3DInputsWithPICASOandXarray.html#xarray-tutorial:-Convert-numpy-arrays-to-xarray-DataSet"><code class="docutils literal notranslate"><span class="pre">xarray</span></code> tutorial: Convert <code class="docutils literal notranslate"><span class="pre">numpy</span></code> arrays to <code class="docutils literal notranslate"><span class="pre">xarray</span></code> DataSet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9a_3DInputsWithPICASOandXarray.html#xarray-tutorial:-Easy-plotting"><code class="docutils literal notranslate"><span class="pre">xarray</span></code> tutorial: Easy plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9a_3DInputsWithPICASOandXarray.html#xesfm-tutorial:-Step-by-step-regrid-3D-GCM"><code class="docutils literal notranslate"><span class="pre">xesfm</span></code> tutorial: Step-by-step regrid 3D GCM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9a_3DInputsWithPICASOandXarray.html#Regrid-3D-GCM-with-PICASO">Regrid 3D GCM with PICASO</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/9b_PostProcess3Dinput-Chemistry.html">What is post-processing?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/9b_PostProcess3Dinput-Chemistry.html#Post-Process-3D-Chemistry-Input">Post-Process 3D Chemistry Input</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9b_PostProcess3Dinput-Chemistry.html#Post-Process-Chemistry:-User-Options">Post-Process Chemistry: User Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9b_PostProcess3Dinput-Chemistry.html#Post-Process-Chemistry:-User-Defined-Input">Post-Process Chemistry: User Defined Input</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9b_PostProcess3Dinput-Chemistry.html#Post-Process-Chemistry:-Chemical-Equilibrium">Post-Process Chemistry: Chemical Equilibrium</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/9c_PostProcess3Dinput-Clouds.html">Post-Processing Clouds for 3D runs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9c_PostProcess3Dinput-Clouds.html#Post-Process-Clouds:-User-Options">Post-Process Clouds: User Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9c_PostProcess3Dinput-Clouds.html#Post-Process-Clouds:-User-Defined-Input">Post-Process Clouds: User Defined Input</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9c_PostProcess3Dinput-Clouds.html#Post-Process-Clouds:-virga-cloud-model">Post-Process Clouds: <code class="docutils literal notranslate"><span class="pre">virga</span></code> cloud model</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/9d_3DSpectra.html">Modeling a 3D Spectrum (Adams et al. 2022)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9d_3DSpectra.html#Run-Cloud-Free-3D-Spectra">Run Cloud-Free 3D Spectra</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9d_3DSpectra.html#Analyze-3D-Spectra">Analyze 3D Spectra</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9d_3DSpectra.html#Run-Cloudy-3D-Spectra">Run Cloudy 3D Spectra</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/9e_PhaseCurves.html">Modeling a Phase Curve pt 1 (Robbins-Blanch et al. 2022)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9e_PhaseCurves.html#Run-Thermal-Phase-Curve-w/-3D-Input">Run Thermal Phase Curve w/ 3D Input</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9e_PhaseCurves.html#Analyze-Phase-Curves">Analyze Phase Curves</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9e_PhaseCurves.html#Run-Cloudy-Thermal-Phase-Curve-w/-3D-Input">Run Cloudy Thermal Phase Curve w/ 3D Input</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/9f_PhaseCurves-wChemEq.html">Modeling a Phase Curve pt 2 (Robbins-Blanch et al. 2022)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9f_PhaseCurves-wChemEq.html#Run-Thermal-Phase-Curve-w/-Post-Processed-Chemical-Abundances">Run Thermal Phase Curve w/ Post-Processed Chemical Abundances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/9f_PhaseCurves-wChemEq.html#Run-Thermal-Phase-Curve-w/-Post-Processed-virga-Models">Run Thermal Phase Curve w/ Post-Processed <code class="docutils literal notranslate"><span class="pre">virga</span></code> Models</a></li>
 </ul>
 </li>
 </ul>
@@ -335,9 +367,9 @@
 <h2>Opacities &amp; Approximatons<a class="headerlink" href="#opacities-approximatons" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/9_SwappingOpacities.html">Opacity Factory</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/9_SwappingOpacities.html#General-Sqlite3-and-how-our-database-is-structured">General Sqlite3 and how our database is structured</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/9_SwappingOpacities.html#How-to-Query-the-Database">How to Query the Database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10_SwappingOpacities.html">Opacity Factory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/10_SwappingOpacities.html#General-Sqlite3-and-how-our-database-is-structured">General Sqlite3 and how our database is structured</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/10_SwappingOpacities.html#How-to-Query-the-Database">How to Query the Database</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html">Investigating Approximations</a><ul>

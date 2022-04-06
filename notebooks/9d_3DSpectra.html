@@ -1,0 +1,1134 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>3D Spectra &mdash; picaso 2.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Phase Curves Part 1" href="9e_PhaseCurves.html" />
+    <link rel="prev" title="Post-Process 3D Clouds Input" href="9c_PostProcess3Dinput-Clouds.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> picaso
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                2.3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../tutorials.html">The Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#basics-of-reflected-light">Basics of Reflected Light</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#basics-of-transmisison">Basics of Transmisison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#basics-of-thermal-emission">Basics of Thermal Emission</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#cloud-modeling-with-virga">Cloud Modeling with <cite>Virga</cite></a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../tutorials.html#moving-to-3-dimensions">Moving to 3 Dimensions</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="8_SphericalIntegration.html">Non-Zero Phase and Spherical Integration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="9a_3DInputsWithPICASOandXarray.html">Basics of a 3D Calculation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="9b_PostProcess3Dinput-Chemistry.html">What is post-processing?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="9b_PostProcess3Dinput-Chemistry.html#Post-Process-3D-Chemistry-Input">Post-Process 3D Chemistry Input</a></li>
+<li class="toctree-l3"><a class="reference internal" href="9c_PostProcess3Dinput-Clouds.html">Post-Processing Clouds for 3D runs</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Modeling a 3D Spectrum (Adams et al. 2022)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Run-Cloud-Free-3D-Spectra">Run Cloud-Free 3D Spectra</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Analyze-3D-Spectra">Analyze 3D Spectra</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Run-Cloudy-3D-Spectra">Run Cloudy 3D Spectra</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="9e_PhaseCurves.html">Modeling a Phase Curve pt 1 (Robbins-Blanch et al. 2022)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="9f_PhaseCurves-wChemEq.html">Modeling a Phase Curve pt 2 (Robbins-Blanch et al. 2022)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#opacities-approximatons">Opacities &amp; Approximatons</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#miscellaneous">Miscellaneous</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../credit.html">The Papers</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">picaso</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../tutorials.html">Tutorials</a> &raquo;</li>
+        
+      <li>3D Spectra</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/notebooks/9d_3DSpectra.ipynb.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container,
+div.nbinput.container div.prompt,
+div.nbinput.container div.input_area,
+div.nbinput.container div[class*=highlight],
+div.nbinput.container div[class*=highlight] pre,
+div.nboutput.container,
+div.nboutput.container div.prompt,
+div.nboutput.container div.output_area,
+div.nboutput.container div[class*=highlight],
+div.nboutput.container div[class*=highlight] pre {
+    background: none;
+    border: none;
+    padding: 0 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    min-width: 5ex;
+    padding-top: 0.3rem;
+    padding-right: 0.3rem;
+    text-align: right;
+    flex: 0;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    background: #f5f5f5;
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 0.3rem;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt a.copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+div.rendered_html th {
+  font-weight: bold;
+}
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/9d_3DSpectra.ipynb">Download full notebook here</a></p>
+</div>
+<h1><p>Table of Contents</p>
+</h1><div class="toc"><ul class="toc-item"><li><p>1  3D Spectra</p>
+<ul class="toc-item"><li><p>1.1  Run Cloud-Free 3D Spectra</p>
+</li><li><p>1.2  Analyze 3D Spectra</p>
+</li><li><p>1.3  Run Cloudy 3D Spectra</p>
+</li></ul></li></ul></div><div class="section" id="3D-Spectra">
+<h1>3D Spectra<a class="headerlink" href="#3D-Spectra" title="Permalink to this headline">¶</a></h1>
+<p>From the previous two tutorials you should understand how:</p>
+<ol class="arabic simple">
+<li><p>How to convert your GCM input to <code class="docutils literal notranslate"><span class="pre">PICASO</span></code>’s required <code class="docutils literal notranslate"><span class="pre">xarray</span></code></p></li>
+<li><p>How to post-process output to append to your GCM output</p></li>
+</ol>
+<p>Here you will learn:</p>
+<ol class="arabic simple">
+<li><p>How to run a 3D spectrum</p></li>
+<li><p>How to analyze the resulting output</p></li>
+</ol>
+<p><strong>Citation:</strong><a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2022ApJ...926..157A/abstract">Adams et al. 2022 “Spatially Resolved Modeling of Optical Albedos for a Sample of Six Hot Jupiters” ApJ</a></p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">picaso</span> <span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
+<span class="kn">from</span> <span class="nn">picaso</span> <span class="kn">import</span> <span class="n">justplotit</span> <span class="k">as</span> <span class="n">jpi</span>
+<span class="n">jpi</span><span class="o">.</span><span class="n">output_notebook</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div class="bk-root">
+    <a href="https://bokeh.org" target="_blank" class="bk-logo bk-logo-small bk-logo-notebook"></a>
+    <span id="1002">Loading BokehJS ...</span>
+</div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+
+(function(root) {
+  function now() {
+    return new Date();
+  }
+
+  var force = true;
+
+  if (typeof root._bokeh_onload_callbacks === "undefined" || force === true) {
+    root._bokeh_onload_callbacks = [];
+    root._bokeh_is_loading = undefined;
+  }
+
+  var JS_MIME_TYPE = 'application/javascript';
+  var HTML_MIME_TYPE = 'text/html';
+  var EXEC_MIME_TYPE = 'application/vnd.bokehjs_exec.v0+json';
+  var CLASS_NAME = 'output_bokeh rendered_html';
+
+  /**
+   * Render data to the DOM node
+   */
+  function render(props, node) {
+    var script = document.createElement("script");
+    node.appendChild(script);
+  }
+
+  /**
+   * Handle when an output is cleared or removed
+   */
+  function handleClearOutput(event, handle) {
+    var cell = handle.cell;
+
+    var id = cell.output_area._bokeh_element_id;
+    var server_id = cell.output_area._bokeh_server_id;
+    // Clean up Bokeh references
+    if (id != null && id in Bokeh.index) {
+      Bokeh.index[id].model.document.clear();
+      delete Bokeh.index[id];
+    }
+
+    if (server_id !== undefined) {
+      // Clean up Bokeh references
+      var cmd = "from bokeh.io.state import curstate; print(curstate().uuid_to_server['" + server_id + "'].get_sessions()[0].document.roots[0]._id)";
+      cell.notebook.kernel.execute(cmd, {
+        iopub: {
+          output: function(msg) {
+            var id = msg.content.text.trim();
+            if (id in Bokeh.index) {
+              Bokeh.index[id].model.document.clear();
+              delete Bokeh.index[id];
+            }
+          }
+        }
+      });
+      // Destroy server and session
+      var cmd = "import bokeh.io.notebook as ion; ion.destroy_server('" + server_id + "')";
+      cell.notebook.kernel.execute(cmd);
+    }
+  }
+
+  /**
+   * Handle when a new output is added
+   */
+  function handleAddOutput(event, handle) {
+    var output_area = handle.output_area;
+    var output = handle.output;
+
+    // limit handleAddOutput to display_data with EXEC_MIME_TYPE content only
+    if ((output.output_type != "display_data") || (!Object.prototype.hasOwnProperty.call(output.data, EXEC_MIME_TYPE))) {
+      return
+    }
+
+    var toinsert = output_area.element.find("." + CLASS_NAME.split(' ')[0]);
+
+    if (output.metadata[EXEC_MIME_TYPE]["id"] !== undefined) {
+      toinsert[toinsert.length - 1].firstChild.textContent = output.data[JS_MIME_TYPE];
+      // store reference to embed id on output_area
+      output_area._bokeh_element_id = output.metadata[EXEC_MIME_TYPE]["id"];
+    }
+    if (output.metadata[EXEC_MIME_TYPE]["server_id"] !== undefined) {
+      var bk_div = document.createElement("div");
+      bk_div.innerHTML = output.data[HTML_MIME_TYPE];
+      var script_attrs = bk_div.children[0].attributes;
+      for (var i = 0; i < script_attrs.length; i++) {
+        toinsert[toinsert.length - 1].firstChild.setAttribute(script_attrs[i].name, script_attrs[i].value);
+        toinsert[toinsert.length - 1].firstChild.textContent = bk_div.children[0].textContent
+      }
+      // store reference to server id on output_area
+      output_area._bokeh_server_id = output.metadata[EXEC_MIME_TYPE]["server_id"];
+    }
+  }
+
+  function register_renderer(events, OutputArea) {
+
+    function append_mime(data, metadata, element) {
+      // create a DOM node to render to
+      var toinsert = this.create_output_subarea(
+        metadata,
+        CLASS_NAME,
+        EXEC_MIME_TYPE
+      );
+      this.keyboard_manager.register_events(toinsert);
+      // Render to node
+      var props = {data: data, metadata: metadata[EXEC_MIME_TYPE]};
+      render(props, toinsert[toinsert.length - 1]);
+      element.append(toinsert);
+      return toinsert
+    }
+
+    /* Handle when an output is cleared or removed */
+    events.on('clear_output.CodeCell', handleClearOutput);
+    events.on('delete.Cell', handleClearOutput);
+
+    /* Handle when a new output is added */
+    events.on('output_added.OutputArea', handleAddOutput);
+
+    /**
+     * Register the mime type and append_mime function with output_area
+     */
+    OutputArea.prototype.register_mime_type(EXEC_MIME_TYPE, append_mime, {
+      /* Is output safe? */
+      safe: true,
+      /* Index of renderer in `output_area.display_order` */
+      index: 0
+    });
+  }
+
+  // register the mime type if in Jupyter Notebook environment and previously unregistered
+  if (root.Jupyter !== undefined) {
+    var events = require('base/js/events');
+    var OutputArea = require('notebook/js/outputarea').OutputArea;
+
+    if (OutputArea.prototype.mime_types().indexOf(EXEC_MIME_TYPE) == -1) {
+      register_renderer(events, OutputArea);
+    }
+  }
+
+
+  if (typeof (root._bokeh_timeout) === "undefined" || force === true) {
+    root._bokeh_timeout = Date.now() + 5000;
+    root._bokeh_failed_load = false;
+  }
+
+  var NB_LOAD_WARNING = {'data': {'text/html':
+     "<div style='background-color: #fdd'>\n"+
+     "<p>\n"+
+     "BokehJS does not appear to have successfully loaded. If loading BokehJS from CDN, this \n"+
+     "may be due to a slow or bad network connection. Possible fixes:\n"+
+     "</p>\n"+
+     "<ul>\n"+
+     "<li>re-rerun `output_notebook()` to attempt to load from CDN again, or</li>\n"+
+     "<li>use INLINE resources instead, as so:</li>\n"+
+     "</ul>\n"+
+     "<code>\n"+
+     "from bokeh.resources import INLINE\n"+
+     "output_notebook(resources=INLINE)\n"+
+     "</code>\n"+
+     "</div>"}};
+
+  function display_loaded() {
+    var el = document.getElementById("1002");
+    if (el != null) {
+      el.textContent = "BokehJS is loading...";
+    }
+    if (root.Bokeh !== undefined) {
+      if (el != null) {
+        el.textContent = "BokehJS " + root.Bokeh.version + " successfully loaded.";
+      }
+    } else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(display_loaded, 100)
+    }
+  }
+
+
+  function run_callbacks() {
+    try {
+      root._bokeh_onload_callbacks.forEach(function(callback) {
+        if (callback != null)
+          callback();
+      });
+    } finally {
+      delete root._bokeh_onload_callbacks
+    }
+    console.debug("Bokeh: all callbacks have finished");
+  }
+
+  function load_libs(css_urls, js_urls, callback) {
+    if (css_urls == null) css_urls = [];
+    if (js_urls == null) js_urls = [];
+
+    root._bokeh_onload_callbacks.push(callback);
+    if (root._bokeh_is_loading > 0) {
+      console.debug("Bokeh: BokehJS is being loaded, scheduling callback at", now());
+      return null;
+    }
+    if (js_urls == null || js_urls.length === 0) {
+      run_callbacks();
+      return null;
+    }
+    console.debug("Bokeh: BokehJS not loaded, scheduling load and callback at", now());
+    root._bokeh_is_loading = css_urls.length + js_urls.length;
+
+    function on_load() {
+      root._bokeh_is_loading--;
+      if (root._bokeh_is_loading === 0) {
+        console.debug("Bokeh: all BokehJS libraries/stylesheets loaded");
+        run_callbacks()
+      }
+    }
+
+    function on_error(url) {
+      console.error("failed to load " + url);
+    }
+
+    for (let i = 0; i < css_urls.length; i++) {
+      const url = css_urls[i];
+      const element = document.createElement("link");
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.rel = "stylesheet";
+      element.type = "text/css";
+      element.href = url;
+      console.debug("Bokeh: injecting link tag for BokehJS stylesheet: ", url);
+      document.body.appendChild(element);
+    }
+
+    const hashes = {"https://cdn.bokeh.org/bokeh/release/bokeh-2.3.3.min.js": "dM3QQsP+wXdHg42wTqW85BjZQdLNNIXqlPw/BgKoExPmTG7ZLML4EGqLMfqHT6ON", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.3.3.min.js": "8x57I4YuIfu8XyZfFo0XVr2WAT8EK4rh/uDe3wF7YuW2FNUSNEpJbsPaB1nJ2fz2", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.3.3.min.js": "3QTqdz9LyAm2i0sG5XTePsHec3UHWwVsrOL68SYRoAXsafvfAyqtQ+h440+qIBhS"};
+
+    for (let i = 0; i < js_urls.length; i++) {
+      const url = js_urls[i];
+      const element = document.createElement('script');
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.async = false;
+      element.src = url;
+      if (url in hashes) {
+        element.crossOrigin = "anonymous";
+        element.integrity = "sha384-" + hashes[url];
+      }
+      console.debug("Bokeh: injecting script tag for BokehJS library: ", url);
+      document.head.appendChild(element);
+    }
+  };
+
+  function inject_raw_css(css) {
+    const element = document.createElement("style");
+    element.appendChild(document.createTextNode(css));
+    document.body.appendChild(element);
+  }
+
+
+  var js_urls = ["https://cdn.bokeh.org/bokeh/release/bokeh-2.3.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.3.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.3.3.min.js"];
+  var css_urls = [];
+
+
+  var inline_js = [
+    function(Bokeh) {
+      Bokeh.set_log_level("info");
+    },
+    function(Bokeh) {
+
+
+    }
+  ];
+
+  function run_inline_js() {
+
+    if (root.Bokeh !== undefined || force === true) {
+
+    for (var i = 0; i < inline_js.length; i++) {
+      inline_js[i].call(root, root.Bokeh);
+    }
+    if (force === true) {
+        display_loaded();
+      }} else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(run_inline_js, 100);
+    } else if (!root._bokeh_failed_load) {
+      console.log("Bokeh: BokehJS failed to load within specified timeout.");
+      root._bokeh_failed_load = true;
+    } else if (force !== true) {
+      var cell = $(document.getElementById("1002")).parents('.cell').data().cell;
+      cell.output_area.append_execute_result(NB_LOAD_WARNING)
+    }
+
+  }
+
+  if (root._bokeh_is_loading === 0) {
+    console.debug("Bokeh: BokehJS loaded, going straight to plotting");
+    run_inline_js();
+  } else {
+    load_libs(css_urls, js_urls, function() {
+      console.debug("Bokeh: BokehJS plotting callback run at", now());
+      run_inline_js();
+    });
+  }
+}(window));
+</script></div>
+</div>
+<div class="section" id="Run-Cloud-Free-3D-Spectra">
+<h2>Run Cloud-Free 3D Spectra<a class="headerlink" href="#Run-Cloud-Free-3D-Spectra" title="Permalink to this headline">¶</a></h2>
+<p>By now you should have completed all the 3D inputs notebooks. This will just take you through completing the last step or running 3D spectra and analyzing your output.</p>
+<p>Note most of the framework here follows the regular PICASO framework. If you need a refresher on the general workflow, please see earlier tutorials.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">opacity</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="p">[</span><span class="mf">1.1</span><span class="p">,</span><span class="mf">1.7</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">gcm_out</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">HJ_pt_3d</span><span class="p">(</span><span class="n">as_xarray</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">case_3d</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_gangle</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">num_tangle</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">atmosphere_3d</span><span class="p">(</span><span class="n">gcm_out</span><span class="p">,</span><span class="n">regrid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">plot</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">chemeq_3d</span><span class="p">(</span><span class="n">n_cpu</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span> <span class="c1">#parallelize chemistry run</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_jup&#39;</span><span class="p">),</span>
+                <span class="n">mass</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">mass_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;M_jup&#39;</span><span class="p">))</span> <span class="c1">#any astropy units available</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">opacity</span><span class="p">,</span><span class="mi">5000</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mf">4.0</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_sun&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/nbatalh1/.conda/envs/picaso38/lib/python3.8/site-packages/xesmf/smm.py:129: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+  warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
+</pre></div></div>
+</div>
+<div class="section" id="Predicting-Compute-Runtimes-for-3D-Calculations">
+<h3>Predicting Compute Runtimes for 3D Calculations<a class="headerlink" href="#Predicting-Compute-Runtimes-for-3D-Calculations" title="Permalink to this headline">¶</a></h3>
+<p>The speed of the code will be nearly directly proportional to the number of gangles and tangles as on radiative transfer calculation has to be computed for each facet of the “disco ball”.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">out3d</span> <span class="o">=</span> <span class="n">case_3d</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opacity</span><span class="p">,</span><span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal&#39;</span><span class="p">,</span><span class="n">dimension</span><span class="o">=</span><span class="s1">&#39;3d&#39;</span><span class="p">,</span><span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/nbatalh1/Documents/codes/PICASO/picaso/picaso/atmsetup.py:130: UserWarning: Ignoring graphite in input file, not a recognized molecule
+  warnings.warn(&#34;Ignoring %s in input file, not a recognized molecule&#34; % i, UserWarning)
+</pre></div></div>
+</div>
+</div>
+</div>
+<div class="section" id="Analyze-3D-Spectra">
+<h2>Analyze 3D Spectra<a class="headerlink" href="#Analyze-3D-Spectra" title="Permalink to this headline">¶</a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1">#same old same old</span>
+<span class="n">wno</span><span class="p">,</span><span class="n">fpfs</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">out3d</span><span class="p">[</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span><span class="n">out3d</span><span class="p">[</span><span class="s1">&#39;fpfs_thermal&#39;</span><span class="p">],</span><span class="n">R</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">jpi</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">wno</span><span class="p">,</span> <span class="n">fpfs</span><span class="o">*</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">plot_width</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span><span class="n">y_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div class="bk-root" id="dfb920cf-8269-43bf-bee7-7a17ade64755" data-root-id="1003"></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+(function(root) {
+  function embed_document(root) {
+
+  var docs_json = {"0af94f8c-fdf7-4649-926c-76c1e092840c":{"defs":[],"roots":{"references":[{"attributes":{"below":[{"id":"1012"}],"center":[{"id":"1015"},{"id":"1019"}],"height":345,"left":[{"id":"1016"}],"renderers":[{"id":"1037"}],"title":{"id":"1040"},"toolbar":{"id":"1027"},"width":500,"x_range":{"id":"1004"},"x_scale":{"id":"1008"},"y_range":{"id":"1006"},"y_scale":{"id":"1010"}},"id":"1003","subtype":"Figure","type":"Plot"},{"attributes":{"overlay":{"id":"1026"}},"id":"1022","type":"BoxZoomTool"},{"attributes":{"data":{"x":{"__ndarray__":"UQxxXDcx+z/WE8lO8+v6P09FWLFfp/o/5UWvwnpj+j8Rj9fFQiD6P3UKSAK23fk/q8rZw9Kb+T/Z4Lxal1r5P7BObRsCGvk/mBSoXhHa+D+2W2CBw5r4P5e7tOQWXPg/KJvk7Qke+D+4rEUGm+D3P8qEOZvIo/c/bksjHpFn9z/Qh10E8yv3P9IFMMfs8PY/XtXF43y29j8pYyPboXz2P8WqHDJaQ/Y/l4FLcaQK9j+S+gUlf9L1P2ziVN3omvU/ElTqLeBj9T8QZRiuYy31P8npx/hx9/Q/LFFvrAnC9D+wlwlrKY30P2ZRDdrPWPQ/3Mpjovsk9D+PQGBwq/HzP9Ast/PdvvM/u6t135GM8z8q9fjpxVrzP1vs5cx4KfM/EcUgRan48j8CvsQSVsjyP1fwG/l9mPI//zOXvh9p8j+7GMYsOjryP4zzThDMC/I/aADnONTd8T/4l0p5UbDxPw==","dtype":"float64","order":"little","shape":[44]},"y":{"__ndarray__":"PUnO15YCZkBqODsGFLNmQN5nLCFHk2VA06oQL4OlZEAwLVt39iZjQGeyzNwgOGJASPvRC5AuYECvxARE/XxdQFelFSoyEVpADVcMk8XdVkCtrzWsOZVSQG57fh6ce1BAT3WOIRIZT0C3iEWg4HdMQNxt3fw6PUhA0A1wi6qDRkDTcAiTxYJFQDU9yiUBCUJAR/hRKh3AQEBNhGyPQEtBQNu9reh3U0JAFEripT+fQEC2N9TUJ1NAQCQP6T8XnEFAqw7BCrDkRkCiGamKSv9WQCIP8RcqxFhARhYFfYK+WUBk5ZUrIRdaQNsX4u1QxVlApCaE3UczWEBk+aJ/h9JVQDiUv2h7gVVAtIVVIOABU0D11rvTWE9RQBD1MC/zQE1AKfEQRX6KSUDDFfs2YmJEQKJbSwe6VkZAMBz7cHF1RUAVJtrkJEVCQBV2htkAqUVA+aL/i6l+RECHTPxi5dVFQA==","dtype":"float64","order":"little","shape":[44]}},"selected":{"id":"1048"},"selection_policy":{"id":"1049"}},"id":"1034","type":"ColumnDataSource"},{"attributes":{},"id":"1045","type":"AllLabels"},{"attributes":{"source":{"id":"1034"}},"id":"1038","type":"CDSView"},{"attributes":{},"id":"1010","type":"LogScale"},{"attributes":{},"id":"1042","type":"AllLabels"},{"attributes":{},"id":"1006","type":"DataRange1d"},{"attributes":{},"id":"1020","type":"PanTool"},{"attributes":{},"id":"1013","type":"BasicTicker"},{"attributes":{"num_minor_ticks":10},"id":"1017","type":"LogTicker"},{"attributes":{},"id":"1046","type":"BasicTickFormatter"},{"attributes":{"data_source":{"id":"1034"},"glyph":{"id":"1035"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"1036"},"view":{"id":"1038"}},"id":"1037","type":"GlyphRenderer"},{"attributes":{},"id":"1024","type":"ResetTool"},{"attributes":{},"id":"1023","type":"SaveTool"},{"attributes":{},"id":"1025","type":"HelpTool"},{"attributes":{"axis_label":"Wavelength [\u03bcm]","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","formatter":{"id":"1046"},"major_label_policy":{"id":"1045"},"major_label_text_font":"times","major_label_text_font_size":"14pt","ticker":{"id":"1013"}},"id":"1012","type":"LinearAxis"},{"attributes":{"active_multi":null,"tools":[{"id":"1020"},{"id":"1021"},{"id":"1022"},{"id":"1023"},{"id":"1024"},{"id":"1025"}]},"id":"1027","type":"Toolbar"},{"attributes":{},"id":"1049","type":"UnionRenderers"},{"attributes":{},"id":"1008","type":"LinearScale"},{"attributes":{"line_alpha":0.1,"line_color":"#0072B2","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1036","type":"Line"},{"attributes":{"line_color":"#0072B2","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1035","type":"Line"},{"attributes":{"axis_label":"Spectrum","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","formatter":{"id":"1043"},"major_label_policy":{"id":"1042"},"major_label_text_font":"times","major_label_text_font_size":"14pt","ticker":{"id":"1017"}},"id":"1016","type":"LogAxis"},{"attributes":{},"id":"1004","type":"DataRange1d"},{"attributes":{"axis":{"id":"1012"},"ticker":null},"id":"1015","type":"Grid"},{"attributes":{},"id":"1040","type":"Title"},{"attributes":{},"id":"1048","type":"Selection"},{"attributes":{},"id":"1021","type":"WheelZoomTool"},{"attributes":{"bottom_units":"screen","fill_alpha":0.5,"fill_color":"lightgrey","left_units":"screen","level":"overlay","line_alpha":1.0,"line_color":"black","line_dash":[4,4],"line_width":2,"right_units":"screen","syncable":false,"top_units":"screen"},"id":"1026","type":"BoxAnnotation"},{"attributes":{"ticker":null},"id":"1043","type":"LogTickFormatter"},{"attributes":{"axis":{"id":"1016"},"dimension":1,"ticker":null},"id":"1019","type":"Grid"}],"root_ids":["1003"]},"title":"Bokeh Application","version":"2.3.3"}};
+  var render_items = [{"docid":"0af94f8c-fdf7-4649-926c-76c1e092840c","root_ids":["1003"],"roots":{"1003":"dfb920cf-8269-43bf-bee7-7a17ade64755"}}];
+  root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    var attempts = 0;
+    var timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        clearInterval(timer);
+        embed_document(root);
+      } else {
+        attempts++;
+        if (attempts > 100) {
+          clearInterval(timer);
+          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        }
+      }
+    }, 10, root)
+  }
+})(window);
+</script></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">jpi</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">flux_at_top</span><span class="p">(</span><span class="n">out3d</span> <span class="p">,</span>
+                     <span class="n">pressures</span> <span class="o">=</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mf">0.8</span><span class="p">],</span>
+                     <span class="n">ng</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">nt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">R</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+                     <span class="n">plot_height</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">plot_width</span><span class="o">=</span><span class="mi">500</span><span class="p">))</span><span class="c1">#note the addition of ng and nt</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div class="bk-root" id="f056122d-f916-4119-b60c-d051e7082983" data-root-id="1105"></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+(function(root) {
+  function embed_document(root) {
+
+  var docs_json = {"da8e08b1-a265-42d3-828a-c6efb846f857":{"defs":[],"roots":{"references":[{"attributes":{"below":[{"id":"1116"}],"center":[{"id":"1119"},{"id":"1123"},{"id":"1160"}],"height":500,"left":[{"id":"1120"}],"renderers":[{"id":"1141"},{"id":"1146"},{"id":"1165"},{"id":"1185"}],"title":{"id":"1106"},"toolbar":{"id":"1131"},"width":500,"x_range":{"id":"1108"},"x_scale":{"id":"1112"},"y_range":{"id":"1110"},"y_scale":{"id":"1114"}},"id":"1105","subtype":"Figure","type":"Plot"},{"attributes":{"data":{"x":{"__ndarray__":"UQxxXDcx+z/WE8lO8+v6P09FWLFfp/o/5UWvwnpj+j8Rj9fFQiD6P3UKSAK23fk/q8rZw9Kb+T/Z4Lxal1r5P7BObRsCGvk/mBSoXhHa+D+2W2CBw5r4P5e7tOQWXPg/KJvk7Qke+D+4rEUGm+D3P8qEOZvIo/c/bksjHpFn9z/Qh10E8yv3P9IFMMfs8PY/XtXF43y29j8pYyPboXz2P8WqHDJaQ/Y/l4FLcaQK9j+S+gUlf9L1P2ziVN3omvU/ElTqLeBj9T8QZRiuYy31P8npx/hx9/Q/LFFvrAnC9D+wlwlrKY30P2ZRDdrPWPQ/3Mpjovsk9D+PQGBwq/HzP9Ast/PdvvM/u6t135GM8z8q9fjpxVrzP1vs5cx4KfM/EcUgRan48j8CvsQSVsjyP1fwG/l9mPI//zOXvh9p8j+7GMYsOjryP4zzThDMC/I/aADnONTd8T/4l0p5UbDxPw==","dtype":"float64","order":"little","shape":[44]},"y":{"__ndarray__":"/mZs6gK4c0LuAgyzsH50QoqqNclnVHRCsXVxHXn4c0JAtbsQpgxzQt/JfsYAfnJCQCdaCL/JcEITEZUfyoluQrqZoCitGmxCflkSLApEaULvQzO2e/pkQlahexkf0mJCJHoXB5KwYUKBAhRJMqdgQhgmqDbBsVxC8SuHWLhOW0LiF+5G1X5aQpdQ28+JmlZCDHnpmtNQVUKRq9vEOsFWQup5xdzgwVhC/SlKD+jXVkJeK5QDOKtWQlhGRistCllCbXd0qwKDYELsuoy9pM5wQqXaA7UzbXJCCO4Te+qGc0IEf0E93PBzQli7aFfOSnRCZdcXOeFic0L2IaN3bsZxQkrgKFn40XFCwRUft6kNcEIROtDJWmZtQh+/rAq1G2lCk8NeaSlbZkJR9R9Gv01iQgr2S7SeNmRCSmfVJYbkY0Id0d/0UfZgQqokrQCYeWRCPzgTH6yzY0KVmT0T9hplQg==","dtype":"float64","order":"little","shape":[44]}},"selected":{"id":"1156"},"selection_policy":{"id":"1157"}},"id":"1138","type":"ColumnDataSource"},{"attributes":{"line_width":4,"x":{"field":"x"},"y":{"field":"y"}},"id":"1139","type":"Line"},{"attributes":{"source":{"id":"1138"}},"id":"1142","type":"CDSView"},{"attributes":{"label":{"value":"1675 K at 5 bars"},"renderers":[{"id":"1146"}]},"id":"1161","type":"LegendItem"},{"attributes":{"line_alpha":0.5,"line_color":"#B53679","line_width":4,"x":{"field":"x"},"y":{"field":"y"}},"id":"1163","type":"Line"},{"attributes":{},"id":"1201","type":"Selection"},{"attributes":{"source":{"id":"1162"}},"id":"1166","type":"CDSView"},{"attributes":{},"id":"1202","type":"UnionRenderers"},{"attributes":{"ticker":null},"id":"1151","type":"LogTickFormatter"},{"attributes":{"line_alpha":0.5,"line_color":"#000003","line_width":4,"x":{"field":"x"},"y":{"field":"y"}},"id":"1144","type":"Line"},{"attributes":{"overlay":{"id":"1130"}},"id":"1126","type":"BoxZoomTool"},{"attributes":{"label":{"value":"1361 K at 1 bars"},"renderers":[{"id":"1165"}]},"id":"1181","type":"LegendItem"},{"attributes":{},"id":"1129","type":"HelpTool"},{"attributes":{"data_source":{"id":"1162"},"glyph":{"id":"1163"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"1164"},"view":{"id":"1166"}},"id":"1165","type":"GlyphRenderer"},{"attributes":{},"id":"1150","type":"AllLabels"},{"attributes":{"source":{"id":"1143"}},"id":"1147","type":"CDSView"},{"attributes":{},"id":"1153","type":"AllLabels"},{"attributes":{"ticker":null},"id":"1154","type":"LogTickFormatter"},{"attributes":{"items":[{"id":"1161"},{"id":"1181"},{"id":"1203"}]},"id":"1160","type":"Legend"},{"attributes":{},"id":"1128","type":"ResetTool"},{"attributes":{"line_alpha":0.1,"line_width":4,"x":{"field":"x"},"y":{"field":"y"}},"id":"1140","type":"Line"},{"attributes":{},"id":"1156","type":"Selection"},{"attributes":{"data_source":{"id":"1138"},"glyph":{"id":"1139"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"1140"},"view":{"id":"1142"}},"id":"1141","type":"GlyphRenderer"},{"attributes":{},"id":"1157","type":"UnionRenderers"},{"attributes":{},"id":"1159","type":"UnionRenderers"},{"attributes":{"axis":{"id":"1116"},"ticker":null},"id":"1119","type":"Grid"},{"attributes":{"axis_label":"Wavelength [\u03bcm]","formatter":{"id":"1154"},"major_label_policy":{"id":"1153"},"ticker":{"id":"1117"}},"id":"1116","type":"LogAxis"},{"attributes":{},"id":"1125","type":"WheelZoomTool"},{"attributes":{"line_alpha":0.1,"line_color":"#000003","line_width":4,"x":{"field":"x"},"y":{"field":"y"}},"id":"1145","type":"Line"},{"attributes":{"num_minor_ticks":10},"id":"1117","type":"LogTicker"},{"attributes":{},"id":"1158","type":"Selection"},{"attributes":{"axis":{"id":"1120"},"dimension":1,"ticker":null},"id":"1123","type":"Grid"},{"attributes":{"line_alpha":0.1,"line_color":"#B53679","line_width":4,"x":{"field":"x"},"y":{"field":"y"}},"id":"1164","type":"Line"},{"attributes":{},"id":"1124","type":"PanTool"},{"attributes":{"active_multi":null,"tools":[{"id":"1124"},{"id":"1125"},{"id":"1126"},{"id":"1127"},{"id":"1128"},{"id":"1129"}]},"id":"1131","type":"Toolbar"},{"attributes":{"data":{"x":{"__ndarray__":"UQxxXDcx+z/WE8lO8+v6P09FWLFfp/o/5UWvwnpj+j8Rj9fFQiD6P3UKSAK23fk/q8rZw9Kb+T/Z4Lxal1r5P7BObRsCGvk/mBSoXhHa+D+2W2CBw5r4P5e7tOQWXPg/KJvk7Qke+D+4rEUGm+D3P8qEOZvIo/c/bksjHpFn9z/Qh10E8yv3P9IFMMfs8PY/XtXF43y29j8pYyPboXz2P8WqHDJaQ/Y/l4FLcaQK9j+S+gUlf9L1P2ziVN3omvU/ElTqLeBj9T8QZRiuYy31P8npx/hx9/Q/LFFvrAnC9D+wlwlrKY30P2ZRDdrPWPQ/3Mpjovsk9D+PQGBwq/HzP9Ast/PdvvM/u6t135GM8z8q9fjpxVrzP1vs5cx4KfM/EcUgRan48j8CvsQSVsjyP1fwG/l9mPI//zOXvh9p8j+7GMYsOjryP4zzThDMC/I/aADnONTd8T/4l0p5UbDxPw==","dtype":"float64","order":"little","shape":[44]},"y":{"__ndarray__":"hsCy8cC0eEKfaVLMzq14QuQ99x27o3hCzGhT34CWeEI2g/k7HIZ4QgmfmZqKcnhCbXeQpMpbeEJV5bxM3EF4Qp8UkNXAJHhCPWVN1noEeEK7Zm8/DuF3QsbtJ16AundCgOvx3teQd0IfZCzPHGR3QkCttp1YNHdC8vSGGpYBd0I2/zR14ct2QhcBdDpIk3ZCNot3UNlXdkLtjEDypBl2Qm6e0Km82HVCNfBCSTOVdUIMesviHE91QqxFnr+OBnVC//3BVZ+7dEInO9I8Zm50QrhXtyH8HnRC1PFauXrNc0KhkGGy/HlzQg0586WdJHNCdQ2eB3rNckJDWl8Ur3RyQsKz4MBaGnJCVfv3ppu+cUIxTHrykGFxQqXmck1aA3FCzTfQyxekcELJDprW6UNwQnvbiS3ixW9CulVuv5wCb0KqgiozRT5uQiaJ1lYdeW1C0bWTymazbEIt+trUYu1rQg==","dtype":"float64","order":"little","shape":[44]}},"selected":{"id":"1158"},"selection_policy":{"id":"1159"}},"id":"1143","type":"ColumnDataSource"},{"attributes":{},"id":"1127","type":"SaveTool"},{"attributes":{"label":{"value":"1295 K at 0.8 bars"},"renderers":[{"id":"1185"}]},"id":"1203","type":"LegendItem"},{"attributes":{},"id":"1180","type":"UnionRenderers"},{"attributes":{"data_source":{"id":"1143"},"glyph":{"id":"1144"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"1145"},"view":{"id":"1147"}},"id":"1146","type":"GlyphRenderer"},{"attributes":{"source":{"id":"1182"}},"id":"1186","type":"CDSView"},{"attributes":{"text":"Outgoing Thermal Radiation"},"id":"1106","type":"Title"},{"attributes":{"bottom_units":"screen","fill_alpha":0.5,"fill_color":"lightgrey","left_units":"screen","level":"overlay","line_alpha":1.0,"line_color":"black","line_dash":[4,4],"line_width":2,"right_units":"screen","syncable":false,"top_units":"screen"},"id":"1130","type":"BoxAnnotation"},{"attributes":{"data":{"x":{"__ndarray__":"UQxxXDcx+z/WE8lO8+v6P09FWLFfp/o/5UWvwnpj+j8Rj9fFQiD6P3UKSAK23fk/q8rZw9Kb+T/Z4Lxal1r5P7BObRsCGvk/mBSoXhHa+D+2W2CBw5r4P5e7tOQWXPg/KJvk7Qke+D+4rEUGm+D3P8qEOZvIo/c/bksjHpFn9z/Qh10E8yv3P9IFMMfs8PY/XtXF43y29j8pYyPboXz2P8WqHDJaQ/Y/l4FLcaQK9j+S+gUlf9L1P2ziVN3omvU/ElTqLeBj9T8QZRiuYy31P8npx/hx9/Q/LFFvrAnC9D+wlwlrKY30P2ZRDdrPWPQ/3Mpjovsk9D+PQGBwq/HzP9Ast/PdvvM/u6t135GM8z8q9fjpxVrzP1vs5cx4KfM/EcUgRan48j8CvsQSVsjyP1fwG/l9mPI//zOXvh9p8j+7GMYsOjryP4zzThDMC/I/aADnONTd8T/4l0p5UbDxPw==","dtype":"float64","order":"little","shape":[44]},"y":{"__ndarray__":"FZLcwg1TVkLjCopHnPlVQrsN/MzwnVVC8tZWjSlAVULQF++4ZeBUQu/HymPFflRCbHM8cmkbVEJpEqmEc7ZTQmK/ieIFUFNCad27ZEPoUkIbZzNfT39SQmMwJIpNFVJC2eG36mGqUUIAVWe7sD5RQg/ADlRe0lBCNcfUEY9lUEKHJ/p9zvBPQojzfvUVFk9CVfZ5Qjw7TkLOM1hniGBNQsjUq4FAhkxCel76m6msS0Ks+ZCAB9RKQkDhj42c/ElChN9ciqkmSULmS6t+bVJIQnYxRoslgEdC/UHHxAywRkL942IQXOJFQnsb7wJKF0VCpjpIwgpPREJSPDPpz4lDQrdp2m3Ix0JCnXj9iiAJQkIntOqrAU5BQkr9UluSlkBCyR0NauzFP0Lv7ki1m2Y+QqJbhdZtDz1CZiIh/JfAO0LrFuM/SXo6QsXxEqiqPDlCr95gLt8HOELsFn/MA9w2Qg==","dtype":"float64","order":"little","shape":[44]}},"selected":{"id":"1201"},"selection_policy":{"id":"1202"}},"id":"1182","type":"ColumnDataSource"},{"attributes":{"data_source":{"id":"1182"},"glyph":{"id":"1183"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"1184"},"view":{"id":"1186"}},"id":"1185","type":"GlyphRenderer"},{"attributes":{"data":{"x":{"__ndarray__":"UQxxXDcx+z/WE8lO8+v6P09FWLFfp/o/5UWvwnpj+j8Rj9fFQiD6P3UKSAK23fk/q8rZw9Kb+T/Z4Lxal1r5P7BObRsCGvk/mBSoXhHa+D+2W2CBw5r4P5e7tOQWXPg/KJvk7Qke+D+4rEUGm+D3P8qEOZvIo/c/bksjHpFn9z/Qh10E8yv3P9IFMMfs8PY/XtXF43y29j8pYyPboXz2P8WqHDJaQ/Y/l4FLcaQK9j+S+gUlf9L1P2ziVN3omvU/ElTqLeBj9T8QZRiuYy31P8npx/hx9/Q/LFFvrAnC9D+wlwlrKY30P2ZRDdrPWPQ/3Mpjovsk9D+PQGBwq/HzP9Ast/PdvvM/u6t135GM8z8q9fjpxVrzP1vs5cx4KfM/EcUgRan48j8CvsQSVsjyP1fwG/l9mPI//zOXvh9p8j+7GMYsOjryP4zzThDMC/I/aADnONTd8T/4l0p5UbDxPw==","dtype":"float64","order":"little","shape":[44]},"y":{"__ndarray__":"j8MrGxe6XkK9EimznVdeQirTEoyb8V1Cc5ISEjCIXULheLBQfBtdQlfny+Giq1xCEi8h28c4XELz42e6EMNbQussF1CkSltCsVPfqKrPWkJqqen1TFJaQg+g8XO10llCqLFLUQ9RWULSWPCShs1YQmzwovhHSFhClMxN4IDBV0I5QK4oXzlXQsWDbBMRsFZCo5W8JsUlVkL+KKYOqppVQjCTEn7uDlVCdVXAD8GCVELHaTwnUPZTQpLSAdLJaVNCTxrgqFvdUkLWbsmxMlFSQhrSKEJ7xVFCG3ng4WA6UUJr3w8vDrBQQt1SwMKsJlBCL5IrLco8T0L1XEHXvC5OQi0e2GR9I01CdPnD6FQbTEI34Tx9iRZLQl4ujhxeFUpCDgD5fBIYSUJMK+7v4h5IQtkTwEQIKkdCIiTorrc5RkK/w/avIk5FQn2yPwV3Z0RCZ49Pmd6FQ0LUIzJ5f6lCQg==","dtype":"float64","order":"little","shape":[44]}},"selected":{"id":"1179"},"selection_policy":{"id":"1180"}},"id":"1162","type":"ColumnDataSource"},{"attributes":{"line_alpha":0.5,"line_color":"#FBFCBF","line_width":4,"x":{"field":"x"},"y":{"field":"y"}},"id":"1183","type":"Line"},{"attributes":{},"id":"1114","type":"LogScale"},{"attributes":{},"id":"1179","type":"Selection"},{"attributes":{"line_alpha":0.1,"line_color":"#FBFCBF","line_width":4,"x":{"field":"x"},"y":{"field":"y"}},"id":"1184","type":"Line"},{"attributes":{"axis_label":"Flux (erg/s/cm^3)","formatter":{"id":"1151"},"major_label_policy":{"id":"1150"},"ticker":{"id":"1121"}},"id":"1120","type":"LogAxis"},{"attributes":{},"id":"1112","type":"LogScale"},{"attributes":{},"id":"1110","type":"DataRange1d"},{"attributes":{"num_minor_ticks":10},"id":"1121","type":"LogTicker"},{"attributes":{},"id":"1108","type":"DataRange1d"}],"root_ids":["1105"]},"title":"Bokeh Application","version":"2.3.3"}};
+  var render_items = [{"docid":"da8e08b1-a265-42d3-828a-c6efb846f857","root_ids":["1105"],"roots":{"1105":"f056122d-f916-4119-b60c-d051e7082983"}}];
+  root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    var attempts = 0;
+    var timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        clearInterval(timer);
+        embed_document(root);
+      } else {
+        attempts++;
+        if (attempts > 100) {
+          clearInterval(timer);
+          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        }
+      }
+    }, 10, root)
+  }
+})(window);
+</script></div>
+</div>
+<div class="section" id="3D-Map-of-Flux">
+<h3>3D Map of Flux<a class="headerlink" href="#3D-Map-of-Flux" title="Permalink to this headline">¶</a></h3>
+<p>We can use the same plot as we used for reflected light. In 3D this plot is quite a bit more interesting since we can see variations across the disk from out input file.</p>
+<p>Note below I specify thermal. The default is reflected, I just chose this as an example.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">jpi</span><span class="o">.</span><span class="n">disco</span><span class="p">(</span><span class="n">out3d</span><span class="p">[</span><span class="s1">&#39;full_output&#39;</span><span class="p">]</span> <span class="p">,</span><span class="n">wavelength</span><span class="o">=</span><span class="p">[</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">1.4</span><span class="p">],</span> <span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_9d_3DSpectra_12_0.png" src="../_images/notebooks_9d_3DSpectra_12_0.png" />
+</div>
+</div>
+</div>
+<div class="section" id="3D-Map-of-Gas-Opacity-Sources">
+<h3>3D Map of Gas Opacity Sources<a class="headerlink" href="#3D-Map-of-Gas-Opacity-Sources" title="Permalink to this headline">¶</a></h3>
+<p>In addition to disco there is a general map function that can plot anything in <code class="docutils literal notranslate"><span class="pre">picaso</span></code>’s full output dict. Below is an example of the <code class="docutils literal notranslate"><span class="pre">taugas</span></code> where we must specify both a pressure and wavelength to plot the map</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1">#Since Taugas is [nlayer, nwave, nlong, nlat] we can specify a list of pressures and a SINGLE wavelength.</span>
+<span class="n">jpi</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">out3d</span><span class="p">[</span><span class="s1">&#39;full_output&#39;</span><span class="p">],</span><span class="n">plot</span><span class="o">=</span><span class="s1">&#39;taugas&#39;</span><span class="p">,</span><span class="n">pressure</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mf">0.8</span><span class="p">],</span><span class="n">wavelength</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_9d_3DSpectra_14_0.png" src="../_images/notebooks_9d_3DSpectra_14_0.png" />
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="Run-Cloudy-3D-Spectra">
+<h2>Run Cloudy 3D Spectra<a class="headerlink" href="#Run-Cloudy-3D-Spectra" title="Permalink to this headline">¶</a></h2>
+<p>If you have not already, please consult the tutorial on post-processing cloud inputs. Below, we will use <code class="docutils literal notranslate"><span class="pre">virga</span></code> to post-process clouds on our example GCM input.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">gcm_out</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">HJ_pt_3d</span><span class="p">(</span><span class="n">as_xarray</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">add_kz</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">case_3d</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_tangle</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">num_gangle</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">atmosphere_3d</span><span class="p">(</span><span class="n">gcm_out</span><span class="p">,</span> <span class="n">regrid</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_jup&#39;</span><span class="p">),</span>
+                <span class="n">mass</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">mass_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;M_jup&#39;</span><span class="p">))</span> <span class="c1">#any astropy units available</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">opacity</span><span class="p">,</span><span class="mi">5000</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mf">4.0</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_sun&#39;</span><span class="p">))</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">chemeq_3d</span><span class="p">(</span><span class="n">n_cpu</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">mieff_directory</span> <span class="o">=</span> <span class="s1">&#39;/Users/nbatalh1/Documents/data/virga/&#39;</span>
+<span class="n">clds</span> <span class="o">=</span> <span class="n">case_3d</span><span class="o">.</span><span class="n">virga_3d</span><span class="p">([</span><span class="s1">&#39;MnS&#39;</span><span class="p">],</span> <span class="n">mieff_directory</span><span class="p">,</span><span class="n">fsed</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">kz_min</span><span class="o">=</span><span class="mf">1e10</span><span class="p">,</span>
+                        <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">n_cpu</span><span class="o">=</span><span class="mi">3</span>
+                       <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+verbose=True;regrid=True; Regridding 3D output to ngangle=10, ntangle=10, with phase=0.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/nbatalh1/.conda/envs/picaso38/lib/python3.8/site-packages/xesmf/smm.py:129: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+  warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_9d_3DSpectra_16_2.png" src="../_images/notebooks_9d_3DSpectra_16_2.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">out3d_cld</span> <span class="o">=</span> <span class="n">case_3d</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opacity</span><span class="p">,</span>
+                             <span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal&#39;</span><span class="p">,</span><span class="n">dimension</span><span class="o">=</span><span class="s1">&#39;3d&#39;</span><span class="p">,</span><span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/nbatalh1/Documents/codes/PICASO/picaso/picaso/atmsetup.py:130: UserWarning: Ignoring kz in input file, not a recognized molecule
+  warnings.warn(&#34;Ignoring %s in input file, not a recognized molecule&#34; % i, UserWarning)
+/Users/nbatalh1/Documents/codes/PICASO/picaso/picaso/atmsetup.py:130: UserWarning: Ignoring graphite in input file, not a recognized molecule
+  warnings.warn(&#34;Ignoring %s in input file, not a recognized molecule&#34; % i, UserWarning)
+</pre></div></div>
+</div>
+<div class="section" id="3D-\tau~1-Pressure-Level-Map">
+<h3>3D <span class="math notranslate nohighlight">\(\tau\)</span>~1 Pressure-Level Map<a class="headerlink" href="#3D-\tau~1-Pressure-Level-Map" title="Permalink to this headline">¶</a></h3>
+<p>Here we can break down a full map of the molecular, cloud and rayleigh opacity. Whereas in map we had to specify a specific pressure and wavelength, here we can specify an optical depth and it will produce a map of what pressure level corresponds to that optical depth. We tend to see photons that originate from tau=1. Therefore, it is interesting to plot a tau=1 map so we can see if we are seeing different pressure levels at different locations across the disk.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1">#NOTE, we haven&#39;t run clouds and are not at short wavelenghts,</span>
+<span class="c1">#so the cloud and rayleigh opacity will not be too interesting</span>
+<span class="n">jpi</span><span class="o">.</span><span class="n">taumap</span><span class="p">(</span><span class="n">out3d_cld</span><span class="p">[</span><span class="s1">&#39;full_output&#39;</span><span class="p">],</span> <span class="n">wavelength</span><span class="o">=</span><span class="mf">1.4</span><span class="p">,</span> <span class="n">at_tau</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_9d_3DSpectra_19_0.png" src="../_images/notebooks_9d_3DSpectra_19_0.png" />
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="9e_PhaseCurves.html" class="btn btn-neutral float-right" title="Phase Curves Part 1" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="9c_PostProcess3Dinput-Clouds.html" class="btn btn-neutral float-left" title="Post-Process 3D Clouds Input" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

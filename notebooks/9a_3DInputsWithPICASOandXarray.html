@@ -1,0 +1,1256 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Handling 3D Inputs with PICASO &mdash; picaso 2.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="What is post-processing?" href="9b_PostProcess3Dinput-Chemistry.html" />
+    <link rel="prev" title="Spherical Integration in PICASO" href="8_SphericalIntegration.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> picaso
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                2.3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../tutorials.html">The Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#basics-of-reflected-light">Basics of Reflected Light</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#basics-of-transmisison">Basics of Transmisison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#basics-of-thermal-emission">Basics of Thermal Emission</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#cloud-modeling-with-virga">Cloud Modeling with <cite>Virga</cite></a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../tutorials.html#moving-to-3-dimensions">Moving to 3 Dimensions</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="8_SphericalIntegration.html">Non-Zero Phase and Spherical Integration</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Basics of a 3D Calculation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#xarray-tutorial:-Convert-numpy-arrays-to-xarray-DataSet"><code class="docutils literal notranslate"><span class="pre">xarray</span></code> tutorial: Convert <code class="docutils literal notranslate"><span class="pre">numpy</span></code> arrays to <code class="docutils literal notranslate"><span class="pre">xarray</span></code> DataSet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#xarray-tutorial:-Easy-plotting"><code class="docutils literal notranslate"><span class="pre">xarray</span></code> tutorial: Easy plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#xesfm-tutorial:-Step-by-step-regrid-3D-GCM"><code class="docutils literal notranslate"><span class="pre">xesfm</span></code> tutorial: Step-by-step regrid 3D GCM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Regrid-3D-GCM-with-PICASO">Regrid 3D GCM with PICASO</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="9b_PostProcess3Dinput-Chemistry.html">What is post-processing?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="9b_PostProcess3Dinput-Chemistry.html#Post-Process-3D-Chemistry-Input">Post-Process 3D Chemistry Input</a></li>
+<li class="toctree-l3"><a class="reference internal" href="9c_PostProcess3Dinput-Clouds.html">Post-Processing Clouds for 3D runs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="9d_3DSpectra.html">Modeling a 3D Spectrum (Adams et al. 2022)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="9e_PhaseCurves.html">Modeling a Phase Curve pt 1 (Robbins-Blanch et al. 2022)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="9f_PhaseCurves-wChemEq.html">Modeling a Phase Curve pt 2 (Robbins-Blanch et al. 2022)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#opacities-approximatons">Opacities &amp; Approximatons</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#miscellaneous">Miscellaneous</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../credit.html">The Papers</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">picaso</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../tutorials.html">Tutorials</a> &raquo;</li>
+        
+      <li>Handling 3D Inputs with PICASO</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/notebooks/9a_3DInputsWithPICASOandXarray.ipynb.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container,
+div.nbinput.container div.prompt,
+div.nbinput.container div.input_area,
+div.nbinput.container div[class*=highlight],
+div.nbinput.container div[class*=highlight] pre,
+div.nboutput.container,
+div.nboutput.container div.prompt,
+div.nboutput.container div.output_area,
+div.nboutput.container div[class*=highlight],
+div.nboutput.container div[class*=highlight] pre {
+    background: none;
+    border: none;
+    padding: 0 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    min-width: 5ex;
+    padding-top: 0.3rem;
+    padding-right: 0.3rem;
+    text-align: right;
+    flex: 0;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    background: #f5f5f5;
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 0.3rem;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt a.copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+div.rendered_html th {
+  font-weight: bold;
+}
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/9a_3DInputsWithPICASOandXarray.ipynb">Download full notebook here</a></p>
+</div>
+<div class="section" id="Handling-3D-Inputs-with-PICASO">
+<h1>Handling 3D Inputs with PICASO<a class="headerlink" href="#Handling-3D-Inputs-with-PICASO" title="Permalink to this headline">¶</a></h1>
+<p>Many GCM groups have their files stored as <code class="docutils literal notranslate"><span class="pre">netCDF</span></code> files. Therefore, you may already be used to <code class="docutils literal notranslate"><span class="pre">xarray</span></code> format. If that is the case you will be able to directly input your xarray formatted data to <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> to get out post-processed spectra. If not though, this tutorial will walk you through how to structure your data in xarray format.</p>
+<p>What you will learn:</p>
+<ol class="arabic simple">
+<li><p>How to convert traditional numpy arrays to <code class="docutils literal notranslate"><span class="pre">xarray</span></code> formatted data, which is common for 3D GCM output</p></li>
+<li><p>How to regrid using <code class="docutils literal notranslate"><span class="pre">xarray</span></code> and <code class="docutils literal notranslate"><span class="pre">xesmf</span></code>’s <code class="docutils literal notranslate"><span class="pre">regridder</span></code></p></li>
+<li><p>How to use <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> built in function (which use #2)</p></li>
+</ol>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">picaso</span> <span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
+</pre></div>
+</div>
+</div>
+<p>Two new packages you will need, that are not required components of other models: xesmf and xarray. You can read more about the installing these packages here:</p>
+<p><a class="reference external" href="https://xesmf.readthedocs.io/en/latest/installation.html">Install XESFM</a> - will only be needed if you want to use their really handy regridding tools</p>
+<p><a class="reference external" href="http://xarray.pydata.org/en/stable/getting-started-guide/installing.html">Install xarray</a> - needed for all <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> 3d operations</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">xesmf</span> <span class="k">as</span> <span class="nn">xe</span>
+<span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
+</pre></div>
+</div>
+</div>
+<p>We will begin with an example file from the MIT GCM group (courtesy of Tiffany Kataria).</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">gcm_out</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">HJ_pt_3d</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>We are going to go through the motions of converting basic <code class="docutils literal notranslate"><span class="pre">numpy</span></code> arrays to <code class="docutils literal notranslate"><span class="pre">xarray</span></code> format. <strong>If you already understand xarrays you may skip to</strong> the <code class="docutils literal notranslate"><span class="pre">`picaso</span></code> section &lt;#regrid-3d-gcm-with-picaso&gt;`__</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">gcm_out</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+dict_keys([&#39;pressure&#39;, &#39;temperature&#39;, &#39;kzz&#39;, &#39;latitude&#39;, &#39;longitude&#39;])
+</pre></div></div>
+</div>
+<p>In this example, pressure, temperature, and kzz are all on a coordinate system that is :</p>
+<p>n_longitude (128) x n_latitude (64) x n_pressure (53)</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">gcm_out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">gcm_out</span><span class="p">[</span><span class="s1">&#39;longitude&#39;</span><span class="p">]),</span> <span class="nb">len</span><span class="p">(</span><span class="n">gcm_out</span><span class="p">[</span><span class="s1">&#39;latitude&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+((128, 64, 53), 128, 64)
+</pre></div></div>
+</div>
+<div class="section" id="xarray-tutorial:-Convert-numpy-arrays-to-xarray-DataSet">
+<h2><code class="docutils literal notranslate"><span class="pre">xarray</span></code> tutorial: Convert <code class="docutils literal notranslate"><span class="pre">numpy</span></code> arrays to <code class="docutils literal notranslate"><span class="pre">xarray</span></code> DataSet<a class="headerlink" href="#xarray-tutorial:-Convert-numpy-arrays-to-xarray-DataSet" title="Permalink to this headline">¶</a></h2>
+<p>The comments with <code class="docutils literal notranslate"><span class="pre">required</span></code> next to them indicate that they are required for <code class="docutils literal notranslate"><span class="pre">picaso</span></code> to create a spectrum</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1"># create data</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">gcm_out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">]</span>
+
+<span class="c1"># create coords</span>
+<span class="n">lon</span> <span class="o">=</span> <span class="n">gcm_out</span><span class="p">[</span><span class="s1">&#39;longitude&#39;</span><span class="p">]</span>
+<span class="n">lat</span> <span class="o">=</span> <span class="n">gcm_out</span><span class="p">[</span><span class="s1">&#39;latitude&#39;</span><span class="p">]</span>
+<span class="n">pres</span> <span class="o">=</span> <span class="n">gcm_out</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,:]</span>
+
+<span class="c1"># put data into a dataset</span>
+<span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+    <span class="n">data_vars</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">temperature</span><span class="o">=</span><span class="p">([</span><span class="s2">&quot;lon&quot;</span><span class="p">,</span> <span class="s2">&quot;lat&quot;</span><span class="p">,</span><span class="s2">&quot;pressure&quot;</span><span class="p">],</span> <span class="n">data</span><span class="p">,{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;Kelvin&#39;</span><span class="p">})</span><span class="c1">#, required</span>
+        <span class="c1">#kzz = ([&quot;x&quot;, &quot;y&quot;,&quot;z&quot;], gcm_out[&#39;kzz&#39;])#could add other data components if wanted</span>
+    <span class="p">),</span>
+    <span class="n">coords</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">lon</span><span class="o">=</span><span class="p">([</span><span class="s2">&quot;lon&quot;</span><span class="p">],</span> <span class="n">lon</span><span class="p">,{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;degrees&#39;</span><span class="p">}),</span><span class="c1">#required</span>
+        <span class="n">lat</span><span class="o">=</span><span class="p">([</span><span class="s2">&quot;lat&quot;</span><span class="p">],</span> <span class="n">lat</span><span class="p">,{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;degrees&#39;</span><span class="p">}),</span><span class="c1">#required</span>
+        <span class="n">pressure</span><span class="o">=</span><span class="p">([</span><span class="s2">&quot;pressure&quot;</span><span class="p">],</span> <span class="n">pres</span><span class="p">,{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;bar&#39;</span><span class="p">})</span><span class="c1">#required*</span>
+    <span class="p">),</span>
+    <span class="n">attrs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;coords with vectors&quot;</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">ds</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+<defs>
+<symbol id="icon-database" viewBox="0 0 32 32">
+<path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
+<path d="M16 17c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+<path d="M16 26c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+</symbol>
+<symbol id="icon-file-text2" viewBox="0 0 32 32">
+<path d="M28.681 7.159c-0.694-0.947-1.662-2.053-2.724-3.116s-2.169-2.030-3.116-2.724c-1.612-1.182-2.393-1.319-2.841-1.319h-15.5c-1.378 0-2.5 1.121-2.5 2.5v27c0 1.378 1.122 2.5 2.5 2.5h23c1.378 0 2.5-1.122 2.5-2.5v-19.5c0-0.448-0.137-1.23-1.319-2.841zM24.543 5.457c0.959 0.959 1.712 1.825 2.268 2.543h-4.811v-4.811c0.718 0.556 1.584 1.309 2.543 2.268zM28 29.5c0 0.271-0.229 0.5-0.5 0.5h-23c-0.271 0-0.5-0.229-0.5-0.5v-27c0-0.271 0.229-0.5 0.5-0.5 0 0 15.499-0 15.5 0v7c0 0.552 0.448 1 1 1h7v19.5z"></path>
+<path d="M23 26h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 22h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 18h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+</symbol>
+</defs>
+</svg>
+<style>/* CSS stylesheet for displaying xarray objects in jupyterlab.
+ *
+ */
+
+:root {
+  --xr-font-color0: var(--jp-content-font-color0, rgba(0, 0, 0, 1));
+  --xr-font-color2: var(--jp-content-font-color2, rgba(0, 0, 0, 0.54));
+  --xr-font-color3: var(--jp-content-font-color3, rgba(0, 0, 0, 0.38));
+  --xr-border-color: var(--jp-border-color2, #e0e0e0);
+  --xr-disabled-color: var(--jp-layout-color3, #bdbdbd);
+  --xr-background-color: var(--jp-layout-color0, white);
+  --xr-background-color-row-even: var(--jp-layout-color1, white);
+  --xr-background-color-row-odd: var(--jp-layout-color2, #eeeeee);
+}
+
+html[theme=dark],
+body.vscode-dark {
+  --xr-font-color0: rgba(255, 255, 255, 1);
+  --xr-font-color2: rgba(255, 255, 255, 0.54);
+  --xr-font-color3: rgba(255, 255, 255, 0.38);
+  --xr-border-color: #1F1F1F;
+  --xr-disabled-color: #515151;
+  --xr-background-color: #111111;
+  --xr-background-color-row-even: #111111;
+  --xr-background-color-row-odd: #313131;
+}
+
+.xr-wrap {
+  display: block;
+  min-width: 300px;
+  max-width: 700px;
+}
+
+.xr-text-repr-fallback {
+  /* fallback to plain text repr when CSS is not injected (untrusted notebook) */
+  display: none;
+}
+
+.xr-header {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+  border-bottom: solid 1px var(--xr-border-color);
+}
+
+.xr-header > div,
+.xr-header > ul {
+  display: inline;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.xr-obj-type,
+.xr-array-name {
+  margin-left: 2px;
+  margin-right: 10px;
+}
+
+.xr-obj-type {
+  color: var(--xr-font-color2);
+}
+
+.xr-sections {
+  padding-left: 0 !important;
+  display: grid;
+  grid-template-columns: 150px auto auto 1fr 20px 20px;
+}
+
+.xr-section-item {
+  display: contents;
+}
+
+.xr-section-item input {
+  display: none;
+}
+
+.xr-section-item input + label {
+  color: var(--xr-disabled-color);
+}
+
+.xr-section-item input:enabled + label {
+  cursor: pointer;
+  color: var(--xr-font-color2);
+}
+
+.xr-section-item input:enabled + label:hover {
+  color: var(--xr-font-color0);
+}
+
+.xr-section-summary {
+  grid-column: 1;
+  color: var(--xr-font-color2);
+  font-weight: 500;
+}
+
+.xr-section-summary > span {
+  display: inline-block;
+  padding-left: 0.5em;
+}
+
+.xr-section-summary-in:disabled + label {
+  color: var(--xr-font-color2);
+}
+
+.xr-section-summary-in + label:before {
+  display: inline-block;
+  content: '►';
+  font-size: 11px;
+  width: 15px;
+  text-align: center;
+}
+
+.xr-section-summary-in:disabled + label:before {
+  color: var(--xr-disabled-color);
+}
+
+.xr-section-summary-in:checked + label:before {
+  content: '▼';
+}
+
+.xr-section-summary-in:checked + label > span {
+  display: none;
+}
+
+.xr-section-summary,
+.xr-section-inline-details {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.xr-section-inline-details {
+  grid-column: 2 / -1;
+}
+
+.xr-section-details {
+  display: none;
+  grid-column: 1 / -1;
+  margin-bottom: 5px;
+}
+
+.xr-section-summary-in:checked ~ .xr-section-details {
+  display: contents;
+}
+
+.xr-array-wrap {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 20px auto;
+}
+
+.xr-array-wrap > label {
+  grid-column: 1;
+  vertical-align: top;
+}
+
+.xr-preview {
+  color: var(--xr-font-color3);
+}
+
+.xr-array-preview,
+.xr-array-data {
+  padding: 0 5px !important;
+  grid-column: 2;
+}
+
+.xr-array-data,
+.xr-array-in:checked ~ .xr-array-preview {
+  display: none;
+}
+
+.xr-array-in:checked ~ .xr-array-data,
+.xr-array-preview {
+  display: inline-block;
+}
+
+.xr-dim-list {
+  display: inline-block !important;
+  list-style: none;
+  padding: 0 !important;
+  margin: 0;
+}
+
+.xr-dim-list li {
+  display: inline-block;
+  padding: 0;
+  margin: 0;
+}
+
+.xr-dim-list:before {
+  content: '(';
+}
+
+.xr-dim-list:after {
+  content: ')';
+}
+
+.xr-dim-list li:not(:last-child):after {
+  content: ',';
+  padding-right: 5px;
+}
+
+.xr-has-index {
+  font-weight: bold;
+}
+
+.xr-var-list,
+.xr-var-item {
+  display: contents;
+}
+
+.xr-var-item > div,
+.xr-var-item label,
+.xr-var-item > .xr-var-name span {
+  background-color: var(--xr-background-color-row-even);
+  margin-bottom: 0;
+}
+
+.xr-var-item > .xr-var-name:hover span {
+  padding-right: 5px;
+}
+
+.xr-var-list > li:nth-child(odd) > div,
+.xr-var-list > li:nth-child(odd) > label,
+.xr-var-list > li:nth-child(odd) > .xr-var-name span {
+  background-color: var(--xr-background-color-row-odd);
+}
+
+.xr-var-name {
+  grid-column: 1;
+}
+
+.xr-var-dims {
+  grid-column: 2;
+}
+
+.xr-var-dtype {
+  grid-column: 3;
+  text-align: right;
+  color: var(--xr-font-color2);
+}
+
+.xr-var-preview {
+  grid-column: 4;
+}
+
+.xr-var-name,
+.xr-var-dims,
+.xr-var-dtype,
+.xr-preview,
+.xr-attrs dt {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 10px;
+}
+
+.xr-var-name:hover,
+.xr-var-dims:hover,
+.xr-var-dtype:hover,
+.xr-attrs dt:hover {
+  overflow: visible;
+  width: auto;
+  z-index: 1;
+}
+
+.xr-var-attrs,
+.xr-var-data {
+  display: none;
+  background-color: var(--xr-background-color) !important;
+  padding-bottom: 5px !important;
+}
+
+.xr-var-attrs-in:checked ~ .xr-var-attrs,
+.xr-var-data-in:checked ~ .xr-var-data {
+  display: block;
+}
+
+.xr-var-data > table {
+  float: right;
+}
+
+.xr-var-name span,
+.xr-var-data,
+.xr-attrs {
+  padding-left: 25px !important;
+}
+
+.xr-attrs,
+.xr-var-attrs,
+.xr-var-data {
+  grid-column: 1 / -1;
+}
+
+dl.xr-attrs {
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 125px auto;
+}
+
+.xr-attrs dt,
+.xr-attrs dd {
+  padding: 0;
+  margin: 0;
+  float: left;
+  padding-right: 10px;
+  width: auto;
+}
+
+.xr-attrs dt {
+  font-weight: normal;
+  grid-column: 1;
+}
+
+.xr-attrs dt:hover span {
+  display: inline-block;
+  background: var(--xr-background-color);
+  padding-right: 10px;
+}
+
+.xr-attrs dd {
+  grid-column: 2;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.xr-icon-database,
+.xr-icon-file-text2 {
+  display: inline-block;
+  vertical-align: middle;
+  width: 1em;
+  height: 1.5em !important;
+  stroke-width: 0;
+  stroke: currentColor;
+  fill: currentColor;
+}
+</style><pre class='xr-text-repr-fallback'>&lt;xarray.Dataset&gt;
+Dimensions:      (lon: 128, lat: 64, pressure: 53)
+Coordinates:
+  * lon          (lon) float64 -180.0 -177.2 -174.4 -171.6 ... 171.6 174.4 177.2
+  * lat          (lat) float64 -90.0 -87.19 -84.38 -81.56 ... 81.56 84.38 87.19
+  * pressure     (pressure) float64 170.6 120.5 85.15 ... 3.42e-06 2.416e-06
+Data variables:
+    temperature  (lon, lat, pressure) float64 1.896e+03 1.809e+03 ... 750.7
+Attributes:
+    description:  coords with vectors</pre><div class='xr-wrap' hidden><div class='xr-header'><div class='xr-obj-type'>xarray.Dataset</div></div><ul class='xr-sections'><li class='xr-section-item'><input id='section-ca02da9d-8973-4126-8a65-5c8289e0a06b' class='xr-section-summary-in' type='checkbox' disabled ><label for='section-ca02da9d-8973-4126-8a65-5c8289e0a06b' class='xr-section-summary'  title='Expand/collapse section'>Dimensions:</label><div class='xr-section-inline-details'><ul class='xr-dim-list'><li><span class='xr-has-index'>lon</span>: 128</li><li><span class='xr-has-index'>lat</span>: 64</li><li><span class='xr-has-index'>pressure</span>: 53</li></ul></div><div class='xr-section-details'></div></li><li class='xr-section-item'><input id='section-926da7e8-168c-47c3-aa0c-7da4509bae4a' class='xr-section-summary-in' type='checkbox'  checked><label for='section-926da7e8-168c-47c3-aa0c-7da4509bae4a' class='xr-section-summary' >Coordinates: <span>(3)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>lon</span></div><div class='xr-var-dims'>(lon)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-180.0 -177.2 ... 174.4 177.2</div><input id='attrs-8f6f3c3e-716c-42be-bf98-e99794cc0fe0' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-8f6f3c3e-716c-42be-bf98-e99794cc0fe0' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-4fb3bbda-6a76-4a60-8eaa-1e4046501fb3' class='xr-var-data-in' type='checkbox'><label for='data-4fb3bbda-6a76-4a60-8eaa-1e4046501fb3' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>degrees</dd></dl></div><div class='xr-var-data'><pre>array([-180.    , -177.1875, -174.375 , -171.5625, -168.75  , -165.9375,
+       -163.125 , -160.3125, -157.5   , -154.6875, -151.875 , -149.0625,
+       -146.25  , -143.4375, -140.625 , -137.8125, -135.    , -132.1875,
+       -129.375 , -126.5625, -123.75  , -120.9375, -118.125 , -115.3125,
+       -112.5   , -109.6875, -106.875 , -104.0625, -101.25  ,  -98.4375,
+        -95.625 ,  -92.8125,  -90.    ,  -87.1875,  -84.375 ,  -81.5625,
+        -78.75  ,  -75.9375,  -73.125 ,  -70.3125,  -67.5   ,  -64.6875,
+        -61.875 ,  -59.0625,  -56.25  ,  -53.4375,  -50.625 ,  -47.8125,
+        -45.    ,  -42.1875,  -39.375 ,  -36.5625,  -33.75  ,  -30.9375,
+        -28.125 ,  -25.3125,  -22.5   ,  -19.6875,  -16.875 ,  -14.0625,
+        -11.25  ,   -8.4375,   -5.625 ,   -2.8125,    0.    ,    2.8125,
+          5.625 ,    8.4375,   11.25  ,   14.0625,   16.875 ,   19.6875,
+         22.5   ,   25.3125,   28.125 ,   30.9375,   33.75  ,   36.5625,
+         39.375 ,   42.1875,   45.    ,   47.8125,   50.625 ,   53.4375,
+         56.25  ,   59.0625,   61.875 ,   64.6875,   67.5   ,   70.3125,
+         73.125 ,   75.9375,   78.75  ,   81.5625,   84.375 ,   87.1875,
+         90.    ,   92.8125,   95.625 ,   98.4375,  101.25  ,  104.0625,
+        106.875 ,  109.6875,  112.5   ,  115.3125,  118.125 ,  120.9375,
+        123.75  ,  126.5625,  129.375 ,  132.1875,  135.    ,  137.8125,
+        140.625 ,  143.4375,  146.25  ,  149.0625,  151.875 ,  154.6875,
+        157.5   ,  160.3125,  163.125 ,  165.9375,  168.75  ,  171.5625,
+        174.375 ,  177.1875])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>lat</span></div><div class='xr-var-dims'>(lat)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-90.0 -87.19 -84.38 ... 84.38 87.19</div><input id='attrs-b3912743-0102-4390-b474-cd451db46f93' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-b3912743-0102-4390-b474-cd451db46f93' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-243182e8-5e95-4957-b35c-527d00e3af61' class='xr-var-data-in' type='checkbox'><label for='data-243182e8-5e95-4957-b35c-527d00e3af61' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>degrees</dd></dl></div><div class='xr-var-data'><pre>array([-90.    , -87.1875, -84.375 , -81.5625, -78.75  , -75.9375, -73.125 ,
+       -70.3125, -67.5   , -64.6875, -61.875 , -59.0625, -56.25  , -53.4375,
+       -50.625 , -47.8125, -45.    , -42.1875, -39.375 , -36.5625, -33.75  ,
+       -30.9375, -28.125 , -25.3125, -22.5   , -19.6875, -16.875 , -14.0625,
+       -11.25  ,  -8.4375,  -5.625 ,  -2.8125,   0.    ,   2.8125,   5.625 ,
+         8.4375,  11.25  ,  14.0625,  16.875 ,  19.6875,  22.5   ,  25.3125,
+        28.125 ,  30.9375,  33.75  ,  36.5625,  39.375 ,  42.1875,  45.    ,
+        47.8125,  50.625 ,  53.4375,  56.25  ,  59.0625,  61.875 ,  64.6875,
+        67.5   ,  70.3125,  73.125 ,  75.9375,  78.75  ,  81.5625,  84.375 ,
+        87.1875])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>pressure</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>170.6 120.5 ... 3.42e-06 2.416e-06</div><input id='attrs-2fb693dd-0d33-4c0f-848c-f5ac3f06e61a' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-2fb693dd-0d33-4c0f-848c-f5ac3f06e61a' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-4ceb7312-c5e6-4e3c-bfa4-a79f4106363c' class='xr-var-data-in' type='checkbox'><label for='data-4ceb7312-c5e6-4e3c-bfa4-a79f4106363c' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>bar</dd></dl></div><div class='xr-var-data'><pre>array([1.706410e+02, 1.205424e+02, 8.515232e+01, 6.015242e+01, 4.249225e+01,
+       3.001693e+01, 2.120425e+01, 1.497889e+01, 1.058123e+01, 7.474682e+00,
+       5.280187e+00, 3.729975e+00, 2.634890e+00, 1.861312e+00, 1.314849e+00,
+       9.288217e-01, 6.561286e-01, 4.634955e-01, 3.274177e-01, 2.312910e-01,
+       1.633862e-01, 1.154176e-01, 8.153209e-02, 5.759505e-02, 4.068570e-02,
+       2.874077e-02, 2.030276e-02, 1.434206e-02, 1.013137e-02, 7.156898e-03,
+       5.055701e-03, 3.571396e-03, 2.522868e-03, 1.782179e-03, 1.258948e-03,
+       8.893330e-04, 6.282334e-04, 4.437901e-04, 3.134976e-04, 2.214577e-04,
+       1.564399e-04, 1.105106e-04, 7.806577e-05, 5.514641e-05, 3.895596e-05,
+       2.751886e-05, 1.943959e-05, 1.373231e-05, 9.700637e-06, 6.852624e-06,
+       4.840759e-06, 3.419559e-06, 2.415609e-06])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-0f632acd-7ec0-4c5d-b67b-19b1c19ed284' class='xr-section-summary-in' type='checkbox'  checked><label for='section-0f632acd-7ec0-4c5d-b67b-19b1c19ed284' class='xr-section-summary' >Data variables: <span>(1)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span>temperature</span></div><div class='xr-var-dims'>(lon, lat, pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>1.896e+03 1.809e+03 ... 742.2 750.7</div><input id='attrs-3ae029e4-a3c0-4ff8-bc9e-8e214084081c' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-3ae029e4-a3c0-4ff8-bc9e-8e214084081c' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-5487abe7-596d-4190-9935-c5dba4ec8cec' class='xr-var-data-in' type='checkbox'><label for='data-5487abe7-596d-4190-9935-c5dba4ec8cec' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([[[1895.999275, 1809.121113, 1810.600187, ...,  752.67337 ,
+          746.530746,  749.708642],
+        [1895.999275, 1809.121113, 1810.600187, ...,  752.67337 ,
+          746.530746,  749.708642],
+        [1895.716972, 1808.89245 , 1810.411931, ...,  717.194494,
+          711.506145,  711.312545],
+        ...,
+        [1895.353431, 1808.95781 , 1810.687147, ...,  717.226621,
+          698.5958  ,  693.9048  ],
+        [1895.471174, 1809.351488, 1811.012275, ...,  732.416455,
+          714.059484,  715.899159],
+        [1895.80702 , 1809.56343 , 1811.111388, ...,  759.101309,
+          742.338831,  750.738207]],
+
+       [[1895.994123, 1809.121967, 1810.598869, ...,  752.711552,
+          746.711958,  749.782784],
+        [1895.994123, 1809.121967, 1810.598869, ...,  752.711552,
+          746.711958,  749.782784],
+        [1895.702917, 1808.896167, 1810.409519, ...,  717.187611,
+          711.913669,  711.371776],
+...
+        [1895.416431, 1808.926684, 1810.665788, ...,  717.178087,
+          696.714997,  693.195505],
+        [1895.504871, 1809.336616, 1811.00378 , ...,  732.313343,
+          713.182503,  715.502312],
+        [1895.819462, 1809.55877 , 1811.110091, ...,  759.090572,
+          742.159896,  750.595986]],
+
+       [[1896.004427, 1809.120258, 1810.601505, ...,  752.635188,
+          746.349534,  749.634501],
+        [1896.004427, 1809.120258, 1810.601505, ...,  752.635188,
+          746.349534,  749.634501],
+        [1895.731026, 1808.888733, 1810.414343, ...,  717.201378,
+          711.098621,  711.253313],
+        ...,
+        [1895.382358, 1808.943729, 1810.677492, ...,  717.131393,
+          697.70195 ,  693.569237],
+        [1895.488022, 1809.344052, 1811.008027, ...,  732.364899,
+          713.620993,  715.700735],
+        [1895.813241, 1809.5611  , 1811.11074 , ...,  759.095941,
+          742.249364,  750.667097]]])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-2818ce94-2e0a-44e4-b01f-0fd1e17b63ad' class='xr-section-summary-in' type='checkbox'  checked><label for='section-2818ce94-2e0a-44e4-b01f-0fd1e17b63ad' class='xr-section-summary' >Attributes: <span>(1)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>description :</span></dt><dd>coords with vectors</dd></dl></div></li></ul></div></div></div>
+</div>
+</div>
+<div class="section" id="xarray-tutorial:-Easy-plotting">
+<h2><code class="docutils literal notranslate"><span class="pre">xarray</span></code> tutorial: Easy plotting<a class="headerlink" href="#xarray-tutorial:-Easy-plotting" title="Permalink to this headline">¶</a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">ds</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">pressure</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="s1">&#39;lat&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;matplotlib.collections.QuadMesh at 0x7fbfe60caa00&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_9a_3DInputsWithPICASOandXarray_14_1.png" src="../_images/notebooks_9a_3DInputsWithPICASOandXarray_14_1.png" />
+</div>
+</div>
+</div>
+<div class="section" id="xesfm-tutorial:-Step-by-step-regrid-3D-GCM">
+<h2><code class="docutils literal notranslate"><span class="pre">xesfm</span></code> tutorial: Step-by-step regrid 3D GCM<a class="headerlink" href="#xesfm-tutorial:-Step-by-step-regrid-3D-GCM" title="Permalink to this headline">¶</a></h2>
+<p>The biggest complication with moving to 3D is making sure that the latitude/longitude grids of some users GCM and <code class="docutils literal notranslate"><span class="pre">picaso</span></code> line up properly. <code class="docutils literal notranslate"><span class="pre">picaso</span></code> computes a flux integration on specific <code class="docutils literal notranslate"><span class="pre">gauss</span></code> and <code class="docutils literal notranslate"><span class="pre">tchebychev</span></code> angles. <strong>Meaning, your GCM input will need to be regridded to fit our angles.</strong> Luckily, as you will see below, it is very easy to do this!</p>
+<p>First, we will show you how this is done using <code class="docutils literal notranslate"><span class="pre">xesfm</span></code>, then we will introduce the <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> function that leverages these same techniques.</p>
+<div class="section" id="Step-1)-Get-latitude/longitude-grid-used-by-picaso">
+<h3>Step 1) Get latitude/longitude grid used by <code class="docutils literal notranslate"><span class="pre">picaso</span></code><a class="headerlink" href="#Step-1)-Get-latitude/longitude-grid-used-by-picaso" title="Permalink to this headline">¶</a></h3>
+<p><strong>G</strong>auss angles are essentially equivalent to lon<strong>G</strong>itudes</p>
+<p><strong>T</strong>chebychev angles are essentially equivalent to la<strong>T</strong>itudes.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">n_gauss_angles</span> <span class="o">=</span><span class="mi">10</span>
+<span class="n">n_chebychev_angles</span><span class="o">=</span><span class="mi">10</span>
+
+<span class="n">gangle</span><span class="p">,</span> <span class="n">gweight</span><span class="p">,</span> <span class="n">tangle</span><span class="p">,</span> <span class="n">tweight</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">get_angles_3d</span><span class="p">(</span><span class="n">n_gauss_angles</span><span class="p">,</span> <span class="n">n_chebychev_angles</span><span class="p">)</span>
+<span class="n">ubar0</span><span class="p">,</span> <span class="n">ubar1</span><span class="p">,</span> <span class="n">cos_theta</span><span class="p">,</span> <span class="n">latitude</span><span class="p">,</span> <span class="n">longitude</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">compute_disco</span><span class="p">(</span><span class="n">n_gauss_angles</span><span class="p">,</span> <span class="n">n_chebychev_angles</span><span class="p">,</span> <span class="n">gangle</span><span class="p">,</span> <span class="n">tangle</span><span class="p">,</span> <span class="n">phase_angle</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Step-2)-Create-the-xesfm-regridder">
+<h3>Step 2) Create the <code class="docutils literal notranslate"><span class="pre">xesfm</span></code> regridder<a class="headerlink" href="#Step-2)-Create-the-xesfm-regridder" title="Permalink to this headline">¶</a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">ds_out</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">({</span><span class="s1">&#39;lon&#39;</span><span class="p">:</span> <span class="p">([</span><span class="s1">&#39;lon&#39;</span><span class="p">],</span> <span class="n">longitude</span><span class="o">*</span><span class="mi">180</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">),</span>
+                     <span class="s1">&#39;lat&#39;</span><span class="p">:</span> <span class="p">([</span><span class="s1">&#39;lat&#39;</span><span class="p">],</span> <span class="n">latitude</span><span class="o">*</span><span class="mi">180</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">),</span>
+                    <span class="p">}</span>
+                   <span class="p">)</span>
+
+<span class="n">regridder</span> <span class="o">=</span> <span class="n">xe</span><span class="o">.</span><span class="n">Regridder</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">ds_out</span><span class="p">,</span> <span class="s1">&#39;bilinear&#39;</span><span class="p">)</span>
+<span class="n">ds_out</span> <span class="o">=</span> <span class="n">regridder</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span><span class="n">keep_attrs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/nbatalh1/.conda/envs/picaso38/lib/python3.8/site-packages/xesmf/smm.py:129: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+  warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
+</pre></div></div>
+</div>
+<p>All done!</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">ds_out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">pressure</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span><span class="s1">&#39;lat&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;matplotlib.collections.QuadMesh at 0x7fbfe7185670&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_9a_3DInputsWithPICASOandXarray_20_1.png" src="../_images/notebooks_9a_3DInputsWithPICASOandXarray_20_1.png" />
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="Regrid-3D-GCM-with-PICASO">
+<h2>Regrid 3D GCM with PICASO<a class="headerlink" href="#Regrid-3D-GCM-with-PICASO" title="Permalink to this headline">¶</a></h2>
+<p>The above code is all the PICASO built in function does – in addition to completing some checks to make sure that your model run is on the same grid as what you are wanting PICASO run.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">ds</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">HJ_pt_3d</span><span class="p">(</span><span class="n">as_xarray</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="DIY-Option-1">
+<h3>DIY Option 1<a class="headerlink" href="#DIY-Option-1" title="Permalink to this headline">¶</a></h3>
+<p>For completeness, first here is the function <code class="docutils literal notranslate"><span class="pre">picaso</span></code> uses internally. You might use this if you want to manipulate results before supplying <code class="docutils literal notranslate"><span class="pre">picaso</span></code> with your final input.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1">#regrid yourself</span>
+<span class="n">out_ds</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">regrid_xarray</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">num_gangle</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+                               <span class="n">num_tangle</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">phase_angle</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="c1">#then supply to picaso</span>
+<span class="n">case_3d</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_gangle</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">num_tangle</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+
+<span class="c1">#here, regrid is false because you have already done it yourself</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">atmosphere_3d</span><span class="p">(</span><span class="n">out_ds</span><span class="p">,</span><span class="n">regrid</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+verbose=True;Only one data variable included. Make sure to add in chemical abundances before trying to run spectra.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/nbatalh1/.conda/envs/picaso38/lib/python3.8/site-packages/xesmf/smm.py:129: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+  warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_9a_3DInputsWithPICASOandXarray_24_2.png" src="../_images/notebooks_9a_3DInputsWithPICASOandXarray_24_2.png" />
+</div>
+</div>
+</div>
+<div class="section" id="Easiest-Option-2">
+<h3>Easiest Option 2<a class="headerlink" href="#Easiest-Option-2" title="Permalink to this headline">¶</a></h3>
+<p>Use the regular <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> workflow to regrid your 3d input</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">case_3d</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_gangle</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">num_tangle</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<span class="c1">#regrid is True as you will do it within the function</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">atmosphere_3d</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span><span class="n">regrid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+verbose=True;regrid=True; Regridding 3D output to ngangle=20, ntangle=20, with phase=0.
+verbose=True;Only one data variable included. Make sure to add in chemical abundances before trying to run spectra.
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_9a_3DInputsWithPICASOandXarray_27_1.png" src="../_images/notebooks_9a_3DInputsWithPICASOandXarray_27_1.png" />
+</div>
+</div>
+<p>We have solved regridding our temperature-pressure profile. However, PICASO has notified us of another step we must take before running a spectrum: <em>verbose=True;Only one data variable included. Make sure to add in chemical abundances before trying to run spectra.</em></p>
+<p>In the next notebook you will see how to add chemistry and/or clouds to your 3D input.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="9b_PostProcess3Dinput-Chemistry.html" class="btn btn-neutral float-right" title="What is post-processing?" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="8_SphericalIntegration.html" class="btn btn-neutral float-left" title="Spherical Integration in PICASO" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

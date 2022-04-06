@@ -1,0 +1,2522 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Phase Curves Part 1 &mdash; picaso 2.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Phase Curves Part 2: With Post-Processed Input" href="9f_PhaseCurves-wChemEq.html" />
+    <link rel="prev" title="3D Spectra" href="9d_3DSpectra.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> picaso
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                2.3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../tutorials.html">The Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#basics-of-reflected-light">Basics of Reflected Light</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#basics-of-transmisison">Basics of Transmisison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#basics-of-thermal-emission">Basics of Thermal Emission</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#cloud-modeling-with-virga">Cloud Modeling with <cite>Virga</cite></a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../tutorials.html#moving-to-3-dimensions">Moving to 3 Dimensions</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="8_SphericalIntegration.html">Non-Zero Phase and Spherical Integration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="9a_3DInputsWithPICASOandXarray.html">Basics of a 3D Calculation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="9b_PostProcess3Dinput-Chemistry.html">What is post-processing?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="9b_PostProcess3Dinput-Chemistry.html#Post-Process-3D-Chemistry-Input">Post-Process 3D Chemistry Input</a></li>
+<li class="toctree-l3"><a class="reference internal" href="9c_PostProcess3Dinput-Clouds.html">Post-Processing Clouds for 3D runs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="9d_3DSpectra.html">Modeling a 3D Spectrum (Adams et al. 2022)</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Modeling a Phase Curve pt 1 (Robbins-Blanch et al. 2022)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Run-Thermal-Phase-Curve-w/-3D-Input">Run Thermal Phase Curve w/ 3D Input</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Analyze-Phase-Curves">Analyze Phase Curves</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Run-Cloudy-Thermal-Phase-Curve-w/-3D-Input">Run Cloudy Thermal Phase Curve w/ 3D Input</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="9f_PhaseCurves-wChemEq.html">Modeling a Phase Curve pt 2 (Robbins-Blanch et al. 2022)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#opacities-approximatons">Opacities &amp; Approximatons</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#miscellaneous">Miscellaneous</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../credit.html">The Papers</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">picaso</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../tutorials.html">Tutorials</a> &raquo;</li>
+        
+      <li>Phase Curves Part 1</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/notebooks/9e_PhaseCurves.ipynb.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container,
+div.nbinput.container div.prompt,
+div.nbinput.container div.input_area,
+div.nbinput.container div[class*=highlight],
+div.nbinput.container div[class*=highlight] pre,
+div.nboutput.container,
+div.nboutput.container div.prompt,
+div.nboutput.container div.output_area,
+div.nboutput.container div[class*=highlight],
+div.nboutput.container div[class*=highlight] pre {
+    background: none;
+    border: none;
+    padding: 0 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    min-width: 5ex;
+    padding-top: 0.3rem;
+    padding-right: 0.3rem;
+    text-align: right;
+    flex: 0;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    background: #f5f5f5;
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 0.3rem;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt a.copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+div.rendered_html th {
+  font-weight: bold;
+}
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/9e_PhaseCurves.ipynb">Download full notebook here</a></p>
+</div>
+<div class="section" id="Phase-Curves-Part-1">
+<h1>Phase Curves Part 1<a class="headerlink" href="#Phase-Curves-Part-1" title="Permalink to this headline">¶</a></h1>
+<p><strong>Citation:</strong><a class="reference external" href="https://arxiv.org/">Robbins-Blanch et al. 2022 “Cloudy and Cloud-free Thermal Phase Curves with PICASO: Applications to WASP-43b” ApJ</a></p>
+<p>From the previous two tutorials you should understand how:</p>
+<ol class="arabic simple">
+<li><p>How to convert your GCM input to <code class="docutils literal notranslate"><span class="pre">PICASO</span></code>’s required <code class="docutils literal notranslate"><span class="pre">xarray</span></code></p></li>
+<li><p>How to post-process output to append to your GCM output</p></li>
+</ol>
+<p>Here you will learn:</p>
+<ol class="arabic simple">
+<li><p>How to compute a phase curve</p></li>
+<li><p>How to analyze the resulting output</p></li>
+</ol>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">picaso</span> <span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
+<span class="kn">from</span> <span class="nn">picaso</span> <span class="kn">import</span> <span class="n">justplotit</span> <span class="k">as</span> <span class="n">jpi</span>
+<span class="n">jpi</span><span class="o">.</span><span class="n">output_notebook</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div class="bk-root">
+    <a href="https://bokeh.org" target="_blank" class="bk-logo bk-logo-small bk-logo-notebook"></a>
+    <span id="1002">Loading BokehJS ...</span>
+</div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+
+(function(root) {
+  function now() {
+    return new Date();
+  }
+
+  var force = true;
+
+  if (typeof root._bokeh_onload_callbacks === "undefined" || force === true) {
+    root._bokeh_onload_callbacks = [];
+    root._bokeh_is_loading = undefined;
+  }
+
+  var JS_MIME_TYPE = 'application/javascript';
+  var HTML_MIME_TYPE = 'text/html';
+  var EXEC_MIME_TYPE = 'application/vnd.bokehjs_exec.v0+json';
+  var CLASS_NAME = 'output_bokeh rendered_html';
+
+  /**
+   * Render data to the DOM node
+   */
+  function render(props, node) {
+    var script = document.createElement("script");
+    node.appendChild(script);
+  }
+
+  /**
+   * Handle when an output is cleared or removed
+   */
+  function handleClearOutput(event, handle) {
+    var cell = handle.cell;
+
+    var id = cell.output_area._bokeh_element_id;
+    var server_id = cell.output_area._bokeh_server_id;
+    // Clean up Bokeh references
+    if (id != null && id in Bokeh.index) {
+      Bokeh.index[id].model.document.clear();
+      delete Bokeh.index[id];
+    }
+
+    if (server_id !== undefined) {
+      // Clean up Bokeh references
+      var cmd = "from bokeh.io.state import curstate; print(curstate().uuid_to_server['" + server_id + "'].get_sessions()[0].document.roots[0]._id)";
+      cell.notebook.kernel.execute(cmd, {
+        iopub: {
+          output: function(msg) {
+            var id = msg.content.text.trim();
+            if (id in Bokeh.index) {
+              Bokeh.index[id].model.document.clear();
+              delete Bokeh.index[id];
+            }
+          }
+        }
+      });
+      // Destroy server and session
+      var cmd = "import bokeh.io.notebook as ion; ion.destroy_server('" + server_id + "')";
+      cell.notebook.kernel.execute(cmd);
+    }
+  }
+
+  /**
+   * Handle when a new output is added
+   */
+  function handleAddOutput(event, handle) {
+    var output_area = handle.output_area;
+    var output = handle.output;
+
+    // limit handleAddOutput to display_data with EXEC_MIME_TYPE content only
+    if ((output.output_type != "display_data") || (!Object.prototype.hasOwnProperty.call(output.data, EXEC_MIME_TYPE))) {
+      return
+    }
+
+    var toinsert = output_area.element.find("." + CLASS_NAME.split(' ')[0]);
+
+    if (output.metadata[EXEC_MIME_TYPE]["id"] !== undefined) {
+      toinsert[toinsert.length - 1].firstChild.textContent = output.data[JS_MIME_TYPE];
+      // store reference to embed id on output_area
+      output_area._bokeh_element_id = output.metadata[EXEC_MIME_TYPE]["id"];
+    }
+    if (output.metadata[EXEC_MIME_TYPE]["server_id"] !== undefined) {
+      var bk_div = document.createElement("div");
+      bk_div.innerHTML = output.data[HTML_MIME_TYPE];
+      var script_attrs = bk_div.children[0].attributes;
+      for (var i = 0; i < script_attrs.length; i++) {
+        toinsert[toinsert.length - 1].firstChild.setAttribute(script_attrs[i].name, script_attrs[i].value);
+        toinsert[toinsert.length - 1].firstChild.textContent = bk_div.children[0].textContent
+      }
+      // store reference to server id on output_area
+      output_area._bokeh_server_id = output.metadata[EXEC_MIME_TYPE]["server_id"];
+    }
+  }
+
+  function register_renderer(events, OutputArea) {
+
+    function append_mime(data, metadata, element) {
+      // create a DOM node to render to
+      var toinsert = this.create_output_subarea(
+        metadata,
+        CLASS_NAME,
+        EXEC_MIME_TYPE
+      );
+      this.keyboard_manager.register_events(toinsert);
+      // Render to node
+      var props = {data: data, metadata: metadata[EXEC_MIME_TYPE]};
+      render(props, toinsert[toinsert.length - 1]);
+      element.append(toinsert);
+      return toinsert
+    }
+
+    /* Handle when an output is cleared or removed */
+    events.on('clear_output.CodeCell', handleClearOutput);
+    events.on('delete.Cell', handleClearOutput);
+
+    /* Handle when a new output is added */
+    events.on('output_added.OutputArea', handleAddOutput);
+
+    /**
+     * Register the mime type and append_mime function with output_area
+     */
+    OutputArea.prototype.register_mime_type(EXEC_MIME_TYPE, append_mime, {
+      /* Is output safe? */
+      safe: true,
+      /* Index of renderer in `output_area.display_order` */
+      index: 0
+    });
+  }
+
+  // register the mime type if in Jupyter Notebook environment and previously unregistered
+  if (root.Jupyter !== undefined) {
+    var events = require('base/js/events');
+    var OutputArea = require('notebook/js/outputarea').OutputArea;
+
+    if (OutputArea.prototype.mime_types().indexOf(EXEC_MIME_TYPE) == -1) {
+      register_renderer(events, OutputArea);
+    }
+  }
+
+
+  if (typeof (root._bokeh_timeout) === "undefined" || force === true) {
+    root._bokeh_timeout = Date.now() + 5000;
+    root._bokeh_failed_load = false;
+  }
+
+  var NB_LOAD_WARNING = {'data': {'text/html':
+     "<div style='background-color: #fdd'>\n"+
+     "<p>\n"+
+     "BokehJS does not appear to have successfully loaded. If loading BokehJS from CDN, this \n"+
+     "may be due to a slow or bad network connection. Possible fixes:\n"+
+     "</p>\n"+
+     "<ul>\n"+
+     "<li>re-rerun `output_notebook()` to attempt to load from CDN again, or</li>\n"+
+     "<li>use INLINE resources instead, as so:</li>\n"+
+     "</ul>\n"+
+     "<code>\n"+
+     "from bokeh.resources import INLINE\n"+
+     "output_notebook(resources=INLINE)\n"+
+     "</code>\n"+
+     "</div>"}};
+
+  function display_loaded() {
+    var el = document.getElementById("1002");
+    if (el != null) {
+      el.textContent = "BokehJS is loading...";
+    }
+    if (root.Bokeh !== undefined) {
+      if (el != null) {
+        el.textContent = "BokehJS " + root.Bokeh.version + " successfully loaded.";
+      }
+    } else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(display_loaded, 100)
+    }
+  }
+
+
+  function run_callbacks() {
+    try {
+      root._bokeh_onload_callbacks.forEach(function(callback) {
+        if (callback != null)
+          callback();
+      });
+    } finally {
+      delete root._bokeh_onload_callbacks
+    }
+    console.debug("Bokeh: all callbacks have finished");
+  }
+
+  function load_libs(css_urls, js_urls, callback) {
+    if (css_urls == null) css_urls = [];
+    if (js_urls == null) js_urls = [];
+
+    root._bokeh_onload_callbacks.push(callback);
+    if (root._bokeh_is_loading > 0) {
+      console.debug("Bokeh: BokehJS is being loaded, scheduling callback at", now());
+      return null;
+    }
+    if (js_urls == null || js_urls.length === 0) {
+      run_callbacks();
+      return null;
+    }
+    console.debug("Bokeh: BokehJS not loaded, scheduling load and callback at", now());
+    root._bokeh_is_loading = css_urls.length + js_urls.length;
+
+    function on_load() {
+      root._bokeh_is_loading--;
+      if (root._bokeh_is_loading === 0) {
+        console.debug("Bokeh: all BokehJS libraries/stylesheets loaded");
+        run_callbacks()
+      }
+    }
+
+    function on_error(url) {
+      console.error("failed to load " + url);
+    }
+
+    for (let i = 0; i < css_urls.length; i++) {
+      const url = css_urls[i];
+      const element = document.createElement("link");
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.rel = "stylesheet";
+      element.type = "text/css";
+      element.href = url;
+      console.debug("Bokeh: injecting link tag for BokehJS stylesheet: ", url);
+      document.body.appendChild(element);
+    }
+
+    const hashes = {"https://cdn.bokeh.org/bokeh/release/bokeh-2.3.3.min.js": "dM3QQsP+wXdHg42wTqW85BjZQdLNNIXqlPw/BgKoExPmTG7ZLML4EGqLMfqHT6ON", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.3.3.min.js": "8x57I4YuIfu8XyZfFo0XVr2WAT8EK4rh/uDe3wF7YuW2FNUSNEpJbsPaB1nJ2fz2", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.3.3.min.js": "3QTqdz9LyAm2i0sG5XTePsHec3UHWwVsrOL68SYRoAXsafvfAyqtQ+h440+qIBhS"};
+
+    for (let i = 0; i < js_urls.length; i++) {
+      const url = js_urls[i];
+      const element = document.createElement('script');
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.async = false;
+      element.src = url;
+      if (url in hashes) {
+        element.crossOrigin = "anonymous";
+        element.integrity = "sha384-" + hashes[url];
+      }
+      console.debug("Bokeh: injecting script tag for BokehJS library: ", url);
+      document.head.appendChild(element);
+    }
+  };
+
+  function inject_raw_css(css) {
+    const element = document.createElement("style");
+    element.appendChild(document.createTextNode(css));
+    document.body.appendChild(element);
+  }
+
+
+  var js_urls = ["https://cdn.bokeh.org/bokeh/release/bokeh-2.3.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.3.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.3.3.min.js"];
+  var css_urls = [];
+
+
+  var inline_js = [
+    function(Bokeh) {
+      Bokeh.set_log_level("info");
+    },
+    function(Bokeh) {
+
+
+    }
+  ];
+
+  function run_inline_js() {
+
+    if (root.Bokeh !== undefined || force === true) {
+
+    for (var i = 0; i < inline_js.length; i++) {
+      inline_js[i].call(root, root.Bokeh);
+    }
+    if (force === true) {
+        display_loaded();
+      }} else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(run_inline_js, 100);
+    } else if (!root._bokeh_failed_load) {
+      console.log("Bokeh: BokehJS failed to load within specified timeout.");
+      root._bokeh_failed_load = true;
+    } else if (force !== true) {
+      var cell = $(document.getElementById("1002")).parents('.cell').data().cell;
+      cell.output_area.append_execute_result(NB_LOAD_WARNING)
+    }
+
+  }
+
+  if (root._bokeh_is_loading === 0) {
+    console.debug("Bokeh: BokehJS loaded, going straight to plotting");
+    run_inline_js();
+  } else {
+    load_libs(css_urls, js_urls, function() {
+      console.debug("Bokeh: BokehJS plotting callback run at", now());
+      run_inline_js();
+    });
+  }
+}(window));
+</script></div>
+</div>
+<div class="section" id="Run-Thermal-Phase-Curve-w/-3D-Input">
+<h2>Run Thermal Phase Curve w/ 3D Input<a class="headerlink" href="#Run-Thermal-Phase-Curve-w/-3D-Input" title="Permalink to this headline">¶</a></h2>
+<p>Computing a phase curve is identical to computing 3D spectra. The only difference is that you will need to <strong>rotate the GCM longitude grid such that the visible portion of the planet changes as the phase changes.</strong></p>
+<p>We can experiment with doing this with our original xarray input:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">opacity</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mf">1.7</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">gcm_out</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">HJ_pt_3d</span><span class="p">(</span><span class="n">as_xarray</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="Add-Chemistry-(randomized-for-purposes-of-the-example)">
+<h3>Add Chemistry (randomized for purposes of the example)<a class="headerlink" href="#Add-Chemistry-(randomized-for-purposes-of-the-example)" title="Permalink to this headline">¶</a></h3>
+<p>Add chemistry, if not already included in your GCM output. Here, we are using the user-defined input.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1"># create coords</span>
+<span class="n">lon</span> <span class="o">=</span> <span class="n">gcm_out</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+<span class="n">lat</span> <span class="o">=</span> <span class="n">gcm_out</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lat&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+<span class="n">pres</span> <span class="o">=</span> <span class="n">gcm_out</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pressure&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+
+<span class="n">fake_chem_H2O</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lon</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">lat</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">pres</span><span class="p">))</span><span class="o">*</span><span class="mf">0.1</span><span class="o">+</span><span class="mf">0.1</span> <span class="c1"># create fake data</span>
+<span class="n">fake_chem_H2</span> <span class="o">=</span> <span class="mi">1</span><span class="o">-</span><span class="n">fake_chem_H2O</span> <span class="c1"># create data</span>
+
+<span class="c1"># put data into a dataset</span>
+<span class="n">ds_chem</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+    <span class="n">data_vars</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">H2O</span><span class="o">=</span><span class="p">([</span><span class="s2">&quot;lon&quot;</span><span class="p">,</span> <span class="s2">&quot;lat&quot;</span><span class="p">,</span><span class="s2">&quot;pressure&quot;</span><span class="p">],</span> <span class="n">fake_chem_H2O</span><span class="p">,{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;v/v&#39;</span><span class="p">}),</span>
+        <span class="n">H2</span><span class="o">=</span><span class="p">([</span><span class="s2">&quot;lon&quot;</span><span class="p">,</span> <span class="s2">&quot;lat&quot;</span><span class="p">,</span><span class="s2">&quot;pressure&quot;</span><span class="p">],</span> <span class="n">fake_chem_H2</span><span class="p">,{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;v/v&#39;</span><span class="p">}),</span>
+    <span class="p">),</span>
+    <span class="n">coords</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">lon</span><span class="o">=</span><span class="p">([</span><span class="s2">&quot;lon&quot;</span><span class="p">],</span> <span class="n">lon</span><span class="p">,{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;degrees&#39;</span><span class="p">}),</span> <span class="c1">#required</span>
+        <span class="n">lat</span><span class="o">=</span><span class="p">([</span><span class="s2">&quot;lat&quot;</span><span class="p">],</span> <span class="n">lat</span><span class="p">,{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;degrees&#39;</span><span class="p">}),</span> <span class="c1">#required</span>
+        <span class="n">pressure</span><span class="o">=</span><span class="p">([</span><span class="s2">&quot;pressure&quot;</span><span class="p">],</span> <span class="n">pres</span><span class="p">,{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;bar&#39;</span><span class="p">})</span><span class="c1">#required*</span>
+    <span class="p">),</span>
+    <span class="n">attrs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;coords with vectors&quot;</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="n">all_gcm</span> <span class="o">=</span> <span class="n">gcm_out</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">ds_chem</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">all_gcm</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+<defs>
+<symbol id="icon-database" viewBox="0 0 32 32">
+<path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
+<path d="M16 17c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+<path d="M16 26c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+</symbol>
+<symbol id="icon-file-text2" viewBox="0 0 32 32">
+<path d="M28.681 7.159c-0.694-0.947-1.662-2.053-2.724-3.116s-2.169-2.030-3.116-2.724c-1.612-1.182-2.393-1.319-2.841-1.319h-15.5c-1.378 0-2.5 1.121-2.5 2.5v27c0 1.378 1.122 2.5 2.5 2.5h23c1.378 0 2.5-1.122 2.5-2.5v-19.5c0-0.448-0.137-1.23-1.319-2.841zM24.543 5.457c0.959 0.959 1.712 1.825 2.268 2.543h-4.811v-4.811c0.718 0.556 1.584 1.309 2.543 2.268zM28 29.5c0 0.271-0.229 0.5-0.5 0.5h-23c-0.271 0-0.5-0.229-0.5-0.5v-27c0-0.271 0.229-0.5 0.5-0.5 0 0 15.499-0 15.5 0v7c0 0.552 0.448 1 1 1h7v19.5z"></path>
+<path d="M23 26h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 22h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 18h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+</symbol>
+</defs>
+</svg>
+<style>/* CSS stylesheet for displaying xarray objects in jupyterlab.
+ *
+ */
+
+:root {
+  --xr-font-color0: var(--jp-content-font-color0, rgba(0, 0, 0, 1));
+  --xr-font-color2: var(--jp-content-font-color2, rgba(0, 0, 0, 0.54));
+  --xr-font-color3: var(--jp-content-font-color3, rgba(0, 0, 0, 0.38));
+  --xr-border-color: var(--jp-border-color2, #e0e0e0);
+  --xr-disabled-color: var(--jp-layout-color3, #bdbdbd);
+  --xr-background-color: var(--jp-layout-color0, white);
+  --xr-background-color-row-even: var(--jp-layout-color1, white);
+  --xr-background-color-row-odd: var(--jp-layout-color2, #eeeeee);
+}
+
+html[theme=dark],
+body.vscode-dark {
+  --xr-font-color0: rgba(255, 255, 255, 1);
+  --xr-font-color2: rgba(255, 255, 255, 0.54);
+  --xr-font-color3: rgba(255, 255, 255, 0.38);
+  --xr-border-color: #1F1F1F;
+  --xr-disabled-color: #515151;
+  --xr-background-color: #111111;
+  --xr-background-color-row-even: #111111;
+  --xr-background-color-row-odd: #313131;
+}
+
+.xr-wrap {
+  display: block;
+  min-width: 300px;
+  max-width: 700px;
+}
+
+.xr-text-repr-fallback {
+  /* fallback to plain text repr when CSS is not injected (untrusted notebook) */
+  display: none;
+}
+
+.xr-header {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+  border-bottom: solid 1px var(--xr-border-color);
+}
+
+.xr-header > div,
+.xr-header > ul {
+  display: inline;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.xr-obj-type,
+.xr-array-name {
+  margin-left: 2px;
+  margin-right: 10px;
+}
+
+.xr-obj-type {
+  color: var(--xr-font-color2);
+}
+
+.xr-sections {
+  padding-left: 0 !important;
+  display: grid;
+  grid-template-columns: 150px auto auto 1fr 20px 20px;
+}
+
+.xr-section-item {
+  display: contents;
+}
+
+.xr-section-item input {
+  display: none;
+}
+
+.xr-section-item input + label {
+  color: var(--xr-disabled-color);
+}
+
+.xr-section-item input:enabled + label {
+  cursor: pointer;
+  color: var(--xr-font-color2);
+}
+
+.xr-section-item input:enabled + label:hover {
+  color: var(--xr-font-color0);
+}
+
+.xr-section-summary {
+  grid-column: 1;
+  color: var(--xr-font-color2);
+  font-weight: 500;
+}
+
+.xr-section-summary > span {
+  display: inline-block;
+  padding-left: 0.5em;
+}
+
+.xr-section-summary-in:disabled + label {
+  color: var(--xr-font-color2);
+}
+
+.xr-section-summary-in + label:before {
+  display: inline-block;
+  content: '►';
+  font-size: 11px;
+  width: 15px;
+  text-align: center;
+}
+
+.xr-section-summary-in:disabled + label:before {
+  color: var(--xr-disabled-color);
+}
+
+.xr-section-summary-in:checked + label:before {
+  content: '▼';
+}
+
+.xr-section-summary-in:checked + label > span {
+  display: none;
+}
+
+.xr-section-summary,
+.xr-section-inline-details {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.xr-section-inline-details {
+  grid-column: 2 / -1;
+}
+
+.xr-section-details {
+  display: none;
+  grid-column: 1 / -1;
+  margin-bottom: 5px;
+}
+
+.xr-section-summary-in:checked ~ .xr-section-details {
+  display: contents;
+}
+
+.xr-array-wrap {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 20px auto;
+}
+
+.xr-array-wrap > label {
+  grid-column: 1;
+  vertical-align: top;
+}
+
+.xr-preview {
+  color: var(--xr-font-color3);
+}
+
+.xr-array-preview,
+.xr-array-data {
+  padding: 0 5px !important;
+  grid-column: 2;
+}
+
+.xr-array-data,
+.xr-array-in:checked ~ .xr-array-preview {
+  display: none;
+}
+
+.xr-array-in:checked ~ .xr-array-data,
+.xr-array-preview {
+  display: inline-block;
+}
+
+.xr-dim-list {
+  display: inline-block !important;
+  list-style: none;
+  padding: 0 !important;
+  margin: 0;
+}
+
+.xr-dim-list li {
+  display: inline-block;
+  padding: 0;
+  margin: 0;
+}
+
+.xr-dim-list:before {
+  content: '(';
+}
+
+.xr-dim-list:after {
+  content: ')';
+}
+
+.xr-dim-list li:not(:last-child):after {
+  content: ',';
+  padding-right: 5px;
+}
+
+.xr-has-index {
+  font-weight: bold;
+}
+
+.xr-var-list,
+.xr-var-item {
+  display: contents;
+}
+
+.xr-var-item > div,
+.xr-var-item label,
+.xr-var-item > .xr-var-name span {
+  background-color: var(--xr-background-color-row-even);
+  margin-bottom: 0;
+}
+
+.xr-var-item > .xr-var-name:hover span {
+  padding-right: 5px;
+}
+
+.xr-var-list > li:nth-child(odd) > div,
+.xr-var-list > li:nth-child(odd) > label,
+.xr-var-list > li:nth-child(odd) > .xr-var-name span {
+  background-color: var(--xr-background-color-row-odd);
+}
+
+.xr-var-name {
+  grid-column: 1;
+}
+
+.xr-var-dims {
+  grid-column: 2;
+}
+
+.xr-var-dtype {
+  grid-column: 3;
+  text-align: right;
+  color: var(--xr-font-color2);
+}
+
+.xr-var-preview {
+  grid-column: 4;
+}
+
+.xr-var-name,
+.xr-var-dims,
+.xr-var-dtype,
+.xr-preview,
+.xr-attrs dt {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 10px;
+}
+
+.xr-var-name:hover,
+.xr-var-dims:hover,
+.xr-var-dtype:hover,
+.xr-attrs dt:hover {
+  overflow: visible;
+  width: auto;
+  z-index: 1;
+}
+
+.xr-var-attrs,
+.xr-var-data {
+  display: none;
+  background-color: var(--xr-background-color) !important;
+  padding-bottom: 5px !important;
+}
+
+.xr-var-attrs-in:checked ~ .xr-var-attrs,
+.xr-var-data-in:checked ~ .xr-var-data {
+  display: block;
+}
+
+.xr-var-data > table {
+  float: right;
+}
+
+.xr-var-name span,
+.xr-var-data,
+.xr-attrs {
+  padding-left: 25px !important;
+}
+
+.xr-attrs,
+.xr-var-attrs,
+.xr-var-data {
+  grid-column: 1 / -1;
+}
+
+dl.xr-attrs {
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 125px auto;
+}
+
+.xr-attrs dt,
+.xr-attrs dd {
+  padding: 0;
+  margin: 0;
+  float: left;
+  padding-right: 10px;
+  width: auto;
+}
+
+.xr-attrs dt {
+  font-weight: normal;
+  grid-column: 1;
+}
+
+.xr-attrs dt:hover span {
+  display: inline-block;
+  background: var(--xr-background-color);
+  padding-right: 10px;
+}
+
+.xr-attrs dd {
+  grid-column: 2;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.xr-icon-database,
+.xr-icon-file-text2 {
+  display: inline-block;
+  vertical-align: middle;
+  width: 1em;
+  height: 1.5em !important;
+  stroke-width: 0;
+  stroke: currentColor;
+  fill: currentColor;
+}
+</style><pre class='xr-text-repr-fallback'>&lt;xarray.Dataset&gt;
+Dimensions:      (lon: 128, lat: 64, pressure: 53)
+Coordinates:
+  * lon          (lon) float64 -180.0 -177.2 -174.4 -171.6 ... 171.6 174.4 177.2
+  * lat          (lat) float64 -90.0 -87.19 -84.38 -81.56 ... 81.56 84.38 87.19
+  * pressure     (pressure) float64 170.6 120.5 85.15 ... 3.42e-06 2.416e-06
+Data variables:
+    temperature  (lon, lat, pressure) float64 1.896e+03 1.809e+03 ... 750.7
+    H2O          (lon, lat, pressure) float64 0.1061 0.1083 ... 0.157 0.1824
+    H2           (lon, lat, pressure) float64 0.8939 0.8917 ... 0.843 0.8176
+Attributes:
+    description:  coords with vectors</pre><div class='xr-wrap' hidden><div class='xr-header'><div class='xr-obj-type'>xarray.Dataset</div></div><ul class='xr-sections'><li class='xr-section-item'><input id='section-ba497ea1-41e4-458d-9faf-9c01fedcc2ed' class='xr-section-summary-in' type='checkbox' disabled ><label for='section-ba497ea1-41e4-458d-9faf-9c01fedcc2ed' class='xr-section-summary'  title='Expand/collapse section'>Dimensions:</label><div class='xr-section-inline-details'><ul class='xr-dim-list'><li><span class='xr-has-index'>lon</span>: 128</li><li><span class='xr-has-index'>lat</span>: 64</li><li><span class='xr-has-index'>pressure</span>: 53</li></ul></div><div class='xr-section-details'></div></li><li class='xr-section-item'><input id='section-4667e23a-760e-4d3d-910d-9dbea0072f98' class='xr-section-summary-in' type='checkbox'  checked><label for='section-4667e23a-760e-4d3d-910d-9dbea0072f98' class='xr-section-summary' >Coordinates: <span>(3)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>lon</span></div><div class='xr-var-dims'>(lon)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-180.0 -177.2 ... 174.4 177.2</div><input id='attrs-9478bc2a-87d3-4038-8923-f4ff36abd763' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-9478bc2a-87d3-4038-8923-f4ff36abd763' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-77a256a8-dc32-4010-ad33-a2ef8af9bedd' class='xr-var-data-in' type='checkbox'><label for='data-77a256a8-dc32-4010-ad33-a2ef8af9bedd' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>degrees</dd></dl></div><div class='xr-var-data'><pre>array([-180.    , -177.1875, -174.375 , -171.5625, -168.75  , -165.9375,
+       -163.125 , -160.3125, -157.5   , -154.6875, -151.875 , -149.0625,
+       -146.25  , -143.4375, -140.625 , -137.8125, -135.    , -132.1875,
+       -129.375 , -126.5625, -123.75  , -120.9375, -118.125 , -115.3125,
+       -112.5   , -109.6875, -106.875 , -104.0625, -101.25  ,  -98.4375,
+        -95.625 ,  -92.8125,  -90.    ,  -87.1875,  -84.375 ,  -81.5625,
+        -78.75  ,  -75.9375,  -73.125 ,  -70.3125,  -67.5   ,  -64.6875,
+        -61.875 ,  -59.0625,  -56.25  ,  -53.4375,  -50.625 ,  -47.8125,
+        -45.    ,  -42.1875,  -39.375 ,  -36.5625,  -33.75  ,  -30.9375,
+        -28.125 ,  -25.3125,  -22.5   ,  -19.6875,  -16.875 ,  -14.0625,
+        -11.25  ,   -8.4375,   -5.625 ,   -2.8125,    0.    ,    2.8125,
+          5.625 ,    8.4375,   11.25  ,   14.0625,   16.875 ,   19.6875,
+         22.5   ,   25.3125,   28.125 ,   30.9375,   33.75  ,   36.5625,
+         39.375 ,   42.1875,   45.    ,   47.8125,   50.625 ,   53.4375,
+         56.25  ,   59.0625,   61.875 ,   64.6875,   67.5   ,   70.3125,
+         73.125 ,   75.9375,   78.75  ,   81.5625,   84.375 ,   87.1875,
+         90.    ,   92.8125,   95.625 ,   98.4375,  101.25  ,  104.0625,
+        106.875 ,  109.6875,  112.5   ,  115.3125,  118.125 ,  120.9375,
+        123.75  ,  126.5625,  129.375 ,  132.1875,  135.    ,  137.8125,
+        140.625 ,  143.4375,  146.25  ,  149.0625,  151.875 ,  154.6875,
+        157.5   ,  160.3125,  163.125 ,  165.9375,  168.75  ,  171.5625,
+        174.375 ,  177.1875])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>lat</span></div><div class='xr-var-dims'>(lat)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-90.0 -87.19 -84.38 ... 84.38 87.19</div><input id='attrs-574c1991-5bc0-4926-9839-e8e91fe06319' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-574c1991-5bc0-4926-9839-e8e91fe06319' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-171de41f-03a3-49e1-9a9a-9a04d50f0d39' class='xr-var-data-in' type='checkbox'><label for='data-171de41f-03a3-49e1-9a9a-9a04d50f0d39' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>degrees</dd></dl></div><div class='xr-var-data'><pre>array([-90.    , -87.1875, -84.375 , -81.5625, -78.75  , -75.9375, -73.125 ,
+       -70.3125, -67.5   , -64.6875, -61.875 , -59.0625, -56.25  , -53.4375,
+       -50.625 , -47.8125, -45.    , -42.1875, -39.375 , -36.5625, -33.75  ,
+       -30.9375, -28.125 , -25.3125, -22.5   , -19.6875, -16.875 , -14.0625,
+       -11.25  ,  -8.4375,  -5.625 ,  -2.8125,   0.    ,   2.8125,   5.625 ,
+         8.4375,  11.25  ,  14.0625,  16.875 ,  19.6875,  22.5   ,  25.3125,
+        28.125 ,  30.9375,  33.75  ,  36.5625,  39.375 ,  42.1875,  45.    ,
+        47.8125,  50.625 ,  53.4375,  56.25  ,  59.0625,  61.875 ,  64.6875,
+        67.5   ,  70.3125,  73.125 ,  75.9375,  78.75  ,  81.5625,  84.375 ,
+        87.1875])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>pressure</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>170.6 120.5 ... 3.42e-06 2.416e-06</div><input id='attrs-76941264-3271-450d-8d9d-aab8e85cc030' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-76941264-3271-450d-8d9d-aab8e85cc030' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-4d0e58e0-4430-4afc-a271-83961eb6cbf1' class='xr-var-data-in' type='checkbox'><label for='data-4d0e58e0-4430-4afc-a271-83961eb6cbf1' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>bar</dd></dl></div><div class='xr-var-data'><pre>array([1.706410e+02, 1.205424e+02, 8.515232e+01, 6.015242e+01, 4.249225e+01,
+       3.001693e+01, 2.120425e+01, 1.497889e+01, 1.058123e+01, 7.474682e+00,
+       5.280187e+00, 3.729975e+00, 2.634890e+00, 1.861312e+00, 1.314849e+00,
+       9.288217e-01, 6.561286e-01, 4.634955e-01, 3.274177e-01, 2.312910e-01,
+       1.633862e-01, 1.154176e-01, 8.153209e-02, 5.759505e-02, 4.068570e-02,
+       2.874077e-02, 2.030276e-02, 1.434206e-02, 1.013137e-02, 7.156898e-03,
+       5.055701e-03, 3.571396e-03, 2.522868e-03, 1.782179e-03, 1.258948e-03,
+       8.893330e-04, 6.282334e-04, 4.437901e-04, 3.134976e-04, 2.214577e-04,
+       1.564399e-04, 1.105106e-04, 7.806577e-05, 5.514641e-05, 3.895596e-05,
+       2.751886e-05, 1.943959e-05, 1.373231e-05, 9.700637e-06, 6.852624e-06,
+       4.840759e-06, 3.419559e-06, 2.415609e-06])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-4fe3c350-8b37-4ff8-bea9-8279993dd8cf' class='xr-section-summary-in' type='checkbox'  checked><label for='section-4fe3c350-8b37-4ff8-bea9-8279993dd8cf' class='xr-section-summary' >Data variables: <span>(3)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span>temperature</span></div><div class='xr-var-dims'>(lon, lat, pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>1.896e+03 1.809e+03 ... 742.2 750.7</div><input id='attrs-56c8aeec-18bc-4b46-9c87-38899d74dbb8' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-56c8aeec-18bc-4b46-9c87-38899d74dbb8' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-dd7e4c7a-d773-4a55-bf50-ebc3328a6c49' class='xr-var-data-in' type='checkbox'><label for='data-dd7e4c7a-d773-4a55-bf50-ebc3328a6c49' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([[[1895.999275, 1809.121113, 1810.600187, ...,  752.67337 ,
+          746.530746,  749.708642],
+        [1895.999275, 1809.121113, 1810.600187, ...,  752.67337 ,
+          746.530746,  749.708642],
+        [1895.716972, 1808.89245 , 1810.411931, ...,  717.194494,
+          711.506145,  711.312545],
+        ...,
+        [1895.353431, 1808.95781 , 1810.687147, ...,  717.226621,
+          698.5958  ,  693.9048  ],
+        [1895.471174, 1809.351488, 1811.012275, ...,  732.416455,
+          714.059484,  715.899159],
+        [1895.80702 , 1809.56343 , 1811.111388, ...,  759.101309,
+          742.338831,  750.738207]],
+
+       [[1895.994123, 1809.121967, 1810.598869, ...,  752.711552,
+          746.711958,  749.782784],
+        [1895.994123, 1809.121967, 1810.598869, ...,  752.711552,
+          746.711958,  749.782784],
+        [1895.702917, 1808.896167, 1810.409519, ...,  717.187611,
+          711.913669,  711.371776],
+...
+        [1895.416431, 1808.926684, 1810.665788, ...,  717.178087,
+          696.714997,  693.195505],
+        [1895.504871, 1809.336616, 1811.00378 , ...,  732.313343,
+          713.182503,  715.502312],
+        [1895.819462, 1809.55877 , 1811.110091, ...,  759.090572,
+          742.159896,  750.595986]],
+
+       [[1896.004427, 1809.120258, 1810.601505, ...,  752.635188,
+          746.349534,  749.634501],
+        [1896.004427, 1809.120258, 1810.601505, ...,  752.635188,
+          746.349534,  749.634501],
+        [1895.731026, 1808.888733, 1810.414343, ...,  717.201378,
+          711.098621,  711.253313],
+        ...,
+        [1895.382358, 1808.943729, 1810.677492, ...,  717.131393,
+          697.70195 ,  693.569237],
+        [1895.488022, 1809.344052, 1811.008027, ...,  732.364899,
+          713.620993,  715.700735],
+        [1895.813241, 1809.5611  , 1811.11074 , ...,  759.095941,
+          742.249364,  750.667097]]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>H2O</span></div><div class='xr-var-dims'>(lon, lat, pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.1061 0.1083 ... 0.157 0.1824</div><input id='attrs-60145535-f9b8-4d8d-943b-e0b9952dc786' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-60145535-f9b8-4d8d-943b-e0b9952dc786' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-51803c3f-c556-4f83-a2c2-a627f1da0c1f' class='xr-var-data-in' type='checkbox'><label for='data-51803c3f-c556-4f83-a2c2-a627f1da0c1f' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>v/v</dd></dl></div><div class='xr-var-data'><pre>array([[[0.10608136, 0.10826763, 0.15496532, ..., 0.19219096,
+         0.11174638, 0.12550185],
+        [0.18794749, 0.18243856, 0.13923787, ..., 0.17711591,
+         0.18183503, 0.131093  ],
+        [0.18306727, 0.14254218, 0.1028804 , ..., 0.15515227,
+         0.1749004 , 0.1320926 ],
+        ...,
+        [0.19586017, 0.11593007, 0.16194334, ..., 0.18843021,
+         0.19299123, 0.15537543],
+        [0.10960917, 0.16916859, 0.18524993, ..., 0.10612212,
+         0.170178  , 0.1024942 ],
+        [0.18161714, 0.10195334, 0.17277889, ..., 0.1245966 ,
+         0.10339024, 0.10736022]],
+
+       [[0.17805768, 0.1384488 , 0.19432129, ..., 0.11410482,
+         0.15468472, 0.1910337 ],
+        [0.13364267, 0.13604049, 0.13533928, ..., 0.14968732,
+         0.11459131, 0.14478321],
+        [0.11814323, 0.19882778, 0.13596365, ..., 0.17701438,
+         0.18423635, 0.15274282],
+...
+        [0.1606017 , 0.16217799, 0.15317492, ..., 0.15604386,
+         0.15542868, 0.11706365],
+        [0.18749919, 0.19733157, 0.18063163, ..., 0.16076033,
+         0.15369831, 0.10898193],
+        [0.18198119, 0.16425016, 0.13954068, ..., 0.11311041,
+         0.10986933, 0.16612968]],
+
+       [[0.17386962, 0.17044151, 0.1657848 , ..., 0.15654991,
+         0.11467179, 0.11127243],
+        [0.16853493, 0.16726601, 0.19199672, ..., 0.11332125,
+         0.16242057, 0.10641784],
+        [0.11132178, 0.11026587, 0.14147873, ..., 0.10201968,
+         0.15102339, 0.1951418 ],
+        ...,
+        [0.11432358, 0.17967811, 0.17330651, ..., 0.19977995,
+         0.17782902, 0.10003164],
+        [0.13098416, 0.16018042, 0.12964516, ..., 0.16646318,
+         0.18189776, 0.14807947],
+        [0.10284038, 0.16295618, 0.11087998, ..., 0.16663062,
+         0.15698065, 0.18244801]]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>H2</span></div><div class='xr-var-dims'>(lon, lat, pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.8939 0.8917 ... 0.843 0.8176</div><input id='attrs-2bb7db0b-6310-4e8c-86ec-481beedb2ee0' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-2bb7db0b-6310-4e8c-86ec-481beedb2ee0' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-19e316a9-e96c-4efc-863a-9397be457f02' class='xr-var-data-in' type='checkbox'><label for='data-19e316a9-e96c-4efc-863a-9397be457f02' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>v/v</dd></dl></div><div class='xr-var-data'><pre>array([[[0.89391864, 0.89173237, 0.84503468, ..., 0.80780904,
+         0.88825362, 0.87449815],
+        [0.81205251, 0.81756144, 0.86076213, ..., 0.82288409,
+         0.81816497, 0.868907  ],
+        [0.81693273, 0.85745782, 0.8971196 , ..., 0.84484773,
+         0.8250996 , 0.8679074 ],
+        ...,
+        [0.80413983, 0.88406993, 0.83805666, ..., 0.81156979,
+         0.80700877, 0.84462457],
+        [0.89039083, 0.83083141, 0.81475007, ..., 0.89387788,
+         0.829822  , 0.8975058 ],
+        [0.81838286, 0.89804666, 0.82722111, ..., 0.8754034 ,
+         0.89660976, 0.89263978]],
+
+       [[0.82194232, 0.8615512 , 0.80567871, ..., 0.88589518,
+         0.84531528, 0.8089663 ],
+        [0.86635733, 0.86395951, 0.86466072, ..., 0.85031268,
+         0.88540869, 0.85521679],
+        [0.88185677, 0.80117222, 0.86403635, ..., 0.82298562,
+         0.81576365, 0.84725718],
+...
+        [0.8393983 , 0.83782201, 0.84682508, ..., 0.84395614,
+         0.84457132, 0.88293635],
+        [0.81250081, 0.80266843, 0.81936837, ..., 0.83923967,
+         0.84630169, 0.89101807],
+        [0.81801881, 0.83574984, 0.86045932, ..., 0.88688959,
+         0.89013067, 0.83387032]],
+
+       [[0.82613038, 0.82955849, 0.8342152 , ..., 0.84345009,
+         0.88532821, 0.88872757],
+        [0.83146507, 0.83273399, 0.80800328, ..., 0.88667875,
+         0.83757943, 0.89358216],
+        [0.88867822, 0.88973413, 0.85852127, ..., 0.89798032,
+         0.84897661, 0.8048582 ],
+        ...,
+        [0.88567642, 0.82032189, 0.82669349, ..., 0.80022005,
+         0.82217098, 0.89996836],
+        [0.86901584, 0.83981958, 0.87035484, ..., 0.83353682,
+         0.81810224, 0.85192053],
+        [0.89715962, 0.83704382, 0.88912002, ..., 0.83336938,
+         0.84301935, 0.81755199]]])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-22f3ce3c-e899-472c-baea-e78e785caf43' class='xr-section-summary-in' type='checkbox'  checked><label for='section-22f3ce3c-e899-472c-baea-e78e785caf43' class='xr-section-summary' >Attributes: <span>(1)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>description :</span></dt><dd>coords with vectors</dd></dl></div></li></ul></div></div></div>
+</div>
+<p>Setup phase curve grid by defining the type of phase curve (thermal or reflected) as well as the phase angle grid.</p>
+<p>If you have not gone through the previous tutorials on xarray, post processing input, and computing 3D spectra, we highly recommend you look at that documentation.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">case_3d</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
+<span class="n">n_phases</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">min_phase</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">max_phase</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+<span class="n">phase_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">min_phase</span><span class="p">,</span><span class="n">max_phase</span><span class="p">,</span><span class="n">n_phases</span><span class="p">)</span><span class="c1">#between 0 - 2pi</span>
+<span class="c1">#send params to phase angle routine</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="n">phase_grid</span><span class="o">=</span><span class="n">phase_grid</span><span class="p">,</span>
+                    <span class="n">num_gangle</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">num_tangle</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span><span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Use-shift-parameter-to-determine-rotation-of-planet">
+<h3>Use <code class="docutils literal notranslate"><span class="pre">shift</span></code> parameter to determine rotation of planet<a class="headerlink" href="#Use-shift-parameter-to-determine-rotation-of-planet" title="Permalink to this headline">¶</a></h3>
+<p>This assumes that lat=0, lon=0 at phase=0 is the dayside.</p>
+<p>For each orbital <code class="docutils literal notranslate"><span class="pre">phase</span></code>, <code class="docutils literal notranslate"><span class="pre">picaso</span></code> will rotate the longitude grid <code class="docutils literal notranslate"><span class="pre">phase_i</span></code>+<code class="docutils literal notranslate"><span class="pre">shift_i</span></code>. For example, for tidally locked planets, <code class="docutils literal notranslate"><span class="pre">shift</span></code>=0 at all phase angles since the sub-solar point never changes.</p>
+<p>Therefore, <code class="docutils literal notranslate"><span class="pre">shift</span></code> must be input as an array of length <code class="docutils literal notranslate"><span class="pre">n_phase</span></code>. In this example, we will only explore tidally locked planets and will input a zero array. Use <code class="docutils literal notranslate"><span class="pre">plot=True</span></code> below to get a better idea of how your GCM grid is being shifted.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">case_3d</span><span class="o">.</span><span class="n">atmosphere_4d</span><span class="p">(</span><span class="n">all_gcm</span><span class="p">,</span> <span class="n">shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_phases</span><span class="p">),</span>
+                                     <span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/nbatalh1/.conda/envs/picaso38/lib/python3.8/site-packages/xesmf/smm.py:129: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+  warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
+/Users/nbatalh1/.conda/envs/picaso38/lib/python3.8/site-packages/xesmf/smm.py:129: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+  warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_9e_PhaseCurves_11_1.png" src="../_images/notebooks_9e_PhaseCurves_11_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">case_3d</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;atmosphere&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+<defs>
+<symbol id="icon-database" viewBox="0 0 32 32">
+<path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
+<path d="M16 17c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+<path d="M16 26c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+</symbol>
+<symbol id="icon-file-text2" viewBox="0 0 32 32">
+<path d="M28.681 7.159c-0.694-0.947-1.662-2.053-2.724-3.116s-2.169-2.030-3.116-2.724c-1.612-1.182-2.393-1.319-2.841-1.319h-15.5c-1.378 0-2.5 1.121-2.5 2.5v27c0 1.378 1.122 2.5 2.5 2.5h23c1.378 0 2.5-1.122 2.5-2.5v-19.5c0-0.448-0.137-1.23-1.319-2.841zM24.543 5.457c0.959 0.959 1.712 1.825 2.268 2.543h-4.811v-4.811c0.718 0.556 1.584 1.309 2.543 2.268zM28 29.5c0 0.271-0.229 0.5-0.5 0.5h-23c-0.271 0-0.5-0.229-0.5-0.5v-27c0-0.271 0.229-0.5 0.5-0.5 0 0 15.499-0 15.5 0v7c0 0.552 0.448 1 1 1h7v19.5z"></path>
+<path d="M23 26h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 22h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 18h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+</symbol>
+</defs>
+</svg>
+<style>/* CSS stylesheet for displaying xarray objects in jupyterlab.
+ *
+ */
+
+:root {
+  --xr-font-color0: var(--jp-content-font-color0, rgba(0, 0, 0, 1));
+  --xr-font-color2: var(--jp-content-font-color2, rgba(0, 0, 0, 0.54));
+  --xr-font-color3: var(--jp-content-font-color3, rgba(0, 0, 0, 0.38));
+  --xr-border-color: var(--jp-border-color2, #e0e0e0);
+  --xr-disabled-color: var(--jp-layout-color3, #bdbdbd);
+  --xr-background-color: var(--jp-layout-color0, white);
+  --xr-background-color-row-even: var(--jp-layout-color1, white);
+  --xr-background-color-row-odd: var(--jp-layout-color2, #eeeeee);
+}
+
+html[theme=dark],
+body.vscode-dark {
+  --xr-font-color0: rgba(255, 255, 255, 1);
+  --xr-font-color2: rgba(255, 255, 255, 0.54);
+  --xr-font-color3: rgba(255, 255, 255, 0.38);
+  --xr-border-color: #1F1F1F;
+  --xr-disabled-color: #515151;
+  --xr-background-color: #111111;
+  --xr-background-color-row-even: #111111;
+  --xr-background-color-row-odd: #313131;
+}
+
+.xr-wrap {
+  display: block;
+  min-width: 300px;
+  max-width: 700px;
+}
+
+.xr-text-repr-fallback {
+  /* fallback to plain text repr when CSS is not injected (untrusted notebook) */
+  display: none;
+}
+
+.xr-header {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+  border-bottom: solid 1px var(--xr-border-color);
+}
+
+.xr-header > div,
+.xr-header > ul {
+  display: inline;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.xr-obj-type,
+.xr-array-name {
+  margin-left: 2px;
+  margin-right: 10px;
+}
+
+.xr-obj-type {
+  color: var(--xr-font-color2);
+}
+
+.xr-sections {
+  padding-left: 0 !important;
+  display: grid;
+  grid-template-columns: 150px auto auto 1fr 20px 20px;
+}
+
+.xr-section-item {
+  display: contents;
+}
+
+.xr-section-item input {
+  display: none;
+}
+
+.xr-section-item input + label {
+  color: var(--xr-disabled-color);
+}
+
+.xr-section-item input:enabled + label {
+  cursor: pointer;
+  color: var(--xr-font-color2);
+}
+
+.xr-section-item input:enabled + label:hover {
+  color: var(--xr-font-color0);
+}
+
+.xr-section-summary {
+  grid-column: 1;
+  color: var(--xr-font-color2);
+  font-weight: 500;
+}
+
+.xr-section-summary > span {
+  display: inline-block;
+  padding-left: 0.5em;
+}
+
+.xr-section-summary-in:disabled + label {
+  color: var(--xr-font-color2);
+}
+
+.xr-section-summary-in + label:before {
+  display: inline-block;
+  content: '►';
+  font-size: 11px;
+  width: 15px;
+  text-align: center;
+}
+
+.xr-section-summary-in:disabled + label:before {
+  color: var(--xr-disabled-color);
+}
+
+.xr-section-summary-in:checked + label:before {
+  content: '▼';
+}
+
+.xr-section-summary-in:checked + label > span {
+  display: none;
+}
+
+.xr-section-summary,
+.xr-section-inline-details {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.xr-section-inline-details {
+  grid-column: 2 / -1;
+}
+
+.xr-section-details {
+  display: none;
+  grid-column: 1 / -1;
+  margin-bottom: 5px;
+}
+
+.xr-section-summary-in:checked ~ .xr-section-details {
+  display: contents;
+}
+
+.xr-array-wrap {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 20px auto;
+}
+
+.xr-array-wrap > label {
+  grid-column: 1;
+  vertical-align: top;
+}
+
+.xr-preview {
+  color: var(--xr-font-color3);
+}
+
+.xr-array-preview,
+.xr-array-data {
+  padding: 0 5px !important;
+  grid-column: 2;
+}
+
+.xr-array-data,
+.xr-array-in:checked ~ .xr-array-preview {
+  display: none;
+}
+
+.xr-array-in:checked ~ .xr-array-data,
+.xr-array-preview {
+  display: inline-block;
+}
+
+.xr-dim-list {
+  display: inline-block !important;
+  list-style: none;
+  padding: 0 !important;
+  margin: 0;
+}
+
+.xr-dim-list li {
+  display: inline-block;
+  padding: 0;
+  margin: 0;
+}
+
+.xr-dim-list:before {
+  content: '(';
+}
+
+.xr-dim-list:after {
+  content: ')';
+}
+
+.xr-dim-list li:not(:last-child):after {
+  content: ',';
+  padding-right: 5px;
+}
+
+.xr-has-index {
+  font-weight: bold;
+}
+
+.xr-var-list,
+.xr-var-item {
+  display: contents;
+}
+
+.xr-var-item > div,
+.xr-var-item label,
+.xr-var-item > .xr-var-name span {
+  background-color: var(--xr-background-color-row-even);
+  margin-bottom: 0;
+}
+
+.xr-var-item > .xr-var-name:hover span {
+  padding-right: 5px;
+}
+
+.xr-var-list > li:nth-child(odd) > div,
+.xr-var-list > li:nth-child(odd) > label,
+.xr-var-list > li:nth-child(odd) > .xr-var-name span {
+  background-color: var(--xr-background-color-row-odd);
+}
+
+.xr-var-name {
+  grid-column: 1;
+}
+
+.xr-var-dims {
+  grid-column: 2;
+}
+
+.xr-var-dtype {
+  grid-column: 3;
+  text-align: right;
+  color: var(--xr-font-color2);
+}
+
+.xr-var-preview {
+  grid-column: 4;
+}
+
+.xr-var-name,
+.xr-var-dims,
+.xr-var-dtype,
+.xr-preview,
+.xr-attrs dt {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 10px;
+}
+
+.xr-var-name:hover,
+.xr-var-dims:hover,
+.xr-var-dtype:hover,
+.xr-attrs dt:hover {
+  overflow: visible;
+  width: auto;
+  z-index: 1;
+}
+
+.xr-var-attrs,
+.xr-var-data {
+  display: none;
+  background-color: var(--xr-background-color) !important;
+  padding-bottom: 5px !important;
+}
+
+.xr-var-attrs-in:checked ~ .xr-var-attrs,
+.xr-var-data-in:checked ~ .xr-var-data {
+  display: block;
+}
+
+.xr-var-data > table {
+  float: right;
+}
+
+.xr-var-name span,
+.xr-var-data,
+.xr-attrs {
+  padding-left: 25px !important;
+}
+
+.xr-attrs,
+.xr-var-attrs,
+.xr-var-data {
+  grid-column: 1 / -1;
+}
+
+dl.xr-attrs {
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 125px auto;
+}
+
+.xr-attrs dt,
+.xr-attrs dd {
+  padding: 0;
+  margin: 0;
+  float: left;
+  padding-right: 10px;
+  width: auto;
+}
+
+.xr-attrs dt {
+  font-weight: normal;
+  grid-column: 1;
+}
+
+.xr-attrs dt:hover span {
+  display: inline-block;
+  background: var(--xr-background-color);
+  padding-right: 10px;
+}
+
+.xr-attrs dd {
+  grid-column: 2;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.xr-icon-database,
+.xr-icon-file-text2 {
+  display: inline-block;
+  vertical-align: middle;
+  width: 1em;
+  height: 1.5em !important;
+  stroke-width: 0;
+  stroke: currentColor;
+  fill: currentColor;
+}
+</style><pre class='xr-text-repr-fallback'>&lt;xarray.Dataset&gt;
+Dimensions:      (phase: 4, pressure: 53, lat: 6, lon: 6)
+Coordinates:
+  * pressure     (pressure) float64 170.6 120.5 85.15 ... 3.42e-06 2.416e-06
+  * lon          (lon) float64 -68.82 -41.39 -13.81 13.81 41.39 68.82
+  * lat          (lat) float64 64.29 38.57 12.86 -12.86 -38.57 -64.29
+  * phase        (phase) float64 0.0 2.094 4.189 6.283
+Data variables:
+    temperature  (phase, pressure, lat, lon) float64 1.898e+03 ... 850.0
+    H2O          (phase, pressure, lat, lon) float64 0.1291 0.1426 ... 0.1591
+    H2           (phase, pressure, lat, lon) float64 0.8709 0.8574 ... 0.8409
+Attributes:
+    description:    coords with vectors
+    regrid_method:  bilinear</pre><div class='xr-wrap' hidden><div class='xr-header'><div class='xr-obj-type'>xarray.Dataset</div></div><ul class='xr-sections'><li class='xr-section-item'><input id='section-4f532fd3-9834-46b5-ace8-7ebc36bd84c4' class='xr-section-summary-in' type='checkbox' disabled ><label for='section-4f532fd3-9834-46b5-ace8-7ebc36bd84c4' class='xr-section-summary'  title='Expand/collapse section'>Dimensions:</label><div class='xr-section-inline-details'><ul class='xr-dim-list'><li><span class='xr-has-index'>phase</span>: 4</li><li><span class='xr-has-index'>pressure</span>: 53</li><li><span class='xr-has-index'>lat</span>: 6</li><li><span class='xr-has-index'>lon</span>: 6</li></ul></div><div class='xr-section-details'></div></li><li class='xr-section-item'><input id='section-ec96e08b-5563-4a37-a69a-edaf5aed892c' class='xr-section-summary-in' type='checkbox'  checked><label for='section-ec96e08b-5563-4a37-a69a-edaf5aed892c' class='xr-section-summary' >Coordinates: <span>(4)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>pressure</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>170.6 120.5 ... 3.42e-06 2.416e-06</div><input id='attrs-ccd18e25-26b2-4839-9156-33362f88b2df' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-ccd18e25-26b2-4839-9156-33362f88b2df' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-d5988d42-689b-4672-9fe9-5b8493648a81' class='xr-var-data-in' type='checkbox'><label for='data-d5988d42-689b-4672-9fe9-5b8493648a81' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>bar</dd></dl></div><div class='xr-var-data'><pre>array([1.706410e+02, 1.205424e+02, 8.515232e+01, 6.015242e+01, 4.249225e+01,
+       3.001693e+01, 2.120425e+01, 1.497889e+01, 1.058123e+01, 7.474682e+00,
+       5.280187e+00, 3.729975e+00, 2.634890e+00, 1.861312e+00, 1.314849e+00,
+       9.288217e-01, 6.561286e-01, 4.634955e-01, 3.274177e-01, 2.312910e-01,
+       1.633862e-01, 1.154176e-01, 8.153209e-02, 5.759505e-02, 4.068570e-02,
+       2.874077e-02, 2.030276e-02, 1.434206e-02, 1.013137e-02, 7.156898e-03,
+       5.055701e-03, 3.571396e-03, 2.522868e-03, 1.782179e-03, 1.258948e-03,
+       8.893330e-04, 6.282334e-04, 4.437901e-04, 3.134976e-04, 2.214577e-04,
+       1.564399e-04, 1.105106e-04, 7.806577e-05, 5.514641e-05, 3.895596e-05,
+       2.751886e-05, 1.943959e-05, 1.373231e-05, 9.700637e-06, 6.852624e-06,
+       4.840759e-06, 3.419559e-06, 2.415609e-06])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>lon</span></div><div class='xr-var-dims'>(lon)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-68.82 -41.39 ... 41.39 68.82</div><input id='attrs-d76fdfae-7fcf-46b4-97a3-e3d56dadb14c' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-d76fdfae-7fcf-46b4-97a3-e3d56dadb14c' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-0164ea20-2e19-4861-aa81-1fb0f547fb17' class='xr-var-data-in' type='checkbox'><label for='data-0164ea20-2e19-4861-aa81-1fb0f547fb17' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([-68.823099, -41.392173, -13.805058,  13.805058,  41.392173,  68.823099])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>lat</span></div><div class='xr-var-dims'>(lat)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>64.29 38.57 12.86 ... -38.57 -64.29</div><input id='attrs-71d54787-f898-4a35-8cec-e74da45acf99' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-71d54787-f898-4a35-8cec-e74da45acf99' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-78bc7f57-41be-4b86-8699-cb1a988677c9' class='xr-var-data-in' type='checkbox'><label for='data-78bc7f57-41be-4b86-8699-cb1a988677c9' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([ 64.285714,  38.571429,  12.857143, -12.857143, -38.571429, -64.285714])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>phase</span></div><div class='xr-var-dims'>(phase)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.0 2.094 4.189 6.283</div><input id='attrs-74326cb6-d499-45c4-b365-d6b2f79d0e0c' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-74326cb6-d499-45c4-b365-d6b2f79d0e0c' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-2a01a433-52af-451c-8ce3-b15481931f02' class='xr-var-data-in' type='checkbox'><label for='data-2a01a433-52af-451c-8ce3-b15481931f02' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([0.      , 2.094395, 4.18879 , 6.283185])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-f1fb7497-2925-44d6-9c7a-27889fd3140f' class='xr-section-summary-in' type='checkbox'  checked><label for='section-f1fb7497-2925-44d6-9c7a-27889fd3140f' class='xr-section-summary' >Data variables: <span>(3)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span>temperature</span></div><div class='xr-var-dims'>(phase, pressure, lat, lon)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>1.898e+03 1.898e+03 ... 867.5 850.0</div><input id='attrs-3376155f-5c5c-47b9-a272-d980cb99cc8f' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-3376155f-5c5c-47b9-a272-d980cb99cc8f' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-417903c1-24d9-49e1-8c75-8c2345ccf22a' class='xr-var-data-in' type='checkbox'><label for='data-417903c1-24d9-49e1-8c75-8c2345ccf22a' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([[[[1898.33902084, 1898.12127692, 1897.87294203, 1897.83469719,
+          1897.93758822, 1898.1104295 ],
+         [1895.37498279, 1895.52130255, 1895.55432749, 1895.84681054,
+          1895.934297  , 1895.77837985],
+         [1897.54987947, 1897.48504866, 1897.6551291 , 1897.78434228,
+          1897.51754342, 1897.60332017],
+         [1897.40487901, 1897.34394498, 1897.59166483, 1897.72848812,
+          1897.42762054, 1897.55760613],
+         [1895.42430223, 1895.60428001, 1895.59299503, 1895.84097809,
+          1895.97021714, 1895.80635325],
+         [1898.23248779, 1897.99166084, 1897.7586264 , 1897.74848293,
+          1897.84921325, 1898.00027758]],
+
+        [[1806.91470751, 1809.14390327, 1811.05225556, 1811.9655226 ,
+          1811.66106641, 1810.4016558 ],
+         [1810.75702735, 1812.77408672, 1814.58315247, 1815.09681748,
+          1814.77494651, 1813.68386812],
+         [1806.57656572, 1808.34844819, 1809.21400816, 1809.38894283,
+          1808.81110971, 1808.6066998 ],
+         [1807.12183789, 1808.68299213, 1809.55678333, 1809.43415211,
+...
+           908.64328646,  878.27033078],
+         [ 845.49568647,  884.16527992,  865.78267551,  899.22613322,
+           909.57342214,  873.81102615],
+         [ 788.32340762,  867.95280356,  887.62353539,  896.05358226,
+           905.40627381,  873.15280065],
+         [ 797.68512868,  846.66824741,  869.99887494,  877.10607752,
+           872.22440737,  853.80222611]],
+
+        [[ 798.90785544,  841.83045914,  866.38428313,  871.59758102,
+           862.52215322,  852.56336396],
+         [ 811.06804974,  860.34108427,  870.20456922,  886.85734645,
+           892.17374362,  873.1690621 ],
+         [ 807.91981551,  856.37154537,  877.22399609,  885.68574034,
+           900.65411962,  872.17846723],
+         [ 819.72132606,  873.29634001,  871.2729135 ,  890.41567492,
+           901.35609649,  869.41103113],
+         [ 808.78405039,  862.17138441,  874.75982089,  889.60763843,
+           895.37057021,  870.42547042],
+         [ 798.10177111,  843.31141365,  865.87032872,  869.70035968,
+           867.50155597,  849.96350404]]]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>H2O</span></div><div class='xr-var-dims'>(phase, pressure, lat, lon)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.1291 0.1426 ... 0.1278 0.1591</div><input id='attrs-c8128e22-76e5-48f2-8bb1-e041e64cfefa' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-c8128e22-76e5-48f2-8bb1-e041e64cfefa' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-68ff0269-1b24-4edd-b21b-c47878d284fd' class='xr-var-data-in' type='checkbox'><label for='data-68ff0269-1b24-4edd-b21b-c47878d284fd' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>v/v</dd></dl></div><div class='xr-var-data'><pre>array([[[[0.12907852, 0.14262242, 0.14500092, 0.19100531, 0.15241159,
+          0.11212503],
+         [0.13696038, 0.1605728 , 0.16996183, 0.14045744, 0.1269548 ,
+          0.15357093],
+         [0.16205965, 0.13546726, 0.15780638, 0.17374594, 0.16404505,
+          0.12374668],
+         [0.14877008, 0.14644919, 0.18551399, 0.11890716, 0.1587835 ,
+          0.1599579 ],
+         [0.17300517, 0.12945755, 0.13210507, 0.14587402, 0.14135722,
+          0.17307977],
+         [0.1422527 , 0.17507693, 0.1543262 , 0.17345952, 0.12931888,
+          0.15992313]],
+
+        [[0.11936929, 0.12446613, 0.18234192, 0.12784675, 0.15463957,
+          0.1619255 ],
+         [0.1743713 , 0.18126592, 0.16140763, 0.13272323, 0.15781398,
+          0.16986447],
+         [0.14847546, 0.16649366, 0.14286994, 0.1834913 , 0.14905449,
+          0.15187006],
+         [0.15628593, 0.13171197, 0.14659358, 0.1584809 , 0.1718838 ,
+...
+          0.1417296 ],
+         [0.14580762, 0.15523335, 0.10615432, 0.16217612, 0.10873518,
+          0.13613357],
+         [0.14090301, 0.13775598, 0.12247742, 0.16270081, 0.16508353,
+          0.16381847],
+         [0.16619621, 0.15015177, 0.15562699, 0.12480343, 0.13401317,
+          0.17939022]],
+
+        [[0.15348114, 0.19402047, 0.17996926, 0.17720365, 0.169858  ,
+          0.12103183],
+         [0.16051275, 0.16101813, 0.14922872, 0.1328745 , 0.15938876,
+          0.1565641 ],
+         [0.1738667 , 0.162992  , 0.1144778 , 0.16130508, 0.12636001,
+          0.13668658],
+         [0.16666704, 0.13234168, 0.11969965, 0.14913033, 0.15293895,
+          0.14487827],
+         [0.14861767, 0.144201  , 0.12967507, 0.13742976, 0.17373735,
+          0.14739339],
+         [0.12769579, 0.10936098, 0.13762677, 0.12358737, 0.12779616,
+          0.15912233]]]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>H2</span></div><div class='xr-var-dims'>(phase, pressure, lat, lon)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.8709 0.8574 ... 0.8722 0.8409</div><input id='attrs-32a5be82-16b5-4843-b7b4-cb1a2628e38e' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-32a5be82-16b5-4843-b7b4-cb1a2628e38e' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-c0922f0e-0b6b-4307-9257-440d2925e1ac' class='xr-var-data-in' type='checkbox'><label for='data-c0922f0e-0b6b-4307-9257-440d2925e1ac' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>v/v</dd></dl></div><div class='xr-var-data'><pre>array([[[[0.87092148, 0.85737758, 0.85499908, 0.80899469, 0.84758841,
+          0.88787497],
+         [0.86303962, 0.8394272 , 0.83003817, 0.85954256, 0.8730452 ,
+          0.84642907],
+         [0.83794035, 0.86453274, 0.84219362, 0.82625406, 0.83595495,
+          0.87625332],
+         [0.85122992, 0.85355081, 0.81448601, 0.88109284, 0.8412165 ,
+          0.8400421 ],
+         [0.82699483, 0.87054245, 0.86789493, 0.85412598, 0.85864278,
+          0.82692023],
+         [0.8577473 , 0.82492307, 0.8456738 , 0.82654048, 0.87068112,
+          0.84007687]],
+
+        [[0.88063071, 0.87553387, 0.81765808, 0.87215325, 0.84536043,
+          0.8380745 ],
+         [0.8256287 , 0.81873408, 0.83859237, 0.86727677, 0.84218602,
+          0.83013553],
+         [0.85152454, 0.83350634, 0.85713006, 0.8165087 , 0.85094551,
+          0.84812994],
+         [0.84371407, 0.86828803, 0.85340642, 0.8415191 , 0.8281162 ,
+...
+          0.8582704 ],
+         [0.85419238, 0.84476665, 0.89384568, 0.83782388, 0.89126482,
+          0.86386643],
+         [0.85909699, 0.86224402, 0.87752258, 0.83729919, 0.83491647,
+          0.83618153],
+         [0.83380379, 0.84984823, 0.84437301, 0.87519657, 0.86598683,
+          0.82060978]],
+
+        [[0.84651886, 0.80597953, 0.82003074, 0.82279635, 0.830142  ,
+          0.87896817],
+         [0.83948725, 0.83898187, 0.85077128, 0.8671255 , 0.84061124,
+          0.8434359 ],
+         [0.8261333 , 0.837008  , 0.8855222 , 0.83869492, 0.87363999,
+          0.86331342],
+         [0.83333296, 0.86765832, 0.88030035, 0.85086967, 0.84706105,
+          0.85512173],
+         [0.85138233, 0.855799  , 0.87032493, 0.86257024, 0.82626265,
+          0.85260661],
+         [0.87230421, 0.89063902, 0.86237323, 0.87641263, 0.87220384,
+          0.84087767]]]])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-84638731-b519-45d5-ab38-592443b871b1' class='xr-section-summary-in' type='checkbox'  checked><label for='section-84638731-b519-45d5-ab38-592443b871b1' class='xr-section-summary' >Attributes: <span>(2)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>description :</span></dt><dd>coords with vectors</dd><dt><span>regrid_method :</span></dt><dd>bilinear</dd></dl></div></li></ul></div></div></div>
+</div>
+<p>Easy plotting different phases with <code class="docutils literal notranslate"><span class="pre">xarray</span></code> functionality (remember our H2O selection was random, so the plot will not be to enlightening)</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">case_3d</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;atmosphere&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;temperature&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">pressure</span><span class="o">=</span><span class="mi">52</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                                              <span class="n">x</span><span class="o">=</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span>
+                                              <span class="n">col</span><span class="o">=</span><span class="s1">&#39;phase&#39;</span><span class="p">,</span><span class="n">col_wrap</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;xarray.plot.facetgrid.FacetGrid at 0x7f914275ccd0&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_9e_PhaseCurves_14_1.png" src="../_images/notebooks_9e_PhaseCurves_14_1.png" />
+</div>
+</div>
+<p>Set gravity and stellar parameters as usual</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">case_3d</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_jup&#39;</span><span class="p">),</span>
+                <span class="n">mass</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">mass_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;M_jup&#39;</span><span class="p">))</span> <span class="c1">#any astropy units available</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">opacity</span><span class="p">,</span><span class="mi">5000</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mf">4.0</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_sun&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<p>All is setup. Proceed with phase curve calculation.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">allout</span> <span class="o">=</span> <span class="n">case_3d</span><span class="o">.</span><span class="n">phase_curve</span><span class="p">(</span><span class="n">opacity</span><span class="p">,</span> <span class="n">n_cpu</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span><span class="c1">#jdi.cpu_count(),</span>
+                             <span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="Analyze-Phase-Curves">
+<h2>Analyze Phase Curves<a class="headerlink" href="#Analyze-Phase-Curves" title="Permalink to this headline">¶</a></h2>
+<p>All original plotting tools still work by selecting an individual phase</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1">#same old same old</span>
+<span class="n">wno</span> <span class="o">=</span><span class="p">[];</span><span class="n">fpfs</span><span class="o">=</span><span class="p">[];</span><span class="n">legend</span><span class="o">=</span><span class="p">[]</span>
+<span class="k">for</span> <span class="n">iphase</span> <span class="ow">in</span> <span class="n">allout</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="n">w</span><span class="p">,</span><span class="n">f</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">allout</span><span class="p">[</span><span class="n">iphase</span><span class="p">][</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span>
+                               <span class="n">allout</span><span class="p">[</span><span class="n">iphase</span><span class="p">][</span><span class="s1">&#39;fpfs_thermal&#39;</span><span class="p">],</span><span class="n">R</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">wno</span><span class="o">+=</span><span class="p">[</span><span class="n">w</span><span class="p">]</span>
+    <span class="n">fpfs</span><span class="o">+=</span><span class="p">[</span><span class="n">f</span><span class="o">*</span><span class="mf">1e6</span><span class="p">]</span>
+    <span class="n">legend</span> <span class="o">+=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">iphase</span><span class="o">*</span><span class="mi">180</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))]</span>
+<span class="n">jpi</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">wno</span><span class="p">,</span> <span class="n">fpfs</span><span class="p">,</span> <span class="n">plot_width</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span><span class="n">legend</span><span class="o">=</span><span class="n">legend</span><span class="p">,</span>
+                     <span class="n">palette</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">viridis</span><span class="p">(</span><span class="n">n_phases</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div class="bk-root" id="8304b7a7-4606-4ef9-b928-ea149717a206" data-root-id="1003"></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+(function(root) {
+  function embed_document(root) {
+
+  var docs_json = {"b98b5c8d-01cd-407b-a5e8-2519835f8f50":{"defs":[],"roots":{"references":[{"attributes":{"below":[{"id":"1012"}],"center":[{"id":"1015"},{"id":"1019"}],"height":345,"left":[{"id":"1016"},{"id":"1058"}],"renderers":[{"id":"1038"},{"id":"1044"},{"id":"1050"},{"id":"1056"}],"title":{"id":"1064"},"toolbar":{"id":"1027"},"width":500,"x_range":{"id":"1004"},"x_scale":{"id":"1008"},"y_range":{"id":"1006"},"y_scale":{"id":"1010"}},"id":"1003","subtype":"Figure","type":"Plot"},{"attributes":{},"id":"1075","type":"Selection"},{"attributes":{},"id":"1020","type":"PanTool"},{"attributes":{"label":{"value":"360"},"renderers":[{"id":"1056"}]},"id":"1062","type":"LegendItem"},{"attributes":{},"id":"1072","type":"UnionRenderers"},{"attributes":{},"id":"1023","type":"SaveTool"},{"attributes":{"axis_label":"Wavelength [\u03bcm]","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","formatter":{"id":"1065"},"major_label_policy":{"id":"1066"},"major_label_text_font":"times","major_label_text_font_size":"14pt","ticker":{"id":"1013"}},"id":"1012","type":"LinearAxis"},{"attributes":{"axis":{"id":"1016"},"dimension":1,"ticker":null},"id":"1019","type":"Grid"},{"attributes":{},"id":"1073","type":"Selection"},{"attributes":{"line_color":"#FDE724","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1053","type":"Line"},{"attributes":{"source":{"id":"1034"}},"id":"1039","type":"CDSView"},{"attributes":{},"id":"1077","type":"Selection"},{"attributes":{"data_source":{"id":"1034"},"glyph":{"id":"1035"},"hover_glyph":null,"muted_glyph":{"id":"1037"},"nonselection_glyph":{"id":"1036"},"view":{"id":"1039"}},"id":"1038","type":"GlyphRenderer"},{"attributes":{},"id":"1004","type":"DataRange1d"},{"attributes":{},"id":"1069","type":"AllLabels"},{"attributes":{"axis":{"id":"1012"},"ticker":null},"id":"1015","type":"Grid"},{"attributes":{},"id":"1074","type":"UnionRenderers"},{"attributes":{"line_alpha":0.1,"line_color":"#440154","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1036","type":"Line"},{"attributes":{"label":{"value":"119"},"renderers":[{"id":"1044"}]},"id":"1060","type":"LegendItem"},{"attributes":{},"id":"1068","type":"BasicTickFormatter"},{"attributes":{"bottom_units":"screen","fill_alpha":0.5,"fill_color":"lightgrey","left_units":"screen","level":"overlay","line_alpha":1.0,"line_color":"black","line_dash":[4,4],"line_width":2,"right_units":"screen","syncable":false,"top_units":"screen"},"id":"1026","type":"BoxAnnotation"},{"attributes":{},"id":"1076","type":"UnionRenderers"},{"attributes":{"source":{"id":"1046"}},"id":"1051","type":"CDSView"},{"attributes":{"line_alpha":0.2,"line_color":"#30678D","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1043","type":"Line"},{"attributes":{"line_color":"#35B778","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1047","type":"Line"},{"attributes":{},"id":"1024","type":"ResetTool"},{"attributes":{"line_alpha":0.2,"line_color":"#440154","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1037","type":"Line"},{"attributes":{"line_alpha":0.1,"line_color":"#30678D","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1042","type":"Line"},{"attributes":{"overlay":{"id":"1026"}},"id":"1022","type":"BoxZoomTool"},{"attributes":{"data":{"x":{"__ndarray__":"bbH8I/1R+z98s1mbZQz7P0dlk1d/x/o/PsEclUiD+j/o+eaUvz/6P/oHVpzi/Pk/l1U19a+6+T9ohqztJXn5P09cNNhCOPk/XbiLCwX4+D/Ot6ziarj4P77swbxyefg/WbIb/Ro7+D8xnCULYv33P4cAXFJGwPc/Lp1BQsaD9z/XVlVO4Ef3P3gSCO6SDPc/k6iynNzR9j8K8ovZu5f2P1runicvXvY/5wLBDTUl9j8dU4gWzOz1PywxQtDytPU/IafpzKd99T8XGB6i6Ub1P0j5Gem2EPU/vqKpPg7b9D9oNyJD7qX0P2OkWJpVcfQ/IbeY60I99D9SSpzhtAn0P0KJgiqq1vM/fEnHdyGk8z9tejp+GXLzP+Cq9/WQQPM/FKRdmoYP8z8qGgYq+d7yP8lxvWbnrvI/r5p6FVB/8j8J/1b+MVDyP1OHhuyLIfI/jbJPrlzz8T+cwgMVo8XxP4j89vRdmPE/kPx4JYxr8T+2Hc2ALD/xP6n0IuQ9E/E/2N2OL7/n8D+BngJGr7zwP3gYRg0NkvA/lBDwbddn8D9/B19TDT7wP7gksqutFPA/","dtype":"float64","order":"little","shape":[54]},"y":{"__ndarray__":"M/7yOSnjNkAPiiwDf1M7QPwl5ur2BDlAg3gBdiD0NUDl/DDPHwc1QKpNtGusNzJA8lP3tGqCLECWsyD69womQDyW0RkSqSFAdciwyVHXGkAOibUoeQoUQFq3RhVRGwxAFUZ+ttnUCUCk7Shzp88EQJAAv7ybhgJA6gWEUjpo+j8YIOscwMX3P7oiX4oTrvM/JhKIOBPt7D/PwHBenQbrP46/QmVN8fA/QtFM/Q7Y6j/xA0KJoo/qP9X5zbZ4Wuo/FUnlTIRN8z/1ero70qoMQK35QV1S/xdAhy2vn2thHEDN0egCrsAgQEPgo13WNyBAkes8mzCMHUBgS5B+SYwaQFN5lfMeeRRA7WL3EhmTEEDORneJAQgKQHYhCexDmgNA077+SHEh+T/SXnUpocj0P5wJSCXORvE/uXIEf6pi8T8gJMS50ZrsP3VVt3+u7+s/I0nk6h8A7T+6JpdGljDzPw4u2NskfPk/bROMhxynDkCI77sGxLkbQKQuqj9BdRhAtun51LyvFkAGticc1B8RQEOCRvVBrg5A4zb7hqyrA0Drk8kohjn5PzuCXktuRPQ/","dtype":"float64","order":"little","shape":[54]}},"selected":{"id":"1075"},"selection_policy":{"id":"1074"}},"id":"1040","type":"ColumnDataSource"},{"attributes":{"data":{"x":{"__ndarray__":"bbH8I/1R+z98s1mbZQz7P0dlk1d/x/o/PsEclUiD+j/o+eaUvz/6P/oHVpzi/Pk/l1U19a+6+T9ohqztJXn5P09cNNhCOPk/XbiLCwX4+D/Ot6ziarj4P77swbxyefg/WbIb/Ro7+D8xnCULYv33P4cAXFJGwPc/Lp1BQsaD9z/XVlVO4Ef3P3gSCO6SDPc/k6iynNzR9j8K8ovZu5f2P1runicvXvY/5wLBDTUl9j8dU4gWzOz1PywxQtDytPU/IafpzKd99T8XGB6i6Ub1P0j5Gem2EPU/vqKpPg7b9D9oNyJD7qX0P2OkWJpVcfQ/IbeY60I99D9SSpzhtAn0P0KJgiqq1vM/fEnHdyGk8z9tejp+GXLzP+Cq9/WQQPM/FKRdmoYP8z8qGgYq+d7yP8lxvWbnrvI/r5p6FVB/8j8J/1b+MVDyP1OHhuyLIfI/jbJPrlzz8T+cwgMVo8XxP4j89vRdmPE/kPx4JYxr8T+2Hc2ALD/xP6n0IuQ9E/E/2N2OL7/n8D+BngJGr7zwP3gYRg0NkvA/lBDwbddn8D9/B19TDT7wP7gksqutFPA/","dtype":"float64","order":"little","shape":[54]},"y":{"__ndarray__":"bPMuT+laQkDIcWq6z0REQNMCUtJ/vUJAJsqgHHCxQEDBV9DkJy8/QEhVKBU5eztABMzJofN6NkBXp/HbpZ4yQAxJkSL6iy9AgfbvkBiyKUDtiUDIyMgkQFxidMvZiiBAm4kvQGXHHkCODmA8ySUbQBXax2ROxhhAIcQ0eZY4E0AY4Cj+S9wSQPlIYYWsdxBAPVeVg1opCkBqf8UJz3oJQB0Q8Qh5GQ1AMkRqr3PSCEAYNq2s0+UHQJY2OelqwghAaEH2ZgqoDkBwfVTm28EdQLBdI2KdviVApu1z/et/KEDWeE1sYucrQJW4/3FLRCpAMWAgTd+sJ0BUwb+vMWslQCuClPk/jSFAMeqVV9sbHUDc8rmp2WwYQGGUUnauhxNAamenW7zQC0AJiGYuKjUIQPvdNqZvvgVAtUu3lZSlBUBprhZZmcMCQPuLI/6jUwJA67wG7f6dAkCK6yv1rJwGQD5GnWMT9wpACWIJAN1oGUDNeSAHmXokQPSql8Y19yFA5I74T7ClIEDLxhvxUCEaQBOpQOB3ahdAqyhCRJZCEED3stwVhLIGQDSsZrAGGQNA","dtype":"float64","order":"little","shape":[54]}},"selected":{"id":"1077"},"selection_policy":{"id":"1076"}},"id":"1046","type":"ColumnDataSource"},{"attributes":{},"id":"1017","type":"BasicTicker"},{"attributes":{"label":{"value":"0"},"renderers":[{"id":"1038"}]},"id":"1059","type":"LegendItem"},{"attributes":{},"id":"1066","type":"AllLabels"},{"attributes":{"line_alpha":0.2,"line_color":"#FDE724","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1055","type":"Line"},{"attributes":{},"id":"1008","type":"LinearScale"},{"attributes":{},"id":"1010","type":"LinearScale"},{"attributes":{},"id":"1021","type":"WheelZoomTool"},{"attributes":{"line_color":"#440154","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1035","type":"Line"},{"attributes":{"line_color":"#30678D","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1041","type":"Line"},{"attributes":{"data_source":{"id":"1040"},"glyph":{"id":"1041"},"hover_glyph":null,"muted_glyph":{"id":"1043"},"nonselection_glyph":{"id":"1042"},"view":{"id":"1045"}},"id":"1044","type":"GlyphRenderer"},{"attributes":{"data_source":{"id":"1052"},"glyph":{"id":"1053"},"hover_glyph":null,"muted_glyph":{"id":"1055"},"nonselection_glyph":{"id":"1054"},"view":{"id":"1057"}},"id":"1056","type":"GlyphRenderer"},{"attributes":{"click_policy":"mute","items":[{"id":"1059"},{"id":"1060"},{"id":"1061"},{"id":"1062"}],"location":[0,0]},"id":"1058","type":"Legend"},{"attributes":{},"id":"1065","type":"BasicTickFormatter"},{"attributes":{"line_alpha":0.2,"line_color":"#35B778","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1049","type":"Line"},{"attributes":{"source":{"id":"1052"}},"id":"1057","type":"CDSView"},{"attributes":{},"id":"1064","type":"Title"},{"attributes":{},"id":"1079","type":"Selection"},{"attributes":{},"id":"1013","type":"BasicTicker"},{"attributes":{},"id":"1078","type":"UnionRenderers"},{"attributes":{},"id":"1006","type":"DataRange1d"},{"attributes":{"label":{"value":"239"},"renderers":[{"id":"1050"}]},"id":"1061","type":"LegendItem"},{"attributes":{"data_source":{"id":"1046"},"glyph":{"id":"1047"},"hover_glyph":null,"muted_glyph":{"id":"1049"},"nonselection_glyph":{"id":"1048"},"view":{"id":"1051"}},"id":"1050","type":"GlyphRenderer"},{"attributes":{"source":{"id":"1040"}},"id":"1045","type":"CDSView"},{"attributes":{"line_alpha":0.1,"line_color":"#FDE724","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1054","type":"Line"},{"attributes":{"data":{"x":{"__ndarray__":"bbH8I/1R+z98s1mbZQz7P0dlk1d/x/o/PsEclUiD+j/o+eaUvz/6P/oHVpzi/Pk/l1U19a+6+T9ohqztJXn5P09cNNhCOPk/XbiLCwX4+D/Ot6ziarj4P77swbxyefg/WbIb/Ro7+D8xnCULYv33P4cAXFJGwPc/Lp1BQsaD9z/XVlVO4Ef3P3gSCO6SDPc/k6iynNzR9j8K8ovZu5f2P1runicvXvY/5wLBDTUl9j8dU4gWzOz1PywxQtDytPU/IafpzKd99T8XGB6i6Ub1P0j5Gem2EPU/vqKpPg7b9D9oNyJD7qX0P2OkWJpVcfQ/IbeY60I99D9SSpzhtAn0P0KJgiqq1vM/fEnHdyGk8z9tejp+GXLzP+Cq9/WQQPM/FKRdmoYP8z8qGgYq+d7yP8lxvWbnrvI/r5p6FVB/8j8J/1b+MVDyP1OHhuyLIfI/jbJPrlzz8T+cwgMVo8XxP4j89vRdmPE/kPx4JYxr8T+2Hc2ALD/xP6n0IuQ9E/E/2N2OL7/n8D+BngJGr7zwP3gYRg0NkvA/lBDwbddn8D9/B19TDT7wP7gksqutFPA/","dtype":"float64","order":"little","shape":[54]},"y":{"__ndarray__":"gk8jlxfbQUD5uXb3gZhDQFcI77iZK0JAiv4bW+Q7QEAWlCv6NmA+QPdigEkv5jpAe2QaKLQ5NkAQ+BI3Mp0yQCqrxhUa5i9AQGqIdP1eKkCRQSSLaNAlQE+REDNf7SFAzCRksDrHIEANh6wGMxQeQGDRE1iBrxtAl4js965qFkC/UeiwcuYVQKuY7PcUZhNATft5uU8lEEAP+EskVx4PQEYaPYUB8RBA6VlqwD67DUASoxgyblkMQAfeVQbkwAxAr8mIe0LkEEBPSSplUssdQMZzpsjx+CRArfuJ2kVWJ0Aor9ZvxkQqQLse8Yt6wChASU45vP1jJkBpw6O8zFAkQFe+m8goxyBAgkWTtjgIHEDii6fZ36wXQGCcaZP5LhNAaYocrrTzC0Bg9E/QioQIQAjzps4wJQZALRwwUQbpBUDB2VAjBCADQDWLCzp0mQJAXK87Pg23AkCfmGEz3REGQHJ3AOe/2AlAeIxiOhlYF0CmrC0Q2IkiQD5+IA6FRyBAmjB6F5MgHkCv2VGgpbcXQHnXPytDRRVAD7TeHUHSDUCeDNv7kREFQOTsFpUKvgFA","dtype":"float64","order":"little","shape":[54]}},"selected":{"id":"1079"},"selection_policy":{"id":"1078"}},"id":"1052","type":"ColumnDataSource"},{"attributes":{},"id":"1025","type":"HelpTool"},{"attributes":{"axis_label":"Spectrum","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","formatter":{"id":"1068"},"major_label_policy":{"id":"1069"},"major_label_text_font":"times","major_label_text_font_size":"14pt","ticker":{"id":"1017"}},"id":"1016","type":"LinearAxis"},{"attributes":{"line_alpha":0.1,"line_color":"#35B778","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1048","type":"Line"},{"attributes":{"active_multi":null,"tools":[{"id":"1020"},{"id":"1021"},{"id":"1022"},{"id":"1023"},{"id":"1024"},{"id":"1025"}]},"id":"1027","type":"Toolbar"},{"attributes":{"data":{"x":{"__ndarray__":"bbH8I/1R+z98s1mbZQz7P0dlk1d/x/o/PsEclUiD+j/o+eaUvz/6P/oHVpzi/Pk/l1U19a+6+T9ohqztJXn5P09cNNhCOPk/XbiLCwX4+D/Ot6ziarj4P77swbxyefg/WbIb/Ro7+D8xnCULYv33P4cAXFJGwPc/Lp1BQsaD9z/XVlVO4Ef3P3gSCO6SDPc/k6iynNzR9j8K8ovZu5f2P1runicvXvY/5wLBDTUl9j8dU4gWzOz1PywxQtDytPU/IafpzKd99T8XGB6i6Ub1P0j5Gem2EPU/vqKpPg7b9D9oNyJD7qX0P2OkWJpVcfQ/IbeY60I99D9SSpzhtAn0P0KJgiqq1vM/fEnHdyGk8z9tejp+GXLzP+Cq9/WQQPM/FKRdmoYP8z8qGgYq+d7yP8lxvWbnrvI/r5p6FVB/8j8J/1b+MVDyP1OHhuyLIfI/jbJPrlzz8T+cwgMVo8XxP4j89vRdmPE/kPx4JYxr8T+2Hc2ALD/xP6n0IuQ9E/E/2N2OL7/n8D+BngJGr7zwP3gYRg0NkvA/lBDwbddn8D9/B19TDT7wP7gksqutFPA/","dtype":"float64","order":"little","shape":[54]},"y":{"__ndarray__":"gk8jlxfbQUD5uXb3gZhDQFcI77iZK0JAiv4bW+Q7QEAWlCv6NmA+QPdigEkv5jpAe2QaKLQ5NkAQ+BI3Mp0yQCqrxhUa5i9AQGqIdP1eKkCRQSSLaNAlQE+REDNf7SFAzCRksDrHIEANh6wGMxQeQGDRE1iBrxtAl4js965qFkC/UeiwcuYVQKuY7PcUZhNATft5uU8lEEAP+EskVx4PQEYaPYUB8RBA6VlqwD67DUASoxgyblkMQAfeVQbkwAxAr8mIe0LkEEBPSSplUssdQMZzpsjx+CRArfuJ2kVWJ0Aor9ZvxkQqQLse8Yt6wChASU45vP1jJkBpw6O8zFAkQFe+m8goxyBAgkWTtjgIHEDii6fZ36wXQGCcaZP5LhNAaYocrrTzC0Bg9E/QioQIQAjzps4wJQZALRwwUQbpBUDB2VAjBCADQDWLCzp0mQJAXK87Pg23AkCfmGEz3REGQHJ3AOe/2AlAeIxiOhlYF0CmrC0Q2IkiQD5+IA6FRyBAmjB6F5MgHkCv2VGgpbcXQHnXPytDRRVAD7TeHUHSDUCeDNv7kREFQOTsFpUKvgFA","dtype":"float64","order":"little","shape":[54]}},"selected":{"id":"1073"},"selection_policy":{"id":"1072"}},"id":"1034","type":"ColumnDataSource"}],"root_ids":["1003"]},"title":"Bokeh Application","version":"2.3.3"}};
+  var render_items = [{"docid":"b98b5c8d-01cd-407b-a5e8-2519835f8f50","root_ids":["1003"],"roots":{"1003":"8304b7a7-4606-4ef9-b928-ea149717a206"}}];
+  root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    var attempts = 0;
+    var timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        clearInterval(timer);
+        embed_document(root);
+      } else {
+        attempts++;
+        if (attempts > 100) {
+          clearInterval(timer);
+          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        }
+      }
+    }, 10, root)
+  }
+})(window);
+</script></div>
+</div>
+<div class="section" id="Phase-Curve-Plotting-Tools:-Phase-Snaps">
+<h3>Phase Curve Plotting Tools: Phase Snaps<a class="headerlink" href="#Phase-Curve-Plotting-Tools:-Phase-Snaps" title="Permalink to this headline">¶</a></h3>
+<p>Phase snaps allows you to show snapshots of what is happening at each phase that was computed. x,y,z axes can be swapped out for flexibility.</p>
+<ul class="simple">
+<li><p>Allowable x: <code class="docutils literal notranslate"><span class="pre">'longitude',</span> <span class="pre">'latitude',</span> <span class="pre">'pressure'</span></code></p></li>
+<li><p>Allowable y: <code class="docutils literal notranslate"><span class="pre">'longitude',</span> <span class="pre">'latitude',</span> <span class="pre">'pressure'</span></code></p></li>
+<li><p>Allowable z: <code class="docutils literal notranslate"><span class="pre">'temperature','taugas','taucld','tauray','w0','g0','opd'</span></code> (<em>the latter three are cloud properties</em>)</p></li>
+<li><p>Allowable collapse: Collapse tells picaso what to do with the extra axes. For instance, taugas is an array that is <code class="docutils literal notranslate"><span class="pre">[npressure,nwavelength,nlongitude,nlatitude]</span></code>. If we want <code class="docutils literal notranslate"><span class="pre">pressure</span> <span class="pre">x</span> <span class="pre">latitude</span></code> we have to collapse wavelength and the longitude axis. To do so we could either supply an integer value to select a single dimension. Or we could supply one of the following as <code class="docutils literal notranslate"><span class="pre">str</span></code> input: [np.mean, np.median, np.min, np.max]. If there are multiple axes you want to collapse, supply an ordered
+list.</p></li>
+</ul>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">fig</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">phase_snaps</span><span class="p">(</span><span class="n">allout</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="s1">&#39;longitude&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;pressure&#39;</span><span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="s1">&#39;temperature&#39;</span><span class="p">,</span>
+                <span class="n">y_log</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">z_log</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">collapse</span><span class="o">=</span><span class="s1">&#39;np.mean&#39;</span><span class="p">)</span><span class="c1">#this will collapse the latitude axis by taking a mean</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/nbatalh1/Documents/codes/PICASO/picaso/picaso/justplotit.py:1703: MatplotlibDeprecationWarning: shading=&#39;flat&#39; when X and Y have the same dimensions as C is deprecated since 3.3.  Either specify the corners of the quadrilaterals with X and Y, or pass shading=&#39;auto&#39;, &#39;nearest&#39; or &#39;gouraud&#39;, or set rcParams[&#39;pcolor.shading&#39;].  This will become an error two minor releases later.
+  c = ax.pcolormesh(x_mesh, y_mesh, zd, cmap=palette,
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_9e_PhaseCurves_22_1.png" src="../_images/notebooks_9e_PhaseCurves_22_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">fig</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">phase_snaps</span><span class="p">(</span><span class="n">allout</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="s1">&#39;longitude&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;pressure&#39;</span><span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="s1">&#39;taugas&#39;</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="s1">&#39;PuBu&#39;</span><span class="p">,</span>
+                <span class="n">y_log</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">z_log</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">collapse</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;np.mean&#39;</span><span class="p">,</span><span class="s1">&#39;np.mean&#39;</span><span class="p">])</span>
+<span class="c1">#this will collapse the latitude axis by taking a mean, and the wavelength axis also by taking the mean</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/nbatalh1/Documents/codes/PICASO/picaso/picaso/justplotit.py:1700: MatplotlibDeprecationWarning: shading=&#39;flat&#39; when X and Y have the same dimensions as C is deprecated since 3.3.  Either specify the corners of the quadrilaterals with X and Y, or pass shading=&#39;auto&#39;, &#39;nearest&#39; or &#39;gouraud&#39;, or set rcParams[&#39;pcolor.shading&#39;].  This will become an error two minor releases later.
+  c = ax.pcolormesh(x_mesh, y_mesh, zd, cmap=palette,
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_9e_PhaseCurves_23_1.png" src="../_images/notebooks_9e_PhaseCurves_23_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">fig</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">phase_snaps</span><span class="p">(</span><span class="n">allout</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="s1">&#39;longitude&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;latitude&#39;</span><span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="s1">&#39;taugas&#39;</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="s1">&#39;PuBu&#39;</span><span class="p">,</span>
+                <span class="n">y_log</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">z_log</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">collapse</span><span class="o">=</span><span class="p">[</span><span class="mi">20</span><span class="p">,</span><span class="s1">&#39;np.mean&#39;</span><span class="p">])</span>
+<span class="c1">#this will collapse the pressure axis by taking the 20th pressure grid point</span>
+<span class="c1">#and the wavelength axis by taking the mean</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Pressure at&#39;</span><span class="p">,</span> <span class="n">allout</span><span class="p">[</span><span class="n">iphase</span><span class="p">][</span><span class="s1">&#39;full_output&#39;</span><span class="p">][</span><span class="s1">&#39;layer&#39;</span><span class="p">][</span><span class="s1">&#39;pressure&#39;</span><span class="p">][</span><span class="mi">20</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Pressure at 0.0030016929695969906
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_9e_PhaseCurves_24_1.png" src="../_images/notebooks_9e_PhaseCurves_24_1.png" />
+</div>
+</div>
+</div>
+<div class="section" id="Phase-Curve-Plotting-Tools:-Phase-Curves">
+<h3>Phase Curve Plotting Tools: Phase Curves<a class="headerlink" href="#Phase-Curve-Plotting-Tools:-Phase-Curves" title="Permalink to this headline">¶</a></h3>
+<p>We can use the same <code class="docutils literal notranslate"><span class="pre">collapse</span></code> feature as in the <code class="docutils literal notranslate"><span class="pre">phase_snaps</span></code> tool to collapse the wavelength axis, when plotting phase curves. For example, we can select a single wavelength point at a given resolution, or we can average over all wavelengths.</p>
+<p>Allowable collapse: - <code class="docutils literal notranslate"><span class="pre">'np.mean'</span></code> or <code class="docutils literal notranslate"><span class="pre">np.sum</span></code> - float or list of float: wavelength in microns (will find the nearest value to this wavelength). Must be in wavenumber range.</p>
+<p>For <code class="docutils literal notranslate"><span class="pre">float</span></code> option, user must specify resolution.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">to_plot</span> <span class="o">=</span> <span class="s1">&#39;fpfs_thermal&#39;</span><span class="c1">#or thermal</span>
+<span class="n">collapse</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.1</span><span class="p">,</span><span class="mf">1.4</span><span class="p">,</span><span class="mf">1.6</span><span class="p">]</span><span class="c1">#micron</span>
+<span class="n">R</span><span class="o">=</span><span class="mi">100</span>
+<span class="n">phases</span><span class="p">,</span> <span class="n">all_curves</span><span class="p">,</span> <span class="n">all_ws</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">phase_curve</span><span class="p">(</span><span class="n">allout</span><span class="p">,</span> <span class="n">to_plot</span><span class="p">,</span> <span class="n">collapse</span><span class="o">=</span><span class="n">collapse</span><span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">jpi</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div class="bk-root" id="d3e05e01-8d7f-487d-95e4-5cf89067cb8d" data-root-id="1165"></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+(function(root) {
+  function embed_document(root) {
+
+  var docs_json = {"74951da1-a610-4f1b-b130-fab608cbb3dd":{"defs":[],"roots":{"references":[{"attributes":{"below":[{"id":"1176"}],"center":[{"id":"1179"},{"id":"1183"}],"height":400,"left":[{"id":"1180"},{"id":"1213"}],"renderers":[{"id":"1201"},{"id":"1206"},{"id":"1211"}],"title":{"id":"1166"},"toolbar":{"id":"1191"},"x_range":{"id":"1168"},"x_scale":{"id":"1172"},"y_range":{"id":"1170"},"y_scale":{"id":"1174"}},"id":"1165","subtype":"Figure","type":"Plot"},{"attributes":{"data":{"x":{"__ndarray__":"AAAAAAAAAAD///////9dQP///////21AAAAAAACAdkA=","dtype":"float64","order":"little","shape":[4]},"y":{"__ndarray__":"zlErmquE8z69gJTdFB3nPu4amkwxhvM+zlErmquE8z4=","dtype":"float64","order":"little","shape":[4]}},"selected":{"id":"1247"},"selection_policy":{"id":"1246"}},"id":"1208","type":"ColumnDataSource"},{"attributes":{"data_source":{"id":"1203"},"glyph":{"id":"1204"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"1205"},"view":{"id":"1207"}},"id":"1206","type":"GlyphRenderer"},{"attributes":{},"id":"1172","type":"LinearScale"},{"attributes":{},"id":"1174","type":"LinearScale"},{"attributes":{"source":{"id":"1198"}},"id":"1202","type":"CDSView"},{"attributes":{},"id":"1181","type":"BasicTicker"},{"attributes":{},"id":"1235","type":"BasicTickFormatter"},{"attributes":{},"id":"1239","type":"AllLabels"},{"attributes":{"label":{"value":"1.39um"},"renderers":[{"id":"1206"}]},"id":"1215","type":"LegendItem"},{"attributes":{"bottom_units":"screen","fill_alpha":0.5,"fill_color":"lightgrey","left_units":"screen","level":"overlay","line_alpha":1.0,"line_color":"black","line_dash":[4,4],"line_width":2,"right_units":"screen","syncable":false,"top_units":"screen"},"id":"1190","type":"BoxAnnotation"},{"attributes":{},"id":"1246","type":"UnionRenderers"},{"attributes":{"text":"Phase Curves"},"id":"1166","type":"Title"},{"attributes":{},"id":"1177","type":"BasicTicker"},{"attributes":{"source":{"id":"1203"}},"id":"1207","type":"CDSView"},{"attributes":{},"id":"1238","type":"BasicTickFormatter"},{"attributes":{"line_alpha":0.1,"line_color":"#3288bd","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1205","type":"Line"},{"attributes":{"axis_label":"fpfs_thermal","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","formatter":{"id":"1238"},"major_label_policy":{"id":"1239"},"major_label_text_font":"times","major_label_text_font_size":"14pt","ticker":{"id":"1181"}},"id":"1180","type":"LinearAxis"},{"attributes":{"source":{"id":"1208"}},"id":"1212","type":"CDSView"},{"attributes":{"line_color":"#3288bd","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1204","type":"Line"},{"attributes":{},"id":"1188","type":"ResetTool"},{"attributes":{"data":{"x":{"__ndarray__":"AAAAAAAAAAD///////9dQP///////21AAAAAAACAdkA=","dtype":"float64","order":"little","shape":[4]},"y":{"__ndarray__":"D/56Myoayz54+myQD7m6PpivokhmRsw+D/56Myoayz4=","dtype":"float64","order":"little","shape":[4]}},"selected":{"id":"1243"},"selection_policy":{"id":"1242"}},"id":"1198","type":"ColumnDataSource"},{"attributes":{},"id":"1185","type":"WheelZoomTool"},{"attributes":{"line_color":"#5e4fa2","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1199","type":"Line"},{"attributes":{"data":{"x":{"__ndarray__":"AAAAAAAAAAD///////9dQP///////21AAAAAAACAdkA=","dtype":"float64","order":"little","shape":[4]},"y":{"__ndarray__":"ZxjAKq7D0T4DUFC6/cOxPtvLRaBWg84+ZxjAKq7D0T4=","dtype":"float64","order":"little","shape":[4]}},"selected":{"id":"1245"},"selection_policy":{"id":"1244"}},"id":"1203","type":"ColumnDataSource"},{"attributes":{"line_alpha":0.1,"line_color":"#5e4fa2","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1200","type":"Line"},{"attributes":{"line_alpha":0.1,"line_color":"#66c2a5","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1210","type":"Line"},{"attributes":{},"id":"1245","type":"Selection"},{"attributes":{"label":{"value":"1.59um"},"renderers":[{"id":"1211"}]},"id":"1216","type":"LegendItem"},{"attributes":{},"id":"1247","type":"Selection"},{"attributes":{},"id":"1168","type":"DataRange1d"},{"attributes":{},"id":"1187","type":"SaveTool"},{"attributes":{"axis":{"id":"1176"},"grid_line_alpha":0,"ticker":null},"id":"1179","type":"Grid"},{"attributes":{},"id":"1236","type":"AllLabels"},{"attributes":{},"id":"1243","type":"Selection"},{"attributes":{"active_multi":null,"tools":[{"id":"1184"},{"id":"1185"},{"id":"1186"},{"id":"1187"},{"id":"1188"},{"id":"1189"}]},"id":"1191","type":"Toolbar"},{"attributes":{},"id":"1242","type":"UnionRenderers"},{"attributes":{"line_color":"#66c2a5","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1209","type":"Line"},{"attributes":{},"id":"1184","type":"PanTool"},{"attributes":{},"id":"1170","type":"DataRange1d"},{"attributes":{"axis":{"id":"1180"},"dimension":1,"grid_line_alpha":0,"ticker":null},"id":"1183","type":"Grid"},{"attributes":{"data_source":{"id":"1198"},"glyph":{"id":"1199"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"1200"},"view":{"id":"1202"}},"id":"1201","type":"GlyphRenderer"},{"attributes":{},"id":"1189","type":"HelpTool"},{"attributes":{"label":{"value":"1.09um"},"renderers":[{"id":"1201"}]},"id":"1214","type":"LegendItem"},{"attributes":{},"id":"1244","type":"UnionRenderers"},{"attributes":{"data_source":{"id":"1208"},"glyph":{"id":"1209"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"1210"},"view":{"id":"1212"}},"id":"1211","type":"GlyphRenderer"},{"attributes":{"click_policy":"mute","items":[{"id":"1214"},{"id":"1215"},{"id":"1216"}],"location":[0,-20]},"id":"1213","type":"Legend"},{"attributes":{"axis_label":"Orbital Phase","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","formatter":{"id":"1235"},"major_label_policy":{"id":"1236"},"major_label_text_font":"times","major_label_text_font_size":"14pt","ticker":{"id":"1177"}},"id":"1176","type":"LinearAxis"},{"attributes":{"overlay":{"id":"1190"}},"id":"1186","type":"BoxZoomTool"}],"root_ids":["1165"]},"title":"Bokeh Application","version":"2.3.3"}};
+  var render_items = [{"docid":"74951da1-a610-4f1b-b130-fab608cbb3dd","root_ids":["1165"],"roots":{"1165":"d3e05e01-8d7f-487d-95e4-5cf89067cb8d"}}];
+  root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    var attempts = 0;
+    var timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        clearInterval(timer);
+        embed_document(root);
+      } else {
+        attempts++;
+        if (attempts > 100) {
+          clearInterval(timer);
+          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        }
+      }
+    }, 10, root)
+  }
+})(window);
+</script></div>
+</div>
+</div>
+</div>
+<div class="section" id="Run-Cloudy-Thermal-Phase-Curve-w/-3D-Input">
+<h2>Run Cloudy Thermal Phase Curve w/ 3D Input<a class="headerlink" href="#Run-Cloudy-Thermal-Phase-Curve-w/-3D-Input" title="Permalink to this headline">¶</a></h2>
+<p>Here we will create a hypothetical cloud path and add it to our fake H2O profile to demonstrate the basics of running a cloudy phase curve</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1"># create coords</span>
+<span class="n">lon</span> <span class="o">=</span> <span class="n">all_gcm</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+<span class="n">lat</span> <span class="o">=</span> <span class="n">all_gcm</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lat&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+<span class="n">pres</span> <span class="o">=</span> <span class="n">all_gcm</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pressure&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+<span class="n">pres_layer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">pres</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">pres</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+<span class="n">wno_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1e4</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span><span class="mf">1e4</span><span class="o">/</span><span class="mi">1</span><span class="p">,</span><span class="mi">10</span><span class="p">)</span><span class="c1">#cloud properties are defined on a wavenumber grid</span>
+
+<span class="c1">#create box-band cloud model</span>
+<span class="n">fake_opd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">lon</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">lat</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">pres_layer</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">wno_grid</span><span class="p">)))</span> <span class="c1"># create fake data</span>
+<span class="n">where_lat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(((</span><span class="n">lat</span><span class="o">&gt;-</span><span class="mi">60</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">lat</span><span class="o">&lt;</span><span class="mi">60</span><span class="p">)))</span><span class="c1">#creating a grey cloud path</span>
+<span class="n">where_lon</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">lon</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span><span class="c1">#creating a grey cloud path</span>
+<span class="n">where_pres</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(((</span><span class="n">pres_layer</span><span class="o">&lt;</span><span class="mf">0.01</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">pres_layer</span><span class="o">&gt;</span><span class="mf">1e-4</span><span class="p">)))</span><span class="c1">#creating a grey cloud band</span>
+
+<span class="k">for</span> <span class="n">il</span> <span class="ow">in</span> <span class="n">where_lat</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+    <span class="k">for</span> <span class="n">ip</span> <span class="ow">in</span> <span class="n">where_pres</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">ilo</span> <span class="ow">in</span> <span class="n">where_lon</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">fake_opd</span><span class="p">[</span><span class="n">ilo</span><span class="p">,</span><span class="n">il</span><span class="p">,</span><span class="n">ip</span><span class="p">,:]</span><span class="o">=</span><span class="mi">10</span> <span class="c1">#optical depth of 10 (&gt;&gt;1)</span>
+
+<span class="c1">#make up asymmetry and single scattering properties</span>
+<span class="n">fake_asymmetry_g0</span> <span class="o">=</span> <span class="mf">0.8</span><span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">lon</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">lat</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">pres_layer</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">wno_grid</span><span class="p">)))</span>
+<span class="n">fake_ssa_w0</span> <span class="o">=</span> <span class="mf">0.9</span><span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">lon</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">lat</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">pres_layer</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">wno_grid</span><span class="p">)))</span>
+
+<span class="c1"># put data into a dataset</span>
+<span class="n">ds_cld</span><span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+    <span class="n">data_vars</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">opd</span><span class="o">=</span><span class="p">([</span><span class="s2">&quot;lon&quot;</span><span class="p">,</span> <span class="s2">&quot;lat&quot;</span><span class="p">,</span><span class="s2">&quot;pressure&quot;</span><span class="p">,</span><span class="s2">&quot;wno&quot;</span><span class="p">],</span> <span class="n">fake_opd</span><span class="p">,{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;depth per layer&#39;</span><span class="p">}),</span>
+        <span class="n">g0</span><span class="o">=</span><span class="p">([</span><span class="s2">&quot;lon&quot;</span><span class="p">,</span> <span class="s2">&quot;lat&quot;</span><span class="p">,</span><span class="s2">&quot;pressure&quot;</span><span class="p">,</span><span class="s2">&quot;wno&quot;</span><span class="p">],</span> <span class="n">fake_asymmetry_g0</span><span class="p">,{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;none&#39;</span><span class="p">}),</span>
+        <span class="n">w0</span><span class="o">=</span><span class="p">([</span><span class="s2">&quot;lon&quot;</span><span class="p">,</span> <span class="s2">&quot;lat&quot;</span><span class="p">,</span><span class="s2">&quot;pressure&quot;</span><span class="p">,</span><span class="s2">&quot;wno&quot;</span><span class="p">],</span> <span class="n">fake_ssa_w0</span><span class="p">,{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;none&#39;</span><span class="p">}),</span>
+    <span class="p">),</span>
+    <span class="n">coords</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">lon</span><span class="o">=</span><span class="p">([</span><span class="s2">&quot;lon&quot;</span><span class="p">],</span> <span class="n">lon</span><span class="p">,{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;degrees&#39;</span><span class="p">}),</span><span class="c1">#required</span>
+        <span class="n">lat</span><span class="o">=</span><span class="p">([</span><span class="s2">&quot;lat&quot;</span><span class="p">],</span> <span class="n">lat</span><span class="p">,{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;degrees&#39;</span><span class="p">}),</span><span class="c1">#required</span>
+        <span class="n">pressure</span><span class="o">=</span><span class="p">([</span><span class="s2">&quot;pressure&quot;</span><span class="p">],</span> <span class="n">pres_layer</span><span class="p">,{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;bar&#39;</span><span class="p">}),</span><span class="c1">#required</span>
+        <span class="n">wno</span><span class="o">=</span><span class="p">([</span><span class="s2">&quot;wno&quot;</span><span class="p">],</span> <span class="n">wno_grid</span><span class="p">,{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;cm^(-1)&#39;</span><span class="p">})</span><span class="c1">#required for clouds</span>
+    <span class="p">),</span>
+    <span class="n">attrs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;coords with vectors&quot;</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="n">ds_cld</span><span class="p">[</span><span class="s1">&#39;opd&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">pressure</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span><span class="n">wno</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="s1">&#39;lat&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;matplotlib.collections.QuadMesh at 0x7f904c965a30&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_9e_PhaseCurves_28_1.png" src="../_images/notebooks_9e_PhaseCurves_28_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">case_cld</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
+<span class="c1">#setup geometry of run</span>
+<span class="n">n_phases</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">min_phase</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">max_phase</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+<span class="n">phase_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">min_phase</span><span class="p">,</span><span class="n">max_phase</span><span class="p">,</span><span class="n">n_phases</span><span class="p">)</span><span class="c1">#between 0 - 2pi</span>
+<span class="c1">#send params to phase angle routine</span>
+<span class="n">case_cld</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="n">phase_grid</span><span class="o">=</span><span class="n">phase_grid</span><span class="p">,</span>
+                    <span class="n">num_gangle</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">num_tangle</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span><span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal&#39;</span><span class="p">)</span>
+
+<span class="c1">#setup 4d atmosphere</span>
+<span class="n">case_cld</span><span class="o">.</span><span class="n">atmosphere_4d</span><span class="p">(</span><span class="n">all_gcm</span><span class="p">,</span> <span class="n">shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_phases</span><span class="p">),</span>
+                                     <span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">case_cld</span><span class="o">.</span><span class="n">clouds_4d</span><span class="p">(</span><span class="n">ds_cld</span><span class="p">,</span> <span class="n">shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_phases</span><span class="p">),</span> <span class="n">iz_plot</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+                                     <span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="c1">#same old planet and star properties</span>
+<span class="n">case_cld</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_jup&#39;</span><span class="p">),</span>
+                <span class="n">mass</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">mass_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;M_jup&#39;</span><span class="p">))</span> <span class="c1">#any astropy units available</span>
+<span class="n">case_cld</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">opacity</span><span class="p">,</span><span class="mi">5000</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mf">4.0</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_sun&#39;</span><span class="p">))</span>
+
+
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_9e_PhaseCurves_29_0.png" src="../_images/notebooks_9e_PhaseCurves_29_0.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_9e_PhaseCurves_29_1.png" src="../_images/notebooks_9e_PhaseCurves_29_1.png" />
+</div>
+</div>
+<p>Run cloudy phase curve!</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">cldout</span> <span class="o">=</span> <span class="n">case_cld</span><span class="o">.</span><span class="n">phase_curve</span><span class="p">(</span><span class="n">opacity</span><span class="p">,</span> <span class="n">n_cpu</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span><span class="c1">#jdi.cpu_count(),</span>
+                             <span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1">#same old same old</span>
+<span class="n">wno</span> <span class="o">=</span><span class="p">[];</span><span class="n">fpfs</span><span class="o">=</span><span class="p">[];</span><span class="n">legend</span><span class="o">=</span><span class="p">[]</span>
+<span class="k">for</span> <span class="n">iphase</span> <span class="ow">in</span> <span class="n">cldout</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="n">w</span><span class="p">,</span><span class="n">f</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">cldout</span><span class="p">[</span><span class="n">iphase</span><span class="p">][</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span>
+                               <span class="n">cldout</span><span class="p">[</span><span class="n">iphase</span><span class="p">][</span><span class="s1">&#39;fpfs_thermal&#39;</span><span class="p">],</span><span class="n">R</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">wno</span><span class="o">+=</span><span class="p">[</span><span class="n">w</span><span class="p">]</span>
+    <span class="n">fpfs</span><span class="o">+=</span><span class="p">[</span><span class="n">f</span><span class="o">*</span><span class="mf">1e6</span><span class="p">]</span>
+    <span class="n">legend</span> <span class="o">+=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">iphase</span><span class="o">*</span><span class="mi">180</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))]</span>
+<span class="n">jpi</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">wno</span><span class="p">,</span> <span class="n">fpfs</span><span class="p">,</span> <span class="n">plot_width</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span><span class="n">legend</span><span class="o">=</span><span class="n">legend</span><span class="p">,</span>
+                     <span class="n">palette</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">viridis</span><span class="p">(</span><span class="n">n_phases</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div class="bk-root" id="cc545c2d-f011-4b67-b801-b573ba323e31" data-root-id="1318"></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+(function(root) {
+  function embed_document(root) {
+
+  var docs_json = {"e5b0799e-6003-4f0f-b8a6-5b94698bc4d3":{"defs":[],"roots":{"references":[{"attributes":{"below":[{"id":"1327"}],"center":[{"id":"1330"},{"id":"1334"}],"height":345,"left":[{"id":"1331"},{"id":"1373"}],"renderers":[{"id":"1353"},{"id":"1359"},{"id":"1365"},{"id":"1371"}],"title":{"id":"1410"},"toolbar":{"id":"1342"},"width":500,"x_range":{"id":"1319"},"x_scale":{"id":"1323"},"y_range":{"id":"1321"},"y_scale":{"id":"1325"}},"id":"1318","subtype":"Figure","type":"Plot"},{"attributes":{"label":{"value":"0"},"renderers":[{"id":"1353"}]},"id":"1374","type":"LegendItem"},{"attributes":{"data":{"x":{"__ndarray__":"bbH8I/1R+z98s1mbZQz7P0dlk1d/x/o/PsEclUiD+j/o+eaUvz/6P/oHVpzi/Pk/l1U19a+6+T9ohqztJXn5P09cNNhCOPk/XbiLCwX4+D/Ot6ziarj4P77swbxyefg/WbIb/Ro7+D8xnCULYv33P4cAXFJGwPc/Lp1BQsaD9z/XVlVO4Ef3P3gSCO6SDPc/k6iynNzR9j8K8ovZu5f2P1runicvXvY/5wLBDTUl9j8dU4gWzOz1PywxQtDytPU/IafpzKd99T8XGB6i6Ub1P0j5Gem2EPU/vqKpPg7b9D9oNyJD7qX0P2OkWJpVcfQ/IbeY60I99D9SSpzhtAn0P0KJgiqq1vM/fEnHdyGk8z9tejp+GXLzP+Cq9/WQQPM/FKRdmoYP8z8qGgYq+d7yP8lxvWbnrvI/r5p6FVB/8j8J/1b+MVDyP1OHhuyLIfI/jbJPrlzz8T+cwgMVo8XxP4j89vRdmPE/kPx4JYxr8T+2Hc2ALD/xP6n0IuQ9E/E/2N2OL7/n8D+BngJGr7zwP3gYRg0NkvA/lBDwbddn8D9/B19TDT7wP7gksqutFPA/","dtype":"float64","order":"little","shape":[54]},"y":{"__ndarray__":"WgpZBa//MkB0KoDxgeo0QAN+BlpkXjNAwOo0cVJMMUA2ysxy+VAwQLKbB7Qe9ixASAP1ph1KKEDCRHuWS5wkQG4Kd6fe8yFANy/+O79YHkDAJ7vLfMwZQHK6qJBE/BVA9vnZ6bCjFEC8VesGH8cSQIffp5G6UhFAZPA/x+9HDUBByVXEbyIMQIl5RwooVglAsbSoVFjhBUAqEZh5Eq8EQMQz5qyUGAVAkefNGbb6AkAjkD/dRfUBQL2PNLiRUQFAmOyKkD76AkDAOKpyJ/MNQFu9nkxLLBRALyqtc7AvFkDDvDSoosAYQHmDXxezZhdAVXlFHVQqFUBKMS62qSsTQB604ECgeg9Aidabk95oCkCIJRPdTjQGQHzXl2bLGwJA+ihrjbv4+j+DLd1mELP3P7zaquFQL/U//VckqgCh9D9hn/0zYBDyP5ZBgBwKUvE/J8Xb2B4a8T9MWrhdSKnzP/PSKVBFyPY/YEB1SUDABECz6bratL4QQEwhk6ahdQ1ARrH+a182C0DoM++AWyMFQBaaklZc9wJAD0Vd8hj6+T9OIq5+/RXyP3r59m8lRO4/","dtype":"float64","order":"little","shape":[54]}},"selected":{"id":"1419"},"selection_policy":{"id":"1418"}},"id":"1349","type":"ColumnDataSource"},{"attributes":{},"id":"1323","type":"LinearScale"},{"attributes":{"line_alpha":0.2,"line_color":"#30678D","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1358","type":"Line"},{"attributes":{},"id":"1423","type":"Selection"},{"attributes":{"data":{"x":{"__ndarray__":"bbH8I/1R+z98s1mbZQz7P0dlk1d/x/o/PsEclUiD+j/o+eaUvz/6P/oHVpzi/Pk/l1U19a+6+T9ohqztJXn5P09cNNhCOPk/XbiLCwX4+D/Ot6ziarj4P77swbxyefg/WbIb/Ro7+D8xnCULYv33P4cAXFJGwPc/Lp1BQsaD9z/XVlVO4Ef3P3gSCO6SDPc/k6iynNzR9j8K8ovZu5f2P1runicvXvY/5wLBDTUl9j8dU4gWzOz1PywxQtDytPU/IafpzKd99T8XGB6i6Ub1P0j5Gem2EPU/vqKpPg7b9D9oNyJD7qX0P2OkWJpVcfQ/IbeY60I99D9SSpzhtAn0P0KJgiqq1vM/fEnHdyGk8z9tejp+GXLzP+Cq9/WQQPM/FKRdmoYP8z8qGgYq+d7yP8lxvWbnrvI/r5p6FVB/8j8J/1b+MVDyP1OHhuyLIfI/jbJPrlzz8T+cwgMVo8XxP4j89vRdmPE/kPx4JYxr8T+2Hc2ALD/xP6n0IuQ9E/E/2N2OL7/n8D+BngJGr7zwP3gYRg0NkvA/lBDwbddn8D9/B19TDT7wP7gksqutFPA/","dtype":"float64","order":"little","shape":[54]},"y":{"__ndarray__":"FO7BFIRvF0CvCpMd+bIZQM41+VRvpRdAiPiapqYfFUBQR/1QjSIUQC83MSsC7xFAqfLNMcO5DkDwy3DmR3YKQHfYc9B6XQdAaOiT9tgdBECCCPKibXcBQPQCb/B3cv4/ftqRRaF6/D+830E7Hw/6P2Jgye/L1fc/so8JTKGN9D//7C0EXm3zP9o1y2BVl/E/Haxfjx+a7j+mksJEDmXsPywleDeFjes/zXFj6JYl6T8d1EO8epvnP7jb8s1bm+U/8+Vb8d1u5j8at5t2QkXvP1SPXeu/o/M/QLb7Hhv89D/GL9115AD3P6CpM4Ryk/U/qsmG1HiG8z86IPAVT4vxP0kkOeOvfuw/MMICDGUz6D+jGhWEezbkPyyGtBiOtuA/CkUvpg+C2T/83fMo/WXWP+cPP9/An9M/iHB7I2Gl0j+dzBT0dkvQP/QQf7Hnas4/JqZBchUAzT8Bfg7ZsA/QP9ANRGEcGtI/IZK5Lw/X3z9k7+UZ7ojpP3USIc9YmOY/n37XpDvA5D95OkIflZbfP+JEgcJNktw/zkXTF4Tb0j9YJBHdbs/JP5fzX2v6VMU/","dtype":"float64","order":"little","shape":[54]}},"selected":{"id":"1423"},"selection_policy":{"id":"1422"}},"id":"1361","type":"ColumnDataSource"},{"attributes":{"data_source":{"id":"1349"},"glyph":{"id":"1350"},"hover_glyph":null,"muted_glyph":{"id":"1352"},"nonselection_glyph":{"id":"1351"},"view":{"id":"1354"}},"id":"1353","type":"GlyphRenderer"},{"attributes":{"line_color":"#30678D","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1356","type":"Line"},{"attributes":{},"id":"1414","type":"BasicTickFormatter"},{"attributes":{"line_color":"#440154","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1350","type":"Line"},{"attributes":{},"id":"1321","type":"DataRange1d"},{"attributes":{"source":{"id":"1367"}},"id":"1372","type":"CDSView"},{"attributes":{"line_alpha":0.1,"line_color":"#35B778","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1363","type":"Line"},{"attributes":{"label":{"value":"360"},"renderers":[{"id":"1371"}]},"id":"1377","type":"LegendItem"},{"attributes":{"source":{"id":"1355"}},"id":"1360","type":"CDSView"},{"attributes":{"data_source":{"id":"1367"},"glyph":{"id":"1368"},"hover_glyph":null,"muted_glyph":{"id":"1370"},"nonselection_glyph":{"id":"1369"},"view":{"id":"1372"}},"id":"1371","type":"GlyphRenderer"},{"attributes":{"click_policy":"mute","items":[{"id":"1374"},{"id":"1375"},{"id":"1376"},{"id":"1377"}],"location":[0,0]},"id":"1373","type":"Legend"},{"attributes":{"bottom_units":"screen","fill_alpha":0.5,"fill_color":"lightgrey","left_units":"screen","level":"overlay","line_alpha":1.0,"line_color":"black","line_dash":[4,4],"line_width":2,"right_units":"screen","syncable":false,"top_units":"screen"},"id":"1341","type":"BoxAnnotation"},{"attributes":{},"id":"1418","type":"UnionRenderers"},{"attributes":{"overlay":{"id":"1341"}},"id":"1337","type":"BoxZoomTool"},{"attributes":{"line_alpha":0.1,"line_color":"#30678D","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1357","type":"Line"},{"attributes":{"line_alpha":0.2,"line_color":"#FDE724","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1370","type":"Line"},{"attributes":{},"id":"1332","type":"BasicTicker"},{"attributes":{},"id":"1336","type":"WheelZoomTool"},{"attributes":{"label":{"value":"239"},"renderers":[{"id":"1365"}]},"id":"1376","type":"LegendItem"},{"attributes":{},"id":"1424","type":"UnionRenderers"},{"attributes":{"active_multi":null,"tools":[{"id":"1335"},{"id":"1336"},{"id":"1337"},{"id":"1338"},{"id":"1339"},{"id":"1340"}]},"id":"1342","type":"Toolbar"},{"attributes":{"data":{"x":{"__ndarray__":"bbH8I/1R+z98s1mbZQz7P0dlk1d/x/o/PsEclUiD+j/o+eaUvz/6P/oHVpzi/Pk/l1U19a+6+T9ohqztJXn5P09cNNhCOPk/XbiLCwX4+D/Ot6ziarj4P77swbxyefg/WbIb/Ro7+D8xnCULYv33P4cAXFJGwPc/Lp1BQsaD9z/XVlVO4Ef3P3gSCO6SDPc/k6iynNzR9j8K8ovZu5f2P1runicvXvY/5wLBDTUl9j8dU4gWzOz1PywxQtDytPU/IafpzKd99T8XGB6i6Ub1P0j5Gem2EPU/vqKpPg7b9D9oNyJD7qX0P2OkWJpVcfQ/IbeY60I99D9SSpzhtAn0P0KJgiqq1vM/fEnHdyGk8z9tejp+GXLzP+Cq9/WQQPM/FKRdmoYP8z8qGgYq+d7yP8lxvWbnrvI/r5p6FVB/8j8J/1b+MVDyP1OHhuyLIfI/jbJPrlzz8T+cwgMVo8XxP4j89vRdmPE/kPx4JYxr8T+2Hc2ALD/xP6n0IuQ9E/E/2N2OL7/n8D+BngJGr7zwP3gYRg0NkvA/lBDwbddn8D9/B19TDT7wP7gksqutFPA/","dtype":"float64","order":"little","shape":[54]},"y":{"__ndarray__":"WgpZBa//MkB0KoDxgeo0QAN+BlpkXjNAwOo0cVJMMUA2ysxy+VAwQLKbB7Qe9ixASAP1ph1KKEDCRHuWS5wkQG4Kd6fe8yFANy/+O79YHkDAJ7vLfMwZQHK6qJBE/BVA9vnZ6bCjFEC8VesGH8cSQIffp5G6UhFAZPA/x+9HDUBByVXEbyIMQIl5RwooVglAsbSoVFjhBUAqEZh5Eq8EQMQz5qyUGAVAkefNGbb6AkAjkD/dRfUBQL2PNLiRUQFAmOyKkD76AkDAOKpyJ/MNQFu9nkxLLBRALyqtc7AvFkDDvDSoosAYQHmDXxezZhdAVXlFHVQqFUBKMS62qSsTQB604ECgeg9Aidabk95oCkCIJRPdTjQGQHzXl2bLGwJA+ihrjbv4+j+DLd1mELP3P7zaquFQL/U//VckqgCh9D9hn/0zYBDyP5ZBgBwKUvE/J8Xb2B4a8T9MWrhdSKnzP/PSKVBFyPY/YEB1SUDABECz6bratL4QQEwhk6ahdQ1ARrH+a182C0DoM++AWyMFQBaaklZc9wJAD0Vd8hj6+T9OIq5+/RXyP3r59m8lRO4/","dtype":"float64","order":"little","shape":[54]}},"selected":{"id":"1425"},"selection_policy":{"id":"1424"}},"id":"1367","type":"ColumnDataSource"},{"attributes":{},"id":"1419","type":"Selection"},{"attributes":{},"id":"1335","type":"PanTool"},{"attributes":{},"id":"1420","type":"UnionRenderers"},{"attributes":{"data":{"x":{"__ndarray__":"bbH8I/1R+z98s1mbZQz7P0dlk1d/x/o/PsEclUiD+j/o+eaUvz/6P/oHVpzi/Pk/l1U19a+6+T9ohqztJXn5P09cNNhCOPk/XbiLCwX4+D/Ot6ziarj4P77swbxyefg/WbIb/Ro7+D8xnCULYv33P4cAXFJGwPc/Lp1BQsaD9z/XVlVO4Ef3P3gSCO6SDPc/k6iynNzR9j8K8ovZu5f2P1runicvXvY/5wLBDTUl9j8dU4gWzOz1PywxQtDytPU/IafpzKd99T8XGB6i6Ub1P0j5Gem2EPU/vqKpPg7b9D9oNyJD7qX0P2OkWJpVcfQ/IbeY60I99D9SSpzhtAn0P0KJgiqq1vM/fEnHdyGk8z9tejp+GXLzP+Cq9/WQQPM/FKRdmoYP8z8qGgYq+d7yP8lxvWbnrvI/r5p6FVB/8j8J/1b+MVDyP1OHhuyLIfI/jbJPrlzz8T+cwgMVo8XxP4j89vRdmPE/kPx4JYxr8T+2Hc2ALD/xP6n0IuQ9E/E/2N2OL7/n8D+BngJGr7zwP3gYRg0NkvA/lBDwbddn8D9/B19TDT7wP7gksqutFPA/","dtype":"float64","order":"little","shape":[54]},"y":{"__ndarray__":"RGj3vLcyNUAzEZm+yV85QBjOilstPTdAfxJFg6diNEDoM5n3GoozQKliZf937DBA29S+iCZrKkBwxiuf/1kkQNavSrosQiBANBNaCCGgGEApbWnryFMSQKDemv2LlQlAvjfmFkyBB0BBtqcyKdgCQLJt0tR2xQBAEjjqTN/f9z+hbKDemV/1PyNqk0/BovE/8ykEe3Xx6T+kOQKgexroPzuwoP2pLO4/0AAnWXAA6D+XtcRDYK7nPwVdUHQzR+c/rjSbPVkw8T9B8FaKF18KQGqKufJ1PBZAW1fTGxteGkASP99mbSsfQBcWN1THQR5ATS0mzKeWG0BVP3HRvc0YQEJjSL1SFxNAPBfZiWLdDkBVvyJwrSkIQA0RMOPDIwJAUr1fZNci9z+lra5L2RjzP/lmMS/UnO8/gvB9BlfU7z8xJiS5rxzqP4Pbv6iLi+k/CngCCp6U6j+qkWhc0qfxPzmx+bHCnfc/jSYugJ2zDEBz7rN02A8aQClnYSWFAhdAsBC7it1cFUClx7o7DiIQQDsvuJ8c5AxAa0fdtnKCAkAgiVkRmKr3P3aS/2IM+/I/","dtype":"float64","order":"little","shape":[54]}},"selected":{"id":"1421"},"selection_policy":{"id":"1420"}},"id":"1355","type":"ColumnDataSource"},{"attributes":{"line_color":"#35B778","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1362","type":"Line"},{"attributes":{"line_alpha":0.2,"line_color":"#35B778","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1364","type":"Line"},{"attributes":{},"id":"1411","type":"BasicTickFormatter"},{"attributes":{},"id":"1412","type":"AllLabels"},{"attributes":{},"id":"1325","type":"LinearScale"},{"attributes":{"line_alpha":0.1,"line_color":"#FDE724","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1369","type":"Line"},{"attributes":{},"id":"1415","type":"AllLabels"},{"attributes":{},"id":"1338","type":"SaveTool"},{"attributes":{"data_source":{"id":"1361"},"glyph":{"id":"1362"},"hover_glyph":null,"muted_glyph":{"id":"1364"},"nonselection_glyph":{"id":"1363"},"view":{"id":"1366"}},"id":"1365","type":"GlyphRenderer"},{"attributes":{"data_source":{"id":"1355"},"glyph":{"id":"1356"},"hover_glyph":null,"muted_glyph":{"id":"1358"},"nonselection_glyph":{"id":"1357"},"view":{"id":"1360"}},"id":"1359","type":"GlyphRenderer"},{"attributes":{},"id":"1339","type":"ResetTool"},{"attributes":{"axis":{"id":"1331"},"dimension":1,"ticker":null},"id":"1334","type":"Grid"},{"attributes":{"line_alpha":0.2,"line_color":"#440154","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1352","type":"Line"},{"attributes":{"axis_label":"Spectrum","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","formatter":{"id":"1414"},"major_label_policy":{"id":"1415"},"major_label_text_font":"times","major_label_text_font_size":"14pt","ticker":{"id":"1332"}},"id":"1331","type":"LinearAxis"},{"attributes":{},"id":"1410","type":"Title"},{"attributes":{},"id":"1328","type":"BasicTicker"},{"attributes":{},"id":"1340","type":"HelpTool"},{"attributes":{"line_alpha":0.1,"line_color":"#440154","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1351","type":"Line"},{"attributes":{},"id":"1319","type":"DataRange1d"},{"attributes":{},"id":"1421","type":"Selection"},{"attributes":{"source":{"id":"1361"}},"id":"1366","type":"CDSView"},{"attributes":{},"id":"1422","type":"UnionRenderers"},{"attributes":{"label":{"value":"119"},"renderers":[{"id":"1359"}]},"id":"1375","type":"LegendItem"},{"attributes":{},"id":"1425","type":"Selection"},{"attributes":{"axis":{"id":"1327"},"ticker":null},"id":"1330","type":"Grid"},{"attributes":{"axis_label":"Wavelength [\u03bcm]","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","formatter":{"id":"1411"},"major_label_policy":{"id":"1412"},"major_label_text_font":"times","major_label_text_font_size":"14pt","ticker":{"id":"1328"}},"id":"1327","type":"LinearAxis"},{"attributes":{"source":{"id":"1349"}},"id":"1354","type":"CDSView"},{"attributes":{"line_color":"#FDE724","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1368","type":"Line"}],"root_ids":["1318"]},"title":"Bokeh Application","version":"2.3.3"}};
+  var render_items = [{"docid":"e5b0799e-6003-4f0f-b8a6-5b94698bc4d3","root_ids":["1318"],"roots":{"1318":"cc545c2d-f011-4b67-b801-b573ba323e31"}}];
+  root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    var attempts = 0;
+    var timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        clearInterval(timer);
+        embed_document(root);
+      } else {
+        attempts++;
+        if (attempts > 100) {
+          clearInterval(timer);
+          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        }
+      }
+    }, 10, root)
+  }
+})(window);
+</script></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">to_plot</span> <span class="o">=</span> <span class="s1">&#39;fpfs_thermal&#39;</span><span class="c1">#or thermal</span>
+<span class="n">collapse</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.1</span><span class="p">,</span><span class="mf">1.4</span><span class="p">,</span><span class="mf">1.6</span><span class="p">]</span><span class="c1">#micron</span>
+<span class="n">R</span><span class="o">=</span><span class="mi">100</span>
+<span class="n">phases</span><span class="p">,</span> <span class="n">all_curves</span><span class="p">,</span> <span class="n">all_ws</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">phase_curve</span><span class="p">(</span><span class="n">cldout</span><span class="p">,</span> <span class="n">to_plot</span><span class="p">,</span> <span class="n">collapse</span><span class="o">=</span><span class="n">collapse</span><span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">jpi</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div class="bk-root" id="89a7f51a-044e-4a52-b810-ea0dc6e66fa4" data-root-id="1511"></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+(function(root) {
+  function embed_document(root) {
+
+  var docs_json = {"0f424de9-2f80-4eeb-8475-a01586d4eb5e":{"defs":[],"roots":{"references":[{"attributes":{"below":[{"id":"1522"}],"center":[{"id":"1525"},{"id":"1529"}],"height":400,"left":[{"id":"1526"},{"id":"1559"}],"renderers":[{"id":"1547"},{"id":"1552"},{"id":"1557"}],"title":{"id":"1512"},"toolbar":{"id":"1537"},"x_range":{"id":"1514"},"x_scale":{"id":"1518"},"y_range":{"id":"1516"},"y_scale":{"id":"1520"}},"id":"1511","subtype":"Figure","type":"Plot"},{"attributes":{},"id":"1523","type":"BasicTicker"},{"attributes":{"axis_label":"fpfs_thermal","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","formatter":{"id":"1615"},"major_label_policy":{"id":"1616"},"major_label_text_font":"times","major_label_text_font_size":"14pt","ticker":{"id":"1527"}},"id":"1526","type":"LinearAxis"},{"attributes":{"line_alpha":0.1,"line_color":"#3288bd","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1551","type":"Line"},{"attributes":{},"id":"1514","type":"DataRange1d"},{"attributes":{"label":{"value":"1.39um"},"renderers":[{"id":"1552"}]},"id":"1561","type":"LegendItem"},{"attributes":{},"id":"1531","type":"WheelZoomTool"},{"attributes":{},"id":"1623","type":"UnionRenderers"},{"attributes":{},"id":"1516","type":"DataRange1d"},{"attributes":{},"id":"1620","type":"Selection"},{"attributes":{},"id":"1612","type":"BasicTickFormatter"},{"attributes":{},"id":"1624","type":"Selection"},{"attributes":{"data_source":{"id":"1544"},"glyph":{"id":"1545"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"1546"},"view":{"id":"1548"}},"id":"1547","type":"GlyphRenderer"},{"attributes":{"bottom_units":"screen","fill_alpha":0.5,"fill_color":"lightgrey","left_units":"screen","level":"overlay","line_alpha":1.0,"line_color":"black","line_dash":[4,4],"line_width":2,"right_units":"screen","syncable":false,"top_units":"screen"},"id":"1536","type":"BoxAnnotation"},{"attributes":{"line_color":"#5e4fa2","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1545","type":"Line"},{"attributes":{},"id":"1622","type":"Selection"},{"attributes":{"source":{"id":"1549"}},"id":"1553","type":"CDSView"},{"attributes":{},"id":"1615","type":"BasicTickFormatter"},{"attributes":{},"id":"1619","type":"UnionRenderers"},{"attributes":{"line_color":"#3288bd","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1550","type":"Line"},{"attributes":{"data_source":{"id":"1549"},"glyph":{"id":"1550"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"1551"},"view":{"id":"1553"}},"id":"1552","type":"GlyphRenderer"},{"attributes":{},"id":"1518","type":"LinearScale"},{"attributes":{"line_alpha":0.1,"line_color":"#5e4fa2","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1546","type":"Line"},{"attributes":{"data_source":{"id":"1554"},"glyph":{"id":"1555"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"1556"},"view":{"id":"1558"}},"id":"1557","type":"GlyphRenderer"},{"attributes":{"data":{"x":{"__ndarray__":"AAAAAAAAAAD///////9dQP///////21AAAAAAACAdkA=","dtype":"float64","order":"little","shape":[4]},"y":{"__ndarray__":"Pau1uZic5T7YEUNUFFflPign9itZv8s+Pau1uZic5T4=","dtype":"float64","order":"little","shape":[4]}},"selected":{"id":"1624"},"selection_policy":{"id":"1623"}},"id":"1554","type":"ColumnDataSource"},{"attributes":{"axis_label":"Orbital Phase","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","formatter":{"id":"1612"},"major_label_policy":{"id":"1613"},"major_label_text_font":"times","major_label_text_font_size":"14pt","ticker":{"id":"1523"}},"id":"1522","type":"LinearAxis"},{"attributes":{},"id":"1616","type":"AllLabels"},{"attributes":{},"id":"1533","type":"SaveTool"},{"attributes":{"line_color":"#66c2a5","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1555","type":"Line"},{"attributes":{"click_policy":"mute","items":[{"id":"1560"},{"id":"1561"},{"id":"1562"}],"location":[0,-20]},"id":"1559","type":"Legend"},{"attributes":{"data":{"x":{"__ndarray__":"AAAAAAAAAAD///////9dQP///////21AAAAAAACAdkA=","dtype":"float64","order":"little","shape":[4]},"y":{"__ndarray__":"r68eXOsexj5MTdm15aOvPniaf/Um5Kw+r68eXOsexj4=","dtype":"float64","order":"little","shape":[4]}},"selected":{"id":"1622"},"selection_policy":{"id":"1621"}},"id":"1549","type":"ColumnDataSource"},{"attributes":{},"id":"1530","type":"PanTool"},{"attributes":{"label":{"value":"1.59um"},"renderers":[{"id":"1557"}]},"id":"1562","type":"LegendItem"},{"attributes":{"axis":{"id":"1522"},"grid_line_alpha":0,"ticker":null},"id":"1525","type":"Grid"},{"attributes":{},"id":"1534","type":"ResetTool"},{"attributes":{},"id":"1535","type":"HelpTool"},{"attributes":{},"id":"1621","type":"UnionRenderers"},{"attributes":{"source":{"id":"1554"}},"id":"1558","type":"CDSView"},{"attributes":{"axis":{"id":"1526"},"dimension":1,"grid_line_alpha":0,"ticker":null},"id":"1529","type":"Grid"},{"attributes":{},"id":"1520","type":"LinearScale"},{"attributes":{"source":{"id":"1544"}},"id":"1548","type":"CDSView"},{"attributes":{},"id":"1613","type":"AllLabels"},{"attributes":{"active_multi":null,"tools":[{"id":"1530"},{"id":"1531"},{"id":"1532"},{"id":"1533"},{"id":"1534"},{"id":"1535"}]},"id":"1537","type":"Toolbar"},{"attributes":{"overlay":{"id":"1536"}},"id":"1532","type":"BoxZoomTool"},{"attributes":{"text":"Phase Curves"},"id":"1512","type":"Title"},{"attributes":{"data":{"x":{"__ndarray__":"AAAAAAAAAAD///////9dQP///////21AAAAAAACAdkA=","dtype":"float64","order":"little","shape":[4]},"y":{"__ndarray__":"/J5tQpTjtz7o4Pd7cMO4PnbFYKk3+5I+/J5tQpTjtz4=","dtype":"float64","order":"little","shape":[4]}},"selected":{"id":"1620"},"selection_policy":{"id":"1619"}},"id":"1544","type":"ColumnDataSource"},{"attributes":{"line_alpha":0.1,"line_color":"#66c2a5","line_width":3,"x":{"field":"x"},"y":{"field":"y"}},"id":"1556","type":"Line"},{"attributes":{},"id":"1527","type":"BasicTicker"},{"attributes":{"label":{"value":"1.09um"},"renderers":[{"id":"1547"}]},"id":"1560","type":"LegendItem"}],"root_ids":["1511"]},"title":"Bokeh Application","version":"2.3.3"}};
+  var render_items = [{"docid":"0f424de9-2f80-4eeb-8475-a01586d4eb5e","root_ids":["1511"],"roots":{"1511":"89a7f51a-044e-4a52-b810-ea0dc6e66fa4"}}];
+  root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    var attempts = 0;
+    var timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        clearInterval(timer);
+        embed_document(root);
+      } else {
+        attempts++;
+        if (attempts > 100) {
+          clearInterval(timer);
+          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        }
+      }
+    }, 10, root)
+  }
+})(window);
+</script></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">fig</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">phase_snaps</span><span class="p">(</span><span class="n">cldout</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="s1">&#39;longitude&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;pressure&#39;</span><span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="s1">&#39;taucld&#39;</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="s1">&#39;PuBu&#39;</span><span class="p">,</span>
+                <span class="n">y_log</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">z_log</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">collapse</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;np.max&#39;</span><span class="p">,</span><span class="s1">&#39;np.mean&#39;</span><span class="p">])</span>
+<span class="c1">#this will collapse the latitude axis by taking a mean, and the wavelength axis also by taking the mean</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_9e_PhaseCurves_34_0.png" src="../_images/notebooks_9e_PhaseCurves_34_0.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">case_cld</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;clouds&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;opd&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">phase</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">lat</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span><span class="n">wno</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+    <span class="n">x</span><span class="o">=</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="s1">&#39;pressure&#39;</span><span class="p">,</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="mf">3e2</span><span class="p">,</span><span class="mf">1e-6</span><span class="p">])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_9e_PhaseCurves_35_0.png" src="../_images/notebooks_9e_PhaseCurves_35_0.png" />
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="9f_PhaseCurves-wChemEq.html" class="btn btn-neutral float-right" title="Phase Curves Part 2: With Post-Processed Input" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="9d_3DSpectra.html" class="btn btn-neutral float-left" title="3D Spectra" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
