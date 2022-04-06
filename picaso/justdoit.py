@@ -2755,6 +2755,7 @@ class inputs():
         except KeyError: 
             if 'reflected' not in calculation:
                 self.phase_angle(0)
+                phase = self.inputs['phase_angle']
             else: 
                 raise Exception("Phase angle not specified. It is needed for reflected light. Please run the jdi.inputs().phase_angle() routine.")
         
