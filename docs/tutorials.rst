@@ -39,11 +39,18 @@ Cloud Modeling with `Virga`
 
 Moving to 3 Dimensions
 ----------------------
+Relevant Citatons: `Adams et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022ApJ...926..157A/abstract>`_ for 3D spectra and `Robbins-Blanch et al. 2022 <https://arxiv.org/>`_ for Phase Curves. 
+
 .. toctree::
    :maxdepth: 2
 
    Non-Zero Phase and Spherical Integration </notebooks/8_SphericalIntegration.ipynb>
-   From 1D to 3D </notebooks/9_Adding3DFunctionality.ipynb>
+   Basics of a 3D Calculation </notebooks/9a_3DInputsWithPICASOandXarray.ipynb>
+   Post-Processing Chemistry for 3D runs </notebooks/9b_PostProcess3Dinput-Chemistry.ipynb>
+   Post-Processing Clouds for 3D runs </notebooks/9c_PostProcess3Dinput-Clouds.ipynb>
+   Modeling a 3D Spectrum (Adams et al. 2022)</notebooks/9d_3DSpectra.ipynb>
+   Modeling a Phase Curve pt 1 (Robbins-Blanch et al. 2022)</notebooks/9e_PhaseCurves.ipynb>
+   Modeling a Phase Curve pt 2 (Robbins-Blanch et al. 2022)</notebooks/9f_PhaseCurves-wChemEq.ipynb>
 
 Opacities & Approximatons
 -------------------------
@@ -51,7 +58,7 @@ Opacities & Approximatons
 .. toctree::
    :maxdepth: 2
 
-   Opacity Factory </notebooks/9_SwappingOpacities.ipynb>
+   Opacity Factory </notebooks/10_SwappingOpacities.ipynb>
    Investigating Approximations  </notebooks/10_AnalyzingApproximations.ipynb>
    SQLITE Tutorial </notebooks/11_Sqlite3Tutorial.ipynb>
 
