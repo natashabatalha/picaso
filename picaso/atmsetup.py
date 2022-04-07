@@ -352,19 +352,25 @@ class ATMSETUP():
         tlevel = self.level['temperature']
         plevel = self.level['pressure']
 
+        if p_reference >= max(plevel):
+            p_reference = plevel[0]
+
         z = np.zeros(np.shape(tlevel)) + self.planet.radius
         dz = np.zeros(np.shape(tlevel)) 
         gravity = np.zeros(np.shape(tlevel))  
 
-        for i in np.where(plevel>p_reference)[0]-1:
-            if constant_gravity:
-                gravity[i] = self.planet.gravity
-            else:
-                gravity[i] = self.c.G * self.planet.mass / ( z[i] )**2
+        indx = np.where(plevel>p_reference)[0]
+        #if there are any pressures less than the reference pressure
+        if len(indx)>0:
+            for i in indx-1:
+                if constant_gravity:
+                    gravity[i] = self.planet.gravity
+                else:
+                    gravity[i] = self.c.G * self.planet.mass / ( z[i] )**2
 
-            scale_h = self.c.k_b * tlevel[i] / (mmw[i] * gravity[i])
-            dz[i] = scale_h * (np.log(plevel[i+1] / plevel[i])) #from eddysed
-            z[i+1] = z[i] - dz[i]
+                scale_h = self.c.k_b * tlevel[i] / (mmw[i] * gravity[i])
+                dz[i] = scale_h * (np.log(plevel[i+1] / plevel[i])) #from eddysed
+                z[i+1] = z[i] - dz[i]
 
         for i in np.where(plevel<=p_reference)[0][::-1][:-1]:
             if constant_gravity:
