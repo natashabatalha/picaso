@@ -39,7 +39,7 @@ Cloud Modeling with `Virga`
 
 Moving to 3 Dimensions
 ----------------------
-Relevant Citatons: `Adams et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022ApJ...926..157A/abstract>`_ for 3D spectra and `Robbins-Blanch et al. 2022 <https://arxiv.org/>`_ for Phase Curves. 
+Relevant Citatons: `Adams et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022ApJ...926..157A/abstract>`_ for 3D spectra and `Robbins-Blanch et al. 2022 <http://arxiv.org/abs/2204.03545>`_ for Phase Curves. 
 
 .. toctree::
    :maxdepth: 2

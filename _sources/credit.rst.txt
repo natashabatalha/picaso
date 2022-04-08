@@ -26,6 +26,6 @@ Retrievals
 Phase curves
 ------------
 
-`Robbins-Blanch, Nina., et al. "Cloudy and Cloud-free Thermal Phase Curves with PICASO: Applications to WASP-43b." The Astrophysical Journal (2022): 157. <https://arxiv.org/>`_
+`Robbins-Blanch, Nina., et al. "Cloudy and Cloud-free Thermal Phase Curves with PICASO: Applications to WASP-43b." The Astrophysical Journal (2022): 157. <http://arxiv.org/abs/2204.03545>`_
 
 - Phase curves 
