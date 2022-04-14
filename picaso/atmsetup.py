@@ -351,15 +351,16 @@ class ATMSETUP():
         mmw = self.level['mmw'] * self.c.amu #make sure mmw in grams
         tlevel = self.level['temperature']
         plevel = self.level['pressure']
-
-        if p_reference >= max(plevel):
-            p_reference = plevel[0]
+        
+        if p_reference >= np.max(plevel):
+            p_reference = np.max(plevel)
 
         z = np.zeros(np.shape(tlevel)) + self.planet.radius
         dz = np.zeros(np.shape(tlevel)) 
         gravity = np.zeros(np.shape(tlevel))  
-
-        indx = np.where(plevel>p_reference)[0]
+        #unique avoids duplicates for 3d grids where pressure is repeated for ngangle,ntangle
+        #would break for nonuniform pressure grids 
+        indx = np.unique(np.where(plevel>p_reference)[0]) 
         #if there are any pressures less than the reference pressure
         if len(indx)>0:
             for i in indx-1:
@@ -372,7 +373,7 @@ class ATMSETUP():
                 dz[i] = scale_h * (np.log(plevel[i+1] / plevel[i])) #from eddysed
                 z[i+1] = z[i] - dz[i]
 
-        for i in np.where(plevel<=p_reference)[0][::-1][:-1]:
+        for i in np.unique(np.where(plevel<=p_reference)[0])[::-1][:-1]:#unique to avoid 3d bug
             if constant_gravity:
                 gravity[i] = self.planet.gravity
             else:
@@ -483,6 +484,10 @@ class ATMSETUP():
                 opd = cld_input['opd'].transpose("pressure","wno","lon", "lat").values
                 g0 = cld_input['g0'].transpose("pressure","wno","lon", "lat").values
                 w0 = cld_input['w0'].transpose("pressure","wno","lon", "lat").values
+            else: 
+                opd = cld_input['opd'].values
+                g0 = cld_input['g0'].values
+                w0 = cld_input['w0'].values                
             self.layer['cloud'] = {'opd': opd}
             self.layer['cloud']['g0'] = g0
             self.layer['cloud']['w0'] = w0  
