@@ -355,16 +355,21 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
                 ftau_ray = np.zeros(DTAU.shape) + 1.0
                 #ftau_cld = 1e-6
                 ftau_cld = np.zeros(DTAU.shape) #+ 1e-6
-            else: 
-                DTAU = atm.layer['cloud']['opd']#TAURAY*0+0.05
+            else:
+                DTAU = np.zeros(DTAU.shape)
+                for igauss in range(ngauss): DTAU[:,:,igauss] = atm.layer['cloud']['opd']#TAURAY*0+0.05
                 GCOS2 = np.zeros(DTAU.shape)#0.0
-                ftau_ray = np.zeros(DTAU.shape)#+1e-6
-                ftau_cld = np.zeros(DTAU.shape)+1            
-            COSB = atm.layer['cloud']['g0']
-            W0 = atm.layer['cloud']['w0']
-            W0_no_raman = atm.layer['cloud']['w0']
+                ftau_ray = np.zeros(DTAU.shape)
+                ftau_cld = np.zeros(DTAU.shape)+1
+            W0_no_raman = np.zeros(DTAU.shape)
+            W0 = np.zeros(DTAU.shape)
+            COSB = np.zeros(DTAU.shape)
+            #check for zero ssa's 
+            atm.layer['cloud']['w0'][atm.layer['cloud']['w0']<=0] = 1e-10#arbitrarily small
+            for igauss in range(ngauss): COSB[:,:,igauss] = atm.layer['cloud']['g0']
+            for igauss in range(ngauss): W0[:,:,igauss] = atm.layer['cloud']['w0']
+            for igauss in range(ngauss): W0_no_raman[:,:,igauss] = atm.layer['cloud']['w0']
             TAU = np.zeros((nlayer+1, nwno,ngauss))
-            #TAU[1:,:]=numba_cumsum(DTAU[:,:,0])
             for igauss in range(ngauss): TAU[1:,:,igauss]=numba_cumsum(DTAU[:,:,igauss])
     #====================== D-Eddington Approximation======================
     if delta_eddington:

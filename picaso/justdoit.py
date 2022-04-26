@@ -172,8 +172,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman= compute_opacity(
             atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
             full_output=full_output, plot_opacity=plot_opacity)
-
-
+        
         if  'reflected' in calculation:
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
             xint_at_top = 0 
