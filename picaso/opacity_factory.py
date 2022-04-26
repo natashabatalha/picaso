@@ -9,6 +9,7 @@ import io
 from astropy.io import fits
 import math
 from scipy.io import FortranFile
+import glob
 
 
 __refdata__ = os.environ.get('picaso_refdata')
@@ -714,6 +715,18 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
             mol_dir = alkali_dir    
     else:
         mol_dir = os.path.join(og_directory,molecule)
+
+    
+    #determine file type
+    find_p_files = glob.glob(os.path.join(mol_dir,'*p_*'))
+    find_npy_files = glob.glob(os.path.join(mol_dir,'*npy*'))
+
+    if len(find_p_files)>1000:
+        ftype = 'fortran_binary'
+    elif len(find_npy_files)>1000: 
+        ftype = 'python'
+    else: 
+        raise Exception('Could not find npy or p_ files. npy are assumed to be read via np.load, where as p_ files are assumed to be unformatted binary or alkali files')
         
     read_fits = os.path.join(mol_dir,'readomni.fits' )
     if os.path.exists(read_fits):
@@ -729,19 +742,26 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         delwn = s1460['delta_wavenumber'].values.astype(float)
         start = s1460['start_wavenumber'].values.astype(float)
         
-    
+
+
     for i,p,t in zip(ifile,pres,temp):  
         #path to richard's data
-        fdata = os.path.join(mol_dir, 'p_'+str(int(i)))
+        if 'fortran' in ftype:
+            fdata = os.path.join(mol_dir, 'p_'+str(int(i)))
+        elif 'python' in ftype: 
+            fdata = os.path.join(mol_dir, str(int(i))+'.npy')
 
-        #Grab 1060 in various format data
+        #Grab 1460 in various format data
         if molecule in alks:
             dset = pd.read_csv(fdata)
             og_wvno_grid = dset['wno'].values.astype(float)
             dset = dset[molecule].values.astype(float)
-        else: 
+        elif 'fortran' in ftype: 
             dset = np.fromfile(fdata, dtype=float) 
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1] 
+        elif 'python' in ftype: 
+            dset = np.load(open(fdata,'rb'))
+            og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]            
             
         #interp on high res grid
         #basic interpolation here onto a new wavegrid that 
