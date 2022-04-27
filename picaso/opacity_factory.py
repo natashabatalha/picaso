@@ -133,11 +133,13 @@ def restructure_opacity(new_db,ntemp,temperatures,molecules,og_opacity,old_wno,n
                 new_bundle_w_lin = fit_linsky(temperatures[i],new_wno[loc_33])
                 new_bundle[loc_33]  = new_bundle_w_lin 
 
-                #now fix discontinuity (if they exist near 1 micron)
-                if max(new_wno[loc_33] <12000):
-                    loc_smooth = np.where((new_wno>9950) & (new_wno<11200))
-                    new_bundle_smooth = sig.medfilt(np.array(new_bundle[loc_smooth]), kernel_size=kernel_size)
-                    new_bundle[loc_smooth] = new_bundle_smooth
+                if len(loc_33[0])!=0:
+                    #now fix discontinuity (if they exist near 1 micron)
+                    if max(new_wno[loc_33] <12000):
+                        loc_smooth = np.where((new_wno>9950) & (new_wno<11200))
+                        if len(loc_smooth[0]) != 0: 
+                            new_bundle_smooth = sig.medfilt(np.array(new_bundle[loc_smooth]), kernel_size=kernel_size)
+                            new_bundle[loc_smooth] = new_bundle_smooth
 
                 #this is to smooth the discontinuous parts 
             insert(cur,conn,m, temperatures[i], new_bundle)
