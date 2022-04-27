@@ -364,6 +364,7 @@ class ATMSETUP():
         #if there are any pressures less than the reference pressure
         if len(indx)>0:
             for i in indx-1:
+                
                 if constant_gravity:
                     gravity[i] = self.planet.gravity
                 else:
@@ -374,13 +375,14 @@ class ATMSETUP():
                 z[i+1] = z[i] - dz[i]
 
         for i in np.unique(np.where(plevel<=p_reference)[0])[::-1][:-1]:#unique to avoid 3d bug
+            
             if constant_gravity:
                 gravity[i] = self.planet.gravity
             else:
                 gravity[i] = self.c.G * self.planet.mass / ( z[i] )**2  
 
             scale_h = self.c.k_b * tlevel[i] / (mmw[i] * gravity[i])
-            dz[i] = scale_h*(np.log(plevel[i+1]/ plevel[i]))
+            dz[i] = scale_h*(np.log(plevel[i]/ plevel[i-1]))#plevel[i+1]/ plevel[i]))
             z[i-1] = z[i] + dz[i]
 
         self.level['z'] = z
