@@ -433,7 +433,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             returns['full_output'] = atm
 
     if input_dir != None:
-        filename = input_dir + 'output.pk' #/Users/crooney/Documents/codes/picaso/docs/notebooks/input_data.pk'
+        filename = input_dir #+ 'output.pk' #/Users/crooney/Documents/codes/picaso/docs/notebooks/input_data.pk'
+        # change other codes to suit this filename, don't change it here
         pk.dump({'pressure': atm.level['pressure'], 'temperature': atm.level['temperature'], 
             'nlevel':nlevel, 'wno':wno, 'nwno':nwno, 'ng':ng, 'nt':nt, 
             'dtau':DTAU, 'tau':TAU, 'w0':W0, 'cosb':COSB, 'gcos2':GCOS2,'ftcld':ftau_cld,'ftray': ftau_ray,
