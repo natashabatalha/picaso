@@ -142,8 +142,8 @@ def compress_disco( nwno, cos_theta, xint_at_top, gweight, tweight,F0PI):
     albedo = sym_fac * 0.5 * albedo /F0PI * (cos_theta + 1.0)
     return albedo
 
-#@jit(nopython=True, cache=True)
-def compress_thermal(nwno, ubar1, flux_at_top, gweight, tweight): 
+@jit(nopython=True, cache=True)
+def compress_thermal(nwno, flux_at_top, gweight, tweight): 
     """
     Last step in albedo code. Integrates over phase angle based on the 
     Gaussian-Chebychev weights in geometry.json 
@@ -152,10 +152,9 @@ def compress_thermal(nwno, ubar1, flux_at_top, gweight, tweight):
     ----------
     nwno : int 
         Number of wavenumbers 
-    ubar1 : ndarray of floats 
-        Outgoing angles 
     flux_at_top : ndarray of floats 
         Thermal Flux at the top of the atmosphere with dimensions (ng, nt, nwno)
+        or could also be (ng,nt,nlayer,nwno)
     gweight : ndarray of floats 
         Gaussian weights for integration 
     tweight : ndarray of floats 
@@ -163,7 +162,8 @@ def compress_thermal(nwno, ubar1, flux_at_top, gweight, tweight):
     """
     ng = len(gweight)
     nt = len(tweight)
-    flux=zeros(nwno)
+    #flexible for something that is 3 or 4 dimensions
+    flux=zeros(flux_at_top[0,0,:].shape)
 
     if nt==1 : sym_fac = 1
     else: sym_fac = 1/(2*pi) #azimuthal symmetry breaks down  

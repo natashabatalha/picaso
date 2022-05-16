@@ -7,8 +7,7 @@ from .justplotit import numba_cumsum, mean_regrid
 from .build_3d_input import regrid_xarray
 
 from virga import justdoit as vj
-from scipy.signal import savgol_filter
-from scipy.interpolate import RegularGridInterpolator,UnivariateSpline
+from scipy.interpolate import UnivariateSpline
 from scipy import special
 from numba import njit
 
@@ -181,8 +180,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman= compute_opacity(
             atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
             full_output=full_output, plot_opacity=plot_opacity)
-
-
+        
         if  'reflected' in calculation:
             xint_at_top = 0 
             for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
@@ -394,7 +392,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     #for thermal light use the compress thermal routine
     #this takes the intensity as a functin of tangle/gangle and creates a 1d spectrum
     if ('thermal' in calculation):
-        thermal = compress_thermal(nwno,ubar1, flux_at_top, gweight, tweight)
+        thermal = compress_thermal(nwno,flux_at_top, gweight, tweight)
         returns['thermal'] = thermal
         returns['xint_at_top'] = flux_at_top 
         returns['intensity'] = intensity 
@@ -959,7 +957,7 @@ class inputs():
         Turns off planet specific things, so program can run as usual
         """
         self.inputs['approx']['raman'] = 2 #turning off raman scattering
-        self.phase_angle(0) #auto turn on zero phase
+        self.phase_angle(0,num_gangle=10,num_tangle=1) #auto turn on zero phase
         self.inputs['calculation'] ='climate'
 
 
@@ -1094,21 +1092,20 @@ class inputs():
             fine_wno_star = np.linspace(min_shift, max_shift, len(wno_planet)*5)
             fine_flux_star = np.interp(fine_wno_star,wno_star, flux_star)
             opannection.compute_stellar_shits(fine_wno_star, fine_flux_star)
+            bin_flux_star = opannection.unshifted_stellar_spec
         elif 'climate' in self.inputs['calculation']: 
             #stellar flux of star 
             nrg_flux = 0.5*np.diff(1/wno_planet)*(flux_star[0:-1]+flux_star[1:])
-            nrg_flux 
-            fine_wno_star = wno_planet
-            _x,fine_flux_star = mean_regrid(wno_star, flux_star,newx=wno_planet)  
-            opannection.unshifted_stellar_spec = fine_flux_star            
+            _x,bin_flux_star = mean_regrid(wno_star, flux_star,newx=wno_planet)  
+            opannection.unshifted_stellar_spec = bin_flux_star            
         else :
-            max_shift = np.max(wno_planet)+1  
-            min_shift = np.min(wno_planet) -1 
-            #gaurd against nans bcause stellar spectrum is too low res
-            fine_wno_star = np.linspace(min_shift, max_shift, len(wno_planet)*5)
-            fine_flux_star = np.interp(fine_wno_star, wno_star, flux_star)
-            _x,fine_flux_star = mean_regrid(fine_wno_star, fine_flux_star,newx=wno_planet)  
-            opannection.unshifted_stellar_spec =fine_flux_star
+            flux_star_interp = np.interp(wno_planet, wno_star, flux_star)
+            _x,bin_flux_star = mean_regrid(wno_star, flux_star,newx=wno_planet)
+            #where the star wasn't high enough resolution  
+            idx_nobins = np.where(np.isnan(bin_flux_star))[0]
+            #replace no bins with interpolated values 
+            bin_flux_star[idx_nobins] = flux_star_interp[idx_nobins]
+            opannection.unshifted_stellar_spec =bin_flux_star
 
         self.inputs['star']['database'] = database
         self.inputs['star']['temp'] = temp
@@ -1116,8 +1113,8 @@ class inputs():
         self.inputs['star']['metal'] = metal
         self.inputs['star']['radius'] = r 
         self.inputs['star']['radius_unit'] = radius_unit 
-        self.inputs['star']['flux'] = fine_flux_star 
-        self.inputs['star']['wno'] = fine_wno_star 
+        self.inputs['star']['flux'] = bin_flux_star
+        self.inputs['star']['wno'] = wno_planet
         self.inputs['star']['semi_major'] = semi_major 
         self.inputs['star']['semi_major_unit'] = semi_major_unit 
     def atmosphere(self, df=None, filename=None, exclude_mol=None, verbose=True, **pd_kwargs):
@@ -1175,7 +1172,46 @@ class inputs():
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
         Sets number of layers in model.  
+        Parameters
+        ----------
+        opa : class 
+            Opacity class from opannection : RetrieveCks() 
+        df : pandas.DataFrame or dict
+            (Optional) Dataframe with volume mixing ratios and pressure, temperature profile. 
+            Must contain pressure (bars) at least one molecule
+        filename : str 
+            (Optional) Filename with pressure, temperature and volume mixing ratios.
+            Must contain pressure at least one molecule
+        exclude_mol : list of str 
+            (Optional) List of molecules to ignore from file
+        pd_kwargs : kwargs 
+            Key word arguments for pd.read_csv to read in supplied atmosphere file 
+        """
+        if not isinstance(df, type(None)):
+            if ((not isinstance(df, dict )) & (not isinstance(df, pd.core.frame.DataFrame ))): 
+                raise Exception("df must be pandas DataFrame or dictionary")
+            else:
+                self.nlevel=df.shape[0] 
+        elif not isinstance(filename, type(None)):
+            df = pd.read_csv(filename, **pd_kwargs)
+            self.nlevel=df.shape[0] 
 
+        if 'pressure' not in df.keys(): 
+            raise Exception("Check column names. `pressure` must be included.")
+
+        if ('temperature' not in df.keys()):
+            raise Exception("`temperature` not specified as a column/key name")
+
+        self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
+
+        #Turn off raman for 196 premix calculations 
+        self.inputs['approx']['raman'] = 2
+
+        self.chem_interp(opa.full_abunds)
+    def premix_atmosphere_nearest_old(self, opa, df=None, filename=None, **pd_kwargs):
+        """
+        Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
+        Sets number of layers in model.  
         Parameters
         ----------
         opa : class 
@@ -1221,7 +1257,7 @@ class inputs():
                         opa.pressures, 
                         np.concatenate([[it]*opa.max_pc for it in opa.temps])):
             
-            if p!=0 : pt_pairs += [[i,ip,it,p/1e3,t]];i+=1
+            if p!=0 : pt_pairs += [[i,ip,it,p,t]];i+=1
 
         ind_pt_log = np.array([min(pt_pairs, 
                     key=lambda c: math.hypot(np.log(c[-2])- np.log(coordinate[0]), 
@@ -1230,6 +1266,7 @@ class inputs():
         ind_chem = ind_pt_log[:,0]
 
         self.inputs['atmosphere']['profile'][opa.full_abunds.keys()] = opa.full_abunds.iloc[ind_chem,:].reset_index(drop=True)
+
     def sonora(self, sonora_path, teff, chem='low'):
         """
         This queries Sonora temperature profile that can be downloaded from profiles.tar on 
@@ -1255,8 +1292,8 @@ class inputs():
                 run the gravity function to set gravity')
 
         flist = os.listdir(os.path.join(sonora_path))
-        if ((len(flist)<300) & ('t400g3160nc_m0.0.cmp.gz' not in flist)):
-            raise Exception('Oops! Looks like the sonora path you specified does not contain the ~390 .gz model files from Zenodo. Please untar the profile.tar file here https://zenodo.org/record/1309035#.Xo5GbZNKjGJ and point to this file path as your input.')
+        if ('cmp.gz' not in str(flist)):
+            raise Exception('Oops! Looks like the sonora path you specified does not contain any files that end in .cmp.gz. Please untar the profile.tar file here https://zenodo.org/record/1309035#.Xo5GbZNKjGJ and point to this file path as your input. There should be around 390 files that end in cmp.gz. No need to unzip then individually.')
 
         flist = [i.split('/')[-1] for i in flist if 'gz' in i]
         ts = [i.split('g')[0][1:] for i in flist if 'gz' in i]
@@ -1268,6 +1305,8 @@ class inputs():
         get_ind = min(pairs, key=lambda c: math.hypot(c[1]- coordinate[0], c[2]-coordinate[1]))[0]
 
         build_filename = 't'+ts[get_ind]+'g'+gs[get_ind]+'nc_m0.0.cmp.gz'
+        if build_filename not in flist: 
+            raise Exception(f"The Sonora file you are looking for {build_filename} does not exist in your specified directory {sonora_path}. Please check that it is in there.")
         ptchem = pd.read_csv(os.path.join(sonora_path,build_filename),delim_whitespace=True,compression='gzip')
         ptchem = ptchem.rename(columns={'P(BARS)':'pressure',
                                         'TEMP':'temperature',
@@ -1278,9 +1317,12 @@ class inputs():
             self.channon_grid_high(filename=os.path.join(__refdata__, 'chemistry','grid75_feh+000_co_100_highP.txt'))
         elif chem == 'low':
             self.channon_grid_low(filename=os.path.join(__refdata__,'chemistry','visscher_abunds_m+0.0_co1.0' ))
+        elif chem=='grid':
+            #solar C/O and M/H 
+            self.chemeq_visscher(c_o=1.0,log_mh=0.0)
         self.inputs['atmosphere']['sonora_filename'] = build_filename
         self.nlevel = ptchem.shape[0]
-    def chemeq(self, CtoO, Met):
+    def deprecate_chemeq(self, CtoO, Met):
         """
         This interpolates from a precomputed grid of CEA runs (run by M.R. Line)
 
@@ -1322,41 +1364,20 @@ class inputs():
         return 
     def channon_grid_high(self,filename=None):
         if isinstance(filename, type(None)):filename=os.path.join(__refdata__,'chemistry','grid75_feh+000_co_100_highP.txt')
-        #df = self.inputs['atmosphere']['profile']
         df = self.inputs['atmosphere']['profile'].sort_values('pressure').reset_index(drop=True)
+
+        #sort pressure
+        self.inputs['atmosphere']['profile'] = df
         self.nlevel = df.shape[0]
         
-        player = df['pressure'].values
-        tlayer  = df['temperature'].values
+        #player = df['pressure'].values
+        #tlayer  = df['temperature'].values
         
-        channon = pd.read_csv(filename,delim_whitespace=True)
-        #get molecules list from channon db
-        mols = list(channon.keys())
-        mols.pop(mols.index('pressure'))
-        mols.pop(mols.index('temperature'))
-        
-        #add molecules to df
-        df = df.reindex(columns = ['pressure','temperature']+mols) 
+        grid = pd.read_csv(filename,delim_whitespace=True)
+        grid['pressure'] = 10**grid['pressure']
 
-        #add pt_ids so we can grab the right points
-        pt_pairs = channon.loc[:,['pressure','temperature']]
-        pt_pairs['pt_id'] = np.arange(pt_pairs.shape[0])
-        channon['pt_id'] = pt_pairs['pt_id']
-
-        pt_pairs = pt_pairs.values#p,t,id
-        
-        #find index corresponding to each pair
-        ind_pt=[min(pt_pairs, 
-                    key=lambda c: math.hypot(c[0]- coordinate[0], c[1]-coordinate[1]))[2] 
-                        for coordinate in  zip(np.log10(player),tlayer)]
-        #build dataframe with chemistry
-        for i in range(df.shape[0]):
-            pair_for_layer = ind_pt[i]
-            df.loc[i,mols] = channon.loc[channon['pt_id'] == pair_for_layer,mols].values
-        df['ptid'] = ind_pt
-        
-        self.inputs['atmosphere']['profile'] = df
-    def chemeq_visscher(self, c_o, log_mh, interp_window = 11, interp_poly=2):
+        self.chem_interp(grid)
+    def chemeq_visscher(self, c_o, log_mh):#, interp_window = 11, interp_poly=2):
         """
         Find nearest neighbor from visscher grid
 
@@ -1399,79 +1420,152 @@ class inputs():
 
         grid_co = cos[np.argmin(np.abs(cos-c_o))]
         grid_feh = fehs[np.argmin(np.abs(fehs-log_mh))]
-        str_co = str(grid_feh).replace('.','')
-        str_fe = str(grid_co).replace('.','')
+        str_co = str(grid_co).replace('.','')
+        str_fe = str(grid_feh).replace('.','')
 
         filename = os.path.join(__refdata__,'chemistry','visscher_grid',
-            f'2015_06_1060grid_feh_{str_co}_co_{str_fe}.txt')
+            f'2015_06_1060grid_feh_{str_fe}_co_{str_co}.txt')
 
         header = pd.read_csv(filename).keys()[0]
         cols = header.replace('T (K)','temperature').replace('P (bar)','pressure').split()
         a = pd.read_csv(filename,delim_whitespace=True,skiprows=1,header=None, names=cols)
         a['pressure']=10**a['pressure']
 
-        mols = list(a.loc[:, ~a.columns.isin(['Unnamed: 0','pressure','temperature'])].keys())
-        #get pt from what users have already input
-        player_tlayer = self.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']].sort_values('pressure').reset_index(drop=True)
-        self.nlevel = player_tlayer.shape[0]
 
-        #loop through all pressure and temperature layers
-        for i in player_tlayer.index:
-            p,t = player_tlayer.loc[i,['pressure','temperature']]
-            #at each layer compute the distance to each point in the visscher table
-            #create a weight that is 1/d**2
-            a['weight'] = (1/((np.log10(a['pressure']) - np.log10(p))**2 + 
-                                       (a['temperature'] - t)**2))
-            #sort by the weight and only pick the TWO nearest neighbors. 
-            #Note, there was a sensitivity study to determine how many nearest neighbors to choose 
-            #It was determined that no more than 2 is best. 
-            w = a.sort_values(by='weight',ascending=False).iloc[0:2,:]
-            #now loop through all the molecules
-            for im in mols:
-                #compute the weighted mean of the mixing ratio
-                weighted_mean = (np.sum(w['weight']*(w.loc[:,im]))/np.sum(w['weight']))
-                player_tlayer.loc[i,im] = weighted_mean
-        #now pass through everything and use savgol filter to average 
-        for im in mols:
-            y = np.log10(player_tlayer.loc[:,im])
-            s = savgol_filter(y , interp_window, interp_poly)
-            player_tlayer.loc[:,im] = 10**s #
-
-        self.inputs['atmosphere']['profile'] = player_tlayer
-    def channon_grid_low(self, filename = None, interp_window = 11, interp_poly=2):
+        self.chem_interp(a)
+    def channon_grid_low(self, filename = None):
         """
         Interpolate from visscher grid
         """
         if isinstance(filename, type(None)):filename= os.path.join(__refdata__,'chemistry','visscher_abunds_m+0.0_co1.0')
         a = pd.read_csv(filename)
-        mols = list(a.loc[:, ~a.columns.isin(['Unnamed: 0','pressure','temperature'])].keys())
-        #get pt from what users have already input
-        player_tlayer = self.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']].sort_values('pressure').reset_index(drop=True)
-        self.nlevel = player_tlayer.shape[0]
+        a = a.iloc[:,1:]
+        self.chem_interp(a)
+    def chem_interp(self, chem_grid):
+        """
+        Interpolates chemistry based on dataframe input of either 1460 or 1060 grid
+        This particular function needs to have all molecules as columns as well as 
+        pressure and temperature
+        """
+        #from user input
+        plevel = self.inputs['atmosphere']['profile']['pressure'].values
+        tlevel =self.inputs['atmosphere']['profile']['temperature'].values
+        t_inv = 1/tlevel
+        p_log = np.log10(plevel)
 
-        #loop through all pressure and temperature layers
-        for i in player_tlayer.index:
-            p,t = player_tlayer.loc[i,['pressure','temperature']]
-            #at each layer compute the distance to each point in the visscher table
-            #create a weight that is 1/d**2
-            a['weight'] = (1/((np.log10(a['pressure']) - np.log10(p))**2 + 
-                                       (a['temperature'] - t)**2))
-            #sort by the weight and only pick the TWO nearest neighbors. 
-            #Note, there was a sensitivity study to determine how many nearest neighbors to choose 
-            #It was determined that no more than 2 is best. 
-            w = a.sort_values(by='weight',ascending=False).iloc[0:2,:]
-            #now loop through all the molecules
-            for im in mols:
-                #compute the weighted mean of the mixing ratio
-                weighted_mean = (np.sum(w['weight']*(w.loc[:,im]))/np.sum(w['weight']))
-                player_tlayer.loc[i,im] = weighted_mean
-        #now pass through everything and use savgol filter to average 
-        for im in mols:
-            y = np.log10(player_tlayer.loc[:,im])
-            s = savgol_filter(y , interp_window, interp_poly)
-            player_tlayer.loc[:,im] = 10**s #
+        nc_p = chem_grid.groupby('temperature').size().values
+        pressures = chem_grid['pressure'].unique()
+        temps = chem_grid['temperature'].unique()
+        log_abunds = np.log10(chem_grid.drop(['pressure','temperature'],axis=1))
+        species = log_abunds.keys()
 
-        self.inputs['atmosphere']['profile'] = player_tlayer
+        #make sure to interp on log and inv array
+        p_log_grid = np.unique(pressures)
+        p_log_grid =np.log10(p_log_grid[p_log_grid>0])
+        t_inv_grid = 1/np.array(temps)
+
+        #Now for the temp point on either side of our atmo grid
+        #first the lower interp temp
+        t_low_ind = []
+        for i in t_inv:
+            find = np.where(t_inv_grid>i)[0]
+            if len(find)==0:
+                #IF T GOES BELOW THE GRID
+                t_low_ind +=[0]
+            else:    
+                t_low_ind += [find[-1]]
+        t_low_ind = np.array(t_low_ind)
+        #IF T goes above the grid
+        t_low_ind[t_low_ind==(len(t_inv_grid)-1)]=len(t_inv_grid)-2
+        #get upper interp temp
+        t_hi_ind = t_low_ind + 1 
+
+        #now get associated temps
+        t_inv_low =  np.array([t_inv_grid[i] for i in t_low_ind])
+        t_inv_hi = np.array([t_inv_grid[i] for i in t_hi_ind])
+
+
+        #We want the pressure points on either side of our atmo grid point
+        #first the lower interp pressure
+        p_low_ind = [] 
+        for i in p_log:
+            find = np.where(p_log_grid<=i)[0]
+            if len(find)==0:
+                #If P GOES BELOW THE GRID
+                p_low_ind += [0]
+            else: 
+                p_low_ind += [find[-1]]
+        p_low_ind = np.array(p_low_ind)
+
+        #IF pressure GOES ABOVE THE GRID
+        p_log_low = []
+        for i in range(len(p_low_ind)): 
+            ilo = p_low_ind[i]
+            it = t_hi_ind[i]
+            max_avail_p = np.min([ilo, nc_p[it]-3])#3 b/c using len instead of where as was done with t above
+            p_low_ind[i] = max_avail_p
+            p_log_low += [p_log_grid[max_avail_p]]
+            
+        p_log_low = np.array(p_log_low)
+
+        #get higher pressure vals
+        p_hi_ind = p_low_ind + 1 
+
+        #now get associated pressures 
+        #p_log_low =  np.array([p_log_grid[i] for i in p_low_ind])
+        p_log_hi = np.array([p_log_grid[i] for i in p_hi_ind])
+
+        #translate to full 1060/1460 account for potentially disparate number of pressures per grid point
+        t_low_1060 = np.array([sum(nc_p[0:i]) for i in t_low_ind])
+        t_hi_1060 = np.array([sum(nc_p[0:i]) for i in t_hi_ind])
+
+        i_t_low_p_low =  t_low_1060 + p_low_ind #(opa.max_pc*t_low_ind)
+        i_t_hi_p_low =  t_hi_1060 + p_low_ind #(opa.max_pc*t_hi_ind)
+        i_t_low_p_hi = t_low_1060 + p_hi_ind
+        i_t_hi_p_hi = t_hi_1060 + p_hi_ind
+
+        t_interp = ((t_inv - t_inv_low) / (t_inv_hi - t_inv_low))[:,np.newaxis]
+        p_interp = ((p_log - p_log_low) / (p_log_hi - p_log_low))[:,np.newaxis]
+
+        log_abunds = log_abunds.values
+
+        abunds = 10**(((1-t_interp)* (1-p_interp) * log_abunds[i_t_low_p_low,:]) +
+                     ((t_interp)  * (1-p_interp) * log_abunds[i_t_hi_p_low,:]) + 
+                     ((t_interp)  * (p_interp)   * log_abunds[i_t_hi_p_hi,:]) + 
+                     ((1-t_interp)* (p_interp)   * log_abunds[i_t_low_p_hi,:]) ) 
+
+        self.inputs['atmosphere']['profile'][species] = pd.DataFrame(abunds)
+    
+    def add_pt(self, T, P, nlevel=61):
+        """
+        Adds temperature pressure profile to atmosphere
+        Parameters
+        ----------
+        T : array
+            Temperature Array
+        P : array 
+            Pressure Array 
+        nlevel : int
+            # of atmospheric levels
+        
+            
+        Returns
+        -------
+        T : numpy.array 
+            Temperature grid 
+        P : numpy.array
+            Pressure grid
+                
+        """
+        
+        self.nlevel=nlevel 
+        
+
+        self.inputs['atmosphere']['profile']  = pd.DataFrame({'temperature': T, 'pressure': P})
+
+        # Return TP profile
+        return self.inputs['atmosphere']['profile'] 
+
     def guillot_pt(self, Teq, T_int=100, logg1=-1, logKir=-1.5, alpha=0.5,nlevel=61, p_bottom = 1.5, p_top = -6):
         """
         Creates temperature pressure profile given parameterization in Guillot 2010 TP profile
@@ -1707,7 +1801,7 @@ class inputs():
                 ds['temperature'].isel(pressure=iz_plot).plot(x ='lon')
 
         self.inputs['atmosphere']['profile'] = ds 
-    def chemeq_3d(self,n_cpu=1): 
+    def chemeq_3d(self,c_o=1.0,log_mh=0.0, n_cpu=1): 
         """
         You must have already ran atmosphere_3d or pre-defined an xarray gcm 
         before running this function. 
@@ -1715,11 +1809,20 @@ class inputs():
         This function will post-process sonora chemical equillibrium 
         chemistry onto your 3D grid. 
 
+        CURRENT options 
+        log m/h: 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
+        C/O: 0.5X, 1.0X, 1.5X, 2.0X, 2.5X
+
         Parameters
         ----------
+        c_o : float,optional
+            default = 1 (solar), options= 0.5X, 1.0X, 1.5X, 2.0X, 2.5X
+        log_mh : float, optional
+            default = 0 (solar), options = 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
         n_cpu : int 
             Number of cpu to use for parallelization of chemistry
         """
+        not_molecules = ['temperature','pressure','kz']
         pt_3d_ds = self.inputs['atmosphere']['profile']
         lon = pt_3d_ds.coords['lon'].values
         lat = pt_3d_ds.coords['lat'].values
@@ -1737,23 +1840,23 @@ class inputs():
             #convert to 1d format
             self.inputs['atmosphere']['profile']=df
             #run chemistry, which adds chem to inputs['atmosphere']['profile']
-            self.channon_grid_low(filename=os.path.join(__refdata__,'chemistry','visscher_abunds_m+0.0_co1.0' ))
+            self.chemeq_visscher(c_o=1.0,log_mh=0.0)
             df_w_chem = self.inputs['atmosphere']['profile']            
             return df_w_chem
 
         results = Parallel(n_jobs=n_cpu)(delayed(run_chem)(ilon,ilat) for ilon in range(ng) for ilat in range(nt))
         
-        all_out = {imol:np.zeros((ng,nt,self.nlevel)) for imol in results[0].keys() if imol not in ['temperature','pressure']}
+        all_out = {imol:np.zeros((ng,nt,self.nlevel)) for imol in results[0].keys() if imol not in not_molecules}
 
         i = -1
         for ilon in range(ng):
             for ilat in range(nt):
                 i+=1
                 for imol in all_out.keys():
-                    if imol not in ['temperature','pressure']:
+                    if imol not in not_molecules:
                         all_out[imol][ilon, ilat,:] = results[i][imol].values
 
-        data_vars = {imol:(["lon", "lat","pressure"], all_out[imol],{'units': 'v/v'}) for imol in results[0].keys() if imol not in ['temperature','pressure']}
+        data_vars = {imol:(["lon", "lat","pressure"], all_out[imol],{'units': 'v/v'}) for imol in results[0].keys() if imol not in not_molecules}
         # put data into a dataset
         ds_chem = xr.Dataset(
             data_vars=data_vars,
@@ -1794,6 +1897,10 @@ class inputs():
             ds = self.inputs['atmosphere']['profile']
             if isinstance(ds, type(None)):
                 raise Exception("Need to submit an xarray.DataArray because there is no input attached to self.inputs['atmosphere']['profile']")
+
+        #make sure order is correct 
+        if [i for i in ds.dims] != ["lon", "lat","pressure"]:
+            ds = ds.transpose("lon", "lat","pressure")
 
         if not isinstance(ds, xr.core.dataset.Dataset): 
             raise Exception('PICASO has moved to only accept xarray input. Please see GCM 3D input tutorials to learn how to reformat your input. ')
@@ -2564,9 +2671,9 @@ class inputs():
         self.inputs['clouds']['profile'] = df
 
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
-        raman='pollack',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
+        raman='none',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
         p_reference=1, method='Toon', stream=2, thermal_calculation=1, Toon_coefficients="quadrature",
-        input_dir=None, SH4_BC=0):
+        input_dir=None):
         """
         This function sets all the default approximations in the code. It transforms the string specificatons
         into a number so that they can be used in numba nopython routines. 
@@ -2707,6 +2814,7 @@ class inputs():
         except KeyError: 
             if 'reflected' not in calculation:
                 self.phase_angle(0)
+                phase = self.inputs['phase_angle']
             else: 
                 raise Exception("Phase angle not specified. It is needed for reflected light. Please run the jdi.inputs().phase_angle() routine.")
         
@@ -2839,6 +2947,7 @@ def load_planet(df, opacity, phase_angle = 0, stellar_db='phoenix', verbose=Fals
 
         #setup picaso
         start_case = inputs()
+        start_case.approx(raman="none")
         start_case.phase_angle(phase_angle) #radians 
 
         #define gravity

@@ -31,7 +31,7 @@ Paper
 	 <div class="row">
 	  <div class="col-md-3">
 	    <div class="thumbnail">
-	      <a href="https://natashabatalha.github.io/picaso">
+	      <a href="https://natashabatalha.github.io/picaso/credit.html">
 	        <img src="docs/scroll-solid.svg" alt="installation" width="30px">
 	      </a>
 	    </div>

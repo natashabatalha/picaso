@@ -3,13 +3,24 @@
 History
 -------
 
+2.3 (2022-4-06)
+~~~~~~~~~~~~~~~
+* lots of fun 3D functionality (Adams et al 2022)
+* phase curves (Robbins-Blanche et al 2022)
+* 3D tutorials with xarray
+* clearer radiative transfer to be compatible with Toon 89
+* Faster chemeq interpolation 
+* opacity tables pull four nearest neighbors (though option for 1 remains)
+* Improvements and additions to plotting functionality 
+* Minor bug fixes  
+
 2.2 (2021-7-12)
 ~~~~~~~~~~~~~~~~~~
 * Add evolution tracks 
 * Add ability to use pre mixed c-k tables 
 * Expand chemistry to include new Visscher tables 
 * Add ability to pull out contribution from individual species without running full RT
-* Yount planet table from ZJ Zhang. 
+* Young planet table from ZJ Zhang. 
 * Separate workshop notebooks for Sagan School 2020, 2021 and ERS 
 * Add explicit "hard surface" term for thermal flux boundary condition for terrestrial calculations
 * Minor bug fixes/improvements 

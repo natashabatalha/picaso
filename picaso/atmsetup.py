@@ -351,29 +351,38 @@ class ATMSETUP():
         mmw = self.level['mmw'] * self.c.amu #make sure mmw in grams
         tlevel = self.level['temperature']
         plevel = self.level['pressure']
+        
+        if p_reference >= np.max(plevel):
+            p_reference = np.max(plevel)
 
         z = np.zeros(np.shape(tlevel)) + self.planet.radius
         dz = np.zeros(np.shape(tlevel)) 
         gravity = np.zeros(np.shape(tlevel))  
+        #unique avoids duplicates for 3d grids where pressure is repeated for ngangle,ntangle
+        #would break for nonuniform pressure grids 
+        indx = np.unique(np.where(plevel>p_reference)[0]) 
+        #if there are any pressures less than the reference pressure
+        if len(indx)>0:
+            for i in indx-1:
+                
+                if constant_gravity:
+                    gravity[i] = self.planet.gravity
+                else:
+                    gravity[i] = self.c.G * self.planet.mass / ( z[i] )**2
 
-        for i in np.where(plevel>p_reference)[0]-1:
-            if constant_gravity:
-                gravity[i] = self.planet.gravity
-            else:
-                gravity[i] = self.c.G * self.planet.mass / ( z[i] )**2
+                scale_h = self.c.k_b * tlevel[i] / (mmw[i] * gravity[i])
+                dz[i] = scale_h * (np.log(plevel[i+1] / plevel[i])) #from eddysed
+                z[i+1] = z[i] - dz[i]
 
-            scale_h = self.c.k_b * tlevel[i] / (mmw[i] * gravity[i])
-            dz[i] = scale_h * (np.log(plevel[i+1] / plevel[i])) #from eddysed
-            z[i+1] = z[i] - dz[i]
-
-        for i in np.where(plevel<=p_reference)[0][::-1][:-1]:
+        for i in np.unique(np.where(plevel<=p_reference)[0])[::-1][:-1]:#unique to avoid 3d bug
+            
             if constant_gravity:
                 gravity[i] = self.planet.gravity
             else:
                 gravity[i] = self.c.G * self.planet.mass / ( z[i] )**2  
 
             scale_h = self.c.k_b * tlevel[i] / (mmw[i] * gravity[i])
-            dz[i] = scale_h*(np.log(plevel[i+1]/ plevel[i]))
+            dz[i] = scale_h*(np.log(plevel[i]/ plevel[i-1]))#plevel[i+1]/ plevel[i]))
             z[i-1] = z[i] + dz[i]
 
         self.level['z'] = z
@@ -471,12 +480,16 @@ class ATMSETUP():
             self.c.input_npts_wave = len(self.input_wno)
             latitude, longitude = self.latitude*180/np.pi, self.longitude*180/np.pi
             cld_input = self.input['clouds']['profile'] 
-
-            if regrid: cld_input = cld_input.interp(wno = wno)
             cld_input = cld_input.sortby('wno').sortby('pressure')
-            opd = cld_input['opd'].transpose("pressure","wno","lon", "lat").values
-            g0 = cld_input['g0'].transpose("pressure","wno","lon", "lat").values
-            w0 = cld_input['w0'].transpose("pressure","wno","lon", "lat").values
+            if regrid: cld_input = cld_input.interp(wno = wno)
+            if [i for i in cld_input.dims] != ["pressure","wno","lon", "lat"]:
+                opd = cld_input['opd'].transpose("pressure","wno","lon", "lat").values
+                g0 = cld_input['g0'].transpose("pressure","wno","lon", "lat").values
+                w0 = cld_input['w0'].transpose("pressure","wno","lon", "lat").values
+            else: 
+                opd = cld_input['opd'].values
+                g0 = cld_input['g0'].values
+                w0 = cld_input['w0'].values                
             self.layer['cloud'] = {'opd': opd}
             self.layer['cloud']['g0'] = g0
             self.layer['cloud']['w0'] = w0  
