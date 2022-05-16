@@ -1468,7 +1468,7 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
         numg x numt x nwno
     """
     nlayer = nlevel - 1 #nlayers 
-    flux_out = zeros((numg, numt, 2*nlayer, nwno))
+    flux_out = zeros((numg, numt, 2*nlevel, nwno))
 
     mu1 = 0.5#0.88#0.5 #from Table 1 Toon  
 
@@ -1554,9 +1554,11 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     f_up = (positive * exptrm_positive + gama * negative * exptrm_minus + c_plus_up)
     flux_minus  = gama*positive*exptrm_positive + negative*exptrm_minus + c_minus_down
     flux_plus  = positive*exptrm_positive + gama*negative*exptrm_minus + c_plus_down
-    flux = zeros((2*nlayer, nwno))
-    flux[::2, :] = flux_minus
-    flux[1::2, :] = flux_plus
+    flux = zeros((2*nlevel, nwno))
+    flux[0,:] = (gama*positive + negative + c_minus_down)[0,:]
+    flux[1,:] = (positive + gama*negative + c_plus_down)[0,:]
+    flux[2::2, :] = flux_minus
+    flux[3::2, :] = flux_plus
 
 
     #calculate everyting from Table 3 toon
