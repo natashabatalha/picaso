@@ -329,6 +329,23 @@ class ATMSETUP():
         return
 
     def get_altitude(self, p_reference=1,constant_gravity=False):
+        #convert to dyn/cm2
+        p_reference = p_reference*self.c.pconv;
+        mmw = self.level['mmw'] #* self.c.amu #make sure mmw in grams
+        tlevel = self.level['temperature']
+        plevel = self.level['pressure'];
+
+        z,dz,gravity=_solve(plevel, tlevel, p_reference, mmw,
+           self.planet.mass, self.planet.radius)
+        self.level['z'] = z;
+        self.level['dz'] = np.append(dz,dz[-1])
+        #for get_column_density calculation below we want gravity at layers
+        self.layer['gravity'] = 0.5*(gravity[0:-1] + gravity[1:])
+        #import pickle as pk
+        #pk.dump([self.level, self.layer], 
+        #    open(f'/Users/nbatalh1/Documents/codes/PICASO/test/profile/layer{plevel[0]}{plevel[-1]}.pk','wb'))
+
+    def get_altitude(self, p_reference=1,constant_gravity=False):
         """
         Calculates z and gravity  
 
@@ -344,7 +361,6 @@ class ATMSETUP():
 
         if np.isnan(self.planet.radius):
             constant_gravity = True
-
         #set zero arays of things we want out 
         nlevel = self.c.nlevel
 
@@ -354,6 +370,12 @@ class ATMSETUP():
         
         if p_reference >= np.max(plevel):
             p_reference = np.max(plevel)
+        else: 
+            #choose a reference pressure that is on the 
+            #user specified pressure grid
+            #if you dont do this your model becomes 
+            #highly sensitive to # of layers used 
+            p_reference = plevel[plevel>=p_reference][0]
 
         z = np.zeros(np.shape(tlevel)) + self.planet.radius
         dz = np.zeros(np.shape(tlevel)) 
@@ -387,10 +409,9 @@ class ATMSETUP():
 
         self.level['z'] = z
         self.level['dz'] = dz
+
         #for get_column_density calculation below we want gravity at layers
         self.layer['gravity'] = 0.5*(gravity[0:-1] + gravity[1:])
-        self.layer['gravity'][0] = self.layer['gravity'][1]
-        self.layer['gravity'][-1] = self.layer['gravity'][-2]
         
     def get_column_density(self):
         """
@@ -597,3 +618,52 @@ class ATMSETUP():
             pass
 
         return df
+
+
+from scipy.interpolate import RectBivariateSpline, UnivariateSpline
+import numpy as np
+from scipy import integrate
+import scipy.interpolate
+import astropy
+
+k_B =  (astropy.constants.k_B.to(astropy.units.erg / astropy.units.K).value)      
+G = astropy.constants.G.to(astropy.units.cm*astropy.units.cm*astropy.units.cm/astropy.units.g/astropy.units.s/astropy.units.s).value 
+AMU = astropy.constants.u.to(astropy.units.g).value #grams
+
+def _get_radii(ln_Ps, planet_mass, planet_radius,
+               T_interpolator, mu_interpolator):
+    #layer mmw
+    intermediate_mu = (mu_interpolator(ln_Ps[1:]) + \
+                       mu_interpolator(ln_Ps[0:-1])) / 2.0
+    #layer T
+    intermediate_T = (T_interpolator(ln_Ps[1:]) + \
+                      T_interpolator(ln_Ps[0:-1])) / 2.0
+
+    d_inv_r = np.diff(ln_Ps) * k_B * intermediate_T / \
+        (G * planet_mass * intermediate_mu * AMU)
+    assert(np.all(d_inv_r >= 0) or np.all(d_inv_r <= 0))
+    inv_r = 1.0 / planet_radius + np.cumsum(d_inv_r)
+    radii = np.append(planet_radius, 1.0 / inv_r)
+    return radii
+
+
+def _solve(P_profile, T_profile, ref_pressure, mu_profile,
+           planet_mass, planet_radius):#above_cloud_cond,
+    mu_interpolator = UnivariateSpline(np.log(P_profile), mu_profile, s=0)
+    T_interpolator = UnivariateSpline(np.log(P_profile), T_profile, s=0)
+
+    P_below = np.append(ref_pressure, P_profile[P_profile > ref_pressure])
+    P_above = np.append(ref_pressure,
+                        P_profile[P_profile <= ref_pressure][::-1])
+    radii_below = _get_radii(np.log(P_below), planet_mass, planet_radius,
+                             T_interpolator, mu_interpolator)
+    radii_above = _get_radii(np.log(P_above), planet_mass, planet_radius,
+                             T_interpolator, mu_interpolator)
+    radii = np.append(radii_above.flatten()[1:][::-1],
+                      radii_below.flatten()[1:])
+    #radii = radii[above_cloud_cond]
+    dr = -np.diff(radii)
+
+    gravity = G*planet_mass/radii**2
+
+    return radii, dr,gravity
