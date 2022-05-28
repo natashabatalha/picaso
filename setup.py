@@ -41,7 +41,7 @@ except ImportError:
 # to this sample package.
 setup(
     name='picaso', 
-    version = '2.3.3',
+    version = '2.3.4',
     description = 'planetary intesity code for atmospheric scattering observations',
     long_description = 'README.rst',
     author = 'Natasha E. Batalha',
