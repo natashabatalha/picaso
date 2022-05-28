@@ -195,7 +195,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                     atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
                                     single_phase,multi_phase,
                                     frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)
-
+                #add guass for ck
                 xint_at_top += xint*gauss_wts[ig]
             #if full output is requested add in xint at top for 3d plots
             if full_output: 
@@ -214,6 +214,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                             DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                             atm.level['pressure'],ubar1,
                                             atm.surf_reflect, atm.hard_surface, tridiagonal)
+                #add guass for ck
                 flux_at_top += flux*gauss_wts[ig]
                 
             #if full output is requested add in flux at top for 3d plots
