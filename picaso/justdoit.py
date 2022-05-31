@@ -326,7 +326,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
                 #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
                 #the uncorrected raman single scattering 
-                flux  += get_thermal_3d(nlevel, wno,nwno,ng,nt,TLEVEL_3d,
+                flux  = get_thermal_3d(nlevel, wno,nwno,ng,nt,TLEVEL_3d,
                                             DTAU_OG_3d[:,:,:,:,ig], W0_no_raman_3d[:,:,:,:,ig], COSB_OG_3d[:,:,:,:,ig], 
                                             PLEVEL_3d,ubar1, atm.surf_reflect, atm.hard_surface, tridiagonal)
                 flux_at_top += flux*gauss_wts[ig]
