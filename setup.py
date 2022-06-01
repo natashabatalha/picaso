@@ -61,7 +61,7 @@ setup(
   packages=['picaso'],
   install_requires=[
           'numpy<1.23',
-          'bokeh<2.4.0,>=2.3.0',
+          'bokeh>=2.3.0,<2.5.0',
           'holoviews',
           'numba',
           'pandas',
