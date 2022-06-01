@@ -1161,7 +1161,7 @@ class inputs():
         self.inputs['approx']['raman'] = 2
 
         self.chem_interp(opa.full_abunds)
-    def premix_atmosphere_nearest_old(self, opa, df=None, filename=None, **pd_kwargs):
+    def premix_atmosphere_nearest_deprecate(self, opa, df=None, filename=None, **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
         Sets number of layers in model.  
@@ -1275,7 +1275,7 @@ class inputs():
             self.chemeq_visscher(c_o=1.0,log_mh=0.0)
         self.inputs['atmosphere']['sonora_filename'] = build_filename
         self.nlevel = ptchem.shape[0]
-    def deprecate_chemeq(self, CtoO, Met):
+    def chemeq_deprecate(self, CtoO, Met):
         """
         This interpolates from a precomputed grid of CEA runs (run by M.R. Line)
 
@@ -1754,6 +1754,76 @@ class inputs():
                 ds['temperature'].isel(pressure=iz_plot).plot(x ='lon')
 
         self.inputs['atmosphere']['profile'] = ds 
+
+    def premix_3d(self, opa, n_cpu=1): 
+        """
+        You must have already ran atmosphere_3d or pre-defined an xarray gcm 
+        before running this function. 
+
+        This function will post-process sonora chemical equillibrium 
+        chemistry onto your 3D grid. 
+
+        CURRENT options 
+        log m/h: 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
+        C/O: 0.5X, 1.0X, 1.5X, 2.0X, 2.5X
+
+        Parameters
+        ----------
+        c_o : float,optional
+            default = 1 (solar), options= 0.5X, 1.0X, 1.5X, 2.0X, 2.5X
+        log_mh : float, optional
+            default = 0 (solar), options = 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
+        n_cpu : int 
+            Number of cpu to use for parallelization of chemistry
+        """
+        not_molecules = ['temperature','pressure','kz']
+        pt_3d_ds = self.inputs['atmosphere']['profile']
+        lon = pt_3d_ds.coords['lon'].values
+        lat = pt_3d_ds.coords['lat'].values
+        nt = len(lat)
+        ng = len(lon)
+
+        pres = pt_3d_ds.coords['pressure'].values
+        self.nlevel = len(pres)
+        def run_chem(ilon,ilat):
+            warnings.filterwarnings("ignore")
+            df = pt_3d_ds.isel(lon=ilon,lat=ilat).to_pandas(
+                    ).reset_index(
+                    ).drop(['lat','lon'],axis=1
+                    ).sort_values('pressure')
+            #convert to 1d format
+            self.inputs['atmosphere']['profile']=df
+            #run chemistry, which adds chem to inputs['atmosphere']['profile']
+            self.chem_interp(opa.full_abunds)
+            df_w_chem = self.inputs['atmosphere']['profile']            
+            return df_w_chem
+
+        results = Parallel(n_jobs=n_cpu)(delayed(run_chem)(ilon,ilat) for ilon in range(ng) for ilat in range(nt))
+        
+        all_out = {imol:np.zeros((ng,nt,self.nlevel)) for imol in results[0].keys() if imol not in not_molecules}
+
+        i = -1
+        for ilon in range(ng):
+            for ilat in range(nt):
+                i+=1
+                for imol in all_out.keys():
+                    if imol not in not_molecules:
+                        all_out[imol][ilon, ilat,:] = results[i][imol].values
+
+        data_vars = {imol:(["lon", "lat","pressure"], all_out[imol],{'units': 'v/v'}) for imol in results[0].keys() if imol not in not_molecules}
+        # put data into a dataset
+        ds_chem = xr.Dataset(
+            data_vars=data_vars,
+            coords=dict(
+                lon=(["lon"], lon,{'units': 'degrees'}),#required
+                lat=(["lat"], lat,{'units': 'degrees'}),#required
+                pressure=(["pressure"], pres,{'units': 'bar'})#required*
+            ),
+            attrs=dict(description="coords with vectors"),
+        )
+
+        #append input
+        self.inputs['atmosphere']['profile'] = pt_3d_ds.update(ds_chem)
     def chemeq_3d(self,c_o=1.0,log_mh=0.0, n_cpu=1): 
         """
         You must have already ran atmosphere_3d or pre-defined an xarray gcm 
