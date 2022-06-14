@@ -69,3 +69,11 @@ Miscellaneous
    :maxdepth: 2
 
    FAQs </notebooks/FAQs.ipynb>
+
+Model Storage Best Practices
+----------------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   Data Storage Uniformity </notebooks/codehelp/data_uniformity_tutorial.ipynb>

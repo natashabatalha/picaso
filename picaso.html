@@ -1924,6 +1924,20 @@ C/O: 0.5X, 1.0X, 1.5X, 2.0X, 2.5X</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="picaso.justdoit.inputs.chemeq_deprecate">
+<code class="sig-name descname">chemeq_deprecate</code><span class="sig-paren">(</span><em class="sig-param">CtoO</em>, <em class="sig-param">Met</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.chemeq_deprecate" title="Permalink to this definition">¶</a></dt>
+<dd><p>This interpolates from a precomputed grid of CEA runs (run by M.R. Line)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>CtoO</strong> (<em>float</em>) – C to O ratio (solar = 0.55)</p></li>
+<li><p><strong>Met</strong> (<em>float</em>) – Metallicity relative to solar (solar = 1)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
 <dt id="picaso.justdoit.inputs.chemeq_visscher">
 <code class="sig-name descname">chemeq_visscher</code><span class="sig-paren">(</span><em class="sig-param">c_o</em>, <em class="sig-param">log_mh</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.chemeq_visscher" title="Permalink to this definition">¶</a></dt>
 <dd><p>Find nearest neighbor from visscher grid</p>
@@ -2111,20 +2125,6 @@ Use plot=True to understand how your grid is being shifted.</p></li>
 </dd></dl>
 
 <dl class="method">
-<dt id="picaso.justdoit.inputs.deprecate_chemeq">
-<code class="sig-name descname">deprecate_chemeq</code><span class="sig-paren">(</span><em class="sig-param">CtoO</em>, <em class="sig-param">Met</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.deprecate_chemeq" title="Permalink to this definition">¶</a></dt>
-<dd><p>This interpolates from a precomputed grid of CEA runs (run by M.R. Line)</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>CtoO</strong> (<em>float</em>) – C to O ratio (solar = 0.55)</p></li>
-<li><p><strong>Met</strong> (<em>float</em>) – Metallicity relative to solar (solar = 1)</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
 <dt>
 <code class="sig-name descname">gravity</code><span class="sig-paren">(</span><em class="sig-param">gravity=None</em>, <em class="sig-param">gravity_unit=None</em>, <em class="sig-param">radius=None</em>, <em class="sig-param">radius_unit=None</em>, <em class="sig-param">mass=None</em>, <em class="sig-param">mass_unit=None</em><span class="sig-paren">)</span></dt>
 <dd><p>Get gravity based on mass and radius, or gravity inputs</p>
@@ -2241,6 +2241,27 @@ necessary</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="picaso.justdoit.inputs.premix_3d">
+<code class="sig-name descname">premix_3d</code><span class="sig-paren">(</span><em class="sig-param">opa</em>, <em class="sig-param">n_cpu=1</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.premix_3d" title="Permalink to this definition">¶</a></dt>
+<dd><p>You must have already ran atmosphere_3d or pre-defined an xarray gcm
+before running this function.</p>
+<p>This function will post-process sonora chemical equillibrium
+chemistry onto your 3D grid.</p>
+<p>CURRENT options
+log m/h: 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
+C/O: 0.5X, 1.0X, 1.5X, 2.0X, 2.5X</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>c_o</strong> (<em>float</em><em>,</em><em>optional</em>) – default = 1 (solar), options= 0.5X, 1.0X, 1.5X, 2.0X, 2.5X</p></li>
+<li><p><strong>log_mh</strong> (<em>float</em><em>, </em><em>optional</em>) – default = 0 (solar), options = 0.0, 0.5, 1.0, 1.5, 1.7, 2.0</p></li>
+<li><p><strong>n_cpu</strong> (<em>int</em>) – Number of cpu to use for parallelization of chemistry</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
 <dt id="picaso.justdoit.inputs.premix_atmosphere">
 <code class="sig-name descname">premix_atmosphere</code><span class="sig-paren">(</span><em class="sig-param">opa</em>, <em class="sig-param">df=None</em>, <em class="sig-param">filename=None</em>, <em class="sig-param">**pd_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.premix_atmosphere" title="Permalink to this definition">¶</a></dt>
 <dd><p>Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
@@ -2264,8 +2285,8 @@ Must contain pressure at least one molecule</p></li>
 </dd></dl>
 
 <dl class="method">
-<dt id="picaso.justdoit.inputs.premix_atmosphere_nearest_old">
-<code class="sig-name descname">premix_atmosphere_nearest_old</code><span class="sig-paren">(</span><em class="sig-param">opa</em>, <em class="sig-param">df=None</em>, <em class="sig-param">filename=None</em>, <em class="sig-param">**pd_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.premix_atmosphere_nearest_old" title="Permalink to this definition">¶</a></dt>
+<dt id="picaso.justdoit.inputs.premix_atmosphere_nearest_deprecate">
+<code class="sig-name descname">premix_atmosphere_nearest_deprecate</code><span class="sig-paren">(</span><em class="sig-param">opa</em>, <em class="sig-param">df=None</em>, <em class="sig-param">filename=None</em>, <em class="sig-param">**pd_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.premix_atmosphere_nearest_deprecate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
 Sets number of layers in model.
 :param opa: Opacity class from opannection : RetrieveCks()
