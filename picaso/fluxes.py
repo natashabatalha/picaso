@@ -1101,20 +1101,20 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                                 #rayleigh phase function
                                 (gcos2))
             elif single_phase==1:#'OTHG':
-                p_single=0*(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+                p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
                 #def P(mu): # Legendre polynomials
                 #    return [1, mu, (3*mu**2 - 1)/2, (5*mu**3 - 3*mu)/2,
                 #            (35*mu**4 - 30*mu**2 + 3)/8, 
                 #            (63*mu**5 - 70*mu**3 + 15*mu)/8, 
                 #            (231*mu**6 - 315*mu**4 + 105*mu**2 - 5)/16 ]
-                maxterm = 7
-                for l in range(maxterm):
-                    from scipy.special import legendre
-                    ff = cosb_og**maxterm
-                    w_temp = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
-                    Pn = legendre(l)
-                    p_single = p_single + w_temp * Pn(-u0)*Pn(u1)
-                    #p_single = p_single + w_temp * P(-u0)[l]*P(u1)[l]
+                #maxterm = 7
+                #for l in range(maxterm):
+                #    from scipy.special import legendre
+                #    ff = cosb_og**maxterm
+                #    w_temp = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
+                #    Pn = legendre(l)
+                #    p_single = p_single + w_temp * Pn(-u0)*Pn(u1)
+                #    #p_single = p_single + w_temp * P(-u0)[l]*P(u1)[l]
             elif single_phase==2:#'TTHG':
                 #Phase function for single scattering albedo frum Solar beam
                 #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
@@ -2062,7 +2062,7 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
                     #cos_theta = -u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
                     #p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
                     #p_single = p_single + w_single[l,:,:] * P(-u0)[l]*P(u1)[l]
-                #p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+                p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 
             elif single_phase==2:#'TTHG':
                 #Phase function for single scattering albedo frum Solar beam
@@ -2147,17 +2147,17 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
             expo_mus = slice_gt(expo_mus, 35.0)    
             exptrm_mus = exp(-expo_mus)
 
-            p_single = 0
-            maxterm = 7
-            for l in range(maxterm):
-            	from scipy.special import legendre
-            	#gama = (0.85/cosb_og)**maxterm
-            	#beta = ((1 + gama * (1. + .5*u0**2 * (1-w0**(1/2))**(1/8)))
-            	#			/ (u0**((1-(1-w0**8)**(1/8))/(1+2*u0)) + gama))
-            	ff = cosb_og**maxterm
-            	w_temp = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
-            	Pn = legendre(l)
-            	p_single = p_single + w_temp[0,0] * Pn(-u0)*Pn(u1)
+            #p_single = 0
+            #maxterm = 7
+            #for l in range(maxterm):
+            #	from scipy.special import legendre
+            #	#gama = (0.85/cosb_og)**maxterm
+            #	#beta = ((1 + gama * (1. + .5*u0**2 * (1-w0**(1/2))**(1/8)))
+            #	#			/ (u0**((1-(1-w0**8)**(1/8))/(1+2*u0)) + gama))
+            #	ff = cosb_og**maxterm
+            #	w_temp = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
+            #	Pn = legendre(l)
+            #	p_single = p_single + w_temp[0,0] * Pn(-u0)*Pn(u1)
             for i in range(nlayer):
                 for l in range(stream):
                     multi_scat[i,:] = multi_scat[i,:] + w_multi[l,i,:] * P(u1)[l] * intgrl_new[stream*i+l,:]
