@@ -698,11 +698,10 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
     cur.execute('INSERT INTO header (pressure_unit, temperature_unit, wavenumber_grid, continuum_unit,molecular_unit) values (?,?,?,?,?)', 
                 ('bar','kelvin', np.array(new_wvno_grid), 'cm-1 amagat-2', 'cm2/molecule'))
     conn.commit()
-    
     grid_file = os.path.join(og_directory,'grid1460.csv')
     if not os.path.exists(grid_file): 
         grid_file = os.path.join(os.environ['picaso_refdata'],'opacities','grid1460.csv')
-    else: 
+    if not os.path.exists(grid_file): 
         raise Exception('cannot find grid1460 file. its possible your reference folder is out of date. please check the Github reference folder')
     s1460 = pd.read_csv(grid_file,dtype=str)
     #all pressures 
