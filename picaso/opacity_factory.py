@@ -698,8 +698,13 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
     cur.execute('INSERT INTO header (pressure_unit, temperature_unit, wavenumber_grid, continuum_unit,molecular_unit) values (?,?,?,?,?)', 
                 ('bar','kelvin', np.array(new_wvno_grid), 'cm-1 amagat-2', 'cm2/molecule'))
     conn.commit()
-
-    s1460 = pd.read_csv(os.path.join(og_directory,'grid1460.csv'),dtype=str)
+    
+    grid_file = os.path.join(og_directory,'grid1460.csv')
+    if not os.path.exists(grid_file): 
+        grid_file = os.path.join(os.environ['picaso_refdata'],'opacities','grid1460.csv')
+    else: 
+        raise Exception('cannot find grid1460 file. its possible your reference folder is out of date. please check the Github reference folder')
+    s1460 = pd.read_csv(grid_file,dtype=str)
     #all pressures 
     pres=s1460['pressure_bar'].values.astype(float)
     #all temperatures 
@@ -713,24 +718,29 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
     if molecule in alks: 
         if alkali_dir == 'alkalis':
             mol_dir = os.path.join(og_directory,alkali_dir)
+        elif alkali_dir == 'individual_file':
+            mol_dir = os.path.join(og_directory,molecule)
         else: 
-            mol_dir = alkali_dir    
+            mol_dir = alkali_dir
     else:
         mol_dir = os.path.join(og_directory,molecule)
-
     
     #determine file type
     find_p_files = glob.glob(os.path.join(mol_dir,'*p_*'))
     find_npy_files = glob.glob(os.path.join(mol_dir,'*npy*'))
+    find_txt_files =  glob.glob(os.path.join(mol_dir,'*txt*'))
 
     if len(find_p_files)>1000:
         ftype = 'fortran_binary'
     elif len(find_npy_files)>1000: 
         ftype = 'python'
+    elif len(find_txt_files)>1000:
+        ftype='lupu_txt'
     else: 
         raise Exception('Could not find npy or p_ files. npy are assumed to be read via np.load, where as p_ files are assumed to be unformatted binary or alkali files')
         
     read_fits = os.path.join(mol_dir,'readomni.fits' )
+    lupu_wave= os.path.join(mol_dir,'wavelengths.txt' )
     if os.path.exists(read_fits):
         # Get Richard's READ ME information
         hdulist = fits.open(read_fits)
@@ -738,6 +748,9 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         numw = sfits['Valid rows'] #defines number of wavelength points for each 1060 layer
         delwn = sfits['Delta Wavenum'] #defines constant delta wavenumber for each 1060 layer
         start = sfits['Start Wavenum'] #defines starting wave number for each 1060 layer
+    elif os.path.exists(lupu_wave):
+        og_wvno_grid = 1e4/pd.read_csv(lupu_wave).values[:,0]
+        numw,delwn,start=np.nan,np.nan,np.nan
     else: 
         #ehsan makes his opacities on uniform 
         numw = s1460['number_wave_pts'].values.astype(int)
@@ -747,14 +760,18 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
 
 
     for i,p,t in zip(ifile,pres,temp):  
-        #path to richard's data
+        #path to data
         if 'fortran' in ftype:
             fdata = os.path.join(mol_dir, 'p_'+str(int(i)))
         elif 'python' in ftype: 
             fdata = os.path.join(mol_dir, str(int(i))+'.npy')
-
+        elif 'lupu' in ftype: 
+            mbar = pres*1e3
+            fdata = os.path.join(mol_dir,f'{molecule}_{mbar:.2e}mbar_{temp:.0f}K.txt') 
         #Grab 1460 in various format data
-        if molecule in alks:
+        if 'lupu' in ftype: 
+            dset =  pd.read_csv(fdata,skiprows=2).values[:,0]
+        elif molecule in alks:
             dset = pd.read_csv(fdata)
             og_wvno_grid = dset['wno'].values.astype(float)
             dset = dset[molecule].values.astype(float)
