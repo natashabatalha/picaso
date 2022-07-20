@@ -690,7 +690,6 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         BINS = int(new_dwno/old_dwno)
     else: 
         raise Exception('Need to either input a new constant R (new_R) or constant delta wno (new_dwno)')
-
     #new wave grid 
     new_wvno_grid = interp_wvno_grid[::BINS]
 
@@ -776,7 +775,7 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
             dset = dset[molecule].values.astype(float)
         elif 'fortran' in ftype: 
             dset = np.fromfile(fdata, dtype=float) 
-            og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1] 
+            og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]
         elif 'python' in ftype: 
             dset = np.load(open(fdata,'rb'))
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]            
@@ -1217,6 +1216,36 @@ def get_molecular(db_file, species, temperature,pressure):
     conn.close()
     restruct['wavenumber'] = wave_grid
     return restruct
+
+def delete_molecule(mol, db_filename):
+    """
+    Delete a record from the database
+
+    Parameters
+    ----------
+    mol : str 
+        molecule to delete 
+    db_filename : str
+        database to delete record from
+    """
+    try:
+        sqliteConnection = sqlite3.connect(db_filename)
+        cursor = sqliteConnection.cursor()
+        print("Connected to SQLite")
+
+        sql_update_query = """DELETE from molecular where molecule = ?"""
+        cursor.execute(sql_update_query, (mol,))
+        sqliteConnection.commit()
+        print("Record deleted successfully")
+
+        cursor.close()
+
+    except sqlite3.Error as error:
+        print("Failed to delete reocord from a sqlite table", error)
+    finally:
+        if sqliteConnection:
+            sqliteConnection.close()
+            print("sqlite connection is closed")
 
           
 def find_nearest(array,value):
