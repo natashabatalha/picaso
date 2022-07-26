@@ -10,7 +10,7 @@ from astropy.io import fits
 import math
 from scipy.io import FortranFile
 import glob
-
+from scipy.stats import binned_statistic
 
 __refdata__ = os.environ.get('picaso_refdata')
 
@@ -631,7 +631,7 @@ def insert_molecular_1060(molecule, min_wavelength, max_wavelength, new_R,
     conn.commit()
     conn.close()
     return new_wvno_grid
-
+#import spectres
 def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory, new_db,
                           new_R=None,new_dwno=None, 
                           old_R=1e6, old_dwno=0.0035,
@@ -690,7 +690,6 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         BINS = int(new_dwno/old_dwno)
     else: 
         raise Exception('Need to either input a new constant R (new_R) or constant delta wno (new_dwno)')
-
     #new wave grid 
     new_wvno_grid = interp_wvno_grid[::BINS]
 
@@ -698,8 +697,12 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
     cur.execute('INSERT INTO header (pressure_unit, temperature_unit, wavenumber_grid, continuum_unit,molecular_unit) values (?,?,?,?,?)', 
                 ('bar','kelvin', np.array(new_wvno_grid), 'cm-1 amagat-2', 'cm2/molecule'))
     conn.commit()
-
-    s1460 = pd.read_csv(os.path.join(og_directory,'grid1460.csv'),dtype=str)
+    grid_file = os.path.join(og_directory,'grid1460.csv')
+    if not os.path.exists(grid_file): 
+        grid_file = os.path.join(os.environ['picaso_refdata'],'opacities','grid1460.csv')
+    if not os.path.exists(grid_file): 
+        raise Exception('cannot find grid1460 file. its possible your reference folder is out of date. please check the Github reference folder')
+    s1460 = pd.read_csv(grid_file,dtype=str)
     #all pressures 
     pres=s1460['pressure_bar'].values.astype(float)
     #all temperatures 
@@ -713,24 +716,29 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
     if molecule in alks: 
         if alkali_dir == 'alkalis':
             mol_dir = os.path.join(og_directory,alkali_dir)
+        elif alkali_dir == 'individual_file':
+            mol_dir = os.path.join(og_directory,molecule)
         else: 
-            mol_dir = alkali_dir    
+            mol_dir = alkali_dir
     else:
         mol_dir = os.path.join(og_directory,molecule)
-
     
     #determine file type
     find_p_files = glob.glob(os.path.join(mol_dir,'*p_*'))
     find_npy_files = glob.glob(os.path.join(mol_dir,'*npy*'))
+    find_txt_files =  glob.glob(os.path.join(mol_dir,'*txt*'))
 
     if len(find_p_files)>1000:
         ftype = 'fortran_binary'
     elif len(find_npy_files)>1000: 
         ftype = 'python'
+    elif len(find_txt_files)>1000:
+        ftype='lupu_txt'
     else: 
         raise Exception('Could not find npy or p_ files. npy are assumed to be read via np.load, where as p_ files are assumed to be unformatted binary or alkali files')
         
     read_fits = os.path.join(mol_dir,'readomni.fits' )
+    lupu_wave= os.path.join(mol_dir,'wavelengths.txt' )
     if os.path.exists(read_fits):
         # Get Richard's READ ME information
         hdulist = fits.open(read_fits)
@@ -738,6 +746,8 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         numw = sfits['Valid rows'] #defines number of wavelength points for each 1060 layer
         delwn = sfits['Delta Wavenum'] #defines constant delta wavenumber for each 1060 layer
         start = sfits['Start Wavenum'] #defines starting wave number for each 1060 layer
+    elif os.path.exists(lupu_wave):
+        numw,delwn,start=np.nan,np.nan,np.nan
     else: 
         #ehsan makes his opacities on uniform 
         numw = s1460['number_wave_pts'].values.astype(int)
@@ -747,20 +757,25 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
 
 
     for i,p,t in zip(ifile,pres,temp):  
-        #path to richard's data
+        #path to data
         if 'fortran' in ftype:
             fdata = os.path.join(mol_dir, 'p_'+str(int(i)))
         elif 'python' in ftype: 
             fdata = os.path.join(mol_dir, str(int(i))+'.npy')
-
+        elif 'lupu' in ftype: 
+            mbar = p*1e3
+            fdata = os.path.join(mol_dir,f'{molecule}_{mbar:.2e}mbar_{t:.0f}K.txt') 
         #Grab 1460 in various format data
-        if molecule in alks:
+        if 'lupu' in ftype: 
+            dset =  pd.read_csv(fdata,skiprows=2,header=None).values[:,0]
+            og_wvno_grid = 1e4/pd.read_csv(lupu_wave).iloc[:,0].values
+        elif molecule in alks:
             dset = pd.read_csv(fdata)
             og_wvno_grid = dset['wno'].values.astype(float)
             dset = dset[molecule].values.astype(float)
         elif 'fortran' in ftype: 
             dset = np.fromfile(fdata, dtype=float) 
-            og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1] 
+            og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]
         elif 'python' in ftype: 
             dset = np.load(open(fdata,'rb'))
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]            
@@ -771,7 +786,8 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         dset[dset<1e-200] = 1e-200 
         #resample evenly
         y = dset[::BINS]
-
+        #y = 10**spectres.spectres(interp_wvno_grid[::BINS],interp_wvno_grid,np.log10(dset), verbose=False,fill=np.nan)
+        #x,y=regrid(interp_wvno_grid, dset, newx=interp_wvno_grid[::BINS], statistic='median')
 
         if ((molecule == 'CH4') & (isinstance(dir_kark_ch4, str)) & (t<500)):
             opa_k,loc = get_kark_CH4(dir_kark_ch4,new_wvno_grid, t)
@@ -1202,6 +1218,36 @@ def get_molecular(db_file, species, temperature,pressure):
     restruct['wavenumber'] = wave_grid
     return restruct
 
+def delete_molecule(mol, db_filename):
+    """
+    Delete a record from the database
+
+    Parameters
+    ----------
+    mol : str 
+        molecule to delete 
+    db_filename : str
+        database to delete record from
+    """
+    try:
+        sqliteConnection = sqlite3.connect(db_filename)
+        cursor = sqliteConnection.cursor()
+        print("Connected to SQLite")
+
+        sql_update_query = """DELETE from molecular where molecule = ?"""
+        cursor.execute(sql_update_query, (mol,))
+        sqliteConnection.commit()
+        print("Record deleted successfully")
+
+        cursor.close()
+
+    except sqlite3.Error as error:
+        print("Failed to delete reocord from a sqlite table", error)
+    finally:
+        if sqliteConnection:
+            sqliteConnection.close()
+            print("sqlite connection is closed")
+
           
 def find_nearest(array,value):
     #small program to find the nearest neighbor in temperature  
@@ -1212,3 +1258,37 @@ def listdir(path):
     for f in os.listdir(path):
         if not f.startswith('.'):
             yield f
+
+
+def regrid(x, y, newx=None, R=None,statistic='mean'):
+    """
+    Rebin the spectrum at a minimum R or on a fixed grid 
+
+    Parameters
+    ----------
+    x : array 
+        Wavenumbers
+    y : array 
+        Anything (e.g. albedo, flux)
+    newx : array 
+        new array to regrid on. 
+    R : float 
+        create grid with constant R
+
+    Returns
+    -------
+    final x, and final y
+    """
+    if (isinstance(newx, type(None)) & (not isinstance(R, type(None)))) :
+        newx = create_grid(1e4/max(x), 1e4/min(x), R)
+    elif (not isinstance(newx, type(None)) & (isinstance(R, type(None)))) :
+        d = np.diff(newx)
+        binedges = np.array([newx[0]-d[0]/2] + list(newx[0:-1]+d/2.0) + [newx[-1]+d[-1]/2])
+        newx = binedges
+    else:
+        raise Exception('Please either enter a newx or a R')
+    y, edges, binnum = binned_statistic(x,y,bins=newx, statistic=statistic)
+    newx = (edges[0:-1]+edges[1:])/2.0
+
+    return newx, y
+
