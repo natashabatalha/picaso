@@ -10,7 +10,7 @@ from astropy.io import fits
 import math
 from scipy.io import FortranFile
 import glob
-
+from scipy.stats import binned_statistic
 
 __refdata__ = os.environ.get('picaso_refdata')
 
@@ -787,7 +787,7 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         #resample evenly
         y = dset[::BINS]
         #y = 10**spectres.spectres(interp_wvno_grid[::BINS],interp_wvno_grid,np.log10(dset), verbose=False,fill=np.nan)
-
+        #x,y=regrid(interp_wvno_grid, dset, newx=interp_wvno_grid[::BINS], statistic='median')
 
         if ((molecule == 'CH4') & (isinstance(dir_kark_ch4, str)) & (t<500)):
             opa_k,loc = get_kark_CH4(dir_kark_ch4,new_wvno_grid, t)
@@ -1258,3 +1258,37 @@ def listdir(path):
     for f in os.listdir(path):
         if not f.startswith('.'):
             yield f
+
+
+def regrid(x, y, newx=None, R=None,statistic='mean'):
+    """
+    Rebin the spectrum at a minimum R or on a fixed grid 
+
+    Parameters
+    ----------
+    x : array 
+        Wavenumbers
+    y : array 
+        Anything (e.g. albedo, flux)
+    newx : array 
+        new array to regrid on. 
+    R : float 
+        create grid with constant R
+
+    Returns
+    -------
+    final x, and final y
+    """
+    if (isinstance(newx, type(None)) & (not isinstance(R, type(None)))) :
+        newx = create_grid(1e4/max(x), 1e4/min(x), R)
+    elif (not isinstance(newx, type(None)) & (isinstance(R, type(None)))) :
+        d = np.diff(newx)
+        binedges = np.array([newx[0]-d[0]/2] + list(newx[0:-1]+d/2.0) + [newx[-1]+d[-1]/2])
+        newx = binedges
+    else:
+        raise Exception('Please either enter a newx or a R')
+    y, edges, binnum = binned_statistic(x,y,bins=newx, statistic=statistic)
+    newx = (edges[0:-1]+edges[1:])/2.0
+
+    return newx, y
+
