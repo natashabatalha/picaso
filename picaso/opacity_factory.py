@@ -10,7 +10,7 @@ from astropy.io import fits
 import math
 from scipy.io import FortranFile
 import glob
-
+from scipy.stats import binned_statistic
 
 __refdata__ = os.environ.get('picaso_refdata')
 
@@ -631,7 +631,7 @@ def insert_molecular_1060(molecule, min_wavelength, max_wavelength, new_R,
     conn.commit()
     conn.close()
     return new_wvno_grid
-
+#import spectres
 def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory, new_db,
                           new_R=None,new_dwno=None, 
                           old_R=1e6, old_dwno=0.0035,
@@ -747,7 +747,6 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         delwn = sfits['Delta Wavenum'] #defines constant delta wavenumber for each 1060 layer
         start = sfits['Start Wavenum'] #defines starting wave number for each 1060 layer
     elif os.path.exists(lupu_wave):
-        og_wvno_grid = 1e4/pd.read_csv(lupu_wave).values[:,0]
         numw,delwn,start=np.nan,np.nan,np.nan
     else: 
         #ehsan makes his opacities on uniform 
@@ -764,11 +763,12 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         elif 'python' in ftype: 
             fdata = os.path.join(mol_dir, str(int(i))+'.npy')
         elif 'lupu' in ftype: 
-            mbar = pres*1e3
-            fdata = os.path.join(mol_dir,f'{molecule}_{mbar:.2e}mbar_{temp:.0f}K.txt') 
+            mbar = p*1e3
+            fdata = os.path.join(mol_dir,f'{molecule}_{mbar:.2e}mbar_{t:.0f}K.txt') 
         #Grab 1460 in various format data
         if 'lupu' in ftype: 
-            dset =  pd.read_csv(fdata,skiprows=2).values[:,0]
+            dset =  pd.read_csv(fdata,skiprows=2,header=None).values[:,0]
+            og_wvno_grid = 1e4/pd.read_csv(lupu_wave).iloc[:,0].values
         elif molecule in alks:
             dset = pd.read_csv(fdata)
             og_wvno_grid = dset['wno'].values.astype(float)
@@ -786,7 +786,8 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         dset[dset<1e-200] = 1e-200 
         #resample evenly
         y = dset[::BINS]
-
+        #y = 10**spectres.spectres(interp_wvno_grid[::BINS],interp_wvno_grid,np.log10(dset), verbose=False,fill=np.nan)
+        #x,y=regrid(interp_wvno_grid, dset, newx=interp_wvno_grid[::BINS], statistic='median')
 
         if ((molecule == 'CH4') & (isinstance(dir_kark_ch4, str)) & (t<500)):
             opa_k,loc = get_kark_CH4(dir_kark_ch4,new_wvno_grid, t)
@@ -1257,3 +1258,37 @@ def listdir(path):
     for f in os.listdir(path):
         if not f.startswith('.'):
             yield f
+
+
+def regrid(x, y, newx=None, R=None,statistic='mean'):
+    """
+    Rebin the spectrum at a minimum R or on a fixed grid 
+
+    Parameters
+    ----------
+    x : array 
+        Wavenumbers
+    y : array 
+        Anything (e.g. albedo, flux)
+    newx : array 
+        new array to regrid on. 
+    R : float 
+        create grid with constant R
+
+    Returns
+    -------
+    final x, and final y
+    """
+    if (isinstance(newx, type(None)) & (not isinstance(R, type(None)))) :
+        newx = create_grid(1e4/max(x), 1e4/min(x), R)
+    elif (not isinstance(newx, type(None)) & (isinstance(R, type(None)))) :
+        d = np.diff(newx)
+        binedges = np.array([newx[0]-d[0]/2] + list(newx[0:-1]+d/2.0) + [newx[-1]+d[-1]/2])
+        newx = binedges
+    else:
+        raise Exception('Please either enter a newx or a R')
+    y, edges, binnum = binned_statistic(x,y,bins=newx, statistic=statistic)
+    newx = (edges[0:-1]+edges[1:])/2.0
+
+    return newx, y
+
