@@ -122,12 +122,13 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#opacities-approximatons">Opacities &amp; Approximatons</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/10_SwappingOpacities.html">Opacity Factory</a></li>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html">Investigating Approximations</a></li>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/11_Sqlite3Tutorial.html">SQLITE Tutorial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/10_QueryOpacities.html">Query Opacites</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/10_CreatingOpacityDb.html">Opacity Factory: Creating Custom Databases</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/10_ResamplingOpacities.html">What Resampling do I Need?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html">Investigating Radiative Transfer Approximations</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#miscellaneous">Miscellaneous</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#faqs">FAQs</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/FAQs.html">FAQs</a></li>
 </ul>
 </li>
@@ -140,6 +141,7 @@
 <li class="toctree-l3"><a class="reference internal" href="notebooks/codehelp/data_uniformity_tutorial.html#Checking-your-data-is-in-compliance">Checking your data is in compliance</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#code-help">Code Help</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="picaso.html">The Code</a></li>
@@ -377,12 +379,28 @@
 <h2>Opacities &amp; Approximatons<a class="headerlink" href="#opacities-approximatons" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/10_SwappingOpacities.html">Opacity Factory</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_SwappingOpacities.html#General-Sqlite3-and-how-our-database-is-structured">General Sqlite3 and how our database is structured</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_SwappingOpacities.html#How-to-Query-the-Database">How to Query the Database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10_QueryOpacities.html">Query Opacites</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/10_QueryOpacities.html#General-Sqlite3-and-how-our-database-is-structured">General Sqlite3 and how our database is structured</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/10_QueryOpacities.html#How-to-Query-the-Database">How to Query the Database</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html">Investigating Approximations</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10_CreatingOpacityDb.html">Opacity Factory: Creating Custom Databases</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/10_CreatingOpacityDb.html#First-Define-Database-Specs-(min,-max-wavelength,-R)">First Define Database Specs (min, max wavelength, R)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/10_CreatingOpacityDb.html#Data-Formats">Data Formats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/10_CreatingOpacityDb.html#Step-1:-Build-New-Database">Step 1: Build New Database</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/10_CreatingOpacityDb.html#Step-2:-Insert-Molecular-opacity">Step 2: Insert Molecular opacity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/10_CreatingOpacityDb.html#Step-3)-Insert-Continuum-Opacity">Step 3) Insert Continuum Opacity</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10_ResamplingOpacities.html">What Resampling do I Need?</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/10_ResamplingOpacities.html#Test-set-up">Test set up</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/10_ResamplingOpacities.html#Simple-Transit-Model">Simple Transit Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/10_ResamplingOpacities.html#Regridding-to-Data-Resolution">Regridding to Data Resolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/10_ResamplingOpacities.html#Plot-differences">Plot differences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/10_ResamplingOpacities.html#Takeaways">Takeaways</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html">Investigating Radiative Transfer Approximations</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html#Using-the-approx-key">Using the <code class="docutils literal notranslate"><span class="pre">approx</span></code> key</a></li>
 <li class="toctree-l2"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html#What-approximations-exist?">What approximations exist?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html#Direct-Scattering-Approximation">Direct Scattering Approximation</a></li>
@@ -391,17 +409,11 @@
 <li class="toctree-l2"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html#The-Effect-of-Stellar-Spectrum">The Effect of Stellar Spectrum</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/11_Sqlite3Tutorial.html">SQLITE Tutorial</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/11_Sqlite3Tutorial.html#Establishing-a-Connection-to-a-Database">Establishing a Connection to a Database</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/11_Sqlite3Tutorial.html#Using-SELECT-*-FROM-to-Query-Items">Using <code class="docutils literal notranslate"><span class="pre">SELECT</span> <span class="pre">*</span> <span class="pre">FROM</span></code> to Query Items</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/11_Sqlite3Tutorial.html#Creating-a-New-Database-from-Scratch">Creating a New Database from Scratch</a></li>
-</ul>
-</li>
 </ul>
 </div>
 </div>
-<div class="section" id="miscellaneous">
-<h2>Miscellaneous<a class="headerlink" href="#miscellaneous" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="faqs">
+<h2>FAQs<a class="headerlink" href="#faqs" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/FAQs.html">FAQs</a><ul>
@@ -441,6 +453,12 @@
 <li class="toctree-l1"><a class="reference internal" href="notebooks/codehelp/data_uniformity_tutorial.html#Checking-your-data-is-in-compliance">Checking your data is in compliance</a></li>
 </ul>
 </div>
+</div>
+<div class="section" id="code-help">
+<h2>Code Help<a class="headerlink" href="#code-help" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><p>SQLITE Tutorial &lt;/notebooks/Sqlite3Tutorial.ipynb&gt;</p>
+</div></blockquote>
 </div>
 </div>
 
