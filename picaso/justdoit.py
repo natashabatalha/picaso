@@ -1897,7 +1897,8 @@ class inputs():
         #append input
         self.inputs['atmosphere']['profile'] = pt_3d_ds.update(ds_chem)
 
-    def atmosphere_4d(self, ds=None, shift=None,  plot=True, iz_plot=0,verbose=True): 
+    def atmosphere_4d(self, ds=None, shift=None, plot=True, iz_plot=0,verbose=True, 
+        zero_point='night_transit'): 
         """
         Regrids xarray 
         
@@ -1908,7 +1909,7 @@ class inputs():
             Only optional if you have already defined your dataframe to 
             self.inputs['atmosphere']['profile'] 
         shift : array 
-            For each orbital `phase`, `picaso` will rotate the longitude grid `phase_i`+`shift_i`. 
+            Degrees, for each orbital `phase`, `picaso` will rotate the longitude grid `phase_i`+`shift_i`. 
             For example, for tidally locked planets, `shift`=0 at all phase angles. 
             Therefore, `shift` must be input as an array of length `n_phase`, set by phase_angle() routine. 
             Use plot=True to understand how your grid is being shifted.
@@ -1917,12 +1918,33 @@ class inputs():
         iz_plot : bool 
             pressure index to plot  
         verbose : bool 
-            If True, this will plot out messages, letting you know if your input data is being transformed 
+            If True, this will plot out messages, letting you know if your input data is being transformed
+        zero_point : str 
+            Is your zero point "night_transit", or "secondary_eclipse"
+            Default, "night_transit"
         """ 
         if isinstance(ds, type(None)):
             ds = self.inputs['atmosphere']['profile']
             if isinstance(ds, type(None)):
                 raise Exception("Need to submit an xarray.DataArray because there is no input attached to self.inputs['atmosphere']['profile']")
+        else: 
+            #do a deep copy so that users runs dont get over written 
+            ds = copy.deepcopy(ds)
+
+        phases = self.inputs['phase_angle']
+
+        #define shift based on user specified shift, and user specified zero point
+        if isinstance(shift, type(None)):
+            shift = np.zeros(len(phases))
+        
+        if zero_point == 'night_transit':
+            shift = shift + 180
+        elif zero_point == 'secondary_eclipse':
+            shift=shift 
+        else: 
+            raise Exception("Do not regocnize input zero point. Please specify: night_transit or secondary_eclipse")
+
+        self.inputs['shift'] = shift
 
         #make sure order is correct 
         if [i for i in ds.dims] != ["lon", "lat","pressure"]:
@@ -1962,7 +1984,7 @@ class inputs():
         data_vars_og = {i:ds[i].values for i in ds.keys()}
         #run through phases and regrid each one
         shifted_grids = {}
-        for i,iphase in enumerate(self.inputs['phase_angle']): 
+        for i,iphase in enumerate(phases): 
             new_lat = self.inputs['disco'][iphase]['latitude']*180/np.pi#to degrees
             new_lon = self.inputs['disco'][iphase]['longitude']*180/np.pi#to degrees
             total_shift = (iphase*180/np.pi + shift[i]) % 360 
@@ -1984,7 +2006,7 @@ class inputs():
         
         self.inputs['atmosphere']['profile'] = new_phase_grid
 
-    def clouds_4d(self, ds=None, shift=None,  plot=True, iz_plot=0,iw_plot=0,verbose=True): 
+    def clouds_4d(self, ds=None, plot=True, iz_plot=0,iw_plot=0,verbose=True): 
         """
         Regrids xarray 
         
@@ -1994,11 +2016,6 @@ class inputs():
             xarray input grid (see GCM 3D input tutorials)
             Only optional if you have already defined your dataframe to 
             self.inputs['clouds']['profile'] 
-        shift : array 
-            For each orbital `phase`, `picaso` will rotate the longitude grid `phase_i`+`shift_i`. 
-            For example, for tidally locked planets, `shift`=0 at all phase angles. 
-            Therefore, `shift` must be input as an array of length `n_phase`, set by phase_angle() routine. 
-            Use plot=True to understand how your grid is being shifted.
         plot : bool 
             If True, this will auto output a regridded plot
         iz_plot : bool 
@@ -2008,14 +2025,23 @@ class inputs():
         verbose : bool 
             If True, this will plot out messages, letting you know if your input data is being transformed 
         """ 
+        phases = self.inputs['phase_angle']
+
         if isinstance(ds, type(None)):
             ds = self.inputs['clouds']['profile']
             if isinstance(ds, type(None)):
                 raise Exception("Need to submit an xarray.DataArray because there is no input attached to self.inputs['clouds']['profile']")
+        else: 
+            ds = copy.deepcopy(ds)
 
         if not isinstance(ds, xr.core.dataset.Dataset): 
             raise Exception('PICASO has moved to only accept xarray input. Please see GCM 3D input tutorials to learn how to reformat your input. ')
 
+        if 'shift' in self.inputs: 
+            shift =  self.inputs['shift']
+        else: 
+            raise Exception('Oops! It looks like cloud_4d is being run before atmosphere_4d. Please run atmosphere_4d first so that you can speficy a shift, relative to the phase. This shift will then be used in cloud_4d.')
+                
         #check for temperature and pressure
         if 'opd' not in ds: raise Exception('Must include opd as data component')
         if 'g0' not in ds: raise Exception('Must include g0 as data component')
@@ -2061,7 +2087,7 @@ class inputs():
         data_vars_og = {i:ds[i].values for i in ds.keys()}
         #run through phases and regrid each one
         shifted_grids = {}
-        for i,iphase in enumerate(self.inputs['phase_angle']): 
+        for i,iphase in enumerate(phases): 
             new_lat = self.inputs['disco'][iphase]['latitude']*180/np.pi#to degrees
             new_lon = self.inputs['disco'][iphase]['longitude']*180/np.pi#to degrees
             total_shift = (iphase*180/np.pi + shift[i]) % 360 
