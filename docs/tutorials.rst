@@ -81,5 +81,17 @@ Model Storage Best Practices
 
 Code Help
 ---------
-   SQLITE Tutorial </notebooks/Sqlite3Tutorial.ipynb>
+
+.. toctree::
+   :maxdepth: 1
+
+   SQLITE Tutorial </notebooks/codehelp/Sqlite3Tutorial.ipynb>
+
+References
+----------
+
+.. toctree::
+   :maxdepth: 2
+
+   Citation Tools </notebooks/References.ipynb>
 
