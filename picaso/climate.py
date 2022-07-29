@@ -1300,7 +1300,7 @@ def calculate_atm(bundle, opacityclass):
     return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw
 
 
-def calculate_atm_deq(bundle, opacityclass):
+def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None):
 
     inputs = bundle.inputs
 
@@ -1404,8 +1404,10 @@ def calculate_atm_deq(bundle, opacityclass):
     nlevel = atm.c.nlevel
     nlayer = atm.c.nlayer
     
-    
-    opacityclass.get_opacities_deq(bundle,atm)
+    if on_fly == False:
+        opacityclass.get_opacities_deq(bundle,atm)
+    else:
+        opacityclass.get_opacities_deq_onfly(bundle,atm,gases_fly=gases_fly)
     
     DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman= compute_opacity(
             atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,

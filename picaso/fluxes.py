@@ -14,7 +14,6 @@ def get_flux_toon(nlevel, wno, nwno, tau, dtau, w0, cosbar, surf_reflect, ubar0,
     Warning
     -------
     Discontinued function. See `get_flux_geom_1d` and `get_flux_geom_3d`.
-
     Parameters
     ----------
     nlevel : int 
@@ -38,12 +37,9 @@ def get_flux_toon(nlevel, wno, nwno, tau, dtau, w0, cosbar, surf_reflect, ubar0,
         Cosine of the incident angle 
     F0PI : array 
         Downward incident solar radiation
-
-
     Returns
     -------
     flux_up and flux_down through each layer as a function of wavelength 
-
     Todo
     ----
     - Replace detla-function adjustment with better approximation (e.g. Cuzzi)
@@ -55,8 +51,6 @@ def get_flux_toon(nlevel, wno, nwno, tau, dtau, w0, cosbar, surf_reflect, ubar0,
     
     >>> flux_plus, flux_minus  = fluxes.get_flux_toon(atm.c.nlevel, wno,nwno,
                                                     tau_dedd,dtau_dedd, w0_dedd, cosb_dedd, surf_reflect, ubar0, F0PI)
-
-
     """
     nlayer = nlevel - 1 
 
@@ -246,7 +240,6 @@ def setup_tri_diag(nlayer,nwno ,c_plus_up, c_minus_up,
     Before we can solve the tridiagonal matrix (See Toon+1989) section
     "SOLUTION OF THE TwO-STREAM EQUATIONS FOR MULTIPLE LAYERS", we 
     need to set up the coefficients. 
-
     Parameters
     ----------
     nlayer : int 
@@ -284,8 +277,6 @@ def setup_tri_diag(nlayer,nwno ,c_plus_up, c_minus_up,
         Eqn 44, expoential terms needed for tridiagonal rotated layered, clipped at 35 
     exptrm_minus : array 
         Eqn 44, expoential terms needed for tridiagonal rotated layered, clipped at 35 
-
-
     Returns
     -------
     array 
@@ -380,8 +371,6 @@ def setup_pent_diag(nlayer,nwno ,c_plus_up, c_minus_up,
         Eqn 44, expoential terms needed for tridiagonal rotated layered, clipped at 35 
     exptrm_minus : array 
         Eqn 44, expoential terms needed for tridiagonal rotated layered, clipped at 35 
-
-
     Returns
     -------
     array 
@@ -453,18 +442,14 @@ def tri_diag_solve(l, a, b, c, d):
     .. _explanation: http://www.cfd-online.com/Wiki/Tridiagonal_matrix_algorithm_-_TDMA_(Thomas_algorithm)
     
     A, B, C and D refer to: 
-
     .. math:: A(I)*X(I-1) + B(I)*X(I) + C(I)*X(I+1) = D(I)
-
     This solver returns X. 
-
     Parameters
     ----------
     A : array or list 
     B : array or list 
     C : array or list 
     C : array or list 
-
     Returns
     -------
     array 
@@ -484,11 +469,10 @@ def tri_diag_solve(l, a, b, c, d):
         XK[i] = DS[i] - AS[i] * XK[i-1]
     return XK
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def pent_diag_solve(l, A, B, C, D, E, F):
     """
     Pentadiagonal Matrix solver
-
     Parameters
     ----------
     A : array or list 
@@ -497,7 +481,6 @@ def pent_diag_solve(l, A, B, C, D, E, F):
     D : array or list 
     E : array or list 
     F : array or list 
-
     Returns
     -------
     array 
@@ -524,7 +507,6 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
     Computes toon fluxes given tau and everything is 3 dimensional. This is the exact same function 
     as `get_flux_geom_1d` but is kept separately so we don't have to do unecessary indexing for 
     retrievals. 
-
     Parameters
     ----------
     nlevel : int 
@@ -605,17 +587,14 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
         Remember, the output of A & M code does not separate back and forward scattering.
     tridiagonal : int 
         0 for tridiagonal, 1 for pentadiagonal 
-
     Returns
     -------
     intensity at the top of the atmosphere for all the different ubar1 and ubar2 
-
     To Do
     -----
     - F0PI Solar flux shouldn't always be 1.. Follow up to make sure that this isn't a bad 
           hardwiring to solar, despite "relative albedo"
     - take delta eddington option out of fluxes and move it all over to optics
-
     """
     #what we want : intensity at the top as a function of all the different angles
 
@@ -1126,7 +1105,6 @@ def get_reflected_1d_gfluxv(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,
     Computes upwelling and downwelling layer and level toon fluxes given tau and everything is 1 dimensional. This is the exact same function 
     as `GFLUXV.f'.
     retrievals. 
-
     Parameters
     ----------
     nlevel : int 
@@ -1168,11 +1146,9 @@ def get_reflected_1d_gfluxv(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,
         Downward incident solar radiation
     delta_approx : int 
         0 for no Delta Approx, 1 for Delta Approx
-
     Returns
     -------
     intensity at the top of the atmosphere for all the different ubar1 and ubar2 
-
     To Do
     -----
     - F0PI Solar flux shouldn't always be 1.. Follow up to make sure that this isn't a bad 
@@ -1323,7 +1299,6 @@ def get_reflected_1d_gfluxv(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,
 def blackbody(t,w):
     """
     Blackbody flux in cgs units in per unit wavelength
-
     Parameters
     ----------
     t : array,float
@@ -1555,17 +1530,13 @@ def get_thermal_1d_gfluxi(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plev
     
     The result of this routine is the top of the atmosphere thermal flux as 
     a function of gauss and chebychev points accross the disk. 
-
     Everything here is in CGS units:
-
     Fluxes - erg/s/cm^3
     Temperature - K 
     Wave grid - cm-1
     Pressure ; dyne/cm2
-
     Reminder: Flux = pi * Intensity, so if you are trying to compare the result of this with 
     a black body you will need to compare with pi * BB !
-
     Parameters
     ----------
     nlevel : int 
@@ -1602,7 +1573,6 @@ def get_thermal_1d_gfluxi(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plev
         0 for tridiagonal, 1 for pentadiagonal
     calc_type : int 
         0 for outgoing flux at top level output, 1 for upward and downward layer and level flux outputs
-
     Returns
     -------
     numpy.ndarray
@@ -1779,17 +1749,13 @@ def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel_3d, dtau_3d, w0_3d,cosb_3d
     
     The result of this routine is the top of the atmosphere thermal flux as 
     a function of gauss and chebychev points accross the disk. 
-
     Everything here is in CGS units:
-
     Fluxes - erg/s/cm^3
     Temperature - K 
     Wave grid - cm-1
     Pressure ; dyne/cm2
-
     Reminder: Flux = pi * Intensity, so if you are trying to compare the result of this with 
     a black body you will need to compare with pi * BB !
-
     Parameters
     ----------
     nlevel : int 
@@ -1825,7 +1791,6 @@ def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel_3d, dtau_3d, w0_3d,cosb_3d
         computed in `picaso.disco`
     tridiagonal : int 
         Zero for tridiagonal solver. 1 for pentadiagonal (not yet implemented)
-
     Returns
     -------
     numpy.ndarray
@@ -1986,7 +1951,6 @@ def get_transit_1d(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
                     player, tlayer, colden, DTAU):
     """
     Routine to get the transmission spectrum 
-
     Parameters
     ----------
     z : float, array
@@ -2014,7 +1978,6 @@ def get_transit_1d(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
     DTAU : float, array
         Matrix of summed tau opacities from optics. This is 
         TAUGAS + TAURAY + TAUCLD
-
     Returns
     -------
     array 
@@ -2076,7 +2039,7 @@ def setup_4_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	nlayer : int 
 		number of layers in the model 
 	nwno : int 
-		number of wavelength points ## need to include this
+		number of wavelength points ## need to include this
 	W0: int
 		single scattering albedo 
 	b_top : array 
@@ -2330,7 +2293,7 @@ def setup_4_stream(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0
 	nlayer : int 
 		number of layers in the model 
 	nwno : int 
-		number of wavelength points ## need to include this
+		number of wavelength points ## need to include this
 	W0: int
 		single scattering albedo 
 	b_top : array 
@@ -2848,7 +2811,7 @@ def setup_2_stream(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI, ubar0
 	nlayer : int 
 		number of layers in the model 
 	nwno : int 
-		number of wavelength points ## need to include this
+		number of wavelength points ## need to include this
 	W0: int
 		single scattering albedo 
 	b_top : array 
@@ -3059,7 +3022,7 @@ def setup_2_stream_scaled(nlayer, nwno, W0, b_top, b_surface, surf_reflect, F0PI
 	nlayer : int 
 		number of layers in the model 
 	nwno : int 
-		number of wavelength points ## need to include this
+		number of wavelength points ## need to include this
 	W0: int
 		single scattering albedo 
 	b_top : array 
@@ -3308,7 +3271,6 @@ def set_bb(wno,delta_wno,nwno,ntmps,dt,tmin,tmax):
     This allows us to interpolate on a blackbody instead of computing the planck 
     function repetitively. This was done because historically computing the 
     planck function was a bottleneck in speed. 
-
     Parameters
     ----------
     wno : array, float 
@@ -3325,7 +3287,6 @@ def set_bb(wno,delta_wno,nwno,ntmps,dt,tmin,tmax):
         Minimum temperature to compute the grid 
     tmax : float 
         Maximum temperature to compute the grid 
-
     Returns 
     -------
     array
@@ -3494,7 +3455,7 @@ def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,
     target_teff = (abs(tidal[0])/sigmab)**0.25
     flx_min = sigmab*((target_teff*0.05)**4)
     
-    
+    #print("Teff now ", teff_now, "Target Teff ", target_teff)
 
     #     we explictly assume that the bottom layer is 100%
     #     convective energy transport.  This helps with
@@ -3515,6 +3476,7 @@ def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,
         
         if chf[iz] < ratio_min*chf[iz+1]:
             chf[iz]= ratio_min*chf[iz+1]
+        
 #     Now we adjust so that the convective flux is equal to the3
 #     target convective flux to see if this helps with the
 #     convergence.
@@ -3526,6 +3488,7 @@ def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,
     for iz in range(nz-1,-1,-1):
         
         chf[iz] = max(chf[iz]*ratio,flx_min) 
+        
     
     player, tlayer = np.zeros(len(pressure)-1), np.zeros(len(pressure)-1)
     lapse_ratio = np.zeros_like(player)
@@ -3538,8 +3501,9 @@ def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,
         pbar = 0.5*(p_cgs[j] +p_cgs[j+1])
         # weirdly layer routine of eddysed uses did_grad with pressures in cgs
         # supposed to be used with pressure in bars
-        grad_x,cp_x = did_grad_cp(tbar, pbar/1e6, t_table, p_table, grad, cp, calc_type)
-        lapse_ratio[j] = max(0.1,min(np.array([1.0, -dtdp/grad_x])))
+        grad_x,cp_x = did_grad_cp(tbar, pbar, t_table, p_table, grad, cp, calc_type)
+        lapse_ratio[j] = min(np.array([1.0, -dtdp/grad_x]))
+        
     
     
     rho_atmos = player/ (r_atmos * tlayer)
@@ -3548,7 +3512,10 @@ def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,
     scale_h = r_atmos * tlayer / (grav_cgs)
     
     #0.1 just to explore was not here 
-    mixl = scale_h*0.01 #lapse_ratio*scale_h*1e-1
+    #mixl = scale_h #lapse_ratio*scale_h*1e-1
+    mixl = np.zeros_like(lapse_ratio)
+    for jj in range(len(pressure)-1):
+    	mixl[jj] = max(0.1,lapse_ratio[jj])*scale_h[jj]
     
     scalef_kz = 1./3.
     
@@ -3558,7 +3525,9 @@ def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,
     
     kz = np.append(kz,kz[-1])
     
+    
     #### julien moses 2021
+    
     logp = np.log10(pressure)
     wh = np.where(np.absolute(logp-(-3)) == np.min(np.absolute(logp-(-3))))
     
@@ -3566,10 +3535,11 @@ def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,
     kzrad2 = (5e8/np.sqrt(pressure[nstr[3]:nstr[4]]))*(scale_h[wh]/(620*1e5))*((target_teff/1450)**4)
     #
     if nstr[3] != 0:
-        kz[nstr[0]:nstr[1]] = kzrad1/100 #*10#kz[nstr[0]:nstr[1]]/1.0
-        kz[nstr[3]:nstr[4]] = kzrad2/100 #*10 #kz[nstr[3]:nstr[4]]/1.0
+        kz[nstr[0]:nstr[1]] = kzrad1#/100 #*10#kz[nstr[0]:nstr[1]]/1.0
+        kz[nstr[3]:nstr[4]] = kzrad2#/100 #*10 #kz[nstr[3]:nstr[4]]/1.0
     else:
-        kz[nstr[0]:nstr[1]] = kzrad1/100
+        kz[nstr[0]:nstr[1]] = kzrad1#/100
+    
     return kz
 
 @jit(nopython=True, cache=True)
@@ -3690,6 +3660,3 @@ def locate(array,value):
         jl= n-1
     
     return jl
-
-
-
