@@ -1863,7 +1863,7 @@ Must contain pressure and at least one molecule</p></li>
 
 <dl class="method">
 <dt id="picaso.justdoit.inputs.atmosphere_4d">
-<code class="sig-name descname">atmosphere_4d</code><span class="sig-paren">(</span><em class="sig-param">ds=None</em>, <em class="sig-param">shift=None</em>, <em class="sig-param">plot=True</em>, <em class="sig-param">iz_plot=0</em>, <em class="sig-param">verbose=True</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.atmosphere_4d" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">atmosphere_4d</code><span class="sig-paren">(</span><em class="sig-param">ds=None</em>, <em class="sig-param">shift=None</em>, <em class="sig-param">plot=True</em>, <em class="sig-param">iz_plot=0</em>, <em class="sig-param">verbose=True</em>, <em class="sig-param">zero_point='night_transit'</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.atmosphere_4d" title="Permalink to this definition">¶</a></dt>
 <dd><p>Regrids xarray</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1871,13 +1871,15 @@ Must contain pressure and at least one molecule</p></li>
 <li><p><strong>ds</strong> (<em>xarray.DataArray</em>) – xarray input grid (see GCM 3D input tutorials)
 Only optional if you have already defined your dataframe to
 self.inputs[‘atmosphere’][‘profile’]</p></li>
-<li><p><strong>shift</strong> (<em>array</em>) – For each orbital <cite>phase</cite>, <cite>picaso</cite> will rotate the longitude grid <cite>phase_i`+`shift_i</cite>.
+<li><p><strong>shift</strong> (<em>array</em>) – Degrees, for each orbital <cite>phase</cite>, <cite>picaso</cite> will rotate the longitude grid <cite>phase_i`+`shift_i</cite>.
 For example, for tidally locked planets, <cite>shift`=0 at all phase angles.
 Therefore, `shift</cite> must be input as an array of length <cite>n_phase</cite>, set by phase_angle() routine.
 Use plot=True to understand how your grid is being shifted.</p></li>
 <li><p><strong>plot</strong> (<em>bool</em>) – If True, this will auto output a regridded plot</p></li>
 <li><p><strong>iz_plot</strong> (<em>bool</em>) – pressure index to plot</p></li>
 <li><p><strong>verbose</strong> (<em>bool</em>) – If True, this will plot out messages, letting you know if your input data is being transformed</p></li>
+<li><p><strong>zero_point</strong> (<em>str</em>) – Is your zero point “night_transit”, or “secondary_eclipse”
+Default, “night_transit”</p></li>
 </ul>
 </dd>
 </dl>
@@ -2097,7 +2099,7 @@ of inverse cm, and bars.</p></li>
 
 <dl class="method">
 <dt id="picaso.justdoit.inputs.clouds_4d">
-<code class="sig-name descname">clouds_4d</code><span class="sig-paren">(</span><em class="sig-param">ds=None</em>, <em class="sig-param">shift=None</em>, <em class="sig-param">plot=True</em>, <em class="sig-param">iz_plot=0</em>, <em class="sig-param">iw_plot=0</em>, <em class="sig-param">verbose=True</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.clouds_4d" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">clouds_4d</code><span class="sig-paren">(</span><em class="sig-param">ds=None</em>, <em class="sig-param">plot=True</em>, <em class="sig-param">iz_plot=0</em>, <em class="sig-param">iw_plot=0</em>, <em class="sig-param">verbose=True</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.clouds_4d" title="Permalink to this definition">¶</a></dt>
 <dd><p>Regrids xarray</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -2105,10 +2107,6 @@ of inverse cm, and bars.</p></li>
 <li><p><strong>ds</strong> (<em>xarray.DataArray</em>) – xarray input grid (see GCM 3D input tutorials)
 Only optional if you have already defined your dataframe to
 self.inputs[‘clouds’][‘profile’]</p></li>
-<li><p><strong>shift</strong> (<em>array</em>) – For each orbital <cite>phase</cite>, <cite>picaso</cite> will rotate the longitude grid <cite>phase_i`+`shift_i</cite>.
-For example, for tidally locked planets, <cite>shift`=0 at all phase angles.
-Therefore, `shift</cite> must be input as an array of length <cite>n_phase</cite>, set by phase_angle() routine.
-Use plot=True to understand how your grid is being shifted.</p></li>
 <li><p><strong>plot</strong> (<em>bool</em>) – If True, this will auto output a regridded plot</p></li>
 <li><p><strong>iz_plot</strong> (<em>bool</em>) – pressure index to plot</p></li>
 <li><p><strong>iw_plot</strong> (<em>bool</em>) – wavelength index to plot</p></li>
