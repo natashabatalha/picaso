@@ -1231,8 +1231,22 @@ class RetrieveCKs():
         else:
             mix_k =   ( bundle.inputs['atmosphere']['profile']['K'].values)*0.0
 
-                
+        if 'TiO' in gases_fly:
+            mix_tio =   ( bundle.inputs['atmosphere']['profile']['TiO'].values)
+        else:
+            mix_tio =   ( bundle.inputs['atmosphere']['profile']['TiO'].values)*0.0
         
+        if 'VO' in gases_fly:
+            mix_vo =   ( bundle.inputs['atmosphere']['profile']['VO'].values)
+        else:
+            mix_vo =   ( bundle.inputs['atmosphere']['profile']['VO'].values)*0.0
+        
+        if 'FeH' in gases_fly:
+            mix_feh =   ( bundle.inputs['atmosphere']['profile']['FeH'].values)
+        else:
+            mix_feh =   ( bundle.inputs['atmosphere']['profile']['FeH'].values)*0.0
+
+                
         
 
         indices, t_interp,p_interp = self.get_mixing_indices(atmosphere) # gets nearest neighbor indices
@@ -1241,10 +1255,11 @@ class RetrieveCKs():
         # these nearest neighbors will be used for interpolation
         kappa_mixed = mix_all_gases_gasesfly(np.array(self.kappa_co),np.array(self.kappa_h2o),np.array(self.kappa_ch4),
                                     np.array(self.kappa_nh3),np.array(self.kappa_co2),np.array(self.kappa_n2),np.array(self.kappa_hcn),
-                                    np.array(self.kappa_h2),np.array(self.kappa_ph3),np.array(self.kappa_c2h2),np.array(self.kappa_na),np.array(self.kappa_k),mix_co,mix_h2o,mix_ch4,mix_nh3,
-                                    mix_co2,mix_n2,mix_hcn,mix_h2,mix_ph3,mix_c2h2,mix_na,mix_k,
+                                    np.array(self.kappa_h2),np.array(self.kappa_ph3),np.array(self.kappa_c2h2),np.array(self.kappa_na),np.array(self.kappa_k),np.array(self.kappa_tio),np.array(self.kappa_vo),np.array(self.kappa_feh),mix_co,mix_h2o,mix_ch4,mix_nh3,
+                                    mix_co2,mix_n2,mix_hcn,mix_h2,mix_ph3,mix_c2h2,mix_na,mix_k,mix_tio,mix_vo,mix_feh,
                                     np.array(self.gauss_pts),np.array(self.gauss_wts),indices)
         kappa = np.zeros(shape=(len(mix_co)-1,self.nwno,self.ngauss))
+        
         # now perform the old nearest neighbor interpolation to produce final opacities
         for i in range(len(mix_co)-1):
             kappa[i,:,:] = (((1-t_interp[i])* (1-p_interp[i]) * kappa_mixed[i,:,:,0]) +
@@ -1252,6 +1267,7 @@ class RetrieveCKs():
                         ((t_interp[i])  * (p_interp[i])   * kappa_mixed[i,:,:,3]) + 
                         ((1-t_interp[i])* (p_interp[i])   * kappa_mixed[i,:,:,2]) )
         self.molecular_opa = np.exp(kappa)*6.02214086e+23
+        
 
     def get_mixing_indices(self,atmosphere):
         """
@@ -1760,6 +1776,27 @@ class RetrieveCKs():
         else:
             array = np.load(path+'/K_1460.npy')
             self.kappa_k = array*0-250.0
+        
+        if 'TiO' in gases_fly:
+            array = np.load(path+'/TiO_1460.npy')
+            self.kappa_tio = array
+        else:
+            array = np.load(path+'/TiO_1460.npy')
+            self.kappa_tio = array*0-250.0
+
+        if 'VO' in gases_fly:
+            array = np.load(path+'/VO_1460.npy')
+            self.kappa_vo = array
+        else:
+            array = np.load(path+'/VO_1460.npy')
+            self.kappa_vo = array*0-250.0
+        
+        if 'FeH' in gases_fly:
+            array = np.load(path+'/FeH_1460.npy')
+            self.kappa_feh = array
+        else:
+            array = np.load(path+'/Feh_1460.npy')
+            self.kappa_feh = array*0-250.0
         
     def get_new_wvno_grid_661(self):
         path = os.path.join(__refdata__, 'climate_INPUTS/')#'/Users/sagnickmukherjee/Documents/GitHub/Disequilibrium-Picaso/reference/climate_INPUTS/'

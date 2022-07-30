@@ -168,7 +168,7 @@ def mix_all_gases(kappa1,kappa2,kappa3,kappa4,kappa5,mix1,mix2,mix3,mix4,mix5,ga
 
 
 @jit(nopython=True, cache=True)
-def mix_all_gases_gasesfly(kappa1,kappa2,kappa3,kappa4,kappa5,kappa6,kappa7,kappa8,kappa9,kappa10,kappa11,kappa12,mix1,mix2,mix3,mix4,mix5,mix6,mix7,mix8,mix9,mix10,mix11,mix12,gauss_pts, gauss_wts,indices):
+def mix_all_gases_gasesfly(kappa1,kappa2,kappa3,kappa4,kappa5,kappa6,kappa7,kappa8,kappa9,kappa10,kappa11,kappa12,kappa13,kappa14,kappa15,mix1,mix2,mix3,mix4,mix5,mix6,mix7,mix8,mix9,mix10,mix11,mix12,mix13,mix14,mix15,gauss_pts, gauss_wts,indices):
     """
     Function to perform "on-the-fly" mixing of 5 opacity sources from Amundsen et al. (2017)
     Parameters
@@ -220,8 +220,8 @@ def mix_all_gases_gasesfly(kappa1,kappa2,kappa3,kappa4,kappa5,kappa6,kappa7,kapp
                 for iw in range(kappa1.shape[2]): # mixing needs to be done at each wno bin separately.
 
                     kmix_bin = do_mixing_mono_gasesfly(kappa1[p_ind,t_ind,iw,:],kappa2[p_ind,t_ind,iw,:],kappa3[p_ind,t_ind,iw,:],kappa4[p_ind,t_ind,iw,:],kappa5[p_ind,t_ind,iw,:],
-                                                        kappa6[p_ind,t_ind,iw,:],kappa7[p_ind,t_ind,iw,:],kappa8[p_ind,t_ind,iw,:],kappa9[p_ind,t_ind,iw,:],kappa10[p_ind,t_ind,iw,:],kappa11[p_ind,t_ind,iw,:],kappa12[p_ind,t_ind,iw,:],
-                                    mix1[ilayer],mix2[ilayer],mix3[ilayer],mix4[ilayer],mix5[ilayer],mix6[ilayer],mix7[ilayer],mix8[ilayer],mix9[ilayer],mix10[ilayer],mix11[ilayer],mix12[ilayer],gauss_pts,gauss_wts)
+                                                        kappa6[p_ind,t_ind,iw,:],kappa7[p_ind,t_ind,iw,:],kappa8[p_ind,t_ind,iw,:],kappa9[p_ind,t_ind,iw,:],kappa10[p_ind,t_ind,iw,:],kappa11[p_ind,t_ind,iw,:],kappa12[p_ind,t_ind,iw,:],kappa13[p_ind,t_ind,iw,:],kappa14[p_ind,t_ind,iw,:],kappa15[p_ind,t_ind,iw,:],
+                                    mix1[ilayer],mix2[ilayer],mix3[ilayer],mix4[ilayer],mix5[ilayer],mix6[ilayer],mix7[ilayer],mix8[ilayer],mix9[ilayer],mix10[ilayer],mix11[ilayer],mix12[ilayer],mix13[ilayer],mix14[ilayer],mix15[ilayer],gauss_pts,gauss_wts)
 
                     kappa_mixed[ilayer,iw,:,ct] = kmix_bin
 
@@ -232,8 +232,8 @@ def mix_all_gases_gasesfly(kappa1,kappa2,kappa3,kappa4,kappa5,kappa6,kappa7,kapp
 
 @jit(nopython=True, cache=True)
 def do_mixing_mono_gasesfly(kappa1_mono,kappa2_mono,kappa3_mono,kappa4_mono,kappa5_mono,
-                          kappa6_mono,kappa7_mono,kappa8_mono,kappa9_mono,kappa10_mono,kappa11_mono,kappa12_mono,
-                          mix1,mix2,mix3,mix4,mix5,mix6,mix7,mix8,mix9,mix10,mix11,mix12,gauss_pts,gauss_wts):
+                          kappa6_mono,kappa7_mono,kappa8_mono,kappa9_mono,kappa10_mono,kappa11_mono,kappa12_mono,kappa13_mono,kappa14_mono,kappa15_mono,
+                          mix1,mix2,mix3,mix4,mix5,mix6,mix7,mix8,mix9,mix10,mix11,mix12,mix13,mix14,mix15,gauss_pts,gauss_wts):
     """
     Function which mixes all the gases together at a single wavenumber bin
     Parameters
@@ -277,20 +277,27 @@ def do_mixing_mono_gasesfly(kappa1_mono,kappa2_mono,kappa3_mono,kappa4_mono,kapp
     kmix_bin,mix_t = mix_2_gases(kmix_bin,np.exp(kappa4_mono), mix_t,mix4,gauss_pts,gauss_wts) # mix 4th with mixture from previous
     
     kmix_bin,mix_t = mix_2_gases(kmix_bin,np.exp(kappa5_mono), mix_t,mix5,gauss_pts,gauss_wts) # and so on
-
+       
     kmix_bin,mix_t = mix_2_gases(kmix_bin,np.exp(kappa6_mono), mix_t,mix6,gauss_pts,gauss_wts) 
-
+    
     kmix_bin,mix_t = mix_2_gases(kmix_bin,np.exp(kappa7_mono), mix_t,mix7,gauss_pts,gauss_wts) 
-
+    
     kmix_bin,mix_t = mix_2_gases(kmix_bin,np.exp(kappa8_mono), mix_t,mix8,gauss_pts,gauss_wts) 
-
+    
     kmix_bin,mix_t = mix_2_gases(kmix_bin,np.exp(kappa9_mono), mix_t,mix9,gauss_pts,gauss_wts) 
-
+    
     kmix_bin,mix_t = mix_2_gases(kmix_bin,np.exp(kappa10_mono), mix_t,mix10,gauss_pts,gauss_wts) 
-
+   
     kmix_bin,mix_t = mix_2_gases(kmix_bin,np.exp(kappa11_mono), mix_t,mix11,gauss_pts,gauss_wts)
-
+    
     kmix_bin,mix_t = mix_2_gases(kmix_bin,np.exp(kappa12_mono), mix_t,mix12,gauss_pts,gauss_wts) 
+
+    kmix_bin,mix_t = mix_2_gases(kmix_bin,np.exp(kappa13_mono), mix_t,mix13,gauss_pts,gauss_wts) 
+
+    kmix_bin,mix_t = mix_2_gases(kmix_bin,np.exp(kappa14_mono), mix_t,mix14,gauss_pts,gauss_wts) 
+
+    kmix_bin,mix_t = mix_2_gases(kmix_bin,np.exp(kappa15_mono), mix_t,mix15,gauss_pts,gauss_wts) 
+    
     '''
     kmix_bin,mix_t = mix_2_gases(kmix_bin,np.exp(kappa6_mono), mix_t,mix6,gauss_pts,gauss_wts)
     
