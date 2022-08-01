@@ -1442,3 +1442,78 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=Spectral11,verbos
     fig.ygrid.grid_line_alpha=0
     plot_format(fig)
     return phases, all_curves, all_ws, fig
+
+#Default Graph - plot_contribution() grabs this graph and juxtaposes it with new graph
+# plot_contribution_sample() is not neccesary for user to run 
+def plot_contribution_sample ():
+    
+    tau_1_surface = out[2]
+    wno=[]
+    spec=[]
+    labels=[]
+    for j in tau_1_surface.keys(): 
+        x,y = jdi.mean_regrid(opa.wno, tau_1_surface[j],R=100) 
+        if np.min(y)<4.5: # Bars 
+            wno+=[x]
+            spec+=[y]
+            labels +=[j]
+    fig1 = jpi.spectrum(wno,spec,plot_width=500,plot_height=400,y_axis_label='Tau~1 Pressure (bars)',
+                       y_axis_type='log',x_range=[1,14],
+                         y_range=[1e2,1e-4],legend=labels)
+    fig1.title.text='Default Tau 1 Surface'
+    jpi.show(fig1)
+    
+    
+
+def plot_contribution(tau_1_surface, opa, min_pressure=4.5, R=100, width=500, height=400 ):
+    
+    
+    """
+    Function to plot & graph the Tau~1 Pressure (bars) of various elements
+    
+    Parameters
+    ----------
+    tau_1_surface : dict
+        The optical depth ~ 1 surface (or whatever the user input for at_tau)
+        
+    opa : picaso.opannection 
+        Picaso opacity connection to get wavelength
+    
+    min_pressure : float, int
+        Minimum pressure contribution in bars for molecules you want to plot. Ignores all molecules that 
+        are optically thick higher than min_pressure
+    
+    R (Resolution) : int
+        The intervals between wavelengths. 
+        
+    Outputs
+    -------
+    figure : bokeh.plotting.figure.Figure
+        Shows a default graph of Tau 1 Surface of various molecules and a graph based on user input based on their parameters
+        
+    """
+    from bokeh.io import output_file, show
+    from bokeh.layouts import row
+    from bokeh.plotting import figure
+    from bokeh.models import LinearAxis, Range1d
+    
+
+    tau_1_surface = out[2]
+    wno=[]
+    spec=[]
+    labels=[]
+    for j in tau_1_surface.keys(): 
+        x,y = jdi.mean_regrid(opa.wno, tau_1_surface[j],R=R) 
+        if np.min(y)<4.5: # Bars 
+            wno+=[x]
+            spec+=[y]
+            labels +=[j]
+    fig2 = jpi.spectrum(wno,spec,plot_width=width,plot_height=height,y_axis_label='Tau~1 Pressure (bars)',
+                       y_axis_type='log',x_range=[1,14],
+                         y_range=[1e2,1e-4],legend=labels)
+    
+    fig2.title.text='User Input Tau 1 Surface' #creates new name for 2nd graph
+    show(row(fig1, fig2)) # shows both the default graph and user input graph side by side. 
+                        # new def function will only change fig2 if additional paramters are provided. 
+
+#make sure the format is def plot_contribution(tau_1_surface, opa, min_pressure, R, width, height )
