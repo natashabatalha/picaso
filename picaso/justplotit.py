@@ -1442,3 +1442,40 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=Spectral11,verbos
     fig.ygrid.grid_line_alpha=0
     plot_format(fig)
     return phases, all_curves, all_ws, fig
+
+def thermal_contribution(full_output, tau_max=1.0, **kwargs):
+    """
+    Computer the contribution function from https://doi.org/10.3847/1538-4357/aadd9e equation 4
+    Note the equation in the paper is missing the - sign in the exponent
+
+    Parameters
+    ----------
+    full_output : dict
+        full dictionary output with {'wavenumber','thermal','full_output'}
+    tau_max : float, optional
+        Maximum tau to consider as opaque, largely here to help prevent NaNs and the colorbar from being weird.
+    **kwargs : dict
+        Any key word argument for pcolormesh
+
+    """
+    all_taus = np.squeeze(full_output['taugas']+full_output['taucld']+full_output['tauray'])
+    all_taus[all_taus > tau_max] = tau_max
+    sum_taus = np.cumsum(all_taus, axis=0)
+
+    press2D = np.transpose(np.repeat(full_output['layer']['pressure'][np.newaxis], np.shape(sum_taus)[1], axis=0))
+
+    bb = np.ones(np.shape(press2D))
+    for i, temp in enumerate(full_output['layer']['temperature']):
+        for j, wave in enumerate(1/full_output['wavenumber']):
+            bb[i, j] = blackbody(temp, wave)[0][0]
+    CF = bb[0:-1, :] * np.exp(-sum_taus[0:-1, :]) * all_taus[0:-1, :] / np.diff(press2D, axis=0)
+
+    fig, ax = plt.subplots()
+    smap = ax.pcolormesh(1e4/full_output['wavenumber'], full_output['layer']['pressure'], CF, **kwargs, norm=colors.LogNorm())
+    ax.set_ylim(np.max(full_output['layer']['pressure']), np.min(full_output['layer']['pressure']))
+    ax.set_yscale('log')
+    ax.set_ylabel('Pressure (bar)')
+    ax.set_xlabel('Wavelength ($\mu$m)')
+    plt.colorbar(smap, label='CF')
+
+    return fig, ax, CF
