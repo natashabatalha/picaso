@@ -73,7 +73,8 @@ setup(
           'sphinx',
           'scipy',
           'virga-exo',
-          'xarray'
+          'xarray',
+          'bibtexparser'
           ], 
     zip_safe = False,
 )

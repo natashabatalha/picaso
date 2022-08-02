@@ -1,0 +1,55 @@
+{"opacities":
+    {
+         "C2H2" :  "hitran2012",
+         "C2H4" : "hitran2012",
+         "C2H6" : "hitran2012" ,
+         "CH4" :  ["yurchenko13vibrational", "yurchenko_2014"] ,
+         "CO" :  ["HITEMP2010","HITRAN2016","li15rovibrational"],
+         "CO2" :  "HUANG2014reliable",
+         "CrH" :  "Burrows02_CrH",
+         "Fe" :  ["Ryabchikova2015","oBrian1991Fe","Fuhr1988Fe", "Bard1991Fe","Bard1994Fe"] ,
+         "FeH" :  ["Dulick2003FeH", "Hargreaves2010FeH"] ,
+         "H2" : "HITRAN2016" ,
+         "H3+" :  "Mizus2017H3p",
+         "H2--H2" : ["Saumon12","Lenzuni1991h2h2" ],
+         "H2--He" :  "Saumon12" ,
+         "H2--N2" :  "Saumon12" ,
+         "H2--CH4" :  "Saumon12" ,
+         "H2--H" :  "Saumon12" ,
+         "H2-"  :  "bell1980free",
+         "H-bf" :  "John1988H",
+         "H-ff" :  "Bell1987Hff",
+         "H2O" :  "Polyansky2018H2O",
+         "H2S" :  "azzam16exomol",
+         "HCN" :  ["Harris2006hcn","Barber2014HCN","hitran2020"],
+         "LiCl" :  "Bittner2018Lis",
+         "LiF" :  "Bittner2018Lis",
+         "LiH" : "Coppola2011LiH" ,
+         "MgH" : ["Yadin2012MgH","GharibNezhad2013MgH","GharibNezhad2021"],
+         "N2" :  "hitran2012",
+         "NH3" :  ["yurchenko11vibrationally","Wilzewski16"] ,
+         "OCS" :  "HITRAN2016",
+         "PH3" : "sousa14exomol" ,
+         "SiO" :  "Barton2013SiO" ,
+         "TiO" : ["McKemmish2019TiO" ,"GharibNezhad2021"],
+         "VO" :   ["McKemmish16" , "GharibNezhad2021"],
+         "Li" :  ["Ryabchikova2015","Allard2007AA", "Allard2007EPJD","Allard2016, Allard2019"],
+         "Na" :  ["Ryabchikova2015","Allard2007AA", "Allard2007EPJD","Allard2016, Allard2019"],
+         "K" :  ["Ryabchikova2015","Allard2007AA", "Allard2007EPJD","Allard2016, Allard2019"],
+         "Rb" :  ["Ryabchikova2015","Allard2007AA", "Allard2007EPJD","Allard2016, Allard2019"],
+         "Cs" :  ["Ryabchikova2015","Allard2007AA", "Allard2007EPJD","Allard2016, Allard2019"]
+    },
+"methods":
+    {"radiative transfer":"toon1989rapid", 
+     "original code":["mckay1989thermal","marley1999thermal","fortney2005comp","cahoy2010exoplanet"]
+    },
+"current":{
+    "1d spectroscopy":"batalha19",
+    "retrievals":"mukherjee20",
+    "3d spectroscopy":"Adams2022ApJ",
+    "phase curves":"Robbins2022ApJ",
+    "climate":"mukherjee22",
+    "virga clouds":"Rooney2022ApJ"
+
+}
+}

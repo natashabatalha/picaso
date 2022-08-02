@@ -58,14 +58,40 @@ Opacities & Approximatons
 .. toctree::
    :maxdepth: 2
 
-   Opacity Factory </notebooks/10_SwappingOpacities.ipynb>
-   Investigating Approximations  </notebooks/10_AnalyzingApproximations.ipynb>
-   SQLITE Tutorial </notebooks/11_Sqlite3Tutorial.ipynb>
+   Query Opacites </notebooks/10_QueryOpacities.ipynb>
+   Opacity Factory: Creating Custom Databases </notebooks/10_CreatingOpacityDb.ipynb>
+   What Resampling do I Need? </notebooks/10_ResamplingOpacities.ipynb>
+   Investigating Radiative Transfer Approximations  </notebooks/10_AnalyzingApproximations.ipynb>
 
-Miscellaneous
--------------
+FAQs
+----
 
 .. toctree::
    :maxdepth: 2
 
    FAQs </notebooks/FAQs.ipynb>
+
+Model Storage Best Practices
+----------------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   Data Storage Uniformity </notebooks/codehelp/data_uniformity_tutorial.ipynb>
+
+Code Help
+---------
+
+.. toctree::
+   :maxdepth: 1
+
+   SQLITE Tutorial </notebooks/codehelp/Sqlite3Tutorial.ipynb>
+
+References
+----------
+
+.. toctree::
+   :maxdepth: 2
+
+   Citation Tools </notebooks/References.ipynb>
+
