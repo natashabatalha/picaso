@@ -1465,7 +1465,7 @@ def plot_contribution_sample ():
     
     
 
-def plot_contribution(tau_1_surface, opa, min_pressure=4.5, R=100, width=500, height=400 ):
+def molecule_contribution(contribution_out, opa, min_pressure=4.5, R=100, **kwargs):
     
     
     """
@@ -1473,18 +1473,21 @@ def plot_contribution(tau_1_surface, opa, min_pressure=4.5, R=100, width=500, he
     
     Parameters
     ----------
-    tau_1_surface : dict
-        The optical depth ~ 1 surface (or whatever the user input for at_tau)
+    contribution_out : dict
+        contribution_out from jdi.get_contribution. 
+        This function will grab contribution_out['at_pressure_array']
+        Pressure vs. wavelength optical depth surface at tau specified by user in 
+        get_contribution function (user input for at_tau)
         
     opa : picaso.opannection 
         Picaso opacity connection to get wavelength
     
     min_pressure : float, int
         Minimum pressure contribution in bars for molecules you want to plot. Ignores all molecules that 
-        are optically thick higher than min_pressure
+        are optically thick higher than min_pressure (bars)
     
-    R (Resolution) : int
-        The intervals between wavelengths. 
+    R : int
+        Resolution defined as lambda/dlambda 
         
     Outputs
     -------
@@ -1492,28 +1495,23 @@ def plot_contribution(tau_1_surface, opa, min_pressure=4.5, R=100, width=500, he
         Shows a default graph of Tau 1 Surface of various molecules and a graph based on user input based on their parameters
         
     """
-    from bokeh.io import output_file, show
-    from bokeh.layouts import row
-    from bokeh.plotting import figure
-    from bokeh.models import LinearAxis, Range1d
-    
+    kwargs['plot_height'] = kwargs.get('plot_height',400)
+    kwargs['plot_width'] = kwargs.get('plot_width',500)
+    kwargs['y_axis_label'] = kwargs.get('y_axis_label','Tau Pressure (bars)')
+    kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength')
+    kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
+    kwargs['y_range'] = kwargs.get('y_range',[1e2,1e-4])
+    kwargs['title'] = kwargs.get('title','User Input Tau Pressure Surface')
 
-    tau_1_surface = out[2]
+    tau_p_surface = contribution_out['at_pressure_array']
     wno=[]
     spec=[]
     labels=[]
-    for j in tau_1_surface.keys(): 
-        x,y = jdi.mean_regrid(opa.wno, tau_1_surface[j],R=R) 
-        if np.min(y)<4.5: # Bars 
+    for j in tau_p_surface.keys(): 
+        x,y = mean_regrid(opa.wno, tau_p_surface[j],R=R) 
+        if np.min(y)<min_pressure: # Bars 
             wno+=[x]
             spec+=[y]
             labels +=[j]
-    fig2 = jpi.spectrum(wno,spec,plot_width=width,plot_height=height,y_axis_label='Tau~1 Pressure (bars)',
-                       y_axis_type='log',x_range=[1,14],
-                         y_range=[1e2,1e-4],legend=labels)
-    
-    fig2.title.text='User Input Tau 1 Surface' #creates new name for 2nd graph
-    show(row(fig1, fig2)) # shows both the default graph and user input graph side by side. 
-                        # new def function will only change fig2 if additional paramters are provided. 
-
-#make sure the format is def plot_contribution(tau_1_surface, opa, min_pressure, R, width, height )
+    fig = spectrum(wno,spec, legend=labels, **kwargs)
+    return fig
