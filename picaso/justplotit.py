@@ -1441,29 +1441,7 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=Spectral11,verbos
     fig.xgrid.grid_line_alpha=0
     fig.ygrid.grid_line_alpha=0
     plot_format(fig)
-    return phases, all_curves, all_ws, fig
-
-#Default Graph - plot_contribution() grabs this graph and juxtaposes it with new graph
-# plot_contribution_sample() is not neccesary for user to run 
-def plot_contribution_sample ():
-    
-    tau_1_surface = out[2]
-    wno=[]
-    spec=[]
-    labels=[]
-    for j in tau_1_surface.keys(): 
-        x,y = jdi.mean_regrid(opa.wno, tau_1_surface[j],R=100) 
-        if np.min(y)<4.5: # Bars 
-            wno+=[x]
-            spec+=[y]
-            labels +=[j]
-    fig1 = jpi.spectrum(wno,spec,plot_width=500,plot_height=400,y_axis_label='Tau~1 Pressure (bars)',
-                       y_axis_type='log',x_range=[1,14],
-                         y_range=[1e2,1e-4],legend=labels)
-    fig1.title.text='Default Tau 1 Surface'
-    jpi.show(fig1)
-    
-    
+    return phases, all_curves, all_ws, fig    
 
 def molecule_contribution(contribution_out, opa, min_pressure=4.5, R=100, **kwargs):
     
