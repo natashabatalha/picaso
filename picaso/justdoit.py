@@ -550,19 +550,11 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
 
     at_pressure_array = {}
     for i in taus_by_species.keys(): 
-        #at_pressures = np.zeros(shape[1])
-        #ind_gas = find_nearest_2d(cumsum_taus[i] , at_tau)
-        
-        #for iw in range(shape[1]):
-        #    at_pressures[iw] = pressure[ind_gas[iw]]
-        #at_pressures=[]
-        #for iw in range(shape[1]): 
-        #    at_pressures += [np.interp([at_tau],cumsum_taus[i][:,iw],
-        #                        pressure )[0]]
-
         at_pressure_array[i] = find_press(at_tau, cumsum_taus[i], shape[1], pressure)
 
-    return taus_by_species, cumsum_taus, at_pressure_array
+    return {'taus_by_species':taus_by_species, 
+            'cumsum_taus':cumsum_taus, 
+            'at_pressure_array':at_pressure_array}
 
 @njit()
 def find_press(at_tau, a, b, c):
