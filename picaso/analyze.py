@@ -6,15 +6,170 @@ import matplotlib.pyplot as plt
 import os
 from astropy.convolution import convolve, Box1DKernel, Gaussian1DKernel
 from scipy import optimize
+import glob
 
 from matplotlib.ticker import StrMethodFormatter
-try:
-    import virga.justdoit as vj
-    import picaso.justdoit as jdi
-except:
-    print("Please install virga or Picaso to use all the functionalities of this analysis code")
+
+import virga.justdoit as vj
+from .justdoit import inputs, opannection, mean_regrid, u
 
 
+
+class GridFitter(): 
+    """
+    Top level grid fitter
+
+    Currently our GridFitter has these requirements for xarray models: 
+
+    Required `coords`: 
+    - wavelength
+    - pressure 
+
+    Required `data_vars`: 
+    - transit_depth
+
+    Parameters
+    ----------
+    grid_name : str 
+        Grid name so that users can keep track of inputs 
+
+    model_dir : str 
+        Location of model grid. Should be a directory that points to 
+        several files in the PICASO xarray format.
+    """
+    def __init__(self, grid_name, model_dir, grid_dimensions=False, verbose=True):
+        self.verbose=verbose
+        
+        self.grids = []
+        self.list_of_files = {}
+        self.grid_params = {}
+        self.overview = {}
+        
+        #adds first grid
+        self.add_grid(grid_name, model_dir)
+
+    def find_grid(self, grid_name, model_dir):
+        """
+        Makes sure the grid exists with proper nc files. Then, adds the file directory to self.list_of_files
+
+        """
+        if not os.path.isdir(model_dir): 
+            raise Exception(f'Path to models entered does not exist: {model_dir}')
+        else: 
+            self.list_of_files[grid_name] = glob.glob(os.path.join(model_dir,"*.nc"))
+            nfiles = len(self.list_of_files[grid_name])
+            if nfiles<=1:
+                raise Exception("Oops! It looks like you only have 1 or less files with the extension '.nc'") 
+            else: 
+                if self.verbose: print(f'Total number of models in grid is {nfiles}')
+
+    def add_grid(self,grid_name,model_dir):
+        #loads in grid info
+        self.grids += [grid_name]
+        self.find_grid(grid_name, model_dir)
+        self.load_grid_params(grid_name)
+
+    def load_grid_params(self,grid_name):
+        """
+        This will read the grid parameters and set the array of parameters 
+
+        Parameters 
+        ----------
+        grid_name : str 
+            Name of grid for bookkeeping
+
+        Returns
+        -------
+        None 
+            Creates self.overview, and self.grid_params
+        """
+        possible_params = {'planet_params': ['rp','mp','tint', 'heat_redis','p_reference','logkzz','mh','cto','p_quench','rainout'],
+                           'stellar_params' : ['rs','logg','steff','feh','ms'],
+                           'cld_params': ['opd','ssa','asy','p_cloud','haze_eff','fsed']}
+
+        #define possible grid parameters
+        self.grid_params[grid_name] = {i:{j:np.array([]) for j in possible_params[i]} for i in possible_params.keys()}
+        #define possible grid parameters
+        self.overview[grid_name] = {i:{j:np.array([]) for j in possible_params[i]} for i in possible_params.keys()}
+
+        #how many possible files 
+        number_files = len(self.list_of_files[grid_name])
+
+        #loop through grid files to get parameters
+        for ct, filename in enumerate(self.list_of_files[grid_name]):
+
+            ds = xr.open_dataset(filename)
+
+            if ct == 0:
+                nwave = len(ds['wavelength'].values)
+                npress = len(ds['pressure'].values)
+                
+                spectra_grid = np.zeros(shape=(number_files,nwave))
+                temperature_grid = np.zeros(shape=(number_files,npress))
+                pressure_grid = np.zeros(shape=(number_files,npress))
+                wavelength = ds['wavelength'].values
+            
+            #start filling out grid parameters
+            #seems like we need to save these?????
+            temperature_grid[ct,:] = ds['temperature'].values[:]
+            pressure_grid[ct,:] = ds['pressure'].values[:]
+            spectra_grid[ct,:] = ds['transit_depth'].values[:] 
+
+
+            # Read all the paramaters in the Xarray so that User can gain insight into the 
+            # grid parameters
+            for iattr in possible_params.keys():#loops through e.g. planet_params, stellar_params,  
+                if iattr in ds.attrs:
+                    attr_dict = json.loads(ds.attrs[iattr])
+                    for ikey in possible_params[iattr]:
+
+                        self.grid_params[grid_name][iattr][ikey] = np.append(
+                                                        self.grid_params[grid_name][iattr][ikey],
+                                                        _get_xarray_attr(attr_dict, ikey))
+
+        #now count how many are in each and pop 
+        for iattr in possible_params.keys():#loops through e.g. planet_params, stellar_params,  
+            if iattr in ds.attrs:
+                for ikey in possible_params[iattr]:
+                    uni_values = np.unique(self.grid_params[grid_name][iattr][ikey])
+                    if (len(uni_values)==1): 
+                        if ('not specified' in str(uni_values[0])):
+                            self.overview[grid_name][iattr][ikey] = 'Not specified in attrs.'
+                            self.grid_params[grid_name][iattr].pop(ikey)
+                        elif ('None' in str(uni_values[0])):
+                            self.overview[grid_name][iattr][ikey] = f'Not used in grid.'
+                            self.grid_params[grid_name][iattr].pop(ikey)  
+                        else: 
+                            self.overview[grid_name][iattr][ikey] = uni_values[0]
+                            self.grid_params[grid_name][iattr].pop(ikey)                            
+                    else: 
+                        self.overview[grid_name][iattr][ikey] = uni_values
+    
+            else:
+                #e.g. if no stellar_params were included for a brown dwarf grid
+                self.overview[grid_name].pop(iattr)
+
+        for iattr in possible_params.keys():
+            if len(self.grid_params[grid_name][iattr].keys())==0: 
+                self.grid_params[grid_name].pop(iattr)
+
+        for iattr in self.overview[grid_name].keys():#loops through e.g. planet_params, stellar_params,
+            for ikey in   self.overview[grid_name][iattr]:
+                if self.verbose:
+                    if isinstance(self.overview[grid_name][iattr][ikey],np.ndarray):
+                        print(f'For {ikey} in {iattr} grid is: {self.overview[grid_name][iattr][ikey]}')
+
+
+
+def _get_xarray_attr(attr_dict, parameter):
+    not_found_msg = "{parameter} not specified"
+    #we assume clear if no fsed parameter specified
+    if parameter =='fsed':
+        not_found_msg='clear'
+    param = attr_dict.get(parameter,not_found_msg)
+    if isinstance(param, dict):
+        param = param.get('value',param)
+    return param
 
 def read_parameter_space_models(model,location,grid_dimensions=False,Verbose=True):
     
