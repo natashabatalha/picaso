@@ -1476,8 +1476,6 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=Spectral11,verbos
     return phases, all_curves, all_ws, fig    
 
 def molecule_contribution(contribution_out, opa, min_pressure=4.5, R=100, **kwargs):
-    
-    
     """
     Function to plot & graph the Tau~1 Pressure (bars) of various elements
     
