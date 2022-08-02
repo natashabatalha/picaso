@@ -40,6 +40,8 @@ def mean_regrid(x, y, newx=None, R=None):
         new array to regrid on. 
     R : float 
         create grid with constant R
+    binwidths : array 
+        bin widths centered at x 
 
     Returns
     -------

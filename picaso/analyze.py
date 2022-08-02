@@ -44,6 +44,10 @@ class GridFitter():
         self.list_of_files = {}
         self.grid_params = {}
         self.overview = {}
+        self.wavelength={}
+        self.temperature={}
+        self.pressure={}
+        self.spectra={}
         
         #adds first grid
         self.add_grid(grid_name, model_dir)
@@ -159,6 +163,52 @@ class GridFitter():
                     if isinstance(self.overview[grid_name][iattr][ikey],np.ndarray):
                         print(f'For {ikey} in {iattr} grid is: {self.overview[grid_name][iattr][ikey]}')
 
+        #lastly save wavelength, temperature, spectra 
+        self.wavelength[grid_name] = wavelength
+        self.pressure[grid_name] = pressure_grid
+        self.temperature[grid_name] = temperature_grid
+        self.spectra[grid_name] = spectra_grid
+
+    def fit_all(self):
+        for i in self.grid_name: self.fit_grid(self.grid_name[i])
+
+    def fit_grid(self,grid_name, numparams, wlgrid_center,wlgrid_width,y_data,e_data):
+        """
+        Fits grids given model and data. 
+
+        Parameters
+        ----------
+        grid_name : str 
+            grid name that was specified before in GridFiter 
+        numparams : int 
+            number of parameters to fit 
+        wlgrid_center : array 
+            array of wavelength centers 
+        wlgrid_width : array 
+            array of wavelength bins 
+        y_data : array 
+            data to be comapred to spectrum. CautioN!! make sure that y_data and material pulled to spectra are the same units. 
+        e_data : array 
+            measurement error associated y_data 
+
+        To Dos
+        ------
+        - make general to fpfs_thermal  
+        """
+        #number of models 
+        nmodels = len(self.list_of_files[grid_name])
+        #get chi_sqrs if it already exists 
+        self.chi_sqs =  getattr(self, 'chi_sqs',{grid_name: np.zeros(shape=(nmodels))})
+        #get best fit dicts if it already exists 
+        self.best_fits =  getattr(self, 'best_fits',{grid_name:np.zeros(shape=(nmodels,len(wlgrid_center)))})
+        #get offsets if it already exists 
+        self.offsets =  getattr(self, 'offsets',{grid_name: np.zeros(nmodels) })
+
+        #note this is for transit only!! Will need to add options later 
+        def shift_spectrum(waves,shift):
+            return flux_in_bin+shift
+
+        for index in range(nmodels):
 
 
 def _get_xarray_attr(attr_dict, parameter):
@@ -171,167 +221,12 @@ def _get_xarray_attr(attr_dict, parameter):
         param = param.get('value',param)
     return param
 
-def read_parameter_space_models(model,location,grid_dimensions=False,Verbose=True):
-    
-    
-    dir_exists = os.path.isdir(location)
-    
-    
-    
-    if (model=="Phoenix") & (dir_exists == True):
-        if Verbose == True:
-            print("\033[1m Loading parameters for Phoenix Grid \033[0m")
-    elif (model == "Picaso") & (dir_exists == True):
-        if Verbose == True:
-            print("\033[1m Loading parameters for Picaso Grid \033[0m ")
-    elif (model == "Picaso_cld") & (dir_exists == True):
-        if Verbose == True:
-            print("\033[1m Loading parameters for Picaso Cloud Grid \033[0m")
-    elif (model == "Picaso_deq") & (dir_exists == True):
-        if Verbose == True:
-            print("\033[1m Loading parameters for Picaso DEQ Grid \033[0m")
-    elif (model == "Picaso_deq_cld") & (dir_exists == True):
-        if Verbose == True:
-            print("\033[1m Loading parameters for Picaso DEQ CLD Grid \033[0m")
-    elif (model == "Atmo") & (dir_exists == True):
-        if Verbose == True:
-            print("\033[1m Loading parameters for Atmo Grid \033[0m")
-    else:
-        raise ValueError("Please check what grid you are loading or if the location of grid exists; options are 'Phoenix', 'Picaso' or 'Atmo Grid'")
-    
-    rp_arr,mp_arr,Tint_arr,heat_redis_arr,pref_arr,logkzz_arr = np.array([]),np.array([]),np.array([]),np.array([]),np.array([]),np.array([])        
-    rs_arr,logg_arr,steff_arr,feh_arr,ms_arr = np.array([]),np.array([]),np.array([]),np.array([]),np.array([])
-    mh_arr,cto_arr,pquench_arr = np.array([]),np.array([]),np.array([])
-    opd_arr,ssa_arr,asy_arr,p_cloud_arr,haze_eff_arr = np.array([]),np.array([]),np.array([]),np.array([]),np.array([])
-    rainout_arr = np.array([])
-    fsed_arr = np.array([])
-    list_of_files = os.listdir(location) # dir is your directory path
-    number_files = len(list_of_files)
-    filename_arr = np.array([])
-    
-    ct=0
-    for filename in os.listdir(location):
-        
-        f = os.path.join(location, filename)
-        
-        # checking if it is a file
-        if os.path.isfile(f):
-            
-            ds = xr.open_dataset(f)
-            
-            
-            filename_arr = np.append(filename_arr,filename)
-            if ct == 0:
-                nwave = len(ds['wavelength'].values)
-                npress = len(ds['pressure'].values)
-                
-                spectra_grid = np.zeros(shape=(number_files,nwave))
-                temperature_grid = np.zeros(shape=(number_files,npress))
-                pressure_grid = np.zeros(shape=(number_files,npress))
-                wavelength = ds['wavelength'].values
-            
-            
-            temperature_grid[ct,:] = ds['temperature'].values[:]
-            pressure_grid[ct,:] = ds['pressure'].values[:]
-            spectra_grid[ct,:] = ds['transit_depth'].values[:]
-            
-            # Read all the paramaters in the Xarray so that User can gain insight into the 
-            # grid parameters
-            rp_arr = np.append(rp_arr,json.loads(ds.attrs['planet_params'])['rp']['value'])
-            mp_arr = np.append(mp_arr,json.loads(ds.attrs['planet_params'])['mp']['value'])
-            Tint_arr = np.append(Tint_arr,json.loads(ds.attrs['planet_params'])['tint'])
-            heat_redis_arr = np.append(heat_redis_arr,json.loads(ds.attrs['planet_params'])['heat_redis'])
-            pref_arr = np.append(pref_arr,json.loads(ds.attrs['planet_params'])['p_reference']['value'])
-
-            mh_arr = np.append(mh_arr,json.loads(ds.attrs['planet_params'])['mh'])
-            cto_arr = np.append(cto_arr,np.round(json.loads(ds.attrs['planet_params'])['cto'],5))
-                        
-            
-            
-            
-            rs_arr = np.append(rs_arr,json.loads(ds.attrs['stellar_params'])['rs']['value'])
-            temperature_grid[ct,:] = ds['temperature'].values[:]
-            pressure_grid[ct,:] = ds['pressure'].values[:]
-                
-
-            
-            try:
-                fsed_arr = np.append(fsed_arr, json.loads(ds.attrs['cld_params'])['fsed'])
-            except:
-                fsed_arr = np.append(fsed_arr, 'Clear')
-                
-            
-            try:
-                logkzz_arr = np.append(logkzz_arr,json.loads(ds.attrs['planet_params'])['logkzz']['value'])
-            except:
-                logkzz_arr = np.append(logkzz_arr,json.loads(ds.attrs['planet_params'])['logkzz'])
-                  
-            #print(ds.attrs['planet_params'].get['logkzz'])
-            #logkzz_arr = np.append(logkzz_arr,json.loads(ds.attrs['planet_params'])['logkzz']['value'])
-            ms_arr = np.append(ms_arr,json.loads(ds.attrs['stellar_params'])['ms']['value'])
-            
-            pquench_arr = np.append(pquench_arr,"Not Included, Kzz instead")
-            logg_arr = np.append(logg_arr,json.loads(ds.attrs['stellar_params'])['logg'])
-            steff_arr = np.append(steff_arr,json.loads(ds.attrs['stellar_params'])['steff'])
-            feh_arr = np.append(feh_arr,json.loads(ds.attrs['stellar_params'])['feh'])
-                
-            p_cloud_arr = np.append(p_cloud_arr,"Not Included")
-            haze_eff_arr = np.append(haze_eff_arr,"Not Included")
-                
-            rainout_arr = np.append(rainout_arr,'T')
-            
-            
-                
-            
-            ct+=1
-            
-            
-    if Verbose == True:        
-        print("Total Number of Models in your grid is", ct)       
-        
-    rp_grid = np.unique(rp_arr)
-    mp_grid = np.unique(mp_arr)
-    Tint_grid = np.unique(Tint_arr)
-    heat_redis_grid = np.unique(heat_redis_arr)
-    pref_grid = np.unique(pref_arr)
-    mh_grid = np.unique(mh_arr)
-    cto_grid = np.unique(cto_arr)
-    rs_grid = np.unique(rs_arr)
-    logkzz_grid = np.unique(logkzz_arr)
-    pquench_grid = np.unique(pquench_arr)
-    logg_grid = np.unique(logg_arr)
-    steff_grid = np.unique(steff_arr)
-    feh_grid = np.unique(feh_arr)
-    ms_grid = np.unique(ms_arr)
-    p_cloud_grid = np.unique(p_cloud_arr)
-    haze_eff_grid = np.unique(haze_eff_arr)
-    
-    rainout_grid = np.unique(rainout_arr)
-    fsed_grid = np.unique(fsed_arr)
-    
-    
-    if grid_dimensions == True:
-        if Verbose==True:
-            print("Planet T_int Grid:",Tint_grid)
-            print("Planet heat_distribution Grid:",heat_redis_grid)
-            print("Planet P_ref Grid:",pref_grid)
-            print("Planet Metallicity Grid:",mh_grid)
-            print("Planet C/O Grid:",cto_grid)
-            print("Planet logKzz Grid:",logkzz_grid)
-            print("Planet fsed Grid:",fsed_grid)
-            print("Planet P_quench Grid:",pquench_grid)
-            print("Planet rainout Grid:",rainout_grid)
-            print("Planet P_cloud Grid:",p_cloud_grid)
-            print("Planet haze_eff Grid:",haze_eff_grid)
-            
-    
-    
-    return rp_arr,mp_arr,Tint_arr,heat_redis_arr,pref_arr,mh_arr,cto_arr,rs_arr,logkzz_arr,pquench_arr,logg_arr,steff_arr,feh_arr,ms_arr,p_cloud_arr,haze_eff_arr,opd_arr,ssa_arr,asy_arr,rainout_arr,wavelength,spectra_grid,temperature_grid,pressure_grid,fsed_arr,filename_arr
 
 
 def fit_grid(grid,location,wlgrid_center,wlgrid_width,rprs_data2,e_rprs2,numparams,rp_arr,mp_arr,Tint_arr,heat_redis_arr,pref_arr,mh_arr,cto_arr,rs_arr,logkzz_arr,pquench_arr,logg_arr,steff_arr,feh_arr,ms_arr,p_cloud_arr,haze_eff_arr,opd_arr,ssa_arr,asy_arr,rainout_arr,wavelength,spectra,temperature,pressure,fsed,filename_arr):
     
-        
+
+    
     chi_sq_arr = np.zeros(shape=(len(Tint_arr)))
     spectra_bf = np.zeros(shape=(len(Tint_arr),len(wlgrid_center)))
     offset_arr = np.zeros(len(Tint_arr))
@@ -489,6 +384,163 @@ def plot_best_fit(wlgrid_center,wlgrid_width,rprs_data2,e_rprs2,grid1=None,spect
     
     
     return fig,ax
+
+def read_parameter_space_models_old(model,location,grid_dimensions=False,Verbose=True):
+    
+    
+    dir_exists = os.path.isdir(location)
+    
+    
+    
+    if (model=="Phoenix") & (dir_exists == True):
+        if Verbose == True:
+            print("\033[1m Loading parameters for Phoenix Grid \033[0m")
+    elif (model == "Picaso") & (dir_exists == True):
+        if Verbose == True:
+            print("\033[1m Loading parameters for Picaso Grid \033[0m ")
+    elif (model == "Picaso_cld") & (dir_exists == True):
+        if Verbose == True:
+            print("\033[1m Loading parameters for Picaso Cloud Grid \033[0m")
+    elif (model == "Picaso_deq") & (dir_exists == True):
+        if Verbose == True:
+            print("\033[1m Loading parameters for Picaso DEQ Grid \033[0m")
+    elif (model == "Picaso_deq_cld") & (dir_exists == True):
+        if Verbose == True:
+            print("\033[1m Loading parameters for Picaso DEQ CLD Grid \033[0m")
+    elif (model == "Atmo") & (dir_exists == True):
+        if Verbose == True:
+            print("\033[1m Loading parameters for Atmo Grid \033[0m")
+    else:
+        raise ValueError("Please check what grid you are loading or if the location of grid exists; options are 'Phoenix', 'Picaso' or 'Atmo Grid'")
+    
+    rp_arr,mp_arr,Tint_arr,heat_redis_arr,pref_arr,logkzz_arr = np.array([]),np.array([]),np.array([]),np.array([]),np.array([]),np.array([])        
+    rs_arr,logg_arr,steff_arr,feh_arr,ms_arr = np.array([]),np.array([]),np.array([]),np.array([]),np.array([])
+    mh_arr,cto_arr,pquench_arr = np.array([]),np.array([]),np.array([])
+    opd_arr,ssa_arr,asy_arr,p_cloud_arr,haze_eff_arr = np.array([]),np.array([]),np.array([]),np.array([]),np.array([])
+    rainout_arr = np.array([])
+    fsed_arr = np.array([])
+    list_of_files = os.listdir(location) # dir is your directory path
+    number_files = len(list_of_files)
+    filename_arr = np.array([])
+    
+    ct=0
+    for filename in os.listdir(location):
+        
+        f = os.path.join(location, filename)
+        
+        # checking if it is a file
+        if os.path.isfile(f):
+            
+            ds = xr.open_dataset(f)
+            
+            
+            filename_arr = np.append(filename_arr,filename)
+            if ct == 0:
+                nwave = len(ds['wavelength'].values)
+                npress = len(ds['pressure'].values)
+                
+                spectra_grid = np.zeros(shape=(number_files,nwave))
+                temperature_grid = np.zeros(shape=(number_files,npress))
+                pressure_grid = np.zeros(shape=(number_files,npress))
+                wavelength = ds['wavelength'].values
+            
+            
+            temperature_grid[ct,:] = ds['temperature'].values[:]
+            pressure_grid[ct,:] = ds['pressure'].values[:]
+            spectra_grid[ct,:] = ds['transit_depth'].values[:]
+            
+            # Read all the paramaters in the Xarray so that User can gain insight into the 
+            # grid parameters
+            rp_arr = np.append(rp_arr,json.loads(ds.attrs['planet_params'])['rp']['value'])
+            mp_arr = np.append(mp_arr,json.loads(ds.attrs['planet_params'])['mp']['value'])
+            Tint_arr = np.append(Tint_arr,json.loads(ds.attrs['planet_params'])['tint'])
+            heat_redis_arr = np.append(heat_redis_arr,json.loads(ds.attrs['planet_params'])['heat_redis'])
+            pref_arr = np.append(pref_arr,json.loads(ds.attrs['planet_params'])['p_reference']['value'])
+
+            mh_arr = np.append(mh_arr,json.loads(ds.attrs['planet_params'])['mh'])
+            cto_arr = np.append(cto_arr,np.round(json.loads(ds.attrs['planet_params'])['cto'],5))
+                        
+            
+            
+            
+            rs_arr = np.append(rs_arr,json.loads(ds.attrs['stellar_params'])['rs']['value'])
+            temperature_grid[ct,:] = ds['temperature'].values[:]
+            pressure_grid[ct,:] = ds['pressure'].values[:]
+                
+
+            
+            try:
+                fsed_arr = np.append(fsed_arr, json.loads(ds.attrs['cld_params'])['fsed'])
+            except:
+                fsed_arr = np.append(fsed_arr, 'Clear')
+                
+            
+            try:
+                logkzz_arr = np.append(logkzz_arr,json.loads(ds.attrs['planet_params'])['logkzz']['value'])
+            except:
+                logkzz_arr = np.append(logkzz_arr,json.loads(ds.attrs['planet_params'])['logkzz'])
+                  
+            #print(ds.attrs['planet_params'].get['logkzz'])
+            #logkzz_arr = np.append(logkzz_arr,json.loads(ds.attrs['planet_params'])['logkzz']['value'])
+            ms_arr = np.append(ms_arr,json.loads(ds.attrs['stellar_params'])['ms']['value'])
+            
+            pquench_arr = np.append(pquench_arr,"Not Included, Kzz instead")
+            logg_arr = np.append(logg_arr,json.loads(ds.attrs['stellar_params'])['logg'])
+            steff_arr = np.append(steff_arr,json.loads(ds.attrs['stellar_params'])['steff'])
+            feh_arr = np.append(feh_arr,json.loads(ds.attrs['stellar_params'])['feh'])
+                
+            p_cloud_arr = np.append(p_cloud_arr,"Not Included")
+            haze_eff_arr = np.append(haze_eff_arr,"Not Included")
+                
+            rainout_arr = np.append(rainout_arr,'T')
+            
+            
+                
+            
+            ct+=1
+            
+            
+    if Verbose == True:        
+        print("Total Number of Models in your grid is", ct)       
+        
+    rp_grid = np.unique(rp_arr)
+    mp_grid = np.unique(mp_arr)
+    Tint_grid = np.unique(Tint_arr)
+    heat_redis_grid = np.unique(heat_redis_arr)
+    pref_grid = np.unique(pref_arr)
+    mh_grid = np.unique(mh_arr)
+    cto_grid = np.unique(cto_arr)
+    rs_grid = np.unique(rs_arr)
+    logkzz_grid = np.unique(logkzz_arr)
+    pquench_grid = np.unique(pquench_arr)
+    logg_grid = np.unique(logg_arr)
+    steff_grid = np.unique(steff_arr)
+    feh_grid = np.unique(feh_arr)
+    ms_grid = np.unique(ms_arr)
+    p_cloud_grid = np.unique(p_cloud_arr)
+    haze_eff_grid = np.unique(haze_eff_arr)
+    
+    rainout_grid = np.unique(rainout_arr)
+    fsed_grid = np.unique(fsed_arr)
+    
+    
+    if grid_dimensions == True:
+        if Verbose==True:
+            print("Planet T_int Grid:",Tint_grid)
+            print("Planet heat_distribution Grid:",heat_redis_grid)
+            print("Planet P_ref Grid:",pref_grid)
+            print("Planet Metallicity Grid:",mh_grid)
+            print("Planet C/O Grid:",cto_grid)
+            print("Planet logKzz Grid:",logkzz_grid)
+            print("Planet fsed Grid:",fsed_grid)
+            print("Planet P_quench Grid:",pquench_grid)
+            print("Planet rainout Grid:",rainout_grid)
+            print("Planet P_cloud Grid:",p_cloud_grid)
+            print("Planet haze_eff Grid:",haze_eff_grid)
+            
+    
+    
+    return rp_arr,mp_arr,Tint_arr,heat_redis_arr,pref_arr,mh_arr,cto_arr,rs_arr,logkzz_arr,pquench_arr,logg_arr,steff_arr,feh_arr,ms_arr,p_cloud_arr,haze_eff_arr,opd_arr,ssa_arr,asy_arr,rainout_arr,wavelength,spectra_grid,temperature_grid,pressure_grid,fsed_arr,filename_arr
 
 
 def get_posteriors(parameter_sort,chi_sq):
