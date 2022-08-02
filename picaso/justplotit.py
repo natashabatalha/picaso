@@ -1473,5 +1473,56 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=Spectral11,verbos
     fig.xgrid.grid_line_alpha=0
     fig.ygrid.grid_line_alpha=0
     plot_format(fig)
-    return phases, all_curves, all_ws, fig
+    return phases, all_curves, all_ws, fig    
+
+def molecule_contribution(contribution_out, opa, min_pressure=4.5, R=100, **kwargs):
+    
+    
+    """
+    Function to plot & graph the Tau~1 Pressure (bars) of various elements
+    
+    Parameters
+    ----------
+    contribution_out : dict
+        contribution_out from jdi.get_contribution. 
+        This function will grab contribution_out['at_pressure_array']
+        Pressure vs. wavelength optical depth surface at tau specified by user in 
+        get_contribution function (user input for at_tau)
+        
+    opa : picaso.opannection 
+        Picaso opacity connection to get wavelength
+    
+    min_pressure : float, int
+        Minimum pressure contribution in bars for molecules you want to plot. Ignores all molecules that 
+        are optically thick higher than min_pressure (bars)
+    
+    R : int
+        Resolution defined as lambda/dlambda 
+        
+    Outputs
+    -------
+    figure : bokeh.plotting.figure.Figure
+        Shows a default graph of Tau 1 Surface of various molecules and a graph based on user input based on their parameters
+        
+    """
+    kwargs['plot_height'] = kwargs.get('plot_height',400)
+    kwargs['plot_width'] = kwargs.get('plot_width',500)
+    kwargs['y_axis_label'] = kwargs.get('y_axis_label','Tau Pressure (bars)')
+    kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength')
+    kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
+    kwargs['y_range'] = kwargs.get('y_range',[1e2,1e-4])
+    kwargs['title'] = kwargs.get('title','User Input Tau Pressure Surface')
+
+    tau_p_surface = contribution_out['at_pressure_array']
+    wno=[]
+    spec=[]
+    labels=[]
+    for j in tau_p_surface.keys(): 
+        x,y = mean_regrid(opa.wno, tau_p_surface[j],R=R) 
+        if np.min(y)<min_pressure: # Bars 
+            wno+=[x]
+            spec+=[y]
+            labels +=[j]
+    fig = spectrum(wno,spec, legend=labels, **kwargs)
+    return fig
 
