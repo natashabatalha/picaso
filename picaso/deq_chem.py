@@ -100,10 +100,16 @@ def quench_level(pressure, temp, kz,mmw, grav, return_mix_timescale = False):
             quench_levels[3] = j
             break
     
+    
+    
+    
+
     if return_mix_timescale == False :
         return quench_levels
     elif return_mix_timescale == True :
         return quench_levels, t_mix
+
+
     
 @jit(nopython=True, cache=True)
 def mix_all_gases(kappa1,kappa2,kappa3,kappa4,kappa5,mix1,mix2,mix3,mix4,mix5,gauss_pts, gauss_wts,indices):

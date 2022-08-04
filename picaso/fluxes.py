@@ -3519,7 +3519,6 @@ def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,
     
     scalef_kz = 1./3.
     
-    
     kz = scalef_kz * scale_h * (mixl/scale_h)**(4./3.) *( ( r_atmos*chf[:-1] ) / ( rho_atmos*c_p ) )**(1./3.)
     
     

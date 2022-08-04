@@ -966,7 +966,7 @@ class inputs():
         self.inputs['climate']['r_planet'] = r_planet # jupiter radii
 
 
-    def run_climate_model(self, opacityclass, save_all_profiles = False, save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False, kz = None, vulcan_run = False, photochem=False,on_fly=False,gases_fly=None ):
+    def run_climate_model(self, opacityclass, save_all_profiles = False, save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False, kz = None, vulcan_run = False, photochem=False,on_fly=False,gases_fly=None,mhdeq=None,CtoOdeq=None ):
         """
         Top Function to run the Climate Model
 
@@ -1168,13 +1168,13 @@ class inputs():
             
             
             # shift everything to the 661 grid now.
-            mh = '+0.0'  #don't change these as the opacities you are using are based on these 
-            CtoO = '1.0' # don't change these as the opacities you are using are based on these #
+            #mh = '+0.0'  #don't change these as the opacities you are using are based on these 
+            #CtoO = '1.0' # don't change these as the opacities you are using are based on these #
             filename_db=os.path.join(__refdata__, 'climate_INPUTS/ck_cx_cont_opacities_661.db')
             
             if on_fly == True:
                 print("From now I will mix "+str(gases_fly)+" only on--the--fly")
-                ck_db=os.path.join(__refdata__, 'climate_INPUTS/sonora_2020_feh+000_co_100.data.196')
+                ck_db=os.path.join(__refdata__, 'climate_INPUTS/sonora_2020_feh'+mhdeq+'_co_'+CtoOdeq+'.data.196')
                 opacityclass = opannection(ck=True, ck_db=ck_db,filename_db=filename_db,deq = True,on_fly=True,gases_fly=gases_fly)
             else:
                 ck_db=os.path.join(__refdata__, 'climate_INPUTS/m+0.0_co1.0.data.196')
@@ -1212,7 +1212,7 @@ class inputs():
 
                 all_kzz = np.append(all_kzz, t_mix) # save kzz
 
-                print("Quench Levels are CO, CO2, NH3, HCN ", quench_levels) # print quench levels
+                print("Quench Levels are CO, CO2, NH3, HCN, PH3 ", quench_levels) # print quench levels
                 
                 final = False
                 #finall = False #### what is this thing?
@@ -1237,7 +1237,7 @@ class inputs():
 
                 # determine the chemistry now
 
-                qvmrs, qvmrs2= bundle.premix_atmosphere_diseq(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']], quench_levels= quench_levels)
+                qvmrs, qvmrs2= bundle.premix_atmosphere_diseq(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']], quench_levels= quench_levels,t_mix=t_mix)
                 #was for check SM
                 #bundle.inputs['atmosphere']['profile'].to_csv('/data/users/samukher/Disequilibrium-picaso/first_iteration_testpls300min500',sep='\t')
                 #raise SystemExit(0) 
@@ -1584,7 +1584,7 @@ class inputs():
 
         self.chem_interp(opa.full_abunds)
     
-    def premix_atmosphere_diseq(self, opa, quench_levels, df=None, filename=None, **pd_kwargs):
+    def premix_atmosphere_diseq(self, opa, quench_levels,t_mix=None, df=None, filename=None, **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
         Sets number of layers in model.  
@@ -1626,6 +1626,26 @@ class inputs():
 
         self.chem_interp(opa.full_abunds)
         
+        # first quench PH3 from eq abundances of H2O and H2
+
+        # quenching PH3 now, this will only have effect if everything is mixed on the fly
+        # formalism from # https://iopscience.iop.org/article/10.1086/428493/pdf
+        OH = OH_conc(self.inputs['atmosphere']['profile']['temperature'].values,self.inputs['atmosphere']['profile']['pressure'].values,self.inputs['atmosphere']['profile']['H2O'].values,self.inputs['atmosphere']['profile']['H2'].values)
+        t_chem_ph3 = 0.19047619047*1e13*np.exp(6013.6/self.inputs['atmosphere']['profile']['temperature'].values)/OH
+
+        for j in range(len(self.inputs['atmosphere']['profile']['temperature'].values)-1,0,-1):
+
+            if ((t_mix[j-1]/1e15) <=  (t_chem_ph3[j-1]/1e15)) and ((t_mix[j]/1e15) >=  (t_chem_ph3[j]/1e15)):
+                quench_levels_ph3 = j
+                break
+        #quench_levels_ph3 =0
+        print('PH3 quenched at level', quench_levels_ph3)
+        # quench ph3 now
+
+        self.inputs['atmosphere']['profile']['PH3'][0:quench_levels_ph3+1] = self.inputs['atmosphere']['profile']['PH3'][0:quench_levels_ph3+1]*0.0 + self.inputs['atmosphere']['profile']['PH3'][quench_levels_ph3]
+        
+
+
         
         qvmrs=np.zeros(shape=(5))
         qvmrs2=np.zeros(shape=(3))
@@ -1669,6 +1689,8 @@ class inputs():
 
             # then quench hcn
             self.inputs['atmosphere']['profile']['HCN'][0:quench_levels[3]+1] = self.inputs['atmosphere']['profile']['HCN'][0:quench_levels[3]+1]*0.0 + qvmrs2[2]
+            
+                        
             # lastly quench H2 accordingly
             self.inputs['atmosphere']['profile']['H2'][0:quench_levels[0]+1] -= (dq_co + dq_ch4 + dq_h2o) 
             self.inputs['atmosphere']['profile']['H2'][0:quench_levels[1]+1] -= (dq_co2)
@@ -4159,7 +4181,7 @@ def profile_deq(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     if vulcan_run == False:
         quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale=True)
         
-        qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+        qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix)
     else :
         bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
         t_mix = bundle.run_vulcan(pressure,temp,kz,grav,mmw, first = False)
@@ -4268,7 +4290,7 @@ def profile_deq(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         if vulcan_run == False:
             quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale=True)
             
-            qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+            qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix)
             print("Quench Levels are CO, CO2, NH3, HCN ", quench_levels)
         else :
             bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
@@ -4737,7 +4759,7 @@ def find_strat_deq(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
 
         quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale=True)
 
-        qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+        qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix)
     else :
         bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
         k_b = 1.38e-23 # boltzmann constant
@@ -4783,6 +4805,18 @@ def find_strat_deq(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
 
     
     return pressure, temp, dtdp, nstr , flux_plus_ir_full, qvmrs, qvmrs2, bundle.inputs['atmosphere']['profile'], all_profiles, all_kzz,opd_now,w0_now,g0_now
+
+
+#@jit(nopython=True, cache=True)
+def OH_conc(temp,press,x_h2o,x_h2):
+    K = 10**(3.672 - (14791/temp))
+    kb= 1.3807e-16 #cgs
     
+    x_oh = K * x_h2o * (x_h2**(-0.5)) * (press**(-0.5))
+    press_cgs = press*1e6
+    
+    n = press_cgs/(kb*temp)
+    
+    return x_oh*n
 
 
