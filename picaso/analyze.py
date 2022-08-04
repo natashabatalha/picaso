@@ -408,8 +408,9 @@ class GridFitter():
             Name of parameter to get the posterior of (e.g. mh or tint)
         """
         parameter_sort = _finditem(self.grid_params[grid_name], parameter)
+        print(parameter)
         if isinstance(parameter_sort, type(None)): 
-            raise Exception('Parameter {parameter} not found in grid {grid_name}')
+            raise Exception(f'Parameter {parameter} not found in grid {grid_name}')
         
         chi_sq = self.chi_sqs[grid_name][data_name]
 
@@ -493,7 +494,7 @@ class GridFitter():
                 else: 
                     get_post = _finditem(self.posteriors[grid_name][data_name], parameters[iparam])
                     if isinstance(get_post, type(None)): 
-                        xgrid,yprob = [0],[0]
+                        xgrid,yprob = [0,0,0],[0,0,0]
                     else: 
                         xgrid,yprob = get_post
 
@@ -869,7 +870,10 @@ def _finditem(obj, key):
     if key in obj: return obj[key]
     for k, v in obj.items():
         if isinstance(v,dict):
-            return _finditem(v, key)
+            item = _finditem(v, key)
+            if item is not None:
+                return item
+
 def _get_xarray_attr(attr_dict, parameter):
     not_found_msg = "{parameter} not specified"
     #we assume clear if no fsed parameter specified
