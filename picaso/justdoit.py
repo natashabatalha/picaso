@@ -1632,7 +1632,7 @@ class inputs():
         # formalism from # https://iopscience.iop.org/article/10.1086/428493/pdf
         OH = OH_conc(self.inputs['atmosphere']['profile']['temperature'].values,self.inputs['atmosphere']['profile']['pressure'].values,self.inputs['atmosphere']['profile']['H2O'].values,self.inputs['atmosphere']['profile']['H2'].values)
         t_chem_ph3 = 0.19047619047*1e13*np.exp(6013.6/self.inputs['atmosphere']['profile']['temperature'].values)/OH
-
+        quench_levels_ph3 = int(0.0)
         for j in range(len(self.inputs['atmosphere']['profile']['temperature'].values)-1,0,-1):
 
             if ((t_mix[j-1]/1e15) <=  (t_chem_ph3[j-1]/1e15)) and ((t_mix[j]/1e15) >=  (t_chem_ph3[j]/1e15)):
