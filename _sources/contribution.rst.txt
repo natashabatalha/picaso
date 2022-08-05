@@ -69,13 +69,17 @@ Before contributing, consider submitting an issue request. Sometimes we may alre
 1) Clone the repository
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Clond the repository that you are interested in working on.
+Clone the repository that you are interested in working on.
 
 .. code-block:: bash
 
 	git clone https://github.com/natashabatalha/picaso.git
 
-This will download a copy of the code to your computer. You will automatically be in the ``master`` branch upon downloading. 
+This will download a copy of the code to your computer. You will automatically be in the ``master`` branch upon downloading. You can track the dev branch like so:
+
+.. code-block:: bash
+
+	git checkout dev 
 
 **Side note: Important distinction between ``master`` and ``dev``**
 

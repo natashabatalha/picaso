@@ -265,11 +265,14 @@
 <p>Before contributing, consider submitting an issue request. Sometimes we may already be aware of an issue and can help you fix something faster.</p>
 <div class="section" id="clone-the-repository">
 <h3>1) Clone the repository<a class="headerlink" href="#clone-the-repository" title="Permalink to this headline">¶</a></h3>
-<p>Clond the repository that you are interested in working on.</p>
+<p>Clone the repository that you are interested in working on.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/natashabatalha/picaso.git
 </pre></div>
 </div>
-<p>This will download a copy of the code to your computer. You will automatically be in the <code class="docutils literal notranslate"><span class="pre">master</span></code> branch upon downloading.</p>
+<p>This will download a copy of the code to your computer. You will automatically be in the <code class="docutils literal notranslate"><span class="pre">master</span></code> branch upon downloading. You can track the dev branch like so:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git checkout dev
+</pre></div>
+</div>
 <p><strong>Side note: Important distinction between ``master`` and ``dev``</strong></p>
 <p><code class="docutils literal notranslate"><span class="pre">master</span></code> always represents the released production code. Here is the workflow we will follow. All major development will be done on branches off of <code class="docutils literal notranslate"><span class="pre">dev</span></code>. The only exceptions are what we call “hotfixes”, which can go directly from the fixed branch to master, and minor bugs that can be directly fixed on <code class="docutils literal notranslate"><span class="pre">dev</span></code>. See the overall schematic below.</p>
 <img alt="_images/github_flow.jpg" src="_images/github_flow.jpg" />

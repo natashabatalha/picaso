@@ -39,7 +39,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Contributing to PICASO" href="contribution.html" />
-    <link rel="prev" title="Model Formating Overview" href="notebooks/codehelp/data_uniformity_tutorial.html" /> 
+    <link rel="prev" title="What do I reference?" href="notebooks/References.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -2943,7 +2943,7 @@ Current options : [logL, Teff, grav_cgs]</p></li>
 
 <dl class="function">
 <dt id="picaso.justplotit.spectrum">
-<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">spectrum</code><span class="sig-paren">(</span><em class="sig-param">xarray, yarray, legend=None, wno_to_micron=True, palette=['#0072B2', '#E69F00', '#F0E442', '#009E73', '#56B4E9', '#D55E00', '#CC79A7', '#000000'], **kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.spectrum" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">picaso.justplotit.</code><code class="sig-name descname">spectrum</code><span class="sig-paren">(</span><em class="sig-param">xarray, yarray, legend=None, wno_to_micron=True, palette=['#0072B2', '#E69F00', '#F0E442', '#009E73', '#56B4E9', '#D55E00', '#CC79A7', '#000000'], muted_alpha=0.2, **kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.spectrum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot formated albedo spectrum</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -2954,6 +2954,7 @@ Current options : [logL, Teff, grav_cgs]</p></li>
 <li><p><strong>wno_to_micron</strong> (<em>bool</em><em> , </em><em>optional</em>) – Converts wavenumber to micron</p></li>
 <li><p><strong>palette</strong> (<em>list</em><em>,</em><em>optional</em>) – List of colors for lines. Default only has 8 colors so if you input more lines, you must
 give a different pallete</p></li>
+<li><p><strong>muted_alpha</strong> (<em>float</em>) – number 0-1 to indicate how muted you want the click functionaity</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em>) – Any key word argument for bokeh.plotting.figure()</p></li>
 </ul>
 </dd>
@@ -3324,7 +3325,7 @@ of the lbl grid.</p></li>
 
 <dl class="function">
 <dt id="picaso.opacity_factory.insert_molecular_1460">
-<code class="sig-prename descclassname">picaso.opacity_factory.</code><code class="sig-name descname">insert_molecular_1460</code><span class="sig-paren">(</span><em class="sig-param">molecule</em>, <em class="sig-param">min_wavelength</em>, <em class="sig-param">max_wavelength</em>, <em class="sig-param">og_directory</em>, <em class="sig-param">new_db</em>, <em class="sig-param">new_R=None</em>, <em class="sig-param">new_dwno=None</em>, <em class="sig-param">old_R=1000000.0</em>, <em class="sig-param">old_dwno=0.0035</em>, <em class="sig-param">alkali_dir='alkalis'</em>, <em class="sig-param">dir_kark_ch4=None</em>, <em class="sig-param">dir_optical_o3=None</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.insert_molecular_1460" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">picaso.opacity_factory.</code><code class="sig-name descname">insert_molecular_1460</code><span class="sig-paren">(</span><em class="sig-param">molecule</em>, <em class="sig-param">min_wavelength</em>, <em class="sig-param">max_wavelength</em>, <em class="sig-param">og_directory</em>, <em class="sig-param">new_db</em>, <em class="sig-param">new_R=None</em>, <em class="sig-param">new_dwno=None</em>, <em class="sig-param">old_R=1000000.0</em>, <em class="sig-param">old_dwno=0.0035</em>, <em class="sig-param">alkali_dir='alkalis'</em>, <em class="sig-param">dir_kark_ch4=None</em>, <em class="sig-param">dir_optical_o3=None</em>, <em class="sig-param">insert_direct=False</em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.insert_molecular_1460" title="Permalink to this definition">¶</a></dt>
 <dd><p>DEVELOPER USE ONLY.
 Function to resample 1060 grid data onto lower resolution grid. The general procedure
 in this function is to interpolate original 1060 data onto very high resolution
@@ -3352,6 +3353,8 @@ If you do not want any resampling, then you need to set new_dwno=old_dwno</p></l
 <li><p><strong>new_db</strong> (<em>str</em>) – New database name</p></li>
 <li><p><strong>dir_kark_ch4</strong> (<em>str</em>) – Karkoschka methane to hack in</p></li>
 <li><p><strong>dir_optical_o3</strong> (<em>str</em>) – optical ozone to hack in</p></li>
+<li><p><strong>insert_direct</strong> (<em>bool</em>) – this ignores all other inputs except min and max wavelength and
+inserts opacities into the database diretly as is</p></li>
 </ul>
 </dd>
 </dl>
@@ -4239,7 +4242,7 @@ to a new wave grid.</p>
         <a href="contribution.html" class="btn btn-neutral float-right" title="Contributing to PICASO" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="notebooks/codehelp/data_uniformity_tutorial.html" class="btn btn-neutral float-left" title="Model Formating Overview" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="notebooks/References.html" class="btn btn-neutral float-left" title="What do I reference?" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

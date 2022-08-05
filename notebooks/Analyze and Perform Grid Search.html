@@ -1,0 +1,770 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>How to Fit Grid Models to Data &mdash; picaso 2.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> picaso
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                2.3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">The Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../credit.html">The Papers</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">picaso</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>How to Fit Grid Models to Data</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/notebooks/Analyze and Perform Grid Search.ipynb.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container,
+div.nbinput.container div.prompt,
+div.nbinput.container div.input_area,
+div.nbinput.container div[class*=highlight],
+div.nbinput.container div[class*=highlight] pre,
+div.nboutput.container,
+div.nboutput.container div.prompt,
+div.nboutput.container div.output_area,
+div.nboutput.container div[class*=highlight],
+div.nboutput.container div[class*=highlight] pre {
+    background: none;
+    border: none;
+    padding: 0 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    min-width: 5ex;
+    padding-top: 0.3rem;
+    padding-right: 0.3rem;
+    text-align: right;
+    flex: 0;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    background: #f5f5f5;
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 0.3rem;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt a.copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+div.rendered_html th {
+  font-weight: bold;
+}
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/AnalyzeandPerformGridSearch.ipynb">Download full notebook here</a></p>
+</div>
+<h1><p>Table of Contents</p>
+</h1><div class="toc"><ul class="toc-item"><li><p>1  How to Fit Grid Models to Data</p>
+<ul class="toc-item"><li><p>1.1  Define Paths To Data and Models</p>
+</li><li><p>1.2  Add Available Grids to Test</p>
+</li><li><p>1.3  Add Datasets to Explore</p>
+</li><li><p>1.4  Compute <span class="math notranslate nohighlight">\(\chi_{red}^2\)</span> and Retrieve Single Best Fit</p>
+</li><li><p>1.5  Analyze Single Best Fits</p>
+</li><li><p>1.6  Rest Still in Dev!!!</p>
+</li></ul></li></ul></div><div class="section" id="How-to-Fit-Grid-Models-to-Data">
+<h1>How to Fit Grid Models to Data<a class="headerlink" href="#How-to-Fit-Grid-Models-to-Data" title="Permalink to this headline">¶</a></h1>
+<p>Author: Sagnick Mukherjee (<a class="reference external" href="mailto:samukher&#37;&#52;&#48;ucsc&#46;edu">email</a>/<a class="reference external" href="https://sagnickm.github.io/">website</a>)</p>
+<p>Citation: <a class="reference external" href="add%20paper%20link">ERS Team Collab, 2022</a></p>
+<p>In this notebook, we show how to use the <code class="docutils literal notranslate"><span class="pre">PICASO</span></code>-formatted grid models to interpret the WASP-39b data from the Early Release Science Program.</p>
+<p><strong>Helpful knowledge before running this notebook:</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://natashabatalha.github.io/picaso/notebooks/codehelp/data_uniformity_tutorial.html">How to use xarray files</a></p></li>
+<li><p><a class="reference external" href="https://natashabatalha.github.io/picaso/notebooks/workshops/ESO2021/ESO_Tutorial.html">Basic PICASO knowledge of how to compute transit spectra</a></p></li>
+</ul>
+<p><strong>Need to do before running this notebook</strong></p>
+<p>In order to use this notebook you will have to:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="final%20link">Download and unpack the zenodo grid models</a></p></li>
+<li><p><a class="reference external" href="final%20link">Download the final planet spectrum</a></p></li>
+</ul>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">picaso.justdoit</span> <span class="k">as</span> <span class="nn">jdi</span>
+<span class="kn">import</span> <span class="nn">picaso.justplotit</span> <span class="k">as</span> <span class="nn">jpi</span>
+<span class="kn">import</span> <span class="nn">picaso.analyze</span> <span class="k">as</span> <span class="nn">lyz</span>
+<span class="n">jpi</span><span class="o">.</span><span class="n">output_notebook</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="Define-Paths-To-Data-and-Models">
+<h2>Define Paths To Data and Models<a class="headerlink" href="#Define-Paths-To-Data-and-Models" title="Permalink to this headline">¶</a></h2>
+<p>You should have four folders in your <code class="docutils literal notranslate"><span class="pre">model_dir</span></code>:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">cld_free_R=3000_0,6-6um/</span></code>: 192 models</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cldy_R=3000_0,6-6um/</span></code>: 3840 models</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cld_free_photo_R=3000_0,6-6um/</span></code>: 116 models</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cldy_photo_R=3000_0,6-6um/</span></code>: 580 models</p></li>
+</ol>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1">#should have sub folders similar to above</span>
+<span class="n">model_dir</span> <span class="o">=</span> <span class="s2">&quot;/Users/nbatalh1/Documents/data/planets/WASP-39b/&quot;</span>
+<span class="c1">#agnostic to where it is, just make sure you point to the right data file</span>
+<span class="n">data_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span><span class="s2">&quot;w39_prism_firefly_trans_spec_20July2022_v1.txt&quot;</span><span class="p">)</span>
+
+<span class="n">wlgrid_center</span><span class="p">,</span><span class="n">rprs_data2</span><span class="p">,</span><span class="n">wlgrid_width</span><span class="p">,</span> <span class="n">e_rprs2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">data_file</span><span class="p">,</span><span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">skiprows</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1">#for now, we are only going to fit 3-5 um</span>
+<span class="n">wh</span> <span class="o">=</span>  <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">wlgrid_center</span> <span class="o">&lt;</span> <span class="mf">3.0</span><span class="p">)</span>
+<span class="n">wlgrid_center</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">wlgrid_center</span><span class="p">,</span><span class="n">wh</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">wlgrid_width</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">wlgrid_width</span><span class="p">,</span><span class="n">wh</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">rprs_data2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">rprs_data2</span><span class="p">,</span><span class="n">wh</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">e_rprs2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">e_rprs2</span><span class="p">,</span><span class="n">wh</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">reduction_name</span> <span class="o">=</span> <span class="s2">&quot;Firefly&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">f</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">plot_errorbar</span><span class="p">(</span><span class="n">wlgrid_center</span><span class="p">,</span> <span class="n">rprs_data2</span><span class="p">,</span><span class="n">e_rprs2</span><span class="p">,</span> <span class="n">plot_type</span><span class="o">=</span><span class="s1">&#39;matplotlib&#39;</span><span class="p">,</span>
+                   <span class="n">plot_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;ylabel&#39;</span><span class="p">:</span><span class="sa">r</span><span class="s1">&#39;(R$_p$/R$_*$)$^2$&#39;</span><span class="p">})</span><span class="c1">#plot_type=&#39;bokeh&#39; also available</span>
+<span class="c1">#jpi.show(f) #if using bokeh (note if using bokeh need those key words (e.g. y_axis_label instead of ylabel))</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Add-Available-Grids-to-Test">
+<h2>Add Available Grids to Test<a class="headerlink" href="#Add-Available-Grids-to-Test" title="Permalink to this headline">¶</a></h2>
+<p>First step will be to load your first grid into the <code class="docutils literal notranslate"><span class="pre">GridFitter</span></code> class. You can do this easily by supplying the function a directory location, and grid name (<code class="docutils literal notranslate"><span class="pre">grid_name</span></code>).</p>
+<p>The only purpose of <code class="docutils literal notranslate"><span class="pre">grid_name</span></code> is in case you add more grids to your <code class="docutils literal notranslate"><span class="pre">GridFitter</span></code> function, it will be easy to keep track of what parameters go with what grid.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">grid_name</span> <span class="o">=</span> <span class="s2">&quot;picaso&quot;</span>
+<span class="n">location</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span><span class="s2">&quot;cld_free_R=3000_0,6-6um&quot;</span><span class="p">)</span>
+<span class="n">fitter</span> <span class="o">=</span> <span class="n">lyz</span><span class="o">.</span><span class="n">GridFitter</span><span class="p">(</span><span class="n">grid_name</span><span class="p">,</span><span class="n">location</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">fitter</span><span class="o">.</span><span class="n">grid_params</span><span class="p">[</span><span class="s1">&#39;picaso&#39;</span><span class="p">][</span><span class="s1">&#39;planet_params&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">location</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span><span class="s2">&quot;cld_free_photo_R=3000_0,6-6um&quot;</span><span class="p">)</span>
+<span class="n">fitter</span><span class="o">.</span><span class="n">add_grid</span><span class="p">(</span><span class="s1">&#39;picaso_deq&#39;</span><span class="p">,</span> <span class="n">location</span><span class="p">)</span><span class="c1">#</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="Explore-the-parameters-of-the-grid">
+<h3>Explore the parameters of the grid<a class="headerlink" href="#Explore-the-parameters-of-the-grid" title="Permalink to this headline">¶</a></h3>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">fitter</span><span class="o">.</span><span class="n">grids</span> <span class="c1">#what grids exist</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">fitter</span><span class="o">.</span><span class="n">overview</span><span class="p">[</span><span class="s1">&#39;picaso&#39;</span><span class="p">]</span><span class="c1">#top level info from the attrs</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="nb">print</span><span class="p">(</span><span class="n">fitter</span><span class="o">.</span><span class="n">grid_params</span><span class="p">[</span><span class="s1">&#39;picaso&#39;</span><span class="p">][</span><span class="s1">&#39;planet_params&#39;</span><span class="p">][</span><span class="s1">&#39;tint&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="c1">#this full list can be cross referened against the file list</span>
+<span class="n">fitter</span><span class="o">.</span><span class="n">list_of_files</span><span class="p">[</span><span class="s1">&#39;picaso&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+<span class="c1">#in this case we can verify against the filename, though that might always not be the case</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="Add-Datasets-to-Explore">
+<h2>Add Datasets to Explore<a class="headerlink" href="#Add-Datasets-to-Explore" title="Permalink to this headline">¶</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">fitter</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="s1">&#39;firefly&#39;</span><span class="p">,</span><span class="n">wlgrid_center</span><span class="p">,</span> <span class="n">wlgrid_width</span><span class="p">,</span> <span class="n">rprs_data2</span><span class="p">,</span> <span class="n">e_rprs2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Compute-\chi_{red}^2-and-Retrieve-Single-Best-Fit">
+<h2>Compute <span class="math notranslate nohighlight">\(\chi_{red}^2\)</span> and Retrieve Single Best Fit<a class="headerlink" href="#Compute-\chi_{red}^2-and-Retrieve-Single-Best-Fit" title="Permalink to this headline">¶</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">fitter</span><span class="o">.</span><span class="n">fit_grid</span><span class="p">(</span><span class="s1">&#39;picaso&#39;</span><span class="p">,</span><span class="s1">&#39;firefly&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">fitter</span><span class="o">.</span><span class="n">fit_grid</span><span class="p">(</span><span class="s1">&#39;picaso_deq&#39;</span><span class="p">,</span><span class="s1">&#39;firefly&#39;</span><span class="p">)</span>
+<span class="c1">#could also do fitter.fit_all() which will run all data and all grids!</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Analyze-Single-Best-Fits">
+<h2>Analyze Single Best Fits<a class="headerlink" href="#Analyze-Single-Best-Fits" title="Permalink to this headline">¶</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">fig</span><span class="p">,</span><span class="n">ax</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">plot_best_fit</span><span class="p">([</span><span class="s1">&#39;picaso&#39;</span><span class="p">,</span><span class="s1">&#39;picaso_deq&#39;</span><span class="p">],</span><span class="s1">&#39;firefly&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">best_fit</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">print_best_fit</span><span class="p">(</span><span class="s1">&#39;picaso&#39;</span><span class="p">,</span><span class="s1">&#39;firefly&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">f</span><span class="p">,</span><span class="n">a</span><span class="o">=</span><span class="n">fitter</span><span class="o">.</span><span class="n">plot_posteriors</span><span class="p">(</span><span class="s1">&#39;picaso&#39;</span><span class="p">,</span><span class="s1">&#39;firefly&#39;</span><span class="p">,[</span><span class="s1">&#39;tint&#39;</span><span class="p">,</span><span class="s1">&#39;mh&#39;</span><span class="p">,</span><span class="s1">&#39;cto&#39;</span><span class="p">],</span>
+               <span class="n">x_label_style</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;tint&#39;</span><span class="p">:</span><span class="sa">r</span><span class="s2">&quot;T$_{\rm int}$ [K]&quot;</span><span class="p">,</span>
+                              <span class="s1">&#39;mh&#39;</span><span class="p">:</span><span class="s2">&quot;log[M/H]&quot;</span><span class="p">,</span> <span class="s1">&#39;cto&#39;</span><span class="p">:</span><span class="sa">r</span><span class="s2">&quot;C/O [$\times$Solar]&quot;</span><span class="p">},</span>
+               <span class="n">x_axis_type</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;tint&#39;</span><span class="p">:</span><span class="sa">r</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+                              <span class="s1">&#39;mh&#39;</span><span class="p">:</span><span class="s2">&quot;log&quot;</span><span class="p">,</span> <span class="s1">&#39;cto&#39;</span><span class="p">:</span><span class="sa">r</span><span class="s2">&quot;linear&quot;</span><span class="p">})</span>
+<span class="n">f</span><span class="p">,</span><span class="n">a</span><span class="o">=</span><span class="n">fitter</span><span class="o">.</span><span class="n">plot_posteriors</span><span class="p">(</span><span class="s1">&#39;picaso_deq&#39;</span><span class="p">,</span><span class="s1">&#39;firefly&#39;</span><span class="p">,[</span><span class="s1">&#39;tint&#39;</span><span class="p">,</span><span class="s1">&#39;mh&#39;</span><span class="p">,</span><span class="s1">&#39;cto&#39;</span><span class="p">],</span>
+               <span class="n">x_label_style</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;tint&#39;</span><span class="p">:</span><span class="sa">r</span><span class="s2">&quot;T$_{\rm int}$ [K]&quot;</span><span class="p">,</span>
+                              <span class="s1">&#39;mh&#39;</span><span class="p">:</span><span class="s2">&quot;log[M/H]&quot;</span><span class="p">,</span> <span class="s1">&#39;cto&#39;</span><span class="p">:</span><span class="sa">r</span><span class="s2">&quot;C/O [$\times$Solar]&quot;</span><span class="p">},</span>
+               <span class="n">x_axis_type</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;tint&#39;</span><span class="p">:</span><span class="sa">r</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+                              <span class="s1">&#39;mh&#39;</span><span class="p">:</span><span class="s2">&quot;log&quot;</span><span class="p">,</span> <span class="s1">&#39;cto&#39;</span><span class="p">:</span><span class="sa">r</span><span class="s2">&quot;linear&quot;</span><span class="p">},</span> <span class="n">fig</span><span class="o">=</span><span class="n">f</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">a</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1">#raw posteriors</span>
+<span class="n">fitter</span><span class="o">.</span><span class="n">posteriors</span><span class="p">[</span><span class="s1">&#39;picaso&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Rest-Still-in-Dev!!!">
+<h2>Rest Still in Dev!!!<a class="headerlink" href="#Rest-Still-in-Dev!!!" title="Permalink to this headline">¶</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">stop</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">location</span> <span class="o">=</span> <span class="s2">&quot;/Users/sagnickmukherjee/Documents/research/geers/wasp39b/cld_free&quot;</span>
+<span class="n">opa</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="p">[</span><span class="mf">0.49</span><span class="p">,</span><span class="mf">5.7</span><span class="p">])</span>
+<span class="n">mass</span><span class="p">,</span><span class="n">radius</span> <span class="o">=</span> <span class="mf">0.28</span><span class="p">,</span><span class="mf">1.279</span>
+<span class="n">T_st</span><span class="p">,</span><span class="n">met_st</span><span class="p">,</span><span class="n">logg_st</span><span class="p">,</span><span class="n">radius_st</span> <span class="o">=</span> <span class="mf">5326.6</span><span class="p">,</span><span class="o">-</span><span class="mf">0.03</span><span class="p">,</span><span class="mf">4.38933</span><span class="p">,</span><span class="mf">0.932</span>
+
+
+<span class="n">fig</span><span class="p">,</span><span class="n">ax</span> <span class="o">=</span> <span class="n">plot_contribution</span><span class="p">(</span><span class="n">mass</span><span class="p">,</span><span class="n">radius</span><span class="p">,</span><span class="n">T_st</span><span class="p">,</span><span class="n">met_st</span><span class="p">,</span><span class="n">logg_st</span><span class="p">,</span><span class="n">radius_st</span><span class="p">,</span><span class="n">opa</span><span class="p">,</span><span class="n">location</span><span class="p">,</span><span class="n">filename_pi</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">offset_pi</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">wlgrid_center</span><span class="p">,</span><span class="n">rprs_data2</span><span class="p">,</span><span class="n">e_rprs2</span><span class="p">,</span><span class="n">gas_contribution</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;H2O&#39;</span><span class="p">,</span><span class="s1">&#39;CO2&#39;</span><span class="p">,</span><span class="s1">&#39;CH4&#39;</span><span class="p">,</span><span class="s1">&#39;CO&#39;</span><span class="p">],</span><span class="n">fig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">location</span> <span class="o">=</span> <span class="s2">&quot;/Users/sagnickmukherjee/Documents/research/geers/wasp39b/cld_free&quot;</span>
+<span class="n">opa</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="p">[</span><span class="mf">0.49</span><span class="p">,</span><span class="mf">5.7</span><span class="p">])</span>
+<span class="n">mass</span><span class="p">,</span><span class="n">radius</span> <span class="o">=</span> <span class="mf">0.28</span><span class="p">,</span><span class="mf">1.279</span>
+<span class="n">T_st</span><span class="p">,</span><span class="n">met_st</span><span class="p">,</span><span class="n">logg_st</span><span class="p">,</span><span class="n">radius_st</span> <span class="o">=</span> <span class="mf">5326.6</span><span class="p">,</span><span class="o">-</span><span class="mf">0.03</span><span class="p">,</span><span class="mf">4.38933</span><span class="p">,</span><span class="mf">0.932</span>
+
+
+<span class="n">fig</span><span class="p">,</span><span class="n">ax</span> <span class="o">=</span> <span class="n">plot_contribution</span><span class="p">(</span><span class="n">mass</span><span class="p">,</span><span class="n">radius</span><span class="p">,</span><span class="n">T_st</span><span class="p">,</span><span class="n">met_st</span><span class="p">,</span><span class="n">logg_st</span><span class="p">,</span><span class="n">radius_st</span><span class="p">,</span><span class="n">opa</span><span class="p">,</span><span class="n">location</span><span class="p">,</span><span class="n">filename_pi</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">offset_pi</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">wlgrid_center</span><span class="p">,</span><span class="n">rprs_data2</span><span class="p">,</span><span class="n">e_rprs2</span><span class="p">,</span><span class="n">gas_contribution</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;H2O&#39;</span><span class="p">,</span><span class="s1">&#39;CO2&#39;</span><span class="p">,</span><span class="s1">&#39;CH4&#39;</span><span class="p">,</span><span class="s1">&#39;CO&#39;</span><span class="p">],</span><span class="n">fig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">location</span> <span class="o">=</span> <span class="s2">&quot;/Users/sagnickmukherjee/Documents/research/geers/wasp39b/cldy&quot;</span>
+<span class="n">opa</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="p">[</span><span class="mf">0.49</span><span class="p">,</span><span class="mf">5.7</span><span class="p">])</span>
+<span class="n">mass</span><span class="p">,</span><span class="n">radius</span> <span class="o">=</span> <span class="mf">0.28</span><span class="p">,</span><span class="mf">1.279</span>
+<span class="n">T_st</span><span class="p">,</span><span class="n">met_st</span><span class="p">,</span><span class="n">logg_st</span><span class="p">,</span><span class="n">radius_st</span> <span class="o">=</span> <span class="mf">5326.6</span><span class="p">,</span><span class="o">-</span><span class="mf">0.03</span><span class="p">,</span><span class="mf">4.38933</span><span class="p">,</span><span class="mf">0.932</span>
+
+
+<span class="n">fig</span><span class="p">,</span><span class="n">ax</span> <span class="o">=</span> <span class="n">plot_contribution</span><span class="p">(</span><span class="n">mass</span><span class="p">,</span><span class="n">radius</span><span class="p">,</span><span class="n">T_st</span><span class="p">,</span><span class="n">met_st</span><span class="p">,</span><span class="n">logg_st</span><span class="p">,</span><span class="n">radius_st</span><span class="p">,</span><span class="n">opa</span><span class="p">,</span><span class="n">location</span><span class="p">,</span><span class="n">filename_picld</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">offset_cld</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">wlgrid_center</span><span class="p">,</span><span class="n">rprs_data2</span><span class="p">,</span><span class="n">e_rprs2</span><span class="p">,</span><span class="n">gas_contribution</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;H2O&#39;</span><span class="p">,</span><span class="s1">&#39;CO2&#39;</span><span class="p">,</span><span class="s1">&#39;CH4&#39;</span><span class="p">,</span><span class="s1">&#39;CO&#39;</span><span class="p">],</span><span class="n">fig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;figures/&quot;</span><span class="o">+</span><span class="n">reduction_name</span><span class="o">+</span><span class="s2">&quot;_contribution.pdf&quot;</span><span class="p">,</span><span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">location</span> <span class="o">=</span> <span class="s2">&quot;/Users/sagnickmukherjee/Documents/research/geers/wasp39b/cld_free_photo&quot;</span>
+<span class="n">opa</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="p">[</span><span class="mf">0.49</span><span class="p">,</span><span class="mf">5.7</span><span class="p">])</span>
+<span class="n">mass</span><span class="p">,</span><span class="n">radius</span> <span class="o">=</span> <span class="mf">0.28</span><span class="p">,</span><span class="mf">1.279</span>
+<span class="n">T_st</span><span class="p">,</span><span class="n">met_st</span><span class="p">,</span><span class="n">logg_st</span><span class="p">,</span><span class="n">radius_st</span> <span class="o">=</span> <span class="mf">5326.6</span><span class="p">,</span><span class="o">-</span><span class="mf">0.03</span><span class="p">,</span><span class="mf">4.38933</span><span class="p">,</span><span class="mf">0.932</span>
+
+
+<span class="n">fig</span><span class="p">,</span><span class="n">ax</span> <span class="o">=</span> <span class="n">plot_contribution</span><span class="p">(</span><span class="n">mass</span><span class="p">,</span><span class="n">radius</span><span class="p">,</span><span class="n">T_st</span><span class="p">,</span><span class="n">met_st</span><span class="p">,</span><span class="n">logg_st</span><span class="p">,</span><span class="n">radius_st</span><span class="p">,</span><span class="n">opa</span><span class="p">,</span><span class="n">location</span><span class="p">,</span><span class="n">filename_piph</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">offset_piph</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">wlgrid_center</span><span class="p">,</span><span class="n">rprs_data2</span><span class="p">,</span><span class="n">e_rprs2</span><span class="p">,</span><span class="n">gas_contribution</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;H2O&#39;</span><span class="p">,</span><span class="s1">&#39;CO2&#39;</span><span class="p">,</span><span class="s1">&#39;CH4&#39;</span><span class="p">,</span><span class="s1">&#39;CO&#39;</span><span class="p">],</span><span class="n">fig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

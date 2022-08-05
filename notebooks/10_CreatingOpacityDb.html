@@ -112,6 +112,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../tutorials.html#faqs">FAQs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials.html#model-storage-best-practices">Model Storage Best Practices</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials.html#code-help">Code Help</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#references">References</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../picaso.html">The Code</a></li>
@@ -436,6 +437,7 @@ div.rendered_html tbody tr:hover {
 <h1>Creating Custom Opacity Database<a class="headerlink" href="#Creating-Custom-Opacity-Database" title="Permalink to this headline">¶</a></h1>
 <p>In this notebook we will take users through how to compute an opacity database file using the full high resolution 1460 opacity grid.</p>
 <p>Roxana Lupu has posted a version of this 1460 grid online on Zenodo: <a class="reference external" href="https://zenodo.org/record/6600976#.YtcFguzMI6E">https://zenodo.org/record/6600976#.YtcFguzMI6E</a></p>
+<p>Roxana’s file at 1 <span class="math notranslate nohighlight">\(\mu\)</span>m is R~100k. This makes it suitable for data up to R~10K at 1 <span class="math notranslate nohighlight">\(\mu\)</span>m.</p>
 <p>Coming soon, we will also be posting original LBL calculations via the MAESTRO collaboration on a MAESTRO Zenodo community and NASA hosted website.</p>
 <p>In the meantime, please contact the developers for access to certain raw data.</p>
 <div class="nbinput nblast docutils container">
@@ -480,7 +482,6 @@ div.rendered_html tbody tr:hover {
 <span></span><span class="c1">#this is where your opacity file should be located if you&#39;ve set your environments correctly</span>
 <span class="n">min_wavelength</span> <span class="o">=</span> <span class="mf">0.3</span>
 <span class="n">max_wavelength</span> <span class="o">=</span> <span class="mi">15</span>
-<span class="n">newR</span><span class="o">=</span><span class="mi">50000</span>
 <span class="n">oldR</span><span class="o">=</span><span class="mf">1e6</span> <span class="c1">#this should be near the value of the LBL calculations</span>
 <span class="c1">#the routine works by first interpolating the LBL calculations uniformly to this opacity</span>
 <span class="c1">#then they are resampled to the new resolution requested by the user</span>
@@ -492,8 +493,7 @@ div.rendered_html tbody tr:hover {
                   <span class="s1">&#39;HCN&#39;</span> <span class="p">,</span> <span class="s1">&#39;LiF&#39;</span>  <span class="p">,</span> <span class="s1">&#39;MgH&#39;</span> <span class="p">,</span> <span class="s1">&#39;NH3&#39;</span> <span class="p">,</span> <span class="s1">&#39;PH3&#39;</span> <span class="p">,</span> <span class="s1">&#39;TiH&#39;</span> <span class="p">,</span> <span class="s1">&#39;VO&#39;</span><span class="p">,</span>
                   <span class="s1">&#39;Na&#39;</span><span class="p">,</span><span class="s1">&#39;K&#39;</span><span class="p">,</span><span class="s1">&#39;Rb&#39;</span><span class="p">,</span><span class="s1">&#39;Cs&#39;</span><span class="p">,</span><span class="s1">&#39;Li&#39;</span><span class="p">,</span><span class="s1">&#39;O2&#39;</span><span class="p">,</span><span class="s1">&#39;O3&#39;</span><span class="p">]</span>
 
-<span class="c1">#new database name</span>
-<span class="n">new_db</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;/data2/picaso_dbs/all_opacities_</span><span class="si">{imin}</span><span class="s1">_</span><span class="si">{imax}</span><span class="s1">_R</span><span class="si">{iR}</span><span class="s1">.db&#39;</span>
+
 </pre></div>
 </div>
 </div>
@@ -582,28 +582,59 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">opa_fac</span><span class="o">.</span><span class="n">build_skeleton</span><span class="p">(</span><span class="n">new_db</span><span class="p">)</span>
+<span></span><span class="n">opa_fac</span><span class="o">.</span><span class="n">build_skeleton</span><span class="p">(</span><span class="s1">&#39;test.db&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
 <div class="section" id="Step-2:-Insert-Molecular-opacity">
 <h2>Step 2: Insert Molecular opacity<a class="headerlink" href="#Step-2:-Insert-Molecular-opacity" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="Option-1:-my-data-is-low-resolution-R&lt;300">
+<h3>Option 1: my data is low resolution R&lt;300<a class="headerlink" href="#Option-1:-my-data-is-low-resolution-R<300" title="Permalink to this headline">¶</a></h3>
+<p>If your data is at low resolution then you can proceed with what is below by resamplig the Lupu files to a lower resolution (R=20k)</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="k">for</span> <span class="n">molecule</span> <span class="ow">in</span> <span class="n">molecules_1460</span><span class="p">:</span><span class="c1">#molecules_1460:</span>
+<span></span><span class="n">newR</span><span class="o">=</span><span class="mi">20000</span>
+<span class="c1">#new database name</span>
+<span class="n">new_db</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;/data2/picaso_dbs/all_opacities_</span><span class="si">{min_wavelength}</span><span class="s1">_</span><span class="si">{max_wavelength}</span><span class="s1">_R</span><span class="si">{newR}</span><span class="s1">.db&#39;</span>
+<span class="n">opa_fac</span><span class="o">.</span><span class="n">build_skeleton</span><span class="p">(</span><span class="n">new_db</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">molecule</span> <span class="ow">in</span> <span class="n">molecules_1460</span><span class="p">:</span><span class="c1">#molecules_1460:</span>
     <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Inserting: &#39;</span><span class="o">+</span><span class="n">molecule</span><span class="p">)</span>
-    <span class="n">new_waveno_grid</span> <span class="o">=</span> <span class="n">opa_fac</span><span class="o">.</span><span class="n">insert_molecular_1460</span><span class="p">(</span><span class="n">molecule</span><span class="p">,</span> <span class="n">imin</span><span class="p">,</span> <span class="n">imax</span><span class="p">,</span> <span class="n">og_directory</span><span class="p">,</span> <span class="n">new_db</span><span class="p">,</span>
+    <span class="n">new_waveno_grid</span> <span class="o">=</span> <span class="n">opa_fac</span><span class="o">.</span><span class="n">insert_molecular_1460</span><span class="p">(</span><span class="n">molecule</span><span class="p">,</span> <span class="n">min_wavelength</span><span class="p">,</span> <span class="n">max_wavelength</span><span class="p">,</span> <span class="n">og_directory</span><span class="p">,</span> <span class="n">new_db</span><span class="p">,</span>
                                                     <span class="c1">#SEE CHOICE HERE!!!!</span>
                                                     <span class="n">new_R</span><span class="o">=</span><span class="n">newR</span><span class="p">,</span> <span class="c1">#new_dwno=new_dwno,</span>
                                                     <span class="n">alkali_dir</span><span class="o">=</span><span class="n">alkalis_dir</span><span class="p">,</span>
             <span class="n">dir_kark_ch4</span><span class="o">=</span><span class="n">dir_kark</span><span class="p">,</span> <span class="n">dir_optical_o3</span><span class="o">=</span><span class="n">dir_o3</span><span class="p">,</span> <span class="n">old_R</span><span class="o">=</span><span class="n">old_R</span><span class="p">)</span> <span class="c1">#these two parameters are used to hack in extra cross sections into the db</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">molecule</span><span class="o">+</span> <span class="s1">&#39; inserts finished in :&#39;</span> <span class="o">+</span><span class="nb">str</span><span class="p">((</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span><span class="o">/</span><span class="mf">60.0</span><span class="p">)[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39; minutes&#39;</span><span class="p">)</span>
 </pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Option-2:-my-data-is-at-high-resolution-R=10k">
+<h3>Option 2: my data is at high resolution R=10k<a class="headerlink" href="#Option-2:-my-data-is-at-high-resolution-R=10k" title="Permalink to this headline">¶</a></h3>
+<p>At high resolution you will need to use the Lupu files with their direct interpolated wavelenght solution. This will not do any resampling and will just insert their opacity data into the picaso database.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">new_db</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;/data2/picaso_dbs/lupu_</span><span class="si">{min_wavelength}</span><span class="s1">_</span><span class="si">{max_wavelength}</span><span class="s1">_R</span><span class="si">{newR}</span><span class="s1">.db&#39;</span>
+<span class="n">opa_fac</span><span class="o">.</span><span class="n">build_skeleton</span><span class="p">(</span><span class="n">new_db</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">molecule</span> <span class="ow">in</span> <span class="n">molecules_1460</span><span class="p">:</span><span class="c1">#molecules_1460:</span>
+    <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Inserting: &#39;</span><span class="o">+</span><span class="n">molecule</span><span class="p">)</span>
+    <span class="n">new_waveno_grid</span> <span class="o">=</span> <span class="n">opa_fac</span><span class="o">.</span><span class="n">insert_molecular_1460</span><span class="p">(</span><span class="n">molecule</span><span class="p">,</span> <span class="n">min_wavelength</span><span class="p">,</span> <span class="n">max_wavelength</span><span class="p">,</span> <span class="n">og_directory</span><span class="p">,</span> <span class="n">new_db</span><span class="p">,</span>
+                                                    <span class="c1">#SEE CHOICE HERE!!!!</span>
+                                                    <span class="n">insert_direct</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                                    <span class="n">alkali_dir</span><span class="o">=</span><span class="n">alkalis_dir</span><span class="p">,</span>
+            <span class="n">dir_kark_ch4</span><span class="o">=</span><span class="n">dir_kark</span><span class="p">,</span> <span class="n">dir_optical_o3</span><span class="o">=</span><span class="n">dir_o3</span><span class="p">)</span> <span class="c1">#these two parameters are used to hack in extra cross sections into the db</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">molecule</span><span class="o">+</span> <span class="s1">&#39; inserts finished in :&#39;</span> <span class="o">+</span><span class="nb">str</span><span class="p">((</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span><span class="o">/</span><span class="mf">60.0</span><span class="p">)[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39; minutes&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
 </div>
 </div>
 </div>
