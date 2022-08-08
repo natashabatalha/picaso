@@ -564,9 +564,9 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     for i in taus_by_species.keys(): 
         at_pressure_array[i] = find_press(at_tau, cumsum_taus[i], shape[1], pressure)
 
-    return {'taus_by_species':taus_by_species, 
+    return {'taus_per_layer':taus_by_species, 
             'cumsum_taus':cumsum_taus, 
-            'at_pressure_array':at_pressure_array}
+            'tau_p_surface':at_pressure_array}
 
 @njit()
 def find_press(at_tau, a, b, c):

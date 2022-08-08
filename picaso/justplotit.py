@@ -1483,7 +1483,7 @@ def molecule_contribution(contribution_out, opa, min_pressure=4.5, R=100, **kwar
     ----------
     contribution_out : dict
         contribution_out from jdi.get_contribution. 
-        This function will grab contribution_out['at_pressure_array']
+        This function will grab contribution_out['tau_p_surface']
         Pressure vs. wavelength optical depth surface at tau specified by user in 
         get_contribution function (user input for at_tau)
         
@@ -1511,7 +1511,7 @@ def molecule_contribution(contribution_out, opa, min_pressure=4.5, R=100, **kwar
     kwargs['y_range'] = kwargs.get('y_range',[1e2,1e-4])
     kwargs['title'] = kwargs.get('title','User Input Tau Pressure Surface')
 
-    tau_p_surface = contribution_out['at_pressure_array']
+    tau_p_surface = contribution_out['tau_p_surface']
     wno=[]
     spec=[]
     labels=[]
