@@ -244,12 +244,17 @@ class GridFitter():
         self.rank[grid_name] = self.rank.get(grid_name, {data_name:np.zeros(shape=(nmodels))})
         self.posteriors[grid_name] = self.posteriors.get(grid_name, {data_name:{}})
 
+        #make sure nothing existing is overwritten 
+        self.chi_sqs[grid_name][data_name] = self.chi_sqs[grid_name].get(data_name, np.zeros(shape=(nmodels)))
+        self.best_fits[grid_name][data_name]  = self.best_fits[grid_name].get(data_name,np.zeros(shape=(nmodels,len(wlgrid_center))))
+        self.rank[grid_name][data_name]  = self.rank[grid_name].get(data_name,np.zeros(shape=(nmodels)))
+        self.posteriors[grid_name][data_name]  = self.posteriors[grid_name].get(data_name,{})
 
         if offset: 
 
             self.offsets =  getattr(self, 'offsets',{grid_name:{data_name:np.zeros(nmodels) }})
             self.offsets[grid_name] = self.offsets.get(grid_name, {data_name:np.zeros(shape=(nmodels))})
-
+            self.offsets[grid_name][data_name] = self.offsets.get(data_name,np.zeros(shape=(nmodels)))
             self.overview[grid_name]['num_params'] = self.overview[grid_name]['num_params'] + 1
 
         numparams = self.overview[grid_name]['num_params']
