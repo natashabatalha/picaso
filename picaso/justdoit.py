@@ -156,6 +156,12 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     no_opacities = [i for i in atm.molecules if i not in opacityclass.molecules]
     atm.add_warnings('No computed opacities for: '+','.join(no_opacities))
     atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
+    query_method = inputs['opacities'].get('query',0)
+
+    if query_method == 0: 
+        get_opacities = opacityclass.get_opacities_nearest
+    elif query_method == 1:
+        get_opacities = opacityclass.get_opacities
 
     nlevel = atm.c.nlevel
     nlayer = atm.c.nlayer
@@ -163,7 +169,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
     if dimension == '1d':
         #lastly grab needed opacities for the problem
-        opacityclass.get_opacities(atm)
+        get_opacities(atm)
         #only need to get opacities for one pt profile
 
         #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
@@ -270,7 +276,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                 #diesct just a subsection to get the opacity 
                 atm_1d.disect(g,t)
 
-                opacityclass.get_opacities(atm_1d)
+                get_opacities(atm_1d)
 
                 dtau, tau, w0, cosb,ftau_cld, ftau_ray, gcos2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, WO_no_raman = compute_opacity(
                     atm_1d, opacityclass, ngauss=ngauss, stream=stream,delta_eddington=delta_eddington,
@@ -526,12 +532,18 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     no_opacities = [i for i in atm.molecules if i not in opacityclass.molecules]
     atm.add_warnings('No computed opacities for: '+','.join(no_opacities))
     atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
+    query_method = inputs['opacities'].get('query',0)
+
+    if query_method == 0: 
+        get_opacities = opacityclass.get_opacities_nearest
+    elif query_method == 1:
+        get_opacities = opacityclass.get_opacities
 
     nlevel = atm.c.nlevel
     nlayer = atm.c.nlayer
     
     #lastly grab needed opacities for the problem
-    opacityclass.get_opacities(atm)
+    get_opacities(atm)
     #only need to get opacities for one pt profile
 
     #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
@@ -2716,7 +2728,7 @@ class inputs():
 
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='none',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
-        p_reference=1,method='Toon', stream=2):
+        p_reference=1,method='Toon', stream=2, query='nearest_neighbor'):
         """
         This function sets all the default approximations in the code. It transforms the string specificatons
         into a number so that they can be used in numba nopython routines. 
@@ -2748,6 +2760,10 @@ class inputs():
             Toon ('Toon') or spherical harmonics ('SH'). 
         stream : int 
             Two stream or four stream (options are 2 or 4). For 4 stream need to set method='SH'
+        query : str 
+            method to grab opacities. either "nearest_neighbor" or "interp" which 
+            interpolates based on 4 nearest neighbors. Default is nearest_neighbor
+            which is significantly faster.
         """
 
         self.inputs['approx']['single_phase'] = single_phase_options(printout=False).index(single_phase)
@@ -2756,7 +2772,8 @@ class inputs():
         self.inputs['approx']['raman'] =  raman_options().index(raman)
         self.inputs['approx']['method'] = method
         self.inputs['approx']['stream'] = stream
- 
+        self.inputs['opacities']['query'] = query_options().index(query)
+
         if isinstance(tthg_frac, (list, np.ndarray)):
             if len(tthg_frac) == 3:
                 self.inputs['approx']['TTHG_params']['fraction'] = tthg_frac
@@ -3090,6 +3107,9 @@ def multi_phase_options(printout=True):
 def raman_options():
     """Retrieve options for raman scattering approximtions"""
     return ["oklopcic","pollack","none"]
+def query_options():
+    """Retrieve options for querying opacities """
+    return ["nearest_neighbor","interp"]
 
 def evolution_track(mass=1, age='all'):
     """
