@@ -591,6 +591,20 @@ class ATMSETUP():
             df['reflected_unit'] = 'albedo'
         except:
             pass 
+
+        try: 
+            x =  self.flux
+            df['flux'] = x
+            df['reflected_unit'] = 'albedo'
+        except:
+            pass 
+
+        try: 
+            x =  self.int_layer
+            df['int_layer'] = x
+            df['reflected_unit'] = 'albedo'
+        except:
+            pass 
     
 
         try: 

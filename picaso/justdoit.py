@@ -1,5 +1,5 @@
 from .atmsetup import ATMSETUP
-from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_new, get_transit_1d
+from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_new, get_transit_1d, get_thermal_new
 from .wavelength import get_cld_input_grid
 from .optics import RetrieveOpacities,compute_opacity,RetrieveCKs
 from .disco import get_angles_1d, get_angles_3d, compute_disco, compress_disco, compress_thermal
@@ -84,7 +84,12 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     raman_approx =inputs['approx']['raman']
     method = inputs['approx']['method']
     stream = inputs['approx']['stream']
+    approximation = inputs['approx']['Toon_coefficients']
     tridiagonal = 0 
+    input_dir = inputs['approx']['input_dir']
+    psingle = inputs['approx']['psingle']
+    rayleigh = inputs['approx']['rayleigh']
+
 
     #parameters needed for the two term hg phase function. 
     #Defaults are set in config.json
@@ -115,10 +120,14 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     lat, lon = geom['latitude'], geom['longitude']
     cos_theta = geom['cos_theta']
     ubar0, ubar1 = geom['ubar0'], geom['ubar1']
+   # ubar1 = np.array([[-.99999],[-0.5],[0.5],[1.]])
+   # ubar0 = np.array([[1/np.sqrt(2)],[1/np.sqrt(2)],[1/np.sqrt(2)],[1/np.sqrt(2)]])
+   # ng = 4; nt = 1
 
     #set star parameters
     radius_star = inputs['star']['radius']
     F0PI = np.zeros(nwno) + 1.
+    b_top = 0.
     #semi major axis
     sa = inputs['star']['semi_major']
 
@@ -174,32 +183,36 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             full_output=full_output, plot_opacity=plot_opacity)
         
         if  'reflected' in calculation:
-            #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
             xint_at_top = 0 
             for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
                 nlevel = atm.c.nlevel
                 if method == 'SH':
-                    xint = get_reflected_new(nlevel, nwno, ng, nt, 
+                    (xint, flux_out, intensity)  = get_reflected_new(nlevel, wno, nwno, ng, nt, 
                                     DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig], 
                                     GCOS2[:,:,ig], ftau_cld[:,:,ig], ftau_ray[:,:,ig],
                                     DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig], 
                                     atm.surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
-                                    single_phase, multi_phase, 
+                                    single_phase, rayleigh, 
                                     frac_a, frac_b, frac_c, constant_back, constant_forward, 
-                                    dimension, stream, print_time) #LCM is carrying this bug
+                                    1, stream, b_top=b_top, psingle=psingle) #LCM is carrying this bug
                 else:
-                    xint = get_reflected_1d(nlevel, wno,nwno,ng,nt,
+                    (xint, flux_out, intensity) = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                     DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
                                     GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
                                     DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
                                     atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
                                     single_phase,multi_phase,
-                                    frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)
+                                    frac_a,frac_b,frac_c,constant_back,constant_forward, approximation,
+                                    b_top=b_top)
+                                    #frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)
                 #add guass for ck
                 xint_at_top += xint*gauss_wts[ig]
+
             #if full output is requested add in xint at top for 3d plots
             if full_output: 
                 atm.xint_at_top = xint_at_top
+                atm.flux= flux_out
+                atm.int_layer = intensity
 
 
         if 'thermal' in calculation:
@@ -210,16 +223,31 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                 
                 #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
                 #the uncorrected raman single scattering 
-                flux  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
-                                            DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
-                                            atm.level['pressure'],ubar1,
-                                            atm.surf_reflect, atm.hard_surface, tridiagonal)
+                if method == 'Toon':
+                    (flux, intensity, flux_out)  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
+                                                        DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
+                                                        atm.level['pressure'],ubar1,
+                                                        atm.surf_reflect, atm.hard_surface, tridiagonal)
+                elif method == 'SH':
+                    thermal_calculation = inputs['approx']['thermal_calculation']
+                    (flux, intensity, flux_out) = get_thermal_new(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
+                                                DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig], 
+                                                DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], 
+                                                W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
+                                                atm.level['pressure'], ubar1, 
+                                                constant_forward,constant_back,frac_a,frac_b,frac_c,
+                                                atm.surf_reflect, 
+                                                single_phase, dimension, stream, atm.hard_surface, 
+                                                calculation=thermal_calculation)
+
                 #add guass for ck
                 flux_at_top += flux*gauss_wts[ig]
                 
             #if full output is requested add in flux at top for 3d plots
             if full_output: 
                 atm.flux_at_top = flux_at_top
+                atm.intensity = intensity
+
         
         if 'transmission' in calculation:
             rprs2 = 0 
@@ -350,6 +378,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     if  ('reflected' in calculation):
         albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
         returns['albedo'] = albedo 
+        returns['xint_at_top'] = xint_at_top 
+        returns['intensity'] = intensity 
         #see equation 18 Batalha+2019 PICASO 
         returns['bond_albedo'] = (np.trapz(x=1/wno, y=albedo*opacityclass.unshifted_stellar_spec)/
                                     np.trapz(x=1/wno, y=opacityclass.unshifted_stellar_spec))
@@ -368,6 +398,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     if ('thermal' in calculation):
         thermal = compress_thermal(nwno,flux_at_top, gweight, tweight)
         returns['thermal'] = thermal
+        returns['xint_at_top'] = flux_at_top 
+        returns['intensity'] = intensity 
+        returns['flux'] = flux_out 
+        returns['tau'] = TAU 
         returns['effective_temperature'] = (np.trapz(x=1/wno[::-1], y=thermal[::-1])/5.67e-5)**0.25
 
         if full_output: 
@@ -400,6 +434,19 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         else:
             returns['full_output'] = atm
 
+    if input_dir != None:
+        filename = input_dir 
+        pk.dump({'pressure': atm.level['pressure'], 'temperature': atm.level['temperature'], 
+            'nlevel':nlevel, 'wno':wno, 'nwno':nwno, 'ng':ng, 'nt':nt, 
+            'dtau':DTAU, 'tau':TAU, 'w0':W0, 'cosb':COSB, 'gcos2':GCOS2,'ftcld':ftau_cld,'ftray': ftau_ray,
+            'dtau_og':DTAU_OG, 'tau_og':TAU_OG, 'w0_og':W0_OG, 'cosb_og':COSB_OG, 
+            'surf_reflect':atm.surf_reflect, 'ubar0':ubar0, 'ubar1':ubar1, 'costheta':cos_theta, 'F0PI':F0PI, 
+            'single_phase':single_phase, 'multi_phase':multi_phase, 
+            'frac_a':frac_a, 'frac_b':frac_b, 'frac_c':frac_c, 'constant_back':constant_back, 
+            'constant_forward':constant_forward, 'dim':dimension, 'stream':stream,
+            #'xint_at_top': xint_at_top, 'albedo': albedo, 'flux': flux_out, 'xint': intensity, 'b_top': b_top,
+            'xint_at_top': flux_at_top, 'flux': flux_out, 'xint': intensity, 'b_top': b_top,
+            'gweight': gweight, 'tweight': tweight, 'gangle': gangle, 'tangle': tangle}, open(filename,'wb'), protocol=2)
     return returns
 
 
@@ -2724,7 +2771,8 @@ class inputs():
 
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='none',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
-        p_reference=1,method='Toon', stream=2):
+        p_reference=1, method='Toon', stream=2, thermal_calculation=1, Toon_coefficients="quadrature",
+        input_dir=None, psingle='og', rayleigh='off'):
         """
         This function sets all the default approximations in the code. It transforms the string specificatons
         into a number so that they can be used in numba nopython routines. 
@@ -2756,6 +2804,9 @@ class inputs():
             Toon ('Toon') or spherical harmonics ('SH'). 
         stream : int 
             Two stream or four stream (options are 2 or 4). For 4 stream need to set method='SH'
+        Toon_coefficients: str
+            Decide whether to use Quadrature ("quadrature") or Eddington ("eddington") schemes
+            to define Toon coefficients in two-stream approximation (see Table 1 in Toon et al 1989)
         """
 
         self.inputs['approx']['single_phase'] = single_phase_options(printout=False).index(single_phase)
@@ -2763,7 +2814,11 @@ class inputs():
         self.inputs['approx']['delta_eddington'] = delta_eddington
         self.inputs['approx']['raman'] =  raman_options().index(raman)
         self.inputs['approx']['method'] = method
-        self.inputs['approx']['stream'] = stream
+        if method == 'Toon':
+                self.inputs['approx']['stream'] = 2 # having method="Toon" and stream=4 messes up delta-eddington stuff
+        else:
+                self.inputs['approx']['stream'] = stream
+        self.inputs['approx']['Toon_coefficients'] = coefficients_options(printout=False).index(Toon_coefficients)
  
         if isinstance(tthg_frac, (list, np.ndarray)):
             if len(tthg_frac) == 3:
@@ -2777,6 +2832,10 @@ class inputs():
         self.inputs['approx']['TTHG_params']['constant_forward']=tthg_forward
 
         self.inputs['approx']['p_reference']= p_reference
+        self.inputs['approx']['input_dir'] = input_dir
+        self.inputs['approx']['thermal_calculation'] = thermal_calculation
+        self.inputs['approx']['psingle'] = psingle_options(printout=False).index(psingle)
+        self.inputs['approx']['rayleigh'] = rayleigh_options(printout=False).index(rayleigh)
     
     def phase_curve(self, opacityclass,  full_output=False, 
         plot_opacity= False,n_cpu =1 ): 
@@ -3090,7 +3149,7 @@ def HJ_cld():
 def single_phase_options(printout=True):
     """Retrieve all the options for direct radation"""
     if printout: print("Can also set functional form of forward/back scattering in approx['TTHG_params']")
-    return ['cahoy','OTHG','TTHG','TTHG_ray']
+    return ['cahoy','OTHG','TTHG','TTHG_ray','heng']
 def multi_phase_options(printout=True):
     """Retrieve all the options for multiple scattering radiation"""
     if printout: print("Can also set delta_eddington=True/False in approx['delta_eddington']")
@@ -3221,4 +3280,13 @@ def stream_options(printout=True):
     """Retrieve all the options for stream"""
     if printout: print("Can use 2-stream or 4-stream sperhical harmonics")
     return [2,4]
+def coefficients_options(printout=True):
+    """Retrieve options for coefficients used in Toon calculation"""
+    return ["quadrature","eddington"]
+def psingle_options(printout=True):
+    """Retrieve options for psingle approximation"""
+    return ['og','new']
+def rayleigh_options(printout=True):
+    """Retrieve options for rayleigh scattering"""
+    return ['off','on']
 
