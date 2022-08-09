@@ -1102,19 +1102,6 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                                 (gcos2))
             elif single_phase==1:#'OTHG':
                 p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
-                #def P(mu): # Legendre polynomials
-                #    return [1, mu, (3*mu**2 - 1)/2, (5*mu**3 - 3*mu)/2,
-                #            (35*mu**4 - 30*mu**2 + 3)/8, 
-                #            (63*mu**5 - 70*mu**3 + 15*mu)/8, 
-                #            (231*mu**6 - 315*mu**4 + 105*mu**2 - 5)/16 ]
-                #maxterm = 7
-                #for l in range(maxterm):
-                #    from scipy.special import legendre
-                #    ff = cosb_og**maxterm
-                #    w_temp = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
-                #    Pn = legendre(l)
-                #    p_single = p_single + w_temp * Pn(-u0)*Pn(u1)
-                #    #p_single = p_single + w_temp * P(-u0)[l]*P(u1)[l]
             elif single_phase==2:#'TTHG':
                 #Phase function for single scattering albedo frum Solar beam
                 #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
@@ -2057,8 +2044,6 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
             if single_phase==1:#'OTHG':
                 for l in range(1,stream):
                     w_multi[l,:,:] = (2*l+1) * (cosb_og**l - ff) / (1 - ff)
-                    #cosb_iso = 0.0
-                    #w_multi[l,:,:] = (2*l+1) * cosb_iso**l 
                     w_single[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
 
                 # OG psingle calculation
@@ -2069,8 +2054,6 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
                 #Phase function for single scattering albedo frum Solar beam
                 #uses the Two term Henyey-Greenstein function
                 for l in range(1,stream):
-                    #cosb_iso = 0.0
-                    #w_multi[l,:,:] = (2*l+1) * cosb_iso**l 
                     w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff1) 
                                         + (1-f)*(g_back**l - ff2) / (1 - ff1))
                     w_single[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff2) 
@@ -2083,36 +2066,17 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
                                 #second term of TTHG: backward scattering
                                 +(1-f)*(1-g_back**2) /sqrt((1+g_back**2+2*g_back*cos_theta)**3))
 
-            #elif single_phase==3:#'TTHG_ray':
-            #    # not happy with Rayleigh, not getting the same inclusion in multiscattering as picaso
-            #    for l in range(1,stream):
-            #        w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff1) 
-            #                            + (1-f)*(g_back**l - ff2) / (1 - ff1))
-            #        w_single[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff2) 
-            #                            + (1-f)*(g_back**l - ff2) / (1 - ff2))
 
-            #        if l==2:
-            #            w_single[2] = w_single[2] + 0.5*ftau_ray
-            #            w_multi[2] = w_multi[2] + 0.5*ftau_ray
-
-            #    # OG psingle calculation
-            #    if psingle==0:
-            #        p_single=(ftau_cld*(f * (1-g_forward**2)
-            #                                    /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
-            #                                    #second term of TTHG: backward scattering
-            #                                    +(1-f)*(1-g_back**2)
-            #                                    /sqrt((1+g_back**2+2*g_back*cos_theta)**3))+            
-            #                                    #rayleigh phase function
-            #                                    ftau_ray*(0.75*(1+cos_theta**2.0)))
-
-            elif single_phase==4:#'heng' isotropic multi, pure rayleigh single 
-                w_single[1:]*=0.0
+            elif single_phase==4:#'heng' isotropic multi
+                # force isotropic multiple scattering
                 w_multi[1:]*=0.0
-                w_single[2] = 0.5#*ftau_ray
+                if rayleigh==1:
+                    # force pure rayleigh single scattering
+                    w_single[1:]*=0.0
+                    w_single[2] = 0.5#*ftau_ray
 
                 # OG psingle calculation
-                if psingle==0:
-                    p_single = 0.75*(1+cos_theta**2.0)
+                if psingle==0: p_single = 0.75*(1+cos_theta**2.0)
 
             if rayleigh==1 and single_phase!=4:
                 for l in range(1,stream):
@@ -2222,13 +2186,7 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     else:
         b_surface = pi*(all_b[-1,:] + b1[-1,:]*mu1)  #(for non terrestrial)
 
-    #print('hard_surface=',hard_surface)
-    if SH4_BC==0:
-        #print("OG BC")
-        b_surface_SH4 = (-pi*all_b[-1,:]/4 )
-    else:
-        #print("test BC")
-        b_surface_SH4 = (-b_surface )
+    b_surface_SH4 = (-pi*all_b[-1,:]/4 )
 
     #if single_phase==1:#'OTHG':
     if np.array_equal(cosb,cosb_og):

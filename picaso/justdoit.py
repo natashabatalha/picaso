@@ -89,7 +89,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     input_dir = inputs['approx']['input_dir']
     psingle = inputs['approx']['psingle']
     rayleigh = inputs['approx']['rayleigh']
-    #input_dir=None
 
 
     #parameters needed for the two term hg phase function. 
@@ -230,7 +229,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                                         atm.surf_reflect, atm.hard_surface, tridiagonal)
                 elif method == 'SH':
                     thermal_calculation = inputs['approx']['thermal_calculation']
-                    #SH4_BC = inputs['approx']['SH4_BC']
                     (flux, intensity, flux_out) = get_thermal_new(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
                                                 DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig], 
                                                 DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], 
@@ -240,7 +238,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                                 atm.surf_reflect, 
                                                 single_phase, dimension, stream, atm.hard_surface, 
                                                 calculation=thermal_calculation)
-                                                #, SH4_BC=SH4_BC)
 
                 flux_at_top += flux*gauss_wts[ig]
                 
@@ -434,8 +431,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             returns['full_output'] = atm
 
     if input_dir != None:
-        filename = input_dir #+ 'output.pk' #/Users/crooney/Documents/codes/picaso/docs/notebooks/input_data.pk'
-        # change other codes to suit this filename, don't change it here
+        filename = input_dir 
         pk.dump({'pressure': atm.level['pressure'], 'temperature': atm.level['temperature'], 
             'nlevel':nlevel, 'wno':wno, 'nwno':nwno, 'ng':ng, 'nt':nt, 
             'dtau':DTAU, 'tau':TAU, 'w0':W0, 'cosb':COSB, 'gcos2':GCOS2,'ftcld':ftau_cld,'ftray': ftau_ray,
@@ -2738,7 +2734,6 @@ class inputs():
         self.inputs['approx']['p_reference']= p_reference
         self.inputs['approx']['input_dir'] = input_dir
         self.inputs['approx']['thermal_calculation'] = thermal_calculation
-#        self.inputs['approx']['SH4_BC'] = SH4_BC
         self.inputs['approx']['psingle'] = psingle_options(printout=False).index(psingle)
         self.inputs['approx']['rayleigh'] = rayleigh_options(printout=False).index(rayleigh)
     
