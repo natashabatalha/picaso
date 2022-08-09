@@ -2025,7 +2025,7 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
                 ff = 0.*cosb_og
             else:
                 ff = cosb_og**stream
-            p_single = ones(cosb_og.shape)
+            p_single = zeros(cosb_og.shape)
 
             if single_phase!=1: 
                 g_forward = constant_forward*cosb_og
