@@ -204,7 +204,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                     single_phase,multi_phase,
                                     frac_a,frac_b,frac_c,constant_back,constant_forward, approximation,
                                     b_top=b_top)
-
+                                    #frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)
+                #add guass for ck
                 xint_at_top += xint*gauss_wts[ig]
 
             #if full output is requested add in xint at top for 3d plots
@@ -239,6 +240,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                                 single_phase, dimension, stream, atm.hard_surface, 
                                                 calculation=thermal_calculation)
 
+                #add guass for ck
                 flux_at_top += flux*gauss_wts[ig]
                 
             #if full output is requested add in flux at top for 3d plots
@@ -332,28 +334,30 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             atm.tauray = TAURAY_3d
 
         if  'reflected' in calculation:
-
+            xint_at_top=0
             for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
                 #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-                xint_at_top  = get_reflected_3d(nlevel, wno,nwno,ng,nt,
+                xint  = get_reflected_3d(nlevel, wno,nwno,ng,nt,
                                                 DTAU_3d[:,:,:,:,ig], TAU_3d[:,:,:,:,ig], W0_3d[:,:,:,:,ig], COSB_3d[:,:,:,:,ig],GCOS2_3d[:,:,:,:,ig],
                                                 FTAU_CLD_3d[:,:,:,:,ig],FTAU_RAY_3d[:,:,:,:,ig],
                                                 DTAU_OG_3d[:,:,:,:,ig], TAU_OG_3d[:,:,:,:,ig], W0_OG_3d[:,:,:,:,ig], COSB_OG_3d[:,:,:,:,ig],
                                                 atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
                                                 single_phase,multi_phase,
                                                 frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)
+                xint_at_top += xint*gauss_wts[ig]
                 #if full output is requested add in xint at top for 3d plots
             if full_output: 
                 atm.xint_at_top = xint_at_top
 
         elif 'thermal' in calculation:
+            flux_at_top=0
             for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
                 #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
                 #the uncorrected raman single scattering 
-                flux_at_top  = get_thermal_3d(nlevel, wno,nwno,ng,nt,TLEVEL_3d,
+                flux  = get_thermal_3d(nlevel, wno,nwno,ng,nt,TLEVEL_3d,
                                             DTAU_OG_3d[:,:,:,:,ig], W0_no_raman_3d[:,:,:,:,ig], COSB_OG_3d[:,:,:,:,ig], 
                                             PLEVEL_3d,ubar1, atm.surf_reflect, atm.hard_surface, tridiagonal)
-
+                flux_at_top += flux*gauss_wts[ig]
             #if full output is requested add in flux at top for 3d plots
             if full_output: 
                 atm.flux_at_top = flux_at_top
@@ -1207,7 +1211,7 @@ class inputs():
         self.inputs['approx']['raman'] = 2
 
         self.chem_interp(opa.full_abunds)
-    def premix_atmosphere_nearest_old(self, opa, df=None, filename=None, **pd_kwargs):
+    def premix_atmosphere_nearest_deprecate(self, opa, df=None, filename=None, **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
         Sets number of layers in model.  
@@ -1321,7 +1325,7 @@ class inputs():
             self.chemeq_visscher(c_o=1.0,log_mh=0.0)
         self.inputs['atmosphere']['sonora_filename'] = build_filename
         self.nlevel = ptchem.shape[0]
-    def deprecate_chemeq(self, CtoO, Met):
+    def chemeq_deprecate(self, CtoO, Met):
         """
         This interpolates from a precomputed grid of CEA runs (run by M.R. Line)
 
@@ -1800,6 +1804,76 @@ class inputs():
                 ds['temperature'].isel(pressure=iz_plot).plot(x ='lon')
 
         self.inputs['atmosphere']['profile'] = ds 
+
+    def premix_3d(self, opa, n_cpu=1): 
+        """
+        You must have already ran atmosphere_3d or pre-defined an xarray gcm 
+        before running this function. 
+
+        This function will post-process sonora chemical equillibrium 
+        chemistry onto your 3D grid. 
+
+        CURRENT options 
+        log m/h: 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
+        C/O: 0.5X, 1.0X, 1.5X, 2.0X, 2.5X
+
+        Parameters
+        ----------
+        c_o : float,optional
+            default = 1 (solar), options= 0.5X, 1.0X, 1.5X, 2.0X, 2.5X
+        log_mh : float, optional
+            default = 0 (solar), options = 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
+        n_cpu : int 
+            Number of cpu to use for parallelization of chemistry
+        """
+        not_molecules = ['temperature','pressure','kz']
+        pt_3d_ds = self.inputs['atmosphere']['profile']
+        lon = pt_3d_ds.coords['lon'].values
+        lat = pt_3d_ds.coords['lat'].values
+        nt = len(lat)
+        ng = len(lon)
+
+        pres = pt_3d_ds.coords['pressure'].values
+        self.nlevel = len(pres)
+        def run_chem(ilon,ilat):
+            warnings.filterwarnings("ignore")
+            df = pt_3d_ds.isel(lon=ilon,lat=ilat).to_pandas(
+                    ).reset_index(
+                    ).drop(['lat','lon'],axis=1
+                    ).sort_values('pressure')
+            #convert to 1d format
+            self.inputs['atmosphere']['profile']=df
+            #run chemistry, which adds chem to inputs['atmosphere']['profile']
+            self.chem_interp(opa.full_abunds)
+            df_w_chem = self.inputs['atmosphere']['profile']            
+            return df_w_chem
+
+        results = Parallel(n_jobs=n_cpu)(delayed(run_chem)(ilon,ilat) for ilon in range(ng) for ilat in range(nt))
+        
+        all_out = {imol:np.zeros((ng,nt,self.nlevel)) for imol in results[0].keys() if imol not in not_molecules}
+
+        i = -1
+        for ilon in range(ng):
+            for ilat in range(nt):
+                i+=1
+                for imol in all_out.keys():
+                    if imol not in not_molecules:
+                        all_out[imol][ilon, ilat,:] = results[i][imol].values
+
+        data_vars = {imol:(["lon", "lat","pressure"], all_out[imol],{'units': 'v/v'}) for imol in results[0].keys() if imol not in not_molecules}
+        # put data into a dataset
+        ds_chem = xr.Dataset(
+            data_vars=data_vars,
+            coords=dict(
+                lon=(["lon"], lon,{'units': 'degrees'}),#required
+                lat=(["lat"], lat,{'units': 'degrees'}),#required
+                pressure=(["pressure"], pres,{'units': 'bar'})#required*
+            ),
+            attrs=dict(description="coords with vectors"),
+        )
+
+        #append input
+        self.inputs['atmosphere']['profile'] = pt_3d_ds.update(ds_chem)
     def chemeq_3d(self,c_o=1.0,log_mh=0.0, n_cpu=1): 
         """
         You must have already ran atmosphere_3d or pre-defined an xarray gcm 
@@ -1870,7 +1944,8 @@ class inputs():
         #append input
         self.inputs['atmosphere']['profile'] = pt_3d_ds.update(ds_chem)
 
-    def atmosphere_4d(self, ds=None, shift=None,  plot=True, iz_plot=0,verbose=True): 
+    def atmosphere_4d(self, ds=None, shift=None, plot=True, iz_plot=0,verbose=True, 
+        zero_point='night_transit'): 
         """
         Regrids xarray 
         
@@ -1881,7 +1956,7 @@ class inputs():
             Only optional if you have already defined your dataframe to 
             self.inputs['atmosphere']['profile'] 
         shift : array 
-            For each orbital `phase`, `picaso` will rotate the longitude grid `phase_i`+`shift_i`. 
+            Degrees, for each orbital `phase`, `picaso` will rotate the longitude grid `phase_i`+`shift_i`. 
             For example, for tidally locked planets, `shift`=0 at all phase angles. 
             Therefore, `shift` must be input as an array of length `n_phase`, set by phase_angle() routine. 
             Use plot=True to understand how your grid is being shifted.
@@ -1890,12 +1965,33 @@ class inputs():
         iz_plot : bool 
             pressure index to plot  
         verbose : bool 
-            If True, this will plot out messages, letting you know if your input data is being transformed 
+            If True, this will plot out messages, letting you know if your input data is being transformed
+        zero_point : str 
+            Is your zero point "night_transit", or "secondary_eclipse"
+            Default, "night_transit"
         """ 
         if isinstance(ds, type(None)):
             ds = self.inputs['atmosphere']['profile']
             if isinstance(ds, type(None)):
                 raise Exception("Need to submit an xarray.DataArray because there is no input attached to self.inputs['atmosphere']['profile']")
+        else: 
+            #do a deep copy so that users runs dont get over written 
+            ds = copy.deepcopy(ds)
+
+        phases = self.inputs['phase_angle']
+
+        #define shift based on user specified shift, and user specified zero point
+        if isinstance(shift, type(None)):
+            shift = np.zeros(len(phases))
+        
+        if zero_point == 'night_transit':
+            shift = shift + 180
+        elif zero_point == 'secondary_eclipse':
+            shift=shift 
+        else: 
+            raise Exception("Do not regocnize input zero point. Please specify: night_transit or secondary_eclipse")
+
+        self.inputs['shift'] = shift
 
         #make sure order is correct 
         if [i for i in ds.dims] != ["lon", "lat","pressure"]:
@@ -1935,7 +2031,7 @@ class inputs():
         data_vars_og = {i:ds[i].values for i in ds.keys()}
         #run through phases and regrid each one
         shifted_grids = {}
-        for i,iphase in enumerate(self.inputs['phase_angle']): 
+        for i,iphase in enumerate(phases): 
             new_lat = self.inputs['disco'][iphase]['latitude']*180/np.pi#to degrees
             new_lon = self.inputs['disco'][iphase]['longitude']*180/np.pi#to degrees
             total_shift = (iphase*180/np.pi + shift[i]) % 360 
@@ -1957,7 +2053,7 @@ class inputs():
         
         self.inputs['atmosphere']['profile'] = new_phase_grid
 
-    def clouds_4d(self, ds=None, shift=None,  plot=True, iz_plot=0,iw_plot=0,verbose=True): 
+    def clouds_4d(self, ds=None, plot=True, iz_plot=0,iw_plot=0,verbose=True): 
         """
         Regrids xarray 
         
@@ -1967,11 +2063,6 @@ class inputs():
             xarray input grid (see GCM 3D input tutorials)
             Only optional if you have already defined your dataframe to 
             self.inputs['clouds']['profile'] 
-        shift : array 
-            For each orbital `phase`, `picaso` will rotate the longitude grid `phase_i`+`shift_i`. 
-            For example, for tidally locked planets, `shift`=0 at all phase angles. 
-            Therefore, `shift` must be input as an array of length `n_phase`, set by phase_angle() routine. 
-            Use plot=True to understand how your grid is being shifted.
         plot : bool 
             If True, this will auto output a regridded plot
         iz_plot : bool 
@@ -1981,14 +2072,23 @@ class inputs():
         verbose : bool 
             If True, this will plot out messages, letting you know if your input data is being transformed 
         """ 
+        phases = self.inputs['phase_angle']
+
         if isinstance(ds, type(None)):
             ds = self.inputs['clouds']['profile']
             if isinstance(ds, type(None)):
                 raise Exception("Need to submit an xarray.DataArray because there is no input attached to self.inputs['clouds']['profile']")
+        else: 
+            ds = copy.deepcopy(ds)
 
         if not isinstance(ds, xr.core.dataset.Dataset): 
             raise Exception('PICASO has moved to only accept xarray input. Please see GCM 3D input tutorials to learn how to reformat your input. ')
 
+        if 'shift' in self.inputs: 
+            shift =  self.inputs['shift']
+        else: 
+            raise Exception('Oops! It looks like cloud_4d is being run before atmosphere_4d. Please run atmosphere_4d first so that you can speficy a shift, relative to the phase. This shift will then be used in cloud_4d.')
+                
         #check for temperature and pressure
         if 'opd' not in ds: raise Exception('Must include opd as data component')
         if 'g0' not in ds: raise Exception('Must include g0 as data component')
@@ -2034,7 +2134,7 @@ class inputs():
         data_vars_og = {i:ds[i].values for i in ds.keys()}
         #run through phases and regrid each one
         shifted_grids = {}
-        for i,iphase in enumerate(self.inputs['phase_angle']): 
+        for i,iphase in enumerate(phases): 
             new_lat = self.inputs['disco'][iphase]['latitude']*180/np.pi#to degrees
             new_lon = self.inputs['disco'][iphase]['longitude']*180/np.pi#to degrees
             total_shift = (iphase*180/np.pi + shift[i]) % 360 

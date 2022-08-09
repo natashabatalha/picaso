@@ -250,7 +250,7 @@ def pt(full_output,ng=None, nt=None, **kwargs):
     plot_format(fig)
     return fig
 
-def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind8, **kwargs):
+def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind8,muted_alpha=0.2, **kwargs):
     """Plot formated albedo spectrum
 
     Parameters
@@ -266,6 +266,8 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind
     palette : list,optional
         List of colors for lines. Default only has 8 colors so if you input more lines, you must
         give a different pallete 
+    muted_alpha : float 
+        number 0-1 to indicate how muted you want the click functionaity 
     **kwargs : dict     
         Any key word argument for bokeh.plotting.figure()
 
@@ -283,7 +285,7 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind
         def conv(x):
             return 1e4/x
     else: 
-        x_axis_label = 'Wavenumber [(]cm-1]'
+        x_axis_label = 'Wavenumber [cm-1]'
         def conv(x):
             return x
 
@@ -306,14 +308,14 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind
                     fig.line(conv(w),  a,  color=palette[np.mod(i, len(palette))], line_width=3)
                 else:
                     f = fig.line(conv(w), a, color=palette[np.mod(i, len(palette))], line_width=3,
-                                muted_color=palette[np.mod(i, len(palette))], muted_alpha=0.2)
+                                muted_color=palette[np.mod(i, len(palette))], muted_alpha=muted_alpha)
                     legend_it.append((l, [f]))
         else: 
             if isinstance(legend,type(None)):
                 fig.line(conv(xarray), yarray,  color=palette[i], line_width=3)
             else:
                 f = fig.line(conv(xarray), yarray, color=palette[i], line_width=3,
-                                muted_color=palette[np.mod(i, len(palette))], muted_alpha=0.2)
+                                muted_color=palette[np.mod(i, len(palette))], muted_alpha=muted_alpha)
                 legend_it.append((l, [f]))
         i = i+1
 

@@ -3,6 +3,12 @@
 History
 -------
 
+2.3 (2022-5-27)
+~~~~~~~~~~~~~~~
+* fixes correlated k 3d runs 
+* forces ref pressure to be in user grid for less sensitivity to layers
+* reference pressure in docs  
+
 2.3 (2022-4-06)
 ~~~~~~~~~~~~~~~
 * lots of fun 3D functionality (Adams et al 2022)

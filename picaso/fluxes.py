@@ -1887,7 +1887,6 @@ def get_transit_1d(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
     mmw = mmw * amu #make sure mmw in grams
 
     delta_length=zeros((nlevel,nlevel))
-
     for i in range(nlevel):
         for j in range(i):
             reference_shell = z[i]
@@ -1903,14 +1902,12 @@ def get_transit_1d(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
             #this is the same index as outer shell because ind = 0 is the outer-
             #most layer 
             delta_length[i,j]=integrate_segment*player[i-j-1]/tlayer[i-j-1]/k_b
-            
     #remove column density and mmw from DTAU which was calculated in 
     #optics because line of site integration is diff for transit
     #TAU = array([DTAU[:,i]  / colden * mmw  for i in range(nwno)])
     TAU = zeros((nwno, nlevel-1))
     for i in range(nwno):
         TAU[i,:] = DTAU[:,i]  / colden * mmw 
-
     transmitted=zeros((nwno, nlevel))+1.0
     for i in range(nlevel):
         TAUALL=zeros(nwno)#0.

@@ -344,7 +344,6 @@ class ATMSETUP():
 
         if np.isnan(self.planet.radius):
             constant_gravity = True
-
         #set zero arays of things we want out 
         nlevel = self.c.nlevel
 
@@ -354,6 +353,12 @@ class ATMSETUP():
         
         if p_reference >= np.max(plevel):
             p_reference = np.max(plevel)
+        else: 
+            #choose a reference pressure that is on the 
+            #user specified pressure grid
+            #if you dont do this your model becomes 
+            #highly sensitive to # of layers used 
+            p_reference = plevel[plevel>=p_reference][0]
 
         z = np.zeros(np.shape(tlevel)) + self.planet.radius
         dz = np.zeros(np.shape(tlevel)) 
@@ -387,10 +392,9 @@ class ATMSETUP():
 
         self.level['z'] = z
         self.level['dz'] = dz
+
         #for get_column_density calculation below we want gravity at layers
         self.layer['gravity'] = 0.5*(gravity[0:-1] + gravity[1:])
-        self.layer['gravity'][0] = self.layer['gravity'][1]
-        self.layer['gravity'][-1] = self.layer['gravity'][-2]
         
     def get_column_density(self):
         """

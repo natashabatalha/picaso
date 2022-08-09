@@ -1539,6 +1539,8 @@ class RetrieveOpacities():
         Get's opacities using the atmosphere class using interpolation for molecular, but not 
         continuum. Continuum opacity is grabbed via nearest neighbor methodology. 
         """
+        #import time 
+        #t1 = time.time()
         #open connection 
         cur, conn = self.db_connect()
         
@@ -1572,11 +1574,11 @@ class RetrieveOpacities():
         #fetch everything and stick into a dictionary where we can find the right
         #pt and molecules
         data= cur.fetchall()
-
+        #t_fetch = time.time()
         #interp data for molecular opacity 
         #DELETE
         data =  dict((x+'_'+str(y), dat[::self.resample][self.loc]) for x,y,dat in data)
-
+        #t_dict = time.time()
         for i in self.molecular_opa.keys():
             for ind in range(nlayer): # multiply by avogadro constant
             #these where statements are used for non zero arrays 
@@ -1596,7 +1598,7 @@ class RetrieveOpacities():
                      ((t_interp[ind])  * (p_interp[ind])   * log_abunds3) + 
                      ((1-t_interp[ind])* (p_interp[ind])   * log_abunds4) ) 
                 self.molecular_opa[i][ind, :] = cx*6.02214086e+23 #avocado number
-
+        #t_loop_opa = time.time()
         #CONTINUUM
         #find nearest temp for cia grid
         tcia = [np.unique(self.cia_temps)[find_nearest(np.unique(self.cia_temps),i)] for i in tlayer]
@@ -1622,7 +1624,13 @@ class RetrieveOpacities():
         for i in self.continuum_opa.keys():
             for j,ind in zip(tcia,range(nlayer)):
                 self.continuum_opa[i][ind,:] = data[i+'_'+str(j)][::self.resample][self.loc]
+        #t_cont = time.time()
 
+        #total = t_cont - t1
+        #print('Fetch:',(t_fetch - t1)/total*100 )
+        #print('Dict:',(t_dict - t_fetch)/total*100 )
+        #print('Opa Loop:',(t_loop_opa - t_dict)/total*100 )
+        #print('Cont Loop:',(t_cont - t_loop_opa)/total*100 )
         conn.close() 
 
     def get_opacities_nearest(self,atmosphere, dimension='1d'):
