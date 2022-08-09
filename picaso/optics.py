@@ -321,6 +321,7 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
     ftau_cld = (single_scattering_cld * TAUCLD)/(single_scattering_cld * TAUCLD + TAURAY)
 
     COSB = ftau_cld*asym_factor_cld
+    #COSB = asym_factor_cld
 
     #formerly GCOSB2 
     ftau_ray = TAURAY/(TAURAY + single_scattering_cld * TAUCLD)

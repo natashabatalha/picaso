@@ -1948,8 +1948,8 @@ def get_transit_3d(nlevel, nwno, radius, gravity,rstar, mass, mmw, k_b, G,amu,
 #@jit(nopython=True, cache=True, debug=True)
 def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
-    surf_reflect, ubar0, ubar1, cos_theta, F0PI, single_phase, multi_phase, 
-    frac_a, frac_b, frac_c, constant_back, constant_forward, dim, stream, b_top=0, flx=1):
+    surf_reflect, ubar0, ubar1, cos_theta, F0PI, single_phase, rayleigh,
+    frac_a, frac_b, frac_c, constant_back, constant_forward, dim, stream, b_top=0, flx=1, psingle=0):
     """
     Computes rooney fluxes given tau and everything is 3 dimensional. This is the exact same function 
     as `get_flux_geom_1d` but is kept separately so we don't have to do unecessary indexing for 
@@ -2057,59 +2057,71 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
             if single_phase==1:#'OTHG':
                 for l in range(1,stream):
                     w_multi[l,:,:] = (2*l+1) * (cosb_og**l - ff) / (1 - ff)
+                    #cosb_iso = 0.0
+                    #w_multi[l,:,:] = (2*l+1) * cosb_iso**l 
                     w_single[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
 
-                    #cos_theta = -u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
-                    #p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
-                    #p_single = p_single + w_single[l,:,:] * P(-u0)[l]*P(u1)[l]
-                p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+                # OG psingle calculation
+                if psingle==0: p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 
-            elif single_phase==2:#'TTHG':
+
+            elif single_phase==2 or single_phase==3:#'TTHG':
                 #Phase function for single scattering albedo frum Solar beam
                 #uses the Two term Henyey-Greenstein function
                 for l in range(1,stream):
-                    #w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
-                    #                    + (1-f)*(g_back**l - ff2) / (1 - ff))
-                    #w_single[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
-                    #                    + (1-f)*(g_back**l - ff2) / (1 - ff))
-                    w_multi[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
-                    w_single[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
+                    #cosb_iso = 0.0
+                    #w_multi[l,:,:] = (2*l+1) * cosb_iso**l 
+                    w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff1) 
+                                        + (1-f)*(g_back**l - ff2) / (1 - ff1))
+                    w_single[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff2) 
+                                        + (1-f)*(g_back**l - ff2) / (1 - ff2))
 
-                    #cos_theta = -u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
-                    #p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
-                    #p_single = p_single + w_single[l,:,:] * P(-u0)[l]*P(u1)[l]
 
-                p_single=(f * (1-g_forward**2) /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
+                # OG psingle calculation
+                if psingle==0:
+                    p_single=(f * (1-g_forward**2) /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
                                 #second term of TTHG: backward scattering
-                                +(1-f)*(1-g_back**2)
-                                /sqrt((1+g_back**2+2*g_back*cos_theta)**3))
+                                +(1-f)*(1-g_back**2) /sqrt((1+g_back**2+2*g_back*cos_theta)**3))
 
-            elif single_phase==3:#'TTHG_ray':
-                # not happy with Rayleigh, not getting the same inclusion in multiscattering as picaso
+            #elif single_phase==3:#'TTHG_ray':
+            #    # not happy with Rayleigh, not getting the same inclusion in multiscattering as picaso
+            #    for l in range(1,stream):
+            #        w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff1) 
+            #                            + (1-f)*(g_back**l - ff2) / (1 - ff1))
+            #        w_single[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff2) 
+            #                            + (1-f)*(g_back**l - ff2) / (1 - ff2))
+
+            #        if l==2:
+            #            w_single[2] = w_single[2] + 0.5*ftau_ray
+            #            w_multi[2] = w_multi[2] + 0.5*ftau_ray
+
+            #    # OG psingle calculation
+            #    if psingle==0:
+            #        p_single=(ftau_cld*(f * (1-g_forward**2)
+            #                                    /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
+            #                                    #second term of TTHG: backward scattering
+            #                                    +(1-f)*(1-g_back**2)
+            #                                    /sqrt((1+g_back**2+2*g_back*cos_theta)**3))+            
+            #                                    #rayleigh phase function
+            #                                    ftau_ray*(0.75*(1+cos_theta**2.0)))
+
+            elif single_phase==4:#'heng' isotropic multi, pure rayleigh single 
+                w_single[1:]*=0.0
+                w_multi[1:]*=0.0
+                w_single[2] = 0.5#*ftau_ray
+
+                # OG psingle calculation
+                if psingle==0:
+                    p_single = 0.75*(1+cos_theta**2.0)
+
+            if rayleigh==1 and single_phase!=4:
                 for l in range(1,stream):
-                    #w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
-                    #                    + (1-f)*(g_back**l - ff2) / (1 - ff))
-                    #w_single[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
-                    #                    + (1-f)*(g_back**l - ff2) / (1 - ff))
-                    w_multi[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
-                    w_single[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
-
-                    if l==2:
-                        w_single[2] = w_single[2] + 0.5*ftau_ray
-                        w_multi[2] = w_multi[2] + 0.5*ftau_ray
-
-                    #cos_theta = -u0 * u1 + sqrt(1-u0**2) * sqrt(1-u1**2)
-                    #p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
-                    #p_single = p_single + w_single[l,:,:] * P(-u0)[l]*P(u1)[l]
-
-                p_single=(ftau_cld*(f * (1-g_forward**2)
-                                                /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
-                                                #second term of TTHG: backward scattering
-                                                +(1-f)*(1-g_back**2)
-                                                /sqrt((1+g_back**2+2*g_back*cos_theta)**3))+            
-                                #rayleigh phase function
-                                ftau_ray*(0.75*(1+cos_theta**2.0)))
-
+                    w_multi[l] *= ftau_cld
+                    w_single[l] *= ftau_cld
+                    if l==2:    
+                        w_multi[2] = ftau_cld*w_multi[2] + 0.5*ftau_ray
+                        w_single[2] = ftau_cld*w_single[2] + 0.5*ftau_ray
+                if psingle==0: p_single = ftau_cld*p_single + ftau_ray*(0.75*(1+cos_theta**2.0))
 
             for l in range(stream):
                 a[l,:,:] = (2*l + 1) -  w0 * w_multi[l,:,:]
@@ -2147,17 +2159,12 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
             expo_mus = slice_gt(expo_mus, 35.0)    
             exptrm_mus = exp(-expo_mus)
 
-            #p_single = 0
-            #maxterm = 7
-            #for l in range(maxterm):
-            #	from scipy.special import legendre
-            #	#gama = (0.85/cosb_og)**maxterm
-            #	#beta = ((1 + gama * (1. + .5*u0**2 * (1-w0**(1/2))**(1/8)))
-            #	#			/ (u0**((1-(1-w0**8)**(1/8))/(1+2*u0)) + gama))
-            #	ff = cosb_og**maxterm
-            #	w_temp = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
-            #	Pn = legendre(l)
-            #	p_single = p_single + w_temp[0,0] * Pn(-u0)*Pn(u1)
+            if psingle==1:
+                maxterm = stream
+                for l in range(maxterm):
+                    from scipy.special import legendre
+                    Pn = legendre(l)
+                    p_single = p_single + w_single[l] * Pn(-u0)*Pn(u1)
             for i in range(nlayer):
                 for l in range(stream):
                     multi_scat[i,:] = multi_scat[i,:] + w_multi[l,i,:] * P(u1)[l] * intgrl_new[stream*i+l,:]
