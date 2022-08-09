@@ -205,6 +205,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                     frac_a,frac_b,frac_c,constant_back,constant_forward, approximation,
                                     b_top=b_top)
                                     #frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)
+
                 #add guass for ck
                 xint_at_top += xint*gauss_wts[ig]
 
@@ -223,6 +224,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                 
                 #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
                 #the uncorrected raman single scattering 
+
                 if method == 'Toon':
                     (flux, intensity, flux_out)  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
                                                         DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
