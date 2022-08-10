@@ -156,7 +156,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     no_opacities = [i for i in atm.molecules if i not in opacityclass.molecules]
     atm.add_warnings('No computed opacities for: '+','.join(no_opacities))
     atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
+    
+    #opacity assumptions
     query_method = inputs['opacities'].get('query',0)
+    exclude_mol = inputs['atmosphere']['exclude_mol']
 
     if query_method == 0: 
         get_opacities = opacityclass.get_opacities_nearest
@@ -169,7 +172,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
     if dimension == '1d':
         #lastly grab needed opacities for the problem
-        get_opacities(atm)
+        get_opacities(atm,exclude_mol=exclude_mol)
         #only need to get opacities for one pt profile
 
         #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
@@ -1091,12 +1094,19 @@ class inputs():
             (Optional) Filename with pressure, temperature and volume mixing ratios.
             Must contain pressure at least one molecule
         exclude_mol : list of str 
-            (Optional) List of molecules to ignore from file
+            (Optional) List of molecules to ignore from opacity. It will NOT 
+            change other aspects of the calculation like mean molecular weight. 
+            This should be used as exploratory ONLY. if you actually want to remove 
+            the contribution of a molecule entirely from your profile you should remove 
+            it from your input data frame. 
         verbose : bool 
             (Optional) prints out warnings. Default set to True
         pd_kwargs : kwargs 
             Key word arguments for pd.read_csv to read in supplied atmosphere file 
         """
+        if not isinstance(exclude_mol, type(None)):
+            if  isinstance(exclude_mol, str):
+                exclude_mol = [exclude_mol]
 
         if not isinstance(df, type(None)):
             if ((not isinstance(df, dict )) & (not isinstance(df, pd.core.frame.DataFrame ))): 
@@ -1114,8 +1124,12 @@ class inputs():
             raise Exception("`temperature` not specified as a column/key name")
 
         if not isinstance(exclude_mol, type(None)):
-            df = df.drop(exclude_mol, axis=1)
-            self.inputs['atmosphere']['exclude_mol'] = exclude_mol
+            #df = df.drop(exclude_mol, axis=1)
+            self.inputs['atmosphere']['exclude_mol'] = {i:1 for i in df.keys()}
+            for i in exclude_mol: 
+                self.inputs['atmosphere']['exclude_mol'][i]=0
+        else: 
+            self.inputs['atmosphere']['exclude_mol'] = 1
 
         self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
 

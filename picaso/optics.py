@@ -1623,7 +1623,7 @@ class RetrieveOpacities():
         data =  dict((x+'_'+str(y), dat[::self.resample][self.loc]) for x,y,dat in data)       
         return data 
 
-    def get_opacities(self,atmosphere, dimension='1d'):
+    def get_opacities(self,atmosphere, dimension='1d', exclude_mol=1):
         """
         Get's opacities using the atmosphere class using interpolation for molecular, but not 
         continuum. Continuum opacity is grabbed via nearest neighbor methodology. 
@@ -1651,6 +1651,13 @@ class RetrieveOpacities():
         data = self._get_query_molecular(ind_pt,molecules,cur)
 
         for i in self.molecular_opa.keys():
+            #fac is a multiplier for users to test the optical contribution of 
+            #each of their molecules
+            #for example, does ignoring CH4 opacity affect my spectrum??
+            if exclude_mol==1:
+                fac =1
+            else: 
+                fac = exclude_mol[i]
             for ind in range(nlayer): # multiply by avogadro constant
             #these where statements are used for non zero arrays 
             #however they should ultimately be put into opacity factory so it doesnt slow 
@@ -1668,7 +1675,7 @@ class RetrieveOpacities():
                      ((t_interp[ind])  * (1-p_interp[ind]) * log_abunds2) + 
                      ((t_interp[ind])  * (p_interp[ind])   * log_abunds3) + 
                      ((1-t_interp[ind])* (p_interp[ind])   * log_abunds4) ) 
-                self.molecular_opa[i][ind, :] = cx*6.02214086e+23 #avocado number
+                self.molecular_opa[i][ind, :] = fac*cx*6.02214086e+23 #avocado number
 
         #CONTINUUM
         #find nearest temp for cia grid
@@ -1684,7 +1691,7 @@ class RetrieveOpacities():
   
         conn.close() 
 
-    def get_opacities_nearest(self,atmosphere, dimension='1d'):
+    def get_opacities_nearest(self,atmosphere, dimension='1d', exclude_mol=1):
         """
         Get's opacities using the atmosphere class
         """
@@ -1717,8 +1724,15 @@ class RetrieveOpacities():
 
         #structure it into a dictionary e.g. {'H2O':ndarray(nwave x nlayer), 'CH4':ndarray(nwave x nlayer)}.. 
         for i in self.molecular_opa.keys():
+           #fac is a multiplier for users to test the optical contribution of 
+            #each of their molecules
+            #for example, does ignoring CH4 opacity affect my spectrum??
+            if exclude_mol==1:
+                fac =1
+            else: 
+                fac = exclude_mol[i]
             for j,ind in zip(ind_pt,range(nlayer)): # multiply by avogadro constant 
-                self.molecular_opa[i][ind, :] = data[i+'_'+str(j)]*6.02214086e+23 #add to opacity bundle
+                self.molecular_opa[i][ind, :] = fac*data[i+'_'+str(j)]*6.02214086e+23 #add to opacity bundle
 
         #continuum
         #find nearest temp for cia grid
