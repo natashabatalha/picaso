@@ -17,7 +17,7 @@
 	},
 	"atmosphere":{
 		"profile":null,
-		"exclude_mol":null,
+		"exclude_mol":1,
 		"pt_params":null
 	},
 	"clouds":{
