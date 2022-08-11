@@ -339,10 +339,11 @@ class GridFitter():
         plt.rcParams['font.family'] = 'serif'
         plt.rcParams['font.serif'] = 'DejaVu Serif'
         plt.rcParams['mathtext.fontset'] = 'dejavuserif'
-        plt.rcParams['axes.prop_cycle'] = \
-        plt.cycler(color=["tomato", "dodgerblue", "gold", 'forestgreen', 'mediumorchid', 'lightblue'])
+        #plt.rcParams['axes.prop_cycle'] = \
+        #plt.cycler(color=["tomato", "dodgerblue", "gold", 'forestgreen', 'mediumorchid', 'lightblue'])
         plt.rcParams['figure.dpi'] = 300
-        
+        colors=["tomato", "dodgerblue", "gold", 'forestgreen', 'mediumorchid', 'lightblue']
+        plt.rcParams["axes.prop_cycle"] = plt.cycler(color=colors)        
 
         ax = fig.subplot_mosaic(x,gridspec_kw={
                 # set the height ratios between the rows
@@ -356,10 +357,13 @@ class GridFitter():
         ax['B'].set_xlim(np.min(all_data_waves)-0.2,np.max(all_data_waves)+0.5)
         #ax['A'].set_ylim(np.min(rprs_data2)-0.01*np.min(rprs_data2),np.max(rprs_data2)+0.01*np.max(rprs_data2))
 
-        colors = ['tomato', 'dodgerblue','forestgreen','green','orchid','slateblue']
+        #colors = ['tomato', 'dodgerblue','forestgreen','green','orchid','slateblue']
         ii=0
         for igrid in grid_names:   
             for idata in data_names: 
+                cycler = ax['A']._get_lines.prop_cycler
+                color = next(cycler)['color']
+
                 wlgrid_center = self.data[idata]['wlgrid_center']
                 y_data = self.data[idata]['y_data']
                 e_data = self.data[idata]['e_data']
@@ -367,14 +371,14 @@ class GridFitter():
                 chi1 = self.chi_sqs[igrid][idata][self.rank[igrid][idata]][0]
 
                 ax['A'].errorbar(wlgrid_center,y_data,yerr=e_data,fmt="ko",label=idata+" Reduction",markersize=5)
-                ax['A'].plot(wlgrid_center,best_fit,colors[ii],linewidth=2,label=r"Best Fit "+igrid+", ${\chi}_{\\nu}$$^2$= "+ str(np.round(chi1,2)))
+                ax['A'].plot(wlgrid_center,best_fit,color,linewidth=2,label=r"Best Fit "+igrid+", ${\chi}_{\\nu}$$^2$= "+ str(np.round(chi1,2)))
 
-                ax['B'].plot(wlgrid_center,(y_data-best_fit)/e_data,"o",color=colors[ii],markersize=5)
+                ax['B'].plot(wlgrid_center,(y_data-best_fit)/e_data,"o",color=color,markersize=5)
                 if ii==0:ax['B'].plot(wlgrid_center,0*y_data,"k")
 
                 ii+=1
 
-        ax['B'].set_xlabel(r"Wavelength [$\mu$m]",fontsize=20)
+        ax['B'].set_xlabel(r"wavelength [$\mu$m]",fontsize=20)
         ax['A'].set_ylabel(r"(R$_{\rm p}$/R$_{*}$)$^2$",fontsize=20)
 
         ax['A'].minorticks_on()
