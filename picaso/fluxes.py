@@ -4,11 +4,8 @@ import numpy as np
 #import pentapy as pp
 import time
 import pickle as pk
-from scipy.sparse.linalg import spsolve
 from scipy.linalg import solve_banded
 from numpy.linalg import solve
-from numpy.linalg import inv as npinv
-from scipy.linalg import inv as spinv
 
 #@jit(nopython=True, cache=True)
 def get_flux_toon(nlevel, wno, nwno, tau, dtau, w0, cosbar, surf_reflect, ubar0, F0PI):
@@ -200,7 +197,7 @@ def get_flux_toon(nlevel, wno, nwno, tau, dtau, w0, cosbar, surf_reflect, ubar0,
 
     return flux_plus, flux_minus
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def slice_eq(array, lim, value):
     """Funciton to replace values with upper or lower limit
     """
@@ -210,7 +207,7 @@ def slice_eq(array, lim, value):
         array[i,:] = new     
     return array
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def slice_lt(array, lim):
     """Funciton to replace values with upper or lower limit
     """
@@ -220,7 +217,7 @@ def slice_lt(array, lim):
         array[i,:] = new     
     return array
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def slice_gt(array, lim):
     """Funciton to replace values with upper or lower limit
     """
@@ -231,7 +228,7 @@ def slice_gt(array, lim):
         array[i,:] = new     
     return array
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def numba_cumsum(mat):
     """Function to compute cumsum along axis=0 to bypass numba not allowing kwargs in 
     cumsum 
@@ -241,7 +238,7 @@ def numba_cumsum(mat):
         new_mat[:,i] = cumsum(mat[:,i])
     return new_mat
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def setup_tri_diag(nlayer,nwno ,c_plus_up, c_minus_up, 
     c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
     gama, dtau, exptrm_positive,  exptrm_minus):
@@ -446,7 +443,7 @@ def setup_pent_diag(nlayer,nwno ,c_plus_up, c_minus_up,
     return A, B, C, D, E, F
 
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def tri_diag_solve(l, a, b, c, d):
     """
     Tridiagonal Matrix Algorithm solver, a b c d can be NumPy array type or Python list type.
@@ -518,7 +515,7 @@ def pent_diag_solve(l, A, B, C, D, E, F):
 
     return X
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3d,gcos2_3d, ftau_cld_3d,ftau_ray_3d,
     dtau_og_3d, tau_og_3d, w0_og_3d, cosb_og_3d, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
@@ -828,7 +825,7 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             xint_at_top[ng,nt,:] = xint[0,:]    
     return xint_at_top
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
@@ -1161,7 +1158,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 #    import sys; sys.exit()
     return xint_at_top, flux_out, intensity
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def blackbody(t,w):
     """
     Blackbody flux in cgs units in per unit wavelength
@@ -1183,7 +1180,7 @@ def blackbody(t,w):
 
     return ((2.0*h*c**2.0)/(w**5.0))*(1.0/(exp((h*c)/outer(t, w*k)) - 1.0))
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_thermal_1d_og(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,
     surf_reflect, hard_surface, tridiagonal):
     """
@@ -1391,7 +1388,7 @@ def get_thermal_1d_og(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, 
 #    import sys; sys.exit()
     return flux_at_top#, flux_down# numg x numt x nwno
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,
     surf_reflect, hard_surface, tridiagonal):
     """
@@ -1632,7 +1629,7 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
     return int_at_top, intensity, flux_out #, int_down# numg x numt x nwno
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel_3d, dtau_3d, w0_3d,cosb_3d,plevel_3d, ubar1,
     surf_reflect, hard_surface, tridiagonal):
     """
@@ -1929,11 +1926,11 @@ def get_transit_3d(nlevel, nwno, radius, gravity,rstar, mass, mmw, k_b, G,amu,
     """
     return 
 
-#@jit(nopython=True, cache=True, debug=True)
+@jit(nopython=True, cache=True, debug=True)
 def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect, ubar0, ubar1, cos_theta, F0PI, single_phase, rayleigh,
-    frac_a, frac_b, frac_c, constant_back, constant_forward, dim, stream, b_top=0, flx=1, psingle=0):
+    frac_a, frac_b, frac_c, constant_back, constant_forward, dim, stream, b_top=0, flx=1, psingle=0, heng_compare=0):
     """
     Computes rooney fluxes given tau and everything is 3 dimensional. This is the exact same function 
     as `get_flux_geom_1d` but is kept separately so we don't have to do unecessary indexing for 
@@ -2041,11 +2038,11 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
                     w_single[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
 
                 # OG psingle calculation
-                if psingle==0: p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+                if psingle==0: 
+                    p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 
 
             elif single_phase==2 or single_phase==3:#'TTHG':
-                #Phase function for single scattering albedo frum Solar beam
                 #uses the Two term Henyey-Greenstein function
                 for l in range(1,stream):
                     w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff1) 
@@ -2061,7 +2058,7 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
                                 +(1-f)*(1-g_back**2) /sqrt((1+g_back**2+2*g_back*cos_theta)**3))
 
 
-            elif single_phase==4:#'heng' isotropic multi
+            if heng_compare==1:# heng tests: isotropic multi
                 # force isotropic multiple scattering
                 w_multi[1:]*=0.0
                 if rayleigh==1:
@@ -2069,17 +2066,18 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
                     w_single[1:]*=0.0
                     w_single[2] = 0.5#*ftau_ray
 
-                # OG psingle calculation
-                if psingle==0: p_single = 0.75*(1+cos_theta**2.0)
+                    # OG psingle calculation
+                    if psingle==0: p_single += 0.75*(1+cos_theta**2.0)
 
-            if rayleigh==1 and single_phase!=4:
+            if rayleigh==1 and heng_compare==0:
                 for l in range(1,stream):
                     w_multi[l] *= ftau_cld
                     w_single[l] *= ftau_cld
                     if l==2:    
                         w_multi[2] = ftau_cld*w_multi[2] + 0.5*ftau_ray
                         w_single[2] = ftau_cld*w_single[2] + 0.5*ftau_ray
-                if psingle==0: p_single = ftau_cld*p_single + ftau_ray*(0.75*(1+cos_theta**2.0))
+                if psingle==0: 
+                    p_single = ftau_cld*p_single + ftau_ray*(0.75*(1+cos_theta**2.0))
 
             for l in range(stream):
                 a[l,:,:] = (2*l + 1) -  w0 * w_multi[l,:,:]
@@ -2145,6 +2143,7 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
 #    import sys; sys.exit()
     return xint_at_top, flux, xint_out
 
+@jit(nopython=True, cache=True, debug=True)
 def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb, 
             dtau_og, tau_og, w0_og, w0_no_raman, cosb_og, plevel, ubar1,
             constant_forward, constant_back, frac_a, frac_b, frac_c,
@@ -2260,7 +2259,7 @@ def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     
     return xint_at_top, intensity, flux 
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, 
         a, b, ubar1, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
 
@@ -2409,7 +2408,7 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
 #    import IPython; IPython.embed()
     return Mb, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2
 
-#@jit(nopython=True, cache=True, debug=True)
+@jit(nopython=True, cache=True, debug=True)
 def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, b_surface_SH4, surf_reflect, F0PI, ubar0, dtau,tau, 
         a, b, ubar1, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
 
@@ -2435,7 +2434,8 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, b_surface_SH4
             Dels[3,:,:] = ((a[2]*b[3] - 3*b[2]/ubar0) * (a[0]*a[1] - 1/ubar0**2) 
                 + 2*(3*a[0]*b[1] - 2*a[0]*b[3] - 3*b[0]/ubar0)/ubar0**2)
         elif calculation==2:
-            b0 = twopi * (1-w0) * B0
+            #b0 = twopi * (1-w0) * B0
+            b0 = 2*pi * (1-w0) * B0
             Del = 9 * f(f0)
             Dels[0,:,:] = a[1]*b0 * (a[2]*a[3] - 9*f0**2) - 4*a[3]*b0*f0**2
             Dels[1,:,:] = b0*f0 * (9*f0**2 - a[2]*a[3])
@@ -2724,6 +2724,7 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, b_surface_SH4
     return Mb, B, A_int, N_int, F_bot, G_bot, F, G
 
 #@jit(nopython=True, cache=True)
+@njit
 def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream, nlayer):
     #   find constants
     diag = int(3*stream/2 - 1)
@@ -2735,17 +2736,13 @@ def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream, nlayer):
     flux = F.dot(X) + G
     return (intgrl_new, flux, X)
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def calculate_flux(F, G, X):
     return F.dot(X) + G
 
-#@jit(nopython=True, cache=True)
-def legP(mu,l=None): # Legendre polynomials
-    poly = np.array([1, mu, (3*mu**2 - 1)/2, (5*mu**3 - 3*mu)/2,
+@jit(nopython=True, cache=True)
+def legP(mu): # Legendre polynomials
+    return np.array([1, mu, (3*mu**2 - 1)/2, (5*mu**3 - 3*mu)/2,
         (35*mu**4 - 30*mu**2 + 3)/8, 
         (63*mu**5 - 70*mu**3 + 15*mu)/8, 
         (231*mu**6 - 315*mu**4 + 105*mu**2 - 5)/16 ])
-    if isinstance(l,int): 
-        return poly[l]
-    else:
-        return poly
