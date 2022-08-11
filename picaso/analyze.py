@@ -255,7 +255,7 @@ class GridFitter():
             self.offsets =  getattr(self, 'offsets',{grid_name:{data_name:np.zeros(nmodels) }})
             self.offsets[grid_name] = self.offsets.get(grid_name, {data_name:np.zeros(shape=(nmodels))})
             self.offsets[grid_name][data_name] = self.offsets.get(data_name,np.zeros(shape=(nmodels)))
-            self.overview[grid_name]['num_params'] = self.overview[grid_name]['num_params'] + 1
+            #self.overview[grid_name]['num_params'] = self.overview[grid_name]['num_params'] + 1
 
         numparams = self.overview[grid_name]['num_params']
 
@@ -527,7 +527,7 @@ def chi_squared(data,data_err,model,numparams):
     Compute reduced chi squared assuming DOF = ndata_pts - num parameters  
     """
     
-    chi_squared = np.sum(((data-model)/(data_err))**2)/(len(data)-numparams)
+    chi_squared = np.sum(((data-model)/(data_err))**2)/(len(data)-(numparams+1))
     
     return chi_squared
 
