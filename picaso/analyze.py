@@ -95,6 +95,20 @@ class GridFitter():
                                 'wlgrid_width':wlgrid_width,
                                  'y_data':y_data,
                                  'e_data':e_data}
+    def as_dict(self):
+        """
+        get class in dictionary form to easily search
+        """
+        return {
+        'list_of_files':self.list_of_files, 
+        'spectra_w_offset':self.best_fits,
+        'rank_order':self.rank,
+        'grid_params':self.grid_params, 
+        'offsets': self.offsets,
+        'chi_sqs': self.chi_sqs,
+        'posteriors': self.posteriors
+        }
+
 
     def load_grid_params(self,grid_name):
         """
@@ -275,7 +289,7 @@ class GridFitter():
             self.chi_sqs[grid_name][data_name][index]= chi_squared(y_data,e_data,flux_in_bin+shift,numparams)
 
             self.best_fits[grid_name][data_name][index,:] = flux_in_bin+shift
-            if offset: self.offsets[grid_name][data_name][index] = popt[0]
+            if offset: self.offsets[grid_name][data_name][index] = shift
 
         self.rank[grid_name][data_name] = self.chi_sqs[grid_name][data_name].argsort()
 
@@ -594,7 +608,7 @@ def plot_atmosphere(location,bf_filename,gas_names=None,fig=None,ax=None,linesty
                 plt.rcParams['font.serif'] = 'DejaVu Sans'
                 plt.rcParams['mathtext.fontset'] = 'stixsans'
                 plt.rcParams['axes.prop_cycle'] = \
-                plt.cycler(color=colors=["xkcd:salmon", "dodgerblue", "sandybrown", 'cadetblue', 'orchid', 'lightblue'])
+                plt.cycler(color=["xkcd:salmon", "dodgerblue", "sandybrown", 'cadetblue', 'orchid', 'lightblue'])
                 plt.rcParams['figure.dpi'] = 300
                 fig,ax = plt.subplots(nrows=1,ncols=3,figsize=(30,10))
         

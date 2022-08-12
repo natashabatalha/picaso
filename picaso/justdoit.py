@@ -411,6 +411,87 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
     return returns
 
+def _finditem(obj, key):
+    if key in obj: return obj[key]
+    for k, v in obj.items():
+        if isinstance(v,dict):
+            item = _finditem(v, key)
+            if item is not None:
+                return item
+
+def input_xarray(xr_usr, opacity,p_reference=10):
+    """
+    This takes an input based on these standards and runs: 
+    -gravity
+    -phase_angle
+    -star
+    -approx (p_reference=10)
+    -atmosphere
+    -clouds (if there are any)
+
+    Parameters
+    ----------
+    xr_usr : xarray
+        xarray based on ERS formatting requirements 
+    opacity : justdoit.opannection
+        opacity connection
+    p_reference : float 
+        reference pressure in bars 
+
+    Example
+    -------
+    case = jdi.input_xarray(xr_user)
+    case.spectrum(opacity,calculation='transit_depth')
+    """
+
+
+            
+    case = inputs()
+    case.phase_angle(0) #radians
+
+    #define gravity
+    planet_params = eval(xr_usr.attrs['planet_params'])
+    stellar_params = eval(xr_usr.attrs['stellar_params'])
+    orbit_params = eval(xr_usr.attrs['orbit_params'])
+
+    mp = _finditem(planet_params,'mp')
+    rp = _finditem(planet_params,'rp')
+
+    if (not isinstance(mp, type(None)) & (not isinstance(rp, type(None)))):
+        case.gravity(mass = mp['value'], mass_unit=u.Unit(mp['unit']),
+                    radius=rp['value'], radius_unit=u.Unit(rp['unit']))
+    else: 
+        print('Mass and Radius not provided in xarray, user needs to run gravity function')
+
+    steff = _finditem(stellar_params,'steff')
+    feh = _finditem(stellar_params,'feh')
+    logg = _finditem(stellar_params,'logg')
+    ms = _finditem(stellar_params,'ms')
+    rs = _finditem(stellar_params,'rs')
+    semi_major = _finditem(planet_params,'sma')
+    case.star(opacity, steff,feh,logg, radius=rs['value'], 
+              radius_unit=u.Unit(rs['unit']))
+
+    case.approx(p_reference=p_reference)
+
+    df = {'pressure':xr_usr.coords['pressure'].values}
+    for i in [i for i in xr_usr.data_vars.keys() if 'transit' not in i]:
+        if i not in ['opd','ssa','asy']:
+            #only get single coord pressure stuff
+            if (len(xr_usr.data_vars[i].values.shape)==1 &
+                        ('pressure' in xr_usr.data_vars[i].coords)):
+                df[i]=xr_usr.data_vars[i].values
+        
+    case.atmosphere(df=pd.DataFrame(df))
+
+    if 'opd' in xr_usr.data_vars.keys():
+        df_cld = vj.picaso_format(xr_usr['opd'].values, 
+                xr_usr['ssa'].values, 
+                xr_usr['asy'].values)
+
+        case.clouds(df=df_cld)
+
+    return case
 
 def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     """
