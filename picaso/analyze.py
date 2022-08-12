@@ -336,13 +336,13 @@ class GridFitter():
         plt.rcParams['image.cmap'] = 'magma'                   # Colormap.
         plt.rcParams['image.interpolation'] = None
         plt.rcParams['image.origin'] = 'lower'
-        plt.rcParams['font.family'] = 'serif'
-        plt.rcParams['font.serif'] = 'DejaVu Serif'
-        plt.rcParams['mathtext.fontset'] = 'dejavuserif'
+        plt.rcParams['font.family'] = 'sans-serif'
+        plt.rcParams['font.serif'] = 'DejaVu Sans'
+        plt.rcParams['mathtext.fontset'] = 'stixsans'
         #plt.rcParams['axes.prop_cycle'] = \
         #plt.cycler(color=["tomato", "dodgerblue", "gold", 'forestgreen', 'mediumorchid', 'lightblue'])
         plt.rcParams['figure.dpi'] = 300
-        colors=["tomato", "dodgerblue", "gold", 'forestgreen', 'mediumorchid', 'lightblue']
+        colors=["xkcd:salmon", "dodgerblue", "sandybrown", 'cadetblue', 'orchid', 'lightblue']
         plt.rcParams["axes.prop_cycle"] = plt.cycler(color=colors)        
 
         ax = fig.subplot_mosaic(x,gridspec_kw={
@@ -353,8 +353,8 @@ class GridFitter():
 
 
         all_data_waves = np.concatenate([self.data[i]['wlgrid_center'] for i in self.data.keys()])
-        ax['A'].set_xlim(np.min(all_data_waves)-0.2,np.max(all_data_waves)+0.5)
-        ax['B'].set_xlim(np.min(all_data_waves)-0.2,np.max(all_data_waves)+0.5)
+        ax['A'].set_xlim(np.min(all_data_waves)-0.1,np.max(all_data_waves)+0.1)
+        ax['B'].set_xlim(np.min(all_data_waves)-0.1,np.max(all_data_waves)+0.1)
         #ax['A'].set_ylim(np.min(rprs_data2)-0.01*np.min(rprs_data2),np.max(rprs_data2)+0.01*np.max(rprs_data2))
 
         #colors = ['tomato', 'dodgerblue','forestgreen','green','orchid','slateblue']
@@ -365,21 +365,20 @@ class GridFitter():
                 color = next(cycler)['color']
 
                 wlgrid_center = self.data[idata]['wlgrid_center']
-                y_data = self.data[idata]['y_data']
-                e_data = self.data[idata]['e_data']
-                best_fit = self.best_fits[igrid][idata][self.rank[igrid][idata],:][0,:]
+                y_data = 100*self.data[idata]['y_data']
+                e_data = 100*self.data[idata]['e_data']
+                best_fit = 100*self.best_fits[igrid][idata][self.rank[igrid][idata],:][0,:]
                 chi1 = self.chi_sqs[igrid][idata][self.rank[igrid][idata]][0]
 
-                ax['A'].errorbar(wlgrid_center,y_data,yerr=e_data,fmt="ko",label=idata+" Reduction",markersize=5)
                 ax['A'].plot(wlgrid_center,best_fit,color,linewidth=2,label=r"Best Fit "+igrid+", ${\chi}_{\\nu}$$^2$= "+ str(np.round(chi1,2)))
 
                 ax['B'].plot(wlgrid_center,(y_data-best_fit)/e_data,"o",color=color,markersize=5)
                 if ii==0:ax['B'].plot(wlgrid_center,0*y_data,"k")
 
                 ii+=1
-
+            ax['A'].errorbar(wlgrid_center,y_data,yerr=e_data,fmt="ko",label=idata+" Reduction",markersize=5)
         ax['B'].set_xlabel(r"wavelength [$\mu$m]",fontsize=20)
-        ax['A'].set_ylabel(r"(R$_{\rm p}$/R$_{*}$)$^2$",fontsize=20)
+        ax['A'].set_ylabel(r"transit depth [%]",fontsize=20)
 
         ax['A'].minorticks_on()
         ax['A'].tick_params(axis='y',which='major',length =20, width=3,direction='in',labelsize=20)
@@ -397,7 +396,7 @@ class GridFitter():
         ax['B'].set_ylabel("${\delta}/N$",fontsize=20)
         
             
-        ax['A'].legend(fontsize=12)
+        ax['A'].legend(fontsize=16)
         
         
         return fig,ax
@@ -474,12 +473,12 @@ class GridFitter():
                 plt.rcParams['image.cmap'] = 'magma'                   # Colormap.
                 plt.rcParams['image.interpolation'] = None
                 plt.rcParams['image.origin'] = 'lower'
-                plt.rcParams['font.family'] = 'serif'
-                plt.rcParams['font.serif'] = 'DejaVu Serif'
-                plt.rcParams['mathtext.fontset'] = 'dejavuserif'
+                plt.rcParams['font.family'] = 'sans-serif'
+                plt.rcParams['font.serif'] = 'DejaVu Sans'
+                plt.rcParams['mathtext.fontset'] = 'stixsans'
                 #plt.rcParams['axes.prop_cycle'] = \
                 #color = plt.cycler()
-                colors=["tomato", "dodgerblue", "gold", 'forestgreen', 'mediumorchid', 'lightblue']
+                colors=["xkcd:salmon", "dodgerblue", "sandybrown", 'cadetblue', 'orchid', 'lightblue']
                 plt.rcParams["axes.prop_cycle"] = plt.cycler(color=colors)
                 plt.rcParams['figure.dpi'] = 300
                 nrow = 2
@@ -592,10 +591,10 @@ def plot_atmosphere(location,bf_filename,gas_names=None,fig=None,ax=None,linesty
                 plt.rcParams['image.interpolation'] = None
                 plt.rcParams['image.origin'] = 'lower'
                 plt.rcParams['font.family'] = 'serif'
-                plt.rcParams['font.serif'] = 'DejaVu Serif'
-                plt.rcParams['mathtext.fontset'] = 'dejavuserif'
+                plt.rcParams['font.serif'] = 'DejaVu Sans'
+                plt.rcParams['mathtext.fontset'] = 'stixsans'
                 plt.rcParams['axes.prop_cycle'] = \
-                plt.cycler(color=["tomato", "dodgerblue", "gold", 'forestgreen', 'mediumorchid', 'lightblue'])
+                plt.cycler(color=colors=["xkcd:salmon", "dodgerblue", "sandybrown", 'cadetblue', 'orchid', 'lightblue'])
                 plt.rcParams['figure.dpi'] = 300
                 fig,ax = plt.subplots(nrows=1,ncols=3,figsize=(30,10))
         
@@ -861,7 +860,7 @@ def plot_contribution(mass,radius,T_st,met_st,logg_st,radius_st,opa,location,bf_
     
     
     #ax.legend(fontsize=20)
-    ax.set_xlabel(r"Wavelength [$\mu$m]",fontsize=20)
+    ax.set_xlabel(r"wavelength [$\mu$m]",fontsize=20)
     ax.set_ylabel(r"(R$_{\rm p}$/R$_{*}$)$^2$",fontsize=20)
 
 
