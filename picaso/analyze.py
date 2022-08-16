@@ -436,7 +436,6 @@ class GridFitter():
             Name of parameter to get the posterior of (e.g. mh or tint)
         """
         parameter_sort = _finditem(self.grid_params[grid_name], parameter)
-        print(parameter)
         if isinstance(parameter_sort, type(None)): 
             raise Exception(f'Parameter {parameter} not found in grid {grid_name}')
         
@@ -546,152 +545,162 @@ class GridFitter():
 
 
 
-    def detection_test(self, molecule, min_wavelength, max_wavelength,
-                       grid_name, data_name, 
-                       filename, 
-                       opa_kwargs={},plot=True):
-        """
-        Computes the detection significance of a molecule given a grid name, data name, 
-        filename
-        """
-        wlgrid_center = self.data[data_name]['wlgrid_center']
-        y_data = self.data[data_name]['y_data']
-        e_data = self.data[data_name]['e_data']
+def detection_test(fitter, molecule, min_wavelength, max_wavelength,
+                   grid_name, data_name, 
+                   filename, 
+                   opa_kwargs={},plot=True):
+    """
+    Computes the detection significance of a molecule given a grid name, data name, 
+    filename
+    """
+    wlgrid_center = fitter.data[data_name]['wlgrid_center']
+    y_data = fitter.data[data_name]['y_data']
+    e_data = fitter.data[data_name]['e_data']
+    
+    index = fitter.list_of_files[grid_name].index(filename)
+    
+    shift = fitter.offsets[grid_name][data_name][index]
+    
+    xr_data = xr.load_dataset(filename)
         
-        index = self.list_of_files[grid_name].index(filename)
-        
-        shift = self.offsets[grid_name][data_name][index]
-        
-        xr_data = xr.load_dataset(filename)
-            
-        opa = opannection(**opa_kwargs)
-        case = input_xarray(xr_data, opa)        
-        og_atmo = copy.deepcopy(case.inputs['atmosphere']['profile'])
-        
-        model_full = xr_data.data_vars['transit_depth']
-        wavelength = xr_data.coords['wavelength']
-        wavelength, model_full = mean_regrid(wavelength,model_full,newx=wlgrid_center)
-        model_full = model_full + shift
-        
-        #
-        case.atmosphere(df = og_atmo,exclude_mol=molecule, delim_whitespace=True)
-        df= case.spectrum(opa, full_output=True,calculation='transmission') #note the new last key 
-        wno, model_exclude  = df['wavenumber'] , df['transit_depth']
-        wno, model_exclude = mean_regrid(wno,model_exclude,newx=1e4/wlgrid_center[::-1])
-        model_exclude = model_exclude + shift 
-        model_exclude = model_exclude[::-1]#switch to be on wavelength increase
-        
-        if plot: 
-            fig,ax = plt.subplots(nrows=3,ncols=1,figsize=(15,10))
-            ax[0].plot(wavelength, model_full,color='blue',label='FULL Model')
-            ax[0].plot(1e4/wno, model_exclude,color='red',label='Model - GASX')
-            ax[0].errorbar(wlgrid_center, y_data, yerr=e_data,fmt='ok')
-            ax[0].set_xlabel('wavelength [microns]')
-            ax[0].set_ylabel('transit depth') 
-        
-        residual = model_full-model_exclude
-        if plot: 
-            ax[1].plot(wavelength, residual, color='blue',label='FULL Model')
-            ax[1].errorbar(wlgrid_center, y_data-model_exclude, yerr=e_data,fmt='ok')
-            ax[1].set_xlabel('wavelength [microns]')
-            ax[1].set_ylabel('delta transit depth')     
-        
-
-        #defining gaussian model-params are centeral wavlenegth, width, amplitude, and a constant "DC" offset
-        def model_gauss(wlgrid, lam0, sig, Amp,cst):
-            return (Amp*np.exp(-(wlgrid-lam0)**2/sig**2)+cst)/1e6
-
-        #likelihood function
-        def loglike_gauss(theta):
-            logAmp, lam0,logsig,cst=theta #fitting for the "log" amplitude and witdths b/c why not...could try linear to see if it affects answer
-            mod=model_gauss(wlgrid_center, lam0, 10**logsig, 10**logAmp,cst) #evaluating model
-            lnl=-0.5*np.sum((residual-mod)**2/e_data**2) #the equation for -1/2 chi-square....
-            return lnl
-
-        #prior transform
-        def prior_transform_gauss(theta):
-            logAmp, lam0,logsig,cst=theta
-            logAmp=-1+(4.5+1)*logAmp
-            lam0=min_wavelength+(max_wavelength-min_wavelength)*lam0 
-            logsig=-2+(1+2)*logsig
-            cst=-200+(400)*cst
-            return logAmp, lam0,logsig,cst
-        
-        Nparam=4  #number of parameters--make sure it is the same as what is in prior and loglike
-        Nproc=4  #number of processors for multi processing--best if you can run on a 12 core+ node or something
-        Nlive=500 #number of nested sampling live points
-
-        #setting up multi-threading and sampler     
-        #pool = Pool(processes=Nproc)
-        dsampler = dynesty.NestedSampler(loglike_gauss, prior_transform_gauss, ndim=Nparam,
-                                                bound='multi', sample='auto', nlive=Nlive)#,
-                                                #pool=pool, queue_size=Nproc)
-        dsampler.run_nested()
-        #GAUSS RESULTS
-        dres_gauss = dsampler.results #results
-        ##grabbing the final evidence--will be used for bayes factor (see Dynesty documnetation)
-        logZ_gaussian=dres_gauss.logz[-1] 
-        samples_gauss, weights_gauss = dres_gauss.samples, np.exp(dres_gauss.logwt - dres_gauss.logz[-1])
-        samp_gauss = dyfunc.resample_equal(samples_gauss, weights_gauss)
-        
-        #flat line test
-        def model_line(wlgrid,cst):
-            #flat line slope = 0 
-            return (cst+wlgrid*0. )/1e6
-
-        #loglike with 
-        def loglike_line(theta):
-            cst=theta
-            mod=model_line(wlgrid_center, cst)
-            lnl=-0.5*np.sum((residual-mod)**2/e_data**2)
-            return lnl
-
-        #prior cube 
-        def prior_transform_line(theta):
-            cst=theta
-            cst=-200+(2000)*cst
-            return cst 
-        
-        Nparam=1
-        dsampler_line = dynesty.NestedSampler(loglike_line, prior_transform_line, ndim=Nparam,
-                                            bound='multi', sample='auto', nlive=Nlive#,
-                                            #pool=pool, queue_size=Nproc
-                                        )
-        
-        dsampler_line.run_nested()
-        dres_line = dsampler_line.results
-        logZ_constant=dres_line.logz[-1] 
-        samples_line, weights_line = dres_line.samples, np.exp(dres_line.logwt - dres_line.logz[-1])
-        samp_line = dyfunc.resample_equal(samples_line, weights_line)
-        
-        
-        if plot:
-            ax[2].errorbar(wlgrid_center, residual,yerr=e_data,fmt='ob',ms=3,label='Residual Data')
-            for i in range(samp_gauss.shape[0]):
-                logAmp, lam0,logsig,cst=samp_gauss[i,:]
-                mod=model_gauss(wlgrid_center, lam0, 10**logsig, 10**logAmp,cst)
-                ax[2].plot(wlgrid_center, mod,alpha=0.01,color='red')
-            
-            ax[2].plot(wlgrid_center, mod,alpha=0.5,color='red',label='Gaussian Fit Ensemble')
-            for i in range(samp_line.shape[0]):
-                cst=samp_line[i,:]
-                mod=model_line(wlgrid_center, cst)
-                ax[2].plot(wlgrid_center, mod,alpha=0.01,color='blue')
-           
-
-            ax[2].plot(wlgrid_center, mod,alpha=0.5,color='blue',label='Constant Fit Ensemble')
+    opa = opannection(**opa_kwargs)
+    case = input_xarray(xr_data, opa)        
+    og_atmo = copy.deepcopy(case.inputs['atmosphere']['profile'])
+    
+    model_full = xr_data.data_vars['transit_depth']
+    wavelength = xr_data.coords['wavelength']
+    wavelength, model_full = mean_regrid(wavelength,model_full,newx=wlgrid_center)
+    model_full = model_full + shift
+    
+    #
+    case.atmosphere(df = og_atmo,exclude_mol=molecule, delim_whitespace=True)
+    df= case.spectrum(opa, full_output=True,calculation='transmission') #note the new last key 
+    wno, model_exclude  = df['wavenumber'] , df['transit_depth']
+    wno, model_exclude = mean_regrid(wno,model_exclude,newx=np.sort(1e4/wlgrid_center))
+    model_exclude = model_exclude + shift 
+    out = pd.DataFrame({
+        'wno':wno, 
+        'wavelength':1e4/wno,
+        'model_exclude':model_exclude})
+    out = out.sort_values(by='wavelength')
+    model_exclude = out['model_exclude']
+    wavelength = out['wavelength']
+    
+    if plot: 
+        fig,ax = plt.subplots(nrows=3,ncols=1,figsize=(15,10))
+        ax[0].plot(wlgrid_center, model_full,color='blue',label='Full Model')
+        ax[0].plot(wlgrid_center, model_exclude,color='red',label=f'Without {molecule}')
+        ax[0].errorbar(wlgrid_center, y_data, yerr=e_data,fmt='ok')
+        ax[0].set_xlabel('wavelength [microns]')
+        ax[0].set_ylabel('transit depth') 
+        ax[0].legend(fontsize=12)
+    
+    residual_model = model_full-model_exclude
+    residual_data = y_data-model_exclude
+    if plot: 
+        ax[1].plot(wlgrid_center, residual_model, color='blue',label='Residual Model')
+        ax[1].errorbar(wlgrid_center, residual_data, yerr=e_data,fmt='ok',label='Residual in data')
         ax[1].set_xlabel('wavelength [microns]')
-        ax[1].set_ylabel('Delta Transit Depth') 
+        ax[1].set_ylabel('delta transit depth')     
+        ax[1].legend(fontsize=12)
+
+    #defining gaussian model-params are centeral wavlenegth, width, amplitude, and a constant "DC" offset
+    def model_gauss(wlgrid, lam0, sig, Amp,cst):
+        return (Amp*np.exp(-(wlgrid-lam0)**2/sig**2)+cst)/1e6
+
+    #likelihood function
+    def loglike_gauss(theta):
+        logAmp, lam0,logsig,cst=theta #fitting for the "log" amplitude and witdths b/c why not...could try linear to see if it affects answer
+        mod=model_gauss(wlgrid_center, lam0, 10**logsig, 10**logAmp,cst) #evaluating model
+        lnl=-0.5*np.sum((residual_data-mod)**2/e_data**2) #the equation for -1/2 chi-square....
+        return lnl
+
+    #prior transform
+    def prior_transform_gauss(theta):
+        logAmp, lam0,logsig,cst=theta
+        logAmp=-1+(4.5+1)*logAmp
+        lam0=min_wavelength+(max_wavelength-min_wavelength)*lam0 
+        logsig=-2+(1+2)*logsig
+        cst=-200+(400)*cst
+        return logAmp, lam0,logsig,cst
+    
+    Nparam=4  #number of parameters--make sure it is the same as what is in prior and loglike
+    Nproc=4  #number of processors for multi processing--best if you can run on a 12 core+ node or something
+    Nlive=500 #number of nested sampling live points
+
+    #setting up multi-threading and sampler     
+    #pool = Pool(processes=Nproc)
+    dsampler = dynesty.NestedSampler(loglike_gauss, prior_transform_gauss, ndim=Nparam,
+                                            bound='multi', sample='auto', nlive=Nlive)#,
+                                            #pool=pool, queue_size=Nproc)
+    dsampler.run_nested()
+    #GAUSS RESULTS
+    dres_gauss = dsampler.results #results
+    ##grabbing the final evidence--will be used for bayes factor (see Dynesty documnetation)
+    logZ_gaussian=dres_gauss.logz[-1] 
+    samples_gauss, weights_gauss = dres_gauss.samples, np.exp(dres_gauss.logwt - dres_gauss.logz[-1])
+    samp_gauss = dyfunc.resample_equal(samples_gauss, weights_gauss)
+    
+    #flat line test
+    def model_line(wlgrid,cst):
+        #flat line slope = 0 
+        return (cst+wlgrid*0. )/1e6
+
+    #loglike with 
+    def loglike_line(theta):
+        cst=theta
+        mod=model_line(wlgrid_center, cst)
+        lnl=-0.5*np.sum((residual_data-mod)**2/e_data**2)
+        return lnl
+
+    #prior cube 
+    def prior_transform_line(theta):
+        cst=theta
+        cst=-200+(2000)*cst
+        return cst 
+    
+    Nparam=1
+    dsampler_line = dynesty.NestedSampler(loglike_line, prior_transform_line, ndim=Nparam,
+                                        bound='multi', sample='auto', nlive=Nlive#,
+                                        #pool=pool, queue_size=Nproc
+                                    )
+    
+    dsampler_line.run_nested()
+    dres_line = dsampler_line.results
+    logZ_constant=dres_line.logz[-1] 
+    samples_line, weights_line = dres_line.samples, np.exp(dres_line.logwt - dres_line.logz[-1])
+    samp_line = dyfunc.resample_equal(samples_line, weights_line)
+    
+    
+    if plot:
+        ax[2].errorbar(wlgrid_center, residual_data,yerr=e_data,fmt='ob',ms=3,label='Residual Data')
+        for i in range(samp_gauss.shape[0]):
+            logAmp, lam0,logsig,cst=samp_gauss[i,:]
+            mod=model_gauss(wlgrid_center, lam0, 10**logsig, 10**logAmp,cst)
+            ax[2].plot(wlgrid_center, mod,alpha=0.01,color='red')
         
-        sig,lnB= sigma(logZ_gaussian, logZ_constant)
-        return {
-            'dres_gauss':dres_gauss,
-            'dres_gauss':dres_line,
-            'logZ_line':logZ_constant,
-            'logZ_gauss':logZ_gaussian,
-            'sigma':sig,
-            'lnB':lnB
-        }  
+        ax[2].plot(wlgrid_center, mod,alpha=0.5,color='red',label='Gaussian Fit Ensemble')
+        for i in range(samp_line.shape[0]):
+            cst=samp_line[i,:]
+            mod=model_line(wlgrid_center, cst)
+            ax[2].plot(wlgrid_center, mod,alpha=0.01,color='blue')
+       
+
+        ax[2].plot(wlgrid_center, mod,alpha=0.5,color='blue',label='Constant Fit Ensemble')
+        
+        ax[2].set_xlabel('wavelength [microns]')
+        ax[2].set_ylabel('Delta Transit Depth') 
+        ax[2].legend(fontsize=12) 
+    
+    sig,lnB= sigma(logZ_gaussian, logZ_constant)
+    return {
+        'dres_gauss':dres_gauss,
+        'dres_gauss':dres_line,
+        'logZ_line':logZ_constant,
+        'logZ_gauss':logZ_gaussian,
+        'sigma':sig,
+        'lnB':lnB
+    }  
         
 
 
