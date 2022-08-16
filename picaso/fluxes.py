@@ -2625,27 +2625,50 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, b_surface_SH4
     B[4::4,:] = z1pl_down[1:,:] - z1pl_up[:-1,:]
     B[5::4,:] = z2pl_down[1:,:] - z2pl_up[:-1,:]
 
-    NN = np.arange(4*nlayer)
-    indcs = NN[::4]
-    k = 0
-    for i in indcs:
-        A_int[i,i,:] = A00[k,:]
-        A_int[i,i+1,:] = A01[k,:]
-        A_int[i,i+2,:] = A02[k,:]
-        A_int[i,i+3,:] = A03[k,:]
-        A_int[i+1,i,:] = A10[k,:]
-        A_int[i+1,i+1,:] = A11[k,:]
-        A_int[i+1,i+2,:] = A12[k,:]
-        A_int[i+1,i+3,:] = A13[k,:]
-        A_int[i+2,i,:] = A20[k,:]
-        A_int[i+2,i+1,:] = A21[k,:]
-        A_int[i+2,i+2,:] = A22[k,:]
-        A_int[i+2,i+3,:] = A23[k,:]
-        A_int[i+3,i,:] = A30[k,:]
-        A_int[i+3,i+1,:] = A31[k,:]
-        A_int[i+3,i+2,:] = A32[k,:]
-        A_int[i+3,i+3,:] = A33[k,:]
-        k = k+1
+    #NN = np.arange(4*nlayer)
+    #indcs = NN[::4]
+    #k = 0
+    #for i in indcs:
+    #    A_int[i,i,:] = A00[k,:]
+    #    A_int[i,i+1,:] = A01[k,:]
+    #    A_int[i,i+2,:] = A02[k,:]
+    #    A_int[i,i+3,:] = A03[k,:]
+    #    A_int[i+1,i,:] = A10[k,:]
+    #    A_int[i+1,i+1,:] = A11[k,:]
+    #    A_int[i+1,i+2,:] = A12[k,:]
+    #    A_int[i+1,i+3,:] = A13[k,:]
+    #    A_int[i+2,i,:] = A20[k,:]
+    #    A_int[i+2,i+1,:] = A21[k,:]
+    #    A_int[i+2,i+2,:] = A22[k,:]
+    #    A_int[i+2,i+3,:] = A23[k,:]
+    #    A_int[i+3,i,:] = A30[k,:]
+    #    A_int[i+3,i+1,:] = A31[k,:]
+    #    A_int[i+3,i+2,:] = A32[k,:]
+    #    A_int[i+3,i+3,:] = A33[k,:]
+    #    k = k+1
+
+    nn = 4*nlayer
+    NN = 4*nn+4
+    a_int = A_int.reshape(nn*nn, A_int.shape[2])
+
+    a_int[::NN,:] = A00
+    a_int[1::NN,:] = A01
+    a_int[2::NN,:] = A02
+    a_int[3::NN,:] = A03
+    a_int[nn::NN,:] = A10
+    a_int[nn+1::NN,:] = A11
+    a_int[nn+2::NN,:] = A12
+    a_int[nn+3::NN,:] = A13
+    a_int[2*nn::NN,:] = A20
+    a_int[2*nn+1::NN,:] = A21
+    a_int[2*nn+2::NN,:] = A22
+    a_int[2*nn+3::NN,:] = A23
+    a_int[3*nn::NN,:] = A30
+    a_int[3*nn+1::NN,:] = A31
+    a_int[3*nn+2::NN,:] = A32
+    a_int[3*nn+3::NN,:] = A33
+
+    A_int = a_int.reshape(A_int.shape)
 
     N_int[::4,:] = N0
     N_int[1::4,:] = N1
