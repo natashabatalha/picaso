@@ -2103,11 +2103,11 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_
 
             if stream==2:
                 M, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2 = setup_2_stream_banded(nlayer, nwno, w0, b_top_, b_surface, 
-                surf_reflect, F0PI, u0, dtau, tau, a, b, u1, fluxes=flx, calculation=0) 
+                surf_reflect, u0, u1, dtau, tau, a, b, fluxes=flx, calculation=0) 
 
             if stream==4:
-                M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top_, b_surface, b_surface_SH4, 
-                    surf_reflect, F0PI, u0, dtau, tau, a, b, u1, fluxes=flx, calculation=0) 
+                M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, nwno, w0, b_top_, b_surface, b_surface_SH4, 
+                    surf_reflect, u0, u1, dtau, tau, a, b, fluxes=flx, calculation=0) 
 
                 # F and G will be nonzero if fluxes=1
 
@@ -2119,6 +2119,10 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_
             multi_scat = zeros((nlayer, nwno))
 
             #========================= Start loop over wavelength =========================
+            A_int = np.ascontiguousarray(A_int)
+            N_int = np.ascontiguousarray(N_int)
+            F_bot = np.ascontiguousarray(F_bot)
+            G_bot = np.ascontiguousarray(G_bot)
             for W in range(nwno):
                 (intgrl_new[:,W], flux_bot[W], X) = solve_4_stream_banded(M[:,:,W], B[:,W],  
                 A_int[:,:,W], N_int[:,W], F_bot[:,W], G_bot[W], stream, nlayer)
@@ -2277,12 +2281,12 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     for ng in range(numg):
         for nt in range(numt):
             if stream==2:
-                M, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2 = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-                surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, ubar1[ng,nt], b0, b1, f0, fluxes=flx, calculation=blackbody_approx)
+                M, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2 = setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, 
+                surf_reflect, ubar1[ng,nt], 0, dtau, tau, a, b, b0, b1, f0, fluxes=flx, calculation=blackbody_approx)
 
             elif stream==4:
-                M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-                        b_surface_SH4, surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, ubar1[ng,nt], b0, b1, f0, fluxes=flx, calculation=blackbody_approx) 
+                M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, 
+                        b_surface_SH4, surf_reflect, ubar1[ng,nt], 0, dtau, tau, a, b, b0, b1, f0, fluxes=flx, calculation=blackbody_approx) 
                 # F and G will be nonzero if fluxes=1
 
             flux_bot = zeros(nwno)
@@ -2343,8 +2347,8 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     return xint_at_top, intensity, flux 
 
 @jit(nopython=True, cache=True)
-def setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar0, dtau,tau, 
-        a, b, ubar1, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
+def setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar0, ubar1,
+        dtau, tau, a, b, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
     """
     Setup up matrices to solve flux problem for spherical harmonics method.
 
@@ -2369,6 +2373,9 @@ def setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar
         Surface reflectivity as a function of wavenumber. 
     ubar0 : ndarray of float 
         matrix of cosine of the incident angle from geometric.json
+    ubar1 : numpy.ndarray
+        This is a matrix of ng by nt. This describes the outgoing incident angles and is generally
+        computed in `picaso.disco`
     dtau : numpy.ndarray
         This is a matrix of nlayer by nwave. This describes the per layer optical depth. 
     tau : numpy.ndarray
@@ -2378,9 +2385,6 @@ def setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar
     b: numpy.ndarray
         Coefficients of source vector capturing legendre expansion of phase function for single 
         scattering
-    ubar1 : numpy.ndarray
-        This is a matrix of ng by nt. This describes the outgoing incident angles and is generally
-        computed in `picaso.disco`
     B0 : numpy.ndarray
         Matrix of blackbodies
     B1 : numpy.ndarray
@@ -2544,8 +2548,8 @@ def setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar
     return Mb, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2
 
 @jit(nopython=True, cache=True, debug=True)
-def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, surf_reflect, ubar0, dtau,tau, 
-        a, b, ubar1, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
+def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, surf_reflect, ubar0, ubar1,
+        dtau, tau, a, b, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
 
     """
     Setup up matrices to solve flux problem for spherical harmonics method.
@@ -2571,6 +2575,9 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
         Surface reflectivity as a function of wavenumber. 
     ubar0 : ndarray of float 
         matrix of cosine of the incident angle from geometric.json
+    ubar1 : numpy.ndarray
+        This is a matrix of ng by nt. This describes the outgoing incident angles and is generally
+        computed in `picaso.disco`
     dtau : numpy.ndarray
         This is a matrix of nlayer by nwave. This describes the per layer optical depth. 
     tau : numpy.ndarray
@@ -2580,9 +2587,6 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
     b: numpy.ndarray
         Coefficients of source vector capturing legendre expansion of phase function for single 
         scattering
-    ubar1 : numpy.ndarray
-        This is a matrix of ng by nt. This describes the outgoing incident angles and is generally
-        computed in `picaso.disco`
     B0 : numpy.ndarray
         Matrix of blackbodies
     B1 : numpy.ndarray
@@ -2904,8 +2908,8 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
 
     return Mb, B, A_int, N_int, F_bot, G_bot, F, G
 
-#@jit(nopython=True, cache=True)
-@njit
+@jit(nopython=True, cache=True)
+#@njit
 def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream, nlayer):
     """
     Solve the Spherical Harmonics Problem
@@ -2924,9 +2928,11 @@ def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream, nlayer):
     with objmode(X='float64[:]'):
         X = solve_banded((diag,diag), M, B)
     #   integral of Iexp(-tau/ubar1) at each level 
-    intgrl_new =  A_int.dot(X) + N_int 
+    #intgrl_new =  A_int.dot(X) + N_int
+    intgrl_new = mat_dot(A_int,X) + N_int
     #   flux at bottom
-    flux = F.dot(X) + G
+    #flux = F.dot(X) + G
+    flux = vec_dot(F,X) + G
     return (intgrl_new, flux, X)
 
 @jit(nopython=True, cache=True)
@@ -2934,7 +2940,8 @@ def calculate_flux(F, G, X):
     """
     Calculate fluxes
     """
-    return F.dot(X) + G
+    #return F.dot(X) + G
+    return mat_dot(F,X) + G
 
 @jit(nopython=True, cache=True)
 def legP(mu): # Legendre polynomials
@@ -2945,3 +2952,24 @@ def legP(mu): # Legendre polynomials
         (35*mu**4 - 30*mu**2 + 3)/8, 
         (63*mu**5 - 70*mu**3 + 15*mu)/8, 
         (231*mu**6 - 315*mu**4 + 105*mu**2 - 5)/16 ])
+
+@jit(nopython=True, cache=True)
+def mat_dot(A,B):
+    """
+    Matrix-vector dot product
+    """
+    C = zeros(A.shape[0])
+    for i in range(A.shape[0]):
+        for j in range(A.shape[1]):
+            C[i] += A[i,j]*B[j]
+    return C
+
+@jit(nopython=True, cache=True)
+def vec_dot(A,B):
+    """
+    Vector-vector dot product
+    """
+    C = 0
+    for i in range(A.shape[0]):
+        C += A[i]*B[i]
+    return C
