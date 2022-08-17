@@ -246,7 +246,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             #if full output is requested add in flux at top for 3d plots
             if full_output: 
                 atm.flux_at_top = flux_at_top
-                atm.intensity = intensity
+                #atm.intensity = intensity
 
         
         if 'transmission' in calculation:
@@ -378,8 +378,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     if  ('reflected' in calculation):
         albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
         returns['albedo'] = albedo 
-        returns['xint_at_top'] = xint_at_top 
-        returns['intensity'] = intensity 
+        #returns['xint_at_top'] = xint_at_top 
+        #returns['intensity'] = intensity 
         #see equation 18 Batalha+2019 PICASO 
         returns['bond_albedo'] = (np.trapz(x=1/wno, y=albedo*opacityclass.unshifted_stellar_spec)/
                                     np.trapz(x=1/wno, y=opacityclass.unshifted_stellar_spec))
@@ -398,8 +398,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     if ('thermal' in calculation):
         thermal = compress_thermal(nwno,flux_at_top, gweight, tweight)
         returns['thermal'] = thermal
-        returns['xint_at_top'] = flux_at_top 
-        returns['tau'] = TAU 
+        #returns['xint_at_top'] = flux_at_top 
+        #returns['tau'] = TAU 
         returns['effective_temperature'] = (np.trapz(x=1/wno[::-1], y=thermal[::-1])/5.67e-5)**0.25
 
         if full_output: 
@@ -2756,7 +2756,7 @@ class inputs():
 
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='none',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
-        p_reference=1, method='toon', stream=2, thermal_calculation=1, Toon_coefficients="quadrature",
+        p_reference=1, method='toon', stream=2, thermal_calculation=1, toon_coefficients="quadrature",
         psingle='og', rayleigh='off', heng_compare='off'):
         """
         This function sets all the default approximations in the code. It transforms the string specificatons
@@ -2803,7 +2803,7 @@ class inputs():
                 self.inputs['approx']['stream'] = 2 # having method="Toon" and stream=4 messes up delta-eddington stuff
         else:
                 self.inputs['approx']['stream'] = stream
-        self.inputs['approx']['Toon_coefficients'] = coefficients_options(printout=False).index(Toon_coefficients)
+        self.inputs['approx']['toon_coefficients'] = coefficients_options(printout=False).index(toon_coefficients)
  
         if isinstance(tthg_frac, (list, np.ndarray)):
             if len(tthg_frac) == 3:
