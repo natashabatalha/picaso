@@ -829,7 +829,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
     frac_a, frac_b, frac_c, constant_back, constant_forward,
-    approximation=0, tridiagonal=0, b_top=0):
+    toon_coefficients=0, tridiagonal=0, b_top=0):
     """
     Computes toon fluxes given tau and everything is 1 dimensional. This is the exact same function 
     as `get_flux_geom_3d` but is kept separately so we don't have to do unecessary indexing for fast
@@ -915,6 +915,8 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
         Remember, the output of A & M code does not separate back and forward scattering.
     tridiagonal : int 
         0 for tridiagonal, 1 for pentadiagonal 
+    toon_coefficients : int     
+        0 for quadrature (default) 1 for eddington
 
     Returns
     -------
@@ -939,10 +941,10 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
     #terms not dependent on incident angle
     sq3 = sqrt(3.)
-    if approximation == 1:#eddington
+    if toon_coefficients == 1:#eddington
         g1  = (7-w0*(4+3*cosb))/4 #(sq3*0.5)*(2. - w0*(1.+cosb)) #table 1 # 
         g2  = -(1-w0*(4-3*cosb))/4 #(sq3*w0*0.5)*(1.-cosb)        #table 1 # 
-    elif approximation == 0:#quadrature
+    elif toon_coefficients == 0:#quadrature
         g1  = (sq3*0.5)*(2. - w0*(1.+cosb)) #table 1 # 
         g2  = (sq3*w0*0.5)*(1.-cosb)        #table 1 # 
     lamda = sqrt(g1**2 - g2**2)         #eqn 21
@@ -953,9 +955,9 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
         for nt in range(numt):
             u1 = ubar1[ng,nt]
             u0 = ubar0[ng,nt]
-            if approximation == 1 : #eddington
+            if toon_coefficients == 1 : #eddington
                 g3  = (2-3*cosb*u0)/4#0.5*(1.-sq3*cosb*ubar0[ng, nt]) #  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
-            elif approximation == 0 :#quadrature
+            elif toon_coefficients == 0 :#quadrature
                 g3  = 0.5*(1.-sq3*cosb*u0) #  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
     
             # now calculate c_plus and c_minus (equation 23 and 24 toon)
@@ -1903,7 +1905,7 @@ def get_transit_3d(nlevel, nwno, radius, gravity,rstar, mass, mmw, k_b, G,amu,
 def get_reflected_SH(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect, ubar0, ubar1, cos_theta, F0PI, single_phase, rayleigh,
-    frac_a, frac_b, frac_c, constant_back, constant_forward, dim, stream, b_top=0, flx=1, psingle=0, heng_compare=0):
+    frac_a, frac_b, frac_c, constant_back, constant_forward, dim, stream, b_top=0, flx=1, single_form=0, heng_compare=0):
     """
     Computes rooney fluxes given tau and everything is 3 dimensional. This is the exact same function 
     as `get_flux_geom_1d` but is kept separately so we don't have to do unecessary indexing for 
@@ -2010,8 +2012,8 @@ def get_reflected_SH(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, 
                     w_multi[l,:,:] = (2*l+1) * (cosb_og**l - ff) / (1 - ff)
                     w_single[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
 
-                # OG psingle calculation
-                if psingle==0: 
+                # OG single_form calculation
+                if single_form==0: 
                     p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 
 
@@ -2024,8 +2026,8 @@ def get_reflected_SH(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, 
                                         + (1-f)*(g_back**l - ff2) / (1 - ff2))
 
 
-                # OG psingle calculation
-                if psingle==0:
+                # OG single_form calculation
+                if single_form==0:
                     p_single=(f * (1-g_forward**2) /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
                                 #second term of TTHG: backward scattering
                                 +(1-f)*(1-g_back**2) /sqrt((1+g_back**2+2*g_back*cos_theta)**3))
@@ -2040,7 +2042,7 @@ def get_reflected_SH(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, 
                     w_single[2] = 0.5#*ftau_ray
 
                     # OG psingle calculation
-                    if psingle==0: p_single += 0.75*(1+cos_theta**2.0)
+                    if single_form==0: p_single += 0.75*(1+cos_theta**2.0)
 
             if rayleigh==1 and heng_compare==0:
                 for l in range(1,stream):
@@ -2049,7 +2051,7 @@ def get_reflected_SH(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, 
                     if l==2:    
                         w_multi[2] = ftau_cld*w_multi[2] + 0.5*ftau_ray
                         w_single[2] = ftau_cld*w_single[2] + 0.5*ftau_ray
-                if psingle==0: 
+                if single_form==0: 
                     p_single = ftau_cld*p_single + ftau_ray*(0.75*(1+cos_theta**2.0))
 
             for l in range(stream):
@@ -2063,10 +2065,11 @@ def get_reflected_SH(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, 
 
             if stream==2:
                 M, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2 = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top_, b_surface, 
-                surf_reflect, F0PI, u0, dtau, tau, a, b, u1, fluxes=flx) 
+                surf_reflect, F0PI, u0, dtau, tau, a, b, u1, fluxes=flx, calculation=0) 
 
             if stream==4:
-                M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top_, b_surface, b_surface_SH4, surf_reflect, F0PI, u0, dtau, tau, a, b, u1, fluxes=flx) 
+                M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top_, b_surface, b_surface_SH4, 
+                    surf_reflect, F0PI, u0, dtau, tau, a, b, u1, fluxes=flx, calculation=0) 
                 # F and G will be nonzero if fluxes=1
 
             flux_bot = zeros(nwno)
@@ -2088,7 +2091,7 @@ def get_reflected_SH(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, 
             expo_mus = slice_gt(expo_mus, 35.0)    
             exptrm_mus = exp(-expo_mus)
 
-            if psingle==1:
+            if single_form==1:
                 maxterm = stream
                 for l in range(maxterm):
                     p_single = p_single + w_single[l] * Pu0[l]*Pu1[l]
@@ -2112,15 +2115,13 @@ def get_reflected_SH(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, 
             xint_out[ng,nt,:,:] = xint_temp
             flux[ng,nt,:,:] = flux_temp
     
-#    import IPython; IPython.embed()
-#    import sys; sys.exit()
     return xint_at_top, flux, xint_out
 
 @jit(nopython=True, cache=True, debug=True)
 def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb, 
             dtau_og, tau_og, w0_og, w0_no_raman, cosb_og, plevel, ubar1,
             constant_forward, constant_back, frac_a, frac_b, frac_c,
-            surf_reflect, single_phase, dimension, stream, hard_surface, flx=1, calculation=1, SH4_BC=0):
+            surf_reflect, single_phase, dimension, stream, hard_surface, flx=1, blackbody_approx=1, SH4_BC=0):
     nlayer = nlevel - 1 #nlayers 
 
     mu1 = 0.5#0.88#0.5 #from Table 1 Toon  
@@ -2129,10 +2130,10 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     #get matrix of blackbodies 
     all_b = blackbody(tlevel, 1/wno) #returns nlevel by nwave   
     b0 = all_b[0:-1,:]
-    if calculation == 1: # linear thermal
+    if blackbody_approx == 1: # linear thermal
         b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
         f0 = 0.
-    elif calculation == 2: # exponential thermal
+    elif blackbody_approx == 2: # exponential thermal
         b1 = all_b[1:,:] 
         f0 = -1/dtau * log(b1/b0)
     
@@ -2168,11 +2169,11 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
         for nt in range(numt):
             if stream==2:
                 M, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2 = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-                surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, ubar1[ng,nt], b0, b1, f0, fluxes=flx, calculation=calculation)
+                surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, ubar1[ng,nt], b0, b1, f0, fluxes=flx, calculation=blackbody_approx)
 
             elif stream==4:
                 M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-                        b_surface_SH4, surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, ubar1[ng,nt], b0, b1, f0, fluxes=flx, calculation=calculation) 
+                        b_surface_SH4, surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, ubar1[ng,nt], b0, b1, f0, fluxes=flx, calculation=blackbody_approx) 
                 # F and G will be nonzero if fluxes=1
 
             flux_bot = zeros(nwno)
@@ -2194,7 +2195,7 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
                 for l in range(stream):
                     multi_scat[i,:] = multi_scat[i,:] + w_multi[l,i,:] * Pubar1[l] * intgrl_new[stream*i+l,:]
 
-            if calculation==1:
+            if blackbody_approx==1:
                 expo = dtau / ubar1[ng,nt] 
                 expo_mus = slice_gt(expo, 35.0)    
                 expdtau = exp(-expo)
@@ -2204,7 +2205,7 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
                             (b0 * (1 - expdtau)
                             + b1 * (ubar1[ng,nt] - (dtau + ubar1[ng,nt]) * expdtau)))
 
-            elif calculation==2:
+            elif blackbody_approx==2:
                 expo = dtau * (f0 + 1/ubar1[ng,nt])
                 expo = slice_gt(expo, 35.0)    
                 expdtau = exp(-expo)
@@ -2234,7 +2235,7 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 
 @jit(nopython=True, cache=True)
 def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, 
-        a, b, ubar1, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
+        a, b, ubar1, B0=0., B1=0., f0=0., fluxes=0, calculation=0):
 
     if calculation==0:
         Del = ((1 / ubar0)**2 - a[0]*a[1])

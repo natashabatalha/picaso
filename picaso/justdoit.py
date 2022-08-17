@@ -77,31 +77,39 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
     ############# DEFINE ALL APPROXIMATIONS USED IN CALCULATION #############
     #see class `inputs` attribute `approx`
+    #what rt method are we using?? 
+    rt_method = inputs['approx']['rt_method'] #either toon or spherical harmonics
+    
+    #USED by all RT
 
-    #set approx numbers options (to be used in numba compiled functions)
-    single_phase = inputs['approx']['single_phase']
-    multi_phase = inputs['approx']['multi_phase']
-    raman_approx =inputs['approx']['raman']
-    method = inputs['approx']['method']
-    stream = inputs['approx']['stream']
-    approximation = inputs['approx']['toon_coefficients']
-    tridiagonal = 0 
-    psingle = inputs['approx']['psingle']
-    rayleigh = inputs['approx']['rayleigh']
-    heng_compare = inputs['approx']['heng_compare']
-
-
+    single_phase = inputs['approx']['rt_params']['common']['single_phase']
+    stream = inputs['approx']['rt_params']['common']['stream']
     #parameters needed for the two term hg phase function. 
     #Defaults are set in config.json
-    f = inputs['approx']['TTHG_params']['fraction']
+    f = inputs['approx']['rt_params']['common']['TTHG_params']['fraction']
     frac_a = f[0]
     frac_b = f[1]
     frac_c = f[2]
-    constant_back = inputs['approx']['TTHG_params']['constant_back']
-    constant_forward = inputs['approx']['TTHG_params']['constant_forward']
-
+    constant_back = inputs['approx']['rt_params']['common']['TTHG_params']['constant_back']
+    constant_forward = inputs['approx']['rt_params']['common']['TTHG_params']['constant_forward']
+    raman_approx =inputs['approx']['rt_params']['common']['raman']
     #define delta eddington approximinations 
-    delta_eddington = inputs['approx']['delta_eddington']
+    delta_eddington = inputs['approx']['rt_params']['common']['delta_eddington']
+
+
+    #USED in TOON (if being used)
+    toon_coefficients = inputs['approx']['rt_params']['toon']['toon_coefficients']
+    tridiagonal = 0 
+    multi_phase = inputs['approx']['rt_params']['toon']['multi_phase']
+
+    #USED in SH (if being used)
+    single_form = inputs['approx']['rt_params']['SH']['single_form']
+    rayleigh = inputs['approx']['rt_params']['SH']['rayleigh']
+    heng_compare = inputs['approx']['rt_params']['SH']['heng_compare']
+
+
+    
+
 
     #pressure assumption
     p_reference =  inputs['approx']['p_reference']
@@ -195,7 +203,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             xint_at_top = 0 
             for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
                 nlevel = atm.c.nlevel
-                if method == 'SH':
+                if rt_method == 'SH':
                     (xint, flux_out, intensity)  = get_reflected_SH(nlevel, wno, nwno, ng, nt, 
                                     DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig], 
                                     GCOS2[:,:,ig], ftau_cld[:,:,ig], ftau_ray[:,:,ig],
@@ -203,7 +211,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                     atm.surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
                                     single_phase, rayleigh, 
                                     frac_a, frac_b, frac_c, constant_back, constant_forward, 
-                                    1, stream, b_top=b_top, psingle=psingle, heng_compare=heng_compare) #LCM is carrying this bug
+                                    1, stream, b_top=b_top, single_form=single_form, heng_compare=heng_compare) #LCM is carrying this bug
                 else:
                     xint = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                     DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
@@ -211,7 +219,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                     DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
                                     atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
                                     single_phase,multi_phase,
-                                    frac_a,frac_b,frac_c,constant_back,constant_forward, approximation,
+                                    frac_a,frac_b,frac_c,constant_back,constant_forward, toon_coefficients,
                                     b_top=b_top)
                                     #frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)
                 #add guass for ck
@@ -232,13 +240,13 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                 
                 #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
                 #the uncorrected raman single scattering 
-                if method == 'toon':
+                if rt_method == 'toon':
                     flux  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
                                                         DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                                         atm.level['pressure'],ubar1,
                                                         atm.surf_reflect, atm.hard_surface, tridiagonal)
-                elif method == 'SH':
-                    thermal_calculation = inputs['approx']['thermal_calculation']
+                elif rt_method == 'SH':
+                    blackbody_approx = inputs['approx']['rt_params']['SH']['blackbody_approx']
                     (flux, intensity, flux_out) = get_thermal_SH(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
                                                 DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig], 
                                                 DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], 
@@ -247,7 +255,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                                 constant_forward,constant_back,frac_a,frac_b,frac_c,
                                                 atm.surf_reflect, 
                                                 single_phase, dimension, stream, atm.hard_surface, 
-                                                calculation=thermal_calculation)
+                                                blackbody_approx=blackbody_approx)
 
                 #add guass for ck
                 flux_at_top += flux*gauss_wts[ig]
@@ -490,26 +498,28 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
 
     ############# DEFINE ALL APPROXIMATIONS USED IN CALCULATION #############
     #see class `inputs` attribute `approx`
+    rt_method = inputs['approx']['rt_method']
 
     #set approx numbers options (to be used in numba compiled functions)
-    single_phase = inputs['approx']['single_phase']
-    multi_phase = inputs['approx']['multi_phase']
-    method = inputs['approx']['method']
-    stream = inputs['approx']['stream']
+    stream = inputs['approx']['rt_params']['common']['stream']
+    single_phase = inputs['approx']['rt_params']['common']['single_phase']
+
+    multi_phase = inputs['approx']['rt_params']['toon']['multi_phase']
+    #define delta eddington approximinations 
+    delta_eddington = inputs['approx']['rt_params']['common']['delta_eddington']    
     tridiagonal = 0 
     raman_approx = 2
 
     #parameters needed for the two term hg phase function. 
     #Defaults are set in config.json
-    f = inputs['approx']['TTHG_params']['fraction']
+    f = inputs['approx']['rt_params']['common']['TTHG_params']['fraction']
     frac_a = f[0]
     frac_b = f[1]
     frac_c = f[2]
-    constant_back = inputs['approx']['TTHG_params']['constant_back']
-    constant_forward = inputs['approx']['TTHG_params']['constant_forward']
+    constant_back = inputs['approx']['rt_params']['common']['TTHG_params']['constant_back']
+    constant_forward = inputs['approx']['rt_params']['common']['TTHG_params']['constant_forward']
 
-    #define delta eddington approximinations 
-    delta_eddington = inputs['approx']['delta_eddington']
+
 
     #pressure assumption
     p_reference =  inputs['approx']['p_reference']
@@ -951,7 +961,7 @@ class inputs():
         """
         Turns off planet specific things, so program can run as usual
         """
-        self.inputs['approx']['raman'] = 2 #turning off raman scattering
+        self.inputs['approx']['rt_params']['common']['raman'] = 2 #turning off raman scattering
         self.phase_angle(0,num_gangle=10,num_tangle=1) #auto turn on zero phase
         self.inputs['calculation'] ='climate'
 
@@ -960,7 +970,7 @@ class inputs():
         """
         Turns off planet specific things, so program can run as usual
         """
-        self.inputs['approx']['raman'] = 2 #turning off raman scattering
+        self.inputs['approx']['rt_params']['common']['raman'] = 2 #turning off raman scattering
         self.inputs['star']['database'] = 'nostar'
         self.inputs['star']['temp'] = 'nostar'
         self.inputs['star']['logg'] = 'nostar'
@@ -1080,7 +1090,7 @@ class inputs():
         wno_planet = opannection.wno
         #this adds stellar shifts 'self.raman_stellar_shifts' to the opacity class
         #the cross sections are computed later 
-        if self.inputs['approx']['raman'] == 0: 
+        if self.inputs['approx']['rt_params']['common']['raman'] == 0: 
             max_shift = np.max(wno_planet)+6000 #this 6000 is just the max raman shift we could have 
             min_shift = np.min(wno_planet) -2000 #it is just to make sure we cut off the right wave ranges
             #do a fail safe to make sure that star is on a fine enough grid for planet case 
@@ -1167,13 +1177,13 @@ class inputs():
 
         #lastly check to see if the atmosphere is non-H2 dominant. 
         #if it is, let's turn off Raman scattering for the user. 
-        if (("H2" not in df.keys()) and (self.inputs['approx']['raman'] != 2)):
+        if (("H2" not in df.keys()) and (self.inputs['approx']['rt_params']['common']['raman'] != 2)):
             if verbose: print("Turning off Raman for Non-H2 atmosphere")
-            self.inputs['approx']['raman'] = 2
-        elif (("H2" in df.keys()) and (self.inputs['approx']['raman'] != 2)): 
+            self.inputs['approx']['rt_params']['common']['raman'] = 2
+        elif (("H2" in df.keys()) and (self.inputs['approx']['rt_params']['common']['raman'] != 2)): 
             if df['H2'].min() < 0.7: 
                 if verbose: print("Turning off Raman for Non-H2 atmosphere")
-                self.inputs['approx']['raman'] = 2
+                self.inputs['approx']['rt_params']['common']['raman'] = 2
     def premix_atmosphere(self, opa, df=None, filename=None, **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
@@ -1211,7 +1221,7 @@ class inputs():
         self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
 
         #Turn off raman for 196 premix calculations 
-        self.inputs['approx']['raman'] = 2
+        self.inputs['approx']['rt_params']['common']['raman'] = 2
 
         self.chem_interp(opa.full_abunds)
     def premix_atmosphere_nearest_deprecate(self, opa, df=None, filename=None, **pd_kwargs):
@@ -1251,7 +1261,7 @@ class inputs():
         self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
 
         #Turn off raman for 196 premix calculations 
-        self.inputs['approx']['raman'] = 2
+        self.inputs['approx']['rt_params']['common']['raman'] = 2
 
         plevel = self.inputs['atmosphere']['profile']['pressure'].values
         tlevel =self.inputs['atmosphere']['profile']['temperature'].values
@@ -2774,8 +2784,8 @@ class inputs():
 
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='none',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
-        p_reference=1, method='toon', stream=2, thermal_calculation=1, toon_coefficients="quadrature",
-        psingle='og', rayleigh='off', heng_compare='off', query='nearest_neighbor'):
+        p_reference=1, rt_method='toon', stream=2, blackbody_approx=1, toon_coefficients="quadrature",
+        single_form='explicit', rayleigh='off', heng_compare='off', query='nearest_neighbor'):
         """
         This function sets all the default approximations in the code. It transforms the string specificatons
         into a number so that they can be used in numba nopython routines. 
@@ -2810,42 +2820,56 @@ class inputs():
         toon_coefficients: str
             Decide whether to use Quadrature ("quadrature") or Eddington ("eddington") schemes
             to define Toon coefficients in two-stream approximation (see Table 1 in Toon et al 1989)
+        blackbody_approx : int 
+            blackbody_approx=1 does a linear blackbody approx (eqn 26 toon 89), 
+            while blackbody_approx=2 does an exponential (only an option for SH)
+        single_form : str 
+            form of the phase function can either be written as an 'explicit' henyey greinstein 
+            or it can be written as a 'legendre' expansion. Default is 'explicit'
         query : str 
             method to grab opacities. either "nearest_neighbor" or "interp" which 
             interpolates based on 4 nearest neighbors. Default is nearest_neighbor
             which is significantly faster.
         """
+        self.inputs['approx']['rt_method'] = rt_method
 
-        self.inputs['approx']['single_phase'] = single_phase_options(printout=False).index(single_phase)
-        self.inputs['approx']['multi_phase'] = multi_phase_options(printout=False).index(multi_phase)
-        self.inputs['approx']['delta_eddington'] = delta_eddington
-        self.inputs['approx']['raman'] =  raman_options().index(raman)
-        self.inputs['approx']['method'] = method
-        if method == 'toon':
-                self.inputs['approx']['stream'] = 2 # having method="Toon" and stream=4 messes up delta-eddington stuff
+        #common to any RT code
+        if rt_method == 'toon':
+                self.inputs['approx']['rt_params']['common']['stream'] = 2 # having method="Toon" and stream=4 messes up delta-eddington stuff
         else:
-                self.inputs['approx']['stream'] = stream
-        self.inputs['approx']['toon_coefficients'] = coefficients_options(printout=False).index(toon_coefficients)
- 
-        self.inputs['opacities']['query'] = query_options().index(query)
+                self.inputs['approx']['rt_params']['common']['stream'] = stream
 
+        self.inputs['approx']['rt_params']['common']['single_phase'] = single_phase_options(printout=False).index(single_phase)
+        self.inputs['approx']['rt_params']['common']['delta_eddington'] = delta_eddington
+        self.inputs['approx']['rt_params']['common']['raman'] =  raman_options().index(raman)
         if isinstance(tthg_frac, (list, np.ndarray)):
             if len(tthg_frac) == 3:
-                self.inputs['approx']['TTHG_params']['fraction'] = tthg_frac
+                self.inputs['approx']['rt_params']['common']['TTHG_params']['fraction'] = tthg_frac
             else:
                 raise Exception('tthg_frac should be of length=3 so that : tthg_frac[0] + tthg_frac[1]*g_b^tthg_frac[2]')
         else: 
             raise Exception('tthg_frac should be a list or ndarray of length=3')
 
-        self.inputs['approx']['TTHG_params']['constant_back'] = tthg_back
-        self.inputs['approx']['TTHG_params']['constant_forward']=tthg_forward
+        self.inputs['approx']['rt_params']['common']['TTHG_params']['constant_back'] = tthg_back
+        self.inputs['approx']['rt_params']['common']['TTHG_params']['constant_forward']=tthg_forward
+
+        #unique to toon 
+        #eddington or quradrature
+        self.inputs['approx']['rt_params']['toon']['toon_coefficients'] = coefficients_options(printout=False).index(toon_coefficients)
+        self.inputs['approx']['rt_params']['toon']['multi_phase'] = multi_phase_options(printout=False).index(multi_phase)
+        
+        #unique to SH
+        self.inputs['approx']['rt_params']['SH']['single_form'] = single_form_options(printout=False).index(single_form)
+        self.inputs['approx']['rt_params']['SH']['rayleigh'] = rayleigh_options(printout=False).index(rayleigh)
+        self.inputs['approx']['rt_params']['SH']['heng_compare'] = heng_compare_options(printout=False).index(heng_compare)
+        self.inputs['approx']['rt_params']['SH']['blackbody_approx'] = blackbody_approx
+
+
+        self.inputs['opacities']['query'] = query_options().index(query)
 
         self.inputs['approx']['p_reference']= p_reference
-        self.inputs['approx']['thermal_calculation'] = thermal_calculation
-        self.inputs['approx']['psingle'] = psingle_options(printout=False).index(psingle)
-        self.inputs['approx']['rayleigh'] = rayleigh_options(printout=False).index(rayleigh)
-        self.inputs['approx']['heng_compare'] = heng_compare_options(printout=False).index(heng_compare)
-    
+        
+
     def phase_curve(self, opacityclass,  full_output=False, 
         plot_opacity= False,n_cpu =1 ): 
         """
@@ -3284,7 +3308,7 @@ def young_planets():
     planets_df = pd.read_csv(os.path.join(__refdata__, 'evolution','benchmarks_age_lbol.csv'),skiprows=12)
     return planets_df
 
-def methodology_options(printout=True):
+def rt_methodology_options(printout=True):
     """Retrieve all the options for methodology"""
     if printout: print("Can calculate spectrum using Toon 1989 methodology or sperhical harmonics")
     return ['toon','SH']
@@ -3295,9 +3319,9 @@ def stream_options(printout=True):
 def coefficients_options(printout=True):
     """Retrieve options for coefficients used in Toon calculation"""
     return ["quadrature","eddington"]
-def psingle_options(printout=True):
-    """Retrieve options for psingle approximation"""
-    return ['og','new']
+def single_form_options(printout=True):
+    """Retrieve options for direct scattering form approximation"""
+    return  ["explicit","legendre"]
 def rayleigh_options(printout=True):
     """Retrieve options for rayleigh scattering"""
     return ['off','on']
