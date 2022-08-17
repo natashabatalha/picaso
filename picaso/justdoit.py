@@ -86,7 +86,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     stream = inputs['approx']['stream']
     approximation = inputs['approx']['Toon_coefficients']
     tridiagonal = 0 
-    input_dir = inputs['approx']['input_dir']
     psingle = inputs['approx']['psingle']
     rayleigh = inputs['approx']['rayleigh']
     heng_compare = inputs['approx']['heng_compare']
@@ -197,7 +196,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                     frac_a, frac_b, frac_c, constant_back, constant_forward, 
                                     1, stream, b_top=b_top, psingle=psingle, heng_compare=heng_compare) #LCM is carrying this bug
                 else:
-                    (xint, flux_out, intensity) = get_reflected_1d(nlevel, wno,nwno,ng,nt,
+                    xint = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                     DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
                                     GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
                                     DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
@@ -212,8 +211,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             #if full output is requested add in xint at top for 3d plots
             if full_output: 
                 atm.xint_at_top = xint_at_top
-                atm.flux= flux_out
-                atm.int_layer = intensity
+                #atm.flux= flux_out
+                #atm.int_layer = intensity
 
 
         if 'thermal' in calculation:
@@ -225,7 +224,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                 #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
                 #the uncorrected raman single scattering 
                 if method == 'Toon':
-                    (flux, intensity, flux_out)  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
+                    flux  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
                                                         DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                                         atm.level['pressure'],ubar1,
                                                         atm.surf_reflect, atm.hard_surface, tridiagonal)
@@ -400,8 +399,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         thermal = compress_thermal(nwno,flux_at_top, gweight, tweight)
         returns['thermal'] = thermal
         returns['xint_at_top'] = flux_at_top 
-        returns['intensity'] = intensity 
-        returns['flux'] = flux_out 
         returns['tau'] = TAU 
         returns['effective_temperature'] = (np.trapz(x=1/wno[::-1], y=thermal[::-1])/5.67e-5)**0.25
 
@@ -435,19 +432,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         else:
             returns['full_output'] = atm
 
-    if input_dir != None:
-        filename = input_dir 
-        pk.dump({'pressure': atm.level['pressure'], 'temperature': atm.level['temperature'], 
-            'nlevel':nlevel, 'wno':wno, 'nwno':nwno, 'ng':ng, 'nt':nt, 
-            'dtau':DTAU, 'tau':TAU, 'w0':W0, 'cosb':COSB, 'gcos2':GCOS2,'ftcld':ftau_cld,'ftray': ftau_ray,
-            'dtau_og':DTAU_OG, 'tau_og':TAU_OG, 'w0_og':W0_OG, 'cosb_og':COSB_OG, 
-            'surf_reflect':atm.surf_reflect, 'ubar0':ubar0, 'ubar1':ubar1, 'costheta':cos_theta, 'F0PI':F0PI, 
-            'single_phase':single_phase, 'multi_phase':multi_phase, 
-            'frac_a':frac_a, 'frac_b':frac_b, 'frac_c':frac_c, 'constant_back':constant_back, 
-            'constant_forward':constant_forward, 'dim':dimension, 'stream':stream,
-            #'xint_at_top': xint_at_top, 'albedo': albedo, 'flux': flux_out, 'xint': intensity, 'b_top': b_top,
-            'xint_at_top': flux_at_top, 'flux': flux_out, 'xint': intensity, 'b_top': b_top,
-            'gweight': gweight, 'tweight': tweight, 'gangle': gangle, 'tangle': tangle}, open(filename,'wb'), protocol=2)
     return returns
 
 
@@ -2773,7 +2757,7 @@ class inputs():
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='none',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
         p_reference=1, method='Toon', stream=2, thermal_calculation=1, Toon_coefficients="quadrature",
-        input_dir=None, psingle='og', rayleigh='off', heng_compare='off'):
+        psingle='og', rayleigh='off', heng_compare='off'):
         """
         This function sets all the default approximations in the code. It transforms the string specificatons
         into a number so that they can be used in numba nopython routines. 
@@ -2833,7 +2817,6 @@ class inputs():
         self.inputs['approx']['TTHG_params']['constant_forward']=tthg_forward
 
         self.inputs['approx']['p_reference']= p_reference
-        self.inputs['approx']['input_dir'] = input_dir
         self.inputs['approx']['thermal_calculation'] = thermal_calculation
         self.inputs['approx']['psingle'] = psingle_options(printout=False).index(psingle)
         self.inputs['approx']['rayleigh'] = rayleigh_options(printout=False).index(rayleigh)
