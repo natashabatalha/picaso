@@ -1900,7 +1900,7 @@ def get_transit_3d(nlevel, nwno, radius, gravity,rstar, mass, mmw, k_b, G,amu,
     return 
 
 @jit(nopython=True, cache=True, debug=True)
-def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_cld, ftau_ray,
+def get_reflected_SH(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect, ubar0, ubar1, cos_theta, F0PI, single_phase, rayleigh,
     frac_a, frac_b, frac_c, constant_back, constant_forward, dim, stream, b_top=0, flx=1, psingle=0, heng_compare=0):
@@ -2117,7 +2117,7 @@ def get_reflected_new(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2,
     return xint_at_top, flux, xint_out
 
 @jit(nopython=True, cache=True, debug=True)
-def get_thermal_new(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb, 
+def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb, 
             dtau_og, tau_og, w0_og, w0_no_raman, cosb_og, plevel, ubar1,
             constant_forward, constant_back, frac_a, frac_b, frac_c,
             surf_reflect, single_phase, dimension, stream, hard_surface, flx=1, calculation=1, SH4_BC=0):
