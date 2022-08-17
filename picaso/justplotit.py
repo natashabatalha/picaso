@@ -6,7 +6,6 @@ from bokeh.layouts import column,row
 import numpy as np
 
 from bokeh.palettes import gray as colfun3
-from bokeh.palettes import RdGy
 from bokeh.palettes import Spectral11,Category20,viridis,magma,RdBu11
 from bokeh.models import HoverTool
 from bokeh.models import LinearColorMapper, LogTicker,BasicTicker, ColorBar,LogColorMapper,Legend

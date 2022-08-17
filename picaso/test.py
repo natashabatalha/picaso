@@ -2,6 +2,7 @@ import json
 import pandas as pd
 from bokeh.plotting import figure, show, output_file
 from bokeh.palettes import inferno
+from bokeh.palettes import RdGy
 import numpy as np
 from .justdoit import opannection, inputs
 import os 
