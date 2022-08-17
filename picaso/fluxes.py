@@ -1026,8 +1026,8 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             #use expression for bottom flux to get the flux_plus and flux_minus at last
             #bottom layer
             flux_zero  = positive[-1,:]*exptrm_positive[-1,:] + gama[-1,:]*negative[-1,:]*exptrm_minus[-1,:] + c_plus_down[-1,:]
-            flux_minus  = gama*positive*exptrm_positive + negative*exptrm_minus + c_minus_down
-            flux_plus  = positive*exptrm_positive + gama*negative*exptrm_minus + c_plus_down
+            #flux_minus  = gama*positive*exptrm_positive + negative*exptrm_minus + c_minus_down
+            #flux_plus  = positive*exptrm_positive + gama*negative*exptrm_minus + c_plus_down
             #flux = zeros((2*nlevel, nwno))
             #flux[0,:] = (gama*positive + negative + a_minus)[0,:]
             #flux[1,:] = (positive + gama*negative + a_plus)[0,:]
@@ -1118,7 +1118,12 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             for i in range(nlayer-1,-1,-1):
                 #direct beam
                 xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/u1) 
-                        + direct_flux[ng,nt,i,:]
+                        #single scattering albedo from sun beam (from ubar0 to ubar1)
+                        +(w0_og[i,:]*F0PI/(4.*pi))
+                        *(p_single[i,:])*exp(-tau_og[i,:]/u0)
+                        *(1. - exp(-dtau_og[i,:]*(u0+u1)
+                        /(u0*u1)))*
+                        (u0/(u0+u1))
                         #multiple scattering terms p_single
                         +A[i,:]*(1. - exp(-dtau[i,:] *(u0+1*u1)/(u0*u1)))*
                         (u0/(u0+1*u1))
