@@ -17,7 +17,7 @@
 	},
 	"atmosphere":{
 		"profile":null,
-		"exclude_mol":null,
+		"exclude_mol":1,
 		"pt_params":null
 	},
 	"clouds":{
@@ -30,9 +30,12 @@
 		}
 	},
 	"approx":{
-		"method":"Toon",
+		"method":"toon",
 		"toon_coefficients":0,
 		"stream":2,
+		"psingle":0,
+		"rayleigh":1,
+		"heng_compare":0,
 		"p_reference":1,
 		"single_phase":3,
 		"TTHG_params":{
