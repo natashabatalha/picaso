@@ -15,7 +15,7 @@ from matplotlib.ticker import StrMethodFormatter
 import virga.justdoit as vj
 from .justdoit import inputs, opannection, mean_regrid, u, input_xarray, copy
 
-
+from bokeh.palettes import Cividis
 #from multiprocessing import Pool
 
 import dynesty
@@ -390,13 +390,19 @@ class GridFitter():
                 best_fit = 100*self.best_fits[igrid][idata][self.rank[igrid][idata],:][0,:]
                 chi1 = self.chi_sqs[igrid][idata][self.rank[igrid][idata]][0]
 
-                ax['A'].plot(wlgrid_center,best_fit,color,linewidth=2,label=r"Best Fit "+igrid+", ${\chi}_{\\nu}$$^2$= "+ str(np.round(chi1,2)))
+                ax['A'].plot(wlgrid_center,best_fit,color,linewidth=2,label=r"Best Fit "+igrid+"+"+idata+", ${\chi}_{\\nu}$$^2$= "+ str(np.round(chi1,2)))
 
                 ax['B'].plot(wlgrid_center,(y_data-best_fit)/e_data,"o",color=color,markersize=5)
                 if ii==0:ax['B'].plot(wlgrid_center,0*y_data,"k")
 
                 ii+=1
-            ax['A'].errorbar(wlgrid_center,y_data,yerr=e_data,fmt="ko",label=idata+" Reduction",markersize=5)
+
+        for i,idata in enumerate(data_names):
+            wlgrid_center = self.data[idata]['wlgrid_center']
+            y_data = 100*self.data[idata]['y_data']
+            e_data = 100*self.data[idata]['e_data']
+            ax['A'].errorbar(wlgrid_center,y_data,yerr=e_data,fmt="o",color=Cividis[7][i],label=idata+" Reduction",markersize=5)
+        
         ax['B'].set_xlabel(r"wavelength [$\mu$m]",fontsize=20)
         ax['A'].set_ylabel(r"transit depth [%]",fontsize=20)
 
