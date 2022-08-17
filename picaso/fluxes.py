@@ -1900,10 +1900,10 @@ def get_transit_3d(nlevel, nwno, radius, gravity,rstar, mass, mmw, k_b, G,amu,
     return 
 
 @jit(nopython=True, cache=True, debug=True)
-def get_reflected_SH(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_cld, ftau_ray,
+def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect, ubar0, ubar1, cos_theta, F0PI, single_phase, rayleigh,
-    frac_a, frac_b, frac_c, constant_back, constant_forward, dim, stream, b_top=0, flx=1, psingle=0, heng_compare=0):
+    frac_a, frac_b, frac_c, constant_back, constant_forward, stream, b_top=0, flx=1, psingle=0, heng_compare=0):
     """
     Computes rooney fluxes given tau and everything is 3 dimensional. This is the exact same function 
     as `get_flux_geom_1d` but is kept separately so we don't have to do unecessary indexing for 
@@ -1919,36 +1919,42 @@ def get_reflected_SH(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, 
         Number of Gauss angles 
     numt : int 
         Number of Chebyshev angles 
-    dtau_3d : ndarray of float
+    dtau : ndarray of float
         This is the opacity contained within each individual layer (defined at midpoints of "levels")
         WITHOUT D-Eddington Correction
         Dimensions=# layer by # wave
-    tau_3d : ndarray of float
+    tau : ndarray of float
         This is the cumulative summed opacity 
         WITHOUT D-Eddington Correction
         Dimensions=# level by # wave        
-    w0_3d : ndarray of float 
+    w0 : ndarray of float 
         This is the single scattering albedo, from scattering, clouds, raman, etc 
         WITHOUT D-Eddington Correction
         Dimensions=# layer by # wave
-    cosb_3d : ndarray of float 
+    cosb : ndarray of float 
         This is the asymmetry factor 
         WITHOUT D-Eddington Correction
         Dimensions=# layer by # wave
-    gcos2_3d : ndarray of float 
+    gcos2 : ndarray of float 
         Parameter that allows us to directly include Rayleigh scattering 
         = 0.5*tau_rayleigh/(tau_rayleigh + tau_cloud)
-    dtau_og_3d : ndarray of float 
+    ftau_cld : ndarray of float 
+        Fraction of cloud extinction to total 
+        = tau_cloud/(tau_rayleigh + tau_cloud)
+    ftau_ray : ndarray of float 
+        Fraction of rayleigh extinction to total 
+        = tau_rayleigh/(tau_rayleigh + tau_cloud)
+    dtau_og : ndarray of float 
         This is the opacity contained within each individual layer (defined at midpoints of "levels")
         WITHOUT the delta eddington correction, if it was specified by user
         Dimensions=# layer by # wave
-    tau_og_3d : ndarray of float
+    tau_og : ndarray of float
         This is the cumulative summed opacity 
         WITHOUT the delta eddington correction, if it was specified by user
         Dimensions=# level by # wave    
-    w0_og_3d : ndarray of float 
+    w0_og : ndarray of float 
         Same as w0 but WITHOUT the delta eddington correction, if it was specified by user  
-    cosb_og_3d : ndarray of float 
+    cosb_og : ndarray of float 
         Same as cosbar buth WITHOUT the delta eddington correction, if it was specified by user
     surf_reflect : float 
         Surface reflectivity 
@@ -1956,8 +1962,40 @@ def get_reflected_SH(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, 
         matrix of cosine of the incident angle from geometric.json
     ubar1 : ndarray of float 
         matrix of cosine of the observer angles
+    cos_theta : float 
+        Cosine of the phase angle of the planet 
     F0PI : array 
         Downward incident solar radiation
+    single_phase : str 
+        Single scattering phase function, default is the two-term henyey-greenstein phase function
+    rayleigh : str 
+        Toggle rayleigh on or off
+    frac_a : float 
+        (Optional), If using the TTHG phase function. Must specify the functional form for fraction 
+        of forward to back scattering (A + B * gcosb^C)
+    frac_b : float 
+        (Optional), If using the TTHG phase function. Must specify the functional form for fraction 
+        of forward to back scattering (A + B * gcosb^C)
+    frac_c : float 
+        (Optional), If using the TTHG phase function. Must specify the functional form for fraction 
+        of forward to back scattering (A + B * gcosb^C), Default is : 1 - gcosb^2
+    constant_back : float 
+        (Optional), If using the TTHG phase function. Must specify the assymetry of back scatterer. 
+        Remember, the output of A & M code does not separate back and forward scattering.
+    constant_forward : float 
+        (Optional), If using the TTHG phase function. Must specify the assymetry of forward scatterer. 
+        Remember, the output of A & M code does not separate back and forward scattering.
+    stream : int 
+        Order of expansion of Legendre polynomials (2 or 4)
+    b_top : float 
+        Upper boundary condition for incoming intensity
+    flx : int 
+        Toggle calculation of layerwise fluxes (0 = do not calculate, 1 = calculate)
+    psingle : int 
+        Toggle which version of p_single to use (0 = explicit, 1 = legendre)
+    heng_compare : int 
+        Temporary option being used for comparison with Heng results
+        
     Returns
     -------
     intensity at the top of the atmosphere for all the different ubar1 and ubar2 
@@ -2062,11 +2100,11 @@ def get_reflected_SH(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, 
             b_top_ = b_top#/(2*pi)
 
             if stream==2:
-                M, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2 = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top_, b_surface, 
-                surf_reflect, F0PI, u0, dtau, tau, a, b, u1, fluxes=flx) 
+                M, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2 = setup_2_stream_banded(nlayer, nwno, w0, b_top_, b_surface, 
+                surf_reflect, u0, dtau, tau, a, b, u1, fluxes=flx) 
 
             if stream==4:
-                M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top_, b_surface, b_surface_SH4, surf_reflect, F0PI, u0, dtau, tau, a, b, u1, fluxes=flx) 
+                M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, nwno, w0, b_top_, b_surface, b_surface_SH4, surf_reflect, u0, dtau, tau, a, b, u1, fluxes=flx) 
                 # F and G will be nonzero if fluxes=1
 
             flux_bot = zeros(nwno)
@@ -2119,8 +2157,79 @@ def get_reflected_SH(nlevel, wno, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, 
 @jit(nopython=True, cache=True, debug=True)
 def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb, 
             dtau_og, tau_og, w0_og, w0_no_raman, cosb_og, plevel, ubar1,
-            constant_forward, constant_back, frac_a, frac_b, frac_c,
-            surf_reflect, single_phase, dimension, stream, hard_surface, flx=1, calculation=1, SH4_BC=0):
+            surf_reflect, stream, hard_surface, flx=1, calculation=1):
+    """
+    The result of this routine is the top of the atmosphere thermal intensity as 
+    a function of gauss and chebychev points accross the disk. 
+
+    Everything here is in CGS units:
+
+    Fluxes - erg/s/cm^3
+    Temperature - K 
+    Wave grid - cm-1
+    Pressure ; dyne/cm2
+
+    Parameters
+    ----------
+    nlevel : int 
+        Number of levels which occur at the grid points (not to be confused with layers which are
+        mid points)
+    wno : numpy.ndarray
+        Wavenumber grid in inverse cm 
+    nwno : int 
+        Number of wavenumber points 
+    numg : int 
+        Number of gauss points (think longitude points)
+    numt : int 
+        Number of chebychev points (think latitude points)
+    tlevel : numpy.ndarray
+        Temperature as a function of level (not layer)
+    dtau : numpy.ndarray
+        This is a matrix of nlayer by nwave. This describes the per layer optical depth. 
+    tau : numpy.ndarray
+        This is a matrix of nlevel by nwave. This describes the cumulative optical depth. 
+    w0 : numpy.ndarray
+        This is a matrix of nlayer by nwave. This describes the single scattering albedo of 
+        the atmosphere. Note this is free of any Raman scattering or any d-eddington correction 
+        that is sometimes included in reflected light calculations.
+    cosb : numpy.ndarray
+        This is a matrix of nlayer by nwave. This describes the asymmetry of the 
+        atmosphere. Note this is free of any Raman scattering or any d-eddington correction 
+        that is sometimes included in reflected light calculations.
+    dtau_og : ndarray of float 
+        This is the opacity contained within each individual layer (defined at midpoints of "levels")
+        WITHOUT the delta eddington correction, if it was specified by user
+        Dimensions=# layer by # wave
+    tau_og : ndarray of float
+        This is the cumulative summed opacity 
+        WITHOUT the delta eddington correction, if it was specified by user
+        Dimensions=# level by # wave    
+    w0_og : ndarray of float 
+        Same as w0 but WITHOUT the delta eddington correction, if it was specified by user  
+    cosb_og : ndarray of float 
+        Same as cosbar buth WITHOUT the delta eddington correction, if it was specified by user
+    plevel : numpy.ndarray
+        Pressure for each level (not layer, which is midpoints). CGS units (dyne/cm2)
+    ubar1 : numpy.ndarray
+        This is a matrix of ng by nt. This describes the outgoing incident angles and is generally
+        computed in `picaso.disco`
+    surf_reflect : numpy.ndarray    
+        Surface reflectivity as a function of wavenumber. 
+    stream : int 
+        Order of expansion of Legendre polynomials (2 or 4)
+    hard_surface : int
+        0 for no hard surface (e.g. Jupiter/Neptune), 1 for hard surface (terrestrial)
+    flx : int 
+        Toggle calculation of layerwise fluxes (0 = do not calculate, 1 = calculate)
+    calculation : int 
+        Toggle calculation method (1 = linear, 2 = exponential)
+
+    Returns
+    -------
+    numpy.ndarray
+        Thermal flux in CGS units (erg/cm3/s) in a matrix that is 
+        numg x numt x nwno
+    """
     nlayer = nlevel - 1 #nlayers 
 
     mu1 = 0.5#0.88#0.5 #from Table 1 Toon  
@@ -2146,7 +2255,6 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 
     b_surface_SH4 = (-pi*all_b[-1,:]/4 )
 
-    #if single_phase==1:#'OTHG':
     if np.array_equal(cosb,cosb_og):
         ff = 0.
     else:
@@ -2167,12 +2275,12 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     for ng in range(numg):
         for nt in range(numt):
             if stream==2:
-                M, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2 = setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-                surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, ubar1[ng,nt], b0, b1, f0, fluxes=flx, calculation=calculation)
+                M, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2 = setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, 
+                surf_reflect, ubar1[ng,nt], dtau, tau, a, b, ubar1[ng,nt], b0, b1, f0, fluxes=flx, calculation=calculation)
 
             elif stream==4:
-                M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, 
-                        b_surface_SH4, surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, ubar1[ng,nt], b0, b1, f0, fluxes=flx, calculation=calculation) 
+                M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, 
+                        b_surface_SH4, surf_reflect, ubar1[ng,nt], dtau, tau, a, b, ubar1[ng,nt], b0, b1, f0, fluxes=flx, calculation=calculation) 
                 # F and G will be nonzero if fluxes=1
 
             flux_bot = zeros(nwno)
@@ -2233,8 +2341,60 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     return xint_at_top, intensity, flux 
 
 @jit(nopython=True, cache=True)
-def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect, F0PI, ubar0, dtau,tau, 
+def setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar0, dtau,tau, 
         a, b, ubar1, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
+    """
+    Setup up matrices to solve flux problem for spherical harmonics method.
+
+    Parameters
+    ----------
+    nlayer : int 
+        Number of layers
+    nwno : int 
+        Number of wavenumber points 
+    w0 : numpy.ndarray
+        This is a matrix of nlayer by nwave. This describes the single scattering albedo of 
+        the atmosphere. Note this is free of any Raman scattering or any d-eddington correction 
+        that is sometimes included in reflected light calculations.
+    b_top : array 
+        The diffuse radiation into the model at the top of the atmosphere
+    b_surface : array
+        The diffuse radiation into the model at the bottom. Includes emission, reflection 
+        of the unattenuated portion of the direct beam  
+    b_surface_SH4 : array
+        Second bottom BC for SH4 method.
+    surf_reflect : numpy.ndarray    
+        Surface reflectivity as a function of wavenumber. 
+    ubar0 : ndarray of float 
+        matrix of cosine of the incident angle from geometric.json
+    dtau : numpy.ndarray
+        This is a matrix of nlayer by nwave. This describes the per layer optical depth. 
+    tau : numpy.ndarray
+        This is a matrix of nlevel by nwave. This describes the cumulative optical depth. 
+    a: numpy.ndarray
+        Coefficients of matrix capturing legendre expansion of phase function for multiple scattering
+    b: numpy.ndarray
+        Coefficients of source vector capturing legendre expansion of phase function for single 
+        scattering
+    ubar1 : numpy.ndarray
+        This is a matrix of ng by nt. This describes the outgoing incident angles and is generally
+        computed in `picaso.disco`
+    B0 : numpy.ndarray
+        Matrix of blackbodies
+    B1 : numpy.ndarray
+        Eqn (26) Toon 89
+    f0 : numpy.ndarray
+        Parameter needed for exponential approach to thermal
+    fluxes : int 
+        Toggle calculation of layerwise fluxes (0 = do not calculate, 1 = calculate)
+    calculation : int 
+        Toggle calculation method (1 = linear, 2 = exponential)
+
+    Returns
+    -------
+    numpy.ndarrays
+       Matrices and vectors used to calculate fluxes and intensities at each level 
+    """
 
     if calculation==0:
         Del = ((1 / ubar0)**2 - a[0]*a[1])
@@ -2382,8 +2542,61 @@ def setup_2_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, surf_reflect,
     return Mb, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2
 
 @jit(nopython=True, cache=True, debug=True)
-def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, b_surface_SH4, surf_reflect, F0PI, ubar0, dtau,tau, 
+def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, surf_reflect, ubar0, dtau,tau, 
         a, b, ubar1, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
+
+    """
+    Setup up matrices to solve flux problem for spherical harmonics method.
+
+    Parameters
+    ----------
+    nlayer : int 
+        Number of layers
+    nwno : int 
+        Number of wavenumber points 
+    w0 : numpy.ndarray
+        This is a matrix of nlayer by nwave. This describes the single scattering albedo of 
+        the atmosphere. Note this is free of any Raman scattering or any d-eddington correction 
+        that is sometimes included in reflected light calculations.
+    b_top : array 
+        The diffuse radiation into the model at the top of the atmosphere
+    b_surface : array
+        The diffuse radiation into the model at the bottom. Includes emission, reflection 
+        of the unattenuated portion of the direct beam  
+    b_surface_SH4 : array
+        Second bottom BC for SH4 method.
+    surf_reflect : numpy.ndarray    
+        Surface reflectivity as a function of wavenumber. 
+    ubar0 : ndarray of float 
+        matrix of cosine of the incident angle from geometric.json
+    dtau : numpy.ndarray
+        This is a matrix of nlayer by nwave. This describes the per layer optical depth. 
+    tau : numpy.ndarray
+        This is a matrix of nlevel by nwave. This describes the cumulative optical depth. 
+    a: numpy.ndarray
+        Coefficients of matrix capturing legendre expansion of phase function for multiple scattering
+    b: numpy.ndarray
+        Coefficients of source vector capturing legendre expansion of phase function for single 
+        scattering
+    ubar1 : numpy.ndarray
+        This is a matrix of ng by nt. This describes the outgoing incident angles and is generally
+        computed in `picaso.disco`
+    B0 : numpy.ndarray
+        Matrix of blackbodies
+    B1 : numpy.ndarray
+        Eqn (26) Toon 89
+    f0 : numpy.ndarray
+        Parameter needed for exponential approach to thermal
+    fluxes : int 
+        Toggle calculation of layerwise fluxes (0 = do not calculate, 1 = calculate)
+    calculation : int 
+        Toggle calculation method (1 = linear, 2 = exponential)
+
+    Returns
+    -------
+    numpy.ndarrays
+       Matrices and vectors used to calculate fluxes and intensities at each level 
+    """
 
     nlevel = nlayer+1
     beta = a[0]*a[1] + 4*a[0]*a[3]/9 + a[2]*a[3]/9
@@ -2692,6 +2905,18 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, b_surface_SH4
 #@jit(nopython=True, cache=True)
 @njit
 def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream, nlayer):
+    """
+    Solve the Spherical Harmonics Problem
+
+    Returns
+    -------
+    intgrl_new : numpy.ndarray
+       Integrated source function for source function technique
+    flux : numpy.ndarray
+        Upwards lux at bottom of atmosphere
+    X : numpy.ndarray
+        Coefficients of flux/intensity matrix problem
+    """
     #   find constants
     diag = int(3*stream/2 - 1)
     with objmode(X='float64[:]'):
@@ -2704,10 +2929,16 @@ def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream, nlayer):
 
 @jit(nopython=True, cache=True)
 def calculate_flux(F, G, X):
+    """
+    Calculate fluxes
+    """
     return F.dot(X) + G
 
 @jit(nopython=True, cache=True)
 def legP(mu): # Legendre polynomials
+    """
+    Generate array of Legendre polynomials
+    """
     return np.array([1, mu, (3*mu**2 - 1)/2, (5*mu**3 - 3*mu)/2,
         (35*mu**4 - 30*mu**2 + 3)/8, 
         (63*mu**5 - 70*mu**3 + 15*mu)/8, 
