@@ -1357,13 +1357,11 @@ def get_thermal_1d_og(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, 
                                        alpha1[ibot,:]*(1.-exptrm_angle_mdpt[ibot,:])+
                                        alpha2[ibot,:]*(iubar+0.5*dtau[ibot,:]-(dtau[ibot,:]+iubar)*exptrm_angle_mdpt[ibot,:])  )
 
-            flux_at_top[ng,nt,:] = flux_plus[0,:]#flux_plus_mdpt[0,:] #nlevel by nwno #
+            flux_plus_mdpt[0,:] #nlevel by nwno #
             #to get the convective heat flux 
             #flux_minus_mdpt_disco[ng,nt,:,:] = flux_minus_mdpt #nlevel by nwno
             #flux_plus_mdpt_disco[ng,nt,:,:] = flux_plus_mdpt #nlevel by nwno
 
-#    import IPython; IPython.embed()
-#    import sys; sys.exit()
     return flux_at_top#, flux_down# numg x numt x nwno
 
 @jit(nopython=True, cache=True)
@@ -1430,7 +1428,7 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
         numg x numt x nwno
     """
     nlayer = nlevel - 1 #nlayers 
-    flux_out = zeros((numg, numt, 2*nlevel, nwno))
+    #flux_out = zeros((numg, numt, 2*nlevel, nwno))
 
     mu1 = 0.5#0.88#0.5 #from Table 1 Toon  
 
@@ -1514,13 +1512,13 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
     #if you stop here this is regular ole 2 stream 
     f_up = (positive * exptrm_positive + gama * negative * exptrm_minus + c_plus_up)
-    flux_minus  = gama*positive*exptrm_positive + negative*exptrm_minus + c_minus_down
-    flux_plus  = positive*exptrm_positive + gama*negative*exptrm_minus + c_plus_down
-    flux = zeros((2*nlevel, nwno))
-    flux[0,:] = (gama*positive + negative + c_minus_down)[0,:]
-    flux[1,:] = (positive + gama*negative + c_plus_down)[0,:]
-    flux[2::2, :] = flux_minus
-    flux[3::2, :] = flux_plus
+    #flux_minus  = gama*positive*exptrm_positive + negative*exptrm_minus + c_minus_down
+    #flux_plus  = positive*exptrm_positive + gama*negative*exptrm_minus + c_plus_down
+    #flux = zeros((2*nlevel, nwno))
+    #flux[0,:] = (gama*positive + negative + c_minus_down)[0,:]
+    #flux[1,:] = (positive + gama*negative + c_plus_down)[0,:]
+    #flux[2::2, :] = flux_minus
+    #flux[3::2, :] = flux_plus
 
 
     #calculate everyting from Table 3 toon
@@ -1538,7 +1536,7 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     int_plus = zeros((nlevel,nwno))
     int_minus_mdpt = zeros((nlevel,nwno))
     int_plus_mdpt = zeros((nlevel,nwno))
-    intensity = zeros((numg, numt, nlevel, nwno))
+    #intensity = zeros((numg, numt, nlevel, nwno))
 
     exptrm_positive_mdpt = exp(0.5*exptrm) 
     exptrm_minus_mdpt = 1/exptrm_positive_mdpt 
@@ -1550,17 +1548,15 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     #work through building eqn 55 in toon (tons of bookeeping exponentials)
     for ng in range(numg):
         for nt in range(numt): 
-            flux_out[ng,nt,:,:] = flux
+            #flux_out[ng,nt,:,:] = flux
 
             iubar = ubar1[ng,nt]
 
             #intensity boundary conditions
             if hard_surface:
                 int_plus[-1,:] = all_b[-1,:] *2*pi  # terrestrial flux /pi = intensity
-                #int_plus[-1,:] = b_surface / pi # before merge
             else:
                 int_plus[-1,:] = ( all_b[-1,:] + b1[-1,:] * iubar)*2*pi #no hard surface   
-                #int_plus[-1,:] = (all_b[-1,:] + b1[-1,:] * iubar) # before merge
 
             int_minus[0,:] =  (1 - exp(-tau_top / iubar)) * all_b[0,:] *2*pi
             
@@ -1597,15 +1593,14 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
                                        alpha1[ibot,:]*(1.-exptrm_angle_mdpt[ibot,:])+
                                        alpha2[ibot,:]*(iubar+0.5*dtau[ibot,:]-(dtau[ibot,:]+iubar)*exptrm_angle_mdpt[ibot,:])  )
 
-            #int_at_top[ng,nt,:] = int_plus_mdpt[0,:] #nlevel by nwno 
-            int_at_top[ng,nt,:] = int_plus[0,:]
-            intensity[ng,nt,:,:] = int_plus
+            int_at_top[ng,nt,:] = int_plus_mdpt[0,:] #nlevel by nwno 
+            #intensity[ng,nt,:,:] = int_plus
 
             #to get the convective heat flux 
             #flux_minus_mdpt_disco[ng,nt,:,:] = flux_minus_mdpt #nlevel by nwno
             #flux_plus_mdpt_disco[ng,nt,:,:] = int_plus_mdpt #nlevel by nwno
 
-    return int_at_top, intensity, flux_out #, int_down# numg x numt x nwno
+    return int_at_top #, intensity, flux_out #, int_down# numg x numt x nwno
 
 @jit(nopython=True, cache=True)
 def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel_3d, dtau_3d, w0_3d,cosb_3d,plevel_3d, ubar1,
