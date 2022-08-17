@@ -40,6 +40,8 @@ def mean_regrid(x, y, newx=None, R=None):
         new array to regrid on. 
     R : float 
         create grid with constant R
+    binwidths : array 
+        bin widths centered at x 
 
     Returns
     -------
@@ -58,7 +60,7 @@ def mean_regrid(x, y, newx=None, R=None):
 
     return newx, y
 
-def plot_errorbar(x,y,e,plot,point_kwargs={}, error_kwargs={}):
+def plot_errorbar(x,y,e,plot=None,point_kwargs={}, error_kwargs={},plot_type='bokeh', plot_kwargs={}):
     """
     Plot only symmetric y error bars in bokeh plot
 
@@ -70,23 +72,53 @@ def plot_errorbar(x,y,e,plot,point_kwargs={}, error_kwargs={}):
         y data 
     e : array 
         +- error for y which will be distributed as y+e, y-e on data point
-    plot : bokeh.figure 
+    plot : bokeh.figure, optional
         Bokeh figure to add error bars to 
+    plot_type : str, optional
+        type of plot (either bokeh or matplotlib)
     point_kwargs : dict 
         formatting for circles 
     error_kwargs : dict 
         formatting for error bar lines
+    plot_kwargs : dict 
+        plot attriutes for bokeh figure
     """
+    if plot_type=='bokeh':
+        if isinstance(plot, type(None)):
+            plot_kwargs['plot_height'] = plot_kwargs.get('plot_height',345)
+            plot_kwargs['plot_width'] = plot_kwargs.get('plot_width',1000)
+            plot_kwargs['y_axis_label'] = plot_kwargs.get('y_axis_label','Spectrum')
+            plot_kwargs['x_axis_label'] = plot_kwargs.get('x_axis_label','Wavelength')
+            plot = figure(**plot_kwargs) 
+        y_err = []
+        x_err = []
+        for px, py, yerr in zip(x, y, e):
+            np.array(x_err.append((px , px )))
+            np.array(y_err.append((py - yerr, py + yerr)))
 
-    y_err = []
-    x_err = []
-    for px, py, yerr in zip(x, y, e):
-        np.array(x_err.append((px , px )))
-        np.array(y_err.append((py - yerr, py + yerr)))
+        plot.multi_line(x_err, y_err, **error_kwargs)
+        plot.circle(x, y, **point_kwargs)
+        return plot
+    elif plot_type=='matplotlib':
+        point_kwargs['color'] = point_kwargs.get('color','k')
+        
+        plot_kwargs['xlabel'] = plot_kwargs.get('xlabel',r'Wavelength [$\mu$m]')
+        plot_kwargs['ylabel'] = plot_kwargs.get('ylabel',r'(R$_p$/R$_*$)$^2$')
+        plot_kwargs['figsize'] = plot_kwargs.get('figsize',(20,10))
+        plot_kwargs['fontsize'] = plot_kwargs.get('fontsize',25)
 
-    plot.multi_line(x_err, y_err, **error_kwargs)
-    plot.circle(x, y, **point_kwargs)
-    return
+
+        point_kwargs.get('color','k')
+        plt.figure(figsize=plot_kwargs['figsize'])
+        plt.errorbar(x,y,e,**point_kwargs)
+        plt.xlabel(plot_kwargs['xlabel'],fontsize=plot_kwargs['fontsize'])
+        plt.ylabel(plot_kwargs['ylabel'],fontsize=plot_kwargs['fontsize'])
+        plt.minorticks_on()
+        plt.tick_params(axis='y',which='major',length =20, width=3,direction='in',labelsize=20)
+        plt.tick_params(axis='y',which='minor',length =10, width=2,direction='in',labelsize=20)
+        plt.tick_params(axis='x',which='major',length =20, width=3,direction='in',labelsize=20)
+        plt.tick_params(axis='x',which='minor',length =10, width=2,direction='in',labelsize=20)
+        return
 
 def plot_multierror(x,y,plot, dx_up=0, dx_low=0, dy_up=0, dy_low=0, 
     point_kwargs={}, error_kwargs={}):
@@ -1443,5 +1475,54 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=Spectral11,verbos
     fig.xgrid.grid_line_alpha=0
     fig.ygrid.grid_line_alpha=0
     plot_format(fig)
-    return phases, all_curves, all_ws, fig
+    return phases, all_curves, all_ws, fig    
+
+def molecule_contribution(contribution_out, opa, min_pressure=4.5, R=100, **kwargs):
+    """
+    Function to plot & graph the Tau~1 Pressure (bars) of various elements
+    
+    Parameters
+    ----------
+    contribution_out : dict
+        contribution_out from jdi.get_contribution. 
+        This function will grab contribution_out['tau_p_surface']
+        Pressure vs. wavelength optical depth surface at tau specified by user in 
+        get_contribution function (user input for at_tau)
+        
+    opa : picaso.opannection 
+        Picaso opacity connection to get wavelength
+    
+    min_pressure : float, int
+        Minimum pressure contribution in bars for molecules you want to plot. Ignores all molecules that 
+        are optically thick higher than min_pressure (bars)
+    
+    R : int
+        Resolution defined as lambda/dlambda 
+        
+    Outputs
+    -------
+    figure : bokeh.plotting.figure.Figure
+        Shows a default graph of Tau 1 Surface of various molecules and a graph based on user input based on their parameters
+        
+    """
+    kwargs['plot_height'] = kwargs.get('plot_height',400)
+    kwargs['plot_width'] = kwargs.get('plot_width',500)
+    kwargs['y_axis_label'] = kwargs.get('y_axis_label','Tau Pressure (bars)')
+    kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength')
+    kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
+    kwargs['y_range'] = kwargs.get('y_range',[1e2,1e-4])
+    kwargs['title'] = kwargs.get('title','User Input Tau Pressure Surface')
+
+    tau_p_surface = contribution_out['tau_p_surface']
+    wno=[]
+    spec=[]
+    labels=[]
+    for j in tau_p_surface.keys(): 
+        x,y = mean_regrid(opa.wno, tau_p_surface[j],R=R) 
+        if np.min(y)<min_pressure: # Bars 
+            wno+=[x]
+            spec+=[y]
+            labels +=[j]
+    fig = spectrum(wno,spec, legend=labels, **kwargs)
+    return fig
 

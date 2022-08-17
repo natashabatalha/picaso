@@ -50,6 +50,7 @@
 	},
 	"opacities":{
 		"wnogrid":null,
+		"query":0,
 		"files":{
 			"opacity":"opacities.db",
 			"ktable_continuum":"ck_cx_cont_opacities.db",

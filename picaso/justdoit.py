@@ -165,6 +165,15 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     no_opacities = [i for i in atm.molecules if i not in opacityclass.molecules]
     atm.add_warnings('No computed opacities for: '+','.join(no_opacities))
     atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
+    
+    #opacity assumptions
+    query_method = inputs['opacities'].get('query',0)
+    exclude_mol = inputs['atmosphere']['exclude_mol']
+
+    if query_method == 0: 
+        get_opacities = opacityclass.get_opacities_nearest
+    elif query_method == 1:
+        get_opacities = opacityclass.get_opacities
 
     nlevel = atm.c.nlevel
     nlayer = atm.c.nlayer
@@ -172,7 +181,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
     if dimension == '1d':
         #lastly grab needed opacities for the problem
-        opacityclass.get_opacities(atm)
+        get_opacities(atm,exclude_mol=exclude_mol)
         #only need to get opacities for one pt profile
 
         #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
@@ -298,7 +307,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                 #diesct just a subsection to get the opacity 
                 atm_1d.disect(g,t)
 
-                opacityclass.get_opacities(atm_1d)
+                get_opacities(atm_1d)
 
                 dtau, tau, w0, cosb,ftau_cld, ftau_ray, gcos2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, WO_no_raman = compute_opacity(
                     atm_1d, opacityclass, ngauss=ngauss, stream=stream,delta_eddington=delta_eddington,
@@ -558,12 +567,18 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     no_opacities = [i for i in atm.molecules if i not in opacityclass.molecules]
     atm.add_warnings('No computed opacities for: '+','.join(no_opacities))
     atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
+    query_method = inputs['opacities'].get('query',0)
+
+    if query_method == 0: 
+        get_opacities = opacityclass.get_opacities_nearest
+    elif query_method == 1:
+        get_opacities = opacityclass.get_opacities
 
     nlevel = atm.c.nlevel
     nlayer = atm.c.nlayer
     
     #lastly grab needed opacities for the problem
-    opacityclass.get_opacities(atm)
+    get_opacities(atm)
     #only need to get opacities for one pt profile
 
     #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
@@ -582,19 +597,11 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
 
     at_pressure_array = {}
     for i in taus_by_species.keys(): 
-        #at_pressures = np.zeros(shape[1])
-        #ind_gas = find_nearest_2d(cumsum_taus[i] , at_tau)
-        
-        #for iw in range(shape[1]):
-        #    at_pressures[iw] = pressure[ind_gas[iw]]
-        #at_pressures=[]
-        #for iw in range(shape[1]): 
-        #    at_pressures += [np.interp([at_tau],cumsum_taus[i][:,iw],
-        #                        pressure )[0]]
-
         at_pressure_array[i] = find_press(at_tau, cumsum_taus[i], shape[1], pressure)
 
-    return taus_by_species, cumsum_taus, at_pressure_array
+    return {'taus_per_layer':taus_by_species, 
+            'cumsum_taus':cumsum_taus, 
+            'tau_p_surface':at_pressure_array}
 
 @njit()
 def find_press(at_tau, a, b, c):
@@ -1119,12 +1126,19 @@ class inputs():
             (Optional) Filename with pressure, temperature and volume mixing ratios.
             Must contain pressure at least one molecule
         exclude_mol : list of str 
-            (Optional) List of molecules to ignore from file
+            (Optional) List of molecules to ignore from opacity. It will NOT 
+            change other aspects of the calculation like mean molecular weight. 
+            This should be used as exploratory ONLY. if you actually want to remove 
+            the contribution of a molecule entirely from your profile you should remove 
+            it from your input data frame. 
         verbose : bool 
             (Optional) prints out warnings. Default set to True
         pd_kwargs : kwargs 
             Key word arguments for pd.read_csv to read in supplied atmosphere file 
         """
+        if not isinstance(exclude_mol, type(None)):
+            if  isinstance(exclude_mol, str):
+                exclude_mol = [exclude_mol]
 
         if not isinstance(df, type(None)):
             if ((not isinstance(df, dict )) & (not isinstance(df, pd.core.frame.DataFrame ))): 
@@ -1142,8 +1156,12 @@ class inputs():
             raise Exception("`temperature` not specified as a column/key name")
 
         if not isinstance(exclude_mol, type(None)):
-            df = df.drop(exclude_mol, axis=1)
-            self.inputs['atmosphere']['exclude_mol'] = exclude_mol
+            #df = df.drop(exclude_mol, axis=1)
+            self.inputs['atmosphere']['exclude_mol'] = {i:1 for i in df.keys()}
+            for i in exclude_mol: 
+                self.inputs['atmosphere']['exclude_mol'][i]=0
+        else: 
+            self.inputs['atmosphere']['exclude_mol'] = 1
 
         self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
 
@@ -2757,7 +2775,7 @@ class inputs():
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='none',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
         p_reference=1, method='toon', stream=2, thermal_calculation=1, toon_coefficients="quadrature",
-        psingle='og', rayleigh='off', heng_compare='off'):
+        psingle='og', rayleigh='off', heng_compare='off', query='nearest_neighbor'):
         """
         This function sets all the default approximations in the code. It transforms the string specificatons
         into a number so that they can be used in numba nopython routines. 
@@ -2792,6 +2810,10 @@ class inputs():
         toon_coefficients: str
             Decide whether to use Quadrature ("quadrature") or Eddington ("eddington") schemes
             to define Toon coefficients in two-stream approximation (see Table 1 in Toon et al 1989)
+        query : str 
+            method to grab opacities. either "nearest_neighbor" or "interp" which 
+            interpolates based on 4 nearest neighbors. Default is nearest_neighbor
+            which is significantly faster.
         """
 
         self.inputs['approx']['single_phase'] = single_phase_options(printout=False).index(single_phase)
@@ -2805,6 +2827,8 @@ class inputs():
                 self.inputs['approx']['stream'] = stream
         self.inputs['approx']['toon_coefficients'] = coefficients_options(printout=False).index(toon_coefficients)
  
+        self.inputs['opacities']['query'] = query_options().index(query)
+
         if isinstance(tthg_frac, (list, np.ndarray)):
             if len(tthg_frac) == 3:
                 self.inputs['approx']['TTHG_params']['fraction'] = tthg_frac
@@ -3142,6 +3166,9 @@ def multi_phase_options(printout=True):
 def raman_options():
     """Retrieve options for raman scattering approximtions"""
     return ["oklopcic","pollack","none"]
+def query_options():
+    """Retrieve options for querying opacities """
+    return ["nearest_neighbor","interp"]
 
 def evolution_track(mass=1, age='all'):
     """
