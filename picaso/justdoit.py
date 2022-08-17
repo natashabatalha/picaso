@@ -203,15 +203,16 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             xint_at_top = 0 
             for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
                 nlevel = atm.c.nlevel
+
                 if rt_method == 'SH':
-                    (xint, flux_out, intensity)  = get_reflected_SH(nlevel, wno, nwno, ng, nt, 
+                    (xint, flux_out, intensity)  = get_reflected_SH(nlevel, nwno, ng, nt, 
                                     DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig], 
                                     GCOS2[:,:,ig], ftau_cld[:,:,ig], ftau_ray[:,:,ig],
                                     DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig], 
                                     atm.surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
                                     single_phase, rayleigh, 
                                     frac_a, frac_b, frac_c, constant_back, constant_forward, 
-                                    1, stream, b_top=b_top, single_form=single_form, heng_compare=heng_compare) #LCM is carrying this bug
+                                    stream, b_top=b_top, single_form=single_form, heng_compare=heng_compare) #LCM is carrying this bug
                 else:
                     xint = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                     DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
@@ -252,9 +253,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                                 DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], 
                                                 W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                                 atm.level['pressure'], ubar1, 
-                                                constant_forward,constant_back,frac_a,frac_b,frac_c,
-                                                atm.surf_reflect, 
-                                                single_phase, dimension, stream, atm.hard_surface, 
+                                                atm.surf_reflect, stream, atm.hard_surface, 
                                                 blackbody_approx=blackbody_approx)
 
                 #add guass for ck
