@@ -224,7 +224,6 @@ def slice_gt(array, lim):
     for i in range(array.shape[0]):
         new = array[i,:] 
         new[where(new>lim)] = lim
-        new[where(new<-lim)] = -lim
         array[i,:] = new     
     return array
 
