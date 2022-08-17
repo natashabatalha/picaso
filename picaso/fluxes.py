@@ -928,13 +928,10 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
     #what we want : intensity at the top as a function of all the different angles
 
     xint_at_top = zeros((numg, numt, nwno))
-    intensity = zeros((numg, numt, nlevel, nwno))
-    direct_flux = zeros((numg, numt, nlevel, nwno))
-    single_scat = zeros((numg, numt, nlevel, nwno))
-    multi_scat = zeros((numg, numt, nlevel, nwno))
+    #intensity = zeros((numg, numt, nlevel, nwno))
 
     nlayer = nlevel - 1 
-    flux_out = zeros((numg, numt, 2*nlevel, nwno))
+    #flux_out = zeros((numg, numt, 2*nlevel, nwno))
 
     #now define terms of Toon et al 1989 quadrature Table 1 
     #https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JD094iD13p16287
@@ -1031,17 +1028,14 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             flux_zero  = positive[-1,:]*exptrm_positive[-1,:] + gama[-1,:]*negative[-1,:]*exptrm_minus[-1,:] + c_plus_down[-1,:]
             flux_minus  = gama*positive*exptrm_positive + negative*exptrm_minus + c_minus_down
             flux_plus  = positive*exptrm_positive + gama*negative*exptrm_minus + c_plus_down
-            flux = zeros((2*nlevel, nwno))
-            flux[0,:] = (gama*positive + negative + a_minus)[0,:]
-            flux[1,:] = (positive + gama*negative + a_plus)[0,:]
-            flux[2::2, :] = flux_minus
-            flux[3::2, :] = flux_plus
-            flux_out[ng,nt,:,:] = flux
+            #flux = zeros((2*nlevel, nwno))
+            #flux[0,:] = (gama*positive + negative + a_minus)[0,:]
+            #flux[1,:] = (positive + gama*negative + a_plus)[0,:]
+            #flux[2::2, :] = flux_minus
+            #flux[3::2, :] = flux_plus
+            #flux_out[ng,nt,:,:] = flux
 
             xint = zeros((nlevel,nwno))
-            term1 = zeros((nlevel,nwno))
-            term2 = zeros((nlevel,nwno))
-            term3 = zeros((nlevel,nwno))
             xint[-1,:] = flux_zero/pi
 
             ################################ BEGIN OPTIONS FOR MULTIPLE SCATTERING####################
@@ -1123,24 +1117,6 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
             for i in range(nlayer-1,-1,-1):
                 #direct beam
-                #single scattering albedo from sun beam (from ubar0 to ubar1)
-                single_scat[ng,nt,i,:] = single_scat[ng,nt,i+1,:]*exp(-dtau[i,:]/u1) + (
-                        w0_og[i,:]*F0PI/(4.*pi) * p_single[i,:]
-                        * exp(-tau_og[i,:]/u0)
-                        *(1. - exp(-dtau_og[i,:]*(u0+u1)/(u0*u1)))
-                        *(u0/(u0+u1)))
-                multi_scat[ng,nt,i,:] = multi_scat[ng,nt,i+1,:]*exp(-dtau[i,:]/u1) + (
-                        +A[i,:]*(1. - exp(-dtau[i,:] *(u0+1*u1)/(u0*u1)))*
-                        (u0/(u0+1*u1))
-                        +G[i,:]*(exp(exptrm[i,:]*1-dtau[i,:]/u1) - 1.0)/(lamda[i,:]*1*u1 - 1.0)
-                        +H[i,:]*(1. - exp(-exptrm[i,:]*1-dtau[i,:]/u1))/(lamda[i,:]*1*u1 + 1.0))
-
-                direct_flux[ng,nt,i,:] = (w0[i,:]*F0PI/(4.*pi)
-                        *(p_single[i,:])
-                        *exp(-tau[i,:]/u0)
-                        *(1. - exp(-dtau[i,:]*(u0+u1)/(u0*u1)))
-                        *(u0/(u0+u1))
-                        )
                 xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/u1) 
                         + direct_flux[ng,nt,i,:]
                         #multiple scattering terms p_single
@@ -1151,11 +1127,9 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                         )
 
             xint_at_top[ng,nt,:] = xint[0,:]
-            intensity[ng,nt,:,:] = xint
+            #intensity[ng,nt,:,:] = xint
 
-#    import IPython; IPython.embed()
-#    import sys; sys.exit()
-    return xint_at_top, flux_out, intensity
+    return xint_at_top #, flux_out, intensity
 
 @jit(nopython=True, cache=True)
 def blackbody(t,w):
