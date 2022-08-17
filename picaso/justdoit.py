@@ -84,7 +84,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     raman_approx =inputs['approx']['raman']
     method = inputs['approx']['method']
     stream = inputs['approx']['stream']
-    approximation = inputs['approx']['Toon_coefficients']
+    approximation = inputs['approx']['toon_coefficients']
     tridiagonal = 0 
     psingle = inputs['approx']['psingle']
     rayleigh = inputs['approx']['rayleigh']
@@ -223,7 +223,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                 
                 #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
                 #the uncorrected raman single scattering 
-                if method == 'Toon':
+                if method == 'toon':
                     flux  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
                                                         DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                                         atm.level['pressure'],ubar1,
@@ -2756,7 +2756,7 @@ class inputs():
 
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='none',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
-        p_reference=1, method='Toon', stream=2, thermal_calculation=1, Toon_coefficients="quadrature",
+        p_reference=1, method='toon', stream=2, thermal_calculation=1, Toon_coefficients="quadrature",
         psingle='og', rayleigh='off', heng_compare='off'):
         """
         This function sets all the default approximations in the code. It transforms the string specificatons
@@ -2786,10 +2786,10 @@ class inputs():
             corresponds do the user's input of radius. Usually something "at depth"
             around 1-10 bars. 
         method : str
-            Toon ('Toon') or spherical harmonics ('SH'). 
+            Toon ('toon') or spherical harmonics ('SH'). 
         stream : int 
             Two stream or four stream (options are 2 or 4). For 4 stream need to set method='SH'
-        Toon_coefficients: str
+        toon_coefficients: str
             Decide whether to use Quadrature ("quadrature") or Eddington ("eddington") schemes
             to define Toon coefficients in two-stream approximation (see Table 1 in Toon et al 1989)
         """
@@ -2799,7 +2799,7 @@ class inputs():
         self.inputs['approx']['delta_eddington'] = delta_eddington
         self.inputs['approx']['raman'] =  raman_options().index(raman)
         self.inputs['approx']['method'] = method
-        if method == 'Toon':
+        if method == 'toon':
                 self.inputs['approx']['stream'] = 2 # having method="Toon" and stream=4 messes up delta-eddington stuff
         else:
                 self.inputs['approx']['stream'] = stream
@@ -3260,7 +3260,7 @@ def young_planets():
 def methodology_options(printout=True):
     """Retrieve all the options for methodology"""
     if printout: print("Can calculate spectrum using Toon 1989 methodology or sperhical harmonics")
-    return ['Toon','SH']
+    return ['toon','SH']
 def stream_options(printout=True):
     """Retrieve all the options for stream"""
     if printout: print("Can use 2-stream or 4-stream sperhical harmonics")
