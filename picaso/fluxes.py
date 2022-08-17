@@ -2478,7 +2478,7 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, b_surface_SH4
     f30 = q1pl*exptrm1; f31 = q1mn/exptrm1; f32 = q2pl*exptrm2; f33 = q2mn/exptrm2
 
     if calculation == 0:# 'reflected':
-        expon = exp(-slice_gt(tau/ubar0, 35.0))
+        expon = exp(-tau/ubar0)
         z1mn_up = z1mn * expon[1:,:]
         z2mn_up = z2mn * expon[1:,:]
         z1pl_up = z1pl * expon[1:,:]
@@ -2515,10 +2515,6 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, b_surface_SH4
     expo_alp2 = alpha2 * dtau
     expo_bet1 = beta1 * dtau
     expo_bet2 = beta2 * dtau
-    expo_alp1 = slice_gt(expo_alp1, 35.0)
-    expo_alp2 = slice_gt(expo_alp2, 35.0)
-    expo_bet1 = slice_gt(expo_bet1, 35.0)
-    expo_bet2 = slice_gt(expo_bet2, 35.0)
     exptrm_alp1 = exp(-expo_alp1)
     exptrm_alp2 = exp(-expo_alp2)
     exptrm_bet1 = exp(-expo_bet1)
@@ -2534,10 +2530,8 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, b_surface_SH4
         if calculation == 0:#is 'reflected':
             mus = (ubar1 + ubar0) / (ubar1 * ubar0)
             expo_mus = mus * dtau 
-            expo_mus = slice_gt(expo_mus, 35.0)    
             exptrm_mus = exp(-expo_mus)
             tau_mu = tau[:-1,:] * (1/ubar0)
-            tau_mu = slice_gt(tau_mu, 35.0)
             exptau_mu = exp(-tau_mu)
             expon1 = (1 - exptrm_mus) * exptau_mu / mus
         elif calculation == 2: # exponential thermal
@@ -2550,7 +2544,6 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, b_surface_SH4
     elif calculation == 1:
         #expdtau = exp(-tau[:-1,:]/ubar1)
         expdtau = exp(-dtau/ubar1)
-        #N0 = (1-w0) * ubar1 / a[0] * ( (B0+B1*tau[:-1,:])*(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau))
         N0 = (1-w0) * ubar1 / a[0] * ( B0*(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau)) #* 2*pi
         N1 = (1-w0) * ubar1 / a[0] * ( B1*(1-expdtau) / a[1]) #* 2*pi
         N2 = zeros(w0.shape)
@@ -2625,28 +2618,6 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, b_surface_SH4
     B[4::4,:] = z1pl_down[1:,:] - z1pl_up[:-1,:]
     B[5::4,:] = z2pl_down[1:,:] - z2pl_up[:-1,:]
 
-    #NN = np.arange(4*nlayer)
-    #indcs = NN[::4]
-    #k = 0
-    #for i in indcs:
-    #    A_int[i,i,:] = A00[k,:]
-    #    A_int[i,i+1,:] = A01[k,:]
-    #    A_int[i,i+2,:] = A02[k,:]
-    #    A_int[i,i+3,:] = A03[k,:]
-    #    A_int[i+1,i,:] = A10[k,:]
-    #    A_int[i+1,i+1,:] = A11[k,:]
-    #    A_int[i+1,i+2,:] = A12[k,:]
-    #    A_int[i+1,i+3,:] = A13[k,:]
-    #    A_int[i+2,i,:] = A20[k,:]
-    #    A_int[i+2,i+1,:] = A21[k,:]
-    #    A_int[i+2,i+2,:] = A22[k,:]
-    #    A_int[i+2,i+3,:] = A23[k,:]
-    #    A_int[i+3,i,:] = A30[k,:]
-    #    A_int[i+3,i+1,:] = A31[k,:]
-    #    A_int[i+3,i+2,:] = A32[k,:]
-    #    A_int[i+3,i+3,:] = A33[k,:]
-    #    k = k+1
-
     nn = 4*nlayer
     NN = 4*nn+4
     a_int = A_int.reshape(nn*nn, A_int.shape[2])
@@ -2686,7 +2657,6 @@ def setup_4_stream_banded(nlayer, wno, nwno, w0, b_top, b_surface, b_surface_SH4
     Mb[8,4*nlayer-4,:] = f30[n,:] - surf_reflect*f10[n,:]
 
     B[4*nlayer-2,:] = b_surface - z1pl_up[n,:] + surf_reflect*z1mn_up[n,:]
-    #B[4*nlayer-1,:] = b_surface - z2pl_up[n,:] + surf_reflect*z2mn_up[n,:]
     B[4*nlayer-1,:] = b_surface_SH4 - z2pl_up[n,:] + surf_reflect*z2mn_up[n,:]
 
     F_bot[-4,:] = f20[-1,:]
