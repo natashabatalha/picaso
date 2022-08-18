@@ -1673,11 +1673,11 @@ def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel_3d, dtau_3d, w0_3d,cosb_3d
             #these are eqns 27a & b in Toon89
             #_ups are evaluated at lower optical depth, TOA
             #_dows are evaluated at higher optical depth, bottom of atmosphere
-            c_plus_up = 2*pi*(b0 + b1* g1_plus_g2)
-            c_minus_up = 2*pi*(b0 - b1* g1_plus_g2)
+            c_plus_up = 2*pi*mu1*(b0 + b1* g1_plus_g2)
+            c_minus_up = 2*pi*mu1*(b0 - b1* g1_plus_g2)
 
-            c_plus_down = 2*pi*(b0 + b1 * dtau + b1 * g1_plus_g2 )
-            c_minus_down = 2*pi*(b0 + b1 * dtau - b1 * g1_plus_g2)
+            c_plus_down = 2*pi*mu1*(b0 + b1 * dtau + b1 * g1_plus_g2 )
+            c_minus_down = 2*pi*mu1*(b0 + b1 * dtau - b1 * g1_plus_g2)
 
             #calculate exponential terms needed for the tridiagonal rotated layered method
             exptrm = lamda*dtau
