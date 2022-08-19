@@ -1176,13 +1176,13 @@ class inputs():
         #lastly check to see if the atmosphere is non-H2 dominant. 
         #if it is, let's turn off Raman scattering for the user. 
         if df.shape[1]>2:
-            if (("H2" not in df.keys()) and (self.inputs['approx']['raman'] != 2)):
+            if (("H2" not in df.keys()) and (self.inputs['approx']['rt_params']['common']['raman'] != 2)):
                 if verbose: print("Turning off Raman for Non-H2 atmosphere")
                 self.inputs['approx']['raman'] = 2
-            elif (("H2" in df.keys()) and (self.inputs['approx']['raman'] != 2)): 
+            elif (("H2" in df.keys()) and (self.inputs['approx']['rt_params']['common']['raman'] != 2)): 
                 if df['H2'].min() < 0.7: 
                     if verbose: print("Turning off Raman for Non-H2 atmosphere")
-                    self.inputs['approx']['raman'] = 2
+                    self.inputs['approx']['rt_params']['common']['raman'] = 2
     def premix_atmosphere(self, opa, df=None, filename=None, **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
