@@ -635,7 +635,8 @@ def insert_molecular_1060(molecule, min_wavelength, max_wavelength, new_R,
 def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory, new_db,
                           new_R=None,new_dwno=None, 
                           old_R=1e6, old_dwno=0.0035,
-                        alkali_dir='alkalis', dir_kark_ch4=None, dir_optical_o3=None):
+                        alkali_dir='alkalis', dir_kark_ch4=None, dir_optical_o3=None,
+                        insert_direct=False):
     """
     DEVELOPER USE ONLY. 
     Function to resample 1060 grid data onto lower resolution grid. The general procedure 
@@ -677,6 +678,9 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         Karkoschka methane to hack in 
     dir_optical_o3 : str 
         optical ozone to hack in 
+    insert_direct : bool 
+        this ignores all other inputs except min and max wavelength and 
+        inserts opacities into the database diretly as is 
     """
     #open database connection 
     ngrid = 1460
@@ -688,15 +692,15 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
     elif isinstance(new_dwno,(float, int)):
         interp_wvno_grid = np.arange(1e4/max_wavelength,1e4/min_wavelength,  old_dwno)          
         BINS = int(new_dwno/old_dwno)
+    elif insert_direct: 
+        interp_wvno_grid = None 
+        BINS = 1
     else: 
         raise Exception('Need to either input a new constant R (new_R) or constant delta wno (new_dwno)')
     #new wave grid 
-    new_wvno_grid = interp_wvno_grid[::BINS]
+    if not insert_direct: 
+        new_wvno_grid = interp_wvno_grid[::BINS]
 
-    #insert to database 
-    cur.execute('INSERT INTO header (pressure_unit, temperature_unit, wavenumber_grid, continuum_unit,molecular_unit) values (?,?,?,?,?)', 
-                ('bar','kelvin', np.array(new_wvno_grid), 'cm-1 amagat-2', 'cm2/molecule'))
-    conn.commit()
     grid_file = os.path.join(og_directory,'grid1460.csv')
     if not os.path.exists(grid_file): 
         grid_file = os.path.join(os.environ['picaso_refdata'],'opacities','grid1460.csv')
@@ -779,15 +783,20 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         elif 'python' in ftype: 
             dset = np.load(open(fdata,'rb'))
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]            
-            
-        #interp on high res grid
-        #basic interpolation here onto a new wavegrid that 
-        dset = np.interp(interp_wvno_grid,og_wvno_grid, dset,right=1e-50, left=1e-50)
-        dset[dset<1e-200] = 1e-200 
-        #resample evenly
-        y = dset[::BINS]
-        #y = 10**spectres.spectres(interp_wvno_grid[::BINS],interp_wvno_grid,np.log10(dset), verbose=False,fill=np.nan)
-        #x,y=regrid(interp_wvno_grid, dset, newx=interp_wvno_grid[::BINS], statistic='median')
+        
+        if not insert_direct:
+            #interp on high res grid
+            #basic interpolation here onto a new wavegrid that 
+            dset = np.interp(interp_wvno_grid,og_wvno_grid, dset,right=1e-50, left=1e-50)
+            dset[dset<1e-200] = 1e-200 
+            #resample evenly
+            y = dset[::BINS]
+            #y = 10**spectres.spectres(interp_wvno_grid[::BINS],interp_wvno_grid,np.log10(dset), verbose=False,fill=np.nan)
+            #x,y=regrid(interp_wvno_grid, dset, newx=interp_wvno_grid[::BINS], statistic='median')
+        else: 
+            new_wvno_grid = og_wvno_grid[np.where(((1e4/og_wvno_grid>min_wavelength) & (1e4/og_wvno_grid<max_wavelength)))]
+            dset[dset<1e-200] = 1e-200
+            y = dset[np.where(((1e4/og_wvno_grid>min_wavelength) & (1e4/og_wvno_grid<max_wavelength)))]
 
         if ((molecule == 'CH4') & (isinstance(dir_kark_ch4, str)) & (t<500)):
             opa_k,loc = get_kark_CH4(dir_kark_ch4,new_wvno_grid, t)
@@ -796,8 +805,17 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
             opa_o3 = get_optical_o3(dir_optical_o3,new_wvno_grid)
             y = y + opa_o3     
         cur.execute('INSERT INTO molecular (ptid, molecule, temperature, pressure,opacity) values (?,?,?,?,?)', (int(i),molecule,float(t),float(p), y))
+    
+    #insert to database 
     conn.commit()
+    cur.execute('SELECT pressure_unit from header')
+    p_find = cur.fetchall()
+    if len(p_find)==0:
+        cur.execute('INSERT INTO header (pressure_unit, temperature_unit, wavenumber_grid, continuum_unit,molecular_unit) values (?,?,?,?,?)',
+                ('bar','kelvin', np.array(new_wvno_grid), 'cm-1 amagat-2', 'cm2/molecule'))
+        conn.commit()
     conn.close()
+
     return new_wvno_grid
 
 def insert_molecular_1460_old(molecule, min_wavelength, max_wavelength, new_R, 

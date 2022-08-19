@@ -2,7 +2,7 @@ from bokeh.plotting import figure, output_file, show
 from bokeh.palettes import Colorblind8
 import numpy as np
 import pandas as pd
-from bokeh.layouts import column,row
+from bokeh.layouts import column,row,gridplot
 import numpy as np
 
 from bokeh.palettes import gray as colfun3
@@ -40,6 +40,8 @@ def mean_regrid(x, y, newx=None, R=None):
         new array to regrid on. 
     R : float 
         create grid with constant R
+    binwidths : array 
+        bin widths centered at x 
 
     Returns
     -------
@@ -58,7 +60,7 @@ def mean_regrid(x, y, newx=None, R=None):
 
     return newx, y
 
-def plot_errorbar(x,y,e,plot,point_kwargs={}, error_kwargs={}):
+def plot_errorbar(x,y,e,plot=None,point_kwargs={}, error_kwargs={},plot_type='bokeh', plot_kwargs={}):
     """
     Plot only symmetric y error bars in bokeh plot
 
@@ -70,23 +72,53 @@ def plot_errorbar(x,y,e,plot,point_kwargs={}, error_kwargs={}):
         y data 
     e : array 
         +- error for y which will be distributed as y+e, y-e on data point
-    plot : bokeh.figure 
+    plot : bokeh.figure, optional
         Bokeh figure to add error bars to 
+    plot_type : str, optional
+        type of plot (either bokeh or matplotlib)
     point_kwargs : dict 
         formatting for circles 
     error_kwargs : dict 
         formatting for error bar lines
+    plot_kwargs : dict 
+        plot attriutes for bokeh figure
     """
+    if plot_type=='bokeh':
+        if isinstance(plot, type(None)):
+            plot_kwargs['plot_height'] = plot_kwargs.get('plot_height',345)
+            plot_kwargs['plot_width'] = plot_kwargs.get('plot_width',1000)
+            plot_kwargs['y_axis_label'] = plot_kwargs.get('y_axis_label','Spectrum')
+            plot_kwargs['x_axis_label'] = plot_kwargs.get('x_axis_label','Wavelength')
+            plot = figure(**plot_kwargs) 
+        y_err = []
+        x_err = []
+        for px, py, yerr in zip(x, y, e):
+            np.array(x_err.append((px , px )))
+            np.array(y_err.append((py - yerr, py + yerr)))
 
-    y_err = []
-    x_err = []
-    for px, py, yerr in zip(x, y, e):
-        np.array(x_err.append((px , px )))
-        np.array(y_err.append((py - yerr, py + yerr)))
+        plot.multi_line(x_err, y_err, **error_kwargs)
+        plot.circle(x, y, **point_kwargs)
+        return plot
+    elif plot_type=='matplotlib':
+        point_kwargs['color'] = point_kwargs.get('color','k')
+        
+        plot_kwargs['xlabel'] = plot_kwargs.get('xlabel',r'Wavelength [$\mu$m]')
+        plot_kwargs['ylabel'] = plot_kwargs.get('ylabel',r'(R$_p$/R$_*$)$^2$')
+        plot_kwargs['figsize'] = plot_kwargs.get('figsize',(20,10))
+        plot_kwargs['fontsize'] = plot_kwargs.get('fontsize',25)
 
-    plot.multi_line(x_err, y_err, **error_kwargs)
-    plot.circle(x, y, **point_kwargs)
-    return
+
+        point_kwargs.get('color','k')
+        plt.figure(figsize=plot_kwargs['figsize'])
+        plt.errorbar(x,y,e,**point_kwargs)
+        plt.xlabel(plot_kwargs['xlabel'],fontsize=plot_kwargs['fontsize'])
+        plt.ylabel(plot_kwargs['ylabel'],fontsize=plot_kwargs['fontsize'])
+        plt.minorticks_on()
+        plt.tick_params(axis='y',which='major',length =20, width=3,direction='in',labelsize=20)
+        plt.tick_params(axis='y',which='minor',length =10, width=2,direction='in',labelsize=20)
+        plt.tick_params(axis='x',which='major',length =20, width=3,direction='in',labelsize=20)
+        plt.tick_params(axis='x',which='minor',length =10, width=2,direction='in',labelsize=20)
+        return
 
 def plot_multierror(x,y,plot, dx_up=0, dx_low=0, dy_up=0, dy_low=0, 
     point_kwargs={}, error_kwargs={}):
@@ -166,7 +198,7 @@ def bin_errors(newx, oldx, dy):
     return err
 
 
-def mixing_ratio(full_output,limit=50, **kwargs):
+def mixing_ratio(full_output,limit=50,ng=None,nt=None, **kwargs):
     """Returns plot of mixing ratios 
 
     Parameters
@@ -179,9 +211,14 @@ def mixing_ratio(full_output,limit=50, **kwargs):
     **kwargs : dict 
         Any key word argument for bokeh.figure() 
     """
-    #set plot defaults
     molecules = full_output['weights'].keys()
-    pressure = full_output['layer']['pressure']
+    #set plot defaults
+    if ((ng==None) & (nt==None)):
+        pressure = full_output['layer']['pressure']
+        mixingratios = full_output['layer']['mixingratios']
+    else: 
+        pressure = full_output['layer']['pressure'][:,ng,nt]
+        mixingratios = pd.DataFrame(full_output['layer']['mixingratios'][:,:,ng,nt],columns=molecules)
 
     kwargs['plot_height'] = kwargs.get('plot_height',300)
     kwargs['plot_width'] = kwargs.get('plot_width',400)
@@ -194,7 +231,7 @@ def mixing_ratio(full_output,limit=50, **kwargs):
     kwargs['x_range'] = kwargs.get('x_range',[1e-20, 1e2])
 
     #to plot (incl limit)
-    to_plot=full_output['layer']['mixingratios'].max().sort_values(ascending=False)[0:limit].keys()
+    to_plot=mixingratios.max().sort_values(ascending=False)[0:limit].keys()
 
     fig = figure(**kwargs)
     if len(molecules) < 3: ncol = 5
@@ -206,7 +243,7 @@ def mixing_ratio(full_output,limit=50, **kwargs):
     legend_it=[]    
     for mol , c in zip(to_plot,cols):
         ind = np.where(mol==np.array(molecules))[0][0]
-        f = fig.line(full_output['layer']['mixingratios'][mol],pressure, color=c, line_width=3,
+        f = fig.line(mixingratios[mol],pressure, color=c, line_width=3,
                     muted_color=c, muted_alpha=0.2)
         legend_it.append((mol, [f]))
 
@@ -249,7 +286,7 @@ def pt(full_output,ng=None, nt=None, **kwargs):
     plot_format(fig)
     return fig
 
-def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind8, **kwargs):
+def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind8,muted_alpha=0.2, **kwargs):
     """Plot formated albedo spectrum
 
     Parameters
@@ -265,6 +302,8 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind
     palette : list,optional
         List of colors for lines. Default only has 8 colors so if you input more lines, you must
         give a different pallete 
+    muted_alpha : float 
+        number 0-1 to indicate how muted you want the click functionaity 
     **kwargs : dict     
         Any key word argument for bokeh.plotting.figure()
 
@@ -282,7 +321,7 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind
         def conv(x):
             return 1e4/x
     else: 
-        x_axis_label = 'Wavenumber [(]cm-1]'
+        x_axis_label = 'Wavenumber [cm-1]'
         def conv(x):
             return x
 
@@ -305,14 +344,14 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind
                     fig.line(conv(w),  a,  color=palette[np.mod(i, len(palette))], line_width=3)
                 else:
                     f = fig.line(conv(w), a, color=palette[np.mod(i, len(palette))], line_width=3,
-                                muted_color=palette[np.mod(i, len(palette))], muted_alpha=0.2)
+                                muted_color=palette[np.mod(i, len(palette))], muted_alpha=muted_alpha)
                     legend_it.append((l, [f]))
         else: 
             if isinstance(legend,type(None)):
                 fig.line(conv(xarray), yarray,  color=palette[i], line_width=3)
             else:
                 f = fig.line(conv(xarray), yarray, color=palette[i], line_width=3,
-                                muted_color=palette[np.mod(i, len(palette))], muted_alpha=0.2)
+                                muted_color=palette[np.mod(i, len(palette))], muted_alpha=muted_alpha)
                 legend_it.append((l, [f]))
         i = i+1
 
@@ -1189,7 +1228,92 @@ def plot_evolution(evo, y = "Teff",**kwargs):
 
     f.add_layout(color_bar, 'right')
     return f
+
+def all_optics_1d(full_output, wave_range, return_output = False,legend=None,
+    ng=None, nt=None,
+    colors = Colorblind8, **kwargs):
+    """
+    Plots 1d profiles of optical depth per layer, single scattering, and 
+    asymmetry averaged over the user input wave_range. 
+    
+    Parameters
+    ----------
+    full_output : list,dict 
+        Dictonary of outputs or list of dicts
+    wave_range : list 
+        min and max wavelength in microns 
+    return_output : bool 
+        Default is just to return a figure but you can also 
+        return all the 1d profiles 
+    legend : bool 
+        Default is none. Legend for each component of out 
+    ng : int 
+        gauss index 
+    nt : int    
+        chebychev intex
+    **kwargs : keyword arguments
+        Key word arguments will be supplied to each bokeh figure function
+    """
+
+    kwargs['plot_height'] = kwargs.get('plot_height',300)
+    kwargs['plot_width'] = kwargs.get('plot_width',300)
+    kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
+
+    if not isinstance(full_output, list):
+        full_output = [full_output]
+
+    if ((ng==None) & (nt==None)):
+        pressure = full_output[0]['layer']['pressure']
+    else: 
+        pressure = full_output[0]['layer']['pressure'][:,ng,nt]
+
+    kwargs['y_range'] = kwargs.get('y_range',[max(pressure),min(pressure)])     
+
+    fssa = figure(x_axis_label='Single Scattering Albedo',**kwargs)
+
+    fg0 = figure(x_axis_label='Asymmetry',**kwargs)
+
+    fopd = figure(x_axis_label='Optical Depth',y_axis_label='Pressure (bars)',
+        x_axis_type='log',**kwargs)
+
+    
+    for i,results in enumerate(full_output): 
+        if ((ng==None) & (nt==None)):
+            pressure = results['layer']['pressure']
+            ssa = results['layer']['cloud']['w0']
+            g0 = results['layer']['cloud']['g0']
+            opd = results['layer']['cloud']['opd']
+        else: 
+            pressure = results['layer']['pressure'][:,ng,nt]
+            ssa = results['layer']['cloud']['w0'][:,:,ng,nt]
+            g0 = results['layer']['cloud']['g0'][:,:,ng,nt]
+            opd = results['layer']['cloud']['opd'][:,:,ng,nt]
+
+        wno = results['wavenumber']
+
+        inds = np.where((1e4/wno>wave_range[0]) & 
+            (1e4/wno<wave_range[1]))
+
+        fopd.line(np.mean(opd[:,inds],axis=2)[:,0], 
+                 pressure, color=colors[np.mod(i, len(colors))],line_width=3)
         
+        fg0.line(np.mean(g0[:,inds],axis=2)[:,0], 
+                 pressure, color=colors[np.mod(i, len(colors))],line_width=3)
+        
+        if isinstance(legend, type(None)):
+            fssa.line(np.mean(ssa[:,inds],axis=2)[:,0], 
+                 pressure, color=colors[np.mod(i, len(colors))],line_width=3)
+        else:
+            fssa.line(np.mean(ssa[:,inds],axis=2)[:,0], 
+                 pressure, color=colors[np.mod(i, len(colors))],line_width=3,
+                 legend_label=legend[i])
+            fssa.legend.location='top_left'
+
+    if return_output:   
+        return gridplot([[fopd,fssa,fg0]]), [opd,ssa,g0]
+    else:   
+        return gridplot([[fopd,fssa,fg0]])
+      
 def heatmap_taus(out, R=0):
     """
     Plots a heatmap of the tau fields (taugas, taucld, tauray)
@@ -1479,3 +1603,54 @@ def thermal_contribution(full_output, tau_max=1.0, **kwargs):
     plt.colorbar(smap, label='CF')
 
     return fig, ax, CF
+ 
+
+def molecule_contribution(contribution_out, opa, min_pressure=4.5, R=100, **kwargs):
+    """
+    Function to plot & graph the Tau~1 Pressure (bars) of various elements
+    
+    Parameters
+    ----------
+    contribution_out : dict
+        contribution_out from jdi.get_contribution. 
+        This function will grab contribution_out['tau_p_surface']
+        Pressure vs. wavelength optical depth surface at tau specified by user in 
+        get_contribution function (user input for at_tau)
+        
+    opa : picaso.opannection 
+        Picaso opacity connection to get wavelength
+    
+    min_pressure : float, int
+        Minimum pressure contribution in bars for molecules you want to plot. Ignores all molecules that 
+        are optically thick higher than min_pressure (bars)
+    
+    R : int
+        Resolution defined as lambda/dlambda 
+        
+    Outputs
+    -------
+    figure : bokeh.plotting.figure.Figure
+        Shows a default graph of Tau 1 Surface of various molecules and a graph based on user input based on their parameters
+        
+    """
+    kwargs['plot_height'] = kwargs.get('plot_height',400)
+    kwargs['plot_width'] = kwargs.get('plot_width',500)
+    kwargs['y_axis_label'] = kwargs.get('y_axis_label','Tau Pressure (bars)')
+    kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength')
+    kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
+    kwargs['y_range'] = kwargs.get('y_range',[1e2,1e-4])
+    kwargs['title'] = kwargs.get('title','User Input Tau Pressure Surface')
+
+    tau_p_surface = contribution_out['tau_p_surface']
+    wno=[]
+    spec=[]
+    labels=[]
+    for j in tau_p_surface.keys(): 
+        x,y = mean_regrid(opa.wno, tau_p_surface[j],R=R) 
+        if np.min(y)<min_pressure: # Bars 
+            wno+=[x]
+            spec+=[y]
+            labels +=[j]
+    fig = spectrum(wno,spec, legend=labels, **kwargs)
+    return fig
+

@@ -2,6 +2,7 @@ import json
 import pandas as pd
 from bokeh.plotting import figure, show, output_file
 from bokeh.palettes import inferno
+from bokeh.palettes import RdGy
 import numpy as np
 from .justdoit import opannection, inputs
 import os 
@@ -9,7 +10,8 @@ import astropy.units as u
 
 __refdata__ = os.environ.get('picaso_refdata')
  
-def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=True, approximation='2steam', stream=2):
+def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=True, 
+	method="Toon", stream=2, Toon_coefficients="quadrature", delta_eddington=False):
 	"""
 	Test the flux against against Dlugach & Yanovitskij 
 	https://www.sciencedirect.com/science/article/pii/0019103574901675?via%3Dihub
@@ -41,24 +43,26 @@ def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=
 
 	#read in table from reference data with the test values
 	real_answer = pd.read_csv(os.path.join(__refdata__,'base_cases', 'DLUGACH_TEST.csv'))
+	#real_answer = pd.read_csv('new_dlug.csv')
 	real_answer = real_answer.set_index('Unnamed: 0')
 
 	perror = real_answer.copy()
 
-	nlevel = 20 
+	nlevel = 60
 
 	opa = opannection(wave_range=[0.3,0.5], resample=10)
 	start_case=inputs()
 	start_case.phase_angle(0) #radians
 	start_case.gravity(gravity = 25, gravity_unit=u.Unit('m/(s**2)'))
-	start_case.approx(raman='none', )
 	start_case.star(opa, 6000,0.0122,4.437) #kelvin, log metal, log cgs
 	start_case.atmosphere(df=pd.DataFrame({'pressure':np.logspace(-6,3,nlevel),
 	                                    'temperature':np.logspace(-6,3,nlevel)*0+1000 ,
 	                                    'H2':np.logspace(-6,3,nlevel)*0+0.99, 
 	                                     'H2O':np.logspace(-6,3,nlevel)*0+0.01}))
 
-	start_case.inputs['approx']['delta_eddington']=False
+	start_case.inputs['approx']['delta_eddington']=delta_eddington
+	start_case.approx(raman='none', method = method, stream = stream, 
+				Toon_coefficients = Toon_coefficients)
 
 	if rayleigh: 
 		#first test Rayleigh
@@ -72,13 +76,16 @@ def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=
 			start_case.clouds(df=pd.DataFrame({'opd':sum([[i]*196 for i in 10**np.linspace(-5, 3, nlevel-1)],[]),
 			                                    'w0':np.zeros(196*(nlevel-1)) + w0 ,
 			                                    'g0':np.zeros(196*(nlevel-1)) + 0}))
-			allout = start_case.spectrum(opa, calculation='reflected', approximation=approximation, stream=stream)
+
+			allout = start_case.spectrum(opa, calculation='reflected')
 
 			alb = allout['albedo']
-			perror.loc[-1][w] = alb[-1]#(100*(alb[-1]-real_answer.loc[-1][w])/real_answer.loc[-1][w])
+			perror.loc[-1][w] = alb[-1]#(100*(alb[-1]-real_answer.loc[-1][w])/real_answer.loc[-1][w])#
+
 
 	start_case.inputs['test_mode']='constant_tau'
-	start_case.approx(single_phase = 'OTHG') 
+	start_case.approx(single_phase = 'OTHG', method = method, stream = stream, 
+				Toon_coefficients = Toon_coefficients)
 
 	#first test Rayleigh
 	if phase:
@@ -89,13 +96,13 @@ def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=
 				else: 
 					w0 = float(w)
 
-				start_case.clouds(df=pd.DataFrame({'opd':sum([[i]*196 for i in 10**np.linspace(-5, 3, nlevel-1)],[]),
+				start_case.clouds(df=pd.DataFrame({'opd':sum([[i]*196 for i in 10**np.linspace(-4, 2, nlevel-1)],[]),
 				                                    'w0':np.zeros(196*(nlevel-1)) + w0 ,
 				                                    'g0':np.zeros(196*(nlevel-1)) + g0}))
-				allout = start_case.spectrum(opa, calculation='reflected', approximation=approximation, stream=stream)
+				allout = start_case.spectrum(opa, calculation='reflected')
 
 				alb = allout['albedo']
-				perror.loc[g0][w] = alb[-1]#(100*(alb[-1]-real_answer.loc[-1][w])/real_answer.loc[-1][w])
+				perror.loc[g0][w] = alb[-1]#(100*(alb[-1]-real_answer.loc[-1][w])/real_answer.loc[-1][w])#
 	
 	if output_dir!=None: perror.to_csv(os.path.join(output_dir))
 	return perror
@@ -192,3 +199,57 @@ def madhu_test(rayleigh=True, isotropic=True, asymmetric=True, single_phase = 'T
 				wno, alb = picaso(a)
 				real_answer.loc[i,str(g)]=alb[-1] 
 	return real_answer
+
+def create_heat_map(data,rayleigh=True,extend=False):
+    reverse = True
+    data.columns.name = 'w0' 
+    data.index.name = 'g0' 
+    data.index=data.index.astype(str)
+    data = data.rename(index={"-1.0":"Ray"})
+    if not rayleigh:
+        data = data.drop(["Ray"])  
+    for w in data.columns[0:]:
+        if pd.isnull(data.loc['0.0'][w]):
+            data = data.drop(columns=[w])
+            reverse = False
+
+    x_range = list(data.index)
+    if reverse:
+        y_range =  list(reversed(data.columns))
+    else:
+        y_range =  list(data.columns)
+
+    df = pd.DataFrame(data.stack(), columns=['albedo']).reset_index()
+
+
+
+    colors = RdGy[11]
+    bd = max(abs(df.albedo.min()), abs(df.albedo.max()))
+#     bd = min(bd,20)
+    mapper = LinearColorMapper(palette=colors, low=-bd, high=bd)
+
+    TOOLS = "hover,save,pan,box_zoom,reset,wheel_zoom"
+
+    p = figure(height=300,width=300,
+           y_range=y_range, x_range=x_range,
+           x_axis_location="above",
+           tools=TOOLS, toolbar_location='below')
+
+    p.grid.grid_line_color = None
+    p.axis.axis_line_color = None
+    p.axis.major_tick_line_color = None
+    p.axis.major_label_text_font_size = "7px"
+    p.axis.major_label_standoff = 0
+    p.xaxis.major_label_orientation = np.pi / 3
+
+    p.rect(x="g0", y="w0", width=1, height=1,
+       source=df,
+       fill_color={'field': 'albedo', 'transform': mapper},
+       line_color=None)
+
+    color_bar = ColorBar(color_mapper=mapper, major_label_text_font_size="12px",
+                     ticker=BasicTicker(desired_num_ticks=len(colors)),
+                     label_standoff=6, border_line_color=None, location=(0, 0))
+    p.add_layout(color_bar, 'right')
+    p.axis.major_label_text_font_size='12px'
+    return p

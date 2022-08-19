@@ -321,6 +321,7 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
     ftau_cld = (single_scattering_cld * TAUCLD)/(single_scattering_cld * TAUCLD + TAURAY)
 
     COSB = ftau_cld*asym_factor_cld
+    #COSB = asym_factor_cld
 
     #formerly GCOSB2 
     ftau_ray = TAURAY/(TAURAY + single_scattering_cld * TAUCLD)
@@ -876,7 +877,9 @@ class RetrieveCKs():
         #get temps
         cur.execute('SELECT temperature FROM continuum')
         self.cia_temps = np.unique(cur.fetchall())
-
+        cur.execute('SELECT molecule FROM continuum')
+        molecules = list(np.unique(cur.fetchall()))
+        self.avail_continuum = molecules
     def get_pre_mix_ck(self,atmosphere):
         """
         Takes in atmosphere profile and returns an array which is 
@@ -1390,6 +1393,8 @@ class RetrieveOpacities():
         #compute available Rayleigh scatterers 
         self.get_available_rayleigh()
 
+        self.preload=False
+
     def open_local(self):
         """Code needed to open up local database, interpret arrays from bytes and return cursor"""
         conn = sqlite3.connect(self.db_filename, detect_types=sqlite3.PARSE_DECLTYPES)
@@ -1410,6 +1415,7 @@ class RetrieveOpacities():
         out = io.BytesIO(text)
         out.seek(0)
         return np.load(out)
+
     def get_available_data(self, wave_range, resample):
         """Get the pressures and temperatures that are available for the continuum and molecules"""
         self.resample = resample
@@ -1419,6 +1425,10 @@ class RetrieveOpacities():
         #get temps
         cur.execute('SELECT temperature FROM continuum')
         self.cia_temps = np.unique(cur.fetchall())
+
+        cur.execute('SELECT molecule FROM continuum')
+        molecules = list(np.unique(cur.fetchall()))
+        self.avail_continuum = molecules
 
         #get available molecules
         cur.execute('SELECT molecule FROM molecular')
@@ -1533,13 +1543,92 @@ class RetrieveOpacities():
 
         return t_interp , p_interp, i_t_low_p_low, i_t_hi_p_low, i_t_low_p_hi, i_t_hi_p_hi 
 
-    def get_opacities(self,atmosphere, dimension='1d'):
+
+    def preload_opacities(self,molecules,p_range,t_range):
+        """
+        Function that pre-loads opacities for certain molecules and p-t range
+
+        Parameters
+        ----------
+        molecules : list
+            list of molecule names 
+        p_range : list 
+            list of floats in bars e.g [1e-2,1]
+        t_range : list 
+            List of floats in kelvin e.g [300,1000]
+        """
+        self.preload=True
+        cur, conn = self.db_connect()
+        ind_pt = np.array(self.pt_pairs)
+        ind_pt = ind_pt[np.where(((ind_pt[:,1] >p_range[0]) & 
+                           (ind_pt[:,1] <p_range[1])))]
+        ind_pt = ind_pt[np.where(((ind_pt[:,2] >t_range[0]) & 
+                           (ind_pt[:,2] <t_range[1])))][:,0]
+        self.loaded_molecules = self._get_query_molecular(ind_pt,molecules,cur)
+
+        tcia = self.cia_temps[np.where(((self.cia_temps > t_range[0]) & 
+                                        (self.cia_temps < t_range[1])
+                ))]
+
+        cia_mol = self.avail_continuum
+        self.loaded_continuum = self._get_query_continuum(tcia,cia_mol,cur)
+
+        conn.close()
+
+        #self.avail_continuum
+
+    def _get_query_continuum(self, tcia, cia_mol, cur):
+        """
+        Get queried continuum 
+        """
+        #if user only runs a single molecule or temperature
+        if len(tcia) ==1: 
+            query_temp = """AND temperature= '{}' """.format(str(tcia[0]))
+        else:
+            query_temp = 'AND temperature in '+str(tuple(tcia) )
+
+        if len(cia_mol) ==1: 
+            query_mol = """WHERE molecule= '{}' """.format(str(cia_mol[0]))
+        else:
+            query_mol = 'WHERE molecule in '+str(tuple(cia_mol) )       
+
+        cur.execute("""SELECT molecule,temperature,opacity 
+                    FROM continuum 
+                    {} 
+                    {}""".format(query_mol, query_temp))
+
+        data = cur.fetchall()
+        data = dict((x+'_'+str(y), dat) for x, y,dat in data)
+        return data 
+
+    def _get_query_molecular(self,ind_pt,molecules,cur):
+        """
+        submits query
+        """
+        #query molecular opacities from sqlite3
+        if len(molecules) ==1: 
+            query_mol = """WHERE molecule= '{}' """.format(str(molecules[0]))
+        else:
+            query_mol = 'WHERE molecule in '+str(tuple(molecules) )
+
+        cur.execute("""SELECT molecule,ptid,opacity 
+                    FROM molecular 
+                    {} 
+                    AND ptid in {}""".format(query_mol, str(tuple(ind_pt))))
+        #fetch everything and stick into a dictionary where we can find the right
+        #pt and molecules
+        data= cur.fetchall()
+        #t_fetch = time.time()
+        #interp data for molecular opacity 
+        #DELETE
+        data =  dict((x+'_'+str(y), dat[::self.resample][self.loc]) for x,y,dat in data)       
+        return data 
+
+    def get_opacities(self,atmosphere, dimension='1d', exclude_mol=1):
         """
         Get's opacities using the atmosphere class using interpolation for molecular, but not 
         continuum. Continuum opacity is grabbed via nearest neighbor methodology. 
         """
-        #import time 
-        #t1 = time.time()
         #open connection 
         cur, conn = self.db_connect()
         
@@ -1558,27 +1647,18 @@ class RetrieveOpacities():
         #only need to uniquely query certain opacities
         ind_pt = 1+np.unique(np.concatenate([i_t_low_p_low, i_t_hi_p_low, i_t_low_p_hi, i_t_hi_p_hi]))
 
-        #query molecular opacities from sqlite3
-        if len(molecules) ==1: 
-            query_mol = """WHERE molecule= '{}' """.format(str(molecules[0]))
-        else:
-            query_mol = 'WHERE molecule in '+str(tuple(molecules) )
-
         atmosphere.layer['pt_opa_index'] = ind_pt
 
-        cur.execute("""SELECT molecule,ptid,opacity 
-                    FROM molecular 
-                    {} 
-                    AND ptid in {}""".format(query_mol, str(tuple(ind_pt))))
-        #fetch everything and stick into a dictionary where we can find the right
-        #pt and molecules
-        data= cur.fetchall()
-        #t_fetch = time.time()
-        #interp data for molecular opacity 
-        #DELETE
-        data =  dict((x+'_'+str(y), dat[::self.resample][self.loc]) for x,y,dat in data)
-        #t_dict = time.time()
+        data = self._get_query_molecular(ind_pt,molecules,cur)
+
         for i in self.molecular_opa.keys():
+            #fac is a multiplier for users to test the optical contribution of 
+            #each of their molecules
+            #for example, does ignoring CH4 opacity affect my spectrum??
+            if exclude_mol==1:
+                fac =1
+            else: 
+                fac = exclude_mol[i]
             for ind in range(nlayer): # multiply by avogadro constant
             #these where statements are used for non zero arrays 
             #however they should ultimately be put into opacity factory so it doesnt slow 
@@ -1596,43 +1676,23 @@ class RetrieveOpacities():
                      ((t_interp[ind])  * (1-p_interp[ind]) * log_abunds2) + 
                      ((t_interp[ind])  * (p_interp[ind])   * log_abunds3) + 
                      ((1-t_interp[ind])* (p_interp[ind])   * log_abunds4) ) 
-                self.molecular_opa[i][ind, :] = cx*6.02214086e+23 #avocado number
-        #t_loop_opa = time.time()
+                self.molecular_opa[i][ind, :] = fac*cx*6.02214086e+23 #avocado number
+
         #CONTINUUM
         #find nearest temp for cia grid
         tcia = [np.unique(self.cia_temps)[find_nearest(np.unique(self.cia_temps),i)] for i in tlayer]
-
-        #if user only runs a single molecule or temperature
-        if len(tcia) ==1: 
-            query_temp = """AND temperature= '{}' """.format(str(tcia[0]))
-        else:
-            query_temp = 'AND temperature in '+str(tuple(tcia) )
         cia_mol = list(self.continuum_opa.keys())
-        if len(cia_mol) ==1: 
-            query_mol = """WHERE molecule= '{}' """.format(str(cia_mol[0]))
-        else:
-            query_mol = 'WHERE molecule in '+str(tuple(cia_mol) )       
 
-        cur.execute("""SELECT molecule,temperature,opacity 
-                    FROM continuum 
-                    {} 
-                    {}""".format(query_mol, query_temp))
+        data = self._get_query_continuum(tcia, cia_mol, cur)
 
-        data = cur.fetchall()
-        data = dict((x+'_'+str(y), dat) for x, y,dat in data)
+
         for i in self.continuum_opa.keys():
             for j,ind in zip(tcia,range(nlayer)):
                 self.continuum_opa[i][ind,:] = data[i+'_'+str(j)][::self.resample][self.loc]
-        #t_cont = time.time()
-
-        #total = t_cont - t1
-        #print('Fetch:',(t_fetch - t1)/total*100 )
-        #print('Dict:',(t_dict - t_fetch)/total*100 )
-        #print('Opa Loop:',(t_loop_opa - t_dict)/total*100 )
-        #print('Cont Loop:',(t_cont - t_loop_opa)/total*100 )
+  
         conn.close() 
 
-    def get_opacities_nearest(self,atmosphere, dimension='1d'):
+    def get_opacities_nearest(self,atmosphere, dimension='1d', exclude_mol=1):
         """
         Get's opacities using the atmosphere class
         """
@@ -1652,57 +1712,40 @@ class RetrieveOpacities():
 
         #this will make getting opacities faster 
         #this is getting the ptid corresponding to the pairs
-
         ind_pt=[min(self.pt_pairs, 
             key=lambda c: math.hypot(np.log(c[1])- np.log(coordinate[0]), c[2]-coordinate[1]))[0] 
                 for coordinate in  zip(player,tlayer)]
-        #query molecular opacities from sqlite3
-        if len(molecules) ==1: 
-            query_mol = """WHERE molecule= '{}' """.format(str(molecules[0]))
-        else:
-            query_mol = 'WHERE molecule in '+str(tuple(molecules) )
-
         atmosphere.layer['pt_opa_index'] = ind_pt
 
+        if self.preload:
+            data = self.loaded_molecules
+        else: 
 
-        cur.execute("""SELECT molecule,ptid,opacity 
-                    FROM molecular 
-                    {} 
-                    AND ptid in {}""".format(query_mol, str(tuple(np.unique(ind_pt)))))
-        #fetch everything and stick into a dictionary where we can find the right
-        #pt and molecules
-        #DELETE
-        data= cur.fetchall()
-
-        data = dict((x+'_'+str(y), dat[::self.resample][self.loc]) for x,y,dat in data)        
+            data = self._get_query_molecular(ind_pt,molecules,cur)
 
         #structure it into a dictionary e.g. {'H2O':ndarray(nwave x nlayer), 'CH4':ndarray(nwave x nlayer)}.. 
         for i in self.molecular_opa.keys():
+           #fac is a multiplier for users to test the optical contribution of 
+            #each of their molecules
+            #for example, does ignoring CH4 opacity affect my spectrum??
+            if exclude_mol==1:
+                fac =1
+            else: 
+                fac = exclude_mol[i]
             for j,ind in zip(ind_pt,range(nlayer)): # multiply by avogadro constant 
-                self.molecular_opa[i][ind, :] = data[i+'_'+str(j)]*6.02214086e+23 #add to opacity bundle
+                self.molecular_opa[i][ind, :] = fac*data[i+'_'+str(j)]*6.02214086e+23 #add to opacity bundle
 
         #continuum
         #find nearest temp for cia grid
         tcia = [np.unique(self.cia_temps)[find_nearest(np.unique(self.cia_temps),i)] for i in tlayer]
-
-        #if user only runs a single molecule or temperature
-        if len(tcia) ==1: 
-            query_temp = """AND temperature= '{}' """.format(str(tcia[0]))
-        else:
-            query_temp = 'AND temperature in '+str(tuple(tcia) )
         cia_mol = list(self.continuum_opa.keys())
-        if len(cia_mol) ==1: 
-            query_mol = """WHERE molecule= '{}' """.format(str(cia_mol[0]))
+
+        if self.preload:
+            data = self.loaded_continuum
         else:
-            query_mol = 'WHERE molecule in '+str(tuple(cia_mol) )       
+            data = self._get_query_continuum(tcia, cia_mol, cur)
 
-        cur.execute("""SELECT molecule,temperature,opacity 
-                    FROM continuum 
-                    {} 
-                    {}""".format(query_mol, query_temp))
 
-        data = cur.fetchall()
-        data = dict((x+'_'+str(y), dat) for x, y,dat in data)
         for i in self.continuum_opa.keys():
             for j,ind in zip(tcia,range(nlayer)):
                 self.continuum_opa[i][ind,:] = data[i+'_'+str(j)][::self.resample][self.loc]
