@@ -234,7 +234,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
 
         if 'thermal' in calculation:
-
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
             flux_at_top = 0 
             for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
@@ -365,7 +364,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             if full_output: 
                 atm.xint_at_top = xint_at_top
 
-        elif 'thermal' in calculation:
+        if 'thermal' in calculation:
             flux_at_top=0
             for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
                 #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
@@ -1176,13 +1175,14 @@ class inputs():
 
         #lastly check to see if the atmosphere is non-H2 dominant. 
         #if it is, let's turn off Raman scattering for the user. 
-        if (("H2" not in df.keys()) and (self.inputs['approx']['rt_params']['common']['raman'] != 2)):
-            if verbose: print("Turning off Raman for Non-H2 atmosphere")
-            self.inputs['approx']['rt_params']['common']['raman'] = 2
-        elif (("H2" in df.keys()) and (self.inputs['approx']['rt_params']['common']['raman'] != 2)): 
-            if df['H2'].min() < 0.7: 
+        if df.shape[1]>2:
+            if (("H2" not in df.keys()) and (self.inputs['approx']['raman'] != 2)):
                 if verbose: print("Turning off Raman for Non-H2 atmosphere")
-                self.inputs['approx']['rt_params']['common']['raman'] = 2
+                self.inputs['approx']['raman'] = 2
+            elif (("H2" in df.keys()) and (self.inputs['approx']['raman'] != 2)): 
+                if df['H2'].min() < 0.7: 
+                    if verbose: print("Turning off Raman for Non-H2 atmosphere")
+                    self.inputs['approx']['raman'] = 2
     def premix_atmosphere(self, opa, df=None, filename=None, **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
@@ -1424,9 +1424,9 @@ class inputs():
             Solar = 0
         """
         #allowable cos 
-        cos = np.array([0.5,1.0,1.5,2.0,2.5])
+        cos = np.array([0.25,0.5,1.0,1.5,2.0,2.5])
         #allowable fehs
-        fehs = np.array([0.0,0.5,1.0,1.5,1.7,2.0])
+        fehs = np.array([0.0,0.3,0.5,0.7,1.0,1.5,1.7,2.0])
 
         if log_mh > max(fehs): 
             raise Exception('Choose a log metallicity less than 2.0')
@@ -1815,7 +1815,7 @@ class inputs():
             elif ((ng>1) & (nt==1)):
                 ds['temperature'].isel(pressure=iz_plot).plot(x ='lon')
 
-        self.inputs['atmosphere']['profile'] = ds 
+        self.inputs['atmosphere']['profile'] = ds.sortby('pressure') 
 
     def premix_3d(self, opa, n_cpu=1): 
         """
@@ -1839,7 +1839,7 @@ class inputs():
             Number of cpu to use for parallelization of chemistry
         """
         not_molecules = ['temperature','pressure','kz']
-        pt_3d_ds = self.inputs['atmosphere']['profile']
+        pt_3d_ds = self.inputs['atmosphere']['profile'].sortby('pressure') 
         lon = pt_3d_ds.coords['lon'].values
         lat = pt_3d_ds.coords['lat'].values
         nt = len(lat)
@@ -1852,7 +1852,7 @@ class inputs():
             df = pt_3d_ds.isel(lon=ilon,lat=ilat).to_pandas(
                     ).reset_index(
                     ).drop(['lat','lon'],axis=1
-                    ).sort_values('pressure')
+                    )#.sort_values('pressure')
             #convert to 1d format
             self.inputs['atmosphere']['profile']=df
             #run chemistry, which adds chem to inputs['atmosphere']['profile']
@@ -1908,7 +1908,7 @@ class inputs():
             Number of cpu to use for parallelization of chemistry
         """
         not_molecules = ['temperature','pressure','kz']
-        pt_3d_ds = self.inputs['atmosphere']['profile']
+        pt_3d_ds = self.inputs['atmosphere']['profile'].sortby('pressure') 
         lon = pt_3d_ds.coords['lon'].values
         lat = pt_3d_ds.coords['lat'].values
         nt = len(lat)
@@ -1921,7 +1921,7 @@ class inputs():
             df = pt_3d_ds.isel(lon=ilon,lat=ilat).to_pandas(
                     ).reset_index(
                     ).drop(['lat','lon'],axis=1
-                    ).sort_values('pressure')
+                    )#.sort_values('pressure')
             #convert to 1d format
             self.inputs['atmosphere']['profile']=df
             #run chemistry, which adds chem to inputs['atmosphere']['profile']
