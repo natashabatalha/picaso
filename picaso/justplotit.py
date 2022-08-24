@@ -1442,3 +1442,57 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=Spectral11,verbos
     fig.ygrid.grid_line_alpha=0
     plot_format(fig)
     return phases, all_curves, all_ws, fig
+
+
+def brightness_temperature(out_dict,plot=True, R = None): 
+    """
+    Plots and returns brightness temperature
+
+    $T_{\rm bright}=\dfrac{a}{{\lambda}log\left(\dfrac{{b}}{F(\lambda){\lambda}^5}+1\right)}$
+
+    where a = 1.43877735$\times$10$^{-2}$ m.K and b = 11.91042952$\times$10$^{-17}$ m$^4$kg/s$^3$ 
+    
+    Parameters
+    ----------
+    out_dict : dict 
+        output of bundle.spectrum(opa,full_output=True)
+    plot : bool 
+        If true creates and returns a plot 
+    R : float 
+        If not None, rebins the brightness temperature 
+    """
+    flux = out_dict['thermal']*1e-7
+    wno = out_dict['wavenumber']
+    lam = 1e4/wno
+    a=1.43877735e-2  #m K
+    hc2=2*5.95521476e-17   # m^4 kg/s^3
+    ## since flux is in W/m^2/microns hence need to multiple 1e6 to the flux to make it W/m^2/m
+    flux=flux*1e6
+    ## converting wv to m from microns
+    lam=lam*1e-6
+
+    T_B  = (a/lam)/np.log(1+(hc2/flux/lam**5))
+
+    t_eq = out_dict['full_output']['layer']['temperature']
+
+
+    if not isinstance(R, type(None)):
+        wno, T_B = jdi.mean_regrid(wno, T_B, R=R)
+
+    if plot: 
+        f = plt.figure(figsize=(15,8))
+        plt.xlabel("Wavelength [microns]",fontsize=20)
+        plt.ylabel("Brightness Temperature [K]",fontsize=20)
+        plt.xlim(0.2,240)
+        plt.ylim(0,4000)
+
+
+        plt.semilogx(1e4/wno,T_B,color='k', label="Brightness Temperature")
+        plt.axhline(np.min(t_eq),linewidth=5,color="blue",label="Minimum Temperature")
+        plt.axhline(np.max(t_eq),linewidth=5,color="red",label="Maximum Temperature")
+
+        plt.legend(fontsize=10)        
+    
+    return T_B , f
+
+
