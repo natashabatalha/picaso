@@ -4,9 +4,12 @@ Tutorials
 Early Release Workshop 2021
 ---------------------------
 
-Coming soon! 
+.. toctree::
+   :maxdepth: 2
+   
+   Tutorial </notebooks/workshops/ERS2021/ThermalEmissionTutorial.ipynb>
 
-Sagan School 2021 (beta): Spectroscopy of Young Planets 
+Sagan School 2021: Spectroscopy of Young Planets 
 -------------------------------------------------------
 
 .. toctree::

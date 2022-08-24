@@ -1,6 +1,11 @@
 Installation
 ============
 
+Python Version
+--------------
+
+Python >= 3.7 
+
 Install with Pip
 ----------------
 
@@ -8,6 +13,7 @@ Install with Pip
 
 	pip install picaso
 
+Note with a pip install you will need to download the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ (explained below). This can simply be done by downloading a zip of the ``PICASO`` code from Github (which does not require git setup). 
 
 Install with Git
 ----------------
@@ -18,15 +24,22 @@ Install with Git
 	cd picaso
 	python setup.py install 
 
-Download and Link Reference Documentation
------------------------------------------
+Download Reference Documentation
+--------------------------------
 
-1) Download the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_. You may have this already if you did a Git clone.
+1) With pip, download the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_. You should already this if you did a Git clone. **Make sure that your reference folder matches the version number of ``PICASO``**. Check the version number in the file ``reference/version.md``. 
 
 2) Download the `Resampled Opacity File from Zenodo <https://doi.org/10.5281/zenodo.3759675>`_. Place in the `Opacities reference Folder you downloaded from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ (see below in step 3)
 
-3) Now you can create an environment variable:
+Create Environment Variable
+---------------------------
 
+There are several ways to create environment variables. Below are the three most popular methods. You only need to choose one that works best for you. 
+
+Method 1: ``bash_profle`` or ``zshrc`` file
+````````````````````````````````````````````
+
+As you might guess ``~/.bash_profile`` is used for the ``Bash`` command line shell. ``~/.zshrc`` is used for the ``Zsh`` command line shell. The steps below are identical.
 
 .. code-block:: bash
 
@@ -38,15 +51,84 @@ Add add this line:
 
 	export picaso_refdata="/path/to/picaso/reference/"
 
-Should look something like this 
+Once you edit a bash profile file, you must source it. Alternatively you can open up a new terminal. 
 
 .. code-block:: bash
 
-	cd /path/to/picaso/reference/data
+	source ~/.bash_profile
+
+Now you can check that your variable has been defined properly: 
+
+.. code-block:: bash
+
+	echo $picaso_refdata
+	/Users/nbatalh1/Documents/codes/PICASO/picaso/reference
+	cd $picaso_refdata
 	ls
-	base_cases	config.json	opacities
+	base_cases chemistry config.json evolution opacities version.md
 
 Your opacities folder shown above should include the file ``opacities.db`` `file downloaded from zenodo <https://doi.org/10.5281/zenodo.3759675>`_. This is mostly a matter of preference, as PICASO allows you to point to an opacity directory. Personally, I like to store something with the reference data so that I don't have to constantly specify a folder path when running the code. 
+
+Method 2: Add directly to python code
+````````````````````````````````````````
+
+Sometimes it is too troublesome to go through bash settings and you may prefer to set it directly in your python code. 
+
+.. code-block:: python
+
+	import os
+	os.environ['picaso_refdata'] = 'your_path' #THIS MUST GO BEFORE YOUR IMPORT STATEMENT
+	os.environ['PYSYN_CDBS'] = 'your_path' #this is for the stellar data discussed below.
+	import picaso.justdoit as jdi
+
+Method 3: Add it to your conda enviornment
+````````````````````````````````````````````
+
+This is my method of choice! It involves creating conda environment specific variables. If you are interested in learning more about environment variables, you can `read more about them here <https://natashabatalha.github.io/picaso/contribution.html#using-conda-enviornments>`_
+
+If you already an evironment setup, you can do the following -- which mimics the `bash_profile/method 1` example.  
+
+.. code-block:: bash
+
+	conda activate your_env_name
+	cd $CONDA_PREFIX
+	mkdir -p ./etc/conda/activate.d
+	mkdir -p ./etc/conda/deactivate.d
+	touch ./etc/conda/activate.d/env_vars.sh
+	touch ./etc/conda/deactivate.d/env_vars.sh
+
+The ``env_vars.sh`` file is similar to your ``bash_profile`` file. Therefore you can directly add your export statement there. 
+
+.. code-block:: bash 
+
+	vi ./etc/conda/activate.d/env_vars.sh
+
+Now add the line: 
+
+.. code-block:: bash 
+
+	export picaso_refdata="/path/to/picaso/reference/"
+
+Finally, you want to make sure that your environment variable is unset when you deactivate your environment. 
+
+.. code-block:: bash 
+
+	vi ./etc/conda/deactivate.d/env_vars.sh
+
+.. code-block:: bash 
+	
+	unset picaso_refdata
+
+Notice here that I do **not** have a tilda (~) in front of ``./etc``. The full path of the ``env_vars.sh`` should look something like this: 
+
+.. code-block:: bash 
+
+	conda activate your_environment
+	cd $CONDA_PREFIX
+	cd ./etc/conda/activate.d/
+	pwd
+	/Users/nbatalh1/.conda/envs/picaso/etc/conda/activate.d
+
 
 Download and Link Pysynphot Stellar Data
 ----------------------------------------
@@ -61,11 +143,8 @@ You can download them by doing this:
 
 	wget http://ssb.stsci.edu/trds/tarfiles/synphot3.tar.gz
 
-When you untar this you should get a directory structure that looks like this ``<path>/grp/redcat/trds/grid/ck04models``. Some other people have reported a directory structure that looks like this ``<path>/grp/redcat/trds/grid/ck04models``. **The full directory structure does not matter**. Only the last portion ``grid/ck04models``. You will need to create an enviornment variable that points to where ``grid/`` is located. See below.
+When you untar this you should get a directory structure that looks like this ``<path>/grp/redcat/trds/grid/ck04models``. Some other people have reported a directory structure that looks like this ``<path>/grp/hst/cdbs/grid/ck04models``. **The full directory structure does not matter**. Only the last portion ``grid/ck04models``. You will need to create an enviornment variable that points to where ``grid/`` is located. See below.
 
-.. code-block:: bash
-
-	wget -r https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/
 
 2) Create environment variable via bash 
 

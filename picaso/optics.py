@@ -3,6 +3,7 @@ from .rayleigh import Rayleigh
 
 import pandas as pd
 import numpy as np
+from numpy import log10
 import json
 import os
 from numba import jit
@@ -14,6 +15,7 @@ import sqlite3
 import math
 from scipy.io import FortranFile
 from .deq_chem import mix_all_gases
+
 __refdata__ = os.environ.get('picaso_refdata')
 #@jit(nopython=True)
 def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddington=True,
@@ -679,12 +681,12 @@ class RetrieveCKs():
             self.get_available_continuum()
             self.get_available_rayleigh()
             self.run_cia_spline_661()
-            
         return
 
     def get_legacy_data_1060(self,wave_range):
         """
         Function to read the legacy data of the 1060 grid computed by Roxana Lupu. 
+
         Note
         ----
         This function is **highly** sensitive to the file format. You cannot edit the ascii file and then 
@@ -769,6 +771,7 @@ class RetrieveCKs():
     def get_legacy_data_1460(self,wave_range):
         """
         Function to read the legacy data of the 1060 grid computed by Roxana Lupu. 
+
         Note
         ----
         This function is **highly** sensitive to the file format. You cannot edit the ascii file and then 
@@ -1056,6 +1059,7 @@ class RetrieveCKs():
             data= hdul[0].data
             self.cia_splines[i] = data
 
+
     def get_pre_mix_ck(self,atmosphere):
         """
         Takes in atmosphere profile and returns an array which is 
@@ -1105,8 +1109,8 @@ class RetrieveCKs():
             else: 
                 p_low_ind += [find[-1]]
         p_low_ind = np.array(p_low_ind)
-
         #IF pressure GOES ABOVE THE GRID
+
         p_log_low = []
         for i in range(len(p_low_ind)): 
             ilo = p_low_ind[i]
@@ -1564,6 +1568,7 @@ class RetrieveCKs():
         kappa_lowp_hight = self.kappa[ind_lowP_highT[:,1].astype(int),ind_lowP_highT[:,2].astype(int),:,:]
         kappa_highp_hight = self.kappa[ind_highP_highT[:,1].astype(int),ind_highP_highT[:,2].astype(int),:,:]
 
+
         log_kappa_interpolated = np.zeros_like(kappa_lowp_lowt)
         
         for i in range(nlayer):
@@ -1572,8 +1577,7 @@ class RetrieveCKs():
         
         self.molecular_opa = np.exp(log_kappa_interpolated)*6.02214086e+23  #avogadro constant!
         #self.molecular_opa = np.exp(self.kappa[ind_p, ind_t, :, :])*6.02214086e+23  #avogadro constant!
-    
-    
+        
     def load_kcoeff_arrays(self,path):
  # this loads and returns the kappa tables from Theodora's bin_mol files
  # will have this very hardcoded.
@@ -1840,7 +1844,6 @@ class RetrieveCKs():
                 tcia_low[i], tcia_high[i] = t+templow,t+temphigh
         
         
-        
         #if user only runs a single molecule or temperature
         if len(tcia_low) ==1: 
             query_temp_low = """AND temperature= '{}' """.format(str(tcia_low[0]))
@@ -1928,7 +1931,6 @@ class RetrieveCKs():
                 tcia_low[i], tcia_high[i] = t+templow,t+temphigh
     
     
-    
         #if user only runs a single molecule or temperature
         if len(tcia_low) ==1: 
             query_temp_low = """AND temperature= '{}' """.format(str(tcia_low[0]))
@@ -1938,7 +1940,7 @@ class RetrieveCKs():
             query_temp_high= """AND temperature= '{}' """.format(str(tcia_high[0]))
         else:
             query_temp_high = 'AND temperature in '+str(tuple(tcia_high) )
-    
+
         cia_mol = list(self.continuum_opa.keys())
         if len(cia_mol) ==1: 
             query_mol = """WHERE molecule= '{}' """.format(str(cia_mol[0]))
@@ -1988,6 +1990,7 @@ class RetrieveCKs():
                                 ((t_interp)   * np.log(data_high[i+'_'+str(jhigh)])))
                 
                 self.continuum_opa[i][ind,:] = ln_kappa
+
         conn.close()
         
 
@@ -2145,6 +2148,12 @@ class RetrieveOpacities():
         cur.execute('SELECT ptid, pressure, temperature FROM molecular')
         data= cur.fetchall()
         self.pt_pairs = sorted(list(set(data)),key=lambda x: (x[0]) )
+        df = pd.DataFrame(self.pt_pairs,columns=['ptid','pressure','temperature'])
+        self.nc_p = df.groupby('temperature').size().values
+        self.pressures = df['pressure'].unique()
+        self.p_log_grid = np.log10(self.pressures) #used for interpolation 
+        self.temps = df['temperature'].unique() #used for interpolation
+        self.t_inv_grid = 1/self.temps
 
         #Get the wave grid info
         cur.execute('SELECT wavenumber_grid FROM header')
@@ -2167,7 +2176,175 @@ class RetrieveOpacities():
         for i in data.rayleigh_molecules: 
             self.rayleigh_opa[i] = data.compute_sigma(i)
 
+    def find_needed_pts(self, tlayer, player):
+        """
+        Function to identify the PT pairs needed given a set of temperature and pressures. 
+        When the opacity connection is established the PT pairs are read in and added to the 
+        class. 
+        """
+        #Now for the temp point on either side of our atmo grid
+        #first the lower interp temp
+        t_inv = 1/tlayer
+        p_log = np.log10(player)
+        t_inv_grid = self.t_inv_grid
+        p_log_grid = self.p_log_grid
+        nc_p = self.nc_p
+
+        t_low_ind = []
+        for i in t_inv:
+            find = np.where(t_inv_grid>i)[0]
+            if len(find)==0:
+                #IF T GOES BELOW THE GRID
+                t_low_ind +=[0]
+            else:    
+                t_low_ind += [find[-1]]
+        t_low_ind = np.array(t_low_ind)
+        #IF T goes above the grid
+        t_low_ind[t_low_ind==(len(t_inv_grid)-1)]=len(t_inv_grid)-2
+        #get upper interp temp
+        t_hi_ind = t_low_ind + 1 
+
+        #now get associated temps
+        t_inv_low =  np.array([t_inv_grid[i] for i in t_low_ind])
+        t_inv_hi = np.array([t_inv_grid[i] for i in t_hi_ind])
+
+
+        #We want the pressure points on either side of our atmo grid point
+        #first the lower interp pressure
+        p_low_ind = [] 
+        for i in p_log:
+            find = np.where(p_log_grid<=i)[0]
+            if len(find)==0:
+                #If P GOES BELOW THE GRID
+                p_low_ind += [0]
+            else: 
+                p_low_ind += [find[-1]]
+        p_low_ind = np.array(p_low_ind)
+
+        #IF pressure GOES ABOVE THE GRID
+        p_log_low = []
+        for i in range(len(p_low_ind)): 
+            ilo = p_low_ind[i]
+            it = t_hi_ind[i]
+            max_avail_p = np.min([ilo, nc_p[it]-3])#3 b/c using len instead of where as was done with t above
+            p_low_ind[i] = max_avail_p
+            p_log_low += [p_log_grid[max_avail_p]]
+            
+        p_log_low = np.array(p_log_low)
+
+        #get higher pressure vals
+        p_hi_ind = p_low_ind + 1 
+
+        #now get associated pressures 
+        #p_log_low =  np.array([p_log_grid[i] for i in p_low_ind])
+        p_log_hi = np.array([p_log_grid[i] for i in p_hi_ind])
+
+        #translate to full 1060/1460 account for potentially disparate number of pressures per grid point
+        t_low_10XX = np.array([sum(nc_p[0:i]) for i in t_low_ind])
+        t_hi_10XX= np.array([sum(nc_p[0:i]) for i in t_hi_ind])
+
+        i_t_low_p_low =  t_low_10XX + p_low_ind #(opa.max_pc*t_low_ind)
+        i_t_hi_p_low =  t_hi_10XX + p_low_ind #(opa.max_pc*t_hi_ind)
+        i_t_low_p_hi = t_low_10XX + p_hi_ind
+        i_t_hi_p_hi = t_hi_10XX + p_hi_ind    
+
+        t_interp = ((t_inv - t_inv_low) / (t_inv_hi - t_inv_low))[:,np.newaxis]
+        p_interp = ((p_log - p_log_low) / (p_log_hi - p_log_low))[:,np.newaxis]
+
+        return t_interp , p_interp, i_t_low_p_low, i_t_hi_p_low, i_t_low_p_hi, i_t_hi_p_hi 
+
     def get_opacities(self,atmosphere, dimension='1d'):
+        """
+        Get's opacities using the atmosphere class using interpolation for molecular, but not 
+        continuum. Continuum opacity is grabbed via nearest neighbor methodology. 
+        """
+        #open connection 
+        cur, conn = self.db_connect()
+        
+        nlayer =atmosphere.c.nlayer
+        tlayer =atmosphere.layer['temperature']
+        player = atmosphere.layer['pressure']/atmosphere.c.pconv
+        molecules = atmosphere.molecules
+        cia_molecules = atmosphere.continuum_molecules        
+        #struture opacity dictionary
+        self.molecular_opa = {key:np.zeros((nlayer, self.nwno)) for key in molecules}
+        self.continuum_opa = {key[0]+key[1]:np.zeros((nlayer, self.nwno)) for key in cia_molecules}
+
+        #MOLECULAR
+        #get parameters we need to interpolate molecular opacity 
+        t_interp , p_interp, i_t_low_p_low, i_t_hi_p_low, i_t_low_p_hi, i_t_hi_p_hi = self.find_needed_pts(tlayer,player)
+        #only need to uniquely query certain opacities
+        ind_pt = 1+np.unique(np.concatenate([i_t_low_p_low, i_t_hi_p_low, i_t_low_p_hi, i_t_hi_p_hi]))
+
+        #query molecular opacities from sqlite3
+        if len(molecules) ==1: 
+            query_mol = """WHERE molecule= '{}' """.format(str(molecules[0]))
+        else:
+            query_mol = 'WHERE molecule in '+str(tuple(molecules) )
+
+        atmosphere.layer['pt_opa_index'] = ind_pt
+
+        cur.execute("""SELECT molecule,ptid,opacity 
+                    FROM molecular 
+                    {} 
+                    AND ptid in {}""".format(query_mol, str(tuple(ind_pt))))
+        #fetch everything and stick into a dictionary where we can find the right
+        #pt and molecules
+        data= cur.fetchall()
+
+        #interp data for molecular opacity 
+        #DELETE
+        data =  dict((x+'_'+str(y), dat[::self.resample][self.loc]) for x,y,dat in data)
+
+        for i in self.molecular_opa.keys():
+            for ind in range(nlayer): # multiply by avogadro constant
+            #these where statements are used for non zero arrays 
+            #however they should ultimately be put into opacity factory so it doesnt slow 
+            #this down
+                log_abunds1 = data[i+'_'+str(1+i_t_low_p_low[ind])]
+                log_abunds1 = np.log10(np.where(log_abunds1!=0,log_abunds1,1e-50))
+                log_abunds2 = data[i+'_'+str(1+i_t_hi_p_low[ind])]
+                log_abunds2 = np.log10(np.where(log_abunds2!=0,log_abunds2,1e-50))
+                log_abunds3 = data[i+'_'+str(1+i_t_hi_p_hi[ind])]
+                log_abunds3 = np.log10(np.where(log_abunds3!=0,log_abunds3,1e-50))
+                log_abunds4 = data[i+'_'+str(1+i_t_low_p_hi[ind])]
+                log_abunds4 = np.log10(np.where(log_abunds4!=0,log_abunds4,1e-50))
+                #nlayer x nwno
+                cx = 10**(((1-t_interp[ind])* (1-p_interp[ind]) * log_abunds1) +
+                     ((t_interp[ind])  * (1-p_interp[ind]) * log_abunds2) + 
+                     ((t_interp[ind])  * (p_interp[ind])   * log_abunds3) + 
+                     ((1-t_interp[ind])* (p_interp[ind])   * log_abunds4) ) 
+                self.molecular_opa[i][ind, :] = cx*6.02214086e+23 #avocado number
+
+        #CONTINUUM
+        #find nearest temp for cia grid
+        tcia = [np.unique(self.cia_temps)[find_nearest(np.unique(self.cia_temps),i)] for i in tlayer]
+
+        #if user only runs a single molecule or temperature
+        if len(tcia) ==1: 
+            query_temp = """AND temperature= '{}' """.format(str(tcia[0]))
+        else:
+            query_temp = 'AND temperature in '+str(tuple(tcia) )
+        cia_mol = list(self.continuum_opa.keys())
+        if len(cia_mol) ==1: 
+            query_mol = """WHERE molecule= '{}' """.format(str(cia_mol[0]))
+        else:
+            query_mol = 'WHERE molecule in '+str(tuple(cia_mol) )       
+
+        cur.execute("""SELECT molecule,temperature,opacity 
+                    FROM continuum 
+                    {} 
+                    {}""".format(query_mol, query_temp))
+
+        data = cur.fetchall()
+        data = dict((x+'_'+str(y), dat) for x, y,dat in data)
+        for i in self.continuum_opa.keys():
+            for j,ind in zip(tcia,range(nlayer)):
+                self.continuum_opa[i][ind,:] = data[i+'_'+str(j)][::self.resample][self.loc]
+
+        conn.close() 
+
+    def get_opacities_nearest(self,atmosphere, dimension='1d'):
         """
         Get's opacities using the atmosphere class
         """
@@ -2198,13 +2375,17 @@ class RetrieveOpacities():
             query_mol = 'WHERE molecule in '+str(tuple(molecules) )
 
         atmosphere.layer['pt_opa_index'] = ind_pt
+
+
         cur.execute("""SELECT molecule,ptid,opacity 
                     FROM molecular 
                     {} 
                     AND ptid in {}""".format(query_mol, str(tuple(np.unique(ind_pt)))))
         #fetch everything and stick into a dictionary where we can find the right
         #pt and molecules
+        #DELETE
         data= cur.fetchall()
+
         data = dict((x+'_'+str(y), dat[::self.resample][self.loc]) for x,y,dat in data)        
 
         #structure it into a dictionary e.g. {'H2O':ndarray(nwave x nlayer), 'CH4':ndarray(nwave x nlayer)}.. 
@@ -2239,6 +2420,7 @@ class RetrieveOpacities():
                 self.continuum_opa[i][ind,:] = data[i+'_'+str(j)][::self.resample][self.loc]
 
         conn.close() 
+
     def compute_stellar_shits(self, wno_star, flux_star):
         """
         Takes the hires stellar spectrum and computes Raman shifts 
@@ -2378,3 +2560,17 @@ def rayleigh_old(colden,gasmixing,wave,xmu,amu):
         TAURAY += TAUR
 
     return TAURAY
+
+
+@jit(nopython=True, cache=True)
+def interp_matrix(a1,a2,a3,a4,t_interp,p_interp):
+    log_abunds1 = log10(a1)
+    log_abunds2 = log10(a2)
+    log_abunds3 = log10(a3)
+    log_abunds4 = log10(a4)
+    cx = 10**(((1-t_interp)* (1-p_interp) * log_abunds1) +
+                     ((t_interp)  * (1-p_interp) * log_abunds2) + 
+                     ((t_interp)  * (p_interp)   * log_abunds3) + 
+                     ((1-t_interp)* (p_interp)   * log_abunds4) ) 
+    return cx*6.02214086e+23 
+

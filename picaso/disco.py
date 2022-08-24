@@ -78,7 +78,7 @@ def get_angles_1d(ngauss):
         gweight = array([0.0032951914, 0.0178429027, 0.0454393195, 0.0791995995, 0.1060473594, 0.1125057995, 0.0911190236, 0.0445508044])
     else: 
         raise Exception("Please enter ngauss=5,6,7 or 8.")
-    tangle,tweight = array([0]), array([2*pi])
+    tangle,tweight = array([0]), array([1])
 
     return gangle, gweight, tangle,tweight
 
@@ -131,17 +131,19 @@ def compress_disco( nwno, cos_theta, xint_at_top, gweight, tweight,F0PI):
     """
     ng = len(gweight)
     nt = len(tweight)
+    if nt==1 : sym_fac = 2*pi #azimuthal symmetry  
+    else: sym_fac = 1
     albedo=zeros(nwno)
     #for w in range(nwno):
     #   albedo[w] = 0.5 * sum((xint_at_top[:,:,w]*tweight).T*gweight)
     for ig in range(ng): 
         for it in range(nt): 
             albedo = albedo + xint_at_top[ig,it,:] * gweight[ig] * tweight[it]
-    albedo = 0.5 * albedo /F0PI * (cos_theta + 1.0)
+    albedo = sym_fac * 0.5 * albedo /F0PI * (cos_theta + 1.0)
     return albedo
 
 @jit(nopython=True, cache=True)
-def compress_thermal(nwno, ubar1, flux_at_top, gweight, tweight): 
+def compress_thermal(nwno, flux_at_top, gweight, tweight): 
     """
     Last step in albedo code. Integrates over phase angle based on the 
     Gaussian-Chebychev weights in geometry.json 
@@ -150,10 +152,9 @@ def compress_thermal(nwno, ubar1, flux_at_top, gweight, tweight):
     ----------
     nwno : int 
         Number of wavenumbers 
-    ubar1 : ndarray of floats 
-        Outgoing angles 
     flux_at_top : ndarray of floats 
         Thermal Flux at the top of the atmosphere with dimensions (ng, nt, nwno)
+        or could also be (ng,nt,nlayer,nwno)
     gweight : ndarray of floats 
         Gaussian weights for integration 
     tweight : ndarray of floats 
@@ -161,12 +162,14 @@ def compress_thermal(nwno, ubar1, flux_at_top, gweight, tweight):
     """
     ng = len(gweight)
     nt = len(tweight)
-    flux=zeros(nwno)
+    #flexible for something that is 3 or 4 dimensions
+    flux=zeros(flux_at_top[0,0,:].shape)
 
-    fac = 1/pi 
+    if nt==1 : sym_fac = 1
+    else: sym_fac = 1/(2*pi) #azimuthal symmetry breaks down  
 
     for ig in range(ng):
         for it in range(nt):
             flux = flux + flux_at_top[ig,it,:] * gweight[ig] * tweight[it]    
 
-    return  fac*flux
+    return  flux*sym_fac
