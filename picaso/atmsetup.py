@@ -584,6 +584,12 @@ class ATMSETUP():
 
         df['star'] = {}
         df['star']['flux_unit'] = 'erg/cm2/s/cm'
+        
+        try: 
+            df['level']['dz'] = self.level['dz']
+            df['level']['z'] = self.level['z']
+        except: 
+            pass
 
         try: 
             x =  self.xint_at_top
