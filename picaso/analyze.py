@@ -553,7 +553,8 @@ class GridFitter():
 
 def detection_test(fitter, molecule, min_wavelength, max_wavelength,
                    grid_name, data_name, 
-                   filename, 
+                   filename, molecule_baseline=None,baseline_wavelength=[],
+                   model_full=None, 
                    opa_kwargs={},plot=True):
     """
     Computes the detection significance of a molecule given a grid name, data name, 
@@ -573,12 +574,25 @@ def detection_test(fitter, molecule, min_wavelength, max_wavelength,
     case = input_xarray(xr_data, opa)        
     og_atmo = copy.deepcopy(case.inputs['atmosphere']['profile'])
     
-    model_full = xr_data.data_vars['transit_depth']
-    wavelength = xr_data.coords['wavelength']
-    wavelength, model_full = mean_regrid(wavelength,model_full,newx=wlgrid_center)
-    model_full = model_full + shift
+    if isinstance(model_full,type(None)):
+        model_full = xr_data.data_vars['transit_depth']
+        wavelength = xr_data.coords['wavelength']
+        wavelength, model_full = mean_regrid(wavelength,model_full,newx=wlgrid_center)
+        model_full = model_full + shift
+    
     
     #
+    double_gauss =False
+    if isinstance(molecule_baseline,str):
+        molecule = [molecule, molecule_baseline]
+        double_gauss = True
+        if len(baseline_wavelength)==2: 
+            min_wavelength_add = sorted(baseline_wavelength)[0]
+            max_wavelength_add = sorted(baseline_wavelength)[1]
+        else: 
+            min_wavelength_add = min_wavelength
+            max_wavelength_add = max_wavelength
+
     case.atmosphere(df = og_atmo,exclude_mol=molecule, delim_whitespace=True)
     df= case.spectrum(opa, full_output=True,calculation='transmission') #note the new last key 
     wno, model_exclude  = df['wavenumber'] , df['transit_depth']
@@ -614,10 +628,20 @@ def detection_test(fitter, molecule, min_wavelength, max_wavelength,
     def model_gauss(wlgrid, lam0, sig, Amp,cst):
         return (Amp*np.exp(-(wlgrid-lam0)**2/sig**2)+cst)/1e6
 
+    def model_double_gauss(wlgrid, lam01, sig1, Amp1,cst1,lam02, sig2, Amp2,cst2):
+        return ((Amp1*np.exp(-(wlgrid-lam01)**2/sig1**2)+cst1)/1e6 + 
+                (Amp2*np.exp(-(wlgrid-lam02)**2/sig2**2)+cst2)/1e6    )
+    #TK ADD IN DOUBLE LOGLIKE AND DOUBLE PRIOR
     #likelihood function
     def loglike_gauss(theta):
         logAmp, lam0,logsig,cst=theta #fitting for the "log" amplitude and witdths b/c why not...could try linear to see if it affects answer
         mod=model_gauss(wlgrid_center, lam0, 10**logsig, 10**logAmp,cst) #evaluating model
+        lnl=-0.5*np.sum((residual_data-mod)**2/e_data**2) #the equation for -1/2 chi-square....
+        return lnl
+    def loglike_double_gauss(theta):
+        logAmp1, lam01,logsig1,cst1,logAmp2, lam02,logsig2,cst2=theta #fitting for the "log" amplitude and witdths b/c why not...could try linear to see if it affects answer
+        mod=model_gauss(wlgrid_center, lam01, 10**logsig1, 10**logAmp1, cst1,
+                                       lam02, 10**logsig2, 10**logAmp2, cst2) #evaluating model
         lnl=-0.5*np.sum((residual_data-mod)**2/e_data**2) #the equation for -1/2 chi-square....
         return lnl
 
@@ -629,14 +653,31 @@ def detection_test(fitter, molecule, min_wavelength, max_wavelength,
         logsig=-2+(1+2)*logsig
         cst=-200+(400)*cst
         return logAmp, lam0,logsig,cst
+    def prior_transform_double_gauss(theta):
+        logAmp1, lam01,logsig1,cst1,logAmp2, lam02,logsig2,cst2=theta
+        logAmp1=-1+(4.5+1)*logAmp1
+        lam01=min_wavelength+(max_wavelength-min_wavelength)*lam01 
+        logsig1=-2+(1+2)*logsig1
+        cst1=-200+(400)*cst1
+        logAmp2=-1+(4.5+1)*logAmp2
+        lam02=min_wavelength_add+(max_wavelength_add-min_wavelength_add)*lam02
+        logsig2=-2+(1+2)*logsig2
+        cst2=-200+(400)*cst2
+        return logAmp1, lam01,logsig1,cst1,logAmp2, lam02,logsig2,cst2 
     
-    Nparam=4  #number of parameters--make sure it is the same as what is in prior and loglike
     Nproc=4  #number of processors for multi processing--best if you can run on a 12 core+ node or something
     Nlive=500 #number of nested sampling live points
 
     #setting up multi-threading and sampler     
     #pool = Pool(processes=Nproc)
-    dsampler = dynesty.NestedSampler(loglike_gauss, prior_transform_gauss, ndim=Nparam,
+    if double_gauss:
+        Nparam=8  #number of parameters--make sure it is the same as what is in prior and loglike
+        dsampler = dynesty.NestedSampler(loglike_double_gauss, prior_transform_double_gauss, ndim=Nparam,
+                                            bound='multi', sample='auto', nlive=Nlive)#,
+                                            #pool=pool, queue_size=Nproc)
+    else: 
+        Nparam = 4
+        dsampler = dynesty.NestedSampler(loglike_gauss, prior_transform_gauss, ndim=Nparam,
                                             bound='multi', sample='auto', nlive=Nlive)#,
                                             #pool=pool, queue_size=Nproc)
     dsampler.run_nested()
