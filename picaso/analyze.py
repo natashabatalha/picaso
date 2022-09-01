@@ -643,7 +643,7 @@ def detection_test(fitter, molecule, min_wavelength, max_wavelength,
         return lnl
     def loglike_double_gauss(theta):
         logAmp1, lam01,logsig1,cst1,logAmp2, lam02,logsig2,cst2=theta #fitting for the "log" amplitude and witdths b/c why not...could try linear to see if it affects answer
-        mod=model_gauss(wlgrid_center, lam01, 10**logsig1, 10**logAmp1, cst1,
+        mod=model_double_gauss(wlgrid_center, lam01, 10**logsig1, 10**logAmp1, cst1,
                                        lam02, 10**logsig2, 10**logAmp2, cst2) #evaluating model
         lnl=-0.5*np.sum((residual_data-mod)**2/e_data**2) #the equation for -1/2 chi-square....
         return lnl
