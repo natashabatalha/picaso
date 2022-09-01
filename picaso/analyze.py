@@ -222,7 +222,7 @@ class GridFitter():
             for j in self.data.keys() :
                 self.fit_grid(i, j)
 
-    def fit_grid(self,grid_name, data_name, offset=True):
+    def fit_grid(self,grid_name, data_name,dof='ndata', offset=True):
         """
         Fits grids given model and data. Retrieves posteriors of fit parameters.
 
@@ -232,6 +232,9 @@ class GridFitter():
             grid name that was specified in GridFiter or add_grid
         data_name : str 
             data name that was specified before in add_data
+        dof : str 
+            used for chi square. if dof=='ndata' then chi square is computed as chi2/len(data). 
+            otherwise it computes as chi2/(len(data) - numparameters)
         offset : bool 
             Fit for an offset (e.g. in transit spectra)
 
@@ -291,7 +294,7 @@ class GridFitter():
                 shift = popt[0]
             else: 
                 shift = 0 
-
+            if dof == 'ndata': numparams=0
             self.chi_sqs[grid_name][data_name][index]= chi_squared(y_data,e_data,flux_in_bin+shift,numparams)
 
             self.best_fits[grid_name][data_name][index,:] = flux_in_bin+shift
@@ -715,7 +718,7 @@ def chi_squared(data,data_err,model,numparams):
     Compute reduced chi squared assuming DOF = ndata_pts - num parameters  
     """
     
-    chi_squared = np.sum(((data-model)/(data_err))**2)/(len(data)-(numparams+1))
+    chi_squared = np.sum(((data-model)/(data_err))**2)/(len(data)-(numparams))
     
     return chi_squared
 

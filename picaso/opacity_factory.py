@@ -779,7 +779,6 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         elif 'python' in ftype: 
             dset = np.load(open(fdata,'rb'))
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]            
-            
         #interp on high res grid
         #basic interpolation here onto a new wavegrid that 
         dset = np.interp(interp_wvno_grid,og_wvno_grid, dset,right=1e-50, left=1e-50)
