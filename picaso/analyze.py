@@ -673,23 +673,28 @@ def detection_test(fitter, molecule, min_wavelength, max_wavelength,
 
     #setting up multi-threading and sampler     
     #pool = Pool(processes=Nproc)
+    results = {}
+    models = []
     if double_gauss:
+        models += ['double']
         Nparam=8  #number of parameters--make sure it is the same as what is in prior and loglike
-        dsampler = dynesty.NestedSampler(loglike_double_gauss, prior_transform_double_gauss, ndim=Nparam,
+        results['double'] = dynesty.NestedSampler(loglike_double_gauss, prior_transform_double_gauss, ndim=Nparam,
                                             bound='multi', sample='auto', nlive=Nlive)#,
                                             #pool=pool, queue_size=Nproc)
-    else: 
-        Nparam = 4
-        dsampler = dynesty.NestedSampler(loglike_gauss, prior_transform_gauss, ndim=Nparam,
-                                            bound='multi', sample='auto', nlive=Nlive)#,
-                                            #pool=pool, queue_size=Nproc)
-    dsampler.run_nested()
-    #GAUSS RESULTS
-    dres_gauss = dsampler.results #results
-    ##grabbing the final evidence--will be used for bayes factor (see Dynesty documnetation)
-    logZ_gaussian=dres_gauss.logz[-1] 
-    samples_gauss, weights_gauss = dres_gauss.samples, np.exp(dres_gauss.logwt - dres_gauss.logz[-1])
-    samp_gauss = dyfunc.resample_equal(samples_gauss, weights_gauss)
+    #run single for comparison 
+    Nparam = 4
+    models += ['single']
+    results['single'] = dynesty.NestedSampler(loglike_gauss, prior_transform_gauss, ndim=Nparam,
+                                        bound='multi', sample='auto', nlive=Nlive)#,
+                                        #pool=pool, queue_size=Nproc)
+    for dsampler in results.keys():
+        results[dsampler].run_nested()
+        #GAUSS RESULTS
+        results[f'dres_{dsampler}'] = results[dsampler].results #results
+        ##grabbing the final evidence--will be used for bayes factor (see Dynesty documnetation)
+        results[f'logZ_{dsampler}'] = results[f'dres_{dsampler}'].logz[-1] 
+        samples, weights = results[f'dres_{dsampler}'].samples, np.exp(results[f'dres_{dsampler}'].logwt - results[f'dres_{dsampler}'].logz[-1])
+        results[f'samp_{dsampler}'] = dyfunc.resample_equal(samples, weights)
     
     #flat line test
     def model_line(wlgrid,cst):
@@ -710,47 +715,58 @@ def detection_test(fitter, molecule, min_wavelength, max_wavelength,
         return cst 
     
     Nparam=1
-    dsampler_line = dynesty.NestedSampler(loglike_line, prior_transform_line, ndim=Nparam,
+    results['line'] = dynesty.NestedSampler(loglike_line, prior_transform_line, ndim=Nparam,
                                         bound='multi', sample='auto', nlive=Nlive#,
                                         #pool=pool, queue_size=Nproc
                                     )
     
-    dsampler_line.run_nested()
-    dres_line = dsampler_line.results
-    logZ_constant=dres_line.logz[-1] 
-    samples_line, weights_line = dres_line.samples, np.exp(dres_line.logwt - dres_line.logz[-1])
-    samp_line = dyfunc.resample_equal(samples_line, weights_line)
+    results['line'].run_nested()
+    results['dres_line'] = results['line'].results
+    results['logZ_line'] = results['dres_line'].logz[-1] 
+    samples, weights = results['dres_line'].samples, np.exp(results['dres_line'].logwt - results['dres_line'].logz[-1])
+    results['samp_line'] = dyfunc.resample_equal(samples_line, weights_line)
     
     
     if plot:
         ax[2].errorbar(wlgrid_center, residual_data,yerr=e_data,fmt='ob',ms=3,label='Residual Data')
+        
+        samp_gauss = results['samp_single']
         for i in range(samp_gauss.shape[0]):
             logAmp, lam0,logsig,cst=samp_gauss[i,:]
             mod=model_gauss(wlgrid_center, lam0, 10**logsig, 10**logAmp,cst)
-            ax[2].plot(wlgrid_center, mod,alpha=0.01,color='red')
-        
-        ax[2].plot(wlgrid_center, mod,alpha=0.5,color='red',label='Gaussian Fit Ensemble')
+            ax[2].plot(wlgrid_center, mod,alpha=0.01,color='purple')
+
+        ax[2].plot(wlgrid_center, mod,alpha=0.5,color='purple')
+
+        if double_gauss:
+            samp_gauss = results['samp_double']
+            for i in range(samp_gauss.shape[0]):
+                logAmp1, lam01,logsig1,cst1,logAmp2, lam02,logsig2,cst2=samp_gauss[i,:]
+                mod=model_double_gauss(wlgrid_center, lam01, 10**logsig1, 10**logAmp1, cst1,
+                                   lam02, 10**logsig2, 10**logAmp2, cst2)
+                ax[2].plot(wlgrid_center, mod,alpha=0.01,color='orange')
+
+            ax[2].plot(wlgrid_center, mod,alpha=0.5,color='orange')
+
+        samp_line = results['samp_line']
         for i in range(samp_line.shape[0]):
             cst=samp_line[i,:]
             mod=model_line(wlgrid_center, cst)
-            ax[2].plot(wlgrid_center, mod,alpha=0.01,color='blue')
+            ax[2].plot(wlgrid_center, mod,alpha=0.01,color='grey')
        
-
-        ax[2].plot(wlgrid_center, mod,alpha=0.5,color='blue',label='Constant Fit Ensemble')
+        ax[2].plot(wlgrid_center, mod,alpha=0.5,color='grey',label='Constant Fit Ensemble')
         
         ax[2].set_xlabel('wavelength [microns]')
         ax[2].set_ylabel('Delta Transit Depth') 
         ax[2].legend(fontsize=12) 
-    
-    sig,lnB= sigma(logZ_gaussian, logZ_constant)
-    return {
-        'dres_gauss':dres_gauss,
-        'dres_gauss':dres_line,
-        'logZ_line':logZ_constant,
-        'logZ_gauss':logZ_gaussian,
-        'sigma':sig,
-        'lnB':lnB
-    }  
+
+    results['sigma_single_v_line'],results['lnB_single_v_line']= sigma(
+                                        results['logZ_single'], results['logZ_line'])
+
+    if double_gauss: 
+        results['sigma_double_v_single'],results['lnB_double_v_single']= sigma(
+                                    results['logZ_double'], results['logZ_single'])
+    return results
         
 
 
