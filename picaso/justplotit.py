@@ -1496,3 +1496,11 @@ def brightness_temperature(out_dict,plot=True, R = None):
     return T_B , f
 
 
+def animate_convergence(clima_out):
+    """
+    Function to animate climate convergence given all profiles that were 
+    computed throughout the climate run 
+    
+    """
+
+

@@ -602,7 +602,7 @@ def opannection(wave_range = None, filename_db = None, raman_db = None,
     """
     inputs = json.load(open(os.path.join(__refdata__,'config.json')))
 
-    if (ck_db, type(None)): 
+    if isinstance(ck_db, type(None)): 
         #only allow raman if no correlated ck is used 
         if isinstance(raman_db,type(None)): raman_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['raman'])
         
@@ -622,6 +622,7 @@ def opannection(wave_range = None, filename_db = None, raman_db = None,
                     raman_db,
                     wave_range = wave_range, resample = resample)
     else: 
+
         if isinstance(filename_db,type(None)): 
             filename_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['ktable_continuum'])
 
@@ -2955,7 +2956,10 @@ class inputs():
         else :
             self.inputs['planet']['T_eff'] = 0
 
-    def inputs_climate(self, temp_guess= None, pressure= None, nstr = None, nofczns = None , rfacv = None, rfaci = None, cloudy = False, mh = None, CtoO = None, species = None, fsed = None, T_star = None, logg= None, metal=None, r_star= None, semi_major = None,r_planet=None):
+    def inputs_climate(self, temp_guess= None, pressure= None, rfaci = 1,nofczns = 1 ,
+        nstr = None,  rfacv = None, cloudy = False,
+        mh = None, CtoO = None, species = None, fsed = None, T_star = None, 
+        logg= None, metal=None, r_star= None, semi_major = None,r_planet=None):
         """
         Get Inputs for Climate run
 
@@ -2976,9 +2980,14 @@ class inputs():
         nofczns : integer
             Number of guessed Convective Zones. 1 or 2
         rfacv : float
-            Fractional contribution of reflected light in net flux
+            Fractional contribution of reflected light in net flux.
+            =0 for no stellar irradition, 
+            =0.5 for full day-night heat redistribution
+            =1 for dayside
         rfaci : float
-            Fractional contribution of thermal light in net flux
+            Default=1, Fractional contribution of thermal light in net flux
+            Usually this is kept at one and then the redistribution is controlled 
+            via rfacv
         cloudy : bool
             Include Clouds or not (True or False)
         mh : string
@@ -3004,6 +3013,12 @@ class inputs():
 
         
         """
+        if cloudy: 
+            raise Exception('Cloudy functionality still in beta form and not ready for public use.')
+        else: 
+            #dummy values only used for cloud model
+            mh = 0 
+            CtoO = 0 
 
         if self.inputs['planet']['T_eff'] == 0.0:
             raise Exception('Need to specify Teff with jdi.input for climate run')
@@ -3036,7 +3051,7 @@ class inputs():
         self.inputs['climate']['semi_major'] = semi_major # au
         self.inputs['climate']['r_planet'] = r_planet # jupiter radii
 
-    def run_climate_model(self, opacityclass, save_all_profiles = False, save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False, kz = None, vulcan_run = False, photochem=False,on_fly=False,gases_fly=None,mhdeq=None,CtoOdeq=None ):
+    def run_climate_model(self, opacityclass, save_all_profiles = False, as_dict=True,save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False, kz = None, vulcan_run = False, photochem=False,on_fly=False,gases_fly=None,mhdeq=None,CtoOdeq=None ):
         """
         Top Function to run the Climate Model
 
@@ -3103,7 +3118,7 @@ class inputs():
             FOPI = fine_flux_star * ((r_star/semi_major)**2)
 
         all_profiles= []
-        if save_all_profiles == True :
+        if save_all_profiles:
             save_profile = 1
         else :
             save_profile = 0
@@ -3373,7 +3388,23 @@ class inputs():
             
             return pressure , temp, dtdp, nstr_new, flux_plus_final, quench_levels, df, all_profiles, all_kzz, opd_now,w0_now,g0_now
             
-        return pressure , temp, dtdp, nstr_new, flux_plus_final, df, all_profiles , opd_now,w0_now,g0_now
+        
+
+        if as_dict: 
+            return {
+            'pressure':pressure,
+            'temperature':temp,
+            'dtdp':dtdp,
+            'cvz_locs':nstr_new,
+            'flux':flux_plus_final,
+            'df':df,
+            'all_profiles':all_profiles,
+            'opd':opd_now,
+            'w0':w0_now,
+            'g0':g0_now
+            }
+        else: 
+            return pressure , temp, dtdp, nstr_new, flux_plus_final, df, all_profiles , opd_now,w0_now,g0_now
 
 def get_targets():
     """Function to grab available targets using exoplanet archive data. 
@@ -3720,7 +3751,7 @@ def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         else Temperature array twice
     """
 
-    # taudif is fixed to be 0 here since it is needed only for clouds
+    # taudif is fixed to be 0 here since it is needed only for clouds mh
     taudif = 0.0
     taudif_tol = 0.1
     
