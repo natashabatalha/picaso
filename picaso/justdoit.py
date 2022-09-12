@@ -34,7 +34,6 @@ import astropy.constants as c
 import math
 import xarray as xr
 from joblib import Parallel, delayed, cpu_count
-import warnings
 
 __refdata__ = os.environ.get('picaso_refdata')
 
