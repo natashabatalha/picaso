@@ -146,10 +146,11 @@ def plot_multierror(x,y,plot, dx_up=0, dx_low=0, dy_up=0, dy_low=0,
     error_kwargs : dict 
         formatting for error bar lines
     """
-    #first turn everything into lists 
-    for i in [dx_up, dx_low, dy_up, dy_low]:
-        if isinstance(i, (float, int)):
-            i = [i]*len(x)
+    #first turn everything into lists
+    (dx_up, dx_low, dy_up, dy_low) = [[i]*len(x)
+                                      if isinstance(i, (float, int)) else i
+                                      for i in [dx_up, dx_low, dy_up, dy_low]]
+
 
     #first x error
     y_err = []
@@ -160,7 +161,7 @@ def plot_multierror(x,y,plot, dx_up=0, dx_low=0, dy_up=0, dy_low=0,
 
     plot.multi_line(x_err, y_err, **error_kwargs)
 
-    #first y error
+    #then y error
     y_err = []
     x_err = []
     for px, py, y_up, y_low in zip(x, y, dy_up, dy_low):
