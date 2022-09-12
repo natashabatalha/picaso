@@ -450,6 +450,189 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     return returns
 
 
+def gpu_test(bundle,opacityclass, dimension = '1d',calculation='reflected', full_output=False, 
+    plot_opacity= False, as_dict=True):
+    """
+    Currently top level program to run albedo code 
+
+    Parameters 
+    ----------
+    bundle : dict 
+        This input dict is built by loading the input = `justdoit.load_inputs()` 
+    opacityclass : class
+        Opacity class from `justdoit.opannection`
+    dimension : str 
+        (Optional) Dimensions of the calculation. Default = '1d'. But '3d' is also accepted. 
+        In order to run '3d' calculations, user must build 3d input (see tutorials)
+    full_output : bool 
+        (Optional) Default = False. Returns atmosphere class, which enables several 
+        plotting capabilities. 
+    plot_opacity : bool 
+        (Optional) Default = False, Creates pop up of the weighted opacity
+    as_dict : bool 
+        (Optional) Default = True. If true, returns a condensed dictionary to the user. 
+        If false, returns the atmosphere class, which can be used for debugging. 
+        The class is clunky to navigate so if you are consiering navigating through this, ping one of the 
+        developers. 
+
+    Return
+    ------
+    dictionary with albedos or fluxes or both (depending on what calculation type)
+    """
+    inputs = bundle.inputs
+
+    wno = opacityclass.wno
+    nwno = opacityclass.nwno
+    ngauss = opacityclass.ngauss
+    gauss_wts = opacityclass.gauss_wts #for opacity
+
+    #check to see if we are running in test mode
+    test_mode = inputs['test_mode']
+
+    ############# DEFINE ALL APPROXIMATIONS USED IN CALCULATION #############
+    #see class `inputs` attribute `approx`
+    #what rt method are we using?? 
+    rt_method = inputs['approx']['rt_method'] #either toon or spherical harmonics
+    
+    #USED by all RT
+
+    single_phase = inputs['approx']['rt_params']['common']['single_phase']
+    stream = inputs['approx']['rt_params']['common']['stream']
+    #parameters needed for the two term hg phase function. 
+    #Defaults are set in config.json
+    f = inputs['approx']['rt_params']['common']['TTHG_params']['fraction']
+    frac_a = f[0]
+    frac_b = f[1]
+    frac_c = f[2]
+    constant_back = inputs['approx']['rt_params']['common']['TTHG_params']['constant_back']
+    constant_forward = inputs['approx']['rt_params']['common']['TTHG_params']['constant_forward']
+    raman_approx =inputs['approx']['rt_params']['common']['raman']
+    #define delta eddington approximinations 
+    delta_eddington = inputs['approx']['rt_params']['common']['delta_eddington']
+
+
+    #USED in TOON (if being used)
+    toon_coefficients = inputs['approx']['rt_params']['toon']['toon_coefficients']
+    tridiagonal = 0 
+    multi_phase = inputs['approx']['rt_params']['toon']['multi_phase']
+
+    #USED in SH (if being used)
+    single_form = inputs['approx']['rt_params']['SH']['single_form']
+    rayleigh = inputs['approx']['rt_params']['SH']['rayleigh']
+    heng_compare = inputs['approx']['rt_params']['SH']['heng_compare']
+
+
+    
+
+
+    #pressure assumption
+    p_reference =  inputs['approx']['p_reference']
+
+    ############# DEFINE ALL GEOMETRY USED IN CALCULATION #############
+    #see class `inputs` attribute `phase_angle`
+    
+
+    #phase angle 
+    phase_angle = inputs['phase_angle']
+    #get geometry
+    geom = inputs['disco']
+
+    ng, nt = geom['num_gangle'], geom['num_tangle']
+    gangle,gweight,tangle,tweight = geom['gangle'], geom['gweight'],geom['tangle'], geom['tweight']
+    lat, lon = geom['latitude'], geom['longitude']
+    cos_theta = geom['cos_theta']
+    ubar0, ubar1 = geom['ubar0'], geom['ubar1']
+   # ubar1 = np.array([[-.99999],[-0.5],[0.5],[1.]])
+   # ubar0 = np.array([[1/np.sqrt(2)],[1/np.sqrt(2)],[1/np.sqrt(2)],[1/np.sqrt(2)]])
+   # ng = 4; nt = 1
+
+    #set star parameters
+    radius_star = inputs['star']['radius']
+    F0PI = np.zeros(nwno) + 1.
+    b_top = 0.
+    #semi major axis
+    sa = inputs['star']['semi_major']
+
+    #begin atm setup
+    atm = ATMSETUP(inputs)
+
+    #Add inputs to class 
+    atm.surf_reflect = inputs['surface_reflect']
+    atm.hard_surface = inputs['hard_surface']#0=no hard surface, 1=hard surface
+    atm.wavenumber = wno
+    atm.planet.gravity = inputs['planet']['gravity']
+    atm.planet.radius = inputs['planet']['radius']
+    atm.planet.mass = inputs['planet']['mass']
+
+    if dimension == '1d':
+        atm.get_profile()
+    elif dimension == '3d':
+        atm.get_profile_3d()
+
+    #now can get these 
+    atm.get_mmw()
+    atm.get_density()
+    atm.get_altitude(p_reference = p_reference)#will calculate altitude if r and m are given (opposed to just g)
+    atm.get_column_density()
+
+    #gets both continuum and needed rayleigh cross sections 
+    #relies on continuum molecules are added into the opacity 
+    #database. Rayleigh molecules are all in `rayleigh.py` 
+    atm.get_needed_continuum(opacityclass.rayleigh_molecules)
+
+    #get cloud properties, if there are any and put it on current grid 
+    atm.get_clouds(wno)
+
+    #Make sure that all molecules are in opacityclass. If not, remove them and add warning
+    no_opacities = [i for i in atm.molecules if i not in opacityclass.molecules]
+    atm.add_warnings('No computed opacities for: '+','.join(no_opacities))
+    atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
+    
+    #opacity assumptions
+    query_method = inputs['opacities'].get('query',0)
+    exclude_mol = inputs['atmosphere']['exclude_mol']
+
+    if query_method == 0: 
+        get_opacities = opacityclass.get_opacities_nearest
+    elif query_method == 1:
+        get_opacities = opacityclass.get_opacities
+
+    nlevel = atm.c.nlevel
+    nlayer = atm.c.nlayer
+    
+
+    if dimension == '1d':
+        #lastly grab needed opacities for the problem
+        get_opacities(atm,exclude_mol=exclude_mol)
+        #only need to get opacities for one pt profile
+
+        #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
+        #We use HG function for single scattering which gets the forward scattering/back scattering peaks 
+        #well. We only really want to use delta-edd for multi scattering legendre polynomials. 
+        DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman= compute_opacity(
+            atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
+            full_output=full_output, plot_opacity=plot_opacity)
+
+    ig = 0 
+
+    return (nlevel, wno,nwno,ng,nt,
+                                    DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
+                                    GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
+                                    DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
+                                    atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
+                                    single_phase,multi_phase,
+                                    frac_a,frac_b,frac_c,constant_back,constant_forward, toon_coefficients,
+                                    b_top
+        ), (nlevel, wno,nwno,ng,nt,atm.level['temperature'],
+                                                        DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
+                                                        atm.level['pressure'],ubar1,
+                                                        atm.surf_reflect, atm.hard_surface, tridiagonal
+        ), (atm.level['z'],atm.level['dz'],
+                                  nlevel, nwno, radius_star, atm.layer['mmw'], 
+                                  atm.c.k_b, atm.c.amu, atm.level['pressure'], 
+                                  atm.level['temperature'], atm.layer['colden'],
+                                  DTAU_OG[:,:,ig]
+        )
 def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     """
     Currently top level program to run albedo code 
