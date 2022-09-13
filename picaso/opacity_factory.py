@@ -799,7 +799,7 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
             y = dset[np.where(((1e4/og_wvno_grid>min_wavelength) & (1e4/og_wvno_grid<max_wavelength)))]
 
         if ((molecule == 'CH4') & (isinstance(dir_kark_ch4, str)) & (t<500)):
-            opa_k,loc = get_kark_CH4(dir_kark_ch4,new_wvno_grid, t)
+            opa_k,loc = get_kark_CH4(dir_kark_ch4,new_wvno_grid, t,dset)
             y[loc] = opa_k
         if ((molecule == 'O3') & (isinstance(dir_optical_o3, str)) & (t<500)):
             opa_o3 = get_optical_o3(dir_optical_o3,new_wvno_grid)
@@ -945,7 +945,7 @@ def get_kark_CH4_noTdependence(kark_dir,new_wave, temperature):
     opacity = np.interp(new_wave,wvno_kark,kappa,left=1e-33, right=1e-33)
     return opacity
 
-def get_kark_CH4(kark_file, new_wno , T):
+def get_kark_CH4(kark_file, new_wno , T,dset):
     kappa = pd.read_csv(kark_file,delim_whitespace=True,skiprows=2,
                            header=None, names = ['nu','nm','100','198','296','del/al'])
 
@@ -957,7 +957,7 @@ def get_kark_CH4(kark_file, new_wno , T):
     #km-am to cm2/g to cm2/molecule 
     logKT = logKT/71.80*1.6726219e-24*16 
     #only less than 1 micron!
-    loc = np.where(1e4/new_wno < 1.0)
+    loc = np.where(((1e4/new_wno < 1.0) & (dset==1e-200)))
     logKT = np.interp(new_wno[loc],kappa['nu'].values,logKT)
     return logKT, loc    
 
