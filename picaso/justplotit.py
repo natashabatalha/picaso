@@ -2,7 +2,7 @@ from bokeh.plotting import figure, output_file, show
 from bokeh.palettes import Colorblind8
 import numpy as np
 import pandas as pd
-from bokeh.layouts import column,row
+from bokeh.layouts import column,row,gridplot
 import numpy as np
 
 from bokeh.palettes import gray as colfun3
@@ -198,7 +198,7 @@ def bin_errors(newx, oldx, dy):
     return err
 
 
-def mixing_ratio(full_output,limit=50, **kwargs):
+def mixing_ratio(full_output,limit=50,ng=None,nt=None, **kwargs):
     """Returns plot of mixing ratios 
 
     Parameters
@@ -211,9 +211,14 @@ def mixing_ratio(full_output,limit=50, **kwargs):
     **kwargs : dict 
         Any key word argument for bokeh.figure() 
     """
-    #set plot defaults
     molecules = full_output['weights'].keys()
-    pressure = full_output['layer']['pressure']
+    #set plot defaults
+    if ((ng==None) & (nt==None)):
+        pressure = full_output['layer']['pressure']
+        mixingratios = full_output['layer']['mixingratios']
+    else: 
+        pressure = full_output['layer']['pressure'][:,ng,nt]
+        mixingratios = pd.DataFrame(full_output['layer']['mixingratios'][:,:,ng,nt],columns=molecules)
 
     kwargs['plot_height'] = kwargs.get('plot_height',300)
     kwargs['plot_width'] = kwargs.get('plot_width',400)
@@ -226,7 +231,7 @@ def mixing_ratio(full_output,limit=50, **kwargs):
     kwargs['x_range'] = kwargs.get('x_range',[1e-20, 1e2])
 
     #to plot (incl limit)
-    to_plot=full_output['layer']['mixingratios'].max().sort_values(ascending=False)[0:limit].keys()
+    to_plot=mixingratios.max().sort_values(ascending=False)[0:limit].keys()
 
     fig = figure(**kwargs)
     if len(molecules) < 3: ncol = 5
@@ -238,7 +243,7 @@ def mixing_ratio(full_output,limit=50, **kwargs):
     legend_it=[]    
     for mol , c in zip(to_plot,cols):
         ind = np.where(mol==np.array(molecules))[0][0]
-        f = fig.line(full_output['layer']['mixingratios'][mol],pressure, color=c, line_width=3,
+        f = fig.line(mixingratios[mol],pressure, color=c, line_width=3,
                     muted_color=c, muted_alpha=0.2)
         legend_it.append((mol, [f]))
 
@@ -1223,7 +1228,92 @@ def plot_evolution(evo, y = "Teff",**kwargs):
 
     f.add_layout(color_bar, 'right')
     return f
+
+def all_optics_1d(full_output, wave_range, return_output = False,legend=None,
+    ng=None, nt=None,
+    colors = Colorblind8, **kwargs):
+    """
+    Plots 1d profiles of optical depth per layer, single scattering, and 
+    asymmetry averaged over the user input wave_range. 
+    
+    Parameters
+    ----------
+    full_output : list,dict 
+        Dictonary of outputs or list of dicts
+    wave_range : list 
+        min and max wavelength in microns 
+    return_output : bool 
+        Default is just to return a figure but you can also 
+        return all the 1d profiles 
+    legend : bool 
+        Default is none. Legend for each component of out 
+    ng : int 
+        gauss index 
+    nt : int    
+        chebychev intex
+    **kwargs : keyword arguments
+        Key word arguments will be supplied to each bokeh figure function
+    """
+
+    kwargs['plot_height'] = kwargs.get('plot_height',300)
+    kwargs['plot_width'] = kwargs.get('plot_width',300)
+    kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
+
+    if not isinstance(full_output, list):
+        full_output = [full_output]
+
+    if ((ng==None) & (nt==None)):
+        pressure = full_output[0]['layer']['pressure']
+    else: 
+        pressure = full_output[0]['layer']['pressure'][:,ng,nt]
+
+    kwargs['y_range'] = kwargs.get('y_range',[max(pressure),min(pressure)])     
+
+    fssa = figure(x_axis_label='Single Scattering Albedo',**kwargs)
+
+    fg0 = figure(x_axis_label='Asymmetry',**kwargs)
+
+    fopd = figure(x_axis_label='Optical Depth',y_axis_label='Pressure (bars)',
+        x_axis_type='log',**kwargs)
+
+    
+    for i,results in enumerate(full_output): 
+        if ((ng==None) & (nt==None)):
+            pressure = results['layer']['pressure']
+            ssa = results['layer']['cloud']['w0']
+            g0 = results['layer']['cloud']['g0']
+            opd = results['layer']['cloud']['opd']
+        else: 
+            pressure = results['layer']['pressure'][:,ng,nt]
+            ssa = results['layer']['cloud']['w0'][:,:,ng,nt]
+            g0 = results['layer']['cloud']['g0'][:,:,ng,nt]
+            opd = results['layer']['cloud']['opd'][:,:,ng,nt]
+
+        wno = results['wavenumber']
+
+        inds = np.where((1e4/wno>wave_range[0]) & 
+            (1e4/wno<wave_range[1]))
+
+        fopd.line(np.mean(opd[:,inds],axis=2)[:,0], 
+                 pressure, color=colors[np.mod(i, len(colors))],line_width=3)
         
+        fg0.line(np.mean(g0[:,inds],axis=2)[:,0], 
+                 pressure, color=colors[np.mod(i, len(colors))],line_width=3)
+        
+        if isinstance(legend, type(None)):
+            fssa.line(np.mean(ssa[:,inds],axis=2)[:,0], 
+                 pressure, color=colors[np.mod(i, len(colors))],line_width=3)
+        else:
+            fssa.line(np.mean(ssa[:,inds],axis=2)[:,0], 
+                 pressure, color=colors[np.mod(i, len(colors))],line_width=3,
+                 legend_label=legend[i])
+            fssa.legend.location='top_left'
+
+    if return_output:   
+        return gridplot([[fopd,fssa,fg0]]), [opd,ssa,g0]
+    else:   
+        return gridplot([[fopd,fssa,fg0]])
+      
 def heatmap_taus(out, R=0):
     """
     Plots a heatmap of the tau fields (taugas, taucld, tauray)
@@ -1475,7 +1565,52 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=Spectral11,verbos
     fig.xgrid.grid_line_alpha=0
     fig.ygrid.grid_line_alpha=0
     plot_format(fig)
-    return phases, all_curves, all_ws, fig    
+    return phases, all_curves, all_ws, fig
+
+
+def thermal_contribution(full_output, tau_max=1.0,  **kwargs):
+    """
+    Computer the contribution function from https://doi.org/10.3847/1538-4357/aadd9e equation 4
+    Note the equation in the paper is missing the - sign in the exponent
+    Parameters
+    ----------
+    full_output : dict
+        full dictionary output with {'wavenumber','thermal','full_output'}
+    tau_max : float, optional
+        Maximum tau to consider as opaque, largely here to help prevent NaNs and the colorbar from being weird.
+    **kwargs : dict
+        Any key word argument for pcolormesh
+    """
+
+    kwargs['norm'] = kwargs.get('norm',colors.LogNorm())
+    kwargs['shading'] = kwargs.get('shading','auto')
+
+    all_taus = np.squeeze(full_output['taugas']+full_output['taucld']+full_output['tauray'])
+    all_taus[all_taus > tau_max] = tau_max
+    sum_taus = np.cumsum(all_taus, axis=0)
+
+    press2D = np.transpose(np.repeat(full_output['layer']['pressure'][np.newaxis], np.shape(sum_taus)[1], axis=0))
+
+    bb = np.ones(np.shape(press2D))
+    for i, temp in enumerate(full_output['layer']['temperature']):
+        for j, wave in enumerate(1/full_output['wavenumber']):
+            bb[i, j] = blackbody(temp, wave)[0][0]
+    CF = bb[0:-1, :] * np.exp(-sum_taus[0:-1, :]) * all_taus[0:-1, :] / np.diff(press2D, axis=0)
+
+    fig, ax = plt.subplots()
+    #if not isinstance( clim , type(None)):
+    #    CF_clipped = np.clip(CF, clim[0],clim[1])
+    #else: 
+    #    CF_clipped = CF+0
+    smap = ax.pcolormesh(1e4/full_output['wavenumber'], full_output['layer']['pressure'], CF, **kwargs)
+    ax.set_ylim(np.max(full_output['layer']['pressure']), np.min(full_output['layer']['pressure']))
+    ax.set_yscale('log')
+    ax.set_ylabel('Pressure (bar)')
+    ax.set_xlabel('Wavelength ($\mu$m)')
+    plt.colorbar(smap, label='CF')
+
+    return fig, ax, CF
+ 
 
 def molecule_contribution(contribution_out, opa, min_pressure=4.5, R=100, **kwargs):
     """
