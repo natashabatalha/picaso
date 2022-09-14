@@ -3050,7 +3050,8 @@ class inputs():
         self.inputs['climate']['semi_major'] = semi_major # au
         self.inputs['climate']['r_planet'] = r_planet # jupiter radii
 
-    def run_climate_model(self, opacityclass, save_all_profiles = False, as_dict=True,save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False, kz = None, vulcan_run = False, photochem=False,on_fly=False,gases_fly=None,mhdeq=None,CtoOdeq=None ):
+    def climate(self, opacityclass, save_all_profiles = False, as_dict=True,with_spec=False,
+        save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False, kz = None, vulcan_run = False, photochem=False,on_fly=False,gases_fly=None,mhdeq=None,CtoOdeq=None ):
         """
         Top Function to run the Climate Model
 
@@ -3060,6 +3061,8 @@ class inputs():
             Opacity class from `justdoit.opannection`
         save_all_profiles : bool
             If you want to save and return all iterations in the T(P) profile,True/False
+        with_spec : bool 
+            Runs picaso spectrum at the end to get the full converged outputs, Default=False
         save_all_kzz : bool
             If you want to save and return all iterations in the kzz profile,True/False
         diseq_chem : bool
@@ -3381,13 +3384,16 @@ class inputs():
                             rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, self_consistent_kzz,save_kzz,all_kzz, vulcan_run,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,on_fly=on_fly, gases_fly=gases_fly  )
             
                 
-
-           
-            
             
             return pressure , temp, dtdp, nstr_new, flux_plus_final, quench_levels, df, all_profiles, all_kzz, opd_now,w0_now,g0_now
             
-        
+           
+        if with_spec:
+            bundle = inputs(calculation='brown')
+            bundle.phase_angle(0)
+            bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
+            bundle.premix_atmosphere(opacityclass,df)
+            df_spec = bundle.spectrum(opacityclass,full_output=True)        
 
         if as_dict: 
             return {
@@ -3396,7 +3402,7 @@ class inputs():
             'dtdp':dtdp,
             'cvz_locs':nstr_new,
             'flux':flux_plus_final,
-            'df':df,
+            'spectrum_output':df_spec,
             'all_profiles':all_profiles,
             'opd':opd_now,
             'w0':w0_now,
