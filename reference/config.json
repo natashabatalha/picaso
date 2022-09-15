@@ -9,6 +9,24 @@
 		"mass":null,
 		"mass_unit":null
 	},
+	"climate":{
+		"t_table":null,
+		"p_table":null,
+		"grad":null,
+		"cp":null,
+		"ntemp_bb_grid":2400,
+		"dt_bb_grid":2.5,
+		"guess_temp":null,
+		"pressure":null,
+		"nstr":null,
+		"nofczns":null,
+		"rfacv":null,
+		"rfaci":null,
+		"cloudy":null,
+		"mh":null,
+		"Cto":null,
+		"cld_species":null
+	},
 	"star":{
 		"database":"ck04models",
 		"temp":null,
