@@ -60,8 +60,8 @@ setup(
   ],
   packages=['picaso'],
   install_requires=[
-          'numpy<1.21',
-          'bokeh>=2.4.0',
+          'numpy<1.23',
+          'bokeh<2.5.0,>=2.4.0',
           'holoviews',
           'numba',
           'pandas',
@@ -72,7 +72,8 @@ setup(
           'pysynphot',
           'sphinx',
           'scipy',
-          'virga-exo'
+          'virga-exo',
+          'xarray'
           ], 
     zip_safe = False,
 )

@@ -471,12 +471,12 @@ class ATMSETUP():
             self.c.input_npts_wave = len(self.input_wno)
             latitude, longitude = self.latitude*180/np.pi, self.longitude*180/np.pi
             cld_input = self.input['clouds']['profile'] 
-
-            if regrid: cld_input = cld_input.interp(wno = wno)
             cld_input = cld_input.sortby('wno').sortby('pressure')
-            opd = cld_input['opd'].transpose("pressure","wno","lon", "lat").values
-            g0 = cld_input['g0'].transpose("pressure","wno","lon", "lat").values
-            w0 = cld_input['w0'].transpose("pressure","wno","lon", "lat").values
+            if regrid: cld_input = cld_input.interp(wno = wno)
+            if [i for i in cld_input.dims] != ["pressure","wno","lon", "lat"]:
+                opd = cld_input['opd'].transpose("pressure","wno","lon", "lat").values
+                g0 = cld_input['g0'].transpose("pressure","wno","lon", "lat").values
+                w0 = cld_input['w0'].transpose("pressure","wno","lon", "lat").values
             self.layer['cloud'] = {'opd': opd}
             self.layer['cloud']['g0'] = g0
             self.layer['cloud']['w0'] = w0  
