@@ -2,9 +2,10 @@ import numpy as np
 import warnings
 from numba import jit, vectorize
 from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh, min, dot, array,log,log10
-from .fluxes import get_reflected_1d_gfluxv, get_thermal_1d_gfluxi
+from .fluxes import get_reflected_1d, get_thermal_1d_gfluxi,get_thermal_1d,get_reflected_1d_gfluxv
 from .atmsetup import ATMSETUP
 from .optics import compute_opacity
+from .disco import compress_thermal
 
 
 @jit(nopython=True, cache=True)
@@ -412,7 +413,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
             ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
             wno,nwno,ng,nt, nlevel, ngauss, gauss_wts,True, True)#True for reflected, True for thermal
-    
+
     # extract visible fluxes
     flux_net_v_layer = flux_net_v_layer_full[0,0,:]  #fmnetv
     flux_net_v = flux_net_v_full[0,0,:]#fnetv
@@ -612,8 +613,6 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
             ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
             wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, False, True) #false for reflected, True for thermal
 
-    
-           
 
                 # extract ir fluxes
 
@@ -823,7 +822,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
             ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
             wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, False, True) #false reflected, True thermal
 
-    
+
            
 
             # extract ir fluxes
@@ -935,6 +934,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                 f2=f
                 
                 alam = max(tmplam,0.1*alam)
+
             if np.isnan(np.sum(temp)) == True:
                 
                 flag_converge = 1 # to avoid getting stuck here unnecesarily.
@@ -950,7 +950,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
             for j in range(nlevel -1):
                 dtdp[j] = (log( temp[j]) - log( temp[j+1]))/(log(pressure[j]) - log(pressure[j+1]))
             
-            print("Converged Solution in iterations ",its)
+            print("In t_start: Converged Solution in iterations ",its)
             
            
            
@@ -1082,8 +1082,8 @@ def climate( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU, W
     array
         Visible and IR -- net (layer and level), upward (level) and downward (level)  fluxes
     """
-    
     #print('enter climate')
+
     # for visible
     flux_net_v = np.zeros(shape=(ng,nt,nlevel)) #net level visible fluxes
     flux_net_v_layer=np.zeros(shape=(ng,nt,nlevel)) #net layer visible fluxes
@@ -1091,6 +1091,14 @@ def climate( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU, W
     flux_plus_v= np.zeros(shape=(ng,nt,nlevel,nwno)) # level plus visible fluxes
     flux_minus_v= np.zeros(shape=(ng,nt,nlevel,nwno)) # level minus visible fluxes
     
+    """<<<<<<< NEWCLIMA
+    # for thermal
+    flux_plus_midpt = np.zeros(shape=(ng,nt,nlevel,nwno))
+    flux_minus_midpt = np.zeros(shape=(ng,nt,nlevel,nwno))
+
+    flux_plus = np.zeros(shape=(ng,nt,nlevel,nwno))
+    flux_minus = np.zeros(shape=(ng,nt,nlevel,nwno))
+    """
     # for thermal
     flux_plus_midpt = np.zeros(shape=(nlevel,nwno))
     flux_minus_midpt = np.zeros(shape=(nlevel,nwno))
@@ -1113,13 +1121,31 @@ def climate( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU, W
 
     if reflected:
         #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-
         b_top = 0.0
-        
-        
-        
-
         for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
+            """
+            <<<<<<< NEWCLIMA
+            #here only the fluxes are returned since we dont care about the outgoing intensity at the 
+            #top, which is only used for albedo/ref light spectra
+            ng_clima,nt_clima=1,1
+            ubar0_clima = ubar0*0+0.5
+            ubar1_clima = ubar1*0+0.5
+
+            _, out_ref_fluxes = get_reflected_1d_newclima(nlevel, wno,nwno,ng_clima,nt_clima,
+                                    DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
+                                    GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
+                                    DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
+                                    surf_reflect, ubar0_clima,ubar1_clima,cos_theta, F0PI,
+                                    single_phase,multi_phase,
+                                    frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal,
+                                    get_toa_intensity=0, get_lvl_flux=1)
+
+            flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v = out_ref_fluxes
+
+            flux_net_v_layer += (np.sum(flux_plus_midpt_all_v,axis=3)-np.sum(flux_minus_midpt_all_v,axis=3))*gauss_wts[ig]
+            flux_net_v += (np.sum(flux_plus_all_v,axis=3)-np.sum(flux_minus_all_v,axis=3))*gauss_wts[ig]
+
+            ======="""
             #nlevel = atm.c.nlevel
             RSFV = 0.01 # from tgmdat.f of EGP
             
@@ -1139,19 +1165,29 @@ def climate( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU, W
 
         #if full output is requested add in xint at top for 3d plots
 
+
     #thermal=1
     if thermal:
 
         #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
         
-
-            # total corr gauss weighted fluxes
-        
-
         for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
-
+            
             #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
             #the uncorrected raman single scattering 
+            
+            """<<<<<<< NEWCLIMA
+            hard_surface = 0 
+            _,out_therm_fluxes = get_thermal_1d_newclima(nlevel, wno,nwno,ng,nt,temperature,
+                                            DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
+                                            pressure,ubar1,
+                                            surf_reflect, hard_surface, tridiagonal)
+            flux_minus_all_i, flux_plus_all_i, flux_minus_midpt_all_i, flux_plus_midpt_all_i = out_therm_fluxes
+
+
+            flux_plus += flux_plus_all_i*gauss_wts[ig]
+            flux_minus += flux_minus_all_i*gauss_wts[ig]
+            """
 
             calc_type=1 # this line might change depending on Natasha's new function
             
@@ -1165,9 +1201,18 @@ def climate( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU, W
             flux_minus_midpt += flux_minus_midpt_all_i*gauss_wts[ig]#*weights
 
 
+        """<<<<<<< NEWCLIMA
+        #compresses in gauss-chebyshev angle space 
+        #the integration over the "disk" of the planet opposed to the 
+        #other gauss angles which are for the correlatedk tables
+        gweight = np.array([0.01574791, 0.07390887, 0.14638699, 0.16717464, 0.09678159])
+        tweight = np.array([6.28318531])
+        flux_plus = compress_thermal(nwno, flux_plus, gweight, tweight)
+        flux_minus= compress_thermal(nwno, flux_minus, gweight, tweight)
+        flux_plus_midpt= compress_thermal(nwno, flux_plus_midpt, gweight, tweight)
+        flux_minus_midpt= compress_thermal(nwno, flux_minus_midpt, gweight, tweight)
+        """
 
-            
-        #print(np.sum(flux_plus),np.sum(flux_minus),np.sum(flux_plus_midpt),np.sum(flux_minus_midpt))
         for wvi in range(nwno):
             flux_net_ir_layer += (flux_plus_midpt[:,wvi]-flux_minus_midpt[:,wvi]) * dwni[wvi]
             flux_net_ir += (flux_plus[:,wvi]-flux_minus[:,wvi]) * dwni[wvi]
@@ -1175,7 +1220,6 @@ def climate( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU, W
             flux_plus_ir[:,wvi] += flux_plus[:,wvi] * dwni[wvi]
             flux_minus_ir[:,wvi] += flux_minus[:,wvi] * dwni[wvi]
 
-        #if full output is requested add in flux at top for 3d plots
 
 
         #if full output is requested add in flux at top for 3d plots
@@ -1229,6 +1273,13 @@ def calculate_atm(bundle, opacityclass):
     #get geometry
     geom = inputs['disco']
 
+    """ NEWCLIMA
+    ng, nt = geom['num_gangle'], geom['num_tangle']#1,1 #
+    gangle,gweight,tangle,tweight = geom['gangle'], geom['gweight'],geom['tangle'], geom['tweight']
+    lat, lon = geom['latitude'], geom['longitude']
+    cos_theta = geom['cos_theta']
+    ubar0, ubar1 = geom['ubar0'], geom['ubar1']
+    """
     ng, nt = 1,1 #geom['num_gangle'], geom['num_tangle']
     gangle,gweight,tangle,tweight = geom['gangle'], geom['gweight'],geom['tangle'], geom['tweight']
     lat, lon = geom['latitude'], geom['longitude']
@@ -1242,7 +1293,7 @@ def calculate_atm(bundle, opacityclass):
 
     #set star parameters
     radius_star = inputs['star']['radius']
-    #F0PI = np.zeros(nwno) + 1.
+
     #semi major axis
     sa = inputs['star']['semi_major']
 
@@ -1418,4 +1469,3 @@ def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None):
     mmw = atm.level['mmw']
     
     return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw
-

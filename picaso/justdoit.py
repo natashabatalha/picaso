@@ -196,13 +196,15 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                     frac_a, frac_b, frac_c, constant_back, constant_forward, 
                                     dimension, stream, print_time) #LCM is carrying this bug
                 else:
+                    #getting intensities, not fluxes (which is why second return is null)
                     xint = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                     DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
                                     GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
                                     DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
                                     atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
                                     single_phase,multi_phase,
-                                    frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)
+                                    frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)#,
+                                    #get_toa_intensity=1, get_lvl_flux=0)
 
                 xint_at_top += xint*gauss_wts[ig]
             #if full output is requested add in xint at top for 3d plots
@@ -214,14 +216,17 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
             flux_at_top = 0 
-            for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
+            for ig in range(ngauss): # correlated-k - loop (which is different from gauss-tchevychev angle)
                 
                 #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
                 #the uncorrected raman single scattering 
-                flux  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
+                #here we only care about the flux outgoing at top layers so not 
+                #returning layer fluxes
+                flux = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
                                             DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                             atm.level['pressure'],ubar1,
                                             atm.surf_reflect, atm.hard_surface, tridiagonal)
+                
                 flux_at_top += flux*gauss_wts[ig]
                 
             #if full output is requested add in flux at top for 3d plots
@@ -373,6 +378,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     if ('thermal' in calculation):
         thermal = compress_thermal(nwno,flux_at_top, gweight, tweight)
         returns['thermal'] = thermal
+        returns['thermal_unit'] = 'erg/s/(cm^2)/(cm)'#'erg/s/(cm^2)/(cm^(-1))'
         returns['effective_temperature'] = (np.trapz(x=1/wno[::-1], y=thermal[::-1])/5.67e-5)**0.25
 
         if full_output: 
@@ -716,10 +722,14 @@ class inputs():
             #this is here so that we can compare to older models 
             #this model only works for full phase calculations
 
-            if phase!=0: raise Exception('This method is faster because it makes use of symmetry \
-                and only computs one fourth of the sphere. ')
-            if num_gangle==1:  raise Exception('Please resubmit your run with num_tangle=1. \
-                Chebyshev angles are used for 3d implementation only.')
+            if phase!=0: raise Exception("""The default PICASO disk integration 
+                is to use num_tangle=1 and num_gangle>1. This method is faster because 
+                it makes use of symmetry and only computs one fourth of the sphere. 
+                However, it looks like you would like to compute non-zero phase functions. 
+                In this case, we can no longer utilize symmetry in our disk integration. Therefore, 
+                please resubmit phase_angle with num_tange>10 and num_gangle>10.""")
+            if num_gangle==1:  raise Exception("""num_gangle cannot be 1. 
+                Please resubmit your run with num_tangle=1, and increase number of Gauss points""")
 
             num_gangle = int(num_gangle/2) #utilizing symmetry
 
@@ -926,28 +936,183 @@ class inputs():
 
 
         #set didier raw data -- NEED TO CHECK WHAT THIS IS
-        t_table=np.loadtxt(os.path.join(__refdata__,'climate_INPUTS/tlog'),usecols=[0],unpack=True)
-        p_table=np.loadtxt(os.path.join(__refdata__,'climate_INPUTS/plog'),usecols=[0],unpack=True)
+        #t_table=np.loadtxt(os.path.join(__refdata__,'climate_INPUTS/tlog'),usecols=[0],unpack=True)
+        #p_table=np.loadtxt(os.path.join(__refdata__,'climate_INPUTS/plog'),usecols=[0],unpack=True)
 
-        grad=np.zeros(shape=(53,26))
-        cp = np.zeros(shape=(53,26))
+        #grad=np.zeros(shape=(53,26))
+        #cp = np.zeros(shape=(53,26))
         
-        grad_inp, i_inp, j_inp = np.loadtxt(os.path.join(__refdata__,'climate_INPUTS/GRAD_FOR_PY_Y28'),usecols=[0,1,2],unpack=True)
-        for i in range(len(grad_inp)):
-            grad[int(i_inp[i]-1),int(j_inp[i]-1)]=grad_inp[i]
+        #grad_inp, i_inp, j_inp = np.loadtxt(os.path.join(__refdata__,'climate_INPUTS/GRAD_FOR_PY_Y28'),usecols=[0,1,2],unpack=True)
+        #for i in range(len(grad_inp)):
+        #    grad[int(i_inp[i]-1),int(j_inp[i]-1)]=grad_inp[i]
         
-        self.inputs['climate']['t_table'] = t_table
-        self.inputs['climate']['p_table'] = p_table
-        self.inputs['climate']['grad'] = grad
-        self.inputs['climate']['cp'] = cp
+        cp_grad = json.load(open(os.path.join(__refdata__,'climate_INPUTS','specific_heat_p_adiabat_grad.json')))
+
+        #log10 base temperature Kelvin 
+        self.inputs['climate']['t_table'] = np.array(cp_grad['temperature'])
+        #log10 base pressure bars 
+        self.inputs['climate']['p_table'] = np.array(cp_grad['pressure'])
+        #\nabla_ad = d ln T/ d ln P |_S (at constant entropy)
+        self.inputs['climate']['grad'] = np.array(cp_grad['adiabat_grad'])
+        #log Cp (erg/g/K);Specific heat at constant pressure for the same H/He 
+        self.inputs['climate']['cp'] = np.array(cp_grad['specific_heat'])
 
 
-        #tmin = 40.0
-        #tmax= tmin + dt*(ntmps-1.0)
+    def inputs_climate(self, temp_guess= None, pressure= None, nstr = None, nofczns = None , rfacv = None, rfaci = None, cloudy = False, mh = None, CtoO = None, species = None, fsed = None):
+        """
+        Get Inputs for Climate run
 
-        #self.inputs['climate']['tmin'] = tmin
-        #self.inputs['climate']['tmax'] = tmax
-    
+        Parameters
+        ----------
+        temp_guess : array 
+            Guess T(P) profile to begin with
+        pressure : array
+            Pressure Grid for climate code (this wont change on the fly)
+        nstr : array
+            NSTR vector describes state of the atmosphere:
+            0   is top layer [0]
+            1   is top layer of top convective region
+            2   is bottom layer of top convective region
+            3   is top layer of lower radiative region
+            4   is top layer of lower convective region
+            5   is bottom layer of lower convective region [nlayer-1]
+        rfacv : float
+            Fractional contribution of reflected light in net flux
+        rfaci : float
+            Fractional contribution of thermal light in net flux
+
+        
+        """
+
+        if self.inputs['planet']['T_eff'] == 0.0:
+            raise Exception('Need to specify Teff with jdi.input for climate run')
+        if self.inputs['planet']['gravity'] == 0.0:
+            raise Exception('Need to specify gravity with jdi.input for climate run')
+
+        
+        self.inputs['climate']['guess_temp'] = temp_guess
+        self.inputs['climate']['pressure'] = pressure
+        self.inputs['climate']['nstr'] = nstr
+        self.inputs['climate']['nofczns'] = nofczns
+        self.inputs['climate']['rfacv'] = rfacv
+        self.inputs['climate']['rfaci'] = rfaci
+        if cloudy:
+            self.inputs['climate']['cloudy'] = 1
+            self.inputs['climate']['cld_species'] = species
+            self.inputs['climate']['fsed'] = fsed
+        else :
+            self.inputs['climate']['cloudy'] = 0
+            self.inputs['climate']['cld_species'] = 0
+            self.inputs['climate']['fsed'] = 0
+        self.inputs['climate']['mh'] = mh
+        self.inputs['climate']['CtoO'] = CtoO
+
+    def old_run_climate_model(self, opacityclass):
+        """
+        Top Function to run the Climate Model
+
+        Parameters
+        -----------
+        
+        """
+        #get necessary parameters from opacity ck-tables 
+        wno = opacityclass.wno
+        delta_wno = opacityclass.delta_wno
+        nwno = opacityclass.nwno
+        min_temp = min(opacityclass.temps)
+        max_temp = max(opacityclass.temps)
+
+        
+        
+        # first calculate the BB grid
+        ntmps = self.inputs['climate']['ntemp_bb_grid']
+        dt = self.inputs['climate']['dt_bb_grid']
+        #we will extend the black body grid 30% beyond the min and max temp of the 
+        #opacity grid just to be safe with the spline
+        extension = 0.3 
+        tmin = min_temp*(1-extension)
+        tmax = max_temp*(1+extension)
+
+        bb , y2 , tp = set_bb(wno,delta_wno,nwno,ntmps,dt,tmin,tmax)
+
+        nofczns = self.inputs['climate']['nofczns']
+        nstr= self.inputs['climate']['nstr']
+
+        rfaci= self.inputs['climate']['rfaci']
+        
+        #turn off stellar radiation if user has run "setup_nostar() function"
+        if 'nostar' in self.inputs['star'].values():
+            rfacv=0.0 
+            F0PI = np.zeros(nwno) #+ 1.0
+        #otherwise assume that there is stellar irradiation 
+        else:
+            rfacv = self.inputs['climate']['rfacv']
+            r_star = self.inputs['star']['radius'] 
+            r_star_unit = self.inputs['star']['radius_unit'] 
+            semi_major = self.inputs['star']['semi_major']
+            semi_major_unit = self.inputs['star']['semi_major_unit'] 
+            
+
+            fine_flux_star  = self.inputs['star']['flux']  # erg/s/cm^2
+            F0PI = fine_flux_star * ((r_star/semi_major)**2)
+
+
+        TEMP1 = self.inputs['climate']['guess_temp']
+        pressure = self.inputs['climate']['pressure']
+        t_table = self.inputs['climate']['t_table']
+        p_table = self.inputs['climate']['p_table']
+        grad = self.inputs['climate']['grad']
+        cp = self.inputs['climate']['cp']
+
+
+        Teff = self.inputs['planet']['T_eff']
+        grav = 0.01*self.inputs['planet']['gravity'] # cgs to si
+        mh = float(self.inputs['climate']['mh'])
+        sigma_sb = 0.56687e-4 # stefan-boltzmann constant
+        
+        col_den = 1e6*(pressure[1:] -pressure[:-1] ) / (grav/0.01) # cgs g/cm^2
+        wave_in, nlevel, pm, hratio = 0.9, len(pressure), 0.001, 0.1
+        #tidal = tidal_flux(Teff, wave_in,nlevel, pressure, pm, hratio, col_den)
+        tidal = np.zeros_like(pressure) - sigma_sb *(Teff**4)
+        
+        cloudy = self.inputs['climate']['cloudy']
+        cld_species = self.inputs['climate']['cld_species']
+        fsed = self.inputs['climate']['fsed']
+        # first conv call
+        it_max= 10
+        itmx= 7
+        conv = 10.0
+        convt=5.0
+        x_max_mult=7.0
+        
+        print('NEB FIRST PROFILE RUN')
+        final = False
+        pressure, temperature, dtdp, profile_flag = profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
+            TEMP1,pressure, F0PI, t_table, p_table, grad, cp, opacityclass, grav, 
+            rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , cloudy, cld_species,mh,fsed )
+
+        # second convergence call
+        it_max= 7
+        itmx= 5
+        conv = 5.0
+        convt=4.0
+        x_max_mult=7.0
+
+
+        print('NEB SECOND PROFILE RUN')
+        final = False
+        pressure, temperature, dtdp, profile_flag = profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
+                    temperature,pressure, F0PI, t_table, p_table, grad, cp, opacityclass, grav, 
+                    rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final, cloudy, cld_species, mh,fsed )   
+        
+        pressure, temp, dtdp, nstr_new, flux_plus_final =find_strat(pressure, temperature, dtdp ,F0PI, nofczns,nstr,x_max_mult,
+                             t_table, p_table, grad, cp, opacityclass, grav, 
+                             rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed)
+
+        
+        return pressure , temp, dtdp, nstr_new, flux_plus_final
+   
+
     def setup_nostar(self):
         """
         Turns off planet specific things, so program can run as usual
@@ -1070,6 +1235,9 @@ class inputs():
         else: 
             raise Exception("Must enter 1) filename,w_unit & f_unit OR 2)temp, metal & logg ")
 
+        #now convert to erg/cm2/s/wavenumber
+        #flux_star = flux_star/wno_star**2
+
         wno_planet = opannection.wno
         #this adds stellar shifts 'self.raman_stellar_shifts' to the opacity class
         #the cross sections are computed later 
@@ -1191,7 +1359,6 @@ class inputs():
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
         Sets number of layers in model.  
-
         Parameters
         ----------
         opa : class 
@@ -1228,122 +1395,6 @@ class inputs():
         self.inputs['approx']['raman'] = 2
 
         self.chem_interp(opa.full_abunds)
-    
-    def premix_atmosphere_nearest_deprecate(self, opa, df=None, filename=None, **pd_kwargs):
-        """
-        Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
-        Sets number of layers in model.  
-        Parameters
-        ----------
-        opa : class 
-            Opacity class from opannection : RetrieveCks() 
-        df : pandas.DataFrame or dict
-            (Optional) Dataframe with volume mixing ratios and pressure, temperature profile. 
-            Must contain pressure (bars) at least one molecule
-        filename : str 
-            (Optional) Filename with pressure, temperature and volume mixing ratios.
-            Must contain pressure at least one molecule
-        exclude_mol : list of str 
-            (Optional) List of molecules to ignore from file
-        pd_kwargs : kwargs 
-            Key word arguments for pd.read_csv to read in supplied atmosphere file 
-        """
-        if not isinstance(df, type(None)):
-            if ((not isinstance(df, dict )) & (not isinstance(df, pd.core.frame.DataFrame ))): 
-                raise Exception("df must be pandas DataFrame or dictionary")
-            else:
-                self.nlevel=df.shape[0] 
-        elif not isinstance(filename, type(None)):
-            df = pd.read_csv(filename, **pd_kwargs)
-            self.nlevel=df.shape[0] 
-
-        if 'pressure' not in df.keys(): 
-            raise Exception("Check column names. `pressure` must be included.")
-
-        if ('temperature' not in df.keys()):
-            raise Exception("`temperature` not specified as a column/key name")
-
-        self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
-
-        #Turn off raman for 196 premix calculations 
-        self.inputs['approx']['rt_params']['common']['raman'] = 2
-
-        plevel = self.inputs['atmosphere']['profile']['pressure'].values
-        tlevel =self.inputs['atmosphere']['profile']['temperature'].values
-        
-        pt_pairs = []
-        i=0
-        for ip,it,p,t in zip(np.concatenate([list(range(opa.max_pc))*opa.max_tc]), 
-                        np.concatenate([[it]*opa.max_pc for it in range(opa.max_tc)]),
-                        opa.pressures, 
-                        np.concatenate([[it]*opa.max_pc for it in opa.temps])):
-            
-            if p!=0 : pt_pairs += [[i,ip,it,p,t]];i+=1
-
-        ind_pt_log = np.array([min(pt_pairs, 
-                    key=lambda c: math.hypot(np.log(c[-2])- np.log(coordinate[0]), 
-                                             c[-1]-coordinate[1]))[0:3] 
-                        for coordinate in  zip(plevel,tlevel)])           
-        ind_chem = ind_pt_log[:,0]
-
-        self.inputs['atmosphere']['profile'][opa.full_abunds.keys()] = opa.full_abunds.iloc[ind_chem,:].reset_index(drop=True)
-        """
-        Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
-        Sets number of layers in model.  
-        Parameters
-        ----------
-        opa : class 
-            Opacity class from opannection : RetrieveCks() 
-        df : pandas.DataFrame or dict
-            (Optional) Dataframe with volume mixing ratios and pressure, temperature profile. 
-            Must contain pressure (bars) at least one molecule
-        filename : str 
-            (Optional) Filename with pressure, temperature and volume mixing ratios.
-            Must contain pressure at least one molecule
-        exclude_mol : list of str 
-            (Optional) List of molecules to ignore from file
-        pd_kwargs : kwargs 
-            Key word arguments for pd.read_csv to read in supplied atmosphere file 
-        """
-        if not isinstance(df, type(None)):
-            if ((not isinstance(df, dict )) & (not isinstance(df, pd.core.frame.DataFrame ))): 
-                raise Exception("df must be pandas DataFrame or dictionary")
-            else:
-                self.nlevel=df.shape[0] 
-        elif not isinstance(filename, type(None)):
-            df = pd.read_csv(filename, **pd_kwargs)
-            self.nlevel=df.shape[0] 
-
-        if 'pressure' not in df.keys(): 
-            raise Exception("Check column names. `pressure` must be included.")
-
-        if ('temperature' not in df.keys()):
-            raise Exception("`temperature` not specified as a column/key name")
-
-        self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
-
-        #Turn off raman for 196 premix calculations 
-        self.inputs['approx']['rt_params']['common']['raman'] = 2
-
-        plevel = self.inputs['atmosphere']['profile']['pressure'].values
-        tlevel =self.inputs['atmosphere']['profile']['temperature'].values
-        
-        pt_pairs = []
-        i=0
-        for ip,it,p,t in zip(np.concatenate([list(range(opa.max_pc))*opa.max_tc]), 
-                        np.concatenate([[it]*opa.max_pc for it in range(opa.max_tc)]),
-                        opa.pressures, 
-                        np.concatenate([[it]*opa.max_pc for it in opa.temps])):
-            
-            if p!=0 : pt_pairs += [[i,ip,it,p,t]];i+=1
-
-        ind_pt_log = np.array([min(pt_pairs, 
-                    key=lambda c: math.hypot(np.log(c[-2])- np.log(coordinate[0]), 
-                                             c[-1]-coordinate[1]))[0:3] 
-                        for coordinate in  zip(plevel,tlevel)])           
-        ind_chem = ind_pt_log[:,0]
-
-        self.inputs['atmosphere']['profile'][opa.full_abunds.keys()] = opa.full_abunds.iloc[ind_chem,:].reset_index(drop=True)
 
     def premix_atmosphere_diseq(self, opa, quench_levels,t_mix=None, df=None, filename=None, **pd_kwargs):
         """
@@ -1364,7 +1415,6 @@ class inputs():
         pd_kwargs : kwargs 
             Key word arguments for pd.read_csv to read in supplied atmosphere file 
         """
-
         if not isinstance(df, type(None)):
             if ((not isinstance(df, dict )) & (not isinstance(df, pd.core.frame.DataFrame ))): 
                 raise Exception("df must be pandas DataFrame or dictionary")
@@ -1677,7 +1727,7 @@ class inputs():
         grid['pressure'] = 10**grid['pressure']
 
         self.chem_interp(grid)
-    
+
     def chemeq_visscher(self, c_o, log_mh):#, interp_window = 11, interp_poly=2):
         """
         Find nearest neighbor from visscher grid
@@ -1729,7 +1779,7 @@ class inputs():
 
 
         self.chem_interp(a)
-    
+
     def channon_grid_low(self, filename = None):
         """
         Interpolate from visscher grid
@@ -1833,7 +1883,7 @@ class inputs():
                      ((1-t_interp)* (p_interp)   * log_abunds[i_t_low_p_hi,:]) ) 
 
         self.inputs['atmosphere']['profile'][species] = pd.DataFrame(abunds)
-    
+
     def add_pt(self, T, P):
         """
         Adds temperature pressure profile to atmosphere
@@ -1859,7 +1909,7 @@ class inputs():
         self.nlevel=len(T) 
         # Return TP profile
         return self.inputs['atmosphere']['profile'] 
-    
+
     def guillot_pt(self, Teq, T_int=100, logg1=-1, logKir=-1.5, alpha=0.5,nlevel=61, p_bottom = 1.5, p_top = -6):
         """
         Creates temperature pressure profile given parameterization in Guillot 2010 TP profile
@@ -2148,6 +2198,7 @@ class inputs():
                 for imol in all_out.keys():
                     if imol not in not_molecules:
                         all_out[imol][ilon, ilat,:] = results[i][imol].values
+
 
         data_vars = {imol:(["lon", "lat","pressure"], all_out[imol],{'units': 'v/v'}) for imol in results[0].keys() if imol not in not_molecules}
         # put data into a dataset

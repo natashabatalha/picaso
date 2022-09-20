@@ -146,7 +146,7 @@ def compress_disco( nwno, cos_theta, xint_at_top, gweight, tweight,F0PI):
 def compress_thermal(nwno, flux_at_top, gweight, tweight): 
     """
     Last step in albedo code. Integrates over phase angle based on the 
-    Gaussian-Chebychev weights in geometry.json 
+    Gaussian-Chebychev weights in disco.get_angles_1d or 3d
     
     Parameters
     ----------

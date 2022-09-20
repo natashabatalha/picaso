@@ -644,6 +644,7 @@ class RetrieveCKs():
         self.full_abunds =  pd.read_csv(os.path.join(self.ck_filename,'full_abunds'),
             delim_whitespace=True)
         self.kcoeff_layers = self.full_abunds.shape[0]
+
         if deq == False :
         #choose get data function based on layer number
             if self.kcoeff_layers==1060: 
@@ -855,6 +856,7 @@ class RetrieveCKs():
         self.full_abunds['pressure']= self.pressures[self.pressures>0]
         self.full_abunds['temperature'] = np.concatenate([[i]*max(self.nc_p) for i in self.temps])[self.pressures>0]
 
+
     def get_gauss_pts_661(self):
         """
         Function to read the legacy data of the 1060 grid computed by Roxana Lupu. 
@@ -1059,7 +1061,6 @@ class RetrieveCKs():
             data= hdul[0].data
             self.cia_splines[i] = data
 
-
     def get_pre_mix_ck(self,atmosphere):
         """
         Takes in atmosphere profile and returns an array which is 
@@ -1109,6 +1110,7 @@ class RetrieveCKs():
             else: 
                 p_low_ind += [find[-1]]
         p_low_ind = np.array(p_low_ind)
+
         #IF pressure GOES ABOVE THE GRID
 
         p_log_low = []
@@ -1138,8 +1140,9 @@ class RetrieveCKs():
                      ((t_interp)  * (1-p_interp) * ln_kappa[p_low_ind,t_hi_ind,:,:]) + 
                      ((t_interp)  * (p_interp)   * ln_kappa[p_hi_ind,t_hi_ind,:,:]) + 
                      ((1-t_interp)* (p_interp)   * ln_kappa[p_hi_ind,t_low_ind,:,:]) )
-        
+
         self.molecular_opa = ln_kappa*6.02214086e+23  #avogadro constant!        
+      
     
     def mix_my_opacities(self,bundle,atmosphere):
         """
@@ -2573,4 +2576,3 @@ def interp_matrix(a1,a2,a3,a4,t_interp,p_interp):
                      ((t_interp)  * (p_interp)   * log_abunds3) + 
                      ((1-t_interp)* (p_interp)   * log_abunds4) ) 
     return cx*6.02214086e+23 
-
