@@ -19,6 +19,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
+import matplotlib.animation as animation
 
 from scipy.stats.stats import pearsonr  
 from scipy.stats import binned_statistic
@@ -1568,7 +1569,6 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=Spectral11,verbos
     plot_format(fig)
     return phases, all_curves, all_ws, fig
 
-
 def thermal_contribution(full_output, tau_max=1.0,  **kwargs):
     """
     Computer the contribution function from https://doi.org/10.3847/1538-4357/aadd9e equation 4
@@ -1661,4 +1661,177 @@ def molecule_contribution(contribution_out, opa, min_pressure=4.5, R=100, **kwar
             labels +=[j]
     fig = spectrum(wno,spec, legend=labels, **kwargs)
     return fig
+
+def brightness_temperature(out_dict,plot=True, R = None): 
+    """
+    Plots and returns brightness temperature
+
+    $T_{\rm bright}=\dfrac{a}{{\lambda}log\left(\dfrac{{b}}{F(\lambda){\lambda}^5}+1\right)}$
+
+    where a = 1.43877735$\times$10$^{-2}$ m.K and b = 11.91042952$\times$10$^{-17}$ m$^4$kg/s$^3$ 
+    
+    Parameters
+    ----------
+    out_dict : dict 
+        output of bundle.spectrum(opa,full_output=True)
+    plot : bool 
+        If true creates and returns a plot 
+    R : float 
+        If not None, rebins the brightness temperature 
+    """
+    flux = out_dict['thermal']*1e-7
+    wno = out_dict['wavenumber']
+    lam = 1e4/wno
+    a=1.43877735e-2  #m K
+    hc2=2*5.95521476e-17   # m^4 kg/s^3
+    ## since flux is in W/m^2/microns hence need to multiple 1e6 to the flux to make it W/m^2/m
+    flux=flux*1e6
+    ## converting wv to m from microns
+    lam=lam*1e-6
+
+    T_B  = (a/lam)/np.log(1+(hc2/flux/lam**5))
+
+    t_eq = out_dict['full_output']['layer']['temperature']
+
+
+    if not isinstance(R, type(None)):
+        wno, T_B = jdi.mean_regrid(wno, T_B, R=R)
+
+    if plot: 
+        f = plt.figure(figsize=(15,8))
+        plt.xlabel("Wavelength [microns]",fontsize=20)
+        plt.ylabel("Brightness Temperature [K]",fontsize=20)
+        plt.xlim(0.2,240)
+        plt.ylim(0,4000)
+
+
+        plt.semilogx(1e4/wno,T_B,color='k', label="Brightness Temperature")
+        plt.axhline(np.min(t_eq),linewidth=5,color="blue",label="Minimum Temperature")
+        plt.axhline(np.max(t_eq),linewidth=5,color="red",label="Maximum Temperature")
+
+        plt.legend(fontsize=10)        
+    
+    return T_B , f
+
+
+def animate_convergence(clima_out, picaso_bundle, opacity, wave_range=[0.3,6],
+    molecules=['H2O','CH4','CO','NH3']):
+    """
+    Function to animate climate convergence given all profiles that were 
+    computed throughout the climate run 
+    Animates from the first guess through to the final converged state. 
+    Runs spectra for each of those cases. 
+    
+    Parameters
+    ----------
+    clima_out : dict 
+        Output from, for example: clima_out = cl_run.climate(opacity_ck, save_all_profiles=True)
+    picaso_bundle : <picaso.justdoit.inputs>
+        This would be the equivalent of cl_run that you used to run climate_model(). This ensures that 
+        your spectra can be rerun
+    opacity : <picaso.optics.RetrieveCKs>
+        This is the jdi.opannection that you used as input in the run_climate_model  
+    wave_range : list 
+        sets the wavelngth range of the spectra 
+    molecules : list 
+        list of strings for what molecules to animate
+    
+    Returns
+    -------
+    matplotlib.animation
+    """
+    t_eq,p_eq,all_profiles_eq = (
+                np.copy(clima_out['temperature']), 
+                np.copy(clima_out['pressure']), 
+                np.copy(clima_out['all_profiles']))
+    
+    nlevel = len(t_eq)
+    mols_to_plot = {i:np.zeros(len(all_profiles_eq)) for i in molecules}
+    spec = np.zeros(shape =(int(len(all_profiles_eq)/nlevel),opacity.nwno))
+    
+    for i in range(int(len(all_profiles_eq)/nlevel)):
+        
+        picaso_bundle.add_pt(all_profiles_eq[i*nlevel:(i+1)*nlevel], 
+                             p_eq)
+
+        picaso_bundle.premix_atmosphere(opacity,picaso_bundle.inputs['atmosphere']['profile'])
+
+        df_spec = picaso_bundle.spectrum(opacity,full_output=True)
+        spec[i,:] = df_spec['thermal']
+        for imol in molecules:
+            mols_to_plot[imol][i*nlevel:(i+1)*nlevel] = picaso_bundle.inputs['atmosphere']['profile'][imol]
+    
+    wh = np.where( (1e4/df_spec['wavenumber'] > wave_range[0]) & (1e4/df_spec['wavenumber'] < wave_range[1]))
+    wv = 1e4/df_spec['wavenumber'][wh]    
+
+
+    writergif = animation.PillowWriter(fps=3) 
+    plt.rcParams["animation.html"] = "jshtml"
+    plt.rcParams["font.weight"] = "bold"
+    plt.rcParams["axes.labelweight"] = "bold"
+
+
+    x='''
+    AA.BB.CC
+    '''
+    fig = plt.figure(figsize=(35,10))
+
+    ax = fig.subplot_mosaic(x,gridspec_kw={
+            # set the height ratios between the rows
+            "height_ratios": [1],
+            # set the width ratios between the columns
+            "width_ratios": [1,1,0.1,1,1,0.1,1,1]})
+
+    temp = all_profiles_eq[0*nlevel:(0+1)*nlevel]
+    lines = {}
+    for imol,col in zip(molecules,Colorblind8):
+        lines[imol], = ax['B'].loglog(mols_to_plot[imol][0:nlevel], p_eq,linewidth=3,color=col, label=imol)
+
+    lines['temp'], = ax['A'].semilogy(temp, p_eq,linewidth=3,color='k')
+    lines['spec'], = ax['C'].semilogy(1e4/df_spec['wavenumber'], spec[0,:],linewidth=3,color="k")
+
+    def init():
+        #line.set_ydata(np.ma.array(x, mask=True))
+
+        ax['A'].set_xlabel('Temperature [K]',fontsize=30)
+        ax['A'].set_ylabel('Pressure [Bars]',fontsize=30)
+        ax['A'].set_xlim(200,2900)
+        ax['A'].set_ylim(205,1.8e-4)
+        ax['B'].set_xlabel('Abundance [V/V]',fontsize=30)
+        ax['B'].set_ylabel('Pressure [Bars]',fontsize=30)
+        ax['B'].set_xlim(1e-6,1e-2)
+        ax['B'].set_ylim(205,1.8e-4)
+        ax['B'].legend(fontsize=20)
+        ax['C'].set_xlabel('Wavelength [$\mu$m]',fontsize=30)
+        ax['C'].set_ylabel('Flux',fontsize=30)
+        ax['C'].set_xlim(0,6)
+        ax['C'].set_ylim(1e7,1e14)
+        ax['A'].minorticks_on()
+        ax['A'].tick_params(axis='both',which='major',length =30, width=2,direction='in',labelsize=30)
+        ax['A'].tick_params(axis='both',which='minor',length =10, width=2,direction='in',labelsize=30)
+        ax['B'].minorticks_on()
+        ax['B'].tick_params(axis='both',which='major',length =30, width=2,direction='in',labelsize=30)
+        ax['B'].tick_params(axis='both',which='minor',length =10, width=2,direction='in',labelsize=30)
+        ax['C'].minorticks_on()
+        ax['C'].tick_params(axis='both',which='major',length =30, width=2,direction='in',labelsize=30)
+        ax['C'].tick_params(axis='both',which='minor',length =10, width=2,direction='in',labelsize=30)
+
+        for ikey in molecules+['temp']:
+            lines[ikey].set_ydata(p_eq)
+        
+        lines['spec'].set_xdata(wv)
+        return lines
+    
+    def animate(i):                       
+        lines['temp'].set_xdata(all_profiles_eq[i*nlevel:(i+1)*nlevel])
+        
+        for imol in molecules:
+            lines[imol].set_xdata(mols_to_plot[imol][i*nlevel:(i+1)*nlevel])
+        
+        lines['spec'].set_ydata(spec[i,:][wh])
+        return lines
+
+    ani = animation.FuncAnimation(fig, animate, frames=int(len(all_profiles_eq)/nlevel),init_func=init,interval=50, blit=False)
+    plt.close()
+    return ani
 

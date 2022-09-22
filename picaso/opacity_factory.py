@@ -12,6 +12,7 @@ from scipy.io import FortranFile
 import glob
 from scipy.stats import binned_statistic
 
+
 __refdata__ = os.environ.get('picaso_refdata')
 
 def restruct_continuum(original_file,colnames, new_wno,new_db, overwrite):
@@ -84,10 +85,11 @@ def get_original_data(original_file,colnames,new_db, overwrite=False):
         cia database 
    """
     og_opacity = pd.read_csv(original_file,delim_whitespace=True,names=colnames)
-
+    
     temperatures = og_opacity['wno'].loc[np.isnan(og_opacity[colnames[1]])].values
 
     og_opacity = og_opacity.dropna()
+    print(og_opacity)
     old_wno = og_opacity['wno'].unique()
     #define units
     w_unit = 'cm-1'
@@ -1193,6 +1195,7 @@ def get_molecular(db_file, species, temperature,pressure):
     cur.execute('SELECT ptid, pressure, temperature FROM molecular')
     data= cur.fetchall()    
     pt_pairs = sorted(list(set(data)),key=lambda x: (x[0]) )
+    print(pt_pairs)
     #here's a little code to get out the correct pair (so we dont have to worry about getting the exact number right)
     ind_pt = [min(pt_pairs, key=lambda c: math.hypot(c[1]- coordinate[0], c[2]-coordinate[1]))[0]
               for coordinate in  zip(pressure,temperature)]
@@ -1266,6 +1269,186 @@ def delete_molecule(mol, db_filename):
             sqliteConnection.close()
             print("sqlite connection is closed")
 
+# Correlated-K functions
+# get guass points for 2 Gauss method
+def g_w_2gauss(order,gfrac):
+    """
+    Gets gauss and weight poitns for correlated-k function 
+    Specifically for the 2-point gauss method 
+
+    Parameters
+    ----------
+    order : int
+        gauss order 
+    gfrac : 
+
+    Returns 
+    -------
+    gauss, weights
+    """
+    g,w=np.polynomial.legendre.leggauss(order)
+
+    wnew1 = gfrac*w*0.5
+    gnew1= gfrac*0.5*(g + 1.)
+
+    wnew2 =(1. - gfrac)*w*0.5
+    gnew2=gfrac + (1. - gfrac)*0.5*(g + 1.)
+    
+    wfin = np.concatenate((wnew1,wnew2))
+    gfin = np.concatenate((gnew1,gnew2))
+    
+    return gfin,wfin
+
+def get_wvno_grid(filename):
+    
+    wvno_new,dwni_new = np.loadtxt(filename,usecols=[0,1],unpack=True)
+    wvno_low = 0.5*(2*wvno_new - dwni_new)
+    wvno_high = 0.5*(2*wvno_new + dwni_new)
+    return wvno_low,wvno_high
+
+
+def func_read_gas(molecule,og_directory,wv_file_name,order,gfrac,dir_kark_ch4=None,alkali_dir=None):
+    """
+    Function to generate correlated-K tables for each individual gas
+
+    """
+
+    grid_file = os.path.join(og_directory,'grid1460.csv')
+
+
+
+    s1460 = pd.read_csv(grid_file,dtype=str)
+    #all pressures
+    pres=s1460['pressure_bar'].values.astype(float)
+    #all temperatures
+    temp=s1460['temperature_K'].values.astype(float)
+
+    #file_num
+    ifile=s1460['file_number'].values.astype(int)
+
+    #alkalis are created using the sep.alkali from a fortran file 
+    alks = ['Na','K','Rb','Cs','Li']
+    if molecule in alks: 
+        if alkali_dir == 'alkalis':
+            mol_dir = os.path.join(og_directory,alkali_dir)
+        elif alkali_dir == 'individual_file':
+            mol_dir = os.path.join(og_directory,molecule)
+        else: 
+            mol_dir = alkali_dir
+    else:
+        mol_dir = os.path.join(og_directory,molecule)
+
+    #determine file type    
+    find_p_files = glob.glob(os.path.join(mol_dir,'*p_*'))
+    find_npy_files = glob.glob(os.path.join(mol_dir,'*npy*'))
+    find_txt_files =  glob.glob(os.path.join(mol_dir,'*txt*'))
+
+    if len(find_p_files)>1000:
+        ftype = 'fortran_binary'
+    elif len(find_npy_files)>1000:
+        ftype = 'python'
+    elif len(find_txt_files)>1000:
+        ftype='lupu_txt'
+    else:
+        raise Exception('Could not find npy or p_ files. npy are assumed to be read via np.load, where as p_ files are assumed to be unformatted binary or alkali files')
+#        print("File number is ", len(find_p_files))
+#        ftype = 'fortran_binary'
+    read_fits = os.path.join(mol_dir,'readomni.fits' )
+    lupu_wave= os.path.join(mol_dir,'wavelengths.txt' )
+    if os.path.exists(read_fits):
+        # Get Richard's READ ME information
+        hdulist = fits.open(read_fits)
+        sfits = hdulist[1].data
+        numw = sfits['Valid rows'] #defines number of wavelength points for each 1060 layer
+        delwn = sfits['Delta Wavenum'] #defines constant delta wavenumber for each 1060 layer
+        start = sfits['Start Wavenum'] #defines starting wave number for each 1060 layer
+    elif os.path.exists(lupu_wave):
+        og_wvno_grid = 1e4/pd.read_csv(lupu_wave).values[:,0]
+        numw,delwn,start=np.nan,np.nan,np.nan
+    else: 
+        #ehsan makes his opacities on uniform 
+        numw = s1460['number_wave_pts'].values.astype(int)
+        delwn = s1460['delta_wavenumber'].values.astype(float)
+        start = s1460['start_wavenumber'].values.astype(float)
+    gi,wi = g_w_2gauss(order,gfrac)
+    
+    wvno_low,wvno_high = get_wvno_grid(wv_file_name)
+    k_coeff_arr = np.zeros(shape=(20,73,len(wvno_low),8))
+    ctp,ctt = 0,0
+    for i,p,t in zip(ifile,pres,temp):  
+        #path to data
+        if 'fortran' in ftype:
+            fdata = os.path.join(mol_dir, 'p_'+str(int(i)))
+        elif 'python' in ftype: 
+            fdata = os.path.join(mol_dir, str(int(i))+'.npy')
+        elif 'lupu' in ftype: 
+            mbar = pres*1e3
+            fdata = os.path.join(mol_dir,f'{molecule}_{mbar:.2e}mbar_{temp:.0f}K.txt') 
+        #Grab 1460 in various format data
+        if 'lupu' in ftype: 
+            dset =  pd.read_csv(fdata,skiprows=2).values[:,0]
+        elif molecule in alks:
+            dset = pd.read_csv(fdata)
+            og_wvno_grid = dset['wno'].values.astype(float)
+            dset = dset[molecule].values.astype(float)
+        elif 'fortran' in ftype: 
+            dset = np.fromfile(fdata, dtype=float) 
+            og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]
+        elif 'python' in ftype: 
+            dset = np.load(open(fdata,'rb'))
+            og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]      
+
+        
+    
+            
+        for iwvbin in range(len(wvno_low)):
+            wvlow_temp = wvno_low[iwvbin]
+            wvhigh_temp = wvno_high[iwvbin]
+            
+            wh = np.where(np.logical_and((og_wvno_grid > wvlow_temp),(og_wvno_grid <=  wvhigh_temp)))
+            
+            
+            
+            linelist = dset[wh]
+            linelist += 1e-200
+            wh2 = np.where(linelist < 0.0)
+            if len(linelist[wh2]) > 0:
+                
+                for icorr in range(len(linelist)):
+                    if linelist[icorr] < 0:
+                        linelist[icorr] = 1e-200
+                
+            if len(linelist) == 0:
+                data = np.sort(np.zeros(10)-250.0)
+                
+            else:
+                data = np.sort(np.log(linelist))
+                        
+            wvno_now = 0.5*(wvlow_temp+wvhigh_temp)
+
+            if ((molecule == 'CH4') & (isinstance(dir_kark_ch4, str)) & (t<500)) & (1e4/wvno_now < 1.0): # short of 1 microns
+                opa_k,loc = get_kark_CH4(dir_kark_ch4,wvno_now, t)
+                
+                data = np.sort(np.log(opa_k*(1+np.zeros(100))))
+            if len(data) > 1:
+                x = np.arange(len(data))/(len(data)-1.)
+
+                k_coeff=np.interp(gi,x, data)
+        
+                k_coeff_arr[ctp,ctt,iwvbin,:] = k_coeff[:]
+            else :
+                k_coeff_arr[ctp,ctt,iwvbin,:] += -250.00
+
+        ctp+=1
+        
+        if ctp == 20:
+            ctp =0
+            ctt +=1
+        
+        
+
+        print(i,p,t)
+    return k_coeff_arr
           
 def find_nearest(array,value):
     #small program to find the nearest neighbor in temperature  
@@ -1309,4 +1492,5 @@ def regrid(x, y, newx=None, R=None,statistic='mean'):
     newx = (edges[0:-1]+edges[1:])/2.0
 
     return newx, y
+
 
