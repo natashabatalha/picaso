@@ -60,7 +60,7 @@ def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=
 	                                    'H2':np.logspace(-6,3,nlevel)*0+0.99, 
 	                                     'H2O':np.logspace(-6,3,nlevel)*0+0.01}))
 
-	start_case.inputs['approx']['delta_eddington']=delta_eddington
+	start_case.inputs['approx']['rt_params']['common']['delta_eddington']=delta_eddington
 	start_case.approx(raman='none', method = method, stream = stream, 
 				Toon_coefficients = Toon_coefficients)
 
@@ -160,9 +160,9 @@ def madhu_test(rayleigh=True, isotropic=True, asymmetric=True, single_phase = 'T
 	a['phase_angle']=0
 	if rayleigh:
 		#SCALAR RAYLEIGH
-		a['approx']['delta_eddington']=True
-		a['approx']['raman']='pollack'
-		a['approx']['single_phase'] ='TTHG_ray'
+		a['approx']['rt_params']['common']['delta_eddington']=True
+		a['approx']['rt_params']['common']['raman']='pollack'
+		a['approx']['rt_params']['common']['single_phase'] ='TTHG_ray'
 		a['test_mode']='rayleigh'
 		a['atmosphere']['cloud']['g0'] = 0
 
@@ -173,9 +173,9 @@ def madhu_test(rayleigh=True, isotropic=True, asymmetric=True, single_phase = 'T
 
 	if isotropic:
 		#constant tau
-		a['approx']['delta_eddington'] = True
-		a['approx']['raman']='pollack'
-		a['approx']['single_phase'] = 'OTHG'
+		a['approx']['rt_params']['common']['delta_eddington'] = True
+		a['approx']['rt_params']['common']['raman']='pollack'
+		a['approx']['rt_params']['common']['single_phase'] = 'OTHG'
 		a['test_mode']='constant_tau'
 		a['atmosphere']['cloud']['g0'] = 0
 
@@ -186,9 +186,9 @@ def madhu_test(rayleigh=True, isotropic=True, asymmetric=True, single_phase = 'T
 
 	if asymmetric:
 		#constant tau
-		a['approx']['delta_eddington']=True
-		a['approx']['raman']='pollack'
-		a['approx']['single_phase'] = single_phase
+		a['approx']['rt_params']['common']['delta_eddington']=True
+		a['approx']['rt_params']['common']['raman']='pollack'
+		a['approx']['rt_params']['common']['single_phase'] = single_phase
 
 		a['test_mode']='constant_tau'
 
