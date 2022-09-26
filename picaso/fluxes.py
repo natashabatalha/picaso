@@ -3026,13 +3026,14 @@ def get_transit_1d_cupy(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
     #for i in range(nwno):
     #    TAU[i,:] = DTAU[:,i]  / colden * mmw 
     TAU =  mmw * DTAU.T / colden 
-    transmitted=cp.zeros((nwno, nlevel))+1.0
-    for i in range(nlevel):
-        TAUALL=cp.zeros(nwno)#0.
-        for j in range(i):
-            #two because symmetry of sphere
-            TAUALL = TAUALL + 2*TAU[:,i-j-1]*delta_length[i,j]
-        transmitted[:,i]=cp.exp(-TAUALL)
+    #transmitted=cp.zeros((nwno, nlevel))+1.0
+    #for i in range(nlevel):
+    #    TAUALL=cp.zeros(nwno)#0.
+    #    for j in range(i):
+    #        #two because symmetry of sphere
+    #        TAUALL = TAUALL + 2*TAU[:,i-j-1]*delta_length[i,j]
+    #    transmitted[:,i]=cp.exp(-TAUALL)
+    transmitted = cp.exp(-cp.sum(2*TAU[:,ii-jj-1]*delta_length,axis=2))
     nvtx.end_range(rng)
     
     rng = nvtx.start_range(message="Dot Product", color="orange")
