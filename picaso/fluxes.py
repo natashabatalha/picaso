@@ -2973,3 +2973,61 @@ def vec_dot(A,B):
     for i in range(A.shape[0]):
         C += A[i]*B[i]
     return C
+
+import cupy 
+def get_transit_1d_cupy(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
+                    player, tlayer, colden, DTAU):
+    
+    rng = nvtx.start_range(message="transfer memory", color="blue")
+    #transfer data to numpy
+    z = cp.asarray(z)
+    dz = cp.asarray(dz)
+    mmw = cp.asarray(mmw)
+    player = cp.asarray(player)
+    tlayer = cp.asarray(tlayer)
+    colden= cp.asarray(colden)
+    DTAU= cp.asarray(DTAU)
+    nvtx.end_range(rng)
+    
+    mmw = mmw * amu #make sure mmw in grams
+    
+    rng = nvtx.start_range(message="delta_length loop", color="orange")
+    delta_length=cp.zeros((nlevel,nlevel))
+    for i in range(nlevel):
+        for j in range(i):
+            reference_shell = z[i]
+            inner_shell = z[i-j]
+            outer_shell = z[i-j-1]
+            #this is the path length between two layers 
+            #essentially tangent from the inner_shell and toward 
+            #line of sight to the outer shell
+            integrate_segment=(cp.power(cp.power(outer_shell,2)-cp.power(reference_shell,2), 0.5)-
+                    cp.power(cp.power(inner_shell,2)-cp.power(reference_shell,2), 0.5))
+            #make sure to use the pressure and temperature  
+            #between inner and outer shell
+            #this is the same index as outer shell because ind = 0 is the outer-
+            #most layer 
+            delta_length[i,j]=integrate_segment*player[i-j-1]/tlayer[i-j-1]/k_b
+    nvtx.end_range(rng)
+    
+    rng = nvtx.start_range(message="Sum TUAS", color="blue")
+    #remove column density and mmw from DTAU which was calculated in 
+    #optics because line of site integration is diff for transit
+    #TAU = array([DTAU[:,i]  / colden * mmw  for i in range(nwno)])
+    TAU = cp.zeros((nwno, nlevel-1))
+    for i in range(nwno):
+        TAU[i,:] = DTAU[:,i]  / colden * mmw 
+    transmitted=cp.zeros((nwno, nlevel))+1.0
+    for i in range(nlevel):
+        TAUALL=cp.zeros(nwno)#0.
+        for j in range(i):
+            #two because symmetry of sphere
+            TAUALL = TAUALL + 2*TAU[:,i-j-1]*delta_length[i,j]
+        transmitted[:,i]=cp.exp(-TAUALL)
+    nvtx.end_range(rng)
+    
+    rng = nvtx.start_range(message="Dot Product", color="orange")
+    F=(((min(z))/(rstar))**2 + 
+        2./(rstar)**2.*cp.dot((1.-transmitted),z*dz))
+    nvtx.end_range(rng)
+    return F
