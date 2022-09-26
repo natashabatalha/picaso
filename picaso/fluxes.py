@@ -2994,22 +2994,29 @@ def get_transit_1d_cupy(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
     mmw = mmw * amu #make sure mmw in grams
     
     rng = nvtx.start_range(message="delta_length loop", color="orange")
-    delta_length=cp.zeros((nlevel,nlevel))
-    for i in range(nlevel):
-        for j in range(i):
-            reference_shell = z[i]
-            inner_shell = z[i-j]
-            outer_shell = z[i-j-1]
-            #this is the path length between two layers 
-            #essentially tangent from the inner_shell and toward 
-            #line of sight to the outer shell
-            integrate_segment=(cp.power(cp.power(outer_shell,2)-cp.power(reference_shell,2), 0.5)-
-                    cp.power(cp.power(inner_shell,2)-cp.power(reference_shell,2), 0.5))
-            #make sure to use the pressure and temperature  
-            #between inner and outer shell
-            #this is the same index as outer shell because ind = 0 is the outer-
-            #most layer 
-            delta_length[i,j]=integrate_segment*player[i-j-1]/tlayer[i-j-1]/k_b
+    #delta_length=cp.zeros((nlevel,nlevel))
+    #for i in range(nlevel):
+    #    for j in range(i):
+    #        reference_shell = z[i]
+    #        inner_shell = z[i-j]
+    #        outer_shell = z[i-j-1]
+    #        #this is the path length between two layers 
+    #        #essentially tangent from the inner_shell and toward 
+    #        #line of sight to the outer shell
+    #        integrate_segment=(cp.power(cp.power(outer_shell,2)-cp.power(reference_shell,2), 0.5)-
+    #                cp.power(cp.power(inner_shell,2)-cp.power(reference_shell,2), 0.5))
+    #        #make sure to use the pressure and temperature  
+    #        #between inner and outer shell
+    #        #this is the same index as outer shell because ind = 0 is the outer-
+    #        #most layer 
+    #        delta_length[i,j]=integrate_segment*player[i-j-1]/tlayer[i-j-1]/k_b
+    ii, jj = cp.mgrid[0:nlevel, 0:nlevel]
+    integrate_segment = (
+        cp.sqrt(cp.tri(nlevel, k=-1)*(z[ii-jj-1]**2 - z[ii]**2)) - 
+        cp.sqrt(cp.tri(nlevel, k=-1)*(z[ii-jj]**2 - z[ii]**2))
+    )
+    delta_length  = integrate_segment*player[ii-jj-1]/tlayer[ii-jj-1]/k_b
+
     nvtx.end_range(rng)
     
     rng = nvtx.start_range(message="Sum TUAS", color="blue")
