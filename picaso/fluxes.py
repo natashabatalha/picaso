@@ -2974,7 +2974,8 @@ def vec_dot(A,B):
         C += A[i]*B[i]
     return C
 
-import cupy 
+import cupy as cp 
+import nvtx
 def get_transit_1d_cupy(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
                     player, tlayer, colden, DTAU):
     
