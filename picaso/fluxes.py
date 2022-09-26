@@ -3039,4 +3039,4 @@ def get_transit_1d_cupy(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
     F=(((min(z))/(rstar))**2 + 
         2./(rstar)**2.*cp.dot((1.-transmitted),z*dz))
     nvtx.end_range(rng)
-    return F
+    return F.get()
