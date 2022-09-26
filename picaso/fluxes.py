@@ -3015,10 +3015,10 @@ def get_transit_1d_cupy(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
     rng = nvtx.start_range(message="Sum TUAS", color="blue")
     #remove column density and mmw from DTAU which was calculated in 
     #optics because line of site integration is diff for transit
-    #TAU = array([DTAU[:,i]  / colden * mmw  for i in range(nwno)])
-    TAU = cp.zeros((nwno, nlevel-1))
-    for i in range(nwno):
-        TAU[i,:] = DTAU[:,i]  / colden * mmw 
+    #TAU = cp.zeros((nwno, nlevel-1)) #change 1: remove this loop 
+    #for i in range(nwno):
+    #    TAU[i,:] = DTAU[:,i]  / colden * mmw 
+    TAU =  mmw * DTAU.T / colden 
     transmitted=cp.zeros((nwno, nlevel))+1.0
     for i in range(nlevel):
         TAUALL=cp.zeros(nwno)#0.
