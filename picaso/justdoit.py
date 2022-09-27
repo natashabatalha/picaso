@@ -605,14 +605,14 @@ def gpu_test(bundle,opacityclass, dimension = '1d',calculation='reflected', full
     if dimension == '1d':
         #lastly grab needed opacities for the problem
         with nvtx.annotate("GET opacities", color="red"):
-            get_opacities(atm,exclude_mol=exclude_mol)
+        get_opacities(atm,exclude_mol=exclude_mol)
         #only need to get opacities for one pt profile
 
         #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
         #We use HG function for single scattering which gets the forward scattering/back scattering peaks 
         #well. We only really want to use delta-edd for multi scattering legendre polynomials. 
         with nvtx.annotate("COMPUTE opacities", color="pink"):
-            DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman= compute_opacity(
+        DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman= compute_opacity(
             atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
             full_output=full_output, plot_opacity=plot_opacity)
 
