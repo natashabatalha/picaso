@@ -3154,6 +3154,7 @@ def pre_get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel,
     mu1, lamda, g1_plus_g2, b0, b1,nlevel,nwno,exptrm,numg, numt,
     all_b, ubar1,dtau,hard_surface,tau_top,nlayer)
 
+@jit(nopython=True, cache=True)
 def  tri_get_thermal_1d(A, B, C, D,nlayer, nwno):
 
     positive = zeros((nlayer, nwno))
@@ -3170,7 +3171,7 @@ def  tri_get_thermal_1d(A, B, C, D,nlayer, nwno):
 
     return positive, negative
 
-
+@jit(nopython=True, cache=True)
 def post_get_thermal_1d(pre_out,tri_out):
 
     (exptrm_positive , exptrm_minus, gama, c_plus_up,
