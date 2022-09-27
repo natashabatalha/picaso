@@ -2975,7 +2975,6 @@ def vec_dot(A,B):
     return C
 
  
-=======
 """
 BEGIN GPU STUFF -- NEED TO MOVE LATER
 """
