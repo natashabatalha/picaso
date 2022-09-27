@@ -2977,7 +2977,7 @@ def vec_dot(A,B):
 import cupy as cp 
 import nvtx
 import math
-import numba
+import numba.cuda
 def get_transit_1d_cupy(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
                     player, tlayer, colden, DTAU):
     
