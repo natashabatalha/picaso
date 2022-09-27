@@ -3045,7 +3045,7 @@ def get_transit_1d_cupy(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
 
 
 
-@cuda.jit()
+@numba.cuda.jit()
 def _get_transit_1d_cuda(z,TAU,player,tlayer,k_b,TAUALL,transmitted):
     k = numba.cuda.grid(1)
     if k < TAU.shape[0]:
