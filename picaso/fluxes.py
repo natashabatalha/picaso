@@ -2976,6 +2976,8 @@ def vec_dot(A,B):
 
 import cupy as cp 
 import nvtx
+import math
+import numba
 def get_transit_1d_cupy(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
                     player, tlayer, colden, DTAU):
     
@@ -3039,4 +3041,44 @@ def get_transit_1d_cupy(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
     F=(((min(z))/(rstar))**2 + 
         2./(rstar)**2.*cp.dot((1.-transmitted),z*dz))
     nvtx.end_range(rng)
+    return F.get()
+
+
+
+@cuda.jit()
+def _get_transit_1d_cuda(z,TAU,player,tlayer,k_b,TAUALL,transmitted):
+    k = numba.cuda.grid(1)
+    if k < TAU.shape[0]:
+        for i in range(len(z)):
+            tmp = 0
+            for j in range(i):
+                #two because symmetry of sphere
+                reference_shell = z[i]
+                inner_shell =z[i-j]
+                outer_shell = z[i-j-1]
+                integrate_segment = (math.pow(math.pow(outer_shell,2)-math.pow(reference_shell,2),0.5)-
+                                    math.pow(math.pow(inner_shell,2)-math.pow(reference_shell,2),0.5))
+                delta_length = integrate_segment*player[i-j-1]/tlayer[i-j-1]/k_b
+                tmp += 2.0*TAU[k,i-j-1]*delta_length
+            transmitted[k, i] = math.exp(-tmp)
+            
+def get_transit_1d_cuda(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
+                    player, tlayer, colden, DTAU): 
+    z = cp.asarray(z)
+    dz = cp.asarray(dz)
+    mmw = cp.asarray(mmw)
+    player = cp.asarray(player)
+    tlayer = cp.asarray(tlayer)
+    colden= cp.asarray(colden)
+    DTAU= cp.asarray(DTAU)
+    mmw = mmw * amu #make sure mmw in grams
+    TAU = mmw*DTAU.T/colden
+    
+    transmitted=cp.zeros((nwno, nlevel))+1.0
+    TAUALL =cp.zeros(nwno)
+    blocksize = 32
+    numblocks = (nwno + blocksize - 1) // blocksize
+    _get_transit_1d_cuda[numblocks, blocksize](z,TAU,player,tlayer,k_b,TAUALL,transmitted)   #
+    F=(((min(z))/(rstar))**2 + 
+            2./(rstar)**2.*cp.dot((1.-transmitted),z*dz))
     return F.get()
