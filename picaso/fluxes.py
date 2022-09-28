@@ -37,6 +37,16 @@ def slice_gt(array, lim):
         array[i,:] = new     
     return array
 
+@jit(nopython=True, cache=True)
+def slice_rav(array, lim):
+    """Funciton to replace values with upper or lower limit
+    """
+    shape = array.shape
+    new = array.ravel()
+    new[where(new>lim)] = lim
+    new[where(new<-lim)] = -lim
+    return new.reshape(shape)
+
 @jit(nopython=True, cache=True,fastmath=True)
 def numba_cumsum(mat):
     """Function to compute cumsum along axis=0 to bypass numba not allowing kwargs in 
@@ -2472,7 +2482,7 @@ def get_transit_3d(nlevel, nwno, radius, gravity,rstar, mass, mmw, k_b, G,amu,
 @jit(nopython=True, cache=True, debug=True)
 def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_cld, ftau_ray, f_deltaM,
     dtau_og, tau_og, w0_og, cosb_og, 
-    surf_reflect, ubar0, ubar1, cos_theta, F0PI, single_phase, rayleigh,
+    surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
     w_single_form, w_multi_form, psingle_form, w_single_rayleigh, w_multi_rayleigh, psingle_rayleigh,
     frac_a, frac_b, frac_c, constant_back, constant_forward, stream, b_top=0, flx=1, single_form=0, heng_compare=0):
     """
@@ -2540,10 +2550,6 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_
         Cosine of the phase angle of the planet 
     F0PI : array 
         Downward incident solar radiation
-    single_phase : str 
-        Single scattering phase function, default is the two-term henyey-greenstein phase function
-    rayleigh : str 
-        Toggle rayleigh on or off
     frac_a : float 
         (Optional), If using the TTHG phase function. Must specify the functional form for fraction 
         of forward to back scattering (A + B * gcosb^C)
@@ -2698,23 +2704,28 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_
                     flux_temp[:,W] = calculate_flux(F[:,:,W], G[:,W], X)
 
             mus = (u1 + u0) / (u1 * u0)
-            expo_mus = mus * dtau 
-            expo_mus = slice_gt(expo_mus, 35.0)    
-            exptrm_mus = exp(-expo_mus)
 
             if single_form==1:
-                for l in range(stream):
+                maxterm = stream
+                TAU = tau; DTAU = dtau; W0 = w0
+                for l in range(maxterm):
                     p_single = p_single + w_single[l] * Pu0[l]*Pu1[l]
+            else:
+                TAU = tau_og; DTAU = dtau_og; W0 = w0_og
+
+            expo_mus = mus * DTAU 
+            expo_mus = slice_rav(expo_mus, 35.0)    
+            exptrm_mus = exp(-expo_mus)
+            single_scat = (W0 * F0PI / (4*np.pi) * p_single 
+                            * (1 - exptrm_mus) * exp(-TAU[:-1,:]/u0)
+                                / mus)
+
             for i in range(nlayer):
                 for l in range(stream):
                     multi_scat[i,:] = multi_scat[i,:] + w_multi[l,i,:] * Pu1[l] * intgrl_new[stream*i+l,:]
 
 
-            intgrl_per_layer = (w0 *  multi_scat 
-                        + w0 * F0PI / (4*np.pi) * p_single 
-                        * (1 - exptrm_mus) * exp(-tau[:-1,:]/u0)
-                        / mus
-                        )
+            intgrl_per_layer = w0 *  multi_scat + single_scat
 
             xint_temp[-1,:] = flux_bot/pi
             for i in range(nlayer-1,-1,-1):
@@ -3213,8 +3224,8 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
         z2pl = (-eta[0]/8 + 5*eta[2]/8 + eta[3])*2*pi 
         z2mn = (-eta[0]/8 + 5*eta[2]/8 - eta[3])*2*pi
     
-    expo1 = slice_gt(lam1*dtau, 35.0) 
-    expo2 = slice_gt(lam2*dtau, 35.0) 
+    expo1 = slice_rav(lam1*dtau, 35.0) 
+    expo2 = slice_rav(lam2*dtau, 35.0) 
     exptrm1 = exp(-expo1)
     exptrm2 = exp(-expo2)
 
@@ -3237,7 +3248,7 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
     f30 = q1pl*exptrm1; f31 = q1mn/exptrm1; f32 = q2pl*exptrm2; f33 = q2mn/exptrm2
 
     if calculation == 0:# 'reflected':
-        expon = exp(-tau/ubar0)
+        expon = exp(-slice_rav(tau/ubar0, 35.0))
         z1mn_up = z1mn * expon[1:,:]
         z2mn_up = z2mn * expon[1:,:]
         z1pl_up = z1pl * expon[1:,:]
@@ -3247,7 +3258,7 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
         z1pl_down = z1pl * expon[:-1,:]
         z2pl_down = z2pl * expon[:-1,:]
     elif calculation == 2: # exponential thermal
-        expon = exp(-slice_gt(dtau * f0, 35.0))
+        expon = exp(-slice_rav(dtau * f0, 35.0))
         z1mn_up = z1mn * expon
         z2mn_up = z2mn * expon
         z1pl_up = z1pl * expon
@@ -3274,10 +3285,10 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
     expo_alp2 = alpha2 * dtau
     expo_bet1 = beta1 * dtau
     expo_bet2 = beta2 * dtau
-    exptrm_alp1 = exp(-expo_alp1)
-    exptrm_alp2 = exp(-expo_alp2)
-    exptrm_bet1 = exp(-expo_bet1)
-    exptrm_bet2 = exp(-expo_bet2)
+    exptrm_alp1 = exp(-slice_rav(expo_alp1,35.0))
+    exptrm_alp2 = exp(-slice_rav(expo_alp2,35.0))
+    exptrm_bet1 = exp(-slice_rav(expo_bet1,35.0))
+    exptrm_bet2 = exp(-slice_rav(expo_bet2,35.0))
 
     A00 = (1-exptrm_alp1)/alpha1; A01 = (1-exptrm_bet1)/beta1; 
     A02 = (1-exptrm_alp2)/alpha2; A03 = (1-exptrm_bet2)/beta2
@@ -3289,20 +3300,20 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
         if calculation == 0:#is 'reflected':
             mus = (ubar1 + ubar0) / (ubar1 * ubar0)
             expo_mus = mus * dtau 
-            exptrm_mus = exp(-expo_mus)
+            exptrm_mus = exp(-slice_rav(expo_mus,35.0))
             tau_mu = tau[:-1,:] * (1/ubar0)
-            exptau_mu = exp(-tau_mu)
+            exptau_mu = exp(-slice_rav(tau_mu,35.0))
             expon1 = (1 - exptrm_mus) * exptau_mu / mus
         elif calculation == 2: # exponential thermal
             expo_thermal = dtau * (f0 + 1/ubar1)
-            expon1 = (1 - exp(-slice_gt(expo_thermal, 35.0))) / (f0 + 1/ubar1)
+            expon1 = (1 - exp(-slice_rav(expo_thermal, 35.0))) / (f0 + 1/ubar1)
         N0 = eta[0] * expon1;   
         N1 = eta[1] * expon1;   
         N2 = eta[2] * expon1;   
         N3 = eta[3] * expon1;   
     elif calculation == 1:
         #expdtau = exp(-tau[:-1,:]/ubar1)
-        expdtau = exp(-dtau/ubar1)
+        expdtau = exp(-slice_rav(dtau/ubar1,35.0))
         N0 = (1-w0) * ubar1 / a[0] * ( B0*(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau)) #* 2*pi
         N1 = (1-w0) * ubar1 / a[0] * ( B1*(1-expdtau) / a[1]) #* 2*pi
         N2 = zeros(w0.shape)
