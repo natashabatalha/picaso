@@ -321,8 +321,8 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
     #scattering. 
     ftau_cld = (single_scattering_cld * TAUCLD)/(single_scattering_cld * TAUCLD + TAURAY)
 
-    COSB = ftau_cld*asym_factor_cld
-    #COSB = asym_factor_cld
+    #COSB = ftau_cld*asym_factor_cld
+    COSB = asym_factor_cld
 
     #formerly GCOSB2 
     ftau_ray = TAURAY/(TAURAY + single_scattering_cld * TAUCLD)
@@ -385,9 +385,11 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
 
         #also see these lecture notes are pretty good
         #http://irina.eas.gatech.edu/EAS8803_SPRING2012/Lec20.pdf
-        w0_dedd=W0*(1.-COSB**stream)/(1.0-W0*COSB**stream)
-        cosb_dedd=COSB/(1.+COSB)
-        dtau_dedd=DTAU*(1.-W0*COSB**stream) 
+        f_deltaM = COSB**stream
+        w0_dedd=W0*(1.-f_deltaM)/(1.0-W0*f_deltaM)
+        #cosb_dedd=COSB/(1.+COSB)
+        cosb_dedd=(COSB-f_deltaM)/(1.-f_deltaM)
+        dtau_dedd=DTAU*(1.-W0*f_deltaM) 
 
         #sum up taus starting at the top, going to depth
         tau_dedd = np.zeros((nlayer+1, nwno, ngauss))

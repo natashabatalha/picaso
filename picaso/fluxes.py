@@ -735,11 +735,11 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
     #terms not dependent on incident angle
     sq3 = sqrt(3.)
     if toon_coefficients == 1:#eddington
-        g1  = (7-w0*(4+3*cosb))/4 #(sq3*0.5)*(2. - w0*(1.+cosb)) #table 1 # 
-        g2  = -(1-w0*(4-3*cosb))/4 #(sq3*w0*0.5)*(1.-cosb)        #table 1 # 
+        g1  = (7-w0*(4+3*ftau_cld*cosb))/4 #(sq3*0.5)*(2. - w0*(1.+cosb)) #table 1 # 
+        g2  = -(1-w0*(4-3*ftau_cld*cosb))/4 #(sq3*w0*0.5)*(1.-cosb)        #table 1 # 
     elif toon_coefficients == 0:#quadrature
-        g1  = (sq3*0.5)*(2. - w0*(1.+cosb)) #table 1 # 
-        g2  = (sq3*w0*0.5)*(1.-cosb)        #table 1 # 
+        g1  = (sq3*0.5)*(2. - w0*(1.+ftau_cld*cosb)) #table 1 # 
+        g2  = (sq3*w0*0.5)*(1.-ftau_cld*cosb)        #table 1 # 
     lamda = sqrt(g1**2 - g2**2)         #eqn 21
     gama  = (g1-lamda)/g2               #eqn 22
 
@@ -749,9 +749,9 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             u1 = ubar1[ng,nt]
             u0 = ubar0[ng,nt]
             if toon_coefficients == 1 : #eddington
-                g3  = (2-3*cosb*u0)/4#0.5*(1.-sq3*cosb*ubar0[ng, nt]) #  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
+                g3  = (2-3*ftau_cld*cosb*u0)/4#0.5*(1.-sq3*cosb*ubar0[ng, nt]) #  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
             elif toon_coefficients == 0 :#quadrature
-                g3  = 0.5*(1.-sq3*cosb*u0) #  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
+                g3  = 0.5*(1.-sq3*ftau_cld*cosb*u0) #  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
     
             # now calculate c_plus and c_minus (equation 23 and 24 toon)
             g4 = 1.0 - g3
@@ -842,13 +842,13 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                 #this is a decent assumption because our second order legendre polynomial 
                 #is forced to be equal to the rayleigh phase function
                 ubar2 = 0.767  # 
-                multi_plus = (1.0+1.5*cosb*u1 #!was 3
+                multi_plus = (1.0+1.5*ftau_cld*cosb*u1 #!was 3
                                 + gcos2*(3.0*ubar2*ubar2*u1*u1 - 1.0)/2.0)
-                multi_minus = (1.-1.5*cosb*u1 
+                multi_minus = (1.-1.5*ftau_cld*cosb*u1 
                                 + gcos2*(3.0*ubar2*ubar2*u1*u1 - 1.0)/2.0)
             elif multi_phase ==1:#'N=1':
-                multi_plus = 1.0+1.5*cosb*u1  
-                multi_minus = 1.-1.5*cosb*u1
+                multi_plus = 1.0+1.5*ftau_cld*cosb*u1  
+                multi_minus = 1.-1.5*ftau_cld*cosb*u1
             ################################ END OPTIONS FOR MULTIPLE SCATTERING####################
 
             G=positive*(multi_plus+gama*multi_minus)    *w0
