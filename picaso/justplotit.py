@@ -354,7 +354,7 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind
             else:
                 f = fig.line(conv(xarray), yarray, color=palette[i], line_width=3,
                                 muted_color=palette[np.mod(i, len(palette))], muted_alpha=muted_alpha)
-                legend_it.append((l, [f]))
+                legend_it.append((legend[i], [f]))
         i = i+1
 
     if not isinstance(legend,type(None)):
