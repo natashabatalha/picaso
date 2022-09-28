@@ -3155,6 +3155,8 @@ def pre_get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel,
     all_b, ubar1,dtau,hard_surface,tau_top,nlayer)
 
 
+
+
 @numba.cuda.jit()
 def _tri_diag_solve_cuda( a, b, c, d,AS,DS,XK):
     k=numba.cuda.grid(1)
@@ -3170,7 +3172,7 @@ def _tri_diag_solve_cuda( a, b, c, d,AS,DS,XK):
         for i in range(1,l):
             XK[i,k] = DS[i,k] - AS[i,k] * XK[i-1,k]
 
-def tri_get_thermal_1d_GPU(a,b,c,d,l,nwno):
+def tri_diag_solve_cuda(a,b,c,d,l,nwno):
     L=2*l
     AS,DS,XK = cp.zeros((L,nwno)),cp.zeros((L,nwno)),cp.zeros((L,nwno))
     a,b,c,d =cp.asarray(a),cp.asarray(b),cp.asarray(c),cp.asarray(d)
@@ -3180,7 +3182,6 @@ def tri_get_thermal_1d_GPU(a,b,c,d,l,nwno):
     blocksize=32
     numblocks =(nwno+blocksize-1)//blocksize
     _tri_diag_solve_cuda[numblocks,blocksize](a,b,c,d,AS,DS,XK)#
-    XK = XK.get()
     positive = XK[::2,:] + XK[1::2,:] #Y1+Y2 in toon (table 3)
     negative = XK[::2,:] - XK[1::2,:] #Y1-Y2 in toon (table 3)    
     return positive,negative
@@ -3302,3 +3303,285 @@ def post_get_thermal_1d(pre_out,tri_out):
             #flux_plus_mdpt_disco[ng,nt,:,:] = int_plus_mdpt #nlevel by nwno
 
     return int_at_top #, intensity, flux_out #, int_down# numg x numt x nwno
+
+
+def slice_gt_cupy(array,lim):
+    shape = array.shape
+    new = array.ravel()
+    new[np.where(new>lim)] = lim 
+    return new.reshape(shape)
+
+def blackbody_cupy(t,w):
+    """
+    Blackbody flux in cgs units in per unit wavelength
+
+    Parameters
+    ----------
+    t : array,float
+        Temperature (K)
+    w : array, float
+        Wavelength (cm)
+    
+    Returns
+    -------
+    ndarray with shape ntemp x numwave
+    """
+    h = 6.62607004e-27 # erg s 
+    c = 2.99792458e+10 # cm/s
+    k = 1.38064852e-16 #erg / K
+
+    return ((2.0*h*c**2.0)/(w**5.0))*(1.0/(np.exp((h*c)/np.outer(t, w*k)) - 1.0))
+
+def pre_get_thermal_1d_cuda(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,
+    surf_reflect, hard_surface, tridiagonal):
+    
+    wno, tlevel, dtau, w0, cosb, plevel, ubar1, surf_reflect = (cp.asarray(wno),
+                                                               cp.asarray(tlevel),
+                                                               cp.asarray(dtau), 
+                                                               cp.asarray(w0),
+                                                               cp.asarray(cosb),
+                                                               cp.asarray(plevel),
+                                                               cp.asarray(ubar1),
+                                                               cp.asarray(surf_reflect))
+    
+    nlayer = nlevel - 1 #nlayers 
+    #flux_out = zeros((numg, numt, 2*nlevel, nwno))
+
+    mu1 = 0.5#0.88#0.5 #from Table 1 Toon  
+
+    #get matrix of blackbodies 
+    all_b = blackbody_cupy(tlevel, 1/wno) #returns nlevel by nwave   
+    b0 = all_b[0:-1,:]
+    b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
+
+    #hemispheric mean parameters from Tabe 1 toon 
+    g1 = 2.0 - w0*(1+cosb); g2 = w0*(1-cosb)
+
+    alpha = sqrt( (1.-w0) / (1.-w0*cosb) )
+    lamda = sqrt(g1**2 - g2**2) #eqn 21 toon 
+    gama = (g1-lamda)/g2 # #eqn 22 toon
+    
+    g1_plus_g2 = 1.0/(g1+g2) #second half of eqn.27
+
+    #same as with reflected light, compute c_plus and c_minus 
+    #these are eqns 27a & b in Toon89
+    #_ups are evaluated at lower optical depth, TOA
+    #_dows are evaluated at higher optical depth, bottom of atmosphere
+    c_plus_up = 2*pi*mu1*(b0 + b1* g1_plus_g2) 
+    c_minus_up = 2*pi*mu1*(b0 - b1* g1_plus_g2)
+    #NOTE: to keep consistent with Toon, we keep these 2pis here. However, 
+    #in 3d cases where we no long assume azimuthal symmetry, we divide out 
+    #by 2pi when we multiply out the weights as seen in disco.compress_thermal 
+
+    c_plus_down = 2*pi*mu1*(b0 + b1 * dtau + b1 * g1_plus_g2) 
+    c_minus_down = 2*pi*mu1*(b0 + b1 * dtau - b1 * g1_plus_g2)
+
+    #calculate exponential terms needed for the tridiagonal rotated layered method
+    exptrm = lamda*dtau
+    #save from overflow 
+    exptrm = slice_gt_cupy (exptrm, 35.0) 
+
+    exptrm_positive = exp(exptrm) 
+    exptrm_minus = 1.0/exptrm_positive
+
+    #for flux heating calculations, the energy balance solver 
+    #does not like a fixed zero at the TOA. 
+    #to avoid a discontinuous kink at the last atmospher
+    #layer we create this "fake" boundary condition
+    #we imagine that the atmosphere continus up at an isothermal T and that 
+    #there is optical depth from above the top to infinity 
+    tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
+    b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:] * pi #  Btop=(1.-np.exp(-tautop/ubari))*B[0]
+    #print('hard_surface=',hard_surface)
+    if hard_surface:
+        b_surface = all_b[-1,:]*pi #for terrestrial, hard surface  
+    else: 
+        b_surface= (all_b[-1,:] + b1[-1,:]*mu1)*pi #(for non terrestrial)
+    
+    A, B, C, D = setup_tri_diag_cuda(nlayer,nwno,  c_plus_up, c_minus_up, 
+                        c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
+                         gama, dtau, 
+                        exptrm_positive,  exptrm_minus)
+    
+    #positive, negative = tri_diag_solve_cuda(A, B, C, D,nlayer,nwno)
+    return (A, B, C, D,nlayer, nwno),(exptrm_positive , exptrm_minus, gama, c_plus_up,
+    mu1, lamda, g1_plus_g2, b0, b1,nlevel,nwno,exptrm,numg, numt,
+    all_b, ubar1,dtau,hard_surface,tau_top,nlayer)
+
+
+def setup_tri_diag_cuda(nlayer,nwno ,c_plus_up, c_minus_up, 
+    c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
+    gama, dtau, exptrm_positive,  exptrm_minus):
+
+    L = 2 * nlayer
+    #c_plus_up, c_minus_up, c_plus_down, c_minus_down = cp.asarray(c_plus_up),cp.asarray(c_minus_up),cp.asarray(c_plus_down), cp.asarray(c_minus_down)
+
+    #b_top, b_surface, surf_reflect,gama, dtau = cp.asarray(b_top), cp.asarray(b_surface), cp.asarray(surf_reflect),  cp.asarray(gama), cp.asarray(dtau)
+    
+    #exptrm_positive,  exptrm_minus = cp.asarray(exptrm_positive), cp.asarray(exptrm_minus)
+
+    A = cp.zeros((L,nwno)) 
+    B = cp.zeros((L,nwno )) 
+    C = cp.zeros((L,nwno )) 
+    D = cp.zeros((L,nwno )) 
+    e1,e2,e3,e4 = cp.zeros((nlayer,nwno )) , cp.zeros((nlayer,nwno )) , cp.zeros((nlayer,nwno )) , cp.zeros((nlayer,nwno )) 
+
+    blocksize=32
+    numblocks =(nwno+blocksize-1)//blocksize
+
+    _setup_tri_diag_cuda[numblocks,blocksize](L,nlayer,nwno ,c_plus_up, c_minus_up, 
+    c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
+    gama, dtau, exptrm_positive,  exptrm_minus,e1,e2,e3,e4,A,B,C,D)#
+    
+    return A, B, C, D
+
+@numba.cuda.jit()
+def _setup_tri_diag_cuda( L,nlayer,nwno ,c_plus_up, c_minus_up, 
+    c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
+    gama, dtau, exptrm_positive,  exptrm_minus,e1,e2,e3,e4,A,B,C,D):
+    
+    k=numba.cuda.grid(1)
+    #loop over wavelenghts
+    
+    
+    if k < nwno:
+        #EQN 44 
+        #now build terms 
+        for n in range(nlayer): 
+            e1[n,k] = exptrm_positive[n,k] + gama[n,k]*exptrm_minus[n,k]
+            e2[n,k] = exptrm_positive[n,k] - gama[n,k]*exptrm_minus[n,k]
+            e3[n,k] = gama[n,k]*exptrm_positive[n,k] + exptrm_minus[n,k]
+            e4[n,k] = gama[n,k]*exptrm_positive[n,k] - exptrm_minus[n,k]
+        A[0,k] = 0.0
+        B[0,k] = gama[0,k] + 1.0
+        C[0,k] = gama[0,k] - 1.0
+        D[0,k] = b_top[k] - c_minus_up[0,k]
+
+        #even terms, not including the last !CMM1 = UP
+        ilayer = 0 
+        for n in range(1,L-1,2): #equiv of A[1::2,k][:-1]
+            A[n,k] = (e1[ilayer,k]+e3[ilayer,k]) * (gama[ilayer+1,k]-1.0) #always good
+            B[n,k] = (e2[ilayer,k]+e4[ilayer,k]) * (gama[ilayer+1,k]-1.0)
+            C[n,k] = 2.0 * (1.0-gama[ilayer+1,k]**2) #always good 
+            D[n,k] =((gama[ilayer+1,k]-1.0)*(c_plus_up[ilayer+1,k] - c_plus_down[ilayer,k]) + 
+                                (1.0-gama[ilayer+1,k])*(c_minus_down[ilayer,k] - c_minus_up[ilayer+1,k]))
+            ilayer += 1
+            
+        #odd terms, not including the first 
+        ilayer = 0 
+        for n in range(2,L,2):#equiv of A[::2,k][1:]
+            A[n,k] = 2.0*(1.0-gama[ilayer,k]**2)
+            B[n,k] = (e1[ilayer,k]-e3[ilayer,k]) * (gama[ilayer+1,k]+1.0)
+            C[n,k] = (e1[ilayer,k]+e3[ilayer,k]) * (gama[ilayer+1,k]-1.0)
+            D[n,k] = (e3[ilayer,k]*(c_plus_up[ilayer+1,k] - c_plus_down[ilayer,k]) + 
+                                    e1[ilayer,k]*(c_minus_down[ilayer,k] - c_minus_up[ilayer+1,k]))
+            ilayer += 1
+            
+        #last term [L-1]
+        A[-1,k] = e1[-1,k]-surf_reflect[k]*e3[-1,k]
+        B[-1,k] = e2[-1,k]-surf_reflect[k]*e4[-1,k]
+        C[-1,k] = 0.0
+        D[-1,k] = b_surface[k]-c_plus_down[-1,k] + surf_reflect[k]*c_minus_down[-1,k]
+
+
+
+def post_get_thermal_1d_cuda(pre_out,tri_out):
+
+    (exptrm_positive , exptrm_minus, gama, c_plus_up,
+        mu1, lamda, g1_plus_g2, b0, b1,nlevel,nwno,exptrm,numg, numt,
+        all_b, ubar1,dtau,hard_surface,tau_top,nlayer) = pre_out
+    positive,negative = tri_out
+
+    #if you stop here this is regular ole 2 stream 
+    f_up = (positive * exptrm_positive + gama * negative * exptrm_minus + c_plus_up)
+
+    #calculate everyting from Table 3 toon
+    #from here forward is source function technique in toon
+    G = (1/mu1 - lamda)*positive     
+    H = gama*(lamda + 1/mu1)*negative 
+    J = gama*(lamda + 1/mu1)*positive 
+    K = (1/mu1 - lamda)*negative     
+    alpha1 = 2*pi*(b0+b1*(g1_plus_g2 - mu1)) 
+    alpha2 = 2*pi*b1 
+    sigma1 = 2*pi*(b0-b1*(g1_plus_g2 - mu1)) 
+    sigma2 = 2*pi*b1 
+
+    int_minus = cp.zeros((nlevel,nwno))
+    int_plus = cp.zeros((nlevel,nwno))
+    int_minus_mdpt = cp.zeros((nlevel,nwno))
+    int_plus_mdpt = cp.zeros((nlevel,nwno))
+    #intensity = zeros((numg, numt, nlevel, nwno))
+
+    exptrm_positive_mdpt = cp.exp(0.5*exptrm) 
+    exptrm_minus_mdpt = 1/exptrm_positive_mdpt 
+
+    #================ START CRAZE LOOP OVER ANGLE #================
+    int_at_top = cp.zeros((numg, numt, nwno)) #get intensity 
+    int_down = cp.zeros((numg, numt, nwno))
+
+    blocksize=32
+    numblocks =(nwno+blocksize-1)//blocksize
+
+    _post_get_thermal_1d_cuda[numblocks,blocksize](nwno,numg,numt,nlayer,G,H,J,K,alpha1,alpha2,sigma1,sigma2,exptrm_positive,exptrm_minus,exptrm_positive_mdpt,exptrm_minus_mdpt,lamda,ubar1,all_b,b1,tau_top,hard_surface,dtau,int_plus,int_minus,int_plus_mdpt,int_minus_mdpt,int_at_top)
+
+    return int_at_top.get() #, intensity, flux_out #, int_down# numg x numt x nwno
+
+@numba.cuda.jit()
+def _post_get_thermal_1d_cuda(nwno,numg,numt,nlayer,G,H,J,K,alpha1,alpha2,sigma1,sigma2,exptrm_positive,exptrm_minus,exptrm_positive_mdpt,exptrm_minus_mdpt,lamda,ubar1,all_b,b1,tau_top,hard_surface,dtau,int_plus,int_minus,int_plus_mdpt,int_minus_mdpt,int_at_top):
+    k=numba.cuda.grid(1)
+    if k < nwno:
+        for ng in range(numg):
+            for nt in range(numt): 
+                #flux_out[ng,nt,:,:] = flux
+
+                iubar = ubar1[ng,nt]
+
+                #intensity boundary conditions
+                if hard_surface:
+                    int_plus[-1,k] = all_b[-1,k] *2*pi  # terrestrial flux /pi = intensity
+                else:
+                    int_plus[-1,k] = ( all_b[-1,k] + b1[-1,k] * iubar)*2*pi #no hard surface   
+
+                int_minus[0,k] =  (1 - math.exp(-tau_top[k] / iubar)) * all_b[0,k] *2*pi
+                
+
+
+                for itop in range(nlayer):
+                    exptrm_angle_itop = math.exp( - dtau[itop,k] / iubar)
+                    exptrm_angle_mdpt_itop = math.exp( -0.5 * dtau[itop,k] / iubar) 
+                    
+                    #disbanning this for now because we dont need it in the thermal emission code
+                    #EQN 56,toon
+                    int_minus[itop+1,k]=(int_minus[itop,k]*exptrm_angle_itop+
+                                            (J[itop,k]/(lamda[itop,k]*iubar+1.0))*(exptrm_positive[itop,k]-exptrm_angle_itop)+
+                                            (K[itop,k]/(lamda[itop,k]*iubar-1.0))*(exptrm_angle_itop-exptrm_minus[itop,k])+
+                                            sigma1[itop,k]*(1.-exptrm_angle_itop)+
+                                            sigma2[itop,k]*(iubar*exptrm_angle_itop+dtau[itop,k]-iubar) )
+
+                    int_minus_mdpt[itop,k]=(int_minus[itop,k]*exptrm_angle_mdpt_itop+
+                                            (J[itop,k]/(lamda[itop,k]*iubar+1.0))*(exptrm_positive_mdpt[itop,k]-exptrm_angle_mdpt_itop)+
+                                            (K[itop,k]/(-lamda[itop,k]*iubar+1.0))*(exptrm_minus_mdpt[itop,k]-exptrm_angle_mdpt_itop)+
+                                            sigma1[itop,k]*(1.-exptrm_angle_mdpt_itop)+
+                                            sigma2[itop,k]*(iubar*exptrm_angle_mdpt_itop+0.5*dtau[itop,k]-iubar))
+
+                    ibot=nlayer-1-itop
+                    #EQN 55,toon
+                    exptrm_angle_ibot = math.exp( - dtau[ibot,k] / iubar)
+                    exptrm_angle_mdpt_ibot = math.exp( -0.5 * dtau[ibot,k] / iubar)
+                    int_plus[ibot,k]=(int_plus[ibot+1,k]*exptrm_angle_ibot+
+                                        (G[ibot,k]/(lamda[ibot,k]*iubar-1.0))*(exptrm_positive[ibot,k]*exptrm_angle_ibot-1.0)+
+                                        (H[ibot,k]/(lamda[ibot,k]*iubar+1.0))*(1.0-exptrm_minus[ibot,k] * exptrm_angle_ibot)+
+                                        alpha1[ibot,k]*(1.-exptrm_angle_ibot)+
+                                        alpha2[ibot,k]*(iubar-(dtau[ibot,k]+iubar)*exptrm_angle_ibot) )
+
+                    int_plus_mdpt[ibot,k]=(int_plus[ibot+1,k]*exptrm_angle_mdpt_ibot+
+                                            (G[ibot,k]/(lamda[ibot,k]*iubar-1.0))*(exptrm_positive[ibot,k]*exptrm_angle_mdpt_ibot-exptrm_positive_mdpt[ibot,k])-
+                                            (H[ibot,k]/(lamda[ibot,k]*iubar+1.0))*(exptrm_minus[ibot,k]*exptrm_angle_mdpt_ibot-exptrm_minus_mdpt[ibot,k])+
+                                            alpha1[ibot,k]*(1.-exptrm_angle_mdpt_ibot)+
+                                            alpha2[ibot,k]*(iubar+0.5*dtau[ibot,k]-(dtau[ibot,k]+iubar)*exptrm_angle_mdpt_ibot)  )
+
+                int_at_top[ng,nt,k] = int_plus_mdpt[0,k] #nlevel by nwno 
+
+
+
+
