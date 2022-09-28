@@ -3155,6 +3155,38 @@ def pre_get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel,
     mu1, lamda, g1_plus_g2, b0, b1,nlevel,nwno,exptrm,numg, numt,
     all_b, ubar1,dtau,hard_surface,tau_top,nlayer)
 
+
+@numba.cuda.jit()
+def _tri_diag_solve_cuda( a, b, c, d,AS,DS,XK):
+    k=numba.cuda.grid(1)
+    l = a.shape[0]
+    if k < b.shape[1]:#loop over wavelenghts
+    #for k in range(b.shape[1]):#range(2):#
+        for i in range(l-2, -1, -1):
+            #print(k,i,b[i,k] , c[i,k])#wave,layer
+            x = 1.0 / (b[i,k] - c[i,k] * AS[i+1,k])
+            AS[i,k] = a[i,k] * x
+            DS[i,k] = (d[i,k]-c[i,k] * DS[i+1,k]) * x
+        XK[0,k] = DS[0,k]
+        for i in range(1,l):
+            XK[i,k] = DS[i,k] - AS[i,k] * XK[i-1,k]
+
+def tri_get_thermal_1d_GPU(a,b,c,d,l,nwno):
+    L=2*l
+    AS,DS,XK = cp.zeros((L,nwno)),cp.zeros((L,nwno)),cp.zeros((L,nwno))
+    a,b,c,d =cp.asarray(a),cp.asarray(b),cp.asarray(c),cp.asarray(d)
+    AS[-1,:] = a[-1,:]/b[-1,:]
+    DS[-1,:] = d[-1,:]/b[-1,:]
+    
+    blocksize=32
+    numblocks =(nwno+blocksize-1)//blocksize
+    _tri_diag_solve_cuda[numblocks,blocksize](a,b,c,d,AS,DS,XK)#
+    XK = XK.get()
+    positive = XK[::2,:] + XK[1::2,:] #Y1+Y2 in toon (table 3)
+    negative = XK[::2,:] - XK[1::2,:] #Y1-Y2 in toon (table 3)    
+    return positive,negative
+
+
 @jit(nopython=True, cache=True)
 def  tri_get_thermal_1d(A, B, C, D,nlayer, nwno):
 
