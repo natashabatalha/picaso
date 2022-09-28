@@ -115,6 +115,12 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     single_form = inputs['approx']['rt_params']['SH']['single_form']
     rayleigh = inputs['approx']['rt_params']['SH']['rayleigh']
     heng_compare = inputs['approx']['rt_params']['SH']['heng_compare']
+    w_single_form = inputs['approx']['rt_params']['SH']['w_single_form']
+    w_multi_form = inputs['approx']['rt_params']['SH']['w_multi_form']
+    psingle_form = inputs['approx']['rt_params']['SH']['psingle_form']
+    w_single_rayleigh = inputs['approx']['rt_params']['SH']['w_single_rayleigh']
+    w_multi_rayleigh = inputs['approx']['rt_params']['SH']['w_multi_rayleigh']
+    psingle_rayleigh = inputs['approx']['rt_params']['SH']['psingle_rayleigh']
 
 
     
@@ -2994,7 +3000,9 @@ class inputs():
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='none',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
         p_reference=1, rt_method='toon', stream=2, blackbody_approx=1, toon_coefficients="quadrature",
-        single_form='explicit', rayleigh='off', heng_compare='off', query='nearest_neighbor'):
+        single_form='explicit', rayleigh='off', heng_compare='off', query='nearest_neighbor',
+        w_single_form='TTHG', w_multi_form='TTHG', psingle_form='TTHG', 
+        w_single_rayleigh = 'on', w_multi_rayleigh='on', psingle_rayleigh='on'):
         """
         This function sets all the default approximations in the code. It transforms the string specificatons
         into a number so that they can be used in numba nopython routines. 
@@ -3072,6 +3080,12 @@ class inputs():
         self.inputs['approx']['rt_params']['SH']['rayleigh'] = rayleigh_options(printout=False).index(rayleigh)
         self.inputs['approx']['rt_params']['SH']['heng_compare'] = heng_compare_options(printout=False).index(heng_compare)
         self.inputs['approx']['rt_params']['SH']['blackbody_approx'] = blackbody_approx
+        self.inputs['approx']['rt_params']['SH']['w_single_form'] = scattering_options(printout=False).index(w_single_form)
+        self.inputs['approx']['rt_params']['SH']['w_multi_form'] = scattering_options(printout=False).index(w_multi_form)
+        self.inputs['approx']['rt_params']['SH']['psingle_form'] = scattering_options(printout=False).index(psingle_form)
+        self.inputs['approx']['rt_params']['SH']['w_single_rayleigh'] = rayleigh_options(printout=False).index(w_single_rayleigh)
+        self.inputs['approx']['rt_params']['SH']['w_multi_rayleigh'] = rayleigh_options(printout=False).index(w_multi_rayleigh)
+        self.inputs['approx']['rt_params']['SH']['psingle_rayleigh'] = rayleigh_options(printout=False).index(psingle_rayleigh)
 
 
         self.inputs['opacities']['query'] = query_options().index(query)
@@ -3942,6 +3956,8 @@ def rayleigh_options(printout=True):
 def heng_compare_options(printout=True):
     """Turn on Heng comparison"""
     return ['off','on']
+def scattering_options(printout=True):
+    return  ["TTHG","OTHG"]
 
 def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             temp,pressure,FOPI, t_table, p_table, grad, cp, opacityclass, grav, 

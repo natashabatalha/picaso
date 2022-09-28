@@ -2602,15 +2602,15 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_
             w_multi = ones(((stream, nlayer, nwno)))
             p_single = zeros(cosb_og.shape)
 
-            if w_single_form==1 or w_multi_form=1: # OTHG:
+            if (w_single_form==1 or w_multi_form==1): # OTHG:
                 for l in range(1,stream):
                     w = (2*l+1) * cosb_og**l
-                    if single_form==1:
+                    if w_single_form==1:
                         w_single[l,:,:] = (w - (2*l+1)*f_deltaM) / (1 - f_deltaM)
-                    if multi_form==1:
+                    if w_multi_form==1:
                         w_multi[l,:,:] = (w - (2*l+1)*f_deltaM) / (1 - f_deltaM)
 
-            elif w_single_form==0 or w_multi_form==0: # TTHG
+            elif (w_single_form==0 or w_multi_form==0): # TTHG
                 g_forward = constant_forward*cosb_og
                 g_back = constant_back*cosb_og
                 f = frac_a + frac_b*g_back**frac_c
@@ -2618,9 +2618,9 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_
                 f_deltaM_ *= (f*constant_forward**stream + (1-f)*constant_back**stream)
                 for l in range(1,stream):
                     w = (2*l+1) * (f*g_forward**l + (1-f)*g_back**l)
-                    if single_form==0:
+                    if w_single_form==0:
                         w_single[l,:,:] = (w - (2*l+1)*f_deltaM_) / (1 - f_deltaM_)
-                    if multi_form==0:
+                    if w_multi_form==0:
                         w_multi[l,:,:] = (w - (2*l+1)*f_deltaM_) / (1 - f_deltaM_)
 
             if w_single_rayleigh==1:
