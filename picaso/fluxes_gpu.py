@@ -2,6 +2,10 @@ import cupy as cp
 import nvtx
 import math
 import numba.cuda
+from numba import jit, vectorize
+from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh, min, dot, array,log, stack, ones, floor, array_equal
+import numpy as np
+
 
 def get_transit_1d_cupy(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
                     player, tlayer, colden, DTAU):
