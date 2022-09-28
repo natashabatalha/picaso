@@ -2470,9 +2470,10 @@ def get_transit_3d(nlevel, nwno, radius, gravity,rstar, mass, mmw, k_b, G,amu,
     return 
 
 @jit(nopython=True, cache=True, debug=True)
-def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_cld, ftau_ray,
+def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_cld, ftau_ray, f_deltaM,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect, ubar0, ubar1, cos_theta, F0PI, single_phase, rayleigh,
+    w_single_form, w_multi_form, psingle_form, w_single_rayleigh, w_multi_rayleigh, psingle_rayleigh,
     frac_a, frac_b, frac_c, constant_back, constant_forward, stream, b_top=0, flx=1, single_form=0, heng_compare=0):
     """
     Computes rooney fluxes given tau and everything is 3 dimensional. This is the exact same function 
@@ -2514,6 +2515,9 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_
     ftau_ray : ndarray of float 
         Fraction of rayleigh extinction to total 
         = tau_rayleigh/(tau_rayleigh + tau_cloud)
+    f_deltaM : ndarray of float 
+        Fractional scattering coefficient for delta-M calculation
+        f_deltaM = 0 if delta_eddington=False
     dtau_og : ndarray of float 
         This is the opacity contained within each individual layer (defined at midpoints of "levels")
         WITHOUT the delta eddington correction, if it was specified by user
@@ -2596,69 +2600,64 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_
             b = zeros((stream, nlayer, nwno))
             w_single = ones((stream, nlayer, nwno))
             w_multi = ones(((stream, nlayer, nwno)))
-            if array_equal(cosb,cosb_og):
-                ff = 0.*cosb_og
-            else:
-                ff = cosb_og**stream
             p_single = zeros(cosb_og.shape)
 
-            if single_phase!=1: 
+            if w_single_form==1 or w_multi_form=1: # OTHG:
+                for l in range(1,stream):
+                    w = (2*l+1) * cosb_og**l
+                    if single_form==1:
+                        w_single[l,:,:] = (w - (2*l+1)*f_deltaM) / (1 - f_deltaM)
+                    if multi_form==1:
+                        w_multi[l,:,:] = (w - (2*l+1)*f_deltaM) / (1 - f_deltaM)
+
+            elif w_single_form==0 or w_multi_form==0: # TTHG
                 g_forward = constant_forward*cosb_og
                 g_back = constant_back*cosb_og
                 f = frac_a + frac_b*g_back**frac_c
-                if array_equal(cosb,cosb_og):
-                    ff1 = 0.*cosb_og
-                    ff2 = 0.*cosb_og
-                else:
-                    ff1 = (constant_forward*cosb_og)**stream
-                    ff2 = (constant_back*cosb_og)**stream
-
-            if single_phase==1:#'OTHG':
+                f_deltaM_ = f_deltaM
+                f_deltaM_ *= (f*constant_forward**stream + (1-f)*constant_back**stream)
                 for l in range(1,stream):
-                    w_multi[l,:,:] = (2*l+1) * (cosb_og**l - ff) / (1 - ff)
-                    w_single[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
+                    w = (2*l+1) * (f*g_forward**l + (1-f)*g_back**l)
+                    if single_form==0:
+                        w_single[l,:,:] = (w - (2*l+1)*f_deltaM_) / (1 - f_deltaM_)
+                    if multi_form==0:
+                        w_multi[l,:,:] = (w - (2*l+1)*f_deltaM_) / (1 - f_deltaM_)
 
-                # OG single_form calculation
-                if single_form==0: 
+            if w_single_rayleigh==1:
+                w_single[1:] *= ftau_cld
+                if stream==4:
+                    w_single[2] += 0.5*ftau_ray 
+            if w_multi_rayleigh==1: 
+                w_multi[1:] *= ftau_cld
+                if stream==4:
+                    w_multi[2] += 0.5*ftau_ray 
+
+            # single-scattering options
+            if single_form==0: # explicit single form
+                if psingle_form==1: #OTHG
                     p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
-
-
-            elif single_phase==2 or single_phase==3:#'TTHG':
-                #uses the Two term Henyey-Greenstein function
-                for l in range(1,stream):
-                    w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff1) 
-                                        + (1-f)*(g_back**l - ff2) / (1 - ff1))
-                    w_single[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff2) 
-                                        + (1-f)*(g_back**l - ff2) / (1 - ff2))
-
-
-                # OG single_form calculation
-                if single_form==0:
+                else: # single_phase==2 or single_phase==3:#'TTHG':
+                    g_forward = constant_forward*cosb_og
+                    g_back = constant_back*cosb_og
+                    f = frac_a + frac_b*g_back**frac_c
                     p_single=(f * (1-g_forward**2) /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
                                 #second term of TTHG: backward scattering
                                 +(1-f)*(1-g_back**2) /sqrt((1+g_back**2+2*g_back*cos_theta)**3))
 
-
-            if heng_compare==1:# heng tests: isotropic multi
-                # force isotropic multiple scattering
-                w_multi[1:]*=0.0
-                if rayleigh==1:
-                    # force pure rayleigh single scattering
-                    w_single[1:]*=0.0
-                    w_single[2] = 0.5#*ftau_ray
-
-                    # OG psingle calculation
-                    if single_form==0: p_single += 0.75*(1+cos_theta**2.0)
-
-            if rayleigh==1 and heng_compare==0:
-                for l in range(1,stream):
-                    w_multi[l] *= ftau_cld
-                    w_single[l] *= ftau_cld
-                    if l==2:    
-                        w_multi[2] = ftau_cld*w_multi[2] + 0.5*ftau_ray
-                        w_single[2] = ftau_cld*w_single[2] + 0.5*ftau_ray
-                if single_form==0: 
+                if psingle_rayleigh==1: 
                     p_single = ftau_cld*p_single + ftau_ray*(0.75*(1+cos_theta**2.0))
+
+
+#            if heng_compare==1:# heng tests: isotropic multi
+#                # force isotropic multiple scattering
+#                w_multi[1:]*=0.0
+#                if rayleigh==1:
+#                    # force pure rayleigh single scattering
+#                    w_single[1:]*=0.0
+#                    w_single[2] = 0.5#*ftau_ray
+#
+#                    # OG psingle calculation
+#                    if single_form==0: p_single += 0.75*(1+cos_theta**2.0)
 
             for l in range(stream):
                 a[l,:,:] = (2*l + 1) -  w0 * w_multi[l,:,:]
@@ -2704,8 +2703,7 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_
             exptrm_mus = exp(-expo_mus)
 
             if single_form==1:
-                maxterm = stream
-                for l in range(maxterm):
+                for l in range(stream):
                     p_single = p_single + w_single[l] * Pu0[l]*Pu1[l]
             for i in range(nlayer):
                 for l in range(stream):

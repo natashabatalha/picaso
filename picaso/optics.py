@@ -398,13 +398,13 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
         #returning the terms used in 
         return (dtau_dedd, tau_dedd, w0_dedd, cosb_dedd ,ftau_cld, ftau_ray, GCOS2, 
                 DTAU, TAU, W0, COSB,    #these are returned twice because we need the uncorrected 
-                W0_no_raman)            #values for single scattering terms where we use the TTHG phase function
+                W0_no_raman, f_deltaM)            #values for single scattering terms where we use the TTHG phase function
                                         # w0_no_raman is used in thermal calculations only
 
     else: 
         return (DTAU, TAU, W0, COSB, ftau_cld, ftau_ray, GCOS2, 
                 DTAU, TAU, W0, COSB,  #these are returned twice for consistency with the delta-eddington option
-                W0_no_raman)          #W0_no_raman is used for thermal calculations only 
+                W0_no_raman, 0*COSB)          #W0_no_raman is used for thermal calculations only 
 
 
 @jit(nopython=True, cache=True)

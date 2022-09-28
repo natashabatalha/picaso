@@ -209,7 +209,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
         #We use HG function for single scattering which gets the forward scattering/back scattering peaks 
         #well. We only really want to use delta-edd for multi scattering legendre polynomials. 
-        DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman= compute_opacity(
+        DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman, f_deltaM= compute_opacity(
             atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
             full_output=full_output, plot_opacity=plot_opacity)
         
@@ -221,10 +221,11 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                 if rt_method == 'SH':
                     (xint, flux_out, intensity)  = get_reflected_SH(nlevel, nwno, ng, nt, 
                                     DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig], 
-                                    GCOS2[:,:,ig], ftau_cld[:,:,ig], ftau_ray[:,:,ig],
+                                    GCOS2[:,:,ig], ftau_cld[:,:,ig], ftau_ray[:,:,ig], f_deltaM[:,:,ig],
                                     DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig], 
                                     atm.surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
                                     single_phase, rayleigh, 
+    w_single_form, w_multi_form, psingle_form, w_single_rayleigh, w_multi_rayleigh, psingle_rayleigh,
                                     frac_a, frac_b, frac_c, constant_back, constant_forward, 
                                     stream, b_top=b_top, single_form=single_form, heng_compare=heng_compare) #LCM is carrying this bug
                 else:
