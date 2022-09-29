@@ -458,11 +458,11 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             tau_og = tau_og_3d[:,:,ng,nt]
             w0_og = w0_og_3d[:,:,ng,nt]         
 
-            g1  = (sq3*0.5)*(2. - w0*(1.+cosb)) #table 1
-            g2  = (sq3*w0*0.5)*(1.-cosb)           #table 1
+            g1  = (sq3*0.5)*(2. - w0*(1.+ftau_cld*cosb)) #table 1
+            g2  = (sq3*w0*0.5)*(1.-ftau_cld*cosb)           #table 1
             lamda = sqrt(g1**2 - g2**2)           #eqn 21
             gama  = (g1-lamda)/g2                   #eqn 22
-            g3  = 0.5*(1.-sq3*cosb*ubar0[ng, nt])   #table 1 #ubar is now 100x 10 matrix.. 
+            g3  = 0.5*(1.-sq3*ftau_cld*cosb*ubar0[ng, nt])   #table 1 #ubar is now 100x 10 matrix.. 
     
             # now calculate c_plus and c_minus (equation 23 and 24)
             g4 = 1.0 - g3
@@ -542,13 +542,13 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
                 #this is a decent assumption because our second order legendre polynomial 
                 #is forced to be equal to the rayleigh phase function
                 ubar2 = 0.767  # 
-                multi_plus = (1.0+1.5*cosb*ubar1[ng,nt] #!was 3
+                multi_plus = (1.0+1.5*ftau_cld*cosb*ubar1[ng,nt] #!was 3
                                 + gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
-                multi_minus = (1.-1.5*cosb*ubar1[ng,nt] 
+                multi_minus = (1.-1.5*ftau_cld*cosb*ubar1[ng,nt] 
                                 + gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
             elif multi_phase ==1:#'N=1':
-                multi_plus = 1.0+1.5*cosb*ubar1[ng,nt]  
-                multi_minus = 1.-1.5*cosb*ubar1[ng,nt]
+                multi_plus = 1.0+1.5*ftau_cld*cosb*ubar1[ng,nt]  
+                multi_minus = 1.-1.5*ftau_cld*cosb*ubar1[ng,nt]
             ################################ END OPTIONS FOR MULTIPLE SCATTERING####################
 
             G=w0*positive*(multi_plus+gama*multi_minus)
@@ -2480,7 +2480,7 @@ def get_transit_3d(nlevel, nwno, radius, gravity,rstar, mass, mmw, k_b, G,amu,
     return 
 
 @jit(nopython=True, cache=True, debug=True)
-def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_cld, ftau_ray, f_deltaM,
+def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ftau_ray, f_deltaM,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
     w_single_form, w_multi_form, psingle_form, w_single_rayleigh, w_multi_rayleigh, psingle_rayleigh,
@@ -2516,9 +2516,6 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_
         This is the asymmetry factor 
         WITHOUT D-Eddington Correction
         Dimensions=# layer by # wave
-    gcos2 : ndarray of float 
-        Parameter that allows us to directly include Rayleigh scattering 
-        = 0.5*tau_rayleigh/(tau_rayleigh + tau_cloud)
     ftau_cld : ndarray of float 
         Fraction of cloud extinction to total 
         = tau_cloud/(tau_rayleigh + tau_cloud)
@@ -2550,6 +2547,18 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_
         Cosine of the phase angle of the planet 
     F0PI : array 
         Downward incident solar radiation
+    w_single_form : str 
+        Single scattering phase function approximation for SH
+    w_multi_form : str 
+        Multiple scattering phase function approximation for SH
+    psingle_form : str 
+        Scattering phase function approximation for psingle in SH
+    w_single_rayleigh : str 
+        Toggle rayleigh scattering on/off for single scattering in SH
+    w_multi_rayleigh : str 
+        Toggle rayleigh scattering on/off for multi scattering in SH
+    psingle_rayleigh : str 
+        Toggle rayleigh scattering on/off for psingle in SH
     frac_a : float 
         (Optional), If using the TTHG phase function. Must specify the functional form for fraction 
         of forward to back scattering (A + B * gcosb^C)
@@ -2571,7 +2580,7 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_
         Upper boundary condition for incoming intensity
     flx : int 
         Toggle calculation of layerwise fluxes (0 = do not calculate, 1 = calculate)
-    psingle : int 
+    single_form : int 
         Toggle which version of p_single to use (0 = explicit, 1 = legendre)
     heng_compare : int 
         Temporary option being used for comparison with Heng results

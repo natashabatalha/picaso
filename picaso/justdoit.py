@@ -226,13 +226,13 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                 if rt_method == 'SH':
                     (xint, flux_out, intensity)  = get_reflected_SH(nlevel, nwno, ng, nt, 
                                     DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig], 
-                                    GCOS2[:,:,ig], ftau_cld[:,:,ig], ftau_ray[:,:,ig], f_deltaM[:,:,ig],
+                                    ftau_cld[:,:,ig], ftau_ray[:,:,ig], f_deltaM[:,:,ig],
                                     DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig], 
                                     atm.surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
                                     w_single_form, w_multi_form, psingle_form, 
                                     w_single_rayleigh, w_multi_rayleigh, psingle_rayleigh,
                                     frac_a, frac_b, frac_c, constant_back, constant_forward, 
-                                    stream, b_top=b_top, single_form=single_form, heng_compare=heng_compare) #LCM is carrying this bug
+                                    stream, b_top=b_top, single_form=single_form, heng_compare=heng_compare) 
                 else:
                     #getting intensities, not fluxes (which is why second return is null)
                     xint = get_reflected_1d(nlevel, wno,nwno,ng,nt,
