@@ -1330,7 +1330,7 @@ class inputs():
             #fine_flux_star[where_are_NaNs] = 0   
             
             opannection.unshifted_stellar_spec = fine_flux_star            
-
+            bin_flux_star = fine_flux_star
         else :
             flux_star_interp = np.interp(wno_planet, wno_star, flux_star)
             _x,bin_flux_star = mean_regrid(wno_star, flux_star,newx=wno_planet)
