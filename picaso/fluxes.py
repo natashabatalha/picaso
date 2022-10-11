@@ -922,9 +922,10 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                 p_single = 0
                 Pu0 = legP(-u0) # legendre polynomials for -u0
                 Pu1 = legP(u1) # legendre polynomials for -u0
-                for l in range(2):
+                maxterm = 2
+                for l in range(maxterm):
                     w = (2*l+1) * cosb_og**l
-                    w_single = (w - (2*l+1)*cosb_og**2) / (1 - cosb_og**2) 
+                    w_single = (w - (2*l+1)*cosb_og**maxterm) / (1 - cosb_og**maxterm) 
                     p_single = p_single + w_single * Pu0[l]*Pu1[l]
 
             else:
@@ -2727,10 +2728,12 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
             mus = (u1 + u0) / (u1 * u0)
 
             if single_form==1:
-                maxterm = stream
+                maxterm = 4
                 TAU = tau; DTAU = dtau; W0 = w0
                 for l in range(maxterm):
-                    p_single = p_single + w_single[l] * Pu0[l]*Pu1[l]
+                    w = (2*l+1) * cosb_og**l
+                    w_single_tmp = (w - (2*l+1)*cosb_og**maxterm) / (1 - cosb_og**maxterm) 
+                    p_single = p_single + w_single_tmp * Pu0[l]*Pu1[l]
             else:
                 TAU = tau_og; DTAU = dtau_og; W0 = w0_og
 
