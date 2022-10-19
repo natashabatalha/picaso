@@ -326,7 +326,7 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind
         x_axis_label = 'Wavenumber [cm-1]'
         def conv(x):
             return x
-
+    if isinstance(legend, str): legend=[legend]
     kwargs['plot_height'] = kwargs.get('plot_height',345)
     kwargs['plot_width'] = kwargs.get('plot_width',1000)
     kwargs['y_axis_label'] = kwargs.get('y_axis_label','Spectrum')
