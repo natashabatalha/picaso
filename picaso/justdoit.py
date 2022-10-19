@@ -682,7 +682,11 @@ def opannection(wave_range = None, filename_db = None, raman_db = None,
 
         if isinstance(filename_db,type(None)): 
             filename_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['ktable_continuum'])
-
+        if not os.path.isfile(ck_db):
+            if os.path.isfile(ck_db+'.tar.gz'): 
+                raise Exception('The CK filename that you have selected appears still be .tar.gz. Please unpack and rerun')
+            else: 
+                raise Exception('The CK filename that you have selected does not exist. Please make sure you have downloaded and unpacked the right CK file.')
         opacityclass=RetrieveCKs(
                     ck_db, 
                     filename_db, 
