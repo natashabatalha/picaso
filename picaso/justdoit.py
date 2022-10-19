@@ -682,7 +682,8 @@ def opannection(wave_range = None, filename_db = None, raman_db = None,
 
         if isinstance(filename_db,type(None)): 
             filename_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['ktable_continuum'])
-        if not os.path.isfile(ck_db):
+        if not os.path.exists(ck_db):
+            if ck_db[-1] == '/':ck_db = ck_db[0:-1]
             if os.path.isfile(ck_db+'.tar.gz'): 
                 raise Exception('The CK filename that you have selected appears still be .tar.gz. Please unpack and rerun')
             else: 
