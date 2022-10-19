@@ -1679,7 +1679,7 @@ def brightness_temperature(out_dict,plot=True, R = None):
     R : float 
         If not None, rebins the brightness temperature 
     """
-    flux = out_dict['thermal']*1e-7
+    flux = out_dict['thermal']/np.pi*1e-7
     wno = out_dict['wavenumber']
     lam = 1e4/wno
     a=1.43877735e-2  #m K
