@@ -1695,14 +1695,14 @@ def brightness_temperature(out_dict,plot=True, R = None):
 
 
     if not isinstance(R, type(None)):
-        wno, T_B = jdi.mean_regrid(wno, T_B, R=R)
+        wno, T_B = mean_regrid(wno, T_B, R=R)
 
     if plot: 
         f = plt.figure(figsize=(15,8))
         plt.xlabel("Wavelength [microns]",fontsize=20)
         plt.ylabel("Brightness Temperature [K]",fontsize=20)
-        plt.xlim(0.2,240)
-        plt.ylim(0,4000)
+        plt.xlim(min(1e4/wno),max(1e4/wno))
+        plt.ylim(np.min(t_eq)-0.1*np.min(t_eq),np.max(t_eq)+0.1*np.min(t_eq))
 
 
         plt.semilogx(1e4/wno,T_B,color='k', label="Brightness Temperature")
