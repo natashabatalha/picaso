@@ -72,6 +72,7 @@ Opacities & Approximatons
    Query Opacites </notebooks/10_QueryOpacities.ipynb>
    Opacity Factory: Creating Custom Databases </notebooks/10_CreatingOpacityDb.ipynb>
    What Resampling do I Need? </notebooks/10_ResamplingOpacities.ipynb>
+   Using Correlated-K Tables </notebooks/10_CorrelatedKTables.ipynb>
    Investigating Radiative Transfer Approximations  </notebooks/10_AnalyzingApproximations.ipynb>
 
 FAQs
