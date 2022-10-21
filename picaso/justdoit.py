@@ -3299,7 +3299,8 @@ class inputs():
         self.inputs['climate']['r_planet'] = r_planet # jupiter radii
 
     def climate(self, opacityclass, save_all_profiles = False, as_dict=True,with_spec=False,
-        save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False, kz = None, vulcan_run = False, photochem=False,on_fly=False,gases_fly=None,mhdeq=None,CtoOdeq=None ):
+        save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False, kz = None):#,
+        #vulcan_run = False, photochem=False,on_fly=False,gases_fly=None,mhdeq=None,CtoOdeq=None ):
         """
         Top Function to run the Climate Model
 
@@ -3320,11 +3321,18 @@ class inputs():
         kz : array
             Kzz input array if user wants constant or whatever input profile (cgs)
         vulcan_run : bool
-            If you want to run vulcan on the fly (takes longer),True/False
+            (beta, contact developers)If you want to run vulcan on the fly (takes longer),True/False
         photochem : bool
-            If you want to run photochemistry in vulcan on the fly (takes much longer),True/False
+            (beta, contact developers)If you want to run photochemistry in vulcan on the fly (takes much longer),True/False
         
         """
+        #save to user 
+        all_out = {}
+
+        vulcan_run=False;photochem=False;on_fly=False;gases_fly=None;mhdeq=None;CtoOdeq=None
+        if (vulcan_run or photochem): 
+            raise Exception("Vulcan and photochemistry is not yet a live feature. If you are interesting in helping the development team, contact us.")
+        
         #get necessary parameters from opacity ck-tables 
         wno = opacityclass.wno
         delta_wno = opacityclass.delta_wno
@@ -3436,7 +3444,7 @@ class inputs():
                              rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, save_profile,all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop)
 
         
-        if diseq_chem == True:
+        if diseq_chem:
             wv196 = 1e4/wno
 
             # first change the nstr vector because need to check if they grow or not
@@ -3483,11 +3491,10 @@ class inputs():
             else :
                 save_kzz = 0
             
-            
-            if self_consistent_kzz == True : # MLT plus some prescription in radiative zone
+            #here begins the self consistent Kzz calculation 
+            # MLT plus some prescription in radiative zone
+            if self_consistent_kzz: 
 
-                
-                
                 flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = climate(pressure, temp, delta_wno, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
                 COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
                 ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
@@ -3507,13 +3514,18 @@ class inputs():
             #CtoO = '1.0' # don't change these as the opacities you are using are based on these #
             filename_db=os.path.join(__refdata__, 'climate_INPUTS/ck_cx_cont_opacities_661.db')
             
-            if on_fly == True:
+            if on_fly:
                 print("From now I will mix "+str(gases_fly)+" only on--the--fly")
+                #mhdeq and ctodeq will be auto by opannection
+                #NO Background, just CIA + whatever in gases_fly
                 ck_db=os.path.join(__refdata__, 'climate_INPUTS/sonora_2020_feh'+mhdeq+'_co_'+CtoOdeq+'.data.196')
                 opacityclass = opannection(ck=True, ck_db=ck_db,filename_db=filename_db,deq = True,on_fly=True,gases_fly=gases_fly)
             else:
-                ck_db=os.path.join(__refdata__, 'climate_INPUTS/m+0.0_co1.0.data.196')
-                opacityclass = opannection(ck=True, ck_db=ck_db,filename_db=filename_db,deq = True,on_fly=False)
+                #phillips comparison (discontinued) 
+                #background + gases 
+                #ck_db=os.path.join(__refdata__, 'climate_INPUTS/m+0.0_co1.0.data.196')
+                opacityclass = opannection(ck=True, ck_db=opacityclass.ck_filename,
+                    filename_db=filename_db,deq = True,on_fly=False)
 
         
             
@@ -3542,7 +3554,7 @@ class inputs():
                 r_planet = self.inputs['climate']['r_planet']
                 FOPI = self.star(opacityclass, temp =T_star,metal =metal, logg =logg, radius = r_star, radius_unit=u.R_sun,semi_major= semi_major , semi_major_unit = u.AU, deq= True)
 
-            if vulcan_run == False :
+            if not vulcan_run:
                 quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale= True) # determine quench levels
 
                 all_kzz = np.append(all_kzz, t_mix) # save kzz
@@ -3632,30 +3644,36 @@ class inputs():
                             rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, self_consistent_kzz,save_kzz,all_kzz, vulcan_run,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,on_fly=on_fly, gases_fly=gases_fly  )
             
                 
-            
-            return pressure , temp, dtdp, nstr_new, flux_plus_final, quench_levels, df, all_profiles, all_kzz, opd_now,w0_now,g0_now
-            
+
+            #diseq stuff
+            all_out['diseq_out'] = {}
+            if save_all_kzz: all_out['diseq_out']['all_kzz'] = all_kzz
+            all_out['diseq_out']['quench_levels'] = quench_levels
+
+
+            #return pressure , temp, dtdp, nstr_new, flux_plus_final, quench_levels, df, all_profiles, all_kzz, opd_now,w0_now,g0_now
+        
+        #all output to user
+        all_out['pressure'] = pressure
+        all_out['temperature'] = temp
+        all_out['ptchem_df'] = df
+        all_out['dtdp'] = dtdp
+        all_out['cvz_locs'] = nstr_new
+        all_out['flux']=flux_plus_final
+        if save_all_profiles: all_out['all_profiles'] = all_profiles            
            
         if with_spec:
+            opacityclass = opannection(ck=True, ck_db=opacityclass.ck_filename,deq=False)
             bundle = inputs(calculation='brown')
             bundle.phase_angle(0)
             bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
             bundle.premix_atmosphere(opacityclass,df)
-            df_spec = bundle.spectrum(opacityclass,full_output=True)        
+            df_spec = bundle.spectrum(opacityclass,full_output=True)    
+            all_out['spectrum_output'] = df_spec 
 
+#pressure , temp, dtdp, nstr_new, flux_plus_final, quench_levels, df, all_profiles, all_kzz, opd_now,w0_now,g0_now
         if as_dict: 
-            return {
-            'pressure':pressure,
-            'temperature':temp,
-            'dtdp':dtdp,
-            'cvz_locs':nstr_new,
-            'flux':flux_plus_final,
-            'spectrum_output':df_spec,
-            'all_profiles':all_profiles,
-            'opd':opd_now,
-            'w0':w0_now,
-            'g0':g0_now
-            }
+            return all_out
         else: 
             return pressure , temp, dtdp, nstr_new, flux_plus_final, df, all_profiles , opd_now,w0_now,g0_now
 
