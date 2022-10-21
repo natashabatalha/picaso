@@ -3671,7 +3671,6 @@ class inputs():
             df_spec = bundle.spectrum(opacityclass,full_output=True)    
             all_out['spectrum_output'] = df_spec 
 
-#pressure , temp, dtdp, nstr_new, flux_plus_final, quench_levels, df, all_profiles, all_kzz, opd_now,w0_now,g0_now
         if as_dict: 
             return all_out
         else: 
