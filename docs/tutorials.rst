@@ -52,6 +52,17 @@ Relevant Citatons: `Adams et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022ApJ
    Modeling a Phase Curve pt 1 (Robbins-Blanch et al. 2022)</notebooks/9e_PhaseCurves.ipynb>
    Modeling a Phase Curve pt 2 (Robbins-Blanch et al. 2022)</notebooks/9f_PhaseCurves-wChemEq.ipynb>
 
+1D Climate Modeling (New!!)
+---------------------------
+Relevant Citatons: `Mukherjee et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022arXiv220807836M/abstract>`_
+
+.. toctree::
+   :maxdepth: 2
+
+   Brown Dwarfs </notebooks/climate/12a_BrownDwarf.ipynb>
+   Planet </notebooks/climate/12b_Exoplanet.ipynb>
+   Brown Dwarfs w/ Disequilibrium Chemistry </notebooks/climate/12c_BrownDwarf_DEQ.ipynb>
+
 Opacities & Approximatons
 -------------------------
 
