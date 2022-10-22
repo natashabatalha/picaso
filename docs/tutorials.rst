@@ -5,7 +5,7 @@ Basics of Reflected Light
 -------------------------
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    Getting Started  </notebooks/1_GetStarted.ipynb>
    Adding Clouds  </notebooks/2_AddingClouds.ipynb>
@@ -16,7 +16,7 @@ Basics of Transmisison
 ----------------------
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    
    Transmission Spectroscopy Exoplanets </notebooks/5_AddingTransitSpectrum.ipynb>
 
@@ -24,7 +24,7 @@ Basics of Thermal Emission
 --------------------------
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    Thermal Emission Exoplanets </notebooks/5_AddingThermalFlux.ipynb>
    Brown Dwarfs </notebooks/6_BrownDwarfs.ipynb>
@@ -35,7 +35,7 @@ Cloud Modeling with `Virga`
 ---------------------------
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    Moving Away From Box Models </notebooks/7_PairingPICASOToVIRGA.ipynb>
 
@@ -59,7 +59,7 @@ Relevant Citatons: `Adams et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022ApJ
 Relevant Citatons: `Mukherjee et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022arXiv220807836M/abstract>`_
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    Brown Dwarfs </notebooks/climate/12a_BrownDwarf.ipynb>
    Planet </notebooks/climate/12b_Exoplanet.ipynb>
@@ -67,19 +67,19 @@ Relevant Citatons: `Mukherjee et al. 2022 <https://ui.adsabs.harvard.edu/abs/202
 
 Fitting models to data (New!!)
 ------------------------------
-Relevant Citatons: `JWST Transiting Exoplanet Community Early Release Science Team <https://www.nature.com/articles/s41586-022-05269-w>`_
+Relevant Citatons: `JWST Transiting Exoplanet Community Early Release Science Team (2022) <https://www.nature.com/articles/s41586-022-05269-w>`_
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
-   Grid Search Analysis </notebooks/spectral_inference/GridSearch.ipynb>
+   Grid Search Analysis </notebooks/fitdata/GridSearch.ipynb>
 
 
 Opacities & Approximatons
 -------------------------
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    Query Opacites </notebooks/10_QueryOpacities.ipynb>
    Opacity Factory: Creating Custom Databases </notebooks/10_CreatingOpacityDb.ipynb>
