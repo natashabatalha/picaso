@@ -1940,7 +1940,14 @@ class RetrieveCKs():
         cur = conn.cursor()
         return cur,conn
 
-    def get_opacities(self, atmosphere):
+    def get_opacities(self, atmosphere,exclude_mol=1):
+        """
+        atmosphere : class 
+            picaso atmosphere class 
+        exclude_mol : int
+            Not yet functional for CK option since they are premixed. For individual 
+            CK molecules, this will ignore the optical contribution from one molecule. 
+        """
         self.get_continuum(atmosphere)
         self.get_pre_mix_ck(atmosphere)
     
@@ -2278,7 +2285,7 @@ class RetrieveOpacities():
         data =  dict((x+'_'+str(y), dat[::self.resample][self.loc]) for x,y,dat in data)       
         return data 
 
-    def get_opacities(self,atmosphere, dimension='1d', exclude_mol=1):
+    def get_opacities(self,atmosphere, exclude_mol=1):
         """
         Get's opacities using the atmosphere class using interpolation for molecular, but not 
         continuum. Continuum opacity is grabbed via nearest neighbor methodology. 
@@ -2346,7 +2353,7 @@ class RetrieveOpacities():
   
         conn.close() 
 
-    def get_opacities_nearest(self,atmosphere, dimension='1d', exclude_mol=1):
+    def get_opacities_nearest(self,atmosphere,  exclude_mol=1):
         """
         Get's opacities using the atmosphere class
         """

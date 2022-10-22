@@ -1,8 +1,4 @@
-from bokeh.plotting import figure, output_file, show
-from bokeh.palettes import Colorblind8
-import numpy as np
 import pandas as pd
-from bokeh.layouts import column,row,gridplot
 import numpy as np
 
 from bokeh.palettes import gray as colfun3
@@ -10,10 +6,13 @@ from bokeh.palettes import Spectral11,Category20,viridis,magma,RdBu11
 from bokeh.models import HoverTool
 from bokeh.models import LinearColorMapper, LogTicker,BasicTicker, ColorBar,LogColorMapper,Legend
 from bokeh.models import ColumnDataSource,LinearAxis,Range1d
-
-from bokeh.layouts import row,column
+from bokeh.layouts import row,column,gridplot
 from bokeh.io import output_notebook
+from bokeh.plotting import figure, output_file, show
+from bokeh.palettes import Colorblind8
+
 import os 
+import copy
 from numba import jit
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
@@ -24,7 +23,7 @@ import matplotlib.animation as animation
 from scipy.stats.stats import pearsonr  
 from scipy.stats import binned_statistic
 
-from .fluxes import blackbody
+from .fluxes import blackbody, get_transit_1d
 from .opacity_factory import *
 
 def mean_regrid(x, y, newx=None, R=None):
@@ -1661,6 +1660,90 @@ def molecule_contribution(contribution_out, opa, min_pressure=4.5, R=100, **kwar
             labels +=[j]
     fig = spectrum(wno,spec, legend=labels, **kwargs)
     return fig
+
+def transmission_contribution(full_output ,R=None,  **kwargs):
+    """
+    Compute the transmission contribution function from 
+    
+    https://petitradtrans.readthedocs.io/en/latest/content/notebooks/analysis.html#Transmission-contribution-functions
+    
+    
+    
+    Parameters
+    ----------
+    full_output : dict
+        full dictionary output with {'wavenumber','thermal','full_output'}
+    R : float, optional
+        Resolution for rebinning 
+    **kwargs : dict
+        Any key word argument for pcolormesh
+
+    Returns 
+    -------
+    fig
+        matplotlib figure 
+    ax
+        matplotlib ax 
+    um 
+        micron array
+    CF_bin
+        contribution function
+    """
+    DTAU = (full_output['taugas'][:,:,0] + 
+            full_output['taucld'][:,:,0] +  
+            full_output['tauray'][:,:,0])
+    z = full_output['level']['z']
+    dz= full_output['level']['dz']
+    nlevel = len(dz)
+    nwno = DTAU.shape[1]
+    rstar=1
+    k_b=1
+    amu=1
+    player = full_output['layer']['pressure']
+    tlayer = full_output['layer']['temperature']
+    colden = full_output['layer']['column_density']
+    mmw = full_output['layer']['mmw']
+
+    zs = []
+    for i in range(DTAU.shape[0]):
+        dtau_copy = copy.deepcopy(DTAU)
+        dtau_copy[i,:] = 0 
+        if i == 0 : 
+            norm = get_transit_1d(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
+                            player, tlayer, colden, DTAU)
+        zs+=[get_transit_1d(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
+                            player, tlayer, colden, dtau_copy)]
+    
+    CF=(norm-np.array(zs))/np.sum(norm-np.array(zs),axis=0)
+    
+    if not isinstance(R,type(None)):
+        wno,_ = mean_regrid(full_output['wavenumber'],full_output['wavenumber'],R=R)
+        CF_bin = np.zeros((len(full_output['layer']['pressure']),
+                             len(wno)))
+        for i in range(len(full_output['layer']['pressure'])):
+            _,CF_bin[i,:] = mean_regrid(full_output['wavenumber'],
+                                            CF[i,:],newx=wno)
+    else: 
+        CF_bin = CF
+        wno=full_output['wavenumber']
+            
+    kwargs['norm'] = kwargs.get('norm',colors.LogNorm())
+    kwargs['shading'] = kwargs.get('shading','auto')
+
+    press2D = np.transpose(np.repeat(full_output['layer']['pressure'][np.newaxis],
+                                     np.shape(CF_bin)[1], axis=0))
+
+    fig, ax = plt.subplots()
+
+    smap = ax.pcolormesh(1e4/wno, full_output['layer']['pressure'], CF_bin, **kwargs)
+    ax.set_ylim(np.max(full_output['layer']['pressure']),
+                np.min(full_output['layer']['pressure']))
+    ax.set_yscale('log')
+    ax.set_ylabel('Pressure (bar)')
+    ax.set_xlabel('Wavelength ($\mu$m)')
+    plt.colorbar(smap, label='Transmission CF')
+    
+    return fig, ax, 1e4/wno, CF_bin
 
 def brightness_temperature(out_dict,plot=True, R = None): 
     """

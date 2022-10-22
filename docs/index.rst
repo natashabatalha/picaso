@@ -12,13 +12,10 @@
    </div>
    <br/><br/>
 
-``picaso`` enables the computation of exoplanet and brown dwarf spectroscopy in transmission, emission or reflected light. Check out the use cases below to determine if ``picaso`` is the right tool for your science.
+``picaso`` enables the: 1) computation of exoplanet and brown dwarf spectroscopy in transmission, emission or reflected light, 2) 1D climate modeling of brown dwarfs and exoplanets, 3) fitting spectroscopic data to models.
 
 PICASO
 ======
-
-Example Use Cases
------------------
 
 .. raw:: html 
 
@@ -29,6 +26,14 @@ Example Use Cases
    </div>
    <br/><br/>
 
+Major Functionality
+-------------------
+
+- Reflected Light Spectroscopy 
+- Thermal Emission Spectroscopy 
+- Transit Spectroscopy 
+- 1D Climate modeling 
+- Fitting models to data 
 
 Resources
 ---------
