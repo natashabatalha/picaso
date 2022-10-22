@@ -557,8 +557,7 @@ class GridFitter():
 def detection_test(fitter, molecule, min_wavelength, max_wavelength,
                    grid_name, data_name, 
                    filename, molecule_baseline=None,baseline_wavelength=[],
-                   model_full=None,
-                   nproc=4,
+                   model_full=None, 
                    opa_kwargs={},plot=True):
     """
     Computes the detection significance of a molecule given a grid name, data name, 
@@ -635,12 +634,7 @@ def detection_test(fitter, molecule, min_wavelength, max_wavelength,
     def model_double_gauss(wlgrid, lam01, sig1, Amp1,cst1,lam02, sig2, Amp2,cst2):
         return ((Amp1*np.exp(-(wlgrid-lam01)**2/sig1**2)+cst1)/1e6 + 
                 (Amp2*np.exp(-(wlgrid-lam02)**2/sig2**2)+cst2)/1e6    )
-    
-    global loglike_double_gauss
-    global prior_transform_double_gauss
-    global loglike_gauss
-    global prior_transform_gauss
-
+    #TK ADD IN DOUBLE LOGLIKE AND DOUBLE PRIOR
     #likelihood function
     def loglike_gauss(theta):
         logAmp, lam0,logsig,cst=theta #fitting for the "log" amplitude and witdths b/c why not...could try linear to see if it affects answer
@@ -674,19 +668,19 @@ def detection_test(fitter, molecule, min_wavelength, max_wavelength,
         cst2=-200+(400)*cst2
         return logAmp1, lam01,logsig1,cst1,logAmp2, lam02,logsig2,cst2 
     
-    Nproc=nproc  #number of processors for multi processing--best if you can run on a 12 core+ node or something
+    Nproc=4  #number of processors for multi processing--best if you can run on a 12 core+ node or something
     Nlive=500 #number of nested sampling live points
 
     #setting up multi-threading and sampler     
-    pool = Pool(processes=Nproc)
+    #pool = Pool(processes=Nproc)
     results = {}
     models = []
     if double_gauss:
         models += ['double']
         Nparam=8  #number of parameters--make sure it is the same as what is in prior and loglike
         results['double'] = dynesty.NestedSampler(loglike_double_gauss, prior_transform_double_gauss, ndim=Nparam,
-                                            bound='multi', sample='auto', nlive=Nlive
-                                            ,pool=pool, queue_size=Nproc)
+                                            bound='multi', sample='auto', nlive=Nlive)#,
+                                            #pool=pool, queue_size=Nproc)
     #run single for comparison 
     Nparam = 4
     models += ['single']
@@ -724,7 +718,7 @@ def detection_test(fitter, molecule, min_wavelength, max_wavelength,
     Nparam=1
     results['line'] = dynesty.NestedSampler(loglike_line, prior_transform_line, ndim=Nparam,
                                         bound='multi', sample='auto', nlive=Nlive#,
-                                        ,pool=pool, queue_size=Nproc
+                                        #pool=pool, queue_size=Nproc
                                     )
     
     results['line'].run_nested()
