@@ -687,7 +687,8 @@ def detection_test(fitter, molecule, min_wavelength, max_wavelength,
     results['single'] = dynesty.NestedSampler(loglike_gauss, prior_transform_gauss, ndim=Nparam,
                                         bound='multi', sample='auto', nlive=Nlive)#,
                                         #pool=pool, queue_size=Nproc)
-    for dsampler in results.keys():
+    keys = list(results.keys())
+    for dsampler in keys:
         results[dsampler].run_nested()
         #GAUSS RESULTS
         results[f'dres_{dsampler}'] = results[dsampler].results #results
@@ -724,7 +725,7 @@ def detection_test(fitter, molecule, min_wavelength, max_wavelength,
     results['dres_line'] = results['line'].results
     results['logZ_line'] = results['dres_line'].logz[-1] 
     samples, weights = results['dres_line'].samples, np.exp(results['dres_line'].logwt - results['dres_line'].logz[-1])
-    results['samp_line'] = dyfunc.resample_equal(samples_line, weights_line)
+    results['samp_line'] = dyfunc.resample_equal(samples, weights)
     
     
     if plot:
