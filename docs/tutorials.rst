@@ -5,7 +5,7 @@ Basics of Reflected Light
 -------------------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    Getting Started  </notebooks/1_GetStarted.ipynb>
    Adding Clouds  </notebooks/2_AddingClouds.ipynb>
@@ -16,7 +16,7 @@ Basics of Transmisison
 ----------------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    
    Transmission Spectroscopy Exoplanets </notebooks/5_AddingTransitSpectrum.ipynb>
 
@@ -24,16 +24,18 @@ Basics of Thermal Emission
 --------------------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    Thermal Emission Exoplanets </notebooks/5_AddingThermalFlux.ipynb>
    Brown Dwarfs </notebooks/6_BrownDwarfs.ipynb>
+
+
 
 Cloud Modeling with `Virga`
 ---------------------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    Moving Away From Box Models </notebooks/7_PairingPICASOToVIRGA.ipynb>
 
@@ -42,7 +44,7 @@ Moving to 3 Dimensions
 Relevant Citatons: `Adams et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022ApJ...926..157A/abstract>`_ for 3D spectra and `Robbins-Blanch et al. 2022 <http://arxiv.org/abs/2204.03545>`_ for Phase Curves. 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    Non-Zero Phase and Spherical Integration </notebooks/8_SphericalIntegration.ipynb>
    Basics of a 3D Calculation </notebooks/9a_3DInputsWithPICASOandXarray.ipynb>
@@ -57,17 +59,27 @@ Relevant Citatons: `Adams et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022ApJ
 Relevant Citatons: `Mukherjee et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022arXiv220807836M/abstract>`_
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    Brown Dwarfs </notebooks/climate/12a_BrownDwarf.ipynb>
    Planet </notebooks/climate/12b_Exoplanet.ipynb>
    Brown Dwarfs w/ Disequilibrium Chemistry </notebooks/climate/12c_BrownDwarf_DEQ.ipynb>
 
+Fitting models to data (New!!)
+------------------------------
+Relevant Citatons: `JWST Transiting Exoplanet Community Early Release Science Team <https://www.nature.com/articles/s41586-022-05269-w>`_
+
+.. toctree::
+   :maxdepth: 1
+
+   Grid Search Analysis </notebooks/spectral_inference/GridSearch.ipynb>
+
+
 Opacities & Approximatons
 -------------------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    Query Opacites </notebooks/10_QueryOpacities.ipynb>
    Opacity Factory: Creating Custom Databases </notebooks/10_CreatingOpacityDb.ipynb>
@@ -81,13 +93,14 @@ FAQs
 .. toctree::
    :maxdepth: 2
 
-   FAQs </notebooks/FAQs.ipynb>
+   Misc FAQs </notebooks/FAQs.ipynb>
+   Contribution Functions </notebooks/11_ContributionFunctions.ipynb>
 
 Model Storage Best Practices
 ----------------------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    Data Storage Uniformity </notebooks/codehelp/data_uniformity_tutorial.ipynb>
 
