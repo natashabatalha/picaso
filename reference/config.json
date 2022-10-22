@@ -9,6 +9,24 @@
 		"mass":null,
 		"mass_unit":null
 	},
+	"climate":{
+		"t_table":null,
+		"p_table":null,
+		"grad":null,
+		"cp":null,
+		"ntemp_bb_grid":2400,
+		"dt_bb_grid":2.5,
+		"guess_temp":null,
+		"pressure":null,
+		"nstr":null,
+		"nofczns":null,
+		"rfacv":null,
+		"rfaci":null,
+		"cloudy":null,
+		"mh":null,
+		"Cto":null,
+		"cld_species":null
+	},
 	"star":{
 		"database":"ck04models",
 		"temp":null,
@@ -30,18 +48,32 @@
 		}
 	},
 	"approx":{
-		"method":"toon",
-		"stream":2,
 		"p_reference":1,
-		"single_phase":3,
-		"TTHG_params":{
-			"fraction":[1,-1,2],
-			"constant_back":-0.5, 
-			"constant_forward":1
-		},
-		"multi_phase":0,
-		"delta_eddington":true,
-		"raman":1
+		"rt_method":"toon",
+		"rt_params":{
+			"toon":{
+				"toon_coefficients":0,
+				"multi_phase":0
+			},
+			"SH":{
+				"single_form":0,
+				"rayleigh":1,
+				"heng_compare":0,
+				"blackbody_approx":1
+			},
+			"common":{
+				"single_phase":3,
+				"stream":2,
+				"TTHG_params":{
+					"fraction":[1,-1,2],
+					"constant_back":-0.5, 
+					"constant_forward":1
+				},
+				"delta_eddington":true,
+				"raman":1	
+			}
+		}
+		
 	},
 	"disco":{
 		"num_gangle":10,
