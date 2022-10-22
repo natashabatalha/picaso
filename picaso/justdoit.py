@@ -1261,7 +1261,7 @@ class inputs():
 
     def star(self, opannection,temp=None, metal=None, logg=None ,radius = None, radius_unit=None,
         semi_major=None, semi_major_unit = None, deq = False, 
-        database='phoenix',filename=None, w_unit=None, f_unit=None):
+        database='ck04models',filename=None, w_unit=None, f_unit=None):
         """
         Get the stellar spectrum using pysynphot and interpolate onto a much finer grid than the 
         planet grid. 
@@ -1289,6 +1289,7 @@ class inputs():
             (Optional) Any astropy unit (e.g. `radius_unit=astropy.unit.Unit("au")`)
         database : str 
             (Optional)The database to pull stellar spectrum from. See documentation for pysynphot. 
+            Most popular are 'ck04models', phoenix' and 
         filename : str 
             (Optional) Upload your own stellar spectrum. File format = two column white space (wave, flux). 
             Must specify w_unit and f_unit 
@@ -3764,7 +3765,7 @@ def get_targets():
         planets_df[i] = planets_df[i].astype(float,errors='ignore')
 
     return planets_df
-def load_planet(df, opacity, phase_angle = 0, stellar_db='phoenix', verbose=False,  **planet_kwargs):
+def load_planet(df, opacity, phase_angle = 0, stellar_db='ck04models', verbose=False,  **planet_kwargs):
     """
     Wrapper to simplify PICASO run. This really turns picaso into a black box. This was created 
     specifically Sagan School tutorial. It grabs planet parameters from the user supplied df, then 
@@ -3778,6 +3779,9 @@ def load_planet(df, opacity, phase_angle = 0, stellar_db='phoenix', verbose=Fals
         Opacity loaded from opannection
     phase_angle : float 
         Observing phase angle (radians)
+    stellar_db : str 
+        Stellar database to pull from. Default is ck04models but you can also 
+        use phoenix if you have those downloaded.
     verbose : bool , options
         Print out warnings 
     planet_kwargs : dict 
@@ -3802,7 +3806,6 @@ def load_planet(df, opacity, phase_angle = 0, stellar_db='phoenix', verbose=Fals
         if np.isnan(logmh) : raise Exception('Stellar Fe/H is not added to \
             dataframe input or to planet_kwargs through the column/key named st_metfe. Please add it to one of them')
 
-        stellar_db = 'phoenix'
 
         if logmh > 0.5: 
             if verbose: print ('Stellar M/H exceeded max value of 0.5. Value has been reset to the maximum')
