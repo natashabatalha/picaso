@@ -119,7 +119,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     w_single_rayleigh = inputs['approx']['rt_params']['SH']['w_single_rayleigh']
     w_multi_rayleigh = inputs['approx']['rt_params']['SH']['w_multi_rayleigh']
     psingle_rayleigh = inputs['approx']['rt_params']['SH']['psingle_rayleigh']
-    heng_compare = inputs['approx']['rt_params']['SH']['heng_compare']
 
 
     
@@ -232,7 +231,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                     w_single_form, w_multi_form, psingle_form, 
                                     w_single_rayleigh, w_multi_rayleigh, psingle_rayleigh,
                                     frac_a, frac_b, frac_c, constant_back, constant_forward, 
-                                    stream, b_top=b_top, single_form=single_form, heng_compare=heng_compare) 
+                                    stream, b_top=b_top, single_form=single_form) 
                 else:
                     #getting intensities, not fluxes (which is why second return is null)
                     xint = get_reflected_1d(nlevel, wno,nwno,ng,nt,
@@ -2999,7 +2998,7 @@ class inputs():
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='none',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
         p_reference=1, rt_method='toon', stream=2, blackbody_approx=1, toon_coefficients="quadrature",
-        single_form='explicit', heng_compare='off', query='nearest_neighbor',
+        single_form='explicit', query='nearest_neighbor',
         w_single_form='TTHG', w_multi_form='TTHG', psingle_form='TTHG', 
         w_single_rayleigh = 'on', w_multi_rayleigh='on', psingle_rayleigh='on'):
         """
@@ -3088,7 +3087,6 @@ class inputs():
         
         #unique to SH
         self.inputs['approx']['rt_params']['SH']['single_form'] = SH_psingle_form_options(printout=False).index(single_form)
-        self.inputs['approx']['rt_params']['SH']['heng_compare'] = heng_compare_options(printout=False).index(heng_compare)
         self.inputs['approx']['rt_params']['SH']['blackbody_approx'] = blackbody_approx
         self.inputs['approx']['rt_params']['SH']['w_single_form'] = SH_scattering_options(printout=False).index(w_single_form)
         self.inputs['approx']['rt_params']['SH']['w_multi_form'] = SH_scattering_options(printout=False).index(w_multi_form)
@@ -3966,9 +3964,6 @@ def stream_options(printout=True):
 def coefficients_options(printout=True):
     """Retrieve options for coefficients used in Toon calculation"""
     return ["quadrature","eddington"]
-def heng_compare_options(printout=True):
-    """Turn on Heng comparison"""
-    return ['off','on']
 
 def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             temp,pressure,FOPI, t_table, p_table, grad, cp, opacityclass, grav, 

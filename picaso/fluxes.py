@@ -57,7 +57,7 @@ def numba_cumsum(mat):
         new_mat[:,i] = cumsum(mat[:,i])
     return new_mat
 
-#@jit(nopython=True, cache=True)#, fastmath=True)
+@jit(nopython=True, cache=True)#, fastmath=True)
 def setup_tri_diag(nlayer,nwno ,c_plus_up, c_minus_up, 
     c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
     gama, dtau, exptrm_positive,  exptrm_minus):
@@ -154,7 +154,7 @@ def setup_tri_diag(nlayer,nwno ,c_plus_up, c_minus_up,
 
     return A, B, C, D
 
-#@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def setup_pent_diag(nlayer,nwno ,c_plus_up, c_minus_up, 
     c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
     gama, dtau, exptrm_positive,  exptrm_minus, g1, g2, exptrm, lamda):
@@ -257,7 +257,7 @@ def setup_pent_diag(nlayer,nwno ,c_plus_up, c_minus_up,
     return A, B, C, D, E, F
 
 
-#@jit(nopython=True, cache=True)#, fastmath=True)
+@jit(nopython=True, cache=True)#, fastmath=True)
 def tri_diag_solve(l, a, b, c, d):
     """
     Tridiagonal Matrix Algorithm solver, a b c d can be NumPy array type or Python list type.
@@ -629,7 +629,7 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             xint_at_top[ng,nt,:] = xint[0,:]    
     return xint_at_top
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
@@ -750,6 +750,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
     elif toon_coefficients == 0:#quadrature
         g1  = (sq3*0.5)*(2. - w0*(1.+ftau_cld*cosb)) #table 1 # 
         g2  = (sq3*w0*0.5)*(1.-ftau_cld*cosb)        #table 1 # 
+
     lamda = sqrt(g1**2 - g2**2)         #eqn 21
     gama  = (g1-lamda)/g2               #eqn 22
 
@@ -859,6 +860,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             elif multi_phase ==1:#'N=1':
                 multi_plus = 1.0+1.5*ftau_cld*cosb*u1  
                 multi_minus = 1.-1.5*ftau_cld*cosb*u1
+
             ################################ END OPTIONS FOR MULTIPLE SCATTERING####################
 
             G=positive*(multi_plus+gama*multi_minus)    *w0
@@ -919,7 +921,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                                 ftau_ray*(0.75*(1+cos_theta**2.0)))
             if single_form==1:
                 TAU = tau; DTAU = dtau; W0 = w0
-                p_single = 0
+                p_single = 0*p_single
                 Pu0 = legP(-u0) # legendre polynomials for -u0
                 Pu1 = legP(u1) # legendre polynomials for -u0
                 maxterm = 2
@@ -952,7 +954,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             xint_at_top[ng,nt,:] = xint[0,:]
             intensity[ng,nt,:,:] = xint
 
-    return xint_at_top , flux_out, intensity
+    return xint_at_top #, flux_out, intensity
 
 @jit(nopython=True, cache=True,fastmath=True)
 def get_reflected_1d_newclima(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
@@ -2492,12 +2494,12 @@ def get_transit_3d(nlevel, nwno, radius, gravity,rstar, mass, mmw, k_b, G,amu,
     """
     return 
 
-#@jit(nopython=True, cache=True, debug=True)
+@jit(nopython=True, cache=True, debug=True)
 def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ftau_ray, f_deltaM,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
     w_single_form, w_multi_form, psingle_form, w_single_rayleigh, w_multi_rayleigh, psingle_rayleigh,
-    frac_a, frac_b, frac_c, constant_back, constant_forward, stream, b_top=0, flx=1, single_form=0, heng_compare=0):
+    frac_a, frac_b, frac_c, constant_back, constant_forward, stream, b_top=0, flx=1, single_form=0):
     """
     Computes rooney fluxes given tau and everything is 3 dimensional. This is the exact same function 
     as `get_flux_geom_1d` but is kept separately so we don't have to do unecessary indexing for 
@@ -2595,9 +2597,6 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
         Toggle calculation of layerwise fluxes (0 = do not calculate, 1 = calculate)
     single_form : int 
         Toggle which version of p_single to use (0 = explicit, 1 = legendre)
-    heng_compare : int 
-        Temporary option being used for comparison with Heng results
-        
     Returns
     -------
     intensity at the top of the atmosphere for all the different ubar1 and ubar2 
@@ -2651,6 +2650,10 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
                     if w_multi_form==0:
                         w_multi[l,:,:] = (w - (2*l+1)*f_deltaM_) / (1 - f_deltaM_)
 
+            if (w_single_form==2 or w_multi_form==2): # isotropic (heng comparison)
+                if w_single_form==1: w_single[1:,:,:] *= 0
+                if w_multi_form==1: w_multi[1:,:,:] *= 0
+
             if w_single_rayleigh==1:
                 w_single[1:] *= ftau_cld
                 if stream==4:
@@ -2664,7 +2667,7 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
             if single_form==0: # explicit single form
                 if psingle_form==1: #OTHG
                     p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
-                else: # single_phase==2 or single_phase==3:#'TTHG':
+                elif psingle_form==2: #'TTHG':
                     g_forward = constant_forward*cosb_og
                     g_back = constant_back*cosb_og
                     f = frac_a + frac_b*g_back**frac_c
@@ -2675,17 +2678,6 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
                 if psingle_rayleigh==1: 
                     p_single = ftau_cld*p_single + ftau_ray*(0.75*(1+cos_theta**2.0))
 
-
-#            if heng_compare==1:# heng tests: isotropic multi
-#                # force isotropic multiple scattering
-#                w_multi[1:]*=0.0
-#                if rayleigh==1:
-#                    # force pure rayleigh single scattering
-#                    w_single[1:]*=0.0
-#                    w_single[2] = 0.5#*ftau_ray
-#
-#                    # OG psingle calculation
-#                    if single_form==0: p_single += 0.75*(1+cos_theta**2.0)
 
             for l in range(stream):
                 a[l,:,:] = (2*l + 1) -  w0 * w_multi[l,:,:]
@@ -2702,8 +2694,8 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
                 surf_reflect, u0, u1, dtau, tau, a, b, fluxes=flx, calculation=0) 
 
             if stream==4:
-                M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, nwno, w0, b_top_, b_surface, b_surface_SH4, 
-                    surf_reflect, u0, u1, dtau, tau, a, b, fluxes=flx, calculation=0) 
+                M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, nwno, w0_og, b_top_, b_surface, b_surface_SH4, 
+                    surf_reflect, u0, u1, dtau_og, tau_og, a, b, fluxes=flx, calculation=0) 
 
                 # F and G will be nonzero if fluxes=1
 
@@ -2948,7 +2940,7 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     
     return xint_at_top, intensity, flux 
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar0, ubar1,
         dtau, tau, a, b, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
     """
@@ -3149,7 +3141,7 @@ def setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar
 #    import IPython; IPython.embed()
     return Mb, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2
 
-#@jit(nopython=True, cache=True, debug=True)
+@jit(nopython=True, cache=True, debug=True)
 def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, surf_reflect, ubar0, ubar1,
         dtau, tau, a, b, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
 
@@ -3510,7 +3502,7 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
 
     return Mb, B, A_int, N_int, F_bot, G_bot, F, G
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream, nlayer):
     """
     Solve the Spherical Harmonics Problem
@@ -3536,7 +3528,7 @@ def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream, nlayer):
     flux = vec_dot(F,X) + G
     return (intgrl_new, flux, X)
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def calculate_flux(F, G, X):
     """
     Calculate fluxes
@@ -3544,7 +3536,7 @@ def calculate_flux(F, G, X):
     #return F.dot(X) + G
     return mat_dot(F,X) + G
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def legP(mu): # Legendre polynomials
     """
     Generate array of Legendre polynomials
