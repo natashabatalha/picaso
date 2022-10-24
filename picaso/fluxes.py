@@ -634,7 +634,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
     frac_a, frac_b, frac_c, constant_back, constant_forward,
-    toon_coefficients=0, tridiagonal=0, b_top=0, single_form=0):
+    toon_coefficients=0, tridiagonal=0, b_top=0):
     """
     Computes toon fluxes given tau and everything is 1 dimensional. This is the exact same function 
     as `get_flux_geom_3d` but is kept separately so we don't have to do unecessary indexing for fast
@@ -721,9 +721,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
         0 for tridiagonal, 1 for pentadiagonal 
     toon_coefficients : int     
         0 for quadrature (default) 1 for eddington
-    single_form : int 
-        form of the phase function can either be written as an 'explicit' (0) henyey greinstein 
-        or it can be written as a 'legendre' (1) expansion. Default is 'explicit'=0
+
     Returns
     -------
     intensity at the top of the atmosphere for all the different ubar1 and ubar2 
@@ -921,19 +919,24 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                                                 /sqrt((1+g_back**2+2*g_back*cos_theta)**3))+            
                                 #rayleigh phase function
                                 ftau_ray*(0.75*(1+cos_theta**2.0)))
-            if single_form==1:
-                TAU = tau; DTAU = dtau; W0 = w0
-                p_single = 0*p_single
-                Pu0 = legP(-u0) # legendre polynomials for -u0
-                Pu1 = legP(u1) # legendre polynomials for -u0
-                maxterm = 2
-                for l in range(maxterm):
-                    w = (2*l+1) * cosb_og**l
-                    w_single = (w - (2*l+1)*cosb_og**maxterm) / (1 - cosb_og**maxterm) 
-                    p_single = p_single + w_single * Pu0[l]*Pu1[l]
+            
+            #removing single form option from code 
+            #single_form : int 
+            #    form of the phase function can either be written as an 'explicit' (0) henyey greinstein 
+            #    or it can be written as a 'legendre' (1) expansion. Default is 'explicit'=0
 
-            else:
-                TAU = tau_og; DTAU = dtau_og; W0 = w0_og
+            #if single_form==1:
+            #    TAU = tau; DTAU = dtau; W0 = w0
+            #    p_single = 0*p_single
+            #    Pu0 = legP(-u0) # legendre polynomials for -u0
+            #    Pu1 = legP(u1) # legendre polynomials for -u0
+            #    maxterm = 2
+            #    for l in range(maxterm):
+            #        w = (2*l+1) * cosb_og**l
+            #        w_single = (w - (2*l+1)*cosb_og**maxterm) / (1 - cosb_og**maxterm) 
+            #        p_single = p_single + w_single * Pu0[l]*Pu1[l]
+            #else:
+            #    TAU = tau_og; DTAU = dtau_og; W0 = w0_og
 
             ################################ END OPTIONS FOR DIRECT SCATTERING####################
 
