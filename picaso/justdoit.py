@@ -190,10 +190,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     #opacity assumptions
     query_method = inputs['opacities'].get('query',0)
     exclude_mol = inputs['atmosphere']['exclude_mol']
-    if exclude_mol==1: 
-        get_opa_kwargs = {}
-    else: 
-        get_opa_kwargs = {'exclude_mol':exclude_mol}
 
     #only use nearest neighbor if not using CK method and not using specied by user
     if ((query_method == 0) & (isinstance(getattr(opacityclass,'ck_filename',1),int))): 
@@ -207,7 +203,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
     if dimension == '1d':
         #lastly grab needed opacities for the problem
-        get_opacities(atm,*get_opa_kwargs)
+        get_opacities(atm,exclude_mol=exclude_mol)
         #only need to get opacities for one pt profile
 
         #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
@@ -333,7 +329,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                 #diesct just a subsection to get the opacity 
                 atm_1d.disect(g,t)
 
-                get_opacities(atm_1d,*get_opa_kwargs)
+                get_opacities(atm_1d)
 
                 dtau, tau, w0, cosb,ftau_cld, ftau_ray, gcos2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, WO_no_raman, f_deltaM = compute_opacity(
                     atm_1d, opacityclass, ngauss=ngauss, stream=stream,delta_eddington=delta_eddington,
@@ -469,6 +465,85 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             returns['full_output'] = atm
 
     return returns
+
+def _finditem(obj, key):
+    if key in obj: return obj[key]
+    for k, v in obj.items():
+        if isinstance(v,dict):
+            item = _finditem(v, key)
+            if item is not None:
+                return item
+
+def input_xarray(xr_usr, opacity,p_reference=10):
+    """
+    This takes an input based on these standards and runs: 
+    -gravity
+    -phase_angle
+    -star
+    -approx (p_reference=10)
+    -atmosphere
+    -clouds (if there are any)
+
+    Parameters
+    ----------
+    xr_usr : xarray
+        xarray based on ERS formatting requirements 
+    opacity : justdoit.opannection
+        opacity connection
+    p_reference : float 
+        reference pressure in bars 
+
+    Example
+    -------
+    case = jdi.input_xarray(xr_user)
+    case.spectrum(opacity,calculation='transit_depth')
+    """
+    case = inputs()
+    case.phase_angle(0) #radians
+
+    #define gravity
+    planet_params = eval(xr_usr.attrs['planet_params'])
+    stellar_params = eval(xr_usr.attrs['stellar_params'])
+    orbit_params = eval(xr_usr.attrs['orbit_params'])
+
+    mp = _finditem(planet_params,'mp')
+    rp = _finditem(planet_params,'rp')
+
+    if (not isinstance(mp, type(None)) & (not isinstance(rp, type(None)))):
+        case.gravity(mass = mp['value'], mass_unit=u.Unit(mp['unit']),
+                    radius=rp['value'], radius_unit=u.Unit(rp['unit']))
+    else: 
+        print('Mass and Radius not provided in xarray, user needs to run gravity function')
+
+    steff = _finditem(stellar_params,'steff')
+    feh = _finditem(stellar_params,'feh')
+    logg = _finditem(stellar_params,'logg')
+    ms = _finditem(stellar_params,'ms')
+    rs = _finditem(stellar_params,'rs')
+    semi_major = _finditem(planet_params,'sma')
+    case.star(opacity, steff,feh,logg, radius=rs['value'], 
+              radius_unit=u.Unit(rs['unit']))
+
+    case.approx(p_reference=p_reference)
+
+    df = {'pressure':xr_usr.coords['pressure'].values}
+    for i in [i for i in xr_usr.data_vars.keys() if 'transit' not in i]:
+        if i not in ['opd','ssa','asy']:
+            #only get single coord pressure stuff
+            if (len(xr_usr.data_vars[i].values.shape)==1 &
+                        ('pressure' in xr_usr.data_vars[i].coords)):
+                df[i]=xr_usr.data_vars[i].values
+        
+    case.atmosphere(df=pd.DataFrame(df))
+
+    if 'opd' in xr_usr.data_vars.keys():
+        df_cld = vj.picaso_format(xr_usr['opd'].values, 
+                xr_usr['ssa'].values, 
+                xr_usr['asy'].values)
+
+        case.clouds(df=df_cld)
+
+    return case
 
 def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     """
@@ -687,7 +762,12 @@ def opannection(wave_range = None, filename_db = None, raman_db = None,
 
         if isinstance(filename_db,type(None)): 
             filename_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['ktable_continuum'])
-
+        if not os.path.exists(ck_db):
+            if ck_db[-1] == '/':ck_db = ck_db[0:-1]
+            if os.path.isfile(ck_db+'.tar.gz'): 
+                raise Exception('The CK filename that you have selected appears still be .tar.gz. Please unpack and rerun')
+            else: 
+                raise Exception('The CK filename that you have selected does not exist. Please make sure you have downloaded and unpacked the right CK file.')
         opacityclass=RetrieveCKs(
                     ck_db, 
                     filename_db, 
@@ -1186,7 +1266,7 @@ class inputs():
 
     def star(self, opannection,temp=None, metal=None, logg=None ,radius = None, radius_unit=None,
         semi_major=None, semi_major_unit = None, deq = False, 
-        database='phoenix',filename=None, w_unit=None, f_unit=None):
+        database='ck04models',filename=None, w_unit=None, f_unit=None):
         """
         Get the stellar spectrum using pysynphot and interpolate onto a much finer grid than the 
         planet grid. 
@@ -1214,6 +1294,7 @@ class inputs():
             (Optional) Any astropy unit (e.g. `radius_unit=astropy.unit.Unit("au")`)
         database : str 
             (Optional)The database to pull stellar spectrum from. See documentation for pysynphot. 
+            Most popular are 'ck04models', phoenix' and 
         filename : str 
             (Optional) Upload your own stellar spectrum. File format = two column white space (wave, flux). 
             Must specify w_unit and f_unit 
@@ -1334,8 +1415,8 @@ class inputs():
             
             #fine_flux_star[where_are_NaNs] = 0   
             
-            opannection.unshifted_stellar_spec = fine_flux_star            
-
+            opannection.unshifted_stellar_spec = fine_flux_star  
+            bin_flux_star = fine_flux_star          
         else :
             flux_star_interp = np.interp(wno_planet, wno_star, flux_star)
             _x,bin_flux_star = mean_regrid(wno_star, flux_star,newx=wno_planet)
@@ -3317,7 +3398,8 @@ class inputs():
         self.inputs['climate']['r_planet'] = r_planet # jupiter radii
 
     def climate(self, opacityclass, save_all_profiles = False, as_dict=True,with_spec=False,
-        save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False, kz = None, vulcan_run = False, photochem=False,on_fly=False,gases_fly=None,mhdeq=None,CtoOdeq=None ):
+        save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False, kz = None):#,
+        #vulcan_run = False, photochem=False,on_fly=False,gases_fly=None,mhdeq=None,CtoOdeq=None ):
         """
         Top Function to run the Climate Model
 
@@ -3338,11 +3420,18 @@ class inputs():
         kz : array
             Kzz input array if user wants constant or whatever input profile (cgs)
         vulcan_run : bool
-            If you want to run vulcan on the fly (takes longer),True/False
+            (beta, contact developers)If you want to run vulcan on the fly (takes longer),True/False
         photochem : bool
-            If you want to run photochemistry in vulcan on the fly (takes much longer),True/False
+            (beta, contact developers)If you want to run photochemistry in vulcan on the fly (takes much longer),True/False
         
         """
+        #save to user 
+        all_out = {}
+
+        vulcan_run=False;photochem=False;on_fly=False;gases_fly=None;mhdeq=None;CtoOdeq=None
+        if (vulcan_run or photochem): 
+            raise Exception("Vulcan and photochemistry is not yet a live feature. If you are interesting in helping the development team, contact us.")
+        
         #get necessary parameters from opacity ck-tables 
         wno = opacityclass.wno
         delta_wno = opacityclass.delta_wno
@@ -3454,7 +3543,7 @@ class inputs():
                              rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, save_profile,all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop)
 
         
-        if diseq_chem == True:
+        if diseq_chem:
             wv196 = 1e4/wno
 
             # first change the nstr vector because need to check if they grow or not
@@ -3501,11 +3590,10 @@ class inputs():
             else :
                 save_kzz = 0
             
-            
-            if self_consistent_kzz == True : # MLT plus some prescription in radiative zone
+            #here begins the self consistent Kzz calculation 
+            # MLT plus some prescription in radiative zone
+            if self_consistent_kzz: 
 
-                
-                
                 flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = climate(pressure, temp, delta_wno, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
                 COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
                 ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
@@ -3525,13 +3613,18 @@ class inputs():
             #CtoO = '1.0' # don't change these as the opacities you are using are based on these #
             filename_db=os.path.join(__refdata__, 'climate_INPUTS/ck_cx_cont_opacities_661.db')
             
-            if on_fly == True:
+            if on_fly:
                 print("From now I will mix "+str(gases_fly)+" only on--the--fly")
+                #mhdeq and ctodeq will be auto by opannection
+                #NO Background, just CIA + whatever in gases_fly
                 ck_db=os.path.join(__refdata__, 'climate_INPUTS/sonora_2020_feh'+mhdeq+'_co_'+CtoOdeq+'.data.196')
                 opacityclass = opannection(ck=True, ck_db=ck_db,filename_db=filename_db,deq = True,on_fly=True,gases_fly=gases_fly)
             else:
-                ck_db=os.path.join(__refdata__, 'climate_INPUTS/m+0.0_co1.0.data.196')
-                opacityclass = opannection(ck=True, ck_db=ck_db,filename_db=filename_db,deq = True,on_fly=False)
+                #phillips comparison (discontinued) 
+                #background + gases 
+                #ck_db=os.path.join(__refdata__, 'climate_INPUTS/m+0.0_co1.0.data.196')
+                opacityclass = opannection(ck=True, ck_db=opacityclass.ck_filename,
+                    filename_db=filename_db,deq = True,on_fly=False)
 
         
             
@@ -3560,7 +3653,7 @@ class inputs():
                 r_planet = self.inputs['climate']['r_planet']
                 FOPI = self.star(opacityclass, temp =T_star,metal =metal, logg =logg, radius = r_star, radius_unit=u.R_sun,semi_major= semi_major , semi_major_unit = u.AU, deq= True)
 
-            if vulcan_run == False :
+            if not vulcan_run:
                 quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale= True) # determine quench levels
 
                 all_kzz = np.append(all_kzz, t_mix) # save kzz
@@ -3650,30 +3743,35 @@ class inputs():
                             rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, self_consistent_kzz,save_kzz,all_kzz, vulcan_run,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,on_fly=on_fly, gases_fly=gases_fly  )
             
                 
-            
-            return pressure , temp, dtdp, nstr_new, flux_plus_final, quench_levels, df, all_profiles, all_kzz, opd_now,w0_now,g0_now
-            
+
+            #diseq stuff
+            all_out['diseq_out'] = {}
+            if save_all_kzz: all_out['diseq_out']['all_kzz'] = all_kzz
+            all_out['diseq_out']['quench_levels'] = quench_levels
+
+
+            #return pressure , temp, dtdp, nstr_new, flux_plus_final, quench_levels, df, all_profiles, all_kzz, opd_now,w0_now,g0_now
+        
+        #all output to user
+        all_out['pressure'] = pressure
+        all_out['temperature'] = temp
+        all_out['ptchem_df'] = df
+        all_out['dtdp'] = dtdp
+        all_out['cvz_locs'] = nstr_new
+        all_out['flux']=flux_plus_final
+        if save_all_profiles: all_out['all_profiles'] = all_profiles            
            
         if with_spec:
+            opacityclass = opannection(ck=True, ck_db=opacityclass.ck_filename,deq=False)
             bundle = inputs(calculation='brown')
             bundle.phase_angle(0)
             bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
             bundle.premix_atmosphere(opacityclass,df)
-            df_spec = bundle.spectrum(opacityclass,full_output=True)        
+            df_spec = bundle.spectrum(opacityclass,full_output=True)    
+            all_out['spectrum_output'] = df_spec 
 
         if as_dict: 
-            return {
-            'pressure':pressure,
-            'temperature':temp,
-            'dtdp':dtdp,
-            'cvz_locs':nstr_new,
-            'flux':flux_plus_final,
-            'spectrum_output':df_spec,
-            'all_profiles':all_profiles,
-            'opd':opd_now,
-            'w0':w0_now,
-            'g0':g0_now
-            }
+            return all_out
         else: 
             return pressure , temp, dtdp, nstr_new, flux_plus_final, df, all_profiles , opd_now,w0_now,g0_now
 
@@ -3690,7 +3788,7 @@ def get_targets():
         planets_df[i] = planets_df[i].astype(float,errors='ignore')
 
     return planets_df
-def load_planet(df, opacity, phase_angle = 0, stellar_db='phoenix', verbose=False,  **planet_kwargs):
+def load_planet(df, opacity, phase_angle = 0, stellar_db='ck04models', verbose=False,  **planet_kwargs):
     """
     Wrapper to simplify PICASO run. This really turns picaso into a black box. This was created 
     specifically Sagan School tutorial. It grabs planet parameters from the user supplied df, then 
@@ -3704,6 +3802,9 @@ def load_planet(df, opacity, phase_angle = 0, stellar_db='phoenix', verbose=Fals
         Opacity loaded from opannection
     phase_angle : float 
         Observing phase angle (radians)
+    stellar_db : str 
+        Stellar database to pull from. Default is ck04models but you can also 
+        use phoenix if you have those downloaded.
     verbose : bool , options
         Print out warnings 
     planet_kwargs : dict 
@@ -3728,7 +3829,6 @@ def load_planet(df, opacity, phase_angle = 0, stellar_db='phoenix', verbose=Fals
         if np.isnan(logmh) : raise Exception('Stellar Fe/H is not added to \
             dataframe input or to planet_kwargs through the column/key named st_metfe. Please add it to one of them')
 
-        stellar_db = 'phoenix'
 
         if logmh > 0.5: 
             if verbose: print ('Stellar M/H exceeded max value of 0.5. Value has been reset to the maximum')

@@ -656,7 +656,7 @@ class RetrieveCKs():
         if deq == False :
         #choose get data function based on layer number
             if self.kcoeff_layers==1060: 
-                self.get_legacy_data_1060(wave_range) #wave_range not used yet
+                self.get_legacy_data_1060(wave_range,deq=deq) #wave_range not used yet
             elif self.kcoeff_layers==1460:
                 self.get_legacy_data_1460(wave_range) #wave_range not used yet
             else: 
@@ -670,10 +670,11 @@ class RetrieveCKs():
             
         
         elif (deq == True) and (on_fly == False) :
-            self.get_gauss_pts_661()
+            #self.get_gauss_pts_661()#Discontinuing to delete repetetive code
+            self.get_legacy_data_1060(wave_range,deq=deq)
             self.get_new_wvno_grid_661()
             
-            opa_filepath  = os.path.join(__refdata__, 'climate_INPUTS/661')#'/Users/sagnickmukherjee/Documents/GitHub/Disequilibrium-Picaso/reference/climate_INPUTS/661'
+            opa_filepath  = os.path.join(__refdata__, 'climate_INPUTS/661')
             self.load_kcoeff_arrays(opa_filepath)
             self.db_filename = cont_dir
             self.get_available_continuum()
@@ -684,7 +685,7 @@ class RetrieveCKs():
             self.get_gauss_pts_661_1460()
             self.get_new_wvno_grid_661()
             
-            opa_filepath  = os.path.join(__refdata__, 'climate_INPUTS/661')#'/Users/sagnickmukherjee/Documents/GitHub/Disequilibrium-Picaso/reference/climate_INPUTS/661'
+            opa_filepath  = os.path.join(__refdata__, 'climate_INPUTS/661')
             self.load_kcoeff_arrays_first(opa_filepath,gases_fly)
             self.db_filename = cont_dir
             self.get_available_continuum()
@@ -692,7 +693,7 @@ class RetrieveCKs():
             self.run_cia_spline_661()
         return
 
-    def get_legacy_data_1060(self,wave_range):
+    def get_legacy_data_1060(self,wave_range, deq=False):
         """
         Function to read the legacy data of the 1060 grid computed by Roxana Lupu. 
 
@@ -725,13 +726,13 @@ class RetrieveCKs():
 
         #abundances for elements as a funtion of pressure, temp, and element
         #self.abunds = np.reshape(abunds,(self.max_pc,self.max_tc,max_ele),order='F')
-
-        self.nwno = int(data.iloc[end_abunds,1])
-
         end_window = int(max_windows/3)
-        self.wno = (data.iloc[end_abunds:end_abunds+end_window,0:3].astype(float)).values.ravel(
+        if not deq:
+            self.nwno = int(data.iloc[end_abunds,1])
+ 
+            self.wno = (data.iloc[end_abunds:end_abunds+end_window,0:3].astype(float)).values.ravel(
         )[2:]
-        self.delta_wno = (data.iloc[end_abunds+end_window+1:1+end_abunds+2*end_window,0:3].astype(float)).values.ravel(
+            self.delta_wno = (data.iloc[end_abunds+end_window+1:1+end_abunds+2*end_window,0:3].astype(float)).values.ravel(
         )[1:-1]
         end_windows =2+end_abunds+2*end_window
 
@@ -766,12 +767,13 @@ class RetrieveCKs():
         self.gauss_pts = [i[0] for i in gpts_wts]
         self.gauss_wts = [i[1] for i in gpts_wts]
 
-        kappa = np.array(data.iloc[3+end_temps+int(2*self.ngauss/3):-2,0:3].astype(float)).ravel()
-        kappa = np.reshape(kappa, (max_windows,self.ngauss*2,self.max_pc,self.max_tc),order='F')
-        #want the axes to be [npressure, ntemperature, nwave, ngauss ]
-        kappa = kappa.swapaxes(1,3)
-        kappa = kappa.swapaxes(0,2)
-        self.kappa = kappa[:, :, 0:self.nwno, 0:self.ngauss] 
+        if not deq:
+            kappa = np.array(data.iloc[3+end_temps+int(2*self.ngauss/3):-2,0:3].astype(float)).ravel()
+            kappa = np.reshape(kappa, (max_windows,self.ngauss*2,self.max_pc,self.max_tc),order='F')
+            #want the axes to be [npressure, ntemperature, nwave, ngauss ]
+            kappa = kappa.swapaxes(1,3)
+            kappa = kappa.swapaxes(0,2)
+            self.kappa = kappa[:, :, 0:self.nwno, 0:self.ngauss] 
 
         #finally add pressure/temperature scale to abundances
         self.full_abunds['pressure']= self.pressures[self.pressures>0]
@@ -865,83 +867,6 @@ class RetrieveCKs():
         self.full_abunds['temperature'] = np.concatenate([[i]*max(self.nc_p) for i in self.temps])[self.pressures>0]
 
 
-    def get_gauss_pts_661(self):
-        """
-        Function to read the legacy data of the 1060 grid computed by Roxana Lupu. 
-        Note
-        ----
-        This function is **highly** sensitive to the file format. You cannot edit the ascii file and then 
-        run this function. Each specific line is accounted for.
-        """
-        data = pd.read_csv(os.path.join(self.ck_filename,'ascii_data'), 
-                  delim_whitespace=True,header=None, 
-                  names=list(range(9)),dtype=str)
-
-        num_species = int(data.iloc[0,0])
-        max_ele = 35 
-        self.max_tc = 60 
-        self.max_pc = 18
-        max_windows = 200 
-
-        self.molecules = [str(data.iloc[i,j]) for i in [0,1,2] 
-           for j in range(9)][1:num_species+1]
-
-        first = [float(i) for i in data.iloc[2,2:4]]
-        last = [float(data.iloc[int(max_ele*self.max_pc*self.max_tc/3)+2,0])]
-
-        end_abunds = 2+int(max_ele*self.max_pc*self.max_tc/3)
-        abunds = list(np.array(
-            data.iloc[3:end_abunds,0:3].astype(float)
-            ).ravel())
-        abunds = first + abunds + last
-
-        #abundances for elements as a funtion of pressure, temp, and element
-        #self.abunds = np.reshape(abunds,(self.max_pc,self.max_tc,max_ele),order='F')
-
-        #self.nwno = int(data.iloc[end_abunds,1])
-
-        end_window = int(max_windows/3)
-        #self.wno = (data.iloc[end_abunds:end_abunds+end_window,0:3].astype(float)).values.ravel(
-        #)[2:]
-        #self.delta_wno = (data.iloc[end_abunds+end_window+1:1+end_abunds+2*end_window,0:3].astype(float)).values.ravel(
-        #)[1:-1]
-        end_windows =2+end_abunds+2*end_window
-
-        nc_t=int(data.iloc[end_windows,0])
-        #this defines the number of pressure points per temperature grid
-        #sometimes not all pressures are run for all temperatures
-        self.nc_p = np.array(data.iloc[end_windows:1+end_windows+int(self.max_tc/6),0:6].astype(int
-                    )).ravel()[1:-5]
-        end_npt = 1+end_windows+int(self.max_tc/6) + 9 #9 dummy rows
-
-        first = list(data.iloc[end_npt,2:4].astype(float))
-
-        self.pressures = np.array(first+list(np.array(data.iloc[end_npt+1:end_npt + int(self.max_pc*self.max_tc/3) + 1,0:3]
-                         .astype(float))
-                         .ravel()[0:-2]))/1e3
-        #pressures = np.array(pressures)[np.where(np.array(pressures)>0)]
-        end_ps = end_npt + int(self.max_pc*self.max_tc/3)
-
-        self.temps = list(np.array(data.iloc[end_ps:1+int(end_ps+nc_t/3),0:3]
-                .astype(float))
-                .ravel()[1:-2])
-        end_temps = int(end_ps+nc_t/3)
-
-        ngauss1, ngauss2, gfrac =data.iloc[end_temps,1:4].astype(float)
-        self.ngauss = int(data.iloc[end_temps+1,0])
-
-        assert self.ngauss == 8, 'Legacy code uses 8 gauss points not {0}. Check read in statements'.format(self.ngauss)
-
-        gpts_wts = np.reshape(np.array(data.iloc[end_temps+1:2+end_temps+int(2*self.ngauss/3),0:3]
-                 .astype(float)).ravel()[1:-1], (self.ngauss,2))
-
-        self.gauss_pts = [i[0] for i in gpts_wts]
-        self.gauss_wts = [i[1] for i in gpts_wts]
-
-        #finally add pressure/temperature scale to abundances
-        self.full_abunds['pressure']= self.pressures[self.pressures>0]
-        self.full_abunds['temperature'] = np.concatenate([[i]*max(self.nc_p) for i in self.temps])[self.pressures>0]
-    
     def get_gauss_pts_661_1460(self):
         """
         Function to read the legacy data of the 1060 grid computed by Roxana Lupu. 
@@ -2017,7 +1942,14 @@ class RetrieveCKs():
         cur = conn.cursor()
         return cur,conn
 
-    def get_opacities(self, atmosphere):
+    def get_opacities(self, atmosphere,exclude_mol=1):
+        """
+        atmosphere : class 
+            picaso atmosphere class 
+        exclude_mol : int
+            Not yet functional for CK option since they are premixed. For individual 
+            CK molecules, this will ignore the optical contribution from one molecule. 
+        """
         self.get_continuum(atmosphere)
         self.get_pre_mix_ck(atmosphere)
     
@@ -2355,7 +2287,7 @@ class RetrieveOpacities():
         data =  dict((x+'_'+str(y), dat[::self.resample][self.loc]) for x,y,dat in data)       
         return data 
 
-    def get_opacities(self,atmosphere, dimension='1d', exclude_mol=1):
+    def get_opacities(self,atmosphere, exclude_mol=1):
         """
         Get's opacities using the atmosphere class using interpolation for molecular, but not 
         continuum. Continuum opacity is grabbed via nearest neighbor methodology. 
@@ -2423,7 +2355,7 @@ class RetrieveOpacities():
   
         conn.close() 
 
-    def get_opacities_nearest(self,atmosphere, dimension='1d', exclude_mol=1):
+    def get_opacities_nearest(self,atmosphere,  exclude_mol=1):
         """
         Get's opacities using the atmosphere class
         """
