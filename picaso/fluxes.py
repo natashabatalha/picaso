@@ -721,7 +721,9 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
         0 for tridiagonal, 1 for pentadiagonal 
     toon_coefficients : int     
         0 for quadrature (default) 1 for eddington
-
+    single_form : int 
+        form of the phase function can either be written as an 'explicit' (0) henyey greinstein 
+        or it can be written as a 'legendre' (1) expansion. Default is 'explicit'=0
     Returns
     -------
     intensity at the top of the atmosphere for all the different ubar1 and ubar2 
@@ -733,10 +735,10 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
     #what we want : intensity at the top as a function of all the different angles
 
     xint_at_top = zeros((numg, numt, nwno))
-    intensity = zeros((numg, numt, nlevel, nwno))
+    #intensity = zeros((numg, numt, nlevel, nwno))
 
     nlayer = nlevel - 1 
-    flux_out = zeros((numg, numt, 2*nlevel, nwno))
+    #flux_out = zeros((numg, numt, 2*nlevel, nwno))
 
     #now define terms of Toon et al 1989 quadrature Table 1 
     #https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JD094iD13p16287
@@ -832,14 +834,14 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             #use expression for bottom flux to get the flux_plus and flux_minus at last
             #bottom layer
             flux_zero  = positive[-1,:]*exptrm_positive[-1,:] + gama[-1,:]*negative[-1,:]*exptrm_minus[-1,:] + c_plus_down[-1,:]
-            flux_minus  = gama*positive*exptrm_positive + negative*exptrm_minus + c_minus_down
-            flux_plus  = positive*exptrm_positive + gama*negative*exptrm_minus + c_plus_down
-            flux = zeros((2*nlevel, nwno))
-            flux[0,:] = (gama*positive + negative + a_minus)[0,:]
-            flux[1,:] = (positive + gama*negative + a_plus)[0,:]
-            flux[2::2, :] = flux_minus
-            flux[3::2, :] = flux_plus
-            flux_out[ng,nt,:,:] = flux
+            #flux_minus  = gama*positive*exptrm_positive + negative*exptrm_minus + c_minus_down
+            #flux_plus  = positive*exptrm_positive + gama*negative*exptrm_minus + c_plus_down
+            #flux = zeros((2*nlevel, nwno))
+            #flux[0,:] = (gama*positive + negative + a_minus)[0,:]
+            #flux[1,:] = (positive + gama*negative + a_plus)[0,:]
+            #flux[2::2, :] = flux_minus
+            #flux[3::2, :] = flux_plus
+            #flux_out[ng,nt,:,:] = flux
 
             xint = zeros((nlevel,nwno))
             xint[-1,:] = flux_zero/pi
@@ -952,7 +954,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                         )
 
             xint_at_top[ng,nt,:] = xint[0,:]
-            intensity[ng,nt,:,:] = xint
+            #intensity[ng,nt,:,:] = xint
 
     return xint_at_top #, flux_out, intensity
 
