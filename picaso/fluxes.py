@@ -944,9 +944,9 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                 #direct beam
                 xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/u1) 
                         #single scattering albedo from sun beam (from ubar0 to ubar1)
-                        +(W0[i,:]*F0PI/(4.*pi))
-                        *(p_single[i,:])*exp(-TAU[i,:]/u0)
-                        *(1. - exp(-DTAU[i,:]*(u0+u1)
+                        +(w0_og[i,:]*F0PI/(4.*pi))
+                        *(p_single[i,:])*exp(-tau_og[i,:]/u0)
+                        *(1. - exp(-dtau_og[i,:]*(u0+u1)
                         /(u0*u1)))*
                         (u0/(u0+u1))
                         #multiple scattering terms p_single
@@ -2668,7 +2668,7 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
                 if stream==4:
                     w_multi[2] += 0.5*ftau_ray 
 
-            # single-scattering options
+            #single-scattering options
             if single_form==0: # explicit single form
                 if psingle_form==1: #OTHG
                     p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
