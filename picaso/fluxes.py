@@ -37,6 +37,16 @@ def slice_gt(array, lim):
         array[i,:] = new     
     return array
 
+@jit(nopython=True, cache=True)
+def slice_rav(array, lim):
+    """Funciton to replace values with upper or lower limit
+    """
+    shape = array.shape
+    new = array.ravel()
+    new[where(new>lim)] = lim
+    new[where(new<-lim)] = -lim
+    return new.reshape(shape)
+
 @jit(nopython=True, cache=True,fastmath=True)
 def numba_cumsum(mat):
     """Function to compute cumsum along axis=0 to bypass numba not allowing kwargs in 
@@ -144,7 +154,7 @@ def setup_tri_diag(nlayer,nwno ,c_plus_up, c_minus_up,
 
     return A, B, C, D
 
-#@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def setup_pent_diag(nlayer,nwno ,c_plus_up, c_minus_up, 
     c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
     gama, dtau, exptrm_positive,  exptrm_minus, g1, g2, exptrm, lamda):
@@ -448,11 +458,11 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             tau_og = tau_og_3d[:,:,ng,nt]
             w0_og = w0_og_3d[:,:,ng,nt]         
 
-            g1  = (sq3*0.5)*(2. - w0*(1.+cosb)) #table 1
-            g2  = (sq3*w0*0.5)*(1.-cosb)           #table 1
+            g1  = (sq3*0.5)*(2. - w0*(1.+ftau_cld*cosb)) #table 1
+            g2  = (sq3*w0*0.5)*(1.-ftau_cld*cosb)           #table 1
             lamda = sqrt(g1**2 - g2**2)           #eqn 21
             gama  = (g1-lamda)/g2                   #eqn 22
-            g3  = 0.5*(1.-sq3*cosb*ubar0[ng, nt])   #table 1 #ubar is now 100x 10 matrix.. 
+            g3  = 0.5*(1.-sq3*ftau_cld*cosb*ubar0[ng, nt])   #table 1 #ubar is now 100x 10 matrix.. 
     
             # now calculate c_plus and c_minus (equation 23 and 24)
             g4 = 1.0 - g3
@@ -532,13 +542,13 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
                 #this is a decent assumption because our second order legendre polynomial 
                 #is forced to be equal to the rayleigh phase function
                 ubar2 = 0.767  # 
-                multi_plus = (1.0+1.5*cosb*ubar1[ng,nt] #!was 3
+                multi_plus = (1.0+1.5*ftau_cld*cosb*ubar1[ng,nt] #!was 3
                                 + gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
-                multi_minus = (1.-1.5*cosb*ubar1[ng,nt] 
+                multi_minus = (1.-1.5*ftau_cld*cosb*ubar1[ng,nt] 
                                 + gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
             elif multi_phase ==1:#'N=1':
-                multi_plus = 1.0+1.5*cosb*ubar1[ng,nt]  
-                multi_minus = 1.-1.5*cosb*ubar1[ng,nt]
+                multi_plus = 1.0+1.5*ftau_cld*cosb*ubar1[ng,nt]  
+                multi_minus = 1.-1.5*ftau_cld*cosb*ubar1[ng,nt]
             ################################ END OPTIONS FOR MULTIPLE SCATTERING####################
 
             G=w0*positive*(multi_plus+gama*multi_minus)
@@ -735,11 +745,12 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
     #terms not dependent on incident angle
     sq3 = sqrt(3.)
     if toon_coefficients == 1:#eddington
-        g1  = (7-w0*(4+3*cosb))/4 #(sq3*0.5)*(2. - w0*(1.+cosb)) #table 1 # 
-        g2  = -(1-w0*(4-3*cosb))/4 #(sq3*w0*0.5)*(1.-cosb)        #table 1 # 
+        g1  = (7-w0*(4+3*ftau_cld*cosb))/4 #(sq3*0.5)*(2. - w0*(1.+cosb)) #table 1 # 
+        g2  = -(1-w0*(4-3*ftau_cld*cosb))/4 #(sq3*w0*0.5)*(1.-cosb)        #table 1 # 
     elif toon_coefficients == 0:#quadrature
-        g1  = (sq3*0.5)*(2. - w0*(1.+cosb)) #table 1 # 
-        g2  = (sq3*w0*0.5)*(1.-cosb)        #table 1 # 
+        g1  = (sq3*0.5)*(2. - w0*(1.+ftau_cld*cosb)) #table 1 # 
+        g2  = (sq3*w0*0.5)*(1.-ftau_cld*cosb)        #table 1 # 
+
     lamda = sqrt(g1**2 - g2**2)         #eqn 21
     gama  = (g1-lamda)/g2               #eqn 22
 
@@ -749,9 +760,9 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             u1 = ubar1[ng,nt]
             u0 = ubar0[ng,nt]
             if toon_coefficients == 1 : #eddington
-                g3  = (2-3*cosb*u0)/4#0.5*(1.-sq3*cosb*ubar0[ng, nt]) #  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
+                g3  = (2-3*ftau_cld*cosb*u0)/4#0.5*(1.-sq3*cosb*ubar0[ng, nt]) #  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
             elif toon_coefficients == 0 :#quadrature
-                g3  = 0.5*(1.-sq3*cosb*u0) #  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
+                g3  = 0.5*(1.-sq3*ftau_cld*cosb*u0) #  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
     
             # now calculate c_plus and c_minus (equation 23 and 24 toon)
             g4 = 1.0 - g3
@@ -842,13 +853,14 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                 #this is a decent assumption because our second order legendre polynomial 
                 #is forced to be equal to the rayleigh phase function
                 ubar2 = 0.767  # 
-                multi_plus = (1.0+1.5*cosb*u1 #!was 3
+                multi_plus = (1.0+1.5*ftau_cld*cosb*u1 #!was 3
                                 + gcos2*(3.0*ubar2*ubar2*u1*u1 - 1.0)/2.0)
-                multi_minus = (1.-1.5*cosb*u1 
+                multi_minus = (1.-1.5*ftau_cld*cosb*u1 
                                 + gcos2*(3.0*ubar2*ubar2*u1*u1 - 1.0)/2.0)
             elif multi_phase ==1:#'N=1':
-                multi_plus = 1.0+1.5*cosb*u1  
-                multi_minus = 1.-1.5*cosb*u1
+                multi_plus = 1.0+1.5*ftau_cld*cosb*u1  
+                multi_minus = 1.-1.5*ftau_cld*cosb*u1
+
             ################################ END OPTIONS FOR MULTIPLE SCATTERING####################
 
             G=positive*(multi_plus+gama*multi_minus)    *w0
@@ -907,6 +919,24 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                                                 /sqrt((1+g_back**2+2*g_back*cos_theta)**3))+            
                                 #rayleigh phase function
                                 ftau_ray*(0.75*(1+cos_theta**2.0)))
+            
+            #removing single form option from code 
+            #single_form : int 
+            #    form of the phase function can either be written as an 'explicit' (0) henyey greinstein 
+            #    or it can be written as a 'legendre' (1) expansion. Default is 'explicit'=0
+
+            #if single_form==1:
+            #    TAU = tau; DTAU = dtau; W0 = w0
+            #    p_single = 0*p_single
+            #    Pu0 = legP(-u0) # legendre polynomials for -u0
+            #    Pu1 = legP(u1) # legendre polynomials for -u0
+            #    maxterm = 2
+            #    for l in range(maxterm):
+            #        w = (2*l+1) * cosb_og**l
+            #        w_single = (w - (2*l+1)*cosb_og**maxterm) / (1 - cosb_og**maxterm) 
+            #        p_single = p_single + w_single * Pu0[l]*Pu1[l]
+            #else:
+            #    TAU = tau_og; DTAU = dtau_og; W0 = w0_og
 
             ################################ END OPTIONS FOR DIRECT SCATTERING####################
 
@@ -2470,10 +2500,11 @@ def get_transit_3d(nlevel, nwno, radius, gravity,rstar, mass, mmw, k_b, G,amu,
     return 
 
 @jit(nopython=True, cache=True, debug=True)
-def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_cld, ftau_ray,
+def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ftau_ray, f_deltaM,
     dtau_og, tau_og, w0_og, cosb_og, 
-    surf_reflect, ubar0, ubar1, cos_theta, F0PI, single_phase, rayleigh,
-    frac_a, frac_b, frac_c, constant_back, constant_forward, stream, b_top=0, flx=1, single_form=0, heng_compare=0):
+    surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
+    w_single_form, w_multi_form, psingle_form, w_single_rayleigh, w_multi_rayleigh, psingle_rayleigh,
+    frac_a, frac_b, frac_c, constant_back, constant_forward, stream, b_top=0, flx=1, single_form=0):
     """
     Computes rooney fluxes given tau and everything is 3 dimensional. This is the exact same function 
     as `get_flux_geom_1d` but is kept separately so we don't have to do unecessary indexing for 
@@ -2505,15 +2536,15 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_
         This is the asymmetry factor 
         WITHOUT D-Eddington Correction
         Dimensions=# layer by # wave
-    gcos2 : ndarray of float 
-        Parameter that allows us to directly include Rayleigh scattering 
-        = 0.5*tau_rayleigh/(tau_rayleigh + tau_cloud)
     ftau_cld : ndarray of float 
         Fraction of cloud extinction to total 
         = tau_cloud/(tau_rayleigh + tau_cloud)
     ftau_ray : ndarray of float 
         Fraction of rayleigh extinction to total 
         = tau_rayleigh/(tau_rayleigh + tau_cloud)
+    f_deltaM : ndarray of float 
+        Fractional scattering coefficient for delta-M calculation
+        f_deltaM = 0 if delta_eddington=False
     dtau_og : ndarray of float 
         This is the opacity contained within each individual layer (defined at midpoints of "levels")
         WITHOUT the delta eddington correction, if it was specified by user
@@ -2536,10 +2567,18 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_
         Cosine of the phase angle of the planet 
     F0PI : array 
         Downward incident solar radiation
-    single_phase : str 
-        Single scattering phase function, default is the two-term henyey-greenstein phase function
-    rayleigh : str 
-        Toggle rayleigh on or off
+    w_single_form : str 
+        Single scattering phase function approximation for SH
+    w_multi_form : str 
+        Multiple scattering phase function approximation for SH
+    psingle_form : str 
+        Scattering phase function approximation for psingle in SH
+    w_single_rayleigh : str 
+        Toggle rayleigh scattering on/off for single scattering in SH
+    w_multi_rayleigh : str 
+        Toggle rayleigh scattering on/off for multi scattering in SH
+    psingle_rayleigh : str 
+        Toggle rayleigh scattering on/off for psingle in SH
     frac_a : float 
         (Optional), If using the TTHG phase function. Must specify the functional form for fraction 
         of forward to back scattering (A + B * gcosb^C)
@@ -2561,11 +2600,8 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_
         Upper boundary condition for incoming intensity
     flx : int 
         Toggle calculation of layerwise fluxes (0 = do not calculate, 1 = calculate)
-    psingle : int 
+    single_form : int 
         Toggle which version of p_single to use (0 = explicit, 1 = legendre)
-    heng_compare : int 
-        Temporary option being used for comparison with Heng results
-        
     Returns
     -------
     intensity at the top of the atmosphere for all the different ubar1 and ubar2 
@@ -2596,69 +2632,57 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_
             b = zeros((stream, nlayer, nwno))
             w_single = ones((stream, nlayer, nwno))
             w_multi = ones(((stream, nlayer, nwno)))
-            if array_equal(cosb,cosb_og):
-                ff = 0.*cosb_og
-            else:
-                ff = cosb_og**stream
             p_single = zeros(cosb_og.shape)
 
-            if single_phase!=1: 
+            if (w_single_form==1 or w_multi_form==1): # OTHG:
+                for l in range(1,stream):
+                    w = (2*l+1) * cosb_og**l
+                    if w_single_form==1:
+                        w_single[l,:,:] = (w - (2*l+1)*f_deltaM) / (1 - f_deltaM)
+                    if w_multi_form==1:
+                        w_multi[l,:,:] = (w - (2*l+1)*f_deltaM) / (1 - f_deltaM)
+
+            elif (w_single_form==0 or w_multi_form==0): # TTHG
                 g_forward = constant_forward*cosb_og
                 g_back = constant_back*cosb_og
                 f = frac_a + frac_b*g_back**frac_c
-                if array_equal(cosb,cosb_og):
-                    ff1 = 0.*cosb_og
-                    ff2 = 0.*cosb_og
-                else:
-                    ff1 = (constant_forward*cosb_og)**stream
-                    ff2 = (constant_back*cosb_og)**stream
-
-            if single_phase==1:#'OTHG':
+                f_deltaM_ = f_deltaM
+                f_deltaM_ *= (f*constant_forward**stream + (1-f)*constant_back**stream)
                 for l in range(1,stream):
-                    w_multi[l,:,:] = (2*l+1) * (cosb_og**l - ff) / (1 - ff)
-                    w_single[l,:,:] = (2*l+1) * (cosb_og**l -  ff) / (1-ff)
+                    w = (2*l+1) * (f*g_forward**l + (1-f)*g_back**l)
+                    if w_single_form==0:
+                        w_single[l,:,:] = (w - (2*l+1)*f_deltaM_) / (1 - f_deltaM_)
+                    if w_multi_form==0:
+                        w_multi[l,:,:] = (w - (2*l+1)*f_deltaM_) / (1 - f_deltaM_)
 
-                # OG single_form calculation
-                if single_form==0: 
+            if (w_single_form==2 or w_multi_form==2): # isotropic (heng comparison)
+                if w_single_form==1: w_single[1:,:,:] *= 0
+                if w_multi_form==1: w_multi[1:,:,:] *= 0
+
+            if w_single_rayleigh==1:
+                w_single[1:] *= ftau_cld
+                if stream==4:
+                    w_single[2] += 0.5*ftau_ray 
+            if w_multi_rayleigh==1: 
+                w_multi[1:] *= ftau_cld
+                if stream==4:
+                    w_multi[2] += 0.5*ftau_ray 
+
+            #single-scattering options
+            if single_form==0: # explicit single form
+                if psingle_form==1: #OTHG
                     p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
-
-
-            elif single_phase==2 or single_phase==3:#'TTHG':
-                #uses the Two term Henyey-Greenstein function
-                for l in range(1,stream):
-                    w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff1) 
-                                        + (1-f)*(g_back**l - ff2) / (1 - ff1))
-                    w_single[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff2) 
-                                        + (1-f)*(g_back**l - ff2) / (1 - ff2))
-
-
-                # OG single_form calculation
-                if single_form==0:
+                elif psingle_form==2: #'TTHG':
+                    g_forward = constant_forward*cosb_og
+                    g_back = constant_back*cosb_og
+                    f = frac_a + frac_b*g_back**frac_c
                     p_single=(f * (1-g_forward**2) /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
                                 #second term of TTHG: backward scattering
                                 +(1-f)*(1-g_back**2) /sqrt((1+g_back**2+2*g_back*cos_theta)**3))
 
-
-            if heng_compare==1:# heng tests: isotropic multi
-                # force isotropic multiple scattering
-                w_multi[1:]*=0.0
-                if rayleigh==1:
-                    # force pure rayleigh single scattering
-                    w_single[1:]*=0.0
-                    w_single[2] = 0.5#*ftau_ray
-
-                    # OG psingle calculation
-                    if single_form==0: p_single += 0.75*(1+cos_theta**2.0)
-
-            if rayleigh==1 and heng_compare==0:
-                for l in range(1,stream):
-                    w_multi[l] *= ftau_cld
-                    w_single[l] *= ftau_cld
-                    if l==2:    
-                        w_multi[2] = ftau_cld*w_multi[2] + 0.5*ftau_ray
-                        w_single[2] = ftau_cld*w_single[2] + 0.5*ftau_ray
-                if single_form==0: 
+                if psingle_rayleigh==1: 
                     p_single = ftau_cld*p_single + ftau_ray*(0.75*(1+cos_theta**2.0))
+
 
             for l in range(stream):
                 a[l,:,:] = (2*l + 1) -  w0 * w_multi[l,:,:]
@@ -2675,8 +2699,8 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_
                 surf_reflect, u0, u1, dtau, tau, a, b, fluxes=flx, calculation=0) 
 
             if stream==4:
-                M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, nwno, w0, b_top_, b_surface, b_surface_SH4, 
-                    surf_reflect, u0, u1, dtau, tau, a, b, fluxes=flx, calculation=0) 
+                M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, nwno, w0_og, b_top_, b_surface, b_surface_SH4, 
+                    surf_reflect, u0, u1, dtau_og, tau_og, a, b, fluxes=flx, calculation=0) 
 
                 # F and G will be nonzero if fluxes=1
 
@@ -2699,24 +2723,30 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, gcos2, ftau_
                     flux_temp[:,W] = calculate_flux(F[:,:,W], G[:,W], X)
 
             mus = (u1 + u0) / (u1 * u0)
-            expo_mus = mus * dtau 
-            expo_mus = slice_gt(expo_mus, 35.0)    
-            exptrm_mus = exp(-expo_mus)
 
             if single_form==1:
-                maxterm = stream
+                maxterm = 4
+                TAU = tau; DTAU = dtau; W0 = w0
                 for l in range(maxterm):
-                    p_single = p_single + w_single[l] * Pu0[l]*Pu1[l]
+                    w = (2*l+1) * cosb_og**l
+                    w_single_tmp = (w - (2*l+1)*cosb_og**maxterm) / (1 - cosb_og**maxterm) 
+                    p_single = p_single + w_single_tmp * Pu0[l]*Pu1[l]
+            else:
+                TAU = tau_og; DTAU = dtau_og; W0 = w0_og
+
+            expo_mus = mus * DTAU 
+            expo_mus = slice_rav(expo_mus, 35.0)    
+            exptrm_mus = exp(-expo_mus)
+            single_scat = (W0 * F0PI / (4*np.pi) * p_single 
+                            * (1 - exptrm_mus) * exp(-TAU[:-1,:]/u0)
+                                / mus)
+
             for i in range(nlayer):
                 for l in range(stream):
                     multi_scat[i,:] = multi_scat[i,:] + w_multi[l,i,:] * Pu1[l] * intgrl_new[stream*i+l,:]
 
 
-            intgrl_per_layer = (w0 *  multi_scat 
-                        + w0 * F0PI / (4*np.pi) * p_single 
-                        * (1 - exptrm_mus) * exp(-tau[:-1,:]/u0)
-                        / mus
-                        )
+            intgrl_per_layer = w0 *  multi_scat + single_scat
 
             xint_temp[-1,:] = flux_bot/pi
             for i in range(nlayer-1,-1,-1):
@@ -3215,8 +3245,8 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
         z2pl = (-eta[0]/8 + 5*eta[2]/8 + eta[3])*2*pi 
         z2mn = (-eta[0]/8 + 5*eta[2]/8 - eta[3])*2*pi
     
-    expo1 = slice_gt(lam1*dtau, 35.0) 
-    expo2 = slice_gt(lam2*dtau, 35.0) 
+    expo1 = slice_rav(lam1*dtau, 35.0) 
+    expo2 = slice_rav(lam2*dtau, 35.0) 
     exptrm1 = exp(-expo1)
     exptrm2 = exp(-expo2)
 
@@ -3239,7 +3269,7 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
     f30 = q1pl*exptrm1; f31 = q1mn/exptrm1; f32 = q2pl*exptrm2; f33 = q2mn/exptrm2
 
     if calculation == 0:# 'reflected':
-        expon = exp(-tau/ubar0)
+        expon = exp(-slice_rav(tau/ubar0, 35.0))
         z1mn_up = z1mn * expon[1:,:]
         z2mn_up = z2mn * expon[1:,:]
         z1pl_up = z1pl * expon[1:,:]
@@ -3249,7 +3279,7 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
         z1pl_down = z1pl * expon[:-1,:]
         z2pl_down = z2pl * expon[:-1,:]
     elif calculation == 2: # exponential thermal
-        expon = exp(-slice_gt(dtau * f0, 35.0))
+        expon = exp(-slice_rav(dtau * f0, 35.0))
         z1mn_up = z1mn * expon
         z2mn_up = z2mn * expon
         z1pl_up = z1pl * expon
@@ -3276,10 +3306,10 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
     expo_alp2 = alpha2 * dtau
     expo_bet1 = beta1 * dtau
     expo_bet2 = beta2 * dtau
-    exptrm_alp1 = exp(-expo_alp1)
-    exptrm_alp2 = exp(-expo_alp2)
-    exptrm_bet1 = exp(-expo_bet1)
-    exptrm_bet2 = exp(-expo_bet2)
+    exptrm_alp1 = exp(-slice_rav(expo_alp1,35.0))
+    exptrm_alp2 = exp(-slice_rav(expo_alp2,35.0))
+    exptrm_bet1 = exp(-slice_rav(expo_bet1,35.0))
+    exptrm_bet2 = exp(-slice_rav(expo_bet2,35.0))
 
     A00 = (1-exptrm_alp1)/alpha1; A01 = (1-exptrm_bet1)/beta1; 
     A02 = (1-exptrm_alp2)/alpha2; A03 = (1-exptrm_bet2)/beta2
@@ -3291,20 +3321,20 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
         if calculation == 0:#is 'reflected':
             mus = (ubar1 + ubar0) / (ubar1 * ubar0)
             expo_mus = mus * dtau 
-            exptrm_mus = exp(-expo_mus)
+            exptrm_mus = exp(-slice_rav(expo_mus,35.0))
             tau_mu = tau[:-1,:] * (1/ubar0)
-            exptau_mu = exp(-tau_mu)
+            exptau_mu = exp(-slice_rav(tau_mu,35.0))
             expon1 = (1 - exptrm_mus) * exptau_mu / mus
         elif calculation == 2: # exponential thermal
             expo_thermal = dtau * (f0 + 1/ubar1)
-            expon1 = (1 - exp(-slice_gt(expo_thermal, 35.0))) / (f0 + 1/ubar1)
+            expon1 = (1 - exp(-slice_rav(expo_thermal, 35.0))) / (f0 + 1/ubar1)
         N0 = eta[0] * expon1;   
         N1 = eta[1] * expon1;   
         N2 = eta[2] * expon1;   
         N3 = eta[3] * expon1;   
     elif calculation == 1:
         #expdtau = exp(-tau[:-1,:]/ubar1)
-        expdtau = exp(-dtau/ubar1)
+        expdtau = exp(-slice_rav(dtau/ubar1,35.0))
         N0 = (1-w0) * ubar1 / a[0] * ( B0*(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau)) #* 2*pi
         N1 = (1-w0) * ubar1 / a[0] * ( B1*(1-expdtau) / a[1]) #* 2*pi
         N2 = zeros(w0.shape)

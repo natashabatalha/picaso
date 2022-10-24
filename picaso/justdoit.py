@@ -113,8 +113,12 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
     #USED in SH (if being used)
     single_form = inputs['approx']['rt_params']['SH']['single_form']
-    rayleigh = inputs['approx']['rt_params']['SH']['rayleigh']
-    heng_compare = inputs['approx']['rt_params']['SH']['heng_compare']
+    w_single_form = inputs['approx']['rt_params']['SH']['w_single_form']
+    w_multi_form = inputs['approx']['rt_params']['SH']['w_multi_form']
+    psingle_form = inputs['approx']['rt_params']['SH']['psingle_form']
+    w_single_rayleigh = inputs['approx']['rt_params']['SH']['w_single_rayleigh']
+    w_multi_rayleigh = inputs['approx']['rt_params']['SH']['w_multi_rayleigh']
+    psingle_rayleigh = inputs['approx']['rt_params']['SH']['psingle_rayleigh']
 
 
     
@@ -205,7 +209,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
         #We use HG function for single scattering which gets the forward scattering/back scattering peaks 
         #well. We only really want to use delta-edd for multi scattering legendre polynomials. 
-        DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman= compute_opacity(
+        DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman, f_deltaM= compute_opacity(
             atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
             full_output=full_output, plot_opacity=plot_opacity)
         
@@ -217,12 +221,13 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                 if rt_method == 'SH':
                     (xint, flux_out, intensity)  = get_reflected_SH(nlevel, nwno, ng, nt, 
                                     DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig], 
-                                    GCOS2[:,:,ig], ftau_cld[:,:,ig], ftau_ray[:,:,ig],
+                                    ftau_cld[:,:,ig], ftau_ray[:,:,ig], f_deltaM[:,:,ig],
                                     DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig], 
                                     atm.surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
-                                    single_phase, rayleigh, 
+                                    w_single_form, w_multi_form, psingle_form, 
+                                    w_single_rayleigh, w_multi_rayleigh, psingle_rayleigh,
                                     frac_a, frac_b, frac_c, constant_back, constant_forward, 
-                                    stream, b_top=b_top, single_form=single_form, heng_compare=heng_compare) #LCM is carrying this bug
+                                    stream, b_top=b_top, single_form=single_form) 
                 else:
                     #getting intensities, not fluxes (which is why second return is null)
                     xint = get_reflected_1d(nlevel, wno,nwno,ng,nt,
@@ -326,7 +331,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
                 get_opacities(atm_1d)
 
-                dtau, tau, w0, cosb,ftau_cld, ftau_ray, gcos2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, WO_no_raman = compute_opacity(
+                dtau, tau, w0, cosb,ftau_cld, ftau_ray, gcos2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, WO_no_raman, f_deltaM = compute_opacity(
                     atm_1d, opacityclass, ngauss=ngauss, stream=stream,delta_eddington=delta_eddington,
                     test_mode=test_mode,raman=raman_approx, full_output=full_output)
                 DTAU_3d[:,:,g,t,:] = dtau
@@ -3074,7 +3079,9 @@ class inputs():
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='none',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
         p_reference=1, rt_method='toon', stream=2, blackbody_approx=1, toon_coefficients="quadrature",
-        single_form='explicit', rayleigh='off', heng_compare='off', query='nearest_neighbor'):
+        single_form='explicit', query='nearest_neighbor',
+        w_single_form='TTHG', w_multi_form='TTHG', psingle_form='TTHG', 
+        w_single_rayleigh = 'on', w_multi_rayleigh='on', psingle_rayleigh='on'):
         """
         This function sets all the default approximations in the code. It transforms the string specificatons
         into a number so that they can be used in numba nopython routines. 
@@ -3119,6 +3126,18 @@ class inputs():
             method to grab opacities. either "nearest_neighbor" or "interp" which 
             interpolates based on 4 nearest neighbors. Default is nearest_neighbor
             which is significantly faster.
+        w_single_form : str 
+            Single scattering phase function approximation for SH
+        w_multi_form : str 
+            Multiple scattering phase function approximation for SH
+        psingle_form : str 
+            Scattering phase function approximation for psingle in SH
+        w_single_rayleigh : str 
+            Toggle rayleigh scattering on/off for single scattering in SH
+        w_multi_rayleigh : str 
+            Toggle rayleigh scattering on/off for multi scattering in SH
+        psingle_rayleigh : str 
+            Toggle rayleigh scattering on/off for psingle in SH
         """
         self.inputs['approx']['rt_method'] = rt_method
 
@@ -3148,10 +3167,14 @@ class inputs():
         self.inputs['approx']['rt_params']['toon']['multi_phase'] = multi_phase_options(printout=False).index(multi_phase)
         
         #unique to SH
-        self.inputs['approx']['rt_params']['SH']['single_form'] = single_form_options(printout=False).index(single_form)
-        self.inputs['approx']['rt_params']['SH']['rayleigh'] = rayleigh_options(printout=False).index(rayleigh)
-        self.inputs['approx']['rt_params']['SH']['heng_compare'] = heng_compare_options(printout=False).index(heng_compare)
+        self.inputs['approx']['rt_params']['SH']['single_form'] = SH_psingle_form_options(printout=False).index(single_form)
         self.inputs['approx']['rt_params']['SH']['blackbody_approx'] = blackbody_approx
+        self.inputs['approx']['rt_params']['SH']['w_single_form'] = SH_scattering_options(printout=False).index(w_single_form)
+        self.inputs['approx']['rt_params']['SH']['w_multi_form'] = SH_scattering_options(printout=False).index(w_multi_form)
+        self.inputs['approx']['rt_params']['SH']['psingle_form'] = SH_scattering_options(printout=False).index(psingle_form)
+        self.inputs['approx']['rt_params']['SH']['w_single_rayleigh'] = SH_rayleigh_options(printout=False).index(w_single_rayleigh)
+        self.inputs['approx']['rt_params']['SH']['w_multi_rayleigh'] = SH_rayleigh_options(printout=False).index(w_multi_rayleigh)
+        self.inputs['approx']['rt_params']['SH']['psingle_rayleigh'] = SH_rayleigh_options(printout=False).index(psingle_rayleigh)
 
 
         self.inputs['opacities']['query'] = query_options().index(query)
@@ -3904,7 +3927,16 @@ def single_phase_options(printout=True):
 def multi_phase_options(printout=True):
     """Retrieve all the options for multiple scattering radiation"""
     if printout: print("Can also set delta_eddington=True/False in approx['delta_eddington']")
-    return ['N=2','N=1']
+    return ['N=2','N=1','isotropic']
+def SH_scattering_options(printout=True):
+    """Retrieve all the options for scattering radiation in SH"""
+    return  ["TTHG","OTHG","isotropic"]
+def SH_rayleigh_options(printout=True):
+    """Retrieve options for rayleigh scattering"""
+    return ['off','on']
+def SH_psingle_form_options(printout=True):
+    """Retrieve options for direct scattering form approximation"""
+    return  ["explicit","legendre"]
 def raman_options():
     """Retrieve options for raman scattering approximtions"""
     return ["oklopcic","pollack","none"]
@@ -4032,15 +4064,6 @@ def stream_options(printout=True):
 def coefficients_options(printout=True):
     """Retrieve options for coefficients used in Toon calculation"""
     return ["quadrature","eddington"]
-def single_form_options(printout=True):
-    """Retrieve options for direct scattering form approximation"""
-    return  ["explicit","legendre"]
-def rayleigh_options(printout=True):
-    """Retrieve options for rayleigh scattering"""
-    return ['off','on']
-def heng_compare_options(printout=True):
-    """Turn on Heng comparison"""
-    return ['off','on']
 
 def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             temp,pressure,FOPI, t_table, p_table, grad, cp, opacityclass, grav, 

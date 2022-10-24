@@ -321,8 +321,8 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
     #scattering. 
     ftau_cld = (single_scattering_cld * TAUCLD)/(single_scattering_cld * TAUCLD + TAURAY)
 
-    COSB = ftau_cld*asym_factor_cld
-    #COSB = asym_factor_cld
+    #COSB = ftau_cld*asym_factor_cld
+    COSB = asym_factor_cld
 
     #formerly GCOSB2 
     ftau_ray = TAURAY/(TAURAY + single_scattering_cld * TAUCLD)
@@ -385,9 +385,11 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
 
         #also see these lecture notes are pretty good
         #http://irina.eas.gatech.edu/EAS8803_SPRING2012/Lec20.pdf
-        w0_dedd=W0*(1.-COSB**stream)/(1.0-W0*COSB**stream)
-        cosb_dedd=COSB/(1.+COSB)
-        dtau_dedd=DTAU*(1.-W0*COSB**stream) 
+        f_deltaM = COSB**stream
+        w0_dedd=W0*(1.-f_deltaM)/(1.0-W0*f_deltaM)
+        #cosb_dedd=COSB/(1.+COSB)
+        cosb_dedd=(COSB-f_deltaM)/(1.-f_deltaM)
+        dtau_dedd=DTAU*(1.-W0*f_deltaM) 
 
         #sum up taus starting at the top, going to depth
         tau_dedd = np.zeros((nlayer+1, nwno, ngauss))
@@ -396,13 +398,13 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
         #returning the terms used in 
         return (dtau_dedd, tau_dedd, w0_dedd, cosb_dedd ,ftau_cld, ftau_ray, GCOS2, 
                 DTAU, TAU, W0, COSB,    #these are returned twice because we need the uncorrected 
-                W0_no_raman)            #values for single scattering terms where we use the TTHG phase function
+                W0_no_raman, f_deltaM)            #values for single scattering terms where we use the TTHG phase function
                                         # w0_no_raman is used in thermal calculations only
 
     else: 
         return (DTAU, TAU, W0, COSB, ftau_cld, ftau_ray, GCOS2, 
                 DTAU, TAU, W0, COSB,  #these are returned twice for consistency with the delta-eddington option
-                W0_no_raman)          #W0_no_raman is used for thermal calculations only 
+                W0_no_raman, 0*COSB)          #W0_no_raman is used for thermal calculations only 
 
 
 @jit(nopython=True, cache=True)

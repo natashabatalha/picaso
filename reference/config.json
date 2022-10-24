@@ -57,8 +57,12 @@
 			},
 			"SH":{
 				"single_form":0,
-				"rayleigh":1,
-				"heng_compare":0,
+				"w_single_form":0,
+				"w_multi_form":0,
+				"psingle_form":0,
+				"w_single_rayleigh":1,
+				"w_multi_rayleigh":1,
+				"psingle_rayleigh":1,
 				"blackbody_approx":1
 			},
 			"common":{
