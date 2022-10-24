@@ -336,7 +336,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
                 get_opacities(atm_1d,*get_opa_kwargs)
 
-                dtau, tau, w0, cosb,ftau_cld, ftau_ray, gcos2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, WO_no_raman = compute_opacity(
+                dtau, tau, w0, cosb,ftau_cld, ftau_ray, gcos2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, WO_no_raman, f_deltaM = compute_opacity(
                     atm_1d, opacityclass, ngauss=ngauss, stream=stream,delta_eddington=delta_eddington,
                     test_mode=test_mode,raman=raman_approx, full_output=full_output)
                 DTAU_3d[:,:,g,t,:] = dtau
@@ -3829,10 +3829,10 @@ def single_phase_options(printout=True):
 def multi_phase_options(printout=True):
     """Retrieve all the options for multiple scattering radiation"""
     if printout: print("Can also set delta_eddington=True/False in approx['delta_eddington']")
-    return ['N=2','N=1']
+    return ['N=2','N=1','isotropic']
 def SH_scattering_options(printout=True):
     """Retrieve all the options for scattering radiation in SH"""
-    return  ["TTHG","OTHG"]
+    return  ["TTHG","OTHG","isotropic"]
 def SH_rayleigh_options(printout=True):
     """Retrieve options for rayleigh scattering"""
     return ['off','on']
