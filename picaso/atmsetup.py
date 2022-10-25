@@ -584,10 +584,23 @@ class ATMSETUP():
 
         df['star'] = {}
         df['star']['flux_unit'] = 'erg/cm2/s/cm'
+        
+        try: 
+            df['level']['dz'] = self.level['dz']
+            df['level']['z'] = self.level['z']
+        except: 
+            pass
 
         try: 
             x =  self.xint_at_top
             df['albedo_3d'] = x
+            df['reflected_unit'] = 'albedo'
+        except:
+            pass 
+
+        try: 
+            x =  self.flux
+            df['flux'] = x
             df['reflected_unit'] = 'albedo'
         except:
             pass 
@@ -601,3 +614,59 @@ class ATMSETUP():
             pass
 
         return df
+"""
+## not using this for now.
+def hunt(xx , n , x, jlow):
+    flag1 = 0
+    if ((jlow <= 0) or (jlow > n-1)): # for py
+        jlow = 0
+        jhigh= n+1 -1 # for py
+
+        flag1 = 1
+    inc = 1
+    flag2 = 0
+    
+    if flag1 == 0 :
+
+        if (x >= xx[jlow]) and (xx[n-1] >= xx[0]): #for py
+            while flag2 == 0:
+                jhigh = jlow + inc
+
+                if jhigh > n-1: # for py
+                    jhigh = n+1 -1
+                    flag2 = 1
+                elif (x >= xx[jhigh]) and (xx[n-1] >= xx[0]):
+                    jlow = jhigh
+                    inc += inc
+                    flag2 = 0
+        
+        else :
+            jhigh = jlow
+            while flag3  == 0:
+                jlow = jhigh - inc
+                if jlow < 0 :
+                    jlow  = 0
+                    flag3 = 1
+                elif (x >= xx[jlow]) and (xx[n-1] >= xx[0]):
+                    jhigh = jlow
+                    inc += inc
+                    flag3  = 0
+    flag4 = 0
+    while flag4 == 0:
+        if jhigh - jlow == 1:
+            if x == xx[n-1]:
+                jlow = n-1 -1 # for py
+            if x == xx[0]:
+                jlow = 0
+            
+            return jlow, jhigh
+        jmid= (jhigh+jlow)/2
+
+        if (x >= xx[jmid]) and (xx[n-1] >= xx[0]):
+            jlow = jmid
+        else :
+            jhigh = jmid
+    
+    return jlow, jhigh
+
+"""

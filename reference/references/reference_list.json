@@ -49,7 +49,8 @@
     "3d spectroscopy":"Adams2022ApJ",
     "phase curves":"Robbins2022ApJ",
     "climate":"mukherjee22",
-    "virga clouds":"Rooney2022ApJ"
+    "virga clouds":"Rooney2022ApJ",
+    "grid search":"JWSTERS_FirstLook",
 
 }
 }

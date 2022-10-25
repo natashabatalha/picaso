@@ -29,3 +29,11 @@ Phase curves
 `Robbins-Blanch, Nina., et al. "Cloudy and Cloud-free Thermal Phase Curves with PICASO: Applications to WASP-43b." The Astrophysical Journal (2022): 157. <http://arxiv.org/abs/2204.03545>`_
 
 - Phase curves 
+
+1D Climate Models
+-----------------
+`Mukherjee, et al. "PICASO 3.0: A One-Dimensional Climate Model for Giant Planets and Brown Dwarfs." The Astrophysical Journal (2022): 157. <https://ui.adsabs.harvard.edu/abs/2022arXiv220807836M/abstract>`_
+
+- 1d climate models of brown dwarfs 
+- 1d climate models of exoplanets 
+

@@ -3,6 +3,12 @@
 *.p
 *.json~
 *.db
+*.pk
+*.swp
+*.swm
+*.swn
+*.swo
+*.csv
 
 # Jupyter Notebooks
 .ipynb_checkpoints

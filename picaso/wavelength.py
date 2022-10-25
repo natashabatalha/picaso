@@ -7,7 +7,7 @@ import pickle as pk
 import astropy.constants as c
 import scipy.interpolate as sci
 
-def get_cld_input_grid(filename_or_grid='wave_EGP.dat'):
+def get_cld_input_grid(filename_or_grid='wave_EGP.dat',grid661=False):
 	"""
 	The albedo code relies on the cloud code input, which is traditionally on a 196 wavelength grid. 
 	This method is to retrieve that grid. This file should be kept in the package reference data. Alternatively, 
@@ -24,6 +24,9 @@ def get_cld_input_grid(filename_or_grid='wave_EGP.dat'):
 	array 
 		array of wave numbers in increasing order 
 	"""
+	if grid661 == True:
+		grid,dwni_new = np.loadtxt(os.path.join(__refdata__, 'climate_INPUTS/wvno_661'),usecols=[0,1],unpack=True)
+		return grid
 	if filename_or_grid == 'wave_EGP.dat':
 		grid = pd.read_csv(os.path.join(__refdata__, 'opacities',filename_or_grid), delim_whitespace=True)
 		grid = grid.sort_values('wavenumber')['wavenumber'].values

@@ -3,6 +3,17 @@
 History
 -------
 
+3.0 (2022-10-25)
+~~~~~~~~~~~~~~~~
+* First version of climate code (Mukherjee et al. 2022)
+* First version of grid fitting tools (JWST Transiting Exoplanet ERS et al. 2022)
+* Code help for xarrays
+* Reference/citation tools for opacities
+* Resampling tutorials
+* CK tutorials 
+* Contribution functions 
+* Better plotting tools 
+
 2.3 (2022-5-27)
 ~~~~~~~~~~~~~~~
 * fixes correlated k 3d runs 
