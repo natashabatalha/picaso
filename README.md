@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 ![Logo](docs/logo.png)
 
@@ -46,6 +46,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
   <tbody>
     <tr>
       <td align="center"><a href="http://natashabatalha.github.io"><img src="https://avatars.githubusercontent.com/u/6554465?v=4?s=100" width="100px;" alt="Natasha Batalha"/><br /><sub><b>Natasha Batalha</b></sub></a><br /><a href="https://github.com/natashabatalha/picaso/commits?author=natashabatalha" title="Code">💻</a> <a href="#mentoring-natashabatalha" title="Mentoring">🧑‍🏫</a> <a href="#maintenance-natashabatalha" title="Maintenance">🚧</a></td>
+      <td align="center"><a href="https://www.linkedin.com/in/ehsan-gharib-nezhad/"><img src="https://avatars.githubusercontent.com/u/22139918?v=4?s=100" width="100px;" alt="Ehsan Gharib-Nezhad"/><br /><sub><b>Ehsan Gharib-Nezhad</b></sub></a><br /><a href="#data-EhsanGharibNezhad" title="Data">🔣</a></td>
     </tr>
   </tbody>
 </table>
