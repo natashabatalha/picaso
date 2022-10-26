@@ -21,7 +21,7 @@
 
 ## Contributing
 
-Contributions are always welcome no matter the code level you are at. We value anything from small typos in our documentations page to larger feature changes. If you are a new to github and conda environments you can read our instructions here: https://natashabatalha.github.io/picaso/contribution.html
+Contributions are always welcome no matter the code level you are at. We value anything from small typos in our documentations page to larger feature changes. If you are a new to GitHub and conda environments you can read our instructions here: https://natashabatalha.github.io/picaso/contribution.html
 
 Additionally all contributors agree to adhere to this project's `code of conduct`: https://github.com/natashabatalha/picaso/blob/master/code_of_conduct.md
 
