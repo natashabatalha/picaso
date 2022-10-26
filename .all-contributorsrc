@@ -16,6 +16,16 @@
         "mentoring",
         "maintenance"
       ]
+    },
+    {
+      "login": "sagnickm",
+      "name": "Sagnick Mukherjee",
+      "avatar_url": "https://avatars.githubusercontent.com/u/55552916?v=4",
+      "profile": "https://github.com/sagnickm",
+      "contributions": [
+        "research",
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
