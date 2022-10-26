@@ -16,6 +16,16 @@
         "mentoring",
         "maintenance"
       ]
+    },
+    {
+      "login": "Kappibw",
+      "name": "Kappibw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4071244?v=4",
+      "profile": "http://www.thinkkappi.com",
+      "contributions": [
+        "bug",
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
