@@ -16,6 +16,16 @@
         "mentoring",
         "maintenance"
       ]
+    },
+    {
+      "login": "caoimherooney11",
+      "name": "Caoimhe Rooney",
+      "avatar_url": "https://avatars.githubusercontent.com/u/24413015?v=4",
+      "profile": "https://github.com/caoimherooney11",
+      "contributions": [
+        "research",
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
