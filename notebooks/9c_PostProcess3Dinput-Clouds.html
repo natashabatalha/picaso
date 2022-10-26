@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Post-Process 3D Clouds Input &mdash; picaso 2.3 documentation</title>
+  <title>Post-Process 3D Clouds Input &mdash; picaso 3.0 documentation</title>
   
 
   
@@ -63,7 +63,7 @@
             
             
               <div class="version">
-                2.3
+                3.0
               </div>
             
           
@@ -110,8 +110,13 @@
 <li class="toctree-l3"><a class="reference internal" href="9f_PhaseCurves-wChemEq.html">Modeling a Phase Curve pt 2 (Robbins-Blanch et al. 2022)</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#d-climate-modeling-new">1D Climate Modeling (New!!)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#fitting-models-to-data-new">Fitting models to data (New!!)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials.html#opacities-approximatons">Opacities &amp; Approximatons</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#miscellaneous">Miscellaneous</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#faqs">FAQs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#model-storage-best-practices">Model Storage Best Practices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#code-help">Code Help</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#references">References</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../picaso.html">The Code</a></li>
@@ -432,7 +437,12 @@ div.rendered_html tbody tr:hover {
 <p class="admonition-title">Note</p>
 <p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/9c_PostProcess3Dinput-Clouds.ipynb">Download full notebook here</a></p>
 </div>
-<div class="section" id="Post-Process-3D-Clouds-Input">
+<h1><p>Table of Contents</p>
+</h1><div class="toc"><ul class="toc-item"><li><p>1  Post-Process 3D Clouds Input</p>
+<ul class="toc-item"><li><p>1.1  Post-Process Clouds: User Options</p>
+</li><li><p>1.2  Post-Process Clouds: User Defined Input</p>
+</li><li><p>1.3  Post-Process Clouds: virga cloud model</p>
+</li></ul></li></ul></div><div class="section" id="Post-Process-3D-Clouds-Input">
 <h1>Post-Process 3D Clouds Input<a class="headerlink" href="#Post-Process-3D-Clouds-Input" title="Permalink to this headline">¶</a></h1>
 <p>There are many cases were you may want to post-process components from a 3D GCM output. Post-processing is used to compensate for simplicities, or assumptions within a GCM. For example, you may want to post-process clouds on your output spectra, even if your initial GCM run did not include the effects of clouds.</p>
 <p>In this notebook you will learn: 1. How to post- process clouds using simple box model 2. How to post- process clouds using <code class="docutils literal notranslate"><span class="pre">virga</span></code></p>
@@ -549,7 +559,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/notebooks_9c_PostProcess3Dinput-Clouds_7_1.png" src="../_images/notebooks_9c_PostProcess3Dinput-Clouds_7_1.png" />
+<img alt="../_images/notebooks_9c_PostProcess3Dinput-Clouds_8_1.png" src="../_images/notebooks_9c_PostProcess3Dinput-Clouds_8_1.png" />
 </div>
 </div>
 </div>
@@ -610,7 +620,7 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=4, ntangle=4, with pha
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/notebooks_9c_PostProcess3Dinput-Clouds_11_2.png" src="../_images/notebooks_9c_PostProcess3Dinput-Clouds_11_2.png" />
+<img alt="../_images/notebooks_9c_PostProcess3Dinput-Clouds_12_2.png" src="../_images/notebooks_9c_PostProcess3Dinput-Clouds_12_2.png" />
 </div>
 </div>
 <p>Stylize plots to see reversed pressure axis in log</p>
@@ -632,7 +642,7 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=4, ntangle=4, with pha
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/notebooks_9c_PostProcess3Dinput-Clouds_13_0.png" src="../_images/notebooks_9c_PostProcess3Dinput-Clouds_13_0.png" />
+<img alt="../_images/notebooks_9c_PostProcess3Dinput-Clouds_14_0.png" src="../_images/notebooks_9c_PostProcess3Dinput-Clouds_14_0.png" />
 </div>
 </div>
 </div>
@@ -662,7 +672,7 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=4, ntangle=4, with pha
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/notebooks_9c_PostProcess3Dinput-Clouds_15_1.png" src="../_images/notebooks_9c_PostProcess3Dinput-Clouds_15_1.png" />
+<img alt="../_images/notebooks_9c_PostProcess3Dinput-Clouds_16_1.png" src="../_images/notebooks_9c_PostProcess3Dinput-Clouds_16_1.png" />
 </div>
 </div>
 </div>
@@ -699,7 +709,7 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=10, ntangle=10, with p
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/notebooks_9c_PostProcess3Dinput-Clouds_17_1.png" src="../_images/notebooks_9c_PostProcess3Dinput-Clouds_17_1.png" />
+<img alt="../_images/notebooks_9c_PostProcess3Dinput-Clouds_18_1.png" src="../_images/notebooks_9c_PostProcess3Dinput-Clouds_18_1.png" />
 </div>
 </div>
 <p>Run Virga!</p>
@@ -733,7 +743,7 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=10, ntangle=10, with p
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/notebooks_9c_PostProcess3Dinput-Clouds_21_0.png" src="../_images/notebooks_9c_PostProcess3Dinput-Clouds_21_0.png" />
+<img alt="../_images/notebooks_9c_PostProcess3Dinput-Clouds_22_0.png" src="../_images/notebooks_9c_PostProcess3Dinput-Clouds_22_0.png" />
 </div>
 </div>
 <div class="section" id="Trouble-Shooting-Negative-Kz-Values-(smooth_kz)">

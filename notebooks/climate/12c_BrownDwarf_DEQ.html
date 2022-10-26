@@ -1,0 +1,906 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry at Solar M/H and C/O &mdash; picaso 3.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="How to Fit Grid Models to Data" href="../fitdata/GridSearch.html" />
+    <link rel="prev" title="One-Dimensional Climate Models: The Basics of Planets" href="12b_Exoplanet.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> picaso
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                3.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../tutorials.html">The Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#basics-of-reflected-light">Basics of Reflected Light</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#basics-of-transmisison">Basics of Transmisison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#basics-of-thermal-emission">Basics of Thermal Emission</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#cloud-modeling-with-virga">Cloud Modeling with <cite>Virga</cite></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#moving-to-3-dimensions">Moving to 3 Dimensions</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../tutorials.html#d-climate-modeling-new">1D Climate Modeling (New!!)</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="12a_BrownDwarf.html">Brown Dwarfs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="12b_Exoplanet.html">Planet</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Brown Dwarfs w/ Disequilibrium Chemistry</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Starting-up-the-Run">Starting up the Run</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Initial-T(P)-Guess">Initial T(P) Guess</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Initial-Convective-Zone-Guess">Initial Convective Zone Guess</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Run-the-Climate-Code-with-disequilibrium-chemistry">Run the Climate Code with disequilibrium chemistry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Benchmark-with-Phillips-et-al-2020">Benchmark with Phillips et al 2020</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#fitting-models-to-data-new">Fitting models to data (New!!)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#opacities-approximatons">Opacities &amp; Approximatons</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#faqs">FAQs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#model-storage-best-practices">Model Storage Best Practices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#code-help">Code Help</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credit.html">The Papers</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">picaso</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../tutorials.html">Tutorials</a> &raquo;</li>
+        
+      <li>One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry at Solar M/H and C/O</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/notebooks/climate/12c_BrownDwarf_DEQ.ipynb.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container,
+div.nbinput.container div.prompt,
+div.nbinput.container div.input_area,
+div.nbinput.container div[class*=highlight],
+div.nbinput.container div[class*=highlight] pre,
+div.nboutput.container,
+div.nboutput.container div.prompt,
+div.nboutput.container div.output_area,
+div.nboutput.container div[class*=highlight],
+div.nboutput.container div[class*=highlight] pre {
+    background: none;
+    border: none;
+    padding: 0 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    min-width: 5ex;
+    padding-top: 0.3rem;
+    padding-right: 0.3rem;
+    text-align: right;
+    flex: 0;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    background: #f5f5f5;
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 0.3rem;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt a.copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+div.rendered_html th {
+  font-weight: bold;
+}
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/climate/12c_BrownDwarf_DEQ.ipynb">Download full notebook here</a></p>
+</div>
+<div class="section" id="One-Dimensional-Climate-Models:-Brown-Dwarfs-w/-Disequilibrium-Chemistry-at-Solar-M/H-and-C/O">
+<h1>One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry at Solar M/H and C/O<a class="headerlink" href="#One-Dimensional-Climate-Models:-Brown-Dwarfs-w/-Disequilibrium-Chemistry-at-Solar-M/H-and-C/O" title="Permalink to this headline">¶</a></h1>
+<p>In this tutorial you will learn how to run 1d climate models with the effects of disequilibrium chemistry as was done in <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2022arXiv220814317M/abstract">Mukherjee et al. 2022</a> (note this should also be cited if using this code/tutorial).</p>
+<p>What you should already be familiar with:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://natashabatalha.github.io/picaso/tutorials.html#basics-of-thermal-emission">basics of running/analyzing thermal spectra</a></p></li>
+<li><p><a class="reference external" href="https://natashabatalha.github.io/picaso/notebooks/workshops/ERS2021/ThermalEmissionTutorial.html">how to analyze thermal emission spectra</a></p></li>
+<li><p><a class="reference external" href="https://natashabatalha.github.io/picaso/notebooks/climate/12a_BrownDwarf.html">how to run a basic 1d brown dwarf tutorial</a></p></li>
+</ul>
+<p>What you will need to download to use this tutorial:</p>
+<ol class="arabic simple">
+<li><p><a class="reference external" href="https://zenodo.org/record/6708165/files/m%2B0.0_co1.0.data.196.tar.zip?download=1">Download the m+0.0_co1.0.data.196</a> (28.4 Mb) 1060 196 Correlated-K table from Roxana Lupu to be used by the climate code for opacity. <strong>This is an older version of the C-K tables used in the first two tutorials and you will only need the solar C/O and solar M/H file as we have not yet enabled any chemical composition</strong></p></li>
+<li><p><a class="reference external" href="https://zenodo.org/record/5063476/files/structures_m%2B0.0.tar.gz?download=1">Download</a> the sonora bobcat cloud free <code class="docutils literal notranslate"><span class="pre">structures_</span></code> file so that you can have a simple starting guess</p></li>
+<li><p>(Optional) <a class="reference external" href="http://perso.ens-lyon.fr/isabelle.baraffe/ATMO2020/ATMO_2020_models.tar.gz">Download</a> the <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2020A%26A...637A..38P/abstract">Phillips et al. 2020</a> models if you want to benchmark the diseq runs with an independent code</p></li>
+</ol>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">picaso.justdoit</span> <span class="k">as</span> <span class="nn">jdi</span>
+<span class="kn">import</span> <span class="nn">picaso.justplotit</span> <span class="k">as</span> <span class="nn">jpi</span>
+<span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="o">%</span><span class="k">matplotlib</span> inline
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">ck_db</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;/Users/nbatalh1/Documents/data/m+0.0_co1.0.data.196&#39;</span>
+
+<span class="c1">#sonora bobcat cloud free structures file</span>
+<span class="n">sonora_profile_db</span> <span class="o">=</span> <span class="s1">&#39;/Users/nbatalh1/Documents/data/sonora_bobcat/structures_m+0.0/&#39;</span>
+<span class="n">phillips_2020_db</span> <span class="o">=</span> <span class="s1">&#39;/Users/nbatalh1/Documents/data/ATMO_2020_models/&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="Starting-up-the-Run">
+<h2>Starting up the Run<a class="headerlink" href="#Starting-up-the-Run" title="Permalink to this headline">¶</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1"># Notice The keyword ck is set to True because you want to use the correlated-k opacities for your calculation</span>
+<span class="c1"># and not the line by line opacities</span>
+<span class="n">opacity_ck</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">ck_db</span><span class="o">=</span><span class="n">ck_db</span><span class="p">)</span> <span class="c1"># grab your opacities</span>
+</pre></div>
+</div>
+</div>
+<p>This should all look familiar as it is the same steps taken for the regular brown dwarf run.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">cl_run</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">(</span><span class="n">calculation</span><span class="o">=</span><span class="s2">&quot;browndwarf&quot;</span><span class="p">,</span> <span class="n">climate</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="c1"># start a calculation</span>
+
+<span class="c1">#note you need to put the climate keyword to be True in order to do so</span>
+<span class="c1"># now you need to add these parameters to your calculation</span>
+
+<span class="n">teff</span><span class="o">=</span> <span class="mi">700</span> <span class="c1"># Effective Temperature of your Brown Dwarf in K</span>
+<span class="n">grav</span> <span class="o">=</span> <span class="mi">3160</span> <span class="c1"># Gravity of your brown dwarf in m/s/s</span>
+
+<span class="n">cl_run</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">gravity</span><span class="o">=</span><span class="n">grav</span><span class="p">,</span> <span class="n">gravity_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;m/(s**2)&#39;</span><span class="p">))</span> <span class="c1"># input gravity</span>
+<span class="n">cl_run</span><span class="o">.</span><span class="n">effective_temp</span><span class="p">(</span><span class="n">teff</span><span class="p">)</span> <span class="c1"># input effective temperature</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Initial-T(P)-Guess">
+<h2>Initial T(P) Guess<a class="headerlink" href="#Initial-T(P)-Guess" title="Permalink to this headline">¶</a></h2>
+<p>All same as before</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">nlevel</span> <span class="o">=</span> <span class="mi">91</span> <span class="c1"># number of plane-parallel levels in your code</span>
+
+<span class="c1">#Lets set the max and min at 1e-4 bars and 500 bars</span>
+
+<span class="c1">#Pmin = 1e-4 #bars</span>
+<span class="c1">#Pmax = 500 #bars</span>
+<span class="c1">#pressure=np.logspace(np.log10(Pmin),np.log10(Pmax),nlevel) # set your pressure grid</span>
+
+<span class="n">pressure_bobcat</span><span class="p">,</span><span class="n">temp_bobcat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                            <span class="n">sonora_profile_db</span><span class="p">,</span><span class="sa">f</span><span class="s2">&quot;t</span><span class="si">{teff}</span><span class="s2">g</span><span class="si">{grav}</span><span class="s2">nc_m0.0.dat&quot;</span><span class="p">),</span>
+                            <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">skiprows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">kz</span> <span class="o">=</span> <span class="n">temp_bobcat</span><span class="o">*</span><span class="mi">0</span> <span class="o">+</span> <span class="mf">1e4</span>
+<span class="n">self_consistent_kzz</span> <span class="o">=</span> <span class="kc">False</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Initial-Convective-Zone-Guess">
+<h2>Initial Convective Zone Guess<a class="headerlink" href="#Initial-Convective-Zone-Guess" title="Permalink to this headline">¶</a></h2>
+<p>This is all the same as the original Brown Dwarf tutorial. Here we will be a little more conservative with our convective zone guess as this is our first Disequilibrium run.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">nofczns</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1"># number of convective zones initially. Let&#39;s not play with this for now.</span>
+
+<span class="n">nstr_upper</span> <span class="o">=</span> <span class="mi">86</span> <span class="c1"># top most level of guessed convective zone (we are just guessing nlevel-5)</span>
+<span class="n">nstr_deep</span> <span class="o">=</span> <span class="n">nlevel</span> <span class="o">-</span><span class="mi">2</span> <span class="c1"># this is always the case. Dont change this</span>
+<span class="n">nstr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="n">nstr_upper</span><span class="p">,</span><span class="n">nstr_deep</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span> <span class="c1"># initial guess of convective zones</span>
+
+<span class="c1"># Here are some other parameters needed for the code.</span>
+<span class="n">rfacv</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="c1">#we are focused on a brown dwarf so let&#39;s keep this as is</span>
+</pre></div>
+</div>
+</div>
+<p>All the same here as well.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">cl_run</span><span class="o">.</span><span class="n">inputs_climate</span><span class="p">(</span><span class="n">temp_guess</span><span class="o">=</span> <span class="n">temp_bobcat</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span> <span class="n">pressure_bobcat</span><span class="p">,</span>
+                      <span class="n">nstr</span> <span class="o">=</span> <span class="n">nstr</span><span class="p">,</span> <span class="n">nofczns</span> <span class="o">=</span> <span class="n">nofczns</span> <span class="p">,</span> <span class="n">rfacv</span> <span class="o">=</span> <span class="n">rfacv</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Run-the-Climate-Code-with-disequilibrium-chemistry">
+<h2>Run the Climate Code with disequilibrium chemistry<a class="headerlink" href="#Run-the-Climate-Code-with-disequilibrium-chemistry" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="Setting-K_{zz}">
+<h3>Setting K<span class="math notranslate nohighlight">\(_{zz}\)</span><a class="headerlink" href="#Setting-K_{zz}" title="Permalink to this headline">¶</a></h3>
+<p>We will add one more concept which is the addition of K<span class="math notranslate nohighlight">\(_{zz}\)</span> [cm:math:<cite>^2</cite>/s]. K<span class="math notranslate nohighlight">\(_{zz}\)</span> is the eddy diffusion constant, which sets the strength of vertical mixing. In <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> we have two options for K<span class="math notranslate nohighlight">\(_{zz}\)</span>:</p>
+<ol class="arabic simple">
+<li><p>Constant value: sets a constant at every atmospheric layer</p></li>
+<li><p>Self consistent (see Eqn. 27 and 28 in <a class="reference external" href="https://arxiv.org/pdf/2208.07836.pdf">Mukherjee et al 2022</a>)</p></li>
+</ol>
+<p><strong>New code parameters</strong>:</p>
+<ol class="arabic simple" start="0">
+<li><p><code class="docutils literal notranslate"><span class="pre">diseq_chem=True</span></code> : First we will turn on disequilibrium chemistry</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">self_consistent_kzz</span></code> : (True/False) This solves self consistently for</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">save_all_kzz</span></code> : (True/False) Similar to <code class="docutils literal notranslate"><span class="pre">save_all_profiles</span></code> this saves your intermediate k_zz values if you are trying to solve for a <code class="docutils literal notranslate"><span class="pre">self_consistent_kzz=True</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kz</span></code> : constant value if <code class="docutils literal notranslate"><span class="pre">self_consistent_kzz=False</span></code></p></li>
+</ol>
+</div>
+<div class="section" id="On-the-fly-mixing">
+<h3>On the fly mixing<a class="headerlink" href="#On-the-fly-mixing" title="Permalink to this headline">¶</a></h3>
+<p>In <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2022arXiv220814317M/abstract">Mukherjee et al. 2022</a> on-the-fly mixing of CO, CH4, NH3, and H2O was considered. There are some important assumptions for version 1 that the user needs to be aware:</p>
+<ol class="arabic simple">
+<li><p>We only allow solar C/O and solar M/H</p></li>
+<li><p>Only CO, CH4, NH3, and H2O will be mixed on the fly.</p></li>
+</ol>
+<p>Soon we will make this more flexible but want to make sure that V1 of the climate code is well-behaved for users before we open it up to all gases.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">out</span> <span class="o">=</span> <span class="n">cl_run</span><span class="o">.</span><span class="n">climate</span><span class="p">(</span><span class="n">opacity_ck</span><span class="p">,</span> <span class="n">save_all_profiles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">with_spec</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">diseq_chem</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kz</span><span class="o">=</span><span class="n">kz</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Iteration number  0 , min , max temp  220.37853535863343 2157.2023051116967 , flux balance  1.4321186537961034e-06
+Iteration number  1 , min , max temp  220.1017634936712 2157.186839743511 , flux balance  3.6298329124114754e-10
+In t_start: Converged Solution in iterations  1
+Big iteration is  220.1017634936712 0
+Iteration number  0 , min , max temp  220.5273270433216 2157.9067469165043 , flux balance  3.509789314204546e-08
+In t_start: Converged Solution in iterations  0
+Profile converged
+Iteration number  0 , min , max temp  220.58432395171542 2157.9960553146507 , flux balance  4.159136319763609e-09
+In t_start: Converged Solution in iterations  0
+Big iteration is  220.58432395171542 0
+Iteration number  0 , min , max temp  220.5915905689744 2158.005848583862 , flux balance  9.313327906959213e-10
+In t_start: Converged Solution in iterations  0
+Profile converged
+Iteration number  0 , min , max temp  220.5927368754032 2156.4807243401556 , flux balance  -6.426656068376268e-09
+In t_start: Converged Solution in iterations  0
+Big iteration is  220.5927368754032 0
+Iteration number  0 , min , max temp  220.59309558764093 2156.4960206378246 , flux balance  -6.927604207311125e-10
+In t_start: Converged Solution in iterations  0
+Profile converged
+final [ 0 85 89  0  0  0]
+ We are already at a root, tolf , test =  5e-05 ,  1.0416278095895274e-05
+Big iteration is  220.59309558764093 0
+ We are already at a root, tolf , test =  5e-05 ,  1.0416278095895274e-05
+Profile converged
+YAY ! ENDING WITH CONVERGENCE
+1 conv Zone, so making small adjustment
+New NSTR status is  [ 0 87 89  0  0  0]
+Quench Levels are CO, CO2, NH3, HCN, PH3  [78 71 81 77]
+PH3 quenched at level 76
+661
+DOING DISEQ CALCULATIONS NOW
+PH3 quenched at level 76
+Iteration number  0 , min , max temp  218.78817152839642 2169.462581086566 , flux balance  0.006635656735278115
+Iteration number  1 , min , max temp  219.0302750335384 2169.292389002253 , flux balance  4.116423508594511e-05
+Iteration number  2 , min , max temp  219.03152331183915 2169.2923258751466 , flux balance  8.664250980901208e-09
+In t_start: Converged Solution in iterations  2
+PH3 quenched at level 76
+Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
+Big iteration is  219.03152331183915 0
+Iteration number  0 , min , max temp  216.98005505723333 2169.413515574907 , flux balance  0.0004489678204296811
+Iteration number  1 , min , max temp  216.95843384373327 2169.413997099951 , flux balance  2.078482956223567e-07
+In t_start: Converged Solution in iterations  1
+PH3 quenched at level 76
+Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
+Profile converged
+PH3 quenched at level 76
+Iteration number  0 , min , max temp  216.1109710658991 2155.5363721608956 , flux balance  3.6509869944896474e-05
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 76
+Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
+Big iteration is  216.1109710658991 0
+Iteration number  0 , min , max temp  215.8328757254892 2155.47022070135 , flux balance  3.346783782196641e-06
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 76
+Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
+Profile converged
+PH3 quenched at level 76
+Iteration number  0 , min , max temp  215.74759826620328 2152.9694033044325 , flux balance  3.728234336089751e-07
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 76
+Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
+Big iteration is  215.74759826620328 0
+Iteration number  0 , min , max temp  215.7228237997909 2152.9802019505855 , flux balance  5.843014471871784e-08
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 76
+Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
+Profile converged
+ convection zone status
+0 85 89 0 0 0
+1
+[ 0 72 72 72 85 89]
+PH3 quenched at level 76
+Iteration number  0 , min , max temp  215.7135920982338 2152.973377817694 , flux balance  4.0844698849861946e-07
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 76
+Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
+Big iteration is  215.7135920982338 0
+Iteration number  0 , min , max temp  215.71235330879793 2152.9741149535203 , flux balance  -9.630964117809062e-09
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 76
+Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
+Profile converged
+Grow Phase : Upper Zone
+[ 0 71 72 72 85 89]
+PH3 quenched at level 76
+Iteration number  0 , min , max temp  215.72916465435475 2152.9422988149654 , flux balance  2.011088016164654e-06
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 76
+Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
+Big iteration is  215.72916465435475 0
+Iteration number  0 , min , max temp  215.73574451483316 2152.938680464692 , flux balance  -1.9834335154402686e-08
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 76
+Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
+Profile converged
+[ 0 71 73 73 85 89]
+PH3 quenched at level 76
+Iteration number  0 , min , max temp  215.77554247634293 2152.8963984958036 , flux balance  2.222189078271006e-07
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 76
+Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
+Big iteration is  215.77554247634293 0
+Iteration number  0 , min , max temp  215.785386984878 2152.8859101499274 , flux balance  -7.579754346594153e-08
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 76
+Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
+Profile converged
+[ 0 70 73 73 85 89]
+PH3 quenched at level 76
+Iteration number  0 , min , max temp  215.8154952633034 2152.84119820506 , flux balance  -5.769850542663014e-07
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 76
+Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
+Big iteration is  215.8154952633034 0
+Iteration number  0 , min , max temp  215.82995808844737 2152.8357632365064 , flux balance  -3.0722128018325394e-07
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 76
+Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
+Profile converged
+[ 0 69 73 73 85 89]
+PH3 quenched at level 76
+Iteration number  0 , min , max temp  215.84584179366576 2152.8217507229097 , flux balance  -1.2466848467610948e-06
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 76
+Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
+Big iteration is  215.84584179366576 0
+Iteration number  0 , min , max temp  215.85304529570928 2152.8220009530482 , flux balance  -2.692714055357418e-07
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 76
+Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
+Profile converged
+[ 0 69 74 74 85 89]
+PH3 quenched at level 76
+Iteration number  0 , min , max temp  215.86504189701307 2152.831306168202 , flux balance  4.074836410709678e-06
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 76
+Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
+Big iteration is  215.86504189701307 0
+Iteration number  0 , min , max temp  215.8674518370037 2152.8215821567373 , flux balance  1.057393790294071e-08
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 76
+Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
+Profile converged
+[ 0 68 74 74 85 89]
+PH3 quenched at level 76
+Iteration number  0 , min , max temp  215.85304089732384 2152.864290379212 , flux balance  1.3985729391870582e-05
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 76
+Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
+Big iteration is  215.85304089732384 0
+Iteration number  0 , min , max temp  215.84071285008454 2152.854557177782 , flux balance  1.3798711668259324e-06
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 76
+Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
+Profile converged
+final [ 0 68 74 74 85 89]
+PH3 quenched at level 76
+Iteration number  0 , min , max temp  215.83777169476593 2152.8608431209677 , flux balance  5.277089327954568e-06
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 76
+Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
+Big iteration is  215.83777169476593 0
+Iteration number  0 , min , max temp  215.83352440840727 2152.848839151562 , flux balance  2.3841208342611992e-07
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 76
+Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
+Profile converged
+YAY ! ENDING WITH CONVERGENCE
+PH3 quenched at level 76
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">out</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+dict_keys([&#39;diseq_out&#39;, &#39;pressure&#39;, &#39;temperature&#39;, &#39;ptchem_df&#39;, &#39;dtdp&#39;, &#39;cvz_locs&#39;, &#39;flux&#39;, &#39;all_profiles&#39;, &#39;spectrum_output&#39;])
+</pre></div></div>
+</div>
+</div>
+</div>
+<div class="section" id="Benchmark-with-Phillips-et-al-2020">
+<h2>Benchmark with Phillips et al 2020<a class="headerlink" href="#Benchmark-with-Phillips-et-al-2020" title="Permalink to this headline">¶</a></h2>
+<p>With all model runs it is important to benchmark with previously published models, especially with an independent model. We can benchmark the PICASo runs with the work from <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2020A%26A...637A..38P/abstract">Phillips et al 2020</a> to create the ATMO 2020 grid.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">pphil_deq</span><span class="p">,</span><span class="n">tphil_deq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">phillips_2020_db</span><span class="p">,</span>
+                                              <span class="c1">#phillips directory structre</span>
+                                             <span class="s1">&#39;atmosphere_models&#39;</span><span class="p">,</span><span class="s1">&#39;NEQ_strong_compositions&#39;</span><span class="p">,</span>
+                                             <span class="s1">&#39;chem_T700_lg5.5_NEQ_strong.txt&#39;</span><span class="p">)</span>
+                                <span class="p">,</span><span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Pressure [Bars]&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Temperature [K]&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span><span class="mf">1e-4</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mi">2500</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">],</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">],</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">,</span><span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Our Run&quot;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">tphil_deq</span><span class="p">,</span><span class="n">pphil_deq</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span><span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span><span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Phillips et al 2020&quot;</span><span class="p">)</span>
+
+
+<span class="n">plt</span><span class="o">.</span><span class="n">minorticks_on</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span><span class="n">which</span><span class="o">=</span><span class="s1">&#39;major&#39;</span><span class="p">,</span><span class="n">length</span> <span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">direction</span><span class="o">=</span><span class="s1">&#39;in&#39;</span><span class="p">,</span><span class="n">labelsize</span><span class="o">=</span><span class="mi">23</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span><span class="n">which</span><span class="o">=</span><span class="s1">&#39;minor&#39;</span><span class="p">,</span><span class="n">length</span> <span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">direction</span><span class="o">=</span><span class="s1">&#39;in&#39;</span><span class="p">,</span><span class="n">labelsize</span><span class="o">=</span><span class="mi">23</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;T$_{\rm eff}$= 700 K, log(g)=5.5, K$_{\rm zz}$=1e4&quot;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
+
+
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Text(0.5, 1.0, &#39;T$_{\\rm eff}$= 700 K, log(g)=5.5, K$_{\\rm zz}$=1e4&#39;)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_climate_12c_BrownDwarf_DEQ_17_1.png" src="../../_images/notebooks_climate_12c_BrownDwarf_DEQ_17_1.png" />
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../fitdata/GridSearch.html" class="btn btn-neutral float-right" title="How to Fit Grid Models to Data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="12b_Exoplanet.html" class="btn btn-neutral float-left" title="One-Dimensional Climate Models: The Basics of Planets" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

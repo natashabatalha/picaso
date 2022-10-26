@@ -29,6 +29,8 @@ Basics of Thermal Emission
    Thermal Emission Exoplanets </notebooks/5_AddingThermalFlux.ipynb>
    Brown Dwarfs </notebooks/6_BrownDwarfs.ipynb>
 
+
+
 Cloud Modeling with `Virga`
 ---------------------------
 
@@ -42,7 +44,7 @@ Moving to 3 Dimensions
 Relevant Citatons: `Adams et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022ApJ...926..157A/abstract>`_ for 3D spectra and `Robbins-Blanch et al. 2022 <http://arxiv.org/abs/2204.03545>`_ for Phase Curves. 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    Non-Zero Phase and Spherical Integration </notebooks/8_SphericalIntegration.ipynb>
    Basics of a 3D Calculation </notebooks/9a_3DInputsWithPICASOandXarray.ipynb>
@@ -51,6 +53,27 @@ Relevant Citatons: `Adams et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022ApJ
    Modeling a 3D Spectrum (Adams et al. 2022)</notebooks/9d_3DSpectra.ipynb>
    Modeling a Phase Curve pt 1 (Robbins-Blanch et al. 2022)</notebooks/9e_PhaseCurves.ipynb>
    Modeling a Phase Curve pt 2 (Robbins-Blanch et al. 2022)</notebooks/9f_PhaseCurves-wChemEq.ipynb>
+
+1D Climate Modeling (New!!)
+---------------------------
+Relevant Citatons: `Mukherjee et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022arXiv220807836M/abstract>`_
+
+.. toctree::
+   :maxdepth: 2
+
+   Brown Dwarfs </notebooks/climate/12a_BrownDwarf.ipynb>
+   Planet </notebooks/climate/12b_Exoplanet.ipynb>
+   Brown Dwarfs w/ Disequilibrium Chemistry </notebooks/climate/12c_BrownDwarf_DEQ.ipynb>
+
+Fitting models to data (New!!)
+------------------------------
+Relevant Citatons: `JWST Transiting Exoplanet Community Early Release Science Team (2022) <https://www.nature.com/articles/s41586-022-05269-w>`_
+
+.. toctree::
+   :maxdepth: 2
+
+   Grid Search Analysis </notebooks/fitdata/GridSearch.ipynb>
+
 
 Opacities & Approximatons
 -------------------------
@@ -61,6 +84,7 @@ Opacities & Approximatons
    Query Opacites </notebooks/10_QueryOpacities.ipynb>
    Opacity Factory: Creating Custom Databases </notebooks/10_CreatingOpacityDb.ipynb>
    What Resampling do I Need? </notebooks/10_ResamplingOpacities.ipynb>
+   Using Correlated-K Tables </notebooks/10_CorrelatedKTables.ipynb>
    Investigating Radiative Transfer Approximations  </notebooks/10_AnalyzingApproximations.ipynb>
 
 FAQs
@@ -69,13 +93,14 @@ FAQs
 .. toctree::
    :maxdepth: 2
 
-   FAQs </notebooks/FAQs.ipynb>
+   Misc FAQs </notebooks/FAQs.ipynb>
+   Contribution Functions </notebooks/11_ContributionFunctions.ipynb>
 
 Model Storage Best Practices
 ----------------------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    Data Storage Uniformity </notebooks/codehelp/data_uniformity_tutorial.ipynb>
 

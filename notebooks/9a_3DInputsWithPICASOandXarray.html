@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Handling 3D Inputs with PICASO &mdash; picaso 2.3 documentation</title>
+  <title>Handling 3D Inputs with PICASO &mdash; picaso 3.0 documentation</title>
   
 
   
@@ -63,7 +63,7 @@
             
             
               <div class="version">
-                2.3
+                3.0
               </div>
             
           
@@ -99,7 +99,7 @@
 <li class="toctree-l3 current"><a class="current reference internal" href="#">Basics of a 3D Calculation</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#xarray-tutorial:-Convert-numpy-arrays-to-xarray-DataSet"><code class="docutils literal notranslate"><span class="pre">xarray</span></code> tutorial: Convert <code class="docutils literal notranslate"><span class="pre">numpy</span></code> arrays to <code class="docutils literal notranslate"><span class="pre">xarray</span></code> DataSet</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#xarray-tutorial:-Easy-plotting"><code class="docutils literal notranslate"><span class="pre">xarray</span></code> tutorial: Easy plotting</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#xesfm-tutorial:-Step-by-step-regrid-3D-GCM"><code class="docutils literal notranslate"><span class="pre">xesfm</span></code> tutorial: Step-by-step regrid 3D GCM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#xesmf-tutorial:-Step-by-step-regrid-3D-GCM"><code class="docutils literal notranslate"><span class="pre">xesmf</span></code> tutorial: Step-by-step regrid 3D GCM</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#Regrid-3D-GCM-with-PICASO">Regrid 3D GCM with PICASO</a></li>
 </ul>
 </li>
@@ -111,8 +111,13 @@
 <li class="toctree-l3"><a class="reference internal" href="9f_PhaseCurves-wChemEq.html">Modeling a Phase Curve pt 2 (Robbins-Blanch et al. 2022)</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#d-climate-modeling-new">1D Climate Modeling (New!!)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#fitting-models-to-data-new">Fitting models to data (New!!)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials.html#opacities-approximatons">Opacities &amp; Approximatons</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#miscellaneous">Miscellaneous</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#faqs">FAQs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#model-storage-best-practices">Model Storage Best Practices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#code-help">Code Help</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#references">References</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../picaso.html">The Code</a></li>
@@ -433,7 +438,13 @@ div.rendered_html tbody tr:hover {
 <p class="admonition-title">Note</p>
 <p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/9a_3DInputsWithPICASOandXarray.ipynb">Download full notebook here</a></p>
 </div>
-<div class="section" id="Handling-3D-Inputs-with-PICASO">
+<h1><p>Table of Contents</p>
+</h1><div class="toc"><ul class="toc-item"><li><p>1  Handling 3D Inputs with PICASO</p>
+<ul class="toc-item"><li><p>1.1  xarray tutorial: Convert numpy arrays to xarray DataSet</p>
+</li><li><p>1.2  xarray tutorial: Easy plotting</p>
+</li><li><p>1.3  xesfm tutorial: Step-by-step regrid 3D GCM</p>
+</li><li><p>1.4  Regrid 3D GCM with PICASO</p>
+</li></ul></li></ul></div><div class="section" id="Handling-3D-Inputs-with-PICASO">
 <h1>Handling 3D Inputs with PICASO<a class="headerlink" href="#Handling-3D-Inputs-with-PICASO" title="Permalink to this headline">¶</a></h1>
 <p>Many GCM groups have their files stored as <code class="docutils literal notranslate"><span class="pre">netCDF</span></code> files. Therefore, you may already be used to <code class="docutils literal notranslate"><span class="pre">xarray</span></code> format. If that is the case you will be able to directly input your xarray formatted data to <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> to get out post-processed spectra. If not though, this tutorial will walk you through how to structure your data in xarray format.</p>
 <p>What you will learn:</p>
@@ -455,7 +466,7 @@ div.rendered_html tbody tr:hover {
 </div>
 </div>
 <p>Two new packages you will need, that are not required components of other models: xesmf and xarray. You can read more about the installing these packages here:</p>
-<p><a class="reference external" href="https://xesmf.readthedocs.io/en/latest/installation.html">Install XESFM</a> - will only be needed if you want to use their really handy regridding tools</p>
+<p><a class="reference external" href="https://xesmf.readthedocs.io/en/latest/installation.html">Install XESMF</a> - will only be needed if you want to use their really handy regridding tools</p>
 <p><a class="reference external" href="http://xarray.pydata.org/en/stable/getting-started-guide/installing.html">Install xarray</a> - needed for all <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> 3d operations</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
@@ -1029,14 +1040,14 @@ Attributes:
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/notebooks_9a_3DInputsWithPICASOandXarray_14_1.png" src="../_images/notebooks_9a_3DInputsWithPICASOandXarray_14_1.png" />
+<img alt="../_images/notebooks_9a_3DInputsWithPICASOandXarray_15_1.png" src="../_images/notebooks_9a_3DInputsWithPICASOandXarray_15_1.png" />
 </div>
 </div>
 </div>
-<div class="section" id="xesfm-tutorial:-Step-by-step-regrid-3D-GCM">
-<h2><code class="docutils literal notranslate"><span class="pre">xesfm</span></code> tutorial: Step-by-step regrid 3D GCM<a class="headerlink" href="#xesfm-tutorial:-Step-by-step-regrid-3D-GCM" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="xesmf-tutorial:-Step-by-step-regrid-3D-GCM">
+<h2><code class="docutils literal notranslate"><span class="pre">xesmf</span></code> tutorial: Step-by-step regrid 3D GCM<a class="headerlink" href="#xesmf-tutorial:-Step-by-step-regrid-3D-GCM" title="Permalink to this headline">¶</a></h2>
 <p>The biggest complication with moving to 3D is making sure that the latitude/longitude grids of some users GCM and <code class="docutils literal notranslate"><span class="pre">picaso</span></code> line up properly. <code class="docutils literal notranslate"><span class="pre">picaso</span></code> computes a flux integration on specific <code class="docutils literal notranslate"><span class="pre">gauss</span></code> and <code class="docutils literal notranslate"><span class="pre">tchebychev</span></code> angles. <strong>Meaning, your GCM input will need to be regridded to fit our angles.</strong> Luckily, as you will see below, it is very easy to do this!</p>
-<p>First, we will show you how this is done using <code class="docutils literal notranslate"><span class="pre">xesfm</span></code>, then we will introduce the <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> function that leverages these same techniques.</p>
+<p>First, we will show you how this is done using <code class="docutils literal notranslate"><span class="pre">xesmf</span></code>, then we will introduce the <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> function that leverages these same techniques.</p>
 <div class="section" id="Step-1)-Get-latitude/longitude-grid-used-by-picaso">
 <h3>Step 1) Get latitude/longitude grid used by <code class="docutils literal notranslate"><span class="pre">picaso</span></code><a class="headerlink" href="#Step-1)-Get-latitude/longitude-grid-used-by-picaso" title="Permalink to this headline">¶</a></h3>
 <p><strong>G</strong>auss angles are essentially equivalent to lon<strong>G</strong>itudes</p>
@@ -1056,8 +1067,8 @@ Attributes:
 </div>
 </div>
 </div>
-<div class="section" id="Step-2)-Create-the-xesfm-regridder">
-<h3>Step 2) Create the <code class="docutils literal notranslate"><span class="pre">xesfm</span></code> regridder<a class="headerlink" href="#Step-2)-Create-the-xesfm-regridder" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="Step-2)-Create-the-xesmf-regridder">
+<h3>Step 2) Create the <code class="docutils literal notranslate"><span class="pre">xesmf</span></code> regridder<a class="headerlink" href="#Step-2)-Create-the-xesmf-regridder" title="Permalink to this headline">¶</a></h3>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
@@ -1105,7 +1116,7 @@ Attributes:
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/notebooks_9a_3DInputsWithPICASOandXarray_20_1.png" src="../_images/notebooks_9a_3DInputsWithPICASOandXarray_20_1.png" />
+<img alt="../_images/notebooks_9a_3DInputsWithPICASOandXarray_21_1.png" src="../_images/notebooks_9a_3DInputsWithPICASOandXarray_21_1.png" />
 </div>
 </div>
 </div>
@@ -1163,7 +1174,7 @@ verbose=True;Only one data variable included. Make sure to add in chemical abund
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/notebooks_9a_3DInputsWithPICASOandXarray_24_2.png" src="../_images/notebooks_9a_3DInputsWithPICASOandXarray_24_2.png" />
+<img alt="../_images/notebooks_9a_3DInputsWithPICASOandXarray_25_2.png" src="../_images/notebooks_9a_3DInputsWithPICASOandXarray_25_2.png" />
 </div>
 </div>
 </div>
@@ -1195,7 +1206,7 @@ verbose=True;Only one data variable included. Make sure to add in chemical abund
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/notebooks_9a_3DInputsWithPICASOandXarray_27_1.png" src="../_images/notebooks_9a_3DInputsWithPICASOandXarray_27_1.png" />
+<img alt="../_images/notebooks_9a_3DInputsWithPICASOandXarray_28_1.png" src="../_images/notebooks_9a_3DInputsWithPICASOandXarray_28_1.png" />
 </div>
 </div>
 <p>We have solved regridding our temperature-pressure profile. However, PICASO has notified us of another step we must take before running a spectrum: <em>verbose=True;Only one data variable included. Make sure to add in chemical abundances before trying to run spectra.</em></p>

@@ -2,6 +2,17 @@
  "cells": [
   {
    "cell_type": "markdown",
+   "id": "1503a768",
+   "metadata": {
+    "toc": true
+   },
+   "source": [
+    "<h1>Table of Contents<span class=\"tocSkip\"></span></h1>\n",
+    "<div class=\"toc\"><ul class=\"toc-item\"><li><span><a href=\"#Post-Process-3D-Clouds-Input\" data-toc-modified-id=\"Post-Process-3D-Clouds-Input-1\"><span class=\"toc-item-num\">1&nbsp;&nbsp;</span>Post-Process 3D Clouds Input</a></span><ul class=\"toc-item\"><li><span><a href=\"#Post-Process-Clouds:-User-Options\" data-toc-modified-id=\"Post-Process-Clouds:-User-Options-1.1\"><span class=\"toc-item-num\">1.1&nbsp;&nbsp;</span>Post-Process Clouds: User Options</a></span></li><li><span><a href=\"#Post-Process-Clouds:-User-Defined-Input\" data-toc-modified-id=\"Post-Process-Clouds:-User-Defined-Input-1.2\"><span class=\"toc-item-num\">1.2&nbsp;&nbsp;</span>Post-Process Clouds: User Defined Input</a></span></li><li><span><a href=\"#Post-Process-Clouds:-virga-cloud-model\" data-toc-modified-id=\"Post-Process-Clouds:-virga-cloud-model-1.3\"><span class=\"toc-item-num\">1.3&nbsp;&nbsp;</span>Post-Process Clouds: <code>virga</code> cloud model</a></span></li></ul></li></ul></div>"
+   ]
+  },
+  {
+   "cell_type": "markdown",
    "id": "628a4099",
    "metadata": {},
    "source": [

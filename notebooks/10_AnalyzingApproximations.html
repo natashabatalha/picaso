@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Diving into code approximations &mdash; picaso 2.3 documentation</title>
+  <title>Diving into code approximations &mdash; picaso 3.0 documentation</title>
   
 
   
@@ -38,8 +38,8 @@
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="SQLITE Tutorial" href="11_Sqlite3Tutorial.html" />
-    <link rel="prev" title="Opacity Factory" href="10_SwappingOpacities.html" /> 
+    <link rel="next" title="FAQs" href="FAQs.html" />
+    <link rel="prev" title="Using Correlated-K Tables vs. Monochromatic Opacities" href="10_CorrelatedKTables.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -63,7 +63,7 @@
             
             
               <div class="version">
-                2.3
+                3.0
               </div>
             
           
@@ -95,9 +95,14 @@
 <li class="toctree-l2"><a class="reference internal" href="../tutorials.html#basics-of-thermal-emission">Basics of Thermal Emission</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials.html#cloud-modeling-with-virga">Cloud Modeling with <cite>Virga</cite></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials.html#moving-to-3-dimensions">Moving to 3 Dimensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#d-climate-modeling-new">1D Climate Modeling (New!!)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#fitting-models-to-data-new">Fitting models to data (New!!)</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="../tutorials.html#opacities-approximatons">Opacities &amp; Approximatons</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="10_SwappingOpacities.html">Opacity Factory</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">Investigating Approximations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="10_QueryOpacities.html">Query Opacites</a></li>
+<li class="toctree-l3"><a class="reference internal" href="10_CreatingOpacityDb.html">Opacity Factory: Creating Custom Databases</a></li>
+<li class="toctree-l3"><a class="reference internal" href="10_ResamplingOpacities.html">What Resampling do I Need?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="10_CorrelatedKTables.html">Using Correlated-K Tables</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Investigating Radiative Transfer Approximations</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#Using-the-approx-key">Using the <code class="docutils literal notranslate"><span class="pre">approx</span></code> key</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#What-approximations-exist?">What approximations exist?</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#Direct-Scattering-Approximation">Direct Scattering Approximation</a></li>
@@ -106,10 +111,12 @@
 <li class="toctree-l4"><a class="reference internal" href="#The-Effect-of-Stellar-Spectrum">The Effect of Stellar Spectrum</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="11_Sqlite3Tutorial.html">SQLITE Tutorial</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#miscellaneous">Miscellaneous</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#faqs">FAQs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#model-storage-best-practices">Model Storage Best Practices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#code-help">Code Help</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#references">References</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../picaso.html">The Code</a></li>
@@ -1194,10 +1201,10 @@ var element = document.currentScript.previousSibling.previousSibling;
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="11_Sqlite3Tutorial.html" class="btn btn-neutral float-right" title="SQLITE Tutorial" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="FAQs.html" class="btn btn-neutral float-right" title="FAQs" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="10_SwappingOpacities.html" class="btn btn-neutral float-left" title="Opacity Factory" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="10_CorrelatedKTables.html" class="btn btn-neutral float-left" title="Using Correlated-K Tables vs. Monochromatic Opacities" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
