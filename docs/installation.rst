@@ -27,9 +27,12 @@ Install with Git
 Download Reference Documentation
 --------------------------------
 
+.. note::
+	`PICASO` 3.0 will not work with PICASO 2.3 reference folder. Please download the new reference folder if you are using PICASO 3.0 
+
 1) With pip, download the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_. You should already this if you did a Git clone. **Make sure that your reference folder matches the version number of ``PICASO``**. Check the version number in the file ``reference/version.md``. 
 
-2) Download the `Resampled Opacity File from Zenodo <https://doi.org/10.5281/zenodo.3759675>`_. Place in the `Opacities reference Folder you downloaded from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ (see below in step 3)
+2) Download the `Resampled Opacity File from Zenodo <https://doi.org/10.5281/zenodo.3759675>`_. Note that there is a v1, and v2. Either are acceptable depending on your resolutiona, wavelength needs. Place in the `Opacities reference Folder you downloaded from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ (see below in step 3)
 
 Create Environment Variable
 ---------------------------
