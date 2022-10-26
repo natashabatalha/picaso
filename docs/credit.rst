@@ -37,3 +37,9 @@ Phase curves
 - 1d climate models of brown dwarfs 
 - 1d climate models of exoplanets 
 
+Grid fits
+---------
+
+`The JWST Transiting Exoplanet Community Early Release Science Team, et al. "Identification of carbon dioxide in an exoplanet atmosphere." Nature (2022). <https://www.nature.com/articles/s41586-022-05269-w>`_
+
+- Methodology for fitting picaso model grids to data

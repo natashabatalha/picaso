@@ -4,7 +4,18 @@ Installation
 Python Version
 --------------
 
-Python >= 3.7 
+Python >= 3.8 
+
+Install with Git (recommended)
+------------------------------
+
+The Github repository contains the reference folder and helpful tutorials.  
+
+.. code-block:: bash 
+
+	git clone https://github.com/natashabatalha/picaso.git
+	cd picaso
+	python setup.py install 
 
 Install with Pip
 ----------------
@@ -13,23 +24,18 @@ Install with Pip
 
 	pip install picaso
 
-Note with a pip install you will need to download the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ (explained below). This can simply be done by downloading a zip of the ``PICASO`` code from Github (which does not require git setup). 
+With a pip install you will need to download the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ (explained below). This can simply be done by downloading a zip of the ``PICASO`` code from Github (which does not require git setup if that is not available to you). 
 
-Install with Git
-----------------
-
-.. code-block:: bash 
-
-	git clone https://github.com/natashabatalha/picaso.git
-	cd picaso
-	python setup.py install 
 
 Download Reference Documentation
 --------------------------------
 
+.. note::
+	`PICASO` 3.0 will not work with PICASO 2.3 reference folder. Please download the new reference folder if you are using PICASO 3.0 
+
 1) With pip, download the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_. You should already this if you did a Git clone. **Make sure that your reference folder matches the version number of ``PICASO``**. Check the version number in the file ``reference/version.md``. 
 
-2) Download the `Resampled Opacity File from Zenodo <https://doi.org/10.5281/zenodo.3759675>`_. Place in the `Opacities reference Folder you downloaded from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ (see below in step 3)
+2) Download the `Resampled Opacity File from Zenodo <https://doi.org/10.5281/zenodo.3759675>`_. Note that there is a v1, and v2. Either are acceptable depending on your resolutiona, wavelength needs. Place in the `Opacities reference Folder you downloaded from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ (see below in step 3)
 
 Create Environment Variable
 ---------------------------
