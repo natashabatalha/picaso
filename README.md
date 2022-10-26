@@ -14,16 +14,6 @@
 - Physics help: https://natashabatalha.github.io/picaso_dev 
 - What to cite: https://natashabatalha.github.io/picaso/credit.html 
 
-
-
-## Contributing
-
-Contributions are always welcome no matter the code level you are at. We value anything from small typos in our documentations page to larger feature changes. If you are a new to github and conda environments you can read our instructions here: https://natashabatalha.github.io/picaso/contribution.html
-
-Additionally all contributors agree to adhere to this project's `code of conduct`: https://github.com/natashabatalha/picaso/blob/master/code_of_conduct.md
-
-
-
 ## Major Features
 
 - [Reflected Light Spectroscopy of planets](https://natashabatalha.github.io/picaso/notebooks/1_GetStarted.html)
@@ -32,6 +22,18 @@ Additionally all contributors agree to adhere to this project's `code of conduct
 - [Phase Curves of planets](https://natashabatalha.github.io/picaso/notebooks/9e_PhaseCurves.html)
 - [1D Climate modeling of planets and brown dwarfs](https://natashabatalha.github.io/picaso/notebooks/climate/12a_BrownDwarf.html)
 - [Fitting models to data](https://natashabatalha.github.io/picaso/notebooks/fitdata/GridSearch.html)
+
+## Contributing
+
+Contributions are always welcome no matter the code level you are at. We value anything from small typos in our documentations page to larger feature changes. We follow the [all-contributors](https://github.com/all-contributors/all-contributors) specification. This means that contributions of any kind welcome! If you are a new to github and conda environments you can read our instructions here: https://natashabatalha.github.io/picaso/contribution.html
+
+Additionally all contributors agree to adhere to this project's [`code of conduct`](https://github.com/natashabatalha/picaso/blob/master/code_of_conduct.md)
+
+Anyone is free to use the [contributor bot to add their contribution](https://allcontributors.org/docs/en/bot/usage). Simply comment on an issue or pull request with: 
+
+```
+@all-contributors please add @<username> for <contributions>
+```
 
 ## Contributors
 
@@ -75,6 +77,6 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
-This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
+
 
 
