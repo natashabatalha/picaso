@@ -83,6 +83,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "MartianColonist",
+      "name": "Ryan MacDonald",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22718554?v=4",
+      "profile": "https://github.com/MartianColonist",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
