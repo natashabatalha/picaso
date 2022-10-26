@@ -6,6 +6,17 @@ Python Version
 
 Python >= 3.7 
 
+Install with Git (recommended)
+------------------------------
+
+The Github repository contains the reference folder and helpful tutorials.  
+
+.. code-block:: bash 
+
+	git clone https://github.com/natashabatalha/picaso.git
+	cd picaso
+	python setup.py install 
+
 Install with Pip
 ----------------
 
@@ -13,16 +24,8 @@ Install with Pip
 
 	pip install picaso
 
-Note with a pip install you will need to download the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ (explained below). This can simply be done by downloading a zip of the ``PICASO`` code from Github (which does not require git setup). 
+With a pip install you will need to download the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ (explained below). This can simply be done by downloading a zip of the ``PICASO`` code from Github (which does not require git setup if that is not available to you). 
 
-Install with Git
-----------------
-
-.. code-block:: bash 
-
-	git clone https://github.com/natashabatalha/picaso.git
-	cd picaso
-	python setup.py install 
 
 Download Reference Documentation
 --------------------------------
