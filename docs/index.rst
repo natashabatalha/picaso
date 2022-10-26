@@ -71,6 +71,6 @@ Resources
    Workshop Material <workshops>
    The Derivations <https://natashabatalha.github.io/picaso_dev>
    Github <https://github.com/natashabatalha/picaso>
-   The Papers <credit>
+   What to Cite <credit>
 
 
