@@ -2845,7 +2845,7 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     b0 = all_b[0:-1,:]
     if blackbody_approx == 1: # linear thermal
         b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
-        f0 = 0.
+        f0 = 0.*b1
     elif blackbody_approx == 2: # exponential thermal
         b1 = all_b[1:,:] 
         f0 = -1/dtau * log(b1/b0)
@@ -2861,7 +2861,7 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     b_surface_SH4 = (-pi*all_b[-1,:]/4 )
 
     if np.array_equal(cosb,cosb_og):
-        ff = 0.
+        ff = 0.*cosb_og
     else:
         ff = cosb_og**stream
 
@@ -2881,12 +2881,13 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
         for nt in range(numt):
             if stream==2:
                 M, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2 = setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, 
-                surf_reflect, ubar1[ng,nt], 0, dtau, tau, a, b, b0, b1, f0, fluxes=flx, calculation=blackbody_approx)
+                surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, B0=b0, B1=b1, f0=f0, fluxes=flx, calculation=blackbody_approx)
 
             elif stream==4:
                 M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, 
-                        b_surface_SH4, surf_reflect, ubar1[ng,nt], 0, dtau, tau, a, b, b0, b1, f0, fluxes=flx, calculation=blackbody_approx) 
+                        b_surface_SH4, surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, b0, b1, f0, fluxes=flx, calculation=blackbody_approx) 
                 # F and G will be nonzero if fluxes=1
+
 
             flux_bot = zeros(nwno)
             intgrl_new = zeros((stream*nlayer, nwno))
@@ -3145,7 +3146,6 @@ def setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar
 
 #    import IPython; IPython.embed()
     return Mb, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2
-
 @jit(nopython=True, cache=True, debug=True)
 def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, surf_reflect, ubar0, ubar1,
         dtau, tau, a, b, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
