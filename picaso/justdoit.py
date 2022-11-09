@@ -484,9 +484,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             'single_phase':single_phase, 'multi_phase':multi_phase, 
             'frac_a':frac_a, 'frac_b':frac_b, 'frac_c':frac_c, 'constant_back':constant_back, 
             'constant_forward':constant_forward, 'dim':dimension, 'stream':stream,
-            #'xint_at_top': xint_at_top, 'albedo': albedo, 'flux': flux_out, 'xint': intensity, 'b_top': b_top,
-            'xint_at_top': flux_at_top, 'flux': flux_out, 'xint': intensity, 'b_top': b_top,
-            'gweight': gweight, 'tweight': tweight, 'gangle': gangle, 'tangle': tangle}, open(filename,'wb'), protocol=2)
+            #'xint_at_top': xint_at_top, 'albedo': albedo, 'flux': flux_out, 'xint': intensity,
+            'b_top': b_top, 'gweight': gweight, 'tweight': tweight, 'gangle': gangle, 'tangle': tangle}, 
+            open(filename,'wb'), protocol=2)
+        print('Output saved to ', filename)
     return returns
 
 def _finditem(obj, key):
@@ -5577,3 +5578,4 @@ def OH_conc(temp,press,x_h2o,x_h2):
     n = press_cgs/(kb*temp)
     
     return x_oh*n
+

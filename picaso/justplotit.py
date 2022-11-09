@@ -9,7 +9,7 @@ from bokeh.models import ColumnDataSource,LinearAxis,Range1d
 from bokeh.layouts import row,column,gridplot
 from bokeh.io import output_notebook
 from bokeh.plotting import figure, output_file, show
-from bokeh.palettes import Colorblind8
+from bokeh.palettes import Colorblind8, RdGy
 
 import os 
 import copy
@@ -1918,3 +1918,56 @@ def animate_convergence(clima_out, picaso_bundle, opacity, wave_range=[0.3,6],
     plt.close()
     return ani
 
+def create_heat_map(data,rayleigh=True,extend=False):
+    reverse = True
+    data.columns.name = 'w0' 
+    data.index.name = 'g0' 
+    data.index=data.index.astype(str)
+    data = data.rename(index={"-1.0":"Ray"})
+    if not rayleigh:
+        data = data.drop(["Ray"])  
+    for w in data.columns[0:]:
+        if pd.isnull(data.loc['0.0'][w]):
+            data = data.drop(columns=[w])
+            reverse = False
+
+    x_range = list(data.index)
+    if reverse:
+        y_range =  list(reversed(data.columns))
+    else:
+        y_range =  list(data.columns)
+
+    df = pd.DataFrame(data.stack(), columns=['albedo']).reset_index()
+
+
+
+    colors = RdGy[11]
+    bd = max(abs(df.albedo.min()), abs(df.albedo.max()))
+#     bd = min(bd,20)
+    mapper = LinearColorMapper(palette=colors, low=-bd, high=bd)
+
+    TOOLS = "hover,save,pan,box_zoom,reset,wheel_zoom"
+
+    p = figure(height=300,width=300,
+           y_range=y_range, x_range=x_range,
+           x_axis_location="above",
+           tools=TOOLS, toolbar_location='below')
+
+    p.grid.grid_line_color = None
+    p.axis.axis_line_color = None
+    p.axis.major_tick_line_color = None
+    p.axis.major_label_text_font_size = "7px"
+    p.axis.major_label_standoff = 0
+    p.xaxis.major_label_orientation = np.pi / 3
+
+    p.rect(x="g0", y="w0", width=1, height=1,
+       source=df,
+       fill_color={'field': 'albedo', 'transform': mapper},
+       line_color=None)
+
+    color_bar = ColorBar(color_mapper=mapper, major_label_text_font_size="12px",
+                     ticker=BasicTicker(desired_num_ticks=len(colors)),
+                     label_standoff=6, border_line_color=None, location=(0, 0))
+    p.add_layout(color_bar, 'right')
+    p.axis.major_label_text_font_size='12px'
+    return p
