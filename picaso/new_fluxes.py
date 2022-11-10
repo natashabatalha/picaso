@@ -2886,6 +2886,15 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
                 b_top, b_surface, b_surface_SH4, surf_reflect, 0, dtau, tau, a, b, B0=b0, B1=b1, f0=f0, 
                 fluxes=flx, calculation=blackbody_approx)
 
+    #========================= Start loop over wavelength =========================
+    X = zeros((stream*nlayer, nwno))
+    for W in range(nwno):
+        #(intgrl_new[:,W], flux_bot[W], X) = solve_4_stream_banded(M[:,:,W], B[:,W],  
+        #A_int[:,:,W], N_int[:,W], F_bot[:,W], G_bot[W], stream, nlayer)
+        X[:,W] = solve_4_stream_banded(M[:,:,W], B[:,W], stream)
+        #if flx==1:
+        #    flux_temp[:,W] = calculate_flux(F[:,:,W], G[:,W], X)
+
     for ng in range(numg):
         for nt in range(numt):
             if stream==2:
@@ -2904,23 +2913,15 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 
             flux_bot = zeros(nwno)
             intgrl_new = zeros((stream*nlayer, nwno))
-            X = zeros((stream*nlayer, nwno))
             intgrl_per_layer = zeros((nlayer, nwno))
             multi_scat = zeros((nlayer, nwno))
             xint_temp = zeros((nlevel, nwno))
             flux_temp = zeros((stream*nlevel, nwno))
-            #========================= Start loop over wavelength =========================
 
             #filename = 'solve_' + str(stream) + '_stream_input.pk' 
             #pk.dump({'M':M, 'B':B, 'A_int':A_int, 'N_int':N_int, 'F_bot':F_bot, 'G_bot':G_bot, 
             #    'stream':stream, 'nlayer':nlayer}, open(filename,'wb'), protocol=2)
             #print('Matrix output saved to ', filename)
-            for W in range(nwno):
-                #(intgrl_new[:,W], flux_bot[W], X) = solve_4_stream_banded(M[:,:,W], B[:,W],  
-                #A_int[:,:,W], N_int[:,W], F_bot[:,W], G_bot[W], stream, nlayer)
-                X[:,W] = solve_4_stream_banded(M[:,:,W], B[:,W], stream)
-                #if flx==1:
-                #    flux_temp[:,W] = calculate_flux(F[:,:,W], G[:,W], X)
 
             (intgrl_new, flux_bot) = find_integrated_intensities(A_int, N_int, F, G, X)
 
