@@ -39,7 +39,7 @@ def slice_gt(array, lim):
 
 @jit(nopython=True, cache=True)
 def slice_rav(array, lim):
-    """Funciton to replace values with upper or lower limit
+    """Function to replace values with upper or lower limit
     """
     shape = array.shape
     new = array.ravel()
@@ -2910,11 +2910,19 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
             xint_temp = zeros((nlevel, nwno))
             flux_temp = zeros((stream*nlevel, nwno))
             #========================= Start loop over wavelength =========================
+
+            #filename = 'solve_' + str(stream) + '_stream_input.pk' 
+            #pk.dump({'M':M, 'B':B, 'A_int':A_int, 'N_int':N_int, 'F_bot':F_bot, 'G_bot':G_bot, 
+            #    'stream':stream, 'nlayer':nlayer}, open(filename,'wb'), protocol=2)
+            #print('Matrix output saved to ', filename)
             for W in range(nwno):
-                (intgrl_new[:,W], flux_bot[W], X) = solve_4_stream_banded(M[:,:,W], B[:,W],  
-                A_int[:,:,W], N_int[:,W], F_bot[:,W], G_bot[W], stream, nlayer)
-                if flx==1:
-                    flux_temp[:,W] = calculate_flux(F[:,:,W], G[:,W], X)
+                #(intgrl_new[:,W], flux_bot[W], X) = solve_4_stream_banded(M[:,:,W], B[:,W],  
+                #A_int[:,:,W], N_int[:,W], F_bot[:,W], G_bot[W], stream, nlayer)
+                X[:,W] = solve_4_stream_banded(M[:,:,W], B[:,W], stream)
+                #if flx==1:
+                #    flux_temp[:,W] = calculate_flux(F[:,:,W], G[:,W], X)
+
+            (intgrl_new, flux_bot) = find_integrated_intensities(A_int, N_int, F, G, X)
 
             Pubar1 = legP(ubar1[ng,nt]) 
             for i in range(nlayer):
@@ -3538,7 +3546,8 @@ def setup_4_stream_integrated_intensities(nlayer, nwno, w0, ubar0, ubar1, lam1, 
     return A_int, N_int
 
 @jit(nopython=True, cache=True)
-def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream, nlayer):
+#def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream, nlayer):
+def solve_4_stream_banded(M, B, stream):
     """
     Solve the Spherical Harmonics Problem
 
@@ -3555,13 +3564,19 @@ def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream, nlayer):
     diag = int(3*stream/2 - 1)
     with objmode(X='float64[:]'):
         X = solve_banded((diag,diag), M, B)
+
+    return X
+
+
+@jit(nopython=True, cache=True)
+def find_integrated_intensities(A_int, N_int, F, G, X):
     #   integral of Iexp(-tau/ubar1) at each level 
     #intgrl_new =  A_int.dot(X) + N_int
     intgrl_new = mat_dot(A_int,X) + N_int
     #   flux at bottom
     #flux = F.dot(X) + G
     flux = vec_dot(F,X) + G
-    return (intgrl_new, flux, X)
+    return (intgrl_new, flux)
 
 @jit(nopython=True, cache=True)
 def calculate_flux(F, G, X):
@@ -3586,10 +3601,14 @@ def mat_dot(A,B):
     """
     Matrix-vector dot product
     """
-    C = zeros(A.shape[0])
+    #C = zeros(A.shape[0])
+    #for i in range(A.shape[0]):
+    #    for j in range(A.shape[1]):
+    #        C[i] += A[i,j]*B[j]
+    C = zeros(B.shape)
     for i in range(A.shape[0]):
         for j in range(A.shape[1]):
-            C[i] += A[i,j]*B[j]
+            C[i,:] += A[i,j,:]*B[j,:]
     return C
 
 @jit(nopython=True, cache=True)
@@ -3597,9 +3616,13 @@ def vec_dot(A,B):
     """
     Vector-vector dot product
     """
-    C = 0
+    #C = 0
+    #for i in range(A.shape[0]):
+    #    C += A[i]*B[i]
+    C = zeros((A.shape[0], A.shape[2]))
     for i in range(A.shape[0]):
-        C += A[i]*B[i]
+        for j in range(A.shape[1]):
+            C[i,:] += A[i,j,:]*B[j,:]
     return C
 
 
