@@ -92,7 +92,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#python-version">Python Version</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#install-with-git-recommended">Install with Git (recommended)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#install-with-pip">Install with Pip</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#download-reference-documentation">Download Reference Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#download-picaso-reference-data">Download PICASO Reference Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#create-environment-variable">Create Environment Variable</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#method-1-bash-profle-or-zshrc-file">Method 1: <code class="docutils literal notranslate"><span class="pre">bash_profle</span></code> or <code class="docutils literal notranslate"><span class="pre">zshrc</span></code> file</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#method-2-add-directly-to-python-code">Method 2: Add directly to python code</a></li>
@@ -108,7 +108,7 @@
 <li class="toctree-l1"><a class="reference internal" href="workshops.html">Workshop Material</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
-<li class="toctree-l1"><a class="reference internal" href="credit.html">The Papers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="credit.html">What to Cite</a></li>
 </ul>
 
             
@@ -201,7 +201,7 @@
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="python-version">
 <h2>Python Version<a class="headerlink" href="#python-version" title="Permalink to this headline">¶</a></h2>
-<p>Python &gt;= 3.7</p>
+<p>Python &gt;= 3.8</p>
 </div>
 <div class="section" id="install-with-git-recommended">
 <h2>Install with Git (recommended)<a class="headerlink" href="#install-with-git-recommended" title="Permalink to this headline">¶</a></h2>
@@ -219,15 +219,15 @@ python setup.py install
 </div>
 <p>With a pip install you will need to download the <a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/reference">Reference Folder from Github</a> (explained below). This can simply be done by downloading a zip of the <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> code from Github (which does not require git setup if that is not available to you).</p>
 </div>
-<div class="section" id="download-reference-documentation">
-<h2>Download Reference Documentation<a class="headerlink" href="#download-reference-documentation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="download-picaso-reference-data">
+<h2>Download PICASO Reference Data<a class="headerlink" href="#download-picaso-reference-data" title="Permalink to this headline">¶</a></h2>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p><cite>PICASO</cite> 3.0 will not work with PICASO 2.3 reference folder. Please download the new reference folder if you are using PICASO 3.0</p>
 </div>
 <ol class="arabic simple">
-<li><p>With pip, download the <a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/reference">Reference Folder from Github</a>. You should already this if you did a Git clone. <strong>Make sure that your reference folder matches the version number of ``PICASO``</strong>. Check the version number in the file <code class="docutils literal notranslate"><span class="pre">reference/version.md</span></code>.</p></li>
-<li><p>Download the <a class="reference external" href="https://doi.org/10.5281/zenodo.3759675">Resampled Opacity File from Zenodo</a>. Note that there is a v1, and v2. Either are acceptable depending on your resolutiona, wavelength needs. Place in the <a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/reference">Opacities reference Folder you downloaded from Github</a> (see below in step 3)</p></li>
+<li><p>Download the <a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/reference">Reference Folder from Github</a>. You should already this if you did a Git clone. <strong>Make sure that your reference folder matches the version number of ``PICASO``</strong>. Check the version number in the file <code class="docutils literal notranslate"><span class="pre">reference/version.md</span></code>.</p></li>
+<li><p>Download a <a class="reference external" href="https://doi.org/10.5281/zenodo.3759675">Resampled Opacity File from Zenodo</a>. Note that there are a few different versions. Any is acceptable depending on your resolution and wavelength needs. Put this db file in the <a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/reference">Opacities reference Folder you downloaded from Github</a>. <strong>You may need to rename it opacities.db and place into `reference/opacities` folder</strong>. The file placed into reference/opacities will serve as your default file. You can point to other opacity files using justdoit.opannection.</p></li>
 </ol>
 </div>
 <div class="section" id="create-environment-variable">
