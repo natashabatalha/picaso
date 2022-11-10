@@ -7,7 +7,7 @@ import pickle as pk
 from scipy.linalg import solve_banded
 #from numpy.linalg import solve
 
-#@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def slice_eq(array, lim, value):
     """Funciton to replace values with upper or lower limit
     """
@@ -17,7 +17,7 @@ def slice_eq(array, lim, value):
         array[i,:] = new     
     return array
 
-#@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def slice_lt(array, lim):
     """Funciton to replace values with upper or lower limit
     """
@@ -27,7 +27,7 @@ def slice_lt(array, lim):
         array[i,:] = new     
     return array
 
-#@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def slice_gt(array, lim):
     """Funciton to replace values with upper or lower limit
     """
@@ -37,7 +37,7 @@ def slice_gt(array, lim):
         array[i,:] = new     
     return array
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def slice_rav(array, lim):
     """Funciton to replace values with upper or lower limit
     """
@@ -47,7 +47,7 @@ def slice_rav(array, lim):
     new[where(new<-lim)] = -lim
     return new.reshape(shape)
 
-#@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def numba_cumsum(mat):
     """Function to compute cumsum along axis=0 to bypass numba not allowing kwargs in 
     cumsum 
@@ -57,7 +57,7 @@ def numba_cumsum(mat):
         new_mat[:,i] = cumsum(mat[:,i])
     return new_mat
 
-#@jit(nopython=True, cache=True)#, fastmath=True)
+@jit(nopython=True, cache=True)#, fastmath=True)
 def setup_tri_diag(nlayer,nwno ,c_plus_up, c_minus_up, 
     c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
     gama, dtau, exptrm_positive,  exptrm_minus):
@@ -257,7 +257,7 @@ def setup_pent_diag(nlayer,nwno ,c_plus_up, c_minus_up,
     return A, B, C, D, E, F
 
 
-#@jit(nopython=True, cache=True)#, fastmath=True)
+@jit(nopython=True, cache=True)#, fastmath=True)
 def tri_diag_solve(l, a, b, c, d):
     """
     Tridiagonal Matrix Algorithm solver, a b c d can be NumPy array type or Python list type.
@@ -1531,7 +1531,7 @@ def get_reflected_1d_gfluxv(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,
     return flux_minus_all, flux_plus_all, flux_minus_midpt_all, flux_plus_midpt_all 
 
 
-#@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def blackbody(t,w):
     """
     Blackbody flux in cgs units in per unit wavelength
@@ -1757,7 +1757,7 @@ def get_thermal_1d_newclima(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,pl
 
     return flux_at_top , (flux_minus, flux_plus, flux_minus_mdpt, flux_plus_mdpt)
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,
     surf_reflect, hard_surface, tridiagonal):
     """
@@ -2759,10 +2759,10 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
     
     return xint_at_top, flux, xint_out
 
-#@jit(nopython=True, cache=True, debug=True)
+@jit(nopython=True, cache=True, debug=True)
 def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb, 
             dtau_og, tau_og, w0_og, w0_no_raman, cosb_og, plevel, ubar1,
-            surf_reflect, stream, hard_surface, flx=1, blackbody_approx=1):
+            surf_reflect, stream, hard_surface, flx=0, blackbody_approx=1):
     """
     The result of this routine is the top of the atmosphere thermal intensity as 
     a function of gauss and chebychev points accross the disk. 
@@ -2946,7 +2946,7 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     
     return xint_at_top, intensity, flux 
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar0, ubar1,
         dtau, tau, a, b, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
     """
@@ -3146,7 +3146,7 @@ def setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar
 
 #    import IPython; IPython.embed()
     return Mb, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2
-#@jit(nopython=True, cache=True, debug=True)
+@jit(nopython=True, cache=True, debug=True)
 def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, surf_reflect, ubar0, ubar1,
         dtau, tau, a, b, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
 
@@ -3507,7 +3507,7 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
 
     return Mb, B, A_int, N_int, F_bot, G_bot, F, G
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream, nlayer):
     """
     Solve the Spherical Harmonics Problem
@@ -3533,7 +3533,7 @@ def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream, nlayer):
     flux = vec_dot(F,X) + G
     return (intgrl_new, flux, X)
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def calculate_flux(F, G, X):
     """
     Calculate fluxes
@@ -3541,7 +3541,7 @@ def calculate_flux(F, G, X):
     #return F.dot(X) + G
     return mat_dot(F,X) + G
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def legP(mu): # Legendre polynomials
     """
     Generate array of Legendre polynomials
@@ -3551,7 +3551,7 @@ def legP(mu): # Legendre polynomials
         (63*mu**5 - 70*mu**3 + 15*mu)/8, 
         (231*mu**6 - 315*mu**4 + 105*mu**2 - 5)/16 ])
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def mat_dot(A,B):
     """
     Matrix-vector dot product
@@ -3562,7 +3562,7 @@ def mat_dot(A,B):
             C[i] += A[i,j]*B[j]
     return C
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def vec_dot(A,B):
     """
     Vector-vector dot product
