@@ -753,7 +753,7 @@ def opannection(wave_range = None, filename_db = None, raman_db = None,
         if isinstance(filename_db,type(None)): 
             filename_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['opacity'])
             if not os.path.isfile(filename_db):
-                raise Exception('The opacity file does not exist: '  + filename_db+' The default is to a file opacities.db in reference/opacity/. If you have an older version of PICASO your file might be called opacity.db. Consider just adding the correct path to filename_db=')
+                raise Exception(f'The default opacity file does not exist: {filename_db}. In order to have a default database please download one of the opacity files from Zenodo and place into this folder with the name opacities.db: https://zenodo.org/record/6928501#.Y2w4C-zMI8Y if you dont want a single default file then you just need to point to the opacity db using the keyword filename_db.')
         elif not isinstance(filename_db,type(None) ): 
             if not os.path.isfile(filename_db):
                 raise Exception('The opacity file you have entered does not exist: '  + filename_db)
