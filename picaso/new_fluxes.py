@@ -2889,17 +2889,14 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     #========================= Start loop over wavelength =========================
     X = zeros((stream*nlayer, nwno))
     for W in range(nwno):
-        #(intgrl_new[:,W], flux_bot[W], X) = solve_4_stream_banded(M[:,:,W], B[:,W],  
-        #A_int[:,:,W], N_int[:,W], F_bot[:,W], G_bot[W], stream, nlayer)
         X[:,W] = solve_4_stream_banded(M[:,:,W], B[:,W], stream)
         #if flx==1:
         #    flux_temp[:,W] = calculate_flux(F[:,:,W], G[:,W], X)
+    flux_bot = np.sum(F_bot*X, axis=0) + G_bot
 
     for ng in range(numg):
         for nt in range(numt):
             #if stream==2:
-            #    #M, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2 = setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, 
-            #    #surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, B0=b0, B1=b1, f0=f0, fluxes=flx, calculation=blackbody_approx)
             #    A_int, N_int = setup_2_stream_integrated_intensities(nlayer, nwno, w0, 0, ubar1[ng,nt], lam, q, eta,
             #            dtau, tau, a, B0=b0, B1=b1, f0=f0, calculation=blackbody_approx)
 
@@ -2923,7 +2920,7 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
             #    'stream':stream, 'nlayer':nlayer}, open(filename,'wb'), protocol=2)
             #print('Matrix output saved to ', filename)
 
-            #(intgrl_new, flux_bot) = find_integrated_intensities(A_int, N_int, F, G, X)
+            #(intgrl_new, flux_bot) = find_integrated_intensities(A_int, N_int, F_bot, G_bot, X)
             alpha = 1/ubar1[ng,nt] + lam
             beta = 1/ubar1[ng,nt] - lam
             expo_alp = slice_gt(alpha * dtau, 35.0)
@@ -2936,14 +2933,13 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
             Aint1 = X[1::2,:] * (w_multi[0]+w_multi[1]*Pubar1[1]*q) * exptrm_bet
 
             expdtau = exp(-dtau/ubar1[ng,nt])
-            Nint0 = (1-w0) * ubar1[ng,nt] / a[0] * (b0 *(1-expdtau) + b1*(ubar1[ng,nt] - (dtau+ubar1[ng,nt])*expdtau)) #* 2*pi
-            Nint1 = (1-w0) * ubar1[ng,nt] / a[0] * ( b1*(1-expdtau) / a[1]) #* 2*pi
+            Nint0 = w_multi[0]*((1-w0) * ubar1[ng,nt] / a[0] * (b0 *(1-expdtau) + b1*(ubar1[ng,nt] - (dtau+ubar1[ng,nt])*expdtau))) 
+            Nint1 = w_multi[1]*Pubar1[1]*((1-w0) * ubar1[ng,nt] / a[0] * ( b1*(1-expdtau) / a[1])) #* 2*pi
 
             multi_scat = Aint0 + Nint0 + Aint1 + Nint1
             #for i in range(nlayer):
             #    for l in range(stream):
-            #        #multi_scat[i,:] = multi_scat[i,:] + w_multi[l,i,:] * Pubar1[l] * intgrl_new[stream*i+l,:]
-            #        multi_scat[i,:] = multi_scat[i,:] + Aint0 + Nint0 + Aint1 + Nint1
+            #        multi_scat[i,:] = multi_scat[i,:] + w_multi[l,i,:] * Pubar1[l] * intgrl_new[stream*i+l,:]
 
             if blackbody_approx==1:
                 expo = dtau / ubar1[ng,nt] 
@@ -3632,13 +3628,15 @@ def vec_dot(A,B):
     """
     Vector-vector dot product
     """
-    #C = 0
-    #for i in range(A.shape[0]):
-    #    C += A[i]*B[i]
-    C = zeros((A.shape[0], A.shape[2]))
+    C = 0
     for i in range(A.shape[0]):
-        for j in range(A.shape[1]):
-            C[i,:] += A[i,j,:]*B[j,:]
+        C += A[i]*B[i]
+    #import IPython; IPython.embed()
+    #import sys; sys.exit()
+    #C = zeros((A.shape[0], A.shape[2]))
+    #for i in range(A.shape[0]):
+    #    for j in range(A.shape[1]):
+    #        C[i,:] += A[i,j,:]*B[j,:]
     return C
 
 
