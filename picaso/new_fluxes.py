@@ -2897,18 +2897,18 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 
     for ng in range(numg):
         for nt in range(numt):
-            if stream==2:
-                #M, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2 = setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, 
-                #surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, B0=b0, B1=b1, f0=f0, fluxes=flx, calculation=blackbody_approx)
-                A_int, N_int = setup_2_stream_integrated_intensities(nlayer, nwno, w0, 0, ubar1[ng,nt], lam, q, eta,
-                        dtau, tau, a, B0=b0, B1=b1, f0=f0, calculation=blackbody_approx)
+            #if stream==2:
+            #    #M, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2 = setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, 
+            #    #surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, B0=b0, B1=b1, f0=f0, fluxes=flx, calculation=blackbody_approx)
+            #    A_int, N_int = setup_2_stream_integrated_intensities(nlayer, nwno, w0, 0, ubar1[ng,nt], lam, q, eta,
+            #            dtau, tau, a, B0=b0, B1=b1, f0=f0, calculation=blackbody_approx)
 
-            elif stream==4:
-                #M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, 
-                #        b_surface_SH4, surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, b0, b1, f0, fluxes=flx, calculation=blackbody_approx) 
-                A_int, N_int = setup_4_stream_integrated_intensities(nlayer, nwno, w0, 0, ubar1[ng,nt], lam1, lam2, 
-                        Q1, Q2, R1, R2, S1, S2, eta, dtau, tau, a, B0=b0, B1=b1, f0=f0, calculation=blackbody_approx)
-                # F and G will be nonzero if fluxes=1
+            #elif stream==4:
+            #    #M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, 
+            #    #        b_surface_SH4, surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, b0, b1, f0, fluxes=flx, calculation=blackbody_approx) 
+            #    A_int, N_int = setup_4_stream_integrated_intensities(nlayer, nwno, w0, 0, ubar1[ng,nt], lam1, lam2, 
+            #            Q1, Q2, R1, R2, S1, S2, eta, dtau, tau, a, B0=b0, B1=b1, f0=f0, calculation=blackbody_approx)
+            #    # F and G will be nonzero if fluxes=1
 
 
             flux_bot = zeros(nwno)
@@ -2923,12 +2923,27 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
             #    'stream':stream, 'nlayer':nlayer}, open(filename,'wb'), protocol=2)
             #print('Matrix output saved to ', filename)
 
-            (intgrl_new, flux_bot) = find_integrated_intensities(A_int, N_int, F, G, X)
+            #(intgrl_new, flux_bot) = find_integrated_intensities(A_int, N_int, F, G, X)
+            alpha = 1/ubar1[ng,nt] + lam
+            beta = 1/ubar1[ng,nt] - lam
+            expo_alp = slice_gt(alpha * dtau, 35.0)
+            expo_bet = slice_gt(beta * dtau, 35.0) 
+            exptrm_alp = (1 - exp(-expo_alp)) / alpha 
+            exptrm_bet = (1 - exp(-expo_bet)) / beta
 
             Pubar1 = legP(ubar1[ng,nt]) 
-            for i in range(nlayer):
-                for l in range(stream):
-                    multi_scat[i,:] = multi_scat[i,:] + w_multi[l,i,:] * Pubar1[l] * intgrl_new[stream*i+l,:]
+            Aint0 = X[::2,:]  * (w_multi[0]-w_multi[1]*Pubar1[1]*q) * exptrm_alp
+            Aint1 = X[1::2,:] * (w_multi[0]+w_multi[1]*Pubar1[1]*q) * exptrm_bet
+
+            expdtau = exp(-dtau/ubar1[ng,nt])
+            Nint0 = (1-w0) * ubar1[ng,nt] / a[0] * (b0 *(1-expdtau) + b1*(ubar1[ng,nt] - (dtau+ubar1[ng,nt])*expdtau)) #* 2*pi
+            Nint1 = (1-w0) * ubar1[ng,nt] / a[0] * ( b1*(1-expdtau) / a[1]) #* 2*pi
+
+            multi_scat = Aint0 + Nint0 + Aint1 + Nint1
+            #for i in range(nlayer):
+            #    for l in range(stream):
+            #        #multi_scat[i,:] = multi_scat[i,:] + w_multi[l,i,:] * Pubar1[l] * intgrl_new[stream*i+l,:]
+            #        multi_scat[i,:] = multi_scat[i,:] + Aint0 + Nint0 + Aint1 + Nint1
 
             if blackbody_approx==1:
                 expo = dtau / ubar1[ng,nt] 
