@@ -7,7 +7,7 @@ import pickle as pk
 from scipy.linalg import solve_banded
 #from numpy.linalg import solve
 
-#@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def slice_eq(array, lim, value):
     """Funciton to replace values with upper or lower limit
     """
@@ -17,7 +17,7 @@ def slice_eq(array, lim, value):
         array[i,:] = new     
     return array
 
-#@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def slice_lt(array, lim):
     """Funciton to replace values with upper or lower limit
     """
@@ -27,7 +27,7 @@ def slice_lt(array, lim):
         array[i,:] = new     
     return array
 
-#@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def slice_gt(array, lim):
     """Funciton to replace values with upper or lower limit
     """
@@ -37,7 +37,7 @@ def slice_gt(array, lim):
         array[i,:] = new     
     return array
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def slice_rav(array, lim):
     """Function to replace values with upper or lower limit
     """
@@ -47,7 +47,7 @@ def slice_rav(array, lim):
     new[where(new<-lim)] = -lim
     return new.reshape(shape)
 
-#@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def numba_cumsum(mat):
     """Function to compute cumsum along axis=0 to bypass numba not allowing kwargs in 
     cumsum 
@@ -57,7 +57,7 @@ def numba_cumsum(mat):
         new_mat[:,i] = cumsum(mat[:,i])
     return new_mat
 
-#@jit(nopython=True, cache=True)#, fastmath=True)
+@jit(nopython=True, cache=True)#, fastmath=True)
 def setup_tri_diag(nlayer,nwno ,c_plus_up, c_minus_up, 
     c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
     gama, dtau, exptrm_positive,  exptrm_minus):
@@ -154,7 +154,7 @@ def setup_tri_diag(nlayer,nwno ,c_plus_up, c_minus_up,
 
     return A, B, C, D
 
-#@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def setup_pent_diag(nlayer,nwno ,c_plus_up, c_minus_up, 
     c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
     gama, dtau, exptrm_positive,  exptrm_minus, g1, g2, exptrm, lamda):
@@ -257,7 +257,7 @@ def setup_pent_diag(nlayer,nwno ,c_plus_up, c_minus_up,
     return A, B, C, D, E, F
 
 
-#@jit(nopython=True, cache=True)#, fastmath=True)
+@jit(nopython=True, cache=True)#, fastmath=True)
 def tri_diag_solve(l, a, b, c, d):
     """
     Tridiagonal Matrix Algorithm solver, a b c d can be NumPy array type or Python list type.
@@ -294,7 +294,7 @@ def tri_diag_solve(l, a, b, c, d):
         XK[i] = DS[i] - AS[i] * XK[i-1]
     return XK
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def pent_diag_solve(l, A, B, C, D, E, F):
     """
     Pentadiagonal Matrix solver
@@ -323,7 +323,7 @@ def pent_diag_solve(l, A, B, C, D, E, F):
 
     return X
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3d,gcos2_3d, ftau_cld_3d,ftau_ray_3d,
     dtau_og_3d, tau_og_3d, w0_og_3d, cosb_og_3d, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
@@ -629,7 +629,7 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             xint_at_top[ng,nt,:] = xint[0,:]    
     return xint_at_top
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
@@ -961,7 +961,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
     return xint_at_top #, flux_out, intensity
 
-#@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def get_reflected_1d_newclima(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
@@ -1333,7 +1333,7 @@ def get_reflected_1d_newclima(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,g
     
     return xint_at_top, (flux_minus_all, flux_plus_all, flux_minus_midpt_all, flux_plus_midpt_all )
 
-#@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def get_reflected_1d_gfluxv(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,
     surf_reflect,b_top,b_surface,ubar0, F0PI,tridiagonal, delta_approx):
     """
@@ -1531,7 +1531,7 @@ def get_reflected_1d_gfluxv(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,
     return flux_minus_all, flux_plus_all, flux_minus_midpt_all, flux_plus_midpt_all 
 
 
-#@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def blackbody(t,w):
     """
     Blackbody flux in cgs units in per unit wavelength
@@ -1553,7 +1553,7 @@ def blackbody(t,w):
 
     return ((2.0*h*c**2.0)/(w**5.0))*(1.0/(exp((h*c)/outer(t, w*k)) - 1.0)) #* (w*w)
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_thermal_1d_newclima(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,
     surf_reflect, hard_surface, tridiagonal):
     """
@@ -1757,7 +1757,7 @@ def get_thermal_1d_newclima(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,pl
 
     return flux_at_top , (flux_minus, flux_plus, flux_minus_mdpt, flux_plus_mdpt)
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,
     surf_reflect, hard_surface, tridiagonal):
     """
@@ -1990,7 +1990,7 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
 
     return int_at_top #, intensity, flux_out #, int_down# numg x numt x nwno
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel_3d, dtau_3d, w0_3d,cosb_3d,plevel_3d, ubar1,
     surf_reflect, hard_surface, tridiagonal):
     """
@@ -2198,7 +2198,7 @@ def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel_3d, dtau_3d, w0_3d,cosb_3d
 
     return int_at_top #, int_down# numg x numt x nwno
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_thermal_1d_gfluxi(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,surf_reflect,ugauss_angles,ugauss_weights, tridiagonal, calc_type , bb , y2, tp, tmin, tmax):
     """
     This function uses the source function method, which is outlined here : 
@@ -2417,7 +2417,7 @@ def get_thermal_1d_gfluxi(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plev
     
     return flux_minus_all, flux_plus_all, flux_minus_midpt_all, flux_plus_midpt_all
 
-#@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def get_transit_1d(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
                     player, tlayer, colden, DTAU):
     """
@@ -2499,7 +2499,7 @@ def get_transit_3d(nlevel, nwno, radius, gravity,rstar, mass, mmw, k_b, G,amu,
     """
     return 
 
-#@jit(nopython=True, cache=True, debug=True)
+@jit(nopython=True, cache=True, debug=True)
 def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ftau_ray, f_deltaM,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
@@ -2759,7 +2759,7 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
     
     return xint_at_top, flux, xint_out
 
-#@jit(nopython=True, cache=True, debug=True)
+@jit(nopython=True, cache=True, debug=True)
 def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb, 
             dtau_og, tau_og, w0_og, w0_no_raman, cosb_og, plevel, ubar1,
             surf_reflect, stream, hard_surface, flx=0, blackbody_approx=1):
@@ -2882,7 +2882,7 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
         M, B, F_bot, G_bot, F, G, Q1, Q2, lam, q, eta =  setup_2_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, 
                 surf_reflect, 0, dtau, tau, a, b, B0=b0, B1=b1, f0=f0, fluxes=flx, calculation=blackbody_approx)
     elif stream==4:
-        M, B, F_bot, G_bot, F, G, lam1, lam2, Q1, Q2, R1, R2, S1, S2, eta = setup_4_stream_fluxes(nlayer, nwno, w0, 
+        M, B, F_bot, G_bot, F, G, lam1, lam2, A, eta = setup_4_stream_fluxes(nlayer, nwno, w0, 
                 b_top, b_surface, b_surface_SH4, surf_reflect, 0, dtau, tau, a, b, B0=b0, B1=b1, f0=f0, 
                 fluxes=flx, calculation=blackbody_approx)
 
@@ -2915,6 +2915,8 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
             xint_temp = zeros((nlevel, nwno))
             flux_temp = zeros((stream*nlevel, nwno))
 
+            Pubar1 = legP(ubar1[ng,nt]) 
+
             #filename = 'solve_' + str(stream) + '_stream_input.pk' 
             #pk.dump({'M':M, 'B':B, 'A_int':A_int, 'N_int':N_int, 'F_bot':F_bot, 'G_bot':G_bot, 
             #    'stream':stream, 'nlayer':nlayer}, open(filename,'wb'), protocol=2)
@@ -2928,12 +2930,11 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
             if stream==2:
                 alpha = 1/ubar1[ng,nt] + lam
                 beta = 1/ubar1[ng,nt] - lam
-                expo_alp = slice_gt(alpha * dtau, 35.0)
-                expo_bet = slice_gt(beta * dtau, 35.0) 
+                expo_alp = slice_rav(alpha * dtau, 35.0)
+                expo_bet = slice_rav(beta * dtau, 35.0) 
                 exptrm_alp = (1 - exp(-expo_alp)) / alpha 
                 exptrm_bet = (1 - exp(-expo_bet)) / beta
 
-                Pubar1 = legP(ubar1[ng,nt]) 
                 Aint0 = X[::2,:]  * (w_multi[0]-w_multi[1]*Pubar1[1]*q) * exptrm_alp
                 Aint1 = X[1::2,:] * (w_multi[0]+w_multi[1]*Pubar1[1]*q) * exptrm_bet
 
@@ -2959,32 +2960,14 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
                 exptrm[2] = (1 - exp(-expo_alp2)) / alpha2 * X[2::4]
                 exptrm[3] = (1 - exp(-expo_bet2)) / beta2  * X[3::4]
 
-                A = np.ones((4,4,nlayer,nwno))
-                #A[0,0] =  1;  A[0,1] =  1;  A[0,2] =  1; A[0,3] =   1
-                A[1,0] = R1;  A[1,1] = -R1; A[1,2] = R2; A[1,3] = -R2
-                A[2,0] = Q1;  A[2,1] =  Q1; A[2,2] = Q2; A[2,3] =  Q2
-                A[3,0] = S1;  A[3,1] = -S1; A[3,2] = S2; A[3,3] = -S2
-
                 Aint=np.zeros((4,nlayer,nwno))
-                Pubar1 = legP(u1) 
-                for i in range(4):
-                    for j in range(4):
-                        Aint[i] = Aint[i] + w_multi[j]*Pubar1[j] * A[j,i]
-                        #temp = w_multi[i]*Pubar1[i]
-                        #Aint0 = Aint0 + temp*A[i,0]
-                        #Aint1 = Aint1 + temp*A[i,1]
-                        #Aint2 = Aint2 + temp*A[i,2]
-                        #Aint3 = Aint3 + temp*A[i,3]
-                for i in range(4):  
-                    Aint[i] = Aint[i] * exptrm[i]
-                #Aint0 = Aint0 * X[::4] * exptrm_alp1
-                #Aint1 = Aint1 * X[1::4] * exptrm_bet1
-                #Aint2 = Aint2 * X[2::4] * exptrm_alp2
-                #Aint3 = Aint3 * X[3::4] * exptrm_bet2
+                for j in range(4):
+                    Aint = Aint + w_multi[j]*Pubar1[j] * A[j]
+                Aint = Aint * exptrm
 
                 expdtau = exp(-slice_rav(dtau/u1,35.0))
                 Nint0 = w_multi[0] * ((1-w0) * u1 / a[0] * ( b0*(1-expdtau) + b1*(u1 - (dtau+u1)*expdtau)))
-                Nint1 = w_multi[1]*Pubar1[1]* ((1-w0) * u1 / a[0] * ( b1*(1-expdtau) / a[1]))
+                Nint1 = w_multi[1]*u1* ((1-w0) * u1 / a[0] * ( b1*(1-expdtau) / a[1]))
                 Nint2 = zeros(w0.shape)
                 Nint3 = zeros(w0.shape)
 
@@ -3032,7 +3015,7 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     
     return xint_at_top, intensity, flux 
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def setup_2_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar0, 
         dtau, tau, a, b, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
     """
@@ -3189,7 +3172,7 @@ def setup_2_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar
 
     return Mb, B, F_bot, G_bot, F, G, Q1, Q2, lam, q, a
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def setup_2_stream_integrated_intensities(nlayer, nwno, w0, ubar0, ubar1, lam, q, eta,
         dtau, tau, a, B0=0., B1=0., f0=0., calculation=0):
 
@@ -3239,7 +3222,7 @@ def setup_2_stream_integrated_intensities(nlayer, nwno, w0, ubar0, ubar1, lam, q
 #    import IPython; IPython.embed()
     return A_int, N_int
 
-#@jit(nopython=True, cache=True, debug=True)
+@jit(nopython=True, cache=True, debug=True)
 def setup_4_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, surf_reflect, ubar0, 
         dtau, tau, a, b, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
     """
@@ -3528,89 +3511,95 @@ def setup_4_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
         G[6::4,:] = z1pl_up
         G[7::4,:] = z2pl_up
 
-    return Mb, B, F_bot, G_bot, F, G, lam1, lam2, Q1, Q2, R1, R2, S1, S2, a
+    A = np.ones((4,4,nlayer,nwno))
+    #A[0,0] =  1;  A[0,1] =  1;  A[0,2] =  1; A[0,3] =   1
+    A[1,0] = R1;  A[1,1] = -R1; A[1,2] = R2; A[1,3] = -R2
+    A[2,0] = Q1;  A[2,1] =  Q1; A[2,2] = Q2; A[2,3] =  Q2
+    A[3,0] = S1;  A[3,1] = -S1; A[3,2] = S2; A[3,3] = -S2
+
+    return Mb, B, F_bot, G_bot, F, G, lam1, lam2, A, a
 
 #@jit(nopython=True, cache=True)
-def setup_4_stream_integrated_intensities(nlayer, nwno, w0, ubar0, ubar1, lam1, lam2, 
-        Q1, Q2, R1, R2, S1, S2, eta,
-        dtau, tau, a, B0=0., B1=0., f0=0., calculation=0):
+#def setup_4_stream_integrated_intensities(nlayer, nwno, w0, ubar0, ubar1, lam1, lam2, 
+#        Q1, Q2, R1, R2, S1, S2, eta,
+#        dtau, tau, a, B0=0., B1=0., f0=0., calculation=0):
+#
+#    alpha1 = 1/ubar1 + lam1
+#    alpha2 = 1/ubar1 + lam2
+#    beta1 = 1/ubar1 - lam1
+#    beta2 = 1/ubar1 - lam2
+#    expo_alp1 = alpha1 * dtau
+#    expo_alp2 = alpha2 * dtau
+#    expo_bet1 = beta1 * dtau
+#    expo_bet2 = beta2 * dtau
+#    exptrm_alp1 = exp(-slice_rav(expo_alp1,35.0))
+#    exptrm_alp2 = exp(-slice_rav(expo_alp2,35.0))
+#    exptrm_bet1 = exp(-slice_rav(expo_bet1,35.0))
+#    exptrm_bet2 = exp(-slice_rav(expo_bet2,35.0))
+#
+#    A00 = (1-exptrm_alp1)/alpha1; A01 = (1-exptrm_bet1)/beta1; 
+#    A02 = (1-exptrm_alp2)/alpha2; A03 = (1-exptrm_bet2)/beta2
+#    A10 = R1 * A00; A11 = -R1 * A01; A12 = R2 * A02; A13 = -R2 * A03; 
+#    A20 = Q1 * A00; A21 =  Q1 * A01; A22 = Q2 * A02; A23 =  Q2 * A03; 
+#    A30 = S1 * A00; A31 = -S1 * A01; A32 = S2 * A02; A33 = -S2 * A03; 
+#
+#    if calculation != 1:
+#        if calculation == 0:#is 'reflected':
+#            mus = (ubar1 + ubar0) / (ubar1 * ubar0)
+#            expo_mus = mus * dtau 
+#            exptrm_mus = exp(-slice_rav(expo_mus,35.0))
+#            tau_mu = tau[:-1,:] * (1/ubar0)
+#            exptau_mu = exp(-slice_rav(tau_mu,35.0))
+#            expon1 = (1 - exptrm_mus) * exptau_mu / mus
+#        elif calculation == 2: # exponential thermal
+#            expo_thermal = dtau * (f0 + 1/ubar1)
+#            expon1 = (1 - exp(-slice_rav(expo_thermal, 35.0))) / (f0 + 1/ubar1)
+#        N0 = eta[0] * expon1;   
+#        N1 = eta[1] * expon1;   
+#        N2 = eta[2] * expon1;   
+#        N3 = eta[3] * expon1;   
+#    elif calculation == 1:
+#        #expdtau = exp(-tau[:-1,:]/ubar1)
+#        expdtau = exp(-slice_rav(dtau/ubar1,35.0))
+#        N0 = (1-w0) * ubar1 / a[0] * ( B0*(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau)) #* 2*pi
+#        N1 = (1-w0) * ubar1 / a[0] * ( B1*(1-expdtau) / a[1]) #* 2*pi
+#        N2 = zeros(w0.shape)
+#        N3 = zeros(w0.shape)
+#
+#    A_int = zeros((4*nlayer, 4*nlayer, nwno))
+#    N_int = zeros((4*nlayer, nwno))
+#
+#    nn = 4*nlayer
+#    NN = 4*nn+4
+#    a_int = A_int.reshape(nn*nn, A_int.shape[2])
+#
+#    a_int[::NN,:] = A00
+#    a_int[1::NN,:] = A01
+#    a_int[2::NN,:] = A02
+#    a_int[3::NN,:] = A03
+#    a_int[nn::NN,:] = A10
+#    a_int[nn+1::NN,:] = A11
+#    a_int[nn+2::NN,:] = A12
+#    a_int[nn+3::NN,:] = A13
+#    a_int[2*nn::NN,:] = A20
+#    a_int[2*nn+1::NN,:] = A21
+#    a_int[2*nn+2::NN,:] = A22
+#    a_int[2*nn+3::NN,:] = A23
+#    a_int[3*nn::NN,:] = A30
+#    a_int[3*nn+1::NN,:] = A31
+#    a_int[3*nn+2::NN,:] = A32
+#    a_int[3*nn+3::NN,:] = A33
+#
+#    A_int = a_int.reshape(A_int.shape)
+#
+#    N_int[::4,:] = N0
+#    N_int[1::4,:] = N1
+#    N_int[2::4,:] = N2
+#    N_int[3::4,:] = N3
+#
+#    return A_int, N_int
 
-    alpha1 = 1/ubar1 + lam1
-    alpha2 = 1/ubar1 + lam2
-    beta1 = 1/ubar1 - lam1
-    beta2 = 1/ubar1 - lam2
-    expo_alp1 = alpha1 * dtau
-    expo_alp2 = alpha2 * dtau
-    expo_bet1 = beta1 * dtau
-    expo_bet2 = beta2 * dtau
-    exptrm_alp1 = exp(-slice_rav(expo_alp1,35.0))
-    exptrm_alp2 = exp(-slice_rav(expo_alp2,35.0))
-    exptrm_bet1 = exp(-slice_rav(expo_bet1,35.0))
-    exptrm_bet2 = exp(-slice_rav(expo_bet2,35.0))
-
-    A00 = (1-exptrm_alp1)/alpha1; A01 = (1-exptrm_bet1)/beta1; 
-    A02 = (1-exptrm_alp2)/alpha2; A03 = (1-exptrm_bet2)/beta2
-    A10 = R1 * A00; A11 = -R1 * A01; A12 = R2 * A02; A13 = -R2 * A03; 
-    A20 = Q1 * A00; A21 =  Q1 * A01; A22 = Q2 * A02; A23 =  Q2 * A03; 
-    A30 = S1 * A00; A31 = -S1 * A01; A32 = S2 * A02; A33 = -S2 * A03; 
-
-    if calculation != 1:
-        if calculation == 0:#is 'reflected':
-            mus = (ubar1 + ubar0) / (ubar1 * ubar0)
-            expo_mus = mus * dtau 
-            exptrm_mus = exp(-slice_rav(expo_mus,35.0))
-            tau_mu = tau[:-1,:] * (1/ubar0)
-            exptau_mu = exp(-slice_rav(tau_mu,35.0))
-            expon1 = (1 - exptrm_mus) * exptau_mu / mus
-        elif calculation == 2: # exponential thermal
-            expo_thermal = dtau * (f0 + 1/ubar1)
-            expon1 = (1 - exp(-slice_rav(expo_thermal, 35.0))) / (f0 + 1/ubar1)
-        N0 = eta[0] * expon1;   
-        N1 = eta[1] * expon1;   
-        N2 = eta[2] * expon1;   
-        N3 = eta[3] * expon1;   
-    elif calculation == 1:
-        #expdtau = exp(-tau[:-1,:]/ubar1)
-        expdtau = exp(-slice_rav(dtau/ubar1,35.0))
-        N0 = (1-w0) * ubar1 / a[0] * ( B0*(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau)) #* 2*pi
-        N1 = (1-w0) * ubar1 / a[0] * ( B1*(1-expdtau) / a[1]) #* 2*pi
-        N2 = zeros(w0.shape)
-        N3 = zeros(w0.shape)
-
-    A_int = zeros((4*nlayer, 4*nlayer, nwno))
-    N_int = zeros((4*nlayer, nwno))
-
-    nn = 4*nlayer
-    NN = 4*nn+4
-    a_int = A_int.reshape(nn*nn, A_int.shape[2])
-
-    a_int[::NN,:] = A00
-    a_int[1::NN,:] = A01
-    a_int[2::NN,:] = A02
-    a_int[3::NN,:] = A03
-    a_int[nn::NN,:] = A10
-    a_int[nn+1::NN,:] = A11
-    a_int[nn+2::NN,:] = A12
-    a_int[nn+3::NN,:] = A13
-    a_int[2*nn::NN,:] = A20
-    a_int[2*nn+1::NN,:] = A21
-    a_int[2*nn+2::NN,:] = A22
-    a_int[2*nn+3::NN,:] = A23
-    a_int[3*nn::NN,:] = A30
-    a_int[3*nn+1::NN,:] = A31
-    a_int[3*nn+2::NN,:] = A32
-    a_int[3*nn+3::NN,:] = A33
-
-    A_int = a_int.reshape(A_int.shape)
-
-    N_int[::4,:] = N0
-    N_int[1::4,:] = N1
-    N_int[2::4,:] = N2
-    N_int[3::4,:] = N3
-
-    return A_int, N_int
-
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 #def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream, nlayer):
 def solve_4_stream_banded(M, B, stream):
     """
@@ -3634,16 +3623,16 @@ def solve_4_stream_banded(M, B, stream):
 
 
 #@jit(nopython=True, cache=True)
-def find_integrated_intensities(A_int, N_int, F, G, X):
-    #   integral of Iexp(-tau/ubar1) at each level 
-    #intgrl_new =  A_int.dot(X) + N_int
-    intgrl_new = mat_dot(A_int,X) + N_int
-    #   flux at bottom
-    #flux = F.dot(X) + G
-    flux = vec_dot(F,X) + G
-    return (intgrl_new, flux)
+#def find_integrated_intensities(A_int, N_int, F, G, X):
+#    #   integral of Iexp(-tau/ubar1) at each level 
+#    #intgrl_new =  A_int.dot(X) + N_int
+#    intgrl_new = mat_dot(A_int,X) + N_int
+#    #   flux at bottom
+#    #flux = F.dot(X) + G
+#    flux = vec_dot(F,X) + G
+#    return (intgrl_new, flux)
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def calculate_flux(F, G, X):
     """
     Calculate fluxes
@@ -3651,7 +3640,7 @@ def calculate_flux(F, G, X):
     #return F.dot(X) + G
     return mat_dot(F,X) + G
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def legP(mu): # Legendre polynomials
     """
     Generate array of Legendre polynomials
@@ -3661,7 +3650,7 @@ def legP(mu): # Legendre polynomials
         (63*mu**5 - 70*mu**3 + 15*mu)/8, 
         (231*mu**6 - 315*mu**4 + 105*mu**2 - 5)/16 ])
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def mat_dot(A,B):
     """
     Matrix-vector dot product
@@ -3676,7 +3665,7 @@ def mat_dot(A,B):
             C[i,:] += A[i,j,:]*B[j,:]
     return C
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def vec_dot(A,B):
     """
     Vector-vector dot product
@@ -3876,7 +3865,7 @@ def planck_cgs(wave, T , dwave):
     return planck_sum
 
 
-#@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True,fastmath=True)
 def planck_rad(iw, T, dT ,  tmin, tmax, bb , y2, tp):
 
     if T < tmin :
@@ -3899,7 +3888,7 @@ def planck_rad(iw, T, dT ,  tmin, tmax, bb , y2, tp):
     return planck_rad
 
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def blackbody_climate(wave,temp, bb, y2, tp, tmin, tmax):
 
     blackbody_array = np.zeros(shape=(len(temp),len(wave)))
@@ -3912,7 +3901,7 @@ def blackbody_climate(wave,temp, bb, y2, tp, tmin, tmax):
     return blackbody_array
 
 # still not developed fully. virga has a function already maybe just use that
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr):
 
     grav_cgs = grav*1e2
@@ -4042,7 +4031,7 @@ def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,
     return kz
 
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def did_grad_cp( t, p, t_table, p_table, grad, cp, calc_type):
     """
     Parameters
@@ -4123,7 +4112,7 @@ def did_grad_cp( t, p, t_table, p_table, grad, cp, calc_type):
     
     return grad_x,cp_x
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def locate(array,value):
     """
     Parameters
