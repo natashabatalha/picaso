@@ -2878,6 +2878,11 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     intensity = zeros((numg, numt, nlevel, nwno))
     flux = zeros((numg, numt, stream*nlevel, nwno))
 
+    #filename = 'setup_' + str(stream) + '_stream_fluxes_input.pk' 
+    #pk.dump({'nlayer':nlayer, 'nwno':nwno, 'w0':w0, 'b_top':b_top, 'b_surface':b_surface, 'b_surface_SH4':b_surface_SH4,
+    #    'surf_reflect':surf_reflect, 'dtau':dtau, 'tau':tau, 'a':a, 'b':b, 'B0':b0, 'B1':b1, 'f0':f0,
+    #    'stream':stream}, open(filename,'wb'), protocol=2)
+    #print('Setup flux inputs saved to ', filename)
     if stream==2:
         M, B, F_bot, G_bot, F, G, Q1, Q2, lam, q, eta =  setup_2_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, 
                 surf_reflect, 0, dtau, tau, a, b, B0=b0, B1=b1, f0=f0, fluxes=flx, calculation=blackbody_approx)
@@ -3015,7 +3020,7 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     
     return xint_at_top, intensity, flux 
 
-@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)
 def setup_2_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar0, 
         dtau, tau, a, b, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
     """
@@ -3120,33 +3125,39 @@ def setup_2_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar
     G = zeros((2*nlevel, nwno))
 
     #   first row: BC 1
-    Mb[2,0,:] = Q1[0,:]
-    Mb[1,1,:] = Q2[0,:]
-    B[0,:] = b_top - zmn_down[0,:]
+    Mb[2,0] = Q1[0]
+    Mb[1,1] = Q2[0]
+    B[0] = b_top - zmn_down[0]
     #   last row: BC 4
     n = nlayer-1
-    Mb[3, 2*nlayer-2,:] = Q2mn[n,:] - surf_reflect*Q1mn[n,:]
-    Mb[2, 2*nlayer-1,:] = Q1pl[n,:] - surf_reflect*Q2pl[n,:]
-    B[2*nlayer-1,:] = b_surface - zpl_up[n,:] + surf_reflect * zmn_up[n,:]
+    Mb[3, 2*nlayer-2] = Q2mn[n] - surf_reflect*Q1mn[n]
+    Mb[2, 2*nlayer-1] = Q1pl[n] - surf_reflect*Q2pl[n]
+    B[2*nlayer-1] = b_surface - zpl_up[n] + surf_reflect * zmn_up[n]
 
     #   fill other matrix rows
-    Mb[0,3::2,:] = -Q2[1:,:]
-    Mb[1,2::2,:] = -Q1[1:,:]
-    Mb[1,3::2,:] = -Q1[1:,:]
-    Mb[2,1:-1:2,:] = Q2pl[:-1,:]
-    Mb[2,2::2,:] = -Q2[1:,:]
-    Mb[3,:-2:2,:] = Q1mn[:-1,:]
-    Mb[3,1:-1:2,:] = Q1pl[:-1,:]
-    Mb[4,:-2:2,:] = Q2mn[:-1,:]
-    B[1:-1:2,:] = zmn_down[1:,:] - zmn_up[:-1,:]
-    B[2::2,:] = zpl_down[1:,:] - zpl_up[:-1,:]
+    Mb[0,3::2] = -Q2[1:]
+    Mb[1,2::2] = -Q1[1:]
+    Mb[1,3::2] = -Q1[1:]
+    Mb[2,1:-1:2] = Q2pl[:-1]
+    Mb[2,2::2] = -Q2[1:]
+    Mb[3,:-2:2] = Q1mn[:-1]
+    Mb[3,1:-1:2] = Q1pl[:-1]
+    Mb[4,:-2:2] = Q2mn[:-1]
+    B[1:-1:2] = zmn_down[1:] - zmn_up[:-1]
+    B[2::2] = zpl_down[1:] - zpl_up[:-1]
+
+    #A[1::2,:][:-1] = (e1[:-1,:]+e3[:-1,:]) * (gama[1:,:]-1.0) #always good
+    #B[1::2,:][:-1] = (e2[:-1,:]+e4[:-1,:]) * (gama[1:,:]-1.0)
+    #C[1::2,:][:-1] = 2.0 * (1.0-gama[1:,:]**2)          #always good 
+    #D[1::2,:][:-1] =((gama[1:,:]-1.0)*(c_plus_up[1:,:] - c_plus_down[:-1,:]) + 
+    #                        (1.0-gama[1:,:])*(c_minus_down[:-1,:] - c_minus_up[1:,:]))
 
     #   vectors to calculate flux at bottom (for bottom BC source function technique)
     F_bot = zeros((2*nlayer, nwno))
     G_bot = zeros(nwno)
-    F_bot[-2,:] = Q2mn[-1,:]
-    F_bot[-1,:] = Q1pl[-1,:]
-    G_bot = zpl_up[-1,:]
+    F_bot[-2] = Q2mn[-1]
+    F_bot[-1] = Q1pl[-1]
+    G_bot = zpl_up[-1]
 
     if fluxes == 1: # fluxes per layer
         F[0,0,:] = Q1[0,:]
