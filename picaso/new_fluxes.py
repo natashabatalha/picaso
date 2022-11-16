@@ -2759,7 +2759,7 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
     
     return xint_at_top, flux, xint_out
 
-@jit(nopython=True, cache=True, debug=True)
+#@jit(nopython=True, cache=True, debug=True)
 def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb, 
             dtau_og, tau_og, w0_og, w0_no_raman, cosb_og, plevel, ubar1,
             surf_reflect, stream, hard_surface, flx=0, blackbody_approx=1):
@@ -3183,57 +3183,57 @@ def setup_2_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar
 
     return Mb, B, F_bot, G_bot, F, G, Q1, Q2, lam, q, a
 
-@jit(nopython=True, cache=True)
-def setup_2_stream_integrated_intensities(nlayer, nwno, w0, ubar0, ubar1, lam, q, eta,
-        dtau, tau, a, B0=0., B1=0., f0=0., calculation=0):
+##@jit(nopython=True, cache=True)
+#def setup_2_stream_integrated_intensities(nlayer, nwno, w0, ubar0, ubar1, lam, q, eta,
+#        dtau, tau, a, B0=0., B1=0., f0=0., calculation=0):
+#
+#    alpha = 1/ubar1 + lam
+#    beta = 1/ubar1 - lam
+#    expo_alp = slice_gt(alpha * dtau, 35.0)
+#    expo_bet = slice_gt(beta * dtau, 35.0) 
+#    exptrm_alp = (1 - exp(-expo_alp)) / alpha 
+#    exptrm_bet = (1 - exp(-expo_bet)) / beta
+#
+#    if calculation == 0:
+#        mus = (ubar1 + ubar0) / (ubar1 * ubar0)
+#        expo_mus = slice_gt(mus * dtau, 35.0)    
+#        exptrm_mus = (1 - exp(-expo_mus)) / mus
+#        tau_mu = tau[:-1,:] * 1/ubar0
+#        tau_mu = slice_gt(tau_mu, 35.0)
+#        exptau_mu = exp(-tau_mu)
+#        expon1 = exptrm_mus * exptau_mu
+#    elif calculation == 2:
+#        f0_ubar = f0 + 1/ubar1
+#        expo_f0 = slice_gt(f0_ubar * dtau, 35.0)
+#        exptrm_f0 = (1 - exp(-expo_f0)) / f0_ubar
+#        expon1 = exptrm_f0
+#
+#    A_int = zeros((2*nlayer, 2*nlayer, nwno))
+#    N_int = zeros((2*nlayer, nwno))
+#
+#    nn = 2*nlayer
+#    NN = 2*nn+2
+#    a_int = A_int.reshape(nn*nn, A_int.shape[2])
+#
+#    a_int[::NN,:] = exptrm_alp
+#    a_int[1::NN,:] = exptrm_bet
+#    a_int[nn::NN,:] = -q*exptrm_alp
+#    a_int[nn+1::NN,:] = q*exptrm_bet
+#
+#    A_int = a_int.reshape(A_int.shape)
+#
+#    if calculation == 0 or calculation == 2: # reflected or exponential thermal
+#        N_int[::2,:] = eta[0] * expon1
+#        N_int[1::2,:] = eta[1] * expon1
+#    elif calculation == 1: # linear thermal
+#        expdtau = exp(-dtau/ubar1)
+#        N_int[::2,:] = (1-w0) * ubar1 / a[0] * (B0 *(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau)) #* 2*pi
+#        N_int[1::2,:] = (1-w0) * ubar1 / a[0] * ( B1*(1-expdtau) / a[1]) #* 2*pi
+#
+##    import IPython; IPython.embed()
+#    return A_int, N_int
 
-    alpha = 1/ubar1 + lam
-    beta = 1/ubar1 - lam
-    expo_alp = slice_gt(alpha * dtau, 35.0)
-    expo_bet = slice_gt(beta * dtau, 35.0) 
-    exptrm_alp = (1 - exp(-expo_alp)) / alpha 
-    exptrm_bet = (1 - exp(-expo_bet)) / beta
-
-    if calculation == 0:
-        mus = (ubar1 + ubar0) / (ubar1 * ubar0)
-        expo_mus = slice_gt(mus * dtau, 35.0)    
-        exptrm_mus = (1 - exp(-expo_mus)) / mus
-        tau_mu = tau[:-1,:] * 1/ubar0
-        tau_mu = slice_gt(tau_mu, 35.0)
-        exptau_mu = exp(-tau_mu)
-        expon1 = exptrm_mus * exptau_mu
-    elif calculation == 2:
-        f0_ubar = f0 + 1/ubar1
-        expo_f0 = slice_gt(f0_ubar * dtau, 35.0)
-        exptrm_f0 = (1 - exp(-expo_f0)) / f0_ubar
-        expon1 = exptrm_f0
-
-    A_int = zeros((2*nlayer, 2*nlayer, nwno))
-    N_int = zeros((2*nlayer, nwno))
-
-    nn = 2*nlayer
-    NN = 2*nn+2
-    a_int = A_int.reshape(nn*nn, A_int.shape[2])
-
-    a_int[::NN,:] = exptrm_alp
-    a_int[1::NN,:] = exptrm_bet
-    a_int[nn::NN,:] = -q*exptrm_alp
-    a_int[nn+1::NN,:] = q*exptrm_bet
-
-    A_int = a_int.reshape(A_int.shape)
-
-    if calculation == 0 or calculation == 2: # reflected or exponential thermal
-        N_int[::2,:] = eta[0] * expon1
-        N_int[1::2,:] = eta[1] * expon1
-    elif calculation == 1: # linear thermal
-        expdtau = exp(-dtau/ubar1)
-        N_int[::2,:] = (1-w0) * ubar1 / a[0] * (B0 *(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau)) #* 2*pi
-        N_int[1::2,:] = (1-w0) * ubar1 / a[0] * ( B1*(1-expdtau) / a[1]) #* 2*pi
-
-#    import IPython; IPython.embed()
-    return A_int, N_int
-
-@jit(nopython=True, cache=True, debug=True)
+#@jit(nopython=True, cache=True, debug=True)
 def setup_4_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, surf_reflect, ubar0, 
         dtau, tau, a, b, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
     """
@@ -3530,7 +3530,7 @@ def setup_4_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
 
     return Mb, B, F_bot, G_bot, F, G, lam1, lam2, A, a
 
-#@jit(nopython=True, cache=True)
+##@jit(nopython=True, cache=True)
 #def setup_4_stream_integrated_intensities(nlayer, nwno, w0, ubar0, ubar1, lam1, lam2, 
 #        Q1, Q2, R1, R2, S1, S2, eta,
 #        dtau, tau, a, B0=0., B1=0., f0=0., calculation=0):
@@ -3610,7 +3610,7 @@ def setup_4_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
 #
 #    return A_int, N_int
 
-@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)
 #def solve_4_stream_banded(M, B, A_int, N_int, F, G, stream, nlayer):
 def solve_4_stream_banded(M, B, stream):
     """
@@ -3627,8 +3627,8 @@ def solve_4_stream_banded(M, B, stream):
     """
     #   find constants
     diag = int(3*stream/2 - 1)
-    with objmode(X='float64[:]'):
-        X = solve_banded((diag,diag), M, B)
+    #with objmode(X='float64[:]'):
+    X = solve_banded((diag,diag), M, B)
 
     return X
 
@@ -3651,7 +3651,7 @@ def calculate_flux(F, G, X):
     #return F.dot(X) + G
     return mat_dot(F,X) + G
 
-@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)
 def legP(mu): # Legendre polynomials
     """
     Generate array of Legendre polynomials
@@ -3661,7 +3661,7 @@ def legP(mu): # Legendre polynomials
         (63*mu**5 - 70*mu**3 + 15*mu)/8, 
         (231*mu**6 - 315*mu**4 + 105*mu**2 - 5)/16 ])
 
-@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)
 def mat_dot(A,B):
     """
     Matrix-vector dot product
@@ -3676,7 +3676,7 @@ def mat_dot(A,B):
             C[i,:] += A[i,j,:]*B[j,:]
     return C
 
-@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)
 def vec_dot(A,B):
     """
     Vector-vector dot product
