@@ -1324,7 +1324,8 @@ def calculate_atm(bundle, opacityclass):
     #relies on continuum molecules are added into the opacity 
     #database. Rayleigh molecules are all in `rayleigh.py` 
     
-    atm.get_needed_continuum(opacityclass.rayleigh_molecules)
+    atm.get_needed_continuum(opacityclass.rayleigh_molecules,
+                             opacityclass.avail_continuum)
 
     #get cloud properties, if there are any and put it on current grid 
     atm.get_clouds(wno)
@@ -1442,7 +1443,8 @@ def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None):
     #relies on continuum molecules are added into the opacity 
     #database. Rayleigh molecules are all in `rayleigh.py` 
     
-    atm.get_needed_continuum(opacityclass.rayleigh_molecules)
+    atm.get_needed_continuum(opacityclass.rayleigh_molecules,
+                             opacityclass.avail_continuum)
 
     #get cloud properties, if there are any and put it on current grid 
     atm.get_clouds(wno)
