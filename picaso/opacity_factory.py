@@ -15,6 +15,7 @@ from scipy.stats import binned_statistic
 
 __refdata__ = os.environ.get('picaso_refdata')
 
+
 def restruct_continuum(original_file,colnames, new_wno,new_db, overwrite):
     """
     The continuum factory takes the CIA opacity file and adds in extra sources of 
@@ -54,6 +55,84 @@ def restruct_continuum(original_file,colnames, new_wno,new_db, overwrite):
     #restructure and insert to database 
     restructure_opacity(new_db,ntemp,temperatures,molecules,og_opacity,old_wno,new_wno)
 
+def insert_hitran_cia(original_file, molname, new_db, new_wno):
+    """
+    This continuum function takes a HTIRAN CIA file and adds it as an extra 
+    source of opacity
+
+    Parameters
+    ----------
+    original_file : str
+        Filepath that points to HITRAN file (e.g. H2-CH4_eq_2011.cia)
+    new_db : str 
+        New database name 
+    new_wno : numpy.ndarray, list 
+        wavenumber grid to interpolate onto (units of inverse cm)
+    overwrite : bool 
+        Default is set to False as to not overwrite any existing files. This parameter controls overwriting 
+        cia database 
+    """
+    #get original H2- CIA that is already inserted
+    cur, conn = open_local(new_db)
+    try:
+        cur.execute('SELECT temperature FROM continuum')
+        current_cia_temps = np.unique(cur.fetchall())
+        conn.close()
+    except: 
+        raise Exception('No temperatures found in continuum table. Usually we insert the H2 continuum first since it exists on a larger H2 Temperature grid. Then, we insert other CIA. Please run restruct_continuum first to insert H/H2 based opacity first.')
+
+    #https://hitran.org/data/CIA/CIA_Readme.pdf
+    hitran_header = {'chemical':[0,20],
+                'wavenumber':[20,40],
+                'num_pts':[40,47],
+                'temp':[47,54]}
+
+    cia = pd.read_csv(original_file,names=['wno','cm5/molecule2'], header=None,usecols=[0,1],
+                delim_whitespace=True)
+    header = pd.read_csv(original_file,header=None,names=['header'])
+
+
+    idx_data =[]
+    idx_head = []
+    for i in cia.index: 
+        try: 
+            float(cia.loc[i,'wno'])
+            idx_data += [i]
+        except:
+            idx_head += [i]
+            
+    data_header = header.loc[idx_head,:]
+    data_cia = cia.loc[idx_data,:].astype(float)
+
+    temperatures = [float(i[hitran_header['temp'][0]:hitran_header['temp'][1]]) 
+         for i in data_header['header']]
+
+    starts = list(data_cia.loc[data_cia['wno']==20].index)+[data_cia.index[-1]+1]
+    og_wno = data_cia.loc[starts[0]:starts[1]-1,'wno']
+    cia_array = np.zeros((len(og_wno),len(temperatures)))
+    for i,iss in enumerate(starts[0:-1]):
+        cx = data_cia.loc[starts[i]:starts[i+1]-1,'cm5/molecule2']#']
+        cia_array[:,i]=cx
+
+    #CONVERT FROM cm5/molecule2 to amagat-2 cm-1
+    #Eqn 3: https://www.sciencedirect.com/science/article/pii/S0019103518306997
+    cia_array = cia_array/1.385277e-39
+
+    #we need the temperature grid to be the same
+    interp_cia_temp = np.zeros((len(og_wno), len(current_cia_temps)))
+    for iw in range(len(og_wno)):
+        interp_cia_temp[iw,:] = 10**(np.interp(current_cia_temps,temperatures,
+                                np.log10(cia_array[iw,:]),
+                                right=-33,left=-33))
+
+    #final interpolation to get on the correct wavelength grid and insert to db 
+    cur, conn = open_local(new_db)
+    for it in range(len(current_cia_temps)):
+        final_bundle = 10**(np.interp(new_wno, og_wno, np.log10(interp_cia_temp[:,it]),right=-33,left=-33))
+        insert(cur,conn,molname, current_cia_temps[it], final_bundle)
+    conn.commit()
+    conn.close()
+    return 
 
 def get_original_data(original_file,colnames,new_db, overwrite=False):
     """
@@ -89,7 +168,6 @@ def get_original_data(original_file,colnames,new_db, overwrite=False):
     temperatures = og_opacity['wno'].loc[np.isnan(og_opacity[colnames[1]])].values
 
     og_opacity = og_opacity.dropna()
-    print(og_opacity)
     old_wno = og_opacity['wno'].unique()
     #define units
     w_unit = 'cm-1'
