@@ -968,7 +968,7 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
             y = dset[np.where(((1e4/og_wvno_grid>min_wavelength) & (1e4/og_wvno_grid<max_wavelength)))]
 
         if ((molecule == 'CH4') & (isinstance(dir_kark_ch4, str)) & (t<500)):
-            opa_k,loc = get_kark_CH4(dir_kark_ch4,new_wvno_grid, t,dset)
+            opa_k,loc = get_kark_CH4(dir_kark_ch4,new_wvno_grid, t,y)#dset)
             y[loc] = opa_k
         if ((molecule == 'O3') & (isinstance(dir_optical_o3, str)) & (t<500)):
             opa_o3 = get_optical_o3(dir_optical_o3,new_wvno_grid)
