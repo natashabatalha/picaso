@@ -191,7 +191,6 @@ def insert_hitran_cia(original_file, molname, new_db, new_wno):
     ii = 0 
     for og_t_grid,inds in zip(tranges,iranges): 
         if not np.array_equal(og_t_grid, tgrid):
-            print('not equal')
             #for each temp
             cx = np.array(cx_arrays)[inds[0]:inds[1],:]
             for iw in range(len(new_wno)): 
@@ -1363,7 +1362,6 @@ def get_molecular(db_file, species, temperature,pressure):
     cur.execute('SELECT ptid, pressure, temperature FROM molecular')
     data= cur.fetchall()    
     pt_pairs = sorted(list(set(data)),key=lambda x: (x[0]) )
-    print(pt_pairs)
     #here's a little code to get out the correct pair (so we dont have to worry about getting the exact number right)
     ind_pt = [min(pt_pairs, key=lambda c: math.hypot(c[1]- coordinate[0], c[2]-coordinate[1]))[0]
               for coordinate in  zip(pressure,temperature)]
