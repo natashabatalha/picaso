@@ -38,10 +38,17 @@ import xarray as xr
 from joblib import Parallel, delayed, cpu_count
 
 __refdata__ = os.environ.get('picaso_refdata')
+__version__ = 3.0
 
 
 if not os.path.exists(__refdata__): 
     raise Exception("You have not downloaded the PICASO reference data. You can find it on github here: https://github.com/natashabatalha/picaso/tree/master/reference . If you think you have already downloaded it then you likely just need to set your environment variable. See instructions here: https://natashabatalha.github.io/picaso/installation.html#download-and-link-reference-documentation . You can use `os.environ['PYSYN_CDBS']=<yourpath>` directly in python if you run the line of code before you import PICASO.")
+else: 
+    ref_v = json.load(open(os.path.join(__refdata__,'config.json'))).get('version',2.3)
+    if __version__ > ref_v: 
+        raise Exception(f"You have an out of date reference data set that will not work with your PICASO version {__version__}. Please download the newest version: https://github.com/natashabatalha/picaso/tree/master/reference")
+
+
 if not os.path.exists(os.environ.get('PYSYN_CDBS')): 
     raise Exception("You have not downloaded the Stellar reference data. Follow the installation instructions here: https://natashabatalha.github.io/picaso/installation.html#download-and-link-pysynphot-stellar-data. If you think you have already downloaded it then you likely just need to set your environment variable. You can use `os.environ['PYSYN_CDBS']=<yourpath>` directly in python if you run the line of code before you import PICASO.")
 
@@ -748,7 +755,7 @@ def opannection(wave_range = None, filename_db = None, raman_db = None,
         if isinstance(filename_db,type(None)): 
             filename_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['opacity'])
             if not os.path.isfile(filename_db):
-                raise Exception('The opacity file does not exist: '  + filename_db+' The default is to a file opacities.db in reference/opacity/. If you have an older version of PICASO your file might be called opacity.db. Consider just adding the correct path to filename_db=')
+                raise Exception(f'The default opacity file does not exist: {filename_db}. In order to have a default database please download one of the opacity files from Zenodo and place into this folder with the name opacities.db: https://zenodo.org/record/6928501#.Y2w4C-zMI8Y if you dont want a single default file then you just need to point to the opacity db using the keyword filename_db.')
         elif not isinstance(filename_db,type(None) ): 
             if not os.path.isfile(filename_db):
                 raise Exception('The opacity file you have entered does not exist: '  + filename_db)
