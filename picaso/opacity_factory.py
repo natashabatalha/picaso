@@ -15,6 +15,7 @@ from scipy.stats import binned_statistic
 
 __refdata__ = os.environ.get('picaso_refdata')
 
+
 def restruct_continuum(original_file,colnames, new_wno,new_db, overwrite):
     """
     The continuum factory takes the CIA opacity file and adds in extra sources of 
@@ -54,6 +55,173 @@ def restruct_continuum(original_file,colnames, new_wno,new_db, overwrite):
     #restructure and insert to database 
     restructure_opacity(new_db,ntemp,temperatures,molecules,og_opacity,old_wno,new_wno)
 
+def insert_hitran_cia(original_file, molname, new_db, new_wno):
+    """
+    This continuum function takes a HTIRAN CIA file and adds it as an extra 
+    source of opacity
+
+    Parameters
+    ----------
+    original_file : str
+        Filepath that points to HITRAN file (e.g. H2-CH4_eq_2011.cia)
+    new_db : str 
+        New database name 
+    new_wno : numpy.ndarray, list 
+        wavenumber grid to interpolate onto (units of inverse cm)
+    overwrite : bool 
+        Default is set to False as to not overwrite any existing files. This parameter controls overwriting 
+        cia database 
+    """
+    #get original H2- CIA that is already inserted
+    cur, conn = open_local(new_db)
+    try:
+        cur.execute('SELECT temperature FROM continuum')
+        current_cia_temps = np.unique(cur.fetchall())
+        conn.close()
+    except: 
+        raise Exception('No temperatures found in continuum table. Usually we insert the H2 continuum first since it exists on a larger H2 Temperature grid. Then, we insert other CIA. Please run restruct_continuum first to insert H/H2 based opacity first.')
+
+    #https://hitran.org/data/CIA/CIA_Readme.pdf
+    hitran_header = {'chemical':[0,20],
+                'wavenumber':[20,40],
+                'num_pts':[40,47],
+                'temp':[47,54]}
+
+    #cureated grid based on analyses of each molecule
+    #this tells you what tgrid to use for each molecule, and what 
+    #opacities to ignore from hitran
+    hitran_choices = {'N2N2':{'ignore_tag':['0-10atm'],
+                          'tgrid':[70.,  80.,  90., 100., 110., 120., 130., 140., 150., 160., 170.,
+       180., 190., 200., 210., 220., 230., 240., 250., 260., 270., 280.,
+       290., 300., 310., 320., 330., 340., 350., 360., 370., 380., 390.,
+       400.],
+                         }} 
+
+    cia = pd.read_csv(original_file,names=['wno','cm5/molecule2'], header=None,usecols=[0,1],
+                delim_whitespace=True)
+    header = pd.read_csv(original_file,header=None,names=['header'])
+
+
+    idx_data =[]
+    idx_head = []
+    for i in cia.index: 
+        try: 
+            float(cia.loc[i,'wno'])
+            idx_data += [i]
+        except:
+            idx_head += [i]
+            
+    data_header = header.loc[idx_head,:]
+    data_cia = cia.loc[idx_data,:].astype(float)
+    #dont care about zero opacity grid points
+    data_cia = data_cia.loc[data_cia['cm5/molecule2']>0]
+
+    temperatures = [float(i[hitran_header['temp'][0]:hitran_header['temp'][1]]) 
+         for i in data_header['header']]
+
+    #log the index of each data bundle beginning
+    starts = list(data_header.index+1)+[data_cia.index[-1]+1]
+
+    #loop over each data bundle and interpolate all on the same wavelength grid requested 
+    #by the user
+    #also check the ignore tag to see if we should be skipping
+    #skip data if specified
+    wno_arrays=[]
+    cx_arrays =[]
+    temp_array=[]
+    wno_range_array=[]
+    for i,iss in enumerate(starts[0:-1]):
+        ignore = False
+        if molname in hitran_choices.keys():
+            if 'ignore_tag' in hitran_choices[molname]: 
+                for it in hitran_choices[molname]['ignore_tag']:
+                    if it in data_header.loc[iss-1,'header']:
+                        ignore=True
+        if ignore: 
+            continue
+        
+        #cx = data_cia.loc[starts[i]:starts[i+1]-1,'cm2.mol']#']
+        #cia_array[:,i]=cx
+        wno = data_cia.loc[starts[i]:starts[i+1]-1,'wno'].values #'])
+        #wno_arrays += [wno.values]
+        
+        cx =  data_cia.loc[starts[i]:starts[i+1]-1,'cm5/molecule2']
+        cx_arrays += [10**np.interp(new_wno, wno, np.log10(cx.values),right=-100,left=-100)]
+        #cia_array[:,i]=10**(np.interp(all_wnos, wno, np.log10(cx),right=-100,left=-100))
+        
+        #get temp array and wno ranges just so we can double check for no overlap
+        temp_array += [temperatures[i]]
+        wno_range_array += [[float(ir) for ir in data_header.loc[iss-1,'header'][
+            hitran_header['wavenumber'][0]:hitran_header['wavenumber'][1]].split(' ') if len(ir)>0]]
+    
+    #now start to deal with overlapping temperatures 
+    #double check for overlapping wavelengths within grid and raise error if it exists
+    temp_array = np.array(temp_array)
+    segs = np.diff(temp_array)
+    #if there are overlapping temperature regions need to get on common tgrid
+    if len(segs[segs<0])>0:
+        iranges = []
+        tranges =[]
+        wranges =[]
+        cx_segments = []
+        
+        inds = [0]+list(np.where(segs<0)[0]+1)+[len(temp_array)]
+        
+        for i in range(len(inds)-1):
+            iranges += [[inds[i],inds[i+1]]]
+            tranges += [temp_array[inds[i]:inds[i+1]]]
+            wranges += [[np.min(wno_range_array[inds[i]:inds[i+1]]),np.max(wno_range_array[inds[i]:inds[i+1]])]]
+        if molname in hitran_choices.keys(): 
+            tgrid = hitran_choices[molname]['tgrid']
+        else:
+            raise Exception('Overlapping Temperature Grid, need to provide one in hitran choices',tranges)
+        #check for overlapping wavelengths 
+        w_sets = np.diff(np.argsort(np.concatenate(wranges)))
+        if len(w_sets[w_sets<0])>0:
+            raise Exception('Overlapping Wavelength Grid within Temp, need to provide one in hitran choices',wranges)
+    #otherwise just use the full temperature array
+    else: 
+        tranges = [temp_array]
+        tgrid = temp_array
+        iranges = [[0,len(temp_array)]]
+
+
+    #finally, get everything on the same temperature grid for each individual wavelength
+    summed_cx = np.zeros(( len(current_cia_temps),len(new_wno)))
+    ii = 0 
+    for og_t_grid,inds in zip(tranges,iranges): 
+        if not np.array_equal(og_t_grid, tgrid):
+            #for each temp
+            cx = np.array(cx_arrays)[inds[0]:inds[1],:]
+            for iw in range(len(new_wno)): 
+                #get onto new tgrid
+                #NOTE this seems repetetive but in this interpolation
+                #we are extrapolating the bands to a uniform grid 
+                #in the next interpolation, we are zeroing the bands outside the T range
+                ycx= 10**np.interp(tgrid, og_t_grid, np.log10(cx[:,iw]))#purposefully leaveing as default left, right
+                #now interpolate to the full CIA t grid
+                #notice the addition of left and right bounds
+                ycx= 10**np.interp(current_cia_temps, tgrid, np.log10(ycx),
+                        left = -100, right=-100)
+                summed_cx[:,iw] += ycx
+
+        else: 
+            cx = np.array(cx_arrays)[inds[0]:inds[1],:]
+            for iw in range(len(new_wno)): 
+                #interp to master cia temp grid 
+                summed_cx[:,iw] += 10**np.interp(current_cia_temps,tgrid,np.log10(cx[:, iw]),
+                            left = -100, right=-100)
+
+
+    cur, conn = open_local(new_db)
+    for it in range(len(current_cia_temps)):
+        #CONVERT FROM cm5/molecule2 to amagat-2 cm-1
+        #Eqn 3: https://www.sciencedirect.com/science/article/pii/S0019103518306997
+        final_bundle = summed_cx[it, :]/1.385277e-39
+        insert(cur,conn,molname, current_cia_temps[it], final_bundle)
+    conn.commit()
+    conn.close()
+    return 
 
 def get_original_data(original_file,colnames,new_db, overwrite=False):
     """
@@ -89,7 +257,6 @@ def get_original_data(original_file,colnames,new_db, overwrite=False):
     temperatures = og_opacity['wno'].loc[np.isnan(og_opacity[colnames[1]])].values
 
     og_opacity = og_opacity.dropna()
-    print(og_opacity)
     old_wno = og_opacity['wno'].unique()
     #define units
     w_unit = 'cm-1'
@@ -801,7 +968,7 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
             y = dset[np.where(((1e4/og_wvno_grid>min_wavelength) & (1e4/og_wvno_grid<max_wavelength)))]
 
         if ((molecule == 'CH4') & (isinstance(dir_kark_ch4, str)) & (t<500)):
-            opa_k,loc = get_kark_CH4(dir_kark_ch4,new_wvno_grid, t,dset)
+            opa_k,loc = get_kark_CH4(dir_kark_ch4,new_wvno_grid, t,y)#dset)
             y[loc] = opa_k
         if ((molecule == 'O3') & (isinstance(dir_optical_o3, str)) & (t<500)):
             opa_o3 = get_optical_o3(dir_optical_o3,new_wvno_grid)

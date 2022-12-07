@@ -184,7 +184,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     #gets both continuum and needed rayleigh cross sections 
     #relies on continuum molecules are added into the opacity 
     #database. Rayleigh molecules are all in `rayleigh.py` 
-    atm.get_needed_continuum(opacityclass.rayleigh_molecules)
+    atm.get_needed_continuum(opacityclass.rayleigh_molecules,
+                             opacityclass.avail_continuum)
 
     #get cloud properties, if there are any and put it on current grid 
     atm.get_clouds(wno)
@@ -668,7 +669,8 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     #gets both continuum and needed rayleigh cross sections 
     #relies on continuum molecules are added into the opacity 
     #database. Rayleigh molecules are all in `rayleigh.py` 
-    atm.get_needed_continuum(opacityclass.rayleigh_molecules)
+    atm.get_needed_continuum(opacityclass.rayleigh_molecules,
+                             opacityclass.avail_continuum)
 
     #get cloud properties, if there are any and put it on current grid 
     atm.get_clouds(wno)

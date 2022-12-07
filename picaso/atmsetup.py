@@ -223,16 +223,17 @@ class ATMSETUP():
         """
         return np.zeros(len(logPc)) + T #return isothermal for now
 
-    def get_needed_continuum(self,available_ray_mol):
+    def get_needed_continuum(self,available_ray_mol,available_continuum):
         """
         This will define which molecules are needed for the continuum opacities. THis is based on 
-        temperature and molecules. Eventually CIA's will expand but we may not necessarily 
-        want all of them. 
-        'wno','h2h2','h2he','h2h','h2ch4','h2n2']
+        temperature and molecules. This is terrible code I
 
-        Todo
-        ----
-        - Add in temperature dependent to negate h- and things when not necessary
+        Parameters
+        ----------
+        available_ray_mol : list of str
+            list of available rayleigh molecules 
+        available_continuum : list of str
+            list of available continuum molecules 
         """
         self.rayleigh_molecules = []
         self.continuum_molecules = []
@@ -246,6 +247,13 @@ class ATMSETUP():
             self.continuum_molecules += [['H2','H']]
         if  ("H2" in self.molecules) and ("CH4" in self.molecules):
             self.continuum_molecules += [['H2','CH4']]
+        if  ("N2" in self.molecules):
+            self.continuum_molecules += [['N2','N2']]
+        if  ("CO2" in self.molecules):
+            self.continuum_molecules += [['CO2','CO2']]      
+        if  ("O2" in self.molecules):
+            self.continuum_molecules += [['O2','O2']]    
+
         if ("H-" in self.molecules):
             self.continuum_molecules += [['H-','bf']]
         if ("H" in self.molecules) and ("electrons" in self.level.keys()):
@@ -254,6 +262,12 @@ class ATMSETUP():
             self.continuum_molecules += [['H2-','']]
         #now we can remove continuum molecules from self.molecules to keep them separate 
         if 'H+' in ['H','H2-','H2','H-','He','N2']: self.add_warnings('No H+ continuum opacity included')
+
+        #remove anything not in opacity file
+        cm =[]
+        for i in self.continuum_molecules: 
+            if ''.join(i) in available_continuum: cm += [i]
+        self.continuum_molecules = cm
 
         #and rayleigh opacity
         for i in self.molecules: 
@@ -399,6 +413,7 @@ class ATMSETUP():
     def get_column_density(self):
         """
         Calculates the column desntiy based on TP profile: LAYER
+        unit = g/cm2 = pressure/gravity =dyne/cm2/gravity = (g*cm/s2)/cm2/(cm/s2)=g/cm2
         """
         self.layer['colden'] = (self.level['pressure'][1:] - self.level['pressure'][:-1] ) / self.layer['gravity'] 
         return
