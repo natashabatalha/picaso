@@ -3942,9 +3942,75 @@ def jupiter_cld():
 def HJ_pt():
     """Function to get Jupiter's PT profile"""
     return os.path.join(__refdata__, 'base_cases','HJ.pt')
-def HJ_pt_3d():
-    """Function to get Jupiter's PT profile"""
-    return os.path.join(__refdata__, 'base_cases','HJ_3d.pt')
+def HJ_pt_3d(as_xarray=False,add_kz=False):
+    """Function to get Jupiter's PT profile
+    
+    Parameters
+    ----------
+    as_xarray : bool 
+        Returns as xarray, instead of dictionary
+    add_kz : bool 
+        Returns kzz along with PT info
+    """
+    input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')
+    threed_grid = pd.read_csv(input_file,delim_whitespace=True,names=['p','t','k'])
+    all_lon= threed_grid.loc[np.isnan(threed_grid['k'])]['p'].values
+    all_lat=  threed_grid.loc[np.isnan(threed_grid['k'])]['t'].values
+    latlong_ind = np.concatenate((np.array(threed_grid.loc[np.isnan(threed_grid['k'])].index),[threed_grid.shape[0]] ))
+    threed_grid = threed_grid.dropna() 
+
+    lon = np.unique(all_lon)
+    lat = np.unique(all_lat)
+
+    nlon = len(lon)
+    nlat = len(lat)
+    total_pts = nlon*nlat
+    nz = latlong_ind[1] - 1 
+
+    p = np.zeros((nlon,nlat,nz))
+    t = np.zeros((nlon,nlat,nz))
+    kzz = np.zeros((nlon,nlat,nz))
+
+    for i in range(len(latlong_ind)-1):
+
+        ilon = list(lon).index(all_lon[i])
+        ilat = list(lat).index(all_lat[i])
+
+        p[ilon, ilat, :] = threed_grid.loc[latlong_ind[i]:latlong_ind[i+1]]['p'].values
+        t[ilon, ilat, :] = threed_grid.loc[latlong_ind[i]:latlong_ind[i+1]]['t'].values
+        kzz[ilon, ilat, :] = threed_grid.loc[latlong_ind[i]:latlong_ind[i+1]]['k'].values
+    
+    gcm_out = {'pressure':p, 'temperature':t, 'kzz':kzz, 'latitude':lat, 'longitude':lon}
+    if as_xarray:
+        # create data
+        data = gcm_out['temperature']
+
+        # create coords
+        lon = gcm_out['longitude']
+        lat = gcm_out['latitude']
+        pres = gcm_out['pressure'][0,0,:]
+
+        # put data into a dataset
+        if add_kz:
+            data_vars = dict(
+                temperature=(["lon", "lat","pressure"], data,{'units': 'Kelvin'}),#, required
+                kz = (["lon", "lat","pressure"], kzz,{'units': 'm^2/s'})
+            )
+        else: 
+            data_vars = dict(temperature=(["lon", "lat","pressure"], data,{'units': 'Kelvin'}))
+
+        ds = xr.Dataset(
+            data_vars=data_vars,
+            coords=dict(
+                lon=(["lon"], lon,{'units': 'degrees'}),#required
+                lat=(["lat"], lat,{'units': 'degrees'}),#required
+                pressure=(["pressure"], pres,{'units': 'bar'})#required*
+            ),
+            attrs=dict(description="coords with vectors"),
+        )
+        return  ds
+    else: 
+        return gcm_out
 def HJ_cld():
     """Function to get rough Jupiter Cloud model with fsed=3"""
     return os.path.join(__refdata__, 'base_cases','HJ.cld')
