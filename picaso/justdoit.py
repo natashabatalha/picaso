@@ -3944,7 +3944,7 @@ def jupiter_cld():
 def HJ_pt():
     """Function to get Jupiter's PT profile"""
     return os.path.join(__refdata__, 'base_cases','HJ.pt')
-def HJ_pt_3d(as_xarray=False,add_kz=False):
+def HJ_pt_3d(as_xarray=False,add_kz=False, input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')):
     """Function to get Jupiter's PT profile
     
     Parameters
@@ -3953,8 +3953,11 @@ def HJ_pt_3d(as_xarray=False,add_kz=False):
         Returns as xarray, instead of dictionary
     add_kz : bool 
         Returns kzz along with PT info
+    input_file : str 
+        point to input file in the same format as mitgcm example 
+        file in base_cases/HJ_3d.pt
     """
-    input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')
+    #input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')
     threed_grid = pd.read_csv(input_file,delim_whitespace=True,names=['p','t','k'])
     all_lon= threed_grid.loc[np.isnan(threed_grid['k'])]['p'].values
     all_lat=  threed_grid.loc[np.isnan(threed_grid['k'])]['t'].values
