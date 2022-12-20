@@ -201,10 +201,11 @@ class GridFitter():
             else:
                 #e.g. if no stellar_params were included for a brown dwarf grid
                 self.overview[grid_name].pop(iattr)
-
-        for iattr in possible_params.keys():
-            if len(self.grid_params[grid_name][iattr].keys())==0: 
                 self.grid_params[grid_name].pop(iattr)
+
+        #for iattr in possible_params.keys():
+        #    if len(self.grid_params[grid_name][iattr].keys())==0: 
+        #        self.grid_params[grid_name].pop(iattr)
 
         cnt_params = 0
         for iattr in self.overview[grid_name].keys():#loops through e.g. planet_params, stellar_params,
@@ -331,7 +332,7 @@ class GridFitter():
                 best_fits[ikey] = single_best_fit
         return best_fits
 
-    def plot_best_fit(self, grid_names, data_names): 
+    def plot_best_fit(self, grid_names, data_names, plot_kwargs={}): 
         """
         
         Parameters
@@ -340,6 +341,8 @@ class GridFitter():
             List of grid names or string of single grid name to plot 
         data_names : list, str 
             List of data names or string of single 
+        plot_kwargs : dict 
+            key word arguments for matplotlib plt
         """
         if isinstance(grid_names ,str):grid_names=[grid_names]
         if isinstance(data_names ,str):data_names=[data_names]
@@ -411,8 +414,8 @@ class GridFitter():
             e_data = 100*self.data[idata]['e_data']
             ax['A'].errorbar(wlgrid_center,y_data,yerr=e_data,fmt="o",color=Cividis[7][i],label=idata+" Reduction",markersize=5)
         
-        ax['B'].set_xlabel(r"wavelength [$\mu$m]",fontsize=20)
-        ax['A'].set_ylabel(r"transit depth [%]",fontsize=20)
+        ax['B'].set_xlabel(plot_kwargs.get('xlabel',r"wavelength [$\mu$m]"),fontsize=20)
+        ax['A'].set_ylabel(plot_kwargs.get('ylabel',r"transit depth [%]"),fontsize=20)
 
         ax['A'].minorticks_on()
         ax['A'].tick_params(axis='y',which='major',length =20, width=3,direction='in',labelsize=20)
