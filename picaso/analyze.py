@@ -7,6 +7,7 @@ import json
 import matplotlib.pyplot as plt
 import os
 from astropy.convolution import convolve, Box1DKernel, Gaussian1DKernel
+import astropy.units as u
 from scipy import optimize
 import glob
 
@@ -995,7 +996,7 @@ def _get_xarray_attr(attr_dict, parameter):
             #unit value
             if not np.isnan(param_flt):
                 try: 
-                    param_unit = jdi.u.Unit(''.join(param.split(' ')[1:]))
+                    param_unit = u.Unit(''.join(param.split(' ')[1:]))
                     param = param_flt*param_unit
                 except ValueError: 
                     param = param_flt
