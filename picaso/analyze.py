@@ -497,7 +497,9 @@ class GridFitter():
         if isinstance(parameters, str): parameters=[parameters]
 
         if label == '':
-            label = grid_name + ' ' + data_name
+            legend_label = grid_name + ' ' + data_name
+        else: 
+            legend_label = label
 
         if fig == None:
             if ax == None:
@@ -553,10 +555,11 @@ class GridFitter():
                     if x_axis_type.get(parameters[iparam],'linear') == 'log':
                         xgrid = np.log10(xgrid)
                     cycler = ax[irow,icol]._get_lines.prop_cycler
+                    col = next(cycler)['color']
                     ax[irow,icol].bar(xgrid, yprob,
                         width=[np.mean(abs(np.diff(xgrid)))/2]*len(xgrid), 
-                        color="None",edgecolor=next(cycler)['color'],
-                        linewidth=5,label=label)
+                        color=col,edgecolor=col,
+                        linewidth=5,label=legend_label,alpha=0.2 )
                     ax[irow,icol].tick_params(axis='both',which='major',length =40, width=3,direction='in',labelsize=30)
                     ax[irow,icol].tick_params(axis='both',which='minor',length =10, width=2,direction='in',labelsize=30)
                     
