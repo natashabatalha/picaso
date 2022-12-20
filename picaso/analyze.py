@@ -112,7 +112,7 @@ class GridFitter():
         'spectra_w_offset':self.best_fits,
         'rank_order':self.rank,
         'grid_params':self.grid_params, 
-        'offsets': self.offsets,
+        'offsets': getattr(self, 'offsets',0), #,
         'chi_sqs': self.chi_sqs,
         'posteriors': self.posteriors
         }
