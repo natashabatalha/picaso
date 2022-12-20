@@ -58,7 +58,7 @@ class GridFitter():
         self.spectra={}
         
         #adds first grid
-        self.add_grid(grid_name, model_dir)
+        self.add_grid(grid_name, model_dir, to_fit=to_fit)
 
     def find_grid(self, grid_name, model_dir):
         """
@@ -75,11 +75,11 @@ class GridFitter():
             else: 
                 if self.verbose: print(f'Total number of models in grid is {nfiles}')
 
-    def add_grid(self,grid_name,model_dir):
+    def add_grid(self,grid_name,model_dir,to_fit='transit_depth'):
         #loads in grid info
         self.grids += [grid_name]
         self.find_grid(grid_name, model_dir)
-        self.load_grid_params(grid_name)
+        self.load_grid_params(grid_name,to_fit=to_fit)
 
     def add_data(self, data_name, wlgrid_center,wlgrid_width,y_data,e_data): 
         """
