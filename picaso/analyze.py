@@ -475,14 +475,14 @@ class GridFitter():
 
 
     def plot_posteriors(self, grid_name, data_name,parameters, fig=None, ax=None,
-                       x_label_style={}, x_axis_type={}):
+                       x_label_style={}, x_axis_type={}, label=''):
         """
         Plots posteriors for a given parameter set 
 
         Parameters
         ----------
         grid_names : str 
-            grid names or string of single grid name to plot 
+            string of single grid name to plot 
         data_names : str 
             data names or string of single 
         parameters : list, str
@@ -491,8 +491,13 @@ class GridFitter():
             dictionary with elements of parameters for stylized x axis labels 
         x_axis_type : dict 
             dictionry with 'linear' 'log' arguments for the x axis. 
+        labels : list 
+            how to label the data 
         """
         if isinstance(parameters, str): parameters=[parameters]
+
+        if label == '':
+            label = grid_name + ' ' + data_name
 
         if fig == None:
             if ax == None:
@@ -551,7 +556,7 @@ class GridFitter():
                     ax[irow,icol].bar(xgrid, yprob,
                         width=[np.mean(abs(np.diff(xgrid)))/2]*len(xgrid), 
                         color="None",edgecolor=next(cycler)['color'],
-                        linewidth=5,label=grid_name)
+                        linewidth=5,label=label)
                     ax[irow,icol].tick_params(axis='both',which='major',length =40, width=3,direction='in',labelsize=30)
                     ax[irow,icol].tick_params(axis='both',which='minor',length =10, width=2,direction='in',labelsize=30)
                     
@@ -986,7 +991,7 @@ def _get_xarray_attr(attr_dict, parameter):
         #else: 
         #    param = param_flt
         param = param_flt
-        
+
     if isinstance(param, str):
         if len(param.split(' ')) > 1: 
             #float value
