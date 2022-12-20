@@ -973,5 +973,31 @@ def _get_xarray_attr(attr_dict, parameter):
         not_found_msg='clear'
     param = attr_dict.get(parameter,not_found_msg)
     if isinstance(param, dict):
-        param = param.get('value',param)
+        param_flt = param.get('value',param)
+        #get unit
+        if isinstance(param.get('unit',np.nan),str): 
+            try: 
+                param_unit = u.Unit(param.get('unit'))
+                param = param_flt*param_unit
+            except ValueError: 
+                param = param_flt
+                pass 
+        else: 
+            param = param_flt
+    if isinstance(param, str):
+        if len(param.split(' ')) > 1: 
+            #float value
+            try: 
+                param_flt = float(param.split(' ')[0])
+            except ValueError: 
+                param_flt = np.nan
+                pass
+            #unit value
+            if not np.isnan(param_flt):
+                try: 
+                    param_unit = jdi.u.Unit(''.join(param.split(' ')[1:]))
+                    param = param_flt*param_unit
+                except ValueError: 
+                    param = param_flt
+                    pass            
     return param
