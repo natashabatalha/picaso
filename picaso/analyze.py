@@ -42,8 +42,10 @@ class GridFitter():
     model_dir : str 
         Location of model grid. Should be a directory that points to 
         several files in the PICASO xarray format.
+    to_fit : str 
+        parameter to fit, default is transit_depth. other common is flux
     """
-    def __init__(self, grid_name, model_dir, grid_dimensions=False, verbose=True):
+    def __init__(self, grid_name, model_dir,to_fit='transit_depth', grid_dimensions=False, verbose=True):
         self.verbose=verbose
         
         self.grids = []
@@ -116,7 +118,7 @@ class GridFitter():
         }
 
 
-    def load_grid_params(self,grid_name):
+    def load_grid_params(self,grid_name,to_fit='transit_depth'):
         """
         This will read the grid parameters and set the array of parameters 
 
@@ -124,6 +126,9 @@ class GridFitter():
         ----------
         grid_name : str 
             Name of grid for bookkeeping
+        to_fit : str 
+            Default is transit_depth but also could be flux or any other xarray parameter 
+            you are interested in fitting. 
 
         Returns
         -------
@@ -161,7 +166,7 @@ class GridFitter():
             #seems like we need to save these?????
             temperature_grid[ct,:] = ds['temperature'].values[:]
             pressure_grid[ct,:] = ds['pressure'].values[:]
-            spectra_grid[ct,:] = ds['transit_depth'].values[:] 
+            spectra_grid[ct,:] = ds[to_fit].values[:] 
 
 
             # Read all the paramaters in the Xarray so that User can gain insight into the 
