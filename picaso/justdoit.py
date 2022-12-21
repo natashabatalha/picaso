@@ -482,7 +482,7 @@ def _finditem(obj, key):
             if item is not None:
                 return item
 
-def input_xarray(xr_usr, opacity,p_reference=10):
+def input_xarray(xr_usr, opacity,p_reference=10, calculation='planet'):
     """
     This takes an input based on these standards and runs: 
     -gravity
@@ -500,37 +500,42 @@ def input_xarray(xr_usr, opacity,p_reference=10):
         opacity connection
     p_reference : float 
         reference pressure in bars 
+    calculation : str 
+        'planet' or 'browndwarf'
 
     Example
     -------
     case = jdi.input_xarray(xr_user)
     case.spectrum(opacity,calculation='transit_depth')
     """
-    case = inputs()
+    case = inputs(calculation = calculation)
     case.phase_angle(0) #radians
 
     #define gravity
     planet_params = eval(xr_usr.attrs['planet_params'])
-    stellar_params = eval(xr_usr.attrs['stellar_params'])
-    orbit_params = eval(xr_usr.attrs['orbit_params'])
+    if 'brown' not in calculation:
+        stellar_params = eval(xr_usr.attrs['stellar_params'])
+        orbit_params = eval(xr_usr.attrs['orbit_params'])
+        steff = _finditem(stellar_params,'steff')
+        feh = _finditem(stellar_params,'feh')
+        logg = _finditem(stellar_params,'logg')
+        ms = _finditem(stellar_params,'ms')
+        rs = _finditem(stellar_params,'rs')
+        semi_major = _finditem(planet_params,'sma')
+        case.star(opacity, steff,feh,logg, radius=rs['value'], 
+                  radius_unit=u.Unit(rs['unit']))
 
     mp = _finditem(planet_params,'mp')
     rp = _finditem(planet_params,'rp')
+    logg = _finditem(planet_params,'logg')
 
     if (not isinstance(mp, type(None)) & (not isinstance(rp, type(None)))):
         case.gravity(mass = mp['value'], mass_unit=u.Unit(mp['unit']),
                     radius=rp['value'], radius_unit=u.Unit(rp['unit']))
+    elif (not isinstance(logg, type(None))): 
+        case.gravity(gravity = logg['value'], gravity_unit=logg['unit'])
     else: 
-        print('Mass and Radius not provided in xarray, user needs to run gravity function')
-
-    steff = _finditem(stellar_params,'steff')
-    feh = _finditem(stellar_params,'feh')
-    logg = _finditem(stellar_params,'logg')
-    ms = _finditem(stellar_params,'ms')
-    rs = _finditem(stellar_params,'rs')
-    semi_major = _finditem(planet_params,'sma')
-    case.star(opacity, steff,feh,logg, radius=rs['value'], 
-              radius_unit=u.Unit(rs['unit']))
+        print('Mass and Radius or gravity not provided in xarray, user needs to run gravity function')
 
     case.approx(p_reference=p_reference)
 
