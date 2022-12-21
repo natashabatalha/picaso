@@ -529,7 +529,7 @@ def input_xarray(xr_usr, opacity,p_reference=10, calculation='planet'):
     rp = _finditem(planet_params,'rp')
     logg = _finditem(planet_params,'logg')
 
-    if (not isinstance(mp, type(None)) & (not isinstance(rp, type(None)))):
+    if ((not isinstance(mp, type(None))) & (not isinstance(rp, type(None)))):
         case.gravity(mass = mp['value'], mass_unit=u.Unit(mp['unit']),
                     radius=rp['value'], radius_unit=u.Unit(rp['unit']))
     elif (not isinstance(logg, type(None))): 
