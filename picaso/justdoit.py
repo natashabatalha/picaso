@@ -533,7 +533,7 @@ def input_xarray(xr_usr, opacity,p_reference=10, calculation='planet'):
         case.gravity(mass = mp['value'], mass_unit=u.Unit(mp['unit']),
                     radius=rp['value'], radius_unit=u.Unit(rp['unit']))
     elif (not isinstance(logg, type(None))): 
-        case.gravity(gravity = logg['value'], gravity_unit=logg['unit'])
+        case.gravity(gravity = logg['value'], gravity_unit=u.Unit(logg['unit']))
     else: 
         print('Mass and Radius or gravity not provided in xarray, user needs to run gravity function')
 
