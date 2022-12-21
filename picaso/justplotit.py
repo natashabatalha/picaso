@@ -19,6 +19,7 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.animation as animation
+import seaborn as sns
 
 from scipy.stats.stats import pearsonr  
 from scipy.stats import binned_statistic
@@ -1918,7 +1919,7 @@ def animate_convergence(clima_out, picaso_bundle, opacity, wave_range=[0.3,6],
     plt.close()
     return ani
 
-def create_heat_map(data,rayleigh=True,extend=False):
+def create_heat_map(data,rayleigh=True,extend=False,plot_height=300,plot_width=300,font_size="12px"):
     reverse = True
     data.columns.name = 'w0' 
     data.index.name = 'g0' 
@@ -1948,26 +1949,68 @@ def create_heat_map(data,rayleigh=True,extend=False):
 
     TOOLS = "hover,save,pan,box_zoom,reset,wheel_zoom"
 
-    p = figure(height=300,width=300,
-           y_range=y_range, x_range=x_range,
-           x_axis_location="above",
-           tools=TOOLS, toolbar_location='below')
+    color_bar_height = plot_height + 11
+    color_bar_width = int(plot_width * 0.26)
+
+    p = figure(height=plot_height,width=plot_width,
+       y_range=y_range, x_range=x_range,
+       x_axis_location="above"
+       #,toolbar_location=None
+        )
 
     p.grid.grid_line_color = None
     p.axis.axis_line_color = None
     p.axis.major_tick_line_color = None
-    p.axis.major_label_text_font_size = "7px"
-    p.axis.major_label_standoff = 0
+    p.axis.major_label_text_font_size = font_size
+    p.axis.major_label_standoff = 20
     p.xaxis.major_label_orientation = np.pi / 3
 
     p.rect(x="g0", y="w0", width=1, height=1,
        source=df,
        fill_color={'field': 'albedo', 'transform': mapper},
-       line_color=None)
+       line_color='black')
 
-    color_bar = ColorBar(color_mapper=mapper, major_label_text_font_size="12px",
-                     ticker=BasicTicker(desired_num_ticks=len(colors)),
-                     label_standoff=6, border_line_color=None, location=(0, 0))
-    p.add_layout(color_bar, 'right')
-    p.axis.major_label_text_font_size='12px'
-    return p
+    # cb_width = int(width/11)
+
+    color_bar = ColorBar(color_mapper=mapper,
+                    major_label_text_font_size=font_size,
+                    ticker=BasicTicker(desired_num_ticks=len(colors)),
+                    label_standoff=12, border_line_color=None, location=(0, 10))
+
+    color_bar_plot = figure(#title=r"\[\sin(x)\text{ for }x\text{ between }-2\pi\text{ and }2\pi\]", 
+                        title_location="right", 
+                        height=color_bar_height, width=color_bar_width, 
+                        min_border=0, 
+                        outline_line_color=None
+                        #,toolbar_location=None
+                        )
+
+    color_bar_plot.add_layout(color_bar, 'right')
+    color_bar_plot.title.align="center"
+    color_bar_plot.title.text_font_size = '24px'
+    
+    p.axis.major_label_text_font_size=font_size
+    layout = row(p, color_bar_plot)
+
+    return layout
+
+def create_thermal_heatmap(data, cmap='RdGy', vmin=None, vmax=None):
+
+    data.columns.name = 'w0' 
+    data.index.name = 'g0' 
+    data.index=data.index.astype(str)
+    data = data.rename(index={"-1.0":"Ray"})
+    data = data.drop(["Ray"])  
+    for w in data.columns[0:]:
+        if pd.isnull(data.loc['0.0'][w]):
+            data = data.drop(columns=[w])
+    
+    df = data.T
+    fig = sns.heatmap(df, annot=False, linewidths=0.5, square=False, cmap=cmap, vmin=vmin, vmax=vmax)
+    fig.set(xlabel="asymmetry", ylabel="single scattering albedo")
+    fig.xaxis.major_label_orientation = np.pi / 3
+    
+    plt.yticks(rotation=0) 
+
+    return fig
+

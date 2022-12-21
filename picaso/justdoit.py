@@ -488,7 +488,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             #'xint_at_top': xint_at_top, 'albedo': albedo, 'flux': flux_out, 'xint': intensity,
             'b_top': b_top, 'gweight': gweight, 'tweight': tweight, 'gangle': gangle, 'tangle': tangle}, 
             open(filename,'wb'), protocol=2)
-        print('Output saved to ', filename)
+        #print('Output saved to ', filename)
     return returns
 
 def _finditem(obj, key):
