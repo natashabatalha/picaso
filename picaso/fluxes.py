@@ -3349,6 +3349,7 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
     F = zeros((4*nlevel, 4*nlayer, nwno))
     G = zeros((4*nlevel, nwno))
 
+    # top boundary conditions
     Mb[5,0,:] = p1mn[0,:]
     Mb[5,1,:] = q1pl[0,:]
     Mb[4,1,:] = p1pl[0,:]
@@ -3361,6 +3362,21 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
     B[0,:] = b_top - z1mn_down[0,:]
     B[1,:] = -b_top/4 - z2mn_down[0,:]
 
+    # bottom boundary conditions
+    n = nlayer-1
+    Mb[5,4*nlayer-2,:] = f22[n,:] - surf_reflect*f02[n,:]
+    Mb[5,4*nlayer-1,:] = f33[n,:] - surf_reflect*f13[n,:]
+    Mb[4,4*nlayer-1,:] = f23[n,:] - surf_reflect*f03[n,:]
+    Mb[6,4*nlayer-3,:] = f21[n,:] - surf_reflect*f01[n,:]
+    Mb[6,4*nlayer-2,:] = f32[n,:] - surf_reflect*f12[n,:]
+    Mb[7,4*nlayer-4,:] = f20[n,:] - surf_reflect*f00[n,:]
+    Mb[7,4*nlayer-3,:] = f31[n,:] - surf_reflect*f11[n,:]
+    Mb[8,4*nlayer-4,:] = f30[n,:] - surf_reflect*f10[n,:]
+
+    B[4*nlayer-2,:] = b_surface - z1pl_up[n,:] + surf_reflect*z1mn_up[n,:]
+    B[4*nlayer-1,:] = b_surface_SH4 - z2pl_up[n,:] + surf_reflect*z2mn_up[n,:]
+
+    # fill remaining rows of matrix
     Mb[5,2:-4:4,:] = f02[:-1,:]
     Mb[5,3:-4:4,:] = f13[:-1,:]
     Mb[5,4::4,:] = -p1pl[1:,:]
@@ -3409,6 +3425,7 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
     B[4::4,:] = z1pl_down[1:,:] - z1pl_up[:-1,:]
     B[5::4,:] = z2pl_down[1:,:] - z2pl_up[:-1,:]
 
+    # fill integrated matrices needed for source function technique
     nn = 4*nlayer
     NN = 4*nn+4
     a_int = A_int.reshape(nn*nn, A_int.shape[2])
@@ -3437,19 +3454,7 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
     N_int[2::4,:] = N2
     N_int[3::4,:] = N3
 
-    n = nlayer-1
-    Mb[5,4*nlayer-2,:] = f22[n,:] - surf_reflect*f02[n,:]
-    Mb[5,4*nlayer-1,:] = f33[n,:] - surf_reflect*f13[n,:]
-    Mb[4,4*nlayer-1,:] = f23[n,:] - surf_reflect*f03[n,:]
-    Mb[6,4*nlayer-3,:] = f21[n,:] - surf_reflect*f01[n,:]
-    Mb[6,4*nlayer-2,:] = f32[n,:] - surf_reflect*f12[n,:]
-    Mb[7,4*nlayer-4,:] = f20[n,:] - surf_reflect*f00[n,:]
-    Mb[7,4*nlayer-3,:] = f31[n,:] - surf_reflect*f11[n,:]
-    Mb[8,4*nlayer-4,:] = f30[n,:] - surf_reflect*f10[n,:]
-
-    B[4*nlayer-2,:] = b_surface - z1pl_up[n,:] + surf_reflect*z1mn_up[n,:]
-    B[4*nlayer-1,:] = b_surface_SH4 - z2pl_up[n,:] + surf_reflect*z2mn_up[n,:]
-
+    # flux at bottom
     F_bot[-4,:] = f20[-1,:]
     F_bot[-3,:] = f21[-1,:]
     F_bot[-2,:] = f22[-1,:]
