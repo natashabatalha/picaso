@@ -1,7 +1,6 @@
 from numba import jit, objmode
 from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh, min, dot, array,log, log10,ones, array_equal
 import numpy as np
-#import pentapy as pp
 import time
 import pickle as pk
 from scipy.linalg import solve_banded
