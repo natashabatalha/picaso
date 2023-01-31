@@ -92,6 +92,15 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "sirpetergao",
+      "name": "Peter Gao",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20616506?v=4",
+      "profile": "https://epl.carnegiescience.edu/people/peter-gao",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
