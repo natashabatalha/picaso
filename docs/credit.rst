@@ -43,3 +43,10 @@ Grid fits
 `The JWST Transiting Exoplanet Community Early Release Science Team, et al. "Identification of carbon dioxide in an exoplanet atmosphere." Nature (2022). <https://www.nature.com/articles/s41586-022-05269-w>`_
 
 - Methodology for fitting picaso model grids to data
+
+Chemistry
+---------
+
+`Marley, Mark S.,Saumon, Didier, Visscher, Channon et al. "The Sonora Brown Dwarf Atmosphere and Evolution Models. I. Model Description and Application to Cloudless Atmospheres in Rainout Chemical Equilibrium" ApJ (2021). <https://ui.adsabs.harvard.edu/abs/2021ApJ...920...85M/abstract>`_
+
+- Use of the `chemeq_vissher()` function
