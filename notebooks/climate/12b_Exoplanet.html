@@ -1,74 +1,40 @@
-
-
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>One-Dimensional Climate Models: The Basics of Planets &mdash; picaso 3.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-
-  
-  
-  
-  
-
-  
-  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../../_static/jquery.js"></script>
-        <script type="text/javascript" src="../../_static/underscore.js"></script>
-        <script type="text/javascript" src="../../_static/doctools.js"></script>
-        <script type="text/javascript" src="../../_static/language_data.js"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
-    
-    <script type="text/javascript" src="../../_static/js/theme.js"></script>
-
-    
-
-  
-  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry at Solar M/H and C/O" href="12c_BrownDwarf_DEQ.html" />
     <link rel="prev" title="One-Dimensional Climate Models: The Basics of Brown Dwarfs" href="12a_BrownDwarf.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
-
-          
             <a href="../../index.html" class="icon icon-home"> picaso
-          
-
-          
           </a>
-
-          
-            
-            
               <div class="version">
                 3.0
               </div>
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -76,17 +42,7 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../../tutorials.html">The Tutorials</a><ul class="current">
@@ -120,93 +76,68 @@
 <li class="toctree-l1"><a class="reference internal" href="../../workshops.html">Workshop Material</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../credit.html">The Papers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credit.html">What to Cite</a></li>
 </ul>
 
-            
-          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../index.html">picaso</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="../../index.html">Docs</a> &raquo;</li>
-        
-          <li><a href="../../tutorials.html">Tutorials</a> &raquo;</li>
-        
-      <li>One-Dimensional Climate Models: The Basics of Planets</li>
-    
-    
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">One-Dimensional Climate Models: The Basics of Planets</li>
       <li class="wy-breadcrumbs-aside">
-        
-            
             <a href="../../_sources/notebooks/climate/12b_Exoplanet.ipynb.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+             
   
 <style>
 /* CSS for nbsphinx extension */
 
 /* remove conflicting styling from Sphinx themes */
-div.nbinput.container,
-div.nbinput.container div.prompt,
-div.nbinput.container div.input_area,
-div.nbinput.container div[class*=highlight],
-div.nbinput.container div[class*=highlight] pre,
-div.nboutput.container,
-div.nboutput.container div.prompt,
-div.nboutput.container div.output_area,
-div.nboutput.container div[class*=highlight],
-div.nboutput.container div[class*=highlight] pre {
-    background: none;
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
     border: none;
-    padding: 0 0;
+    padding: 0;
     margin: 0;
     box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
 }
 
 /* avoid gaps between output lines */
@@ -253,27 +184,41 @@ div.nboutput.container div.prompt pre {
 /* all prompts */
 div.nbinput.container div.prompt,
 div.nboutput.container div.prompt {
-    min-width: 5ex;
-    padding-top: 0.3rem;
-    padding-right: 0.3rem;
-    text-align: right;
-    flex: 0;
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
 }
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
 @media (max-width: 540px) {
     div.nbinput.container div.prompt,
     div.nboutput.container div.prompt {
+        width: unset;
         text-align: left;
         padding: 0.4em;
     }
     div.nboutput.container div.prompt.empty {
         padding: 0;
     }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
 }
 
-/* disable scrollbars on prompts */
+/* disable scrollbars and line breaks on prompts */
 div.nbinput.container div.prompt pre,
 div.nboutput.container div.prompt pre {
     overflow: hidden;
+    white-space: pre;
 }
 
 /* input/output area */
@@ -294,7 +239,7 @@ div.nboutput.container div.output_area {
 div.nbinput.container div.input_area {
     border: 1px solid #e0e0e0;
     border-radius: 2px;
-    background: #f5f5f5;
+    /*background: #f5f5f5;*/
 }
 
 /* override MathJax center alignment in output cells */
@@ -359,7 +304,8 @@ div.nboutput.container div.output_area div[class*=highlight].math,
 div.nboutput.container div.output_area.rendered_html,
 div.nboutput.container div.output_area > div.output_javascript,
 div.nboutput.container div.output_area:not(.rendered_html) > img{
-    padding: 0.3rem;
+    padding: 5px;
+    margin: 0;
 }
 
 /* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
@@ -369,11 +315,12 @@ div.nboutput.container div.output_area > div[class^='highlight']{
 }
 
 /* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
-.prompt a.copybtn {
+.prompt .copybtn {
     display: none;
 }
 
 /* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
 div.rendered_html table {
   border: none;
   border-collapse: collapse;
@@ -382,10 +329,14 @@ div.rendered_html table {
   font-size: 12px;
   table-layout: fixed;
 }
+.jp-RenderedHTMLCommon thead,
 div.rendered_html thead {
   border-bottom: 1px solid black;
   vertical-align: bottom;
 }
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
 div.rendered_html tr,
 div.rendered_html th,
 div.rendered_html td {
@@ -397,12 +348,15 @@ div.rendered_html td {
   max-width: none;
   border: none;
 }
+.jp-RenderedHTMLCommon th,
 div.rendered_html th {
   font-weight: bold;
 }
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
 div.rendered_html tbody tr:nth-child(odd) {
   background: #f5f5f5;
 }
+.jp-RenderedHTMLCommon tbody tr:hover,
 div.rendered_html tbody tr:hover {
   background: rgba(66, 165, 245, 0.2);
 }
@@ -433,7 +387,7 @@ div.rendered_html tbody tr:hover {
 <p class="admonition-title">Note</p>
 <p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/climate/12b_Exoplanet.ipynb">Download full notebook here</a></p>
 </div>
-<div class="section" id="One-Dimensional-Climate-Models:-The-Basics-of-Planets">
+<section id="One-Dimensional-Climate-Models:-The-Basics-of-Planets">
 <h1>One-Dimensional Climate Models: The Basics of Planets<a class="headerlink" href="#One-Dimensional-Climate-Models:-The-Basics-of-Planets" title="Permalink to this headline">¶</a></h1>
 <p>In this tutorial you will learn the very basics of running 1D climate runs. For a more in depth look at the climate code check out <a class="reference external" href="https://arxiv.org/abs/2208.07836">Mukherjee et al. 2022</a> (note this should also be cited if using this code/tutorial).</p>
 <p>What you should already be familiar with:</p>
@@ -451,8 +405,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">warnings</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">warnings</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
 <span class="kn">import</span> <span class="nn">picaso.justdoit</span> <span class="k">as</span> <span class="nn">jdi</span>
 <span class="kn">import</span> <span class="nn">picaso.justplotit</span> <span class="k">as</span> <span class="nn">jpi</span>
@@ -467,12 +420,11 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1">#1 ck tables from roxana</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#1 ck tables from roxana</span>
 <span class="n">mh</span> <span class="o">=</span> <span class="s1">&#39;+100&#39;</span><span class="c1">#&#39;+1.0&#39; #log metallicity</span>
 <span class="n">CtoO</span> <span class="o">=</span> <span class="s1">&#39;100&#39;</span><span class="c1">#&#39;1.0&#39; # CtoO ratio</span>
 
-<span class="n">ck_db</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;/Users/nbatalh1/Documents/data/kcoeff_2020/sonora_2020_feh</span><span class="si">{mh}</span><span class="s1">_co_</span><span class="si">{CtoO}</span><span class="s1">.data.196&#39;</span>
+<span class="n">ck_db</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;/Users/nbatalh1/Documents/data/kcoeff_2020/sonora_2020_feh</span><span class="si">{</span><span class="n">mh</span><span class="si">}</span><span class="s1">_co_</span><span class="si">{</span><span class="n">CtoO</span><span class="si">}</span><span class="s1">.data.196&#39;</span>
 </pre></div>
 </div>
 </div>
@@ -480,14 +432,13 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># Notice The keyword ck is set to True because you want to use the correlated-k opacities for your calculation</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Notice The keyword ck is set to True because you want to use the correlated-k opacities for your calculation</span>
 <span class="c1"># and not the line by line opacities</span>
 <span class="n">opacity_ck</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">ck_db</span><span class="o">=</span><span class="n">ck_db</span><span class="p">)</span> <span class="c1"># grab your opacities</span>
 </pre></div>
 </div>
 </div>
-<div class="section" id="Starting-up-the-Run">
+<section id="Starting-up-the-Run">
 <h2>Starting up the Run<a class="headerlink" href="#Starting-up-the-Run" title="Permalink to this headline">¶</a></h2>
 <p>You will notice that starting a run is nearly identical as running a spectrum and brown dwarf climate model. However, how we will add <code class="docutils literal notranslate"><span class="pre">climate=True</span></code> to our inputs flag. We will also specify <code class="docutils literal notranslate"><span class="pre">planet</span></code> in this case, which will turn on the irradiation the object is receiving.</p>
 <p>New Parameter (was also used in the Brown Dwarf tutorial): <strong>Effective Temperature</strong>. This excerpt from <a class="reference external" href="https://arxiv.org/pdf/1804.08149.pdf">Modeling Exoplanetary Atmospheres (Fortney et al)</a> provides a thorough description and more reading, if you are interested.</p>
@@ -502,8 +453,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">cl_run</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">(</span><span class="n">calculation</span><span class="o">=</span><span class="s2">&quot;planet&quot;</span><span class="p">,</span> <span class="n">climate</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="c1"># start a calculation</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">(</span><span class="n">calculation</span><span class="o">=</span><span class="s2">&quot;planet&quot;</span><span class="p">,</span> <span class="n">climate</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="c1"># start a calculation</span>
 
 <span class="c1">#note you need to put the climate keyword to be True in order to do so</span>
 <span class="c1"># now you need to add these parameters to your calculation</span>
@@ -522,8 +472,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">T_star</span> <span class="o">=</span><span class="mf">5326.6</span> <span class="c1"># K, star effective temperature</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">T_star</span> <span class="o">=</span><span class="mf">5326.6</span> <span class="c1"># K, star effective temperature</span>
 <span class="n">logg</span> <span class="o">=</span><span class="mf">4.38933</span> <span class="c1">#logg , cgs</span>
 <span class="n">metal</span> <span class="o">=-</span><span class="mf">0.03</span> <span class="c1"># metallicity of star</span>
 <span class="n">r_star</span> <span class="o">=</span> <span class="mf">0.932</span> <span class="c1"># solar radius</span>
@@ -531,12 +480,11 @@ div.rendered_html tbody tr:hover {
 
 <span class="n">cl_run</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">opacity_ck</span><span class="p">,</span> <span class="n">temp</span> <span class="o">=</span><span class="n">T_star</span><span class="p">,</span><span class="n">metal</span> <span class="o">=</span><span class="n">metal</span><span class="p">,</span> <span class="n">logg</span> <span class="o">=</span><span class="n">logg</span><span class="p">,</span> <span class="n">radius</span> <span class="o">=</span> <span class="n">r_star</span><span class="p">,</span>
             <span class="n">radius_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">R_sun</span><span class="p">,</span><span class="n">semi_major</span><span class="o">=</span> <span class="n">semi_major</span> <span class="p">,</span> <span class="n">semi_major_unit</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">AU</span><span class="p">)</span><span class="c1">#opacity db, pysynphot database, temp, metallicity, logg</span>
-
-</pre></div>
+<br/></pre></div>
 </div>
 </div>
-</div>
-<div class="section" id="Initial-T(P)-Guess">
+</section>
+<section id="Initial-T(P)-Guess">
 <h2>Initial T(P) Guess<a class="headerlink" href="#Initial-T(P)-Guess" title="Permalink to this headline">¶</a></h2>
 <p>Every calculation requires an initial guess of the pressure temperature profile. The code will iterate from there to find the correct solution. A few tips:</p>
 <ol class="arabic simple">
@@ -547,8 +495,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">nlevel</span> <span class="o">=</span> <span class="mi">91</span> <span class="c1"># number of plane-parallel levels in your code</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">nlevel</span> <span class="o">=</span> <span class="mi">91</span> <span class="c1"># number of plane-parallel levels in your code</span>
 
 <span class="c1">#Lets set the max and min at 1e-4 bars and 500 bars</span>
 <span class="n">Teq</span><span class="o">=</span><span class="mi">1000</span> <span class="c1"># planet equilibrium temperature</span>
@@ -558,8 +505,8 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 </div>
-</div>
-<div class="section" id="Initial-Convective-Zone-Guess">
+</section>
+<section id="Initial-Convective-Zone-Guess">
 <h2>Initial Convective Zone Guess<a class="headerlink" href="#Initial-Convective-Zone-Guess" title="Permalink to this headline">¶</a></h2>
 <p>You also need to have a crude guess of the convective zone of your atmosphere. Generally the deeper atmosphere is always convective. Again a good guess is always the published SONORA grid of models for this. But lets assume that the bottom 7 levels of the atmosphere is convective.</p>
 <p><strong>New Parameters:</strong></p>
@@ -573,8 +520,7 @@ rst should be set at 1.</p>
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">nofczns</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1"># number of convective zones initially. Let&#39;s not play with this for now.</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">nofczns</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1"># number of convective zones initially. Let&#39;s not play with this for now.</span>
 
 <span class="n">nstr_upper</span> <span class="o">=</span> <span class="mi">85</span> <span class="c1"># top most level of guessed convective zone</span>
 <span class="n">nstr_deep</span> <span class="o">=</span> <span class="n">nlevel</span> <span class="o">-</span><span class="mi">2</span> <span class="c1"># this is always the case. Dont change this</span>
@@ -590,22 +536,20 @@ rst should be set at 1.</p>
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">cl_run</span><span class="o">.</span><span class="n">inputs_climate</span><span class="p">(</span><span class="n">temp_guess</span><span class="o">=</span> <span class="n">temp_guess</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span> <span class="n">pressure</span><span class="p">,</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span><span class="o">.</span><span class="n">inputs_climate</span><span class="p">(</span><span class="n">temp_guess</span><span class="o">=</span> <span class="n">temp_guess</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span> <span class="n">pressure</span><span class="p">,</span>
                       <span class="n">nstr</span> <span class="o">=</span> <span class="n">nstr</span><span class="p">,</span> <span class="n">nofczns</span> <span class="o">=</span> <span class="n">nofczns</span> <span class="p">,</span> <span class="n">rfacv</span> <span class="o">=</span> <span class="n">rfacv</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-</div>
-<div class="section" id="Run-the-Climate-Code">
+</section>
+<section id="Run-the-Climate-Code">
 <h2>Run the Climate Code<a class="headerlink" href="#Run-the-Climate-Code" title="Permalink to this headline">¶</a></h2>
 <p>The actual climate code can be run with the cl_run.run command. The save_all_profiles is set to True to save the T(P) profile at all steps. The code will now iterate from your guess to reach the correct atmospheric solution for your brown dwarf of interest.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">out</span> <span class="o">=</span> <span class="n">cl_run</span><span class="o">.</span><span class="n">climate</span><span class="p">(</span><span class="n">opacity_ck</span><span class="p">,</span> <span class="n">save_all_profiles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">with_spec</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">out</span> <span class="o">=</span> <span class="n">cl_run</span><span class="o">.</span><span class="n">climate</span><span class="p">(</span><span class="n">opacity_ck</span><span class="p">,</span> <span class="n">save_all_profiles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">with_spec</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -662,8 +606,7 @@ YAY ! ENDING WITH CONVERGENCE
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">base_case</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">HJ_pt</span><span class="p">(),</span> <span class="n">delim_whitespace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">base_case</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">HJ_pt</span><span class="p">(),</span> <span class="n">delim_whitespace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">))</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Pressure [Bars]&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
@@ -683,9 +626,7 @@ YAY ! ENDING WITH CONVERGENCE
 <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;T$_{\rm eff}$= 1000 K, log(g)=5.0&quot;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
-
-
-</pre></div>
+<br/><br/></pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -704,7 +645,7 @@ Text(0.5, 1.0, &#39;T$_{\\rm eff}$= 1000 K, log(g)=5.0&#39;)
 <img alt="../../_images/notebooks_climate_12b_Exoplanet_18_1.png" src="../../_images/notebooks_climate_12b_Exoplanet_18_1.png" />
 </div>
 </div>
-<div class="section" id="Brightness-Temperature">
+<section id="Brightness-Temperature">
 <h3>Brightness Temperature<a class="headerlink" href="#Brightness-Temperature" title="Permalink to this headline">¶</a></h3>
 <p>Checking the brightness temperature serves many useful purposes:</p>
 <ol class="arabic simple">
@@ -723,8 +664,7 @@ Text(0.5, 1.0, &#39;T$_{\\rm eff}$= 1000 K, log(g)=5.0&#39;)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">brightness_temp</span><span class="p">,</span> <span class="n">figure</span><span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">brightness_temperature</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;spectrum_output&#39;</span><span class="p">])</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">brightness_temp</span><span class="p">,</span> <span class="n">figure</span><span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">brightness_temperature</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;spectrum_output&#39;</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
@@ -735,57 +675,39 @@ Text(0.5, 1.0, &#39;T$_{\\rm eff}$= 1000 K, log(g)=5.0&#39;)
 <img alt="../../_images/notebooks_climate_12b_Exoplanet_21_0.png" src="../../_images/notebooks_climate_12b_Exoplanet_21_0.png" />
 </div>
 </div>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
            </div>
-           
           </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="12c_BrownDwarf_DEQ.html" class="btn btn-neutral float-right" title="One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry at Solar M/H and C/O" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="12a_BrownDwarf.html" class="btn btn-neutral float-left" title="One-Dimensional Climate Models: The Basics of Brown Dwarfs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="12a_BrownDwarf.html" class="btn btn-neutral float-left" title="One-Dimensional Climate Models: The Basics of Brown Dwarfs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="12c_BrownDwarf_DEQ.html" class="btn btn-neutral float-right" title="One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry at Solar M/H and C/O" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &copy; Copyright 
-
-    </p>
+    <p>&#169; Copyright .</p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

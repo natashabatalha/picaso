@@ -1,74 +1,40 @@
-
-
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Phase Curves Part 1 &mdash; picaso 3.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-
-  
-  
-  
-  
-
-  
-  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../_static/jquery.js"></script>
-        <script type="text/javascript" src="../_static/underscore.js"></script>
-        <script type="text/javascript" src="../_static/doctools.js"></script>
-        <script type="text/javascript" src="../_static/language_data.js"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
-    
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-
-    
-
-  
-  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Phase Curves Part 2: With Post-Processed Input" href="9f_PhaseCurves-wChemEq.html" />
     <link rel="prev" title="3D Spectra" href="9d_3DSpectra.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
-
-          
             <a href="../index.html" class="icon icon-home"> picaso
-          
-
-          
           </a>
-
-          
-            
-            
               <div class="version">
                 3.0
               </div>
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -76,17 +42,7 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../tutorials.html">The Tutorials</a><ul class="current">
@@ -124,93 +80,68 @@
 <li class="toctree-l1"><a class="reference internal" href="../workshops.html">Workshop Material</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../credit.html">The Papers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../credit.html">What to Cite</a></li>
 </ul>
 
-            
-          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../index.html">picaso</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="../index.html">Docs</a> &raquo;</li>
-        
-          <li><a href="../tutorials.html">Tutorials</a> &raquo;</li>
-        
-      <li>Phase Curves Part 1</li>
-    
-    
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">Phase Curves Part 1</li>
       <li class="wy-breadcrumbs-aside">
-        
-            
             <a href="../_sources/notebooks/9e_PhaseCurves.ipynb.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+             
   
 <style>
 /* CSS for nbsphinx extension */
 
 /* remove conflicting styling from Sphinx themes */
-div.nbinput.container,
-div.nbinput.container div.prompt,
-div.nbinput.container div.input_area,
-div.nbinput.container div[class*=highlight],
-div.nbinput.container div[class*=highlight] pre,
-div.nboutput.container,
-div.nboutput.container div.prompt,
-div.nboutput.container div.output_area,
-div.nboutput.container div[class*=highlight],
-div.nboutput.container div[class*=highlight] pre {
-    background: none;
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
     border: none;
-    padding: 0 0;
+    padding: 0;
     margin: 0;
     box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
 }
 
 /* avoid gaps between output lines */
@@ -257,27 +188,41 @@ div.nboutput.container div.prompt pre {
 /* all prompts */
 div.nbinput.container div.prompt,
 div.nboutput.container div.prompt {
-    min-width: 5ex;
-    padding-top: 0.3rem;
-    padding-right: 0.3rem;
-    text-align: right;
-    flex: 0;
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
 }
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
 @media (max-width: 540px) {
     div.nbinput.container div.prompt,
     div.nboutput.container div.prompt {
+        width: unset;
         text-align: left;
         padding: 0.4em;
     }
     div.nboutput.container div.prompt.empty {
         padding: 0;
     }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
 }
 
-/* disable scrollbars on prompts */
+/* disable scrollbars and line breaks on prompts */
 div.nbinput.container div.prompt pre,
 div.nboutput.container div.prompt pre {
     overflow: hidden;
+    white-space: pre;
 }
 
 /* input/output area */
@@ -298,7 +243,7 @@ div.nboutput.container div.output_area {
 div.nbinput.container div.input_area {
     border: 1px solid #e0e0e0;
     border-radius: 2px;
-    background: #f5f5f5;
+    /*background: #f5f5f5;*/
 }
 
 /* override MathJax center alignment in output cells */
@@ -363,7 +308,8 @@ div.nboutput.container div.output_area div[class*=highlight].math,
 div.nboutput.container div.output_area.rendered_html,
 div.nboutput.container div.output_area > div.output_javascript,
 div.nboutput.container div.output_area:not(.rendered_html) > img{
-    padding: 0.3rem;
+    padding: 5px;
+    margin: 0;
 }
 
 /* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
@@ -373,11 +319,12 @@ div.nboutput.container div.output_area > div[class^='highlight']{
 }
 
 /* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
-.prompt a.copybtn {
+.prompt .copybtn {
     display: none;
 }
 
 /* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
 div.rendered_html table {
   border: none;
   border-collapse: collapse;
@@ -386,10 +333,14 @@ div.rendered_html table {
   font-size: 12px;
   table-layout: fixed;
 }
+.jp-RenderedHTMLCommon thead,
 div.rendered_html thead {
   border-bottom: 1px solid black;
   vertical-align: bottom;
 }
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
 div.rendered_html tr,
 div.rendered_html th,
 div.rendered_html td {
@@ -401,12 +352,15 @@ div.rendered_html td {
   max-width: none;
   border: none;
 }
+.jp-RenderedHTMLCommon th,
 div.rendered_html th {
   font-weight: bold;
 }
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
 div.rendered_html tbody tr:nth-child(odd) {
   background: #f5f5f5;
 }
+.jp-RenderedHTMLCommon tbody tr:hover,
 div.rendered_html tbody tr:hover {
   background: rgba(66, 165, 245, 0.2);
 }
@@ -442,9 +396,9 @@ div.rendered_html tbody tr:hover {
 <ul class="toc-item"><li><p>1.1  Run Thermal Phase Curve w/ 3D Input</p>
 </li><li><p>1.2  Analyze Phase Curves</p>
 </li><li><p>1.3  Run Cloudy Thermal Phase Curve w/ 3D Input</p>
-</li></ul></li></ul></div><div class="section" id="Phase-Curves-Part-1">
+</li></ul></li></ul></div><section id="Phase-Curves-Part-1">
 <h1>Phase Curves Part 1<a class="headerlink" href="#Phase-Curves-Part-1" title="Permalink to this headline">¶</a></h1>
-<p><strong>Citation:</strong><a class="reference external" href="http://arxiv.org/abs/2204.03545">Robbins-Blanch et al. 2022 “Cloudy and Cloud-free Thermal Phase Curves with PICASO: Applications to WASP-43b” ApJ</a></p>
+<p><strong>Citation:</strong> <a class="reference external" href="http://arxiv.org/abs/2204.03545">Robbins-Blanch et al. 2022 “Cloudy and Cloud-free Thermal Phase Curves with PICASO: Applications to WASP-43b” ApJ</a></p>
 <p>From the previous two tutorials you should understand how:</p>
 <ol class="arabic simple">
 <li><p>How to convert your GCM input to <code class="docutils literal notranslate"><span class="pre">PICASO</span></code>’s required <code class="docutils literal notranslate"><span class="pre">xarray</span></code></p></li>
@@ -459,8 +413,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="kn">from</span> <span class="nn">picaso</span> <span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
@@ -783,7 +736,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 }(window));
 </script></div>
 </div>
-<div class="section" id="Run-Thermal-Phase-Curve-w/-3D-Input">
+<section id="Run-Thermal-Phase-Curve-w/-3D-Input">
 <h2>Run Thermal Phase Curve w/ 3D Input<a class="headerlink" href="#Run-Thermal-Phase-Curve-w/-3D-Input" title="Permalink to this headline">¶</a></h2>
 <p>Computing a phase curve is identical to computing 3D spectra. The only difference is that you will need to <strong>rotate the GCM longitude grid such that the visible portion of the planet changes as the phase changes.</strong></p>
 <p>We can experiment with doing this with our original xarray input:</p>
@@ -791,8 +744,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">opacity</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mf">1.7</span><span class="p">])</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">opacity</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mf">1.7</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
@@ -800,20 +752,18 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">gcm_out</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">HJ_pt_3d</span><span class="p">(</span><span class="n">as_xarray</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gcm_out</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">HJ_pt_3d</span><span class="p">(</span><span class="n">as_xarray</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="section" id="Add-Chemistry-(randomized-for-purposes-of-the-example)">
+<section id="Add-Chemistry-(randomized-for-purposes-of-the-example)">
 <h3>Add Chemistry (randomized for purposes of the example)<a class="headerlink" href="#Add-Chemistry-(randomized-for-purposes-of-the-example)" title="Permalink to this headline">¶</a></h3>
 <p>Add chemistry, if not already included in your GCM output. Here, we are using the user-defined input.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># create coords</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># create coords</span>
 <span class="n">lon</span> <span class="o">=</span> <span class="n">gcm_out</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
 <span class="n">lat</span> <span class="o">=</span> <span class="n">gcm_out</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lat&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
 <span class="n">pres</span> <span class="o">=</span> <span class="n">gcm_out</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pressure&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
@@ -842,8 +792,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">all_gcm</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">all_gcm</span>
 </pre></div>
 </div>
 </div>
@@ -1382,8 +1331,7 @@ Attributes:
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">case_3d</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">case_3d</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
 <span class="n">n_phases</span> <span class="o">=</span> <span class="mi">4</span>
 <span class="n">min_phase</span> <span class="o">=</span> <span class="mi">0</span>
 <span class="n">max_phase</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
@@ -1394,8 +1342,8 @@ Attributes:
 </pre></div>
 </div>
 </div>
-</div>
-<div class="section" id="Determining-the-zero_point-and-the-shift-parameter">
+</section>
+<section id="Determining-the-zero_point-and-the-shift-parameter">
 <h3>Determining the <code class="docutils literal notranslate"><span class="pre">zero_point</span></code> and the <code class="docutils literal notranslate"><span class="pre">shift</span></code> parameter<a class="headerlink" href="#Determining-the-zero_point-and-the-shift-parameter" title="Permalink to this headline">¶</a></h3>
 <p>Starting assumptions: - User input lat=0, lon=0 is the substellar point and phase=0 is the nightside transit</p>
 <p>If you want to change the zero point use <code class="docutils literal notranslate"><span class="pre">zero_point</span></code>: - options for zero_point include: ‘night_transit’ (default) or ‘secondary_eclipse’</p>
@@ -1406,8 +1354,7 @@ Attributes:
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">case_3d</span><span class="o">.</span><span class="n">atmosphere_4d</span><span class="p">(</span><span class="n">all_gcm</span><span class="p">,</span> <span class="n">shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_phases</span><span class="p">),</span> <span class="n">zero_point</span><span class="o">=</span><span class="s1">&#39;night_transit&#39;</span><span class="p">,</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">case_3d</span><span class="o">.</span><span class="n">atmosphere_4d</span><span class="p">(</span><span class="n">all_gcm</span><span class="p">,</span> <span class="n">shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_phases</span><span class="p">),</span> <span class="n">zero_point</span><span class="o">=</span><span class="s1">&#39;night_transit&#39;</span><span class="p">,</span>
                                      <span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -1434,8 +1381,7 @@ Attributes:
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">case_3d</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;atmosphere&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">]</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">case_3d</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;atmosphere&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
@@ -1945,8 +1891,7 @@ Attributes:
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">case_3d</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;atmosphere&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;temperature&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">pressure</span><span class="o">=</span><span class="mi">52</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">case_3d</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;atmosphere&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;temperature&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">pressure</span><span class="o">=</span><span class="mi">52</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
                                               <span class="n">x</span><span class="o">=</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span>
                                               <span class="n">col</span><span class="o">=</span><span class="s1">&#39;phase&#39;</span><span class="p">,</span><span class="n">col_wrap</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 </pre></div>
@@ -1973,8 +1918,7 @@ Attributes:
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">case_3d</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_jup&#39;</span><span class="p">),</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">case_3d</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_jup&#39;</span><span class="p">),</span>
                 <span class="n">mass</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">mass_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;M_jup&#39;</span><span class="p">))</span> <span class="c1">#any astropy units available</span>
 <span class="n">case_3d</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">opacity</span><span class="p">,</span><span class="mi">5000</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mf">4.0</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_sun&#39;</span><span class="p">))</span>
 </pre></div>
@@ -1985,23 +1929,21 @@ Attributes:
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">allout</span> <span class="o">=</span> <span class="n">case_3d</span><span class="o">.</span><span class="n">phase_curve</span><span class="p">(</span><span class="n">opacity</span><span class="p">,</span> <span class="n">n_cpu</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span><span class="c1">#jdi.cpu_count(),</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">allout</span> <span class="o">=</span> <span class="n">case_3d</span><span class="o">.</span><span class="n">phase_curve</span><span class="p">(</span><span class="n">opacity</span><span class="p">,</span> <span class="n">n_cpu</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span><span class="c1">#jdi.cpu_count(),</span>
                              <span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-</div>
-</div>
-<div class="section" id="Analyze-Phase-Curves">
+</section>
+</section>
+<section id="Analyze-Phase-Curves">
 <h2>Analyze Phase Curves<a class="headerlink" href="#Analyze-Phase-Curves" title="Permalink to this headline">¶</a></h2>
 <p>All original plotting tools still work by selecting an individual phase</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1">#same old same old</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#same old same old</span>
 <span class="n">wno</span> <span class="o">=</span><span class="p">[];</span><span class="n">fpfs</span><span class="o">=</span><span class="p">[];</span><span class="n">legend</span><span class="o">=</span><span class="p">[]</span>
 <span class="k">for</span> <span class="n">iphase</span> <span class="ow">in</span> <span class="n">allout</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
     <span class="n">w</span><span class="p">,</span><span class="n">f</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">allout</span><span class="p">[</span><span class="n">iphase</span><span class="p">][</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span>
@@ -2055,7 +1997,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 })(window);
 </script></div>
 </div>
-<div class="section" id="Phase-Curve-Plotting-Tools:-Phase-Snaps">
+<section id="Phase-Curve-Plotting-Tools:-Phase-Snaps">
 <h3>Phase Curve Plotting Tools: Phase Snaps<a class="headerlink" href="#Phase-Curve-Plotting-Tools:-Phase-Snaps" title="Permalink to this headline">¶</a></h3>
 <p>Phase snaps allows you to show snapshots of what is happening at each phase that was computed. x,y,z axes can be swapped out for flexibility.</p>
 <ul class="simple">
@@ -2069,8 +2011,7 @@ list.</p></li>
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fig</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">phase_snaps</span><span class="p">(</span><span class="n">allout</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="s1">&#39;longitude&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;pressure&#39;</span><span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="s1">&#39;temperature&#39;</span><span class="p">,</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">phase_snaps</span><span class="p">(</span><span class="n">allout</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="s1">&#39;longitude&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;pressure&#39;</span><span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="s1">&#39;temperature&#39;</span><span class="p">,</span>
                 <span class="n">y_log</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">z_log</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">collapse</span><span class="o">=</span><span class="s1">&#39;np.mean&#39;</span><span class="p">)</span><span class="c1">#this will collapse the latitude axis by taking a mean</span>
 </pre></div>
 </div>
@@ -2095,8 +2036,7 @@ list.</p></li>
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fig</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">phase_snaps</span><span class="p">(</span><span class="n">allout</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="s1">&#39;longitude&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;pressure&#39;</span><span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="s1">&#39;taugas&#39;</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="s1">&#39;PuBu&#39;</span><span class="p">,</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">phase_snaps</span><span class="p">(</span><span class="n">allout</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="s1">&#39;longitude&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;pressure&#39;</span><span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="s1">&#39;taugas&#39;</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="s1">&#39;PuBu&#39;</span><span class="p">,</span>
                 <span class="n">y_log</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">z_log</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">collapse</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;np.mean&#39;</span><span class="p">,</span><span class="s1">&#39;np.mean&#39;</span><span class="p">])</span>
 <span class="c1">#this will collapse the latitude axis by taking a mean, and the wavelength axis also by taking the mean</span>
 </pre></div>
@@ -2122,8 +2062,7 @@ list.</p></li>
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fig</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">phase_snaps</span><span class="p">(</span><span class="n">allout</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="s1">&#39;longitude&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;latitude&#39;</span><span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="s1">&#39;taugas&#39;</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="s1">&#39;PuBu&#39;</span><span class="p">,</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">phase_snaps</span><span class="p">(</span><span class="n">allout</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="s1">&#39;longitude&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;latitude&#39;</span><span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="s1">&#39;taugas&#39;</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="s1">&#39;PuBu&#39;</span><span class="p">,</span>
                 <span class="n">y_log</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">z_log</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">collapse</span><span class="o">=</span><span class="p">[</span><span class="mi">20</span><span class="p">,</span><span class="s1">&#39;np.mean&#39;</span><span class="p">])</span>
 <span class="c1">#this will collapse the pressure axis by taking the 20th pressure grid point</span>
 <span class="c1">#and the wavelength axis by taking the mean</span>
@@ -2146,8 +2085,8 @@ Pressure at 0.0030016929695969906
 <img alt="../_images/notebooks_9e_PhaseCurves_25_1.png" src="../_images/notebooks_9e_PhaseCurves_25_1.png" />
 </div>
 </div>
-</div>
-<div class="section" id="Phase-Curve-Plotting-Tools:-Phase-Curves">
+</section>
+<section id="Phase-Curve-Plotting-Tools:-Phase-Curves">
 <h3>Phase Curve Plotting Tools: Phase Curves<a class="headerlink" href="#Phase-Curve-Plotting-Tools:-Phase-Curves" title="Permalink to this headline">¶</a></h3>
 <p>We can use the same <code class="docutils literal notranslate"><span class="pre">collapse</span></code> feature as in the <code class="docutils literal notranslate"><span class="pre">phase_snaps</span></code> tool to collapse the wavelength axis, when plotting phase curves. For example, we can select a single wavelength point at a given resolution, or we can average over all wavelengths.</p>
 <p>Allowable collapse: - <code class="docutils literal notranslate"><span class="pre">'np.mean'</span></code> or <code class="docutils literal notranslate"><span class="pre">np.sum</span></code> - float or list of float: wavelength in microns (will find the nearest value to this wavelength). Must be in wavenumber range.</p>
@@ -2156,8 +2095,7 @@ Pressure at 0.0030016929695969906
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">to_plot</span> <span class="o">=</span> <span class="s1">&#39;fpfs_thermal&#39;</span><span class="c1">#or thermal</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">to_plot</span> <span class="o">=</span> <span class="s1">&#39;fpfs_thermal&#39;</span><span class="c1">#or thermal</span>
 <span class="n">collapse</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.1</span><span class="p">,</span><span class="mf">1.4</span><span class="p">,</span><span class="mf">1.6</span><span class="p">]</span><span class="c1">#micron</span>
 <span class="n">R</span><span class="o">=</span><span class="mi">100</span>
 <span class="n">phases</span><span class="p">,</span> <span class="n">all_curves</span><span class="p">,</span> <span class="n">all_ws</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">phase_curve</span><span class="p">(</span><span class="n">allout</span><span class="p">,</span> <span class="n">to_plot</span><span class="p">,</span> <span class="n">collapse</span><span class="o">=</span><span class="n">collapse</span><span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
@@ -2206,17 +2144,16 @@ var element = document.currentScript.previousSibling.previousSibling;
 })(window);
 </script></div>
 </div>
-</div>
-</div>
-<div class="section" id="Run-Cloudy-Thermal-Phase-Curve-w/-3D-Input">
+</section>
+</section>
+<section id="Run-Cloudy-Thermal-Phase-Curve-w/-3D-Input">
 <h2>Run Cloudy Thermal Phase Curve w/ 3D Input<a class="headerlink" href="#Run-Cloudy-Thermal-Phase-Curve-w/-3D-Input" title="Permalink to this headline">¶</a></h2>
 <p>Here we will create a hypothetical cloud path and add it to our fake H2O profile to demonstrate the basics of running a cloudy phase curve</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># create coords</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># create coords</span>
 <span class="n">lon</span> <span class="o">=</span> <span class="n">all_gcm</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
 <span class="n">lat</span> <span class="o">=</span> <span class="n">all_gcm</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lat&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
 <span class="n">pres</span> <span class="o">=</span> <span class="n">all_gcm</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pressure&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
@@ -2277,8 +2214,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">case_cld</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">case_cld</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
 <span class="c1">#setup geometry of run</span>
 <span class="n">n_phases</span> <span class="o">=</span> <span class="mi">4</span>
 <span class="n">min_phase</span> <span class="o">=</span> <span class="mi">0</span>
@@ -2299,9 +2235,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <span class="n">case_cld</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_jup&#39;</span><span class="p">),</span>
                 <span class="n">mass</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">mass_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;M_jup&#39;</span><span class="p">))</span> <span class="c1">#any astropy units available</span>
 <span class="n">case_cld</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">opacity</span><span class="p">,</span><span class="mi">5000</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mf">4.0</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_sun&#39;</span><span class="p">))</span>
-
-
-</pre></div>
+<br/><br/></pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -2323,8 +2257,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">cldout</span> <span class="o">=</span> <span class="n">case_cld</span><span class="o">.</span><span class="n">phase_curve</span><span class="p">(</span><span class="n">opacity</span><span class="p">,</span> <span class="n">n_cpu</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span><span class="c1">#jdi.cpu_count(),</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cldout</span> <span class="o">=</span> <span class="n">case_cld</span><span class="o">.</span><span class="n">phase_curve</span><span class="p">(</span><span class="n">opacity</span><span class="p">,</span> <span class="n">n_cpu</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span><span class="c1">#jdi.cpu_count(),</span>
                              <span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -2333,8 +2266,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1">#same old same old</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#same old same old</span>
 <span class="n">wno</span> <span class="o">=</span><span class="p">[];</span><span class="n">fpfs</span><span class="o">=</span><span class="p">[];</span><span class="n">legend</span><span class="o">=</span><span class="p">[]</span>
 <span class="k">for</span> <span class="n">iphase</span> <span class="ow">in</span> <span class="n">cldout</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
     <span class="n">w</span><span class="p">,</span><span class="n">f</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">cldout</span><span class="p">[</span><span class="n">iphase</span><span class="p">][</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span>
@@ -2392,8 +2324,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">to_plot</span> <span class="o">=</span> <span class="s1">&#39;fpfs_thermal&#39;</span><span class="c1">#or thermal</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">to_plot</span> <span class="o">=</span> <span class="s1">&#39;fpfs_thermal&#39;</span><span class="c1">#or thermal</span>
 <span class="n">collapse</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.1</span><span class="p">,</span><span class="mf">1.4</span><span class="p">,</span><span class="mf">1.6</span><span class="p">]</span><span class="c1">#micron</span>
 <span class="n">R</span><span class="o">=</span><span class="mi">100</span>
 <span class="n">phases</span><span class="p">,</span> <span class="n">all_curves</span><span class="p">,</span> <span class="n">all_ws</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">phase_curve</span><span class="p">(</span><span class="n">cldout</span><span class="p">,</span> <span class="n">to_plot</span><span class="p">,</span> <span class="n">collapse</span><span class="o">=</span><span class="n">collapse</span><span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
@@ -2446,8 +2377,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fig</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">phase_snaps</span><span class="p">(</span><span class="n">cldout</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="s1">&#39;longitude&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;pressure&#39;</span><span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="s1">&#39;taucld&#39;</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="s1">&#39;PuBu&#39;</span><span class="p">,</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">phase_snaps</span><span class="p">(</span><span class="n">cldout</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="s1">&#39;longitude&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;pressure&#39;</span><span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="s1">&#39;taucld&#39;</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="s1">&#39;PuBu&#39;</span><span class="p">,</span>
                 <span class="n">y_log</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">z_log</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">collapse</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;np.max&#39;</span><span class="p">,</span><span class="s1">&#39;np.mean&#39;</span><span class="p">])</span>
 <span class="c1">#this will collapse the latitude axis by taking a mean, and the wavelength axis also by taking the mean</span>
 </pre></div>
@@ -2464,8 +2394,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
 <span class="n">case_cld</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;clouds&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;opd&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">phase</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
     <span class="n">lat</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span><span class="n">wno</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
     <span class="n">x</span><span class="o">=</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="s1">&#39;pressure&#39;</span><span class="p">,</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
@@ -2485,61 +2414,42 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
 </pre></div>
 </div>
 </div>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>
-           
           </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="9f_PhaseCurves-wChemEq.html" class="btn btn-neutral float-right" title="Phase Curves Part 2: With Post-Processed Input" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="9d_3DSpectra.html" class="btn btn-neutral float-left" title="3D Spectra" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="9d_3DSpectra.html" class="btn btn-neutral float-left" title="3D Spectra" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="9f_PhaseCurves-wChemEq.html" class="btn btn-neutral float-right" title="Phase Curves Part 2: With Post-Processed Input" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &copy; Copyright 
-
-    </p>
+    <p>&#169; Copyright .</p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

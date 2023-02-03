@@ -1,74 +1,40 @@
-
-
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Spherical Integration in PICASO &mdash; picaso 3.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-
-  
-  
-  
-  
-
-  
-  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../_static/jquery.js"></script>
-        <script type="text/javascript" src="../_static/underscore.js"></script>
-        <script type="text/javascript" src="../_static/doctools.js"></script>
-        <script type="text/javascript" src="../_static/language_data.js"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
-    
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-
-    
-
-  
-  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Handling 3D Inputs with PICASO" href="9a_3DInputsWithPICASOandXarray.html" />
     <link rel="prev" title="How clouds affect albedo spectroscopy" href="7_PairingPICASOToVIRGA.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
-
-          
             <a href="../index.html" class="icon icon-home"> picaso
-          
-
-          
           </a>
-
-          
-            
-            
               <div class="version">
                 3.0
               </div>
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -76,17 +42,7 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../tutorials.html">The Tutorials</a><ul class="current">
@@ -123,93 +79,68 @@
 <li class="toctree-l1"><a class="reference internal" href="../workshops.html">Workshop Material</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../credit.html">The Papers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../credit.html">What to Cite</a></li>
 </ul>
 
-            
-          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../index.html">picaso</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="../index.html">Docs</a> &raquo;</li>
-        
-          <li><a href="../tutorials.html">Tutorials</a> &raquo;</li>
-        
-      <li>Spherical Integration in PICASO</li>
-    
-    
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">Spherical Integration in PICASO</li>
       <li class="wy-breadcrumbs-aside">
-        
-            
             <a href="../_sources/notebooks/8_SphericalIntegration.ipynb.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+             
   
 <style>
 /* CSS for nbsphinx extension */
 
 /* remove conflicting styling from Sphinx themes */
-div.nbinput.container,
-div.nbinput.container div.prompt,
-div.nbinput.container div.input_area,
-div.nbinput.container div[class*=highlight],
-div.nbinput.container div[class*=highlight] pre,
-div.nboutput.container,
-div.nboutput.container div.prompt,
-div.nboutput.container div.output_area,
-div.nboutput.container div[class*=highlight],
-div.nboutput.container div[class*=highlight] pre {
-    background: none;
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
     border: none;
-    padding: 0 0;
+    padding: 0;
     margin: 0;
     box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
 }
 
 /* avoid gaps between output lines */
@@ -256,27 +187,41 @@ div.nboutput.container div.prompt pre {
 /* all prompts */
 div.nbinput.container div.prompt,
 div.nboutput.container div.prompt {
-    min-width: 5ex;
-    padding-top: 0.3rem;
-    padding-right: 0.3rem;
-    text-align: right;
-    flex: 0;
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
 }
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
 @media (max-width: 540px) {
     div.nbinput.container div.prompt,
     div.nboutput.container div.prompt {
+        width: unset;
         text-align: left;
         padding: 0.4em;
     }
     div.nboutput.container div.prompt.empty {
         padding: 0;
     }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
 }
 
-/* disable scrollbars on prompts */
+/* disable scrollbars and line breaks on prompts */
 div.nbinput.container div.prompt pre,
 div.nboutput.container div.prompt pre {
     overflow: hidden;
+    white-space: pre;
 }
 
 /* input/output area */
@@ -297,7 +242,7 @@ div.nboutput.container div.output_area {
 div.nbinput.container div.input_area {
     border: 1px solid #e0e0e0;
     border-radius: 2px;
-    background: #f5f5f5;
+    /*background: #f5f5f5;*/
 }
 
 /* override MathJax center alignment in output cells */
@@ -362,7 +307,8 @@ div.nboutput.container div.output_area div[class*=highlight].math,
 div.nboutput.container div.output_area.rendered_html,
 div.nboutput.container div.output_area > div.output_javascript,
 div.nboutput.container div.output_area:not(.rendered_html) > img{
-    padding: 0.3rem;
+    padding: 5px;
+    margin: 0;
 }
 
 /* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
@@ -372,11 +318,12 @@ div.nboutput.container div.output_area > div[class^='highlight']{
 }
 
 /* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
-.prompt a.copybtn {
+.prompt .copybtn {
     display: none;
 }
 
 /* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
 div.rendered_html table {
   border: none;
   border-collapse: collapse;
@@ -385,10 +332,14 @@ div.rendered_html table {
   font-size: 12px;
   table-layout: fixed;
 }
+.jp-RenderedHTMLCommon thead,
 div.rendered_html thead {
   border-bottom: 1px solid black;
   vertical-align: bottom;
 }
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
 div.rendered_html tr,
 div.rendered_html th,
 div.rendered_html td {
@@ -400,12 +351,15 @@ div.rendered_html td {
   max-width: none;
   border: none;
 }
+.jp-RenderedHTMLCommon th,
 div.rendered_html th {
   font-weight: bold;
 }
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
 div.rendered_html tbody tr:nth-child(odd) {
   background: #f5f5f5;
 }
+.jp-RenderedHTMLCommon tbody tr:hover,
 div.rendered_html tbody tr:hover {
   background: rgba(66, 165, 245, 0.2);
 }
@@ -436,15 +390,14 @@ div.rendered_html tbody tr:hover {
 <p class="admonition-title">Note</p>
 <p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/8_SphericalIntegration.ipynb">Download full notebook here</a></p>
 </div>
-<div class="section" id="Spherical-Integration-in-PICASO">
+<section id="Spherical-Integration-in-PICASO">
 <h1>Spherical Integration in PICASO<a class="headerlink" href="#Spherical-Integration-in-PICASO" title="Permalink to this headline">¶</a></h1>
 <p>In this tutorial you will learn the different integration schemes that exist within <code class="docutils literal notranslate"><span class="pre">PICASO</span></code>.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">warnings</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">warnings</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
@@ -780,15 +733,14 @@ var element = document.currentScript.previousSibling.previousSibling;
 }(window));
 </script></div>
 </div>
-<div class="section" id="Test-Geometry-with-Brown-Dwarf-Sonora-Example">
+<section id="Test-Geometry-with-Brown-Dwarf-Sonora-Example">
 <h2>Test Geometry with Brown Dwarf Sonora Example<a class="headerlink" href="#Test-Geometry-with-Brown-Dwarf-Sonora-Example" title="Permalink to this headline">¶</a></h2>
 <p>Let’s try three different cases</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">wave_range</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">]</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">wave_range</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">]</span>
 
 <span class="n">opa</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="n">wave_range</span><span class="p">)</span>
 
@@ -797,9 +749,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <span class="n">case2</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">(</span><span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;browndwarf&#39;</span><span class="p">)</span>
 
 <span class="n">case3</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">(</span><span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;browndwarf&#39;</span><span class="p">)</span>
-
-
-</pre></div>
+<br/><br/></pre></div>
 </div>
 </div>
 <p>First case will be a full 10x10 grid, second will be the same 10x10 grid but leveraging symmetry, last will be a 1x10 grid. A 1x10 grid automaticlly leverages symmetry as we will see in the disco plots below.</p>
@@ -807,8 +757,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;10x10&#39;</span><span class="p">,</span> <span class="s1">&#39;10x10sym&#39;</span><span class="p">,</span> <span class="s1">&#39;1x10&#39;</span><span class="p">]</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;10x10&#39;</span><span class="p">,</span> <span class="s1">&#39;10x10sym&#39;</span><span class="p">,</span> <span class="s1">&#39;1x10&#39;</span><span class="p">]</span>
 <span class="n">cases</span> <span class="o">=</span> <span class="p">[</span> <span class="n">case1</span><span class="p">,</span> <span class="n">case2</span><span class="p">,</span> <span class="n">case3</span><span class="p">]</span><span class="c1">#, case5]</span>
 
 <span class="n">case1</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="n">num_tangle</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">num_gangle</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
@@ -817,7 +766,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 </pre></div>
 </div>
 </div>
-<div class="section" id="Query-from-Sonora-Profile-Grid">
+<section id="Query-from-Sonora-Profile-Grid">
 <h3>Query from Sonora Profile Grid<a class="headerlink" href="#Query-from-Sonora-Profile-Grid" title="Permalink to this headline">¶</a></h3>
 <p>(Same as before) Download the profile files that are located in the <a class="reference external" href="https://zenodo.org/record/1309035#.Xo5GbZNKjGJ">profile.tar file</a></p>
 <p>Once you untar the file you can set the file path below. You do not need to unzip each profile. <code class="docutils literal notranslate"><span class="pre">picaso</span></code> will do that upon read in. <code class="docutils literal notranslate"><span class="pre">picaso</span></code> will find the nearest neighbor and attach it to your class.</p>
@@ -825,8 +774,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># Note here that we do not need to provide case.star, since there is none!</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Note here that we do not need to provide case.star, since there is none!</span>
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">cases</span><span class="p">:</span><span class="n">i</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">gravity</span><span class="o">=</span><span class="mi">100</span> <span class="p">,</span> <span class="n">gravity_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;m/s**2&#39;</span><span class="p">))</span>
 
 <span class="c1">#grab sonora profile</span>
@@ -838,15 +786,14 @@ var element = document.currentScript.previousSibling.previousSibling;
 </pre></div>
 </div>
 </div>
-</div>
-<div class="section" id="Run-Spectrum">
+</section>
+<section id="Run-Spectrum">
 <h3>Run Spectrum<a class="headerlink" href="#Run-Spectrum" title="Permalink to this headline">¶</a></h3>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">df</span> <span class="o">=</span> <span class="p">{}</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">ikey</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cases</span><span class="p">,</span> <span class="n">names</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">ikey</span><span class="p">)</span>
     <span class="n">df</span><span class="p">[</span><span class="n">ikey</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span> <span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -863,15 +810,14 @@ var element = document.currentScript.previousSibling.previousSibling;
 1x10
 </pre></div></div>
 </div>
-</div>
-<div class="section" id="Convert-Units-and-Regrid">
+</section>
+<section id="Convert-Units-and-Regrid">
 <h3>Convert Units and Regrid<a class="headerlink" href="#Convert-Units-and-Regrid" title="Permalink to this headline">¶</a></h3>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">ikey</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cases</span><span class="p">,</span> <span class="n">names</span><span class="p">):</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">ikey</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cases</span><span class="p">,</span> <span class="n">names</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">ikey</span><span class="p">)</span>
     <span class="n">x</span><span class="p">,</span><span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">ikey</span><span class="p">][</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="n">ikey</span><span class="p">][</span><span class="s1">&#39;thermal&#39;</span><span class="p">]</span> <span class="c1">#units of erg/cm2/s/cm</span>
     <span class="n">xmicron</span> <span class="o">=</span> <span class="mf">1e4</span><span class="o">/</span><span class="n">x</span>
@@ -902,14 +848,13 @@ var element = document.currentScript.previousSibling.previousSibling;
 1x10
 </pre></div></div>
 </div>
-<div class="section" id="Compare-Different-Integration-Schemes-with-Sonora-Grid">
+<section id="Compare-Different-Integration-Schemes-with-Sonora-Grid">
 <h4>Compare Different Integration Schemes with Sonora Grid<a class="headerlink" href="#Compare-Different-Integration-Schemes-with-Sonora-Grid" title="Permalink to this headline">¶</a></h4>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">son</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;sp_t900g100nc_m0.0&#39;</span><span class="p">,</span><span class="n">delim_whitespace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">son</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;sp_t900g100nc_m0.0&#39;</span><span class="p">,</span><span class="n">delim_whitespace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                  <span class="n">skiprows</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span><span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;w&#39;</span><span class="p">,</span><span class="s1">&#39;f&#39;</span><span class="p">])</span>
 <span class="n">sonx</span><span class="p">,</span> <span class="n">sony</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="mf">1e4</span><span class="o">/</span><span class="n">son</span><span class="p">[</span><span class="s1">&#39;w&#39;</span><span class="p">],</span> <span class="n">son</span><span class="p">[</span><span class="s1">&#39;f&#39;</span><span class="p">],</span> <span class="n">newx</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
 </pre></div>
@@ -919,8 +864,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">to_compare</span> <span class="o">=</span> <span class="p">[]</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">to_compare</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="n">fraction_compare</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">ikey</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
     <span class="n">to_compare</span> <span class="o">+=</span> <span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="n">ikey</span><span class="p">][</span><span class="s1">&#39;regridy&#39;</span><span class="p">]]</span>
@@ -932,24 +876,21 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">to_compare</span> <span class="o">+=</span> <span class="p">[</span><span class="n">sony</span><span class="p">]</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">to_compare</span> <span class="o">+=</span> <span class="p">[</span><span class="n">sony</span><span class="p">]</span>
 <span class="n">legend_label</span> <span class="o">=</span> <span class="n">names</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;sonora&#39;</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
-</div>
-<div class="section" id="Compare-Accuracy-of-Different-Number-of-Integration-Points">
+</section>
+<section id="Compare-Accuracy-of-Different-Number-of-Integration-Points">
 <h4>Compare Accuracy of Different Number of Integration Points<a class="headerlink" href="#Compare-Accuracy-of-Different-Number-of-Integration-Points" title="Permalink to this headline">¶</a></h4>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">([</span><span class="n">x</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">to_compare</span><span class="p">),</span><span class="n">to_compare</span><span class="p">,</span> <span class="n">legend</span><span class="o">=</span><span class="n">legend_label</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">([</span><span class="n">x</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">to_compare</span><span class="p">),</span><span class="n">to_compare</span><span class="p">,</span> <span class="n">legend</span><span class="o">=</span><span class="n">legend_label</span>
                   <span class="p">,</span><span class="n">plot_width</span><span class="o">=</span><span class="mi">800</span><span class="p">,</span><span class="n">x_range</span><span class="o">=</span><span class="n">wave_range</span><span class="p">,</span><span class="n">y_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">))</span>
-
-</pre></div>
+<br/></pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -993,15 +934,14 @@ var element = document.currentScript.previousSibling.previousSibling;
 })(window);
 </script></div>
 </div>
-</div>
-<div class="section" id="Visualize-Integration-Schemes">
+</section>
+<section id="Visualize-Integration-Schemes">
 <h4>Visualize Integration Schemes<a class="headerlink" href="#Visualize-Integration-Schemes" title="Permalink to this headline">¶</a></h4>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="k">for</span> <span class="n">ikey</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">ikey</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
     <span class="n">asdict</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">ikey</span><span class="p">][</span><span class="s1">&#39;full_output&#39;</span><span class="p">]</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">ikey</span><span class="p">)</span>
     <span class="n">jpi</span><span class="o">.</span><span class="n">disco</span><span class="p">(</span><span class="n">asdict</span><span class="p">,</span> <span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal&#39;</span><span class="p">,</span> <span class="n">wavelength</span><span class="o">=</span><span class="p">[</span><span class="mf">4.5</span><span class="p">])</span>
@@ -1053,16 +993,15 @@ var element = document.currentScript.previousSibling.previousSibling;
 <img alt="../_images/notebooks_8_SphericalIntegration_20_5.png" src="../_images/notebooks_8_SphericalIntegration_20_5.png" />
 </div>
 </div>
-</div>
-<div class="section" id="Plot-Gauss-Weights">
+</section>
+<section id="Plot-Gauss-Weights">
 <h4>Plot Gauss Weights<a class="headerlink" href="#Plot-Gauss-Weights" title="Permalink to this headline">¶</a></h4>
 <p>Plotting out the gauss weights you can see the difference between the purely 1D (without using chebyshev weights), 2D full grid and 2D symmetric.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">figure</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">x_axis_label</span><span class="o">=</span><span class="s1">&#39;gangle&#39;</span><span class="p">,</span><span class="n">y_axis_label</span><span class="o">=</span><span class="s1">&#39;gweight&#39;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">figure</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">x_axis_label</span><span class="o">=</span><span class="s1">&#39;gangle&#39;</span><span class="p">,</span><span class="n">y_axis_label</span><span class="o">=</span><span class="s1">&#39;gweight&#39;</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="n">fig</span><span class="o">.</span><span class="n">line</span><span class="p">,</span> <span class="n">fig</span><span class="o">.</span><span class="n">circle</span><span class="p">]:</span> <span class="n">i</span><span class="p">(</span><span class="n">cases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;disco&#39;</span><span class="p">][</span><span class="s1">&#39;gangle&#39;</span><span class="p">],</span>
          <span class="n">cases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;disco&#39;</span><span class="p">][</span><span class="s1">&#39;gweight&#39;</span><span class="p">],</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span>
                                   <span class="n">legend_label</span><span class="o">=</span><span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="p">)</span>
@@ -1077,8 +1016,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 
 
 <span class="n">show</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
-
-</pre></div>
+<br/></pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -1122,10 +1060,10 @@ var element = document.currentScript.previousSibling.previousSibling;
 })(window);
 </script></div>
 </div>
-</div>
-</div>
-</div>
-<div class="section" id="Geometry-with-Reflectivity-and-Non-Zero-Phase">
+</section>
+</section>
+</section>
+<section id="Geometry-with-Reflectivity-and-Non-Zero-Phase">
 <h2>Geometry with Reflectivity and Non-Zero Phase<a class="headerlink" href="#Geometry-with-Reflectivity-and-Non-Zero-Phase" title="Permalink to this headline">¶</a></h2>
 <p>In this example, let’s look at four difference cases.</p>
 <ol class="arabic simple">
@@ -1138,8 +1076,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">wave_range</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.3</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">wave_range</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.3</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
 
 <span class="n">opa</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="n">wave_range</span><span class="p">)</span>
 
@@ -1154,8 +1091,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;1x10&#39;</span><span class="p">,</span><span class="s1">&#39;10x10&#39;</span><span class="p">,</span> <span class="s1">&#39;10x10sym&#39;</span><span class="p">,</span>  <span class="s1">&#39;10x10_60&#39;</span><span class="p">]</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;1x10&#39;</span><span class="p">,</span><span class="s1">&#39;10x10&#39;</span><span class="p">,</span> <span class="s1">&#39;10x10sym&#39;</span><span class="p">,</span>  <span class="s1">&#39;10x10_60&#39;</span><span class="p">]</span>
 
 <span class="n">case1</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="n">phase</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_tangle</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_gangle</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span> <span class="c1">#remember num_tangle=1 automatically insinuates symmetry</span>
 <span class="n">case2</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="n">phase</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_tangle</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">num_gangle</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
@@ -1170,8 +1106,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">cases</span><span class="p">:</span><span class="n">i</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">gravity</span><span class="o">=</span><span class="mi">20</span> <span class="p">,</span> <span class="n">gravity_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;m/s**2&#39;</span><span class="p">))</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">cases</span><span class="p">:</span><span class="n">i</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">gravity</span><span class="o">=</span><span class="mi">20</span> <span class="p">,</span> <span class="n">gravity_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;m/s**2&#39;</span><span class="p">))</span>
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">cases</span><span class="p">:</span><span class="n">i</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span><span class="n">filename</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_pt</span><span class="p">(),</span> <span class="n">delim_whitespace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">cases</span><span class="p">:</span><span class="n">i</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="n">raman</span><span class="o">=</span><span class="s1">&#39;pollack&#39;</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">cases</span><span class="p">:</span><span class="n">i</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span> <span class="mi">5000</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mf">4.0</span><span class="p">)</span>
@@ -1182,8 +1117,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">df</span> <span class="o">=</span> <span class="p">{}</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">ikey</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cases</span><span class="p">,</span> <span class="n">names</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">ikey</span><span class="p">)</span>
     <span class="n">df</span><span class="p">[</span><span class="n">ikey</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span><span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;reflected&#39;</span> <span class="p">,</span><span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -1205,8 +1139,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">to_compare</span> <span class="o">=</span> <span class="p">[]</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">to_compare</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="n">fraction_compare</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">ikey</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
     <span class="n">x</span><span class="p">,</span><span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">ikey</span><span class="p">][</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="n">ikey</span><span class="p">][</span><span class="s1">&#39;albedo&#39;</span><span class="p">]</span>
@@ -1221,11 +1154,9 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">([</span><span class="n">x</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">to_compare</span><span class="p">),</span><span class="n">to_compare</span><span class="p">,</span> <span class="n">legend</span><span class="o">=</span><span class="n">names</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">([</span><span class="n">x</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">to_compare</span><span class="p">),</span><span class="n">to_compare</span><span class="p">,</span> <span class="n">legend</span><span class="o">=</span><span class="n">names</span>
                   <span class="p">,</span><span class="n">plot_width</span><span class="o">=</span><span class="mi">800</span><span class="p">))</span>
-
-</pre></div>
+<br/></pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -1274,8 +1205,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="k">for</span> <span class="n">ikey</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">ikey</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
     <span class="n">asdict</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">ikey</span><span class="p">][</span><span class="s1">&#39;full_output&#39;</span><span class="p">]</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">ikey</span><span class="p">)</span>
     <span class="n">jpi</span><span class="o">.</span><span class="n">disco</span><span class="p">(</span><span class="n">asdict</span><span class="p">,</span> <span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;reflected&#39;</span><span class="p">,</span> <span class="n">wavelength</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">])</span>
@@ -1346,61 +1276,42 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
 </pre></div>
 </div>
 </div>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>
-           
           </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="9a_3DInputsWithPICASOandXarray.html" class="btn btn-neutral float-right" title="Handling 3D Inputs with PICASO" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="7_PairingPICASOToVIRGA.html" class="btn btn-neutral float-left" title="How clouds affect albedo spectroscopy" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="7_PairingPICASOToVIRGA.html" class="btn btn-neutral float-left" title="How clouds affect albedo spectroscopy" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="9a_3DInputsWithPICASOandXarray.html" class="btn btn-neutral float-right" title="Handling 3D Inputs with PICASO" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &copy; Copyright 
-
-    </p>
+    <p>&#169; Copyright .</p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

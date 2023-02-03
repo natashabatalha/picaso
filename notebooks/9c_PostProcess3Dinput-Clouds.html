@@ -1,74 +1,40 @@
-
-
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Post-Process 3D Clouds Input &mdash; picaso 3.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-
-  
-  
-  
-  
-
-  
-  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../_static/jquery.js"></script>
-        <script type="text/javascript" src="../_static/underscore.js"></script>
-        <script type="text/javascript" src="../_static/doctools.js"></script>
-        <script type="text/javascript" src="../_static/language_data.js"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
-    
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-
-    
-
-  
-  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="3D Spectra" href="9d_3DSpectra.html" />
     <link rel="prev" title="What is post-processing?" href="9b_PostProcess3Dinput-Chemistry.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
-
-          
             <a href="../index.html" class="icon icon-home"> picaso
-          
-
-          
           </a>
-
-          
-            
-            
               <div class="version">
                 3.0
               </div>
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -76,17 +42,7 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../tutorials.html">The Tutorials</a><ul class="current">
@@ -124,93 +80,68 @@
 <li class="toctree-l1"><a class="reference internal" href="../workshops.html">Workshop Material</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../credit.html">The Papers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../credit.html">What to Cite</a></li>
 </ul>
 
-            
-          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../index.html">picaso</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="../index.html">Docs</a> &raquo;</li>
-        
-          <li><a href="../tutorials.html">Tutorials</a> &raquo;</li>
-        
-      <li>Post-Process 3D Clouds Input</li>
-    
-    
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">Post-Process 3D Clouds Input</li>
       <li class="wy-breadcrumbs-aside">
-        
-            
             <a href="../_sources/notebooks/9c_PostProcess3Dinput-Clouds.ipynb.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+             
   
 <style>
 /* CSS for nbsphinx extension */
 
 /* remove conflicting styling from Sphinx themes */
-div.nbinput.container,
-div.nbinput.container div.prompt,
-div.nbinput.container div.input_area,
-div.nbinput.container div[class*=highlight],
-div.nbinput.container div[class*=highlight] pre,
-div.nboutput.container,
-div.nboutput.container div.prompt,
-div.nboutput.container div.output_area,
-div.nboutput.container div[class*=highlight],
-div.nboutput.container div[class*=highlight] pre {
-    background: none;
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
     border: none;
-    padding: 0 0;
+    padding: 0;
     margin: 0;
     box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
 }
 
 /* avoid gaps between output lines */
@@ -257,27 +188,41 @@ div.nboutput.container div.prompt pre {
 /* all prompts */
 div.nbinput.container div.prompt,
 div.nboutput.container div.prompt {
-    min-width: 5ex;
-    padding-top: 0.3rem;
-    padding-right: 0.3rem;
-    text-align: right;
-    flex: 0;
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
 }
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
 @media (max-width: 540px) {
     div.nbinput.container div.prompt,
     div.nboutput.container div.prompt {
+        width: unset;
         text-align: left;
         padding: 0.4em;
     }
     div.nboutput.container div.prompt.empty {
         padding: 0;
     }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
 }
 
-/* disable scrollbars on prompts */
+/* disable scrollbars and line breaks on prompts */
 div.nbinput.container div.prompt pre,
 div.nboutput.container div.prompt pre {
     overflow: hidden;
+    white-space: pre;
 }
 
 /* input/output area */
@@ -298,7 +243,7 @@ div.nboutput.container div.output_area {
 div.nbinput.container div.input_area {
     border: 1px solid #e0e0e0;
     border-radius: 2px;
-    background: #f5f5f5;
+    /*background: #f5f5f5;*/
 }
 
 /* override MathJax center alignment in output cells */
@@ -363,7 +308,8 @@ div.nboutput.container div.output_area div[class*=highlight].math,
 div.nboutput.container div.output_area.rendered_html,
 div.nboutput.container div.output_area > div.output_javascript,
 div.nboutput.container div.output_area:not(.rendered_html) > img{
-    padding: 0.3rem;
+    padding: 5px;
+    margin: 0;
 }
 
 /* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
@@ -373,11 +319,12 @@ div.nboutput.container div.output_area > div[class^='highlight']{
 }
 
 /* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
-.prompt a.copybtn {
+.prompt .copybtn {
     display: none;
 }
 
 /* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
 div.rendered_html table {
   border: none;
   border-collapse: collapse;
@@ -386,10 +333,14 @@ div.rendered_html table {
   font-size: 12px;
   table-layout: fixed;
 }
+.jp-RenderedHTMLCommon thead,
 div.rendered_html thead {
   border-bottom: 1px solid black;
   vertical-align: bottom;
 }
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
 div.rendered_html tr,
 div.rendered_html th,
 div.rendered_html td {
@@ -401,12 +352,15 @@ div.rendered_html td {
   max-width: none;
   border: none;
 }
+.jp-RenderedHTMLCommon th,
 div.rendered_html th {
   font-weight: bold;
 }
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
 div.rendered_html tbody tr:nth-child(odd) {
   background: #f5f5f5;
 }
+.jp-RenderedHTMLCommon tbody tr:hover,
 div.rendered_html tbody tr:hover {
   background: rgba(66, 165, 245, 0.2);
 }
@@ -442,7 +396,7 @@ div.rendered_html tbody tr:hover {
 <ul class="toc-item"><li><p>1.1  Post-Process Clouds: User Options</p>
 </li><li><p>1.2  Post-Process Clouds: User Defined Input</p>
 </li><li><p>1.3  Post-Process Clouds: virga cloud model</p>
-</li></ul></li></ul></div><div class="section" id="Post-Process-3D-Clouds-Input">
+</li></ul></li></ul></div><section id="Post-Process-3D-Clouds-Input">
 <h1>Post-Process 3D Clouds Input<a class="headerlink" href="#Post-Process-3D-Clouds-Input" title="Permalink to this headline">¶</a></h1>
 <p>There are many cases were you may want to post-process components from a 3D GCM output. Post-processing is used to compensate for simplicities, or assumptions within a GCM. For example, you may want to post-process clouds on your output spectra, even if your initial GCM run did not include the effects of clouds.</p>
 <p>In this notebook you will learn: 1. How to post- process clouds using simple box model 2. How to post- process clouds using <code class="docutils literal notranslate"><span class="pre">virga</span></code></p>
@@ -452,8 +406,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
 
@@ -466,12 +419,11 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">gcm_out</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">HJ_pt_3d</span><span class="p">(</span><span class="n">as_xarray</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gcm_out</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">HJ_pt_3d</span><span class="p">(</span><span class="n">as_xarray</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="section" id="Post-Process-Clouds:-User-Options">
+<section id="Post-Process-Clouds:-User-Options">
 <h2>Post-Process Clouds: User Options<a class="headerlink" href="#Post-Process-Clouds:-User-Options" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic simple">
 <li><p>User-defined input: this would only be used to explore simplistic cases (e.g. 100% H2O, or 50/50 H2/H2O). It also might be the case that you have abundance models from elsewhere (e.g. 3D model or GCM) and want to add it to your pressure/temperature <code class="docutils literal notranslate"><span class="pre">xarray</span></code></p></li>
@@ -489,16 +441,15 @@ div.rendered_html tbody tr:hover {
 </li>
 </ol>
 <p>In this demo, we will do option #1 and #3 so that it can be self-contained and computationally fast, but you should explore what works best for your problem.</p>
-</div>
-<div class="section" id="Post-Process-Clouds:-User-Defined-Input">
+</section>
+<section id="Post-Process-Clouds:-User-Defined-Input">
 <h2>Post-Process Clouds: User Defined Input<a class="headerlink" href="#Post-Process-Clouds:-User-Defined-Input" title="Permalink to this headline">¶</a></h2>
 <p>Very similar to chemistry process, we can create an xarray that has our cloud output. Note that for clouds there is a fourth dimension (wavelength)</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># create coords</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># create coords</span>
 <span class="n">lon</span> <span class="o">=</span> <span class="n">gcm_out</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
 <span class="n">lat</span> <span class="o">=</span> <span class="n">gcm_out</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lat&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
 <span class="n">pres</span> <span class="o">=</span> <span class="n">gcm_out</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pressure&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
@@ -507,7 +458,7 @@ div.rendered_html tbody tr:hover {
 <span class="c1">#create box-band cloud model</span>
 <span class="n">fake_opd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">lon</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">lat</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">pres</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">wno_grid</span><span class="p">)))</span> <span class="c1"># create fake data</span>
 <span class="n">where_lat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(((</span><span class="n">lat</span><span class="o">&gt;-</span><span class="mi">50</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">lat</span><span class="o">&lt;</span><span class="mi">50</span><span class="p">)))</span><span class="c1">#creating a grey cloud band</span>
-<span class="n">where_pres</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(((</span><span class="n">pres</span><span class="o">&lt;</span><span class="mf">0.01</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">pres</span><span class="o">&gt;.</span><span class="mi">001</span><span class="p">)))</span><span class="c1">#creating a grey cloud band</span>
+<span class="n">where_pres</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(((</span><span class="n">pres</span><span class="o">&lt;</span><span class="mf">0.01</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">pres</span><span class="o">&gt;</span><span class="mf">.001</span><span class="p">)))</span><span class="c1">#creating a grey cloud band</span>
 <span class="k">for</span> <span class="n">il</span> <span class="ow">in</span> <span class="n">where_lat</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
     <span class="k">for</span> <span class="n">ip</span> <span class="ow">in</span> <span class="n">where_pres</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
         <span class="n">fake_opd</span><span class="p">[:,</span><span class="n">il</span><span class="p">,</span><span class="n">ip</span><span class="p">,:]</span><span class="o">=</span><span class="mi">10</span> <span class="c1">#optical depth of 10 (&gt;&gt;1)</span>
@@ -531,18 +482,16 @@ div.rendered_html tbody tr:hover {
     <span class="p">),</span>
     <span class="n">attrs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;coords with vectors&quot;</span><span class="p">),</span>
 <span class="p">)</span>
-
-</pre></div>
+<br/></pre></div>
 </div>
 </div>
-<div class="section" id="Visualize-Cloud-Input">
+<section id="Visualize-Cloud-Input">
 <h3>Visualize Cloud Input<a class="headerlink" href="#Visualize-Cloud-Input" title="Permalink to this headline">¶</a></h3>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">ds_cld</span><span class="p">[</span><span class="s1">&#39;opd&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">pressure</span><span class="o">=</span><span class="n">where_pres</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span><span class="n">wno</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="s1">&#39;lat&#39;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ds_cld</span><span class="p">[</span><span class="s1">&#39;opd&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">pressure</span><span class="o">=</span><span class="n">where_pres</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span><span class="n">wno</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="s1">&#39;lat&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -562,8 +511,8 @@ div.rendered_html tbody tr:hover {
 <img alt="../_images/notebooks_9c_PostProcess3Dinput-Clouds_8_1.png" src="../_images/notebooks_9c_PostProcess3Dinput-Clouds_8_1.png" />
 </div>
 </div>
-</div>
-<div class="section" id="Add-clouds-to-picaso-bundle">
+</section>
+<section id="Add-clouds-to-picaso-bundle">
 <h3>Add clouds to <code class="docutils literal notranslate"><span class="pre">picaso</span></code> bundle<a class="headerlink" href="#Add-clouds-to-picaso-bundle" title="Permalink to this headline">¶</a></h3>
 <p>As a recap, in the steps below we: 1. Initiate a new run (jdi.inputs) 2. Define the geometry of the run (phase_angle) 3. Set the pressure-temperature-lat-lon profile (atmosphere_3d)</p>
 <p>Note here we are not worrying about chemical abundances (see post process chem tutorial). We will combine both clouds and chemistry steps in the next tutorial on 3D Spectra.</p>
@@ -571,8 +520,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1">#first step is identical to what&#39;s been done in the past</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#first step is identical to what&#39;s been done in the past</span>
 <span class="n">case_3d</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
 <span class="n">case_3d</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_tangle</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">num_gangle</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 <span class="c1">#turning off alerts since we already went through this</span>
@@ -594,8 +542,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">case_3d</span><span class="o">.</span><span class="n">clouds_3d</span><span class="p">(</span><span class="n">ds_cld</span><span class="p">,</span><span class="n">iz_plot</span><span class="o">=</span><span class="n">where_pres</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">case_3d</span><span class="o">.</span><span class="n">clouds_3d</span><span class="p">(</span><span class="n">ds_cld</span><span class="p">,</span><span class="n">iz_plot</span><span class="o">=</span><span class="n">where_pres</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
@@ -628,8 +575,7 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=4, ntangle=4, with pha
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
 <span class="n">case_3d</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;clouds&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;opd&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span>
     <span class="n">lat</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">wno</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
     <span class="n">x</span><span class="o">=</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="s1">&#39;pressure&#39;</span><span class="p">,</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
@@ -645,16 +591,15 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=4, ntangle=4, with pha
 <img alt="../_images/notebooks_9c_PostProcess3Dinput-Clouds_14_0.png" src="../_images/notebooks_9c_PostProcess3Dinput-Clouds_14_0.png" />
 </div>
 </div>
-</div>
-<div class="section" id="See-other-regridded-variables">
+</section>
+<section id="See-other-regridded-variables">
 <h3>See other regridded variables<a class="headerlink" href="#See-other-regridded-variables" title="Permalink to this headline">¶</a></h3>
 <p>All the elements of your data bundle have been regridded! Though for now this is not too interesting since we have set the asymmetry to a constant value of 0.8</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">case_3d</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;clouds&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;g0&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">pressure</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">wno</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">case_3d</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;clouds&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;g0&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">pressure</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">wno</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
     <span class="n">x</span><span class="o">=</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="s1">&#39;lat&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -675,9 +620,9 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=4, ntangle=4, with pha
 <img alt="../_images/notebooks_9c_PostProcess3Dinput-Clouds_16_1.png" src="../_images/notebooks_9c_PostProcess3Dinput-Clouds_16_1.png" />
 </div>
 </div>
-</div>
-</div>
-<div class="section" id="Post-Process-Clouds:-virga-cloud-model">
+</section>
+</section>
+<section id="Post-Process-Clouds:-virga-cloud-model">
 <h2>Post-Process Clouds: <code class="docutils literal notranslate"><span class="pre">virga</span></code> cloud model<a class="headerlink" href="#Post-Process-Clouds:-virga-cloud-model" title="Permalink to this headline">¶</a></h2>
 <p>We will run this example on a very coarse (5x5) grid to make it faster. Note that similar to the <code class="docutils literal notranslate"><span class="pre">chemeq_3d</span></code> routine, running <code class="docutils literal notranslate"><span class="pre">virga_3d</span></code> will just run <code class="docutils literal notranslate"><span class="pre">ngangle</span></code>x<code class="docutils literal notranslate"><span class="pre">ntangle</span></code> 1d models. <strong>There is no transport of particles in the vertical/horizontal direction.</strong></p>
 <p><strong>NOTE!!</strong> If you are not familiar with <code class="docutils literal notranslate"><span class="pre">virga</span></code> models it is highly recommended that you start in one-dimension first. <a class="reference external" href="https://natashabatalha.github.io/virga/notebooks/1_GettingStarted.html">You can review the tutorials here</a>. This tutorial will not explain the required <code class="docutils literal notranslate"><span class="pre">virga</span></code> inputs.</p>
@@ -685,8 +630,7 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=4, ntangle=4, with pha
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">opacity</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">])</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">opacity</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">])</span>
 <span class="n">gcm_out</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">HJ_pt_3d</span><span class="p">(</span><span class="n">as_xarray</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">add_kz</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">case_3d</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
 <span class="n">case_3d</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_tangle</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">num_gangle</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
@@ -717,8 +661,7 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=10, ntangle=10, with p
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">mieff_directory</span> <span class="o">=</span> <span class="s1">&#39;/Users/nbatalh1/Documents/data/virga/&#39;</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mieff_directory</span> <span class="o">=</span> <span class="s1">&#39;/Users/nbatalh1/Documents/data/virga/&#39;</span>
 <span class="n">clds</span> <span class="o">=</span> <span class="n">case_3d</span><span class="o">.</span><span class="n">virga_3d</span><span class="p">([</span><span class="s1">&#39;MnS&#39;</span><span class="p">],</span> <span class="n">mieff_directory</span><span class="p">,</span><span class="n">fsed</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">kz_min</span><span class="o">=</span><span class="mf">1e10</span><span class="p">,</span>
                         <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">n_cpu</span><span class="o">=</span><span class="mi">3</span>
                        <span class="p">)</span>
@@ -730,8 +673,7 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=10, ntangle=10, with p
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
 <span class="n">case_3d</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;clouds&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;opd&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">lat</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span><span class="n">wno</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
     <span class="n">x</span><span class="o">=</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="s1">&#39;pressure&#39;</span><span class="p">,</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="mf">3e2</span><span class="p">,</span><span class="mf">1e-6</span><span class="p">])</span>
@@ -746,15 +688,14 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=10, ntangle=10, with p
 <img alt="../_images/notebooks_9c_PostProcess3Dinput-Clouds_22_0.png" src="../_images/notebooks_9c_PostProcess3Dinput-Clouds_22_0.png" />
 </div>
 </div>
-<div class="section" id="Trouble-Shooting-Negative-Kz-Values-(smooth_kz)">
+<section id="Trouble-Shooting-Negative-Kz-Values-(smooth_kz)">
 <h3>Trouble Shooting Negative Kz Values (smooth_kz)<a class="headerlink" href="#Trouble-Shooting-Negative-Kz-Values-(smooth_kz)" title="Permalink to this headline">¶</a></h3>
 <p>GCM runs produce both positive and negative K_z values. A negative K_z represents downdrafts, which cannot be accounted for in <code class="docutils literal notranslate"><span class="pre">virga</span></code>. In fact, <code class="docutils literal notranslate"><span class="pre">virga</span></code> has a default minimum value of 1e5 cm<span class="math notranslate nohighlight">\(^2\)</span>/s. For the above run, note I used a very large kz_min value of 1e10cm<span class="math notranslate nohighlight">\(^2\)</span>/s. The smaller the k_z value, the values create small particles. Let’s take at some of the difficulty with smoothing over K_z profiles:</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">gcm_out</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">HJ_pt_3d</span><span class="p">(</span><span class="n">as_xarray</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">add_kz</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gcm_out</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">HJ_pt_3d</span><span class="p">(</span><span class="n">as_xarray</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">add_kz</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">test</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
 <span class="n">test</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_tangle</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">num_gangle</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 <span class="n">test</span><span class="o">.</span><span class="n">atmosphere_3d</span><span class="p">(</span><span class="n">gcm_out</span><span class="p">,</span> <span class="n">regrid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -766,8 +707,7 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=10, ntangle=10, with p
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">jpi</span><span class="o">.</span><span class="n">output_notebook</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">jpi</span><span class="o">.</span><span class="n">output_notebook</span><span class="p">()</span>
 <span class="n">df</span> <span class="o">=</span> <span class="n">test</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;atmosphere&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">lon</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">lat</span><span class="o">=</span><span class="mi">0</span>
                             <span class="p">)</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">(</span>
                             <span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span>
@@ -1143,16 +1083,14 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
 <span class="n">df</span><span class="p">[</span><span class="s1">&#39;logp&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">x</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;kz&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
 <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">[</span><span class="n">y</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">]</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">y</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">]</span>
 <span class="n">spl</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">UnivariateSpline</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span><span class="n">ext</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 <span class="n">df</span><span class="p">[</span><span class="s1">&#39;splKz&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">spl</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">))</span>
-
-</pre></div>
+<br/></pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1168,8 +1106,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">y_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span><span class="n">y_range</span><span class="o">=</span><span class="p">[</span><span class="mf">1e2</span><span class="p">,</span><span class="mf">1e-6</span><span class="p">],</span> <span class="n">x_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">y_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span><span class="n">y_range</span><span class="o">=</span><span class="p">[</span><span class="mf">1e2</span><span class="p">,</span><span class="mf">1e-6</span><span class="p">],</span> <span class="n">x_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span>
                  <span class="n">x_axis_label</span><span class="o">=</span><span class="s1">&#39;Kz (cm2/s)&#39;</span><span class="p">,</span>
                  <span class="n">y_axis_label</span><span class="o">=</span><span class="s1">&#39;pressure (bars)&#39;</span><span class="p">,</span>
                  <span class="n">plot_width</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">plot_height</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">x_range</span><span class="o">=</span><span class="p">[</span><span class="mf">1e5</span><span class="p">,</span> <span class="mf">1e11</span><span class="p">])</span>
@@ -1225,62 +1162,43 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
 </pre></div>
 </div>
 </div>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
            </div>
-           
           </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="9d_3DSpectra.html" class="btn btn-neutral float-right" title="3D Spectra" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="9b_PostProcess3Dinput-Chemistry.html" class="btn btn-neutral float-left" title="What is post-processing?" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="9b_PostProcess3Dinput-Chemistry.html" class="btn btn-neutral float-left" title="What is post-processing?" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="9d_3DSpectra.html" class="btn btn-neutral float-right" title="3D Spectra" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &copy; Copyright 
-
-    </p>
+    <p>&#169; Copyright .</p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

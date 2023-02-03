@@ -1,74 +1,40 @@
-
-
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ESO ATMO 2021 Tutorial: Chemistry and Clouds in Exoplanet Transit Spectroscopy &mdash; picaso 3.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-
-  
-  
-  
-  
-
-  
-  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../../../_static/jquery.js"></script>
-        <script type="text/javascript" src="../../../_static/underscore.js"></script>
-        <script type="text/javascript" src="../../../_static/doctools.js"></script>
-        <script type="text/javascript" src="../../../_static/language_data.js"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
-    
-    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
-
-    
-
-  
-  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
     <link rel="next" title="Setup PICASO" href="../ERS2021/ThermalEmissionTutorial.html" />
     <link rel="prev" title="Tutorials" href="../../../workshops.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
-
-          
             <a href="../../../index.html" class="icon icon-home"> picaso
-          
-
-          
           </a>
-
-          
-            
-            
               <div class="version">
                 3.0
               </div>
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -76,17 +42,7 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials.html">The Tutorials</a></li>
@@ -112,93 +68,68 @@
 </li>
 <li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../credit.html">The Papers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../credit.html">What to Cite</a></li>
 </ul>
 
-            
-          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../../index.html">picaso</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="../../../index.html">Docs</a> &raquo;</li>
-        
-          <li><a href="../../../workshops.html">Tutorials</a> &raquo;</li>
-        
-      <li>ESO ATMO 2021 Tutorial: Chemistry and Clouds in Exoplanet Transit Spectroscopy</li>
-    
-    
+      <li><a href="../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../workshops.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">ESO ATMO 2021 Tutorial: Chemistry and Clouds in Exoplanet Transit Spectroscopy</li>
       <li class="wy-breadcrumbs-aside">
-        
-            
             <a href="../../../_sources/notebooks/workshops/ESO2021/ESO_Tutorial.ipynb.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+             
   
 <style>
 /* CSS for nbsphinx extension */
 
 /* remove conflicting styling from Sphinx themes */
-div.nbinput.container,
-div.nbinput.container div.prompt,
-div.nbinput.container div.input_area,
-div.nbinput.container div[class*=highlight],
-div.nbinput.container div[class*=highlight] pre,
-div.nboutput.container,
-div.nboutput.container div.prompt,
-div.nboutput.container div.output_area,
-div.nboutput.container div[class*=highlight],
-div.nboutput.container div[class*=highlight] pre {
-    background: none;
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
     border: none;
-    padding: 0 0;
+    padding: 0;
     margin: 0;
     box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
 }
 
 /* avoid gaps between output lines */
@@ -245,27 +176,41 @@ div.nboutput.container div.prompt pre {
 /* all prompts */
 div.nbinput.container div.prompt,
 div.nboutput.container div.prompt {
-    min-width: 5ex;
-    padding-top: 0.3rem;
-    padding-right: 0.3rem;
-    text-align: right;
-    flex: 0;
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
 }
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
 @media (max-width: 540px) {
     div.nbinput.container div.prompt,
     div.nboutput.container div.prompt {
+        width: unset;
         text-align: left;
         padding: 0.4em;
     }
     div.nboutput.container div.prompt.empty {
         padding: 0;
     }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
 }
 
-/* disable scrollbars on prompts */
+/* disable scrollbars and line breaks on prompts */
 div.nbinput.container div.prompt pre,
 div.nboutput.container div.prompt pre {
     overflow: hidden;
+    white-space: pre;
 }
 
 /* input/output area */
@@ -286,7 +231,7 @@ div.nboutput.container div.output_area {
 div.nbinput.container div.input_area {
     border: 1px solid #e0e0e0;
     border-radius: 2px;
-    background: #f5f5f5;
+    /*background: #f5f5f5;*/
 }
 
 /* override MathJax center alignment in output cells */
@@ -351,7 +296,8 @@ div.nboutput.container div.output_area div[class*=highlight].math,
 div.nboutput.container div.output_area.rendered_html,
 div.nboutput.container div.output_area > div.output_javascript,
 div.nboutput.container div.output_area:not(.rendered_html) > img{
-    padding: 0.3rem;
+    padding: 5px;
+    margin: 0;
 }
 
 /* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
@@ -361,11 +307,12 @@ div.nboutput.container div.output_area > div[class^='highlight']{
 }
 
 /* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
-.prompt a.copybtn {
+.prompt .copybtn {
     display: none;
 }
 
 /* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
 div.rendered_html table {
   border: none;
   border-collapse: collapse;
@@ -374,10 +321,14 @@ div.rendered_html table {
   font-size: 12px;
   table-layout: fixed;
 }
+.jp-RenderedHTMLCommon thead,
 div.rendered_html thead {
   border-bottom: 1px solid black;
   vertical-align: bottom;
 }
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
 div.rendered_html tr,
 div.rendered_html th,
 div.rendered_html td {
@@ -389,12 +340,15 @@ div.rendered_html td {
   max-width: none;
   border: none;
 }
+.jp-RenderedHTMLCommon th,
 div.rendered_html th {
   font-weight: bold;
 }
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
 div.rendered_html tbody tr:nth-child(odd) {
   background: #f5f5f5;
 }
+.jp-RenderedHTMLCommon tbody tr:hover,
 div.rendered_html tbody tr:hover {
   background: rgba(66, 165, 245, 0.2);
 }
@@ -425,7 +379,7 @@ div.rendered_html tbody tr:hover {
 <p class="admonition-title">Note</p>
 <p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/workshops/ESO2021/ESO_Tutorial.ipynb">Download full notebook here</a></p>
 </div>
-<div class="section" id="ESO-ATMO-2021-Tutorial:-Chemistry-and-Clouds-in-Exoplanet-Transit-Spectroscopy">
+<section id="ESO-ATMO-2021-Tutorial:-Chemistry-and-Clouds-in-Exoplanet-Transit-Spectroscopy">
 <h1>ESO ATMO 2021 Tutorial: Chemistry and Clouds in Exoplanet Transit Spectroscopy<a class="headerlink" href="#ESO-ATMO-2021-Tutorial:-Chemistry-and-Clouds-in-Exoplanet-Transit-Spectroscopy" title="Permalink to this headline">¶</a></h1>
 <p>What you will learn:</p>
 <ol class="arabic simple">
@@ -448,8 +402,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">warnings</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">warnings</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
 <span class="kn">import</span> <span class="nn">picaso.justdoit</span> <span class="k">as</span> <span class="nn">jdi</span>
 <span class="kn">import</span> <span class="nn">picaso.justplotit</span> <span class="k">as</span> <span class="nn">jpi</span>
@@ -781,23 +734,21 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">wave_range</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">14</span><span class="p">]</span> <span class="c1">#don&#39;t worry we will play around with this more later</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">wave_range</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">14</span><span class="p">]</span> <span class="c1">#don&#39;t worry we will play around with this more later</span>
 <span class="n">opa</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="n">wave_range</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="section" id="What-happens-to-a-transit-(transmission+emission)-spectrum-as-a-function-of-temperature">
+<section id="What-happens-to-a-transit-(transmission+emission)-spectrum-as-a-function-of-temperature">
 <h2>What happens to a transit (transmission+emission) spectrum as a function of temperature<a class="headerlink" href="#What-happens-to-a-transit-(transmission+emission)-spectrum-as-a-function-of-temperature" title="Permalink to this headline">¶</a></h2>
 <p>We will dive right in by computing a series of spectra as a function of temperature. As we progress we will break down what is happening.</p>
-<div class="section" id="What-is-the-relevant-temperature-range-we-care-about-for-exoplanets?">
+<section id="What-is-the-relevant-temperature-range-we-care-about-for-exoplanets?">
 <h3>What is the relevant temperature range we care about for exoplanets?<a class="headerlink" href="#What-is-the-relevant-temperature-range-we-care-about-for-exoplanets?" title="Permalink to this headline">¶</a></h3>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">all_planets</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">all_planets</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">all_planets</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">all_planets</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -805,8 +756,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1">#let&#39;s only grab targets with masses and errors</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#let&#39;s only grab targets with masses and errors</span>
 <span class="n">pl_mass_err</span> <span class="o">=</span> <span class="n">all_planets</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,[</span><span class="s1">&#39;pl_name&#39;</span><span class="p">,</span><span class="s1">&#39;pl_letter&#39;</span><span class="p">,</span><span class="s1">&#39;pl_bmassjerr1&#39;</span><span class="p">,</span> <span class="s1">&#39;pl_bmassj&#39;</span><span class="p">,</span><span class="s1">&#39;pl_eqt&#39;</span><span class="p">]]</span>
 <span class="n">pl_mass_err</span> <span class="o">=</span> <span class="n">pl_mass_err</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
 </pre></div>
@@ -816,8 +766,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">x_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span><span class="n">x_axis_label</span><span class="o">=</span><span class="s1">&#39;Mass(Mj)&#39;</span><span class="p">,</span><span class="n">y_axis_label</span><span class="o">=</span><span class="s1">&#39;Eql Temp (A=0)&#39;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">x_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span><span class="n">x_axis_label</span><span class="o">=</span><span class="s1">&#39;Mass(Mj)&#39;</span><span class="p">,</span><span class="n">y_axis_label</span><span class="o">=</span><span class="s1">&#39;Eql Temp (A=0)&#39;</span><span class="p">)</span>
 <span class="n">source</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">ColumnDataSource</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
         <span class="n">pl_mass_err</span><span class="p">))</span>
 <span class="n">cir</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">circle</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;pl_bmassj&#39;</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="s1">&#39;pl_eqt&#39;</span><span class="p">,</span><span class="n">size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
@@ -874,8 +823,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">T_to_compute</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mi">2500</span><span class="p">,</span><span class="mi">250</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">T_to_compute</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mi">2500</span><span class="p">,</span><span class="mi">250</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -894,8 +842,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">case</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">case</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
 <span class="n">case</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span> <span class="mi">5000</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mf">4.0</span><span class="p">,</span><span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_sun&#39;</span><span class="p">))</span>
 <span class="n">case</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">radius</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_jup&#39;</span><span class="p">),</span>
            <span class="n">mass</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">mass_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;M_jup&#39;</span><span class="p">))</span>
@@ -907,12 +854,11 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1">#Let&#39;s stick the loop in right here!</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#Let&#39;s stick the loop in right here!</span>
 <span class="n">all_out</span><span class="o">=</span><span class="p">{}</span> <span class="c1">#easy mechanism to save all the output</span>
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">T_to_compute</span><span class="p">:</span>
     <span class="n">case</span><span class="o">.</span><span class="n">sonora</span><span class="p">(</span><span class="n">sonora_profile_db</span><span class="p">,</span>  <span class="n">i</span><span class="p">)</span>
-    <span class="n">all_out</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{i}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">case</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span><span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal+transmission&#39;</span><span class="p">,</span> <span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">all_out</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">case</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span><span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal+transmission&#39;</span><span class="p">,</span> <span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -921,8 +867,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">wno</span><span class="p">,</span><span class="n">spec</span><span class="o">=</span><span class="p">[],[]</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">wno</span><span class="p">,</span><span class="n">spec</span><span class="o">=</span><span class="p">[],[]</span>
 <span class="n">fig_e</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span><span class="n">width</span><span class="o">=</span><span class="mi">700</span><span class="p">,</span> <span class="n">y_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span>
                  <span class="n">x_axis_label</span><span class="o">=</span><span class="s1">&#39;Wavelength(um)&#39;</span><span class="p">,</span><span class="n">y_axis_label</span><span class="o">=</span><span class="s1">&#39;Relative Planet/Star Flux (ppm)&#39;</span><span class="p">)</span>
 <span class="n">fig_t</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span><span class="n">width</span><span class="o">=</span><span class="mi">700</span><span class="p">,</span>
@@ -932,7 +877,7 @@ var element = document.currentScript.previousSibling.previousSibling;
     <span class="n">x</span><span class="p">,</span><span class="n">y</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">all_out</span><span class="p">[</span><span class="n">ikey</span><span class="p">][</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span>
                           <span class="n">all_out</span><span class="p">[</span><span class="n">ikey</span><span class="p">][</span><span class="s1">&#39;thermal&#39;</span><span class="p">],</span> <span class="n">R</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
     <span class="n">fig_e</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="mf">1e4</span><span class="o">/</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="o">*</span><span class="mf">1e6</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">Spectral11</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">line_width</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
-               <span class="n">legend_label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Teff=</span><span class="si">{ikey}</span><span class="s1">&#39;</span><span class="p">)</span>
+               <span class="n">legend_label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Teff=</span><span class="si">{</span><span class="n">ikey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 
     <span class="n">x</span><span class="p">,</span><span class="n">y</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">all_out</span><span class="p">[</span><span class="n">ikey</span><span class="p">][</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span>
                           <span class="n">all_out</span><span class="p">[</span><span class="n">ikey</span><span class="p">][</span><span class="s1">&#39;transit_depth&#39;</span><span class="p">],</span> <span class="n">R</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
@@ -986,17 +931,16 @@ var element = document.currentScript.previousSibling.previousSibling;
 </script></div>
 </div>
 <p>There is rich information encoded in these spectra. In order to fully grasp what is going on, it is important to understand the chemistry.</p>
-</div>
-</div>
-<div class="section" id="What-molecules-are-most-important-to-planetary-spectroscopy?">
+</section>
+</section>
+<section id="What-molecules-are-most-important-to-planetary-spectroscopy?">
 <h2>What molecules are most important to planetary spectroscopy?<a class="headerlink" href="#What-molecules-are-most-important-to-planetary-spectroscopy?" title="Permalink to this headline">¶</a></h2>
 <p>When we compute our spectra, we get a full output of abundances (aka “mixing ratios”) as a function of pressure.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1">#remember the mixing ratios (or abundances) exist in this pandas dataframe</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#remember the mixing ratios (or abundances) exist in this pandas dataframe</span>
 <span class="n">all_out</span><span class="p">[</span><span class="s1">&#39;100&#39;</span><span class="p">][</span><span class="s1">&#39;full_output&#39;</span><span class="p">][</span><span class="s1">&#39;layer&#39;</span><span class="p">][</span><span class="s1">&#39;mixingratios&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="c1">#but this is too many molecules to keep track of for every single spectrum</span>
 </pre></div>
@@ -1179,8 +1123,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">relevant_molecules</span><span class="o">=</span><span class="p">[]</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">relevant_molecules</span><span class="o">=</span><span class="p">[]</span>
 <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">ikey</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">all_out</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
     <span class="n">abundances</span> <span class="o">=</span> <span class="n">all_out</span><span class="p">[</span><span class="n">ikey</span><span class="p">][</span><span class="s1">&#39;full_output&#39;</span><span class="p">][</span><span class="s1">&#39;layer&#39;</span><span class="p">][</span><span class="s1">&#39;mixingratios&#39;</span><span class="p">]</span>
 
@@ -1206,15 +1149,14 @@ var element = document.currentScript.previousSibling.previousSibling;
 </div>
 <p>Now that we have condensed this to a meaningful set of molecules, we can proceed to plot the sequence</p>
 <p><em>Side note: You might try to see if the technique of taking the “median” yields the same results as “max” or “mean”. This gives some insight into how dynamic moleculare abundances are as a function of pressure</em></p>
-</div>
-<div class="section" id="Where-in-temperature-space-do-chemical-transitions-seem-to-take-place?">
+</section>
+<section id="Where-in-temperature-space-do-chemical-transitions-seem-to-take-place?">
 <h2>Where in temperature space do chemical transitions seem to take place?<a class="headerlink" href="#Where-in-temperature-space-do-chemical-transitions-seem-to-take-place?" title="Permalink to this headline">¶</a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span><span class="n">width</span><span class="o">=</span><span class="mi">700</span><span class="p">,</span> <span class="n">y_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span><span class="n">width</span><span class="o">=</span><span class="mi">700</span><span class="p">,</span> <span class="n">y_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span>
                  <span class="n">y_range</span><span class="o">=</span><span class="p">[</span><span class="mf">1e-15</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span><span class="n">x_range</span><span class="o">=</span><span class="p">[</span><span class="mi">200</span><span class="p">,</span><span class="mi">2600</span><span class="p">],</span>
                  <span class="n">x_axis_label</span><span class="o">=</span><span class="s1">&#39;Planet Effective Temperature&#39;</span><span class="p">,</span><span class="n">y_axis_label</span><span class="o">=</span><span class="s1">&#39;Abundance&#39;</span><span class="p">)</span>
 
@@ -1299,8 +1241,8 @@ var element = document.currentScript.previousSibling.previousSibling;
 <li><p>Across all these molecules, what are the few most critical temperature transitions?</p></li>
 <li><p>What known phenomena can cause deviations from chemical equilibrium?</p></li>
 </ul>
-</div>
-<div class="section" id="Is-this-molecule-affecting-my-spectrum?">
+</section>
+<section id="Is-this-molecule-affecting-my-spectrum?">
 <h2>Is this molecule affecting my spectrum?<a class="headerlink" href="#Is-this-molecule-affecting-my-spectrum?" title="Permalink to this headline">¶</a></h2>
 <p>Seeing a high abundance for a molecule does not automatically mean that it will be detectable in a given spectrum. In order to determine if a molecule is detectable we need to further address these questions:</p>
 <ol class="arabic simple">
@@ -1317,8 +1259,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">case1</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">case1</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
 <span class="n">case1</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span> <span class="mi">5000</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mf">4.0</span><span class="p">,</span><span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_sun&#39;</span><span class="p">))</span>
 <span class="n">case1</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">radius</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_jup&#39;</span><span class="p">),</span>
            <span class="n">mass</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">mass_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;M_jup&#39;</span><span class="p">))</span>
@@ -1332,8 +1273,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">case2</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">case2</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
 <span class="n">case2</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span> <span class="mi">5000</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mf">4.0</span><span class="p">,</span><span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_sun&#39;</span><span class="p">))</span>
 <span class="n">case2</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">radius</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_jup&#39;</span><span class="p">),</span>
            <span class="n">mass</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">mass_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;M_jup&#39;</span><span class="p">))</span>
@@ -1348,8 +1288,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">figs</span><span class="o">=</span><span class="p">[]</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">figs</span><span class="o">=</span><span class="p">[]</span>
 <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">it</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">([</span><span class="n">out1</span><span class="p">[</span><span class="s1">&#39;tau_p_surface&#39;</span><span class="p">],</span> <span class="n">out2</span><span class="p">[</span><span class="s1">&#39;tau_p_surface&#39;</span><span class="p">]],[</span><span class="s1">&#39;Cold&#39;</span><span class="p">,</span><span class="s1">&#39;Hot&#39;</span><span class="p">]):</span>
     <span class="n">wno</span><span class="o">=</span><span class="p">[]</span>
     <span class="n">spec</span><span class="o">=</span><span class="p">[]</span>
@@ -1417,25 +1356,25 @@ var element = document.currentScript.previousSibling.previousSibling;
 <li><p>Can you spot any molecules that appeared in relatively high abundance in the mixing ratio plots, but do not appear here?</p></li>
 </ol>
 <p><strong>Repeat the Exercise: Swap out your T=2000 K case with a T=1000 K case.</strong> 1. We know that CH4/CO should be experience a big chemical shift in this region. Isolate the Tau~1 curve for CH4. What accounts for the difference in contribution curve?</p>
-</div>
-<div class="section" id="Understanding-Models-in-the-Context-of-Observing-Modes">
+</section>
+<section id="Understanding-Models-in-the-Context-of-Observing-Modes">
 <h2>Understanding Models in the Context of Observing Modes<a class="headerlink" href="#Understanding-Models-in-the-Context-of-Observing-Modes" title="Permalink to this headline">¶</a></h2>
 <p>Now that we have an intuition for diagnosing spectra. Let’s gain an intuition for what molecules dominate what spectral regions. I find it is best to do this with real instrument modes. Let’s focus on JWST modes. Take a moment to stare at the figure below:</p>
-<p><img alt="JWST Modes" src="https://natashabatalha.github.io/assets/img/gallery/pec_res.jpg" /></p>
+<img alt="JWST Modes" src="https://natashabatalha.github.io/assets/img/gallery/pec_res.jpg" />
 <p><strong>Discussion</strong>: 1. What spectral features are dominant across what JWST modes? For different planet cases? - NIRISS SOSS: - NIRCam F322W2: - NIRCam F444W: - NIRSpec G140: - NIRSpec G235: - NIRSpec G395: - NIRSpec Prism:<span class="math notranslate nohighlight">\(^*\)</span> - MIRI LRS</p>
 <p><em>:math:`^*`what is the sublety that makes this a difficult mode to use universally</em></p>
 <ol class="arabic simple" start="2">
 <li><p>Excluding the Prism, if you had to choose only one mode for JWST to observe the cold planet case, which would you choose? Repeat for hot planet case.</p></li>
 <li><p>Are there regions of parameter space where two molecule overlap could be problematic?</p></li>
 </ol>
-</div>
-<div class="section" id="Adding-Clouds-to-the-Story-using-Virga">
+</section>
+<section id="Adding-Clouds-to-the-Story-using-Virga">
 <h2>Adding Clouds to the Story using <code class="docutils literal notranslate"><span class="pre">Virga</span></code><a class="headerlink" href="#Adding-Clouds-to-the-Story-using-Virga" title="Permalink to this headline">¶</a></h2>
 <p>Since you’ve already had some experience modeling clouds in spectra, we will focus on specific cloud profiles and cloud species. We have already computed some cloud-free models. Let’s add clouds to the models we have already computed.</p>
 <p>There are a few more parameters that we have to specify with regards to the cloud code:</p>
 <ul class="simple">
 <li><p>metallicity and mean molecular weight (should be consistent with your atmosphere profile)</p></li>
-<li><p>f<span class="math notranslate nohighlight">\(_{sed}\)</span>: sedimentation efficiency, which controls the vertical extent of the cloud deck. For more information see: <a class="reference external" href="https://natashabatalha.github.io/virga/notebooks/1_GettingStarted.html#How-to-pick">https://natashabatalha.github.io/virga/notebooks/1_GettingStarted.html#How-to-pick</a>-f_{sed}</p></li>
+<li><p>f<span class="math notranslate nohighlight">\(_{sed}\)</span>: sedimentation efficiency, which controls the vertical extent of the cloud deck. For more information see: <a class="reference external" href="https://natashabatalha.github.io/virga/notebooks/1_GettingStarted.html#How-to-pick-f">https://natashabatalha.github.io/virga/notebooks/1_GettingStarted.html#How-to-pick-f</a>_{sed}</p></li>
 <li><p>K<span class="math notranslate nohighlight">\(_{zz}\)</span>: vertical mixing</p></li>
 <li><p>Gas condensates: in general, you should think carefully about what gases you want to set as condensable. For this exercise we will just look at a subset four potential condensates for simplicity.</p></li>
 </ul>
@@ -1443,8 +1382,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">case_cld</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">case_cld</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
 <span class="n">case_cld</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span> <span class="mi">5000</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mf">4.0</span><span class="p">,</span><span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_sun&#39;</span><span class="p">))</span>
 <span class="n">case_cld</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">radius</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_jup&#39;</span><span class="p">),</span>
            <span class="n">mass</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">mass_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;M_jup&#39;</span><span class="p">))</span>
@@ -1467,20 +1405,19 @@ var element = document.currentScript.previousSibling.previousSibling;
     <span class="c1">#for the cloud code we have to supply a kzz value, which describes the degree of mixing</span>
     <span class="n">case_cld</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;atmosphere&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;kz&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1e9</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
 
-    <span class="n">cld_mdl_out</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{i}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">case_cld</span><span class="o">.</span><span class="n">virga</span><span class="p">(</span><span class="n">gas_condensates</span><span class="p">,</span> <span class="n">mieff_dir</span><span class="p">,</span> <span class="n">fsed</span><span class="o">=</span><span class="n">fsed</span><span class="p">,</span><span class="n">mh</span><span class="o">=</span><span class="n">metallicity</span><span class="p">,</span>
+    <span class="n">cld_mdl_out</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">case_cld</span><span class="o">.</span><span class="n">virga</span><span class="p">(</span><span class="n">gas_condensates</span><span class="p">,</span> <span class="n">mieff_dir</span><span class="p">,</span> <span class="n">fsed</span><span class="o">=</span><span class="n">fsed</span><span class="p">,</span><span class="n">mh</span><span class="o">=</span><span class="n">metallicity</span><span class="p">,</span>
                  <span class="n">mmw</span> <span class="o">=</span> <span class="n">mean_molecular_weight</span><span class="p">,</span><span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">all_out_cld</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{i}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">case_cld</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span><span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal+transmission&#39;</span><span class="p">,</span> <span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">all_out_cld</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">case_cld</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span><span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal+transmission&#39;</span><span class="p">,</span> <span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="section" id="A-cloud-sequence-in-transit-emission">
+<section id="A-cloud-sequence-in-transit-emission">
 <h3>A cloud sequence in transit emission<a class="headerlink" href="#A-cloud-sequence-in-transit-emission" title="Permalink to this headline">¶</a></h3>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">wno</span><span class="p">,</span><span class="n">spec</span><span class="o">=</span><span class="p">[],[]</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">wno</span><span class="p">,</span><span class="n">spec</span><span class="o">=</span><span class="p">[],[]</span>
 <span class="n">fig</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span><span class="n">width</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">y_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span>
                  <span class="n">x_axis_label</span><span class="o">=</span><span class="s1">&#39;Wavelength(um)&#39;</span><span class="p">,</span><span class="n">y_axis_label</span><span class="o">=</span><span class="s1">&#39;Flux (erg/s/cm2/cm)&#39;</span><span class="p">)</span>
 <span class="n">delta_fig</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span><span class="n">width</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="c1">#y_axis_type=&#39;log&#39;,</span>
@@ -1549,15 +1486,14 @@ var element = document.currentScript.previousSibling.previousSibling;
 </script></div>
 </div>
 <p>What overall affect do the clouds have on emission spectra?</p>
-</div>
-<div class="section" id="A-cloud-sequence-in-transit-transmission">
+</section>
+<section id="A-cloud-sequence-in-transit-transmission">
 <h3>A cloud sequence in transit transmission<a class="headerlink" href="#A-cloud-sequence-in-transit-transmission" title="Permalink to this headline">¶</a></h3>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">wno</span><span class="p">,</span><span class="n">spec</span><span class="o">=</span><span class="p">[],[]</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">wno</span><span class="p">,</span><span class="n">spec</span><span class="o">=</span><span class="p">[],[]</span>
 <span class="n">fig</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span><span class="n">width</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">y_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span>
                  <span class="n">x_axis_label</span><span class="o">=</span><span class="s1">&#39;Wavelength(um)&#39;</span><span class="p">,</span><span class="n">y_axis_label</span><span class="o">=</span><span class="s1">&#39;Relative Transit Depth&#39;</span><span class="p">)</span>
 <span class="n">delta_fig</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span><span class="n">width</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="c1">#y_axis_type=&#39;log&#39;,</span>
@@ -1626,16 +1562,15 @@ var element = document.currentScript.previousSibling.previousSibling;
 </script></div>
 </div>
 <p>What overall affect do the clouds have on transmission spectra?</p>
-</div>
-<div class="section" id="What-is-the-dominant-cloud-species-for-each-case?">
+</section>
+<section id="What-is-the-dominant-cloud-species-for-each-case?">
 <h3>What is the dominant cloud species for each case?<a class="headerlink" href="#What-is-the-dominant-cloud-species-for-each-case?" title="Permalink to this headline">¶</a></h3>
 <p>We saved all of the cloud output in the dictionary <code class="docutils literal notranslate"><span class="pre">cld_mdl_out</span></code>. You can explore all the output fields here: <a class="reference external" href="https://natashabatalha.github.io/virga/notebooks/2_RunningTheCode.html#Exploring-dict-Output">https://natashabatalha.github.io/virga/notebooks/2_RunningTheCode.html#Exploring-dict-Output</a></p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">cld_mdl_out</span><span class="p">[</span><span class="s1">&#39;100&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cld_mdl_out</span><span class="p">[</span><span class="s1">&#39;100&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -1652,8 +1587,7 @@ dict_keys([&#39;pressure&#39;, &#39;pressure_unit&#39;, &#39;temperature&#39;, &
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">virga</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">virga</span>
 <span class="n">jpi</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">virga</span><span class="o">.</span><span class="n">justplotit</span><span class="o">.</span><span class="n">opd_by_gas</span><span class="p">(</span><span class="n">cld_mdl_out</span><span class="p">[</span><span class="s1">&#39;100&#39;</span><span class="p">]))</span>
 </pre></div>
 </div>
@@ -1704,13 +1638,12 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">figs</span> <span class="o">=</span> <span class="p">[]</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">figs</span> <span class="o">=</span> <span class="p">[]</span>
 
 <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">ikey</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">all_out_cld</span><span class="o">.</span><span class="n">keys</span><span class="p">())[::</span><span class="mi">3</span><span class="p">]):</span>
 
     <span class="n">figs</span> <span class="o">+=</span> <span class="p">[</span><span class="n">virga</span><span class="o">.</span><span class="n">justplotit</span><span class="o">.</span><span class="n">opd_by_gas</span><span class="p">(</span><span class="n">cld_mdl_out</span><span class="p">[</span><span class="n">ikey</span><span class="p">],</span>
-                                         <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Teff=</span><span class="si">{ikey}</span><span class="s1">K&#39;</span><span class="p">,</span><span class="n">plot_width</span><span class="o">=</span><span class="mi">300</span><span class="p">)]</span>
+                                         <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Teff=</span><span class="si">{</span><span class="n">ikey</span><span class="si">}</span><span class="s1">K&#39;</span><span class="p">,</span><span class="n">plot_width</span><span class="o">=</span><span class="mi">300</span><span class="p">)]</span>
 
     <span class="n">figs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="o">.</span><span class="n">location</span><span class="o">=</span><span class="s1">&#39;bottom_left&#39;</span>
 
@@ -1765,8 +1698,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">jpi</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">virga</span><span class="o">.</span><span class="n">justplotit</span><span class="o">.</span><span class="n">pt</span><span class="p">(</span><span class="n">cld_mdl_out</span><span class="p">[</span><span class="s1">&#39;1600&#39;</span><span class="p">],</span> <span class="n">plot_height</span><span class="o">=</span><span class="mi">500</span><span class="p">))</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">jpi</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">virga</span><span class="o">.</span><span class="n">justplotit</span><span class="o">.</span><span class="n">pt</span><span class="p">(</span><span class="n">cld_mdl_out</span><span class="p">[</span><span class="s1">&#39;1600&#39;</span><span class="p">],</span> <span class="n">plot_height</span><span class="o">=</span><span class="mi">500</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -1817,8 +1749,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span><span class="mi">5</span><span class="p">))</span>
 
 <span class="n">ikey</span> <span class="o">=</span> <span class="s1">&#39;100&#39;</span>
@@ -1854,57 +1785,39 @@ var element = document.currentScript.previousSibling.previousSibling;
 </div>
 </div>
 <p><strong>Final Discussion</strong>: - Revisit the JWST questions. Would you change any of your “mode selections” based on the affect you see here with clouds? - What might be some observational strategies to combat muting of spectral features ?</p>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
            </div>
-           
           </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="../ERS2021/ThermalEmissionTutorial.html" class="btn btn-neutral float-right" title="Setup PICASO" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="../../../workshops.html" class="btn btn-neutral float-left" title="Tutorials" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../../../workshops.html" class="btn btn-neutral float-left" title="Tutorials" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../ERS2021/ThermalEmissionTutorial.html" class="btn btn-neutral float-right" title="Setup PICASO" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &copy; Copyright 
-
-    </p>
+    <p>&#169; Copyright .</p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

@@ -1,74 +1,40 @@
-
-
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Using Correlated-K Tables vs. Monochromatic Opacities &mdash; picaso 3.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-
-  
-  
-  
-  
-
-  
-  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../_static/jquery.js"></script>
-        <script type="text/javascript" src="../_static/underscore.js"></script>
-        <script type="text/javascript" src="../_static/doctools.js"></script>
-        <script type="text/javascript" src="../_static/language_data.js"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
-    
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-
-    
-
-  
-  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Diving into code approximations" href="10_AnalyzingApproximations.html" />
     <link rel="prev" title="What Resampling Do I Need for My Data??" href="10_ResamplingOpacities.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
-
-          
             <a href="../index.html" class="icon icon-home"> picaso
-          
-
-          
           </a>
-
-          
-            
-            
               <div class="version">
                 3.0
               </div>
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -76,17 +42,7 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../tutorials.html">The Tutorials</a><ul class="current">
@@ -122,93 +78,68 @@
 <li class="toctree-l1"><a class="reference internal" href="../workshops.html">Workshop Material</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../credit.html">The Papers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../credit.html">What to Cite</a></li>
 </ul>
 
-            
-          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../index.html">picaso</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="../index.html">Docs</a> &raquo;</li>
-        
-          <li><a href="../tutorials.html">Tutorials</a> &raquo;</li>
-        
-      <li>Using Correlated-K Tables vs. Monochromatic Opacities</li>
-    
-    
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">Using Correlated-K Tables vs. Monochromatic Opacities</li>
       <li class="wy-breadcrumbs-aside">
-        
-            
             <a href="../_sources/notebooks/10_CorrelatedKTables.ipynb.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+             
   
 <style>
 /* CSS for nbsphinx extension */
 
 /* remove conflicting styling from Sphinx themes */
-div.nbinput.container,
-div.nbinput.container div.prompt,
-div.nbinput.container div.input_area,
-div.nbinput.container div[class*=highlight],
-div.nbinput.container div[class*=highlight] pre,
-div.nboutput.container,
-div.nboutput.container div.prompt,
-div.nboutput.container div.output_area,
-div.nboutput.container div[class*=highlight],
-div.nboutput.container div[class*=highlight] pre {
-    background: none;
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
     border: none;
-    padding: 0 0;
+    padding: 0;
     margin: 0;
     box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
 }
 
 /* avoid gaps between output lines */
@@ -255,27 +186,41 @@ div.nboutput.container div.prompt pre {
 /* all prompts */
 div.nbinput.container div.prompt,
 div.nboutput.container div.prompt {
-    min-width: 5ex;
-    padding-top: 0.3rem;
-    padding-right: 0.3rem;
-    text-align: right;
-    flex: 0;
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
 }
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
 @media (max-width: 540px) {
     div.nbinput.container div.prompt,
     div.nboutput.container div.prompt {
+        width: unset;
         text-align: left;
         padding: 0.4em;
     }
     div.nboutput.container div.prompt.empty {
         padding: 0;
     }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
 }
 
-/* disable scrollbars on prompts */
+/* disable scrollbars and line breaks on prompts */
 div.nbinput.container div.prompt pre,
 div.nboutput.container div.prompt pre {
     overflow: hidden;
+    white-space: pre;
 }
 
 /* input/output area */
@@ -296,7 +241,7 @@ div.nboutput.container div.output_area {
 div.nbinput.container div.input_area {
     border: 1px solid #e0e0e0;
     border-radius: 2px;
-    background: #f5f5f5;
+    /*background: #f5f5f5;*/
 }
 
 /* override MathJax center alignment in output cells */
@@ -361,7 +306,8 @@ div.nboutput.container div.output_area div[class*=highlight].math,
 div.nboutput.container div.output_area.rendered_html,
 div.nboutput.container div.output_area > div.output_javascript,
 div.nboutput.container div.output_area:not(.rendered_html) > img{
-    padding: 0.3rem;
+    padding: 5px;
+    margin: 0;
 }
 
 /* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
@@ -371,11 +317,12 @@ div.nboutput.container div.output_area > div[class^='highlight']{
 }
 
 /* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
-.prompt a.copybtn {
+.prompt .copybtn {
     display: none;
 }
 
 /* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
 div.rendered_html table {
   border: none;
   border-collapse: collapse;
@@ -384,10 +331,14 @@ div.rendered_html table {
   font-size: 12px;
   table-layout: fixed;
 }
+.jp-RenderedHTMLCommon thead,
 div.rendered_html thead {
   border-bottom: 1px solid black;
   vertical-align: bottom;
 }
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
 div.rendered_html tr,
 div.rendered_html th,
 div.rendered_html td {
@@ -399,12 +350,15 @@ div.rendered_html td {
   max-width: none;
   border: none;
 }
+.jp-RenderedHTMLCommon th,
 div.rendered_html th {
   font-weight: bold;
 }
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
 div.rendered_html tbody tr:nth-child(odd) {
   background: #f5f5f5;
 }
+.jp-RenderedHTMLCommon tbody tr:hover,
 div.rendered_html tbody tr:hover {
   background: rgba(66, 165, 245, 0.2);
 }
@@ -435,7 +389,7 @@ div.rendered_html tbody tr:hover {
 <p class="admonition-title">Note</p>
 <p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/10_CorrelatedKTables.ipynb">Download full notebook here</a></p>
 </div>
-<div class="section" id="Using-Correlated-K-Tables-vs. Monochromatic-Opacities">
+<section id="Using-Correlated-K-Tables-vs. Monochromatic-Opacities">
 <h1>Using Correlated-K Tables vs. Monochromatic Opacities<a class="headerlink" href="#Using-Correlated-K-Tables-vs. Monochromatic-Opacities" title="Permalink to this headline">¶</a></h1>
 <p>Throughout the tutorials, we have always used monochromatic opacities. If you are interested in switching to correlated-K tables versus using the currently provided opacities on Zenodo, that is possible. However, we currently are only supporting our pre-mixed correlated-k-tables that you can find on <a href="#id1"><span class="problematic" id="id2">`Zenodo &lt;&gt;`__</span></a> and details are included in <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2021ApJ...920...85M/abstract">Marley et al. 2020</a>.</p>
 <p>Before completing this notebook you will have to:</p>
@@ -447,8 +401,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1">#for number #1 above point to the directory</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#for number #1 above point to the directory</span>
 <span class="n">ck_db</span> <span class="o">=</span> <span class="s1">&#39;/Users/nbatalh1/Documents/data/kcoeff_2020/sonora_2020_feh+000_co_100.data.196/&#39;</span>
 <span class="c1">#for number #2 above, point to the directory</span>
 <span class="n">sonora_profile_db</span> <span class="o">=</span> <span class="s1">&#39;/Users/nbatalh1/Documents/data/sonora_profile/&#39;</span>
@@ -459,8 +412,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1">#picaso</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#picaso</span>
 <span class="kn">from</span> <span class="nn">picaso</span> <span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
 <span class="kn">from</span> <span class="nn">picaso</span> <span class="kn">import</span> <span class="n">justplotit</span> <span class="k">as</span> <span class="n">jpi</span>
 <span class="n">jpi</span><span class="o">.</span><span class="n">output_notebook</span><span class="p">()</span>
@@ -785,22 +737,20 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1">#let&#39;s do two calculations</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#let&#39;s do two calculations</span>
 <span class="c1">#first, the regular monochromatic opacities</span>
 <span class="n">opacity_mono</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">()</span> <span class="c1">#lets just use all defaults</span>
 </pre></div>
 </div>
 </div>
-<div class="section" id="Call-opannection-and-supply-a-correlated-k-table">
+<section id="Call-opannection-and-supply-a-correlated-k-table">
 <h2>Call <code class="docutils literal notranslate"><span class="pre">opannection</span></code> and supply a correlated-k table<a class="headerlink" href="#Call-opannection-and-supply-a-correlated-k-table" title="Permalink to this headline">¶</a></h2>
 <p>Notice that when we call the <code class="docutils literal notranslate"><span class="pre">opannection</span></code> with the <code class="docutils literal notranslate"><span class="pre">ck=True</span></code>, we must also pass it one of the directories from Zenodo. The directory name describes the chemistry that this has been calculated for. The <code class="docutils literal notranslate"><span class="pre">ck_db</span></code> we have defined is for 1xSolar, Solar C/O.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1">#second the correlated k table</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#second the correlated k table</span>
 <span class="n">opacity_ck</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">ck</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                              <span class="n">ck_db</span><span class="o">=</span><span class="n">ck_db</span>
                             <span class="p">)</span>
@@ -811,8 +761,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1">#lets use the same example Jupiter PT profile</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#lets use the same example Jupiter PT profile</span>
 <span class="n">pt</span><span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_pt</span><span class="p">(),</span> <span class="n">delim_whitespace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
 </pre></div>
 </div>
@@ -822,8 +771,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">calc</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;ck&#39;</span><span class="p">:</span><span class="n">opacity_ck</span><span class="p">,</span><span class="s1">&#39;mono&#39;</span><span class="p">:</span><span class="n">opacity_mono</span><span class="p">}</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">calc</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;ck&#39;</span><span class="p">:</span><span class="n">opacity_ck</span><span class="p">,</span><span class="s1">&#39;mono&#39;</span><span class="p">:</span><span class="n">opacity_mono</span><span class="p">}</span>
 <span class="n">cases</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">calc</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
 
 <span class="c1">#phase angle</span>
@@ -854,26 +802,22 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">cases</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">premix_atmosphere</span><span class="p">(</span><span class="n">calc</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">],</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cases</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">premix_atmosphere</span><span class="p">(</span><span class="n">calc</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">],</span>
             <span class="n">df</span> <span class="o">=</span> <span class="n">cases</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;atmosphere&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,[</span><span class="s1">&#39;pressure&#39;</span><span class="p">,</span><span class="s1">&#39;temperature&#39;</span><span class="p">]])</span>
 
 <span class="c1">#now let&#39;s pass that to the monochromatic opacities for consistency</span>
 <span class="n">cases</span><span class="p">[</span><span class="s1">&#39;mono&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">cases</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;atmosphere&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">])</span>
-
-</pre></div>
+<br/></pre></div>
 </div>
 </div>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">df</span> <span class="o">=</span> <span class="p">{}</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="n">df</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cases</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">calc</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">],</span><span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal&#39;</span><span class="p">)</span>
 <span class="n">df</span><span class="p">[</span><span class="s1">&#39;mono&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cases</span><span class="p">[</span><span class="s1">&#39;mono&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">calc</span><span class="p">[</span><span class="s1">&#39;mono&#39;</span><span class="p">],</span><span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal&#39;</span><span class="p">)</span>
-
-</pre></div>
+<br/></pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -887,8 +831,8 @@ var element = document.currentScript.previousSibling.previousSibling;
   ln_kappa = np.exp(((1-t_interp) * np.log(data_low[i+&#39;_&#39;+str(jlow)]) ) +
 </pre></div></div>
 </div>
-</div>
-<div class="section" id="Compare-the-optical-depth-for-various-layers">
+</section>
+<section id="Compare-the-optical-depth-for-various-layers">
 <h2>Compare the optical depth for various layers<a class="headerlink" href="#Compare-the-optical-depth-for-various-layers" title="Permalink to this headline">¶</a></h2>
 <p>One big difference you will notice between <code class="docutils literal notranslate"><span class="pre">taugas</span></code> for a monochromatic opacity calculation and a correlated-k calculation, is that <code class="docutils literal notranslate"><span class="pre">taugas</span></code> will have an extra dimension for CK. Those correspond to each of the gauss points. Now, be careful not to confuse the gauss points that we use for the disk integration and these gauss points. They are different!</p>
 <p>Below is an example of summing the <code class="docutils literal notranslate"><span class="pre">tau</span></code>’s in order to compare with the monochromatic opacities.</p>
@@ -896,8 +840,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">f</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">y_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span><span class="n">y_range</span><span class="o">=</span><span class="p">[</span><span class="mf">1e-3</span><span class="p">,</span><span class="mf">1e4</span><span class="p">],</span><span class="n">x_range</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">14</span><span class="p">],</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">f</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">y_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span><span class="n">y_range</span><span class="o">=</span><span class="p">[</span><span class="mf">1e-3</span><span class="p">,</span><span class="mf">1e4</span><span class="p">],</span><span class="n">x_range</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">14</span><span class="p">],</span>
               <span class="n">x_axis_label</span><span class="o">=</span><span class="s1">&#39;Wavelength (um)&#39;</span><span class="p">,</span>
               <span class="n">y_axis_label</span><span class="o">=</span><span class="s1">&#39;Optical Depth per Layer&#39;</span><span class="p">)</span>
 
@@ -914,8 +857,7 @@ var element = document.currentScript.previousSibling.previousSibling;
     <span class="n">f</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="mf">1e4</span><span class="o">/</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">][</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span><span class="n">plot</span><span class="p">[</span><span class="n">i</span><span class="p">,:],</span><span class="n">color</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">Colorblind8</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
            <span class="p">,</span><span class="n">line_width</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">legend_label</span><span class="o">=</span><span class="s1">&#39;CK&#39;</span><span class="p">)</span>
 <span class="n">jpi</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-
-</pre></div>
+<br/></pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -959,16 +901,15 @@ var element = document.currentScript.previousSibling.previousSibling;
 })(window);
 </script></div>
 </div>
-</div>
-<div class="section" id="Compare-the-final-result-of-the-monochromatic-and-ck-generated---spectra">
+</section>
+<section id="Compare-the-final-result-of-the-monochromatic-and-ck-generated---spectra">
 <h2>Compare the final result of the monochromatic and ck generated - spectra<a class="headerlink" href="#Compare-the-final-result-of-the-monochromatic-and-ck-generated---spectra" title="Permalink to this headline">¶</a></h2>
 <p>If all was perfect and the Correlated-K tables and the picaso opacity file were derived from the same set of cross sections, then these should be identical. Small deviations might be from: 1) different line lists sources, or 2) the resampling factor might be too low. The latter could be resolved by not using the resampling parameter in <code class="docutils literal notranslate"><span class="pre">opannection</span></code>.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1">#flip units just to show an example of unit converstion</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#flip units just to show an example of unit converstion</span>
 <span class="n">wno_ck</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">][</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">]</span>
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">calc</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
     <span class="n">compare</span> <span class="o">=</span> <span class="s1">&#39;thermal&#39;</span>
@@ -998,8 +939,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">x</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1e4</span><span class="o">/</span><span class="n">df</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;regridx&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">calc</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1e4</span><span class="o">/</span><span class="n">df</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;regridx&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">calc</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
 <span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;regridy&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">calc</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
 <span class="n">jpi</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span>
                   <span class="n">y</span><span class="p">,</span>
@@ -1050,8 +990,8 @@ var element = document.currentScript.previousSibling.previousSibling;
 })(window);
 </script></div>
 </div>
-</div>
-<div class="section" id="Compare-Chemistry">
+</section>
+<section id="Compare-Chemistry">
 <h2>Compare Chemistry<a class="headerlink" href="#Compare-Chemistry" title="Permalink to this headline">¶</a></h2>
 <p>In this case we supplied it the same chemistry. However, there may be cases where you want to extract the chemistry from the pre-computed files. This is how you would go about doing so.</p>
 <p>For the below code snippet, I am pulling out the abundances that are higher than 0.1 ppm.</p>
@@ -1059,8 +999,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">f</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">y_range</span><span class="o">=</span><span class="p">[</span><span class="mi">50</span><span class="p">,</span><span class="mf">1e-4</span><span class="p">],</span> <span class="n">y_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span><span class="n">x_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">f</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">y_range</span><span class="o">=</span><span class="p">[</span><span class="mi">50</span><span class="p">,</span><span class="mf">1e-4</span><span class="p">],</span> <span class="n">y_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span><span class="n">x_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span>
                <span class="n">x_range</span><span class="o">=</span><span class="p">[</span><span class="mf">1e-8</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">y_axis_label</span><span class="o">=</span><span class="s1">&#39;Pressure (bar)&#39;</span><span class="p">,</span>
               <span class="n">x_axis_label</span><span class="o">=</span><span class="s1">&#39;Mixing Ratio (v/v)&#39;</span><span class="p">)</span>
 
@@ -1128,61 +1067,42 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
 </pre></div>
 </div>
 </div>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>
-           
           </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="10_AnalyzingApproximations.html" class="btn btn-neutral float-right" title="Diving into code approximations" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="10_ResamplingOpacities.html" class="btn btn-neutral float-left" title="What Resampling Do I Need for My Data??" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="10_ResamplingOpacities.html" class="btn btn-neutral float-left" title="What Resampling Do I Need for My Data??" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="10_AnalyzingApproximations.html" class="btn btn-neutral float-right" title="Diving into code approximations" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &copy; Copyright 
-
-    </p>
+    <p>&#169; Copyright .</p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

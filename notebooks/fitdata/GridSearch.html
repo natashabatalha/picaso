@@ -1,74 +1,40 @@
-
-
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>How to Fit Grid Models to Data &mdash; picaso 3.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-
-  
-  
-  
-  
-
-  
-  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../../_static/jquery.js"></script>
-        <script type="text/javascript" src="../../_static/underscore.js"></script>
-        <script type="text/javascript" src="../../_static/doctools.js"></script>
-        <script type="text/javascript" src="../../_static/language_data.js"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
-    
-    <script type="text/javascript" src="../../_static/js/theme.js"></script>
-
-    
-
-  
-  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Querying Opacities" href="../10_QueryOpacities.html" />
     <link rel="prev" title="One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry at Solar M/H and C/O" href="../climate/12c_BrownDwarf_DEQ.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
-
-          
             <a href="../../index.html" class="icon icon-home"> picaso
-          
-
-          
           </a>
-
-          
-            
-            
               <div class="version">
                 3.0
               </div>
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -76,17 +42,7 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../../tutorials.html">The Tutorials</a><ul class="current">
@@ -122,93 +78,68 @@
 <li class="toctree-l1"><a class="reference internal" href="../../workshops.html">Workshop Material</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../credit.html">The Papers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credit.html">What to Cite</a></li>
 </ul>
 
-            
-          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../index.html">picaso</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="../../index.html">Docs</a> &raquo;</li>
-        
-          <li><a href="../../tutorials.html">Tutorials</a> &raquo;</li>
-        
-      <li>How to Fit Grid Models to Data</li>
-    
-    
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">How to Fit Grid Models to Data</li>
       <li class="wy-breadcrumbs-aside">
-        
-            
             <a href="../../_sources/notebooks/fitdata/GridSearch.ipynb.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+             
   
 <style>
 /* CSS for nbsphinx extension */
 
 /* remove conflicting styling from Sphinx themes */
-div.nbinput.container,
-div.nbinput.container div.prompt,
-div.nbinput.container div.input_area,
-div.nbinput.container div[class*=highlight],
-div.nbinput.container div[class*=highlight] pre,
-div.nboutput.container,
-div.nboutput.container div.prompt,
-div.nboutput.container div.output_area,
-div.nboutput.container div[class*=highlight],
-div.nboutput.container div[class*=highlight] pre {
-    background: none;
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
     border: none;
-    padding: 0 0;
+    padding: 0;
     margin: 0;
     box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
 }
 
 /* avoid gaps between output lines */
@@ -255,27 +186,41 @@ div.nboutput.container div.prompt pre {
 /* all prompts */
 div.nbinput.container div.prompt,
 div.nboutput.container div.prompt {
-    min-width: 5ex;
-    padding-top: 0.3rem;
-    padding-right: 0.3rem;
-    text-align: right;
-    flex: 0;
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
 }
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
 @media (max-width: 540px) {
     div.nbinput.container div.prompt,
     div.nboutput.container div.prompt {
+        width: unset;
         text-align: left;
         padding: 0.4em;
     }
     div.nboutput.container div.prompt.empty {
         padding: 0;
     }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
 }
 
-/* disable scrollbars on prompts */
+/* disable scrollbars and line breaks on prompts */
 div.nbinput.container div.prompt pre,
 div.nboutput.container div.prompt pre {
     overflow: hidden;
+    white-space: pre;
 }
 
 /* input/output area */
@@ -296,7 +241,7 @@ div.nboutput.container div.output_area {
 div.nbinput.container div.input_area {
     border: 1px solid #e0e0e0;
     border-radius: 2px;
-    background: #f5f5f5;
+    /*background: #f5f5f5;*/
 }
 
 /* override MathJax center alignment in output cells */
@@ -361,7 +306,8 @@ div.nboutput.container div.output_area div[class*=highlight].math,
 div.nboutput.container div.output_area.rendered_html,
 div.nboutput.container div.output_area > div.output_javascript,
 div.nboutput.container div.output_area:not(.rendered_html) > img{
-    padding: 0.3rem;
+    padding: 5px;
+    margin: 0;
 }
 
 /* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
@@ -371,11 +317,12 @@ div.nboutput.container div.output_area > div[class^='highlight']{
 }
 
 /* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
-.prompt a.copybtn {
+.prompt .copybtn {
     display: none;
 }
 
 /* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
 div.rendered_html table {
   border: none;
   border-collapse: collapse;
@@ -384,10 +331,14 @@ div.rendered_html table {
   font-size: 12px;
   table-layout: fixed;
 }
+.jp-RenderedHTMLCommon thead,
 div.rendered_html thead {
   border-bottom: 1px solid black;
   vertical-align: bottom;
 }
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
 div.rendered_html tr,
 div.rendered_html th,
 div.rendered_html td {
@@ -399,12 +350,15 @@ div.rendered_html td {
   max-width: none;
   border: none;
 }
+.jp-RenderedHTMLCommon th,
 div.rendered_html th {
   font-weight: bold;
 }
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
 div.rendered_html tbody tr:nth-child(odd) {
   background: #f5f5f5;
 }
+.jp-RenderedHTMLCommon tbody tr:hover,
 div.rendered_html tbody tr:hover {
   background: rgba(66, 165, 245, 0.2);
 }
@@ -435,7 +389,7 @@ div.rendered_html tbody tr:hover {
 <p class="admonition-title">Note</p>
 <p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/fitdata/GridSearch.ipynb">Download full notebook here</a></p>
 </div>
-<div class="section" id="How-to-Fit-Grid-Models-to-Data">
+<section id="How-to-Fit-Grid-Models-to-Data">
 <h1>How to Fit Grid Models to Data<a class="headerlink" href="#How-to-Fit-Grid-Models-to-Data" title="Permalink to this headline">¶</a></h1>
 <p>In this notebook, we show how to use the <code class="docutils literal notranslate"><span class="pre">PICASO</span></code>-formatted grid models to interpret data. We will use the results of the <a class="reference external" href="https://arxiv.org/pdf/2208.11692.pdf">JWST Transiting Exoplanet Community Early Release Science Team’s</a> first look analysis of WASP-39 b.</p>
 <p><strong>Helpful knowledge before running this notebook:</strong></p>
@@ -453,8 +407,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">os</span>
 
 <span class="kn">import</span> <span class="nn">picaso.justdoit</span> <span class="k">as</span> <span class="nn">jdi</span>
@@ -778,7 +731,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 }(window));
 </script></div>
 </div>
-<div class="section" id="Define-Paths-To-Data-and-Models">
+<section id="Define-Paths-To-Data-and-Models">
 <h2>Define Paths To Data and Models<a class="headerlink" href="#Define-Paths-To-Data-and-Models" title="Permalink to this headline">¶</a></h2>
 <p>You should have four folders in your <code class="docutils literal notranslate"><span class="pre">model_dir</span></code>:</p>
 <ol class="arabic simple">
@@ -791,8 +744,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1">#should have sub folders similar to above</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#should have sub folders similar to above</span>
 <span class="c1">#agnostic to where it is, just make sure you point to the right data file</span>
 <span class="n">model_dir</span> <span class="o">=</span> <span class="s2">&quot;/Users/nbatalh1/Documents/data/planets/WASP-39b/&quot;</span>
 
@@ -817,8 +769,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">f</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">plot_errorbar</span><span class="p">(</span><span class="n">wlgrid_center</span><span class="p">,</span> <span class="n">rprs_data2</span><span class="p">,</span><span class="n">e_rprs2</span><span class="p">,</span> <span class="n">plot_type</span><span class="o">=</span><span class="s1">&#39;matplotlib&#39;</span><span class="p">,</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">f</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">plot_errorbar</span><span class="p">(</span><span class="n">wlgrid_center</span><span class="p">,</span> <span class="n">rprs_data2</span><span class="p">,</span><span class="n">e_rprs2</span><span class="p">,</span> <span class="n">plot_type</span><span class="o">=</span><span class="s1">&#39;matplotlib&#39;</span><span class="p">,</span>
                    <span class="n">plot_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;ylabel&#39;</span><span class="p">:</span><span class="sa">r</span><span class="s1">&#39;(R$_p$/R$_*$)$^2$&#39;</span><span class="p">})</span><span class="c1">#plot_type=&#39;bokeh&#39; also available</span>
 <span class="c1">#jpi.show(f) #if using bokeh (note if using bokeh need those key words (e.g. y_axis_label instead of ylabel))</span>
 </pre></div>
@@ -831,8 +782,8 @@ var element = document.currentScript.previousSibling.previousSibling;
 <img alt="../../_images/notebooks_fitdata_GridSearch_4_0.png" src="../../_images/notebooks_fitdata_GridSearch_4_0.png" />
 </div>
 </div>
-</div>
-<div class="section" id="Add-Available-Grids-to-Test">
+</section>
+<section id="Add-Available-Grids-to-Test">
 <h2>Add Available Grids to Test<a class="headerlink" href="#Add-Available-Grids-to-Test" title="Permalink to this headline">¶</a></h2>
 <p>First step will be to load your first grid into the <code class="docutils literal notranslate"><span class="pre">GridFitter</span></code> class. You can do this easily by supplying the function a directory location, and grid name (<code class="docutils literal notranslate"><span class="pre">grid_name</span></code>).</p>
 <p>The only purpose of <code class="docutils literal notranslate"><span class="pre">grid_name</span></code> is in case you add more grids to your <code class="docutils literal notranslate"><span class="pre">GridFitter</span></code> function, it will be easy to keep track of what parameters go with what grid.</p>
@@ -840,8 +791,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">grid_name</span> <span class="o">=</span> <span class="s2">&quot;picaso_cld_free&quot;</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">grid_name</span> <span class="o">=</span> <span class="s2">&quot;picaso_cld_free&quot;</span>
 <span class="n">location</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span><span class="s2">&quot;cld_free_R=3000_0,6-6um&quot;</span><span class="p">)</span>
 <span class="n">fitter</span> <span class="o">=</span> <span class="n">lyz</span><span class="o">.</span><span class="n">GridFitter</span><span class="p">(</span><span class="n">grid_name</span><span class="p">,</span><span class="n">location</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
@@ -864,8 +814,7 @@ For cto in planet_params grid is: [0.229 0.458 0.687 0.916]
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fitter</span><span class="o">.</span><span class="n">grid_params</span><span class="p">[</span><span class="s1">&#39;picaso_cld_free&#39;</span><span class="p">][</span><span class="s1">&#39;planet_params&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fitter</span><span class="o">.</span><span class="n">grid_params</span><span class="p">[</span><span class="s1">&#39;picaso_cld_free&#39;</span><span class="p">][</span><span class="s1">&#39;planet_params&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -882,8 +831,7 @@ dict_keys([&#39;tint&#39;, &#39;heat_redis&#39;, &#39;mh&#39;, &#39;cto&#39;])
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">location</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span><span class="s2">&quot;cldy_R=3000_0,6-6um&quot;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">location</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span><span class="s2">&quot;cldy_R=3000_0,6-6um&quot;</span><span class="p">)</span>
 <span class="n">fitter</span><span class="o">.</span><span class="n">add_grid</span><span class="p">(</span><span class="s1">&#39;picaso_cldy&#39;</span><span class="p">,</span> <span class="n">location</span><span class="p">)</span><span class="c1">#</span>
 </pre></div>
 </div>
@@ -902,15 +850,14 @@ For cto in planet_params grid is: [0.229 0.458 0.687 0.916]
 For fsed in cld_params grid is: [ 0.6  1.   3.   6.  10. ]
 </pre></div></div>
 </div>
-<div class="section" id="Explore-the-parameters-of-the-grid">
+<section id="Explore-the-parameters-of-the-grid">
 <h3>Explore the parameters of the grid<a class="headerlink" href="#Explore-the-parameters-of-the-grid" title="Permalink to this headline">¶</a></h3>
 <p>You can see what grids you have loaded</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fitter</span><span class="o">.</span><span class="n">grids</span> <span class="c1">#what grids exist</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fitter</span><span class="o">.</span><span class="n">grids</span> <span class="c1">#what grids exist</span>
 </pre></div>
 </div>
 </div>
@@ -928,8 +875,7 @@ For fsed in cld_params grid is: [ 0.6  1.   3.   6.  10. ]
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fitter</span><span class="o">.</span><span class="n">overview</span><span class="p">[</span><span class="s1">&#39;picaso_cld_free&#39;</span><span class="p">]</span><span class="c1">#top level info from the attrs</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fitter</span><span class="o">.</span><span class="n">overview</span><span class="p">[</span><span class="s1">&#39;picaso_cld_free&#39;</span><span class="p">]</span><span class="c1">#top level info from the attrs</span>
 </pre></div>
 </div>
 </div>
@@ -969,8 +915,7 @@ For fsed in cld_params grid is: [ 0.6  1.   3.   6.  10. ]
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="nb">print</span><span class="p">(</span><span class="n">fitter</span><span class="o">.</span><span class="n">grid_params</span><span class="p">[</span><span class="s1">&#39;picaso_cld_free&#39;</span><span class="p">][</span><span class="s1">&#39;planet_params&#39;</span><span class="p">][</span><span class="s1">&#39;tint&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">fitter</span><span class="o">.</span><span class="n">grid_params</span><span class="p">[</span><span class="s1">&#39;picaso_cld_free&#39;</span><span class="p">][</span><span class="s1">&#39;planet_params&#39;</span><span class="p">][</span><span class="s1">&#39;tint&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
 <span class="c1">#this full list can be cross referened against the file list</span>
 <span class="n">fitter</span><span class="o">.</span><span class="n">list_of_files</span><span class="p">[</span><span class="s1">&#39;picaso_cld_free&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
 <span class="c1">#in this case we can verify against the filename</span>
@@ -985,30 +930,28 @@ For fsed in cld_params grid is: [ 0.6  1.   3.   6.  10. ]
 100.0 /Users/nbatalh1/Documents/data/planets/WASP-39b/cld_free_R=3000_0,6-6um/profile_eq_planet_100_grav_4.5_mh_+1.5_CO_0.5_sm_0.0486_v_0.4_.nc
 </pre></div></div>
 </div>
-</div>
-</div>
-<div class="section" id="Add-Datasets-to-Explore">
+</section>
+</section>
+<section id="Add-Datasets-to-Explore">
 <h2>Add Datasets to Explore<a class="headerlink" href="#Add-Datasets-to-Explore" title="Permalink to this headline">¶</a></h2>
 <p>Though the models are interesting, what we are really after is which is most representative of the data. So now let’s add some datasets to explore.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fitter</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="s1">&#39;firefly&#39;</span><span class="p">,</span><span class="n">wlgrid_center</span><span class="p">,</span> <span class="n">wlgrid_width</span><span class="p">,</span> <span class="n">rprs_data2</span><span class="p">,</span> <span class="n">e_rprs2</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fitter</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="s1">&#39;firefly&#39;</span><span class="p">,</span><span class="n">wlgrid_center</span><span class="p">,</span> <span class="n">wlgrid_width</span><span class="p">,</span> <span class="n">rprs_data2</span><span class="p">,</span> <span class="n">e_rprs2</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-</div>
-<div class="section" id="Compute-\chi_{red}^2/N-and-Retrieve-Single-Best-Fit">
+</section>
+<section id="Compute-\chi_{red}^2/N-and-Retrieve-Single-Best-Fit">
 <h2>Compute <span class="math notranslate nohighlight">\(\chi_{red}^2\)</span>/N and Retrieve Single Best Fit<a class="headerlink" href="#Compute-\chi_{red}^2/N-and-Retrieve-Single-Best-Fit" title="Permalink to this headline">¶</a></h2>
 <p>In this analysis we used the reduced chi sq per data point as a metric to fit the grid. This fitter function will go through your whole grid and compute cross reference the chi sq compared to your data.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fitter</span><span class="o">.</span><span class="n">fit_grid</span><span class="p">(</span><span class="s1">&#39;picaso_cld_free&#39;</span><span class="p">,</span><span class="s1">&#39;firefly&#39;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fitter</span><span class="o">.</span><span class="n">fit_grid</span><span class="p">(</span><span class="s1">&#39;picaso_cld_free&#39;</span><span class="p">,</span><span class="s1">&#39;firefly&#39;</span><span class="p">)</span>
 <span class="n">fitter</span><span class="o">.</span><span class="n">fit_grid</span><span class="p">(</span><span class="s1">&#39;picaso_cldy&#39;</span><span class="p">,</span><span class="s1">&#39;firefly&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -1018,8 +961,7 @@ For fsed in cld_params grid is: [ 0.6  1.   3.   6.  10. ]
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">out</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span><span class="c1">#allows you to easily grab data</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">out</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span><span class="c1">#allows you to easily grab data</span>
 <span class="n">out</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -1038,8 +980,7 @@ dict_keys([&#39;list_of_files&#39;, &#39;spectra_w_offset&#39;, &#39;rank_order&
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1">### Use rank order to get the top best fit or other parameters</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">### Use rank order to get the top best fit or other parameters</span>
 <span class="c1">#top 5 best fit models metallicities for the cloud free grid</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;cld free&quot;</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;grid_params&#39;</span><span class="p">][</span><span class="s1">&#39;picaso_cld_free&#39;</span><span class="p">][</span><span class="s1">&#39;planet_params&#39;</span><span class="p">][</span><span class="s1">&#39;mh&#39;</span><span class="p">]</span>
         <span class="p">)[</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;rank_order&#39;</span><span class="p">][</span><span class="s1">&#39;picaso_cld_free&#39;</span><span class="p">][</span><span class="s1">&#39;firefly&#39;</span><span class="p">]][</span><span class="mi">0</span><span class="p">:</span><span class="mi">5</span><span class="p">])</span>
@@ -1064,8 +1005,7 @@ cldy [10.     3.162 10.    10.    10.   ]
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1">#top 5 best fit chi sqs for the cloud free grid</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#top 5 best fit chi sqs for the cloud free grid</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;cld free&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;chi_sqs&#39;</span><span class="p">][</span><span class="s1">&#39;picaso_cld_free&#39;</span><span class="p">][</span><span class="s1">&#39;firefly&#39;</span><span class="p">]</span>
         <span class="p">)[</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;rank_order&#39;</span><span class="p">][</span><span class="s1">&#39;picaso_cld_free&#39;</span><span class="p">][</span><span class="s1">&#39;firefly&#39;</span><span class="p">]][</span><span class="mi">0</span><span class="p">:</span><span class="mi">5</span><span class="p">])</span>
 
@@ -1085,16 +1025,15 @@ cldy [1.32824608 1.38695585 1.39407696 1.39873511 1.40012717]
 </pre></div></div>
 </div>
 <p>The cloudy grid is giving lower chi square giving us clues that this planet likely has clouds affecting the spectrum.</p>
-</div>
-<div class="section" id="Analyze-Single-Best-Fits">
+</section>
+<section id="Analyze-Single-Best-Fits">
 <h2>Analyze Single Best Fits<a class="headerlink" href="#Analyze-Single-Best-Fits" title="Permalink to this headline">¶</a></h2>
 <p>Let’s analyze the single best fits in order to compare the spectrum with the data</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fig</span><span class="p">,</span><span class="n">ax</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">plot_best_fit</span><span class="p">([</span><span class="s1">&#39;picaso_cld_free&#39;</span><span class="p">,</span><span class="s1">&#39;picaso_cldy&#39;</span><span class="p">],</span><span class="s1">&#39;firefly&#39;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span><span class="n">ax</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">plot_best_fit</span><span class="p">([</span><span class="s1">&#39;picaso_cld_free&#39;</span><span class="p">,</span><span class="s1">&#39;picaso_cldy&#39;</span><span class="p">],</span><span class="s1">&#39;firefly&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -1110,8 +1049,7 @@ cldy [1.32824608 1.38695585 1.39407696 1.39873511 1.40012717]
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">best_fit</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">print_best_fit</span><span class="p">(</span><span class="s1">&#39;picaso_cldy&#39;</span><span class="p">,</span><span class="s1">&#39;firefly&#39;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">best_fit</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">print_best_fit</span><span class="p">(</span><span class="s1">&#39;picaso_cldy&#39;</span><span class="p">,</span><span class="s1">&#39;firefly&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -1129,16 +1067,15 @@ fsed=0.6
 </pre></div></div>
 </div>
 <p>You can see these same parameters reported in original Nature paper: <a class="reference external" href="https://arxiv.org/pdf/2208.11692.pdf">https://arxiv.org/pdf/2208.11692.pdf</a></p>
-</div>
-<div class="section" id="Estimated-Posteriors">
+</section>
+<section id="Estimated-Posteriors">
 <h2>Estimated Posteriors<a class="headerlink" href="#Estimated-Posteriors" title="Permalink to this headline">¶</a></h2>
 <p>It is also helpful to get an idea of what the probability is for each grid parameter in your model. This will give you a better representation of degeneracies that exist with your data and each of your physical parameters.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">f</span><span class="p">,</span><span class="n">a</span><span class="o">=</span><span class="n">fitter</span><span class="o">.</span><span class="n">plot_posteriors</span><span class="p">(</span><span class="s1">&#39;picaso_cld_free&#39;</span><span class="p">,</span><span class="s1">&#39;firefly&#39;</span><span class="p">,[</span><span class="s1">&#39;tint&#39;</span><span class="p">,</span><span class="s1">&#39;mh&#39;</span><span class="p">,</span><span class="s1">&#39;cto&#39;</span><span class="p">],</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">f</span><span class="p">,</span><span class="n">a</span><span class="o">=</span><span class="n">fitter</span><span class="o">.</span><span class="n">plot_posteriors</span><span class="p">(</span><span class="s1">&#39;picaso_cld_free&#39;</span><span class="p">,</span><span class="s1">&#39;firefly&#39;</span><span class="p">,[</span><span class="s1">&#39;tint&#39;</span><span class="p">,</span><span class="s1">&#39;mh&#39;</span><span class="p">,</span><span class="s1">&#39;cto&#39;</span><span class="p">],</span>
                <span class="n">x_label_style</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;tint&#39;</span><span class="p">:</span><span class="sa">r</span><span class="s2">&quot;T$_{\rm int}$ [K]&quot;</span><span class="p">,</span>
                               <span class="s1">&#39;mh&#39;</span><span class="p">:</span><span class="s2">&quot;log[M/H]&quot;</span><span class="p">,</span> <span class="s1">&#39;cto&#39;</span><span class="p">:</span><span class="sa">r</span><span class="s2">&quot;C/O&quot;</span><span class="p">},</span>
                <span class="n">x_axis_type</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;tint&#39;</span><span class="p">:</span><span class="sa">r</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span>
@@ -1159,8 +1096,8 @@ fsed=0.6
 </div>
 </div>
 <p>What can you take away from this plot? 1. Cloudy models reduce the number of models that can be fit to the data with high metallicity 2. Internal temperature cannot be constrained by the data 3. C/O ratios greater than ~0.8 can be ruled out by the data</p>
-</div>
-<div class="section" id="Interpret-Best-Fit">
+</section>
+<section id="Interpret-Best-Fit">
 <h2>Interpret Best Fit<a class="headerlink" href="#Interpret-Best-Fit" title="Permalink to this headline">¶</a></h2>
 <p>Now that we are happy with the best-fitting model, we can load in that data and post process some plots in order to gain better understanding of our results.</p>
 <p>We can use <code class="docutils literal notranslate"><span class="pre">PICASO</span></code>’s <code class="docutils literal notranslate"><span class="pre">xarray</span></code> loader to quickly load in one of our models.</p>
@@ -1168,8 +1105,7 @@ fsed=0.6
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1">#grab top model</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#grab top model</span>
 <span class="n">top_model_file</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;list_of_files&#39;</span><span class="p">][</span><span class="s1">&#39;picaso_cldy&#39;</span><span class="p">]</span>
         <span class="p">)[</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;rank_order&#39;</span><span class="p">][</span><span class="s1">&#39;picaso_cldy&#39;</span><span class="p">][</span><span class="s1">&#39;firefly&#39;</span><span class="p">]][</span><span class="mi">0</span><span class="p">]</span>
 
@@ -2702,23 +2638,21 @@ Attributes:
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">opa</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">])</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">opa</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">])</span>
 <span class="n">case</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">input_xarray</span><span class="p">(</span><span class="n">xr_usr</span><span class="p">,</span> <span class="n">opa</span><span class="p">)</span>
 <span class="c1">#if you need to rerun your spectrum</span>
 <span class="c1">#out = case.spectrum(opa,calculation=&#39;transmisson&#39;)</span>
 </pre></div>
 </div>
 </div>
-<div class="section" id="See-Contribution-From-Each-Molecule">
+<section id="See-Contribution-From-Each-Molecule">
 <h3>See Contribution From Each Molecule<a class="headerlink" href="#See-Contribution-From-Each-Molecule" title="Permalink to this headline">¶</a></h3>
 <p>One of the most common plots that was also used in the original paper is the “leave one out” method to see how each molecule is affecting our spectrum.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1">#copy atmo before modifying and rerunning picaso</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#copy atmo before modifying and rerunning picaso</span>
 <span class="n">og_atmo</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;atmosphere&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">])</span>
 <span class="c1">#atmo</span>
 <span class="n">w</span><span class="p">,</span><span class="n">f</span><span class="p">,</span><span class="n">l</span> <span class="o">=</span><span class="p">[],[],[]</span>
@@ -2732,7 +2666,7 @@ Attributes:
     <span class="k">if</span> <span class="n">iex</span><span class="o">==</span><span class="kc">None</span><span class="p">:</span>
         <span class="n">leg</span><span class="o">=</span><span class="s1">&#39;all&#39;</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">leg</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;No </span><span class="si">{iex}</span><span class="s1">&#39;</span>
+        <span class="n">leg</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;No </span><span class="si">{</span><span class="n">iex</span><span class="si">}</span><span class="s1">&#39;</span>
     <span class="n">l</span><span class="o">+=</span><span class="p">[</span><span class="n">leg</span><span class="p">]</span>
 <span class="n">jpi</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">w</span><span class="p">,</span><span class="n">f</span><span class="p">,</span><span class="n">legend</span><span class="o">=</span><span class="n">l</span><span class="p">))</span>
 </pre></div>
@@ -2779,17 +2713,16 @@ var element = document.currentScript.previousSibling.previousSibling;
 })(window);
 </script></div>
 </div>
-</div>
-</div>
-<div class="section" id="Quantify-Molecular-Detection-using-Guassian-Fitting">
+</section>
+</section>
+<section id="Quantify-Molecular-Detection-using-Guassian-Fitting">
 <h2>Quantify Molecular Detection using Guassian Fitting<a class="headerlink" href="#Quantify-Molecular-Detection-using-Guassian-Fitting" title="Permalink to this headline">¶</a></h2>
 <p>For very gaussian shaped molecules (like CO2 in this case), we can use a simple Gaussian fitting technique to quantify the significance of our detection. Note this ONLY works in cases where the shape of the molecule is gaussian with a single peak and well-shaped wings.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1">#grab file to test</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#grab file to test</span>
 <span class="n">top_model_file</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;list_of_files&#39;</span><span class="p">][</span><span class="s1">&#39;picaso_cldy&#39;</span><span class="p">]</span>
         <span class="p">)[</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;rank_order&#39;</span><span class="p">][</span><span class="s1">&#39;picaso_cldy&#39;</span><span class="p">][</span><span class="s1">&#39;firefly&#39;</span><span class="p">]][</span><span class="mi">0</span><span class="p">]</span>
 
@@ -2823,61 +2756,42 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;sigma_single_v_line&#39;</span><span class="p">]</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;sigma_single_v_line&#39;</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>
-           
           </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="../10_QueryOpacities.html" class="btn btn-neutral float-right" title="Querying Opacities" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="../climate/12c_BrownDwarf_DEQ.html" class="btn btn-neutral float-left" title="One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry at Solar M/H and C/O" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../climate/12c_BrownDwarf_DEQ.html" class="btn btn-neutral float-left" title="One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry at Solar M/H and C/O" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../10_QueryOpacities.html" class="btn btn-neutral float-right" title="Querying Opacities" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &copy; Copyright 
-
-    </p>
+    <p>&#169; Copyright .</p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

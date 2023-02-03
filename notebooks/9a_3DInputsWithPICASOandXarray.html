@@ -1,74 +1,40 @@
-
-
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Handling 3D Inputs with PICASO &mdash; picaso 3.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-
-  
-  
-  
-  
-
-  
-  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../_static/jquery.js"></script>
-        <script type="text/javascript" src="../_static/underscore.js"></script>
-        <script type="text/javascript" src="../_static/doctools.js"></script>
-        <script type="text/javascript" src="../_static/language_data.js"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
-    
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-
-    
-
-  
-  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="What is post-processing?" href="9b_PostProcess3Dinput-Chemistry.html" />
     <link rel="prev" title="Spherical Integration in PICASO" href="8_SphericalIntegration.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
-
-          
             <a href="../index.html" class="icon icon-home"> picaso
-          
-
-          
           </a>
-
-          
-            
-            
               <div class="version">
                 3.0
               </div>
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -76,17 +42,7 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../tutorials.html">The Tutorials</a><ul class="current">
@@ -128,90 +84,65 @@
 <li class="toctree-l1"><a class="reference internal" href="../credit.html">What to Cite</a></li>
 </ul>
 
-            
-          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../index.html">picaso</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="../index.html">Docs</a> &raquo;</li>
-        
-          <li><a href="../tutorials.html">Tutorials</a> &raquo;</li>
-        
-      <li>Handling 3D Inputs with PICASO</li>
-    
-    
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">Handling 3D Inputs with PICASO</li>
       <li class="wy-breadcrumbs-aside">
-        
-            
             <a href="../_sources/notebooks/9a_3DInputsWithPICASOandXarray.ipynb.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+             
   
 <style>
 /* CSS for nbsphinx extension */
 
 /* remove conflicting styling from Sphinx themes */
-div.nbinput.container,
-div.nbinput.container div.prompt,
-div.nbinput.container div.input_area,
-div.nbinput.container div[class*=highlight],
-div.nbinput.container div[class*=highlight] pre,
-div.nboutput.container,
-div.nboutput.container div.prompt,
-div.nboutput.container div.output_area,
-div.nboutput.container div[class*=highlight],
-div.nboutput.container div[class*=highlight] pre {
-    background: none;
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
     border: none;
-    padding: 0 0;
+    padding: 0;
     margin: 0;
     box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
 }
 
 /* avoid gaps between output lines */
@@ -258,27 +189,41 @@ div.nboutput.container div.prompt pre {
 /* all prompts */
 div.nbinput.container div.prompt,
 div.nboutput.container div.prompt {
-    min-width: 5ex;
-    padding-top: 0.3rem;
-    padding-right: 0.3rem;
-    text-align: right;
-    flex: 0;
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
 }
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
 @media (max-width: 540px) {
     div.nbinput.container div.prompt,
     div.nboutput.container div.prompt {
+        width: unset;
         text-align: left;
         padding: 0.4em;
     }
     div.nboutput.container div.prompt.empty {
         padding: 0;
     }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
 }
 
-/* disable scrollbars on prompts */
+/* disable scrollbars and line breaks on prompts */
 div.nbinput.container div.prompt pre,
 div.nboutput.container div.prompt pre {
     overflow: hidden;
+    white-space: pre;
 }
 
 /* input/output area */
@@ -299,7 +244,7 @@ div.nboutput.container div.output_area {
 div.nbinput.container div.input_area {
     border: 1px solid #e0e0e0;
     border-radius: 2px;
-    background: #f5f5f5;
+    /*background: #f5f5f5;*/
 }
 
 /* override MathJax center alignment in output cells */
@@ -364,7 +309,8 @@ div.nboutput.container div.output_area div[class*=highlight].math,
 div.nboutput.container div.output_area.rendered_html,
 div.nboutput.container div.output_area > div.output_javascript,
 div.nboutput.container div.output_area:not(.rendered_html) > img{
-    padding: 0.3rem;
+    padding: 5px;
+    margin: 0;
 }
 
 /* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
@@ -374,11 +320,12 @@ div.nboutput.container div.output_area > div[class^='highlight']{
 }
 
 /* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
-.prompt a.copybtn {
+.prompt .copybtn {
     display: none;
 }
 
 /* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
 div.rendered_html table {
   border: none;
   border-collapse: collapse;
@@ -387,10 +334,14 @@ div.rendered_html table {
   font-size: 12px;
   table-layout: fixed;
 }
+.jp-RenderedHTMLCommon thead,
 div.rendered_html thead {
   border-bottom: 1px solid black;
   vertical-align: bottom;
 }
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
 div.rendered_html tr,
 div.rendered_html th,
 div.rendered_html td {
@@ -402,12 +353,15 @@ div.rendered_html td {
   max-width: none;
   border: none;
 }
+.jp-RenderedHTMLCommon th,
 div.rendered_html th {
   font-weight: bold;
 }
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
 div.rendered_html tbody tr:nth-child(odd) {
   background: #f5f5f5;
 }
+.jp-RenderedHTMLCommon tbody tr:hover,
 div.rendered_html tbody tr:hover {
   background: rgba(66, 165, 245, 0.2);
 }
@@ -444,7 +398,7 @@ div.rendered_html tbody tr:hover {
 </li><li><p>1.2  xarray tutorial: Easy plotting</p>
 </li><li><p>1.3  xesfm tutorial: Step-by-step regrid 3D GCM</p>
 </li><li><p>1.4  Regrid 3D GCM with PICASO</p>
-</li></ul></li></ul></div><div class="section" id="Handling-3D-Inputs-with-PICASO">
+</li></ul></li></ul></div><section id="Handling-3D-Inputs-with-PICASO">
 <h1>Handling 3D Inputs with PICASO<a class="headerlink" href="#Handling-3D-Inputs-with-PICASO" title="Permalink to this headline">¶</a></h1>
 <p>Many GCM groups have their files stored as <code class="docutils literal notranslate"><span class="pre">netCDF</span></code> files. Therefore, you may already be used to <code class="docutils literal notranslate"><span class="pre">xarray</span></code> format. If that is the case you will be able to directly input your xarray formatted data to <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> to get out post-processed spectra. If not though, this tutorial will walk you through how to structure your data in xarray format.</p>
 <p>What you will learn:</p>
@@ -457,8 +411,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="kn">from</span> <span class="nn">picaso</span> <span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
@@ -472,8 +425,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">xesmf</span> <span class="k">as</span> <span class="nn">xe</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xesmf</span> <span class="k">as</span> <span class="nn">xe</span>
 <span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
 </pre></div>
 </div>
@@ -483,8 +435,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">gcm_out</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">HJ_pt_3d</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gcm_out</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">HJ_pt_3d</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -493,8 +444,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">gcm_out</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gcm_out</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -513,8 +463,7 @@ dict_keys([&#39;pressure&#39;, &#39;temperature&#39;, &#39;kzz&#39;, &#39;latitu
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">gcm_out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">gcm_out</span><span class="p">[</span><span class="s1">&#39;longitude&#39;</span><span class="p">]),</span> <span class="nb">len</span><span class="p">(</span><span class="n">gcm_out</span><span class="p">[</span><span class="s1">&#39;latitude&#39;</span><span class="p">])</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gcm_out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">gcm_out</span><span class="p">[</span><span class="s1">&#39;longitude&#39;</span><span class="p">]),</span> <span class="nb">len</span><span class="p">(</span><span class="n">gcm_out</span><span class="p">[</span><span class="s1">&#39;latitude&#39;</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
@@ -527,15 +476,14 @@ dict_keys([&#39;pressure&#39;, &#39;temperature&#39;, &#39;kzz&#39;, &#39;latitu
 ((128, 64, 53), 128, 64)
 </pre></div></div>
 </div>
-<div class="section" id="xarray-tutorial:-Convert-numpy-arrays-to-xarray-DataSet">
+<section id="xarray-tutorial:-Convert-numpy-arrays-to-xarray-DataSet">
 <h2><code class="docutils literal notranslate"><span class="pre">xarray</span></code> tutorial: Convert <code class="docutils literal notranslate"><span class="pre">numpy</span></code> arrays to <code class="docutils literal notranslate"><span class="pre">xarray</span></code> DataSet<a class="headerlink" href="#xarray-tutorial:-Convert-numpy-arrays-to-xarray-DataSet" title="Permalink to this headline">¶</a></h2>
 <p>The comments with <code class="docutils literal notranslate"><span class="pre">required</span></code> next to them indicate that they are required for <code class="docutils literal notranslate"><span class="pre">picaso</span></code> to create a spectrum</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># create data</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># create data</span>
 <span class="n">data</span> <span class="o">=</span> <span class="n">gcm_out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">]</span>
 
 <span class="c1"># create coords</span>
@@ -563,8 +511,7 @@ dict_keys([&#39;pressure&#39;, &#39;temperature&#39;, &#39;kzz&#39;, &#39;latitu
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">ds</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ds</span>
 </pre></div>
 </div>
 </div>
@@ -1015,15 +962,14 @@ Attributes:
         [1895.813241, 1809.5611  , 1811.11074 , ...,  759.095941,
           742.249364,  750.667097]]])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-2818ce94-2e0a-44e4-b01f-0fd1e17b63ad' class='xr-section-summary-in' type='checkbox'  checked><label for='section-2818ce94-2e0a-44e4-b01f-0fd1e17b63ad' class='xr-section-summary' >Attributes: <span>(1)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>description :</span></dt><dd>coords with vectors</dd></dl></div></li></ul></div></div></div>
 </div>
-</div>
-<div class="section" id="xarray-tutorial:-Easy-plotting">
+</section>
+<section id="xarray-tutorial:-Easy-plotting">
 <h2><code class="docutils literal notranslate"><span class="pre">xarray</span></code> tutorial: Easy plotting<a class="headerlink" href="#xarray-tutorial:-Easy-plotting" title="Permalink to this headline">¶</a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">ds</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">pressure</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="s1">&#39;lat&#39;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ds</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">pressure</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="s1">&#39;lat&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -1043,12 +989,12 @@ Attributes:
 <img alt="../_images/notebooks_9a_3DInputsWithPICASOandXarray_15_1.png" src="../_images/notebooks_9a_3DInputsWithPICASOandXarray_15_1.png" />
 </div>
 </div>
-</div>
-<div class="section" id="xesmf-tutorial:-Step-by-step-regrid-3D-GCM">
+</section>
+<section id="xesmf-tutorial:-Step-by-step-regrid-3D-GCM">
 <h2><code class="docutils literal notranslate"><span class="pre">xesmf</span></code> tutorial: Step-by-step regrid 3D GCM<a class="headerlink" href="#xesmf-tutorial:-Step-by-step-regrid-3D-GCM" title="Permalink to this headline">¶</a></h2>
 <p>The biggest complication with moving to 3D is making sure that the latitude/longitude grids of some users GCM and <code class="docutils literal notranslate"><span class="pre">picaso</span></code> line up properly. <code class="docutils literal notranslate"><span class="pre">picaso</span></code> computes a flux integration on specific <code class="docutils literal notranslate"><span class="pre">gauss</span></code> and <code class="docutils literal notranslate"><span class="pre">tchebychev</span></code> angles. <strong>Meaning, your GCM input will need to be regridded to fit our angles.</strong> Luckily, as you will see below, it is very easy to do this!</p>
 <p>First, we will show you how this is done using <code class="docutils literal notranslate"><span class="pre">xesmf</span></code>, then we will introduce the <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> function that leverages these same techniques.</p>
-<div class="section" id="Step-1)-Get-latitude/longitude-grid-used-by-picaso">
+<section id="Step-1)-Get-latitude/longitude-grid-used-by-picaso">
 <h3>Step 1) Get latitude/longitude grid used by <code class="docutils literal notranslate"><span class="pre">picaso</span></code><a class="headerlink" href="#Step-1)-Get-latitude/longitude-grid-used-by-picaso" title="Permalink to this headline">¶</a></h3>
 <p><strong>G</strong>auss angles are essentially equivalent to lon<strong>G</strong>itudes</p>
 <p><strong>T</strong>chebychev angles are essentially equivalent to la<strong>T</strong>itudes.</p>
@@ -1056,25 +1002,22 @@ Attributes:
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">n_gauss_angles</span> <span class="o">=</span><span class="mi">10</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">n_gauss_angles</span> <span class="o">=</span><span class="mi">10</span>
 <span class="n">n_chebychev_angles</span><span class="o">=</span><span class="mi">10</span>
 
 <span class="n">gangle</span><span class="p">,</span> <span class="n">gweight</span><span class="p">,</span> <span class="n">tangle</span><span class="p">,</span> <span class="n">tweight</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">get_angles_3d</span><span class="p">(</span><span class="n">n_gauss_angles</span><span class="p">,</span> <span class="n">n_chebychev_angles</span><span class="p">)</span>
 <span class="n">ubar0</span><span class="p">,</span> <span class="n">ubar1</span><span class="p">,</span> <span class="n">cos_theta</span><span class="p">,</span> <span class="n">latitude</span><span class="p">,</span> <span class="n">longitude</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">compute_disco</span><span class="p">(</span><span class="n">n_gauss_angles</span><span class="p">,</span> <span class="n">n_chebychev_angles</span><span class="p">,</span> <span class="n">gangle</span><span class="p">,</span> <span class="n">tangle</span><span class="p">,</span> <span class="n">phase_angle</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-
-</pre></div>
+<br/></pre></div>
 </div>
 </div>
-</div>
-<div class="section" id="Step-2)-Create-the-xesmf-regridder">
+</section>
+<section id="Step-2)-Create-the-xesmf-regridder">
 <h3>Step 2) Create the <code class="docutils literal notranslate"><span class="pre">xesmf</span></code> regridder<a class="headerlink" href="#Step-2)-Create-the-xesmf-regridder" title="Permalink to this headline">¶</a></h3>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">ds_out</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">({</span><span class="s1">&#39;lon&#39;</span><span class="p">:</span> <span class="p">([</span><span class="s1">&#39;lon&#39;</span><span class="p">],</span> <span class="n">longitude</span><span class="o">*</span><span class="mi">180</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">),</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ds_out</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">({</span><span class="s1">&#39;lon&#39;</span><span class="p">:</span> <span class="p">([</span><span class="s1">&#39;lon&#39;</span><span class="p">],</span> <span class="n">longitude</span><span class="o">*</span><span class="mi">180</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">),</span>
                      <span class="s1">&#39;lat&#39;</span><span class="p">:</span> <span class="p">([</span><span class="s1">&#39;lat&#39;</span><span class="p">],</span> <span class="n">latitude</span><span class="o">*</span><span class="mi">180</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">),</span>
                     <span class="p">}</span>
                    <span class="p">)</span>
@@ -1098,8 +1041,7 @@ Attributes:
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">ds_out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">pressure</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span><span class="s1">&#39;lat&#39;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ds_out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">pressure</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span><span class="s1">&#39;lat&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -1119,29 +1061,27 @@ Attributes:
 <img alt="../_images/notebooks_9a_3DInputsWithPICASOandXarray_21_1.png" src="../_images/notebooks_9a_3DInputsWithPICASOandXarray_21_1.png" />
 </div>
 </div>
-</div>
-</div>
-<div class="section" id="Regrid-3D-GCM-with-PICASO">
+</section>
+</section>
+<section id="Regrid-3D-GCM-with-PICASO">
 <h2>Regrid 3D GCM with PICASO<a class="headerlink" href="#Regrid-3D-GCM-with-PICASO" title="Permalink to this headline">¶</a></h2>
 <p>The above code is all the PICASO built in function does – in addition to completing some checks to make sure that your model run is on the same grid as what you are wanting PICASO run.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">ds</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">HJ_pt_3d</span><span class="p">(</span><span class="n">as_xarray</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ds</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">HJ_pt_3d</span><span class="p">(</span><span class="n">as_xarray</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="section" id="DIY-Option-1">
+<section id="DIY-Option-1">
 <h3>DIY Option 1<a class="headerlink" href="#DIY-Option-1" title="Permalink to this headline">¶</a></h3>
 <p>For completeness, first here is the function <code class="docutils literal notranslate"><span class="pre">picaso</span></code> uses internally. You might use this if you want to manipulate results before supplying <code class="docutils literal notranslate"><span class="pre">picaso</span></code> with your final input.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1">#regrid yourself</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#regrid yourself</span>
 <span class="n">out_ds</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">regrid_xarray</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">num_gangle</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
                                <span class="n">num_tangle</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">phase_angle</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="c1">#then supply to picaso</span>
@@ -1177,16 +1117,15 @@ verbose=True;Only one data variable included. Make sure to add in chemical abund
 <img alt="../_images/notebooks_9a_3DInputsWithPICASOandXarray_25_2.png" src="../_images/notebooks_9a_3DInputsWithPICASOandXarray_25_2.png" />
 </div>
 </div>
-</div>
-<div class="section" id="Easiest-Option-2">
+</section>
+<section id="Easiest-Option-2">
 <h3>Easiest Option 2<a class="headerlink" href="#Easiest-Option-2" title="Permalink to this headline">¶</a></h3>
 <p>Use the regular <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> workflow to regrid your 3d input</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">case_3d</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">case_3d</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
 <span class="n">case_3d</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_gangle</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">num_tangle</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
 <span class="c1">#regrid is True as you will do it within the function</span>
 <span class="n">case_3d</span><span class="o">.</span><span class="n">atmosphere_3d</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span><span class="n">regrid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -1211,57 +1150,39 @@ verbose=True;Only one data variable included. Make sure to add in chemical abund
 </div>
 <p>We have solved regridding our temperature-pressure profile. However, PICASO has notified us of another step we must take before running a spectrum: <em>verbose=True;Only one data variable included. Make sure to add in chemical abundances before trying to run spectra.</em></p>
 <p>In the next notebook you will see how to add chemistry and/or clouds to your 3D input.</p>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
            </div>
-           
           </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="9b_PostProcess3Dinput-Chemistry.html" class="btn btn-neutral float-right" title="What is post-processing?" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="8_SphericalIntegration.html" class="btn btn-neutral float-left" title="Spherical Integration in PICASO" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="8_SphericalIntegration.html" class="btn btn-neutral float-left" title="Spherical Integration in PICASO" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="9b_PostProcess3Dinput-Chemistry.html" class="btn btn-neutral float-right" title="What is post-processing?" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &copy; Copyright 
-
-    </p>
+    <p>&#169; Copyright .</p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>
