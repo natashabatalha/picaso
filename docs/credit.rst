@@ -49,4 +49,4 @@ Chemistry
 
 `Marley, Mark S.,Saumon, Didier, Visscher, Channon et al. "The Sonora Brown Dwarf Atmosphere and Evolution Models. I. Model Description and Application to Cloudless Atmospheres in Rainout Chemical Equilibrium" ApJ (2021). <https://ui.adsabs.harvard.edu/abs/2021ApJ...920...85M/abstract>`_
 
-- Use of the `chemeq_vissher()` function
+- Use of the `chemeq_visscher()` function
