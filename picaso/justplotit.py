@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.animation as animation
 import seaborn as sns
+from matplotlib import rc
 
 from scipy.stats.stats import pearsonr  
 from scipy.stats import binned_statistic
@@ -1994,7 +1995,9 @@ def create_heat_map(data,rayleigh=True,extend=False,plot_height=300,plot_width=3
 
     return layout
 
-def create_thermal_heatmap(data, cmap='RdGy', vmin=None, vmax=None):
+def create_thermal_heatmap(data, cmap='RdGy', width=8, height=10, label_size=15, tick_size=12, y_axis=True, pad=0.1, vmin=None, vmax=None):
+
+    rc('font',**{'family':'sans-serif','sans-serif':['Times New Roman']})
 
     data.columns.name = 'w0' 
     data.index.name = 'g0' 
@@ -2006,9 +2009,19 @@ def create_thermal_heatmap(data, cmap='RdGy', vmin=None, vmax=None):
             data = data.drop(columns=[w])
     
     df = data.T
-    fig = sns.heatmap(df, annot=False, linewidths=0.5, square=False, cmap=cmap, vmin=vmin, vmax=vmax)
-    fig.set(xlabel="asymmetry", ylabel="single scattering albedo")
-    fig.xaxis.major_label_orientation = np.pi / 3
+    fig, ax = plt.subplots(figsize=(width,height)) 
+    sns.heatmap(df, annot=False, linewidths=0.5, square=False, cmap=cmap, cbar_kws={'orientation': 'horizontal', 'pad' : pad}, vmin=vmin, vmax=vmax)
+    ax.set_xlabel("Asymmetry",fontsize=label_size)
+    if y_axis==True:
+        ax.set_ylabel("Single Scattering Albedo",fontsize=label_size)
+    else:
+        ax.set_ylabel("")
+    ax.tick_params(labelsize=tick_size)
+    ax.xaxis.major_label_orientation = np.pi / 3
+    
+    cbar_axes = fig.figure.axes[-1]
+    cbar_axes.set_ylabel('% Diff', size=label_size)
+    cbar_axes.tick_params(labelsize=tick_size)
     
     plt.yticks(rotation=0) 
 
