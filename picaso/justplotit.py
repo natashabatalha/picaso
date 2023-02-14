@@ -87,8 +87,10 @@ def plot_errorbar(x,y,e,plot=None,point_kwargs={}, error_kwargs={},plot_type='bo
     """
     if plot_type=='bokeh':
         if isinstance(plot, type(None)):
-            plot_kwargs['plot_height'] = plot_kwargs.get('plot_height',345)
-            plot_kwargs['plot_width'] = plot_kwargs.get('plot_width',1000)
+            plot_kwargs['height'] = plot_kwargs.get('plot_height',345)
+            plot_kwargs['width'] = plot_kwargs.get('plot_width',1000)
+            plot_kwargs['height'] = plot_kwargs.get('height',plot_kwargs['height'])
+            plot_kwargs['width'] = plot_kwargs.get('width',plot_kwargs['width'])
             plot_kwargs['y_axis_label'] = plot_kwargs.get('y_axis_label','Spectrum')
             plot_kwargs['x_axis_label'] = plot_kwargs.get('x_axis_label','Wavelength')
             plot = figure(**plot_kwargs) 
@@ -223,8 +225,10 @@ def mixing_ratio(full_output,limit=50,ng=None,nt=None, **kwargs):
         pressure = full_output['layer']['pressure'][:,ng,nt]
         mixingratios = pd.DataFrame(full_output['layer']['mixingratios'][:,:,ng,nt],columns=molecules)
 
-    kwargs['plot_height'] = kwargs.get('plot_height',300)
-    kwargs['plot_width'] = kwargs.get('plot_width',400)
+    kwargs['height'] = kwargs.get('plot_height',300)
+    kwargs['width'] = kwargs.get('plot_width',400)
+    kwargs['height'] = kwargs.get('height',kwargs['height'])
+    kwargs['width'] = kwargs.get('width',kwargs['width'])
     kwargs['title'] = kwargs.get('title','Mixing Ratios')
     kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
     kwargs['x_axis_label'] = kwargs.get('x_axis_label','Mixing Ratio(v/v)')
@@ -274,8 +278,10 @@ def pt(full_output,ng=None, nt=None, **kwargs):
         pressure = full_output['layer']['pressure'][:,ng,nt]
         temperature = full_output['layer']['temperature'][:,ng,nt]
 
-    kwargs['plot_height'] = kwargs.get('plot_height',300)
-    kwargs['plot_width'] = kwargs.get('plot_width',400)
+    kwargs['height'] = kwargs.get('plot_height',300)
+    kwargs['width'] = kwargs.get('plot_width',400)
+    kwargs['height'] = kwargs.get('height',kwargs['height'])
+    kwargs['width'] = kwargs.get('width',kwargs['width'])
     kwargs['title'] = kwargs.get('title','Pressure-Temperature Profile')
     kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
     kwargs['x_axis_label'] = kwargs.get('x_axis_label','Temperature (K)')
@@ -328,8 +334,10 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind
         def conv(x):
             return x
     if isinstance(legend, str): legend=[legend]
-    kwargs['plot_height'] = kwargs.get('plot_height',345)
-    kwargs['plot_width'] = kwargs.get('plot_width',1000)
+    kwargs['height'] = kwargs.get('plot_height',345)
+    kwargs['width'] = kwargs.get('plot_width',1000)
+    kwargs['height'] = kwargs.get('height',kwargs['height'])
+    kwargs['width'] = kwargs.get('width',kwargs['width'])
     kwargs['y_axis_label'] = kwargs.get('y_axis_label','Spectrum')
     kwargs['x_axis_label'] = kwargs.get('x_axis_label',x_axis_label)
     #kwargs['y_range'] = kwargs.get('y_range',[0,1.2])
@@ -424,8 +432,10 @@ def photon_attenuation(full_output, at_tau=0.5,return_output=False,igauss=0, **k
         at_pressures_cld[i] = pressure[ind_cld[i]]
         at_pressures_ray[i] = pressure[ind_ray[i]]
 
-    kwargs['plot_height'] = kwargs.get('plot_height',300)
-    kwargs['plot_width'] = kwargs.get('plot_width',1000)
+    kwargs['height'] = kwargs.get('plot_height',300)
+    kwargs['width'] = kwargs.get('plot_width',1000)
+    kwargs['height'] = kwargs.get('height',kwargs['height'])
+    kwargs['width'] = kwargs.get('width',kwargs['width'])
     kwargs['title'] = kwargs.get('title','Pressure at 𝞽 =' +str(at_tau))
     kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
     kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength [μm]')
@@ -543,7 +553,7 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
     f01a = figure(x_range=[0, yr], y_range=[0,xr],
                            x_axis_label=wavelength_label, y_axis_label=pressure_label,
                            title="Single Scattering Albedo",
-                          plot_width=300, plot_height=300)
+                          width=300, height=300)
 
 
     f01a.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw =yr )
@@ -565,7 +575,7 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
     f01 = figure(x_range=[0, yr], y_range=[0,xr],
                            x_axis_label=wavelength_label, y_axis_label=pressure_label,
                            title="Cloud Optical Depth Per Layer",
-                          plot_width=300, plot_height=300)
+                          width=300, height=300)
 
     f01.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw =yr )
 
@@ -584,7 +594,7 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
     f01b = figure(x_range=[0, yr], y_range=[0,xr],
                            x_axis_label=wavelength_label, y_axis_label=pressure_label,
                            title="Assymetry Parameter",
-                          plot_width=300, plot_height=300)
+                          width=300, height=300)
 
     f01b.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw =yr )
 
@@ -648,7 +658,7 @@ def cloud(full_output):
     f01a = figure(x_range=[0, yr], y_range=[0,xr],
                            x_axis_label='Wavelength (micron)', y_axis_label='Pressure (bar)',
                            title="Single Scattering Albedo",
-                          plot_width=300, plot_height=300)
+                          width=300, height=300)
 
 
     f01a.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw = yr)
@@ -670,7 +680,7 @@ def cloud(full_output):
     f01 = figure(x_range=[0, yr], y_range=[0,xr],
                            x_axis_label='Wavelength (micron)', y_axis_label='Pressure (bar)',
                            title="Cloud Optical Depth Per Layer",
-                          plot_width=300, plot_height=300)
+                          width=300, height=300)
 
     f01.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw = yr)
 
@@ -689,7 +699,7 @@ def cloud(full_output):
     f01b = figure(x_range=[0, yr], y_range=[0,xr],
                            x_axis_label='Wavelength (micron)', y_axis_label='Pressure (bar)',
                            title="Assymetry Parameter",
-                          plot_width=300, plot_height=300)
+                          width=300, height=300)
 
     f01b.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw = yr)
 
@@ -945,8 +955,10 @@ def spectrum_hires(wno, alb,legend=None, **kwargs):
 
     hv.extension('bokeh')
 
-    kwargs['plot_height'] = kwargs.get('plot_height',345)
-    kwargs['plot_width'] = kwargs.get('plot_width',1000)
+    kwargs['height'] = kwargs.get('plot_height',345)
+    kwargs['width'] = kwargs.get('plot_width',1000)
+    kwargs['height'] = kwargs.get('height',kwargs['height'])
+    kwargs['width'] = kwargs.get('width',kwargs['width'])
     kwargs['y_axis_label'] = kwargs.get('y_axis_label','Albedo')
     kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength [μm]')
     kwargs['y_range'] = kwargs.get('y_range',[0,1.2])
@@ -990,8 +1002,10 @@ def flux_at_top(full_output, plot_bb = True, R=None, pressures = [1e-1,1e-2,1e-3
     if not isinstance(pressures, (np.ndarray, list)): 
         raise Exception('check pressure input. It must be list or array. You can still input a single value as `pressures = [1e-3]`')
 
-    kwargs['plot_height'] = kwargs.get('plot_height',300)
-    kwargs['plot_width'] = kwargs.get('plot_width',400)
+    kwargs['height'] = kwargs.get('plot_height',300)
+    kwargs['width'] = kwargs.get('plot_width',400)
+    kwargs['height'] = kwargs.get('height',kwargs['height'])
+    kwargs['width'] = kwargs.get('width',kwargs['width'] )
     kwargs['title'] = kwargs.get('title','Outgoing Thermal Radiation')
     kwargs['y_axis_label'] = kwargs.get('y_axis_label','Flux (erg/s/cm^3)')
     kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength [μm]')
@@ -1186,8 +1200,10 @@ def plot_evolution(evo, y = "Teff",**kwargs):
         But, age_years is not an option as it is not a function of mass. 
         Current options : [logL, Teff, grav_cgs]
     """
-    kwargs['plot_height'] = kwargs.get('plot_height',400)
-    kwargs['plot_width'] = kwargs.get('plot_width',500)
+    kwargs['height'] = kwargs.get('plot_height',400)
+    kwargs['width'] = kwargs.get('plot_width',500)
+    kwargs['height'] = kwargs.get('height',kwargs['height'])
+    kwargs['width'] = kwargs.get('width',kwargs['width'] )
     kwargs['title'] = kwargs.get('title','Thermal Evolution')
     kwargs['y_axis_label'] = kwargs.get('y_axis_label',y)
     kwargs['x_axis_label'] = kwargs.get('x_axis_label','Age(years)')
@@ -1258,8 +1274,10 @@ def all_optics_1d(full_output, wave_range, return_output = False,legend=None,
         Key word arguments will be supplied to each bokeh figure function
     """
 
-    kwargs['plot_height'] = kwargs.get('plot_height',300)
-    kwargs['plot_width'] = kwargs.get('plot_width',300)
+    kwargs['height'] = kwargs.get('plot_height',300)
+    kwargs['width'] = kwargs.get('plot_width',300)
+    kwargs['height'] = kwargs.get('height',kwargs['height'])
+    kwargs['width'] = kwargs.get('width',kwargs['width'] )
     kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
 
     if not isinstance(full_output, list):
@@ -1516,8 +1534,10 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=Spectral11,verbos
     kwargs : dict 
         Bokeh plotting kwargs for bokeh.Figure
     """
-    kwargs['plot_height'] = kwargs.get('plot_height',400)
-    kwargs['plot_width'] = kwargs.get('plot_width',600)
+    kwargs['height'] = kwargs.get('plot_height',400)
+    kwargs['width'] = kwargs.get('plot_width',600)
+    kwargs['height'] = kwargs.get('height',kwargs['height'])
+    kwargs['width'] = kwargs.get('width',kwargs['width'])
     kwargs['title'] = kwargs.get('title','Phase Curves')
     kwargs['y_axis_label'] = kwargs.get('y_axis_label',to_plot)
     kwargs['x_axis_label'] = kwargs.get('x_axis_label','Orbital Phase')
@@ -1570,7 +1590,7 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=Spectral11,verbos
     plot_format(fig)
     return phases, all_curves, all_ws, fig
 
-def thermal_contribution(full_output, tau_max=1.0,  **kwargs):
+def thermal_contribution(full_output, tau_max=1.0,R=100,  **kwargs):
     """
     Computer the contribution function from https://doi.org/10.3847/1538-4357/aadd9e equation 4
     Note the equation in the paper is missing the - sign in the exponent
@@ -1599,19 +1619,37 @@ def thermal_contribution(full_output, tau_max=1.0,  **kwargs):
             bb[i, j] = blackbody(temp, wave)[0][0]
     CF = bb[0:-1, :] * np.exp(-sum_taus[0:-1, :]) * all_taus[0:-1, :] / np.diff(press2D, axis=0)
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(15,10))
     #if not isinstance( clim , type(None)):
     #    CF_clipped = np.clip(CF, clim[0],clim[1])
     #else: 
     #    CF_clipped = CF+0
-    smap = ax.pcolormesh(1e4/full_output['wavenumber'], full_output['layer']['pressure'], CF, **kwargs)
+    
+    if not isinstance(R,type(None)):
+        wno,_ = mean_regrid(full_output['wavenumber'],full_output['wavenumber'],R=R)
+        CF_bin = np.zeros((len(full_output['layer']['pressure'])-1,
+                             len(wno)))
+        for i in range(len(full_output['layer']['pressure'])-1):
+            _,CF_bin[i,:] = mean_regrid(full_output['wavenumber'],
+                                            CF[i,:],newx=wno)
+    else: 
+        CF_bin = CF
+        wno=full_output['wavenumber']
+        
+    smap = ax.pcolormesh(1e4/wno, full_output['layer']['pressure'][0:-1], CF_bin, **kwargs)
     ax.set_ylim(np.max(full_output['layer']['pressure']), np.min(full_output['layer']['pressure']))
     ax.set_yscale('log')
-    ax.set_ylabel('Pressure (bar)')
-    ax.set_xlabel('Wavelength ($\mu$m)')
-    plt.colorbar(smap, label='CF')
-
-    return fig, ax, CF
+    ax.set_ylabel('Pressure (bar)', fontsize=20)
+    ax.set_xlabel('Wavelength ($\mu$m)', fontdict={'fontsize':20})
+    cm = plt.colorbar(smap)
+    cm.ax.set_ylabel('Emission Contribution Function', fontdict={'fontsize':18} )
+    for l in cm.ax.yaxis.get_ticklabels():
+        l.set_fontsize(16)
+    
+    ax.set_yticks(np.logspace(-5,1,7), minor=False)
+    ax.set_yticklabels(np.logspace(-5,1,7), fontdict={'fontsize':18})
+    
+    return fig, ax, CF_bin
  
 
 def molecule_contribution(contribution_out, opa, min_pressure=4.5, R=100, **kwargs):
@@ -1642,8 +1680,10 @@ def molecule_contribution(contribution_out, opa, min_pressure=4.5, R=100, **kwar
         Shows a default graph of Tau 1 Surface of various molecules and a graph based on user input based on their parameters
         
     """
-    kwargs['plot_height'] = kwargs.get('plot_height',400)
-    kwargs['plot_width'] = kwargs.get('plot_width',500)
+    kwargs['height'] = kwargs.get('plot_height',400)
+    kwargs['width'] = kwargs.get('plot_width',500)
+    kwargs['height'] = kwargs.get('height',kwargs['height'])
+    kwargs['width'] = kwargs.get('width',kwargs['width'])
     kwargs['y_axis_label'] = kwargs.get('y_axis_label','Tau Pressure (bars)')
     kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength')
     kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')

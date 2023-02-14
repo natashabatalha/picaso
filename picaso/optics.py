@@ -794,78 +794,166 @@ class RetrieveCKs():
                   names=list(range(9)),dtype=str)
 
         num_species = int(data.iloc[0,0])
-        max_ele = 35 
-        self.max_tc = 73 
-        self.max_pc = 20
-        max_windows = 200 
+        if num_species == 24:
+            max_ele = 35 
+            self.max_tc = 73 
+            self.max_pc = 20
+            max_windows = 200 
 
-        self.molecules = [str(data.iloc[i,j]) for i in [0,1,2] 
-           for j in range(9)][1:num_species+1]
+            self.molecules = [str(data.iloc[i,j]) for i in [0,1,2] 
+            for j in range(9)][1:num_species+1]
+            
+            last = [float(data.iloc[int(max_ele*self.max_pc*self.max_tc/3)+3,0])]
+            end_abunds = 3+int(max_ele*self.max_pc*self.max_tc/3)
+            
+            abunds = list(np.array(
+                data.iloc[3:end_abunds,0:3].astype(float)
+                ).ravel())
+            abunds = abunds + last
+            abunds = np.reshape(abunds,(self.max_pc,self.max_tc,max_ele),order='F')
+            
+            self.nwno = int(data.iloc[end_abunds,1])
 
-        last = [float(data.iloc[int(max_ele*self.max_pc*self.max_tc/3)+3,0])]
+            end_window = int(max_windows/3)
+            self.wno = (data.iloc[end_abunds:end_abunds+end_window,0:3].astype(float)).values.ravel()[2:]
+            self.delta_wno = (data.iloc[end_abunds+end_window+1:1+end_abunds+2*end_window,0:3].astype(float)).values.ravel()[1:-1]
+            end_windows =2+end_abunds+2*end_window
 
-        end_abunds = 3+int(max_ele*self.max_pc*self.max_tc/3)
-        abunds = list(np.array(
-            data.iloc[3:end_abunds,0:3].astype(float)
-            ).ravel())
-        abunds = abunds + last
-        abunds = np.reshape(abunds,(self.max_pc,self.max_tc,max_ele),order='F')
+            nc_t=int(data.iloc[end_windows,0])
+            #this defines the number of pressure points per temperature grid
+            #historically not all pressures are run for all temperatures
+            #though in 1460 there are always 20
+            self.nc_p = np.array(data.iloc[end_windows:1+end_windows+int(self.max_tc/6),0:6].astype(int
+                        )).ravel()[1:-4]
+            
+            end_npt = 1+end_windows+int(self.max_tc/6) + 11 #11 dummy rows
 
-        self.nwno = int(data.iloc[end_abunds,1])
+            first = list(data.iloc[end_npt,4:5].astype(float))
 
-        end_window = int(max_windows/3)
-        self.wno = (data.iloc[end_abunds:end_abunds+end_window,0:3].astype(float)).values.ravel()[2:]
-        self.delta_wno = (data.iloc[end_abunds+end_window+1:1+end_abunds+2*end_window,0:3].astype(float)).values.ravel()[1:-1]
-        end_windows =2+end_abunds+2*end_window
+            #convert to bars
+            self.pressures = np.array(first+list(np.array(data.iloc[end_npt+1:end_npt + int(self.max_pc*self.max_tc/3) + 2,0:3]
+                                    .astype(float))
+                                    .ravel()[0:-2]))/1e3
 
-        nc_t=int(data.iloc[end_windows,0])
-        #this defines the number of pressure points per temperature grid
-        #historically not all pressures are run for all temperatures
-        #though in 1460 there are always 20
-        self.nc_p = np.array(data.iloc[end_windows:1+end_windows+int(self.max_tc/6),0:6].astype(int
-                    )).ravel()[1:-4]
-        end_npt = 1+end_windows+int(self.max_tc/6) + 11 #11 dummy rows
+            end_ps = end_npt + int(self.max_pc*self.max_tc/3)
 
-        first = list(data.iloc[end_npt,4:5].astype(float))
+            self.temps = list(np.array(data.iloc[end_ps+1:2+int(end_ps+nc_t/3),0:3]
+                            .astype(float))
+                            .ravel()[1:-1])
+            end_temps = int(end_ps+nc_t/3)+1
+            
 
-        #convert to bars
-        self.pressures = np.array(first+list(np.array(data.iloc[end_npt+1:end_npt + int(self.max_pc*self.max_tc/3) + 2,0:3]
-                                 .astype(float))
-                                 .ravel()[0:-2]))/1e3
+            ngauss1, ngauss2,  =data.iloc[end_temps,2:4].astype(int)
+            gfrac = float(data.iloc[end_temps+1,0])
+            self.ngauss = int(data.iloc[end_temps+1,1])
 
-        end_ps = end_npt + int(self.max_pc*self.max_tc/3)
+            assert self.ngauss == 8, 'Legacy code uses 8 gauss points not {0}. Check read in statements'.format(self.ngauss)
 
-        self.temps = list(np.array(data.iloc[end_ps+1:2+int(end_ps+nc_t/3),0:3]
-                        .astype(float))
-                        .ravel()[1:-1])
-        end_temps = int(end_ps+nc_t/3)+1
+            gpts_wts = np.reshape(np.array(data.iloc[end_temps+1:2+end_temps+int(2*self.ngauss/3),0:3]
+            .astype(float)).ravel()[2:], (self.ngauss,2))
 
-        ngauss1, ngauss2,  =data.iloc[end_temps,2:4].astype(int)
-        gfrac = float(data.iloc[end_temps+1,0])
-        self.ngauss = int(data.iloc[end_temps+1,1])
+            self.gauss_pts = [i[0] for i in gpts_wts]
+            self.gauss_wts = [i[1] for i in gpts_wts]
+            
+            kappa = np.array(
+                data.iloc[3+end_temps+int(2*self.ngauss/3):-2,0:3]
+                        .astype(float)).ravel()[0:-2]
+            kappa = np.reshape(kappa, 
+                            (max_windows,self.ngauss*2,self.max_pc,self.max_tc),order='F')
 
-        assert self.ngauss == 8, 'Legacy code uses 8 gauss points not {0}. Check read in statements'.format(self.ngauss)
+            #want the axes to be [npressure, ntemperature, nwave, ngauss ]
+            kappa = kappa.swapaxes(1,3)
+            kappa = kappa.swapaxes(0,2)
+            self.kappa = kappa[:, :, 0:self.nwno, 0:self.ngauss] 
 
-        gpts_wts = np.reshape(np.array(data.iloc[end_temps+1:2+end_temps+int(2*self.ngauss/3),0:3]
-         .astype(float)).ravel()[2:], (self.ngauss,2))
-
-        self.gauss_pts = [i[0] for i in gpts_wts]
-        self.gauss_wts = [i[1] for i in gpts_wts]
+            #finally add pressure/temperature scale to abundances
+            self.full_abunds['pressure']= self.pressures[self.pressures>0]
+            self.full_abunds['temperature'] = np.concatenate([[i]*max(self.nc_p) for i in self.temps])[self.pressures>0]
         
-        kappa = np.array(
-            data.iloc[3+end_temps+int(2*self.ngauss/3):-2,0:3]
-                     .astype(float)).ravel()[0:-2]
-        kappa = np.reshape(kappa, 
-                           (max_windows,self.ngauss*2,self.max_pc,self.max_tc),order='F')
+        elif num_species == 22:
+            print("NOTE: You are loading Opacity tables without any Gaseous TiO and VO opacities")
+            max_ele = 35 
+            self.max_tc = 73 
+            self.max_pc = 20
+            max_windows = 200 
 
-        #want the axes to be [npressure, ntemperature, nwave, ngauss ]
-        kappa = kappa.swapaxes(1,3)
-        kappa = kappa.swapaxes(0,2)
-        self.kappa = kappa[:, :, 0:self.nwno, 0:self.ngauss] 
+            self.molecules = [str(data.iloc[i,j]) for i in [0,1,2] 
+            for j in range(9)][1:num_species+1]
+            
+            last = [float(data.iloc[int(max_ele*self.max_pc*self.max_tc/3)+1,0])]
+            end_abunds = 3+int(max_ele*self.max_pc*self.max_tc/3)
+            
 
-        #finally add pressure/temperature scale to abundances
-        self.full_abunds['pressure']= self.pressures[self.pressures>0]
-        self.full_abunds['temperature'] = np.concatenate([[i]*max(self.nc_p) for i in self.temps])[self.pressures>0]
+            abunds = list(np.array(
+                data.iloc[3:end_abunds,0:3].astype(float)
+                ).ravel())
+            abunds = abunds + last
+            abunds = np.reshape(abunds,(self.max_pc,self.max_tc,max_ele),order='F')
+        
+
+            self.nwno = int(data.iloc[end_abunds,0])
+
+            end_window = int(max_windows/3)
+            
+            self.wno = (data.iloc[end_abunds:end_abunds+end_window,0:3].astype(float)).values.ravel()[1:-1]
+            
+            self.delta_wno = (data.iloc[end_abunds+end_window+1:1+end_abunds+2*end_window,0:3].astype(float)).values.ravel()[:-2]
+            
+            end_windows =1+end_abunds+2*end_window
+            
+            nc_t=int(data.iloc[end_windows,2])
+            #this defines the number of pressure points per temperature grid
+            #historically not all pressures are run for all temperatures
+            #though in 1460 there are always 20
+            
+            #self.nc_p = np.array(data.iloc[end_windows:1+end_windows+int(self.max_tc/6),:]).ravel()[3:].astype(int)
+            # noTiOVO format is such that it is not in 6x table
+            self.nc_p = (np.zeros(shape=(nc_t))+20).astype(int)
+            end_npt = 1+end_windows+int(self.max_tc/6) + 12 #12 dummy rows
+            
+            first = list(data.iloc[end_npt,2:4].astype(float))
+
+            #convert to bars
+            self.pressures = np.array(first+list(np.array(data.iloc[end_npt+1:end_npt + int(self.max_pc*self.max_tc/3)+1,0:3]
+                                    .astype(float))
+                                    .ravel()[0:]))/1e3
+            
+            end_ps = end_npt + int(self.max_pc*self.max_tc/3)
+            
+            self.temps = list(np.array(data.iloc[end_ps+1:2+int(end_ps+nc_t/3),0:3]
+                            .astype(float))
+                            .ravel()[:-2])
+            end_temps = int(end_ps+nc_t/3)+1
+            
+            
+            ngauss1, ngauss2,  =data.iloc[end_temps,1:3].astype(int)
+            gfrac = float(data.iloc[end_temps,3])
+            self.ngauss = int(data.iloc[end_temps+1,0])
+            
+
+            assert self.ngauss == 8, 'Legacy code uses 8 gauss points not {0}. Check read in statements'.format(self.ngauss)
+
+            gpts_wts = np.reshape(np.array(data.iloc[end_temps+1:2+end_temps+int(2*self.ngauss/3),0:3]
+            .astype(float)).ravel()[1:-1], (self.ngauss,2))
+
+            self.gauss_pts = [i[0] for i in gpts_wts]
+            self.gauss_wts = [i[1] for i in gpts_wts]
+            
+            kappa = np.array(
+                data.iloc[3+end_temps+int(2*self.ngauss/3):-2,0:3]
+                        .astype(float)).ravel()[0:-2]
+            kappa = np.reshape(kappa, 
+                            (max_windows,self.ngauss*2,self.max_pc,self.max_tc),order='F')
+
+            #want the axes to be [npressure, ntemperature, nwave, ngauss ]
+            kappa = kappa.swapaxes(1,3)
+            kappa = kappa.swapaxes(0,2)
+            self.kappa = kappa[:, :, 0:self.nwno, 0:self.ngauss] 
+            
+            #finally add pressure/temperature scale to abundances
+            self.full_abunds['pressure']= self.pressures[self.pressures>0]
+            self.full_abunds['temperature'] = np.concatenate([[i]*max(self.nc_p) for i in self.temps])[self.pressures>0]
+ 
 
 
     def get_gauss_pts_661_1460(self):

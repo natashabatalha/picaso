@@ -31,6 +31,7 @@
          "OCS" :  "HITRAN2016",
          "PH3" : "sousa14exomol" ,
          "SiO" :  "Barton2013SiO" ,
+         "SO2" :  "underwood2016exomol" ,
          "TiO" : ["McKemmish2019TiO" ,"GharibNezhad2021"],
          "VO" :   ["McKemmish16" , "GharibNezhad2021"],
          "Li" :  ["Ryabchikova2015","Allard2007AA", "Allard2007EPJD","Allard2016, Allard2019"],
@@ -50,7 +51,6 @@
     "phase curves":"Robbins2022ApJ",
     "climate":"mukherjee22",
     "virga clouds":"Rooney2022ApJ",
-    "grid search":"JWSTERS_FirstLook",
-
+    "grid search":"JWSTERS_FirstLook"
 }
 }

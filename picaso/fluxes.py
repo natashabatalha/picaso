@@ -1,7 +1,6 @@
 from numba import jit, objmode
 from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh, min, dot, array,log, log10,ones, array_equal
 import numpy as np
-#import pentapy as pp
 import time
 import pickle as pk
 from scipy.linalg import solve_banded
@@ -3080,6 +3079,13 @@ def setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar
     Mb[1,1,:] = Q2[0,:]
     B[0,:] = b_top - zmn_down[0,:]
 
+    #   last row: BC 4
+    n = nlayer-1
+    Mb[3, 2*nlayer-2,:] = Q2mn[n,:] - surf_reflect*Q1mn[n,:]
+    Mb[2, 2*nlayer-1,:] = Q1pl[n,:] - surf_reflect*Q2pl[n,:]
+    B[2*nlayer-1,:] = b_surface - zpl_up[n,:] + surf_reflect * zmn_up[n,:]
+
+    # remaining rows
     Mb[0,3::2,:] = -Q2[1:,:]
     Mb[1,2::2,:] = -Q1[1:,:]
     Mb[1,3::2,:] = -Q1[1:,:]
@@ -3091,6 +3097,7 @@ def setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar
     B[1:-1:2,:] = zmn_down[1:,:] - zmn_up[:-1,:]
     B[2::2,:] = zpl_down[1:,:] - zpl_up[:-1,:]
 
+    # fill integrated matrices needed for source-function technique
     nn = np.arange(2*nlayer)
     indcs = nn[::2]
     k = 0
@@ -3109,18 +3116,12 @@ def setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar
         N_int[::2,:] = (1-w0) * ubar1 / a[0] * (B0 *(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau)) #* 2*pi
         N_int[1::2,:] = (1-w0) * ubar1 / a[0] * ( B1*(1-expdtau) / a[1]) #* 2*pi
 
-    #   last row: BC 4
-    n = nlayer-1
-    Mb[3, 2*nlayer-2,:] = Q2mn[n,:] - surf_reflect*Q1mn[n,:]
-    Mb[2, 2*nlayer-1,:] = Q1pl[n,:] - surf_reflect*Q2pl[n,:]
-    B[2*nlayer-1,:] = b_surface - zpl_up[n,:] + surf_reflect * zmn_up[n,:]
-
+    # flux at bottom of atmosphere
     F_bot = zeros((2*nlayer, nwno))
     G_bot = zeros(nwno)
     F_bot[-2,:] = Q2mn[-1,:]
     F_bot[-1,:] = Q1pl[-1,:]
     G_bot = zpl_up[-1,:]
-
 
     if fluxes == 1: # fluxes per layer
         F[0,0,:] = Q1[0,:]
@@ -3144,7 +3145,6 @@ def setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar
         G[2::2,:] = zmn_up
         G[3::2,:] = zpl_up
 
-#    import IPython; IPython.embed()
     return Mb, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2
 @jit(nopython=True, cache=True, debug=True)
 def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, surf_reflect, ubar0, ubar1,
@@ -3425,7 +3425,7 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
     B[4::4,:] = z1pl_down[1:,:] - z1pl_up[:-1,:]
     B[5::4,:] = z2pl_down[1:,:] - z2pl_up[:-1,:]
 
-    # fill integrated matrices needed for source function technique
+    # fill integrated matrices needed for source-function technique
     nn = 4*nlayer
     NN = 4*nn+4
     a_int = A_int.reshape(nn*nn, A_int.shape[2])
@@ -3454,7 +3454,7 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
     N_int[2::4,:] = N2
     N_int[3::4,:] = N3
 
-    # flux at bottom
+    # flux at bottom of atmosphere
     F_bot[-4,:] = f20[-1,:]
     F_bot[-3,:] = f21[-1,:]
     F_bot[-2,:] = f22[-1,:]

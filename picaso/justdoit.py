@@ -187,7 +187,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     #gets both continuum and needed rayleigh cross sections 
     #relies on continuum molecules are added into the opacity 
     #database. Rayleigh molecules are all in `rayleigh.py` 
-    atm.get_needed_continuum(opacityclass.rayleigh_molecules)
+    atm.get_needed_continuum(opacityclass.rayleigh_molecules,
+                             opacityclass.avail_continuum)
 
     #get cloud properties, if there are any and put it on current grid 
     atm.get_clouds(wno)
@@ -499,7 +500,7 @@ def _finditem(obj, key):
             if item is not None:
                 return item
 
-def input_xarray(xr_usr, opacity,p_reference=10):
+def input_xarray(xr_usr, opacity,p_reference=10, calculation='planet'):
     """
     This takes an input based on these standards and runs: 
     -gravity
@@ -517,37 +518,42 @@ def input_xarray(xr_usr, opacity,p_reference=10):
         opacity connection
     p_reference : float 
         reference pressure in bars 
+    calculation : str 
+        'planet' or 'browndwarf'
 
     Example
     -------
     case = jdi.input_xarray(xr_user)
     case.spectrum(opacity,calculation='transit_depth')
     """
-    case = inputs()
+    case = inputs(calculation = calculation)
     case.phase_angle(0) #radians
 
     #define gravity
     planet_params = eval(xr_usr.attrs['planet_params'])
-    stellar_params = eval(xr_usr.attrs['stellar_params'])
-    orbit_params = eval(xr_usr.attrs['orbit_params'])
+    if 'brown' not in calculation:
+        stellar_params = eval(xr_usr.attrs['stellar_params'])
+        orbit_params = eval(xr_usr.attrs['orbit_params'])
+        steff = _finditem(stellar_params,'steff')
+        feh = _finditem(stellar_params,'feh')
+        logg = _finditem(stellar_params,'logg')
+        ms = _finditem(stellar_params,'ms')
+        rs = _finditem(stellar_params,'rs')
+        semi_major = _finditem(planet_params,'sma')
+        case.star(opacity, steff,feh,logg, radius=rs['value'], 
+                  radius_unit=u.Unit(rs['unit']))
 
     mp = _finditem(planet_params,'mp')
     rp = _finditem(planet_params,'rp')
+    logg = _finditem(planet_params,'logg')
 
-    if (not isinstance(mp, type(None)) & (not isinstance(rp, type(None)))):
+    if ((not isinstance(mp, type(None))) & (not isinstance(rp, type(None)))):
         case.gravity(mass = mp['value'], mass_unit=u.Unit(mp['unit']),
                     radius=rp['value'], radius_unit=u.Unit(rp['unit']))
+    elif (not isinstance(logg, type(None))): 
+        case.gravity(gravity = logg['value'], gravity_unit=u.Unit(logg['unit']))
     else: 
-        print('Mass and Radius not provided in xarray, user needs to run gravity function')
-
-    steff = _finditem(stellar_params,'steff')
-    feh = _finditem(stellar_params,'feh')
-    logg = _finditem(stellar_params,'logg')
-    ms = _finditem(stellar_params,'ms')
-    rs = _finditem(stellar_params,'rs')
-    semi_major = _finditem(planet_params,'sma')
-    case.star(opacity, steff,feh,logg, radius=rs['value'], 
-              radius_unit=u.Unit(rs['unit']))
+        print('Mass and Radius or gravity not provided in xarray, user needs to run gravity function')
 
     case.approx(p_reference=p_reference)
 
@@ -686,7 +692,8 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     #gets both continuum and needed rayleigh cross sections 
     #relies on continuum molecules are added into the opacity 
     #database. Rayleigh molecules are all in `rayleigh.py` 
-    atm.get_needed_continuum(opacityclass.rayleigh_molecules)
+    atm.get_needed_continuum(opacityclass.rayleigh_molecules,
+                             opacityclass.avail_continuum)
 
     #get cloud properties, if there are any and put it on current grid 
     atm.get_clouds(wno)
@@ -771,7 +778,7 @@ def opannection(wave_range = None, filename_db = None, raman_db = None,
         if isinstance(filename_db,type(None)): 
             filename_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['opacity'])
             if not os.path.isfile(filename_db):
-                raise Exception('The opacity file does not exist: '  + filename_db+' The default is to a file opacities.db in reference/opacity/. If you have an older version of PICASO your file might be called opacity.db. Consider just adding the correct path to filename_db=')
+                raise Exception(f'The default opacity file does not exist: {filename_db}. In order to have a default database please download one of the opacity files from Zenodo and place into this folder with the name opacities.db: https://zenodo.org/record/6928501#.Y2w4C-zMI8Y if you dont want a single default file then you just need to point to the opacity db using the keyword filename_db.')
         elif not isinstance(filename_db,type(None) ): 
             if not os.path.isfile(filename_db):
                 raise Exception('The opacity file you have entered does not exist: '  + filename_db)
@@ -3960,9 +3967,78 @@ def jupiter_cld():
 def HJ_pt():
     """Function to get Jupiter's PT profile"""
     return os.path.join(__refdata__, 'base_cases','HJ.pt')
-def HJ_pt_3d():
-    """Function to get Jupiter's PT profile"""
-    return os.path.join(__refdata__, 'base_cases','HJ_3d.pt')
+def HJ_pt_3d(as_xarray=False,add_kz=False, input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')):
+    """Function to get Jupiter's PT profile
+    
+    Parameters
+    ----------
+    as_xarray : bool 
+        Returns as xarray, instead of dictionary
+    add_kz : bool 
+        Returns kzz along with PT info
+    input_file : str 
+        point to input file in the same format as mitgcm example 
+        file in base_cases/HJ_3d.pt
+    """
+    #input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')
+    threed_grid = pd.read_csv(input_file,delim_whitespace=True,names=['p','t','k'])
+    all_lon= threed_grid.loc[np.isnan(threed_grid['k'])]['p'].values
+    all_lat=  threed_grid.loc[np.isnan(threed_grid['k'])]['t'].values
+    latlong_ind = np.concatenate((np.array(threed_grid.loc[np.isnan(threed_grid['k'])].index),[threed_grid.shape[0]] ))
+    threed_grid = threed_grid.dropna() 
+
+    lon = np.unique(all_lon)
+    lat = np.unique(all_lat)
+
+    nlon = len(lon)
+    nlat = len(lat)
+    total_pts = nlon*nlat
+    nz = latlong_ind[1] - 1 
+
+    p = np.zeros((nlon,nlat,nz))
+    t = np.zeros((nlon,nlat,nz))
+    kzz = np.zeros((nlon,nlat,nz))
+
+    for i in range(len(latlong_ind)-1):
+
+        ilon = list(lon).index(all_lon[i])
+        ilat = list(lat).index(all_lat[i])
+
+        p[ilon, ilat, :] = threed_grid.loc[latlong_ind[i]:latlong_ind[i+1]]['p'].values
+        t[ilon, ilat, :] = threed_grid.loc[latlong_ind[i]:latlong_ind[i+1]]['t'].values
+        kzz[ilon, ilat, :] = threed_grid.loc[latlong_ind[i]:latlong_ind[i+1]]['k'].values
+    
+    gcm_out = {'pressure':p, 'temperature':t, 'kzz':kzz, 'latitude':lat, 'longitude':lon}
+    if as_xarray:
+        # create data
+        data = gcm_out['temperature']
+
+        # create coords
+        lon = gcm_out['longitude']
+        lat = gcm_out['latitude']
+        pres = gcm_out['pressure'][0,0,:]
+
+        # put data into a dataset
+        if add_kz:
+            data_vars = dict(
+                temperature=(["lon", "lat","pressure"], data,{'units': 'Kelvin'}),#, required
+                kz = (["lon", "lat","pressure"], kzz,{'units': 'm^2/s'})
+            )
+        else: 
+            data_vars = dict(temperature=(["lon", "lat","pressure"], data,{'units': 'Kelvin'}))
+
+        ds = xr.Dataset(
+            data_vars=data_vars,
+            coords=dict(
+                lon=(["lon"], lon,{'units': 'degrees'}),#required
+                lat=(["lat"], lat,{'units': 'degrees'}),#required
+                pressure=(["pressure"], pres,{'units': 'bar'})#required*
+            ),
+            attrs=dict(description="coords with vectors"),
+        )
+        return  ds
+    else: 
+        return gcm_out
 def HJ_cld():
     """Function to get rough Jupiter Cloud model with fsed=3"""
     return os.path.join(__refdata__, 'base_cases','HJ.cld')
