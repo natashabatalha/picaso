@@ -9,7 +9,7 @@ from bokeh.models import ColumnDataSource,LinearAxis,Range1d
 from bokeh.layouts import row,column,gridplot
 from bokeh.io import output_notebook
 from bokeh.plotting import figure, output_file, show
-from bokeh.palettes import Colorblind8
+from bokeh.palettes import Colorblind8, RdGy
 
 import os 
 import copy
@@ -19,6 +19,8 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.animation as animation
+import seaborn as sns
+from matplotlib import rc
 
 from scipy.stats.stats import pearsonr  
 from scipy.stats import binned_statistic
@@ -1957,4 +1959,111 @@ def animate_convergence(clima_out, picaso_bundle, opacity, wave_range=[0.3,6],
     ani = animation.FuncAnimation(fig, animate, frames=int(len(all_profiles_eq)/nlevel),init_func=init,interval=50, blit=False)
     plt.close()
     return ani
+
+def create_heat_map(data,rayleigh=True,extend=False,plot_height=300,plot_width=300,font_size="12px"):
+    reverse = True
+    data.columns.name = 'w0' 
+    data.index.name = 'g0' 
+    data.index=data.index.astype(str)
+    data = data.rename(index={"-1.0":"Ray"})
+    if not rayleigh:
+        data = data.drop(["Ray"])  
+    for w in data.columns[0:]:
+        if pd.isnull(data.loc['0.0'][w]):
+            data = data.drop(columns=[w])
+            reverse = False
+
+    x_range = list(data.index)
+    if reverse:
+        y_range =  list(reversed(data.columns))
+    else:
+        y_range =  list(data.columns)
+
+    df = pd.DataFrame(data.stack(), columns=['albedo']).reset_index()
+
+
+
+    colors = RdGy[11]
+    bd = max(abs(df.albedo.min()), abs(df.albedo.max()))
+#     bd = min(bd,20)
+    mapper = LinearColorMapper(palette=colors, low=-bd, high=bd)
+
+    TOOLS = "hover,save,pan,box_zoom,reset,wheel_zoom"
+
+    color_bar_height = plot_height + 11
+    color_bar_width = int(plot_width * 0.26)
+
+    p = figure(height=plot_height,width=plot_width,
+       y_range=y_range, x_range=x_range,
+       x_axis_location="above"
+       #,toolbar_location=None
+        )
+
+    p.grid.grid_line_color = None
+    p.axis.axis_line_color = None
+    p.axis.major_tick_line_color = None
+    p.axis.major_label_text_font_size = font_size
+    p.axis.major_label_standoff = 20
+    p.xaxis.major_label_orientation = np.pi / 3
+
+    p.rect(x="g0", y="w0", width=1, height=1,
+       source=df,
+       fill_color={'field': 'albedo', 'transform': mapper},
+       line_color='black')
+
+    # cb_width = int(width/11)
+
+    color_bar = ColorBar(color_mapper=mapper,
+                    major_label_text_font_size=font_size,
+                    ticker=BasicTicker(desired_num_ticks=len(colors)),
+                    label_standoff=12, border_line_color=None, location=(0, 10))
+
+    color_bar_plot = figure(#title=r"\[\sin(x)\text{ for }x\text{ between }-2\pi\text{ and }2\pi\]", 
+                        title_location="right", 
+                        height=color_bar_height, width=color_bar_width, 
+                        min_border=0, 
+                        outline_line_color=None
+                        #,toolbar_location=None
+                        )
+
+    color_bar_plot.add_layout(color_bar, 'right')
+    color_bar_plot.title.align="center"
+    color_bar_plot.title.text_font_size = '24px'
+    
+    p.axis.major_label_text_font_size=font_size
+    layout = row(p, color_bar_plot)
+
+    return layout
+
+def create_thermal_heatmap(data, cmap='RdGy', width=8, height=10, label_size=15, tick_size=12, y_axis=True, pad=0.1, vmin=None, vmax=None):
+
+    rc('font',**{'family':'sans-serif','sans-serif':['Times New Roman']})
+
+    data.columns.name = 'w0' 
+    data.index.name = 'g0' 
+    data.index=data.index.astype(str)
+    data = data.rename(index={"-1.0":"Ray"})
+    data = data.drop(["Ray"])  
+    for w in data.columns[0:]:
+        if pd.isnull(data.loc['0.0'][w]):
+            data = data.drop(columns=[w])
+    
+    df = data.T
+    fig, ax = plt.subplots(figsize=(width,height)) 
+    sns.heatmap(df, annot=False, linewidths=0.5, square=False, cmap=cmap, cbar_kws={'orientation': 'horizontal', 'pad' : pad}, vmin=vmin, vmax=vmax)
+    ax.set_xlabel("Asymmetry",fontsize=label_size)
+    if y_axis==True:
+        ax.set_ylabel("Single Scattering Albedo",fontsize=label_size)
+    else:
+        ax.set_ylabel("")
+    ax.tick_params(labelsize=tick_size)
+    ax.xaxis.major_label_orientation = np.pi / 3
+    
+    cbar_axes = fig.figure.axes[-1]
+    cbar_axes.set_ylabel('% Diff', size=label_size)
+    cbar_axes.tick_params(labelsize=tick_size)
+    
+    plt.yticks(rotation=0) 
+
+    return fig
 
