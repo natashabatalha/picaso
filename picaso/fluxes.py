@@ -2657,18 +2657,26 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
                     if w_multi_form==1:
                         w_multi[l,:,:] = (w - (2*l+1)*f_deltaM) / (1 - f_deltaM)
 
-            elif (w_single_form==0 or w_multi_form==0): # TTHG
+            if (w_single_form==0 or w_multi_form==0): # TTHG
                 g_forward = constant_forward*cosb_og
                 g_back = constant_back*cosb_og
                 f = frac_a + frac_b*g_back**frac_c
-                f_deltaM_ = f_deltaM
-                f_deltaM_ *= (f*constant_forward**stream + (1-f)*constant_back**stream)
+                #f_deltaM_ = f_deltaM
+                #f_deltaM_ *= (f*constant_forward**stream + (1-f)*constant_back**stream)
+                
+                ff1 = (constant_forward*cosb_og)**stream
+                ff2 = (constant_back*cosb_og)**stream
+                ff = f_deltaM
                 for l in range(1,stream):
                     w = (2*l+1) * (f*g_forward**l + (1-f)*g_back**l)
                     if w_single_form==0:
-                        w_single[l,:,:] = (w - (2*l+1)*f_deltaM_) / (1 - f_deltaM_)
+                        #w_single[l,:,:] = (w - (2*l+1)*f_deltaM_) / (1 - f_deltaM_)
+                        w_single[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
+                                        + (1-f)*(g_back**l - ff2) / (1 - ff))
                     if w_multi_form==0:
-                        w_multi[l,:,:] = (w - (2*l+1)*f_deltaM_) / (1 - f_deltaM_)
+                        #w_multi[l,:,:] = (w - (2*l+1)*f_deltaM_) / (1 - f_deltaM_)
+                        w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
+                                        + (1-f)*(g_back**l - ff2) / (1 - ff))
 
             if (w_single_form==2 or w_multi_form==2): # isotropic (heng comparison)
                 if w_single_form==1: w_single[1:,:,:] *= 0
@@ -2776,15 +2784,18 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
 
                 # fill integrated matrices needed for source-function technique
                 Aint=np.zeros((4,nlayer,nwno))
-                Nint=np.zeros((4,nlayer,nwno))
-                multi_scat = np.zeros((nlayer,nwno))
                 for j in range(4):
-                    Aint = Aint + w_multi[j]*Pubar1[j] * A[j] * exptrm[j]  
-                    Nint = Nint + w_multi[j]*Pubar1[j] * eta[j] * expon1
+                    Aint = Aint + w_multi[j]*Pubar1[j] * A[j]
+                Aint = Aint * exptrm
+
+                Nint0 = w_multi[0]*Pubar1[0] * eta[0] * expon1
+                Nint1 = w_multi[1]*Pubar1[1] * eta[1] * expon1
+                Nint2 = w_multi[2]*Pubar1[2] * eta[2] * expon1
+                Nint3 = w_multi[3]*Pubar1[3] * eta[3] * expon1
 
                 # this could be tidier but going for transparency with paper for now
-                for j in range(4):
-                    multi_scat += Aint[j] + Nint[j]
+                multi_scat = (Aint[0] + Nint0 + Aint[1] + Nint1
+                                + Aint[2] + Nint2 + Aint[3] + Nint3)
 
             if single_form==1:
                 maxterm = 4
