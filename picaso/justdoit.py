@@ -1,5 +1,5 @@
 from .atmsetup import ATMSETUP
-from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_transit_1d, get_thermal_SH
+from .debug_fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_transit_1d, get_thermal_SH
 #from .new_fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_transit_1d, get_thermal_SH
 
 from .fluxes import set_bb, tidal_flux, get_kzz
@@ -239,6 +239,17 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                     w_single_rayleigh, w_multi_rayleigh, psingle_rayleigh,
                                     frac_a, frac_b, frac_c, constant_back, constant_forward, 
                                     stream, b_top=b_top, single_form=single_form) 
+                    #rayleigh=1
+                    #heng_compare=0
+                    #(xint, flux_out, intensity)  = get_reflected_SH(nlevel, nwno, ng, nt, 
+                    #                DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig], 
+                    #                ftau_cld[:,:,ig], ftau_ray[:,:,ig], f_deltaM[:,:,ig],
+                    #                DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig], 
+                    #                atm.surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
+                    #                psingle_form, psingle_rayleigh,
+                    #                single_phase, rayleigh, 
+                    #                frac_a, frac_b, frac_c, constant_back, constant_forward, 
+                    #                stream, b_top=b_top, single_form=single_form, heng_compare=heng_compare) #LCM is carrying this bug
                 else:
                     #getting intensities, not fluxes (which is why second return is null)
                     xint = get_reflected_1d(nlevel, wno,nwno,ng,nt,
