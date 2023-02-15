@@ -735,7 +735,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
     #intensity = zeros((numg, numt, nlevel, nwno))
 
     nlayer = nlevel - 1 
-    #flux_out = zeros((numg, numt, 2*nlevel, nwno))
+    flux_out = zeros((numg, numt, 2*nlevel, nwno))
 
     #now define terms of Toon et al 1989 quadrature Table 1 
     #https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JD094iD13p16287
@@ -831,14 +831,14 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             #use expression for bottom flux to get the flux_plus and flux_minus at last
             #bottom layer
             flux_zero  = positive[-1,:]*exptrm_positive[-1,:] + gama[-1,:]*negative[-1,:]*exptrm_minus[-1,:] + c_plus_down[-1,:]
-            #flux_minus  = gama*positive*exptrm_positive + negative*exptrm_minus + c_minus_down
-            #flux_plus  = positive*exptrm_positive + gama*negative*exptrm_minus + c_plus_down
-            #flux = zeros((2*nlevel, nwno))
-            #flux[0,:] = (gama*positive + negative + a_minus)[0,:]
-            #flux[1,:] = (positive + gama*negative + a_plus)[0,:]
-            #flux[2::2, :] = flux_minus
-            #flux[3::2, :] = flux_plus
-            #flux_out[ng,nt,:,:] = flux
+            flux_minus  = gama*positive*exptrm_positive + negative*exptrm_minus + c_minus_down
+            flux_plus  = positive*exptrm_positive + gama*negative*exptrm_minus + c_plus_down
+            flux = zeros((2*nlevel, nwno))
+            flux[0,:] = (gama*positive + negative + a_minus)[0,:]
+            flux[1,:] = (positive + gama*negative + a_plus)[0,:]
+            flux[2::2, :] = flux_minus
+            flux[3::2, :] = flux_plus
+            flux_out[ng,nt,:,:] = flux
 
             xint = zeros((nlevel,nwno))
             xint[-1,:] = flux_zero/pi
@@ -939,7 +939,21 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 
             ################################ END OPTIONS FOR DIRECT SCATTERING####################
 
+            single_scat = zeros((nlevel,nwno))
+            multi_scat = zeros((nlevel,nwno))
             for i in range(nlayer-1,-1,-1):
+                single_scat[i,:] = ((w0_og[i,:]*F0PI/(4.*pi))
+                        *(p_single[i,:])*exp(-tau_og[i,:]/u0)
+                        *(1. - exp(-dtau_og[i,:]*(u0+u1)
+                        /(u0*u1)))*
+                        (u0/(u0+u1)))
+
+                multi_scat[i,:] = (A[i,:]*(1. - exp(-dtau[i,:] *(u0+1*u1)/(u0*u1)))*
+                        (u0/(u0+1*u1))
+                        +G[i,:]*(exp(exptrm[i,:]*1-dtau[i,:]/u1) - 1.0)/(lamda[i,:]*1*u1 - 1.0)
+                        +H[i,:]*(1. - exp(-exptrm[i,:]*1-dtau[i,:]/u1))/(lamda[i,:]*1*u1 + 1.0)
+                        )
+
                 #direct beam
                 xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/u1) 
                         #single scattering albedo from sun beam (from ubar0 to ubar1)
@@ -2505,7 +2519,7 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
     w_single_form, w_multi_form, psingle_form, w_single_rayleigh, w_multi_rayleigh, psingle_rayleigh,
-    frac_a, frac_b, frac_c, constant_back, constant_forward, stream, b_top=0, flx=0, single_form=0):
+    frac_a, frac_b, frac_c, constant_back, constant_forward, stream, b_top=0, flx=1, single_form=0):
     """
     Computes rooney fluxes given tau and everything is 3 dimensional. This is the exact same function 
     as `get_flux_geom_1d` but is kept separately so we don't have to do unecessary indexing for 
@@ -2711,7 +2725,7 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
             for W in range(nwno):
                 X[:,W] = solve_4_stream_banded(M[:,:,W], B[:,W], stream)
                 if flx==1:
-                    flux_temp[:,W] = calculate_flux(F[:,:,W], G[:,W], X)
+                    flux_temp[:,W] = calculate_flux(F[:,:,W], G[:,W], X[:,W])
             flux_bot = np.sum(F_bot*X, axis=0) + G_bot
 
             intgrl_new = zeros((stream*nlayer, nwno))
@@ -2722,9 +2736,9 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
             Pubar1 = legP(u1) 
 
             mus = (u1 + u0) / (u1 * u0)
-            expo_mus = slice_gt(mus * dtau, 35.0)    
+            expo_mus = slice_rav(mus * dtau, 35.0)    
             exptrm_mus = (1 - exp(-expo_mus)) / mus
-            tau_mu = slice_gt(tau[:-1,:] * 1/u0, 35.0)
+            tau_mu = slice_rav(tau[:-1,:] * 1/u0, 35.0)
             exptau_mu = exp(-tau_mu)
             expon1 = exptrm_mus * exptau_mu
 
@@ -2789,9 +2803,9 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
                             * (1 - exptrm_mus) * exp(-TAU[:-1,:]/u0)
                                 / mus)
 
-            for i in range(nlayer):
-                for l in range(stream):
-                    multi_scat[i,:] = multi_scat[i,:] + w_multi[l,i,:] * Pu1[l] * intgrl_new[stream*i+l,:]
+            #for i in range(nlayer):
+            #    for l in range(stream):
+            #        multi_scat[i,:] = multi_scat[i,:] + w_multi[l,i,:] * Pu1[l] * intgrl_new[stream*i+l,:]
 
 
             intgrl_per_layer = w0 *  multi_scat + single_scat
@@ -2997,7 +3011,7 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 
 
             expo = dtau / ubar1[ng,nt] 
-            expo_mus = slice_gt(expo, 35.0)    
+            expo_mus = slice_rav(expo, 35.0)    
             expdtau = exp(-expo)
 
             intgrl_per_layer = (w0 *  multi_scat *2*pi
@@ -3082,7 +3096,7 @@ def setup_2_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar
 
     lam = sqrt(a[0]*a[1])
     expo = lam*dtau
-    expo = slice_gt(expo, 35.0) 
+    expo = slice_rav(expo, 35.0) 
     exptrm = exp(-expo)
 
     #   parameters in matrices
@@ -3472,8 +3486,8 @@ def calculate_flux(F, G, X):
     """
     Calculate fluxes
     """
-    #return F.dot(X) + G
-    return mat_dot(F,X) + G
+    return F.dot(X) + G
+    #return mat_dot(F,X) + G
 
 #@jit(nopython=True, cache=True)
 def legP(mu): # Legendre polynomials
@@ -3494,6 +3508,7 @@ def mat_dot(A,B):
     for i in range(A.shape[0]):
         for j in range(A.shape[1]):
             C[i,:] += A[i,j,:]*B[j,:]
+    #C = np.dot(A,B)
     return C
 
 #@jit(nopython=True, cache=True)
