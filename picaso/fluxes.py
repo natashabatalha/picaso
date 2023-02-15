@@ -1,7 +1,6 @@
 from numba import jit, objmode
 from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh, min, dot, array,log, log10,ones, array_equal
 import numpy as np
-#import pentapy as pp
 import time
 import pickle as pk
 from scipy.linalg import solve_banded
@@ -2767,7 +2766,7 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
 @jit(nopython=True, cache=True, debug=True)
 def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb, 
             dtau_og, tau_og, w0_og, w0_no_raman, cosb_og, plevel, ubar1,
-            surf_reflect, stream, hard_surface, flx=1, blackbody_approx=1):
+            surf_reflect, stream, hard_surface, flx=0, blackbody_approx=1):
     """
     The result of this routine is the top of the atmosphere thermal intensity as 
     a function of gauss and chebychev points accross the disk. 
@@ -2850,7 +2849,7 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     b0 = all_b[0:-1,:]
     if blackbody_approx == 1: # linear thermal
         b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
-        f0 = 0.
+        f0 = 0.*b1
     elif blackbody_approx == 2: # exponential thermal
         b1 = all_b[1:,:] 
         f0 = -1/dtau * log(b1/b0)
@@ -2866,7 +2865,7 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
     b_surface_SH4 = (-pi*all_b[-1,:]/4 )
 
     if np.array_equal(cosb,cosb_og):
-        ff = 0.
+        ff = 0.*cosb_og
     else:
         ff = cosb_og**stream
 
@@ -2886,12 +2885,13 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
         for nt in range(numt):
             if stream==2:
                 M, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2 = setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, 
-                surf_reflect, ubar1[ng,nt], 0, dtau, tau, a, b, b0, b1, f0, fluxes=flx, calculation=blackbody_approx)
+                surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, B0=b0, B1=b1, f0=f0, fluxes=flx, calculation=blackbody_approx)
 
             elif stream==4:
                 M, B, A_int, N_int, F_bot, G_bot, F, G = setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, 
-                        b_surface_SH4, surf_reflect, ubar1[ng,nt], 0, dtau, tau, a, b, b0, b1, f0, fluxes=flx, calculation=blackbody_approx) 
+                        b_surface_SH4, surf_reflect, 0, ubar1[ng,nt], dtau, tau, a, b, b0, b1, f0, fluxes=flx, calculation=blackbody_approx) 
                 # F and G will be nonzero if fluxes=1
+
 
             flux_bot = zeros(nwno)
             intgrl_new = zeros((stream*nlayer, nwno))
@@ -3084,6 +3084,13 @@ def setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar
     Mb[1,1,:] = Q2[0,:]
     B[0,:] = b_top - zmn_down[0,:]
 
+    #   last row: BC 4
+    n = nlayer-1
+    Mb[3, 2*nlayer-2,:] = Q2mn[n,:] - surf_reflect*Q1mn[n,:]
+    Mb[2, 2*nlayer-1,:] = Q1pl[n,:] - surf_reflect*Q2pl[n,:]
+    B[2*nlayer-1,:] = b_surface - zpl_up[n,:] + surf_reflect * zmn_up[n,:]
+
+    # remaining rows
     Mb[0,3::2,:] = -Q2[1:,:]
     Mb[1,2::2,:] = -Q1[1:,:]
     Mb[1,3::2,:] = -Q1[1:,:]
@@ -3095,6 +3102,7 @@ def setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar
     B[1:-1:2,:] = zmn_down[1:,:] - zmn_up[:-1,:]
     B[2::2,:] = zpl_down[1:,:] - zpl_up[:-1,:]
 
+    # fill integrated matrices needed for source-function technique
     nn = np.arange(2*nlayer)
     indcs = nn[::2]
     k = 0
@@ -3113,18 +3121,12 @@ def setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar
         N_int[::2,:] = (1-w0) * ubar1 / a[0] * (B0 *(1-expdtau) + B1*(ubar1 - (dtau+ubar1)*expdtau)) #* 2*pi
         N_int[1::2,:] = (1-w0) * ubar1 / a[0] * ( B1*(1-expdtau) / a[1]) #* 2*pi
 
-    #   last row: BC 4
-    n = nlayer-1
-    Mb[3, 2*nlayer-2,:] = Q2mn[n,:] - surf_reflect*Q1mn[n,:]
-    Mb[2, 2*nlayer-1,:] = Q1pl[n,:] - surf_reflect*Q2pl[n,:]
-    B[2*nlayer-1,:] = b_surface - zpl_up[n,:] + surf_reflect * zmn_up[n,:]
-
+    # flux at bottom of atmosphere
     F_bot = zeros((2*nlayer, nwno))
     G_bot = zeros(nwno)
     F_bot[-2,:] = Q2mn[-1,:]
     F_bot[-1,:] = Q1pl[-1,:]
     G_bot = zpl_up[-1,:]
-
 
     if fluxes == 1: # fluxes per layer
         F[0,0,:] = Q1[0,:]
@@ -3148,9 +3150,7 @@ def setup_2_stream_banded(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar
         G[2::2,:] = zmn_up
         G[3::2,:] = zpl_up
 
-#    import IPython; IPython.embed()
     return Mb, B, A_int, N_int, F_bot, G_bot, F, G, Q1, Q2
-
 @jit(nopython=True, cache=True, debug=True)
 def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, surf_reflect, ubar0, ubar1,
         dtau, tau, a, b, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
@@ -3354,6 +3354,7 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
     F = zeros((4*nlevel, 4*nlayer, nwno))
     G = zeros((4*nlevel, nwno))
 
+    # top boundary conditions
     Mb[5,0,:] = p1mn[0,:]
     Mb[5,1,:] = q1pl[0,:]
     Mb[4,1,:] = p1pl[0,:]
@@ -3366,6 +3367,21 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
     B[0,:] = b_top - z1mn_down[0,:]
     B[1,:] = -b_top/4 - z2mn_down[0,:]
 
+    # bottom boundary conditions
+    n = nlayer-1
+    Mb[5,4*nlayer-2,:] = f22[n,:] - surf_reflect*f02[n,:]
+    Mb[5,4*nlayer-1,:] = f33[n,:] - surf_reflect*f13[n,:]
+    Mb[4,4*nlayer-1,:] = f23[n,:] - surf_reflect*f03[n,:]
+    Mb[6,4*nlayer-3,:] = f21[n,:] - surf_reflect*f01[n,:]
+    Mb[6,4*nlayer-2,:] = f32[n,:] - surf_reflect*f12[n,:]
+    Mb[7,4*nlayer-4,:] = f20[n,:] - surf_reflect*f00[n,:]
+    Mb[7,4*nlayer-3,:] = f31[n,:] - surf_reflect*f11[n,:]
+    Mb[8,4*nlayer-4,:] = f30[n,:] - surf_reflect*f10[n,:]
+
+    B[4*nlayer-2,:] = b_surface - z1pl_up[n,:] + surf_reflect*z1mn_up[n,:]
+    B[4*nlayer-1,:] = b_surface_SH4 - z2pl_up[n,:] + surf_reflect*z2mn_up[n,:]
+
+    # fill remaining rows of matrix
     Mb[5,2:-4:4,:] = f02[:-1,:]
     Mb[5,3:-4:4,:] = f13[:-1,:]
     Mb[5,4::4,:] = -p1pl[1:,:]
@@ -3414,6 +3430,7 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
     B[4::4,:] = z1pl_down[1:,:] - z1pl_up[:-1,:]
     B[5::4,:] = z2pl_down[1:,:] - z2pl_up[:-1,:]
 
+    # fill integrated matrices needed for source-function technique
     nn = 4*nlayer
     NN = 4*nn+4
     a_int = A_int.reshape(nn*nn, A_int.shape[2])
@@ -3442,19 +3459,7 @@ def setup_4_stream_banded(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
     N_int[2::4,:] = N2
     N_int[3::4,:] = N3
 
-    n = nlayer-1
-    Mb[5,4*nlayer-2,:] = f22[n,:] - surf_reflect*f02[n,:]
-    Mb[5,4*nlayer-1,:] = f33[n,:] - surf_reflect*f13[n,:]
-    Mb[4,4*nlayer-1,:] = f23[n,:] - surf_reflect*f03[n,:]
-    Mb[6,4*nlayer-3,:] = f21[n,:] - surf_reflect*f01[n,:]
-    Mb[6,4*nlayer-2,:] = f32[n,:] - surf_reflect*f12[n,:]
-    Mb[7,4*nlayer-4,:] = f20[n,:] - surf_reflect*f00[n,:]
-    Mb[7,4*nlayer-3,:] = f31[n,:] - surf_reflect*f11[n,:]
-    Mb[8,4*nlayer-4,:] = f30[n,:] - surf_reflect*f10[n,:]
-
-    B[4*nlayer-2,:] = b_surface - z1pl_up[n,:] + surf_reflect*z1mn_up[n,:]
-    B[4*nlayer-1,:] = b_surface_SH4 - z2pl_up[n,:] + surf_reflect*z2mn_up[n,:]
-
+    # flux at bottom of atmosphere
     F_bot[-4,:] = f20[-1,:]
     F_bot[-3,:] = f21[-1,:]
     F_bot[-2,:] = f22[-1,:]
