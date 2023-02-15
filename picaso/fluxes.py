@@ -972,8 +972,8 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             xint_at_top[ng,nt,:] = xint[0,:]
             #intensity[ng,nt,:,:] = xint
 
-    import IPython; IPython.embed()
-    import sys; sys.exit()
+#    import IPython; IPython.embed()
+#    import sys; sys.exit()
     return xint_at_top #, flux_out, intensity
 
 @jit(nopython=True, cache=True,fastmath=True)
@@ -2687,7 +2687,7 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
             if single_form==0: # explicit single form
                 if psingle_form==1: #OTHG
                     p_single=(1-cosb_og**2)/(sqrt(1+cosb_og**2+2*cosb_og*cos_theta)**3) 
-                elif psingle_form==2: #'TTHG':
+                elif psingle_form==0: #'TTHG':
                     g_forward = constant_forward*cosb_og
                     g_back = constant_back*cosb_og
                     f = frac_a + frac_b*g_back**frac_c
@@ -2818,8 +2818,8 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
             xint_at_top[ng,nt,:] = xint_temp[0, :]
             xint_out[ng,nt,:,:] = xint_temp
             flux[ng,nt,:,:] = flux_temp
-    import IPython; IPython.embed()
-    import sys; sys.exit()
+#    import IPython; IPython.embed()
+#    import sys; sys.exit()
     
     return xint_at_top, flux, xint_out
 
