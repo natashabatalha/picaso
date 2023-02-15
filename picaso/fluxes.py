@@ -628,7 +628,7 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             xint_at_top[ng,nt,:] = xint[0,:]    
     return xint_at_top
 
-@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)
 def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
@@ -958,6 +958,8 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             xint_at_top[ng,nt,:] = xint[0,:]
             #intensity[ng,nt,:,:] = xint
 
+    import IPython; IPython.embed()
+    import sys; sys.exit()
     return xint_at_top #, flux_out, intensity
 
 @jit(nopython=True, cache=True,fastmath=True)
@@ -2729,8 +2731,8 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
             if stream==2:
                 alpha = 1/u1 + lam
                 beta = 1/u1 - lam
-                expo_alp = slice_gt(alpha * dtau, 35.0)
-                expo_bet = slice_gt(beta * dtau, 35.0) 
+                expo_alp = slice_rav(alpha * dtau, 35.0)
+                expo_bet = slice_rav(beta * dtau, 35.0) 
                 exptrm_alp = (1 - exp(-expo_alp)) / alpha 
                 exptrm_bet = (1 - exp(-expo_bet)) / beta
 
@@ -2802,6 +2804,8 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
             xint_at_top[ng,nt,:] = xint_temp[0, :]
             xint_out[ng,nt,:,:] = xint_temp
             flux[ng,nt,:,:] = flux_temp
+    import IPython; IPython.embed()
+    import sys; sys.exit()
     
     return xint_at_top, flux, xint_out
 
