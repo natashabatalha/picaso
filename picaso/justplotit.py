@@ -19,7 +19,6 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.animation as animation
-import seaborn as sns
 from matplotlib import rc
 
 from scipy.stats.stats import pearsonr  
@@ -2036,7 +2035,8 @@ def create_heat_map(data,rayleigh=True,extend=False,plot_height=300,plot_width=3
     return layout
 
 def create_thermal_heatmap(data, cmap='RdGy', width=8, height=10, label_size=15, tick_size=12, y_axis=True, pad=0.1, vmin=None, vmax=None):
-
+    import seaborn as sns
+    
     rc('font',**{'family':'sans-serif','sans-serif':['Times New Roman']})
 
     data.columns.name = 'w0' 

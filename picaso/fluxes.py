@@ -2468,6 +2468,10 @@ def get_transit_1d(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
     -------
     array 
         Rp**2 /Rs**2 as a function of wavelength 
+
+    Notes
+    -----
+    .. [1] Brown, Timothy M. "Transmission spectra as diagnostics of extrasolar giant planet atmospheres." The Astrophysical Journal 553.2 (2001): 1006.
     """
     mmw = mmw * amu #make sure mmw in grams
 
@@ -2500,7 +2504,8 @@ def get_transit_1d(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
             #two because symmetry of sphere
             TAUALL = TAUALL + 2*TAU[:,i-j-1]*delta_length[i,j]
         transmitted[:,i]=exp(-TAUALL)
-
+    #equation 11 from Brown, T (2001)
+    #https://ui.adsabs.harvard.edu/abs/2001ApJ...553.1006B/abstract 
     F=(((min(z))/(rstar))**2 + 
         2./(rstar)**2.*dot((1.-transmitted),z*dz))
 
