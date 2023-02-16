@@ -628,7 +628,7 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             xint_at_top[ng,nt,:] = xint[0,:]    
     return xint_at_top
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
@@ -732,7 +732,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
     #what we want : intensity at the top as a function of all the different angles
 
     xint_at_top = zeros((numg, numt, nwno))
-    #intensity = zeros((numg, numt, nlevel, nwno))
+    intensity = zeros((numg, numt, nlevel, nwno))
 
     nlayer = nlevel - 1 
     flux_out = zeros((numg, numt, 2*nlevel, nwno))
@@ -970,11 +970,11 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                         )
 
             xint_at_top[ng,nt,:] = xint[0,:]
-            #intensity[ng,nt,:,:] = xint
+            intensity[ng,nt,:,:] = xint
 
 #    import IPython; IPython.embed()
 #    import sys; sys.exit()
-    return xint_at_top #, flux_out, intensity
+    return xint_at_top , flux_out#, intensity
 
 @jit(nopython=True, cache=True,fastmath=True)
 def get_reflected_1d_newclima(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
@@ -2520,7 +2520,7 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
     w_single_form, w_multi_form, psingle_form, w_single_rayleigh, w_multi_rayleigh, psingle_rayleigh,
-    frac_a, frac_b, frac_c, constant_back, constant_forward, stream, b_top=0, flx=1, single_form=0):
+    frac_a, frac_b, frac_c, constant_back, constant_forward, stream, b_top=0, flx=0, single_form=0):
     """
     Computes rooney fluxes given tau and everything is 3 dimensional. This is the exact same function 
     as `get_flux_geom_1d` but is kept separately so we don't have to do unecessary indexing for 
@@ -2651,7 +2651,7 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
             p_single = zeros(cosb_og.shape)
 
 
-            if (w_single_form==1 or w_multi_form==1): # OTHG:
+            if ((w_single_form==1) or (w_multi_form==1)): # OTHG:
                 for l in range(1,stream):
                     w = (2*l+1) * cosb_og**l
                     if w_single_form==1:
@@ -2659,12 +2659,12 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
                     if w_multi_form==1:
                         w_multi[l,:,:] = (w - (2*l+1)*f_deltaM) / (1 - f_deltaM)
 
-            if (w_single_form==0 or w_multi_form==0): # TTHG
+            if ((w_single_form==0) or (w_multi_form==0)): # TTHG
                 g_forward = constant_forward*cosb_og
                 g_back = constant_back*cosb_og
                 f = frac_a + frac_b*g_back**frac_c
-                #f_deltaM_ = f_deltaM
-                #f_deltaM_ *= (f*constant_forward**stream + (1-f)*constant_back**stream)
+                f_deltaM_ = f_deltaM
+                f_deltaM_ *= (f*constant_forward**stream + (1-f)*constant_back**stream)
                 
                 ff1 = (constant_forward*cosb_og)**stream
                 ff2 = (constant_back*cosb_og)**stream
@@ -2672,13 +2672,13 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
                 for l in range(1,stream):
                     w = (2*l+1) * (f*g_forward**l + (1-f)*g_back**l)
                     if w_single_form==0:
-                        #w_single[l,:,:] = (w - (2*l+1)*f_deltaM_) / (1 - f_deltaM_)
-                        w_single[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
-                                        + (1-f)*(g_back**l - ff2) / (1 - ff))
+                        w_single[l,:,:] = (w - (2*l+1)*f_deltaM_) / (1 - f_deltaM_)
+                        #w_single[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
+                        #                + (1-f)*(g_back**l - ff2) / (1 - ff))
                     if w_multi_form==0:
-                        #w_multi[l,:,:] = (w - (2*l+1)*f_deltaM_) / (1 - f_deltaM_)
-                        w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
-                                        + (1-f)*(g_back**l - ff2) / (1 - ff))
+                        w_multi[l,:,:] = (w - (2*l+1)*f_deltaM_) / (1 - f_deltaM_)
+                        #w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
+                        #               + (1-f)*(g_back**l - ff2) / (1 - ff))
 
             #single-scattering options
             if single_form==0: # explicit single form
@@ -2811,10 +2811,10 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
                             + intgrl_per_layer[i,:] / u1) 
 
             xint_at_top[ng,nt,:] = xint_temp[0, :]
-            xint_out[ng,nt,:,:] = xint_temp
+            #xint_out[ng,nt,:,:] = xint_temp
             flux[ng,nt,:,:] = flux_temp
     
-    return xint_at_top, flux, xint_out
+    return xint_at_top, flux#, xint_out
 
 #@jit(nopython=True, cache=True, debug=True)
 def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb, 

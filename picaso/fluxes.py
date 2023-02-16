@@ -628,7 +628,7 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             xint_at_top[ng,nt,:] = xint[0,:]    
     return xint_at_top
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
@@ -2514,12 +2514,13 @@ def get_transit_3d(nlevel, nwno, radius, gravity,rstar, mass, mmw, k_b, G,amu,
     """
     return 
 
+
 #@jit(nopython=True, cache=True, debug=True)
 def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ftau_ray, f_deltaM,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect, ubar0, ubar1, cos_theta, F0PI, 
     w_single_form, w_multi_form, psingle_form, w_single_rayleigh, w_multi_rayleigh, psingle_rayleigh,
-    frac_a, frac_b, frac_c, constant_back, constant_forward, stream, b_top=0, flx=1, single_form=0):
+    frac_a, frac_b, frac_c, constant_back, constant_forward, stream, b_top=0, flx=0, single_form=0):
     """
     Computes rooney fluxes given tau and everything is 3 dimensional. This is the exact same function 
     as `get_flux_geom_1d` but is kept separately so we don't have to do unecessary indexing for 
@@ -2649,7 +2650,8 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
             w_multi = ones(((stream, nlayer, nwno)))
             p_single = zeros(cosb_og.shape)
 
-            if (w_single_form==1 or w_multi_form==1): # OTHG:
+
+            if ((w_single_form==1) or (w_multi_form==1)): # OTHG:
                 for l in range(1,stream):
                     w = (2*l+1) * cosb_og**l
                     if w_single_form==1:
@@ -2657,12 +2659,12 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
                     if w_multi_form==1:
                         w_multi[l,:,:] = (w - (2*l+1)*f_deltaM) / (1 - f_deltaM)
 
-            if (w_single_form==0 or w_multi_form==0): # TTHG
+            if ((w_single_form==0) or (w_multi_form==0)): # TTHG
                 g_forward = constant_forward*cosb_og
                 g_back = constant_back*cosb_og
                 f = frac_a + frac_b*g_back**frac_c
-                #f_deltaM_ = f_deltaM
-                #f_deltaM_ *= (f*constant_forward**stream + (1-f)*constant_back**stream)
+                f_deltaM_ = f_deltaM
+                f_deltaM_ *= (f*constant_forward**stream + (1-f)*constant_back**stream)
                 
                 ff1 = (constant_forward*cosb_og)**stream
                 ff2 = (constant_back*cosb_og)**stream
@@ -2670,26 +2672,13 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
                 for l in range(1,stream):
                     w = (2*l+1) * (f*g_forward**l + (1-f)*g_back**l)
                     if w_single_form==0:
-                        #w_single[l,:,:] = (w - (2*l+1)*f_deltaM_) / (1 - f_deltaM_)
-                        w_single[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
-                                        + (1-f)*(g_back**l - ff2) / (1 - ff))
+                        w_single[l,:,:] = (w - (2*l+1)*f_deltaM_) / (1 - f_deltaM_)
+                        #w_single[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
+                        #                + (1-f)*(g_back**l - ff2) / (1 - ff))
                     if w_multi_form==0:
-                        #w_multi[l,:,:] = (w - (2*l+1)*f_deltaM_) / (1 - f_deltaM_)
-                        w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
-                                        + (1-f)*(g_back**l - ff2) / (1 - ff))
-
-            if (w_single_form==2 or w_multi_form==2): # isotropic (heng comparison)
-                if w_single_form==1: w_single[1:,:,:] *= 0
-                if w_multi_form==1: w_multi[1:,:,:] *= 0
-
-            if w_single_rayleigh==1:
-                w_single[1:] *= ftau_cld
-                if stream==4:
-                    w_single[2] += 0.5*ftau_ray 
-            if w_multi_rayleigh==1: 
-                w_multi[1:] *= ftau_cld
-                if stream==4:
-                    w_multi[2] += 0.5*ftau_ray 
+                        w_multi[l,:,:] = (w - (2*l+1)*f_deltaM_) / (1 - f_deltaM_)
+                        #w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
+                        #               + (1-f)*(g_back**l - ff2) / (1 - ff))
 
             #single-scattering options
             if single_form==0: # explicit single form
@@ -2716,16 +2705,22 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
             b_surface_SH4 = -(0. + surf_reflect*u0*F0PI*exp(-tau[-1, :]/u0))/4#/(2*pi)# need to double check BCs)
             b_top_ = b_top#/(2*pi)
 
-
             if stream==2:
-                M, B, F_bot, G_bot, F, G, Q1, Q2, lam, q, eta = setup_2_stream_fluxes(nlayer, nwno, w0, b_top_, b_surface, 
+                M, B, F_bot, G_bot, F, G, Q1, Q2, lam, q, eta  = setup_2_stream_fluxes(nlayer, nwno, w0, b_top_, b_surface, 
                 surf_reflect, u0, dtau, tau, a, b, fluxes=flx, calculation=0) 
 
             if stream==4:
-                M, B, F_bot, G_bot, F, G, lam1, lam2, A, eta = setup_4_stream_fluxes(nlayer, nwno, w0_og, b_top_, b_surface, b_surface_SH4, 
-                    surf_reflect, u0, dtau_og, tau_og, a, b, fluxes=flx, calculation=0) 
+                M, B, F_bot, G_bot, F, G, lam1, lam2, A, eta = setup_4_stream_fluxes(nlayer, nwno, w0, b_top_, b_surface, b_surface_SH4, 
+                    surf_reflect, u0, dtau, tau, a, b, fluxes=flx, calculation=0) 
 
                 # F and G will be nonzero if fluxes=1
+
+            flux_bot = zeros(nwno)
+            intgrl_new = zeros((stream*nlayer, nwno))
+            flux_temp = zeros((stream*nlevel, nwno))
+            intgrl_per_layer = zeros((nlayer, nwno))
+            xint_temp = zeros((nlevel, nwno))
+            multi_scat = zeros((nlayer, nwno))
 
             #========================= Start loop over wavelength =========================
             X = zeros((stream*nlayer, nwno))
@@ -2798,28 +2793,17 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
                                 + Aint[2] + Nint2 + Aint[3] + Nint3)
 
             if single_form==1:
-                maxterm = 4
-                TAU = tau; DTAU = dtau; W0 = w0
+                maxterm = stream
                 for l in range(maxterm):
-                    w = (2*l+1) * cosb_og**l
-                    w_single_tmp = (w - (2*l+1)*cosb_og**maxterm) / (1 - cosb_og**maxterm) 
-                    p_single = p_single + w_single_tmp * Pu0[l]*Pu1[l]
-            else:
-                TAU = tau_og; DTAU = dtau_og; W0 = w0_og
+                    p_single = p_single + w_single[l] * Pu0[l]*Pu1[l]
 
-            expo_mus = mus * DTAU 
-            expo_mus = slice_rav(expo_mus, 35.0)    
-            exptrm_mus = exp(-expo_mus)
-            single_scat = (W0 * F0PI / (4*np.pi) * p_single 
-                            * (1 - exptrm_mus) * exp(-TAU[:-1,:]/u0)
-                                / mus)
-
-            #for i in range(nlayer):
-            #    for l in range(stream):
-            #        multi_scat[i,:] = multi_scat[i,:] + w_multi[l,i,:] * Pu1[l] * intgrl_new[stream*i+l,:]
-
-
-            intgrl_per_layer = w0 *  multi_scat + single_scat
+            expo_mus1 = slice_rav(mus * dtau_og, 35.0)    
+            exptrm_mus1 = exp(-expo_mus1)
+            intgrl_per_layer = (w0 *  multi_scat 
+                        + w0_og * F0PI / (4*np.pi) * p_single 
+                        * (1 - exptrm_mus1) * exp(-tau_og[:-1,:]/u0)
+                        / mus
+                        )
 
             xint_temp[-1,:] = flux_bot/pi
             for i in range(nlayer-1,-1,-1):
@@ -2827,12 +2811,10 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
                             + intgrl_per_layer[i,:] / u1) 
 
             xint_at_top[ng,nt,:] = xint_temp[0, :]
-            xint_out[ng,nt,:,:] = xint_temp
+            #xint_out[ng,nt,:,:] = xint_temp
             flux[ng,nt,:,:] = flux_temp
-#    import IPython; IPython.embed()
-#    import sys; sys.exit()
     
-    return xint_at_top, flux, xint_out
+    return xint_at_top, flux#, xint_out
 
 #@jit(nopython=True, cache=True, debug=True)
 def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb, 
@@ -3048,7 +3030,7 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 
 #@jit(nopython=True, cache=True)
 def setup_2_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar0, 
-        dtau, tau, a, b, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
+        dtau, tau, a, b, B0=0., B1=0., fluxes=0, calculation=0):#'reflected'):
     """
     Setup up matrices to solve flux problem for spherical harmonics method.
 
@@ -3086,8 +3068,6 @@ def setup_2_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar
         Matrix of blackbodies
     B1 : numpy.ndarray
         Eqn (26) Toon 89
-    f0 : numpy.ndarray
-        Parameter needed for exponential approach to thermal
     fluxes : int 
         Toggle calculation of layerwise fluxes (0 = do not calculate, 1 = calculate)
     calculation : int 
@@ -3197,7 +3177,7 @@ def setup_2_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar
 
 #@jit(nopython=True, cache=True, debug=True)
 def setup_4_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, surf_reflect, ubar0, 
-        dtau, tau, a, b, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
+        dtau, tau, a, b, B0=0., B1=0., fluxes=0, calculation=0):#'reflected'):
 
     """
     Setup up matrices to solve flux problem for spherical harmonics method.
@@ -3236,8 +3216,6 @@ def setup_4_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
         Matrix of blackbodies
     B1 : numpy.ndarray
         Eqn (26) Toon 89
-    f0 : numpy.ndarray
-        Parameter needed for exponential approach to thermal
     fluxes : int 
         Toggle calculation of layerwise fluxes (0 = do not calculate, 1 = calculate)
     calculation : int 
