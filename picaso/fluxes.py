@@ -2514,6 +2514,7 @@ def get_transit_3d(nlevel, nwno, radius, gravity,rstar, mass, mmw, k_b, G,amu,
     """
     return 
 
+
 #@jit(nopython=True, cache=True, debug=True)
 def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ftau_ray, f_deltaM,
     dtau_og, tau_og, w0_og, cosb_og, 
@@ -2649,6 +2650,7 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
             w_multi = ones(((stream, nlayer, nwno)))
             p_single = zeros(cosb_og.shape)
 
+
             if (w_single_form==1 or w_multi_form==1): # OTHG:
                 for l in range(1,stream):
                     w = (2*l+1) * cosb_og**l
@@ -2678,19 +2680,6 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
                         w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
                                         + (1-f)*(g_back**l - ff2) / (1 - ff))
 
-            if (w_single_form==2 or w_multi_form==2): # isotropic (heng comparison)
-                if w_single_form==1: w_single[1:,:,:] *= 0
-                if w_multi_form==1: w_multi[1:,:,:] *= 0
-
-            if w_single_rayleigh==1:
-                w_single[1:] *= ftau_cld
-                if stream==4:
-                    w_single[2] += 0.5*ftau_ray 
-            if w_multi_rayleigh==1: 
-                w_multi[1:] *= ftau_cld
-                if stream==4:
-                    w_multi[2] += 0.5*ftau_ray 
-
             #single-scattering options
             if single_form==0: # explicit single form
                 if psingle_form==1: #OTHG
@@ -2716,16 +2705,22 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
             b_surface_SH4 = -(0. + surf_reflect*u0*F0PI*exp(-tau[-1, :]/u0))/4#/(2*pi)# need to double check BCs)
             b_top_ = b_top#/(2*pi)
 
-
             if stream==2:
-                M, B, F_bot, G_bot, F, G, Q1, Q2, lam, q, eta = setup_2_stream_fluxes(nlayer, nwno, w0, b_top_, b_surface, 
+                M, B, F_bot, G_bot, F, G, Q1, Q2, lam, q, eta  = setup_2_stream_fluxes(nlayer, nwno, w0, b_top_, b_surface, 
                 surf_reflect, u0, dtau, tau, a, b, fluxes=flx, calculation=0) 
 
             if stream==4:
-                M, B, F_bot, G_bot, F, G, lam1, lam2, A, eta = setup_4_stream_fluxes(nlayer, nwno, w0_og, b_top_, b_surface, b_surface_SH4, 
-                    surf_reflect, u0, dtau_og, tau_og, a, b, fluxes=flx, calculation=0) 
+                M, B, F_bot, G_bot, F, G, lam1, lam2, A, eta = setup_4_stream_fluxes(nlayer, nwno, w0, b_top_, b_surface, b_surface_SH4, 
+                    surf_reflect, u0, dtau, tau, a, b, fluxes=flx, calculation=0) 
 
                 # F and G will be nonzero if fluxes=1
+
+            flux_bot = zeros(nwno)
+            intgrl_new = zeros((stream*nlayer, nwno))
+            flux_temp = zeros((stream*nlevel, nwno))
+            intgrl_per_layer = zeros((nlayer, nwno))
+            xint_temp = zeros((nlevel, nwno))
+            multi_scat = zeros((nlayer, nwno))
 
             #========================= Start loop over wavelength =========================
             X = zeros((stream*nlayer, nwno))
@@ -2798,28 +2793,16 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
                                 + Aint[2] + Nint2 + Aint[3] + Nint3)
 
             if single_form==1:
-                maxterm = 4
-                TAU = tau; DTAU = dtau; W0 = w0
+                maxterm = stream
                 for l in range(maxterm):
-                    w = (2*l+1) * cosb_og**l
-                    w_single_tmp = (w - (2*l+1)*cosb_og**maxterm) / (1 - cosb_og**maxterm) 
-                    p_single = p_single + w_single_tmp * Pu0[l]*Pu1[l]
-            else:
-                TAU = tau_og; DTAU = dtau_og; W0 = w0_og
+                    p_single = p_single + w_single[l] * Pu0[l]*Pu1[l]
 
-            expo_mus = mus * DTAU 
-            expo_mus = slice_rav(expo_mus, 35.0)    
-            exptrm_mus = exp(-expo_mus)
-            single_scat = (W0 * F0PI / (4*np.pi) * p_single 
-                            * (1 - exptrm_mus) * exp(-TAU[:-1,:]/u0)
-                                / mus)
-
-            #for i in range(nlayer):
-            #    for l in range(stream):
-            #        multi_scat[i,:] = multi_scat[i,:] + w_multi[l,i,:] * Pu1[l] * intgrl_new[stream*i+l,:]
-
-
-            intgrl_per_layer = w0 *  multi_scat + single_scat
+            exptrm_mus1 = exp(-expo_mus)
+            intgrl_per_layer = (w0 *  multi_scat 
+                        + w0 * F0PI / (4*np.pi) * p_single 
+                        * (1 - exptrm_mus1) * exp(-tau[:-1,:]/u0)
+                        / mus
+                        )
 
             xint_temp[-1,:] = flux_bot/pi
             for i in range(nlayer-1,-1,-1):
@@ -2829,8 +2812,6 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
             xint_at_top[ng,nt,:] = xint_temp[0, :]
             xint_out[ng,nt,:,:] = xint_temp
             flux[ng,nt,:,:] = flux_temp
-#    import IPython; IPython.embed()
-#    import sys; sys.exit()
     
     return xint_at_top, flux, xint_out
 

@@ -1948,15 +1948,15 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
         This is the asymmetry factor 
         WITHOUT D-Eddington Correction
         Dimensions=# layer by # wave
-    gcos2 : ndarray of float 
-        Parameter that allows us to directly include Rayleigh scattering 
-        = 0.5*tau_rayleigh/(tau_rayleigh + tau_cloud)
     ftau_cld : ndarray of float 
         Fraction of cloud extinction to total 
         = tau_cloud/(tau_rayleigh + tau_cloud)
     ftau_ray : ndarray of float 
         Fraction of rayleigh extinction to total 
         = tau_rayleigh/(tau_rayleigh + tau_cloud)
+    f_deltaM : ndarray of float 
+        Fractional scattering coefficient for delta-M calculation
+        f_deltaM = 0 if delta_eddington=False
     dtau_og : ndarray of float 
         This is the opacity contained within each individual layer (defined at midpoints of "levels")
         WITHOUT the delta eddington correction, if it was specified by user
@@ -1979,10 +1979,18 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
         Cosine of the phase angle of the planet 
     F0PI : array 
         Downward incident solar radiation
-    single_phase : str 
-        Single scattering phase function, default is the two-term henyey-greenstein phase function
-    rayleigh : str 
-        Toggle rayleigh on or off
+    w_single_form : str 
+        Single scattering phase function approximation for SH
+    w_multi_form : str 
+        Multiple scattering phase function approximation for SH
+    psingle_form : str 
+        Scattering phase function approximation for psingle in SH
+    w_single_rayleigh : str 
+        Toggle rayleigh scattering on/off for single scattering in SH
+    w_multi_rayleigh : str 
+        Toggle rayleigh scattering on/off for multi scattering in SH
+    psingle_rayleigh : str 
+        Toggle rayleigh scattering on/off for psingle in SH
     frac_a : float 
         (Optional), If using the TTHG phase function. Must specify the functional form for fraction 
         of forward to back scattering (A + B * gcosb^C)
@@ -2004,11 +2012,8 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
         Upper boundary condition for incoming intensity
     flx : int 
         Toggle calculation of layerwise fluxes (0 = do not calculate, 1 = calculate)
-    psingle : int 
+    single_form : int 
         Toggle which version of p_single to use (0 = explicit, 1 = legendre)
-    heng_compare : int 
-        Temporary option being used for comparison with Heng results
-        
     Returns
     -------
     intensity at the top of the atmosphere for all the different ubar1 and ubar2 
