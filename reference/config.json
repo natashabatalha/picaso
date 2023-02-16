@@ -64,7 +64,8 @@
 				"w_single_rayleigh":1,
 				"w_multi_rayleigh":1,
 				"psingle_rayleigh":1,
-				"blackbody_approx":1
+				"blackbody_approx":1,
+				"calculate_fluxes":0
 			},
 			"common":{
 				"single_phase":3,

@@ -732,7 +732,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
     #what we want : intensity at the top as a function of all the different angles
 
     xint_at_top = zeros((numg, numt, nwno))
-    #intensity = zeros((numg, numt, nlevel, nwno))
+    intensity = zeros((numg, numt, nlevel, nwno))
 
     nlayer = nlevel - 1 
     flux_out = zeros((numg, numt, 2*nlevel, nwno))
@@ -970,11 +970,11 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                         )
 
             xint_at_top[ng,nt,:] = xint[0,:]
-            #intensity[ng,nt,:,:] = xint
+            intensity[ng,nt,:,:] = xint
 
 #    import IPython; IPython.embed()
 #    import sys; sys.exit()
-    return xint_at_top #, flux_out, intensity
+    return xint_at_top , flux_out#, intensity
 
 @jit(nopython=True, cache=True,fastmath=True)
 def get_reflected_1d_newclima(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
@@ -2468,10 +2468,6 @@ def get_transit_1d(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
     -------
     array 
         Rp**2 /Rs**2 as a function of wavelength 
-
-    Notes
-    -----
-    .. [1] Brown, Timothy M. "Transmission spectra as diagnostics of extrasolar giant planet atmospheres." The Astrophysical Journal 553.2 (2001): 1006.
     """
     mmw = mmw * amu #make sure mmw in grams
 
@@ -2504,8 +2500,7 @@ def get_transit_1d(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
             #two because symmetry of sphere
             TAUALL = TAUALL + 2*TAU[:,i-j-1]*delta_length[i,j]
         transmitted[:,i]=exp(-TAUALL)
-    #equation 11 from Brown, T (2001)
-    #https://ui.adsabs.harvard.edu/abs/2001ApJ...553.1006B/abstract 
+
     F=(((min(z))/(rstar))**2 + 
         2./(rstar)**2.*dot((1.-transmitted),z*dz))
 
@@ -2656,8 +2651,7 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
             p_single = zeros(cosb_og.shape)
 
 
-
-            if (w_single_form==1 or w_multi_form==1): # OTHG:
+            if ((w_single_form==1) or (w_multi_form==1)): # OTHG:
                 for l in range(1,stream):
                     w = (2*l+1) * cosb_og**l
                     if w_single_form==1:
@@ -2685,7 +2679,6 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
                         w_multi[l,:,:] = (w - (2*l+1)*f_deltaM_) / (1 - f_deltaM_)
                         #w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
                         #               + (1-f)*(g_back**l - ff2) / (1 - ff))
-
 
             #single-scattering options
             if single_form==0: # explicit single form
@@ -2826,7 +2819,7 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
 #@jit(nopython=True, cache=True, debug=True)
 def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb, 
             dtau_og, tau_og, w0_og, w0_no_raman, cosb_og, plevel, ubar1,
-            surf_reflect, stream, hard_surface, flx=0):
+            surf_reflect, stream, hard_surface, flx=0, blackbody_approx=1):
     """
     The result of this routine is the top of the atmosphere thermal intensity as 
     a function of gauss and chebychev points accross the disk. 
@@ -2890,6 +2883,8 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
         0 for no hard surface (e.g. Jupiter/Neptune), 1 for hard surface (terrestrial)
     flx : int 
         Toggle calculation of layerwise fluxes (0 = do not calculate, 1 = calculate)
+    calculation : int 
+        Toggle calculation method (1 = linear, 2 = exponential)
 
     Returns
     -------
@@ -2936,18 +2931,18 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 
     if stream==2:
         M, B, F_bot, G_bot, F, G, Q1, Q2, lam, q, eta =  setup_2_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, 
-                surf_reflect, 0, dtau, tau, a, b, B0=b0, B1=b1, fluxes=flx, calculation=1)
+                surf_reflect, 0, dtau, tau, a, b, B0=b0, B1=b1, fluxes=flx, calculation=blackbody_approx)
     elif stream==4:
         M, B, F_bot, G_bot, F, G, lam1, lam2, A, eta = setup_4_stream_fluxes(nlayer, nwno, w0, 
                 b_top, b_surface, b_surface_SH4, surf_reflect, 0, dtau, tau, a, b, B0=b0, B1=b1,  
-                fluxes=flx, calculation=1)
+                fluxes=flx, calculation=blackbody_approx)
 
     #========================= Start loop over wavelength =========================
     X = zeros((stream*nlayer, nwno))
     for W in range(nwno):
         X[:,W] = solve_4_stream_banded(M[:,:,W], B[:,W], stream)
-        if flx==1:
-            flux_temp[:,W] = calculate_flux(F[:,:,W], G[:,W], X)
+        #if flx==1:
+        #    flux_temp[:,W] = calculate_flux(F[:,:,W], G[:,W], X)
     flux_bot = np.sum(F_bot*X, axis=0) + G_bot
 
     for ng in range(numg):
@@ -3028,10 +3023,10 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
                             + intgrl_per_layer[i,:] / ubar1[ng,nt]) 
 
             xint_at_top[ng,nt,:] = xint_temp[0, :]
-            #intensity[ng,nt,:,:] = xint_temp
+            intensity[ng,nt,:,:] = xint_temp
             flux[ng,nt,:,:] = flux_temp
     
-    return xint_at_top, flux 
+    return xint_at_top, intensity, flux 
 
 #@jit(nopython=True, cache=True)
 def setup_2_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar0, 
@@ -3224,7 +3219,7 @@ def setup_4_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
     fluxes : int 
         Toggle calculation of layerwise fluxes (0 = do not calculate, 1 = calculate)
     calculation : int 
-        Toggle calculation method (0 = reflected, 1 = thermal)
+        Toggle calculation method (1 = linear, 2 = exponential)
 
     Returns
     -------
