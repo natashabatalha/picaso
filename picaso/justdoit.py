@@ -1,7 +1,5 @@
 from .atmsetup import ATMSETUP
-from .updated_fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_transit_1d, get_thermal_SH
-#from .new_fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_transit_1d, get_thermal_SH
-
+from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_transit_1d, get_thermal_SH
 from .fluxes import set_bb, tidal_flux, get_kzz
 from .climate import  calculate_atm_deq, did_grad_cp, convec, calculate_atm, t_start, growdown, growup, climate
 
@@ -231,7 +229,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                 nlevel = atm.c.nlevel
 
                 if rt_method == 'SH':
-                    (xint, flux_out, intensity)  = get_reflected_SH(nlevel, nwno, ng, nt, 
+                    (xint, flux_out)  = get_reflected_SH(nlevel, nwno, ng, nt, 
                                     DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig], 
                                     ftau_cld[:,:,ig], ftau_ray[:,:,ig], f_deltaM[:,:,ig],
                                     DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig], 
@@ -275,14 +273,12 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                                         atm.level['pressure'],ubar1,
                                                         atm.surf_reflect, atm.hard_surface, tridiagonal)
                 elif rt_method == 'SH':
-                    blackbody_approx = inputs['approx']['rt_params']['SH']['blackbody_approx']
-                    (flux, intensity, flux_out) = get_thermal_SH(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
+                    (flux, flux_out) = get_thermal_SH(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
                                                 DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig], 
                                                 DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], 
                                                 W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                                 atm.level['pressure'], ubar1, 
-                                                atm.surf_reflect, stream, atm.hard_surface, 
-                                                blackbody_approx=blackbody_approx)
+                                                atm.surf_reflect, stream, atm.hard_surface)
 
 
                 flux_at_top += flux*gauss_wts[ig]
@@ -3133,7 +3129,7 @@ class inputs():
     
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='none',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
-        p_reference=1, rt_method='toon', stream=2, blackbody_approx=1, toon_coefficients="quadrature",
+        p_reference=1, rt_method='toon', stream=2, toon_coefficients="quadrature",
         single_form='explicit', calculate_fluxes='off', query='nearest_neighbor',
         w_single_form='TTHG', w_multi_form='TTHG', psingle_form='TTHG', 
         w_single_rayleigh = 'on', w_multi_rayleigh='on', psingle_rayleigh='on'):
@@ -3171,9 +3167,6 @@ class inputs():
         toon_coefficients: str
             Decide whether to use Quadrature ("quadrature") or Eddington ("eddington") schemes
             to define Toon coefficients in two-stream approximation (see Table 1 in Toon et al 1989)
-        blackbody_approx : int 
-            blackbody_approx=1 does a linear blackbody approx (eqn 26 toon 89), 
-            while blackbody_approx=2 does an exponential (only an option for SH)
         single_form : str 
             form of the phase function can either be written as an 'explicit' henyey greinstein 
             or it can be written as a 'legendre' expansion. Default is 'explicit'
@@ -3223,7 +3216,6 @@ class inputs():
         
         #unique to SH
         self.inputs['approx']['rt_params']['SH']['single_form'] = SH_psingle_form_options(printout=False).index(single_form)
-        self.inputs['approx']['rt_params']['SH']['blackbody_approx'] = blackbody_approx
         self.inputs['approx']['rt_params']['SH']['w_single_form'] = SH_scattering_options(printout=False).index(w_single_form)
         self.inputs['approx']['rt_params']['SH']['w_multi_form'] = SH_scattering_options(printout=False).index(w_multi_form)
         self.inputs['approx']['rt_params']['SH']['psingle_form'] = SH_scattering_options(printout=False).index(psingle_form)
