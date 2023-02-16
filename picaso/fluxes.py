@@ -2930,10 +2930,10 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 
     if stream==2:
         M, B, F_bot, G_bot, F, G, Q1, Q2, lam, q, eta =  setup_2_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, 
-                surf_reflect, 0, dtau, tau, a, b, B0=b0, B1=b1, f0=f0, fluxes=flx, calculation=blackbody_approx)
+                surf_reflect, 0, dtau, tau, a, b, B0=b0, B1=b1, fluxes=flx, calculation=blackbody_approx)
     elif stream==4:
         M, B, F_bot, G_bot, F, G, lam1, lam2, A, eta = setup_4_stream_fluxes(nlayer, nwno, w0, 
-                b_top, b_surface, b_surface_SH4, surf_reflect, 0, dtau, tau, a, b, B0=b0, B1=b1, f0=f0, 
+                b_top, b_surface, b_surface_SH4, surf_reflect, 0, dtau, tau, a, b, B0=b0, B1=b1,  
                 fluxes=flx, calculation=blackbody_approx)
 
     #========================= Start loop over wavelength =========================
@@ -3029,7 +3029,7 @@ def get_thermal_SH(nlevel, wno, nwno, numg, numt, tlevel, dtau, tau, w0, cosb,
 
 #@jit(nopython=True, cache=True)
 def setup_2_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar0, 
-        dtau, tau, a, b, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
+        dtau, tau, a, b, B0=0., B1=0., fluxes=0, calculation=0):#'reflected'):
     """
     Setup up matrices to solve flux problem for spherical harmonics method.
 
@@ -3067,8 +3067,6 @@ def setup_2_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar
         Matrix of blackbodies
     B1 : numpy.ndarray
         Eqn (26) Toon 89
-    f0 : numpy.ndarray
-        Parameter needed for exponential approach to thermal
     fluxes : int 
         Toggle calculation of layerwise fluxes (0 = do not calculate, 1 = calculate)
     calculation : int 
@@ -3178,7 +3176,7 @@ def setup_2_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, surf_reflect, ubar
 
 #@jit(nopython=True, cache=True, debug=True)
 def setup_4_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, surf_reflect, ubar0, 
-        dtau, tau, a, b, B0=0., B1=0., f0=0., fluxes=0, calculation=0):#'reflected'):
+        dtau, tau, a, b, B0=0., B1=0., fluxes=0, calculation=0):#'reflected'):
 
     """
     Setup up matrices to solve flux problem for spherical harmonics method.
@@ -3217,8 +3215,6 @@ def setup_4_stream_fluxes(nlayer, nwno, w0, b_top, b_surface, b_surface_SH4, sur
         Matrix of blackbodies
     B1 : numpy.ndarray
         Eqn (26) Toon 89
-    f0 : numpy.ndarray
-        Parameter needed for exponential approach to thermal
     fluxes : int 
         Toggle calculation of layerwise fluxes (0 = do not calculate, 1 = calculate)
     calculation : int 
