@@ -1,5 +1,6 @@
 from .atmsetup import ATMSETUP
 from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_transit_1d, get_thermal_SH
+
 from .fluxes import set_bb, tidal_flux, get_kzz
 from .climate import  calculate_atm_deq, did_grad_cp, convec, calculate_atm, t_start, growdown, growup, climate
 
@@ -239,6 +240,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                     frac_a, frac_b, frac_c, constant_back, constant_forward, 
                                     stream, b_top=b_top, flx=calculate_fluxes, 
                                     single_form=single_form) 
+
                 else:
                     #getting intensities, not fluxes (which is why second return is null)
                     xint = get_reflected_1d(nlevel, wno,nwno,ng,nt,
