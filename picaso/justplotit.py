@@ -333,14 +333,12 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind
         def conv(x):
             return x
     if isinstance(legend, str): legend=[legend]
-    kwargs['height'] = kwargs.get('plot_height',345)
-    kwargs['width'] = kwargs.get('plot_width',1000)
-    kwargs['height'] = kwargs.get('height',kwargs['height'])
-    kwargs['width'] = kwargs.get('width',kwargs['width'])
+    kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',345))
+    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',1000))
+    if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
+    if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
     kwargs['y_axis_label'] = kwargs.get('y_axis_label','Spectrum')
     kwargs['x_axis_label'] = kwargs.get('x_axis_label',x_axis_label)
-    #kwargs['y_range'] = kwargs.get('y_range',[0,1.2])
-    #kwargs['x_range'] = kwargs.get('x_range',[0.3,1])
 
     fig = figure(**kwargs)
 

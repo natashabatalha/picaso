@@ -3213,7 +3213,7 @@ class inputs():
 
         #unique to toon 
         #eddington or quradrature
-        self.inputs['approx']['rt_params']['toon']['toon_coefficients'] = coefficients_options(printout=False).index(toon_coefficients)
+        self.inputs['approx']['rt_params']['toon']['toon_coefficients'] = toon_phase_coefficients(printout=False).index(toon_coefficients)
         self.inputs['approx']['rt_params']['toon']['multi_phase'] = multi_phase_options(printout=False).index(multi_phase)
         
         #unique to SH
@@ -4039,6 +4039,8 @@ def HJ_pt_3d(as_xarray=False,add_kz=False, input_file = os.path.join(__refdata__
 def HJ_cld():
     """Function to get rough Jupiter Cloud model with fsed=3"""
     return os.path.join(__refdata__, 'base_cases','HJ.cld')
+
+
 def single_phase_options(printout=True):
     """Retrieve all the options for direct radation"""
     if printout: print("Can also set functional form of forward/back scattering in approx['TTHG_params']")
@@ -4183,8 +4185,9 @@ def stream_options(printout=True):
     """Retrieve all the options for stream"""
     if printout: print("Can use 2-stream or 4-stream sperhical harmonics")
     return [2,4]
-def coefficients_options(printout=True):
-    """Retrieve options for coefficients used in Toon calculation"""
+def toon_phase_coefficients(printout=True):
+    """Retrieve options for coefficients used in Toon calculation
+    """
     return ["quadrature","eddington"]
 
 def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
