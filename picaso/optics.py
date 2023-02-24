@@ -371,7 +371,7 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
             DTAU[DTAU<=0] = 1e-10#arbitrarily small
             for igauss in range(ngauss): COSB[:,:,igauss] = atm.layer['cloud']['g0']
             for igauss in range(ngauss): W0[:,:,igauss] = atm.layer['cloud']['w0']
-            for igauss in range(ngauss): W0_no_raman[:,:,igauss] = atm.layer['cloud']['w0']
+            W0_no_raman = W0
             TAU = np.zeros((nlayer+1, nwno,ngauss))
             for igauss in range(ngauss): TAU[1:,:,igauss]=numba_cumsum(DTAU[:,:,igauss])
     #====================== D-Eddington Approximation======================

@@ -1,15 +1,15 @@
 import pandas as pd
 import numpy as np
 
-from bokeh.palettes import gray as colfun3
-from bokeh.palettes import Spectral11,Category20,viridis,magma,RdBu11
+from bokeh.palettes import Colorblind8
+import bokeh.palettes as pals
 from bokeh.models import HoverTool
 from bokeh.models import LinearColorMapper, LogTicker,BasicTicker, ColorBar,LogColorMapper,Legend
 from bokeh.models import ColumnDataSource,LinearAxis,Range1d
 from bokeh.layouts import row,column,gridplot
 from bokeh.io import output_notebook
 from bokeh.plotting import figure, output_file, show
-from bokeh.palettes import Colorblind8, RdGy
+Colorblind8 = pals.Colorblind8
 
 import os 
 import copy
@@ -429,10 +429,12 @@ def photon_attenuation(full_output, at_tau=0.5,return_output=False,igauss=0, **k
         at_pressures_cld[i] = pressure[ind_cld[i]]
         at_pressures_ray[i] = pressure[ind_ray[i]]
 
-    kwargs['height'] = kwargs.get('plot_height',300)
-    kwargs['width'] = kwargs.get('plot_width',1000)
-    kwargs['height'] = kwargs.get('height',kwargs['height'])
-    kwargs['width'] = kwargs.get('width',kwargs['width'])
+    kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',345))
+    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',1000))
+    if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
+    if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
+    kwargs['y_axis_label'] = kwargs.get('y_axis_label','Spectrum')
+    kwargs['x_axis_label'] = kwargs.get('x_axis_label',x_axis_label)
     kwargs['title'] = kwargs.get('title','Pressure at 𝞽 =' +str(at_tau))
     kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
     kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength [μm]')
@@ -565,7 +567,7 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
     scat01 = np.flip(np.reshape(dat01['opd'].values,(nlayer,nwno)),0)
 
     xr, yr = scat01.shape
-    cols = viridis(200)[::-1]
+    cols = pals.viridis(200)[::-1]
     color_mapper = LogColorMapper(palette=cols, low=1e-3, high=10)
 
 
@@ -584,7 +586,7 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
     scat01 = np.flip(np.reshape(dat01['g0'].values,(nlayer,nwno)),0)
 
     xr, yr = scat01.shape
-    cols = colfun3(200)[::-1]
+    cols = pals.gray(200)[::-1]
     color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
 
 
@@ -643,7 +645,7 @@ def cloud(full_output):
     -------
     A row of two bokeh plots with the single scattering and optical depth map
     """
-    cols = magma(200)
+    cols = pals.magma(200)
     color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
 
     dat01 = full_output['layer']['cloud']
@@ -670,7 +672,7 @@ def cloud(full_output):
     scat01 = np.flip(dat01['opd']+1e-60,0)
 
     xr, yr = scat01.shape
-    cols = viridis(200)[::-1]
+    cols = pals.viridis(200)[::-1]
     color_mapper = LogColorMapper(palette=cols, low=1e-3, high=10)
 
 
@@ -689,7 +691,7 @@ def cloud(full_output):
     scat01 = np.flip(dat01['g0']+1e-60,0)
 
     xr, yr = scat01.shape
-    cols = colfun3(200)[::-1]
+    cols = pals.gray(200)[::-1]
     color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
 
 
@@ -1012,7 +1014,7 @@ def flux_at_top(full_output, plot_bb = True, R=None, pressures = [1e-1,1e-2,1e-3
     fig = figure(**kwargs)
     if len(pressures) < 3: ncol = 5
     else: ncol = len(pressures)
-    cols = magma(ncol)
+    cols = pals.magma(ncol)
 
     wno = full_output['wavenumber']
     if isinstance(R,(int, float)): 
@@ -1216,7 +1218,7 @@ def plot_evolution(evo, y = "Teff",**kwargs):
     source_cold = ColumnDataSource(data=dict(
         evo_cold))
 
-    colors = viridis(10)
+    colors = pals.viridis(10)
     for i, ikey in enumerate(list(evo_hot.keys())[1:]):
         if y in ikey:
             mass = int(ikey[ikey.rfind(y[-1])+1:ikey.find('M')])
@@ -1508,7 +1510,7 @@ def phase_snaps(allout, x = 'longitude', y = 'pressure', z='temperature',palette
 
     fig.tight_layout()
     return fig
-def phase_curve(allout, to_plot, collapse=None, R=100, palette=Spectral11,verbose=True, **kwargs):
+def phase_curve(allout, to_plot, collapse=None, R=100, palette=pals.Spectral11,verbose=True, **kwargs):
     """
     Plots phase curves
     
@@ -1552,7 +1554,7 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=Spectral11,verbos
         raise Exception('Collapse must either be float, str or list')
     if len(collapse)>len(palette): 
         if verbose: print('Switched color palette to accomodate more collapse input options')
-        palette = magma(len(collapse))
+        palette = pals.magma(len(collapse))
 
     all_curves = np.zeros((len(allout.keys()), len(collapse)))
     all_ws = np.zeros(len(collapse))
@@ -2032,36 +2034,77 @@ def create_heat_map(data,rayleigh=True,extend=False,plot_height=300,plot_width=3
 
     return layout
 
-def create_thermal_heatmap(data, cmap='RdGy', width=8, height=10, label_size=15, tick_size=12, y_axis=True, pad=0.1, vmin=None, vmax=None):
-    import seaborn as sns
-    
-    rc('font',**{'family':'sans-serif','sans-serif':['Times New Roman']})
 
+def rt_heatmap(data,figure_kwargs={},cmap_kwargs={}):
+    """
+    This creates a heat map of the dataframe created from 
+    picaso.test.thermal_sh_test() or picaso.test.dlugach_test()
+    The tutorial 10c_AnalyzingApproximationsThermal.ipynb 
+    and 10b_AnalyzingApproximationsReflectedLightSH.ipynb 
+    shows it in use. 
+    
+    Parameters
+    ----------
+    data : pandas.DataFrame 
+        Technically, this can be any dataframe, but this function was specifically built to 
+        replicate Figure 9 in Batalha et al.  2019 and Figure 6 from Rooney et al. 2023. Part II Thermal. It is assumed that the 
+        index of the dataframe is asymmetry and the columns are single scattering albedo. 
+    figure_kwargs : dict 
+        keywords for bokeh.plotting.figure function
+    cmap_kwargs : dict 
+        keywords for bokeh.models.LinearColorMapper funtion. Most common parameters to input are 
+        palette (list or tuple of colors), high (upper lim of color map), and low (lower lim of color map)
+    """
+    reverse = True
     data.columns.name = 'w0' 
     data.index.name = 'g0' 
     data.index=data.index.astype(str)
-    data = data.rename(index={"-1.0":"Ray"})
-    data = data.drop(["Ray"])  
-    for w in data.columns[0:]:
-        if pd.isnull(data.loc['0.0'][w]):
-            data = data.drop(columns=[w])
-    
-    df = data.T
-    fig, ax = plt.subplots(figsize=(width,height)) 
-    sns.heatmap(df, annot=False, linewidths=0.5, square=False, cmap=cmap, cbar_kws={'orientation': 'horizontal', 'pad' : pad}, vmin=vmin, vmax=vmax)
-    ax.set_xlabel("Asymmetry",fontsize=label_size)
-    if y_axis==True:
-        ax.set_ylabel("Single Scattering Albedo",fontsize=label_size)
+    x_range = list(data.index)
+    if reverse:
+        y_range =  list(reversed(data.columns))
     else:
-        ax.set_ylabel("")
-    ax.tick_params(labelsize=tick_size)
-    ax.xaxis.major_label_orientation = np.pi / 3
-    
-    cbar_axes = fig.figure.axes[-1]
-    cbar_axes.set_ylabel('% Diff', size=label_size)
-    cbar_axes.tick_params(labelsize=tick_size)
-    
-    plt.yticks(rotation=0) 
+        y_range =  list(data.columns)
 
-    return fig
+    df = pd.DataFrame(data.stack(), columns=['albedo']).reset_index()
+    bd = max(abs(df.albedo.min()), abs(df.albedo.max()))
+
+    cmap_kwargs['palette'] = cmap_kwargs.get('palette',pals.RdGy[11])
+    cmap_kwargs['low'] = cmap_kwargs.get('low',-bd)
+    cmap_kwargs['high'] = cmap_kwargs.get('high',bd)    
+
+    mapper = LinearColorMapper(**cmap_kwargs)
+    colors = cmap_kwargs['palette']
+    
+    figure_kwargs['height'] = figure_kwargs.get('height',400)
+    figure_kwargs['width'] = figure_kwargs.get('width',300)
+    figure_kwargs['x_axis_location'] = figure_kwargs.get('x_axis_location','above')
+    figure_kwargs['tools'] = figure_kwargs.get('tools',"hover,save,pan,box_zoom,reset,wheel_zoom")
+    figure_kwargs['toolbar_location'] =  figure_kwargs.get('toolbar_location','below') 
+    figure_kwargs['y_range'] =  figure_kwargs.get('y_range',y_range) 
+    figure_kwargs['x_range'] =  figure_kwargs.get('x_range',x_range) 
+    figure_kwargs['y_axis_label'] =  figure_kwargs.get('y_axis_label','Single Scattering Albedo') 
+    figure_kwargs['x_axis_label'] =  figure_kwargs.get('x_axis_label','Asymmetry')
+    figure_kwargs['title'] =  figure_kwargs.get('title','% Diff')
+    
+    p = figure(**figure_kwargs)
+
+    p.grid.grid_line_color = None
+    p.axis.axis_line_color = None
+    p.axis.major_tick_line_color = None
+    p.axis.major_label_text_font_size = "7px"
+    p.axis.major_label_standoff = 0
+    p.xaxis.major_label_orientation = np.pi / 3
+
+    p.rect(x="g0", y="w0", width=1, height=1,
+       source=df,
+       fill_color={'field': 'albedo', 'transform': mapper},
+       line_color=None)
+    
+    
+    color_bar = ColorBar(color_mapper=mapper, major_label_text_font_size="12px",
+                     ticker=BasicTicker(desired_num_ticks=len(colors)),
+                     label_standoff=6, border_line_color=None, location=(0, 0))
+    p.add_layout(color_bar, 'below')
+    p.axis.major_label_text_font_size='12px'
+    return p
 

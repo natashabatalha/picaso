@@ -4,14 +4,106 @@ from bokeh.plotting import figure, show, output_file
 from bokeh.palettes import inferno
 from bokeh.palettes import RdGy
 import numpy as np
-from .justdoit import opannection, inputs
+from .justdoit import opannection, inputs, brown_dwarf_pt,brown_dwarf_cld
 import os 
 import astropy.units as u
 
 __refdata__ = os.environ.get('picaso_refdata')
- 
-def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=True, 
-	method="Toon", stream=2, Toon_coefficients="quadrature", delta_eddington=False):
+
+
+def thermal_sh_test(single_phase = 'OTHG', output_dir = None, 
+	phase=True, method="toon", stream=2, toon_coefficients="quadrature", delta_eddington=True,
+	disort_data=False, phangle=0, tau=0.2):
+	"""
+	Generate data to compare against DISORT. Must also run picaso_compare.py in pyDISORT
+	Parameters
+	----------
+	single_phase : str 
+		Single phase function to test with the constant_tau test. Can either be: 
+		"cahoy","TTHG_ray","TTHG", and "OTHG"
+	output_dir : str 
+		Output directory for results of test. Default is to just return the dataframe (None). 
+	rayleigh : bool
+		Default is True. Turns on and off the rayleigh phase function test 
+	phase : float
+		Default=True. Turns on and off the constant g phase function test
+	tau : float 
+		constant per layer opacity, 0.2 used as default in rooney+2023 tests
+	Retuns
+	------
+	DataFrame 
+	"""
+	calculation = 'thermal'
+
+	# high single scattering 
+	df = pd.DataFrame(columns = ['1.0','0.999','0.995','0.990','0.980','0.950','0.90','0.8','0.7','0.6','0.5','0.4','0.3','0.2','0.1'],
+                   index = [0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.999])
+	perror = df.copy()
+
+	nlevel = 20
+
+	opa = opannection(wave_range=[1,10], resample=100,verbose=False)
+	start_case=inputs(calculation='browndwarf')
+	start_case.phase_angle(0)
+	#start_case.inputs['test_mode']='test'
+	start_case.gravity(gravity=200 , gravity_unit=u.Unit('m/s**2'))
+	start_case.surface_reflect(0,opa.wno)
+	
+	cloudy_file = brown_dwarf_pt()
+	atmos=pd.read_csv(cloudy_file,delim_whitespace=True)
+	start_case.atmosphere(df=atmos)
+	cld=pd.read_csv(brown_dwarf_cld(),delim_whitespace=True)
+
+	start_case.inputs['approx']['rt_params']['common']['delta_eddington']=delta_eddington
+	
+
+	start_case.inputs['test_mode']='constant_tau'
+	start_case.surface_reflect(0,opa.wno)
+
+	if phase:
+		for g in perror.index:
+			for w in perror.keys():
+				if float(w) ==1.000:
+					w0 = 0.999999
+				else: 
+					w0 = float(w)
+				g0 = float(g)
+
+				#start_case.clouds(df=pd.DataFrame({'opd':sum([[i]*196 for i in 10**np.linspace(-4, 2, nlevel-1)],[]),
+				#                                    'w0':np.zeros(196*(nlevel-1)) + w0 ,
+				#                                    'g0':np.zeros(196*(nlevel-1)) + g0}))
+				CLD = cld
+				if tau is not None:
+					CLD['opd'] = 0*CLD['opd'] + tau
+				CLD['w0']=0*CLD['w0']+w0
+				CLD['g0']=0*CLD['g0']+g0
+				start_case.clouds(df=CLD)
+
+				#if disort_data:
+				#	disort_dir_ = disort_dir + 'data_%.3f_%.3f.pk' % (g0, w0)
+				#	start_case.inputs['approx']['input_dir']=disort_dir_
+				#if disort_data:
+				#	disort_dir_ = disort_dir + 'data_%.3f_%.3f.pk' % (g0, w0)
+				#	start_case.inputs['output_dir']=disort_dir_
+				start_case.approx(single_phase = 'OTHG', rt_method = method, stream = stream, 
+						toon_coefficients = toon_coefficients,
+						delta_eddington=delta_eddington)
+
+				allout = start_case.spectrum(opa, full_output=True, calculation=calculation, as_dict=True)
+
+				alb = allout['thermal']
+				perror.loc[g][w] = np.mean(alb)
+	
+	perror.index.name = 'asy'
+	if output_dir!=None: perror.to_csv(os.path.join(output_dir))
+
+	return perror
+
+
+def dlugach_test(single_phase = 'OTHG', multi_phase='N=1',
+	output_dir = None, rayleigh=True, phase=True, 
+	method="Toon", stream=2, opd=0.2,
+	toon_coefficients="quadrature", delta_eddington=False):
 	"""
 	Test the flux against against Dlugach & Yanovitskij 
 	https://www.sciencedirect.com/science/article/pii/0019103574901675?via%3Dihub
@@ -42,15 +134,15 @@ def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=
 	"""
 
 	#read in table from reference data with the test values
-	real_answer = pd.read_csv(os.path.join(__refdata__,'base_cases', 'DLUGACH_TEST.csv'))
+	real_answer = pd.read_csv(os.path.join(__refdata__,'base_cases', 'testing','DLUGACH_TEST.csv'))
 	#real_answer = pd.read_csv('new_dlug.csv')
-	real_answer = real_answer.set_index('Unnamed: 0')
+	real_answer = real_answer.set_index('asy')
 
 	perror = real_answer.copy()
 
 	nlevel = 60
 
-	opa = opannection(wave_range=[0.3,0.5], resample=10)
+	opa = opannection(wave_range=[0.5,1], resample=10, verbose=False)
 	start_case=inputs()
 	start_case.phase_angle(0) #radians
 	start_case.gravity(gravity = 25, gravity_unit=u.Unit('m/(s**2)'))
@@ -60,9 +152,9 @@ def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=
 	                                    'H2':np.logspace(-6,3,nlevel)*0+0.99, 
 	                                     'H2O':np.logspace(-6,3,nlevel)*0+0.01}))
 
+	start_case.approx(raman='none', rt_method = method, stream = stream, 
+				toon_coefficients = toon_coefficients,multi_phase=multi_phase)
 	start_case.inputs['approx']['rt_params']['common']['delta_eddington']=delta_eddington
-	start_case.approx(raman='none', method = method, stream = stream, 
-				Toon_coefficients = Toon_coefficients)
 
 	if rayleigh: 
 		#first test Rayleigh
@@ -80,14 +172,15 @@ def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=
 			allout = start_case.spectrum(opa, calculation='reflected')
 
 			alb = allout['albedo']
-			perror.loc[-1][w] = alb[-1]#(100*(alb[-1]-real_answer.loc[-1][w])/real_answer.loc[-1][w])#
+			perror.loc['Ray',w] = alb[-1]#(100*(alb[-1]-real_answer.loc[-1][w])/real_answer.loc[-1][w])#
 
 
 	start_case.inputs['test_mode']='constant_tau'
-	start_case.approx(single_phase = 'OTHG', method = method, stream = stream, 
-				Toon_coefficients = Toon_coefficients)
+	start_case.approx(single_phase = 'OTHG', rt_method = method, stream = stream, 
+				toon_coefficients = toon_coefficients,multi_phase=multi_phase)
+	start_case.inputs['approx']['rt_params']['common']['delta_eddington']=delta_eddington
 
-	#first test Rayleigh
+	#then test constant tau approx
 	if phase:
 		for g0 in real_answer.index[1:]:#[6:]:
 			for w in real_answer.keys():#[7:]:
@@ -95,17 +188,17 @@ def dlugach_test(single_phase = 'OTHG', output_dir = None, rayleigh=True, phase=
 					w0 = 0.999999
 				else: 
 					w0 = float(w)
-
-				start_case.clouds(df=pd.DataFrame({'opd':sum([[i]*196 for i in 10**np.linspace(-4, 2, nlevel-1)],[]),
+				start_case.clouds(df=pd.DataFrame({'opd':opd,#sum([[i]*196 for i in 10**np.linspace(-4, 2, nlevel-1)],[]),
 				                                    'w0':np.zeros(196*(nlevel-1)) + w0 ,
-				                                    'g0':np.zeros(196*(nlevel-1)) + g0}))
+				                                    'g0':np.zeros(196*(nlevel-1)) + float(g0)}))
 				allout = start_case.spectrum(opa, calculation='reflected')
 
 				alb = allout['albedo']
 				perror.loc[g0][w] = alb[-1]#(100*(alb[-1]-real_answer.loc[-1][w])/real_answer.loc[-1][w])#
 	
 	if output_dir!=None: perror.to_csv(os.path.join(output_dir))
-	return perror
+	perror.index.name = 'asy'
+	return real_answer, perror
 
 def madhu_test(rayleigh=True, isotropic=True, asymmetric=True, single_phase = 'TTHG_ray', output_dir = None):
 	"""
@@ -200,56 +293,3 @@ def madhu_test(rayleigh=True, isotropic=True, asymmetric=True, single_phase = 'T
 				real_answer.loc[i,str(g)]=alb[-1] 
 	return real_answer
 
-def create_heat_map(data,rayleigh=True,extend=False):
-    reverse = True
-    data.columns.name = 'w0' 
-    data.index.name = 'g0' 
-    data.index=data.index.astype(str)
-    data = data.rename(index={"-1.0":"Ray"})
-    if not rayleigh:
-        data = data.drop(["Ray"])  
-    for w in data.columns[0:]:
-        if pd.isnull(data.loc['0.0'][w]):
-            data = data.drop(columns=[w])
-            reverse = False
-
-    x_range = list(data.index)
-    if reverse:
-        y_range =  list(reversed(data.columns))
-    else:
-        y_range =  list(data.columns)
-
-    df = pd.DataFrame(data.stack(), columns=['albedo']).reset_index()
-
-
-
-    colors = RdGy[11]
-    bd = max(abs(df.albedo.min()), abs(df.albedo.max()))
-#     bd = min(bd,20)
-    mapper = LinearColorMapper(palette=colors, low=-bd, high=bd)
-
-    TOOLS = "hover,save,pan,box_zoom,reset,wheel_zoom"
-
-    p = figure(height=300,width=300,
-           y_range=y_range, x_range=x_range,
-           x_axis_location="above",
-           tools=TOOLS, toolbar_location='below')
-
-    p.grid.grid_line_color = None
-    p.axis.axis_line_color = None
-    p.axis.major_tick_line_color = None
-    p.axis.major_label_text_font_size = "7px"
-    p.axis.major_label_standoff = 0
-    p.xaxis.major_label_orientation = np.pi / 3
-
-    p.rect(x="g0", y="w0", width=1, height=1,
-       source=df,
-       fill_color={'field': 'albedo', 'transform': mapper},
-       line_color=None)
-
-    color_bar = ColorBar(color_mapper=mapper, major_label_text_font_size="12px",
-                     ticker=BasicTicker(desired_num_ticks=len(colors)),
-                     label_standoff=6, border_line_color=None, location=(0, 0))
-    p.add_layout(color_bar, 'right')
-    p.axis.major_label_text_font_size='12px'
-    return p

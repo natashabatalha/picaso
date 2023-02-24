@@ -860,6 +860,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                 multi_plus = 1.0+1.5*ftau_cld*cosb*u1  
                 multi_minus = 1.-1.5*ftau_cld*cosb*u1
 
+
             ################################ END OPTIONS FOR MULTIPLE SCATTERING####################
 
             G=positive*(multi_plus+gama*multi_minus)    *w0

@@ -97,8 +97,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     rt_method = inputs['approx']['rt_method'] #either toon or spherical harmonics
     
     #USED by all RT
-
-    single_phase = inputs['approx']['rt_params']['common']['single_phase']
     stream = inputs['approx']['rt_params']['common']['stream']
     #parameters needed for the two term hg phase function. 
     #Defaults are set in config.json
@@ -114,6 +112,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
 
     #USED in TOON (if being used)
+    single_phase = inputs['approx']['rt_params']['toon']['single_phase']
     toon_coefficients = inputs['approx']['rt_params']['toon']['toon_coefficients']
     tridiagonal = 0 
     multi_phase = inputs['approx']['rt_params']['toon']['multi_phase']
@@ -220,10 +219,11 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
         #We use HG function for single scattering which gets the forward scattering/back scattering peaks 
         #well. We only really want to use delta-edd for multi scattering legendre polynomials. 
+
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman, f_deltaM= compute_opacity(
             atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
             full_output=full_output, plot_opacity=plot_opacity)
-        
+
         if  'reflected' in calculation:
             xint_at_top = 0 
             for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
@@ -476,8 +476,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             returns['full_output'] = atm
 
     if output_dir != None:
-        filename = output_dir #+ 'output.pk' #/Users/crooney/Documents/codes/picaso/docs/notebooks/input_data.pk'
-        # change other codes to suit this filename, don't change it here
+        filename = output_dir
         pk.dump({'pressure': atm.level['pressure'], 'temperature': atm.level['temperature'], 
             'nlevel':nlevel, 'wno':wno, 'nwno':nwno, 'ng':ng, 'nt':nt, 
             'dtau':DTAU, 'tau':TAU, 'w0':W0, 'cosb':COSB, 'gcos2':GCOS2,'ftcld':ftau_cld,'ftray': ftau_ray,
@@ -489,7 +488,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             #'xint_at_top': xint_at_top, 'albedo': albedo, 'flux': flux_out, 'xint': intensity,
             'b_top': b_top, 'gweight': gweight, 'tweight': tweight, 'gangle': gangle, 'tangle': tangle}, 
             open(filename,'wb'), protocol=2)
-        #print('Output saved to ', filename)
     return returns
 
 def _finditem(obj, key):
@@ -746,7 +744,9 @@ def find_press(at_tau, a, b, c):
     return at_press
 
 def opannection(wave_range = None, filename_db = None, raman_db = None, 
-                resample=1, ck_db=None, deq= False, on_fly=False,gases_fly =None,ck=False):
+                resample=1, ck_db=None, deq= False, on_fly=False,
+                gases_fly =None,ck=False,
+                verbose=True):
     """
     Sets up database connection to opacities. 
 
@@ -768,6 +768,9 @@ def opannection(wave_range = None, filename_db = None, raman_db = None,
         using this. 
     ck_db : str 
         ASCII filename of ck file
+    verbose : bool 
+        Error message to warn users about resampling. Can be turned off by supplying 
+        verbose=False
     """
     inputs = json.load(open(os.path.join(__refdata__,'config.json')))
 
@@ -784,7 +787,7 @@ def opannection(wave_range = None, filename_db = None, raman_db = None,
                 raise Exception('The opacity file you have entered does not exist: '  + filename_db)
 
         if resample != 1:
-            print("YOU ARE REQUESTING RESAMPLING!!")
+            if verbose:print("YOU ARE REQUESTING RESAMPLING!! This could degrade the precision of your spectral calculations so should be used with caution. If you are unsure check out this tutorial: https://natashabatalha.github.io/picaso/notebooks/10_ResamplingOpacities.html")
 
         opacityclass=RetrieveOpacities(
                     filename_db, 
@@ -1912,19 +1915,31 @@ class inputs():
 
     def chemeq_visscher(self, c_o, log_mh):#, interp_window = 11, interp_poly=2):
         """
+        Author of Data: Channon Visscher
+
         Find nearest neighbor from visscher grid
         JUNE 2015
         MODELS BASED ON 1060-POINT MARLEY GRID
         GRAPHITE ACTIVITY ADDED IN TEXT FILES (AFTER OCS)
         "ABUNDANCE" INDICATES CONDENSATION CONDITION (O OR 1)
         CURRENT GRID
+
         FE/H: 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
+
         C/O: 0.5X, 1.0X, 1.5X, 2.0X, 2.5X
-        C/O RATIO IS RELATIVE TO SOLAR C/O RATIO OF
+
+        The *solar* carbon-to-oxygen ratio is calculated from Lodders (2010):
+        
         CARBON = 7.19E6 ATOMS
         OXYGEN = 1.57E7 ATOMS
-        NOTE THAT THE C/O RATIO IS ADJUSTED BY SIMPLY MULTIPLYING BY C/O FACTOR
-        THIS MAY YIELD EFFECTIVE METALLICITIES SLIGHTLY HIGHER THAN THE DEFINED METALLICITY
+        
+        This gives a "solar" C/O ratio of 0.458
+         
+        The C/O ratio adjusted by keeping C + O = constant and adjusting the carbon-to-oxygen ratio by a factor relative to the solar value (i.e., a factor of "1" means 1x the solar value, i.e. a C/O ratio of 0.458).
+         
+        This approach keeps the heavy-element-to-hydrogen ratio (Z/X) constant for a given [Fe/H]
+         
+        These abundances are then multiplied by the metallicity factor (10**[Fe/H]) along with every other element in the model.
         
         Parameters
         ----------
@@ -4039,6 +4054,12 @@ def HJ_pt_3d(as_xarray=False,add_kz=False, input_file = os.path.join(__refdata__
 def HJ_cld():
     """Function to get rough Jupiter Cloud model with fsed=3"""
     return os.path.join(__refdata__, 'base_cases','HJ.cld')
+def brown_dwarf_pt():
+    """Function to get rough Brown Dwarf climate model with Teff=1270 K M/H=1xSolar, C/O=1xSolar, fsed=1"""
+    return os.path.join(__refdata__, 'base_cases','t1270g200f1_m0.0_co1.0.cmp')    
+def brown_dwarf_cld():
+    """Function to get rough Brown Dwarf cloud model with Teff=1270 K M/H=1xSolar, C/O=1xSolar, fsed=1"""
+    return os.path.join(__refdata__, 'base_cases','t1270g200f1_m0.0_co1.0.cld')    
 
 
 def single_phase_options(printout=True):
