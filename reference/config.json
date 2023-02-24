@@ -54,7 +54,8 @@
 		"rt_params":{
 			"toon":{
 				"toon_coefficients":0,
-				"multi_phase":0
+				"multi_phase":0,
+				"single_phase":3
 			},
 			"SH":{
 				"single_form":0,
@@ -64,11 +65,9 @@
 				"w_single_rayleigh":1,
 				"w_multi_rayleigh":1,
 				"psingle_rayleigh":1,
-				"blackbody_approx":1,
 				"calculate_fluxes":0
 			},
 			"common":{
-				"single_phase":3,
 				"stream":2,
 				"TTHG_params":{
 					"fraction":[1,-1,2],
