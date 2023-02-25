@@ -1954,7 +1954,7 @@ class inputs():
         #allowable cos 
         cos = np.array([0.25,0.5,1.0,1.5,2.0,2.5])
         #allowable fehs
-        fehs = np.array([0.0,0.3,0.5,0.7,1.0,1.5,1.7,2.0])
+        fehs = np.array([-0.3, 0.0,0.3,0.5,0.7,1.0,1.5,1.7,2.0])
 
         if log_mh > max(fehs): 
             raise Exception('Choose a log metallicity less than 2.0')
@@ -1964,10 +1964,10 @@ class inputs():
         grid_co = cos[np.argmin(np.abs(cos-c_o))]
         grid_feh = fehs[np.argmin(np.abs(fehs-log_mh))]
         str_co = str(grid_co).replace('.','')
-        str_fe = str(grid_feh).replace('.','')
+        str_fe = str(grid_feh).replace('.','').replace('-','m')
 
         filename = os.path.join(__refdata__,'chemistry','visscher_grid',
-            f'2015_06_1060grid_feh_{str_fe}_co_{str_co}.txt')
+            f'2015_06_1060grid_feh_{str_fe}_co_{str_co}.txt').replace('_m0','m0')
 
         header = pd.read_csv(filename).keys()[0]
         cols = header.replace('T (K)','temperature').replace('P (bar)','pressure').split()
