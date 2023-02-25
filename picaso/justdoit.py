@@ -1255,7 +1255,7 @@ class inputs():
         convt=5.0
         x_max_mult=7.0
         
-        print('NEB FIRST PROFILE RUN')
+        #print('NEB FIRST PROFILE RUN')
         final = False
         pressure, temperature, dtdp, profile_flag = profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             TEMP1,pressure, F0PI, t_table, p_table, grad, cp, opacityclass, grav, 
@@ -1269,7 +1269,7 @@ class inputs():
         x_max_mult=7.0
 
 
-        print('NEB SECOND PROFILE RUN')
+        #print('NEB SECOND PROFILE RUN')
         final = False
         pressure, temperature, dtdp, profile_flag = profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                     temperature,pressure, F0PI, t_table, p_table, grad, cp, opacityclass, grav, 
@@ -3212,7 +3212,6 @@ class inputs():
         else:
                 self.inputs['approx']['rt_params']['common']['stream'] = stream
 
-        self.inputs['approx']['rt_params']['common']['single_phase'] = single_phase_options(printout=False).index(single_phase)
         self.inputs['approx']['rt_params']['common']['delta_eddington'] = delta_eddington
         self.inputs['approx']['rt_params']['common']['raman'] =  raman_options().index(raman)
         if isinstance(tthg_frac, (list, np.ndarray)):
@@ -3230,6 +3229,7 @@ class inputs():
         #eddington or quradrature
         self.inputs['approx']['rt_params']['toon']['toon_coefficients'] = toon_phase_coefficients(printout=False).index(toon_coefficients)
         self.inputs['approx']['rt_params']['toon']['multi_phase'] = multi_phase_options(printout=False).index(multi_phase)
+        self.inputs['approx']['rt_params']['toon']['single_phase'] = single_phase_options(printout=False).index(single_phase)
         
         #unique to SH
         self.inputs['approx']['rt_params']['SH']['single_form'] = SH_psingle_form_options(printout=False).index(single_form)
