@@ -97,8 +97,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     rt_method = inputs['approx']['rt_method'] #either toon or spherical harmonics
     
     #USED by all RT
-
-    single_phase = inputs['approx']['rt_params']['common']['single_phase']
     stream = inputs['approx']['rt_params']['common']['stream']
     #parameters needed for the two term hg phase function. 
     #Defaults are set in config.json
@@ -114,6 +112,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
 
     #USED in TOON (if being used)
+    single_phase = inputs['approx']['rt_params']['toon']['single_phase']
     toon_coefficients = inputs['approx']['rt_params']['toon']['toon_coefficients']
     tridiagonal = 0 
     multi_phase = inputs['approx']['rt_params']['toon']['multi_phase']
@@ -126,8 +125,11 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     w_single_rayleigh = inputs['approx']['rt_params']['SH']['w_single_rayleigh']
     w_multi_rayleigh = inputs['approx']['rt_params']['SH']['w_multi_rayleigh']
     psingle_rayleigh = inputs['approx']['rt_params']['SH']['psingle_rayleigh']
+    calculate_fluxes = inputs['approx']['rt_params']['SH']['calculate_fluxes']
 
 
+    # save returns to output file
+    output_dir = inputs['output_dir']
     
 
 
@@ -184,7 +186,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     #gets both continuum and needed rayleigh cross sections 
     #relies on continuum molecules are added into the opacity 
     #database. Rayleigh molecules are all in `rayleigh.py` 
-    atm.get_needed_continuum(opacityclass.rayleigh_molecules)
+    atm.get_needed_continuum(opacityclass.rayleigh_molecules,
+                             opacityclass.avail_continuum)
 
     #get cloud properties, if there are any and put it on current grid 
     atm.get_clouds(wno)
@@ -216,17 +219,18 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
         #We use HG function for single scattering which gets the forward scattering/back scattering peaks 
         #well. We only really want to use delta-edd for multi scattering legendre polynomials. 
+
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman, f_deltaM= compute_opacity(
             atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
             full_output=full_output, plot_opacity=plot_opacity)
-        
+
         if  'reflected' in calculation:
             xint_at_top = 0 
             for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
                 nlevel = atm.c.nlevel
 
                 if rt_method == 'SH':
-                    (xint, flux_out, intensity)  = get_reflected_SH(nlevel, nwno, ng, nt, 
+                    (xint, flux_out)  = get_reflected_SH(nlevel, nwno, ng, nt, 
                                     DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig], 
                                     ftau_cld[:,:,ig], ftau_ray[:,:,ig], f_deltaM[:,:,ig],
                                     DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig], 
@@ -234,7 +238,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                     w_single_form, w_multi_form, psingle_form, 
                                     w_single_rayleigh, w_multi_rayleigh, psingle_rayleigh,
                                     frac_a, frac_b, frac_c, constant_back, constant_forward, 
-                                    stream, b_top=b_top, single_form=single_form) 
+                                    stream, b_top=b_top, flx=calculate_fluxes, 
+                                    single_form=single_form) 
+
                 else:
                     #getting intensities, not fluxes (which is why second return is null)
                     xint = get_reflected_1d(nlevel, wno,nwno,ng,nt,
@@ -269,14 +275,12 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                                         atm.level['pressure'],ubar1,
                                                         atm.surf_reflect, atm.hard_surface, tridiagonal)
                 elif rt_method == 'SH':
-                    blackbody_approx = inputs['approx']['rt_params']['SH']['blackbody_approx']
-                    (flux, intensity, flux_out) = get_thermal_SH(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
+                    (flux, flux_out) = get_thermal_SH(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
                                                 DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig], 
                                                 DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], 
                                                 W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                                 atm.level['pressure'], ubar1, 
-                                                atm.surf_reflect, stream, atm.hard_surface, 
-                                                blackbody_approx=blackbody_approx)
+                                                atm.surf_reflect, stream, atm.hard_surface)
 
 
                 flux_at_top += flux*gauss_wts[ig]
@@ -471,6 +475,19 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         else:
             returns['full_output'] = atm
 
+    if output_dir != None:
+        filename = output_dir
+        pk.dump({'pressure': atm.level['pressure'], 'temperature': atm.level['temperature'], 
+            'nlevel':nlevel, 'wno':wno, 'nwno':nwno, 'ng':ng, 'nt':nt, 
+            'dtau':DTAU, 'tau':TAU, 'w0':W0, 'cosb':COSB, 'gcos2':GCOS2,'ftcld':ftau_cld,'ftray': ftau_ray,
+            'dtau_og':DTAU_OG, 'tau_og':TAU_OG, 'w0_og':W0_OG, 'cosb_og':COSB_OG, 
+            'surf_reflect':atm.surf_reflect, 'ubar0':ubar0, 'ubar1':ubar1, 'costheta':cos_theta, 'F0PI':F0PI, 
+            'single_phase':single_phase, 'multi_phase':multi_phase, 
+            'frac_a':frac_a, 'frac_b':frac_b, 'frac_c':frac_c, 'constant_back':constant_back, 
+            'constant_forward':constant_forward, 'dim':dimension, 'stream':stream,
+            #'xint_at_top': xint_at_top, 'albedo': albedo, 'flux': flux_out, 'xint': intensity,
+            'b_top': b_top, 'gweight': gweight, 'tweight': tweight, 'gangle': gangle, 'tangle': tangle}, 
+            open(filename,'wb'), protocol=2)
     return returns
 
 def _finditem(obj, key):
@@ -481,7 +498,7 @@ def _finditem(obj, key):
             if item is not None:
                 return item
 
-def input_xarray(xr_usr, opacity,p_reference=10):
+def input_xarray(xr_usr, opacity,p_reference=10, calculation='planet'):
     """
     This takes an input based on these standards and runs: 
     -gravity
@@ -499,37 +516,42 @@ def input_xarray(xr_usr, opacity,p_reference=10):
         opacity connection
     p_reference : float 
         reference pressure in bars 
+    calculation : str 
+        'planet' or 'browndwarf'
 
     Example
     -------
     case = jdi.input_xarray(xr_user)
     case.spectrum(opacity,calculation='transit_depth')
     """
-    case = inputs()
+    case = inputs(calculation = calculation)
     case.phase_angle(0) #radians
 
     #define gravity
     planet_params = eval(xr_usr.attrs['planet_params'])
-    stellar_params = eval(xr_usr.attrs['stellar_params'])
-    orbit_params = eval(xr_usr.attrs['orbit_params'])
+    if 'brown' not in calculation:
+        stellar_params = eval(xr_usr.attrs['stellar_params'])
+        orbit_params = eval(xr_usr.attrs['orbit_params'])
+        steff = _finditem(stellar_params,'steff')
+        feh = _finditem(stellar_params,'feh')
+        logg = _finditem(stellar_params,'logg')
+        ms = _finditem(stellar_params,'ms')
+        rs = _finditem(stellar_params,'rs')
+        semi_major = _finditem(planet_params,'sma')
+        case.star(opacity, steff,feh,logg, radius=rs['value'], 
+                  radius_unit=u.Unit(rs['unit']))
 
     mp = _finditem(planet_params,'mp')
     rp = _finditem(planet_params,'rp')
+    logg = _finditem(planet_params,'logg')
 
-    if (not isinstance(mp, type(None)) & (not isinstance(rp, type(None)))):
+    if ((not isinstance(mp, type(None))) & (not isinstance(rp, type(None)))):
         case.gravity(mass = mp['value'], mass_unit=u.Unit(mp['unit']),
                     radius=rp['value'], radius_unit=u.Unit(rp['unit']))
+    elif (not isinstance(logg, type(None))): 
+        case.gravity(gravity = logg['value'], gravity_unit=u.Unit(logg['unit']))
     else: 
-        print('Mass and Radius not provided in xarray, user needs to run gravity function')
-
-    steff = _finditem(stellar_params,'steff')
-    feh = _finditem(stellar_params,'feh')
-    logg = _finditem(stellar_params,'logg')
-    ms = _finditem(stellar_params,'ms')
-    rs = _finditem(stellar_params,'rs')
-    semi_major = _finditem(planet_params,'sma')
-    case.star(opacity, steff,feh,logg, radius=rs['value'], 
-              radius_unit=u.Unit(rs['unit']))
+        print('Mass and Radius or gravity not provided in xarray, user needs to run gravity function')
 
     case.approx(p_reference=p_reference)
 
@@ -668,7 +690,8 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     #gets both continuum and needed rayleigh cross sections 
     #relies on continuum molecules are added into the opacity 
     #database. Rayleigh molecules are all in `rayleigh.py` 
-    atm.get_needed_continuum(opacityclass.rayleigh_molecules)
+    atm.get_needed_continuum(opacityclass.rayleigh_molecules,
+                             opacityclass.avail_continuum)
 
     #get cloud properties, if there are any and put it on current grid 
     atm.get_clouds(wno)
@@ -721,7 +744,9 @@ def find_press(at_tau, a, b, c):
     return at_press
 
 def opannection(wave_range = None, filename_db = None, raman_db = None, 
-                resample=1, ck_db=None, deq= False, on_fly=False,gases_fly =None,ck=False):
+                resample=1, ck_db=None, deq= False, on_fly=False,
+                gases_fly =None,ck=False,
+                verbose=True):
     """
     Sets up database connection to opacities. 
 
@@ -743,6 +768,9 @@ def opannection(wave_range = None, filename_db = None, raman_db = None,
         using this. 
     ck_db : str 
         ASCII filename of ck file
+    verbose : bool 
+        Error message to warn users about resampling. Can be turned off by supplying 
+        verbose=False
     """
     inputs = json.load(open(os.path.join(__refdata__,'config.json')))
 
@@ -753,13 +781,13 @@ def opannection(wave_range = None, filename_db = None, raman_db = None,
         if isinstance(filename_db,type(None)): 
             filename_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['opacity'])
             if not os.path.isfile(filename_db):
-                raise Exception('The opacity file does not exist: '  + filename_db+' The default is to a file opacities.db in reference/opacity/. If you have an older version of PICASO your file might be called opacity.db. Consider just adding the correct path to filename_db=')
+                raise Exception(f'The default opacity file does not exist: {filename_db}. In order to have a default database please download one of the opacity files from Zenodo and place into this folder with the name opacities.db: https://zenodo.org/record/6928501#.Y2w4C-zMI8Y if you dont want a single default file then you just need to point to the opacity db using the keyword filename_db.')
         elif not isinstance(filename_db,type(None) ): 
             if not os.path.isfile(filename_db):
                 raise Exception('The opacity file you have entered does not exist: '  + filename_db)
 
         if resample != 1:
-            print("YOU ARE REQUESTING RESAMPLING!!")
+            if verbose:print("YOU ARE REQUESTING RESAMPLING!! This could degrade the precision of your spectral calculations so should be used with caution. If you are unsure check out this tutorial: https://natashabatalha.github.io/picaso/notebooks/10_ResamplingOpacities.html")
 
         opacityclass=RetrieveOpacities(
                     filename_db, 
@@ -1227,7 +1255,7 @@ class inputs():
         convt=5.0
         x_max_mult=7.0
         
-        print('NEB FIRST PROFILE RUN')
+        #print('NEB FIRST PROFILE RUN')
         final = False
         pressure, temperature, dtdp, profile_flag = profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             TEMP1,pressure, F0PI, t_table, p_table, grad, cp, opacityclass, grav, 
@@ -1241,7 +1269,7 @@ class inputs():
         x_max_mult=7.0
 
 
-        print('NEB SECOND PROFILE RUN')
+        #print('NEB SECOND PROFILE RUN')
         final = False
         pressure, temperature, dtdp, profile_flag = profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                     temperature,pressure, F0PI, t_table, p_table, grad, cp, opacityclass, grav, 
@@ -1887,19 +1915,31 @@ class inputs():
 
     def chemeq_visscher(self, c_o, log_mh):#, interp_window = 11, interp_poly=2):
         """
+        Author of Data: Channon Visscher
+
         Find nearest neighbor from visscher grid
         JUNE 2015
         MODELS BASED ON 1060-POINT MARLEY GRID
         GRAPHITE ACTIVITY ADDED IN TEXT FILES (AFTER OCS)
         "ABUNDANCE" INDICATES CONDENSATION CONDITION (O OR 1)
         CURRENT GRID
+
         FE/H: 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
+
         C/O: 0.5X, 1.0X, 1.5X, 2.0X, 2.5X
-        C/O RATIO IS RELATIVE TO SOLAR C/O RATIO OF
+
+        The *solar* carbon-to-oxygen ratio is calculated from Lodders (2010):
+        
         CARBON = 7.19E6 ATOMS
         OXYGEN = 1.57E7 ATOMS
-        NOTE THAT THE C/O RATIO IS ADJUSTED BY SIMPLY MULTIPLYING BY C/O FACTOR
-        THIS MAY YIELD EFFECTIVE METALLICITIES SLIGHTLY HIGHER THAN THE DEFINED METALLICITY
+        
+        This gives a "solar" C/O ratio of 0.458
+         
+        The C/O ratio adjusted by keeping C + O = constant and adjusting the carbon-to-oxygen ratio by a factor relative to the solar value (i.e., a factor of "1" means 1x the solar value, i.e. a C/O ratio of 0.458).
+         
+        This approach keeps the heavy-element-to-hydrogen ratio (Z/X) constant for a given [Fe/H]
+         
+        These abundances are then multiplied by the metallicity factor (10**[Fe/H]) along with every other element in the model.
         
         Parameters
         ----------
@@ -1914,7 +1954,7 @@ class inputs():
         #allowable cos 
         cos = np.array([0.25,0.5,1.0,1.5,2.0,2.5])
         #allowable fehs
-        fehs = np.array([0.0,0.3,0.5,0.7,1.0,1.5,1.7,2.0])
+        fehs = np.array([-0.3, 0.0,0.3,0.5,0.7,1.0,1.5,1.7,2.0])
 
         if log_mh > max(fehs): 
             raise Exception('Choose a log metallicity less than 2.0')
@@ -1924,10 +1964,10 @@ class inputs():
         grid_co = cos[np.argmin(np.abs(cos-c_o))]
         grid_feh = fehs[np.argmin(np.abs(fehs-log_mh))]
         str_co = str(grid_co).replace('.','')
-        str_fe = str(grid_feh).replace('.','')
+        str_fe = str(grid_feh).replace('.','').replace('-','m')
 
         filename = os.path.join(__refdata__,'chemistry','visscher_grid',
-            f'2015_06_1060grid_feh_{str_fe}_co_{str_co}.txt')
+            f'2015_06_1060grid_feh_{str_fe}_co_{str_co}.txt').replace('_m0','m0')
 
         header = pd.read_csv(filename).keys()[0]
         cols = header.replace('T (K)','temperature').replace('P (bar)','pressure').split()
@@ -3106,8 +3146,8 @@ class inputs():
     
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='none',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
-        p_reference=1, rt_method='toon', stream=2, blackbody_approx=1, toon_coefficients="quadrature",
-        single_form='explicit', query='nearest_neighbor',
+        p_reference=1, rt_method='toon', stream=2, toon_coefficients="quadrature",
+        single_form='explicit', calculate_fluxes='off', query='nearest_neighbor',
         w_single_form='TTHG', w_multi_form='TTHG', psingle_form='TTHG', 
         w_single_rayleigh = 'on', w_multi_rayleigh='on', psingle_rayleigh='on'):
         """
@@ -3144,9 +3184,6 @@ class inputs():
         toon_coefficients: str
             Decide whether to use Quadrature ("quadrature") or Eddington ("eddington") schemes
             to define Toon coefficients in two-stream approximation (see Table 1 in Toon et al 1989)
-        blackbody_approx : int 
-            blackbody_approx=1 does a linear blackbody approx (eqn 26 toon 89), 
-            while blackbody_approx=2 does an exponential (only an option for SH)
         single_form : str 
             form of the phase function can either be written as an 'explicit' henyey greinstein 
             or it can be written as a 'legendre' expansion. Default is 'explicit'
@@ -3175,7 +3212,6 @@ class inputs():
         else:
                 self.inputs['approx']['rt_params']['common']['stream'] = stream
 
-        self.inputs['approx']['rt_params']['common']['single_phase'] = single_phase_options(printout=False).index(single_phase)
         self.inputs['approx']['rt_params']['common']['delta_eddington'] = delta_eddington
         self.inputs['approx']['rt_params']['common']['raman'] =  raman_options().index(raman)
         if isinstance(tthg_frac, (list, np.ndarray)):
@@ -3191,18 +3227,19 @@ class inputs():
 
         #unique to toon 
         #eddington or quradrature
-        self.inputs['approx']['rt_params']['toon']['toon_coefficients'] = coefficients_options(printout=False).index(toon_coefficients)
+        self.inputs['approx']['rt_params']['toon']['toon_coefficients'] = toon_phase_coefficients(printout=False).index(toon_coefficients)
         self.inputs['approx']['rt_params']['toon']['multi_phase'] = multi_phase_options(printout=False).index(multi_phase)
+        self.inputs['approx']['rt_params']['toon']['single_phase'] = single_phase_options(printout=False).index(single_phase)
         
         #unique to SH
         self.inputs['approx']['rt_params']['SH']['single_form'] = SH_psingle_form_options(printout=False).index(single_form)
-        self.inputs['approx']['rt_params']['SH']['blackbody_approx'] = blackbody_approx
         self.inputs['approx']['rt_params']['SH']['w_single_form'] = SH_scattering_options(printout=False).index(w_single_form)
         self.inputs['approx']['rt_params']['SH']['w_multi_form'] = SH_scattering_options(printout=False).index(w_multi_form)
         self.inputs['approx']['rt_params']['SH']['psingle_form'] = SH_scattering_options(printout=False).index(psingle_form)
         self.inputs['approx']['rt_params']['SH']['w_single_rayleigh'] = SH_rayleigh_options(printout=False).index(w_single_rayleigh)
         self.inputs['approx']['rt_params']['SH']['w_multi_rayleigh'] = SH_rayleigh_options(printout=False).index(w_multi_rayleigh)
         self.inputs['approx']['rt_params']['SH']['psingle_rayleigh'] = SH_rayleigh_options(printout=False).index(psingle_rayleigh)
+        self.inputs['approx']['rt_params']['SH']['calculate_fluxes'] = SH_calculate_fluxes_options(printout=False).index(calculate_fluxes)
 
 
         self.inputs['opacities']['query'] = query_options().index(query)
@@ -3942,12 +3979,89 @@ def jupiter_cld():
 def HJ_pt():
     """Function to get Jupiter's PT profile"""
     return os.path.join(__refdata__, 'base_cases','HJ.pt')
-def HJ_pt_3d():
-    """Function to get Jupiter's PT profile"""
-    return os.path.join(__refdata__, 'base_cases','HJ_3d.pt')
+def HJ_pt_3d(as_xarray=False,add_kz=False, input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')):
+    """Function to get Jupiter's PT profile
+    
+    Parameters
+    ----------
+    as_xarray : bool 
+        Returns as xarray, instead of dictionary
+    add_kz : bool 
+        Returns kzz along with PT info
+    input_file : str 
+        point to input file in the same format as mitgcm example 
+        file in base_cases/HJ_3d.pt
+    """
+    #input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')
+    threed_grid = pd.read_csv(input_file,delim_whitespace=True,names=['p','t','k'])
+    all_lon= threed_grid.loc[np.isnan(threed_grid['k'])]['p'].values
+    all_lat=  threed_grid.loc[np.isnan(threed_grid['k'])]['t'].values
+    latlong_ind = np.concatenate((np.array(threed_grid.loc[np.isnan(threed_grid['k'])].index),[threed_grid.shape[0]] ))
+    threed_grid = threed_grid.dropna() 
+
+    lon = np.unique(all_lon)
+    lat = np.unique(all_lat)
+
+    nlon = len(lon)
+    nlat = len(lat)
+    total_pts = nlon*nlat
+    nz = latlong_ind[1] - 1 
+
+    p = np.zeros((nlon,nlat,nz))
+    t = np.zeros((nlon,nlat,nz))
+    kzz = np.zeros((nlon,nlat,nz))
+
+    for i in range(len(latlong_ind)-1):
+
+        ilon = list(lon).index(all_lon[i])
+        ilat = list(lat).index(all_lat[i])
+
+        p[ilon, ilat, :] = threed_grid.loc[latlong_ind[i]:latlong_ind[i+1]]['p'].values
+        t[ilon, ilat, :] = threed_grid.loc[latlong_ind[i]:latlong_ind[i+1]]['t'].values
+        kzz[ilon, ilat, :] = threed_grid.loc[latlong_ind[i]:latlong_ind[i+1]]['k'].values
+    
+    gcm_out = {'pressure':p, 'temperature':t, 'kzz':kzz, 'latitude':lat, 'longitude':lon}
+    if as_xarray:
+        # create data
+        data = gcm_out['temperature']
+
+        # create coords
+        lon = gcm_out['longitude']
+        lat = gcm_out['latitude']
+        pres = gcm_out['pressure'][0,0,:]
+
+        # put data into a dataset
+        if add_kz:
+            data_vars = dict(
+                temperature=(["lon", "lat","pressure"], data,{'units': 'Kelvin'}),#, required
+                kz = (["lon", "lat","pressure"], kzz,{'units': 'm^2/s'})
+            )
+        else: 
+            data_vars = dict(temperature=(["lon", "lat","pressure"], data,{'units': 'Kelvin'}))
+
+        ds = xr.Dataset(
+            data_vars=data_vars,
+            coords=dict(
+                lon=(["lon"], lon,{'units': 'degrees'}),#required
+                lat=(["lat"], lat,{'units': 'degrees'}),#required
+                pressure=(["pressure"], pres,{'units': 'bar'})#required*
+            ),
+            attrs=dict(description="coords with vectors"),
+        )
+        return  ds
+    else: 
+        return gcm_out
 def HJ_cld():
     """Function to get rough Jupiter Cloud model with fsed=3"""
     return os.path.join(__refdata__, 'base_cases','HJ.cld')
+def brown_dwarf_pt():
+    """Function to get rough Brown Dwarf climate model with Teff=1270 K M/H=1xSolar, C/O=1xSolar, fsed=1"""
+    return os.path.join(__refdata__, 'base_cases','t1270g200f1_m0.0_co1.0.cmp')    
+def brown_dwarf_cld():
+    """Function to get rough Brown Dwarf cloud model with Teff=1270 K M/H=1xSolar, C/O=1xSolar, fsed=1"""
+    return os.path.join(__refdata__, 'base_cases','t1270g200f1_m0.0_co1.0.cld')    
+
+
 def single_phase_options(printout=True):
     """Retrieve all the options for direct radation"""
     if printout: print("Can also set functional form of forward/back scattering in approx['TTHG_params']")
@@ -3965,6 +4079,9 @@ def SH_rayleigh_options(printout=True):
 def SH_psingle_form_options(printout=True):
     """Retrieve options for direct scattering form approximation"""
     return  ["explicit","legendre"]
+def SH_calculate_fluxes_options(printout=True):
+    """Retrieve options for calculating layerwise fluxes"""
+    return  ["off","on"]
 def raman_options():
     """Retrieve options for raman scattering approximtions"""
     return ["oklopcic","pollack","none"]
@@ -4089,8 +4206,9 @@ def stream_options(printout=True):
     """Retrieve all the options for stream"""
     if printout: print("Can use 2-stream or 4-stream sperhical harmonics")
     return [2,4]
-def coefficients_options(printout=True):
-    """Retrieve options for coefficients used in Toon calculation"""
+def toon_phase_coefficients(printout=True):
+    """Retrieve options for coefficients used in Toon calculation
+    """
     return ["quadrature","eddington"]
 
 def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
@@ -5561,3 +5679,4 @@ def OH_conc(temp,press,x_h2o,x_h2):
     n = press_cgs/(kb*temp)
     
     return x_oh*n
+

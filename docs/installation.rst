@@ -27,29 +27,30 @@ Install with Pip
 With a pip install you will need to download the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ (explained below). This can simply be done by downloading a zip of the ``PICASO`` code from Github (which does not require git setup if that is not available to you). 
 
 
-Download Reference Documentation
---------------------------------
+Download PICASO Reference Data
+------------------------------
 
 .. note::
 	`PICASO` 3.0 will not work with PICASO 2.3 reference folder. Please download the new reference folder if you are using PICASO 3.0 
 
-1) With pip, download the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_. You should already this if you did a Git clone. **Make sure that your reference folder matches the version number of ``PICASO``**. Check the version number in the file ``reference/version.md``. 
+1) Download the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_. You should already this if you did a Git clone. **Make sure that your reference folder matches the version number of ``PICASO``**. Check the version number in the file ``reference/version.md``. 
 
-2) Download the `Resampled Opacity File from Zenodo <https://doi.org/10.5281/zenodo.3759675>`_. Note that there is a v1, and v2. Either are acceptable depending on your resolutiona, wavelength needs. Place in the `Opacities reference Folder you downloaded from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ (see below in step 3)
+2) Download a `Resampled Opacity File from Zenodo <https://doi.org/10.5281/zenodo.3759675>`_. Note that there are a few different versions. Any is acceptable depending on your resolution and wavelength needs. Put this db file in the `Opacities reference Folder you downloaded from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_. **You may need to rename it opacities.db and place into `reference/opacities` folder**. The file placed into reference/opacities will serve as your default file. You can point to other opacity files using justdoit.opannection. 
 
-Create Environment Variable
+
+Create Environment Variable 
 ---------------------------
 
 There are several ways to create environment variables. Below are the three most popular methods. You only need to choose one that works best for you. 
 
-Method 1: ``bash_profle`` or ``zshrc`` file
+Method 1: ``bash_profile`` or ``zshrc`` file
 ````````````````````````````````````````````
 
 As you might guess ``~/.bash_profile`` is used for the ``Bash`` command line shell. ``~/.zshrc`` is used for the ``Zsh`` command line shell. The steps below are identical.
 
 .. code-block:: bash
 
-	vi ~/.bash_profle
+	vi ~/.bash_profile
 
 Add add this line:
 
@@ -156,7 +157,7 @@ When you untar this you should get a directory structure that looks like this ``
 
 .. code-block:: bash
 
-	vi ~/.bash_profle
+	vi ~/.bash_profile
 
 Add add this line:
 

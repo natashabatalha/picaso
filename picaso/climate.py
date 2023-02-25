@@ -1324,7 +1324,8 @@ def calculate_atm(bundle, opacityclass):
     #relies on continuum molecules are added into the opacity 
     #database. Rayleigh molecules are all in `rayleigh.py` 
     
-    atm.get_needed_continuum(opacityclass.rayleigh_molecules)
+    atm.get_needed_continuum(opacityclass.rayleigh_molecules,
+                             opacityclass.avail_continuum)
 
     #get cloud properties, if there are any and put it on current grid 
     atm.get_clouds(wno)
@@ -1340,7 +1341,7 @@ def calculate_atm(bundle, opacityclass):
     
     opacityclass.get_opacities(atm)
     
-    DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman= compute_opacity(
+    DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman, f_deltaM= compute_opacity(
             atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
             full_output=False, plot_opacity=False)
     
@@ -1442,7 +1443,8 @@ def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None):
     #relies on continuum molecules are added into the opacity 
     #database. Rayleigh molecules are all in `rayleigh.py` 
     
-    atm.get_needed_continuum(opacityclass.rayleigh_molecules)
+    atm.get_needed_continuum(opacityclass.rayleigh_molecules,
+                             opacityclass.avail_continuum)
 
     #get cloud properties, if there are any and put it on current grid 
     atm.get_clouds(wno)
@@ -1460,7 +1462,7 @@ def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None):
     else:
         opacityclass.get_opacities_deq_onfly(bundle,atm,gases_fly=gases_fly)
     
-    DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman= compute_opacity(
+    DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman, f_deltaM= compute_opacity(
             atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
             full_output=False, plot_opacity=False)
     
