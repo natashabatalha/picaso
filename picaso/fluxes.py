@@ -2687,7 +2687,15 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
                         #w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
                         #               + (1-f)*(g_back**l - ff2) / (1 - ff))
 
-
+            if w_single_rayleigh==1:
+                w_single[1:] *= ftau_cld
+                if stream==4:
+                    w_single[2] += 0.5*ftau_ray 
+            if w_multi_rayleigh==1: 
+                w_multi[1:] *= ftau_cld
+                if stream==4:
+                    w_multi[2] += 0.5*ftau_ray 
+                    
             #single-scattering options
             if single_form==0: # explicit single form
                 if psingle_form==1: #OTHG
