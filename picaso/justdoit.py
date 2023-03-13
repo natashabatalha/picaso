@@ -38,7 +38,7 @@ import xarray as xr
 from joblib import Parallel, delayed, cpu_count
 
 __refdata__ = os.environ.get('picaso_refdata')
-__version__ = 3.0
+__version__ = 3.1
 
 
 if not os.path.exists(__refdata__): 
