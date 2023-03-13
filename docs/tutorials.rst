@@ -5,7 +5,7 @@ Basics of Reflected Light
 -------------------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    Getting Started  </notebooks/1_GetStarted.ipynb>
    Adding Clouds  </notebooks/2_AddingClouds.ipynb>
@@ -59,7 +59,7 @@ Relevant Citatons: `Adams et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022ApJ
 Relevant Citatons: `Mukherjee et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022arXiv220807836M/abstract>`_
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    Brown Dwarfs </notebooks/climate/12a_BrownDwarf.ipynb>
    Planet </notebooks/climate/12b_Exoplanet.ipynb>
@@ -70,7 +70,7 @@ Fitting models to data
 Relevant Citatons: `JWST Transiting Exoplanet Community Early Release Science Team (2022) <https://www.nature.com/articles/s41586-022-05269-w>`_
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    Grid Search Analysis </notebooks/fitdata/GridSearch.ipynb>
 
@@ -79,7 +79,7 @@ Opacities
 ---------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    Query Opacites </notebooks/10_QueryOpacities.ipynb>
    Opacity Factory: Creating Custom Databases </notebooks/10_CreatingOpacityDb.ipynb>
@@ -88,8 +88,11 @@ Opacities
 
 Radiative Transfer Techniques 
 -----------------------------
-   Toon Radiative Transfer in Reflected Light
-   </notebooks/10a_AnalyzingApproximationsReflectedLightToon.ipynb>
+
+.. toctree::
+   :maxdepth: 1
+
+   Toon Radiative Transfer in Reflected Light </notebooks/10a_AnalyzingApproximationsReflectedLightToon.ipynb>
    Spherical Harmonics Radiative Transfer in Reflected Light </notebooks/10b_AnalyzingApproximationsReflectedLightSH.ipynb>
    Spherical Harmonics Radiative Transfer in Thermal Emission </notebooks/10c_AnalyzingApproximationsThermal.ipynb>
 
@@ -97,7 +100,7 @@ FAQs
 ----
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    Misc FAQs </notebooks/FAQs.ipynb>
    Contribution Functions </notebooks/11_ContributionFunctions.ipynb>
