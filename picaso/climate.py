@@ -1242,7 +1242,7 @@ def calculate_atm(bundle, opacityclass):
     #see class `inputs` attribute `approx`
 
     #set approx numbers options (to be used in numba compiled functions)
-    single_phase = inputs['approx']['rt_params']['common']['single_phase']
+    single_phase = inputs['approx']['rt_params']['toon']['single_phase']
     multi_phase = inputs['approx']['rt_params']['toon']['multi_phase']
     raman_approx =inputs['approx']['rt_params']['common']['raman']
     method = inputs['approx']['rt_method']
@@ -1368,7 +1368,7 @@ def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None):
     #see class `inputs` attribute `approx`
 
     #set approx numbers options (to be used in numba compiled functions)
-    single_phase = inputs['approx']['rt_params']['common']['single_phase']
+    single_phase = inputs['approx']['rt_params']['toon']['single_phase']
     multi_phase = inputs['approx']['rt_params']['toon']['multi_phase']
     raman_approx =inputs['approx']['rt_params']['common']['raman']
     method = inputs['approx']['rt_method']
