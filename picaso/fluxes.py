@@ -2672,20 +2672,13 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
                 f = frac_a + frac_b*g_back**frac_c
                 f_deltaM_ = f_deltaM
                 f_deltaM_ *= (f*constant_forward**stream + (1-f)*constant_back**stream)
-                
-                ff1 = (constant_forward*cosb_og)**stream
-                ff2 = (constant_back*cosb_og)**stream
-                ff = f_deltaM
+
                 for l in range(1,stream):
                     w = (2*l+1) * (f*g_forward**l + (1-f)*g_back**l)
                     if w_single_form==0:
                         w_single[l,:,:] = (w - (2*l+1)*f_deltaM_) / (1 - f_deltaM_)
-                        #w_single[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
-                        #                + (1-f)*(g_back**l - ff2) / (1 - ff))
                     if w_multi_form==0:
                         w_multi[l,:,:] = (w - (2*l+1)*f_deltaM_) / (1 - f_deltaM_)
-                        #w_multi[l,:,:] = (2*l+1) * (f*(g_forward**l - ff1) / (1 - ff) 
-                        #               + (1-f)*(g_back**l - ff2) / (1 - ff))
 
             if w_single_rayleigh==1:
                 w_single[1:] *= ftau_cld
@@ -2695,7 +2688,7 @@ def get_reflected_SH(nlevel, nwno, numg, numt, dtau, tau, w0, cosb, ftau_cld, ft
                 w_multi[1:] *= ftau_cld
                 if stream==4:
                     w_multi[2] += 0.5*ftau_ray 
-                    
+
             #single-scattering options
             if single_form==0: # explicit single form
                 if psingle_form==1: #OTHG
