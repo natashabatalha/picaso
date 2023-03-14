@@ -243,9 +243,9 @@ def mixing_ratio(full_output,limit=50,ng=None,nt=None, **kwargs):
     if len(molecules) < 3: ncol = 5
     else: ncol = len(molecules)
     if limit<3: 
-        cols = magma(5) #magma needs at least 5 colors
+        cols = pals.magma(5) #magma needs at least 5 colors
     else: 
-        cols = magma(min([ncol,limit]))
+        cols = pals.magma(min([ncol,limit]))
     legend_it=[]    
     for mol , c in zip(to_plot,cols):
         ind = np.where(mol==np.array(molecules))[0][0]
@@ -538,7 +538,7 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
         wavelength_label = 'Wavelength (units by user)'
     else: 
         wavelength_label = 'Wavenumber Grid'
-    cols = magma(200)
+    cols = pals.magma(200)
     color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
 
     if not isinstance(filename,type(None)):
