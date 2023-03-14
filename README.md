@@ -38,7 +38,7 @@ Anyone is free to use the [contributor bot to add their contribution](https://al
 ## Contributors
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-10-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-11-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
@@ -60,6 +60,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ninarobbins"><img src="https://avatars.githubusercontent.com/u/43654406?v=4?s=100" width="100px;" alt="Nina Robbins Blanch"/><br /><sub><b>Nina Robbins Blanch</b></sub></a><br /><a href="https://github.com/natashabatalha/picaso/commits?author=ninarobbins" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/MartianColonist"><img src="https://avatars.githubusercontent.com/u/22718554?v=4?s=100" width="100px;" alt="Ryan MacDonald"/><br /><sub><b>Ryan MacDonald</b></sub></a><br /><a href="https://github.com/natashabatalha/picaso/issues?q=author%3AMartianColonist" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://epl.carnegiescience.edu/people/peter-gao"><img src="https://avatars.githubusercontent.com/u/20616506?v=4?s=100" width="100px;" alt="Peter Gao"/><br /><sub><b>Peter Gao</b></sub></a><br /><a href="https://github.com/natashabatalha/picaso/issues?q=author%3Asirpetergao" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/nklewis"><img src="https://avatars.githubusercontent.com/u/16822846?v=4?s=100" width="100px;" alt="Nikole Lewis"/><br /><sub><b>Nikole Lewis</b></sub></a><br /><a href="https://github.com/natashabatalha/picaso/issues?q=author%3Anklewis" title="Bug reports">🐛</a> <a href="#mentoring-nklewis" title="Mentoring">🧑‍🏫</a></td>
     </tr>
   </tbody>
 </table>
