@@ -101,6 +101,16 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "drtkat",
+      "name": "Tiffany Kataria",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10516244?v=4",
+      "profile": "https://github.com/drtkat",
+      "contributions": [
+        "bug",
+        "mentoring"
+      ]
     }
   ],
   "contributorsPerLine": 7,
