@@ -38,7 +38,7 @@ Anyone is free to use the [contributor bot to add their contribution](https://al
 ## Contributors
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-11-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-14-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
@@ -63,6 +63,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/nklewis"><img src="https://avatars.githubusercontent.com/u/16822846?v=4?s=100" width="100px;" alt="Nikole Lewis"/><br /><sub><b>Nikole Lewis</b></sub></a><br /><a href="https://github.com/natashabatalha/picaso/issues?q=author%3Anklewis" title="Bug reports">🐛</a> <a href="#mentoring-nklewis" title="Mentoring">🧑‍🏫</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/exoBD"><img src="https://avatars.githubusercontent.com/u/38989139?v=4?s=100" width="100px;" alt="Mark Marley"/><br /><sub><b>Mark Marley</b></sub></a><br /><a href="#mentoring-exobd" title="Mentoring">🧑‍🏫</a> <a href="#ideas-exobd" title="Ideas, Planning, & Feedback">🤔</a> <a href="#research-exobd" title="Research">🔬</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/drtkat"><img src="https://avatars.githubusercontent.com/u/10516244?v=4?s=100" width="100px;" alt="Tiffany Kataria"/><br /><sub><b>Tiffany Kataria</b></sub></a><br /><a href="https://github.com/natashabatalha/picaso/issues?q=author%3Adrtkat" title="Bug reports">🐛</a> <a href="#mentoring-drtkat" title="Mentoring">🧑‍🏫</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/jjfplanet"><img src="https://avatars.githubusercontent.com/u/42284609?v=4?s=100" width="100px;" alt="jjfplanet"/><br /><sub><b>jjfplanet</b></sub></a><br /><a href="#ideas-jjfplanet" title="Ideas, Planning, & Feedback">🤔</a> <a href="#mentoring-jjfplanet" title="Mentoring">🧑‍🏫</a> <a href="#fundingFinding-jjfplanet" title="Funding Finding">🔍</a></td>
     </tr>
   </tbody>
 </table>
