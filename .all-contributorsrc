@@ -108,8 +108,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/16822846?v=4",
       "profile": "https://github.com/nklewis",
       "contributions": [
-      "bug",
-      "mentoring"
+        "bug",
+        "mentoring"
       ]
     },
     {
@@ -131,6 +131,17 @@
       "contributions": [
         "bug",
         "mentoring"
+      ]
+    },
+    {
+      "login": "jjfplanet",
+      "name": "jjfplanet",
+      "avatar_url": "https://avatars.githubusercontent.com/u/42284609?v=4",
+      "profile": "https://github.com/jjfplanet",
+      "contributions": [
+        "ideas",
+        "mentoring",
+        "fundingFinding"
       ]
     }
   ],
