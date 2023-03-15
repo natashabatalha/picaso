@@ -45,8 +45,9 @@ if not os.path.exists(__refdata__):
     raise Exception("You have not downloaded the PICASO reference data. You can find it on github here: https://github.com/natashabatalha/picaso/tree/master/reference . If you think you have already downloaded it then you likely just need to set your environment variable. See instructions here: https://natashabatalha.github.io/picaso/installation.html#download-and-link-reference-documentation . You can use `os.environ['PYSYN_CDBS']=<yourpath>` directly in python if you run the line of code before you import PICASO.")
 else: 
     ref_v = json.load(open(os.path.join(__refdata__,'config.json'))).get('version',2.3)
+    
     if __version__ > ref_v: 
-        raise Exception(f"You have an out of date reference data set that will not work with your PICASO version {__version__}. Please download the newest version: https://github.com/natashabatalha/picaso/tree/master/reference")
+        warnings.warn(f"Your code version is {__version__} but your reference data version is {ref_v}. For some functionality you may experience Keyword errors. Please download the newest ref version or update your code: https://github.com/natashabatalha/picaso/tree/master/reference")
 
 
 if not os.path.exists(os.environ.get('PYSYN_CDBS')): 
