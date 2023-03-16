@@ -433,8 +433,6 @@ def photon_attenuation(full_output, at_tau=0.5,return_output=False,igauss=0, **k
     kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',1000))
     if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
     if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
-    kwargs['y_axis_label'] = kwargs.get('y_axis_label','Spectrum')
-    kwargs['x_axis_label'] = kwargs.get('x_axis_label',x_axis_label)
     kwargs['title'] = kwargs.get('title','Pressure at 𝞽 =' +str(at_tau))
     kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
     kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength [μm]')
