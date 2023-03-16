@@ -625,9 +625,10 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
 
     #set approx numbers options (to be used in numba compiled functions)
     stream = inputs['approx']['rt_params']['common']['stream']
-    single_phase = inputs['approx']['rt_params']['common']['single_phase']
-
+    
+    #only used in toon
     multi_phase = inputs['approx']['rt_params']['toon']['multi_phase']
+    single_phase = inputs['approx']['rt_params']['toon']['single_phase']
     #define delta eddington approximinations 
     delta_eddington = inputs['approx']['rt_params']['common']['delta_eddington']    
     tridiagonal = 0 
