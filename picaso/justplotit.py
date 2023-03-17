@@ -224,10 +224,10 @@ def mixing_ratio(full_output,limit=50,ng=None,nt=None, **kwargs):
         pressure = full_output['layer']['pressure'][:,ng,nt]
         mixingratios = pd.DataFrame(full_output['layer']['mixingratios'][:,:,ng,nt],columns=molecules)
 
-    kwargs['height'] = kwargs.get('plot_height',300)
-    kwargs['width'] = kwargs.get('plot_width',400)
-    kwargs['height'] = kwargs.get('height',kwargs['height'])
-    kwargs['width'] = kwargs.get('width',kwargs['width'])
+    kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',300))
+    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',400))
+    if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
+    if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
     kwargs['title'] = kwargs.get('title','Mixing Ratios')
     kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
     kwargs['x_axis_label'] = kwargs.get('x_axis_label','Mixing Ratio(v/v)')
@@ -277,10 +277,10 @@ def pt(full_output,ng=None, nt=None, **kwargs):
         pressure = full_output['layer']['pressure'][:,ng,nt]
         temperature = full_output['layer']['temperature'][:,ng,nt]
 
-    kwargs['height'] = kwargs.get('plot_height',300)
-    kwargs['width'] = kwargs.get('plot_width',400)
-    kwargs['height'] = kwargs.get('height',kwargs['height'])
-    kwargs['width'] = kwargs.get('width',kwargs['width'])
+    kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',300))
+    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',400))
+    if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
+    if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
     kwargs['title'] = kwargs.get('title','Pressure-Temperature Profile')
     kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
     kwargs['x_axis_label'] = kwargs.get('x_axis_label','Temperature (K)')
