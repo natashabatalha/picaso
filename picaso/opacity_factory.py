@@ -1437,7 +1437,7 @@ def delete_molecule(mol, db_filename):
 
 # Correlated-K functions
 # get guass points for 2 Gauss method
-def g_w_2gauss(order,gfrac):
+def g_w_2gauss(order=4,gfrac=0.95):
     """
     Gets gauss and weight poitns for correlated-k function 
     Specifically for the 2-point gauss method 
@@ -1445,15 +1445,17 @@ def g_w_2gauss(order,gfrac):
     Parameters
     ----------
     order : int
-        gauss order 
-    gfrac : 
-
+        Gauss order 
+    gfrac : float
+        Adjustable parameter which sets the division in the values of G which will
+        be sampled by the first and second set of Gauss points.
     Returns 
     -------
     gauss, weights
     """
     g,w=np.polynomial.legendre.leggauss(order)
 
+    #see equation 25 in https://arxiv.org/pdf/2208.07836.pdf 
     wnew1 = gfrac*w*0.5
     gnew1= gfrac*0.5*(g + 1.)
 
@@ -1465,23 +1467,52 @@ def g_w_2gauss(order,gfrac):
     
     return gfin,wfin
 
-def get_wvno_grid(filename):
-    
-    wvno_new,dwni_new = np.loadtxt(filename,usecols=[0,1],unpack=True)
-    wvno_low = 0.5*(2*wvno_new - dwni_new)
-    wvno_high = 0.5*(2*wvno_new + dwni_new)
+def get_wvno_grid(filename, min_wavelength=None, max_wavelength=None, R=None):
+    if not isinstance(filename, type(None)):
+        wvno_new,dwni_new = np.loadtxt(filename,usecols=[0,1],unpack=True)
+        wvno_low = 0.5*(2*wvno_new - dwni_new)
+        wvno_high = 0.5*(2*wvno_new + dwni_new)
+    else: 
+        wvno_new = create_grid(min_wavelength, max_wavelength, R)
+        dwni_new = list(np.diff(wvno_new))
+        dwni_new = np.array([dwni_new[0]] + dwni_new)
+        wvno_low = 0.5*(2*wvno_new - dwni_new)
+        wvno_high = 0.5*(2*wvno_new + dwni_new)
     return wvno_low,wvno_high
 
 
-def func_read_gas(molecule,og_directory,wv_file_name,order,gfrac,dir_kark_ch4=None,alkali_dir=None):
+def func_read_gas(molecule,og_directory,wv_file_name=None,
+    order=4,gfrac=0.95,dir_kark_ch4=None,alkali_dir=None,
+    min_wavelength=None, max_wavelength=None, R=None, 
+    verbose=True):
     """
     Function to generate correlated-K tables for each individual gas
+    
+    Parameters
+    ----------
+    molecule : str 
+        Name of molecule 
+    og_directory : str 
+        Directory of all the cross sections that include folders e.g. "H2O", "CH4"
+    alkali_dir : str 
+        Alakalis directory
+    wv_file_name : str 
+        (optional) file name with wavelength. First column wavenumber, second column delta wavenumber 
+        Must supply this OR combo of min, max wavelength and R
+    order : int     
+        (Optional) Gauss Legendre order which by default is set to 4, with the double gauss method 
+    gfrac : int     
+        (Optional) Double-gauss method of splitting up the gauss points, by default we use 0.95 
+    dir_kark_ch4 : str 
+        (Optional) directory of additional karkochka methane 
+    alkali_dir : str 
+        (Optional) Directory of alkalis or "individual_file" which is the method to use for Roxana Lupus data. 
+    verbose: bool 
+        (Optional) prints out status of which p,t, point the code is at 
 
     """
 
     grid_file = os.path.join(og_directory,'grid1460.csv')
-
-
 
     s1460 = pd.read_csv(grid_file,dtype=str)
     #all pressures
@@ -1538,7 +1569,10 @@ def func_read_gas(molecule,og_directory,wv_file_name,order,gfrac,dir_kark_ch4=No
         start = s1460['start_wavenumber'].values.astype(float)
     gi,wi = g_w_2gauss(order,gfrac)
     
-    wvno_low,wvno_high = get_wvno_grid(wv_file_name)
+    if not isinstance(wv_file_name,type(None)):
+        wvno_low,wvno_high = get_wvno_grid(wv_file_name)
+    else: 
+        wvno_low,wvno_high = get_wvno_grid(None, min_wavelength, max_wavelength, R)
     k_coeff_arr = np.zeros(shape=(20,73,len(wvno_low),8))
     ctp,ctt = 0,0
     for i,p,t in zip(ifile,pres,temp):  
@@ -1613,7 +1647,7 @@ def func_read_gas(molecule,og_directory,wv_file_name,order,gfrac,dir_kark_ch4=No
         
         
 
-        print(i,p,t)
+        if verbose: print(i,p,t)
     return k_coeff_arr
           
 def find_nearest(array,value):
