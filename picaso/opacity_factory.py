@@ -1480,8 +1480,7 @@ def get_wvno_grid(filename, min_wavelength=None, max_wavelength=None, R=None):
         wvno_high = 0.5*(2*wvno_new + dwni_new)
     return wvno_low,wvno_high
 
-
-def func_read_gas(molecule,og_directory,wv_file_name=None,
+def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
     order=4,gfrac=0.95,dir_kark_ch4=None,alkali_dir=None,
     min_wavelength=None, max_wavelength=None, R=None, 
     verbose=True):
@@ -1511,7 +1510,6 @@ def func_read_gas(molecule,og_directory,wv_file_name=None,
         (Optional) prints out status of which p,t, point the code is at 
 
     """
-
     grid_file = os.path.join(og_directory,'grid1460.csv')
 
     s1460 = pd.read_csv(grid_file,dtype=str)
@@ -1535,6 +1533,7 @@ def func_read_gas(molecule,og_directory,wv_file_name=None,
     else:
         mol_dir = os.path.join(og_directory,molecule)
 
+
     #determine file type    
     find_p_files = glob.glob(os.path.join(mol_dir,'*p_*'))
     find_npy_files = glob.glob(os.path.join(mol_dir,'*npy*'))
@@ -1548,8 +1547,8 @@ def func_read_gas(molecule,og_directory,wv_file_name=None,
         ftype='lupu_txt'
     else:
         raise Exception('Could not find npy or p_ files. npy are assumed to be read via np.load, where as p_ files are assumed to be unformatted binary or alkali files')
-#        print("File number is ", len(find_p_files))
-#        ftype = 'fortran_binary'
+
+
     read_fits = os.path.join(mol_dir,'readomni.fits' )
     lupu_wave= os.path.join(mol_dir,'wavelengths.txt' )
     if os.path.exists(read_fits):
@@ -1567,6 +1566,7 @@ def func_read_gas(molecule,og_directory,wv_file_name=None,
         numw = s1460['number_wave_pts'].values.astype(int)
         delwn = s1460['delta_wavenumber'].values.astype(float)
         start = s1460['start_wavenumber'].values.astype(float)
+    
     gi,wi = g_w_2gauss(order,gfrac)
     
     if not isinstance(wv_file_name,type(None)):
@@ -1584,6 +1584,7 @@ def func_read_gas(molecule,og_directory,wv_file_name=None,
         elif 'lupu' in ftype: 
             mbar = pres*1e3
             fdata = os.path.join(mol_dir,f'{molecule}_{mbar:.2e}mbar_{temp:.0f}K.txt') 
+        
         #Grab 1460 in various format data
         if 'lupu' in ftype: 
             dset =  pd.read_csv(fdata,skiprows=2).values[:,0]
@@ -1649,6 +1650,9 @@ def func_read_gas(molecule,og_directory,wv_file_name=None,
 
         if verbose: print(i,p,t)
     return k_coeff_arr
+
+#keeping old name here for Sagnick
+func_read_gas = compute_ck_molecular
           
 def find_nearest(array,value):
     #small program to find the nearest neighbor in temperature  
