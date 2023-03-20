@@ -1784,7 +1784,7 @@ def transmission_contribution(full_output ,R=None,  **kwargs):
     
     return fig, ax, 1e4/wno, CF_bin
 
-def brightness_temperature(out_dict,plot=True, R = None): 
+def brightness_temperature(out_dict,plot=True, R = None, with_guide=True): 
     """
     Plots and returns brightness temperature
 
@@ -1795,11 +1795,14 @@ def brightness_temperature(out_dict,plot=True, R = None):
     Parameters
     ----------
     out_dict : dict 
-        output of bundle.spectrum(opa,full_output=True)
+        output of bundle.spectrum(opa,full_output=True) or a dictionary with 
+        {"wavenumber": np.array, "thermal": np.array of standard output in erg/cm2/s/cm}
     plot : bool 
         If true creates and returns a plot 
     R : float 
         If not None, rebins the brightness temperature 
+    with_guide : bool 
+        Plots points from the minimum and maximum pt values 
     """
     flux = out_dict['thermal']/np.pi*1e-7
     wno = out_dict['wavenumber']
@@ -1813,23 +1816,24 @@ def brightness_temperature(out_dict,plot=True, R = None):
 
     T_B  = (a/lam)/np.log(1+(hc2/flux/lam**5))
 
-    t_eq = out_dict['full_output']['layer']['temperature']
+    
 
 
     if not isinstance(R, type(None)):
         wno, T_B = mean_regrid(wno, T_B, R=R)
 
     if plot: 
+        if with_guide: t_eq = out_dict['full_output']['layer']['temperature']
         f = plt.figure(figsize=(15,8))
         plt.xlabel("Wavelength [microns]",fontsize=20)
         plt.ylabel("Brightness Temperature [K]",fontsize=20)
         plt.xlim(min(1e4/wno),max(1e4/wno))
-        plt.ylim(np.min(t_eq)-0.1*np.min(t_eq),np.max(t_eq)+0.1*np.min(t_eq))
+        if with_guide: plt.ylim(np.min(t_eq)-0.1*np.min(t_eq),np.max(t_eq)+0.1*np.min(t_eq))
 
 
         plt.semilogx(1e4/wno,T_B,color='k', label="Brightness Temperature")
-        plt.axhline(np.min(t_eq),linewidth=5,color="blue",label="Minimum Temperature")
-        plt.axhline(np.max(t_eq),linewidth=5,color="red",label="Maximum Temperature")
+        if with_guide: plt.axhline(np.min(t_eq),linewidth=5,color="blue",label="Minimum Temperature")
+        if with_guide: plt.axhline(np.max(t_eq),linewidth=5,color="red",label="Maximum Temperature")
 
         plt.legend(fontsize=10)        
     
