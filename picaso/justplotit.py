@@ -1837,7 +1837,9 @@ def brightness_temperature(out_dict,plot=True, R = None, with_guide=True):
 
         plt.legend(fontsize=10)        
     
-    return T_B , f
+        return T_B , f
+    else: 
+        return T_B
 
 
 def animate_convergence(clima_out, picaso_bundle, opacity, wave_range=[0.3,6],
