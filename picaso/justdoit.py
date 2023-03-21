@@ -2852,7 +2852,7 @@ class inputs():
         fsed=1, b=1, eps=1e-2, param='const', 
         mh=1, mmw=2.2, kz_min=1e5, sig=2, 
         full_output=False, Teff=None, alpha_pressure=None, supsat=0,
-        gas_mmr=None, do_virtual=False): 
+        gas_mmr=None, do_virtual=False, verbose=True): 
         """
         Runs virga cloud code based on the PT and Kzz profiles 
         that have been added to inptus class.
@@ -2887,11 +2887,13 @@ class inputs():
         do_virtual : bool 
             Turn on and off the "virtual" cloud which is a cloud that forms below 
             the pressure grid defined by the user. 
+        verbose : bool 
+            Turn off warnings 
         """
         
         cloud_p = vj.Atmosphere(condensates,fsed=fsed,mh=mh,
                  mmw = mmw, sig =sig, b=b, eps=eps, param=param, supsat=supsat,
-                 gas_mmr=gas_mmr) 
+                 gas_mmr=gas_mmr, verbose=verbose) 
         if 'kz' not in self.inputs['atmosphere']['profile'].keys():
             raise Exception ("Must supply kz to atmosphere/chemistry DataFrame, \
                 if running `virga` through `picaso`. This should go in the \
