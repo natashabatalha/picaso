@@ -536,11 +536,12 @@ def input_xarray(xr_usr, opacity,p_reference=10, calculation='planet'):
         steff = _finditem(stellar_params,'steff')
         feh = _finditem(stellar_params,'feh')
         logg = _finditem(stellar_params,'logg')
+        database = 'phoenix' if type(_finditem(stellar_params,'database')) == type(None) else _finditem(stellar_params,'database')
         ms = _finditem(stellar_params,'ms')
         rs = _finditem(stellar_params,'rs')
         semi_major = _finditem(planet_params,'sma')
         case.star(opacity, steff,feh,logg, radius=rs['value'], 
-                  radius_unit=u.Unit(rs['unit']))
+                  radius_unit=u.Unit(rs['unit']), database=database)
 
     mp = _finditem(planet_params,'mp')
     rp = _finditem(planet_params,'rp')
