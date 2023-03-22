@@ -33,6 +33,7 @@ with warnings.catch_warnings():#
     import pysynphot as psyn
 import astropy.units as u
 import astropy.constants as c
+from astropy.utils.misc import JsonCustomEncoder
 import math
 import xarray as xr
 from joblib import Parallel, delayed, cpu_count
@@ -498,7 +499,245 @@ def _finditem(obj, key):
             item = _finditem(v, key)
             if item is not None:
                 return item
+def standard_metadata(): 
+    return {
+    'author':'optional',
+    'contact':'optional', 
+    'code':'optional', 
+    'doi':'optional', 
+    'planet_params':{
+        'rp':'usually taken from picaso',
+        'mp':'usually taken from picaso',
+        'mh':'optional',
+        'cto':'optional',
+        'heat_redis':'optional',
+        'p_reference':'usually taken from picaso',
+        'tint':'optional'
+    },
+    'stellar_params':{
+         'logg':'usually taken from picaso', 
+         'feh': 'usually taken from picaso', 
+         'steff':'usually taken from picaso', 
+         'rs': 'usually taken from picaso', 
+         'ms': 'optional', 
+         'database':'usually taken from picaso',
+    },
+    'orbit_params':{
+        'sma':'usually taken from picaso', 
+    }
+}
+def check_units(unit):
+    try: 
+        return u.Unit(unit)
+    except ValueError: 
+        #check if real unit
+        return None
+    
+def output_xarray(df, picaso_class, add_output={}, savefile=None): 
+    """
+    This function converts all picaso output to xarray which is easy to save 
+    It is recommended for reuse and reproducibility of models. the returned 
+    xarray can be used with input_xarray to rerun models. See Preservation notebook. 
+    
+    Parameters
+    ----------
+    df : dict 
+        This is the output of your spectrum and must include "full_output=True"
+        For example, df = case.spectrum(opa, full_output=True)
+    picaso_class : picaso.inputs
+        This is the original class that you made to do your run. 
+        For example, case=jdi.inputs();followed by case.atmosphere(), case.clouds(), etc
+    add_output : dict
+        These are any additional outputs you want included in your xarray metadata 
+        This dictionary has a very specific struture if you want it to work correctly. 
+        To see the structure you can run justdoit.standard_metadata() which will 
+        return an empty dictionary that you can fill. 
+    savefile : str 
+        Optional, if string it will save a xarray file for you 
+    
+    Returns
+    -------
+    xarray.Dataset
+        this xarray dataset can be easily passed to justdoit.input_xarray to run a spectrum 
+        
+    """
+        
+    full_output = df['full_output']
+    df_atmo = picaso_class.inputs['atmosphere']['profile']
+    molecules_included = full_output['weights']
+    
+    #start with simple layer T
+    data_vars=dict(temperature = (["pressure"], 
+                                  df_atmo['temperature'],
+                                  {'units': 'Kelvin'}))
+    
+    #spectral data 
+    if 'thermal' in df.keys(): 
+        data_vars['flux_emission'] = (["wavelength"], df['thermal'],{'units': 'erg/cm**2/s/cm'}) 
+    if 'transit_depth' in df.keys(): 
+        data_vars['transit_depth'] = (["wavelength"], df['transit_depth'],{'units': 'R_jup**2/R_jup**2'}) 
+    if 'temp_brightness' in df.keys(): 
+        data_vars['temp_brightness'] = (["wavelength"], df['temp_brightness'],{'units': 'Kelvin'})
+    if 'fpfs_thermal' in df.keys(): 
+        if isinstance(df['fpfs_thermal'], np.ndarray): 
+            data_vars['fpfs_emission'] = (["wavelength"], df['fpfs_thermal'],{'units': 'erg/cm**2/s/cm/(erg/cm**2/s/cm)'})
+    if 'albedo' in df.keys(): 
+        data_vars['albedo'] = (["wavelength"], df['albedo'],{'units': 'none'})
+    if 'fpfs_reflected' in df.keys(): 
+        if isinstance(df['fpfs_reflected'], np.ndarray): 
+            data_vars['fpfs_reflected'] = (["wavelength"], df['fpfs_reflected'],{'units': 'erg/cm**2/s/cm/(erg/cm**2/s/cm)'})
+    
+    #atmospheric data data 
+    for ikey in molecules_included:
+        data_vars[ikey] = (["pressure"], df_atmo[ikey].values,{'units': 'v/v'})
+        
+    if 'kz' in picaso_class.inputs['atmosphere']['profile'].keys(): 
+        data_vars['kzz'] = (["pressure"], picaso_class.inputs['atmosphere']['profile']['kz'].values,{'units': 'cm**2/s'})
+      
+    #clouds if they exist 
+    if 'clouds' in picaso_class.inputs: 
+        if not isinstance(picaso_class.inputs['clouds']['profile'],type(None)):
+            for ikey,lbl in zip( ['opd', 'w0', 'g0'], ['opd','ssa','asy']):
+                array = np.reshape(picaso_class.inputs['clouds']['profile'][ikey].values, 
+                       (picaso_class.nlevel-1, 
+                        len(picaso_class.inputs['clouds']['wavenumber'])))
 
+                data_vars[lbl]=(['pressure_cld','wavenumber_cld'],array,{'units': 'unitless'})
+    
+    attrs = {}
+    #basic info
+    for ikey in ['author','code','doi','contact']:
+        if add_output.get(ikey,'optional') != 'optional':
+            attrs[ikey] = add_output[ikey]
+            
+    #planet params 
+    planet_params = add_output.get('planet_params',{})
+    attrs['planet_params'] = {}
+    
+    #find gravity in picaso
+    gravity = picaso_class.inputs['planet'].get('gravity',np.nan)
+    if np.isfinite(gravity): 
+        gravity = gravity * check_units(picaso_class.inputs['planet']['gravity_unit'])
+    #otherwise find gravity from user input
+    else: 
+        gravity = planet_params.get('logg', np.nan) 
+    
+    mp = picaso_class.inputs['planet'].get('mass',np.nan)
+    if np.isfinite(mp):
+        mp = mp * check_units(picaso_class.inputs['planet']['mass_unit'])
+    else: 
+        mp = planet_params.get('mp',np.nan) 
+        
+    rp = picaso_class.inputs['planet'].get('radius',np.nan)
+    if np.isfinite(mp):
+        rp = rp * check_units(picaso_class.inputs['planet']['radius_unit'])
+    else: 
+        rp = planet_params.get('rp',np.nan) 
+        
+    #add required RP/MP or gravity
+    if (not np.isnan(mp) & (not np.isnan(rp))):
+        attrs['planet_params']['mp'] = mp
+        attrs['planet_params']['rp'] = rp
+        assert isinstance(attrs['planet_params']['mp'],u.quantity.Quantity ), "User supplied mp in planet_params must be an astropy unit: e.g. 1*u.Unit('M_jup')"
+        assert isinstance(attrs['planet_params']['rp'],u.quantity.Quantity ), "User supplied rp in planet_params must be an astropy unit: e.g. 1*u.Unit('R_jup')"
+    elif (not np.isnan(gravity)): 
+        attrs['planet_params']['gravity'] = gravity
+        assert isinstance(attrs['planet_params']['gravity'],u.quantity.Quantity ), "User supplied gravity in planet_params must be an astropy unit: e.g. 1*u.Unit('m/s**2')"
+    else: 
+        print('Mass and Radius, or gravity not provided in add_output, and wasn not found in picaso class')
+    
+    #add anything else the user had in planet params
+    for ikey in planet_params.keys(): 
+        if ikey not in ['rp','mp','logg','gravity']:
+            if planet_params[ikey]!='optional':attrs['planet_params'][ikey] = planet_params[ikey]
+
+    #find gravity in picaso
+    p_reference = picaso_class.inputs['approx'].get('p_reference',np.nan)
+    if np.isfinite(p_reference): 
+        p_reference = p_reference * u.Unit('bar')
+    #otherwise find gravity from user input
+    else: 
+        p_reference = planet_params.get('p_reference', np.nan) 
+    if not np.isnan(p_reference): attrs['planet_params']['p_reference'] = p_reference
+        
+
+    attrs['planet_params'] = json.dumps(attrs['planet_params'],cls=JsonCustomEncoder)
+
+
+    if 'nostar' not in picaso_class.inputs['star']['database']:
+        #stellar params 
+        stellar_params = add_output.get('stellar_params',{})
+        attrs['stellar_params'] = {}
+        #must be supplied in picaso
+        attrs['stellar_params']['database'] = stellar_params.get('database', picaso_class.inputs['star'].get('database',None)) 
+        attrs['stellar_params']['steff'] = stellar_params.get('steff', picaso_class.inputs['star'].get('temp',None)) 
+        attrs['stellar_params']['feh'] = stellar_params.get('feh', picaso_class.inputs['star'].get('metal',None)) 
+        attrs['stellar_params']['logg'] = stellar_params.get('logg', picaso_class.inputs['star'].get('logg',None)) 
+        #optional could be nan
+        rs = picaso_class.inputs['star'].get('radius',np.nan)
+        if np.isfinite(rs):
+            rs = rs * check_units(picaso_class.inputs['star']['radius_unit'])
+        else: 
+            rs = stellar_params.get('rs',np.nan)
+            
+        if not np.isnan(rs):
+            attrs['stellar_params']['rs'] = rs
+            assert isinstance(attrs['stellar_params']['rs'],u.quantity.Quantity ), "User supplied rs in stellar_params must be an astropy unit: e.g. 1*u.Unit('R_sun')"
+        
+        #perform stellar params checks
+        for ikey in attrs['stellar_params'].keys():
+            assert not isinstance(attrs['stellar_params'][ikey],type(None)), f"We couldnt find these stellar parameters in add_output or the picaso class {attrs['stellar_params']}" 
+        for ikey in stellar_params.keys(): 
+            if ikey not in ['database','steff','feh','logg','rs']:
+                if stellar_params[ikey]!='optional':attrs['stellar_params'][ikey] = stellar_params[ikey]
+                
+        #orbit params
+        orbit_params = add_output.get('orbit_params',{})
+        sma = picaso_class.inputs['star'].get('semi_major',np.nan)
+        if np.isfinite(sma):
+            sma = sma * check_units(picaso_class.inputs['star']['semi_major_unit'])
+        else: 
+            sma = orbit_params.get('sma',np.nan)        
+        
+        if not np.isnan(sma): 
+            attrs['orbit_params'] = {}
+            attrs['orbit_params']['sma'] = sma
+            assert isinstance(attrs['orbit_params']['sma'],u.quantity.Quantity ), "User supplied rs in orbit_params must be an astropy unit: e.g. 1*u.Unit('AU')"
+            
+            for ikey in orbit_params.keys(): 
+                if ikey not in ['sma']:
+                    if orbit_params[ikey]!='optional':attrs['orbit_params'][ikey] = orbit_params[ikey] 
+                    
+            attrs['orbit_params'] = json.dumps(attrs['orbit_params'],cls=JsonCustomEncoder)
+            
+
+               
+        attrs['stellar_params'] = json.dumps(attrs['stellar_params'],cls=JsonCustomEncoder)
+        
+        
+    #add anything else requested by the user
+    for ikey in add_output.keys(): 
+        if ikey not in attrs.keys(): 
+            if add_output[ikey]!="optional":attrs[ikey] = add_output[ikey]
+    
+    
+    coords=dict(
+            pressure=(["pressure"], picaso_class.inputs['atmosphere']['profile']['pressure'].values,{'units': 'bar'}),#required*
+            wavelength=(["wavelength"], 1e4/df['wavenumber'],{'units': 'micron'})
+        )
+    if 'clouds' in 'opd' in data_vars.keys(): 
+        coords['wavenumber_cld'] = (["wavenumber_cld"], picaso_class.inputs['clouds']['wavenumber'],{'units': 'cm**(-1)'})
+        coords['pressure_cld'] = (["pressure_cld"], full_output['layer']['pressure'] ,{'units': full_output['layer']['pressure_unit']})
+        
+    # put data into a dataset where each
+    ds = xr.Dataset(
+        data_vars=data_vars,
+        coords=coords,
+        attrs=attrs
+    )
+    
+    if isinstance(savefile, str): ds.to_netcdf(savefile)
+    return ds
 def input_xarray(xr_usr, opacity,p_reference=10, calculation='planet'):
     """
     This takes an input based on these standards and runs: 
@@ -516,7 +755,7 @@ def input_xarray(xr_usr, opacity,p_reference=10, calculation='planet'):
     opacity : justdoit.opannection
         opacity connection
     p_reference : float 
-        reference pressure in bars 
+        Default is to take from xarray reference pressure in bars 
     calculation : str 
         'planet' or 'browndwarf'
 
@@ -555,7 +794,16 @@ def input_xarray(xr_usr, opacity,p_reference=10, calculation='planet'):
     else: 
         print('Mass and Radius or gravity not provided in xarray, user needs to run gravity function')
 
-    case.approx(p_reference=p_reference)
+    p_reference_xarray = _finditem(planet_params,'p_reference')
+    if (not isinstance(p_reference_xarray, type(None))): 
+        p_bar = p_reference_xarray['value']*u.Unit(p_reference_xarray['unit'])
+        p_bar = p_bar.to('bar').value
+        case.approx(p_reference=p_bar)
+    elif (not isinstance(p_reference, type(None))): 
+        #is it common to want to change the reference pressure
+        case.approx(p_reference=p_reference)
+    else: 
+        raise Exception("p_reference couldnt be found in the xarray, nor was it supplied to this function inputs. Please rerun function with p_reference=10 (or another number in bars).")
 
     df = {'pressure':xr_usr.coords['pressure'].values}
     for i in [i for i in xr_usr.data_vars.keys() if 'transit' not in i]:
