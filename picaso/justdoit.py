@@ -2781,7 +2781,8 @@ class inputs():
         df : pd.DataFrame, dict
             (Optional) Same as what would be included in the file, but in DataFrame or dict form
         """
-        if not hasattr(self,'nlevel'): "Please make sure to run `atmosphere` before adding clouds"
+        assert hasattr(self,'nlevel'), "Please make sure to run `atmosphere` before adding clouds"
+
         #first complete options if user inputs dataframe or dict 
         if (not isinstance(filename, type(None)) & isinstance(df, type(None))) or (isinstance(filename, type(None)) & (not isinstance(df, type(None)))):
 
