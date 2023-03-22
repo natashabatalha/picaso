@@ -3155,17 +3155,19 @@ class inputs():
         self.inputs['clouds']['wavenumber'] = ds.coords['wno'].values
     
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
-        raman='none',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
+        raman='pollack',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
         p_reference=1, rt_method='toon', stream=2, toon_coefficients="quadrature",
         single_form='explicit', calculate_fluxes='off', query='nearest_neighbor',
         w_single_form='TTHG', w_multi_form='TTHG', psingle_form='TTHG', 
         w_single_rayleigh = 'on', w_multi_rayleigh='on', psingle_rayleigh='on'):
         """
-        This function sets all the default approximations in the code. It transforms the string specificatons
+        This function REsets all the default approximations in the code from what is in config file.
+        This means that it will rewrite what is specified via config file defaults.
+        It transforms the string specificatons
         into a number so that they can be used in numba nopython routines. 
 
-        For `str` cases such as `TTHG_ray` users see all the options by using the function `single_phase_options`
-        or `multi_phase_options`, etc. 
+        To see the `str` cases such as `TTHG_ray` users see all the options by using the function `justdoit.single_phase_options`
+        or `justdoit.multi_phase_options`, etc. 
 
         single_phase : str 
             Single scattering phase function approximation 
@@ -3174,7 +3176,8 @@ class inputs():
         delta_eddington : bool 
             Turns delta-eddington on and off
         raman : str 
-            Uses various versions of raman scattering 
+            Uses various versions of raman scattering
+            default is to use the pollack approximation 
         tthg_frac : list 
             Functional of forward to back scattering with the form of polynomial :
             tthg_frac[0] + tthg_frac[1]*g_b^tthg_frac[2]
