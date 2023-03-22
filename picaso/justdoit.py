@@ -2806,9 +2806,12 @@ class inputs():
             
             #if its eddysed, make sure there are 196 wave points 
             else: 
-                assert df.shape[0] == (self.nlevel-1)*196, "There are {0} rows in the df, which does not equal {1} layers x 196 eddysed wave pts".format(df.shape[0], self.nlevel-1) 
-                
-                self.inputs['clouds']['wavenumber'] = get_cld_input_grid('wave_EGP.dat')
+                if df.shape[0] == (self.nlevel-1)*196 :
+                    self.inputs['clouds']['wavenumber'] = get_cld_input_grid('wave_EGP.dat')
+                elif df.shape[0] == (self.nlevel-1)*661:
+                    self.inputs['clouds']['wavenumber'] = get_cld_input_grid('wave_EGP.dat',grid661=True)
+                else: 
+                    raise Exception( "There are {0} rows in the df, which does not equal {1} layers x 196 or 661 eddysed wave pts".format(df.shape[0], self.nlevel-1) )
 
             #add it to input
             self.inputs['clouds']['profile'] = df
