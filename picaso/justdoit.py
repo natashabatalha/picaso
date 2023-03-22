@@ -2793,6 +2793,7 @@ class inputs():
             assert 'g0' in cols, "Please make sure g0 is a named column in cld file"
             assert 'w0' in cols, "Please make sure w0 is a named column in cld file"
             assert 'opd' in cols, "Please make sure opd is a named column in cld file"
+            if not hasattr(self,'nlevel'): "Please make sure to run `atmosphere` before adding clouds"
 
             #CHECK SIZES
 
