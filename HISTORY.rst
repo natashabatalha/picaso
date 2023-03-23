@@ -3,6 +3,12 @@
 History
 -------
 
+3.1 (2023-3-23)
+~~~~~~~~~~~~~~~
+* SH harmonics documentation for reflected light 
+* SH harmonics documentation for thermal emission 
+* Added output xarray resources for model preservation and reusibility
+
 3.0 (2022-10-25)
 ~~~~~~~~~~~~~~~~
 * First version of climate code (Mukherjee et al. 2022)
