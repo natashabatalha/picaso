@@ -7,6 +7,7 @@ import json
 import matplotlib.pyplot as plt
 import os
 from astropy.convolution import convolve, Box1DKernel, Gaussian1DKernel
+import astropy.units as u
 from scipy import optimize
 import glob
 
@@ -42,8 +43,10 @@ class GridFitter():
     model_dir : str 
         Location of model grid. Should be a directory that points to 
         several files in the PICASO xarray format.
+    to_fit : str 
+        parameter to fit, default is transit_depth. other common is flux
     """
-    def __init__(self, grid_name, model_dir, grid_dimensions=False, verbose=True):
+    def __init__(self, grid_name, model_dir,to_fit='transit_depth', grid_dimensions=False, verbose=True):
         self.verbose=verbose
         
         self.grids = []
@@ -56,7 +59,7 @@ class GridFitter():
         self.spectra={}
         
         #adds first grid
-        self.add_grid(grid_name, model_dir)
+        self.add_grid(grid_name, model_dir, to_fit=to_fit)
 
     def find_grid(self, grid_name, model_dir):
         """
@@ -73,11 +76,11 @@ class GridFitter():
             else: 
                 if self.verbose: print(f'Total number of models in grid is {nfiles}')
 
-    def add_grid(self,grid_name,model_dir):
+    def add_grid(self,grid_name,model_dir,to_fit='transit_depth'):
         #loads in grid info
         self.grids += [grid_name]
         self.find_grid(grid_name, model_dir)
-        self.load_grid_params(grid_name)
+        self.load_grid_params(grid_name,to_fit=to_fit)
 
     def add_data(self, data_name, wlgrid_center,wlgrid_width,y_data,e_data): 
         """
@@ -110,13 +113,13 @@ class GridFitter():
         'spectra_w_offset':self.best_fits,
         'rank_order':self.rank,
         'grid_params':self.grid_params, 
-        'offsets': self.offsets,
+        'offsets': getattr(self, 'offsets',0), #,
         'chi_sqs': self.chi_sqs,
         'posteriors': self.posteriors
         }
 
 
-    def load_grid_params(self,grid_name):
+    def load_grid_params(self,grid_name,to_fit='transit_depth'):
         """
         This will read the grid parameters and set the array of parameters 
 
@@ -124,13 +127,16 @@ class GridFitter():
         ----------
         grid_name : str 
             Name of grid for bookkeeping
+        to_fit : str 
+            Default is transit_depth but also could be flux or any other xarray parameter 
+            you are interested in fitting. 
 
         Returns
         -------
         None 
             Creates self.overview, and self.grid_params
         """
-        possible_params = {'planet_params': ['rp','mp','tint', 'heat_redis','p_reference','logkzz','mh','cto','p_quench','rainout'],
+        possible_params = {'planet_params': ['rp','mp','tint', 'heat_redis','p_reference','logkzz','mh','cto','p_quench','rainout','teff','logg','m_length'],
                            'stellar_params' : ['rs','logg','steff','feh','ms'],
                            'cld_params': ['opd','ssa','asy','p_cloud','haze_eff','fsed']}
 
@@ -161,7 +167,7 @@ class GridFitter():
             #seems like we need to save these?????
             temperature_grid[ct,:] = ds['temperature'].values[:]
             pressure_grid[ct,:] = ds['pressure'].values[:]
-            spectra_grid[ct,:] = ds['transit_depth'].values[:] 
+            spectra_grid[ct,:] = ds[to_fit].values[:] 
 
 
             # Read all the paramaters in the Xarray so that User can gain insight into the 
@@ -196,10 +202,11 @@ class GridFitter():
             else:
                 #e.g. if no stellar_params were included for a brown dwarf grid
                 self.overview[grid_name].pop(iattr)
-
-        for iattr in possible_params.keys():
-            if len(self.grid_params[grid_name][iattr].keys())==0: 
                 self.grid_params[grid_name].pop(iattr)
+
+        #for iattr in possible_params.keys():
+        #    if len(self.grid_params[grid_name][iattr].keys())==0: 
+        #        self.grid_params[grid_name].pop(iattr)
 
         cnt_params = 0
         for iattr in self.overview[grid_name].keys():#loops through e.g. planet_params, stellar_params,
@@ -326,7 +333,7 @@ class GridFitter():
                 best_fits[ikey] = single_best_fit
         return best_fits
 
-    def plot_best_fit(self, grid_names, data_names): 
+    def plot_best_fit(self, grid_names, data_names, plot_kwargs={}): 
         """
         
         Parameters
@@ -335,6 +342,8 @@ class GridFitter():
             List of grid names or string of single grid name to plot 
         data_names : list, str 
             List of data names or string of single 
+        plot_kwargs : dict 
+            key word arguments for matplotlib plt
         """
         if isinstance(grid_names ,str):grid_names=[grid_names]
         if isinstance(data_names ,str):data_names=[data_names]
@@ -406,8 +415,8 @@ class GridFitter():
             e_data = 100*self.data[idata]['e_data']
             ax['A'].errorbar(wlgrid_center,y_data,yerr=e_data,fmt="o",color=Cividis[7][i],label=idata+" Reduction",markersize=5)
         
-        ax['B'].set_xlabel(r"wavelength [$\mu$m]",fontsize=20)
-        ax['A'].set_ylabel(r"transit depth [%]",fontsize=20)
+        ax['B'].set_xlabel(plot_kwargs.get('xlabel',r"wavelength [$\mu$m]"),fontsize=20)
+        ax['A'].set_ylabel(plot_kwargs.get('ylabel',r"transit depth [%]"),fontsize=20)
 
         ax['A'].minorticks_on()
         ax['A'].tick_params(axis='y',which='major',length =20, width=3,direction='in',labelsize=20)
@@ -466,14 +475,14 @@ class GridFitter():
 
 
     def plot_posteriors(self, grid_name, data_name,parameters, fig=None, ax=None,
-                       x_label_style={}, x_axis_type={}):
+                       x_label_style={}, x_axis_type={}, label=''):
         """
         Plots posteriors for a given parameter set 
 
         Parameters
         ----------
         grid_names : str 
-            grid names or string of single grid name to plot 
+            string of single grid name to plot 
         data_names : str 
             data names or string of single 
         parameters : list, str
@@ -482,8 +491,15 @@ class GridFitter():
             dictionary with elements of parameters for stylized x axis labels 
         x_axis_type : dict 
             dictionry with 'linear' 'log' arguments for the x axis. 
+        labels : list 
+            how to label the data 
         """
         if isinstance(parameters, str): parameters=[parameters]
+
+        if label == '':
+            legend_label = grid_name + ' ' + data_name
+        else: 
+            legend_label = label
 
         if fig == None:
             if ax == None:
@@ -539,10 +555,11 @@ class GridFitter():
                     if x_axis_type.get(parameters[iparam],'linear') == 'log':
                         xgrid = np.log10(xgrid)
                     cycler = ax[irow,icol]._get_lines.prop_cycler
+                    col = next(cycler)['color']
                     ax[irow,icol].bar(xgrid, yprob,
                         width=[np.mean(abs(np.diff(xgrid)))/2]*len(xgrid), 
-                        color="None",edgecolor=next(cycler)['color'],
-                        linewidth=5,label=grid_name)
+                        color=col,edgecolor=col,
+                        linewidth=5,label=legend_label,alpha=0.2 )
                     ax[irow,icol].tick_params(axis='both',which='major',length =40, width=3,direction='in',labelsize=30)
                     ax[irow,icol].tick_params(axis='both',which='minor',length =10, width=2,direction='in',labelsize=30)
                     
@@ -965,5 +982,34 @@ def _get_xarray_attr(attr_dict, parameter):
         not_found_msg='clear'
     param = attr_dict.get(parameter,not_found_msg)
     if isinstance(param, dict):
-        param = param.get('value',param)
+        param_flt = param.get('value',param)
+        #get unit
+        #if isinstance(param.get('unit',np.nan),str): 
+        #    try: 
+        #        param_unit = u.Unit(param.get('unit'))
+        #        param = param_flt*param_unit
+        #    except ValueError: 
+        #        param = param_flt
+        #        pass 
+        #else: 
+        #    param = param_flt
+        param = param_flt
+
+    if isinstance(param, str):
+        if len(param.split(' ')) > 1: 
+            #float value
+            try: 
+                param_flt = float(param.split(' ')[0])
+            except ValueError: 
+                param_flt = np.nan
+                pass
+            param = param_flt
+            #unit value
+            #if not np.isnan(param_flt):
+            #    try: 
+            #        param_unit = u.Unit(''.join(param.split(' ')[1:]))
+            #        param = param_flt*param_unit
+            #    except ValueError: 
+            #        param = param_flt
+            #        pass            
     return param

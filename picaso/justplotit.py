@@ -1,15 +1,15 @@
 import pandas as pd
 import numpy as np
 
-from bokeh.palettes import gray as colfun3
-from bokeh.palettes import Spectral11,Category20,viridis,magma,RdBu11
+from bokeh.palettes import Colorblind8
+import bokeh.palettes as pals
 from bokeh.models import HoverTool
 from bokeh.models import LinearColorMapper, LogTicker,BasicTicker, ColorBar,LogColorMapper,Legend
 from bokeh.models import ColumnDataSource,LinearAxis,Range1d
 from bokeh.layouts import row,column,gridplot
 from bokeh.io import output_notebook
 from bokeh.plotting import figure, output_file, show
-from bokeh.palettes import Colorblind8
+Colorblind8 = pals.Colorblind8
 
 import os 
 import copy
@@ -19,6 +19,7 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.animation as animation
+from matplotlib import rc
 
 from scipy.stats.stats import pearsonr  
 from scipy.stats import binned_statistic
@@ -85,10 +86,10 @@ def plot_errorbar(x,y,e,plot=None,point_kwargs={}, error_kwargs={},plot_type='bo
     """
     if plot_type=='bokeh':
         if isinstance(plot, type(None)):
-            plot_kwargs['height'] = plot_kwargs.get('plot_height',345)
-            plot_kwargs['width'] = plot_kwargs.get('plot_width',1000)
-            plot_kwargs['height'] = plot_kwargs.get('height',plot_kwargs['height'])
-            plot_kwargs['width'] = plot_kwargs.get('width',plot_kwargs['width'])
+            plot_kwargs['height'] = plot_kwargs.get('plot_height',plot_kwargs.get('height',345))
+            plot_kwargs['width'] = plot_kwargs.get('plot_width', plot_kwargs.get('width',1000))
+            if 'plot_width' in plot_kwargs.keys() : plot_kwargs.pop('plot_width')
+            if 'plot_height' in plot_kwargs.keys() : plot_kwargs.pop('plot_height')
             plot_kwargs['y_axis_label'] = plot_kwargs.get('y_axis_label','Spectrum')
             plot_kwargs['x_axis_label'] = plot_kwargs.get('x_axis_label','Wavelength')
             plot = figure(**plot_kwargs) 
@@ -223,10 +224,10 @@ def mixing_ratio(full_output,limit=50,ng=None,nt=None, **kwargs):
         pressure = full_output['layer']['pressure'][:,ng,nt]
         mixingratios = pd.DataFrame(full_output['layer']['mixingratios'][:,:,ng,nt],columns=molecules)
 
-    kwargs['height'] = kwargs.get('plot_height',300)
-    kwargs['width'] = kwargs.get('plot_width',400)
-    kwargs['height'] = kwargs.get('height',kwargs['height'])
-    kwargs['width'] = kwargs.get('width',kwargs['width'])
+    kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',300))
+    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',400))
+    if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
+    if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
     kwargs['title'] = kwargs.get('title','Mixing Ratios')
     kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
     kwargs['x_axis_label'] = kwargs.get('x_axis_label','Mixing Ratio(v/v)')
@@ -242,9 +243,9 @@ def mixing_ratio(full_output,limit=50,ng=None,nt=None, **kwargs):
     if len(molecules) < 3: ncol = 5
     else: ncol = len(molecules)
     if limit<3: 
-        cols = magma(5) #magma needs at least 5 colors
+        cols = pals.magma(5) #magma needs at least 5 colors
     else: 
-        cols = magma(min([ncol,limit]))
+        cols = pals.magma(min([ncol,limit]))
     legend_it=[]    
     for mol , c in zip(to_plot,cols):
         ind = np.where(mol==np.array(molecules))[0][0]
@@ -276,10 +277,10 @@ def pt(full_output,ng=None, nt=None, **kwargs):
         pressure = full_output['layer']['pressure'][:,ng,nt]
         temperature = full_output['layer']['temperature'][:,ng,nt]
 
-    kwargs['height'] = kwargs.get('plot_height',300)
-    kwargs['width'] = kwargs.get('plot_width',400)
-    kwargs['height'] = kwargs.get('height',kwargs['height'])
-    kwargs['width'] = kwargs.get('width',kwargs['width'])
+    kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',300))
+    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',400))
+    if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
+    if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
     kwargs['title'] = kwargs.get('title','Pressure-Temperature Profile')
     kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
     kwargs['x_axis_label'] = kwargs.get('x_axis_label','Temperature (K)')
@@ -332,14 +333,12 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind
         def conv(x):
             return x
     if isinstance(legend, str): legend=[legend]
-    kwargs['height'] = kwargs.get('plot_height',345)
-    kwargs['width'] = kwargs.get('plot_width',1000)
-    kwargs['height'] = kwargs.get('height',kwargs['height'])
-    kwargs['width'] = kwargs.get('width',kwargs['width'])
+    kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',345))
+    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',1000))
+    if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
+    if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
     kwargs['y_axis_label'] = kwargs.get('y_axis_label','Spectrum')
     kwargs['x_axis_label'] = kwargs.get('x_axis_label',x_axis_label)
-    #kwargs['y_range'] = kwargs.get('y_range',[0,1.2])
-    #kwargs['x_range'] = kwargs.get('x_range',[0.3,1])
 
     fig = figure(**kwargs)
 
@@ -430,10 +429,10 @@ def photon_attenuation(full_output, at_tau=0.5,return_output=False,igauss=0, **k
         at_pressures_cld[i] = pressure[ind_cld[i]]
         at_pressures_ray[i] = pressure[ind_ray[i]]
 
-    kwargs['height'] = kwargs.get('plot_height',300)
-    kwargs['width'] = kwargs.get('plot_width',1000)
-    kwargs['height'] = kwargs.get('height',kwargs['height'])
-    kwargs['width'] = kwargs.get('width',kwargs['width'])
+    kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',345))
+    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',1000))
+    if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
+    if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
     kwargs['title'] = kwargs.get('title','Pressure at 𝞽 =' +str(at_tau))
     kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
     kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength [μm]')
@@ -537,7 +536,7 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
         wavelength_label = 'Wavelength (units by user)'
     else: 
         wavelength_label = 'Wavenumber Grid'
-    cols = magma(200)
+    cols = pals.magma(200)
     color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
 
     if not isinstance(filename,type(None)):
@@ -566,7 +565,7 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
     scat01 = np.flip(np.reshape(dat01['opd'].values,(nlayer,nwno)),0)
 
     xr, yr = scat01.shape
-    cols = viridis(200)[::-1]
+    cols = pals.viridis(200)[::-1]
     color_mapper = LogColorMapper(palette=cols, low=1e-3, high=10)
 
 
@@ -585,7 +584,7 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
     scat01 = np.flip(np.reshape(dat01['g0'].values,(nlayer,nwno)),0)
 
     xr, yr = scat01.shape
-    cols = colfun3(200)[::-1]
+    cols = pals.gray(200)[::-1]
     color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
 
 
@@ -644,7 +643,7 @@ def cloud(full_output):
     -------
     A row of two bokeh plots with the single scattering and optical depth map
     """
-    cols = magma(200)
+    cols = pals.magma(200)
     color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
 
     dat01 = full_output['layer']['cloud']
@@ -671,7 +670,7 @@ def cloud(full_output):
     scat01 = np.flip(dat01['opd']+1e-60,0)
 
     xr, yr = scat01.shape
-    cols = viridis(200)[::-1]
+    cols = pals.viridis(200)[::-1]
     color_mapper = LogColorMapper(palette=cols, low=1e-3, high=10)
 
 
@@ -690,7 +689,7 @@ def cloud(full_output):
     scat01 = np.flip(dat01['g0']+1e-60,0)
 
     xr, yr = scat01.shape
-    cols = colfun3(200)[::-1]
+    cols = pals.gray(200)[::-1]
     color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
 
 
@@ -953,10 +952,10 @@ def spectrum_hires(wno, alb,legend=None, **kwargs):
 
     hv.extension('bokeh')
 
-    kwargs['height'] = kwargs.get('plot_height',345)
-    kwargs['width'] = kwargs.get('plot_width',1000)
-    kwargs['height'] = kwargs.get('height',kwargs['height'])
-    kwargs['width'] = kwargs.get('width',kwargs['width'])
+    kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',345))
+    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',1000))
+    if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
+    if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
     kwargs['y_axis_label'] = kwargs.get('y_axis_label','Albedo')
     kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength [μm]')
     kwargs['y_range'] = kwargs.get('y_range',[0,1.2])
@@ -1000,10 +999,10 @@ def flux_at_top(full_output, plot_bb = True, R=None, pressures = [1e-1,1e-2,1e-3
     if not isinstance(pressures, (np.ndarray, list)): 
         raise Exception('check pressure input. It must be list or array. You can still input a single value as `pressures = [1e-3]`')
 
-    kwargs['height'] = kwargs.get('plot_height',300)
-    kwargs['width'] = kwargs.get('plot_width',400)
-    kwargs['height'] = kwargs.get('height',kwargs['height'])
-    kwargs['width'] = kwargs.get('width',kwargs['width'] )
+    kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',300))
+    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',400))
+    if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
+    if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
     kwargs['title'] = kwargs.get('title','Outgoing Thermal Radiation')
     kwargs['y_axis_label'] = kwargs.get('y_axis_label','Flux (erg/s/cm^3)')
     kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength [μm]')
@@ -1013,7 +1012,7 @@ def flux_at_top(full_output, plot_bb = True, R=None, pressures = [1e-1,1e-2,1e-3
     fig = figure(**kwargs)
     if len(pressures) < 3: ncol = 5
     else: ncol = len(pressures)
-    cols = magma(ncol)
+    cols = pals.magma(ncol)
 
     wno = full_output['wavenumber']
     if isinstance(R,(int, float)): 
@@ -1198,10 +1197,10 @@ def plot_evolution(evo, y = "Teff",**kwargs):
         But, age_years is not an option as it is not a function of mass. 
         Current options : [logL, Teff, grav_cgs]
     """
-    kwargs['height'] = kwargs.get('plot_height',400)
-    kwargs['width'] = kwargs.get('plot_width',500)
-    kwargs['height'] = kwargs.get('height',kwargs['height'])
-    kwargs['width'] = kwargs.get('width',kwargs['width'] )
+    kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',400))
+    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',500))
+    if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
+    if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
     kwargs['title'] = kwargs.get('title','Thermal Evolution')
     kwargs['y_axis_label'] = kwargs.get('y_axis_label',y)
     kwargs['x_axis_label'] = kwargs.get('x_axis_label','Age(years)')
@@ -1217,7 +1216,7 @@ def plot_evolution(evo, y = "Teff",**kwargs):
     source_cold = ColumnDataSource(data=dict(
         evo_cold))
 
-    colors = viridis(10)
+    colors = pals.viridis(10)
     for i, ikey in enumerate(list(evo_hot.keys())[1:]):
         if y in ikey:
             mass = int(ikey[ikey.rfind(y[-1])+1:ikey.find('M')])
@@ -1272,10 +1271,10 @@ def all_optics_1d(full_output, wave_range, return_output = False,legend=None,
         Key word arguments will be supplied to each bokeh figure function
     """
 
-    kwargs['height'] = kwargs.get('plot_height',300)
-    kwargs['width'] = kwargs.get('plot_width',300)
-    kwargs['height'] = kwargs.get('height',kwargs['height'])
-    kwargs['width'] = kwargs.get('width',kwargs['width'] )
+    kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',300))
+    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',300))
+    if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
+    if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
     kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
 
     if not isinstance(full_output, list):
@@ -1509,7 +1508,7 @@ def phase_snaps(allout, x = 'longitude', y = 'pressure', z='temperature',palette
 
     fig.tight_layout()
     return fig
-def phase_curve(allout, to_plot, collapse=None, R=100, palette=Spectral11,verbose=True, **kwargs):
+def phase_curve(allout, to_plot, collapse=None, R=100, palette=pals.Spectral11,verbose=True, **kwargs):
     """
     Plots phase curves
     
@@ -1532,10 +1531,10 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=Spectral11,verbos
     kwargs : dict 
         Bokeh plotting kwargs for bokeh.Figure
     """
-    kwargs['height'] = kwargs.get('plot_height',400)
-    kwargs['width'] = kwargs.get('plot_width',600)
-    kwargs['height'] = kwargs.get('height',kwargs['height'])
-    kwargs['width'] = kwargs.get('width',kwargs['width'])
+    kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',400))
+    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',600))
+    if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
+    if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
     kwargs['title'] = kwargs.get('title','Phase Curves')
     kwargs['y_axis_label'] = kwargs.get('y_axis_label',to_plot)
     kwargs['x_axis_label'] = kwargs.get('x_axis_label','Orbital Phase')
@@ -1553,7 +1552,7 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=Spectral11,verbos
         raise Exception('Collapse must either be float, str or list')
     if len(collapse)>len(palette): 
         if verbose: print('Switched color palette to accomodate more collapse input options')
-        palette = magma(len(collapse))
+        palette = pals.magma(len(collapse))
 
     all_curves = np.zeros((len(allout.keys()), len(collapse)))
     all_ws = np.zeros(len(collapse))
@@ -1678,10 +1677,10 @@ def molecule_contribution(contribution_out, opa, min_pressure=4.5, R=100, **kwar
         Shows a default graph of Tau 1 Surface of various molecules and a graph based on user input based on their parameters
         
     """
-    kwargs['height'] = kwargs.get('plot_height',400)
-    kwargs['width'] = kwargs.get('plot_width',500)
-    kwargs['height'] = kwargs.get('height',kwargs['height'])
-    kwargs['width'] = kwargs.get('width',kwargs['width'])
+    kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',400))
+    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',500))
+    if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
+    if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
     kwargs['y_axis_label'] = kwargs.get('y_axis_label','Tau Pressure (bars)')
     kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength')
     kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
@@ -1785,7 +1784,7 @@ def transmission_contribution(full_output ,R=None,  **kwargs):
     
     return fig, ax, 1e4/wno, CF_bin
 
-def brightness_temperature(out_dict,plot=True, R = None): 
+def brightness_temperature(out_dict,plot=True, R = None, with_guide=True): 
     """
     Plots and returns brightness temperature
 
@@ -1796,11 +1795,14 @@ def brightness_temperature(out_dict,plot=True, R = None):
     Parameters
     ----------
     out_dict : dict 
-        output of bundle.spectrum(opa,full_output=True)
+        output of bundle.spectrum(opa,full_output=True) or a dictionary with 
+        {"wavenumber": np.array, "thermal": np.array of standard output in erg/cm2/s/cm}
     plot : bool 
         If true creates and returns a plot 
     R : float 
         If not None, rebins the brightness temperature 
+    with_guide : bool 
+        Plots points from the minimum and maximum pt values 
     """
     flux = out_dict['thermal']/np.pi*1e-7
     wno = out_dict['wavenumber']
@@ -1814,27 +1816,30 @@ def brightness_temperature(out_dict,plot=True, R = None):
 
     T_B  = (a/lam)/np.log(1+(hc2/flux/lam**5))
 
-    t_eq = out_dict['full_output']['layer']['temperature']
+    
 
 
     if not isinstance(R, type(None)):
         wno, T_B = mean_regrid(wno, T_B, R=R)
 
     if plot: 
+        if with_guide: t_eq = out_dict['full_output']['layer']['temperature']
         f = plt.figure(figsize=(15,8))
         plt.xlabel("Wavelength [microns]",fontsize=20)
         plt.ylabel("Brightness Temperature [K]",fontsize=20)
         plt.xlim(min(1e4/wno),max(1e4/wno))
-        plt.ylim(np.min(t_eq)-0.1*np.min(t_eq),np.max(t_eq)+0.1*np.min(t_eq))
+        if with_guide: plt.ylim(np.min(t_eq)-0.1*np.min(t_eq),np.max(t_eq)+0.1*np.min(t_eq))
 
 
         plt.semilogx(1e4/wno,T_B,color='k', label="Brightness Temperature")
-        plt.axhline(np.min(t_eq),linewidth=5,color="blue",label="Minimum Temperature")
-        plt.axhline(np.max(t_eq),linewidth=5,color="red",label="Maximum Temperature")
+        if with_guide: plt.axhline(np.min(t_eq),linewidth=5,color="blue",label="Minimum Temperature")
+        if with_guide: plt.axhline(np.max(t_eq),linewidth=5,color="red",label="Maximum Temperature")
 
         plt.legend(fontsize=10)        
     
-    return T_B , f
+        return T_B , f
+    else: 
+        return T_B
 
 
 def animate_convergence(clima_out, picaso_bundle, opacity, wave_range=[0.3,6],
@@ -1957,4 +1962,153 @@ def animate_convergence(clima_out, picaso_bundle, opacity, wave_range=[0.3,6],
     ani = animation.FuncAnimation(fig, animate, frames=int(len(all_profiles_eq)/nlevel),init_func=init,interval=50, blit=False)
     plt.close()
     return ani
+
+def create_heat_map(data,rayleigh=True,extend=False,plot_height=300,plot_width=300,font_size="12px"):
+    reverse = True
+    data.columns.name = 'w0' 
+    data.index.name = 'g0' 
+    data.index=data.index.astype(str)
+    data = data.rename(index={"-1.0":"Ray"})
+    if not rayleigh:
+        data = data.drop(["Ray"])  
+    for w in data.columns[0:]:
+        if pd.isnull(data.loc['0.0'][w]):
+            data = data.drop(columns=[w])
+            reverse = False
+
+    x_range = list(data.index)
+    if reverse:
+        y_range =  list(reversed(data.columns))
+    else:
+        y_range =  list(data.columns)
+
+    df = pd.DataFrame(data.stack(), columns=['albedo']).reset_index()
+
+
+
+    colors = RdGy[11]
+    bd = max(abs(df.albedo.min()), abs(df.albedo.max()))
+#     bd = min(bd,20)
+    mapper = LinearColorMapper(palette=colors, low=-bd, high=bd)
+
+    TOOLS = "hover,save,pan,box_zoom,reset,wheel_zoom"
+
+    color_bar_height = plot_height + 11
+    color_bar_width = int(plot_width * 0.26)
+
+    p = figure(height=plot_height,width=plot_width,
+       y_range=y_range, x_range=x_range,
+       x_axis_location="above"
+       #,toolbar_location=None
+        )
+
+    p.grid.grid_line_color = None
+    p.axis.axis_line_color = None
+    p.axis.major_tick_line_color = None
+    p.axis.major_label_text_font_size = font_size
+    p.axis.major_label_standoff = 20
+    p.xaxis.major_label_orientation = np.pi / 3
+
+    p.rect(x="g0", y="w0", width=1, height=1,
+       source=df,
+       fill_color={'field': 'albedo', 'transform': mapper},
+       line_color='black')
+
+    # cb_width = int(width/11)
+
+    color_bar = ColorBar(color_mapper=mapper,
+                    major_label_text_font_size=font_size,
+                    ticker=BasicTicker(desired_num_ticks=len(colors)),
+                    label_standoff=12, border_line_color=None, location=(0, 10))
+
+    color_bar_plot = figure(#title=r"\[\sin(x)\text{ for }x\text{ between }-2\pi\text{ and }2\pi\]", 
+                        title_location="right", 
+                        height=color_bar_height, width=color_bar_width, 
+                        min_border=0, 
+                        outline_line_color=None
+                        #,toolbar_location=None
+                        )
+
+    color_bar_plot.add_layout(color_bar, 'right')
+    color_bar_plot.title.align="center"
+    color_bar_plot.title.text_font_size = '24px'
+    
+    p.axis.major_label_text_font_size=font_size
+    layout = row(p, color_bar_plot)
+
+    return layout
+
+
+def rt_heatmap(data,figure_kwargs={},cmap_kwargs={}):
+    """
+    This creates a heat map of the dataframe created from 
+    picaso.test.thermal_sh_test() or picaso.test.dlugach_test()
+    The tutorial 10c_AnalyzingApproximationsThermal.ipynb 
+    and 10b_AnalyzingApproximationsReflectedLightSH.ipynb 
+    shows it in use. 
+    
+    Parameters
+    ----------
+    data : pandas.DataFrame 
+        Technically, this can be any dataframe, but this function was specifically built to 
+        replicate Figure 9 in Batalha et al.  2019 and Figure 6 from Rooney et al. 2023. Part II Thermal. It is assumed that the 
+        index of the dataframe is asymmetry and the columns are single scattering albedo. 
+    figure_kwargs : dict 
+        keywords for bokeh.plotting.figure function
+    cmap_kwargs : dict 
+        keywords for bokeh.models.LinearColorMapper funtion. Most common parameters to input are 
+        palette (list or tuple of colors), high (upper lim of color map), and low (lower lim of color map)
+    """
+    reverse = True
+    data.columns.name = 'w0' 
+    data.index.name = 'g0' 
+    data.index=data.index.astype(str)
+    x_range = list(data.index)
+    if reverse:
+        y_range =  list(reversed(data.columns))
+    else:
+        y_range =  list(data.columns)
+
+    df = pd.DataFrame(data.stack(), columns=['albedo']).reset_index()
+    bd = max(abs(df.albedo.min()), abs(df.albedo.max()))
+
+    cmap_kwargs['palette'] = cmap_kwargs.get('palette',pals.RdGy[11])
+    cmap_kwargs['low'] = cmap_kwargs.get('low',-bd)
+    cmap_kwargs['high'] = cmap_kwargs.get('high',bd)    
+
+    mapper = LinearColorMapper(**cmap_kwargs)
+    colors = cmap_kwargs['palette']
+    
+    figure_kwargs['height'] = figure_kwargs.get('height',400)
+    figure_kwargs['width'] = figure_kwargs.get('width',300)
+    figure_kwargs['x_axis_location'] = figure_kwargs.get('x_axis_location','above')
+    figure_kwargs['tools'] = figure_kwargs.get('tools',"hover,save,pan,box_zoom,reset,wheel_zoom")
+    figure_kwargs['toolbar_location'] =  figure_kwargs.get('toolbar_location','below') 
+    figure_kwargs['y_range'] =  figure_kwargs.get('y_range',y_range) 
+    figure_kwargs['x_range'] =  figure_kwargs.get('x_range',x_range) 
+    figure_kwargs['y_axis_label'] =  figure_kwargs.get('y_axis_label','Single Scattering Albedo') 
+    figure_kwargs['x_axis_label'] =  figure_kwargs.get('x_axis_label','Asymmetry')
+    figure_kwargs['title'] =  figure_kwargs.get('title','% Diff')
+    
+    p = figure(**figure_kwargs)
+
+    p.grid.grid_line_color = None
+    p.axis.axis_line_color = None
+    p.axis.major_tick_line_color = None
+    p.axis.major_label_text_font_size = "7px"
+    p.axis.major_label_standoff = 0
+    p.xaxis.major_label_orientation = np.pi / 3
+
+    p.rect(x="g0", y="w0", width=1, height=1,
+       source=df,
+       fill_color={'field': 'albedo', 'transform': mapper},
+       line_color=None)
+    
+    
+    color_bar = ColorBar(color_mapper=mapper, major_label_text_font_size="12px",
+                     ticker=BasicTicker(desired_num_ticks=len(colors)),
+                     label_standoff=6, border_line_color=None, location=(0, 0))
+    p.add_layout(color_bar, 'below')
+    p.axis.major_label_text_font_size='12px'
+    return p
 
