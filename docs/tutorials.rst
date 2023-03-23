@@ -75,6 +75,14 @@ Relevant Citatons: `JWST Transiting Exoplanet Community Early Release Science Te
    Grid Search Analysis </notebooks/fitdata/GridSearch.ipynb>
 
 
+Model Storage & Reuse
+---------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   How to store and reuse models </notebooks/ModelStorage.ipynb>
+
 Opacities
 ---------
 
@@ -105,20 +113,14 @@ FAQs
    Misc FAQs </notebooks/FAQs.ipynb>
    Contribution Functions </notebooks/11_ContributionFunctions.ipynb>
 
-Model Storage Best Practices
-----------------------------
-
-.. toctree::
-   :maxdepth: 1
-
-   Data Storage Uniformity </notebooks/codehelp/data_uniformity_tutorial.ipynb>
 
 Code Help
 ---------
 
 .. toctree::
    :maxdepth: 1
-
+   
+   Data Storage Uniformity </notebooks/codehelp/data_uniformity_tutorial.ipynb>
    SQLITE Tutorial </notebooks/codehelp/Sqlite3Tutorial.ipynb>
 
 References
