@@ -92,6 +92,57 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "sirpetergao",
+      "name": "Peter Gao",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20616506?v=4",
+      "profile": "https://epl.carnegiescience.edu/people/peter-gao",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "nklewis",
+      "name": "Nikole Lewis",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16822846?v=4",
+      "profile": "https://github.com/nklewis",
+      "contributions": [
+        "bug",
+        "mentoring"
+      ]
+    },
+    {
+      "login": "exobd",
+      "name": "Mark Marley",
+      "avatar_url": "https://avatars.githubusercontent.com/u/38989139?v=4",
+      "profile": "https://github.com/exoBD",
+      "contributions": [
+        "mentoring",
+        "ideas",
+        "research"
+      ]
+    },
+    {
+      "login": "drtkat",
+      "name": "Tiffany Kataria",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10516244?v=4",
+      "profile": "https://github.com/drtkat",
+      "contributions": [
+        "bug",
+        "mentoring"
+      ]
+    },
+    {
+      "login": "jjfplanet",
+      "name": "jjfplanet",
+      "avatar_url": "https://avatars.githubusercontent.com/u/42284609?v=4",
+      "profile": "https://github.com/jjfplanet",
+      "contributions": [
+        "ideas",
+        "mentoring",
+        "fundingFinding"
+      ]
     }
   ],
   "contributorsPerLine": 7,
