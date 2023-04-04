@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>The Code &mdash; picaso 3.0 documentation</title>
+  <title>The Code &mdash; picaso 3.1 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -28,14 +28,18 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> picaso
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            picaso
           </a>
               <div class="version">
-                3.0
+                3.1
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -84,7 +88,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">The Code</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/picaso.rst.txt" rel="nofollow"> View page source</a>
@@ -95,31 +99,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  
-<style>
-/* CSS overrides for sphinx_rtd_theme */
-
-/* 24px margin */
-.nbinput.nblast.container,
-.nboutput.nblast.container {
-    margin-bottom: 19px;  /* padding has already 5px */
-}
-
-/* ... except between code cells! */
-.nblast.container + .nbinput.container {
-    margin-top: -19px;
-}
-
-.admonition > p:before {
-    margin-right: 4px;  /* make room for the exclamation icon */
-}
-
-/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
-.math {
-    text-align: unset;
-}
-</style>
-<section id="the-code">
+  <section id="the-code">
 <h1>The Code<a class="headerlink" href="#the-code" title="Permalink to this headline">¶</a></h1>
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
@@ -128,7 +108,7 @@
 <span id="picaso-atmsetup-module"></span><h2>picaso.atmsetup module<a class="headerlink" href="#module-picaso.atmsetup" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="picaso.atmsetup.ATMSETUP">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">picaso.atmsetup.</span></span><span class="sig-name descname"><span class="pre">ATMSETUP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.atmsetup.ATMSETUP" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">picaso.atmsetup.</span></span><span class="sig-name descname"><span class="pre">ATMSETUP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.atmsetup.ATMSETUP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Reads in default source configuration from JSON and creates a full atmosphere class.</p>
 <ul class="simple">
@@ -236,7 +216,8 @@ into a matrix that has the size: [nlayer,nwave].</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="picaso.atmsetup.ATMSETUP.get_column_density">
 <span class="sig-name descname"><span class="pre">get_column_density</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.atmsetup.ATMSETUP.get_column_density" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculates the column desntiy based on TP profile: LAYER</p>
+<dd><p>Calculates the column desntiy based on TP profile: LAYER
+unit = g/cm2 = pressure/gravity =dyne/cm2/gravity = (g*cm/s2)/cm2/(cm/s2)=g/cm2</p>
 </dd></dl>
 
 <dl class="py method">
@@ -262,17 +243,17 @@ call lengths of things once (e.g. number of wavelength points, number of layers 
 
 <dl class="py method">
 <dt class="sig sig-object py" id="picaso.atmsetup.ATMSETUP.get_needed_continuum">
-<span class="sig-name descname"><span class="pre">get_needed_continuum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">available_ray_mol</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.atmsetup.ATMSETUP.get_needed_continuum" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_needed_continuum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">available_ray_mol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">available_continuum</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.atmsetup.ATMSETUP.get_needed_continuum" title="Permalink to this definition">¶</a></dt>
 <dd><p>This will define which molecules are needed for the continuum opacities. THis is based on
-temperature and molecules. Eventually CIA’s will expand but we may not necessarily
-want all of them.
-‘wno’,’h2h2’,’h2he’,’h2h’,’h2ch4’,’h2n2’]</p>
-<div class="admonition-todo admonition" id="id2">
-<p class="admonition-title">Todo</p>
-<ul class="simple">
-<li><p>Add in temperature dependent to negate h- and things when not necessary</p></li>
+temperature and molecules. This is terrible code I</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>available_ray_mol</strong> (<em>list of str</em>) – list of available rayleigh molecules</p></li>
+<li><p><strong>available_continuum</strong> (<em>list of str</em>) – list of available continuum molecules</p></li>
 </ul>
-</div>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -281,7 +262,7 @@ want all of them.
 <dd><p>Get profile from file or from user input file or direct pandas dataframe. If PT profile
 is not given, use parameterization</p>
 <p>Currently only needs inputs from config file</p>
-<div class="admonition-todo admonition" id="id3">
+<div class="admonition-todo admonition" id="id2">
 <p class="admonition-title">Todo</p>
 <ul class="simple">
 <li><p>Add regridding to this by having users be able to set a different nlevel than the input cloud code is</p></li>
@@ -303,7 +284,7 @@ is not given, use parameterization</p>
 </ul>
 </dd>
 </dl>
-<div class="admonition-todo admonition" id="id4">
+<div class="admonition-todo admonition" id="id3">
 <p class="admonition-title">Todo</p>
 <ul class="simple">
 <li><p>Add regridding to this by having users be able to set a different nlevel than the input cloud code is</p></li>
@@ -834,7 +815,7 @@ Remember, the output of A &amp; M code does not separate back and forward scatte
 <dt class="sig sig-object py" id="picaso.fluxes.get_reflected_1d_gfluxv">
 <span class="sig-prename descclassname"><span class="pre">picaso.fluxes.</span></span><span class="sig-name descname"><span class="pre">get_reflected_1d_gfluxv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nlevel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wno</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nwno</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtau</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cosb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_reflect</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_top</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_surface</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ubar0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F0PI</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tridiagonal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_approx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.fluxes.get_reflected_1d_gfluxv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes upwelling and downwelling layer and level toon fluxes given tau and everything is 1 dimensional. This is the exact same function
-as <a href="#id5"><span class="problematic" id="id6">`</span></a>GFLUXV.f’.
+as <a href="#id4"><span class="problematic" id="id5">`</span></a>GFLUXV.f’.
 retrievals.
 :param nlevel: Number of levels in the model
 :type nlevel: int
@@ -1044,7 +1025,7 @@ Remember, the output of A &amp; M code does not separate back and forward scatte
 
 <dl class="py function">
 <dt class="sig sig-object py" id="picaso.fluxes.get_reflected_SH">
-<span class="sig-prename descclassname"><span class="pre">picaso.fluxes.</span></span><span class="sig-name descname"><span class="pre">get_reflected_SH</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nlevel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nwno</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtau</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cosb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ftau_cld</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ftau_ray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_deltaM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtau_og</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau_og</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0_og</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cosb_og</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_reflect</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ubar0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ubar1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cos_theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F0PI</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_single_form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_multi_form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psingle_form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_single_rayleigh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_multi_rayleigh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psingle_rayleigh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frac_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frac_b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frac_c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constant_back</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constant_forward</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_top</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_form</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.fluxes.get_reflected_SH" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">picaso.fluxes.</span></span><span class="sig-name descname"><span class="pre">get_reflected_SH</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nlevel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nwno</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtau</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cosb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ftau_cld</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ftau_ray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_deltaM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtau_og</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau_og</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0_og</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cosb_og</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_reflect</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ubar0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ubar1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cos_theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F0PI</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_single_form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_multi_form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psingle_form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_single_rayleigh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_multi_rayleigh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psingle_rayleigh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frac_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frac_b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frac_c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constant_back</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constant_forward</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_top</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_form</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.fluxes.get_reflected_SH" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes rooney fluxes given tau and everything is 3 dimensional. This is the exact same function
 as <cite>get_flux_geom_1d</cite> but is kept separately so we don’t have to do unecessary indexing for
 retrievals.</p>
@@ -1329,7 +1310,7 @@ numg x numt x nwno</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="picaso.fluxes.get_thermal_SH">
-<span class="sig-prename descclassname"><span class="pre">picaso.fluxes.</span></span><span class="sig-name descname"><span class="pre">get_thermal_SH</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nlevel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wno</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nwno</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tlevel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtau</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cosb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtau_og</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau_og</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0_og</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0_no_raman</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cosb_og</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plevel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ubar1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_reflect</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hard_surface</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blackbody_approx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.fluxes.get_thermal_SH" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">picaso.fluxes.</span></span><span class="sig-name descname"><span class="pre">get_thermal_SH</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nlevel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wno</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nwno</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tlevel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtau</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cosb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtau_og</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau_og</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0_og</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0_no_raman</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cosb_og</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plevel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ubar1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_reflect</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hard_surface</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.fluxes.get_thermal_SH" title="Permalink to this definition">¶</a></dt>
 <dd><p>The result of this routine is the top of the atmosphere thermal intensity as
 a function of gauss and chebychev points accross the disk.</p>
 <p>Everything here is in CGS units:</p>
@@ -1370,7 +1351,6 @@ computed in <cite>picaso.disco</cite></p></li>
 <li><p><strong>stream</strong> (<em>int</em>) – Order of expansion of Legendre polynomials (2 or 4)</p></li>
 <li><p><strong>hard_surface</strong> (<em>int</em>) – 0 for no hard surface (e.g. Jupiter/Neptune), 1 for hard surface (terrestrial)</p></li>
 <li><p><strong>flx</strong> (<em>int</em>) – Toggle calculation of layerwise fluxes (0 = do not calculate, 1 = calculate)</p></li>
-<li><p><strong>calculation</strong> (<em>int</em>) – Toggle calculation method (1 = linear, 2 = exponential)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1419,6 +1399,12 @@ numg x numt x nwno</p>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p>array</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<dl class="footnote brackets">
+<dt class="label" id="id6"><span class="brackets">1</span></dt>
+<dd><p>Brown, Timothy M. “Transmission spectra as diagnostics of extrasolar giant planet atmospheres.” The Astrophysical Journal 553.2 (2001): 1006.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1534,8 +1520,8 @@ planck function was a bottleneck in speed.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="picaso.fluxes.setup_2_stream_banded">
-<span class="sig-prename descclassname"><span class="pre">picaso.fluxes.</span></span><span class="sig-name descname"><span class="pre">setup_2_stream_banded</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nlayer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nwno</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_top</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_surface</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_reflect</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ubar0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ubar1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtau</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fluxes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calculation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.fluxes.setup_2_stream_banded" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="picaso.fluxes.setup_2_stream_fluxes">
+<span class="sig-prename descclassname"><span class="pre">picaso.fluxes.</span></span><span class="sig-name descname"><span class="pre">setup_2_stream_fluxes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nlayer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nwno</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_top</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_surface</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_reflect</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ubar0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtau</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fluxes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calculation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.fluxes.setup_2_stream_fluxes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Setup up matrices to solve flux problem for spherical harmonics method.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1551,8 +1537,6 @@ of the unattenuated portion of the direct beam</p></li>
 <li><p><strong>b_surface_SH4</strong> (<em>array</em>) – Second bottom BC for SH4 method.</p></li>
 <li><p><strong>surf_reflect</strong> (<em>numpy.ndarray</em>) – Surface reflectivity as a function of wavenumber.</p></li>
 <li><p><strong>ubar0</strong> (<em>ndarray of float</em>) – matrix of cosine of the incident angle from geometric.json</p></li>
-<li><p><strong>ubar1</strong> (<em>numpy.ndarray</em>) – This is a matrix of ng by nt. This describes the outgoing incident angles and is generally
-computed in <cite>picaso.disco</cite></p></li>
 <li><p><strong>dtau</strong> (<em>numpy.ndarray</em>) – This is a matrix of nlayer by nwave. This describes the per layer optical depth.</p></li>
 <li><p><strong>tau</strong> (<em>numpy.ndarray</em>) – This is a matrix of nlevel by nwave. This describes the cumulative optical depth.</p></li>
 <li><p><strong>a</strong> (<em>numpy.ndarray</em>) – Coefficients of matrix capturing legendre expansion of phase function for multiple scattering</p></li>
@@ -1560,7 +1544,6 @@ computed in <cite>picaso.disco</cite></p></li>
 scattering</p></li>
 <li><p><strong>B0</strong> (<em>numpy.ndarray</em>) – Matrix of blackbodies</p></li>
 <li><p><strong>B1</strong> (<em>numpy.ndarray</em>) – Eqn (26) Toon 89</p></li>
-<li><p><strong>f0</strong> (<em>numpy.ndarray</em>) – Parameter needed for exponential approach to thermal</p></li>
 <li><p><strong>fluxes</strong> (<em>int</em>) – Toggle calculation of layerwise fluxes (0 = do not calculate, 1 = calculate)</p></li>
 <li><p><strong>calculation</strong> (<em>int</em>) – Toggle calculation method (1 = linear, 2 = exponential)</p></li>
 </ul>
@@ -1575,8 +1558,8 @@ scattering</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="picaso.fluxes.setup_4_stream_banded">
-<span class="sig-prename descclassname"><span class="pre">picaso.fluxes.</span></span><span class="sig-name descname"><span class="pre">setup_4_stream_banded</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nlayer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nwno</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_top</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_surface</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_surface_SH4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_reflect</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ubar0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ubar1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtau</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fluxes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calculation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.fluxes.setup_4_stream_banded" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="picaso.fluxes.setup_4_stream_fluxes">
+<span class="sig-prename descclassname"><span class="pre">picaso.fluxes.</span></span><span class="sig-name descname"><span class="pre">setup_4_stream_fluxes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nlayer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nwno</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_top</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_surface</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_surface_SH4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_reflect</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ubar0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtau</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fluxes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calculation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.fluxes.setup_4_stream_fluxes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Setup up matrices to solve flux problem for spherical harmonics method.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1592,8 +1575,6 @@ of the unattenuated portion of the direct beam</p></li>
 <li><p><strong>b_surface_SH4</strong> (<em>array</em>) – Second bottom BC for SH4 method.</p></li>
 <li><p><strong>surf_reflect</strong> (<em>numpy.ndarray</em>) – Surface reflectivity as a function of wavenumber.</p></li>
 <li><p><strong>ubar0</strong> (<em>ndarray of float</em>) – matrix of cosine of the incident angle from geometric.json</p></li>
-<li><p><strong>ubar1</strong> (<em>numpy.ndarray</em>) – This is a matrix of ng by nt. This describes the outgoing incident angles and is generally
-computed in <cite>picaso.disco</cite></p></li>
 <li><p><strong>dtau</strong> (<em>numpy.ndarray</em>) – This is a matrix of nlayer by nwave. This describes the per layer optical depth.</p></li>
 <li><p><strong>tau</strong> (<em>numpy.ndarray</em>) – This is a matrix of nlevel by nwave. This describes the cumulative optical depth.</p></li>
 <li><p><strong>a</strong> (<em>numpy.ndarray</em>) – Coefficients of matrix capturing legendre expansion of phase function for multiple scattering</p></li>
@@ -1601,9 +1582,8 @@ computed in <cite>picaso.disco</cite></p></li>
 scattering</p></li>
 <li><p><strong>B0</strong> (<em>numpy.ndarray</em>) – Matrix of blackbodies</p></li>
 <li><p><strong>B1</strong> (<em>numpy.ndarray</em>) – Eqn (26) Toon 89</p></li>
-<li><p><strong>f0</strong> (<em>numpy.ndarray</em>) – Parameter needed for exponential approach to thermal</p></li>
 <li><p><strong>fluxes</strong> (<em>int</em>) – Toggle calculation of layerwise fluxes (0 = do not calculate, 1 = calculate)</p></li>
-<li><p><strong>calculation</strong> (<em>int</em>) – Toggle calculation method (1 = linear, 2 = exponential)</p></li>
+<li><p><strong>calculation</strong> (<em>int</em>) – Toggle calculation method (0 = reflected, 1 = thermal)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1723,7 +1703,7 @@ need to set up the coefficients.
 
 <dl class="py function">
 <dt class="sig sig-object py" id="picaso.fluxes.solve_4_stream_banded">
-<span class="sig-prename descclassname"><span class="pre">picaso.fluxes.</span></span><span class="sig-name descname"><span class="pre">solve_4_stream_banded</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A_int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N_int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">G</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nlayer</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.fluxes.solve_4_stream_banded" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">picaso.fluxes.</span></span><span class="sig-name descname"><span class="pre">solve_4_stream_banded</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.fluxes.solve_4_stream_banded" title="Permalink to this definition">¶</a></dt>
 <dd><p>Solve the Spherical Harmonics Problem</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -1863,13 +1843,15 @@ e.g. {‘wmin’:0.3, ‘wmax’:1, ‘R’:5000} for opacity grid</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="picaso.justdoit.HJ_pt_3d">
-<span class="sig-prename descclassname"><span class="pre">picaso.justdoit.</span></span><span class="sig-name descname"><span class="pre">HJ_pt_3d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">as_xarray</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_kz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.HJ_pt_3d" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">picaso.justdoit.</span></span><span class="sig-name descname"><span class="pre">HJ_pt_3d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">as_xarray</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_kz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'/data/reference_data/picaso/reference/base_cases/HJ_3d.pt'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.HJ_pt_3d" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to get Jupiter’s PT profile</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>as_xarray</strong> (<em>bool</em>) – Returns as xarray, instead of dictionary</p></li>
 <li><p><strong>add_kz</strong> (<em>bool</em>) – Returns kzz along with PT info</p></li>
+<li><p><strong>input_file</strong> (<em>str</em>) – point to input file in the same format as mitgcm example
+file in base_cases/HJ_3d.pt</p></li>
 </ul>
 </dd>
 </dl>
@@ -1879,6 +1861,12 @@ e.g. {‘wmin’:0.3, ‘wmax’:1, ‘R’:5000} for opacity grid</p></li>
 <dt class="sig sig-object py" id="picaso.justdoit.OH_conc">
 <span class="sig-prename descclassname"><span class="pre">picaso.justdoit.</span></span><span class="sig-name descname"><span class="pre">OH_conc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">press</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_h2o</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_h2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.OH_conc" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="picaso.justdoit.SH_calculate_fluxes_options">
+<span class="sig-prename descclassname"><span class="pre">picaso.justdoit.</span></span><span class="sig-name descname"><span class="pre">SH_calculate_fluxes_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">printout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.SH_calculate_fluxes_options" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve options for calculating layerwise fluxes</p>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="picaso.justdoit.SH_psingle_form_options">
@@ -1905,10 +1893,21 @@ e.g. {‘wmin’:0.3, ‘wmax’:1, ‘R’:5000} for opacity grid</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="picaso.justdoit.coefficients_options">
-<span class="sig-prename descclassname"><span class="pre">picaso.justdoit.</span></span><span class="sig-name descname"><span class="pre">coefficients_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">printout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.coefficients_options" title="Permalink to this definition">¶</a></dt>
-<dd><p>Retrieve options for coefficients used in Toon calculation</p>
+<dt class="sig sig-object py" id="picaso.justdoit.brown_dwarf_cld">
+<span class="sig-prename descclassname"><span class="pre">picaso.justdoit.</span></span><span class="sig-name descname"><span class="pre">brown_dwarf_cld</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.brown_dwarf_cld" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to get rough Brown Dwarf cloud model with Teff=1270 K M/H=1xSolar, C/O=1xSolar, fsed=1</p>
 </dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="picaso.justdoit.brown_dwarf_pt">
+<span class="sig-prename descclassname"><span class="pre">picaso.justdoit.</span></span><span class="sig-name descname"><span class="pre">brown_dwarf_pt</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.brown_dwarf_pt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to get rough Brown Dwarf climate model with Teff=1270 K M/H=1xSolar, C/O=1xSolar, fsed=1</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="picaso.justdoit.check_units">
+<span class="sig-prename descclassname"><span class="pre">picaso.justdoit.</span></span><span class="sig-name descname"><span class="pre">check_units</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.check_units" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="picaso.justdoit.correct_profile">
@@ -2131,7 +2130,7 @@ propertly formatted (e.g. Sodium must be Na not NA, Titanium Oxide must be TiO n
 
 <dl class="py function">
 <dt class="sig sig-object py" id="picaso.justdoit.input_xarray">
-<span class="sig-prename descclassname"><span class="pre">picaso.justdoit.</span></span><span class="sig-name descname"><span class="pre">input_xarray</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xr_usr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opacity</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_reference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.input_xarray" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">picaso.justdoit.</span></span><span class="sig-name descname"><span class="pre">input_xarray</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xr_usr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opacity</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_reference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calculation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'planet'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.input_xarray" title="Permalink to this definition">¶</a></dt>
 <dd><p>This takes an input based on these standards and runs:
 -gravity
 -phase_angle
@@ -2144,7 +2143,8 @@ propertly formatted (e.g. Sodium must be Na not NA, Titanium Oxide must be TiO n
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>xr_usr</strong> (<em>xarray</em>) – xarray based on ERS formatting requirements</p></li>
 <li><p><strong>opacity</strong> (<em>justdoit.opannection</em>) – opacity connection</p></li>
-<li><p><strong>p_reference</strong> (<em>float</em>) – reference pressure in bars</p></li>
+<li><p><strong>p_reference</strong> (<em>float</em>) – Default is to take from xarray reference pressure in bars</p></li>
+<li><p><strong>calculation</strong> (<em>str</em>) – ‘planet’ or ‘browndwarf’</p></li>
 </ul>
 </dd>
 </dl>
@@ -2155,7 +2155,7 @@ case.spectrum(opacity,calculation=’transit_depth’)</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="picaso.justdoit.inputs">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">picaso.justdoit.</span></span><span class="sig-name descname"><span class="pre">inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">calculation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'planet'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">climate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">picaso.justdoit.</span></span><span class="sig-name descname"><span class="pre">inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">calculation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'planet'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">climate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Class to setup planet to run</p>
 <dl class="field-list simple">
@@ -2304,11 +2304,13 @@ pressure profile.
 
 <dl class="py method">
 <dt class="sig sig-object py" id="id0">
-<span class="sig-name descname"><span class="pre">approx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">single_phase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'TTHG_ray'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multi_phase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N=2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_eddington</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raman</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tthg_frac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[1,</span> <span class="pre">-</span> <span class="pre">1,</span> <span class="pre">2]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tthg_back</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-</span> <span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tthg_forward</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_reference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rt_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'toon'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blackbody_approx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">toon_coefficients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'quadrature'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_form</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'explicit'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'nearest_neighbor'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_single_form</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'TTHG'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_multi_form</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'TTHG'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psingle_form</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'TTHG'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_single_rayleigh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'on'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_multi_rayleigh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'on'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psingle_rayleigh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'on'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
-<dd><p>This function sets all the default approximations in the code. It transforms the string specificatons
+<span class="sig-name descname"><span class="pre">approx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">single_phase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'TTHG_ray'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multi_phase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N=2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_eddington</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raman</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pollack'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tthg_frac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[1,</span> <span class="pre">-</span> <span class="pre">1,</span> <span class="pre">2]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tthg_back</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-</span> <span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tthg_forward</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_reference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rt_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'toon'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">toon_coefficients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'quadrature'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_form</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'explicit'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calculate_fluxes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'off'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'nearest_neighbor'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_single_form</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'TTHG'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_multi_form</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'TTHG'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psingle_form</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'TTHG'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_single_rayleigh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'on'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_multi_rayleigh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'on'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psingle_rayleigh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'on'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function REsets all the default approximations in the code from what is in config file.
+This means that it will rewrite what is specified via config file defaults.
+It transforms the string specificatons
 into a number so that they can be used in numba nopython routines.</p>
-<p>For <cite>str</cite> cases such as <cite>TTHG_ray</cite> users see all the options by using the function <cite>single_phase_options</cite>
-or <cite>multi_phase_options</cite>, etc.</p>
+<p>To see the <cite>str</cite> cases such as <cite>TTHG_ray</cite> users see all the options by using the function <cite>justdoit.single_phase_options</cite>
+or <cite>justdoit.multi_phase_options</cite>, etc.</p>
 <dl class="simple">
 <dt>single_phase<span class="classifier">str</span></dt><dd><p>Single scattering phase function approximation</p>
 </dd>
@@ -2316,7 +2318,8 @@ or <cite>multi_phase_options</cite>, etc.</p>
 </dd>
 <dt>delta_eddington<span class="classifier">bool</span></dt><dd><p>Turns delta-eddington on and off</p>
 </dd>
-<dt>raman<span class="classifier">str</span></dt><dd><p>Uses various versions of raman scattering</p>
+<dt>raman<span class="classifier">str</span></dt><dd><p>Uses various versions of raman scattering
+default is to use the pollack approximation</p>
 </dd>
 <dt>tthg_frac<span class="classifier">list</span></dt><dd><p>Functional of forward to back scattering with the form of polynomial :
 tthg_frac[0] + tthg_frac[1]*g_b^tthg_frac[2]
@@ -2336,9 +2339,6 @@ around 1-10 bars.</p>
 </dd>
 <dt>toon_coefficients: str</dt><dd><p>Decide whether to use Quadrature (“quadrature”) or Eddington (“eddington”) schemes
 to define Toon coefficients in two-stream approximation (see Table 1 in Toon et al 1989)</p>
-</dd>
-<dt>blackbody_approx<span class="classifier">int</span></dt><dd><p>blackbody_approx=1 does a linear blackbody approx (eqn 26 toon 89),
-while blackbody_approx=2 does an exponential (only an option for SH)</p>
 </dd>
 <dt>single_form<span class="classifier">str</span></dt><dd><p>form of the phase function can either be written as an ‘explicit’ henyey greinstein
 or it can be written as a ‘legendre’ expansion. Default is ‘explicit’</p>
@@ -2489,19 +2489,22 @@ C/O: 0.5X, 1.0X, 1.5X, 2.0X, 2.5X</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="picaso.justdoit.inputs.chemeq_visscher">
 <span class="sig-name descname"><span class="pre">chemeq_visscher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">c_o</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_mh</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.chemeq_visscher" title="Permalink to this definition">¶</a></dt>
-<dd><p>Find nearest neighbor from visscher grid
+<dd><p>Author of Data: Channon Visscher</p>
+<p>Find nearest neighbor from visscher grid
 JUNE 2015
 MODELS BASED ON 1060-POINT MARLEY GRID
 GRAPHITE ACTIVITY ADDED IN TEXT FILES (AFTER OCS)
 “ABUNDANCE” INDICATES CONDENSATION CONDITION (O OR 1)
-CURRENT GRID
-FE/H: 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
-C/O: 0.5X, 1.0X, 1.5X, 2.0X, 2.5X
-C/O RATIO IS RELATIVE TO SOLAR C/O RATIO OF
-CARBON = 7.19E6 ATOMS
-OXYGEN = 1.57E7 ATOMS
-NOTE THAT THE C/O RATIO IS ADJUSTED BY SIMPLY MULTIPLYING BY C/O FACTOR
-THIS MAY YIELD EFFECTIVE METALLICITIES SLIGHTLY HIGHER THAN THE DEFINED METALLICITY</p>
+CURRENT GRID</p>
+<p>FE/H: 0.0, 0.5, 1.0, 1.5, 1.7, 2.0</p>
+<p>C/O: 0.5X, 1.0X, 1.5X, 2.0X, 2.5X</p>
+<p>The <em>solar</em> carbon-to-oxygen ratio is calculated from Lodders (2010):</p>
+<p>CARBON = 7.19E6 ATOMS
+OXYGEN = 1.57E7 ATOMS</p>
+<p>This gives a “solar” C/O ratio of 0.458</p>
+<p>The C/O ratio adjusted by keeping C + O = constant and adjusting the carbon-to-oxygen ratio by a factor relative to the solar value (i.e., a factor of “1” means 1x the solar value, i.e. a C/O ratio of 0.458).</p>
+<p>This approach keeps the heavy-element-to-hydrogen ratio (Z/X) constant for a given [Fe/H]</p>
+<p>These abundances are then multiplied by the metallicity factor (10**[Fe/H]) along with every other element in the model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -2997,7 +3000,7 @@ the lower boundary condition of the thermal_1d flux calculation.
 
 <dl class="py method">
 <dt class="sig sig-object py" id="picaso.justdoit.inputs.virga">
-<span class="sig-name descname"><span class="pre">virga</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">condensates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fsed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'const'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mmw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kz_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sig</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">full_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Teff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_pressure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supsat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gas_mmr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_virtual</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.virga" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">virga</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">condensates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fsed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'const'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mmw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kz_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sig</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">full_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Teff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_pressure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supsat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gas_mmr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_virtual</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.virga" title="Permalink to this definition">¶</a></dt>
 <dd><p>Runs virga cloud code based on the PT and Kzz profiles
 that have been added to inptus class.
 :param condensates: Condensates to run in cloud model
@@ -3025,6 +3028,7 @@ If None, pressure set to the top of the atmosphere</p></li>
 <li><p><strong>gas_mmr</strong> (<em>float</em><em>, </em><em>optional</em>) – Temporary option to set gas_mmr of single condensate (this needs updated)</p></li>
 <li><p><strong>do_virtual</strong> (<em>bool</em>) – Turn on and off the “virtual” cloud which is a cloud that forms below
 the pressure grid defined by the user.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – Turn off warnings</p></li>
 </ul>
 </dd>
 </dl>
@@ -3094,7 +3098,7 @@ use phoenix if you have those downloaded.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="picaso.justdoit.opannection">
-<span class="sig-prename descclassname"><span class="pre">picaso.justdoit.</span></span><span class="sig-name descname"><span class="pre">opannection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wave_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename_db</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raman_db</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ck_db</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_fly</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gases_fly</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ck</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.opannection" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">picaso.justdoit.</span></span><span class="sig-name descname"><span class="pre">opannection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wave_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename_db</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raman_db</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ck_db</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_fly</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gases_fly</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ck</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.opannection" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets up database connection to opacities.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -3110,7 +3114,38 @@ This effectively takes opacity[::BINS] depending on what the
 sampling requested is. Consult your local theorist before
 using this.</p></li>
 <li><p><strong>ck_db</strong> (<em>str</em>) – ASCII filename of ck file</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – Error message to warn users about resampling. Can be turned off by supplying
+verbose=False</p></li>
 </ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="picaso.justdoit.output_xarray">
+<span class="sig-prename descclassname"><span class="pre">picaso.justdoit.</span></span><span class="sig-name descname"><span class="pre">output_xarray</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">picaso_class</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">savefile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.output_xarray" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function converts all picaso output to xarray which is easy to save
+It is recommended for reuse and reproducibility of models. the returned
+xarray can be used with input_xarray to rerun models. See Preservation notebook.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>dict</em>) – This is the output of your spectrum and must include “full_output=True”
+For example, df = case.spectrum(opa, full_output=True)</p></li>
+<li><p><strong>picaso_class</strong> (<em>picaso.inputs</em>) – This is the original class that you made to do your run.
+For example, case=jdi.inputs();followed by case.atmosphere(), case.clouds(), etc</p></li>
+<li><p><strong>add_output</strong> (<em>dict</em>) – These are any additional outputs you want included in your xarray metadata
+This dictionary has a very specific struture if you want it to work correctly.
+To see the structure you can run justdoit.standard_metadata() which will
+return an empty dictionary that you can fill.</p></li>
+<li><p><strong>savefile</strong> (<em>str</em>) – Optional, if string it will save a xarray file for you</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>this xarray dataset can be easily passed to justdoit.input_xarray to run a spectrum</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3291,9 +3326,20 @@ else Temperature array twice</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="picaso.justdoit.standard_metadata">
+<span class="sig-prename descclassname"><span class="pre">picaso.justdoit.</span></span><span class="sig-name descname"><span class="pre">standard_metadata</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.standard_metadata" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="picaso.justdoit.stream_options">
 <span class="sig-prename descclassname"><span class="pre">picaso.justdoit.</span></span><span class="sig-name descname"><span class="pre">stream_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">printout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.stream_options" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieve all the options for stream</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="picaso.justdoit.toon_phase_coefficients">
+<span class="sig-prename descclassname"><span class="pre">picaso.justdoit.</span></span><span class="sig-name descname"><span class="pre">toon_phase_coefficients</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">printout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.toon_phase_coefficients" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve options for coefficients used in Toon calculation</p>
 </dd></dl>
 
 <dl class="py function">
@@ -3376,7 +3422,7 @@ your spectra can be rerun</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="picaso.justplotit.brightness_temperature">
-<span class="sig-prename descclassname"><span class="pre">picaso.justplotit.</span></span><span class="sig-name descname"><span class="pre">brightness_temperature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.brightness_temperature" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">picaso.justplotit.</span></span><span class="sig-name descname"><span class="pre">brightness_temperature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_guide</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.brightness_temperature" title="Permalink to this definition">¶</a></dt>
 <dd><blockquote>
 <div><p>Plots and returns brightness temperature</p>
 <p>$T_{</p>
@@ -3386,11 +3432,14 @@ ight)}$</p>
 <blockquote>
 <div><p>where a = 1.43877735$       imes$10$^{-2}$ m.K and b = 11.91042952$ imes$10$^{-17}$ m$^4$kg/s$^3$</p>
 <dl class="simple">
-<dt>out_dict<span class="classifier">dict</span></dt><dd><p>output of bundle.spectrum(opa,full_output=True)</p>
+<dt>out_dict<span class="classifier">dict</span></dt><dd><p>output of bundle.spectrum(opa,full_output=True) or a dictionary with
+{“wavenumber”: np.array, “thermal”: np.array of standard output in erg/cm2/s/cm}</p>
 </dd>
 <dt>plot<span class="classifier">bool</span></dt><dd><p>If true creates and returns a plot</p>
 </dd>
 <dt>R<span class="classifier">float</span></dt><dd><p>If not None, rebins the brightness temperature</p>
+</dd>
+<dt>with_guide<span class="classifier">bool</span></dt><dd><p>Plots points from the minimum and maximum pt values</p>
 </dd>
 </dl>
 </div></blockquote>
@@ -3414,6 +3463,11 @@ and cloud opacity as a function of altitude.</p>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="picaso.justplotit.create_heat_map">
+<span class="sig-prename descclassname"><span class="pre">picaso.justplotit.</span></span><span class="sig-name descname"><span class="pre">create_heat_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rayleigh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_height</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">font_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'12px'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.create_heat_map" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="picaso.justplotit.disco">
@@ -3780,6 +3834,28 @@ Current options : [logL, Teff, grav_cgs]</p></li>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="picaso.justplotit.rt_heatmap">
+<span class="sig-prename descclassname"><span class="pre">picaso.justplotit.</span></span><span class="sig-name descname"><span class="pre">rt_heatmap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figure_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.rt_heatmap" title="Permalink to this definition">¶</a></dt>
+<dd><p>This creates a heat map of the dataframe created from
+picaso.test.thermal_sh_test() or picaso.test.dlugach_test()
+The tutorial 10c_AnalyzingApproximationsThermal.ipynb
+and 10b_AnalyzingApproximationsReflectedLightSH.ipynb
+shows it in use.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pandas.DataFrame</em>) – Technically, this can be any dataframe, but this function was specifically built to
+replicate Figure 9 in Batalha et al.  2019 and Figure 6 from Rooney et al. 2023. Part II Thermal. It is assumed that the
+index of the dataframe is asymmetry and the columns are single scattering albedo.</p></li>
+<li><p><strong>figure_kwargs</strong> (<em>dict</em>) – keywords for bokeh.plotting.figure function</p></li>
+<li><p><strong>cmap_kwargs</strong> (<em>dict</em>) – keywords for bokeh.models.LinearColorMapper funtion. Most common parameters to input are
+palette (list or tuple of colors), high (upper lim of color map), and low (lower lim of color map)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="picaso.justplotit.spectrum">
 <span class="sig-prename descclassname"><span class="pre">picaso.justplotit.</span></span><span class="sig-name descname"><span class="pre">spectrum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wno_to_micron</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">palette</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('#0072B2',</span> <span class="pre">'#E69F00',</span> <span class="pre">'#F0E442',</span> <span class="pre">'#009E73',</span> <span class="pre">'#56B4E9',</span> <span class="pre">'#D55E00',</span> <span class="pre">'#CC79A7',</span> <span class="pre">'#000000')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muted_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.spectrum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot formated albedo spectrum</p>
@@ -3908,6 +3984,28 @@ Note the equation in the paper is missing the - sign in the exponent
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="picaso.opacity_factory.compute_ck_molecular">
+<span class="sig-prename descclassname"><span class="pre">picaso.opacity_factory.</span></span><span class="sig-name descname"><span class="pre">compute_ck_molecular</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">molecule</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">og_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wv_file_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gfrac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.95</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dir_kark_ch4</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alkali_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_wavelength</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_wavelength</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.compute_ck_molecular" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to generate correlated-K tables for each individual gas</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>molecule</strong> (<em>str</em>) – Name of molecule</p></li>
+<li><p><strong>og_directory</strong> (<em>str</em>) – Directory of all the cross sections that include folders e.g. “H2O”, “CH4”</p></li>
+<li><p><strong>alkali_dir</strong> (<em>str</em>) – Alakalis directory</p></li>
+<li><p><strong>wv_file_name</strong> (<em>str</em>) – (optional) file name with wavelength. First column wavenumber, second column delta wavenumber
+Must supply this OR combo of min, max wavelength and R</p></li>
+<li><p><strong>order</strong> (<em>int</em>) – (Optional) Gauss Legendre order which by default is set to 4, with the double gauss method</p></li>
+<li><p><strong>gfrac</strong> (<em>int</em>) – (Optional) Double-gauss method of splitting up the gauss points, by default we use 0.95</p></li>
+<li><p><strong>dir_kark_ch4</strong> (<em>str</em>) – (Optional) directory of additional karkochka methane</p></li>
+<li><p><strong>alkali_dir</strong> – (Optional) Directory of alkalis or “individual_file” which is the method to use for Roxana Lupus data.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – (Optional) prints out status of which p,t, point the code is at</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="picaso.opacity_factory.continuum_avail">
 <span class="sig-prename descclassname"><span class="pre">picaso.opacity_factory.</span></span><span class="sig-name descname"><span class="pre">continuum_avail</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.continuum_avail" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -3994,20 +4092,37 @@ to values that were set to -33 as place holders.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="picaso.opacity_factory.func_read_gas">
-<span class="sig-prename descclassname"><span class="pre">picaso.opacity_factory.</span></span><span class="sig-name descname"><span class="pre">func_read_gas</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">molecule</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">og_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wv_file_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gfrac</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dir_kark_ch4</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alkali_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.func_read_gas" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">picaso.opacity_factory.</span></span><span class="sig-name descname"><span class="pre">func_read_gas</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">molecule</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">og_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wv_file_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gfrac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.95</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dir_kark_ch4</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alkali_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_wavelength</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_wavelength</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.func_read_gas" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to generate correlated-K tables for each individual gas</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>molecule</strong> (<em>str</em>) – Name of molecule</p></li>
+<li><p><strong>og_directory</strong> (<em>str</em>) – Directory of all the cross sections that include folders e.g. “H2O”, “CH4”</p></li>
+<li><p><strong>alkali_dir</strong> (<em>str</em>) – Alakalis directory</p></li>
+<li><p><strong>wv_file_name</strong> (<em>str</em>) – (optional) file name with wavelength. First column wavenumber, second column delta wavenumber
+Must supply this OR combo of min, max wavelength and R</p></li>
+<li><p><strong>order</strong> (<em>int</em>) – (Optional) Gauss Legendre order which by default is set to 4, with the double gauss method</p></li>
+<li><p><strong>gfrac</strong> (<em>int</em>) – (Optional) Double-gauss method of splitting up the gauss points, by default we use 0.95</p></li>
+<li><p><strong>dir_kark_ch4</strong> (<em>str</em>) – (Optional) directory of additional karkochka methane</p></li>
+<li><p><strong>alkali_dir</strong> – (Optional) Directory of alkalis or “individual_file” which is the method to use for Roxana Lupus data.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – (Optional) prints out status of which p,t, point the code is at</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="picaso.opacity_factory.g_w_2gauss">
-<span class="sig-prename descclassname"><span class="pre">picaso.opacity_factory.</span></span><span class="sig-name descname"><span class="pre">g_w_2gauss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">order</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gfrac</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.g_w_2gauss" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">picaso.opacity_factory.</span></span><span class="sig-name descname"><span class="pre">g_w_2gauss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gfrac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.95</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.g_w_2gauss" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gets gauss and weight poitns for correlated-k function
 Specifically for the 2-point gauss method</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>order</strong> (<em>int</em>) – gauss order</p></li>
-<li><p><strong>gfrac</strong> – </p></li>
+<li><p><strong>order</strong> (<em>int</em>) – Gauss order</p></li>
+<li><p><strong>gfrac</strong> (<em>float</em>) – Adjustable parameter which sets the division in the values of G which will
+be sampled by the first and second set of Gauss points.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4180,7 +4295,7 @@ cia database</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="picaso.opacity_factory.get_wvno_grid">
-<span class="sig-prename descclassname"><span class="pre">picaso.opacity_factory.</span></span><span class="sig-name descname"><span class="pre">get_wvno_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.get_wvno_grid" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">picaso.opacity_factory.</span></span><span class="sig-name descname"><span class="pre">get_wvno_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_wavelength</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_wavelength</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.get_wvno_grid" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
@@ -4207,6 +4322,24 @@ cia database</p></li>
 <dt class="sig sig-object py" id="picaso.opacity_factory.insert">
 <span class="sig-prename descclassname"><span class="pre">picaso.opacity_factory.</span></span><span class="sig-name descname"><span class="pre">insert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cur</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opacity</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.insert" title="Permalink to this definition">¶</a></dt>
 <dd><p>Insert into</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="picaso.opacity_factory.insert_hitran_cia">
+<span class="sig-prename descclassname"><span class="pre">picaso.opacity_factory.</span></span><span class="sig-name descname"><span class="pre">insert_hitran_cia</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">molname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_db</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_wno</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.insert_hitran_cia" title="Permalink to this definition">¶</a></dt>
+<dd><p>This continuum function takes a HTIRAN CIA file and adds it as an extra
+source of opacity</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>original_file</strong> (<em>str</em>) – Filepath that points to HITRAN file (e.g. H2-CH4_eq_2011.cia)</p></li>
+<li><p><strong>new_db</strong> (<em>str</em>) – New database name</p></li>
+<li><p><strong>new_wno</strong> (<em>numpy.ndarray</em><em>, </em><em>list</em>) – wavenumber grid to interpolate onto (units of inverse cm)</p></li>
+<li><p><strong>overwrite</strong> (<em>bool</em>) – Default is set to False as to not overwrite any existing files. This parameter controls overwriting
+cia database</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -4394,7 +4527,7 @@ So dont bother using this unless there is something specific to try.</p>
 <span id="picaso-optics-module"></span><h2>picaso.optics module<a class="headerlink" href="#module-picaso.optics" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="picaso.optics.RetrieveCKs">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">picaso.optics.</span></span><span class="sig-name descname"><span class="pre">RetrieveCKs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ck_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cont_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wave_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_fly</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gases_fly</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveCKs" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">picaso.optics.</span></span><span class="sig-name descname"><span class="pre">RetrieveCKs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ck_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cont_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wave_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_fly</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gases_fly</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveCKs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>This will be the class to retrieve correlated-k tables from the database.
 Right now this is in beta mode and is retrieving the direct heritage
@@ -4572,7 +4705,7 @@ nlayer by ngauss by nwno</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="picaso.optics.RetrieveOpacities">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">picaso.optics.</span></span><span class="sig-name descname"><span class="pre">RetrieveOpacities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raman_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wave_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'local'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacities" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">picaso.optics.</span></span><span class="sig-name descname"><span class="pre">RetrieveOpacities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raman_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wave_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'local'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacities" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>This will be the class that will retrieve the opacities from the sqlite3 database. Right
 now we are just employing nearest neighbors to grab the respective opacities.</p>
@@ -5127,13 +5260,8 @@ to swap out different methods to calculate rayleigh opacity
 <section id="module-picaso.test">
 <span id="picaso-test-module"></span><h2>picaso.test module<a class="headerlink" href="#module-picaso.test" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
-<dt class="sig sig-object py" id="picaso.test.create_heat_map">
-<span class="sig-prename descclassname"><span class="pre">picaso.test.</span></span><span class="sig-name descname"><span class="pre">create_heat_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rayleigh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.test.create_heat_map" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="picaso.test.dlugach_test">
-<span class="sig-prename descclassname"><span class="pre">picaso.test.</span></span><span class="sig-name descname"><span class="pre">dlugach_test</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">single_phase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'OTHG'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rayleigh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Toon'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Toon_coefficients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'quadrature'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_eddington</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.test.dlugach_test" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">picaso.test.</span></span><span class="sig-name descname"><span class="pre">dlugach_test</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">single_phase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'OTHG'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multi_phase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N=1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rayleigh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Toon'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">toon_coefficients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'quadrature'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_eddington</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.test.dlugach_test" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test the flux against against Dlugach &amp; Yanovitskij
 <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/0019103574901675?via%3Dihub">https://www.sciencedirect.com/science/article/pii/0019103574901675?via%3Dihub</a></p>
 <p>There are two tests: rayleigh and constant_tau. This will run through the entire
@@ -5180,6 +5308,29 @@ Madhu and Burrows paper.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>DataFrame of % deviation from Dlugach &amp; Yanovitskij Table XXI</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="picaso.test.thermal_sh_test">
+<span class="sig-prename descclassname"><span class="pre">picaso.test.</span></span><span class="sig-name descname"><span class="pre">thermal_sh_test</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">single_phase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'OTHG'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'toon'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">toon_coefficients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'quadrature'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_eddington</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disort_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phangle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.test.thermal_sh_test" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate data to compare against DISORT. Must also run picaso_compare.py in pyDISORT
+:param single_phase: Single phase function to test with the constant_tau test. Can either be:</p>
+<blockquote>
+<div><p>“cahoy”,”TTHG_ray”,”TTHG”, and “OTHG”</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_dir</strong> (<em>str</em>) – Output directory for results of test. Default is to just return the dataframe (None).</p></li>
+<li><p><strong>rayleigh</strong> (<em>bool</em>) – Default is True. Turns on and off the rayleigh phase function test</p></li>
+<li><p><strong>phase</strong> (<em>float</em>) – Default=True. Turns on and off the constant g phase function test</p></li>
+<li><p><strong>tau</strong> (<em>float</em>) – constant per layer opacity, 0.2 used as default in rooney+2023 tests</p></li>
+<li><p><strong>Retuns</strong> – </p></li>
+<li><p><strong>------</strong> – </p></li>
+<li><p><strong>DataFrame</strong> – </p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>

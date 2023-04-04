@@ -43,14 +43,14 @@ Create Environment Variable
 
 There are several ways to create environment variables. Below are the three most popular methods. You only need to choose one that works best for you. 
 
-Method 1: ``bash_profle`` or ``zshrc`` file
+Method 1: ``bash_profile`` or ``zshrc`` file
 ````````````````````````````````````````````
 
 As you might guess ``~/.bash_profile`` is used for the ``Bash`` command line shell. ``~/.zshrc`` is used for the ``Zsh`` command line shell. The steps below are identical.
 
 .. code-block:: bash
 
-	vi ~/.bash_profle
+	vi ~/.bash_profile
 
 Add add this line:
 
@@ -157,7 +157,7 @@ When you untar this you should get a directory structure that looks like this ``
 
 .. code-block:: bash
 
-	vi ~/.bash_profle
+	vi ~/.bash_profile
 
 Add add this line:
 

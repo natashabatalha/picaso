@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Installation &mdash; picaso 3.0 documentation</title>
+  <title>Installation &mdash; picaso 3.1 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -28,14 +28,18 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> picaso
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            picaso
           </a>
               <div class="version">
-                3.0
+                3.1
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -48,7 +52,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#install-with-pip">Install with Pip</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#download-picaso-reference-data">Download PICASO Reference Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#create-environment-variable">Create Environment Variable</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#method-1-bash-profle-or-zshrc-file">Method 1: <code class="docutils literal notranslate"><span class="pre">bash_profle</span></code> or <code class="docutils literal notranslate"><span class="pre">zshrc</span></code> file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#method-1-bash-profile-or-zshrc-file">Method 1: <code class="docutils literal notranslate"><span class="pre">bash_profile</span></code> or <code class="docutils literal notranslate"><span class="pre">zshrc</span></code> file</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#method-2-add-directly-to-python-code">Method 2: Add directly to python code</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#method-3-add-it-to-your-conda-enviornment">Method 3: Add it to your conda enviornment</a></li>
 </ul>
@@ -78,7 +82,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">Installation</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/installation.rst.txt" rel="nofollow"> View page source</a>
@@ -89,31 +93,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  
-<style>
-/* CSS overrides for sphinx_rtd_theme */
-
-/* 24px margin */
-.nbinput.nblast.container,
-.nboutput.nblast.container {
-    margin-bottom: 19px;  /* padding has already 5px */
-}
-
-/* ... except between code cells! */
-.nblast.container + .nbinput.container {
-    margin-top: -19px;
-}
-
-.admonition > p:before {
-    margin-right: 4px;  /* make room for the exclamation icon */
-}
-
-/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
-.math {
-    text-align: unset;
-}
-</style>
-<section id="installation">
+  <section id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
 <section id="python-version">
 <h2>Python Version<a class="headerlink" href="#python-version" title="Permalink to this headline">¶</a></h2>
@@ -149,10 +129,10 @@ python setup.py install
 <section id="create-environment-variable">
 <h2>Create Environment Variable<a class="headerlink" href="#create-environment-variable" title="Permalink to this headline">¶</a></h2>
 <p>There are several ways to create environment variables. Below are the three most popular methods. You only need to choose one that works best for you.</p>
-<section id="method-1-bash-profle-or-zshrc-file">
-<h3>Method 1: <code class="docutils literal notranslate"><span class="pre">bash_profle</span></code> or <code class="docutils literal notranslate"><span class="pre">zshrc</span></code> file<a class="headerlink" href="#method-1-bash-profle-or-zshrc-file" title="Permalink to this headline">¶</a></h3>
+<section id="method-1-bash-profile-or-zshrc-file">
+<h3>Method 1: <code class="docutils literal notranslate"><span class="pre">bash_profile</span></code> or <code class="docutils literal notranslate"><span class="pre">zshrc</span></code> file<a class="headerlink" href="#method-1-bash-profile-or-zshrc-file" title="Permalink to this headline">¶</a></h3>
 <p>As you might guess <code class="docutils literal notranslate"><span class="pre">~/.bash_profile</span></code> is used for the <code class="docutils literal notranslate"><span class="pre">Bash</span></code> command line shell. <code class="docutils literal notranslate"><span class="pre">~/.zshrc</span></code> is used for the <code class="docutils literal notranslate"><span class="pre">Zsh</span></code> command line shell. The steps below are identical.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>vi ~/.bash_profle
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>vi ~/.bash_profile
 </pre></div>
 </div>
 <p>Add add this line:</p>
@@ -234,7 +214,7 @@ touch ./etc/conda/deactivate.d/env_vars.sh
 <ol class="arabic simple" start="2">
 <li><p>Create environment variable via bash</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>vi ~/.bash_profle
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>vi ~/.bash_profile
 </pre></div>
 </div>
 <p>Add add this line:</p>

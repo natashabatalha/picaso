@@ -5,7 +5,7 @@ Basics of Reflected Light
 -------------------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    Getting Started  </notebooks/1_GetStarted.ipynb>
    Adding Clouds  </notebooks/2_AddingClouds.ipynb>
@@ -54,62 +54,73 @@ Relevant Citatons: `Adams et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022ApJ
    Modeling a Phase Curve pt 1 (Robbins-Blanch et al. 2022)</notebooks/9e_PhaseCurves.ipynb>
    Modeling a Phase Curve pt 2 (Robbins-Blanch et al. 2022)</notebooks/9f_PhaseCurves-wChemEq.ipynb>
 
-1D Climate Modeling (New!!)
----------------------------
+1D Climate Modeling
+-------------------
 Relevant Citatons: `Mukherjee et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022arXiv220807836M/abstract>`_
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    Brown Dwarfs </notebooks/climate/12a_BrownDwarf.ipynb>
    Planet </notebooks/climate/12b_Exoplanet.ipynb>
    Brown Dwarfs w/ Disequilibrium Chemistry </notebooks/climate/12c_BrownDwarf_DEQ.ipynb>
 
-Fitting models to data (New!!)
-------------------------------
+Fitting models to data
+----------------------
 Relevant Citatons: `JWST Transiting Exoplanet Community Early Release Science Team (2022) <https://www.nature.com/articles/s41586-022-05269-w>`_
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    Grid Search Analysis </notebooks/fitdata/GridSearch.ipynb>
 
 
-Opacities & Approximatons
--------------------------
+Model Storage & Reuse
+---------------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
+
+   How to store and reuse models </notebooks/ModelStorage.ipynb>
+
+Opacities
+---------
+
+.. toctree::
+   :maxdepth: 1
 
    Query Opacites </notebooks/10_QueryOpacities.ipynb>
    Opacity Factory: Creating Custom Databases </notebooks/10_CreatingOpacityDb.ipynb>
    What Resampling do I Need? </notebooks/10_ResamplingOpacities.ipynb>
    Using Correlated-K Tables </notebooks/10_CorrelatedKTables.ipynb>
-   Investigating Radiative Transfer Approximations  </notebooks/10_AnalyzingApproximations.ipynb>
+
+Radiative Transfer Techniques 
+-----------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   Toon Radiative Transfer in Reflected Light </notebooks/10a_AnalyzingApproximationsReflectedLightToon.ipynb>
+   Spherical Harmonics Radiative Transfer in Reflected Light </notebooks/10b_AnalyzingApproximationsReflectedLightSH.ipynb>
+   Spherical Harmonics Radiative Transfer in Thermal Emission </notebooks/10c_AnalyzingApproximationsThermal.ipynb>
 
 FAQs
 ----
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    Misc FAQs </notebooks/FAQs.ipynb>
    Contribution Functions </notebooks/11_ContributionFunctions.ipynb>
 
-Model Storage Best Practices
-----------------------------
-
-.. toctree::
-   :maxdepth: 1
-
-   Data Storage Uniformity </notebooks/codehelp/data_uniformity_tutorial.ipynb>
 
 Code Help
 ---------
 
 .. toctree::
    :maxdepth: 1
-
+   
+   Data Storage Uniformity </notebooks/codehelp/data_uniformity_tutorial.ipynb>
    SQLITE Tutorial </notebooks/codehelp/Sqlite3Tutorial.ipynb>
 
 References

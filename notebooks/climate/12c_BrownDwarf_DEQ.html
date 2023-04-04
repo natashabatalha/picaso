@@ -4,9 +4,10 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry at Solar M/H and C/O &mdash; picaso 3.0 documentation</title>
+  <title>One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry at Solar M/H and C/O &mdash; picaso 3.1 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/nbsphinx-code-cells.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -16,7 +17,7 @@
         <script src="../../_static/underscore.js"></script>
         <script src="../../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -30,14 +31,18 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="../../index.html" class="icon icon-home"> picaso
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            picaso
           </a>
               <div class="version">
-                3.0
+                3.1
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -51,7 +56,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#basics-of-thermal-emission">Basics of Thermal Emission</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#cloud-modeling-with-virga">Cloud Modeling with <cite>Virga</cite></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#moving-to-3-dimensions">Moving to 3 Dimensions</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="../../tutorials.html#d-climate-modeling-new">1D Climate Modeling (New!!)</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../tutorials.html#d-climate-modeling">1D Climate Modeling</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="12a_BrownDwarf.html">Brown Dwarfs</a></li>
 <li class="toctree-l3"><a class="reference internal" href="12b_Exoplanet.html">Planet</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">Brown Dwarfs w/ Disequilibrium Chemistry</a><ul>
@@ -64,10 +69,11 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#fitting-models-to-data-new">Fitting models to data (New!!)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#opacities-approximatons">Opacities &amp; Approximatons</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#fitting-models-to-data">Fitting models to data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#model-storage-reuse">Model Storage &amp; Reuse</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#opacities">Opacities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#radiative-transfer-techniques">Radiative Transfer Techniques</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#faqs">FAQs</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#model-storage-best-practices">Model Storage Best Practices</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#code-help">Code Help</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#references">References</a></li>
 </ul>
@@ -93,7 +99,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../index.html" class="icon icon-home"></a></li>
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../../tutorials.html">Tutorials</a></li>
       <li class="breadcrumb-item active">One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry at Solar M/H and C/O</li>
       <li class="wy-breadcrumbs-aside">
@@ -105,292 +111,13 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  
-<style>
-/* CSS for nbsphinx extension */
-
-/* remove conflicting styling from Sphinx themes */
-div.nbinput.container div.prompt *,
-div.nboutput.container div.prompt *,
-div.nbinput.container div.input_area pre,
-div.nboutput.container div.output_area pre,
-div.nbinput.container div.input_area .highlight,
-div.nboutput.container div.output_area .highlight {
-    border: none;
-    padding: 0;
-    margin: 0;
-    box-shadow: none;
-}
-
-div.nbinput.container > div[class*=highlight],
-div.nboutput.container > div[class*=highlight] {
-    margin: 0;
-}
-
-div.nbinput.container div.prompt *,
-div.nboutput.container div.prompt * {
-    background: none;
-}
-
-div.nboutput.container div.output_area .highlight,
-div.nboutput.container div.output_area pre {
-    background: unset;
-}
-
-div.nboutput.container div.output_area div.highlight {
-    color: unset;  /* override Pygments text color */
-}
-
-/* avoid gaps between output lines */
-div.nboutput.container div[class*=highlight] pre {
-    line-height: normal;
-}
-
-/* input/output containers */
-div.nbinput.container,
-div.nboutput.container {
-    display: -webkit-flex;
-    display: flex;
-    align-items: flex-start;
-    margin: 0;
-    width: 100%;
-}
-@media (max-width: 540px) {
-    div.nbinput.container,
-    div.nboutput.container {
-        flex-direction: column;
-    }
-}
-
-/* input container */
-div.nbinput.container {
-    padding-top: 5px;
-}
-
-/* last container */
-div.nblast.container {
-    padding-bottom: 5px;
-}
-
-/* input prompt */
-div.nbinput.container div.prompt pre {
-    color: #307FC1;
-}
-
-/* output prompt */
-div.nboutput.container div.prompt pre {
-    color: #BF5B3D;
-}
-
-/* all prompts */
-div.nbinput.container div.prompt,
-div.nboutput.container div.prompt {
-    width: 4.5ex;
-    padding-top: 5px;
-    position: relative;
-    user-select: none;
-}
-
-div.nbinput.container div.prompt > div,
-div.nboutput.container div.prompt > div {
-    position: absolute;
-    right: 0;
-    margin-right: 0.3ex;
-}
-
-@media (max-width: 540px) {
-    div.nbinput.container div.prompt,
-    div.nboutput.container div.prompt {
-        width: unset;
-        text-align: left;
-        padding: 0.4em;
-    }
-    div.nboutput.container div.prompt.empty {
-        padding: 0;
-    }
-
-    div.nbinput.container div.prompt > div,
-    div.nboutput.container div.prompt > div {
-        position: unset;
-    }
-}
-
-/* disable scrollbars and line breaks on prompts */
-div.nbinput.container div.prompt pre,
-div.nboutput.container div.prompt pre {
-    overflow: hidden;
-    white-space: pre;
-}
-
-/* input/output area */
-div.nbinput.container div.input_area,
-div.nboutput.container div.output_area {
-    -webkit-flex: 1;
-    flex: 1;
-    overflow: auto;
-}
-@media (max-width: 540px) {
-    div.nbinput.container div.input_area,
-    div.nboutput.container div.output_area {
-        width: 100%;
-    }
-}
-
-/* input area */
-div.nbinput.container div.input_area {
-    border: 1px solid #e0e0e0;
-    border-radius: 2px;
-    /*background: #f5f5f5;*/
-}
-
-/* override MathJax center alignment in output cells */
-div.nboutput.container div[class*=MathJax] {
-    text-align: left !important;
-}
-
-/* override sphinx.ext.imgmath center alignment in output cells */
-div.nboutput.container div.math p {
-    text-align: left;
-}
-
-/* standard error */
-div.nboutput.container div.output_area.stderr {
-    background: #fdd;
-}
-
-/* ANSI colors */
-.ansi-black-fg { color: #3E424D; }
-.ansi-black-bg { background-color: #3E424D; }
-.ansi-black-intense-fg { color: #282C36; }
-.ansi-black-intense-bg { background-color: #282C36; }
-.ansi-red-fg { color: #E75C58; }
-.ansi-red-bg { background-color: #E75C58; }
-.ansi-red-intense-fg { color: #B22B31; }
-.ansi-red-intense-bg { background-color: #B22B31; }
-.ansi-green-fg { color: #00A250; }
-.ansi-green-bg { background-color: #00A250; }
-.ansi-green-intense-fg { color: #007427; }
-.ansi-green-intense-bg { background-color: #007427; }
-.ansi-yellow-fg { color: #DDB62B; }
-.ansi-yellow-bg { background-color: #DDB62B; }
-.ansi-yellow-intense-fg { color: #B27D12; }
-.ansi-yellow-intense-bg { background-color: #B27D12; }
-.ansi-blue-fg { color: #208FFB; }
-.ansi-blue-bg { background-color: #208FFB; }
-.ansi-blue-intense-fg { color: #0065CA; }
-.ansi-blue-intense-bg { background-color: #0065CA; }
-.ansi-magenta-fg { color: #D160C4; }
-.ansi-magenta-bg { background-color: #D160C4; }
-.ansi-magenta-intense-fg { color: #A03196; }
-.ansi-magenta-intense-bg { background-color: #A03196; }
-.ansi-cyan-fg { color: #60C6C8; }
-.ansi-cyan-bg { background-color: #60C6C8; }
-.ansi-cyan-intense-fg { color: #258F8F; }
-.ansi-cyan-intense-bg { background-color: #258F8F; }
-.ansi-white-fg { color: #C5C1B4; }
-.ansi-white-bg { background-color: #C5C1B4; }
-.ansi-white-intense-fg { color: #A1A6B2; }
-.ansi-white-intense-bg { background-color: #A1A6B2; }
-
-.ansi-default-inverse-fg { color: #FFFFFF; }
-.ansi-default-inverse-bg { background-color: #000000; }
-
-.ansi-bold { font-weight: bold; }
-.ansi-underline { text-decoration: underline; }
-
-
-div.nbinput.container div.input_area div[class*=highlight] > pre,
-div.nboutput.container div.output_area div[class*=highlight] > pre,
-div.nboutput.container div.output_area div[class*=highlight].math,
-div.nboutput.container div.output_area.rendered_html,
-div.nboutput.container div.output_area > div.output_javascript,
-div.nboutput.container div.output_area:not(.rendered_html) > img{
-    padding: 5px;
-    margin: 0;
-}
-
-/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
-div.nbinput.container div.input_area > div[class^='highlight'],
-div.nboutput.container div.output_area > div[class^='highlight']{
-    overflow-y: hidden;
-}
-
-/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
-.prompt .copybtn {
-    display: none;
-}
-
-/* Some additional styling taken form the Jupyter notebook CSS */
-.jp-RenderedHTMLCommon table,
-div.rendered_html table {
-  border: none;
-  border-collapse: collapse;
-  border-spacing: 0;
-  color: black;
-  font-size: 12px;
-  table-layout: fixed;
-}
-.jp-RenderedHTMLCommon thead,
-div.rendered_html thead {
-  border-bottom: 1px solid black;
-  vertical-align: bottom;
-}
-.jp-RenderedHTMLCommon tr,
-.jp-RenderedHTMLCommon th,
-.jp-RenderedHTMLCommon td,
-div.rendered_html tr,
-div.rendered_html th,
-div.rendered_html td {
-  text-align: right;
-  vertical-align: middle;
-  padding: 0.5em 0.5em;
-  line-height: normal;
-  white-space: normal;
-  max-width: none;
-  border: none;
-}
-.jp-RenderedHTMLCommon th,
-div.rendered_html th {
-  font-weight: bold;
-}
-.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
-div.rendered_html tbody tr:nth-child(odd) {
-  background: #f5f5f5;
-}
-.jp-RenderedHTMLCommon tbody tr:hover,
-div.rendered_html tbody tr:hover {
-  background: rgba(66, 165, 245, 0.2);
-}
-
-/* CSS overrides for sphinx_rtd_theme */
-
-/* 24px margin */
-.nbinput.nblast.container,
-.nboutput.nblast.container {
-    margin-bottom: 19px;  /* padding has already 5px */
-}
-
-/* ... except between code cells! */
-.nblast.container + .nbinput.container {
-    margin-top: -19px;
-}
-
-.admonition > p:before {
-    margin-right: 4px;  /* make room for the exclamation icon */
-}
-
-/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
-.math {
-    text-align: unset;
-}
-</style>
-<div class="admonition note">
+  <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/climate/12c_BrownDwarf_DEQ.ipynb">Download full notebook here</a></p>
 </div>
 <section id="One-Dimensional-Climate-Models:-Brown-Dwarfs-w/-Disequilibrium-Chemistry-at-Solar-M/H-and-C/O">
 <h1>One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry at Solar M/H and C/O<a class="headerlink" href="#One-Dimensional-Climate-Models:-Brown-Dwarfs-w/-Disequilibrium-Chemistry-at-Solar-M/H-and-C/O" title="Permalink to this headline">¶</a></h1>
-<p>In this tutorial you will learn how to run 1d climate models with the effects of disequilibrium chemistry as was done in <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2022arXiv220814317M/abstract">Mukherjee et al. 2022</a> (note this should also be cited if using this code/tutorial).</p>
+<p>In this tutorial you will learn how to run 1d climate models with the effects of disequilibrium chemistry as was done in <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2022arXiv220814317M/abstract">Mukherjee et al. 2022</a> (note this should also be cited if using this code/tutorial).</p>
 <p>What you should already be familiar with:</p>
 <ul class="simple">
 <li><p><a class="reference external" href="https://natashabatalha.github.io/picaso/tutorials.html#basics-of-thermal-emission">basics of running/analyzing thermal spectra</a></p></li>
@@ -401,7 +128,7 @@ div.rendered_html tbody tr:hover {
 <ol class="arabic simple">
 <li><p><a class="reference external" href="https://zenodo.org/record/6708165/files/m%2B0.0_co1.0.data.196.tar.zip?download=1">Download the m+0.0_co1.0.data.196</a> (28.4 Mb) 1060 196 Correlated-K table from Roxana Lupu to be used by the climate code for opacity. <strong>This is an older version of the C-K tables used in the first two tutorials and you will only need the solar C/O and solar M/H file as we have not yet enabled any chemical composition</strong></p></li>
 <li><p><a class="reference external" href="https://zenodo.org/record/5063476/files/structures_m%2B0.0.tar.gz?download=1">Download</a> the sonora bobcat cloud free <code class="docutils literal notranslate"><span class="pre">structures_</span></code> file so that you can have a simple starting guess</p></li>
-<li><p>(Optional) <a class="reference external" href="http://perso.ens-lyon.fr/isabelle.baraffe/ATMO2020/ATMO_2020_models.tar.gz">Download</a> the <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2020A%26A...637A..38P/abstract">Phillips et al. 2020</a> models if you want to benchmark the diseq runs with an independent code</p></li>
+<li><p>(Optional) <a class="reference external" href="http://perso.ens-lyon.fr/isabelle.baraffe/ATMO2020/ATMO_2020_models.tar.gz">Download</a> the <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2020A%26A...637A..38P/abstract">Phillips et al. 2020</a> models if you want to benchmark the diseq runs with an independent code</p></li>
 </ol>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
@@ -422,11 +149,11 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ck_db</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;/Users/nbatalh1/Documents/data/m+0.0_co1.0.data.196&#39;</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ck_db</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;/data/ck_1060/m+0.0_co1.0.data.196&#39;</span>
 
 <span class="c1">#sonora bobcat cloud free structures file</span>
-<span class="n">sonora_profile_db</span> <span class="o">=</span> <span class="s1">&#39;/Users/nbatalh1/Documents/data/sonora_bobcat/structures_m+0.0/&#39;</span>
-<span class="n">phillips_2020_db</span> <span class="o">=</span> <span class="s1">&#39;/Users/nbatalh1/Documents/data/ATMO_2020_models/&#39;</span>
+<span class="n">sonora_profile_db</span> <span class="o">=</span> <span class="s1">&#39;/data/sonora_bobcat/structure/structures_m+0.0&#39;</span>
+<span class="n">phillips_2020_db</span> <span class="o">=</span> <span class="s1">&#39;/data/ATMO_2020_models/&#39;</span>
 </pre></div>
 </div>
 </div>
@@ -533,7 +260,7 @@ div.rendered_html tbody tr:hover {
 </section>
 <section id="On-the-fly-mixing">
 <h3>On the fly mixing<a class="headerlink" href="#On-the-fly-mixing" title="Permalink to this headline">¶</a></h3>
-<p>In <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2022arXiv220814317M/abstract">Mukherjee et al. 2022</a> on-the-fly mixing of CO, CH4, NH3, and H2O was considered. There are some important assumptions for version 1 that the user needs to be aware:</p>
+<p>In <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2022arXiv220814317M/abstract">Mukherjee et al. 2022</a> on-the-fly mixing of CO, CH4, NH3, and H2O was considered. There are some important assumptions for version 1 that the user needs to be aware:</p>
 <ol class="arabic simple">
 <li><p>We only allow solar C/O and solar M/H</p></li>
 <li><p>Only CO, CH4, NH3, and H2O will be mixed on the fly.</p></li>
@@ -553,29 +280,29 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Iteration number  0 , min , max temp  220.37853535863343 2157.2023051116967 , flux balance  1.4321186537961034e-06
-Iteration number  1 , min , max temp  220.1017634936712 2157.186839743511 , flux balance  3.6298329124114754e-10
+Iteration number  0 , min , max temp  220.37858713860058 2157.202305111695 , flux balance  1.4321185036683038e-06
+Iteration number  1 , min , max temp  220.10176185906062 2157.186839743511 , flux balance  3.6293963511708516e-10
 In t_start: Converged Solution in iterations  1
-Big iteration is  220.1017634936712 0
-Iteration number  0 , min , max temp  220.5273270433216 2157.9067469165043 , flux balance  3.509789314204546e-08
+Big iteration is  220.10176185906062 0
+Iteration number  0 , min , max temp  220.52732958495542 2157.9067469165043 , flux balance  3.509786289752064e-08
 In t_start: Converged Solution in iterations  0
 Profile converged
-Iteration number  0 , min , max temp  220.58432395171542 2157.9960553146507 , flux balance  4.159136319763609e-09
+Iteration number  0 , min , max temp  220.5842925322004 2157.996055314647 , flux balance  4.159136730322769e-09
 In t_start: Converged Solution in iterations  0
-Big iteration is  220.58432395171542 0
-Iteration number  0 , min , max temp  220.5915905689744 2158.005848583862 , flux balance  9.313327906959213e-10
+Big iteration is  220.5842925322004 0
+Iteration number  0 , min , max temp  220.59166345425052 2158.005848583862 , flux balance  9.313321064306538e-10
 In t_start: Converged Solution in iterations  0
 Profile converged
-Iteration number  0 , min , max temp  220.5927368754032 2156.4807243401556 , flux balance  -6.426656068376268e-09
+Iteration number  0 , min , max temp  220.59273106766537 2156.4807243401574 , flux balance  -6.426659079143445e-09
 In t_start: Converged Solution in iterations  0
-Big iteration is  220.5927368754032 0
-Iteration number  0 , min , max temp  220.59309558764093 2156.4960206378246 , flux balance  -6.927604207311125e-10
+Big iteration is  220.59273106766537 0
+Iteration number  0 , min , max temp  220.59300837696887 2156.4960206378264 , flux balance  -6.927606944372195e-10
 In t_start: Converged Solution in iterations  0
 Profile converged
 final [ 0 85 89  0  0  0]
- We are already at a root, tolf , test =  5e-05 ,  1.0416278095895274e-05
-Big iteration is  220.59309558764093 0
- We are already at a root, tolf , test =  5e-05 ,  1.0416278095895274e-05
+ We are already at a root, tolf , test =  5e-05 ,  1.0416278093431919e-05
+Big iteration is  220.59300837696887 0
+ We are already at a root, tolf , test =  5e-05 ,  1.0416278093431919e-05
 Profile converged
 YAY ! ENDING WITH CONVERGENCE
 1 conv Zone, so making small adjustment
@@ -585,37 +312,37 @@ PH3 quenched at level 76
 661
 DOING DISEQ CALCULATIONS NOW
 PH3 quenched at level 76
-Iteration number  0 , min , max temp  218.78817152839642 2169.462581086566 , flux balance  0.006635656735278115
-Iteration number  1 , min , max temp  219.0302750335384 2169.292389002253 , flux balance  4.116423508594511e-05
-Iteration number  2 , min , max temp  219.03152331183915 2169.2923258751466 , flux balance  8.664250980901208e-09
+Iteration number  0 , min , max temp  218.78981470957572 2169.462581086828 , flux balance  0.0066356567351585054
+Iteration number  1 , min , max temp  219.03032058249835 2169.2923890022666 , flux balance  4.116423680824079e-05
+Iteration number  2 , min , max temp  219.0315085968162 2169.2923258751466 , flux balance  8.664247833280977e-09
 In t_start: Converged Solution in iterations  2
 PH3 quenched at level 76
 Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Big iteration is  219.03152331183915 0
-Iteration number  0 , min , max temp  216.98005505723333 2169.413515574907 , flux balance  0.0004489678204296811
-Iteration number  1 , min , max temp  216.95843384373327 2169.413997099951 , flux balance  2.078482956223567e-07
+Big iteration is  219.0315085968162 0
+Iteration number  0 , min , max temp  216.98018027911496 2169.4135155749013 , flux balance  0.00044896782405368676
+Iteration number  1 , min , max temp  216.95843047854694 2169.413997099947 , flux balance  2.078483002753605e-07
 In t_start: Converged Solution in iterations  1
 PH3 quenched at level 76
 Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
 Profile converged
 PH3 quenched at level 76
-Iteration number  0 , min , max temp  216.1109710658991 2155.5363721608956 , flux balance  3.6509869944896474e-05
+Iteration number  0 , min , max temp  216.11107816147248 2155.536372160911 , flux balance  3.650986988016498e-05
 In t_start: Converged Solution in iterations  0
 PH3 quenched at level 76
 Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Big iteration is  216.1109710658991 0
-Iteration number  0 , min , max temp  215.8328757254892 2155.47022070135 , flux balance  3.346783782196641e-06
+Big iteration is  216.11107816147248 0
+Iteration number  0 , min , max temp  215.8328958595726 2155.4702207013484 , flux balance  3.3467837648163033e-06
 In t_start: Converged Solution in iterations  0
 PH3 quenched at level 76
 Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
 Profile converged
 PH3 quenched at level 76
-Iteration number  0 , min , max temp  215.74759826620328 2152.9694033044325 , flux balance  3.728234336089751e-07
+Iteration number  0 , min , max temp  215.74760987713432 2152.969403304396 , flux balance  3.7282356060860876e-07
 In t_start: Converged Solution in iterations  0
 PH3 quenched at level 76
 Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Big iteration is  215.74759826620328 0
-Iteration number  0 , min , max temp  215.7228237997909 2152.9802019505855 , flux balance  5.843014471871784e-08
+Big iteration is  215.74760987713432 0
+Iteration number  0 , min , max temp  215.7228286796615 2152.9802019505855 , flux balance  5.8430143487040355e-08
 In t_start: Converged Solution in iterations  0
 PH3 quenched at level 76
 Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
@@ -625,12 +352,12 @@ Profile converged
 1
 [ 0 72 72 72 85 89]
 PH3 quenched at level 76
-Iteration number  0 , min , max temp  215.7135920982338 2152.973377817694 , flux balance  4.0844698849861946e-07
+Iteration number  0 , min , max temp  215.71358664853605 2152.973377817694 , flux balance  4.084469697497511e-07
 In t_start: Converged Solution in iterations  0
 PH3 quenched at level 76
 Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Big iteration is  215.7135920982338 0
-Iteration number  0 , min , max temp  215.71235330879793 2152.9741149535203 , flux balance  -9.630964117809062e-09
+Big iteration is  215.71358664853605 0
+Iteration number  0 , min , max temp  215.71234654608872 2152.974114953522 , flux balance  -9.630963433543795e-09
 In t_start: Converged Solution in iterations  0
 PH3 quenched at level 76
 Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
@@ -638,84 +365,84 @@ Profile converged
 Grow Phase : Upper Zone
 [ 0 71 72 72 85 89]
 PH3 quenched at level 76
-Iteration number  0 , min , max temp  215.72916465435475 2152.9422988149654 , flux balance  2.011088016164654e-06
+Iteration number  0 , min , max temp  215.7291676897581 2152.942298814967 , flux balance  2.0110880472302973e-06
 In t_start: Converged Solution in iterations  0
 PH3 quenched at level 76
 Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Big iteration is  215.72916465435475 0
-Iteration number  0 , min , max temp  215.73574451483316 2152.938680464692 , flux balance  -1.9834335154402686e-08
+Big iteration is  215.7291676897581 0
+Iteration number  0 , min , max temp  215.7357440489825 2152.93868046469 , flux balance  -1.983433967055345e-08
 In t_start: Converged Solution in iterations  0
 PH3 quenched at level 76
 Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
 Profile converged
 [ 0 71 73 73 85 89]
 PH3 quenched at level 76
-Iteration number  0 , min , max temp  215.77554247634293 2152.8963984958036 , flux balance  2.222189078271006e-07
+Iteration number  0 , min , max temp  215.7755502585758 2152.8963984958036 , flux balance  2.2221894436686587e-07
 In t_start: Converged Solution in iterations  0
 PH3 quenched at level 76
 Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Big iteration is  215.77554247634293 0
-Iteration number  0 , min , max temp  215.785386984878 2152.8859101499274 , flux balance  -7.579754346594153e-08
+Big iteration is  215.7755502585758 0
+Iteration number  0 , min , max temp  215.78538826143682 2152.8859101499274 , flux balance  -7.579754346594153e-08
 In t_start: Converged Solution in iterations  0
 PH3 quenched at level 76
 Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
 Profile converged
 [ 0 70 73 73 85 89]
 PH3 quenched at level 76
-Iteration number  0 , min , max temp  215.8154952633034 2152.84119820506 , flux balance  -5.769850542663014e-07
+Iteration number  0 , min , max temp  215.81549649074464 2152.8411982050625 , flux balance  -5.769850805420877e-07
 In t_start: Converged Solution in iterations  0
 PH3 quenched at level 76
 Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Big iteration is  215.8154952633034 0
-Iteration number  0 , min , max temp  215.82995808844737 2152.8357632365064 , flux balance  -3.0722128018325394e-07
+Big iteration is  215.81549649074464 0
+Iteration number  0 , min , max temp  215.82995551893686 2152.8357632365087 , flux balance  -3.072212621186509e-07
 In t_start: Converged Solution in iterations  0
 PH3 quenched at level 76
 Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
 Profile converged
 [ 0 69 73 73 85 89]
 PH3 quenched at level 76
-Iteration number  0 , min , max temp  215.84584179366576 2152.8217507229097 , flux balance  -1.2466848467610948e-06
+Iteration number  0 , min , max temp  215.84583564503927 2152.8217507229115 , flux balance  -1.246684896028194e-06
 In t_start: Converged Solution in iterations  0
 PH3 quenched at level 76
 Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Big iteration is  215.84584179366576 0
-Iteration number  0 , min , max temp  215.85304529570928 2152.8220009530482 , flux balance  -2.692714055357418e-07
+Big iteration is  215.84583564503927 0
+Iteration number  0 , min , max temp  215.85303696944254 2152.8220009530482 , flux balance  -2.6927141237839446e-07
 In t_start: Converged Solution in iterations  0
 PH3 quenched at level 76
 Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
 Profile converged
 [ 0 69 74 74 85 89]
 PH3 quenched at level 76
-Iteration number  0 , min , max temp  215.86504189701307 2152.831306168202 , flux balance  4.074836410709678e-06
+Iteration number  0 , min , max temp  215.86504159919122 2152.831306168204 , flux balance  4.074836392645075e-06
 In t_start: Converged Solution in iterations  0
 PH3 quenched at level 76
 Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Big iteration is  215.86504189701307 0
-Iteration number  0 , min , max temp  215.8674518370037 2152.8215821567373 , flux balance  1.057393790294071e-08
+Big iteration is  215.86504159919122 0
+Iteration number  0 , min , max temp  215.8674525422709 2152.8215821567355 , flux balance  1.0573936534410175e-08
 In t_start: Converged Solution in iterations  0
 PH3 quenched at level 76
 Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
 Profile converged
 [ 0 68 74 74 85 89]
 PH3 quenched at level 76
-Iteration number  0 , min , max temp  215.85304089732384 2152.864290379212 , flux balance  1.3985729391870582e-05
+Iteration number  0 , min , max temp  215.8530400211446 2152.864290379212 , flux balance  1.398572939488135e-05
 In t_start: Converged Solution in iterations  0
 PH3 quenched at level 76
 Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Big iteration is  215.85304089732384 0
-Iteration number  0 , min , max temp  215.84071285008454 2152.854557177782 , flux balance  1.3798711668259324e-06
+Big iteration is  215.8530400211446 0
+Iteration number  0 , min , max temp  215.840714730026 2152.8545571777804 , flux balance  1.3798711855748009e-06
 In t_start: Converged Solution in iterations  0
 PH3 quenched at level 76
 Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
 Profile converged
 final [ 0 68 74 74 85 89]
 PH3 quenched at level 76
-Iteration number  0 , min , max temp  215.83777169476593 2152.8608431209677 , flux balance  5.277089327954568e-06
+Iteration number  0 , min , max temp  215.83776622024584 2152.860843120966 , flux balance  5.277089291688508e-06
 In t_start: Converged Solution in iterations  0
 PH3 quenched at level 76
 Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Big iteration is  215.83777169476593 0
-Iteration number  0 , min , max temp  215.83352440840727 2152.848839151562 , flux balance  2.3841208342611992e-07
+Big iteration is  215.83776622024584 0
+Iteration number  0 , min , max temp  215.83352824722516 2152.8488391515602 , flux balance  2.38412086163181e-07
 In t_start: Converged Solution in iterations  0
 PH3 quenched at level 76
 Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
@@ -725,7 +452,7 @@ PH3 quenched at level 76
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">out</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
@@ -733,7 +460,7 @@ PH3 quenched at level 76
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="output_area docutils container">

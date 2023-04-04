@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tutorials &mdash; picaso 3.0 documentation</title>
+  <title>Tutorials &mdash; picaso 3.1 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -28,14 +28,18 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> picaso
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            picaso
           </a>
               <div class="version">
-                3.0
+                3.1
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -75,39 +79,52 @@
 <li class="toctree-l3"><a class="reference internal" href="notebooks/9f_PhaseCurves-wChemEq.html">Modeling a Phase Curve pt 2 (Robbins-Blanch et al. 2022)</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#d-climate-modeling-new">1D Climate Modeling (New!!)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#d-climate-modeling">1D Climate Modeling</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/climate/12a_BrownDwarf.html">Brown Dwarfs</a></li>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/climate/12b_Exoplanet.html">Planet</a></li>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/climate/12c_BrownDwarf_DEQ.html">Brown Dwarfs w/ Disequilibrium Chemistry</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#fitting-models-to-data-new">Fitting models to data (New!!)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#fitting-models-to-data">Fitting models to data</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/fitdata/GridSearch.html">Grid Search Analysis</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#opacities-approximatons">Opacities &amp; Approximatons</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#model-storage-reuse">Model Storage &amp; Reuse</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/ModelStorage.html">How to store and reuse models</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#opacities">Opacities</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/10_QueryOpacities.html">Query Opacites</a></li>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/10_CreatingOpacityDb.html">Opacity Factory: Creating Custom Databases</a></li>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/10_ResamplingOpacities.html">What Resampling do I Need?</a></li>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/10_CorrelatedKTables.html">Using Correlated-K Tables</a></li>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html">Investigating Radiative Transfer Approximations</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#radiative-transfer-techniques">Radiative Transfer Techniques</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/10a_AnalyzingApproximationsReflectedLightToon.html">Approximations for Toon89 Two-Stream Radiative Transfer in Reflected Light</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/10a_AnalyzingApproximationsReflectedLightToon.html#Benchmark-Toon89-w/-Dlugach-&amp;-Yanovitskij-(1974)">Benchmark Toon89 w/ Dlugach &amp; Yanovitskij (1974)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/10b_AnalyzingApproximationsReflectedLightSH.html">Spherical Harmonics Radiative Transfer in Reflected Light</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/10c_AnalyzingApproximationsThermal.html">Approximations for Spherical Harmonics Radiative Transfer in Thermal Emission</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/10c_AnalyzingApproximationsThermal.html#Dependence-of-Radiative-Transfer-Method-on-Scattering-Parameters">Dependence of Radiative Transfer Method on Scattering Parameters</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#faqs">FAQs</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/FAQs.html">Misc FAQs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/FAQs.html">How do I load in target properties from Exo.Mast?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/FAQs.html#How-do-I-access-the-pressure-temperature-profile-parameterizations?">How do I access the pressure-temperature profile parameterizations?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/FAQs.html#How-do-I-return-the-output-from-photon-attenuation-plot?">How do I return the output from photon attenuation plot?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/FAQs.html#Can-I-use-the-phase-angle-function-to-specify-a-non-zero-phase-for-thermal-emission?">Can I use the phase angle function to specify a non-zero phase for thermal emission?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/FAQs.html#I'm-confused-about-what-opacity-file-to-use">I’m confused about what opacity file to use</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/FAQs.html#Has-your-question-not-been-answered?-Feel-free-to-contact-us!">Has your question not been answered? Feel free to contact us!</a></li>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/11_ContributionFunctions.html">Contribution Functions</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#model-storage-best-practices">Model Storage Best Practices</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#code-help">Code Help</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/codehelp/data_uniformity_tutorial.html">Model Formating Overview</a></li>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/codehelp/data_uniformity_tutorial.html#Specifying-units">Specifying units</a></li>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/codehelp/data_uniformity_tutorial.html#Data-Types:-Using-xarray">Data Types: Using <code class="docutils literal notranslate"><span class="pre">xarray</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/codehelp/data_uniformity_tutorial.html#Storing-xarray-data">Storing <code class="docutils literal notranslate"><span class="pre">xarray</span></code> data</a></li>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/codehelp/data_uniformity_tutorial.html#Reading/interpreting-an-xarray-file">Reading/interpreting an <code class="docutils literal notranslate"><span class="pre">xarray</span></code> file</a></li>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/codehelp/data_uniformity_tutorial.html#Checking-your-data-is-in-compliance">Checking your data is in compliance</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#code-help">Code Help</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/codehelp/Sqlite3Tutorial.html">SQLITE Tutorial</a></li>
 </ul>
 </li>
@@ -138,7 +155,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">Tutorials</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/tutorials.rst.txt" rel="nofollow"> View page source</a>
@@ -149,62 +166,16 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  
-<style>
-/* CSS overrides for sphinx_rtd_theme */
-
-/* 24px margin */
-.nbinput.nblast.container,
-.nboutput.nblast.container {
-    margin-bottom: 19px;  /* padding has already 5px */
-}
-
-/* ... except between code cells! */
-.nblast.container + .nbinput.container {
-    margin-top: -19px;
-}
-
-.admonition > p:before {
-    margin-right: 4px;  /* make room for the exclamation icon */
-}
-
-/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
-.math {
-    text-align: unset;
-}
-</style>
-<section id="tutorials">
+  <section id="tutorials">
 <h1>Tutorials<a class="headerlink" href="#tutorials" title="Permalink to this headline">¶</a></h1>
 <section id="basics-of-reflected-light">
 <h2>Basics of Reflected Light<a class="headerlink" href="#basics-of-reflected-light" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/1_GetStarted.html">Getting Started</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/1_GetStarted.html#Connect-to-Opacity-Database">Connect to Opacity Database</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/1_GetStarted.html#Load-blank-slate">Load blank slate</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/1_GetStarted.html#Set-Planet-&amp;-Star-Properties">Set Planet &amp; Star Properties</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/1_GetStarted.html#Set-Atmospheric-Composition">Set Atmospheric Composition</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/1_GetStarted.html#Create-1D-Reflected-Light-Spectrum">Create 1D Reflected Light Spectrum</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/1_GetStarted.html#Regrid-Opacities-to-Constant-Resolution">Regrid Opacities to Constant Resolution</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/2_AddingClouds.html">Adding Clouds</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/2_AddingClouds.html#User-Defined-Cloud-Input">User Defined Cloud Input</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/2_AddingClouds.html#Cloud-Input-for-Using-Single-Parameter-Box-Model">Cloud Input for Using Single Parameter Box Model</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/3_AddingSurfaceReflectivity.html">Adding Surface Reflectivity</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/3_AddingSurfaceReflectivity.html#Connect-to-Opacity-Database">Connect to Opacity Database</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/3_AddingSurfaceReflectivity.html#Load-blank-slate">Load blank slate</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/3_AddingSurfaceReflectivity.html#Set-Planet-&amp;-Star-Properties">Set Planet &amp; Star Properties</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/3_AddingSurfaceReflectivity.html#Get-Contrast-Units">Get Contrast Units</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/4_PlotDiagnostics.html">Plot Diagnostics</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/4_PlotDiagnostics.html#Return-PICASO-Full-Ouput">Return <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> Full Ouput</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/4_PlotDiagnostics.html#Visualizing-Full-Output">Visualizing Full Output</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/1_GetStarted.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/2_AddingClouds.html">Adding Clouds</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/3_AddingSurfaceReflectivity.html">Adding Surface Reflectivity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/4_PlotDiagnostics.html">Plot Diagnostics</a></li>
 </ul>
 </div>
 </section>
@@ -281,101 +252,54 @@
 </ul>
 </div>
 </section>
-<section id="d-climate-modeling-new">
-<h2>1D Climate Modeling (New!!)<a class="headerlink" href="#d-climate-modeling-new" title="Permalink to this headline">¶</a></h2>
+<section id="d-climate-modeling">
+<h2>1D Climate Modeling<a class="headerlink" href="#d-climate-modeling" title="Permalink to this headline">¶</a></h2>
 <p>Relevant Citatons: <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2022arXiv220807836M/abstract">Mukherjee et al. 2022</a></p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/climate/12a_BrownDwarf.html">Brown Dwarfs</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/climate/12a_BrownDwarf.html#What-does-a-climate-model-solve-for?">What does a climate model solve for?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/climate/12a_BrownDwarf.html#Starting-up-the-Run">Starting up the Run</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/climate/12a_BrownDwarf.html#Initial-T(P)-Guess">Initial T(P) Guess</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/climate/12a_BrownDwarf.html#Initial-Convective-Zone-Guess">Initial Convective Zone Guess</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/climate/12a_BrownDwarf.html#Run-the-Climate-Code">Run the Climate Code</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/climate/12a_BrownDwarf.html#Benchmark-with-Sonora-Bobcat">Benchmark with Sonora Bobcat</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/climate/12a_BrownDwarf.html#Climate-Plots-and-Animations">Climate Plots and Animations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/climate/12a_BrownDwarf.html#Selecting-an-Adequate-Pressure-Grid">Selecting an Adequate Pressure Grid</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/climate/12a_BrownDwarf.html#Post-Process-High-Resolution-Spectrum">Post Process High Resolution Spectrum</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/climate/12b_Exoplanet.html">Planet</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/climate/12b_Exoplanet.html#Starting-up-the-Run">Starting up the Run</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/climate/12b_Exoplanet.html#Initial-T(P)-Guess">Initial T(P) Guess</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/climate/12b_Exoplanet.html#Initial-Convective-Zone-Guess">Initial Convective Zone Guess</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/climate/12b_Exoplanet.html#Run-the-Climate-Code">Run the Climate Code</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/climate/12c_BrownDwarf_DEQ.html">Brown Dwarfs w/ Disequilibrium Chemistry</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/climate/12c_BrownDwarf_DEQ.html#Starting-up-the-Run">Starting up the Run</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/climate/12c_BrownDwarf_DEQ.html#Initial-T(P)-Guess">Initial T(P) Guess</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/climate/12c_BrownDwarf_DEQ.html#Initial-Convective-Zone-Guess">Initial Convective Zone Guess</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/climate/12c_BrownDwarf_DEQ.html#Run-the-Climate-Code-with-disequilibrium-chemistry">Run the Climate Code with disequilibrium chemistry</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/climate/12c_BrownDwarf_DEQ.html#Benchmark-with-Phillips-et-al-2020">Benchmark with Phillips et al 2020</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/climate/12a_BrownDwarf.html">Brown Dwarfs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/climate/12b_Exoplanet.html">Planet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/climate/12c_BrownDwarf_DEQ.html">Brown Dwarfs w/ Disequilibrium Chemistry</a></li>
 </ul>
 </div>
 </section>
-<section id="fitting-models-to-data-new">
-<h2>Fitting models to data (New!!)<a class="headerlink" href="#fitting-models-to-data-new" title="Permalink to this headline">¶</a></h2>
+<section id="fitting-models-to-data">
+<h2>Fitting models to data<a class="headerlink" href="#fitting-models-to-data" title="Permalink to this headline">¶</a></h2>
 <p>Relevant Citatons: <a class="reference external" href="https://www.nature.com/articles/s41586-022-05269-w">JWST Transiting Exoplanet Community Early Release Science Team (2022)</a></p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/fitdata/GridSearch.html">Grid Search Analysis</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/fitdata/GridSearch.html#Define-Paths-To-Data-and-Models">Define Paths To Data and Models</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/fitdata/GridSearch.html#Add-Available-Grids-to-Test">Add Available Grids to Test</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/fitdata/GridSearch.html#Add-Datasets-to-Explore">Add Datasets to Explore</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/fitdata/GridSearch.html#Compute-\chi_{red}^2/N-and-Retrieve-Single-Best-Fit">Compute <span class="math notranslate nohighlight">\(\chi_{red}^2\)</span>/N and Retrieve Single Best Fit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/fitdata/GridSearch.html#Analyze-Single-Best-Fits">Analyze Single Best Fits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/fitdata/GridSearch.html#Estimated-Posteriors">Estimated Posteriors</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/fitdata/GridSearch.html#Interpret-Best-Fit">Interpret Best Fit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/fitdata/GridSearch.html#Quantify-Molecular-Detection-using-Guassian-Fitting">Quantify Molecular Detection using Guassian Fitting</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/fitdata/GridSearch.html">Grid Search Analysis</a></li>
 </ul>
 </div>
 </section>
-<section id="opacities-approximatons">
-<h2>Opacities &amp; Approximatons<a class="headerlink" href="#opacities-approximatons" title="Permalink to this headline">¶</a></h2>
+<section id="model-storage-reuse">
+<h2>Model Storage &amp; Reuse<a class="headerlink" href="#model-storage-reuse" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/10_QueryOpacities.html">Query Opacites</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_QueryOpacities.html#General-Sqlite3-and-how-our-database-is-structured">General Sqlite3 and how our database is structured</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_QueryOpacities.html#How-to-Query-the-Database">How to Query the Database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/ModelStorage.html">How to store and reuse models</a></li>
 </ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/10_CreatingOpacityDb.html">Opacity Factory: Creating Custom Databases</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_CreatingOpacityDb.html#First-Define-Database-Specs-(min,-max-wavelength,-R)">First Define Database Specs (min, max wavelength, R)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_CreatingOpacityDb.html#Data-Formats">Data Formats</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_CreatingOpacityDb.html#Step-1:-Build-New-Database">Step 1: Build New Database</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_CreatingOpacityDb.html#Step-2:-Insert-Molecular-opacity">Step 2: Insert Molecular opacity</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_CreatingOpacityDb.html#Step-3)-Insert-Continuum-Opacity">Step 3) Insert Continuum Opacity</a></li>
+</div>
+</section>
+<section id="opacities">
+<h2>Opacities<a class="headerlink" href="#opacities" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10_QueryOpacities.html">Query Opacites</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10_CreatingOpacityDb.html">Opacity Factory: Creating Custom Databases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10_ResamplingOpacities.html">What Resampling do I Need?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10_CorrelatedKTables.html">Using Correlated-K Tables</a></li>
 </ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/10_ResamplingOpacities.html">What Resampling do I Need?</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_ResamplingOpacities.html#Test-set-up">Test set up</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_ResamplingOpacities.html#Simple-Transit-Model">Simple Transit Model</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_ResamplingOpacities.html#Regridding-to-Data-Resolution">Regridding to Data Resolution</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_ResamplingOpacities.html#Plot-differences">Plot differences</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_ResamplingOpacities.html#Takeaways">Takeaways</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/10_CorrelatedKTables.html">Using Correlated-K Tables</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_CorrelatedKTables.html#Call-opannection-and-supply-a-correlated-k-table">Call <code class="docutils literal notranslate"><span class="pre">opannection</span></code> and supply a correlated-k table</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_CorrelatedKTables.html#Compare-the-optical-depth-for-various-layers">Compare the optical depth for various layers</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_CorrelatedKTables.html#Compare-the-final-result-of-the-monochromatic-and-ck-generated---spectra">Compare the final result of the monochromatic and ck generated - spectra</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_CorrelatedKTables.html#Compare-Chemistry">Compare Chemistry</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html">Investigating Radiative Transfer Approximations</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html#Using-the-approx-key">Using the <code class="docutils literal notranslate"><span class="pre">approx</span></code> key</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html#What-approximations-exist?">What approximations exist?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html#Direct-Scattering-Approximation">Direct Scattering Approximation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html#Multiple-Scattering-Approximations">Multiple Scattering Approximations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html#Raman-Scattering-Approximations">Raman Scattering Approximations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/10_AnalyzingApproximations.html#The-Effect-of-Stellar-Spectrum">The Effect of Stellar Spectrum</a></li>
-</ul>
-</li>
+</div>
+</section>
+<section id="radiative-transfer-techniques">
+<h2>Radiative Transfer Techniques<a class="headerlink" href="#radiative-transfer-techniques" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10a_AnalyzingApproximationsReflectedLightToon.html">Approximations for Toon89 Two-Stream Radiative Transfer in Reflected Light</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10a_AnalyzingApproximationsReflectedLightToon.html#Benchmark-Toon89-w/-Dlugach-&amp;-Yanovitskij-(1974)">Benchmark Toon89 w/ Dlugach &amp; Yanovitskij (1974)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10b_AnalyzingApproximationsReflectedLightSH.html">Spherical Harmonics Radiative Transfer in Reflected Light</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10c_AnalyzingApproximationsThermal.html">Approximations for Spherical Harmonics Radiative Transfer in Thermal Emission</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10c_AnalyzingApproximationsThermal.html#Dependence-of-Radiative-Transfer-Method-on-Scattering-Parameters">Dependence of Radiative Transfer Method on Scattering Parameters</a></li>
 </ul>
 </div>
 </section>
@@ -383,27 +307,18 @@
 <h2>FAQs<a class="headerlink" href="#faqs" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/FAQs.html">Misc FAQs</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/FAQs.html#How-do-I-load-in-target-properties-from-Exo.Mast?">How do I load in target properties from Exo.Mast?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/FAQs.html#How-do-I-access-the-pressure-temperature-profile-parameterizations?">How do I access the pressure-temperature profile parameterizations?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/FAQs.html#How-do-I-return-the-output-from-photon-attenuation-plot?">How do I return the output from photon attenuation plot?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/FAQs.html#Can-I-use-the-phase-angle-function-to-specify-a-non-zero-phase-for-thermal-emission?">Can I use the phase angle function to specify a non-zero phase for thermal emission?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/FAQs.html#Has-your-question-not-been-answered?-Feel-free-to-contact-us!">Has your question not been answered? Feel free to contact us!</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/11_ContributionFunctions.html">Contribution Functions</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/11_ContributionFunctions.html#Initial-Model-Setup">Initial Model Setup</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/11_ContributionFunctions.html#Individual-Species-Contribution">Individual Species Contribution</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/11_ContributionFunctions.html#See-Species-Contribution-w/-“leave-one-out”-Method">See Species Contribution w/ “leave-one-out” Method</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/11_ContributionFunctions.html#Transmission-Contribution-Function">Transmission Contribution Function</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/11_ContributionFunctions.html#Thermal-Contribution-Function">Thermal Contribution Function</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/FAQs.html">How do I load in target properties from Exo.Mast?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/FAQs.html#How-do-I-access-the-pressure-temperature-profile-parameterizations?">How do I access the pressure-temperature profile parameterizations?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/FAQs.html#How-do-I-return-the-output-from-photon-attenuation-plot?">How do I return the output from photon attenuation plot?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/FAQs.html#Can-I-use-the-phase-angle-function-to-specify-a-non-zero-phase-for-thermal-emission?">Can I use the phase angle function to specify a non-zero phase for thermal emission?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/FAQs.html#I'm-confused-about-what-opacity-file-to-use">I’m confused about what opacity file to use</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/FAQs.html#Has-your-question-not-been-answered?-Feel-free-to-contact-us!">Has your question not been answered? Feel free to contact us!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/11_ContributionFunctions.html">Contribution Functions</a></li>
 </ul>
 </div>
 </section>
-<section id="model-storage-best-practices">
-<h2>Model Storage Best Practices<a class="headerlink" href="#model-storage-best-practices" title="Permalink to this headline">¶</a></h2>
+<section id="code-help">
+<h2>Code Help<a class="headerlink" href="#code-help" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/codehelp/data_uniformity_tutorial.html">Model Formating Overview</a></li>
@@ -412,13 +327,6 @@
 <li class="toctree-l1"><a class="reference internal" href="notebooks/codehelp/data_uniformity_tutorial.html#Storing-xarray-data">Storing <code class="docutils literal notranslate"><span class="pre">xarray</span></code> data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/codehelp/data_uniformity_tutorial.html#Reading/interpreting-an-xarray-file">Reading/interpreting an <code class="docutils literal notranslate"><span class="pre">xarray</span></code> file</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/codehelp/data_uniformity_tutorial.html#Checking-your-data-is-in-compliance">Checking your data is in compliance</a></li>
-</ul>
-</div>
-</section>
-<section id="code-help">
-<h2>Code Help<a class="headerlink" href="#code-help" title="Permalink to this headline">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/codehelp/Sqlite3Tutorial.html">SQLITE Tutorial</a></li>
 </ul>
 </div>
