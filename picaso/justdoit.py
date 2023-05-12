@@ -1551,7 +1551,7 @@ class inputs():
         self.inputs['star']['semi_major_unit'] = 'nostar' 
 
     def star(self, opannection,temp=None, metal=None, logg=None ,radius = None, radius_unit=None,
-        semi_major=None, semi_major_unit = None, deq = False, 
+        semi_major=None, semi_major_unit = None, #deq = False, 
         database='ck04models',filename=None, w_unit=None, f_unit=None):
         """
         Get the stellar spectrum using pysynphot and interpolate onto a much finer grid than the 
@@ -1723,9 +1723,12 @@ class inputs():
         self.inputs['star']['semi_major'] = semi_major 
         self.inputs['star']['semi_major_unit'] = semi_major_unit         
 
+        """
+        return not needed anymore
         if deq == True :
             FOPI = fine_flux_star * ((r/semi_major)**2)
             return FOPI
+        """
 
     def atmosphere(self, df=None, filename=None, exclude_mol=None, verbose=True, **pd_kwargs):
         """
@@ -3796,11 +3799,9 @@ class inputs():
             r_star_unit = self.inputs['star']['radius_unit'] 
             semi_major = self.inputs['star']['semi_major']
             semi_major_unit = self.inputs['star']['semi_major_unit'] 
-            
-
             fine_flux_star  = self.inputs['star']['flux']  # erg/s/cm^2
             FOPI = fine_flux_star * ((r_star/semi_major)**2)
-
+        print(FOPI)
         all_profiles= []
         if save_all_profiles:
             save_profile = 1
@@ -3962,6 +3963,11 @@ class inputs():
                 wv661 = 1e4/opacityclass.wno
                 opd_cld_climate,g0_cld_climate,w0_cld_climate = initiate_cld_matrices(opd_cld_climate,g0_cld_climate,w0_cld_climate,wv196,wv661)
                 print(np.shape(opd_cld_climate))
+            
+            """
+            Potentially repetetive code, with code 
+            block start at 3789
+
             if 'nostar' in self.inputs['star'].values():
                 rfacv=0.0 
                 FOPI = np.zeros(opacityclass.nwno) + 1.0
@@ -3981,7 +3987,7 @@ class inputs():
                 semi_major = self.inputs['climate']['semi_major']
                 r_planet = self.inputs['climate']['r_planet']
                 FOPI = self.star(opacityclass, temp =T_star,metal =metal, logg =logg, radius = r_star, radius_unit=u.R_sun,semi_major= semi_major , semi_major_unit = u.AU, deq= True)
-
+            """
             if not vulcan_run:
                 quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale= True) # determine quench levels
 
@@ -4477,7 +4483,10 @@ def toon_phase_coefficients(printout=True):
 
 def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             temp,pressure,FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
-             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species,mh,fsed,flag_hack, save_profile, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer=None, flux_plus_ir_attop=None,first_call_ever=False):
+             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
+             cloudy, cld_species,mh,fsed,flag_hack, save_profile, 
+             all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,
+             flux_net_ir_layer=None, flux_plus_ir_attop=None,first_call_ever=False):
     """
     Function iterating on the TP profile by calling tstart and changing opacities as well
     Parameters
