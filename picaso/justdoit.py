@@ -3724,7 +3724,8 @@ class inputs():
         self.inputs['climate']['r_planet'] = r_planet # jupiter radii
 
     def climate(self, opacityclass, save_all_profiles = False, as_dict=True,with_spec=False,
-        save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False, kz = None):#,
+        save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False, kz = None, 
+        on_fly=False,gases_fly=None):#,
         #vulcan_run = False, photochem=False,on_fly=False,gases_fly=None,mhdeq=None,CtoOdeq=None ):
         """
         Top Function to run the Climate Model
@@ -3754,7 +3755,7 @@ class inputs():
         #save to user 
         all_out = {}
 
-        vulcan_run=False;photochem=False;on_fly=False;gases_fly=None;mhdeq=None;CtoOdeq=None
+        vulcan_run=False;photochem=False;#on_fly=False;gases_fly=None;mhdeq=None;CtoOdeq=None
         if (vulcan_run or photochem): 
             raise Exception("Vulcan and photochemistry is not yet a live feature. If you are interesting in helping the development team, contact us.")
         
@@ -3943,8 +3944,10 @@ class inputs():
                 print("From now I will mix "+str(gases_fly)+" only on--the--fly")
                 #mhdeq and ctodeq will be auto by opannection
                 #NO Background, just CIA + whatever in gases_fly
-                ck_db=os.path.join(__refdata__, 'climate_INPUTS/sonora_2020_feh'+mhdeq+'_co_'+CtoOdeq+'.data.196')
-                opacityclass = opannection(ck=True, ck_db=ck_db,filename_db=filename_db,deq = True,on_fly=True,gases_fly=gases_fly)
+                #ck_db=os.path.join(__refdata__, 'climate_INPUTS/sonora_2020_feh'+mhdeq+'_co_'+CtoOdeq+'.data.196')
+                opacityclass = opannection(ck=True, 
+                    ck_db=ck_db=opacityclass.ck_filename,filename_db=filename_db,
+                    deq = True,on_fly=True,gases_fly=gases_fly)
             else:
                 #phillips comparison (discontinued) 
                 #background + gases 
