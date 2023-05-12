@@ -3801,7 +3801,7 @@ class inputs():
             semi_major_unit = self.inputs['star']['semi_major_unit'] 
             fine_flux_star  = self.inputs['star']['flux']  # erg/s/cm^2
             FOPI = fine_flux_star * ((r_star/semi_major)**2)
-        print(FOPI)
+
         all_profiles= []
         if save_all_profiles:
             save_profile = 1
@@ -5418,7 +5418,11 @@ def profile_deq(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         
         temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(nofczns,nstr,it_max,conv,x_max_mult, 
             rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
-            grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts, save_profile, all_profiles)
+            grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, 
+            COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
+            W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, FOPI, 
+            single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
+            tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts, save_profile, all_profiles)
         '''
         if (temp <= min(opacityclass.cia_temps)).any():
             wh = np.where(temp <= min(opacityclass.cia_temps))
