@@ -1725,9 +1725,11 @@ class RetrieveCKs():
         #self.molecular_opa = np.exp(self.kappa[ind_p, ind_t, :, :])*6.02214086e+23  #avogadro constant!
         
     def load_kcoeff_arrays(self,path):
- # this loads and returns the kappa tables from Theodora's bin_mol files
- # will have this very hardcoded.
- # use this func only once before run begins
+        """
+        This loads and returns the kappa tables from Theodora's bin_mol files
+        will have this very hardcoded.
+        use this func only once before run begins
+        """
         max_wind = 670 # this can change as well but hopefully not
         n_windows = 661 # wait for 196 , then this is 196
         npres = 18 # max pres grid #
@@ -1773,29 +1775,7 @@ class RetrieveCKs():
         dummy4 = f.read_reals( dtype='int16' )
 
         kh2o = np.reshape(k_h2o,(ntemp,npres,16,max_wind))
-        '''
-        f = FortranFile( path+'/bin_CO2', 'r' )
-        dummy1= f.read_record(dtype='float32')
-        dummy2 = f.read_reals( dtype='float32' )
-        k_co2 = f.read_reals( dtype='float' )
-        dummy3 = f.read_reals( dtype='float' )
-        dummy4 = f.read_reals( dtype='int16' )
-        kco2 = np.reshape(k_co2,(ntemp,npres,16,max_wind))
-        f = FortranFile( path+'/bin_HCN', 'r' )
-        dummy1= f.read_record(dtype='float32')
-        dummy2 = f.read_reals( dtype='float32' )
-        k_hcn = f.read_reals( dtype='float' )
-        dummy3 = f.read_reals( dtype='float' )
-        dummy4 = f.read_reals( dtype='int16' )
-        khcn = np.reshape(k_hcn,(ntemp,npres,16,max_wind))
-        f = FortranFile( path+'/bin_N2', 'r' )
-        dummy1= f.read_record(dtype='float32')
-        dummy2 = f.read_reals( dtype='float32' )
-        k_n2 = f.read_reals( dtype='float' )
-        dummy3 = f.read_reals( dtype='float' )
-        dummy4 = f.read_reals( dtype='int16' )
-        kn2 = np.reshape(k_n2,(ntemp,npres,16,max_wind))
-        '''
+
         f = FortranFile( path+'/bin_deq_rst_4', 'r' )
 
         dummy1= f.read_record(dtype='float32')
@@ -1820,29 +1800,28 @@ class RetrieveCKs():
 
         kco = kco.swapaxes(0,1)
         kco = kco.swapaxes(2,3)
-        '''
-        kco2 = kco2.swapaxes(0,1)
-        kco2 = kco2.swapaxes(2,3)
-        kn2 = kn2.swapaxes(0,1)
-        kn2 = kn2.swapaxes(2,3)
-        khcn = khcn.swapaxes(0,1)
-        khcn = khcn.swapaxes(2,3)
-        '''
+
 
         self.kappa_back = kback[:,:,0:self.nwno,0:self.ngauss]
         self.kappa_h2o = kh2o[:,:,0:self.nwno,0:self.ngauss]
         self.kappa_co = kco[:,:,0:self.nwno,0:self.ngauss]
         self.kappa_nh3 = knh3[:,:,0:self.nwno,0:self.ngauss]
         self.kappa_ch4 = kch4[:,:,0:self.nwno,0:self.ngauss]
-        '''
-        self.kappa_co2 = kco2[:,:,0:self.nwno,0:self.ngauss]
-        self.kappa_n2 = kn2[:,:,0:self.nwno,0:self.ngauss]
-        self.kappa_hcn = khcn[:,:,0:self.nwno,0:self.ngauss]
-        '''
+
+
     def load_kcoeff_arrays_first(self,path,gases_fly):
- # this loads and returns the kappa tables from Theodora's bin_mol files
- # will have this very hardcoded.
- # use this func only once before run begins
+        """
+        This loads and returns the kappa tables from
+        opacity_factory.compute_ck_molecular()
+        Currently we have a single file for each molecule 
+
+        Parameters 
+        ----------
+        path : str 
+            Path to the individual ck files 
+        gases_fly : bool 
+            Specifies what gasses to mix on the fly 
+        """
         if 'H2O' in gases_fly:
             array = np.load(path+'/H2O_1460.npy')
             self.kappa_h2o = array
@@ -1945,7 +1924,7 @@ class RetrieveCKs():
             array = np.load(path+'/FeH_1460.npy')
             self.kappa_feh = array
         else:
-            array = np.load(path+'/Feh_1460.npy')
+            array = np.load(path+'/FeH_1460.npy')
             self.kappa_feh = array*0-250.0
         
     def get_new_wvno_grid_661(self):
