@@ -771,7 +771,7 @@ def insert_molecular_1060(molecule, min_wavelength, max_wavelength, new_R,
         #Grab 1060 in various format data
         if molecule in ['Cs','K','Li','Na','Rb']:
             openf=FortranFile(fdata,'r')
-            dset = openf.read_ints(dtype=np.float)
+            dset = openf.read_ints(dtype=float)
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1] 
         elif molecule =='CH3D':
             df = pd.read_csv(os.path.join(og_directory,molecule,'fort.{0}.bz2'.format(int(i)))
@@ -1220,7 +1220,7 @@ def vresample_and_insert_molecular(molecule, min_wavelength, max_wavelength, new
         fdata = os.path.join(og_directory,molecule,'p_'+str(int(i)))
 
         #Grab 1060 format data
-        dset = np.fromfile(fdata, dtype=float)   #openf.read_ints(dtype=np.float)
+        dset = np.fromfile(fdata, dtype=float)   #openf.read_ints(dtype=float)
         og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]      
 
         #interp on high res grid
