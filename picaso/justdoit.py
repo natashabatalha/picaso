@@ -3946,7 +3946,7 @@ class inputs():
                 #NO Background, just CIA + whatever in gases_fly
                 #ck_db=os.path.join(__refdata__, 'climate_INPUTS/sonora_2020_feh'+mhdeq+'_co_'+CtoOdeq+'.data.196')
                 opacityclass = opannection(ck=True, 
-                    ck_db=ck_db=opacityclass.ck_filename,filename_db=filename_db,
+                    ck_db=opacityclass.ck_filename,filename_db=filename_db,
                     deq = True,on_fly=True,gases_fly=gases_fly)
             else:
                 #phillips comparison (discontinued) 
