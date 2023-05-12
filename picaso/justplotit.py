@@ -1884,8 +1884,8 @@ def animate_convergence(clima_out, picaso_bundle, opacity, wave_range=[0.3,6],
 
         picaso_bundle.premix_atmosphere(opacity,picaso_bundle.inputs['atmosphere']['profile'])
 
-        df_spec = picaso_bundle.spectrum(opacity,full_output=True)
-        spec[i,:] = df_spec['thermal']
+        df_spec = picaso_bundle.spectrum(opacity,full_output=True,calculation='thermal')
+
         for imol in molecules:
             mols_to_plot[imol][i*nlevel:(i+1)*nlevel] = picaso_bundle.inputs['atmosphere']['profile'][imol]
     
