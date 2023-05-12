@@ -1389,9 +1389,8 @@ def get_molecular(db_file, species, temperature,pressure):
 
     data= cur.fetchall()
 
-    temp_nearest = [pt_pairs[i][2] for i in ind_pt]
-    pres_nearest = [pt_pairs[i][1] for i in ind_pt]
-
+    temp_nearest = [pt_pairs[i-1][2] for i in ind_pt]
+    pres_nearest = [pt_pairs[i-1][1] for i in ind_pt]
     restruct = {i:{} for i in species}
     for i in restruct.keys():
         for t in temp_nearest:
