@@ -3964,29 +3964,33 @@ class inputs():
                 opd_cld_climate,g0_cld_climate,w0_cld_climate = initiate_cld_matrices(opd_cld_climate,g0_cld_climate,w0_cld_climate,wv196,wv661)
                 print(np.shape(opd_cld_climate))
             
-            """
-            Potentially repetetive code, with code 
-            block start at 3789
-
+            #Rerun star so that F0PI can now be on the 
+            #661 grid 
             if 'nostar' in self.inputs['star'].values():
-                rfacv=0.0 
+                #rfacv=0.0 
                 FOPI = np.zeros(opacityclass.nwno) + 1.0
-                T_star = None
-                r_star = None
-                logg = None
-                metal = None
-                semi_major = None
-                r_planet = None
+                #T_star = None
+                #r_star = None
+                #logg = None
+                #metal = None
+                #semi_major = None
+                #r_planet = None
             #otherwise assume that there is stellar irradiation 
             else:
-                rfacv = self.inputs['climate']['rfacv']
-                T_star = self.inputs['climate']['T_star']
-                r_star = self.inputs['climate']['r_star']
-                logg = self.inputs['climate']['logg']
-                metal = self.inputs['climate']['metal']
-                semi_major = self.inputs['climate']['semi_major']
-                r_planet = self.inputs['climate']['r_planet']
-                FOPI = self.star(opacityclass, temp =T_star,metal =metal, logg =logg, radius = r_star, radius_unit=u.R_sun,semi_major= semi_major , semi_major_unit = u.AU, deq= True)
+                T_star = self.inputs['star']['temp']
+                r_star = self.inputs['star']['radius']
+                r_star_unit = self.inputs['star']['radius_unit']
+                logg = self.inputs['star']['logg']
+                metal =  self.inputs['star']['metal']
+                semi_major = self.inputs['star']['semi_major']
+                sm_unit = self.inputs['star']['semi_major_unit']
+
+                self.star(opacityclass, temp =T_star,metal =metal, logg =logg, 
+                    radius = r_star, radius_unit=r_star_unit,semi_major= semi_major , 
+                    semi_major_unit = sm_unit)
+                fine_flux_star  = self.inputs['star']['flux']  # erg/s/cm^2
+                FOPI = fine_flux_star * ((r_star/semi_major)**2)
+                print("NEW STAR GRID",len(FOPI))
             """
             if not vulcan_run:
                 quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale= True) # determine quench levels
