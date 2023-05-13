@@ -3967,15 +3967,7 @@ class inputs():
             #Rerun star so that F0PI can now be on the 
             #661 grid 
             if 'nostar' in self.inputs['star'].values():
-                #rfacv=0.0 
                 FOPI = np.zeros(opacityclass.nwno) + 1.0
-                #T_star = None
-                #r_star = None
-                #logg = None
-                #metal = None
-                #semi_major = None
-                #r_planet = None
-            #otherwise assume that there is stellar irradiation 
             else:
                 T_star = self.inputs['star']['temp']
                 r_star = self.inputs['star']['radius']
@@ -3984,14 +3976,13 @@ class inputs():
                 metal =  self.inputs['star']['metal']
                 semi_major = self.inputs['star']['semi_major']
                 sm_unit = self.inputs['star']['semi_major_unit']
-
                 self.star(opacityclass, temp =T_star,metal =metal, logg =logg, 
                     radius = r_star, radius_unit=r_star_unit,semi_major= semi_major , 
                     semi_major_unit = sm_unit)
                 fine_flux_star  = self.inputs['star']['flux']  # erg/s/cm^2
                 FOPI = fine_flux_star * ((r_star/semi_major)**2)
                 print("NEW STAR GRID",len(FOPI))
-            """
+            
             if not vulcan_run:
                 quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale= True) # determine quench levels
 
