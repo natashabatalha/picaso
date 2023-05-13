@@ -3977,8 +3977,8 @@ class inputs():
                 semi_major = self.inputs['star']['semi_major']
                 sm_unit = self.inputs['star']['semi_major_unit']
                 self.star(opacityclass, temp =T_star,metal =metal, logg =logg, 
-                    radius = r_star, radius_unit=r_star_unit,semi_major= semi_major , 
-                    semi_major_unit = sm_unit)
+                    radius = r_star, radius_unit=u.Unit(r_star_unit),semi_major= semi_major , 
+                    semi_major_unit = u.Unit(sm_unit))
                 fine_flux_star  = self.inputs['star']['flux']  # erg/s/cm^2
                 FOPI = fine_flux_star * ((r_star/semi_major)**2)
                 print("NEW STAR GRID",len(FOPI))
