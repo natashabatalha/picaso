@@ -3976,12 +3976,12 @@ class inputs():
                 metal =  self.inputs['star']['metal']
                 semi_major = self.inputs['star']['semi_major']
                 sm_unit = self.inputs['star']['semi_major_unit']
-                self.star(opacityclass, temp =T_star,metal =metal, logg =logg, 
+                database = self.inputs['star']['database']
+                self.star(opacityclass, database=database,temp =T_star,metal =metal, logg =logg, 
                     radius = r_star, radius_unit=u.Unit(r_star_unit),semi_major= semi_major , 
                     semi_major_unit = u.Unit(sm_unit))
                 fine_flux_star  = self.inputs['star']['flux']  # erg/s/cm^2
                 FOPI = fine_flux_star * ((r_star/semi_major)**2)
-                print("NEW STAR GRID",len(FOPI))
             
             if not vulcan_run:
                 quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale= True) # determine quench levels
