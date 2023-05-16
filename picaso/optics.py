@@ -646,7 +646,8 @@ class RetrieveCKs():
         NOT FUNCTIONAL YET. 
         Wavelength range to compuate in the format [min micron, max micron]
     """
-    def __init__(self, ck_dir, cont_dir, wave_range=None, deq=False, on_fly=False,gases_fly=None):
+    def __init__(self, ck_dir, cont_dir, wave_range=None, 
+        deq=False, on_fly=False,gases_fly=None):
         self.ck_filename = ck_dir
         #read in the full abundance file sot hat we can check the number of kcoefficient layers 
         #this should either be 1460 or 1060
@@ -671,7 +672,10 @@ class RetrieveCKs():
             
         
         elif (deq == True) and (on_fly == False) :
-            #self.get_gauss_pts_661()#Discontinuing to delete repetetive code
+            #this option follows the old method where we used 
+            #661 fortran files computed by T.Karidali
+            #this is why we have to use the 1060 files instead 
+            #of the 1460 files
             self.get_legacy_data_1060(wave_range,deq=deq)
             self.get_new_wvno_grid_661()
             
@@ -683,7 +687,8 @@ class RetrieveCKs():
             self.run_cia_spline_661()
         
         elif (deq == True) and (on_fly== True) :
-            self.get_gauss_pts_661_1460()
+            #self.get_gauss_pts_661_1460() repetetive code function
+            self.get_legacy_data_1460(wave_range)
             self.get_new_wvno_grid_661()
             
             opa_filepath  = os.path.join(__refdata__, 'climate_INPUTS/661')
@@ -1074,8 +1079,8 @@ class RetrieveCKs():
  
 
 
-    def get_gauss_pts_661_1460(self):
-        """
+    def get_gauss_pts_661_1460_deprecate(self):
+        """NOT needed anymore, should be replaced with 1460 function
         Function to read the legacy data of the 1060 grid computed by Roxana Lupu. 
         Note
         ----
