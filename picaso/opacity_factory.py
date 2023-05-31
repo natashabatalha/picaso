@@ -1511,6 +1511,9 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
 
     """
     grid_file = os.path.join(og_directory,'grid1460.csv')
+    npres = 20 
+    ntemp = 73 
+    ngauss = order*2 
 
     s1460 = pd.read_csv(grid_file,dtype=str)
     #all pressures
@@ -1573,7 +1576,7 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
         wvno_low,wvno_high = get_wvno_grid(wv_file_name)
     else: 
         wvno_low,wvno_high = get_wvno_grid(None, min_wavelength, max_wavelength, R)
-    k_coeff_arr = np.zeros(shape=(20,73,len(wvno_low),8))
+    k_coeff_arr = np.zeros(shape=(npres,ntemp,len(wvno_low),ngauss))
     ctp,ctt = 0,0
     for i,p,t in zip(ifile,pres,temp):  
         #path to data

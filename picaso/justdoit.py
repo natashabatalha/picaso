@@ -1551,7 +1551,7 @@ class inputs():
         self.inputs['star']['semi_major_unit'] = 'nostar' 
 
     def star(self, opannection,temp=None, metal=None, logg=None ,radius = None, radius_unit=None,
-        semi_major=None, semi_major_unit = None, deq = False, 
+        semi_major=None, semi_major_unit = None, #deq = False, 
         database='ck04models',filename=None, w_unit=None, f_unit=None):
         """
         Get the stellar spectrum using pysynphot and interpolate onto a much finer grid than the 
@@ -1723,9 +1723,12 @@ class inputs():
         self.inputs['star']['semi_major'] = semi_major 
         self.inputs['star']['semi_major_unit'] = semi_major_unit         
 
+        """
+        return not needed anymore
         if deq == True :
             FOPI = fine_flux_star * ((r/semi_major)**2)
             return FOPI
+        """
 
     def atmosphere(self, df=None, filename=None, exclude_mol=None, verbose=True, **pd_kwargs):
         """
@@ -3724,7 +3727,8 @@ class inputs():
         self.inputs['climate']['r_planet'] = r_planet # jupiter radii
 
     def climate(self, opacityclass, save_all_profiles = False, as_dict=True,with_spec=False,
-        save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False, kz = None):#,
+        save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False, kz = None, 
+        on_fly=False,gases_fly=None, chemeq_first=True):#,
         #vulcan_run = False, photochem=False,on_fly=False,gases_fly=None,mhdeq=None,CtoOdeq=None ):
         """
         Top Function to run the Climate Model
@@ -3754,7 +3758,7 @@ class inputs():
         #save to user 
         all_out = {}
 
-        vulcan_run=False;photochem=False;on_fly=False;gases_fly=None;mhdeq=None;CtoOdeq=None
+        vulcan_run=False;photochem=False;#on_fly=False;gases_fly=None;mhdeq=None;CtoOdeq=None
         if (vulcan_run or photochem): 
             raise Exception("Vulcan and photochemistry is not yet a live feature. If you are interesting in helping the development team, contact us.")
         
@@ -3795,8 +3799,6 @@ class inputs():
             r_star_unit = self.inputs['star']['radius_unit'] 
             semi_major = self.inputs['star']['semi_major']
             semi_major_unit = self.inputs['star']['semi_major_unit'] 
-            
-
             fine_flux_star  = self.inputs['star']['flux']  # erg/s/cm^2
             FOPI = fine_flux_star * ((r_star/semi_major)**2)
 
@@ -3847,7 +3849,7 @@ class inputs():
         flag_hack = False
 
         
-        pressure, temperature, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
+        if chemeq_first: pressure, temperature, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             TEMP1,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
             rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , cloudy, cld_species,mh,fsed,flag_hack, save_profile,all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,first_call_ever=True)
 
@@ -3860,16 +3862,20 @@ class inputs():
 
         
         final = False
-        pressure, temperature, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
+        if chemeq_first: pressure, temperature, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                     temperature,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
                     rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack,save_profile,all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop )   
 
-        pressure, temp, dtdp, nstr_new, flux_plus_final, df, all_profiles, opd_now,w0_now,g0_now =find_strat(pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
+        if chemeq_first: pressure, temp, dtdp, nstr_new, flux_plus_final, df, all_profiles, opd_now,w0_now,g0_now =find_strat(pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                              t_table, p_table, grad, cp, opacityclass, grav, 
                              rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, save_profile,all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop)
 
         
         if diseq_chem:
+            #Starting with user's guess since there was no request to converge a chemeq profile first 
+            if not chemeq_first: 
+                temp = TEMP1
+
             wv196 = 1e4/wno
 
             # first change the nstr vector because need to check if they grow or not
@@ -3896,9 +3902,8 @@ class inputs():
             
             print("New NSTR status is ", nstr)
 
-            #was for check SM 
-            #pressure,temp =np.loadtxt("/data/users/samukher/Disequilibrium-picaso/picaso/tstart_800_562.dat",usecols=[1,2],unpack=True) 
-            #temp+=300            
+            
+
             bundle = inputs(calculation='brown')
 
             bundle.phase_angle(0)
@@ -3918,8 +3923,8 @@ class inputs():
             
             #here begins the self consistent Kzz calculation 
             # MLT plus some prescription in radiative zone
-            if self_consistent_kzz: 
-
+            if self_consistent_kzz or (not chemeq_first): 
+                
                 flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = climate(pressure, temp, delta_wno, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
                 COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
                 ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
@@ -3928,8 +3933,10 @@ class inputs():
                 flux_net_ir_layer = flux_net_ir_layer_full[:]
                 flux_plus_ir_attop = flux_plus_ir_full[0,:] 
                 calc_type = 0
+                
                 # use mixing length theory to calculate Kzz profile
-                kz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
+                if self_consistent_kzz: 
+                    kz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
             
             
             
@@ -3943,8 +3950,10 @@ class inputs():
                 print("From now I will mix "+str(gases_fly)+" only on--the--fly")
                 #mhdeq and ctodeq will be auto by opannection
                 #NO Background, just CIA + whatever in gases_fly
-                ck_db=os.path.join(__refdata__, 'climate_INPUTS/sonora_2020_feh'+mhdeq+'_co_'+CtoOdeq+'.data.196')
-                opacityclass = opannection(ck=True, ck_db=ck_db,filename_db=filename_db,deq = True,on_fly=True,gases_fly=gases_fly)
+                #ck_db=os.path.join(__refdata__, 'climate_INPUTS/sonora_2020_feh'+mhdeq+'_co_'+CtoOdeq+'.data.196')
+                opacityclass = opannection(ck=True, 
+                    ck_db=opacityclass.ck_filename,filename_db=filename_db,
+                    deq = True,on_fly=True,gases_fly=gases_fly)
             else:
                 #phillips comparison (discontinued) 
                 #background + gases 
@@ -3959,26 +3968,26 @@ class inputs():
                 wv661 = 1e4/opacityclass.wno
                 opd_cld_climate,g0_cld_climate,w0_cld_climate = initiate_cld_matrices(opd_cld_climate,g0_cld_climate,w0_cld_climate,wv196,wv661)
                 print(np.shape(opd_cld_climate))
+            
+            #Rerun star so that F0PI can now be on the 
+            #661 grid 
             if 'nostar' in self.inputs['star'].values():
-                rfacv=0.0 
                 FOPI = np.zeros(opacityclass.nwno) + 1.0
-                T_star = None
-                r_star = None
-                logg = None
-                metal = None
-                semi_major = None
-                r_planet = None
-            #otherwise assume that there is stellar irradiation 
             else:
-                rfacv = self.inputs['climate']['rfacv']
-                T_star = self.inputs['climate']['T_star']
-                r_star = self.inputs['climate']['r_star']
-                logg = self.inputs['climate']['logg']
-                metal = self.inputs['climate']['metal']
-                semi_major = self.inputs['climate']['semi_major']
-                r_planet = self.inputs['climate']['r_planet']
-                FOPI = self.star(opacityclass, temp =T_star,metal =metal, logg =logg, radius = r_star, radius_unit=u.R_sun,semi_major= semi_major , semi_major_unit = u.AU, deq= True)
-
+                T_star = self.inputs['star']['temp']
+                r_star = self.inputs['star']['radius']
+                r_star_unit = self.inputs['star']['radius_unit']
+                logg = self.inputs['star']['logg']
+                metal =  self.inputs['star']['metal']
+                semi_major = self.inputs['star']['semi_major']
+                sm_unit = self.inputs['star']['semi_major_unit']
+                database = self.inputs['star']['database']
+                self.star(opacityclass, database=database,temp =T_star,metal =metal, logg =logg, 
+                    radius = r_star, radius_unit=u.Unit(r_star_unit),semi_major= semi_major , 
+                    semi_major_unit = u.Unit(sm_unit))
+                fine_flux_star  = self.inputs['star']['flux']  # erg/s/cm^2
+                FOPI = fine_flux_star * ((r_star/semi_major)**2)
+            
             if not vulcan_run:
                 quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale= True) # determine quench levels
 
@@ -4474,7 +4483,10 @@ def toon_phase_coefficients(printout=True):
 
 def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             temp,pressure,FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
-             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species,mh,fsed,flag_hack, save_profile, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer=None, flux_plus_ir_attop=None,first_call_ever=False):
+             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
+             cloudy, cld_species,mh,fsed,flag_hack, save_profile, 
+             all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,
+             flux_net_ir_layer=None, flux_plus_ir_attop=None,first_call_ever=False):
     """
     Function iterating on the TP profile by calling tstart and changing opacities as well
     Parameters
@@ -5406,7 +5418,11 @@ def profile_deq(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         
         temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(nofczns,nstr,it_max,conv,x_max_mult, 
             rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
-            grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts, save_profile, all_profiles)
+            grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, 
+            COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
+            W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, FOPI, 
+            single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
+            tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts, save_profile, all_profiles)
         '''
         if (temp <= min(opacityclass.cia_temps)).any():
             wh = np.where(temp <= min(opacityclass.cia_temps))
