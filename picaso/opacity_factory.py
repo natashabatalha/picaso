@@ -960,8 +960,8 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]  
         elif 'rfree_fort' in ftype: 
             df = pd.read_csv(f'fort.{i}',delim_whitespace=True, skiprows=27, header=None, names=['wno','cx'])
-            dset=df.loc[:,'wno'].values
-            og_wvno_grid=df.loc[:,'cx'].values           
+            dset=df.loc[:,'cx'].values
+            og_wvno_grid=df.loc[:,'wno'].values           
 
         if not insert_direct:
             #interp on high res grid
