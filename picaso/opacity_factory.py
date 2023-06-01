@@ -912,7 +912,6 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         ftype='rfree_fort'
     else: 
         raise Exception('Could not find npy or p_ files. npy are assumed to be read via np.load, where as p_ files are assumed to be unformatted binary or alkali files')
-        
     read_fits = os.path.join(mol_dir,'readomni.fits' )
     lupu_wave= os.path.join(mol_dir,'wavelengths.txt' )
     if os.path.exists(read_fits):
@@ -931,7 +930,7 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         start = s1460['start_wavenumber'].values.astype(float)
         
 
-
+    
     for i,p,t in zip(ifile,pres,temp):  
         #path to data
         if 'fortran' in ftype:
@@ -959,7 +958,7 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
             dset = np.load(open(fdata,'rb'))
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]  
         elif 'rfree_fort' in ftype: 
-            df = pd.read_csv(f'fort.{i}',delim_whitespace=True, skiprows=27, header=None, names=['wno','cx'])
+            df = pd.read_csv(fdata,delim_whitespace=True, skiprows=27, header=None, names=['wno','cx'])
             dset=df.loc[:,'wno'].values
             og_wvno_grid=df.loc[:,'cx'].values           
 
