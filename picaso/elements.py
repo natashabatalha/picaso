@@ -356,8 +356,7 @@ ELEMENTS = ElementsDict(
         eleconfig='1s',
         oxistates='1*, -1',
         ionenergy=(13.5984, ),
-        isotopes={1: Isotope(1.0078250321, 0.999885, 1),
-                  2: Isotope(2.014101778, 0.000115, 2)}),
+        isotopes={2: Isotope(2.014101778, 0.000115, 2)}),
     Element(
         2, 'He', 'Helium',
         group=18, period=1, block='s', series=2,
