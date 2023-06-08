@@ -3106,7 +3106,7 @@ class inputs():
     
     def virga(self, condensates, directory,
         fsed=1, b=1, eps=1e-2, param='const', 
-        mh=1, mmw=2.2, kz_min=1e5, sig=2, 
+        mh=1, mmw=2.2, kz_min=1e5, sig=2, gas_mmr=None,
         full_output=False, Teff=None, alpha_pressure=None, supsat=0,
         gas_mmr=None, do_virtual=False, verbose=True): 
         """
@@ -3128,7 +3128,10 @@ class inputs():
         mh : float 
             Metallicity 
         mmw : float 
-            Atmospheric mean molecular weight  
+            Atmospheric mean molecular weight 
+        gas_mmr : dict 
+            Gas MMR as a dictionary for individual gases. This allows users to override 
+            virga's chemistry. E.g. {'SiO2':1e-6}
         kz_min : float
             Minimum kzz value
         sig : float 
