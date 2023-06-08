@@ -3169,7 +3169,9 @@ class inputs():
             df = vj.picaso_format(opd, w0, g0)
         else: 
             opd, w0, g0 = out['opd_per_layer'],out['single_scattering'],out['asymmetry']
-            df = vj.picaso_format(opd, w0, g0)
+            pres = out['pressure']
+            wno = 1e4/out['wave']
+            df = vj.picaso_format(opd, w0, g0, pressure = pres, wavenumber=wno)
         #only pass through clouds 1d if clouds are one dimension 
         self.clouds(df=df)
         if full_output : return out
