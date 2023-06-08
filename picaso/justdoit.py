@@ -3106,7 +3106,7 @@ class inputs():
     
     def virga(self, condensates, directory,
         fsed=1, b=1, eps=1e-2, param='const', 
-        mh=1, mmw=2.2, kz_min=1e5, sig=2, gas_mmr=None,
+        mh=1, mmw=2.2, kz_min=1e5, sig=2, 
         full_output=False, Teff=None, alpha_pressure=None, supsat=0,
         gas_mmr=None, do_virtual=False, verbose=True): 
         """
@@ -3141,8 +3141,6 @@ class inputs():
         alpha_pressure: float, optional
             Pressure at which we want fsed=alpha for variable fsed calculation.
             If None, pressure set to the top of the atmosphere
-        gas_mmr : float, optional
-            Temporary option to set gas_mmr of single condensate (this needs updated)
         do_virtual : bool 
             Turn on and off the "virtual" cloud which is a cloud that forms below 
             the pressure grid defined by the user. 
