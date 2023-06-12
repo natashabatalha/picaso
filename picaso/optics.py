@@ -302,7 +302,7 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
         single_scattering_cld[:,:,igauss] = atm.layer['cloud']['w0'] 
 
     if return_mode: 
-        taus_by_species['cloud'] = TAUCLD[:,:,0]*single_scattering_cld[:,:,0]
+        taus_by_species['cloud'] = TAUCLD[:,:,0]#*single_scattering_cld[:,:,0]
         return taus_by_species
         
     #====================== If user requests full output, add Tau's to atmosphere class=====
