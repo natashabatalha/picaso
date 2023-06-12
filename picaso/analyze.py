@@ -614,7 +614,7 @@ class GridFitter():
         
         #if the grid were square what size would it be based on unique params
         square_size = np.product([len(i) for i in grid_params_unique.values()])
-        if square != all_spectra.shape[0]:
+        if square_size != all_spectra.shape[0]:
             #grid is not square let's fix that for interpolation 
             spectra_square = []
             full_df_grid = pd.DataFrame(columns = grid_params_unique.keys(), 
