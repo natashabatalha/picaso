@@ -597,6 +597,7 @@ class GridFitter():
         grid_name : str 
             Name of grid that you want to interpolate on
         """
+        all_spectra = fitter.spectra[grid_name]
         df_grid_params = pd.DataFrame(index = range(len(fitter.list_of_files[grid_name])))
         grid_params=[]
         for i in fitter.grid_params[grid_name].keys():
