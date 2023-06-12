@@ -9,6 +9,7 @@ import os
 from astropy.convolution import convolve, Box1DKernel, Gaussian1DKernel
 import astropy.units as u
 from scipy import optimize
+from scipy.stats import cKDTree
 import glob
 
 from matplotlib.ticker import StrMethodFormatter
@@ -440,7 +441,7 @@ class GridFitter():
         return fig,ax
 
 
-    def get_posteriors(self, grid_name, data_name, parameter):
+    def get_chi_posteriors(self, grid_name, data_name, parameter):
         """
         Get posteriors (x,y) given a grid name, data name and parameter specified in grid_params
 
@@ -474,7 +475,7 @@ class GridFitter():
         return parameter_grid,prob
 
 
-    def plot_posteriors(self, grid_name, data_name,parameters, fig=None, ax=None,
+    def plot_chi_posteriors(self, grid_name, data_name,parameters, fig=None, ax=None,
                        x_label_style={}, x_axis_type={}, label=''):
         """
         Plots posteriors for a given parameter set 
@@ -569,7 +570,197 @@ class GridFitter():
                     ax[irow,icol].legend(fontsize=20)
         return fig, ax 
 
+import itertools
+from numba import jit 
+from scipy.spatial import cKDTree
 
+
+#@jit(nopython=True)
+def get_last_dimension(arr, indices):
+    """
+    Given an array of any dimenion, returns the last dimension with the other 
+    dimensions specified by "indices". 
+    
+    for example, if arr = np.random.randn([4,4]) and indices = [1,-1], it would
+    return arr[1,:]. this is slightly confusing because -1 usually indicates last element, 
+    which is different from the use of ":". However, jit nopython cannot compare string 
+    elements. Therefore this code uses -1 in place of :. 
+    """
+    if len(indices) == 1 and indices[0] == -1:
+        return arr
+    elif len(indices) == 1:
+        return arr[indices[0]]
+    
+    return get_last_dimension(arr[indices[0]], indices[1:])
+
+    def prep_gridtrieval(self, grid_name):
+        """
+        Preps the loaded grid for interpolated gridtrieval 
+        """
+        sqr_spec , uniq, offset_prior = self.transform_4_interp(grid_name)
+        self.interp_params = {}
+        self.interp_params[grid_name] = {}
+        self.interp_params[grid_name]['offset_prior'] = offset_prior
+        self.interp_params[grid_name]['grid_parameters'] = uniq
+        self.interp_params[grid_name]['square_spectra_grid'] = sqr_spec
+
+    def transform_4_interp(fitter, grid_name):
+        """
+        Transforms the fitter output into a square grid with np.nan in place 
+        of spectra that are missing 
+        This allows us to use the custom grid interpolator for cases where spectra are 
+        available. for everything else it will use the non square grid 
+        
+        Parameters
+        ----------
+        fitter : analyze.GridFitter
+            class that has all the spectra information loaded 
+        grid_name : str 
+            Name of grid that you want to interpolate on
+        """
+        df_grid_params = jdi.pd.DataFrame(index = range(len(fitter.list_of_files[grid_name])))
+        grid_params=[]
+        for i in fitter.grid_params[grid_name].keys():
+            for j in fitter.grid_params[grid_name][i].keys():
+                grid_params+=[j]
+                df_grid_params[j] = fitter.grid_params[grid_name][i][j]
+        grid_params_unique = {}
+
+        offset_pm = abs(2*(np.min(fitter.spectra[grid_name]) - 
+                           np.max(fitter.spectra[grid_name])))
+
+        for i in grid_params:
+            grid_params_unique[i]=np.array([float(i) for i in 
+                                        sorted(df_grid_params[i].unique())])
+        
+        #if the grid were square what size would it be based on unique params
+        square_size = np.product([len(i) for i in grid_params_unique.values()])
+        if square != all_spectra.shape[0]:
+            #grid is not square let's fix that for interpolation 
+            spectra_square = []
+            full_df_grid = pd.DataFrame(columns = grid_params_unique.keys(), 
+                                       index = range(square_size))
+            for i,icombo in enumerate(itertools.product(*grid_params_unique.values())): 
+
+                matches = df_grid_params.astype(float).eq(icombo)
+                matches_all_rows = matches.all(axis=1)
+                matches = df_grid_params.loc[matches_all_rows]
+
+                if len(matches.index)==0: 
+                    full_df_grid.iloc[i,:] = icombo
+                    spectra_square += [[np.nan]*all_spectra.shape[1]]
+                else: 
+                    ind = matches.index[0]
+                    full_df_grid.iloc[i,:] = icombo
+                    spectra_square += [all_spectra[ind]]
+            spectra_square = np.reshape(spectra_square, [len(i) for i in grid_params_unique.values()]
+                                        +[all_spectra.shape[1]])
+
+        else: 
+            #reshape all_spectra to be on npar1 x npar2 x npar3 etc 
+            spectra_square = np.reshape(all_spectra, 
+                                        [len(i) for i in grid_params_unique.values()]
+                                        +[all_spectra.shape[1]])
+            
+        return spectra_square, grid_params_unique, offset_pm
+
+
+    
+def custom_interp(final_goal,fitter,grid_name): 
+    """
+    Custom interpolation routine that interpolates based on the nearest two neighbors
+    of each parameter. e.g. if interpolating M/H and C/O it will find the upper 
+    and lower M/H, C/O and interpolate between those four grid points. 
+    Currently, this does not handle cases that go off the grid. 
+    
+    Parameters
+    ----------
+    final_goal : array
+        Values on which to interpolate on in the order of grid_pars 
+        e.g. [mh_interp, co_interp]
+    fitter : analyze.GridFitter
+        See tutorial, provided loaded grid fitter tool
+    grid_name : str
+        name of grid provided to analyze.GridFitter
+
+    
+    Returns
+    -------
+    ndarray
+        Final spectra interpolated onto final_goal values requested 
+    """
+    grid_pars = fitter.interp_params[grid_name]['grid_parameters']
+    spectra = fitter.interp_params[grid_name]['square_spectra_grid']
+    
+    #transform to list of unique values 
+    grid_pars = list(grid_pars.values())
+    hypercube = np.array(list(itertools.product([0,1],repeat=len(grid_pars))))
+    hilos = np.array([find_bounding_values(arr, val)[0] for arr, val in 
+                 zip(grid_pars, final_goal)])
+    hilos_inds = np.array([find_bounding_values(arr, val)[1] for arr, val in 
+                 zip(grid_pars, final_goal)])
+
+    #@jit(nopython=True)
+    def weight_interp(grid_pars, final_goal, spectra,hypercube,hilos, hilos_inds): 
+        weights = []
+        for i in range(len(final_goal)): 
+            weights += [(final_goal[i] - hilos[i,0])/(hilos[i,1] - hilos[i,0])]
+
+        weights = np.array(weights)#length of number of params
+        inv_weights = 1-weights
+        all_weights = np.array([inv_weights, weights]).T#same as inds
+
+        interp = 0 
+        for irow in hypercube: 
+            weight_multip = [all_weights[i][j] for i, j in enumerate(irow)]
+            inds = [hilos_inds[i][j] for i, j in enumerate(irow)]+[-1]
+            spec_interp = get_last_dimension(spectra, inds)
+            interp+= np.product(weight_multip)*spec_interp
+        return interp
+    interp = weight_interp(grid_pars, final_goal, spectra,hypercube, hilos,hilos_inds)
+    
+    if np.any(np.isnan(interp)):
+        tree = cKDTree(grid_points)
+        dd, inds = tree.query(final_goal, k=3)
+        weights = 1.0 / dd**2
+        interp = np.dot(weights , fitter.spectra[grid_name][inds]) / np.sum(weights)  
+        
+    return interp
+
+def find_bounding_values(arr, value):
+    """
+    Given an array and a value this finds the values on each side of the array. 
+    If this locates a value on the edge, it returns the edge and the parameter to the 
+    right or left. If it is out of bounds it returns just the edge value 
+    
+    Parameters
+    ----------
+    arr : array
+        sorted array of values 
+    value : float 
+        float located within the bounds of the array specified 
+    """
+    # Find the indices of the elements that are less than or equal to the value
+    indices = np.where(arr <= value)[0]
+
+    # Check if the value is smaller than the smallest element in the array
+    if len(indices) == 0:
+        return [arr[0]]
+
+    # Check if the value is larger than the largest element in the array
+    if indices[-1] == len(arr) - 1:
+        lower = arr[-2]
+        upper = arr[-1]
+        ind_lower = indices[-1] - 1
+        ind_upper = indices[-1]
+    else:
+        # Get the elements at the indices and the next index
+        lower = arr[indices[-1]]
+        upper = arr[indices[-1] + 1]
+        ind_lower = indices[-1]
+        ind_upper =indices[-1] + 1 
+
+    return [lower, upper], [ind_lower,ind_upper ]
 
 def detection_test(fitter, molecule, min_wavelength, max_wavelength,
                    grid_name, data_name, 
