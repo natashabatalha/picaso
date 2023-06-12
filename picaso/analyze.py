@@ -2,15 +2,16 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import scipy as sp
+cKDTree = sp.spatial.cKDTree
+optimize = sp.optimize
 
 import json
 import matplotlib.pyplot as plt
 import os
 from astropy.convolution import convolve, Box1DKernel, Gaussian1DKernel
 import astropy.units as u
-from scipy import optimize
-from scipy.stats import cKDTree
 import glob
+import itertools
 
 from matplotlib.ticker import StrMethodFormatter
 
