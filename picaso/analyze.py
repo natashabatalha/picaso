@@ -576,11 +576,12 @@ class GridFitter():
         """
         Preps the loaded grid for interpolated gridtrieval 
         """
-        sqr_spec , uniq, offset_prior = self.transform_4_interp(grid_name)
+        sqr_spec , uniq, offset_prior,df_grid_params = self.transform_4_interp(grid_name)
         self.interp_params = {}
         self.interp_params[grid_name] = {}
         self.interp_params[grid_name]['offset_prior'] = offset_prior
-        self.interp_params[grid_name]['grid_parameters'] = uniq
+        self.interp_params[grid_name]['grid_parameters'] = df_grid_params
+        self.interp_params[grid_name]['grid_parameters_unique'] = uniq
         self.interp_params[grid_name]['square_spectra_grid'] = sqr_spec
 
     def transform_4_interp(fitter, grid_name):
@@ -642,7 +643,7 @@ class GridFitter():
                                         [len(i) for i in grid_params_unique.values()]
                                         +[all_spectra.shape[1]])
             
-        return spectra_square, grid_params_unique, offset_pm
+        return spectra_square, grid_params_unique, offset_pm,df_grid_params
 
 
     
@@ -669,8 +670,10 @@ def custom_interp(final_goal,fitter,grid_name):
     ndarray
         Final spectra interpolated onto final_goal values requested 
     """
-    grid_pars = fitter.interp_params[grid_name]['grid_parameters']
+    grid_points = fitter.interp_params[grid_name]['grid_parameters']
+    grid_pars = fitter.interp_params[grid_name]['grid_parameters_unique']
     spectra = fitter.interp_params[grid_name]['square_spectra_grid']
+
     
     #transform to list of unique values 
     grid_pars = list(grid_pars.values())
