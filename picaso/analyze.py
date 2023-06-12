@@ -571,28 +571,6 @@ class GridFitter():
                     ax[irow,icol].legend(fontsize=20)
         return fig, ax 
 
-import itertools
-from numba import jit 
-from scipy.spatial import cKDTree
-
-
-#@jit(nopython=True)
-def get_last_dimension(arr, indices):
-    """
-    Given an array of any dimenion, returns the last dimension with the other 
-    dimensions specified by "indices". 
-    
-    for example, if arr = np.random.randn([4,4]) and indices = [1,-1], it would
-    return arr[1,:]. this is slightly confusing because -1 usually indicates last element, 
-    which is different from the use of ":". However, jit nopython cannot compare string 
-    elements. Therefore this code uses -1 in place of :. 
-    """
-    if len(indices) == 1 and indices[0] == -1:
-        return arr
-    elif len(indices) == 1:
-        return arr[indices[0]]
-    
-    return get_last_dimension(arr[indices[0]], indices[1:])
 
     def prep_gridtrieval(self, grid_name):
         """
@@ -728,6 +706,23 @@ def custom_interp(final_goal,fitter,grid_name):
         
     return interp
 
+def get_last_dimension(arr, indices):
+    """
+    Given an array of any dimenion, returns the last dimension with the other 
+    dimensions specified by "indices". 
+    
+    for example, if arr = np.random.randn([4,4]) and indices = [1,-1], it would
+    return arr[1,:]. this is slightly confusing because -1 usually indicates last element, 
+    which is different from the use of ":". However, jit nopython cannot compare string 
+    elements. Therefore this code uses -1 in place of :. 
+    """
+    if len(indices) == 1 and indices[0] == -1:
+        return arr
+    elif len(indices) == 1:
+        return arr[indices[0]]
+    
+    return get_last_dimension(arr[indices[0]], indices[1:])
+    
 def find_bounding_values(arr, value):
     """
     Given an array and a value this finds the values on each side of the array. 
