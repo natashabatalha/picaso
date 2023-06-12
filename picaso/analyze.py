@@ -597,7 +597,7 @@ class GridFitter():
         grid_name : str 
             Name of grid that you want to interpolate on
         """
-        df_grid_params = jdi.pd.DataFrame(index = range(len(fitter.list_of_files[grid_name])))
+        df_grid_params = pd.DataFrame(index = range(len(fitter.list_of_files[grid_name])))
         grid_params=[]
         for i in fitter.grid_params[grid_name].keys():
             for j in fitter.grid_params[grid_name][i].keys():
@@ -722,7 +722,7 @@ def get_last_dimension(arr, indices):
         return arr[indices[0]]
     
     return get_last_dimension(arr[indices[0]], indices[1:])
-    
+
 def find_bounding_values(arr, value):
     """
     Given an array and a value this finds the values on each side of the array. 
