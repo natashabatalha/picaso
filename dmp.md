@@ -1,0 +1,27 @@
+# Open Science & Data Management Plan 
+
+This document is meant to help ROSES proposers curate their PICASO related Data Management Plans. 
+
+## Underlying data that are part of the software
+The underlying data that are already part of PICASO are 1) monochromatic opacities (SQLite), 2) correlated-K tables (ascii), 3) the Mie and refractive indices files used for the computation of cloud properties (ascii), 4) input chemistry grids used to attain atmospheric composition profiles (ascii), and 5) baseline templates used for tutorials -- such as \texttt{justdoit.jupiter\_pt()} which contains a standard template for computing a Jupiter-like spectrum (ascii, jupyter notebooks). 
+
+1, 2, & 3 are large enough that they are version controlled separate from the Github repository, and contain an associated DOI on Zenodo (Zenodo link for [opacities](https://zenodo.org/record/3759675#.YAdeSZNKjGI), [ck tables](https://zenodo.org/record/5590989#.Yzy2YOzMI8a), and [clouds](https://zenodo.org/record/3992294#.YAdeRJNKjGI). 4 is so small ($<$1 Mb) that they are stored directly on [Github](https://github.com/natashabatalha/picaso/tree/master/reference). 5 is stored as raw notebooks and also incorporated to the online documentation page at [picaso ReadTheDocs](https://natashabatalha.github.io/picaso/). In addition to these five input products.... 
+
+### ...Common additions: 
+* We will produce additional opacities to support the new models  that will come online in the time leading up to the expected award start date of this program. These will be incorporated into the new monochromatic, and ck tables and updated on the relevant Zenodo postings. 
+* The only data product that is not possible to store on Zenodo are the raw opacities (prior to pre-processing to resampled SQLite and CK tables). These, however, can be stored and supplied to the community on NASA's open opacity database MAESTRO. We will abide MAESTRO's [community contribution guidelines](https://github.com/maestro-opacities/submit-data), submit our data for vetting by the MAESTRO team, and ultimately ensure that they are incorporated into the community database.
+
+## Input Data Release Plan
+All input data will only be kept on version-controlled systems with permament identifiers. General updates/releases of input data, included under the umbrella of code maintenance, will be re-released on Zenodo or Github in conjunction with a corresponding code release and/or publication as specified in the work development plan. In addition to the accompanying documentation or publication, any updates to input data will be described in the Github Release Notes. 
+
+## Output Data Format
+We will abide by the picaso model formatting overview for storing and naming metadata, [which is outlined here](https://natashabatalha.github.io/picaso/notebooks/codehelp/data_uniformity_tutorial.html). This ensures commonality in variable names. Overall we recommend outputs in `xarray/netCDF` format and outline our [model storage and reuse policy here](https://natashabatalha.github.io/picaso/notebooks/ModelStorage.html). These direct xarray outputting functions allow for full reproducibility of results. This means that users can take our models, reproduce them, and add to them as needed (e.g. to explore different chemistry or cloud scenarios, for example). xarray/netCDF files also integrate with PICASO's auto grid fitting tools, which through reading metadata, are able to auto recognize the parameters of the grid and perform best fit analyses on data. Though xarray/netCDF abides by FAIR principles it is not "human readable" and often hinders less technical users. Therefore, we will also supply our in ascii format with a file naming scheme that indicates the bounds of the parameters ([see example](https://natashabatalha.github.io/picaso/notebooks/codehelp/data_uniformity_tutorial.html)). 
+
+## Model Grid Release 
+All model grids will be posted on Zenodo. Zenodo's 50 Gb limit is not expected to be problematic. If it is, we will chunk our models to ensure it fits within the 50 Gb limit. For instance, we can provide near-IR models in one posting, and mid-IR models in another. *Or for example, could chunk according to observing geometry.*. Zenodo DOI's will be referenced in the published manuscript. Metadata will be included in the Zenodo posting for reproducibility. 
+
+*Be sure to add number of models expected of your grid*. 
+
+## Software Releases 
+
+We will abide by [PICASO's contributor guidelines for software](https://natashabatalha.github.io/picaso/contribution.html). Specifically, we will conduct our code development openly in a branch specified by the feature name (e.g. `dev-feature1`). We will welcome community contributions during our development stage and will review contributions via pull requests to this branch. Hot fixes and immediately problems will be addressed in separate branches and immediately pushed to `master`. Upon completion of our development feature, we will push to the main `dev` branch where it will be integrated with other ongoing PICASO development features. Once we are ready to publish, we will coordinate a release with the PIASO code managers, which will likely result in either a +0.1 or an integer addition to the version number (depending on the size of the feature addition). These software releases are [pushed to Zenodo](https://zenodo.org/record/7765171) via Github. Ultimately the new version number will be referenced in our final manuscripts for reproducibility.

@@ -900,6 +900,7 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
     find_p_files = glob.glob(os.path.join(mol_dir,'*p_*'))
     find_npy_files = glob.glob(os.path.join(mol_dir,'*npy*'))
     find_txt_files =  glob.glob(os.path.join(mol_dir,'*txt*'))
+    find_fort_files =  glob.glob(os.path.join(mol_dir,'fort.*'))
 
     if len(find_p_files)>1000:
         ftype = 'fortran_binary'
@@ -907,9 +908,10 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         ftype = 'python'
     elif len(find_txt_files)>1000:
         ftype='lupu_txt'
+    elif len(find_fort_files)>1000:
+        ftype='rfree_fort'
     else: 
         raise Exception('Could not find npy or p_ files. npy are assumed to be read via np.load, where as p_ files are assumed to be unformatted binary or alkali files')
-        
     read_fits = os.path.join(mol_dir,'readomni.fits' )
     lupu_wave= os.path.join(mol_dir,'wavelengths.txt' )
     if os.path.exists(read_fits):
@@ -928,16 +930,19 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         start = s1460['start_wavenumber'].values.astype(float)
         
 
-
+    
     for i,p,t in zip(ifile,pres,temp):  
         #path to data
         if 'fortran' in ftype:
             fdata = os.path.join(mol_dir, 'p_'+str(int(i)))
+        elif 'rfree_fort' in ftype: 
+            fdata = os.path.join(mol_dir, 'fort.'+str(int(i)))
         elif 'python' in ftype: 
             fdata = os.path.join(mol_dir, str(int(i))+'.npy')
         elif 'lupu' in ftype: 
             mbar = p*1e3
             fdata = os.path.join(mol_dir,f'{molecule}_{mbar:.2e}mbar_{t:.0f}K.txt') 
+        
         #Grab 1460 in various format data
         if 'lupu' in ftype: 
             dset =  pd.read_csv(fdata,skiprows=2,header=None).values[:,0]
@@ -951,7 +956,11 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]
         elif 'python' in ftype: 
             dset = np.load(open(fdata,'rb'))
-            og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]            
+            og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]  
+        elif 'rfree_fort' in ftype: 
+            df = pd.read_csv(fdata,delim_whitespace=True, skiprows=27, header=None, names=['wno','cx'])
+            dset=df.loc[:,'cx'].values
+            og_wvno_grid=df.loc[:,'wno'].values           
 
         if not insert_direct:
             #interp on high res grid
@@ -1510,6 +1519,9 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
 
     """
     grid_file = os.path.join(og_directory,'grid1460.csv')
+    npres = 20 
+    ntemp = 73 
+    ngauss = order*2 
 
     s1460 = pd.read_csv(grid_file,dtype=str)
     #all pressures
@@ -1572,7 +1584,7 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
         wvno_low,wvno_high = get_wvno_grid(wv_file_name)
     else: 
         wvno_low,wvno_high = get_wvno_grid(None, min_wavelength, max_wavelength, R)
-    k_coeff_arr = np.zeros(shape=(20,73,len(wvno_low),8))
+    k_coeff_arr = np.zeros(shape=(npres,ntemp,len(wvno_low),ngauss))
     ctp,ctt = 0,0
     for i,p,t in zip(ifile,pres,temp):  
         #path to data

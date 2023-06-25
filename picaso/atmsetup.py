@@ -1,6 +1,7 @@
 from .elements import ELEMENTS as ele 
 import json 
 import os
+import re
 from .io_utils import read_json
 import astropy.units as u
 import astropy.constants as c
@@ -237,28 +238,31 @@ class ATMSETUP():
         """
         self.rayleigh_molecules = []
         self.continuum_molecules = []
-        if "H2" in self.molecules:
+
+        simple_names = [convert_to_simple(i) for i in self.molecules]
+        
+        if "H2" in simple_names:
             self.continuum_molecules += [['H2','H2']]
-        if ("H2" in self.molecules) and ("He" in self.molecules):
+        if ("H2" in simple_names) and ("He" in simple_names):
             self.continuum_molecules += [['H2','He']]
-        if ("H2" in self.molecules) and ("N2" in self.molecules):
+        if ("H2" in simple_names) and ("N2" in simple_names):
             self.continuum_molecules += [['H2','N2']]   
-        if  ("H2" in self.molecules) and ("H" in self.molecules):
+        if  ("H2" in simple_names) and ("H" in simple_names):
             self.continuum_molecules += [['H2','H']]
-        if  ("H2" in self.molecules) and ("CH4" in self.molecules):
+        if  ("H2" in simple_names) and ("CH4" in simple_names):
             self.continuum_molecules += [['H2','CH4']]
-        if  ("N2" in self.molecules):
+        if  ("N2" in simple_names):
             self.continuum_molecules += [['N2','N2']]
-        if  ("CO2" in self.molecules):
+        if  ("CO2" in simple_names):
             self.continuum_molecules += [['CO2','CO2']]      
-        if  ("O2" in self.molecules):
+        if  ("O2" in simple_names):
             self.continuum_molecules += [['O2','O2']]    
 
-        if ("H-" in self.molecules):
+        if ("H-" in simple_names):
             self.continuum_molecules += [['H-','bf']]
-        if ("H" in self.molecules) and ("electrons" in self.level.keys()):
+        if ("H" in simple_names) and ("electrons" in self.level.keys()):
             self.continuum_molecules += [['H-','ff']]
-        if ("H2" in self.molecules) and ("electrons" in self.level.keys()):
+        if ("H2" in simple_names) and ("electrons" in self.level.keys()):
             self.continuum_molecules += [['H2-','']]
         #now we can remove continuum molecules from self.molecules to keep them separate 
         if 'H+' in ['H','H2-','H2','H-','He','N2']: self.add_warnings('No H+ continuum opacity included')
@@ -270,9 +274,10 @@ class ATMSETUP():
         self.continuum_molecules = cm
 
         #and rayleigh opacity
-        for i in self.molecules: 
+        for i in simple_names: 
             if i in available_ray_mol : self.rayleigh_molecules += [i]
 
+        
         #self.molecules = np.array([ x for x in self.molecules if x not in ['H','H2-','H2','H-','He','N2', 'H+'] ])
 
     def get_weights(self, molecule):
@@ -284,35 +289,52 @@ class ATMSETUP():
         ----------
         molecule : str or list
             any molecule string e.g. "H2O", "CH4" etc "TiO" or ["H2O", 'CH4']
+            Isotopologues should be specified with a dash separating the 
+            elemtents. E.g. 12C-16O2 or 13C-16O2. If you only want to specify one 
+            then you would have 12C-O2. 
 
         Returns
         -------
         dict 
             molecule as keys with molecular weights as value
-        """
+        """    
         weights = {}
+        separator='_' #e.g. C_16O2 NOT C-16O2
         if not isinstance(molecule,list):
-            molecule = [molecule]
-
-        for i in molecule:
-            molecule_list = []
-            for j in range(0,len(i)):
-                try:
-                    molecule_list += [float(i[j])]
-                except: 
-                    if i[j].isupper(): molecule_list += [i[j]] 
-                    elif i[j].islower(): molecule_list[-1] =  molecule_list[-1] + i[j]
-            totmass=0
-            for j in range(0,len(molecule_list)): 
+                molecule = [molecule]
                 
-                if isinstance(molecule_list[j],str):
-                    elem = ele[molecule_list[j]]
-                    try:
-                        num = float(molecule_list[j+1])
-                    except: 
-                        num = 1 
-                    totmass += elem.mass * num
-            weights[i] = totmass
+        for i in molecule:
+            totmass = 0
+            #this indicates the user has specified the isotope
+            if separator in i: 
+                elements = [separate_molecule_name(j) for j in i.split(separator)]
+            else:    
+                elements = separate_molecule_name(i)
+
+            for iele in elements:
+                if isinstance(iele,list):
+                    #this is the user's specified isotope
+                    if len(iele)==1:
+                        iele = iele[0]
+                        iso_num = 'main'
+                    else:
+                        iso_num = int(iele[0])
+                        iele = iele[1]
+                else: 
+                    iso_num = 'main'
+
+                sep = separate_string_number(iele)
+                if len(sep)==1:
+                    el, num = sep[0], 1
+                else: 
+                    el, num = sep
+                #default isotope
+                if iso_num=='main':
+                    iso_num = list(ele[el].isotopes.keys())[0] 
+                totmass += ele[el].isotopes[iso_num].mass*float(num)
+
+            weights[i]=totmass
+        
         return weights
 
 
@@ -629,6 +651,36 @@ class ATMSETUP():
             pass
 
         return df
+
+def convert_to_simple(iso_name):
+    """
+    Converts iso name (e.g. 13C-16O2 to CO2)
+    Returns same name if not (e.g. CO2 gives CO2)
+    """
+    separator = '_'
+    if separator not in iso_name: return iso_name
+    separate = [separate_molecule_name(j) for j in iso_name.split('-')]
+    mol=''
+    for i in separate: 
+        if len(i)>1:
+            mol+=i[1]
+        else: 
+            mol += i[0]
+    return mol
+
+def separate_molecule_name(molecule_name):
+    """used for separating molecules
+    For example, CO2 becomes "C" "O2"
+    """
+    elements = re.findall('[A-Z][a-z]?\d*|\d+', molecule_name)
+    return elements
+def separate_string_number(string):
+    """used for separating numbers from molecules
+    For example, CO2 becomes "C" "O2" in `separate_molecule_name` 
+    then this function turns it into [['C'],['O','2']]
+    """
+    elements = re.findall('[A-Za-z]+|\d+', string)
+    return elements
 """
 ## not using this for now.
 def hunt(xx , n , x, jlow):
