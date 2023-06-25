@@ -1842,7 +1842,8 @@ def brightness_temperature(out_dict,plot=True, R = None, with_guide=True):
         return T_B
 
 
-def animate_convergence(clima_out, picaso_bundle, opacity, wave_range=[0.3,6],
+def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal',
+    wave_range=[0.3,6],
     molecules=['H2O','CH4','CO','NH3']):
     """
     Function to animate climate convergence given all profiles that were 
@@ -1868,6 +1869,7 @@ def animate_convergence(clima_out, picaso_bundle, opacity, wave_range=[0.3,6],
     -------
     matplotlib.animation
     """
+    map_calc = {'thermal':'thermal','reflected':'albedo','transmission':'transit_depth'}
     t_eq,p_eq,all_profiles_eq = (
                 np.copy(clima_out['temperature']), 
                 np.copy(clima_out['pressure']), 
@@ -1884,8 +1886,8 @@ def animate_convergence(clima_out, picaso_bundle, opacity, wave_range=[0.3,6],
 
         picaso_bundle.premix_atmosphere(opacity,picaso_bundle.inputs['atmosphere']['profile'])
 
-        df_spec = picaso_bundle.spectrum(opacity,full_output=True,calculation='thermal')
-
+        df_spec = picaso_bundle.spectrum(opacity,calculation=calculation,full_output=True)
+        spec[i,:] = df_spec[map_calc[calculation]]
         for imol in molecules:
             mols_to_plot[imol][i*nlevel:(i+1)*nlevel] = picaso_bundle.inputs['atmosphere']['profile'][imol]
     
@@ -1916,7 +1918,10 @@ def animate_convergence(clima_out, picaso_bundle, opacity, wave_range=[0.3,6],
         lines[imol], = ax['B'].loglog(mols_to_plot[imol][0:nlevel], p_eq,linewidth=3,color=col, label=imol)
 
     lines['temp'], = ax['A'].semilogy(temp, p_eq,linewidth=3,color='k')
-    lines['spec'], = ax['C'].semilogy(1e4/df_spec['wavenumber'], spec[0,:],linewidth=3,color="k")
+    if calculation=='thermal':
+        lines['spec'], = ax['C'].semilogy(1e4/df_spec['wavenumber'], spec[0,:],linewidth=3,color="k")
+    else: 
+        lines['spec'], = ax['C'].plot(1e4/df_spec['wavenumber'], spec[0,:],linewidth=3,color="k")
 
     def init():
         #line.set_ydata(np.ma.array(x, mask=True))
@@ -1931,9 +1936,9 @@ def animate_convergence(clima_out, picaso_bundle, opacity, wave_range=[0.3,6],
         ax['B'].set_ylim(205,1.8e-4)
         ax['B'].legend(fontsize=20)
         ax['C'].set_xlabel('Wavelength [$\mu$m]',fontsize=30)
-        ax['C'].set_ylabel('Flux',fontsize=30)
+        ax['C'].set_ylabel('Spectrum',fontsize=30)
         ax['C'].set_xlim(0,6)
-        ax['C'].set_ylim(1e7,1e14)
+        #ax['C'].set_ylim(1e7,1e14)
         ax['A'].minorticks_on()
         ax['A'].tick_params(axis='both',which='major',length =30, width=2,direction='in',labelsize=30)
         ax['A'].tick_params(axis='both',which='minor',length =10, width=2,direction='in',labelsize=30)
