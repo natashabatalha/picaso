@@ -562,7 +562,7 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
         
     """
         
-    full_output = df['full_output']
+    full_output = df['full_output'] if 'full_output' in df.keys() else  df['spectrum_output']['full_output']
     df_atmo = picaso_class.inputs['atmosphere']['profile']
     molecules_included = full_output['weights']
     
@@ -899,10 +899,6 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
 
     ############# DEFINE ALL GEOMETRY USED IN CALCULATION #############
     #see class `inputs` attribute `phase_angle`
-    
-
-    #phase angle 
-    phase_angle = inputs['phase_angle']
     #get geometry
     geom = inputs['disco']
 
@@ -2064,6 +2060,9 @@ class inputs():
                 run the gravity function to set gravity')
 
         flist = os.listdir(os.path.join(sonora_path))
+        #ignore hidden drive files 
+        flist = [i for i in flist if '._' != i[0:2]]
+
 
         if ('cmp.gz' in str(flist)):
 
