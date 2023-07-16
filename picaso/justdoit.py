@@ -333,9 +333,16 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
             TAURAY_3d = np.zeros((nlayer, nwno, ng, nt, ngauss))  
 
         #get opacities at each facet
+        #sample MPI code 
+        #from mpi4py improt MPI
+        #comm = MPI.COMM_WORLD
+        #rank = comm.Get_rank()
+        #size = comm.Get_size()
+        #idx = rank-1 
+        #gts = [[g,t] for g in range(ng) for t in range(nt)]
         for g in range(ng):
             for t in range(nt): 
-
+                #g,t = gts[idx]
                 #edit atm class to only have subsection of 3d stuff 
                 atm_1d = copy.deepcopy(atm)
 
