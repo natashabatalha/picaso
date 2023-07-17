@@ -1717,7 +1717,10 @@ class inputs():
         self.inputs['star']['flux'] = bin_flux_star
         self.inputs['star']['wno'] = wno_planet
         self.inputs['star']['semi_major'] = semi_major 
-        self.inputs['star']['semi_major_unit'] = semi_major_unit         
+        self.inputs['star']['semi_major_unit'] = semi_major_unit    
+        self.inputs['star']['filename'] = filename
+        self.inputs['star']['w_unit'] = w_unit
+        self.inputs['star']['f_unit'] = f_unit     
 
         """
         return not needed anymore
@@ -3984,9 +3987,15 @@ class inputs():
                 semi_major = self.inputs['star']['semi_major']
                 sm_unit = self.inputs['star']['semi_major_unit']
                 database = self.inputs['star']['database']
+                filename = self.inputs['star']['filename']
+                f_unit = self.inputs['star']['f_unit']
+                w_unit = self.inputs['star']['w_unit']
                 self.star(opacityclass, database=database,temp =T_star,metal =metal, logg =logg, 
                     radius = r_star, radius_unit=u.Unit(r_star_unit),semi_major= semi_major , 
-                    semi_major_unit = u.Unit(sm_unit))
+                    semi_major_unit = u.Unit(sm_unit), 
+                    filename = filename, 
+                    f_unit=f_unit, 
+                    w_unit=w_unit)
                 fine_flux_star  = self.inputs['star']['flux']  # erg/s/cm^2
                 FOPI = fine_flux_star * ((r_star/semi_major)**2)
             
