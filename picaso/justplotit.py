@@ -203,7 +203,7 @@ def bin_errors(newx, oldx, dy):
     return err
 
 
-def mixing_ratio(full_output,limit=50,ng=None,nt=None, **kwargs):
+def mixing_ratio(full_output,limit=50,molecules=None, ng=None,nt=None, plot_type='bokeh', **kwargs):
     """Returns plot of mixing ratios 
 
     Parameters
@@ -211,12 +211,18 @@ def mixing_ratio(full_output,limit=50,ng=None,nt=None, **kwargs):
     full_output : class
         picaso.atmsetup.ATMSETUP
     limit : int
+        (Optional), Default = ?? 
         Limits the number of curves to 20. Will plot the top 20 molecules 
-        with highest max(abundance). Limit must be >=3. 
+        with highest max(abundance). Limit must be >=3.
+    molecules: str, list
+        (Optional), Default = ?? 
+        Directly state what molecule to plot ** ADD DESCRIPTION** 
+    plot_type : 'bokeh' or 'matplotlib'
+         (Optional), Default = ?? 
+        str type that can be 'bokeh' or 'matplotlib'
     **kwargs : dict 
         Any key word argument for bokeh.figure() 
     """
-    molecules = full_output['weights'].keys()
     #set plot defaults
     if ((ng==None) & (nt==None)):
         pressure = full_output['layer']['pressure']
@@ -225,39 +231,84 @@ def mixing_ratio(full_output,limit=50,ng=None,nt=None, **kwargs):
         pressure = full_output['layer']['pressure'][:,ng,nt]
         mixingratios = pd.DataFrame(full_output['layer']['mixingratios'][:,:,ng,nt],columns=molecules)
 
-    kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',300))
-    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',400))
-    if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
-    if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
-    kwargs['title'] = kwargs.get('title','Mixing Ratios')
-    kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
-    kwargs['x_axis_label'] = kwargs.get('x_axis_label','Mixing Ratio(v/v)')
-    kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
-    kwargs['x_axis_type'] = kwargs.get('x_axis_type','log') 
-    kwargs['y_range'] = kwargs.get('y_range',[np.max(pressure),np.min(pressure)])
-    kwargs['x_range'] = kwargs.get('x_range',[1e-20, 1e2])
+        
+    #both bokeh/matplotlib get data 
+    if isinstance(molecules, type(None)):
+    # Check if the inputted molecule is actually in the list and remove 'pressure' and 'temperature'
+        to_plot = [mol for mol in mixingratios.keys() if mol not in ['pressure', 'temperature', 'kz']][:limit]
+    elif isinstance(molecules , str):
+        to_plot = [molecules]
+    elif isinstance((molecules) , list):
+        to_plot = molecules
+        
+    molecules=to_plot
+    
+    #sets defaults for the user for BOKEH
+    if plot_type=='bokeh':
+        kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',300))
+        kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',400))
+        if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
+        if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
+        kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
+        kwargs['x_axis_label'] = kwargs.get('x_axis_label','Mixing Ratio(v/v)')
+        kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
+        kwargs['x_axis_type'] = kwargs.get('x_axis_type','log') 
+        kwargs['y_range'] = kwargs.get('y_range',[np.max(pressure),np.min(pressure)])
+        kwargs['x_range'] = kwargs.get('x_range',[1e-20, 5])
+    elif plot_type=='matplotlib':
+        #adjusted kwargs for matplotlib
+        kwargs.setdefault('height', kwargs.get('plot_height', kwargs.get('height', 5)))
+        kwargs.setdefault('width', kwargs.get('plot_width', kwargs.get('width', 7)))
+        kwargs.pop('plot_width', None)
+        kwargs.pop('plot_height', None)
+        kwargs.setdefault('y_axis_label', 'Pressure(Bars)')
+        kwargs.setdefault('x_axis_label', 'Mixing Ratio(v/v)')
+        kwargs.setdefault('y_axis_type', 'log')
+        kwargs.setdefault('x_axis_type', 'log')
+        kwargs.setdefault('y_range', [np.max(pressure), np.min(pressure)])
+        kwargs.setdefault('x_range', [1e-25, 5])
 
-    #to plot (incl limit)
-    to_plot=mixingratios.max().sort_values(ascending=False)[0:limit].keys()
+   # Determine what molecules to plot for the user
+    if plot_type=='bokeh':
+        fig = figure(**kwargs)
+        if len(molecules) < 3: ncol = 5
+        else: ncol = len(molecules)
+        if limit<3: 
+            cols = pals.magma(5) #magma needs at least 5 colors
+        else: 
+            cols = pals.magma(min([ncol,limit]))
+        legend_it=[]    
+        for mol , c in zip(to_plot,cols):
+            ind = np.where(mol==np.array(molecules))[0][0]
+            f = fig.line(mixingratios[mol],pressure, color=c, line_width=3,
+                        muted_color=c, muted_alpha=0.2)
+            legend_it.append((mol, [f]))
 
-    fig = figure(**kwargs)
-    if len(molecules) < 3: ncol = 5
-    else: ncol = len(molecules)
-    if limit<3: 
-        cols = pals.magma(5) #magma needs at least 5 colors
-    else: 
-        cols = pals.magma(min([ncol,limit]))
-    legend_it=[]    
-    for mol , c in zip(to_plot,cols):
-        ind = np.where(mol==np.array(molecules))[0][0]
-        f = fig.line(mixingratios[mol],pressure, color=c, line_width=3,
-                    muted_color=c, muted_alpha=0.2)
-        legend_it.append((mol, [f]))
-
-    legend = Legend(items=legend_it, location=(0, -20))
-    legend.click_policy="mute"
-    fig.add_layout(legend, 'left')  
-
+        legend = Legend(items=legend_it, location=(0, -20))
+        legend.click_policy="mute"
+        fig.add_layout(legend, 'left')  
+  
+    elif plot_type=='matplotlib':
+        
+        #or fig, ax = plt.subplots(**kwargs)
+        fig = plt.figure(figsize=(kwargs['width'], kwargs['height']))
+        axes = fig.add_subplot(1,1,1)
+        ind = np.where(mol for mol in np.array(molecules))[0][0]
+       
+        for mol in to_plot:
+            axes.plot(mixingratios[mol], pressure, label=mol)
+        axes.set_xlim(kwargs['x_range'])
+        #set y lim 
+        
+        #add the legend 
+        
+        axes.set_xlabel("Mixing Ratios [v/v]") #change this to use kwargs x_axis_label
+        axes.set_ylabel("Pressure")#add units  and change this to use kwargs y_axis_label
+        axes.set_yscale('log')
+        axes.set_xscale('log')
+        axes.invert_yaxis()
+        
+        
     return fig
     
 def pt(full_output,ng=None, nt=None, **kwargs):
