@@ -493,6 +493,7 @@ class ATMSETUP():
             #then reshape and regrid inputs to be a nice matrix that is nlayer by nwave
             #total extinction optical depth 
             opd = np.reshape(cld_input['opd'].values, (self.c.nlayer,self.c.input_npts_wave))
+            opd = opd.astype(np.float64)
             if regrid: opd = regrid_cld(opd, self.input_wno, wno)
             self.layer['cloud'] = {'opd': opd}
             #cloud assymetry parameter
