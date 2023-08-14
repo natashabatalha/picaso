@@ -3179,6 +3179,7 @@ class inputs():
         #only pass through clouds 1d if clouds are one dimension 
         self.clouds(df=df)
         if full_output : return out
+        else: return opd, w0, g0
     
     def virga_3d(self, condensates, directory,
         fsed=1, mh=1, mmw=2.2,kz_min=1e5,sig=2, full_output=False,
@@ -3694,12 +3695,12 @@ class inputs():
 
         
         """
-        if cloudy: 
-            raise Exception('Cloudy functionality still in beta form and not ready for public use.')
-        else: 
+        # if cloudy: 
+            # raise Exception('Cloudy functionality still in beta form and not ready for public use.')
+        # else: 
             #dummy values only used for cloud model
-            mh = 0 
-            CtoO = 0 
+            # mh = 0 
+            # CtoO = 0 
 
         if self.inputs['planet']['T_eff'] == 0.0:
             raise Exception('Need to specify Teff with jdi.input for climate run')
@@ -4614,14 +4615,15 @@ def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             
             metallicity = 10**(mh) #atmospheric metallicity relative to Solar
             mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
-            directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new'
+            # directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new'
+            directory = '/home/jjm6243/dev_virga/'
             
             kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
             bundle.inputs['atmosphere']['profile']['kz'] = kzz
         
 
             cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
-                        mmw = mean_molecular_weight,full_output=False,climate=True)
+                        mmw = mean_molecular_weight,full_output=False) #,climate=True)
             
             opd_now, w0_now, g0_now = cld_out
             
@@ -4692,15 +4694,17 @@ def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             
             metallicity = 10**(mh) #atmospheric metallicity relative to Solar
             mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
-            directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new'
-            
+            # directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new'
+            directory = directory = '/home/jjm6243/dev_virga/'
+
             kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
             bundle.inputs['atmosphere']['profile']['kz'] = kzz
-        
     
             cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
-                        mmw = mean_molecular_weight,full_output=False,climate=True)
-            
+                        mmw = mean_molecular_weight,full_output=False)#,climate=True)
+
+            print(cld_out)
+
             opd_now, w0_now, g0_now = cld_out
             
             opd_cld_climate[:,:,3], g0_cld_climate[:,:,3], w0_cld_climate[:,:,3] = opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2]
@@ -5167,14 +5171,16 @@ def find_strat(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
 
         metallicity = 10**(mh) #atmospheric metallicity relative to Solar
         mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
-        directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new'
+        # directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new'
+        directory = '/home/jjm6243/dev_virga/'
+
         calc_type =0
         kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
         bundle.inputs['atmosphere']['profile']['kz'] = kzz
 
 
         cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
-                        mmw = mean_molecular_weight,full_output=False,climate=True)
+                        mmw = mean_molecular_weight,full_output=False) #,climate=True)
         
         opd_now, w0_now, g0_now = cld_out
         df_cld = vj.picaso_format(opd_now, w0_now, g0_now)
@@ -5368,14 +5374,15 @@ def profile_deq(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             
             metallicity = 10**(0) #atmospheric metallicity relative to Solar
             mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
-            directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new661'
+            # directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new661'
+            directory = '/home/jjm6243/dev_virga/'
             
             kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
             bundle.inputs['atmosphere']['profile']['kz'] = kzz
         
 
             cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
-                        mmw = mean_molecular_weight,full_output=False,climate=True)
+                        mmw = mean_molecular_weight,full_output=False)#,climate=True)
             
             opd_now, w0_now, g0_now = cld_out
             
@@ -5470,14 +5477,15 @@ def profile_deq(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             
             metallicity = 10**(0) #atmospheric metallicity relative to Solar
             mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
-            directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new661'
+            # directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new661'
+            directory = '/home/jjm6243/dev_virga/'
             
             kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
             bundle.inputs['atmosphere']['profile']['kz'] = kzz
         
     
             cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
-                        mmw = mean_molecular_weight,full_output=False,climate=True)
+                        mmw = mean_molecular_weight,full_output=False)#,climate=True)
             
             opd_now, w0_now, g0_now = cld_out
             
@@ -5930,14 +5938,16 @@ def find_strat_deq(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw =  calculate_atm_deq(bundle, opacityclass,on_fly=on_fly, gases_fly=gases_fly)
         metallicity = 10**(0.0) #atmospheric metallicity relative to Solar
         mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
-        directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new661'
+        # directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new661'
+        directory = '/home/jjm6243/dev_virga/'
+
         calc_type =0
         kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
         bundle.inputs['atmosphere']['profile']['kz'] = kzz
 
 
         cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
-                        mmw = mean_molecular_weight,full_output=False,climate=True)
+                        mmw = mean_molecular_weight,full_output=False)#,climate=True)
         
         opd_now, w0_now, g0_now = cld_out
         df_cld = vj.picaso_format(opd_now, w0_now, g0_now)
