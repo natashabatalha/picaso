@@ -45,10 +45,16 @@ class GridFitter():
     model_dir : str 
         Location of model grid. Should be a directory that points to 
         several files in the PICASO xarray format.
+        Only keep as None if user chooses 'init' as type
+    model_type : str , ('xarrays','user')
+        Default = xarray which points to a directly full of xarrays in picaso format 
+        Otherwise can input "user" which initializes the grid fitter without 
+        reading anything in. "user" gives users the flexibility to add  
+        in their own input
     to_fit : str 
         parameter to fit, default is transit_depth. other common is flux
     """
-    def __init__(self, grid_name, model_dir,to_fit='transit_depth', grid_dimensions=False, verbose=True):
+    def __init__(self, grid_name, model_dir=None,to_fit='transit_depth', model_type='user', verbose=True):
         self.verbose=verbose
         
         self.grids = []
@@ -59,10 +65,14 @@ class GridFitter():
         self.temperature={}
         self.pressure={}
         self.spectra={}
+        self.interp_params={}
         
         #adds first grid
-        self.add_grid(grid_name, model_dir, to_fit=to_fit)
-
+        if model_type=='xarrays': 
+            self.add_grid(grid_name, model_dir, to_fit=to_fit)
+        elif model_type == 'user': 
+            self.grids += [grid_name]
+            
     def find_grid(self, grid_name, model_dir):
         """
         Makes sure the grid exists with proper nc files. Then, adds the file directory to self.list_of_files
