@@ -54,7 +54,7 @@ class GridFitter():
     to_fit : str 
         parameter to fit, default is transit_depth. other common is flux
     """
-    def __init__(self, grid_name, model_dir=None,to_fit='transit_depth', model_type='user', verbose=True):
+    def __init__(self, grid_name, model_dir=None,to_fit='transit_depth', model_type='xarrays', verbose=True):
         self.verbose=verbose
         
         self.grids = []
@@ -324,7 +324,7 @@ class GridFitter():
         #finally compute the posteriors 
         for iattr in self.grid_params[grid_name].keys(): 
             for ikey in self.grid_params[grid_name][iattr].keys():
-                self.posteriors[grid_name][data_name][ikey] = self.get_posteriors(grid_name, data_name, ikey)
+                self.posteriors[grid_name][data_name][ikey] = self.get_chi_posteriors(grid_name, data_name, ikey)
     
     def print_best_fit(self, grid_name, data_name, verbose=True): 
         """
