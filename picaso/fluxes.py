@@ -981,7 +981,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 def get_reflected_1d_newclima(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
-    frac_a, frac_b, frac_c, constant_back, constant_forward, tridiagonal,get_toa_intensity,get_lvl_flux):
+    frac_a, frac_b, frac_c, constant_back, constant_forward, tridiagonal,get_toa_intensity,get_lyr_flux):
     """
     Computes toon fluxes given tau and everything is 1 dimensional. This is the exact same function 
     as `get_flux_geom_3d` but is kept separately so we don't have to do unecessary indexing for fast
@@ -1066,6 +1066,8 @@ def get_reflected_1d_newclima(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,g
         Remember, the output of A & M code does not separate back and forward scattering.
     tridiagonal : int 
         0 for tridiagonal, 1 for pentadiagonal 
+    get_lyr_flux : int 
+        0 for no, 1 for yes 
     Returns
     -------
     intensity at the top of the atmosphere for all the different ubar1 and ubar2 
@@ -1172,7 +1174,7 @@ def get_reflected_1d_newclima(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,g
             #========================= End loop over wavelength =========================
 
             #========================= Get fluxes if needed for climate =========================
-            if get_lvl_flux: 
+            if get_lyr_flux: 
                 flux_minus=np.zeros(shape=(nlevel,nwno))
                 flux_plus=np.zeros(shape=(nlevel,nwno))
                 
@@ -1571,24 +1573,20 @@ def blackbody(t,w):
 
 @jit(nopython=True, cache=True)
 def get_thermal_1d_newclima(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,
-    surf_reflect, hard_surface, tridiagonal):
+    surf_reflect, hard_surface, tridiagonal,get_lyr_flux):
     """
     This function uses the source function method, which is outlined here : 
     https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JD094iD13p16287
     
     The result of this routine is the top of the atmosphere thermal flux as 
     a function of gauss and chebychev points accross the disk. 
-
     Everything here is in CGS units:
-
     Fluxes - erg/s/cm^3
     Temperature - K 
     Wave grid - cm-1
     Pressure ; dyne/cm2
-
     Reminder: Flux = pi * Intensity, so if you are trying to compare the result of this with 
     a black body you will need to compare with pi * BB !
-
     Parameters
     ----------
     nlevel : int 
@@ -1625,7 +1623,6 @@ def get_thermal_1d_newclima(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,pl
         0 for no hard surface (e.g. Jupiter/Neptune), 1 for hard surface (terrestrial)
     tridiagonal : int 
         0 for tridiagonal, 1 for pentadiagonal
-
     Returns
     -------
     numpy.ndarray
@@ -1633,35 +1630,38 @@ def get_thermal_1d_newclima(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,pl
         numg x numt x nwno
     """
     nlayer = nlevel - 1 #nlayers 
+    #flux_out = zeros((numg, numt, 2*nlevel, nwno))
 
     mu1 = 0.5#0.88#0.5 #from Table 1 Toon  
-    twopi = pi#+pi #NEB REMOVING A PI FROM HERE BECAUSE WE ASSUME NO SYMMETRY! 
 
     #get matrix of blackbodies 
     all_b = blackbody(tlevel, 1/wno) #returns nlevel by nwave   
     b0 = all_b[0:-1,:]
     b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
 
-    #hemispheric mean parameters from Tabel 1 toon 
-    #**originally written in terms of alpha which isn't in the table. 
-    #**changed to more closely resemble Toon (no change in actual values)
+    #hemispheric mean parameters from Tabe 1 toon 
+    g1 = 2.0 - w0*(1+cosb); g2 = w0*(1-cosb)
+
     alpha = sqrt( (1.-w0) / (1.-w0*cosb) )
-    g1 = 2 - w0*(1 + cosb) # (7-w0*(4+3*cosb))/4  # 
-    g2 = w0*(1 - cosb)     # -(1-w0*(4-3*cosb))/4 # 
-    lamda = alpha*(1.-w0*cosb)/mu1 #(g1**2 - g2**2)**0.5 #eqn 21 toon
-    gama = (1.-alpha)/(1.+alpha) #g2 / (g1 + lamda) #eqn 22 toon
-    g1_plus_g2 = mu1/(1.-w0*cosb) #effectively 1/(gamma1 + gamma2) .. second half of eqn.27
+    lamda = sqrt(g1**2 - g2**2) #eqn 21 toon 
+    gama = (g1-lamda)/g2 # #eqn 22 toon
+    
+    g1_plus_g2 = 1.0/(g1+g2) #second half of eqn.27
 
     #same as with reflected light, compute c_plus and c_minus 
     #these are eqns 27a & b in Toon89
     #_ups are evaluated at lower optical depth, TOA
     #_dows are evaluated at higher optical depth, bottom of atmosphere
-    c_plus_up = b0 + b1* g1_plus_g2 
-    c_minus_up = b0 - b1* g1_plus_g2
+    c_plus_up = 2*pi*mu1*(b0 + b1* g1_plus_g2) 
+    c_minus_up = 2*pi*mu1*(b0 - b1* g1_plus_g2)
+    #NOTE: to keep consistent with Toon, we keep these 2pis here. However, 
+    #in 3d cases where we no long assume azimuthal symmetry, we divide out 
+    #by 2pi when we multiply out the weights as seen in disco.compress_thermal 
 
-    c_plus_down = (b0 + b1 * dtau + b1 * g1_plus_g2)
-    c_minus_down = (b0 + b1 * dtau - b1 * g1_plus_g2)
-    # note there should be a factor of 2mu1 in c expressions, need to include that if mu1 not 0.5
+    c_plus_down = 2*pi*mu1*(b0 + b1 * dtau + b1 * g1_plus_g2) 
+    c_minus_down = 2*pi*mu1*(b0 + b1 * dtau - b1 * g1_plus_g2)
+
+
 
     #calculate exponential terms needed for the tridiagonal rotated layered method
     exptrm = lamda*dtau
@@ -1671,12 +1671,19 @@ def get_thermal_1d_newclima(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,pl
     exptrm_positive = exp(exptrm) 
     exptrm_minus = 1.0/exptrm_positive
 
+    #for flux heating calculations, the energy balance solver 
+    #does not like a fixed zero at the TOA. 
+    #to avoid a discontinuous kink at the last atmospher
+    #layer we create this "fake" boundary condition
+    #we imagine that the atmosphere continus up at an isothermal T and that 
+    #there is optical depth from above the top to infinity 
     tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
-    b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
+    b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:] * pi #  Btop=(1.-np.exp(-tautop/ubari))*B[0]
+    #print('hard_surface=',hard_surface)
     if hard_surface:
-        b_surface = all_b[-1,:] #for terrestrial, hard surface  
+        b_surface = all_b[-1,:]*pi #for terrestrial, hard surface  
     else: 
-        b_surface=all_b[-1,:] + b1[-1,:]*mu1 #(for non terrestrial)
+        b_surface= (all_b[-1,:] + b1[-1,:]*mu1)*pi #(for non terrestrial)
 
     #Now we need the terms for the tridiagonal rotated layered method
     if tridiagonal==0:
@@ -1684,6 +1691,11 @@ def get_thermal_1d_newclima(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,pl
                             c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
                              gama, dtau, 
                             exptrm_positive,  exptrm_minus) 
+    #else:
+    #   A_, B_, C_, D_, E_, F_ = setup_pent_diag(nlayer,nwno,  c_plus_up, c_minus_up, 
+    #                       c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
+    #                        gama, dtau, 
+    #                       exptrm_positive,  exptrm_minus, g1,g2,exptrm,lamda) 
     positive = zeros((nlayer, nwno))
     negative = zeros((nlayer, nwno))
     #========================= Start loop over wavelength =========================
@@ -1693,48 +1705,66 @@ def get_thermal_1d_newclima(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,pl
         if tridiagonal==0:
             X = tri_diag_solve(L, A[:,w], B[:,w], C[:,w], D[:,w])
             #unmix the coefficients
-            positive[:,w] = X[::2] + X[1::2] 
-            negative[:,w] = X[::2] - X[1::2]
+            positive[:,w] = X[::2] + X[1::2] #Y1+Y2 in toon (table 3)
+            negative[:,w] = X[::2] - X[1::2] #Y1-Y2 in toon (table 3)
+        #else:
+        #   X = pent_diag_solve(L, A_[:,w], B_[:,w], C_[:,w], D_[:,w], E_[:,w], F_[:,w])
+        #   positive[:,w] = exptrm_minus[:,w] * (X[::2] + X[1::2])
+        #   negative[:,w] = X[::2] - X[1::2]
 
-    #if you stop here this is regular ole 2 stream
-    f_up = pi*(positive * exptrm_positive + gama * negative * exptrm_minus + c_plus_up)
+    #if you stop here this is regular ole 2 stream 
+    f_up = (positive * exptrm_positive + gama * negative * exptrm_minus + c_plus_up)
+    #flux_minus  = gama*positive*exptrm_positive + negative*exptrm_minus + c_minus_down
+    #flux_plus  = positive*exptrm_positive + gama*negative*exptrm_minus + c_plus_down
+    #flux = zeros((2*nlevel, nwno))
+    #flux[0,:] = (gama*positive + negative + c_minus_down)[0,:]
+    #flux[1,:] = (positive + gama*negative + c_plus_down)[0,:]
+    #flux[2::2, :] = flux_minus
+    #flux[3::2, :] = flux_plus
 
 
     #calculate everyting from Table 3 toon
-    alphax = ((1.0-w0)/(1.0-w0*cosb))**0.5
-    G = twopi*w0*positive*(1.0+cosb*alphax)/(1.0+alphax)#
-    H = twopi*w0*negative*(1.0-cosb*alphax)/(1.0+alphax)#
-    J = twopi*w0*positive*(1.0-cosb*alphax)/(1.0+alphax)#
-    K = twopi*w0*negative*(1.0+cosb*alphax)/(1.0+alphax)#
-    alpha1 = twopi*(b0+ b1*(mu1*w0*cosb/(1.0-w0*cosb)))
-    alpha2 = twopi*b1
-    sigma1 = twopi*(b0- b1*(mu1*w0*cosb/(1.0-w0*cosb)))
-    sigma2 = twopi*b1
+    #from here forward is source function technique in toon
+    G = (1/mu1 - lamda)*positive     
+    H = gama*(lamda + 1/mu1)*negative 
+    J = gama*(lamda + 1/mu1)*positive 
+    K = (1/mu1 - lamda)*negative     
+    alpha1 = 2*pi*(b0+b1*(g1_plus_g2 - mu1)) 
+    alpha2 = 2*pi*b1 
+    sigma1 = 2*pi*(b0-b1*(g1_plus_g2 - mu1)) 
+    sigma2 = 2*pi*b1 
 
-    flux_minus = zeros((numg, numt,nlevel,nwno))
-    flux_plus = zeros((numg, numt,nlevel,nwno))
-    flux_minus_mdpt = zeros((numg, numt,nlevel,nwno))
-    flux_plus_mdpt = zeros((numg, numt,nlevel,nwno))
+    flux_minus = zeros((nlevel,nwno))
+    flux_plus = zeros((nlevel,nwno))
+    flux_minus_mdpt = zeros((nlevel,nwno))
+    flux_plus_mdpt = zeros((nlevel,nwno))
+    if get_lyr_flux: 
+        flux_minus_all = zeros((numg, numt, nlevel,nwno))
+        flux_plus_all = zeros((numg, numt, nlevel,nwno))
+        flux_minus_mdpt_all = zeros((numg, numt, nlevel,nwno))
+        flux_plus_mdpt_all = zeros((numg, numt, nlevel,nwno))        
 
     exptrm_positive_mdpt = exp(0.5*exptrm) 
     exptrm_minus_mdpt = 1/exptrm_positive_mdpt 
 
     #================ START CRAZE LOOP OVER ANGLE #================
-    flux_at_top = zeros((numg, numt, nwno))
+    flux_at_top = zeros((numg, numt, nwno)) #get intensity 
     flux_down = zeros((numg, numt, nwno))
 
     #work through building eqn 55 in toon (tons of bookeeping exponentials)
     for ng in range(numg):
         for nt in range(numt): 
+            #flux_out[ng,nt,:,:] = flux
 
             iubar = ubar1[ng,nt]
 
+            #intensity boundary conditions
             if hard_surface:
-                flux_plus[ng,nt,-1,:] = twopi * (b_surface ) # terrestrial
+                flux_plus[-1,:] = all_b[-1,:] *2*pi  # terrestrial flux /pi = intensity
             else:
-                flux_plus[ng,nt,-1,:] = twopi*( all_b[-1,:] + b1[-1,:] * iubar) #no hard surface
-                
-            flux_minus[ng,nt,0,:] = twopi * (1 - exp(-tau_top / iubar)) * all_b[0,:]
+                flux_plus[-1,:] = ( all_b[-1,:] + b1[-1,:] * iubar)*2*pi #no hard surface   
+
+            flux_minus[0,:] =  (1 - exp(-tau_top / iubar)) * all_b[0,:] *2*pi
             
             exptrm_angle = exp( - dtau / iubar)
             exptrm_angle_mdpt = exp( -0.5 * dtau / iubar) 
@@ -1742,36 +1772,48 @@ def get_thermal_1d_newclima(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,pl
             for itop in range(nlayer):
 
                 #disbanning this for now because we dont need it in the thermal emission code
-                flux_minus[ng,nt,itop+1,:]=(flux_minus[ng,nt,itop,:]*exptrm_angle[itop,:]+
+                #EQN 56,toon
+                if get_lyr_flux:
+                    flux_minus[itop+1,:]=(flux_minus[itop,:]*exptrm_angle[itop,:]+
                                      (J[itop,:]/(lamda[itop,:]*iubar+1.0))*(exptrm_positive[itop,:]-exptrm_angle[itop,:])+
                                      (K[itop,:]/(lamda[itop,:]*iubar-1.0))*(exptrm_angle[itop,:]-exptrm_minus[itop,:])+
                                      sigma1[itop,:]*(1.-exptrm_angle[itop,:])+
                                      sigma2[itop,:]*(iubar*exptrm_angle[itop,:]+dtau[itop,:]-iubar) )
 
-                flux_minus_mdpt[ng,nt,itop,:]=(flux_minus[ng,nt,itop,:]*exptrm_angle_mdpt[itop,:]+
+                    flux_minus_mdpt[itop,:]=(flux_minus[itop,:]*exptrm_angle_mdpt[itop,:]+
                                         (J[itop,:]/(lamda[itop,:]*iubar+1.0))*(exptrm_positive_mdpt[itop,:]-exptrm_angle_mdpt[itop,:])+
                                         (K[itop,:]/(-lamda[itop,:]*iubar+1.0))*(exptrm_minus_mdpt[itop,:]-exptrm_angle_mdpt[itop,:])+
                                         sigma1[itop,:]*(1.-exptrm_angle_mdpt[itop,:])+
                                         sigma2[itop,:]*(iubar*exptrm_angle_mdpt[itop,:]+0.5*dtau[itop,:]-iubar))
 
                 ibot=nlayer-1-itop
-
-                flux_plus[ng,nt,ibot,:]=(flux_plus[ng,nt,ibot+1,:]*exptrm_angle[ibot,:]+
+                #EQN 55,toon
+                flux_plus[ibot,:]=(flux_plus[ibot+1,:]*exptrm_angle[ibot,:]+
                                   (G[ibot,:]/(lamda[ibot,:]*iubar-1.0))*(exptrm_positive[ibot,:]*exptrm_angle[ibot,:]-1.0)+
                                   (H[ibot,:]/(lamda[ibot,:]*iubar+1.0))*(1.0-exptrm_minus[ibot,:] * exptrm_angle[ibot,:])+
                                   alpha1[ibot,:]*(1.-exptrm_angle[ibot,:])+
                                   alpha2[ibot,:]*(iubar-(dtau[ibot,:]+iubar)*exptrm_angle[ibot,:]) )
 
-                flux_plus_mdpt[ng,nt,ibot,:]=(flux_plus[ng,nt,ibot+1,:]*exptrm_angle_mdpt[ibot,:]+
+                flux_plus_mdpt[ibot,:]=(flux_plus[ibot+1,:]*exptrm_angle_mdpt[ibot,:]+
                                        (G[ibot,:]/(lamda[ibot,:]*iubar-1.0))*(exptrm_positive[ibot,:]*exptrm_angle_mdpt[ibot,:]-exptrm_positive_mdpt[ibot,:])-
                                        (H[ibot,:]/(lamda[ibot,:]*iubar+1.0))*(exptrm_minus[ibot,:]*exptrm_angle_mdpt[ibot,:]-exptrm_minus_mdpt[ibot,:])+
                                        alpha1[ibot,:]*(1.-exptrm_angle_mdpt[ibot,:])+
                                        alpha2[ibot,:]*(iubar+0.5*dtau[ibot,:]-(dtau[ibot,:]+iubar)*exptrm_angle_mdpt[ibot,:])  )
 
-
-            flux_at_top[ng,nt,:] = flux_plus_mdpt[ng,nt,0,:] #nlevel by nwno 
-
-    return flux_at_top , (flux_minus, flux_plus, flux_minus_mdpt, flux_plus_mdpt)
+            flux_at_top[ng,nt,:] = flux_plus_mdpt[0,:] #nlevel by nwno 
+            
+            if get_lyr_flux: 
+                flux_minus_all[ng,nt,:]      = flux_minus
+                flux_plus_all[ng,nt,:]       = flux_minus_mdpt
+                flux_minus_mdpt_all[ng,nt,:] = flux_plus
+                flux_plus_mdpt_all[ng,nt,:]  = flux_plus_mdpt  
+    
+    if get_lyr_flux:
+        returns =   (flux_minus_all, flux_plus_all, flux_minus_mdpt_all, flux_plus_mdpt_all)  
+    else: 
+        returns = None
+        
+    return flux_at_top , returns
 
 @jit(nopython=True, cache=True)
 def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,

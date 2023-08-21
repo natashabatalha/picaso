@@ -1,5 +1,5 @@
 from .atmsetup import ATMSETUP
-from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_transit_1d, get_thermal_SH
+from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_transit_1d, get_thermal_SH, get_thermal_1d_newclima
 
 from .fluxes import set_bb, tidal_flux, get_kzz
 from .climate import  calculate_atm_deq, did_grad_cp, convec, calculate_atm, t_start, growdown, growup, climate
@@ -92,6 +92,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
     #check to see if we are running in test mode
     test_mode = inputs['test_mode']
+
+    #get layer fluxes?? 
+    get_layer_fluxes = inputs['approx'].get('get_layer_fluxes',0)
 
     ############# DEFINE ALL APPROXIMATIONS USED IN CALCULATION #############
     #see class `inputs` attribute `approx`
@@ -267,17 +270,21 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
         if 'thermal' in calculation:
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
             flux_at_top = 0 
+            if get_layer_fluxes: 
+                flux_layers_sum = [0]*4
             for ig in range(ngauss): # correlated-k - loop (which is different from gauss-tchevychev angle)
                 
                 #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
                 #the uncorrected raman single scattering 
                 if rt_method == 'toon':
-                    flux  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
+                    flux,flux_layers  = get_thermal_1d_newclima(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
                                                         DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                                         atm.level['pressure'],ubar1,
-                                                        atm.surf_reflect, atm.hard_surface, tridiagonal)
+                                                        atm.surf_reflect, atm.hard_surface, tridiagonal
+                                                        ,get_layer_fluxes)
+
                 elif rt_method == 'SH':
-                    (flux, flux_out) = get_thermal_SH(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
+                    flux, flux_layers = get_thermal_SH(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
                                                 DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig], 
                                                 DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], 
                                                 W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
@@ -287,10 +294,18 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
 
                 flux_at_top += flux*gauss_wts[ig]
                 
+                #only allowing for toon since the SH routines need to be updated accordingly
+                if ((rt_method == 'toon') & get_layer_fluxes):
+                    for i,ifl in enumerate(flux_layers): 
+                        flux_layers_sum[i] += ifl*gauss_wts[ig] 
+                
             #if full output is requested add in flux at top for 3d plots
             if full_output: 
                 atm.flux_at_top = flux_at_top
-                #atm.intensity = intensity
+                if ((rt_method == 'toon') & get_layer_fluxes):
+                    #adds the layers with the gauss weights 
+                    atm.flux_layers = [compress_thermal(nwno,i, gweight, tweight)
+                                       for i in flux_layers_sum]
 
         
         if 'transmission' in calculation:
