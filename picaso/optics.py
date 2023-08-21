@@ -821,7 +821,7 @@ class RetrieveCKs():
             
             end_window = int(max_windows/3)
             self.wno = (data.iloc[end_abunds:end_abunds+end_window,0:3].astype(float)).values.ravel()[2:]
-            if np.float(data.iloc[end_abunds+end_window+1,2]) == 0.0: # for >+1.0 metallicity tables
+            if float(data.iloc[end_abunds+end_window+1,2]) == 0.0: # for >+1.0 metallicity tables
                 max_windows=1000
                 offset_new=267
                 self.delta_wno = (data.iloc[end_abunds+end_window+1+offset_new:1+end_abunds+2*end_window+offset_new,0:3].astype(float)).values.ravel()[:-2]
@@ -961,7 +961,7 @@ class RetrieveCKs():
             end_window = int(max_windows/3)
             
             self.wno = (data.iloc[end_abunds:end_abunds+end_window,0:3].astype(float)).values.ravel()[1:-1]
-            if np.float(data.iloc[end_abunds+end_window+1,2]) == 0.0: # for >+1.0 metallicity tables
+            if float(data.iloc[end_abunds+end_window+1,2]) == 0.0: # for >+1.0 metallicity tables
                 max_windows=1000
                 offset_new=266
                 self.delta_wno = (data.iloc[end_abunds+end_window+1+offset_new:1+end_abunds+2*end_window+offset_new,0:3].astype(float)).values.ravel()[2:]
