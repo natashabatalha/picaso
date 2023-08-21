@@ -4695,7 +4695,7 @@ def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             metallicity = 10**(mh) #atmospheric metallicity relative to Solar
             mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
             # directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new'
-            directory = directory = '/home/jjm6243/dev_virga/'
+            directory = '/home/jjm6243/dev_virga/'
 
             kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
             bundle.inputs['atmosphere']['profile']['kz'] = kzz
