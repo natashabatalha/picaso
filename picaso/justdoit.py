@@ -38,6 +38,8 @@ import math
 import xarray as xr
 from joblib import Parallel, delayed, cpu_count
 
+#testing error tracker
+from loguru import logger 
 __refdata__ = os.environ.get('picaso_refdata')
 __version__ = 3.1
 

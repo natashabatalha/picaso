@@ -7,6 +7,8 @@ from .atmsetup import ATMSETUP
 from .optics import compute_opacity
 from .disco import compress_thermal
 
+#testing error tracker
+from loguru import logger 
 
 @jit(nopython=True, cache=True)
 def did_grad_cp( t, p, t_table, p_table, grad, cp, calc_type):
@@ -319,6 +321,7 @@ def lu_backsubs(a, n, ntot, indx, b):
     
     return b
 
+@logger.catch # Add this to track errors
 @jit(nopython=True, cache=True)
 def t_start(nofczns,nstr,it_max,conv,x_max_mult, 
             rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
