@@ -5051,7 +5051,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
     while dtdp[nstr[1]-1] >= subad*grad_x[nstr[1]-1] :
         ratio = dtdp[nstr[1]-1]/grad_x[nstr[1]-1]
 
-        if ratio > 2 :
+        if ratio > 1.8 :
             print("Move up two levels")
             ngrow = 2
             nstr = growup( 1, nstr , ngrow)
@@ -5059,7 +5059,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
             ngrow = 1
             nstr = growup( 1, nstr , ngrow)
         
-        if nstr[1] < 6 :
+        if nstr[1] < 5 :
             raise ValueError( "Convection zone grew to Top of atmosphere, Need to Stop")
         
         pressure, temp, dtdp, profile_flag, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir, it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
@@ -5073,12 +5073,13 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
     flag_super = 0
     for i in range(nstr[1]-1, ifirst-1, -1):
         add = dtdp[i] - grad_x[i]
-        if add/grad_x[i] >= 0.02 : # non-neglegible super-adiabaticity
+        if add > dt_max and add/grad_x[i] >= 0.02 : # non-neglegible super-adiabaticity
+            dt_max = add
             i_max =i
             break
     
     flag_final_convergence =0
-    if i_max == 0: # no superadiabaticity, we are done
+    if i_max == 0 or dt_max/grad_x[i_max] < 0.02: # no superadiabaticity, we are done
         flag_final_convergence = 1
 
     if flag_final_convergence  == 0:
@@ -5091,7 +5092,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
         nstr[5]= nstr[2]
         nstr[1]= i_max
         nstr[2] = i_max
-        nstr[3] = i_max
+        nstr[3] = i_max + 1
         print(nstr)
         if nstr[3] >= nstr[4] :
             #print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
@@ -5138,7 +5139,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
                 c1 = grad_x[nstr[1]-1]
                 c2 = grad_x[nstr[3]]
             #Now grow the lower zone.
-            while ((dtdp[nstr[4]-1] >= subad*grad_x[nstr[5]-1]) and nofczns > 1):
+            while ((dtdp[nstr[4]-1] >= subad*grad_x[nstr[4]-1]) and nofczns > 1):
                 
                 ngrow = 1
                 nstr = growup( 2, nstr , ngrow)
@@ -5798,7 +5799,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
     while dtdp[nstr[1]-1] >= subad*grad_x[nstr[1]-1] :
         ratio = dtdp[nstr[1]-1]/grad_x[nstr[1]-1]
 
-        if ratio > 2 :
+        if ratio > 1.8 :
             print("Move up two levels")
             ngrow = 2
             nstr = growup( 1, nstr , ngrow)
@@ -5806,7 +5807,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
             ngrow = 1
             nstr = growup( 1, nstr , ngrow)
         
-        if nstr[1] < 6 :
+        if nstr[1] < 5 :
             raise ValueError( "Convection zone grew to Top of atmosphere, Need to Stop")
         
         pressure, temp, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile_deq(it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
@@ -5820,12 +5821,13 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
     flag_super = 0
     for i in range(nstr[1]-1, ifirst-1, -1):
         add = dtdp[i] - grad_x[i]
-        if add/grad_x[i] >= 0.02 : # non-neglegible super-adiabaticity
+        if add > dt_max and add/grad_x[i] >= 0.02 : # non-neglegible super-adiabaticity
+            dt_max = add
             i_max =i
             break
     
     flag_final_convergence =0
-    if i_max == 0: # no superadiabaticity, we are done
+    if i_max == 0 or dt_max/grad_x[i_max] < 0.02: # no superadiabaticity, we are done
         flag_final_convergence = 1
 
     if flag_final_convergence  == 0:
@@ -5838,7 +5840,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         nstr[5]= nstr[2]
         nstr[1]= i_max
         nstr[2] = i_max
-        nstr[3] = i_max
+        nstr[3] = i_max + 1
         print(nstr)
         if nstr[3] >= nstr[4] :
             #print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
@@ -5885,7 +5887,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
                 c1 = grad_x[nstr[1]-1]
                 c2 = grad_x[nstr[3]]
             #Now grow the lower zone.
-            while ((dtdp[nstr[4]-1] >= subad*grad_x[nstr[5]-1]) and nofczns > 1):
+            while ((dtdp[nstr[4]-1] >= subad*grad_x[nstr[4]-1]) and nofczns > 1):
                 
                 ngrow = 1
                 nstr = growup( 2, nstr , ngrow)

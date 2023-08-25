@@ -230,7 +230,7 @@ def lu_decomp(a, n, ntot):
             if abs(a[i,j]) > aamax:
                 aamax=abs(a[i,j])
         if aamax == 0.0:
-        	raise ValueError("Array is singular, cannot be decomposed")
+        	raise ValueError("Array is singular, cannot be decomposed in n:" + str(n))
         vv[i]=1.0/aamax  
 
     for j in range(n):
@@ -404,7 +404,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
 
     # here are other  convergence and tolerance criterias
 
-    step_max = 0.03e0 # scaled maximum step size in line searches
+    step_max = 0.01e0 # scaled maximum step size in line searches
     alf = 1.e-4    # ? 
     alam2 = 0.0   # ? 
     tolmin=1.e-5   # ?
@@ -572,7 +572,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
 
                 i_count += 1
 
-                del_t = eps * temp_old[jm] # perturbation
+                del_t = max(eps * temp_old[jm], 3) # perturbation
 
                 beta[jm] += del_t # perturb
 
