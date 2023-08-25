@@ -4129,6 +4129,10 @@ class inputs():
             df_spec = bundle.spectrum(opacityclass,full_output=True)    
             all_out['spectrum_output'] = df_spec 
 
+        #put cld output in all_out
+        if cloudy == 1:
+            df_cld = vj.picaso_format(opd_now, w0_now, g0_now)
+            all_out['cld_output'] = df_cld
         if as_dict: 
             return all_out
         else: 
@@ -4671,7 +4675,6 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             bundle.clouds(df=df_cld)
 
 
-
     DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
         W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
         frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , \
@@ -4717,8 +4720,6 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     
             cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
                         mmw = mean_molecular_weight,full_output=False)#,climate=True)
-
-            print(cld_out)
 
             opd_now, w0_now, g0_now = cld_out
             
@@ -5202,7 +5203,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
         
         opd_now, w0_now, g0_now = cld_out
         df_cld = vj.picaso_format(opd_now, w0_now, g0_now)
-        bundle.clouds(df=df_cld)  
+        bundle.clouds(df=df_cld)
     else:
         opd_now,w0_now,g0_now = 0,0,0
 
