@@ -8,7 +8,7 @@ from .optics import compute_opacity
 from .disco import compress_thermal
 
 #testing error tracker
-from loguru import logger 
+# from loguru import logger 
 
 @jit(nopython=True, cache=True)
 def did_grad_cp( t, p, t_table, p_table, grad, cp, calc_type):
@@ -321,7 +321,7 @@ def lu_backsubs(a, n, ntot, indx, b):
     
     return b
 
-@logger.catch # Add this to track errors
+# @logger.catch # Add this to track errors
 @jit(nopython=True, cache=True)
 def t_start(nofczns,nstr,it_max,conv,x_max_mult, 
             rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
@@ -572,7 +572,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
 
                 i_count += 1
 
-                del_t = max(eps * temp_old[jm], 3) # perturbation
+                del_t = max(eps * temp_old[jm], 3.0) # perturbation
 
                 beta[jm] += del_t # perturb
 
@@ -768,7 +768,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                     jmx = j+ n_top_r
                 err += dzx
             
-            err= err/(n_total*scalt)
+            err= err/(float(n_total)*scalt)
 
             if jmx > nstr[1] :
                 jmx+= nstr[2]-nstr[1]
@@ -813,7 +813,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
             
             # artificial damper
 
-            for j1 in range(n_top_r+1, nlevel):
+            for j1 in range(n_top_r+1, nlevel+1):
                 if temp[j1] < tmin:
                     temp[j1] = tmin+ 0.1
                 elif temp[j1] > tmax:
@@ -913,7 +913,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                     
 
                     if anr == 0 :
-                        tmplam= -slope/(2*b)
+                        tmplam= -slope/(2.0*b)
                         
                         
                     else:
@@ -923,7 +923,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                             tmplam= 0.5*alam
                            
                         elif b <= 0.0:
-                            tmplam=(-b + sqrt(disc))/(3*anr)
+                            tmplam=(-b + sqrt(disc))/(3.0*anr)
                             
 
                         else:

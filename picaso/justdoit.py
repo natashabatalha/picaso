@@ -38,8 +38,8 @@ import math
 import xarray as xr
 from joblib import Parallel, delayed, cpu_count
 
-#testing error tracker
-from loguru import logger 
+# #testing error tracker
+# from loguru import logger 
 __refdata__ = os.environ.get('picaso_refdata')
 __version__ = 3.1
 
@@ -4777,9 +4777,9 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         ## do this hack only during findstrat maybe ?
         ## otherwise problematic
         #####################################
-     #   if flag_hack == True:
-     #       temp= 0.5*(temp+temp_old) 
-     #       print("Hack Activated")
+        # if flag_hack == True:
+        #    temp= 0.5*(temp+temp_old) 
+        #    print("Hack Activated")
         #####################################   
         
         temp_old= np.copy(temp)
@@ -5161,7 +5161,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
     it_max_strat = 10
     convt_strat = 2.0
     convt_strat = 2.0
-    x_max_mult = 2.0
+    x_max_mult = x_max_mult/2.0
     ip2 = -10
 
     final = True
@@ -5909,7 +5909,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
     it_max_strat = 10
     convt_strat = 2.0
     convt_strat = 2.0
-    x_max_mult = 2.0
+    x_max_mult = x_max_mult/2.0
     ip2 = -10
 
     final = True
