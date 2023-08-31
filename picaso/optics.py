@@ -19,7 +19,7 @@ from .deq_chem import mix_all_gases
 __refdata__ = os.environ.get('picaso_refdata')
 #@jit(nopython=True)
 def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddington=True,
-    test_mode=False,raman=0, plot_opacity=False,full_output=False, return_mode=False):
+    test_mode=False,raman=0, plot_opacity=False,full_output=False, return_mode=False, do_holes = False):
     """
     Returns total optical depth per slab layer including molecular opacity, continuum opacity. 
     It should automatically select the molecules needed
@@ -56,6 +56,8 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
     return_mode : bool 
         (Optional) Default = False, If true, will only return matrices for all the weighted opacity 
         contributions
+    do_holes : bool
+        (Optional) Default = False, If true, will calculate clearsky
     Returns
     -------
     DTAU : ndarray 
@@ -318,7 +320,7 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
     # This is the fractional of the total scattering that will be due to the cloud
     #VERY important note. You must weight the taucld by the single scattering 
     #this is because we only care about the fractional opacity from the cloud that is 
-    #scattering. 
+    #scattering. Equivalent to w_ray in optici.f
     ftau_cld = (single_scattering_cld * TAUCLD)/(single_scattering_cld * TAUCLD + TAURAY)
 
     #COSB = ftau_cld*asym_factor_cld
@@ -339,6 +341,14 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
     #sum up taus starting at the top, going to depth
     TAU = np.zeros((nlayer+1, nwno,ngauss))
     for igauss in range(ngauss): TAU[1:,:,igauss]=numba_cumsum(DTAU[:,:,igauss])
+
+    # Clearsky case
+    if do_holes == True:
+        DTAU = TAUGAS + TAURAY #omit cloud opacity
+        COSB = np.zeros_like(asym_factor_cld) #zero out asymmetry factor since clearsky
+        GCOS2 = 0.5 # since ftau_ray = 1 without any clouds
+        W0 = (TAURAY*raman_factor) / DTAU #TOTAL single scattering
+        W0_no_raman = (TAURAY*0.99999) / DTAU #TOTAL single scattering
 
     if plot_opacity:
         opt_figure.line(1e4/opacityclass.wno, DTAU[plot_layer,:,0], legend_label='TOTAL', line_width=4, color=colors[0],
