@@ -584,7 +584,7 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
         
     """
         
-    full_output = df['full_output']
+    full_output = df['full_output'] if 'full_output' in df.keys() else  df['spectrum_output']['full_output']
     df_atmo = picaso_class.inputs['atmosphere']['profile']
     molecules_included = full_output['weights']
     
@@ -921,10 +921,6 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
 
     ############# DEFINE ALL GEOMETRY USED IN CALCULATION #############
     #see class `inputs` attribute `phase_angle`
-    
-
-    #phase angle 
-    phase_angle = inputs['phase_angle']
     #get geometry
     geom = inputs['disco']
 
@@ -1741,9 +1737,13 @@ class inputs():
         self.inputs['star']['radius'] = r 
         self.inputs['star']['radius_unit'] = radius_unit 
         self.inputs['star']['flux'] = bin_flux_star
+        self.inputs['star']['flux_unit'] = 'ergs cm^{-2} s^{-1} cm^{-1}'
         self.inputs['star']['wno'] = wno_planet
         self.inputs['star']['semi_major'] = semi_major 
-        self.inputs['star']['semi_major_unit'] = semi_major_unit         
+        self.inputs['star']['semi_major_unit'] = semi_major_unit    
+        self.inputs['star']['filename'] = filename
+        self.inputs['star']['w_unit'] = w_unit
+        self.inputs['star']['f_unit'] = f_unit     
 
         """
         return not needed anymore
@@ -2086,6 +2086,9 @@ class inputs():
                 run the gravity function to set gravity')
 
         flist = os.listdir(os.path.join(sonora_path))
+        #ignore hidden drive files 
+        flist = [i for i in flist if '._' != i[0:2]]
+
 
         if ('cmp.gz' in str(flist)):
 
@@ -4007,9 +4010,15 @@ class inputs():
                 semi_major = self.inputs['star']['semi_major']
                 sm_unit = self.inputs['star']['semi_major_unit']
                 database = self.inputs['star']['database']
+                filename = self.inputs['star']['filename']
+                f_unit = self.inputs['star']['f_unit']
+                w_unit = self.inputs['star']['w_unit']
                 self.star(opacityclass, database=database,temp =T_star,metal =metal, logg =logg, 
                     radius = r_star, radius_unit=u.Unit(r_star_unit),semi_major= semi_major , 
-                    semi_major_unit = u.Unit(sm_unit))
+                    semi_major_unit = u.Unit(sm_unit), 
+                    filename = filename, 
+                    f_unit=f_unit, 
+                    w_unit=w_unit)
                 fine_flux_star  = self.inputs['star']['flux']  # erg/s/cm^2
                 FOPI = fine_flux_star * ((r_star/semi_major)**2)
             

@@ -29,7 +29,7 @@ from .opacity_factory import *
 
 def mean_regrid(x, y, newx=None, R=None):
     """
-    Rebin the spectrum at a minimum R or on a fixed grid 
+    Rebin the spectrum at a minimum R or on a fixed grid! 
 
     Parameters
     ----------

@@ -771,7 +771,7 @@ def insert_molecular_1060(molecule, min_wavelength, max_wavelength, new_R,
         #Grab 1060 in various format data
         if molecule in ['Cs','K','Li','Na','Rb']:
             openf=FortranFile(fdata,'r')
-            dset = openf.read_ints(dtype=np.float)
+            dset = openf.read_ints(dtype=float)
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1] 
         elif molecule =='CH3D':
             df = pd.read_csv(os.path.join(og_directory,molecule,'fort.{0}.bz2'.format(int(i)))
@@ -900,6 +900,7 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
     find_p_files = glob.glob(os.path.join(mol_dir,'*p_*'))
     find_npy_files = glob.glob(os.path.join(mol_dir,'*npy*'))
     find_txt_files =  glob.glob(os.path.join(mol_dir,'*txt*'))
+    find_fort_files =  glob.glob(os.path.join(mol_dir,'fort.*'))
 
     if len(find_p_files)>1000:
         ftype = 'fortran_binary'
@@ -907,9 +908,10 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         ftype = 'python'
     elif len(find_txt_files)>1000:
         ftype='lupu_txt'
+    elif len(find_fort_files)>1000:
+        ftype='rfree_fort'
     else: 
         raise Exception('Could not find npy or p_ files. npy are assumed to be read via np.load, where as p_ files are assumed to be unformatted binary or alkali files')
-        
     read_fits = os.path.join(mol_dir,'readomni.fits' )
     lupu_wave= os.path.join(mol_dir,'wavelengths.txt' )
     if os.path.exists(read_fits):
@@ -928,16 +930,19 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         start = s1460['start_wavenumber'].values.astype(float)
         
 
-
+    
     for i,p,t in zip(ifile,pres,temp):  
         #path to data
         if 'fortran' in ftype:
             fdata = os.path.join(mol_dir, 'p_'+str(int(i)))
+        elif 'rfree_fort' in ftype: 
+            fdata = os.path.join(mol_dir, 'fort.'+str(int(i)))
         elif 'python' in ftype: 
             fdata = os.path.join(mol_dir, str(int(i))+'.npy')
         elif 'lupu' in ftype: 
             mbar = p*1e3
             fdata = os.path.join(mol_dir,f'{molecule}_{mbar:.2e}mbar_{t:.0f}K.txt') 
+        
         #Grab 1460 in various format data
         if 'lupu' in ftype: 
             dset =  pd.read_csv(fdata,skiprows=2,header=None).values[:,0]
@@ -951,7 +956,11 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]
         elif 'python' in ftype: 
             dset = np.load(open(fdata,'rb'))
-            og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]            
+            og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]  
+        elif 'rfree_fort' in ftype: 
+            df = pd.read_csv(fdata,delim_whitespace=True, skiprows=27, header=None, names=['wno','cx'])
+            dset=df.loc[:,'cx'].values
+            og_wvno_grid=df.loc[:,'wno'].values           
 
         if not insert_direct:
             #interp on high res grid
@@ -1220,7 +1229,7 @@ def vresample_and_insert_molecular(molecule, min_wavelength, max_wavelength, new
         fdata = os.path.join(og_directory,molecule,'p_'+str(int(i)))
 
         #Grab 1060 format data
-        dset = np.fromfile(fdata, dtype=float)   #openf.read_ints(dtype=np.float)
+        dset = np.fromfile(fdata, dtype=float)   #openf.read_ints(dtype=float)
         og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]      
 
         #interp on high res grid
@@ -1389,9 +1398,8 @@ def get_molecular(db_file, species, temperature,pressure):
 
     data= cur.fetchall()
 
-    temp_nearest = [pt_pairs[i][2] for i in ind_pt]
-    pres_nearest = [pt_pairs[i][1] for i in ind_pt]
-
+    temp_nearest = [pt_pairs[i-1][2] for i in ind_pt]
+    pres_nearest = [pt_pairs[i-1][1] for i in ind_pt]
     restruct = {i:{} for i in species}
     for i in restruct.keys():
         for t in temp_nearest:

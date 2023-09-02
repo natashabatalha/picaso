@@ -41,7 +41,7 @@ except ImportError:
 # to this sample package.
 setup(
     name='picaso', 
-    version = '3.1b1',
+    version = '3.1.1',
     description = 'planetary intesity code for atmospheric scattering observations',
     long_description = 'README.md',
     author = 'Natasha E. Batalha',
@@ -61,7 +61,7 @@ setup(
   packages=['picaso'],
   install_requires=[
           'numpy<1.25',
-          'bokeh>=2.3.0,<3.1.0',
+          'bokeh>=2.3.0,<3.2.0',
           'holoviews',
           'numba',
           'pandas',
