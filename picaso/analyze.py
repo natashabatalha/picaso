@@ -405,8 +405,7 @@ class GridFitter():
         ii=0
         for igrid in grid_names:   
             for idata in data_names: 
-                cycler = ax['A']._get_lines.prop_cycler
-                color = next(cycler)['color']
+                color = ax['A']._get_lines.get_next_color()
 
                 wlgrid_center = self.data[idata]['wlgrid_center']
                 y_data = 100*self.data[idata]['y_data']
