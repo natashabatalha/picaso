@@ -656,7 +656,7 @@ class GridFitter():
 
 
     
-def custom_interp(final_goal,fitter,grid_name): 
+def custom_interp(final_goal,fitter,grid_name, interp='spectra',array_to_interp=None ): 
     """
     Custom interpolation routine that interpolates based on the nearest two neighbors
     of each parameter. e.g. if interpolating M/H and C/O it will find the upper 
@@ -672,16 +672,30 @@ def custom_interp(final_goal,fitter,grid_name):
         See tutorial, provided loaded grid fitter tool
     grid_name : str
         name of grid provided to analyze.GridFitter
-
+    interp : str 
+        Default = 'spectra', this dictates the entity you want to interpolate 
+        Other option is to specify "custom" in this case you will have to 
+        add in a array of something else (e.g. temperature, chemistry). 
+    array_to_interp : array
+        Default = None, in this case it assumes you are fitting for the spectrum. 
+        Otherwise you have to input the array of what you want to input via this 
+        variable.
+        This array should be on an identical array as the spectra, except the last dimension
+        which might not be of wavelength (could be of pressure for instance)
     
     Returns
     -------
     ndarray
         Final spectra interpolated onto final_goal values requested 
     """
+
     grid_points = fitter.interp_params[grid_name]['grid_parameters']
     grid_pars = fitter.interp_params[grid_name]['grid_parameters_unique']
-    spectra = fitter.interp_params[grid_name]['square_spectra_grid']
+
+    if interp == 'spectra':
+        spectra = fitter.interp_params[grid_name]['square_spectra_grid']
+    else: 
+        spectra = array_to_interp
 
     
     #transform to list of unique values 
@@ -711,11 +725,13 @@ def custom_interp(final_goal,fitter,grid_name):
         return interp
     interp = weight_interp(grid_pars, final_goal, spectra,hypercube, hilos,hilos_inds)
     
-    if np.any(np.isnan(interp)):
-        tree = cKDTree(grid_points)
-        dd, inds = tree.query(final_goal, k=3)
-        weights = 1.0 / dd**2
-        interp = np.dot(weights , fitter.spectra[grid_name][inds]) / np.sum(weights)  
+    if interp == 'spectra':
+        #only fill this gap if you are fitting spectra
+        if np.any(np.isnan(interp)):
+            tree = cKDTree(grid_points)
+            dd, inds = tree.query(final_goal, k=3)
+            weights = 1.0 / dd**2
+            interp = np.dot(weights , fitter.spectra[grid_name][inds]) / np.sum(weights)  
         
     return interp
 
