@@ -329,8 +329,8 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
             ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,
             cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,
             constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts, save_profile, all_profiles,
-            do_holes=None, fhole = None, DTAU_clear = None, TAU_clear = None, W0_clear = None, COSB_clear = None, 
-            DTAU_OG_clear = None, COSB_OG_clear = None, W0_no_raman_clear = None):
+            fhole = None, DTAU_clear = None, TAU_clear = None, W0_clear = None, COSB_clear = None, 
+            DTAU_OG_clear = None, COSB_OG_clear = None, W0_no_raman_clear = None, do_holes=None):
     """
     Module to iterate on the level TP profile to make the Net Flux as close to 0.
     Opacities/chemistry are not updated while iterating in this module.
@@ -414,17 +414,18 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
     tolx = tolf    # tolerance in fractional T change we are aiming for
 
     #both reflected and thermal
-    flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = climate(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
-            COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
-            wno,nwno,ng,nt, nlevel, ngauss, gauss_wts,True, True)#True for reflected, True for thermal
-    
+
     if do_holes == True:
-            flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = climate(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
-            COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
-            wno,nwno,ng,nt, nlevel, ngauss, gauss_wts,True, True, fhole, DTAU_clear , TAU_clear , W0_clear , COSB_clear , 
-            DTAU_OG_clear , COSB_OG_clear , W0_no_raman_clear, do_holes=True) #True for reflected, True for thermal
+        flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = climate(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
+        COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
+        ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
+        wno,nwno,ng,nt, nlevel, ngauss, gauss_wts,True, True, fhole, DTAU_clear , TAU_clear , W0_clear , COSB_clear , 
+        DTAU_OG_clear , COSB_OG_clear , W0_no_raman_clear, do_holes=True) #True for reflected, True for thermal
+    else:
+        flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = climate(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
+                COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
+                ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
+                wno,nwno,ng,nt, nlevel, ngauss, gauss_wts,True, True)#True for reflected, True for thermal
 
     # extract visible fluxes
     flux_net_v_layer = flux_net_v_layer_full[0,0,:]  #fmnetv
@@ -1273,7 +1274,7 @@ def climate( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU, W
     
     return flux_net_v_layer, flux_net_v, flux_plus_v, flux_minus_v , flux_net_ir_layer, flux_net_ir, flux_plus_ir, flux_minus_ir
 
-def calculate_atm(bundle, opacityclass, do_holes = None):
+def calculate_atm(bundle, opacityclass, fthin_cld = None, do_holes = None):
 
     inputs = bundle.inputs
 
@@ -1388,15 +1389,15 @@ def calculate_atm(bundle, opacityclass, do_holes = None):
     
     opacityclass.get_opacities(atm)
     
-    DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman, f_deltaM= compute_opacity(
-            atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
-            full_output=False, plot_opacity=False)
-    
-    #check if patchy clouds are requested
+        #check if patchy clouds are requested
     if do_holes == True:
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman, f_deltaM= compute_opacity(
             atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
-            full_output=False, plot_opacity=False, do_holes = True)
+            full_output=False, plot_opacity=False, fthin_cld = fthin_cld, do_holes = True)
+    else:
+        DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman, f_deltaM= compute_opacity(
+                atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
+                full_output=False, plot_opacity=False)
 
     #mmw = np.mean(atm.layer['mmw'])
     mmw = atm.layer['mmw']
@@ -1404,7 +1405,7 @@ def calculate_atm(bundle, opacityclass, do_holes = None):
     return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw
 
 
-def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None, do_holes=None):
+def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None, fthin_cld = None, do_holes=None):
 
     inputs = bundle.inputs
 
@@ -1513,16 +1514,16 @@ def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None, do_holes
         opacityclass.get_opacities_deq(bundle,atm)
     else:
         opacityclass.get_opacities_deq_onfly(bundle,atm,gases_fly=gases_fly)
-    
-    DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman, f_deltaM= compute_opacity(
-            atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
-            full_output=False, plot_opacity=False)
-    
+
     #check if patchy clouds are requested
     if do_holes == True:
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman, f_deltaM= compute_opacity(
         atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
-        full_output=False, plot_opacity=False, do_holes = True)
+        full_output=False, plot_opacity=False, fthin_cld = fthin_cld, do_holes = True)
+
+    DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman, f_deltaM= compute_opacity(
+            atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
+            full_output=False, plot_opacity=False)
     
 
     #mmw = np.mean(atm.layer['mmw'])
