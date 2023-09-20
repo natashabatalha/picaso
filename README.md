@@ -1,3 +1,4 @@
+# This fork is used by Purdue Cloud Lab, and uses modified fluxes.py, justdoit.py, and atmsetup.py 
 
 ![Logo](docs/logo.png)
 
