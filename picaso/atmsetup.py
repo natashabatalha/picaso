@@ -111,8 +111,8 @@ class ATMSETUP():
         electrons = False
         for g in range(ng):
             for t in range(nt):
-                ilat = list(read_3d.coords['lat'].values.astype(np.float32)).index(np.float32(latitude[t]))
-                ilon = list(read_3d.coords['lon'].values.astype(np.float32)).index(np.float32(longitude[g]))
+                ilat = list(read_3d.coords['lat2d'].values.astype(np.float32)).index(np.float32(latitude[t]))
+                ilon = list(read_3d.coords['lon2d'].values.astype(np.float32)).index(np.float32(longitude[g]))
                 #read = read_3d[int(latitude[t])][int(longitude[g])].sort_values('pressure').reset_index(drop=True)
                 read = read_3d.isel(lon=ilon,lat=ilat).to_pandas().reset_index().drop(['lat','lon'],axis=1).sort_values('pressure')
                 if 'phase' in read.keys():

@@ -19,6 +19,7 @@ from numpy import exp, sqrt,log
 from numba import jit,njit
 from scipy.io import FortranFile
 
+from picaso import justdoit as jdi
 
 import os
 import pickle as pk
@@ -41,6 +42,23 @@ from joblib import Parallel, delayed, cpu_count
 __refdata__ = os.environ.get('picaso_refdata')
 __version__ = 3.1
 
+#Stuff needed for 'LAB' scattering approximation
+#import pandas as pd
+#from scipy.interpolate import CubicSpline
+
+## Define Laboratory data to be used in Single Scattering approximations below
+## Make sure to change directories as needed
+#LargeKCl_405nm_Full = pd.read_csv("~/CloudLab/LAB_Extrapolation/LargeKCl_405nm_Full.txt",header=0)
+#LargeKCl_405nm_Full_Array = LargeKCl_405nm_Full.to_numpy() #convert to numpy array
+    
+#LargeKCl_405nm_cosd = LargeKCl_405nm_Full_Array[:,3] #extract 4th column (cos(theta))
+#LargeKCl_405nm_Intensity = LargeKCl_405nm_Full_Array[:,2] #extract 3rd column (normalized intensity)
+    
+#LargeKCl_405nm_cosd_flip = np.flip(LargeKCl_405nm_cosd)  # Reverse these bc CubicSpline needs x in order of increasing
+#LargeKCl_405nm_Intensity_flip = np.flip(LargeKCl_405nm_Intensity)
+    
+# This spline is what we will be using hence forth. It describes (extrapolated; 0-180 deg) lab data using a series of piecewise polynomials in order to create a continuous set of functions wrt cos_theta
+#LargeKCl_405nm_Full_Spline = CubicSpline(LargeKCl_405nm_cosd_flip, LargeKCl_405nm_Intensity_flip) 
 
 if not os.path.exists(__refdata__): 
     raise Exception("You have not downloaded the PICASO reference data. You can find it on github here: https://github.com/natashabatalha/picaso/tree/master/reference . If you think you have already downloaded it then you likely just need to set your environment variable. See instructions here: https://natashabatalha.github.io/picaso/installation.html#download-and-link-reference-documentation . You can use `os.environ['PYSYN_CDBS']=<yourpath>` directly in python if you run the line of code before you import PICASO.")
@@ -143,7 +161,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
     
 
     #phase angle 
-    phase_angle = inputs['phase_angle']
+    #phase_angle = inputs['phase_angle']
     #get geometry
     geom = inputs['disco']
 
@@ -387,7 +405,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_o
                                                 DTAU_OG_3d[:,:,:,:,ig], TAU_OG_3d[:,:,:,:,ig], W0_OG_3d[:,:,:,:,ig], COSB_OG_3d[:,:,:,:,ig],
                                                 atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
                                                 single_phase,multi_phase,
-                                                frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)
+                                                frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)#, LargeKCl_405nm_Full_Spline)
                 xint_at_top += xint*gauss_wts[ig]
                 #if full output is requested add in xint at top for 3d plots
             if full_output: 
@@ -2817,14 +2835,20 @@ class inputs():
         else :
             og_lat = ds.coords['lat'].values #degrees
             og_lon = ds.coords['lon'].values #degrees
-
+            pres = ds.coords['pressure'].values #bars  #adding this so I can add it explicitly to ds_New below
+            
         #store so we can rotate
         data_vars_og = {i:ds[i].values for i in ds.keys()}
         #run through phases and regrid each one
+        new_lat_totals = []
+        new_lon_totals = []
         shifted_grids = {}
         for i,iphase in enumerate(phases): 
             new_lat = self.inputs['disco'][iphase]['latitude']*180/np.pi#to degrees
             new_lon = self.inputs['disco'][iphase]['longitude']*180/np.pi#to degrees
+            #print("New Lon", new_lon)
+            new_lat_totals.append(new_lat)
+            new_lon_totals.append(new_lon)
             total_shift = (iphase*180/np.pi + shift[i]) % 360 
             change_zero_pt = og_lon +  total_shift
             change_zero_pt[change_zero_pt>360]=change_zero_pt[change_zero_pt>360]%360 #such that always between -180 and 180
@@ -2837,10 +2861,52 @@ class inputs():
                 data = np.concatenate((swap2,swap1))
                 ds[idata].values = data
             shifted_grids[iphase] = regrid_xarray(ds, latitude=new_lat, longitude=new_lon)
-        new_phase_grid=xr.concat(list(shifted_grids.values()), pd.Index(list(shifted_grids.keys()), name='phase'))
+            #print("Shifted grids", shifted_grids)
+            
+            ## we need a lon_total that is len(phase) x len(lon regrid) as ARRAY, not list
+            ## Test this part with varying phases, regrid resolutions later
+            new_lat_totals_array = np.array(new_lat_totals)
+            new_lon_totals_array = np.array(new_lon_totals)
+            #print("New Lon Totals",new_lon_totals_array)
+            #print("New Lon Totals SHAPE",new_lon_totals_array.shape)
+
+        # New_phase_grids will not work, creates 17 long lon, we need to preserve 6 lon 
+        stacked_phase_grid=xr.concat(list(shifted_grids.values()), pd.Index(list(shifted_grids.keys()), name='phase'), join='override')  ## join=override gets rid of errant lon values
+        #print("Stacked phase grids data vars", stacked_phase_grid.data_vars.values)
+        #print("Stacked phase grids data vars SHAPE", stacked_phase_grid.data_vars['temperature'].values.shape)
+        
+            # put data into a dataset
+        ds_New = jdi.xr.Dataset(
+            data_vars=dict(
+            ),
+            coords=dict(
+                lon2d=(["phase","lon"], new_lon_totals_array,{'units': 'degrees'}), #required. Errors when named lon
+                lat2d=(["phase","lat"], new_lat_totals_array,{'units': 'degrees'}), #required
+                pressure=(["pressure"], pres,{'units': 'bar'})#required*
+            ),
+            attrs=dict(description="coords with vectors"),
+        )
+        new_phase_grid = ds_New  ##changed from new_phase_grid to shifted_grids
+            
+        # Now we need to add stacked_phase_grid Data Vars to new_phase_grid, and also add Phase to coords
+        
+        # Lets use merge with compat=override (use data_vars from 1st dataset)
+        # This adds a new, 2D coord named 'longitude' (not 'lon'). Longitude needs to be specified for phase__curve
+        new_phase_grid = xr.merge([stacked_phase_grid, new_phase_grid], compat='override', join='right')
+        
+        #new_phase_grid = new_phase_grid.rename_dims({'lon':'long','lat':'lati'})
+        #new_phase_grid = new_phase_grid.assign_coords({'lon':new_phase_grid.lon2d, 'lat':new_phase_grid.lat2d})
+        #new_phase_grid = new_phase_grid.drop_vars({'lon2d','lat2d'})
+        #new_phase_grid = new_phase_grid.rename_dims({'long':'lon','lati':'lat'})
+        
+        print("New Phase Grid UPDATED", new_phase_grid)
+        
+        #print("Shifted grids data vars", shifted_grids[iphase].data_vars.values)
+        #print("Shifted grids data vars SHAPE", shifted_grids[iphase].data_vars['temperature'].values.shape)
 
         if plot: 
-            new_phase_grid['temperature'].isel(pressure=iz_plot).plot(x='lon', y ='lat', col='phase',col_wrap=4)
+            new_phase_grid['temperature'].isel(pressure=iz_plot).plot(x='lon2d', y ='lat2d', col='phase',col_wrap=4)
+            #changed lon, lat to longitude, latitude
         
         self.inputs['atmosphere']['profile'] = new_phase_grid
 
@@ -4248,7 +4314,7 @@ def jupiter_cld():
 def HJ_pt():
     """Function to get Jupiter's PT profile"""
     return os.path.join(__refdata__, 'base_cases','HJ.pt')
-def HJ_pt_3d(as_xarray=False,add_kz=False, input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')):
+def HJ_pt_3d(as_xarray=False,add_kz=False):
     """Function to get Jupiter's PT profile
     
     Parameters
@@ -4257,11 +4323,8 @@ def HJ_pt_3d(as_xarray=False,add_kz=False, input_file = os.path.join(__refdata__
         Returns as xarray, instead of dictionary
     add_kz : bool 
         Returns kzz along with PT info
-    input_file : str 
-        point to input file in the same format as mitgcm example 
-        file in base_cases/HJ_3d.pt
     """
-    #input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')
+    input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')
     threed_grid = pd.read_csv(input_file,delim_whitespace=True,names=['p','t','k'])
     all_lon= threed_grid.loc[np.isnan(threed_grid['k'])]['p'].values
     all_lat=  threed_grid.loc[np.isnan(threed_grid['k'])]['t'].values
@@ -4334,7 +4397,7 @@ def brown_dwarf_cld():
 def single_phase_options(printout=True):
     """Retrieve all the options for direct radation"""
     if printout: print("Can also set functional form of forward/back scattering in approx['TTHG_params']")
-    return ['cahoy','OTHG','TTHG','TTHG_ray']
+    return ['cahoy','OTHG','TTHG','TTHG_ray','LAB']
 def multi_phase_options(printout=True):
     """Retrieve all the options for multiple scattering radiation"""
     if printout: print("Can also set delta_eddington=True/False in approx['delta_eddington']")
