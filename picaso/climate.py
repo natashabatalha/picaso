@@ -92,7 +92,7 @@ def did_grad_cp( t, p, t_table, p_table, grad, cp, calc_type):
     return grad_x,cp_x
     
 @jit(nopython=True, cache=True)
-def convec(temp,pressure, t_table, p_table, grad, cp):
+def convec(temp,pressure, t_table, p_table, grad, cp, opacityclass, moist = False):
     """
     Calculates Grad arrays from profiles
     
@@ -110,6 +110,10 @@ def convec(temp,pressure, t_table, p_table, grad, cp):
         array of gradients of dimension 53*26
     cp : array 
         array of cp of dimension 53*26
+    opacityclass : class
+        opacity from jdi.opannection for abundances used in moistgrad
+    moist : bool
+        if moist adiabat is to be used
     Return
     ------
     grad_x, cp_x
@@ -120,11 +124,19 @@ def convec(temp,pressure, t_table, p_table, grad, cp):
     
     grad_x, cp_x = np.zeros(shape=(len(temp)-1)), np.zeros(shape=(len(temp)-1))
 
-    for j in range(len(temp)-1):
-        tbar[j] = 0.5*(temp[j]+temp[j+1])
-        pbar[j] = sqrt(pressure[j]*pressure[j+1])
-        calc_type = 0
-        grad_x[j], cp_x[j] =  did_grad_cp( tbar[j], pbar[j], t_table, p_table, grad, cp, calc_type)
+    if moist == True:
+        for j in range(len(temp)-1):
+            tbar[j] = 0.5*(temp[j]+temp[j+1])
+            pbar[j] = sqrt(pressure[j]*pressure[j+1])
+            calc_type = 0
+            grad_x[j], cp_x[j] =  moist_grad( tbar[j], pbar[j], t_table, p_table, grad, cp, calc_type, opacityclass)
+
+    else:
+        for j in range(len(temp)-1):
+            tbar[j] = 0.5*(temp[j]+temp[j+1])
+            pbar[j] = sqrt(pressure[j]*pressure[j+1])
+            calc_type = 0
+            grad_x[j], cp_x[j] =  did_grad_cp( tbar[j], pbar[j], t_table, p_table, grad, cp, calc_type)
 
     return grad_x, cp_x
 
@@ -230,7 +242,7 @@ def lu_decomp(a, n, ntot):
             if abs(a[i,j]) > aamax:
                 aamax=abs(a[i,j])
         if aamax == 0.0:
-        	raise ValueError("Array is singular, cannot be decomposed in n:" + str(n))
+            raise ValueError("Array is singular, cannot be decomposed in n:" + str(n))
         vv[i]=1.0/aamax  
 
     for j in range(n):
@@ -328,9 +340,9 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
             grad, cp, tidal, tmin,tmax, dwni , bb , y2, tp, DTAU, TAU, W0, COSB, 
             ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,
             cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,
-            constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts, save_profile, all_profiles,
+            constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts, save_profile, all_profiles, opacityclass,
             fhole = None, DTAU_clear = None, TAU_clear = None, W0_clear = None, COSB_clear = None, 
-            DTAU_OG_clear = None, COSB_OG_clear = None, W0_no_raman_clear = None, do_holes=None):
+            DTAU_OG_clear = None, COSB_OG_clear = None, W0_no_raman_clear = None, do_holes=None, moist = None):
     """
     Module to iterate on the level TP profile to make the Net Flux as close to 0.
     Opacities/chemistry are not updated while iterating in this module.
@@ -419,7 +431,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
         flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = climate(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
         COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
         ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
-        wno,nwno,ng,nt, nlevel, ngauss, gauss_wts,True, True, fhole, DTAU_clear , TAU_clear , W0_clear , COSB_clear , 
+        wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, True, True, fhole, DTAU_clear , TAU_clear , W0_clear , COSB_clear , 
         DTAU_OG_clear , COSB_OG_clear , W0_no_raman_clear, do_holes=True) #True for reflected, True for thermal
     else:
         flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = climate(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
@@ -611,8 +623,12 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                     for j1 in range(n_conv_top_b, n_bot_b+1): 
                         
                         press = sqrt(pressure[j1-1]*pressure[j1])
-                        calc_type =  0 
-                        grad_x, cp_x = did_grad_cp( beta[j1-1], press, t_table, p_table, grad, cp, calc_type)
+                        calc_type =  0
+
+                        if moist == True:
+                            grad_x, cp_x = moist_grad( beta[j1-1], press, t_table, p_table, grad, cp, calc_type, opacityclass)
+                        else: 
+                            grad_x, cp_x = did_grad_cp( beta[j1-1], press, t_table, p_table, grad, cp, calc_type)
                         
                         temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
                 
@@ -818,7 +834,10 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
 
                     press = sqrt(pressure[j1-1]*pressure[j1])
                     calc_type =  0 # only need grad_x in return
-                    grad_x, cp_x = did_grad_cp( temp[j1-1], press, t_table, p_table, grad, cp, calc_type)
+                    if moist == True:
+                        grad_x, cp_x = moist_grad( temp[j1-1], press, t_table, p_table, grad, cp, calc_type, opacityclass)
+                    else:
+                        grad_x, cp_x = did_grad_cp( temp[j1-1], press, t_table, p_table, grad, cp, calc_type)
                             
                     temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
                 
@@ -1530,3 +1549,360 @@ def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None, fthin_cl
     mmw = atm.level['mmw']
     
     return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw
+
+def moist_grad( t, p, t_table, p_table, grad, cp, calc_type, opacityclass):
+    """
+    Parameters
+    ----------
+    t : float
+        Temperature  value
+    p : float 
+        Pressure value
+    t_table : array 
+        array of Temperature values with 53 entries
+    p_table : array 
+        array of Pressure value with 26 entries
+    grad : array 
+        array of gradients of dimension 53*26
+    cp : array 
+        array of cp of dimension 53*26
+    calc_type : int 
+        not used to make compatible with nopython.
+    opacityclass : class
+         Opacity class from `justdoit.opannection` for abundances
+    
+    Returns
+    -------
+    float 
+        grad_x
+    
+    """
+    # Python version of moistgrad function in convec.f in EGP
+
+    #constants
+
+    #gas MMW organized into one vector (g/mol)
+    mmw = [0.00067, 2.01588, 1.008, 1.008-0.00067, 1.008+0.00067, 2.01588+0.00067, 2.01588-0.00067, 
+            2.01588+1.008-0.00067,4.002602, 18.01528, 16.04276, 28.0104, 17.03056, 28.0134, 33.997582, 
+            34.0809, 63.8794, 66.9409, 55.84, 56.85494, 53.00404, 22.989770, 39.0983, 85.4678, 132.90545, 44.0]
+
+    Rgas = 8.314e7 #erg/K/mol
+
+    #indexes of species that are allowed to condense
+    icond = [9,10,12,18] #h2o, ch4, nh3, fe
+
+    ncond = 4 #Only 4 molecules are considered for now (H2O, CH4, NH3, Fe) 
+    Tcrit = [647.,   191.,   406.,  4000.]
+    Tfr   = [273.,    90.,   195.,  1150.]
+    hfus  = [6.00e10, 9.46e9, 5.65e10, 1.4e11] #(erg/mol)
+
+    #set heat of vaporization + fusion (when applicable)
+    dH = np.zeros(ncond)
+    for i in range(ncond):
+        if(t < Tcrit[i]):
+            dH[i] = dH[i] + hvapfunc(icond[i],t, mmw)
+        if(t < Tfr[i]):
+            dH[i] = dH[i] + hfus[i]
+
+    #set abundances
+    t_fine = t
+    p_fine = 1e3*p
+    # output_abunds = interp(t_fine,p_fine)
+
+    output_abunds = np.empty(0)
+    for k in [0,3,4,14]: #these indices are based on the opacityclass.molecules list to get H2O, CH4, NH3, Fe
+        output_abunds = np.append(output_abunds, opacityclass.get_pre_mix_ck().molecular_opa[k]) #need to fix this tp get proper abundances
+
+    # find condensible partial pressures and H/R/T for condensibles.  
+    # also find background pressure, which makes up difference between partial pressures and total pressure
+    pb = p
+    pc = np.zeros(ncond)
+    a  = np.zeros(ncond)
+
+    for i in range(ncond):
+        pc[i] = output_abunds(icond[i])*p
+        a[i]  = dH[i]/Rgas/t
+        pb    -= pc[i]
+
+    # summed heat capacity for ideal gas case. note that this cp is in erg/K/mol
+    cpI = 0.0
+    f = 0.0
+    for i in range(9,len(mmw)+1): #+1 to include last element
+        f  += output_abunds[i]
+        cpI += output_abunds[i]*cpfunc(i,t,mmw)*mmw[i]
+
+    # ideal gas adiaibatic gradient
+    gradI = Rgas//cpI*f
+
+    #non-ideal gas from Didier
+    gradNI, cp_x = did_grad_cp(t,p,t_table,p_table,grad,cp, calc_type)
+    cp_NI = Rgas/gradNI
+
+    #weighted combination of non-ideal and ideal components
+    gradb = 1.0/((1.0-f)*cp_NI/Rgas + f*cpI/Rgas)
+
+    #moist adiabatic gradient from note by T. Robinson.
+    numer = 1.0
+    denom = 1.0/gradb
+
+    for i in range(ncond):
+        numer += a[i]*pc[i]/p
+        denom += a[i]**2*pc[i]/p
+
+    grad_x = numer/denom
+
+    return grad_x, cp_x 
+
+@jit(nopython=True, cache=True)
+def hvapfunc(igas, temp, mmw):
+    """
+    Parameters
+    ----------
+    gas: int 
+        gas index
+    temp : float
+        Temperature  value
+    mmw: list
+        list of mmw of all gases (g/mol)
+
+    Returns
+    -------
+    float 
+        hvap
+    """
+
+    #this function condenses all the individual elemental hvap functions in EGP into one function
+
+    if (igas == 9): #h2o
+        t = temp/647.
+        if( temp < 647. ):
+            hvap = 51.67*np.exp(0.199*t)*(1 - t)**0.410
+        else:
+            hvap = 0.
+    elif (igas == 10): #ch4
+        t = temp/191
+        if( temp < 191 ):
+            hvap = 10.11*np.exp(0.22*t)*(1 - t)**0.388
+        else:
+            hvap = 0.
+    elif (igas == 12): #nh3
+        m = mmw[igas]
+        t = temp - 273.
+        if( temp < 406. ):
+          hvap = (137.91*(133. - t)**0.5 - 2.466*(133. - t))/1.e3*m
+        else:
+          hvap = 0.
+    elif (igas == 18):
+        hvap = 3.50e2 # temperature-independent (kJ/mol)
+    else:
+        print('Warning: calling hvap for missing species. Returning zero.')
+        hvap = 0.0
+
+    #convert from kJ/mol to erg/mol
+    hvap = hvap*1.e10
+
+    return hvap
+
+
+@jit(nopython=True, cache=True)
+def cpfunc(igas, temp, mmw):
+    """
+    Parameters
+    ----------
+    gas: int 
+        gas index
+    temp : float
+        Temperature  value
+    mmw: list
+        list of mmw of all gases (g/mol)
+
+    Returns
+    -------
+    float 
+        cp
+    """
+    #this function condenses all the individual elemental cp functions in EGP into one function
+    #NIST constants could be placed into dictionary or other readin file to make code more readable -JM
+
+    # haven't included the cp function for the first 8 species since not needed in moist adiabat calculation but can be added later if needed from EGP+ code
+    # if (igas == 0): #e-
+    #     cp = cp_e(temp)
+    # elif (igas == 1): # h2
+    #     cp = cp_h2(temp)
+    # elif (igas == 2): # h
+    #     cp = cp_h(temp)
+    # elif (igas == 3): # h+
+    #     cp = cp_hp(temp)
+    # elif (igas == 4): # h-
+    #     cp = cp_hm(temp)
+    # elif (igas == 5): # h2-
+    #     cp = cp_h2p(temp)
+    # elif (igas == 6): # h2+
+    #     cp = cp_h2m(temp)
+    # elif (igas == 7): # h3+
+    #     cp = cp_h3p(temp)
+    # elif (igas == 8): # he
+    #     cp = cp_he(temp)
+
+    if (igas == 9): # h2o
+        #coefficients NIST in polynomial fit
+        A = [      33.7476,      22.1440,      43.2009]
+        B = [     -6.85376,      24.6949,      7.91703]
+        C = [      24.6006,     -6.23914,     -1.35732]
+        D = [     -10.2578,     0.576813,    0.0883558]
+        E = [  0.000170650,   -0.0143783,     -12.3810]
+        G = [      230.708,      210.968,      219.916]
+        default_cp = 33.299
+    elif (igas == 10): # ch4
+        A = [      30.1333,      33.3642,      107.517]
+        B = [     -10.7805,      62.9633,    -0.420051]
+        C = [      116.987,     -20.9146,     0.158105]
+        D = [     -64.8550,      2.54256,   -0.0135050]
+        E = [    0.0315890,     -6.26634,     -53.2270]
+        G = [      221.436,      191.066,      225.284]
+        default_cp = 33.258
+    elif (igas == 11): # co
+        A = [      30.7036,      34.2259,      35.3293]
+        B = [     -11.7368,      1.51655,      1.14525]
+        C = [      25.8658,    0.0492481,    -0.170423]
+        D = [     -11.6476,   -0.0690167,    0.0111323]
+        E = [  -0.00675277,     -2.61424,     -2.85798]
+        G = [      237.225,      231.715,      231.882]
+        default_cp = 29.104
+    elif (igas == 12): # nh3
+        A = [      28.6905,      48.0925,      89.3168]
+        B = [      14.9648,      16.6892,   -0.0283260]
+        C = [      32.2849,    -0.765783,    -0.403009]
+        D = [     -19.5766,    -0.465621,    0.0366428]
+        E = [    0.0281968,     -7.37491,     -68.5295]
+        G = [      221.899,      226.660,      222.041]
+        default_cp = 33.284
+    elif (igas == 13): # n2
+        A = [      30.7036,      34.2259,      35.3293]
+        B = [     -11.7368,      1.51655,      1.14525]
+        C = [      25.8658,    0.0492481,    -0.170423]
+        D = [     -11.6476,   -0.0690167,    0.0111323]
+        E = [  -0.00675277,     -2.61424,     -2.85798]
+        G = [      237.225,      231.715,      231.882]
+        default_cp = 29.104
+    elif (igas == 14): # ph3
+        A = [      24.1623,      75.4246,      82.3854]
+        B = [      35.7131,    -0.467915,     0.229399]
+        C = [      28.4716,      2.70503,   -0.0280155]
+        D = [     -24.2205,    -0.650872,   0.00135605]
+        E = [    0.0530053,     -13.0455,     -24.2573]
+        G = [      228.047,      262.751,      258.876]
+        default_cp = 33.259
+    elif (igas == 15): # h2s
+        A = [      32.3729,      45.0479,      59.8489]
+        B = [     -1.43579,      7.28547,    -0.380368]
+        C = [      29.0118,    -0.645552,     0.218138]
+        D = [     -14.1925,    -0.109566,   -0.0148742]
+        E = [   0.00759539,     -6.02580,     -21.7958]
+        G = [      244.187,      242.650,      243.798]
+        default_cp = 33.259
+    elif (igas == 16): # tio
+        A = [      24.6205,      42.5795,      25.6986]
+        B = [      30.8607,     -3.86291,      2.45240]
+        C = [     -23.2493,      1.15148,     0.770717]
+        D = [      5.39026,   -0.0315822,   -0.0946717]
+        E = [    0.0642488,     -2.14344,      26.1268]
+        G = [      255.386,      278.646,      282.105]
+        default_cp = 33.880
+    elif (igas == 17): # vo
+        A = [      23.6324,      40.2277,      31.0958]
+        B = [      28.8676,     -2.68241,    0.0444865]
+        C = [     -21.5825,     0.855477,      1.06932]
+        D = [      5.35779,  -0.00729363,    -0.106395]
+        E = [    0.0281114,     -2.10348,      13.7865]
+        G = [      251.949,      273.020,      275.689]
+        default_cp = 29.106
+    elif (igas == 18): # fe
+        A = [      22.5120,      29.3785,      31.0353]
+        B = [      23.6042,     -12.7912,     -3.09778]
+        C = [     -49.5765,      6.80824,     0.766662]
+        D = [      26.1116,    -0.979241,   0.00158800]
+        E = [   -0.0305055,    0.0621550,     -22.0154]
+        G = [      202.527,      219.780,      206.035]
+        default_cp = 21.387
+    elif (igas == 19): # feh
+        A = [      17.0970,      43.7692,      80.0135]
+        B = [      52.0678,     0.968978,     -18.2832]
+        C = [     -34.3367,     0.818403,     3.55466]
+        D = [      7.96189,    -0.356898,    -0.288758]
+        E = [     0.455643,     -1.88073,     -41.0125]
+        G = [      285.000,      285.000,      285.000]
+        default_cp = 34.906
+    elif (igas == 20): # crh
+        A = [      24.6453,      40.9948,      100.083]
+        B = [      12.9392,     -3.29251,     -36.2074]
+        C = [    0.0477315,      1.40327,      7.79945]
+        D = [     -2.45803,   -0.0468814,    -0.458881]
+        E = [    0.0859445,     -3.87926,     -68.1415]
+        G = [      260.000,      280.000,      280.000]
+        default_cp = 29.417
+    elif (igas == 21): # na
+        A = [      20.8154,      21.0812,      38.7681]
+        B = [    -0.162936,   -0.0211313,     -9.69137]
+        C = [     0.281035,    -0.188686,      1.61045]
+        D = [    -0.149202,    0.0703542,   -0.0183163]
+        E = [ -0.000166252,    -0.169969,     -21.5246]
+        G = [      178.894,      178.829,      179.923]
+        default_cp = 20.786
+    elif (igas == 22): # k
+        A = [      20.8154,      20.1077,      80.8587]
+        B = [    -0.162936,      1.72326,     -38.6316]
+        C = [     0.281035,     -1.42054,      8.80886]
+        D = [    -0.149202,     0.388577,    -0.553605]
+        E = [ -0.000166252,   -0.0178336,     -57.1459]
+        G = [      185.566,      184.342,      197.881]
+        default_cp = 20.786
+    elif (igas == 23): # rb
+        A = [      20.8110,      21.8305,      67.6946]
+        B = [    -0.139382,    -0.120618,     -36.4056]
+        C = [     0.241553,    -0.759797,      9.45407]
+        D = [    -0.129505,     0.324361,    -0.654225]
+        E = [ -0.000134562,    -0.519578,     -22.9711]
+        G = [      195.310,      195.381,      215.367]
+        default_cp = 20.786
+    elif (igas == 24): # cs
+        A = [      20.8111,      19.3844,     -99.0597]
+        B = [    -0.139259,      3.51623,      42.3576]
+        C = [     0.238592,     -3.00169,     -2.76224]
+        D = [    -0.126005,     0.867065,   -0.0552789]
+        E = [ -0.000147773,    0.0177750,      218.172]
+        G = [      200.816,      198.458,      231.228]
+        default_cp = 20.786
+    elif (igas == 25): # co2
+        A = [      17.1622,      59.7854,      65.7964]
+        B = [      84.3617,    -0.472970,     -1.17414]
+        C = [     -71.5668,      1.36583,     0.232788]
+        D = [      24.3579,    -0.300212,  -0.00788867]
+        E = [    0.0429191,     -6.20314,     -17.2749]
+        G = [      212.619,      266.092,      263.469]
+        default_cp = 20.786
+        
+    m = mmw[igas]
+    t = temp/1000.
+
+    if ( temp > 2500. ):
+        it = 3
+        cp = polyAE(A,B,C,D,E,t,it)
+    elif ( temp > 1000. and temp <= 2500.):
+        it = 2
+        cp = polyAE(A,B,C,D,E,t,it)
+    elif ( temp >= 100. and temp < 1000.):
+        it = 1
+        cp = polyAE(A,B,C,D,E,t,it)
+    else:
+        cp = default_cp
+    
+    # convert from J/K/mol to erg/g/K
+    cp = cp/m*1.e7
+    return cp
+    
+#polynomial function for cp
+@jit(nopython=True, cache=True)
+def polyAE(A,B,C,D,E, t, it):
+    cp = A[it] + B[it]*t + C[it]*t**2 + D[it]*t**3 + E[it]/t**2
+    return cp
