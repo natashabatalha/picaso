@@ -14,7 +14,7 @@ from scipy.interpolate import CubicSpline
 ## Make sure to change directories as needed
 
 #Large 405 nm
-LargeKCl_405nm_Full = pd.read_csv("./LargeKCl_405nm_Full.txt",header=0)
+LargeKCl_405nm_Full = pd.read_csv("./KCL_data/LargeKCl_405nm_Full.txt",header=0)
 LargeKCl_405nm_Full_Array = LargeKCl_405nm_Full.to_numpy() #convert to numpy array
 LargeKCl_405nm_cosd = LargeKCl_405nm_Full_Array[:,3] #extract 4th column (cos(theta))
 LargeKCl_405nm_Intensity = LargeKCl_405nm_Full_Array[:,2] #extract 3rd column (normalized intensity)
@@ -24,7 +24,7 @@ LargeKCl_405nm_Intensity_flip = np.flip(LargeKCl_405nm_Intensity)
 LargeKCl_405nm_Full_Spline = CubicSpline(LargeKCl_405nm_cosd_flip, LargeKCl_405nm_Intensity_flip)
 
 #Medium 405 nm
-MediumKCl_405nm_Full = pd.read_csv("./MediumKCl_405nm_Full.txt",header=0)
+MediumKCl_405nm_Full = pd.read_csv("./KCL_data/MediumKCl_405nm_Full.txt",header=0)
 MediumKCl_405nm_Full_Array = MediumKCl_405nm_Full.to_numpy() #convert to numpy array
 MediumKCl_405nm_cosd = MediumKCl_405nm_Full_Array[:,3] #extract 4th column (cos(theta))
 MediumKCl_405nm_Intensity = MediumKCl_405nm_Full_Array[:,2] #extract 3rd column (normalized intensity)
@@ -34,7 +34,7 @@ MediumKCl_405nm_Intensity_flip = np.flip(MediumKCl_405nm_Intensity)
 MediumKCl_405nm_Full_Spline = CubicSpline(MediumKCl_405nm_cosd_flip, MediumKCl_405nm_Intensity_flip)
 
 #Small 405 nm
-SmallKCl_405nm_Full = pd.read_csv("./SmallKCl_405nm_Full.txt",header=0)
+SmallKCl_405nm_Full = pd.read_csv("./KCL_data/SmallKCl_405nm_Full.txt",header=0)
 SmallKCl_405nm_Full_Array = SmallKCl_405nm_Full.to_numpy() #convert to numpy array
 SmallKCl_405nm_cosd = SmallKCl_405nm_Full_Array[:,3] #extract 4th column (cos(theta))
 SmallKCl_405nm_Intensity = SmallKCl_405nm_Full_Array[:,2] #extract 3rd column (normalized intensity)
@@ -44,7 +44,7 @@ SmallKCl_405nm_Intensity_flip = np.flip(SmallKCl_405nm_Intensity)
 SmallKCl_405nm_Full_Spline = CubicSpline(SmallKCl_405nm_cosd_flip, SmallKCl_405nm_Intensity_flip)
 
 #Large 532 nm
-LargeKCl_532nm_Full = pd.read_csv("./LargeKCl_532nm_Full.txt",header=0)
+LargeKCl_532nm_Full = pd.read_csv("./KCL_data/LargeKCl_532nm_Full.txt",header=0)
 LargeKCl_532nm_Full_Array = LargeKCl_532nm_Full.to_numpy() #convert to numpy array
 LargeKCl_532nm_cosd = LargeKCl_532nm_Full_Array[:,3] #extract 4th column (cos(theta))
 LargeKCl_532nm_Intensity = LargeKCl_532nm_Full_Array[:,2] #extract 3rd column (normalized intensity)
@@ -54,7 +54,7 @@ LargeKCl_532nm_Intensity_flip = np.flip(LargeKCl_532nm_Intensity)
 LargeKCl_532nm_Full_Spline = CubicSpline(LargeKCl_532nm_cosd_flip, LargeKCl_532nm_Intensity_flip)
 
 #Medium 532nm
-MediumKCl_532nm_Full = pd.read_csv("./MediumKCl_532nm_Full.txt",header=0)
+MediumKCl_532nm_Full = pd.read_csv("./KCL_data/MediumKCl_532nm_Full.txt",header=0)
 MediumKCl_532nm_Full_Array = MediumKCl_532nm_Full.to_numpy() #convert to numpy array
 MediumKCl_532nm_cosd = MediumKCl_532nm_Full_Array[:,3] #extract 4th column (cos(theta))
 MediumKCl_532nm_Intensity = MediumKCl_532nm_Full_Array[:,2] #extract 3rd column (normalized intensity)
@@ -64,7 +64,7 @@ MediumKCl_532nm_Intensity_flip = np.flip(MediumKCl_532nm_Intensity)
 MediumKCl_532nm_Full_Spline = CubicSpline(MediumKCl_532nm_cosd_flip, MediumKCl_532nm_Intensity_flip)
 
 #Small 532 nm
-SmallKCl_532nm_Full = pd.read_csv("./SmallKCl_532nm_Full.txt",header=0)
+SmallKCl_532nm_Full = pd.read_csv("./KCL_data/SmallKCl_532nm_Full.txt",header=0)
 SmallKCl_532nm_Full_Array = SmallKCl_532nm_Full.to_numpy() #convert to numpy array
 SmallKCl_532nm_cosd = SmallKCl_532nm_Full_Array[:,3] #extract 4th column (cos(theta))
 SmallKCl_532nm_Intensity = SmallKCl_532nm_Full_Array[:,2] #extract 3rd column (normalized intensity)
