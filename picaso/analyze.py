@@ -656,7 +656,7 @@ class GridFitter():
 
 
     
-def custom_interp(final_goal,fitter,grid_name, interp='spectra',array_to_interp=None ): 
+def custom_interp(final_goal,fitter,grid_name, to_interp='spectra',array_to_interp=None ): 
     """
     Custom interpolation routine that interpolates based on the nearest two neighbors
     of each parameter. e.g. if interpolating M/H and C/O it will find the upper 
@@ -692,7 +692,7 @@ def custom_interp(final_goal,fitter,grid_name, interp='spectra',array_to_interp=
     grid_points = fitter.interp_params[grid_name]['grid_parameters']
     grid_pars = fitter.interp_params[grid_name]['grid_parameters_unique']
 
-    if interp == 'spectra':
+    if 'spectra' in to_interp:
         spectra = fitter.interp_params[grid_name]['square_spectra_grid']
     else: 
         spectra = array_to_interp
@@ -725,7 +725,7 @@ def custom_interp(final_goal,fitter,grid_name, interp='spectra',array_to_interp=
         return interp
     interp = weight_interp(grid_pars, final_goal, spectra,hypercube, hilos,hilos_inds)
     
-    if interp == 'spectra':
+    if 'spectra' in to_interp:
         #only fill this gap if you are fitting spectra
         if np.any(np.isnan(interp)):
             tree = cKDTree(grid_points)
