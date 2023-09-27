@@ -1407,6 +1407,9 @@ def calculate_atm(bundle, opacityclass, fthin_cld = None, do_holes = None, moist
     
     
     opacityclass.get_opacities(atm)
+
+    if moist_call == True:
+        return opacityclass.molecular_opa
     
         #check if patchy clouds are requested
     if do_holes == True:
@@ -1422,10 +1425,7 @@ def calculate_atm(bundle, opacityclass, fthin_cld = None, do_holes = None, moist
     mmw = atm.layer['mmw']
     
     #added this to quickly grab the molecular opacities for moistgrad calculation without having to change syntax for all other calls
-    if moist_call == True:
-        return opacityclass.molecular_opa
-    else:
-        return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw
+    return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw
 
 
 def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None, fthin_cld = None, do_holes=None, moist_call = False):
@@ -1537,6 +1537,10 @@ def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None, fthin_cl
         opacityclass.get_opacities_deq(bundle,atm)
     else:
         opacityclass.get_opacities_deq_onfly(bundle,atm,gases_fly=gases_fly)
+    
+    #added this to quickly grab the molecular opacities for moistgrad calculation without having to change syntax for all other calls
+    if moist_call == True:
+        return opacityclass.molecular_opa
 
     #check if patchy clouds are requested
     if do_holes == True:
@@ -1552,11 +1556,7 @@ def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None, fthin_cl
     #mmw = np.mean(atm.layer['mmw'])
     mmw = atm.level['mmw']
     
-    #added this to quickly grab the molecular opacities for moistgrad calculation without having to change syntax for all other calls
-    if moist_call == True:
-        return opacityclass.molecular_opa
-    else:
-        return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw
+    return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw
 
 # @jit(nopython=True, cache=True)
 def moist_grad( t, p, t_table, p_table, grad, cp, calc_type, opacityclass, bundle, deq = False, on_fly = False, gases_fly = False):
@@ -1625,6 +1625,7 @@ def moist_grad( t, p, t_table, p_table, grad, cp, calc_type, opacityclass, bundl
     p_fine = 1e3*p
     # output_abunds = interp(t_fine,p_fine)
 
+    #not the most efficient way to run this and grab the opacities, would be great to be able to speed this up somehow
     if deq == False:
         #call calculate_atm in order to get the atm profiles for the call to get the abundances
         mol_opa = calculate_atm(bundle, opacityclass, moist_call= True)

@@ -3958,7 +3958,7 @@ class inputs():
         if chemeq_first: 
             pressure, temp, dtdp, nstr_new, flux_plus_final, df, all_profiles, opd_now,w0_now,g0_now =find_strat(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
             t_table, p_table, grad, cp, opacityclass, grav, 
-            rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, save_profile,all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,  fhole, fthin_cld, do_holes = do_holes, moist = moist)
+            rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, save_profile,all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop, fhole, fthin_cld, do_holes = do_holes, moist = moist)
         
         if diseq_chem:
             #Starting with user's guess since there was no request to converge a chemeq profile first 
@@ -5080,7 +5080,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
 
 def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,t_table, p_table, grad, cp, opacityclass, grav, 
              rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, cloudy, cld_species,mh,fsed,flag_hack, save_profile, 
-             all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop, bundle, fhole = None, fthin_cld = None, do_holes = None, moist = None):
+             all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop, fhole = None, fthin_cld = None, do_holes = None, moist = None):
     """
     Function iterating on the TP profile by calling tstart and changing opacities as well
     Parameters
@@ -5178,6 +5178,13 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,t
     final = False
 
     if moist == True:
+        #call bundle for moist adiabat option
+        bundle = inputs(calculation='brown')
+
+        bundle.phase_angle(0)
+        bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
+        bundle.add_pt( temp, pressure)
+        bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
         grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, opacityclass, bundle, moist = True)
     else:
         grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, moist = False)
