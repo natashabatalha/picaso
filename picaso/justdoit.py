@@ -4691,11 +4691,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         for j1 in range(n_ctop_b,n_bot_b+1): 
             press = sqrt(pressure[j1-1]*pressure[j1])
             calc_type =  0 # only need grad_x in return
-
-            if moist == True:
-                grad_x, cp_x = moist_grad( temp[j1-1], press, t_table, p_table, grad, cp, calc_type, opacityclass)
-            else:
-                grad_x, cp_x = did_grad_cp( temp[j1-1], press, t_table, p_table, grad, cp, calc_type)
+            grad_x, cp_x = did_grad_cp( temp[j1-1], press, t_table, p_table, grad, cp, calc_type)
             temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
     
     temp_old= np.copy(temp)
@@ -4708,6 +4704,26 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     bundle.add_pt( temp, pressure)
     
     bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+
+
+    #re-call calculation of convective zones if moist since moist adiabat needs the bundle class with an initial PT profile to grab abundances
+    if moist == True:
+        for nb in range(0,3*nofczns,3):
+        
+            n_strt_b= nstr[nb+1]
+            n_ctop_b= n_strt_b+1
+            n_bot_b= nstr[nb+2] +1
+
+            for j1 in range(n_ctop_b,n_bot_b+1): 
+                press = sqrt(pressure[j1-1]*pressure[j1])
+                calc_type =  0 # only need grad_x in return
+                grad_x, cp_x = moist_grad( temp[j1-1], press, t_table, p_table, grad, cp, calc_type, opacityclass, bundle)
+                temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
+    
+        temp_old= np.copy(temp)
+        bundle.add_pt( temp, pressure)
+        bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+
     if save_profile == 1:
             all_profiles = np.append(all_profiles,temp_old)
     
@@ -4786,13 +4802,13 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
             grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , 
             surf_reflect, ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, 
-            ngauss, gauss_wts, save_profile, all_profiles, opacityclass, fhole, DTAU_clear, TAU_clear, W0_clear, COSB_clear, 
+            ngauss, gauss_wts, save_profile, all_profiles, opacityclass, bundle, fhole, DTAU_clear, TAU_clear, W0_clear, COSB_clear, 
             DTAU_OG_clear, COSB_OG_clear, W0_no_raman_clear, do_holes = True, moist = moist)
         
         else:
             temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(nofczns,nstr,it_max,conv,x_max_mult, 
                 rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
-                grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts, save_profile, all_profiles, opacityclass, moist = moist)
+                grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts, save_profile, all_profiles, opacityclass, bundle, moist = moist)
         
         if (temp <= min(opacityclass.cia_temps)).any():
             wh = np.where(temp <= min(opacityclass.cia_temps))
@@ -5064,7 +5080,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
 
 def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,t_table, p_table, grad, cp, opacityclass, grav, 
              rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, cloudy, cld_species,mh,fsed,flag_hack, save_profile, 
-             all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop, fhole = None, fthin_cld = None, do_holes = None, moist = None):
+             all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop, bundle, fhole = None, fthin_cld = None, do_holes = None, moist = None):
     """
     Function iterating on the TP profile by calling tstart and changing opacities as well
     Parameters
@@ -5162,9 +5178,9 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,t
     final = False
 
     if moist == True:
-        grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, opacityclass, moist = True)
+        grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, opacityclass, bundle, moist = True)
     else:
-        grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, opacityclass, moist = False)
+        grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, moist = False)
     # grad_x = 
     while dtdp[nstr[1]-1] >= subad*grad_x[nstr[1]-1] :
         ratio = dtdp[nstr[1]-1]/grad_x[nstr[1]-1]
@@ -5381,7 +5397,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
                 rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
                 cloudy, cld_species,mh,fsed,flag_hack,quench_levels,kz,mmw, save_profile, all_profiles,
                 self_consistent_kzz,save_kzz,all_kzz, vulcan_run,opd_cld_climate,g0_cld_climate,w0_cld_climate,
-                flux_net_ir_layer, flux_plus_ir_attop,on_fly=False,gases_fly=None, do_holes = False, fhole = None, fthin_cld = None, moist = None):
+                flux_net_ir_layer, flux_plus_ir_attop,on_fly=False,gases_fly=False, do_holes = False, fhole = None, fthin_cld = None, moist = None):
     """
     Function iterating on the TP profile by calling tstart and changing opacities as well
     Parameters
@@ -5465,6 +5481,11 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
     # taudif is fixed to be 0 here since it is needed only for clouds
     taudif = 0.0
     taudif_tol = 0.1
+
+    #move bundle earlier to use in moist_grad
+    bundle = inputs(calculation='brown')
+    bundle.phase_angle(0)
+    bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
     
     # first calculate the convective zones
     for nb in range(0,3*nofczns,3):
@@ -5477,7 +5498,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             press = sqrt(pressure[j1-1]*pressure[j1])
             calc_type =  0 # only need grad_x in return
             if moist == True:
-                grad_x, cp_x = moist_grad( temp[j1-1], press, t_table, p_table, grad, cp, calc_type, opacityclass)
+                grad_x, cp_x = moist_grad( temp[j1-1], press, t_table, p_table, grad, cp, calc_type, opacityclass, bundle, deq = True, on_fly = on_fly, gases_fly = gases_fly)
             else:
                 grad_x, cp_x = did_grad_cp( temp[j1-1], press, t_table, p_table, grad, cp, calc_type)
             temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
@@ -5623,8 +5644,8 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
             grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , 
             surf_reflect, ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, 
-            ngauss, gauss_wts, save_profile, all_profiles, opacityclass, fhole, DTAU_clear, TAU_clear, W0_clear, COSB_clear, 
-            DTAU_OG_clear, COSB_OG_clear, W0_no_raman_clear, do_holes = True, moist = moist)
+            ngauss, gauss_wts, save_profile, all_profiles, opacityclass, bundle, fhole, DTAU_clear, TAU_clear, W0_clear, COSB_clear, 
+            DTAU_OG_clear, COSB_OG_clear, W0_no_raman_clear, do_holes = True, moist = moist, deq = True, on_fly = on_fly, gases_fly = gases_fly)
         else:
             temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(nofczns,nstr,it_max,conv,x_max_mult, 
                 rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
@@ -5632,7 +5653,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
                 COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
                 W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, FOPI, 
                 single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
-                tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts, save_profile, all_profiles, opacityclass, moist = moist)
+                tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts, save_profile, all_profiles, opacityclass, bundle, moist = moist, deq = True, on_fly = on_fly, gases_fly = gases_fly)
         '''
         if (temp <= min(opacityclass.cia_temps)).any():
             wh = np.where(temp <= min(opacityclass.cia_temps))
@@ -5987,9 +6008,9 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
     final = False
 
     if moist == True:
-        grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, opacityclass, moist = True)
+        grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, opacityclass, bundle, moist = True, deq = True, on_fly = on_fly, gases_fly = gases_fly)
     else:
-        grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, opacityclass, moist = False)
+        grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, moist = False)
     # grad_x = 
     while dtdp[nstr[1]-1] >= subad*grad_x[nstr[1]-1] :
         ratio = dtdp[nstr[1]-1]/grad_x[nstr[1]-1]
