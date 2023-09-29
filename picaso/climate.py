@@ -813,7 +813,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
             
             # artificial damper
 
-            for j1 in range(n_top_r+1, nlevel+1):
+            for j1 in range(n_top_r+1, nlevel):
                 if temp[j1] < tmin:
                     temp[j1] = tmin+ 0.1
                 elif temp[j1] > tmax:
