@@ -38,6 +38,8 @@ import math
 import xarray as xr
 from joblib import Parallel, delayed, cpu_count
 
+# #testing error tracker
+# from loguru import logger 
 __refdata__ = os.environ.get('picaso_refdata')
 __version__ = 3.1
 
@@ -1375,7 +1377,7 @@ class inputs():
         self.inputs['climate']['cp'] = np.array(cp_grad['specific_heat'])
 
 
-    def inputs_climate(self, temp_guess= None, pressure= None, nstr = None, nofczns = None , rfacv = None, rfaci = None, cloudy = False, mh = None, CtoO = None, species = None, fsed = None):
+    def inputs_climate(self, temp_guess= None, pressure= None, nstr = None, nofczns = None , rfacv = None, rfaci = None, cloudy = False, mh = None, CtoO = None, species = None, fsed = None, mieff_dir = None):
         """
         Get Inputs for Climate run
 
@@ -1417,10 +1419,12 @@ class inputs():
             self.inputs['climate']['cloudy'] = 1
             self.inputs['climate']['cld_species'] = species
             self.inputs['climate']['fsed'] = fsed
+            self.inputs['climate']['mieff_dir'] = mieff_dir
         else :
             self.inputs['climate']['cloudy'] = 0
             self.inputs['climate']['cld_species'] = 0
             self.inputs['climate']['fsed'] = 0
+            self.inputs['climate']['mieff_dir'] = mieff_dir
         self.inputs['climate']['mh'] = mh
         self.inputs['climate']['CtoO'] = CtoO
 
@@ -1495,6 +1499,7 @@ class inputs():
         cloudy = self.inputs['climate']['cloudy']
         cld_species = self.inputs['climate']['cld_species']
         fsed = self.inputs['climate']['fsed']
+        mieff_dir = self.inputs['climate']['mieff_dir']
         # first conv call
         it_max= 10
         itmx= 7
@@ -1504,7 +1509,7 @@ class inputs():
         
         #print('NEB FIRST PROFILE RUN')
         final = False
-        pressure, temperature, dtdp, profile_flag = profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
+        pressure, temperature, dtdp, profile_flag = profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             TEMP1,pressure, F0PI, t_table, p_table, grad, cp, opacityclass, grav, 
             rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , cloudy, cld_species,mh,fsed )
 
@@ -1518,11 +1523,11 @@ class inputs():
 
         #print('NEB SECOND PROFILE RUN')
         final = False
-        pressure, temperature, dtdp, profile_flag = profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
+        pressure, temperature, dtdp, profile_flag = profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                     temperature,pressure, F0PI, t_table, p_table, grad, cp, opacityclass, grav, 
                     rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final, cloudy, cld_species, mh,fsed )   
         
-        pressure, temp, dtdp, nstr_new, flux_plus_final =find_strat(pressure, temperature, dtdp ,F0PI, nofczns,nstr,x_max_mult,
+        pressure, temp, dtdp, nstr_new, flux_plus_final =find_strat(mieff_dir, pressure, temperature, dtdp ,F0PI, nofczns,nstr,x_max_mult,
                              t_table, p_table, grad, cp, opacityclass, grav, 
                              rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed)
 
@@ -3179,6 +3184,7 @@ class inputs():
         #only pass through clouds 1d if clouds are one dimension 
         self.clouds(df=df)
         if full_output : return out
+        else: return opd, w0, g0
     
     def virga_3d(self, condensates, directory,
         fsed=1, mh=1, mmw=2.2,kz_min=1e5,sig=2, full_output=False,
@@ -3640,7 +3646,7 @@ class inputs():
     def inputs_climate(self, temp_guess= None, pressure= None, rfaci = 1,nofczns = 1 ,
         nstr = None,  rfacv = None, cloudy = False,
         mh = None, CtoO = None, species = None, fsed = None, T_star = None, 
-        logg= None, metal=None, r_star= None, semi_major = None,r_planet=None):
+        logg= None, metal=None, r_star= None, semi_major = None,r_planet=None, mieff_dir = None):
         """
         Get Inputs for Climate run
 
@@ -3691,11 +3697,15 @@ class inputs():
             Semi-major axis of Planet (AU)
         r_planet : planet radius
             Radius of Planet (Rj)
+        mieff_dir: str
+        path to directory with mieff files for virga
+        
 
         
         """
         if cloudy: 
-            raise Exception('Cloudy functionality still in beta form and not ready for public use.')
+            print("Cloudy functionality still in beta form and not ready for public use.")
+            # raise Exception('Cloudy functionality still in beta fosrm and not ready for public use.')
         else: 
             #dummy values only used for cloud model
             mh = 0 
@@ -3717,10 +3727,12 @@ class inputs():
             self.inputs['climate']['cloudy'] = 1
             self.inputs['climate']['cld_species'] = species
             self.inputs['climate']['fsed'] = fsed
+            self.inputs['climate']['mieff_dir'] = mieff_dir
         else :
             self.inputs['climate']['cloudy'] = 0
             self.inputs['climate']['cld_species'] = 0
             self.inputs['climate']['fsed'] = 0
+            self.inputs['climate']['mieff_dir'] = mieff_dir
         self.inputs['climate']['mh'] = mh
         self.inputs['climate']['CtoO'] = CtoO
         
@@ -3836,6 +3848,7 @@ class inputs():
         cloudy = self.inputs['climate']['cloudy']
         cld_species = self.inputs['climate']['cld_species']
         fsed = self.inputs['climate']['fsed']
+        mieff_dir = self.inputs['climate']['mieff_dir']
         
         opd_cld_climate = np.zeros(shape=(nlevel-1,nwno,4))
         g0_cld_climate = np.zeros(shape=(nlevel-1,nwno,4))
@@ -3855,7 +3868,7 @@ class inputs():
         flag_hack = False
 
         
-        if chemeq_first: pressure, temperature, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
+        if chemeq_first: pressure, temperature, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir,it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             TEMP1,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
             rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , cloudy, cld_species,mh,fsed,flag_hack, save_profile,all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,first_call_ever=True)
 
@@ -3868,11 +3881,11 @@ class inputs():
 
         
         final = False
-        if chemeq_first: pressure, temperature, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
+        if chemeq_first: pressure, temperature, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                     temperature,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
                     rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack,save_profile,all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop )   
 
-        if chemeq_first: pressure, temp, dtdp, nstr_new, flux_plus_final, df, all_profiles, opd_now,w0_now,g0_now =find_strat(pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
+        if chemeq_first: pressure, temp, dtdp, nstr_new, flux_plus_final, df, all_profiles, opd_now,w0_now,g0_now =find_strat(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                              t_table, p_table, grad, cp, opacityclass, grav, 
                              rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, save_profile,all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop)
 
@@ -4081,11 +4094,11 @@ class inputs():
             #    print("nofczns corrected") 
 
             
-            pressure, temperature, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop  = profile_deq(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
+            pressure, temperature, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop  = profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
             rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , cloudy, cld_species,mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile,all_profiles, self_consistent_kzz,save_kzz,all_kzz, vulcan_run,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,on_fly=on_fly, gases_fly=gases_fly )
             
-            pressure, temp, dtdp, nstr_new, flux_plus_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,opd_now,g0_now,w0_now =find_strat_deq(pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
+            pressure, temp, dtdp, nstr_new, flux_plus_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,opd_now,g0_now,w0_now =find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                             t_table, p_table, grad, cp, opacityclass, grav, 
                             rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, self_consistent_kzz,save_kzz,all_kzz, vulcan_run,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,on_fly=on_fly, gases_fly=gases_fly  )
             
@@ -4117,6 +4130,10 @@ class inputs():
             df_spec = bundle.spectrum(opacityclass,full_output=True)    
             all_out['spectrum_output'] = df_spec 
 
+        #put cld output in all_out
+        if cloudy == 1:
+            df_cld = vj.picaso_format(opd_now, w0_now, g0_now)
+            all_out['cld_output'] = df_cld
         if as_dict: 
             return all_out
         else: 
@@ -4493,7 +4510,7 @@ def toon_phase_coefficients(printout=True):
     """
     return ["quadrature","eddington"]
 
-def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
+def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             temp,pressure,FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
              rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
              cloudy, cld_species,mh,fsed,flag_hack, save_profile, 
@@ -4503,6 +4520,8 @@ def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     Function iterating on the TP profile by calling tstart and changing opacities as well
     Parameters
     ----------
+    mieff_dir: str
+        path to directory with mieff files for virga
     it_max : int
         Maximum iterations allowed in the inner no opa change loop
     itmx : int
@@ -4614,14 +4633,16 @@ def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             
             metallicity = 10**(mh) #atmospheric metallicity relative to Solar
             mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
-            directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new'
+            # directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new'
+            # directory = '/home/jjm6243/dev_virga/'
+            directory = mieff_dir
             
             kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
             bundle.inputs['atmosphere']['profile']['kz'] = kzz
         
 
             cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
-                        mmw = mean_molecular_weight,full_output=False,climate=True)
+                        mmw = mean_molecular_weight,full_output=False) #,climate=True)
             
             opd_now, w0_now, g0_now = cld_out
             
@@ -4653,7 +4674,6 @@ def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             
             df_cld = vj.picaso_format(opd_clmt, w0_clmt, g0_clmt)
             bundle.clouds(df=df_cld)
-
 
 
     DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
@@ -4692,15 +4712,16 @@ def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             
             metallicity = 10**(mh) #atmospheric metallicity relative to Solar
             mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
-            directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new'
-            
+            # directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new'
+            # directory = '/home/jjm6243/dev_virga/'
+            directory = mieff_dir
+
             kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
             bundle.inputs['atmosphere']['profile']['kz'] = kzz
-        
     
             cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
-                        mmw = mean_molecular_weight,full_output=False,climate=True)
-            
+                        mmw = mean_molecular_weight,full_output=False)#,climate=True)
+
             opd_now, w0_now, g0_now = cld_out
             
             opd_cld_climate[:,:,3], g0_cld_climate[:,:,3], w0_cld_climate[:,:,3] = opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2]
@@ -4757,9 +4778,9 @@ def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         ## do this hack only during findstrat maybe ?
         ## otherwise problematic
         #####################################
-     #   if flag_hack == True:
-     #       temp= 0.5*(temp+temp_old) 
-     #       print("Hack Activated")
+        # if flag_hack == True:
+        #    temp= 0.5*(temp+temp_old) 
+        #    print("Hack Activated")
         #####################################   
         
         temp_old= np.copy(temp)
@@ -4935,13 +4956,15 @@ def profile(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         print("Profile converged")
     return pressure, temp, dtdp, conv_flag, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop
 
-def find_strat(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
+def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
              t_table, p_table, grad, cp, opacityclass, grav, 
              rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, cloudy, cld_species,mh,fsed,flag_hack, save_profile, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop):
     """
     Function iterating on the TP profile by calling tstart and changing opacities as well
     Parameters
     ----------
+    mieff_dir: str
+        path to directory with mieff files for virga
     it_max : int
         Maximum iterations allowed in the inner no opa change loop
     itmx : int
@@ -5029,7 +5052,7 @@ def find_strat(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
     while dtdp[nstr[1]-1] >= subad*grad_x[nstr[1]-1] :
         ratio = dtdp[nstr[1]-1]/grad_x[nstr[1]-1]
 
-        if ratio > 2 :
+        if ratio > 1.8 :
             print("Move up two levels")
             ngrow = 2
             nstr = growup( 1, nstr , ngrow)
@@ -5037,10 +5060,10 @@ def find_strat(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
             ngrow = 1
             nstr = growup( 1, nstr , ngrow)
         
-        if nstr[1] < 6 :
+        if nstr[1] < 5 :
             raise ValueError( "Convection zone grew to Top of atmosphere, Need to Stop")
         
-        pressure, temp, dtdp, profile_flag, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
+        pressure, temp, dtdp, profile_flag, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir, it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
              rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, save_profile, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop)
 
@@ -5051,12 +5074,13 @@ def find_strat(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
     flag_super = 0
     for i in range(nstr[1]-1, ifirst-1, -1):
         add = dtdp[i] - grad_x[i]
-        if add/grad_x[i] >= 0.02 : # non-neglegible super-adiabaticity
+        if add > dt_max and add/grad_x[i] >= 0.02 : # non-neglegible super-adiabaticity
+            dt_max = add
             i_max =i
             break
     
     flag_final_convergence =0
-    if i_max == 0: # no superadiabaticity, we are done
+    if i_max == 0 or dt_max/grad_x[i_max] < 0.02: # no superadiabaticity, we are done
         flag_final_convergence = 1
 
     if flag_final_convergence  == 0:
@@ -5069,13 +5093,13 @@ def find_strat(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
         nstr[5]= nstr[2]
         nstr[1]= i_max
         nstr[2] = i_max
-        nstr[3] = i_max
+        nstr[3] = i_max + 1
         print(nstr)
         if nstr[3] >= nstr[4] :
             #print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
             #print(nofczns)
             raise ValueError("Overlap happened !")
-        pressure, temp, dtdp, profile_flag, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
+        pressure, temp, dtdp, profile_flag, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir, it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
              rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species,mh, fsed,flag_hack,save_profile, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop)
 
@@ -5107,7 +5131,7 @@ def find_strat(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
                         nstr[3] = 0
                         i_change = 1
                 print(nstr)
-                pressure, temp, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
+                pressure, temp, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir, it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
              rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack,save_profile, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop)
 
@@ -5116,7 +5140,7 @@ def find_strat(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
                 c1 = grad_x[nstr[1]-1]
                 c2 = grad_x[nstr[3]]
             #Now grow the lower zone.
-            while ((dtdp[nstr[4]-1] >= subad*grad_x[nstr[5]-1]) and nofczns > 1):
+            while ((dtdp[nstr[4]-1] >= subad*grad_x[nstr[4]-1]) and nofczns > 1):
                 
                 ngrow = 1
                 nstr = growup( 2, nstr , ngrow)
@@ -5127,7 +5151,7 @@ def find_strat(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
                     nstr[3] = 0
                     i_change =1
                 print(nstr)
-                pressure, temp, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
+                pressure, temp, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir, it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
                     temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
                     rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack,save_profile, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop)
             
@@ -5138,12 +5162,12 @@ def find_strat(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
     it_max_strat = 10
     convt_strat = 2.0
     convt_strat = 2.0
-    x_max_mult = 2.0
+    x_max_mult = x_max_mult/2.0
     ip2 = -10
 
     final = True
     print("final",nstr)
-    pressure, temp, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
+    pressure, temp, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir, it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
                 temp,pressure, FOPI, t_table, p_table, grad, cp,opacityclass, grav, 
                 rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species,mh,fsed,flag_hack,save_profile, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop)
 
@@ -5167,18 +5191,21 @@ def find_strat(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
 
         metallicity = 10**(mh) #atmospheric metallicity relative to Solar
         mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
-        directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new'
+        # directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new'
+        # directory = '/home/jjm6243/dev_virga/'
+        directory = mieff_dir
+
         calc_type =0
         kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
         bundle.inputs['atmosphere']['profile']['kz'] = kzz
 
 
         cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
-                        mmw = mean_molecular_weight,full_output=False,climate=True)
+                        mmw = mean_molecular_weight,full_output=False) #,climate=True)
         
         opd_now, w0_now, g0_now = cld_out
         df_cld = vj.picaso_format(opd_now, w0_now, g0_now)
-        bundle.clouds(df=df_cld)  
+        bundle.clouds(df=df_cld)
     else:
         opd_now,w0_now,g0_now = 0,0,0
 
@@ -5216,13 +5243,15 @@ def correct_profile(temp,pressure,wh,min_temp):
 
     return temp
 
-def profile_deq(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
+def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             temp,pressure,FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
              rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species,mh,fsed,flag_hack,quench_levels,kz,mmw, save_profile, all_profiles,self_consistent_kzz,save_kzz,all_kzz, vulcan_run,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,on_fly=False,gases_fly=None ):
     """
     Function iterating on the TP profile by calling tstart and changing opacities as well
     Parameters
     ----------
+    mieff_dir: str
+        path to directory with mieff files for virga
     it_max : int
         Maximum iterations allowed in the inner no opa change loop
     itmx : int
@@ -5368,14 +5397,16 @@ def profile_deq(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             
             metallicity = 10**(0) #atmospheric metallicity relative to Solar
             mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
-            directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new661'
-            
+            # directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new661'
+            # directory = '/home/jjm6243/dev_virga/'
+            directory = mieff_dir
+
             kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
             bundle.inputs['atmosphere']['profile']['kz'] = kzz
         
 
             cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
-                        mmw = mean_molecular_weight,full_output=False,climate=True)
+                        mmw = mean_molecular_weight,full_output=False)#,climate=True)
             
             opd_now, w0_now, g0_now = cld_out
             
@@ -5470,14 +5501,16 @@ def profile_deq(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             
             metallicity = 10**(0) #atmospheric metallicity relative to Solar
             mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
-            directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new661'
-            
+            # directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new661'
+            # directory = '/home/jjm6243/dev_virga/'
+            directory = mieff_dir
+
             kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
             bundle.inputs['atmosphere']['profile']['kz'] = kzz
         
     
             cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
-                        mmw = mean_molecular_weight,full_output=False,climate=True)
+                        mmw = mean_molecular_weight,full_output=False)#,climate=True)
             
             opd_now, w0_now, g0_now = cld_out
             
@@ -5672,13 +5705,15 @@ def profile_deq(it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     
     return pressure, temp , dtdp, conv_flag, qvmrs, qvmrs2, all_profiles, all_kzz, opd_cld_climate, g0_cld_climate, w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop
     
-def find_strat_deq(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
+def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
              t_table, p_table, grad, cp, opacityclass, grav, 
              rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, cloudy, cld_species,mh,fsed,flag_hack, quench_levels, kz,mmw, save_profile, all_profiles,self_consistent_kzz ,save_kzz,all_kzz, vulcan_run,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,on_fly=False, gases_fly=None ):
     """
     Function iterating on the TP profile by calling tstart and changing opacities as well
     Parameters
     ----------
+    mieff_dir: str
+        path to directory with mieff files for virga
     it_max : int
         Maximum iterations allowed in the inner no opa change loop
     itmx : int
@@ -5765,7 +5800,7 @@ def find_strat_deq(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
     while dtdp[nstr[1]-1] >= subad*grad_x[nstr[1]-1] :
         ratio = dtdp[nstr[1]-1]/grad_x[nstr[1]-1]
 
-        if ratio > 2 :
+        if ratio > 1.8 :
             print("Move up two levels")
             ngrow = 2
             nstr = growup( 1, nstr , ngrow)
@@ -5773,7 +5808,7 @@ def find_strat_deq(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
             ngrow = 1
             nstr = growup( 1, nstr , ngrow)
         
-        if nstr[1] < 6 :
+        if nstr[1] < 5 :
             raise ValueError( "Convection zone grew to Top of atmosphere, Need to Stop")
         
         pressure, temp, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile_deq(it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
@@ -5787,12 +5822,13 @@ def find_strat_deq(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
     flag_super = 0
     for i in range(nstr[1]-1, ifirst-1, -1):
         add = dtdp[i] - grad_x[i]
-        if add/grad_x[i] >= 0.02 : # non-neglegible super-adiabaticity
+        if add > dt_max and add/grad_x[i] >= 0.02 : # non-neglegible super-adiabaticity
+            dt_max = add
             i_max =i
             break
     
     flag_final_convergence =0
-    if i_max == 0: # no superadiabaticity, we are done
+    if i_max == 0 or dt_max/grad_x[i_max] < 0.02: # no superadiabaticity, we are done
         flag_final_convergence = 1
 
     if flag_final_convergence  == 0:
@@ -5805,7 +5841,7 @@ def find_strat_deq(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
         nstr[5]= nstr[2]
         nstr[1]= i_max
         nstr[2] = i_max
-        nstr[3] = i_max
+        nstr[3] = i_max + 1
         print(nstr)
         if nstr[3] >= nstr[4] :
             #print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
@@ -5852,7 +5888,7 @@ def find_strat_deq(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
                 c1 = grad_x[nstr[1]-1]
                 c2 = grad_x[nstr[3]]
             #Now grow the lower zone.
-            while ((dtdp[nstr[4]-1] >= subad*grad_x[nstr[5]-1]) and nofczns > 1):
+            while ((dtdp[nstr[4]-1] >= subad*grad_x[nstr[4]-1]) and nofczns > 1):
                 
                 ngrow = 1
                 nstr = growup( 2, nstr , ngrow)
@@ -5874,7 +5910,7 @@ def find_strat_deq(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
     it_max_strat = 10
     convt_strat = 2.0
     convt_strat = 2.0
-    x_max_mult = 2.0
+    x_max_mult = x_max_mult/2.0
     ip2 = -10
 
     final = True
@@ -5930,14 +5966,17 @@ def find_strat_deq(pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw =  calculate_atm_deq(bundle, opacityclass,on_fly=on_fly, gases_fly=gases_fly)
         metallicity = 10**(0.0) #atmospheric metallicity relative to Solar
         mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
-        directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new661'
+        # directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new661'
+        # directory = '/home/jjm6243/dev_virga/'
+        directory = mieff_dir
+
         calc_type =0
         kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
         bundle.inputs['atmosphere']['profile']['kz'] = kzz
 
 
         cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
-                        mmw = mean_molecular_weight,full_output=False,climate=True)
+                        mmw = mean_molecular_weight,full_output=False)#,climate=True)
         
         opd_now, w0_now, g0_now = cld_out
         df_cld = vj.picaso_format(opd_now, w0_now, g0_now)
