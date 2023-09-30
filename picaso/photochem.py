@@ -296,10 +296,6 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
     return pc_new,output_array,species,np.flip(pressure)
 
 
-def call_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=1e7,filename = '111',first=True,pc=None):
-    
-    pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,first=first,pc=pc)
 
-    return pc,output_array,species,np.flip(pressure)
       
     
