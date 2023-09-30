@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import scipy as sp
+from scipy.interpolate import griddata
 cKDTree = sp.spatial.cKDTree
 optimize = sp.optimize
 
@@ -54,7 +55,9 @@ class GridFitter():
     to_fit : str 
         parameter to fit, default is transit_depth. other common is flux
     """
-    def __init__(self, grid_name, model_dir=None,to_fit='transit_depth', model_type='xarrays', verbose=True):
+    def __init__(self, grid_name, model_dir=None,
+        to_fit='transit_depth', model_type='xarrays', save_chem=False, 
+        verbose=True):
         self.verbose=verbose
         
         self.grids = []
@@ -63,13 +66,14 @@ class GridFitter():
         self.overview = {}
         self.wavelength={}
         self.temperature={}
+        if save_chem: self.chemistry={}
         self.pressure={}
         self.spectra={}
         self.interp_params={}
         
         #adds first grid
         if model_type=='xarrays': 
-            self.add_grid(grid_name, model_dir, to_fit=to_fit)
+            self.add_grid(grid_name, model_dir, to_fit=to_fit, save_chem=save_chem)
         elif model_type == 'user': 
             self.grids += [grid_name]
             
@@ -88,11 +92,12 @@ class GridFitter():
             else: 
                 if self.verbose: print(f'Total number of models in grid is {nfiles}')
 
-    def add_grid(self,grid_name,model_dir,to_fit='transit_depth'):
+    def add_grid(self,grid_name,model_dir,to_fit='transit_depth',
+        save_chem=False):
         #loads in grid info
         self.grids += [grid_name]
         self.find_grid(grid_name, model_dir)
-        self.load_grid_params(grid_name,to_fit=to_fit)
+        self.load_grid_params(grid_name,to_fit=to_fit,save_chem=save_chem)
 
     def add_data(self, data_name, wlgrid_center,wlgrid_width,y_data,e_data): 
         """
@@ -131,7 +136,8 @@ class GridFitter():
         }
 
 
-    def load_grid_params(self,grid_name,to_fit='transit_depth'):
+    def load_grid_params(self,grid_name,to_fit='transit_depth',
+        save_chem=False):
         """
         This will read the grid parameters and set the array of parameters 
 
@@ -163,8 +169,12 @@ class GridFitter():
 
         #loop through grid files to get parameters
         for ct, filename in enumerate(self.list_of_files[grid_name]):
-
             ds = xr.open_dataset(filename)
+            if save_chem:
+                #grab everything on pressure grid thats not temperature
+                mols = [i for i in ds.data_vars.keys() if 
+                        'pressure' in ds.data_vars[i].coords 
+                       and i != 'temperature']
 
             if ct == 0:
                 nwave = len(ds['wavelength'].values)
@@ -174,13 +184,20 @@ class GridFitter():
                 temperature_grid = np.zeros(shape=(number_files,npress))
                 pressure_grid = np.zeros(shape=(number_files,npress))
                 wavelength = ds['wavelength'].values
+                if save_chem:
+                    molecule_dict = {}
+                    for imol in mols: 
+                        molecule_dict[imol]= np.zeros(
+                        shape=(number_files,npress))
             
             #start filling out grid parameters
             #seems like we need to save these?????
             temperature_grid[ct,:] = ds['temperature'].values[:]
             pressure_grid[ct,:] = ds['pressure'].values[:]
             spectra_grid[ct,:] = ds[to_fit].values[:] 
-
+            if save_chem:
+                for imol in mols: 
+                    molecule_dict[imol][ct,:] = ds[imol].values[:]
 
             # Read all the paramaters in the Xarray so that User can gain insight into the 
             # grid parameters
@@ -235,7 +252,8 @@ class GridFitter():
         self.pressure[grid_name] = pressure_grid
         self.temperature[grid_name] = temperature_grid
         self.spectra[grid_name] = spectra_grid
-
+        if save_chem: 
+            self.chemistry[grid_name] = molecule_dict
     def fit_all(self):
         for i in self.grids:
             for j in self.data.keys() :
@@ -581,11 +599,15 @@ class GridFitter():
         return fig, ax 
 
 
-    def prep_gridtrieval(self, grid_name):
+    def prep_gridtrieval(self, grid_name,add_ptchem=False):
         """
         Preps the loaded grid for interpolated gridtrieval 
         """
-        sqr_spec , uniq, offset_prior,df_grid_params = self.transform_4_interp(grid_name)
+        if add_ptchem:
+            sqr_spec , sqr_pt, sqr_chem, uniq, offset_prior,df_grid_params = self.transform_4_interp(grid_name, add_ptchem=add_ptchem)
+        else: 
+            sqr_spec , uniq, offset_prior,df_grid_params = self.transform_4_interp(grid_name, add_ptchem=add_ptchem)
+        
         self.interp_params = {}
         self.interp_params[grid_name] = {}
         self.interp_params[grid_name]['offset_prior'] = offset_prior
@@ -593,7 +615,11 @@ class GridFitter():
         self.interp_params[grid_name]['grid_parameters_unique'] = uniq
         self.interp_params[grid_name]['square_spectra_grid'] = sqr_spec
 
-    def transform_4_interp(fitter, grid_name):
+        if add_ptchem:
+            self.interp_params[grid_name]['square_temp_grid'] = sqr_pt
+            self.interp_params[grid_name]['square_chem_grid'] = sqr_chem
+
+    def transform_4_interp(fitter, grid_name,add_ptchem=False):
         """
         Transforms the fitter output into a square grid with np.nan in place 
         of spectra that are missing 
@@ -608,6 +634,11 @@ class GridFitter():
             Name of grid that you want to interpolate on
         """
         all_spectra = fitter.spectra[grid_name]
+        
+        if add_ptchem: 
+            all_pt = fitter.temperature[grid_name]
+            all_chem = fitter.chemistry[grid_name]
+
         df_grid_params = pd.DataFrame(index = range(len(fitter.list_of_files[grid_name])))
         grid_params=[]
         for i in fitter.grid_params[grid_name].keys():
@@ -628,6 +659,12 @@ class GridFitter():
         if square_size != all_spectra.shape[0]:
             #grid is not square let's fix that for interpolation 
             spectra_square = []
+            #and add pt/chem if we want
+            if add_ptchem: 
+                mols = all_chem.keys()
+                pt_square = []
+                chem_square = {imol:[] for imol in mols}
+
             full_df_grid = pd.DataFrame(columns = grid_params_unique.keys(), 
                                        index = range(square_size))
             for i,icombo in enumerate(itertools.product(*grid_params_unique.values())): 
@@ -637,22 +674,88 @@ class GridFitter():
                 matches = df_grid_params.loc[matches_all_rows]
 
                 if len(matches.index)==0: 
+                    #if there are no matches then let's add a nan to that location
                     full_df_grid.iloc[i,:] = icombo
                     spectra_square += [[np.nan]*all_spectra.shape[1]]
+                    if add_ptchem: 
+                        pt_square += [[np.nan]*all_pt.shape[1]]
+                        for imol in mols:
+                            chem_square[imol] += [[np.nan]*all_chem[imol].shape[1]]
+
                 else: 
+                    #if there are matches then let's add in the corresponding value
                     ind = matches.index[0]
                     full_df_grid.iloc[i,:] = icombo
                     spectra_square += [all_spectra[ind]]
-            spectra_square = np.reshape(spectra_square, [len(i) for i in grid_params_unique.values()]
+                    if add_ptchem: 
+                        pt_square += [all_pt[ind]]
+                        for imol in mols: 
+                            chem_square[imol] += [all_chem[imol][ind]]
+
+            #now we can properly reshape everything
+            spectra_square = np.reshape(spectra_square, 
+                                        [len(i) for i in grid_params_unique.values()]
                                         +[all_spectra.shape[1]])
 
+            if add_ptchem: 
+                pt_square = np.reshape(pt_square, [len(i) for i in grid_params_unique.values()]
+                                        +[all_pt.shape[1]])
+                for imol in mols: 
+                    chem_square[imol] = np.reshape(chem_square[imol], [len(i) for i in grid_params_unique.values()]
+                                        +[all_chem[imol].shape[1]])
         else: 
             #reshape all_spectra to be on npar1 x npar2 x npar3 etc 
             spectra_square = np.reshape(all_spectra, 
                                         [len(i) for i in grid_params_unique.values()]
                                         +[all_spectra.shape[1]])
-            
-        return spectra_square, grid_params_unique, offset_pm,df_grid_params
+            if add_ptchem: 
+                #reshape all_spectra to be on npar1 x npar2 x npar3 etc 
+                pt_square = np.reshape(all_pt, 
+                                        [len(i) for i in grid_params_unique.values()]
+                                        +[all_pt.shape[1]])
+                for imol in mols: 
+                    chem_square = {imol: np.reshape(all_chem[imol], 
+                                        [len(i) for i in grid_params_unique.values()]
+                                        +[all_chem[imol].shape[1]])
+                                    for imol in mols}
+        
+
+        #lastly replace nans in grid with real values 
+        def replace_nans(data):
+            #will first interpolate nearest neighbors 
+            #then it will replace nans with nearest neighbors
+            for imethod in ['linear','nearest']:
+                nan_coords = np.argwhere(np.isnan(data))
+
+                # Find the coordinates and values of non-NaN values
+                non_nan_coords = np.argwhere(~np.isnan(data))
+                non_nan_values = data[~np.isnan(data)]
+
+                # Perform interpolation to fill NaN values
+                filled_data = griddata(non_nan_coords, non_nan_values, nan_coords, method=imethod)
+
+                # Replace NaN values with interpolated values
+                data[np.isnan(data)] = filled_data
+            return data
+        import time
+        #removing this because grid data takes way too long with 
+        #high res spectra 
+
+        #if np.argwhere(np.isnan(spectra_square)).shape[0]!=0: 
+        #    spectra_square = replace_nans(spectra_square)
+        #    print('finish spec', time.time()-start);start = time.time()
+
+        if add_ptchem:
+            if np.argwhere(np.isnan(pt_square)).shape[0]!=0: 
+                pt_square = replace_nans(pt_square)
+                for imol in chem_square.keys():
+                    chem_square[imol] = replace_nans(chem_square[imol])
+
+        if add_ptchem: 
+            return (spectra_square, pt_square, chem_square, 
+                                grid_params_unique, offset_pm,df_grid_params)
+        else :
+            return spectra_square, grid_params_unique, offset_pm,df_grid_params
 
 
     
@@ -726,7 +829,7 @@ def custom_interp(final_goal,fitter,grid_name, to_interp='spectra',array_to_inte
     interp = weight_interp(grid_pars, final_goal, spectra,hypercube, hilos,hilos_inds)
     
     if 'spectra' in to_interp:
-        #only fill this gap if you are fitting spectra
+        #only fill this gap if you are fitting spectra which takes too long with the griddata method
         if np.any(np.isnan(interp)):
             tree = cKDTree(grid_points)
             dd, inds = tree.query(final_goal, k=3)
