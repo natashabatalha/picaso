@@ -74,7 +74,8 @@ setup(
           'scipy',
           'virga-exo',
           'xarray',
-          'bibtexparser'
+          'bibtexparser',
+          'cantera==2.6'
           ], 
     zip_safe = False,
 )
