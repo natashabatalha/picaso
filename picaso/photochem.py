@@ -10,7 +10,7 @@ import pickle
 from photochem.utils._format import FormatSettings_main, MyDumper, Loader, yaml, FormatReactions_main
 from photochem.utils import photochem2cantera
 from photochem import Atmosphere
-
+from .deq_chem import quench_level
 
 
 
@@ -130,6 +130,15 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
     wh= np.where(dist == np.min(dist))
     ind_surf = wh[0][0]
     print('surface pressure in bar =',pressure[ind_surf])
+
+    grav_quench = 6.67430e-11 *((mass)/1.0e3) / ((radius)/1.0e2)**2.0
+    if first==True:
+        quench_levels = quench_level(np.flip(pressure), np.flip(temp), np.flip(kzz) ,pressure*0+2.34, grav_quench, return_mix_timescale= False)
+        print(np.flip(pressure)[np.max(quench_levels)])
+        
+        if np.flip(pressure)[np.max(quench_levels)] >=  pressure[ind_surf]:
+            raise Exception("You need a deeper Surface Pressure. Surface is ", pressure[ind_surf], " max quench is ",np.flip(pressure)[np.max(quench_levels)] )
+        new_quench = 91-quench_levels
     
     # get anundances at the surface
     surf = np.empty(len(gas.species_names))
@@ -157,7 +166,7 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
     pt = TempPress(pressure, temp)
     radius = float(radius.value) #planets.WASP39b.radius*(constants.R_jup.value)*1e2
     mass = float(mass.value)#planets.WASP39b.mass*(constants.M_jup.value)*1e3
-    print(mass,radius)
+    
     # Here, we must guess the mean molecular weight
     mubar = 4*surf[gas.species_names.index('He')] + 2*(1.0-surf[gas.species_names.index('He')])
     P0 = pressure[ind_surf]
@@ -202,6 +211,20 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
             # We use chemical equilibrium as an initial condition
             if first == True:
                 for key in sol:
+                    if key == 'CH4':
+                        sol[key][new_quench[0]:] = sol[key][new_quench[0]:]*0 + sol[key][new_quench[0]]    
+                    if key == 'CO':
+                        sol[key][new_quench[0]:] = sol[key][new_quench[0]:]*0 + sol[key][new_quench[0]]
+                    if key == 'H2O':
+                        sol[key][new_quench[0]:] = sol[key][new_quench[0]:]*0 + sol[key][new_quench[0]]
+                    if key == 'CO2':
+                        sol[key][new_quench[1]:] = sol[key][new_quench[1]:]*0 + sol[key][new_quench[1]]
+
+                    if key == 'NH3':
+                        sol[key][new_quench[2]:] = sol[key][new_quench[2]:]*0 + sol[key][new_quench[2]]
+                    if key == 'HCN':
+                        sol[key][new_quench[3]:] = sol[key][new_quench[3]:]*0 + sol[key][new_quench[3]]
+                        
                     f.write(fmt.format('%e'%sol[key][i+ind_surf]))
             else:
                 for key in sol:
