@@ -131,7 +131,7 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
     ind_surf = wh[0][0]
     print('surface pressure in bar =',pressure[ind_surf])
 
-    grav_quench = 6.67430e-11 *((mass)/1.0e3) / ((radius)/1.0e2)**2.0
+    grav_quench = 6.67430e-11 *((float(mass.value))/1.0e3) / ((float(radius.value))/1.0e2)**2.0
     if first==True:
         quench_levels = quench_level(np.flip(pressure), np.flip(temp), np.flip(kzz) ,pressure*0+2.34, grav_quench, return_mix_timescale= False)
         print(np.flip(pressure)[np.max(quench_levels)])
