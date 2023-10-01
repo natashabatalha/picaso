@@ -75,7 +75,7 @@ setup(
           'virga-exo',
           'xarray',
           'bibtexparser',
-          'cantera==2.6'
+          'cantera==3.0.0'
           ], 
     zip_safe = False,
 )
