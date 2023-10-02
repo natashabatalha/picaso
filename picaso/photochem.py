@@ -138,7 +138,7 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
         
         if np.flip(pressure)[np.max(quench_levels)] >=  pressure[ind_surf]:
             raise Exception("You need a deeper Surface Pressure. Surface is ", pressure[ind_surf], " max quench is ",np.flip(pressure)[np.max(quench_levels)] )
-        new_quench = 91-quench_levels
+        new_quench = 90-quench_levels
     
     # get anundances at the surface
     surf = np.empty(len(gas.species_names))
