@@ -253,7 +253,7 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
                 filename+"_init.txt")
     
     pc_new.var.atol = 1e-25
-    pc_new.var.rtol = 1e-3
+    pc_new.var.rtol = 1e-5
     pc_new.var.verbose = 1
     usol = pc_new.wrk.usol.copy()
     # usol[pc.dat.species_names.index('CH4'),:] = 1.0e-6
@@ -297,11 +297,15 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
         #ax.set_ylabel('Pressure (mbar)')
         
         #plt.show()
+        tn_prev = tn
         for i in range(100):
             tn = pc_new.step()
             if tn > tstop:
                 break
-    
+        if tn > 1:
+            if np.abs(tn-tn_prev)/tn < 1e-5:
+                print("Stopping because steps are too small t= ", tn," dt/t= ",np.abs(tn-tn_prev)/tn)
+                break
     #pc.out2atmosphere_txt(filename="WASP39b/"+filename+"_init.txt", overwrite=True, clip=True)
     #species = ['CH4','CO','CO2','H2O','HCN','NH3','H','H2','He','C2H2','C2H4','C2H6','SO2','H2S']
     species = species_cantera
