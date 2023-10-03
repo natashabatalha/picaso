@@ -254,7 +254,7 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
     
     pc_new.var.atol = 1e-25
     pc_new.var.rtol = 1e-2
-    pc_new.var.verbose = 0
+    pc_new.var.verbose = 1
     usol = pc_new.wrk.usol.copy()
     # usol[pc.dat.species_names.index('CH4'),:] = 1.0e-6
     pc_new.initialize_stepper(usol)
