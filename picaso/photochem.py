@@ -280,7 +280,7 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
             
             wh = np.where(diff_ch4  == np.max(diff_ch4))
             change_ch4 = diff_ch4[wh[0][0]]/old_meth[wh[0][0]]
-            print("Methane relative Change ",change_ch4)
+            print("Methane relative Change ",change_ch4," tn ", tn)
         old_meth = (pc_new.wrk.densities[ind,:]/pc_new.wrk.density).copy()
         sp = 'NH3'
         ind = pc_new.dat.species_names.index(sp)
@@ -291,7 +291,7 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
             wh = np.where(diff_nh3  == np.max(diff_nh3))
             change_nh3 = diff_nh3[wh[0][0]]/old_nh3[wh[0][0]]
             
-            print("Amonnia relative Change ",change_nh3)
+            print("Amonnia relative Change ",change_nh3," tn ", tn)
         old_nh3 = (pc_new.wrk.densities[ind,:]/pc_new.wrk.density).copy()
         sp = 'SO2'
         ind = pc_new.dat.species_names.index(sp)
@@ -301,7 +301,7 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
             
             wh = np.where(diff_so2  == np.max(diff_so2))
             change_so2 = diff_so2[wh[0][0]]/old_so2[wh[0][0]]
-            print("SO2 relative Change ",change_so2)
+            print("SO2 relative Change ",change_so2," tn ", tn)
         old_so2 = (pc_new.wrk.densities[ind,:]/pc_new.wrk.density).copy()
 
         
@@ -330,15 +330,17 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
         #ax.set_ylabel('Pressure (mbar)')
         
         #plt.show()
+        if change_ch4 <= 1e-3:
+            if change_nh3 <= 1e-3:
+                if change_so2 <= 1e-3:
+                    print("Stopping because Relative changes in CH4, NH3, SO2 are ", change_ch4," ",change_nh3," ",change_so2)
+                    break
         tn_prev = tn
         for i in range(100):
             tn = pc_new.step()
             if tn > tstop:
                 break
-            if change_ch4 <= 1e-4:
-                if change_nh3 <= 1e-4:
-                    if change_so2 <= 1e-4:
-                        break
+            
         
     #pc.out2atmosphere_txt(filename="WASP39b/"+filename+"_init.txt", overwrite=True, clip=True)
     #species = ['CH4','CO','CO2','H2O','HCN','NH3','H','H2','He','C2H2','C2H4','C2H6','SO2','H2S']
