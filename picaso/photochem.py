@@ -147,11 +147,18 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
     
     # get anundances at the surface
     surf = np.empty(len(gas.species_names))
-    deeper_surf = np.zeros(shape=(len(gas.species_names),len(pressure[:ind_surf])))
+    if eq_chem == False:
+        deeper_surf = np.zeros(shape=(len(gas.species_names),len(pressure[:ind_surf])))
+    else:
+        deeper_surf = np.zeros(shape=(len(gas.species_names),len(pressure[:ind_surf+1])))
+
     species_cantera = gas.species_names
     for i,sp in enumerate(gas.species_names):
         surf[i] = sol[sp][ind_surf]
-        deeper_surf[i,:] = sol[sp][:ind_surf]
+        if eq_chem == False:
+            deeper_surf[i,:] = sol[sp][:ind_surf]
+        else:
+            deeper_surf[i,:] = sol[sp][:ind_surf+1]
     if eq_chem==False:
         bc_list = []
         for i,sp in enumerate(gas.species_names):
@@ -374,6 +381,7 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
                 #ax.plot(tmp,pc.wrk.pressure/1e6,label=sp,color=color[i])
                 #ax.plot(deeper_surf[ind_cantera,:],pressure[:ind_surf],linestyle="--",color=color[i])
                 output_array[i,:] = np.flip(deeper_surf[ind_cantera,:])
+        pc_new = {'eq_chem'}
 
     return pc_new,output_array,species,np.flip(pressure)
 
