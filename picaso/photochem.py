@@ -254,7 +254,7 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
     
     pc_new.var.atol = 1e-25
     pc_new.var.rtol = 1e-5
-    pc_new.var.verbose = 1
+    pc_new.var.verbose = 0
     usol = pc_new.wrk.usol.copy()
     # usol[pc.dat.species_names.index('CH4'),:] = 1.0e-6
     pc_new.initialize_stepper(usol)
@@ -272,6 +272,39 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
         #fig.patch.set_facecolor("w")
     
         sol = pc_new.mole_fraction_dict()
+
+        sp = 'CH4'
+        ind = pc_new.dat.species_names.index(sp)
+        if tn > 0:
+            diff_ch4 = np.abs((pc_new.wrk.densities[ind,:]/pc_new.wrk.density) - old_meth)
+            
+            wh = np.where(diff_ch4  == np.max(diff_ch4))
+            change_ch4 = diff_ch4[wh[0][0]]/old_meth[wh[0][0]]
+            print("Methane relative Change ",change_ch4)
+        old_meth = (pc_new.wrk.densities[ind,:]/pc_new.wrk.density).copy()
+        sp = 'NH3'
+        ind = pc_new.dat.species_names.index(sp)
+        
+        if tn > 0:
+            diff_nh3 = np.abs((pc_new.wrk.densities[ind,:]/pc_new.wrk.density) - old_nh3)
+            
+            wh = np.where(diff_nh3  == np.max(diff_nh3))
+            change_nh3 = diff_nh3[wh[0][0]]/old_nh3[wh[0][0]]
+            
+            print("Amonnia relative Change ",change_nh3)
+        old_nh3 = (pc_new.wrk.densities[ind,:]/pc_new.wrk.density).copy()
+        sp = 'SO2'
+        ind = pc_new.dat.species_names.index(sp)
+        
+        if tn > 0:
+            diff_so2 = np.abs((pc_new.wrk.densities[ind,:]/pc_new.wrk.density) - old_so2)
+            
+            wh = np.where(diff_so2  == np.max(diff_so2))
+            change_so2 = diff_so2[wh[0][0]]/old_so2[wh[0][0]]
+            print("SO2 relative Change ",change_so2)
+        old_so2 = (pc_new.wrk.densities[ind,:]/pc_new.wrk.density).copy()
+
+        
     
         #species = ['CO','CO2','CH4','H','H2','NH3','C2H2','H2S','SO2']
         #for i,sp in enumerate(species):
@@ -302,10 +335,11 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
             tn = pc_new.step()
             if tn > tstop:
                 break
-        if tn > 1:
-            if np.abs(tn-tn_prev)/tn < 1e-5:
-                print("Stopping because steps are too small t= ", tn," dt/t= ",np.abs(tn-tn_prev)/tn)
-                break
+            if change_ch4 <= 1e-4:
+                if change_nh3 <= 1e-4:
+                    if change_so2 <= 1e-4:
+                        break
+        
     #pc.out2atmosphere_txt(filename="WASP39b/"+filename+"_init.txt", overwrite=True, clip=True)
     #species = ['CH4','CO','CO2','H2O','HCN','NH3','H','H2','He','C2H2','C2H4','C2H6','SO2','H2S']
     species = species_cantera
