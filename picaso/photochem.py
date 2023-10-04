@@ -345,7 +345,7 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
             for i in range(100):
                 tn = pc_new.step()
                 if tn > tstop:
-                    break`
+                    break
             
         
     #pc.out2atmosphere_txt(filename="WASP39b/"+filename+"_init.txt", overwrite=True, clip=True)
