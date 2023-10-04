@@ -330,7 +330,7 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
         #ax.set_ylabel('Pressure (mbar)')
         
         #plt.show()
-        if tn>0:
+        if tn>1e5:
             if change_ch4 <= 1e-3:
                 if change_nh3 <= 1e-3:
                     if change_so2 <= 1e-3:
