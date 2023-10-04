@@ -330,11 +330,12 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
         #ax.set_ylabel('Pressure (mbar)')
         
         #plt.show()
-        if change_ch4 <= 1e-3:
-            if change_nh3 <= 1e-3:
-                if change_so2 <= 1e-3:
-                    print("Stopping because Relative changes in CH4, NH3, SO2 are ", change_ch4," ",change_nh3," ",change_so2)
-                    break
+        if tn>0:
+            if change_ch4 <= 1e-3:
+                if change_nh3 <= 1e-3:
+                    if change_so2 <= 1e-3:
+                        print("Stopping because Relative changes in CH4, NH3, SO2 are ", change_ch4," ",change_nh3," ",change_so2)
+                        break
         tn_prev = tn
         for i in range(100):
             tn = pc_new.step()
