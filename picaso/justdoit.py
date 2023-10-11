@@ -56,8 +56,8 @@ if not os.path.exists(os.environ.get('PYSYN_CDBS')):
 
 
 
-def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_output=False, 
-    plot_opacity= False, as_dict=True):
+def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', 
+    full_output=False, plot_opacity= False, as_dict=True):
     """
     Currently top level program to run albedo code 
     Parameters 
