@@ -3737,7 +3737,7 @@ def blackbody_climate(wave,temp, bb, y2, tp, tmin, tmax):
     return blackbody_array
 
 # still not developed fully. virga has a function already maybe just use that
-@jit(nopython=True, cache=True)
+# @jit(nopython=True, cache=True)
 def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, opacityclass, bundle, moist = None):
     from .climate import moist_grad, did_grad_cp
 
