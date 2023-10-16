@@ -2975,14 +2975,20 @@ class inputs():
         else :
             og_lat = ds.coords['lat'].values #degrees
             og_lon = ds.coords['lon'].values #degrees
+            pres = ds.coords['pressure'].values #bars  #adding this so I can add it explicitly to ds_New below
 
         #store so we can rotate
         data_vars_og = {i:ds[i].values for i in ds.keys()}
         #run through phases and regrid each one
+        new_lat_totals = []
+        new_lon_totals = []
         shifted_grids = {}
         for i,iphase in enumerate(phases): 
             new_lat = self.inputs['disco'][iphase]['latitude']*180/np.pi#to degrees
             new_lon = self.inputs['disco'][iphase]['longitude']*180/np.pi#to degrees
+
+            new_lat_totals.append(new_lat)
+            new_lon_totals.append(new_lon)
             total_shift = (iphase*180/np.pi + shift[i]) % 360 
             change_zero_pt = og_lon +  total_shift
             change_zero_pt[change_zero_pt>360]=change_zero_pt[change_zero_pt>360]%360 #such that always between -180 and 180
@@ -2995,10 +3001,36 @@ class inputs():
                 data = np.concatenate((swap2,swap1))
                 ds[idata].values = data
             shifted_grids[iphase] = regrid_xarray(ds, latitude=new_lat, longitude=new_lon)
-        new_phase_grid=xr.concat(list(shifted_grids.values()), pd.Index(list(shifted_grids.keys()), name='phase'))
+        # new_phase_grid=xr.concat(list(shifted_grids.values()), pd.Index(list(shifted_grids.keys()), name='phase'))
+            ## we need a lon_total that is len(phase) x len(lon regrid) as ARRAY, not list
+            ## Test this part with varying phases, regrid resolutions later
+            new_lat_totals_array = np.array(new_lat_totals)
+            new_lon_totals_array = np.array(new_lon_totals)
+
+
+        stacked_phase_grid=xr.concat(list(shifted_grids.values()), pd.Index(list(shifted_grids.keys()), name='phase'), join='override')  ## join=override gets rid of errant lon values
+
+        # put data into a dataset
+        ds_New = jdi.xr.Dataset(
+            data_vars=dict(
+            ),
+            coords=dict(
+                lon2d=(["phase","lon"], new_lon_totals_array,{'units': 'degrees'}), #required. Errors when named lon
+                lat2d=(["phase","lat"], new_lat_totals_array,{'units': 'degrees'}), #required
+                pressure=(["pressure"], pres,{'units': 'bar'})#required*
+            ),
+            attrs=dict(description="coords with vectors"),
+        )
+        new_phase_grid = ds_New
+
+        # Now we need to add stacked_phase_grid Data Vars to new_phase_grid, and also add Phase to coords
+        
+        # Lets use merge with compat=override (use data_vars from 1st dataset)
+        # This adds a new, 2D coord named 'longitude' (not 'lon'). Longitude needs to be specified for phase__curve
+        new_phase_grid = xr.merge([stacked_phase_grid, new_phase_grid], compat='override', join='right')
 
         if plot: 
-            new_phase_grid['opd'].isel(pressure=iz_plot,wno=iw_plot).plot(x='lon', y ='lat', col='phase',col_wrap=4)
+            new_phase_grid['opd'].isel(pressure=iz_plot,wno=iw_plot).plot(x='lon2d', y ='lat2d', col='phase',col_wrap=4)
         
         self.inputs['clouds']['profile'] = new_phase_grid
         self.inputs['clouds']['wavenumber'] = ds.coords['wno'].values
