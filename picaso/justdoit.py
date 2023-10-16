@@ -2796,9 +2796,9 @@ class inputs():
         if zero_point == 'night_transit':
             shift = shift + 180
         elif zero_point == 'secondary_eclipse':
-            shift=shift 
+            shift=shift
         else: 
-            raise Exception("Do not regocnize input zero point. Please specify: night_transit or secondary_eclipse")
+            raise Exception("Do not recognize input zero point. Please specify: night_transit or secondary_eclipse")
 
         self.inputs['shift'] = shift
 
@@ -2846,7 +2846,7 @@ class inputs():
         for i,iphase in enumerate(phases): 
             new_lat = self.inputs['disco'][iphase]['latitude']*180/np.pi#to degrees
             new_lon = self.inputs['disco'][iphase]['longitude']*180/np.pi#to degrees
-            #print("New Lon", new_lon)
+            #append new lons and lats, used to create array below this for loop
             new_lat_totals.append(new_lat)
             new_lon_totals.append(new_lon)
             total_shift = (iphase*180/np.pi + shift[i]) % 360 
@@ -2861,21 +2861,18 @@ class inputs():
                 data = np.concatenate((swap2,swap1))
                 ds[idata].values = data
             shifted_grids[iphase] = regrid_xarray(ds, latitude=new_lat, longitude=new_lon)
-            #print("Shifted grids", shifted_grids)
             
-            ## we need a lon_total that is len(phase) x len(lon regrid) as ARRAY, not list
-            ## Test this part with varying phases, regrid resolutions later
+            # we need arrays that are len(phase) x len(lon regrid) as array, not list.
+            # These are used to create 'lon2d' and 'lat2d', which are needed for reflected case.
             new_lat_totals_array = np.array(new_lat_totals)
             new_lon_totals_array = np.array(new_lon_totals)
-            #print("New Lon Totals",new_lon_totals_array)
-            #print("New Lon Totals SHAPE",new_lon_totals_array.shape)
 
-        # New_phase_grids will not work, creates 17 long lon, we need to preserve 6 lon 
+        # This creates 'phase' as a coord 
         stacked_phase_grid=xr.concat(list(shifted_grids.values()), pd.Index(list(shifted_grids.keys()), name='phase'), join='override')  ## join=override gets rid of errant lon values
-        #print("Stacked phase grids data vars", stacked_phase_grid.data_vars.values)
-        #print("Stacked phase grids data vars SHAPE", stacked_phase_grid.data_vars['temperature'].values.shape)
         
-            # put data into a dataset
+        # Here we are manually creating a new xarray from scratch that has 'lon2d', 'lat2d', which have 'phase' as their 2nd dimension (neeeded for reflected case)
+        # This is a temporary xarray that will be used to merge data variables (created above) with our new 2d coordinates.
+        # We do it this way because xarray does not like when you add dimensions to existing coordinate system. This seems to be the only work around.
         ds_New = jdi.xr.Dataset(
             data_vars=dict(
             ),
@@ -2886,24 +2883,16 @@ class inputs():
             ),
             attrs=dict(description="coords with vectors"),
         )
-        new_phase_grid = ds_New  ##changed from new_phase_grid to shifted_grids
-            
-        # Now we need to add stacked_phase_grid Data Vars to new_phase_grid, and also add Phase to coords
+        new_phase_grid = ds_New 
         
-        # Lets use merge with compat=override (use data_vars from 1st dataset)
-        # This adds a new, 2D coord named 'longitude' (not 'lon'). Longitude needs to be specified for phase__curve
+        # Lets use merge with compat=override (use data_vars from 1st dataset) and join=right
+        # This creates an xarray with all of the variables from stacked_phase_grid (i.e., temperature and chemicals).
+        # This also creates an xarray with coords named 'lon2d' and 'lat2d' (as well as 'lon' and 'lat'). 'lon2d' and 'lat2d' have 'phase' as their second dimension, which is needed when we use reflected case.
         new_phase_grid = xr.merge([stacked_phase_grid, new_phase_grid], compat='override', join='right')
         
-        #new_phase_grid = new_phase_grid.rename_dims({'lon':'long','lat':'lati'})
-        #new_phase_grid = new_phase_grid.assign_coords({'lon':new_phase_grid.lon2d, 'lat':new_phase_grid.lat2d})
-        #new_phase_grid = new_phase_grid.drop_vars({'lon2d','lat2d'})
-        #new_phase_grid = new_phase_grid.rename_dims({'long':'lon','lati':'lat'})
-        
-        print("New Phase Grid UPDATED", new_phase_grid)
-        
-        #print("Shifted grids data vars", shifted_grids[iphase].data_vars.values)
-        #print("Shifted grids data vars SHAPE", shifted_grids[iphase].data_vars['temperature'].values.shape)
-
+        #Coords = pressure, lon, lat, phase, lat2d, lon2d.    # Variables = temperature, chemical composition
+        print("Phase Grid XArray", new_phase_grid)
+    
         if plot: 
             new_phase_grid['temperature'].isel(pressure=iz_plot).plot(x='lon2d', y ='lat2d', col='phase',col_wrap=4)
             #changed lon, lat to longitude, latitude

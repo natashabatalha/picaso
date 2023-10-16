@@ -1581,10 +1581,41 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=pals.Spectral11,v
     legend = Legend(items=legend_it, location=(0, -20))
     legend.click_policy="mute"
     fig.add_layout(legend, 'left') 
-        
+    
     fig.xgrid.grid_line_alpha=0
     fig.ygrid.grid_line_alpha=0
     plot_format(fig)
+
+    print("phases", phases)
+    print("all_curves",all_curves)
+
+    #re-order phases such that brightest value is at phase=0 (only way to do this for reflected case)
+    front_half_phases = phases[:len(phases)//2]
+    back_half_phases = phases[len(phases)//2:] - (2*np.pi)
+    reorder_phases = np.concatenate((back_half_phases, front_half_phases))
+
+    #re-order all_curves such that brightest value is at phase=0 (only way to do this for reflected case)
+    front_half_all_curves = all_curves[:len(all_curves)//2]
+    back_half_all_curves = all_curves[len(all_curves)//2:]
+    reorder_all_curves = np.concatenate((back_half_all_curves, front_half_all_curves))
+    print("Reorder all curves",reorder_all_curves)
+
+    if to_plot == "fpfs_reflected" or to_plot == "albedo":
+        fig2 = figure(**kwargs)
+
+        for i in range(len(collapse)): 
+            f2 = fig2.line(reorder_phases,reorder_all_curves[:,i],line_width=3,color=palette[i],
+                    )
+    
+        legend2 = Legend(items=legend_it, location=(0, -20))
+        legend2.click_policy="mute"
+        fig2.add_layout(legend, 'left')
+
+        fig2.xgrid.grid_line_alpha=0
+        fig2.ygrid.grid_line_alpha=0
+        plot_format(fig2)
+        show(fig2)
+
     return phases, all_curves, all_ws, fig
 
 def thermal_contribution(full_output, tau_max=1.0,R=100,  **kwargs):

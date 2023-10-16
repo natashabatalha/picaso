@@ -396,7 +396,7 @@ def pent_diag_solve(l, A, B, C, D, E, F):
 
     return X
 
-#@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)  ## comment out jit for this one to use lab data
 ## Added LargeKCl_405nm_Full_Spline to second line of variables for LAB scattering approx
 def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3d,gcos2_3d, ftau_cld_3d,ftau_ray_3d,
     dtau_og_3d, tau_og_3d, w0_og_3d, cosb_og_3d,
@@ -514,7 +514,8 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
     #================ START CRAZE LOOP OVER ANGLE #================
     for ng in range(numg):
         for nt in range(numt):
-
+            u1 = abs(ubar1[ng,nt])  #absolute value here becuase naegative u values causes overflow errors in x
+            u0 = abs(ubar0[ng,nt])  #absolute value here becuase naegative u values causes overflow errors in x
             #get needed chunk for 3d inputs
             #should consider thinking of a better method for when doing 1d only
             cosb = cosb_3d[:,:,ng,nt]
@@ -539,23 +540,23 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             g2  = (sq3*w0*0.5)*(1.-ftau_cld*cosb)           #table 1
             lamda = sqrt(g1**2 - g2**2)           #eqn 21
             gama  = (g1-lamda)/g2                   #eqn 22
-            g3  = 0.5*(1.-sq3*ftau_cld*cosb*ubar0[ng, nt])   #table 1 #ubar is now 100x 10 matrix.. 
+            g3  = 0.5*(1.-sq3*ftau_cld*cosb*u0)   #table 1 #ubar is now 100x 10 matrix.. 
     
             # now calculate c_plus and c_minus (equation 23 and 24)
             g4 = 1.0 - g3
-            denominator = lamda**2 - 1.0/ubar0[ng, nt]**2.0
+            denominator = lamda**2 - 1.0/u0**2.0
 
             #everything but the exponential 
-            a_minus = F0PI*w0* (g4*(g1 + 1.0/ubar0[ng, nt]) +g2*g3 ) / denominator
-            a_plus  = F0PI*w0*(g3*(g1-1.0/ubar0[ng, nt]) +g2*g4) / denominator
+            a_minus = F0PI*w0* (g4*(g1 + 1.0/u0) +g2*g3 ) / denominator
+            a_plus  = F0PI*w0*(g3*(g1-1.0/u0) +g2*g4) / denominator
 
             #add in exponential to get full eqn
             #_up is the terms evaluated at lower optical depths (higher altitudes)
             #_down is terms evaluated at higher optical depths (lower altitudes)
-            x = exp(-tau[:-1,:]/ubar0[ng, nt])
+            x = exp(-tau[:-1,:]/u0) 
             c_minus_up = a_minus*x #CMM1
             c_plus_up  = a_plus*x #CPM1
-            x = exp(-tau[1:,:]/ubar0[ng, nt])
+            x = exp(-tau[1:,:]/u0)
             c_minus_down = a_minus*x #CM
             c_plus_down  = a_plus*x #CP
 
@@ -570,7 +571,7 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 
             #boundary conditions 
             b_top = 0.0                                       
-            b_surface = 0. + surf_reflect*ubar0[ng, nt]*F0PI*exp(-tau[-1, :]/ubar0[ng, nt])
+            b_surface = 0. + surf_reflect*u0*F0PI*exp(-tau[-1, :]/u0)
 
             #Now we need the terms for the tridiagonal rotated layered method
             if tridiagonal==0:
@@ -619,13 +620,13 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
                 #this is a decent assumption because our second order legendre polynomial 
                 #is forced to be equal to the rayleigh phase function
                 ubar2 = 0.767  # 
-                multi_plus = (1.0+1.5*ftau_cld*cosb*ubar1[ng,nt] #!was 3
-                                + gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
-                multi_minus = (1.-1.5*ftau_cld*cosb*ubar1[ng,nt] 
-                                + gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
+                multi_plus = (1.0+1.5*ftau_cld*cosb*u1 #!was 3
+                                + gcos2*(3.0*ubar2*ubar2*u1*u1 - 1.0)/2.0)
+                multi_minus = (1.-1.5*ftau_cld*cosb*u1 
+                                + gcos2*(3.0*ubar2*ubar2*u1*u1 - 1.0)/2.0)
             elif multi_phase ==1:#'N=1':
-                multi_plus = 1.0+1.5*ftau_cld*cosb*ubar1[ng,nt]  
-                multi_minus = 1.-1.5*ftau_cld*cosb*ubar1[ng,nt]
+                multi_plus = 1.0+1.5*ftau_cld*cosb*u1  
+                multi_minus = 1.-1.5*ftau_cld*cosb*u1
             ################################ END OPTIONS FOR MULTIPLE SCATTERING####################
 
             G=w0*positive*(multi_plus+gama*multi_minus)
@@ -711,36 +712,36 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
                 if single_phase==4:#'LAB' - The lab phase fcns do not iterate over wavelength. Therefore we need to re-structure p_single in the equation below
                 #direct beam
                 #note when delta-eddington=off, then tau_single=tau, cosb_single=cosb, w0_single=w0, etc
-                    xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/ubar1[ng,nt])
+                    xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/u1)
                             #single scattering albedo from sun beam (from ubar0 to ubar1)
                             +(w0_og[i,:]*F0PI/(4.*pi))*
-                            (p_single)*exp(-tau_og[i,:]/ubar0[ng,nt])*
-                            (1. - exp(-dtau_og[i,:]*(ubar0[ng,nt]+ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
-                            (ubar0[ng,nt]/(ubar0[ng,nt]+ubar1[ng,nt]))
+                            (p_single)*exp(-tau_og[i,:]/u0)*
+                            (1. - exp(-dtau_og[i,:]*(u0+u1)/(u0*u1)))*
+                            (u0/(u0+u1))
                             #three multiple scattering terms 
-                            +A[i,:]* (1. - exp(-dtau[i,:] *(ubar0[ng,nt]+1*ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
-                            (ubar0[ng,nt]/(ubar0[ng,nt]+1*ubar1[ng,nt]))
-                            +G[i,:]*(exp(exptrm[i,:]*1-dtau[i,:]/ubar1[ng,nt]) - 1.0)/(lamda[i,:]*1*ubar1[ng,nt] - 1.0)
-                            +H[i,:]*(1. - exp(-exptrm[i,:]*1-dtau[i,:]/ubar1[ng,nt]))/(lamda[i,:]*1*ubar1[ng,nt] + 1.0))
+                            +A[i,:]* (1. - exp(-dtau[i,:] *(u0+1*u1)/(u0*u1)))*
+                            (u0/(u0+1*u1))
+                            +G[i,:]*(exp(exptrm[i,:]*1-dtau[i,:]/u1) - 1.0)/(lamda[i,:]*1*u1 - 1.0)
+                            +H[i,:]*(1. - exp(-exptrm[i,:]*1-dtau[i,:]/u1))/(lamda[i,:]*1*u1 + 1.0))
                             #thermal
                 elif single_phase!=4:#For normal scattering approximations. This is what PICASO has originally
-                    xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/ubar1[ng,nt])
+                    xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/u1)
                             #single scattering albedo from sun beam (from ubar0 to ubar1)
                             +(w0_og[i,:]*F0PI/(4.*pi))*
-                            (p_single[i,:])*exp(-tau_og[i,:]/ubar0[ng,nt])*
-                            (1. - exp(-dtau_og[i,:]*(ubar0[ng,nt]+ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
-                            (ubar0[ng,nt]/(ubar0[ng,nt]+ubar1[ng,nt]))
+                            (p_single[i,:])*exp(-tau_og[i,:]/u0)*
+                            (1. - exp(-dtau_og[i,:]*(u0+u1)/(u0*u1)))*
+                            (u0/(u0+u1))
                             #three multiple scattering terms 
-                            +A[i,:]* (1. - exp(-dtau[i,:] *(ubar0[ng,nt]+1*ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
-                            (ubar0[ng,nt]/(ubar0[ng,nt]+1*ubar1[ng,nt]))
-                            +G[i,:]*(exp(exptrm[i,:]*1-dtau[i,:]/ubar1[ng,nt]) - 1.0)/(lamda[i,:]*1*ubar1[ng,nt] - 1.0)
-                            +H[i,:]*(1. - exp(-exptrm[i,:]*1-dtau[i,:]/ubar1[ng,nt]))/(lamda[i,:]*1*ubar1[ng,nt] + 1.0))
+                            +A[i,:]* (1. - exp(-dtau[i,:] *(u0+1*u1)/(u0*u1)))*
+                            (u0/(u0+1*u1))
+                            +G[i,:]*(exp(exptrm[i,:]*1-dtau[i,:]/u1) - 1.0)/(lamda[i,:]*1*u1 - 1.0)
+                            +H[i,:]*(1. - exp(-exptrm[i,:]*1-dtau[i,:]/u1))/(lamda[i,:]*1*u1 + 1.0))
                             #thermal
 
             xint_at_top[ng,nt,:] = xint[0,:]    
     return xint_at_top
 
-@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)  ##comment out jit to use lab data
 def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
@@ -868,8 +869,8 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
     #================ START CRAZE LOOP OVER ANGLE #================
     for ng in range(numg):
         for nt in range(numt):
-            u1 = ubar1[ng,nt]
-            u0 = ubar0[ng,nt]
+            u1 = abs(ubar1[ng,nt])   #absolute value here becuase naegative u values causes overflow errors in x
+            u0 = abs(ubar0[ng,nt])   #absolute value here becuase naegative u values causes overflow errors in x
             if toon_coefficients == 1 : #eddington
                 g3  = (2-3*ftau_cld*cosb*u0)/4#0.5*(1.-sq3*cosb*ubar0[ng, nt]) #  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
             elif toon_coefficients == 0 :#quadrature
@@ -887,9 +888,11 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             #_up is the terms evaluated at lower optical depths (higher altitudes)
             #_down is terms evaluated at higher optical depths (lower altitudes)
             x = exp(-tau[:-1,:]/u0)
+            #x = exp(-tau[:-1,:]/abs(u0))
             c_minus_up = a_minus*x #CMM1
             c_plus_up  = a_plus*x #CPM1
             x = exp(-tau[1:,:]/u0)
+            #x = exp(-tau[1:,:]/abs(u0))
             c_minus_down = a_minus*x #CM
             c_plus_down  = a_plus*x #CP
 
@@ -897,10 +900,9 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             exptrm = lamda*dtau
             #save from overflow 
             exptrm = slice_gt (exptrm, 35.0) 
-
+            
             exptrm_positive = exp(exptrm) #EP
             exptrm_minus = 1.0/exptrm_positive#EM
-
 
             #boundary conditions 
             #b_top = 0.0                                       
