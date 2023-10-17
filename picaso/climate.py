@@ -129,7 +129,7 @@ def convec(temp,pressure, t_table, p_table, grad, cp, output_abunds = None, mois
             tbar[j] = 0.5*(temp[j]+temp[j+1])
             pbar[j] = sqrt(pressure[j]*pressure[j+1])
             calc_type = 0
-            grad_x[j], cp_x[j] =  moist_grad( tbar[j], pbar[j], t_table, p_table, temp, pressure, grad, cp, calc_type, output_abunds, deq = deq, on_fly = on_fly, gases_fly = gases_fly)
+            grad_x[j], cp_x[j] =  moist_grad( tbar[j], pbar[j], t_table, p_table, grad, cp, calc_type, output_abunds, deq = deq, on_fly = on_fly, gases_fly = gases_fly)
 
     else:
         for j in range(len(temp)-1):
@@ -626,7 +626,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                         calc_type =  0
 
                         if moist == True:
-                            grad_x, cp_x = moist_grad( beta[j1-1], press, t_table, p_table, temp, pressure, grad, cp, calc_type, output_abunds, deq = deq, on_fly = on_fly, gases_fly = gases_fly)
+                            grad_x, cp_x = moist_grad( beta[j1-1], press, t_table, p_table, grad, cp, calc_type, output_abunds, deq = deq, on_fly = on_fly, gases_fly = gases_fly)
                         else: 
                             grad_x, cp_x = did_grad_cp( beta[j1-1], press, t_table, p_table, grad, cp, calc_type)
                         
@@ -835,7 +835,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                     press = sqrt(pressure[j1-1]*pressure[j1])
                     calc_type =  0 # only need grad_x in return
                     if moist == True:
-                        grad_x, cp_x = moist_grad( temp[j1-1], press, t_table, p_table, temp, pressure, grad, cp, calc_type, output_abunds, deq = deq, on_fly = on_fly, gases_fly = gases_fly)
+                        grad_x, cp_x = moist_grad( temp[j1-1], press, t_table, p_table, grad, cp, calc_type, output_abunds, deq = deq, on_fly = on_fly, gases_fly = gases_fly)
                     else:
                         grad_x, cp_x = did_grad_cp( temp[j1-1], press, t_table, p_table, grad, cp, calc_type)
                             
@@ -1559,7 +1559,7 @@ def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None, fthin_cl
     return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw
 
 @jit(nopython=True, cache=True)
-def moist_grad( t, p, t_table, p_table, temp, pressure, grad, cp, calc_type, output_abunds, deq = False, on_fly = False, gases_fly = False):
+def moist_grad( t, p, t_table, p_table, grad, cp, calc_type, output_abunds, deq = False, on_fly = False, gases_fly = False):
     """
     Parameters
     ----------
@@ -1571,18 +1571,14 @@ def moist_grad( t, p, t_table, p_table, temp, pressure, grad, cp, calc_type, out
         array of Temperature values with 53 entries
     p_table : array 
         array of Pressure value with 26 entries
-    temp: array
-        current PT temperature
-    pressure: array
-        current PT pressure
     grad : array 
         array of gradients of dimension 53*26
     cp : array 
         array of cp of dimension 53*26
     calc_type : int 
         not used to make compatible with nopython.
-    ck_filename : str
-         Ck_db filename
+    output_abunds : str
+        abundances in the atmosphere
     deq : bool, optional
         if True, runs calculate_atm_deq. The default is False.
     on_fly : bool, optional
@@ -1658,7 +1654,7 @@ def moist_grad( t, p, t_table, p_table, temp, pressure, grad, cp, calc_type, out
     a  = np.zeros(ncond)
 
     for i in range(ncond):
-        pc[i] = output_abunds[icond[i]]*p
+        pc[i] = output_abunds[icond[i]]*p #don't need to index by icond[i] since output_abunds is already in the correct order
         a[i]  = dH[i]/Rgas/t
         pb    -= pc[i]
 
@@ -1670,7 +1666,7 @@ def moist_grad( t, p, t_table, p_table, temp, pressure, grad, cp, calc_type, out
         cpI += output_abunds[i]*cpfunc(i,t,mmw)*mmw[i]
 
     # ideal gas adiaibatic gradient
-    gradI = Rgas//cpI*f
+    gradI = Rgas/cpI*f
 
     #non-ideal gas from Didier
     gradNI, cp_x = did_grad_cp(t,p,t_table,p_table,grad,cp, calc_type)
