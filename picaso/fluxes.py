@@ -3737,9 +3737,8 @@ def blackbody_climate(wave,temp, bb, y2, tp, tmin, tmax):
     return blackbody_array
 
 # still not developed fully. virga has a function already maybe just use that
-# @jit(nopython=True, cache=True)
-def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, opacityclass, bundle, moist = None):
-    from .climate import moist_grad, did_grad_cp
+@jit(nopython=True, cache=True)
+def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds = None, moist = None):
 
     grav_cgs = grav*1e2
     p_cgs = pressure *1e6
@@ -3828,7 +3827,7 @@ def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,
         # weirdly layer routine of eddysed uses did_grad with pressures in cgs
         # supposed to be used with pressure in bars
         if moist == True:
-            grad_x,cp_x = moist_grad(tbar, pbar, t_table, p_table, grad, cp, calc_type, opacityclass, bundle)
+            grad_x,cp_x = moist_grad(tbar, pbar, t_table, p_table, temp, pressure, grad, cp, calc_type, output_abunds)
         else:
             grad_x,cp_x = did_grad_cp(tbar, pbar, t_table, p_table, grad, cp, calc_type)
         lapse_ratio[j] = min(np.array([1.0, -dtdp/grad_x]))
@@ -3869,3 +3868,5 @@ def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,
         kz[nstr[0]:nstr[1]] = kzrad1#/100
     
     return kz
+
+from .climate import moist_grad, did_grad_cp

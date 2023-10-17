@@ -6,6 +6,8 @@ from .fluxes import get_reflected_1d, get_thermal_1d_gfluxi,get_thermal_1d,get_r
 from .atmsetup import ATMSETUP
 from .optics import compute_opacity
 from .disco import compress_thermal
+import astropy.units as u
+import os
 
 #testing error tracker
 # from loguru import logger 
@@ -91,8 +93,8 @@ def did_grad_cp( t, p, t_table, p_table, grad, cp, calc_type):
     
     return grad_x,cp_x
     
-# @jit(nopython=True, cache=True)
-def convec(temp,pressure, t_table, p_table, grad, cp, opacityclass = None, bundle = None, moist = False, deq = False, on_fly = False, gases_fly = False):
+@jit(nopython=True, cache=True)
+def convec(temp,pressure, t_table, p_table, grad, cp, output_abunds = None, moist = False, deq = False, on_fly = False, gases_fly = False):
     """
     Calculates Grad arrays from profiles
     
@@ -110,8 +112,6 @@ def convec(temp,pressure, t_table, p_table, grad, cp, opacityclass = None, bundl
         array of gradients of dimension 53*26
     cp : array 
         array of cp of dimension 53*26
-    opacityclass : class
-        opacity from jdi.opannection for abundances used in moistgrad
     moist : bool
         if moist adiabat is to be used
     Return
@@ -129,7 +129,7 @@ def convec(temp,pressure, t_table, p_table, grad, cp, opacityclass = None, bundl
             tbar[j] = 0.5*(temp[j]+temp[j+1])
             pbar[j] = sqrt(pressure[j]*pressure[j+1])
             calc_type = 0
-            grad_x[j], cp_x[j] =  moist_grad( tbar[j], pbar[j], t_table, p_table, grad, cp, calc_type, opacityclass, bundle, deq = deq, on_fly = on_fly, gases_fly = gases_fly)
+            grad_x[j], cp_x[j] =  moist_grad( tbar[j], pbar[j], t_table, p_table, temp, pressure, grad, cp, calc_type, output_abunds, deq = deq, on_fly = on_fly, gases_fly = gases_fly)
 
     else:
         for j in range(len(temp)-1):
@@ -334,13 +334,13 @@ def lu_backsubs(a, n, ntot, indx, b):
     return b
 
 # @logger.catch # Add this to track errors
-# @jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def t_start(nofczns,nstr,it_max,conv,x_max_mult, 
             rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
             grad, cp, tidal, tmin,tmax, dwni , bb , y2, tp, DTAU, TAU, W0, COSB, 
             ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,
             cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,
-            constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts, save_profile, all_profiles, opacityclass, bundle,
+            constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts, save_profile, all_profiles, output_abunds,
             fhole = None, DTAU_clear = None, TAU_clear = None, W0_clear = None, COSB_clear = None, 
             DTAU_OG_clear = None, COSB_OG_clear = None, W0_no_raman_clear = None, do_holes=None, moist = False, deq = False, on_fly = False, gases_fly = False):
     """
@@ -626,7 +626,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                         calc_type =  0
 
                         if moist == True:
-                            grad_x, cp_x = moist_grad( beta[j1-1], press, t_table, p_table, grad, cp, calc_type, opacityclass, bundle, deq = deq, on_fly = on_fly, gases_fly = gases_fly)
+                            grad_x, cp_x = moist_grad( beta[j1-1], press, t_table, p_table, temp, pressure, grad, cp, calc_type, output_abunds, deq = deq, on_fly = on_fly, gases_fly = gases_fly)
                         else: 
                             grad_x, cp_x = did_grad_cp( beta[j1-1], press, t_table, p_table, grad, cp, calc_type)
                         
@@ -835,7 +835,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                     press = sqrt(pressure[j1-1]*pressure[j1])
                     calc_type =  0 # only need grad_x in return
                     if moist == True:
-                        grad_x, cp_x = moist_grad( temp[j1-1], press, t_table, p_table, grad, cp, calc_type, opacityclass, bundle, deq = deq, on_fly = on_fly, gases_fly = gases_fly)
+                        grad_x, cp_x = moist_grad( temp[j1-1], press, t_table, p_table, temp, pressure, grad, cp, calc_type, output_abunds, deq = deq, on_fly = on_fly, gases_fly = gases_fly)
                     else:
                         grad_x, cp_x = did_grad_cp( temp[j1-1], press, t_table, p_table, grad, cp, calc_type)
                             
@@ -1558,8 +1558,8 @@ def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None, fthin_cl
     
     return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw
 
-# @jit(nopython=True, cache=True)
-def moist_grad( t, p, t_table, p_table, grad, cp, calc_type, opacityclass, bundle, deq = False, on_fly = False, gases_fly = False):
+@jit(nopython=True, cache=True)
+def moist_grad( t, p, t_table, p_table, temp, pressure, grad, cp, calc_type, output_abunds, deq = False, on_fly = False, gases_fly = False):
     """
     Parameters
     ----------
@@ -1571,16 +1571,18 @@ def moist_grad( t, p, t_table, p_table, grad, cp, calc_type, opacityclass, bundl
         array of Temperature values with 53 entries
     p_table : array 
         array of Pressure value with 26 entries
+    temp: array
+        current PT temperature
+    pressure: array
+        current PT pressure
     grad : array 
         array of gradients of dimension 53*26
     cp : array 
         array of cp of dimension 53*26
     calc_type : int 
         not used to make compatible with nopython.
-    opacityclass : class
-         Opacity class from `justdoit.opannection` for abundances
-    bundle : class
-        Climate inputs to run calculate_atm
+    ck_filename : str
+         Ck_db filename
     deq : bool, optional
         if True, runs calculate_atm_deq. The default is False.
     on_fly : bool, optional
@@ -1594,8 +1596,6 @@ def moist_grad( t, p, t_table, p_table, grad, cp, calc_type, opacityclass, bundl
     
     """
     # Python version of moistgrad function in convec.f in EGP
-
-    #constants
 
     #gas MMW organized into one vector (g/mol)
     mmw = [0.00067, 2.01588, 1.008, 1.008-0.00067, 1.008+0.00067, 2.01588+0.00067, 2.01588-0.00067, 
@@ -1621,25 +1621,35 @@ def moist_grad( t, p, t_table, p_table, grad, cp, calc_type, opacityclass, bundl
             dH[i] = dH[i] + hfus[i]
 
     #set abundances
-    t_fine = t
-    p_fine = 1e3*p
-    # output_abunds = interp(t_fine,p_fine)
+    #get opacities (argument not used to avoid having to turn numba off)
+    # opacityclass = opannection(ck=True, ck_db=ck_filename,deq=False)
+
+    # bundle = inputs(calculation='brown')
+    # bundle.phase_angle(0)
+    # bundle.gravity(gravity=1000 , gravity_unit=u.Unit('m/s**2'))
+    # bundle.add_pt(temp, pressure)
+    # bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+
+    # __refdata__ = os.environ.get('picaso_refdata')
+    # filename_db=os.path.join(__refdata__, 'climate_INPUTS/ck_cx_cont_opacities_661.db')
 
     #not the most efficient way to run this and grab the opacities, would be great to be able to speed this up somehow
-    if deq == False:
-        #call calculate_atm in order to get the atm profiles for the call to get the abundances
-        mol_opa = calculate_atm(bundle, opacityclass, moist_call= True)
+    # if deq == False:
+    #     #call calculate_atm in order to get the atm profiles for the call to get the abundances
+    #     mol_opa = calculate_atm(bundle, opacityclass, moist_call= True)
 
-        output_abunds = np.empty(0)
-        for k in [0,3,4,14]: #these indices are based on the opacityclass.molecules list to get H2O, CH4, NH3, Fe
-            output_abunds = np.append(output_abunds, mol_opa[k]) #need to fix this tp get proper abundances
-    else:
-        #call calculate_atm in order to get the atm profiles for the call to get the abundances
-        mol_opa = calculate_atm_deq(bundle, opacityclass, on_fly = on_fly, gases_fly = gases_fly, moist_call= True)
+    #     output_abunds = np.empty(0)
+    #     for k in [0,3,4,14]: #these indices are based on the opacityclass.molecules list to get H2O, CH4, NH3, Fe
+    #         output_abunds = np.append(output_abunds, mol_opa[k]) #need to fix this to get proper abundances
+    # else:
+    #     opacityclass = opannection(ck=True, ck_db=opacityclass.ck_filename,
+    #                 filename_db=filename_db,deq = True,on_fly=False)
+    #     #call calculate_atm in order to get the atm profiles for the call to get the abundances
+    #     mol_opa = calculate_atm_deq(bundle, opacityclass, on_fly = on_fly, gases_fly = gases_fly, moist_call= True)
 
-        output_abunds = np.empty(0)
-        for k in [0,3,4,14]: #these indices are based on the opacityclass.molecules list to get H2O, CH4, NH3, Fe
-            output_abunds = np.append(output_abunds, mol_opa[k]) #need to fix this tp get proper abundances
+    #     output_abunds = np.empty(0)
+    #     for k in [0,3,4,14]: #these indices are based on the opacityclass.molecules list to get H2O, CH4, NH3, Fe
+    #         output_abunds = np.append(output_abunds, mol_opa[k]) #need to fix this to get proper abundances
 
     # find condensible partial pressures and H/R/T for condensibles.  
     # also find background pressure, which makes up difference between partial pressures and total pressure
