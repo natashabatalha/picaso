@@ -3863,7 +3863,6 @@ class inputs():
         tmin = min_temp*(1-extension)
         # tmax = max_temp*(1+extension)
         tmax = 10000
-        print(tmin,tmax)
         ntmps = int((tmax-tmin)/dt)
         
         bb , y2 , tp = set_bb(wno,delta_wno,nwno,ntmps,dt,tmin,tmax)
@@ -4044,12 +4043,7 @@ class inputs():
                 
                 # use mixing length theory to calculate Kzz profile
                 if self_consistent_kzz: 
-                    #call calculate_atm in order to get the atm profiles for the call to get the abundances
-                    mol_opa = calculate_atm(bundle, opacityclass, moist_call= True)
-                    output_abunds = np.empty(0)
-                    for k in [0,3,4,14]: #these indices are based on the opacityclass.molecules list to get H2O, CH4, NH3, Fe
-                        output_abunds = np.append(output_abunds, [mol_opa[k]]) #need to fix this to get proper abundances
-                        
+                    output_abunds = bundle.inputs['atmosphere']['profile'].T.values
                     kz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
             
             
@@ -4701,12 +4695,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
 
         #grab initial abundances for moist adiabat calculation
-        calculate_atm(bundle, opacityclass, moist_call = True)
-        mol_opa = calculate_atm(bundle, opacityclass, moist_call= True)
-        output_abunds = np.empty(0)
-        for k in [0,3,4,14]: #these indices are based on the opacityclass.molecules list to get H2O, CH4, NH3, Fe
-            output_abunds = np.append(output_abunds, [mol_opa[k]]) #grab the abundances of these molecules
-        print(output_abunds.shape)
+        output_abunds = bundle.inputs['atmosphere']['profile'].T.values
 
         for nb in range(0,3*nofczns,3):
         
@@ -4717,7 +4706,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             for j1 in range(n_ctop_b,n_bot_b+1): 
                 press = sqrt(pressure[j1-1]*pressure[j1])
                 calc_type =  0 # only need grad_x in return
-                grad_x, cp_x = moist_grad( temp[j1-1], press, t_table, p_table, grad, cp, calc_type, output_abunds)
+                grad_x, cp_x = moist_grad( temp[j1-1], press, t_table, p_table, grad, cp, calc_type, output_abunds, j1-1)
                 temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
     
         temp_old= np.copy(temp)
@@ -4746,6 +4735,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         bundle.add_pt( temp, pressure)
         
         bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+        output_abunds = bundle.inputs['atmosphere']['profile'].T.values
 
     if save_profile == 1:
             all_profiles = np.append(all_profiles,temp_old)
@@ -4767,11 +4757,8 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             # directory = '/home/jjm6243/dev_virga/'
             directory = mieff_dir
             
-            #call calculate_atm in order to get the atm profiles for the call to get the abundances
-            mol_opa = calculate_atm(bundle, opacityclass, moist_call= True)
-            output_abunds = np.empty(0)
-            for k in [0,3,4,14]: #these indices are based on the opacityclass.molecules list to get H2O, CH4, NH3, Fe
-                output_abunds = np.append(output_abunds, [mol_opa[k]]) #need to fix this to get proper abundances
+            #get the abundances
+            output_abunds = bundle.inputs['atmosphere']['profile'].T.values
                 
             kzz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
             bundle.inputs['atmosphere']['profile']['kz'] = kzz
@@ -4867,11 +4854,8 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             # directory = '/home/jjm6243/dev_virga/'
             directory = mieff_dir
 
-            #call calculate_atm in order to get the atm profiles for the call to get the abundances
-            mol_opa = calculate_atm(bundle, opacityclass, moist_call= True)
-            output_abunds = np.empty(0)
-            for k in [0,3,4,14]: #these indices are based on the opacityclass.molecules list to get H2O, CH4, NH3, Fe
-                output_abunds = np.append(output_abunds, [mol_opa[k]]) #need to fix this to get proper abundances
+            #get the abundances
+            output_abunds = bundle.inputs['atmosphere']['profile'].T.values
                 
             kzz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
             bundle.inputs['atmosphere']['profile']['kz'] = kzz
@@ -5221,12 +5205,8 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,t
         bundle.add_pt( temp, pressure)
         bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
 
-        #call calculate_atm in order to get the atm profiles for the call to get the abundances
-        mol_opa = calculate_atm(bundle, opacityclass, moist_call= True)
-
-        output_abunds = np.empty(0)
-        for k in [0,3,4,14]: #these indices are based on the opacityclass.molecules list to get H2O, CH4, NH3, Fe
-            output_abunds = np.append(output_abunds, [mol_opa[k]]) #need to fix this to get proper abundances
+        #get the abundances
+        output_abunds = bundle.inputs['atmosphere']['profile'].T.values
 
         grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, output_abunds, moist = True)
     else:
@@ -5389,11 +5369,8 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,t
 
         calc_type =0
 
-        #call calculate_atm in order to get the atm profiles for the call to get the abundances
-        mol_opa = calculate_atm(bundle, opacityclass, moist_call= True)
-        output_abunds = np.empty(0)
-        for k in [0,3,4,14]: #these indices are based on the opacityclass.molecules list to get H2O, CH4, NH3, Fe
-            output_abunds = np.append(output_abunds, [mol_opa[k]]) #need to fix this to get proper abundances
+        #get the abundances
+        output_abunds = bundle.inputs['atmosphere']['profile'].T.values
             
         kzz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
         bundle.inputs['atmosphere']['profile']['kz'] = kzz
@@ -5545,10 +5522,8 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
     bundle.phase_angle(0)
     bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
 
-    mol_opa = calculate_atm_deq(bundle, opacityclass, on_fly = on_fly, gases_fly = gases_fly, moist_call= True)
-    output_abunds = np.empty(0)
-    for k in [0,3,4,14]: #these indices are based on the opacityclass.molecules list to get H2O, CH4, NH3, Fe
-        output_abunds = np.append(output_abunds, [mol_opa[k]]) #need to fix this tp get proper abundances
+    #get the abundances
+    output_abunds = bundle.inputs['atmosphere']['profile'].T.values
 
     # first calculate the convective zones
     for nb in range(0,3*nofczns,3):
@@ -5561,7 +5536,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             press = sqrt(pressure[j1-1]*pressure[j1])
             calc_type =  0 # only need grad_x in return
             if moist == True:
-                grad_x, cp_x = moist_grad( temp[j1-1], press, t_table, p_table, grad, cp, calc_type, output_abunds, deq = True, on_fly = on_fly, gases_fly = gases_fly)
+                grad_x, cp_x = moist_grad( temp[j1-1], press, t_table, p_table, grad, cp, calc_type, output_abunds, j1-1)
             else:
                 grad_x, cp_x = did_grad_cp( temp[j1-1], press, t_table, p_table, grad, cp, calc_type)
             temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
@@ -5630,11 +5605,8 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             # directory = '/home/jjm6243/dev_virga/'
             directory = mieff_dir
             
-            #call calculate_atm in order to get the atm profiles for the call to get the abundances
-            mol_opa = calculate_atm(bundle, opacityclass, moist_call= True)
-            output_abunds = np.empty(0)
-            for k in [0,3,4,14]: #these indices are based on the opacityclass.molecules list to get H2O, CH4, NH3, Fe
-                output_abunds = np.append(output_abunds, [mol_opa[k]]) #need to fix this to get proper abundances
+            #get the abundances
+            output_abunds = bundle.inputs['atmosphere']['profile'].T.values
                 
             kzz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
             bundle.inputs['atmosphere']['profile']['kz'] = kzz
@@ -5703,11 +5675,8 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
         flux_plus_ir_attop = flux_plus_ir_full[0,:] 
         calc_type = 0
     
-        #call calculate_atm in order to get the atm profiles for the call to get the abundances
-        mol_opa = calculate_atm(bundle, opacityclass, moist_call= True)
-        output_abunds = np.empty(0)
-        for k in [0,3,4,14]: #these indices are based on the opacityclass.molecules list to get H2O, CH4, NH3, Fe
-            output_abunds = np.append(output_abunds, [mol_opa[k]]) #need to fix this to get proper abundances
+        #get the abundances
+        output_abunds = bundle.inputs['atmosphere']['profile'].T.values
             
         kz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
     
@@ -5720,7 +5689,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , 
             surf_reflect, ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, 
             ngauss, gauss_wts, save_profile, all_profiles, fhole, DTAU_clear, TAU_clear, W0_clear, COSB_clear, 
-            DTAU_OG_clear, COSB_OG_clear, W0_no_raman_clear, output_abunds, do_holes = True, moist = moist, deq = True, on_fly = on_fly, gases_fly = gases_fly)
+            DTAU_OG_clear, COSB_OG_clear, W0_no_raman_clear, output_abunds, do_holes = True, moist = moist)
         else:
             temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(nofczns,nstr,it_max,conv,x_max_mult, 
                 rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
@@ -5728,7 +5697,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
                 COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
                 W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, FOPI, 
                 single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
-                tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts, save_profile, all_profiles, output_abunds, moist = moist, deq = True, on_fly = on_fly, gases_fly = gases_fly)
+                tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts, save_profile, all_profiles, output_abunds, moist = moist)
         '''
         if (temp <= min(opacityclass.cia_temps)).any():
             wh = np.where(temp <= min(opacityclass.cia_temps))
@@ -5768,12 +5737,8 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             # directory = '/home/jjm6243/dev_virga/'
             directory = mieff_dir
 
-            #call calculate_atm in order to get the atm profiles for the call to get the abundances
-            mol_opa = calculate_atm_deq(bundle, opacityclass, on_fly = on_fly, gases_fly = gases_fly, moist_call= True)
-
-            output_abunds = np.empty(0)
-            for k in [0,3,4,14]: #these indices are based on the opacityclass.molecules list to get H2O, CH4, NH3, Fe
-                output_abunds = np.append(output_abunds, [mol_opa[k]]) #need to fix this to get proper abundances
+            #get the abundances
+            output_abunds = bundle.inputs['atmosphere']['profile'].T.values
                 
             kzz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
             bundle.inputs['atmosphere']['profile']['kz'] = kzz
@@ -5849,12 +5814,8 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             flux_plus_ir_attop = flux_plus_ir_full[0,:] 
             calc_type = 0
         
-            #call calculate_atm in order to get the atm profiles for the call to get the abundances
-            mol_opa = calculate_atm_deq(bundle, opacityclass, on_fly = on_fly, gases_fly = gases_fly, moist_call= True)
-
-            output_abunds = np.empty(0)
-            for k in [0,3,4,14]: #these indices are based on the opacityclass.molecules list to get H2O, CH4, NH3, Fe
-                output_abunds = np.append(output_abunds, [mol_opa[k]]) #need to fix this to get proper abundances
+            #get the abundances
+            output_abunds = bundle.inputs['atmosphere']['profile'].T.values
                 
             kz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
 
@@ -6104,14 +6065,10 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
         bundle.add_pt(temp, pressure)
 
-        #call calculate_atm in order to get the atm profiles for the call to get the abundances
-        mol_opa = calculate_atm_deq(bundle, opacityclass, on_fly = on_fly, gases_fly = gases_fly, moist_call= True)
+        #get the abundances
+        output_abunds = bundle.inputs['atmosphere']['profile'].T.values
 
-        output_abunds = np.empty(0)
-        for k in [0,3,4,14]: #these indices are based on the opacityclass.molecules list to get H2O, CH4, NH3, Fe
-            output_abunds = np.append(output_abunds, [mol_opa[k]]) #need to fix this to get proper abundances
-
-        grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, output_abunds, moist = True, deq = True, on_fly = on_fly, gases_fly = gases_fly)
+        grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, output_abunds, moist = True)
     else:
         grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, moist = False)
     # grad_x = 
@@ -6302,12 +6259,9 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         directory = mieff_dir
 
         calc_type =0
-        #call calculate_atm in order to get the atm profiles for the call to get the abundances
-        mol_opa = calculate_atm_deq(bundle, opacityclass, on_fly = on_fly, gases_fly = gases_fly, moist_call= True)
 
-        output_abunds = np.empty(0)
-        for k in [0,3,4,14]: #these indices are based on the opacityclass.molecules list to get H2O, CH4, NH3, Fe
-            output_abunds = np.append(output_abunds, [mol_opa[k]]) #need to fix this to get proper abundances
+        #get the abundances
+        output_abunds = bundle.inputs['atmosphere']['profile'].T.values
             
         kzz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
         bundle.inputs['atmosphere']['profile']['kz'] = kzz

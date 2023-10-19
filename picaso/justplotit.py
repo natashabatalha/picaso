@@ -1929,7 +1929,7 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
 
         ax['A'].set_xlabel('Temperature [K]',fontsize=30)
         ax['A'].set_ylabel('Pressure [Bars]',fontsize=30)
-        ax['A'].set_xlim(200,2900)
+        ax['A'].set_xlim(0,2900)
         ax['A'].set_ylim(205,1.8e-4)
         ax['B'].set_xlabel('Abundance [V/V]',fontsize=30)
         ax['B'].set_ylabel('Pressure [Bars]',fontsize=30)
