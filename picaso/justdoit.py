@@ -5196,21 +5196,20 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,t
     iend = 0 #?
     final = False
 
+    #call bundle for moist adiabat option (moved out of if statement for numba issue)
+    bundle = inputs(calculation='brown')
+
+    bundle.phase_angle(0)
+    bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
+    bundle.add_pt( temp, pressure)
+    bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+
+    #get the abundances
+    output_abunds = bundle.inputs['atmosphere']['profile'].T.values
     if moist == True:
-        #call bundle for moist adiabat option
-        bundle = inputs(calculation='brown')
-
-        bundle.phase_angle(0)
-        bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
-        bundle.add_pt( temp, pressure)
-        bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
-
-        #get the abundances
-        output_abunds = bundle.inputs['atmosphere']['profile'].T.values
-
         grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, output_abunds, moist = True)
     else:
-        grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, moist = False)
+        grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, output_abunds, moist = False)
     # grad_x = 
     while dtdp[nstr[1]-1] >= subad*grad_x[nstr[1]-1] :
         ratio = dtdp[nstr[1]-1]/grad_x[nstr[1]-1]
@@ -6057,20 +6056,19 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
     iend = 0 #?
     final = False
 
+    #call bundle for moist adiabat option (moved outside of if statement for numba issue with convec)
+    bundle = inputs(calculation='brown')
+
+    bundle.phase_angle(0)
+    bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
+    bundle.add_pt(temp, pressure)
+
+    #get the abundances
+    output_abunds = bundle.inputs['atmosphere']['profile'].T.values
     if moist == True:
-       #call bundle for moist adiabat option
-        bundle = inputs(calculation='brown')
-
-        bundle.phase_angle(0)
-        bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
-        bundle.add_pt(temp, pressure)
-
-        #get the abundances
-        output_abunds = bundle.inputs['atmosphere']['profile'].T.values
-
         grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, output_abunds, moist = True)
     else:
-        grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, moist = False)
+        grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, output_abunds, moist = False)
     # grad_x = 
     while dtdp[nstr[1]-1] >= subad*grad_x[nstr[1]-1] :
         ratio = dtdp[nstr[1]-1]/grad_x[nstr[1]-1]

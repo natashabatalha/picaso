@@ -94,7 +94,7 @@ def did_grad_cp( t, p, t_table, p_table, grad, cp, calc_type):
     return grad_x,cp_x
     
 @jit(nopython=True, cache=True)
-def convec(temp,pressure, t_table, p_table, grad, cp, output_abunds = None, moist = False):
+def convec(temp,pressure, t_table, p_table, grad, cp, output_abunds, moist = False):
     """
     Calculates Grad arrays from profiles
     
