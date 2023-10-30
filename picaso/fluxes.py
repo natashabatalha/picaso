@@ -7,6 +7,7 @@ from scipy.linalg import solve_banded
 #from numpy.linalg import solve
 
 #Stuff needed for 'LAB' scattering approximation
+import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.interpolate import CubicSpline
 
@@ -653,6 +654,8 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             # as opposed to the traditional:
             # p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2-2*cosb_og*cos_theta)**3) (NOTICE NEGATIVE)
 
+            p_single_totals=[]
+            
             if single_phase==0:#'cahoy':
                 #Phase function for single scattering albedo frum Solar beam
                 #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
@@ -665,7 +668,13 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
                                 #rayleigh phase function
                                 (gcos2))
             elif single_phase==1:#'OTHG':
-                p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+                p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3)
+
+                #print("p_single", p_single[1,1])
+                p_single_totals.append(p_single[1,1])
+                p_single_array = np.array(p_single_totals)
+                #print("p_single_array", p_single_array)
+
             elif single_phase==2:#'TTHG':
                 #Phase function for single scattering albedo frum Solar beam
                 #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
@@ -675,6 +684,12 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
                                 #second term of TTHG: backward scattering
                                 +(1-f)*(1-g_back**2)
                                 /sqrt((1+g_back**2+2*g_back*cos_theta)**3))
+                
+                #print("p_single", p_single[1,1])
+                p_single_totals.append(p_single[1,:])
+                p_single_array = np.array(p_single_totals)
+                #print("p_single_array", p_single_array)
+
             elif single_phase==3:#'TTHG_ray':
                 #Phase function for single scattering albedo frum Solar beam
                 #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
@@ -688,15 +703,25 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
                                 ftau_ray*(0.75*(1+cos_theta**2.0)))
             elif single_phase==4:#'LAB':
                 #Phase function as measured by ExCESS, extrapolated to full viewing angles
-                # The user must make sure to use correct lab function by commenting / uncommenting here for 3d phase curves
+                # The user must make sure to use correct lab function and wavelength by commenting / uncommenting here for 3d phase curves
                 
-                p_single = LargeKCl_405nm_Full_Spline(cos_theta)
-                #p_single = MeidumKCl_405nm_Full_Spline(cos_theta)
+                #p_single = LargeKCl_405nm_Full_Spline(cos_theta)
+                #p_single = MediumKCl_405nm_Full_Spline(cos_theta)
                 #p_single = SmallKCl_405nm_Full_Spline(cos_theta)
                 #p_single = LargeKCl_532nm_Full_Spline(cos_theta)
                 #p_single = MediumKCl_532nm_Full_Spline(cos_theta)
-                #p_single = SmallKCl_532nm_Full_Spline(cos_theta)
+                p_single = SmallKCl_532nm_Full_Spline(cos_theta)
                 
+                #print("p_single LAB", p_single)
+                p_single_totals.append(p_single)
+                p_single_array = np.array(p_single_totals)
+                #print("p_single_array", p_single_array)
+                #print(p_single_array.shape)
+
+            print("p_single_array", p_single_array)
+            print(p_single_array.shape)
+           # print("p_single", p_single[1,1])
+            #plt.plot(cos_theta, p_single)
                 
                 #For Loop Method doesn't seem to work, can't have more than one variable in here
                 #for i in range(len(pp.x)-1):
@@ -1035,7 +1060,14 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                                 ftau_ray*(0.75*(1+cos_theta**2.0)))
             elif single_phase==4:#'LAB':
                 #Phase function as measured by ExCESS, extrapolated to full viewing angles
-                p_single=(ftau_cld*cos_theta)
+                #p_single=(ftau_cld*cos_theta)
+
+                p_single = LargeKCl_405nm_Full_Spline(cos_theta)
+                #p_single = MeidumKCl_405nm_Full_Spline(cos_theta)
+                #p_single = SmallKCl_405nm_Full_Spline(cos_theta)
+                #p_single = LargeKCl_532nm_Full_Spline(cos_theta)
+                #p_single = MediumKCl_532nm_Full_Spline(cos_theta)
+                #p_single = SmallKCl_532nm_Full_Spline(cos_theta)
             
             #removing single form option from code 
             #single_form : int 
