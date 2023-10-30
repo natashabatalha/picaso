@@ -1,6 +1,9 @@
 from numba import jit
 from numpy import pi, zeros, cos, arcsin, sin, arccos,outer,array,sum,zeros, linspace
 from numpy import polynomial
+
+import numpy as np
+
 import json 
 import os 
 
@@ -34,7 +37,12 @@ def compute_disco(ng, nt, gangle, tangle, phase_angle):
     """
     #this theta is defined from the frame of the downward propagating beam
     cos_theta = cos(phase_angle)
-    longitude = arcsin((gangle-(cos_theta-1.0)/(cos_theta+1.0))/(2.0/(cos_theta+1)))
+
+    if phase_angle <= np.pi:
+        longitude = arcsin((gangle-(cos_theta-1.0)/(cos_theta+1.0))/(2.0/(cos_theta+1)))
+    else: 
+        longitude = - arcsin((gangle-(cos_theta-1.0)/(cos_theta+1.0))/(2.0/(cos_theta+1)))
+
     colatitude = arccos(tangle)#colatitude = 90-latitude 
     latitude = pi/2-colatitude
     f = sin(colatitude) #define to eliminate repitition
