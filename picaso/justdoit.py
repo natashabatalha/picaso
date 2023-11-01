@@ -1483,7 +1483,7 @@ class inputs():
         extension = 0.8 
         tmin = min_temp*(1-extension)
         # tmax = max_temp*(1+extension)
-        tmax = 10000
+        tmax = 20000
 
         bb , y2 , tp = set_bb(wno,delta_wno,nwno,ntmps,dt,tmin,tmax)
 
@@ -3862,7 +3862,7 @@ class inputs():
         extension = 0.8 
         tmin = min_temp*(1-extension)
         # tmax = max_temp*(1+extension)
-        tmax = 10000
+        tmax = 20000
         ntmps = int((tmax-tmin)/dt)
         
         bb , y2 , tp = set_bb(wno,delta_wno,nwno,ntmps,dt,tmin,tmax)
@@ -4157,7 +4157,7 @@ class inputs():
             extension = 0.8 
             tmin = min_temp*(1-extension)
             # tmax = max_temp*(1+extension)
-            tmax = 10000
+            tmax = 20000
 
             ntmps = int((tmax-tmin)/dt)
             
@@ -5231,7 +5231,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,t
             fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, moist = moist)
 
     if nofczns ==2:
-        # now for the 2nd convection zone
+    # now for the 2nd convection zone
         dt_max = 0.0 #DTMAX
         i_max = 0 #IMAX
         # -1 in ifirst to include ifirst index

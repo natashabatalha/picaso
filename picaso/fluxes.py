@@ -3706,7 +3706,7 @@ def planck_rad(iw, T, dT ,  tmin, tmax, bb , y2, tp):
 
     if T < tmin :
        # itchx = 1
-        T= tmax
+        T= tmin #originally set = tmax JM
     elif T > tmax :
        # itchx = 1
         T=tmax
