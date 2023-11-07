@@ -9,8 +9,9 @@ from .optics import RetrieveOpacities,compute_opacity,RetrieveCKs
 from .disco import get_angles_1d, get_angles_3d, compute_disco, compress_disco, compress_thermal
 from .justplotit import numba_cumsum, find_nearest_2d, mean_regrid
 from .deq_chem import quench_level,initiate_cld_matrices
-#from .vulcan import run_vulcan_chem
 from .build_3d_input import regrid_xarray
+from .photochem import run_photochem
+
 
 from virga import justdoit as vj
 from scipy.interpolate import UnivariateSpline
@@ -58,8 +59,8 @@ if not os.path.exists(os.environ.get('PYSYN_CDBS')):
 
 
 
-def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_output=False, 
-    plot_opacity= False, as_dict=True):
+def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', 
+    full_output=False, plot_opacity= False, as_dict=True):
     """
     Currently top level program to run albedo code 
     Parameters 
@@ -1993,90 +1994,7 @@ class inputs():
         
         return qvmrs, qvmrs2
     
-    def run_vulcan(self,pressure,temp,kz,grav,mmw,T_star=None, logg=None,metal=None,r_star=None,semi_major=None,r_planet=None, first = False,photochem = False):
-        
-        #if T_star == None & photochem == True :
-        #    raise Exception("Cannot do photochem without star Temperature")
-        k_b = 1.38e-23 # boltzmann constant
-        m_p = 1.66e-27 # proton mass
-        
-        if len(mmw) < len(temp):
-            mmw = np.append(mmw,mmw[-1])
-        con  = k_b/(mmw*m_p)
 
-        scale_H = con * temp*1e2/(grav)
-
-        t_mix = scale_H**2/kz ## level mixing timescales
-
-        if photochem == True:
-            #T_star = self.inputs['climate']['T_star']
-            #logg = self.inputs['climate']['logg']
-            #metal = self.inputs['climate']['metal']
-            #r_star = self.inputs['climate']['r_star']
-            #semi_major = self.inputs['climate']['semi_major']
-            #r_planet = self.inputs['climate']['r_planet']
-            path = "/Users/sagnickmukherjee/Documents/GitHub/Disequilibrium-Picaso/picaso/vulcan_whole/atm/stellar_flux/starfile.txt"
-            if os.path.exists(path) == False:
-                raise Exception("Starfile does not exist. Creat a Starfile first for photochem run. Use the script read_muscles_spectra_in_nm.py to produce the right file.") 
-            
-            print("I hope you have updated the starfile with the right UV fluxes for your planet.")
-            
-            '''
-            sp = psyn.Icat("phoenix", T_star, metal,logg )
-            sp.convert("um")
-            sp.convert('flam')  # ergs/s/cm^2/ang
-            wave_nm = sp.wave*1e3
-            wave_escmnm = sp.flux*10 #ergs/s/cm^2/nm
-            header =' WL(nm)     Flux(ergs/cm**2/s/nm)'
-            wh = np.where(wave_nm < 5500)
-            np.savetxt("/Users/sagnickmukherjee/Documents/GitHub/Disequilibrium-Picaso/picaso/vulcan_whole/atm/stellar_flux/starfile.txt",np.transpose([wave_nm[wh] ,wave_escmnm[wh]]),header= header)
-            '''
-            # extending the pressure grid for vulcan to run better
-            
-            nlevel_vulc = 150
-            dummy_pressure_grid = np.logspace(np.log10(np.min(pressure)),np.log10(np.max(pressure)),nlevel_vulc)
-            temp_interp =  np.interp(dummy_pressure_grid,pressure,temp)
-            kz_interp = np.interp(dummy_pressure_grid,pressure,kz)
-            ch4_,co_,co2_,h2o_,hcn_,nh3_,h_ = run_vulcan_chem(dummy_pressure_grid,temp_interp,kz_interp,grav,first = first,photochem=True, r_star=r_star,semi_major=semi_major,r_planet = r_planet)
-            ch4 = np.interp(pressure,dummy_pressure_grid,ch4_)
-            co = np.interp(pressure,dummy_pressure_grid,co_)
-            co2 = np.interp(pressure,dummy_pressure_grid,co2_)
-            h2o = np.interp(pressure,dummy_pressure_grid,h2o_)
-            hcn = np.interp(pressure,dummy_pressure_grid,hcn_)
-            nh3 = np.interp(pressure,dummy_pressure_grid,nh3_)
-            h = np.interp(pressure,dummy_pressure_grid,h_)
-            
-
-            #ch4,co,co2,h2o,hcn,nh3,h = run_vulcan_chem(pressure,temp,kz,grav,first = first,photochem=True, r_star=r_star,semi_major=semi_major,r_planet = r_planet)
-        else :   
-            '''
-            nlevel_vulc = 150
-            dummy_pressure_grid = np.logspace(np.log10(np.min(pressure)),np.log10(np.max(pressure)),nlevel_vulc)
-            temp_interp =  np.interp(dummy_pressure_grid,pressure,temp)
-            kz_interp = np.interp(dummy_pressure_grid,pressure,kz)
-            ch4_,co_,co2_,h2o_,hcn_,nh3_,h_ = run_vulcan_chem(dummy_pressure_grid,temp_interp,kz_interp,grav,first = first)
-            ch4 = np.interp(pressure,dummy_pressure_grid,ch4_)
-            co = np.interp(pressure,dummy_pressure_grid,co_)
-            co2 = np.interp(pressure,dummy_pressure_grid,co2_)
-            h2o = np.interp(pressure,dummy_pressure_grid,h2o_)
-            hcn = np.interp(pressure,dummy_pressure_grid,hcn_)
-            nh3 = np.interp(pressure,dummy_pressure_grid,nh3_)
-            h = np.interp(pressure,dummy_pressure_grid,h_)
-            '''
-            ch4,co,co2,h2o,hcn,nh3,h = run_vulcan_chem(pressure,temp,kz,grav,first = first)
-
-        
-        self.inputs['atmosphere']['profile']['H2O'] = h2o
-        self.inputs['atmosphere']['profile']['CO'] = co
-        self.inputs['atmosphere']['profile']['CH4'] = ch4
-        self.inputs['atmosphere']['profile']['CO2'] = co2
-        self.inputs['atmosphere']['profile']['NH3'] = nh3
-        self.inputs['atmosphere']['profile']['HCN'] = hcn
-        self.inputs['atmosphere']['profile']['H'] = h
-
-
-
-        return t_mix
     
     def sonora(self, sonora_path, teff, chem='low'):
         """
@@ -3683,8 +3601,8 @@ class inputs():
     def inputs_climate(self, temp_guess= None, pressure= None, rfaci = 1,nofczns = 1 ,
         nstr = None,  rfacv = None, cloudy = False,
         mh = None, CtoO = None, species = None, fsed = None, T_star = None, 
-        logg= None, metal=None, r_star= None, semi_major = None,r_planet=None, mieff_dir = None,
-        fhole = None, do_holes = False, fthin_cld = None, moistgrad = False):
+        logg= None, metal=None, r_star= None, semi_major = None,r_planet=None, mieff_dir = None,m_planet=None,photochem=None,photochem_file=None,photochem_stfile = None,photonetwork_file = None,photonetworkct_file=None,tstop=1e7,psurf=10, fhole = None, do_holes = False, fthin_cld = None, moistgrad = False):
+
         """
         Get Inputs for Climate run
 
@@ -3748,13 +3666,18 @@ class inputs():
 
         
         """
+        
         if cloudy: 
             print("Cloudy functionality still in beta form and not ready for public use.")
             # raise Exception('Cloudy functionality still in beta fosrm and not ready for public use.')
-        else: 
+        
+        elif photochem == False: 
             #dummy values only used for cloud model
             mh = 0 
             CtoO = 0 
+        else:
+            mh = 0
+            CtoO = 0
 
         if self.inputs['planet']['T_eff'] == 0.0:
             raise Exception('Need to specify Teff with jdi.input for climate run')
@@ -3809,10 +3732,37 @@ class inputs():
         self.inputs['climate']['semi_major'] = semi_major # au
         self.inputs['climate']['r_planet'] = r_planet # jupiter radii
 
+        if photochem == True :
+            if m_planet is None:
+                raiseExceptions("Supply planet mass if you want to run photochem")
+            else:
+                self.inputs['climate']['m_planet'] = m_planet
+
+            if r_planet is None:
+                raiseExceptions("Supply planet radius if you want to run photochem")
+            if photochem_file is None:
+                raiseExceptions("Supply photochem_filename if you want to run photochem")
+            else:
+                self.inputs['climate']['photochem_file'] =photochem_file
+
+            if photochem_stfile is None:
+                raiseExceptions("Supply photochem star filename if you want to run photochem")
+            else:
+                self.inputs['climate']['photochem_stfile'] =photochem_stfile
+            self.inputs['climate']['tstop'] =tstop
+            self.inputs['climate']['psurf'] =psurf
+            self.inputs['climate']['photochem'] =photochem
+            self.inputs['climate']['photochem_network'] =photonetwork_file
+            self.inputs['climate']['photochem_networkct'] =photonetworkct_file
+            
+
+        else:
+            self.inputs['climate']['photochem'] =False
+
     def climate(self, opacityclass, save_all_profiles = False, as_dict=True,with_spec=False,
         save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False, kz = None, 
         on_fly=False,gases_fly=None, chemeq_first=True):#,
-        #vulcan_run = False, photochem=False,on_fly=False,gases_fly=None,mhdeq=None,CtoOdeq=None ):
+       
         """
         Top Function to run the Climate Model
 
@@ -3832,18 +3782,10 @@ class inputs():
             If you want to run MLT in convective zones and Moses in the radiative zones
         kz : array
             Kzz input array if user wants constant or whatever input profile (cgs)
-        vulcan_run : bool
-            (beta, contact developers)If you want to run vulcan on the fly (takes longer),True/False
-        photochem : bool
-            (beta, contact developers)If you want to run photochemistry in vulcan on the fly (takes much longer),True/False
         
         """
         #save to user 
         all_out = {}
-
-        vulcan_run=False;photochem=False;#on_fly=False;gases_fly=None;mhdeq=None;CtoOdeq=None
-        if (vulcan_run or photochem): 
-            raise Exception("Vulcan and photochemistry is not yet a live feature. If you are interesting in helping the development team, contact us.")
         
         #get necessary parameters from opacity ck-tables 
         wno = opacityclass.wno
@@ -4022,6 +3964,7 @@ class inputs():
             #here begins the self consistent Kzz calculation 
             # MLT plus some prescription in radiative zone
             if self_consistent_kzz or (not chemeq_first): 
+
                 if do_holes == True:
                     flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = climate(pressure, temp, delta_wno, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
                     COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
@@ -4034,8 +3977,6 @@ class inputs():
                     COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
                     ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
                     wno,nwno,ng,nt, nlevel, ngauss, gauss_wts,True, True)#True for reflected, True for thermal
-
-
 
                 flux_net_ir_layer = flux_net_ir_layer_full[:]
                 flux_plus_ir_attop = flux_plus_ir_full[0,:] 
@@ -4102,7 +4043,7 @@ class inputs():
                 fine_flux_star  = self.inputs['star']['flux']  # erg/s/cm^2
                 FOPI = fine_flux_star * ((r_star/semi_major)**2)
             
-            if not vulcan_run:
+            if self.inputs['climate']['photochem']==False:
                 quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale= True) # determine quench levels
 
                 all_kzz = np.append(all_kzz, t_mix) # save kzz
@@ -4136,10 +4077,32 @@ class inputs():
                 #was for check SM
                 #bundle.inputs['atmosphere']['profile'].to_csv('/data/users/samukher/Disequilibrium-picaso/first_iteration_testpls300min500',sep='\t')
                 #raise SystemExit(0) 
+                photo_inputs_dict = {}
+                photo_inputs_dict['yesorno'] = False
             else :
-                t_mix = bundle.run_vulcan(pressure,temp,kz,grav,mmw,T_star=T_star, logg=logg,metal=metal,r_star=metal,semi_major=semi_major,r_planet=r_planet, first = True, photochem=photochem)    
-                all_kzz = np.append(all_kzz, t_mix)
+                bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+
+                pc= bundle.call_photochem(temp,pressure,float(self.inputs['climate']['mh']),float(self.inputs['climate']['CtoO']),self.inputs['climate']['psurf'],self.inputs['climate']['m_planet'],self.inputs['climate']['r_planet'],kz,tstop=self.inputs['climate']['tstop'],filename = self.inputs['climate']['photochem_file'],stfilename = self.inputs['climate']['photochem_stfile'],network = self.inputs['climate']['photochem_network'],network_ct = self.inputs['climate']['photochem_networkct'],first=True,pc=None)
+                all_kzz = np.append(all_kzz, kz)
                 quench_levels = np.array([0,0,0,0])
+                photo_inputs_dict = {}
+                photo_inputs_dict['yesorno'] = True
+                photo_inputs_dict['mh'] = float(self.inputs['climate']['mh'])
+                photo_inputs_dict['CtoO'] = float(self.inputs['climate']['CtoO'])
+                photo_inputs_dict['psurf'] = self.inputs['climate']['psurf']
+                photo_inputs_dict['m_planet'] = self.inputs['climate']['m_planet']
+                photo_inputs_dict['r_planet'] = self.inputs['climate']['r_planet']
+                photo_inputs_dict['tstop']=self.inputs['climate']['tstop']
+                photo_inputs_dict['photochem_file']=self.inputs['climate']['photochem_file']
+                photo_inputs_dict['photochem_stfile']=self.inputs['climate']['photochem_stfile']
+                photo_inputs_dict['photochem_network']=self.inputs['climate']['photochem_network']
+                photo_inputs_dict['photochem_networkct']=self.inputs['climate']['photochem_networkct']
+                photo_inputs_dict['pc'] = pc
+                photo_inputs_dict['kz'] = kz
+                
+
+
+
 
 
             wno = opacityclass.wno
@@ -4183,16 +4146,19 @@ class inputs():
             #    nofczns = 2
             #    print("nofczns corrected") 
 
+
             pressure, temperature, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop  = profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
             rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , cloudy, cld_species,mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile,all_profiles, self_consistent_kzz,save_kzz,all_kzz, vulcan_run,opd_cld_climate,g0_cld_climate,
             w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist=moist)
-        
+            
+            print(photo_inputs_dict)
+      
             pressure, temp, dtdp, nstr_new, flux_plus_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,opd_now,g0_now,w0_now =find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
             t_table, p_table, grad, cp, opacityclass, grav, rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, 
             mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, self_consistent_kzz,save_kzz,all_kzz, vulcan_run,opd_cld_climate,
             g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist = moist)
-             
+            
 
             #diseq stuff
             all_out['diseq_out'] = {}
@@ -4228,6 +4194,19 @@ class inputs():
             return all_out
         else: 
             return pressure , temp, dtdp, nstr_new, flux_plus_final, df, all_profiles , opd_now,w0_now,g0_now
+    
+    def call_photochem(self,temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=1e7,filename = None,stfilename=None,network=None,network_ct=None,first=True,pc=None):
+    
+        pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=first,pc=pc)
+        #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
+        #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
+        #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
+        #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
+        #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
+
+        for i in range(len(species)):
+            self.inputs['atmosphere']['profile'][species[i]] = output_array[i,:]
+        return pc
 
 def get_targets():
     """Function to grab available targets using exoplanet archive data. 
@@ -5427,11 +5406,13 @@ def correct_profile(temp,pressure,wh,min_temp):
 
     return temp
 
+
 def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, temp,pressure,FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
                 rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
                 cloudy, cld_species,mh,fsed,flag_hack,quench_levels,kz,mmw, save_profile, all_profiles,
                 self_consistent_kzz,save_kzz,all_kzz, vulcan_run,opd_cld_climate,g0_cld_climate,w0_cld_climate,
                 flux_net_ir_layer, flux_plus_ir_attop,on_fly=False,gases_fly=False, do_holes = False, fhole = None, fthin_cld = None, moist = None):
+
     """
     Function iterating on the TP profile by calling tstart and changing opacities as well
     Parameters
@@ -5560,24 +5541,31 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
     bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
     bundle.add_pt( temp, pressure)
     #### to get the last Kzz in the calculation
-    k_b = 1.38e-23 # boltzmann constant
-    m_p = 1.66e-27 # proton mass
     
-    if len(mmw) < len(temp):
-        mmw = np.append(mmw,mmw[-1])
-    con  = k_b/(mmw*m_p)
 
-    scale_H = con * temp*1e2/(grav)
-
-    kz = scale_H**2/all_kzz[-len(temp):] ## level mixing timescales
-
-    if vulcan_run == False:
-        quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale=True)
+    if photo_inputs_dict['yesorno'] == False:
+        k_b = 1.38e-23 # boltzmann constant
+        m_p = 1.66e-27 # proton mass
         
+        if len(mmw) < len(temp):
+            mmw = np.append(mmw,mmw[-1])
+        con  = k_b/(mmw*m_p)
+
+        scale_H = con * temp*1e2/(grav)
+
+        kz = scale_H**2/all_kzz[-len(temp):] ## level mixing timescales
+        quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale=True)
+        if save_kzz == 1:
+            all_kzz = np.append(all_kzz,t_mix)
         qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix)
     else :
         bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
-        t_mix = bundle.run_vulcan(pressure,temp,kz,grav,mmw, first = False)
+        pc= bundle.call_photochem(temp,pressure,photo_inputs_dict['mh'],photo_inputs_dict['CtoO'],photo_inputs_dict['psurf'],photo_inputs_dict['m_planet'],photo_inputs_dict['r_planet'],photo_inputs_dict['kz'],tstop=photo_inputs_dict['tstop'],filename = photo_inputs_dict['photochem_file'],stfilename =photo_inputs_dict['photochem_stfile'],network = photo_inputs_dict['photochem_network'],network_ct=photo_inputs_dict['photochem_networkct'],first=False,pc=photo_inputs_dict['pc'])
+        photo_inputs_dict['pc'] = pc
+        all_kzz = np.append(all_kzz, kz)
+        quench_levels = np.array([0,0,0,0])
+        photo_inputs_dict['pc'] = pc
+        qvmrs, qvmrs2=0,0
     
     #if save_profile == 1:
     #        all_profiles = np.append(all_profiles,bundle.inputs['atmosphere']['profile']['NH3'].values)
@@ -5591,8 +5579,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
     
     #    bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
     #    mmw = mean_molecular_weight,full_output=False)
-    if save_kzz == 1:
-        all_kzz = np.append(all_kzz,t_mix)
+    
 
     if cloudy == 1 :
             
@@ -5611,7 +5598,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
                 
             kzz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
             bundle.inputs['atmosphere']['profile']['kz'] = kzz
-        
+            photo_inputs_dict['kz'] = kzz
 
             cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
                         mmw = mean_molecular_weight,full_output=False)#,climate=True)
@@ -5680,7 +5667,8 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
         output_abunds = bundle.inputs['atmosphere']['profile'].T.values
             
         kz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
-    
+        photo_inputs_dict['kz'] = kz
+
     ## begin bigger loop which gets opacities
     for iii in range(itmx):
         
@@ -5714,15 +5702,20 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
         bundle.phase_angle(0)
         bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
         bundle.add_pt( temp, pressure)
-        if vulcan_run == False:
+        if photo_inputs_dict['yesorno'] == False:
             quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale=True)
             
             qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix)
             print("Quench Levels are CO, CO2, NH3, HCN ", quench_levels)
         else :
             bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
-            t_mix = bundle.run_vulcan(pressure,temp,kz,grav,mmw, first = False)
-            qvmrs, qvmrs2 = 0,0
+            pc= bundle.call_photochem(temp,pressure,photo_inputs_dict['mh'],photo_inputs_dict['CtoO'],photo_inputs_dict['psurf'],photo_inputs_dict['m_planet'],photo_inputs_dict['r_planet'],photo_inputs_dict['kz'],tstop=photo_inputs_dict['tstop'],filename = photo_inputs_dict['photochem_file'],stfilename =photo_inputs_dict['photochem_stfile'],network = photo_inputs_dict['photochem_network'],network_ct=photo_inputs_dict['photochem_networkct'],first=False,pc=photo_inputs_dict['pc'])
+            photo_inputs_dict['pc'] = pc
+            all_kzz = np.append(all_kzz, kz)
+            quench_levels = np.array([0,0,0,0])
+            photo_inputs_dict['pc'] = pc
+            qvmrs, qvmrs2=0,0
+            photo_inputs_dict['kz'] = kz
         
     
         #if save_profile == 1:
@@ -5743,6 +5736,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
                 
             kzz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
             bundle.inputs['atmosphere']['profile']['kz'] = kzz
+            photo_inputs_dict['kz'] =kzz
         
     
             cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
@@ -5819,9 +5813,13 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             output_abunds = bundle.inputs['atmosphere']['profile'].T.values
                 
             kz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
+            photo_inputs_dict['kz'] = kz
+        if save_kzz == 1: 
+            if photo_inputs_dict['yesorno'] == False:
+                all_kzz = np.append(all_kzz,t_mix)
+            else:
+                all_kzz = np.append(all_kzz,kz)
 
-        if save_kzz == 1:
-            all_kzz = np.append(all_kzz,t_mix)
 
         ert = 0.0 # avg temp change
         scalt= 1.5
@@ -5894,7 +5892,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
                 temp_old= np.copy(temp)
                 '''
             
-            return pressure, temp , dtdp, conv_flag, qvmrs, qvmrs2, all_profiles, all_kzz, opd_cld_climate, g0_cld_climate, w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop
+            return pressure, temp , dtdp, conv_flag, qvmrs, qvmrs2, all_profiles, all_kzz, opd_cld_climate, g0_cld_climate, w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict
             
         
         print("Big iteration is ",min(temp), iii)
@@ -5955,14 +5953,15 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
     else :
         print("Profile converged")
     
-    return pressure, temp , dtdp, conv_flag, qvmrs, qvmrs2, all_profiles, all_kzz, opd_cld_climate, g0_cld_climate, w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop
+    return pressure, temp , dtdp, conv_flag, qvmrs, qvmrs2, all_profiles, all_kzz, opd_cld_climate, g0_cld_climate, w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict
     
 def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
              t_table, p_table, grad, cp, opacityclass, grav, 
              rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, cloudy, cld_species,mh,fsed,
              flag_hack, quench_levels, kz,mmw, save_profile, all_profiles,self_consistent_kzz ,save_kzz,all_kzz, 
              vulcan_run,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,
-             on_fly=False, gases_fly=None, do_holes=None, fhole = None, fthin_cld = None, moist = None):
+             photo_inputs_dict=None, on_fly=False, gases_fly=None, do_holes=None, fhole = None, fthin_cld = None, moist = None):
+
     """
     Function iterating on the TP profile by calling tstart and changing opacities as well
     Parameters
@@ -6090,7 +6089,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         flux_net_ir_layer, flux_plus_ir_attop = profile_deq(it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, 
             final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw, save_profile, all_profiles, self_consistent_kzz,save_kzz,all_kzz,
-            vulcan_run,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes,
+            vulcan_run,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes,
             fhole = fhole, fthin_cld=fthin_cld, moist = moist)
 
     if nofczns == 2:
@@ -6130,7 +6129,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
             pressure, temp, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile_deq(it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult, temp,pressure, FOPI, t_table, 
                 p_table, grad, cp, opacityclass, grav, rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species,mh, fsed,flag_hack, 
                 quench_levels, kz , mmw,save_profile, all_profiles, self_consistent_kzz, save_kzz,all_kzz,vulcan_run,
-                opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist=moist)
+                opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist=moist)
 
             i_change = 1
             while i_change == 1 :
@@ -6165,7 +6164,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
                     flux_plus_ir_attop = profile_deq(it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,temp,pressure, FOPI, t_table, 
                     p_table, grad, cp, opacityclass, grav, rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,
                     flag_hack, quench_levels, kz, mmw, save_profile, all_profiles,self_consistent_kzz,save_kzz,all_kzz, vulcan_run,
-                    opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist=moist)
+                    opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist=moist)
     
                     d1 = dtdp[nstr[1]-1]
                     d2 = dtdp[nstr[3]]
@@ -6188,7 +6187,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
                     flux_plus_ir_attop = profile_deq(it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
                         temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
                         cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile, all_profiles, self_consistent_kzz, save_kzz,all_kzz,vulcan_run,
-                        opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist=moist)               
+                        opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist=moist)               
 
                 flag_final_convergence = 1
         
@@ -6206,7 +6205,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
     flux_plus_ir_attop = profile_deq(it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
         temp,pressure, FOPI, t_table, p_table, grad, cp,opacityclass, grav, rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
         cloudy, cld_species,mh,fsed,flag_hack,quench_levels,kz, mmw,save_profile, all_profiles, self_consistent_kzz,save_kzz,all_kzz,vulcan_run,
-        opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist=moist)
+        opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist=moist)
 
     #    else :
     #        raise ValueError("Some problem here with goto 125")
@@ -6221,7 +6220,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
     bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
     bundle.add_pt( temp, pressure)
 
-    if vulcan_run == False:
+    if photo_inputs_dict['yesorno'] == False:
         k_b = 1.38e-23 # boltzmann constant
         m_p = 1.66e-27 # proton mass
 
@@ -6238,17 +6237,15 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix)
     else :
         bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
-        k_b = 1.38e-23 # boltzmann constant
-        m_p = 1.66e-27 # proton mass
         
-        if len(mmw) < len(temp):
-            mmw = np.append(mmw,mmw[-1])
-        con  = k_b/(mmw*m_p)
 
-        scale_H = con * temp*1e2/(grav)
-
-        kz = scale_H**2/all_kzz[-len(temp):] ## level mixing timescales
-        t_mix = bundle.run_vulcan(pressure,temp,kz,grav,mmw, first = False)    
+        kz = all_kzz[-len(temp):] ## level mixing timescales
+        pc= bundle.call_photochem(temp,pressure,photo_inputs_dict['mh'],photo_inputs_dict['CtoO'],photo_inputs_dict['psurf'],photo_inputs_dict['m_planet'],photo_inputs_dict['r_planet'],photo_inputs_dict['kz'],tstop=photo_inputs_dict['tstop'],filename = photo_inputs_dict['photochem_file'],stfilename =photo_inputs_dict['photochem_stfile'],network = photo_inputs_dict['photochem_network'],network_ct=photo_inputs_dict['photochem_networkct'],first=False,pc=photo_inputs_dict['pc'])
+        photo_inputs_dict['pc'] = pc
+        all_kzz = np.append(all_kzz, kz)
+        quench_levels = np.array([0,0,0,0])
+        photo_inputs_dict['pc'] = pc
+        
         qvmrs,qvmrs2 = 0,0
     
     if cloudy == 1:
@@ -6296,7 +6293,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
 
 
     
-    return pressure, temp, dtdp, nstr , flux_plus_ir_full, qvmrs, qvmrs2, bundle.inputs['atmosphere']['profile'], all_profiles, all_kzz,opd_now,w0_now,g0_now
+    return pressure, temp, dtdp, nstr , flux_plus_ir_full, qvmrs, qvmrs2, bundle.inputs['atmosphere']['profile'], all_profiles, all_kzz,opd_now,w0_now,g0_now,photo_inputs_dict
 
 #@jit(nopython=True, cache=True)
 def OH_conc(temp,press,x_h2o,x_h2):
