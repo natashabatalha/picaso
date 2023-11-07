@@ -3972,7 +3972,7 @@ class inputs():
             # first change the nstr vector because need to check if they grow or not
             # delete upper convective zone if one develops
             
-            del_zone =4 # move 4 levels deeper
+            del_zone =0 # move 4 levels deeper
             if (nstr[1] > 0) & (nstr[4] > 0) & (nstr[3] > 0) :
                 nstr[1] = nstr[4]+del_zone
                 nstr[2] = 89
@@ -4186,7 +4186,7 @@ class inputs():
             pressure, temperature, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop  = profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
             rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , cloudy, cld_species,mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile,all_profiles, self_consistent_kzz,save_kzz,all_kzz, vulcan_run,opd_cld_climate,g0_cld_climate,
-            w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld)
+            w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist=moist)
         
             pressure, temp, dtdp, nstr_new, flux_plus_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,opd_now,g0_now,w0_now =find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
             t_table, p_table, grad, cp, opacityclass, grav, rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, 
@@ -5257,7 +5257,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,t
             nstr[5]= nstr[2]
             nstr[1]= i_max
             nstr[2] = i_max
-            nstr[3] = i_max + 1
+            nstr[3] = i_max
             print(nstr)
             if nstr[3] >= nstr[4] :
                 #print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
@@ -6090,7 +6090,8 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         flux_net_ir_layer, flux_plus_ir_attop = profile_deq(it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, 
             final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw, save_profile, all_profiles, self_consistent_kzz,save_kzz,all_kzz,
-            vulcan_run,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist = moist)
+            vulcan_run,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes,
+            fhole = fhole, fthin_cld=fthin_cld, moist = moist)
 
     if nofczns == 2:
         # now for the 2nd convection zone
@@ -6119,7 +6120,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
             nstr[5]= nstr[2]
             nstr[1]= i_max
             nstr[2] = i_max
-            nstr[3] = i_max + 1
+            nstr[3] = i_max
             print(nstr)
             if nstr[3] >= nstr[4] :
                 #print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
