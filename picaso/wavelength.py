@@ -65,7 +65,7 @@ def regrid(matrix, old_wno, new_wno):
 	"""
 	new = np.zeros((matrix.shape[0],len(new_wno)))
 	for i in range(matrix.shape[0]): 
-		new[i, :] = np.interp(new_wno, old_wno, matrix[i,:])
+		new[i, :] = np.interp(new_wno.astype('float64'), old_wno.astype('float64'), matrix[i,:].astype('float64'))
 		#f = sci.interp1d(old_wno, matrix[i,:],kind='cubic')
 		#new[i, :] = f(new_wno)
 	return new
