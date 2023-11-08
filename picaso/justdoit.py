@@ -3804,7 +3804,7 @@ class inputs():
         extension = 0.8 
         tmin = min_temp*(1-extension)
         # tmax = max_temp*(1+extension)
-        tmax = 20000
+        tmax = 10000
         ntmps = int((tmax-tmin)/dt)
         
         bb , y2 , tp = set_bb(wno,delta_wno,nwno,ntmps,dt,tmin,tmax)
@@ -4120,7 +4120,7 @@ class inputs():
             extension = 0.8 
             tmin = min_temp*(1-extension)
             # tmax = max_temp*(1+extension)
-            tmax = 20000
+            tmax = 10000
 
             ntmps = int((tmax-tmin)/dt)
             
@@ -5209,102 +5209,102 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,t
             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, save_profile, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,
             fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, moist = moist)
 
-    if nofczns ==2:
+    # if nofczns == 2: JM* #should be a flag here since this block in EGP is skipped if only 1 convective zone but convergence is better when enabled
     # now for the 2nd convection zone
-        dt_max = 0.0 #DTMAX
-        i_max = 0 #IMAX
-        # -1 in ifirst to include ifirst index
-        flag_super = 0
-        for i in range(nstr[1]-1, ifirst-1, -1):
-            add = dtdp[i] - grad_x[i]
-            if add > dt_max and add/grad_x[i] >= 0.02 : # non-neglegible super-adiabaticity
-                dt_max = add
-                i_max =i
-                break
-        
-        flag_final_convergence =0
-        if i_max == 0 or dt_max/grad_x[i_max] < 0.02: # no superadiabaticity, we are done
-            flag_final_convergence = 1
+    dt_max = 0.0 #DTMAX
+    i_max = 0 #IMAX
+    # -1 in ifirst to include ifirst index
+    flag_super = 0
+    for i in range(nstr[1]-1, ifirst-1, -1):
+        add = dtdp[i] - grad_x[i]
+        if add > dt_max and add/grad_x[i] >= 0.02 : # non-neglegible super-adiabaticity
+            dt_max = add
+            i_max =i
+            break
+    
+    flag_final_convergence =0
+    if i_max == 0 or dt_max/grad_x[i_max] < 0.02: # no superadiabaticity, we are done
+        flag_final_convergence = 1
 
-        if flag_final_convergence  == 0:
-            print(" convection zone status")
-            print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
-            print(nofczns)
+    if flag_final_convergence  == 0:
+        print(" convection zone status")
+        print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
+        print(nofczns)
 
-            nofczns = 2
-            nstr[4]= nstr[1]
-            nstr[5]= nstr[2]
-            nstr[1]= i_max
-            nstr[2] = i_max
-            nstr[3] = i_max
-            print(nstr)
-            if nstr[3] >= nstr[4] :
-                #print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
-                #print(nofczns)
-                raise ValueError("Overlap happened !")
+        nofczns = 2
+        nstr[4]= nstr[1]
+        nstr[5]= nstr[2]
+        nstr[1]= i_max
+        nstr[2] = i_max
+        nstr[3] = i_max #JM: Should be i_max + 1 according to EGP, but runs into ValueError when used
+        print(nstr)
+        if nstr[3] >= nstr[4] :
+            #print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
+            #print(nofczns)
+            raise ValueError("Overlap happened !")
 
-            pressure, temp, dtdp, profile_flag, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir, it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
-            temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
-                rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species,mh, fsed,flag_hack,save_profile, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,
+        pressure, temp, dtdp, profile_flag, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir, it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
+        temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
+            rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species,mh, fsed,flag_hack,save_profile, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,
+            fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, moist = moist)
+
+        i_change = 1
+        while i_change == 1 :
+            print("Grow Phase : Upper Zone")
+            i_change = 0
+
+            d1 = dtdp[nstr[1]-1]
+            d2 = dtdp[nstr[3]]
+            c1 = grad_x[nstr[1]-1]
+            c2 = grad_x[nstr[3]]
+
+            while ((d1 > subad*c1) or (d2 > subad*c2)):
+
+                if (((d1-c1)>= (d2-c2)) or (nofczns == 1)) :
+                    ngrow = 1
+                    nstr = growup( 1, nstr , ngrow)
+
+                    if nstr[1] < 3 :
+                        raise ValueError( "Convection zone grew to Top of atmosphere, Need to Stop")
+                else :
+                    ngrow = 1
+                    nstr = growdown( 1, nstr , ngrow)
+
+                    if nstr[2] == nstr[4]: # one conv zone
+                        nofczns =1
+                        nstr[2] = nstr[5]
+                        nstr[3] = 0
+                        i_change = 1
+                print(nstr)
+                
+                pressure, temp, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir, it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
+                temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
+                rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack,save_profile, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,
                 fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, moist = moist)
-
-            i_change = 1
-            while i_change == 1 :
-                print("Grow Phase : Upper Zone")
-                i_change = 0
 
                 d1 = dtdp[nstr[1]-1]
                 d2 = dtdp[nstr[3]]
                 c1 = grad_x[nstr[1]-1]
                 c2 = grad_x[nstr[3]]
+            #Now grow the lower zone.
+            while ((dtdp[nstr[4]-1] >= subad*grad_x[nstr[4]-1]) and nofczns > 1):
+                
+                ngrow = 1
+                nstr = growup( 2, nstr , ngrow)
+                #Now check to see if two zones have merged and stop further searching if so.
+                if nstr[2] == nstr[4] :
+                    nofczns = 1
+                    nstr[2] = nstr[5]
+                    nstr[3] = 0
+                    i_change =1
+                print(nstr)
 
-                while ((d1 > subad*c1) or (d2 > subad*c2)):
+                pressure, temp, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir, it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
+                temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
+                rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack,save_profile, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,
+                fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, moist = moist)         
 
-                    if (((d1-c1)>= (d2-c2)) or (nofczns == 1)) :
-                        ngrow = 1
-                        nstr = growup( 1, nstr , ngrow)
-
-                        if nstr[1] < 3 :
-                            raise ValueError( "Convection zone grew to Top of atmosphere, Need to Stop")
-                    else :
-                        ngrow = 1
-                        nstr = growdown( 1, nstr , ngrow)
-
-                        if nstr[2] == nstr[4]: # one conv zone
-                            nofczns =1
-                            nstr[2] = nstr[5]
-                            nstr[3] = 0
-                            i_change = 1
-                    print(nstr)
-                    
-                    pressure, temp, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir, it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
-                    temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
-                    rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack,save_profile, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,
-                    fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, moist = moist)
-
-                    d1 = dtdp[nstr[1]-1]
-                    d2 = dtdp[nstr[3]]
-                    c1 = grad_x[nstr[1]-1]
-                    c2 = grad_x[nstr[3]]
-                #Now grow the lower zone.
-                while ((dtdp[nstr[4]-1] >= subad*grad_x[nstr[4]-1]) and nofczns > 1):
-                    
-                    ngrow = 1
-                    nstr = growup( 2, nstr , ngrow)
-                    #Now check to see if two zones have merged and stop further searching if so.
-                    if nstr[2] == nstr[4] :
-                        nofczns = 1
-                        nstr[2] = nstr[5]
-                        nstr[3] = 0
-                        i_change =1
-                    print(nstr)
-
-                    pressure, temp, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir, it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
-                    temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
-                    rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack,save_profile, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,
-                    fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, moist = moist)         
-
-                flag_final_convergence = 1
+            flag_final_convergence = 1
         
     itmx_strat =6
     it_max_strat = 10
@@ -6102,104 +6102,105 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
             opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes,
             fhole = fhole, fthin_cld=fthin_cld, moist = moist)
 
-    if nofczns == 2:
-        # now for the 2nd convection zone
-        dt_max = 0.0 #DTMAX
-        i_max = 0 #IMAX
-        # -1 in ifirst to include ifirst index
-        flag_super = 0
-        for i in range(nstr[1]-1, ifirst-1, -1):
-            add = dtdp[i] - grad_x[i]
-            if add > dt_max and add/grad_x[i] >= 0.02 : # non-neglegible super-adiabaticity
-                dt_max = add
-                i_max =i
-                break
-        
-        flag_final_convergence =0
-        if i_max == 0 or dt_max/grad_x[i_max] < 0.02: # no superadiabaticity, we are done
-            flag_final_convergence = 1
+    # if nofczns == 2: JM* #should be a flag here since this block in EGP is skipped if only 1 convective zone but convergence is better when enabled
+    
+    # now for the 2nd convection zone
+    dt_max = 0.0 #DTMAX
+    i_max = 0 #IMAX
+    # -1 in ifirst to include ifirst index
+    flag_super = 0
+    for i in range(nstr[1]-1, ifirst-1, -1):
+        add = dtdp[i] - grad_x[i]
+        if add > dt_max and add/grad_x[i] >= 0.02 : # non-neglegible super-adiabaticity
+            dt_max = add
+            i_max =i
+            break
+    
+    flag_final_convergence =0
+    if i_max == 0 or dt_max/grad_x[i_max] < 0.02: # no superadiabaticity, we are done
+        flag_final_convergence = 1
 
-        if flag_final_convergence  == 0:
-            print(" convection zone status")
-            print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
-            print(nofczns)
+    if flag_final_convergence  == 0:
+        print(" convection zone status")
+        print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
+        print(nofczns)
 
-            nofczns = 2
-            nstr[4]= nstr[1]
-            nstr[5]= nstr[2]
-            nstr[1]= i_max
-            nstr[2] = i_max
-            nstr[3] = i_max
-            print(nstr)
-            if nstr[3] >= nstr[4] :
-                #print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
-                #print(nofczns)
-                raise ValueError("Overlap happened !")
+        nofczns = 2
+        nstr[4]= nstr[1]
+        nstr[5]= nstr[2]
+        nstr[1]= i_max
+        nstr[2] = i_max
+        nstr[3] = i_max #JM: Should be i_max + 1 according to EGP, but runs into ValueError when used
+        print(nstr)
+        if nstr[3] >= nstr[4] :
+            #print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
+            #print(nofczns)
+            raise ValueError("Overlap happened !")
 
-            pressure, temp, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop, photo_inputs_dict = profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult, temp,pressure, FOPI, t_table, 
-                p_table, grad, cp, opacityclass, grav, rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species,mh, fsed,flag_hack, 
-                quench_levels, kz , mmw,save_profile, all_profiles, self_consistent_kzz, save_kzz,all_kzz,
+        pressure, temp, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop, photo_inputs_dict = profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult, temp,pressure, FOPI, t_table, 
+            p_table, grad, cp, opacityclass, grav, rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species,mh, fsed,flag_hack, 
+            quench_levels, kz , mmw,save_profile, all_profiles, self_consistent_kzz, save_kzz,all_kzz,
+            opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist=moist)
+
+        i_change = 1
+        while i_change == 1 :
+            print("Grow Phase : Upper Zone")
+            i_change = 0
+
+            d1 = dtdp[nstr[1]-1]
+            d2 = dtdp[nstr[3]]
+            c1 = grad_x[nstr[1]-1]
+            c2 = grad_x[nstr[3]]
+
+            while ((d1 > subad*c1) or (d2 > subad*c2)):
+
+                if (((d1-c1)>= (d2-c2)) or (nofczns == 1)) :
+                    ngrow = 1
+                    nstr = growup( 1, nstr , ngrow)
+
+                    if nstr[1] < 3 :
+                        raise ValueError( "Convection zone grew to Top of atmosphere, Need to Stop")
+                else :
+                    ngrow = 1
+                    nstr = growdown( 1, nstr , ngrow)
+
+                    if nstr[2] == nstr[4]: # one conv zone
+                        nofczns =1
+                        nstr[2] = nstr[5]
+                        nstr[3] = 0
+                        i_change = 1
+                print(nstr)
+
+                pressure, temp, dtdp, profile_flag,qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
+                flux_plus_ir_attop,photo_inputs_dict = profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,temp,pressure, FOPI, t_table, 
+                p_table, grad, cp, opacityclass, grav, rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,
+                flag_hack, quench_levels, kz, mmw, save_profile, all_profiles,self_consistent_kzz,save_kzz,all_kzz, 
                 opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist=moist)
-
-            i_change = 1
-            while i_change == 1 :
-                print("Grow Phase : Upper Zone")
-                i_change = 0
 
                 d1 = dtdp[nstr[1]-1]
                 d2 = dtdp[nstr[3]]
                 c1 = grad_x[nstr[1]-1]
                 c2 = grad_x[nstr[3]]
+            #Now grow the lower zone.
+            while ((dtdp[nstr[4]-1] >= subad*grad_x[nstr[4]-1]) and nofczns > 1):
+                
+                ngrow = 1
+                nstr = growup( 2, nstr , ngrow)
+                #Now check to see if two zones have merged and stop further searching if so.
+                if nstr[2] == nstr[4] :
+                    nofczns = 1
+                    nstr[2] = nstr[5]
+                    nstr[3] = 0
+                    i_change =1
+                print(nstr)
 
-                while ((d1 > subad*c1) or (d2 > subad*c2)):
+                pressure, temp, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
+                flux_plus_ir_attop,photo_inputs_dict = profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
+                    temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
+                    cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile, all_profiles, self_consistent_kzz, save_kzz,all_kzz,
+                    opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist=moist)               
 
-                    if (((d1-c1)>= (d2-c2)) or (nofczns == 1)) :
-                        ngrow = 1
-                        nstr = growup( 1, nstr , ngrow)
-
-                        if nstr[1] < 3 :
-                            raise ValueError( "Convection zone grew to Top of atmosphere, Need to Stop")
-                    else :
-                        ngrow = 1
-                        nstr = growdown( 1, nstr , ngrow)
-
-                        if nstr[2] == nstr[4]: # one conv zone
-                            nofczns =1
-                            nstr[2] = nstr[5]
-                            nstr[3] = 0
-                            i_change = 1
-                    print(nstr)
-
-                    pressure, temp, dtdp, profile_flag,qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
-                    flux_plus_ir_attop,photo_inputs_dict = profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,temp,pressure, FOPI, t_table, 
-                    p_table, grad, cp, opacityclass, grav, rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,
-                    flag_hack, quench_levels, kz, mmw, save_profile, all_profiles,self_consistent_kzz,save_kzz,all_kzz, 
-                    opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist=moist)
-    
-                    d1 = dtdp[nstr[1]-1]
-                    d2 = dtdp[nstr[3]]
-                    c1 = grad_x[nstr[1]-1]
-                    c2 = grad_x[nstr[3]]
-                #Now grow the lower zone.
-                while ((dtdp[nstr[4]-1] >= subad*grad_x[nstr[4]-1]) and nofczns > 1):
-                    
-                    ngrow = 1
-                    nstr = growup( 2, nstr , ngrow)
-                    #Now check to see if two zones have merged and stop further searching if so.
-                    if nstr[2] == nstr[4] :
-                        nofczns = 1
-                        nstr[2] = nstr[5]
-                        nstr[3] = 0
-                        i_change =1
-                    print(nstr)
-
-                    pressure, temp, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
-                    flux_plus_ir_attop,photo_inputs_dict = profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
-                        temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
-                        cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile, all_profiles, self_consistent_kzz, save_kzz,all_kzz,
-                        opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist=moist)               
-
-                flag_final_convergence = 1
+            flag_final_convergence = 1
         
     itmx_strat =6
     it_max_strat = 10
