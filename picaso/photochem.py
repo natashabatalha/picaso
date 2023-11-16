@@ -51,6 +51,7 @@ def rhs(P, u, mubar, radius, mass, pt):
 def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,filename = '111',stfilename='111',network=None,network_ct=None,first=True,pc=None):
     # somehow all photochemical models want stuff flipped
     # dont worry we flip back before exiting the function
+    
     temp,pressure = np.flip(temp), np.flip(pressure)
     if np.logical_and(first == False, pc == None):
         raise ValueError('If this is not the first run, pc should be recycled')
@@ -61,7 +62,7 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
     gas = ct.Solution(network_ct)
 
     # Composition from VULCAN file (see vulcan_files/cfg_wasp39b_10Xsolar_evening20deg.py)
-    O_H = 5.37E-4*(10.0**logMH)*(0.2)
+    O_H = 5.37E-4*(10.0**logMH)*(0.8)
     C_H = 2.95E-4*(10.0**logMH)
     N_H = 7.08E-5*(10.0**logMH)
     S_H = 1.41E-5*(10.0**logMH)
