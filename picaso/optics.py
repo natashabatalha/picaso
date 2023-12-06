@@ -1400,6 +1400,16 @@ class RetrieveCKs():
             mix_feh =   ( bundle.inputs['atmosphere']['profile']['FeH'].values)
         else:
             mix_feh =   ( bundle.inputs['atmosphere']['profile']['FeH'].values)*0.0
+        
+        if 'SO2' in gases_fly:
+            mix_so2 =   ( bundle.inputs['atmosphere']['profile']['SO2'].values)
+        else:
+            mix_so2 =   ( bundle.inputs['atmosphere']['profile']['H2O'].values)*0.0
+
+        if 'H2S' in gases_fly:
+            mix_h2s =   ( bundle.inputs['atmosphere']['profile']['H2S'].values)
+        else:
+            mix_h2s =   ( bundle.inputs['atmosphere']['profile']['H2O'].values)*0.0
 
                 
         
@@ -1410,8 +1420,8 @@ class RetrieveCKs():
         # these nearest neighbors will be used for interpolation
         kappa_mixed = mix_all_gases_gasesfly(np.array(self.kappa_co),np.array(self.kappa_h2o),np.array(self.kappa_ch4),
                                     np.array(self.kappa_nh3),np.array(self.kappa_co2),np.array(self.kappa_n2),np.array(self.kappa_hcn),
-                                    np.array(self.kappa_h2),np.array(self.kappa_ph3),np.array(self.kappa_c2h2),np.array(self.kappa_na),np.array(self.kappa_k),np.array(self.kappa_tio),np.array(self.kappa_vo),np.array(self.kappa_feh),mix_co,mix_h2o,mix_ch4,mix_nh3,
-                                    mix_co2,mix_n2,mix_hcn,mix_h2,mix_ph3,mix_c2h2,mix_na,mix_k,mix_tio,mix_vo,mix_feh,
+                                    np.array(self.kappa_h2),np.array(self.kappa_ph3),np.array(self.kappa_c2h2),np.array(self.kappa_na),np.array(self.kappa_k),np.array(self.kappa_tio),np.array(self.kappa_vo),np.array(self.kappa_feh),np.array(self.kappa_so2),np.array(self.kappa_h2s),mix_co,mix_h2o,mix_ch4,mix_nh3,
+                                    mix_co2,mix_n2,mix_hcn,mix_h2,mix_ph3,mix_c2h2,mix_na,mix_k,mix_tio,mix_vo,mix_feh, mix_so2,mix_h2s,
                                     np.array(self.gauss_pts),np.array(self.gauss_wts),indices)
         kappa = np.zeros(shape=(len(mix_co)-1,self.nwno,self.ngauss))
         
@@ -1931,6 +1941,20 @@ class RetrieveCKs():
         else:
             array = np.load(path+'/FeH_1460.npy')
             self.kappa_feh = array*0-250.0
+        
+        if 'SO2' in gases_fly:
+            array = np.load(path+'/SO2_1460.npy')
+            self.kappa_so2 = array
+        else:
+            array = np.load(path+'/SO2_1460.npy')
+            self.kappa_so2 = array*0-250.0
+
+        if 'H2S' in gases_fly:
+            array = np.load(path+'/H2S_1460.npy')
+            self.kappa_h2s = array
+        else:
+            array = np.load(path+'/H2S_1460.npy')
+            self.kappa_h2s = array*0-250.0
         
     def get_new_wvno_grid_661(self):
         path = os.path.join(__refdata__, 'climate_INPUTS/')#'/Users/sagnickmukherjee/Documents/GitHub/Disequilibrium-Picaso/reference/climate_INPUTS/'
