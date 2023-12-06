@@ -117,6 +117,7 @@ class ATMSETUP():
                 read = read_3d.isel(lon=ilon,lat=ilat).to_pandas().reset_index().drop(['lat','lon'],axis=1).sort_values('pressure')
                 if 'phase' in read.keys():
                     read=read.drop('phase',axis=1)
+
                 #on the first pass look through all the molecules, parse out the electrons and 
                 #add warnings for molecules that aren't recognized
                 if first:
