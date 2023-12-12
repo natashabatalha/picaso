@@ -4069,7 +4069,6 @@ class inputs():
             max_temp = max(opacityclass.temps)
 
            
-            print(nwno)             
             # first calculate the BB grid
             ntmps = self.inputs['climate']['ntemp_bb_grid']
             dt = self.inputs['climate']['dt_bb_grid']

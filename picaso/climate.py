@@ -940,6 +940,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                 flag_converge = 1 # to avoid getting stuck here unnecesarily.
                 temp = temp_old.copy() +0.5
                 print("Got stuck-- so escaping the while loop in tstart")
+
         print("Iteration number ", its,", min , max temp ", min(temp),max(temp), ", flux balance ", flux_net[0]/abs(tidal[0]))
         #print(f, f_old, tolf, np.max((temp-temp_old)/temp_old), tolx)
         if save_profile == 1:
