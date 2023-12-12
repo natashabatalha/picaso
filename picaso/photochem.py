@@ -136,7 +136,7 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
     dist = np.abs(np.log10(pressure)-np.log10(pressure_surf))
     wh= np.where(dist == np.min(dist))
     ind_surf = wh[0][0]
-    print('surface pressure in bar =',pressure[ind_surf])
+    print('User surface pressure in bar =',pressure[ind_surf])
     if pressure[ind_surf] == np.min(pressure):
         print('You are running Equilibrium Chemistry through photochem.')
         eq_chem=True
@@ -146,13 +146,13 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
     grav_quench = 6.67430e-11 *((float(mass.value))/1.0e3) / ((float(radius.value))/1.0e2)**2.0
     if first==True:
         quench_levels = quench_level(np.flip(pressure), np.flip(temp), np.flip(kzz) ,pressure*0+2.34, grav_quench, return_mix_timescale= False)
-        print(np.flip(pressure)[np.max(quench_levels)])
+        print("Quench time max pressure is ",np.flip(pressure)[np.max(quench_levels)])
         if user_psurf == False:
             pressure_surf = np.flip(pressure)[np.max(quench_levels)+3]
             dist = np.abs(np.log10(pressure)-np.log10(pressure_surf))
             wh= np.where(dist == np.min(dist))
             ind_surf = wh[0][0]
-            print('Overwriting surface pressure (as user_psurf is True) in bar =',pressure[ind_surf])
+            print('Overwriting user surface pressure (as user_psurf is True) in bar =',pressure[ind_surf])
 
         if np.logical_and(np.flip(pressure)[np.max(quench_levels)] >=  pressure[ind_surf],eq_chem==False):
             raise Exception("You need a deeper Surface Pressure. Surface is ", pressure[ind_surf], " max quench is ",np.flip(pressure)[np.max(quench_levels)] )
