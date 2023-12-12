@@ -48,7 +48,7 @@ def rhs(P, u, mubar, radius, mass, pt):
 
     return np.array([dz_dP])
 
-def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,filename = '111',stfilename='111',network=None,network_ct=None,first=True,pc=None):
+def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,filename = '111',stfilename='111',network=None,network_ct=None,first=True,pc=None,user_psurf=True):
     # somehow all photochemical models want stuff flipped
     # dont worry we flip back before exiting the function
     
@@ -150,6 +150,13 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
         
         if np.logical_and(np.flip(pressure)[np.max(quench_levels)] >=  pressure[ind_surf],eq_chem==False):
             raise Exception("You need a deeper Surface Pressure. Surface is ", pressure[ind_surf], " max quench is ",np.flip(pressure)[np.max(quench_levels)] )
+        if user_psurf == False:
+            pressure_surf = np.flip(pressure)[np.max(quench_levels)+3]
+            dist = np.abs(np.log10(pressure)-np.log10(pressure_surf))
+            wh= np.where(dist == np.min(dist))
+            ind_surf = wh[0][0]
+            print('Overwriting surface pressure (as user_psurf is True) in bar =',pressure[ind_surf])
+
         new_quench = 90-quench_levels
     
     # get anundances at the surface
@@ -322,6 +329,46 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
                 change_so2 = diff_so2[wh[0][0]]/old_so2[wh[0][0]]
                 print("SO2 relative Change ",change_so2," tn ", tn)
             old_so2 = (pc_new.wrk.densities[ind,:]/pc_new.wrk.density).copy()
+            
+            sp = 'CO2'
+            ind = pc_new.dat.species_names.index(sp)
+            if tn > 0:
+                diff_co2 = np.abs((pc_new.wrk.densities[ind,:]/pc_new.wrk.density) - old_co2)
+                
+                wh = np.where(diff_co2  == np.max(diff_co2))
+                change_co2 = diff_co2[wh[0][0]]/old_co2[wh[0][0]]
+                print("CO2 relative Change ",change_co2," tn ", tn)
+            old_co2 = (pc_new.wrk.densities[ind,:]/pc_new.wrk.density).copy()
+
+            sp = 'H2O'
+            ind = pc_new.dat.species_names.index(sp)
+            if tn > 0:
+                diff_h2o = np.abs((pc_new.wrk.densities[ind,:]/pc_new.wrk.density) - old_h2o)
+                
+                wh = np.where(diff_h2o  == np.max(diff_h2o))
+                change_h2o = diff_h2o[wh[0][0]]/old_h2o[wh[0][0]]
+                print("H2O relative Change ",change_h2o," tn ", tn)
+            old_h2o = (pc_new.wrk.densities[ind,:]/pc_new.wrk.density).copy()
+
+            sp = 'CO'
+            ind = pc_new.dat.species_names.index(sp)
+            if tn > 0:
+                diff_co = np.abs((pc_new.wrk.densities[ind,:]/pc_new.wrk.density) - old_co)
+                
+                wh = np.where(diff_co  == np.max(diff_co))
+                change_co = diff_co[wh[0][0]]/old_co[wh[0][0]]
+                print("CO relative Change ",change_co," tn ", tn)
+            old_co = (pc_new.wrk.densities[ind,:]/pc_new.wrk.density).copy()
+
+            sp = 'HCN'
+            ind = pc_new.dat.species_names.index(sp)
+            if tn > 0:
+                diff_hcn = np.abs((pc_new.wrk.densities[ind,:]/pc_new.wrk.density) - old_hcn)
+                
+                wh = np.where(diff_hcn  == np.max(diff_hcn))
+                change_hcn = diff_hcn[wh[0][0]]/old_hcn[wh[0][0]]
+                print("HCN relative Change ",change_hcn," tn ", tn)
+            old_hcn = (pc_new.wrk.densities[ind,:]/pc_new.wrk.density).copy()
 
             
         
@@ -353,8 +400,12 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
                 if change_ch4 <= 1e-3:
                     if change_nh3 <= 1e-3:
                         if change_so2 <= 1e-3:
-                            print("Stopping because Relative changes in CH4, NH3, SO2 are ", change_ch4," ",change_nh3," ",change_so2)
-                            break
+                            if change_co2 <= 1e-3:
+                                if change_h2o <= 1e-3:
+                                    if change_co <= 1e-3:
+                                        if change_hcn <= 1e-3:
+                                            print("Stopping because Relative changes in CH4, NH3, SO2 are ", change_ch4," ",change_nh3," ",change_so2)
+                                            break
             tn_prev = tn
             for i in range(100):
                 tn = pc_new.step()
