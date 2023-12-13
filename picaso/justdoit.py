@@ -1464,7 +1464,7 @@ class inputs():
         rfaci= self.inputs['climate']['rfaci']
         
         #turn off stellar radiation if user has run "setup_nostar() function"
-        if 'nostar' in self.inputs['star'].values():
+        if 'nostar' in self.inputs['star']['database']:
             rfacv=0.0 
             F0PI = np.zeros(nwno) #+ 1.0
         #otherwise assume that there is stellar irradiation 
@@ -3748,7 +3748,7 @@ class inputs():
         rfaci= self.inputs['climate']['rfaci']
         
         #turn off stellar radiation if user has run "setup_nostar() function"
-        if 'nostar' in self.inputs['star'].values():
+        if 'nostar' in self.inputs['star']['database']:
             rfacv=0.0 
             FOPI = np.zeros(nwno) + 1.0
         #otherwise assume that there is stellar irradiation 
@@ -3931,7 +3931,7 @@ class inputs():
             
             #Rerun star so that F0PI can now be on the 
             #661 grid 
-            if 'nostar' in self.inputs['star'].values():
+            if 'nostar' in self.inputs['star']['database']:
                 FOPI = np.zeros(opacityclass.nwno) + 1.0
             else:
                 T_star = self.inputs['star']['temp']
