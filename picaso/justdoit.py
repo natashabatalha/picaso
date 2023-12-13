@@ -1,7 +1,7 @@
 from .atmsetup import ATMSETUP
 from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_transit_1d, get_thermal_SH
 
-from .fluxes import set_bb, tidal_flux, get_kzz
+from .fluxes import tidal_flux, get_kzz#set_bb, 
 from .climate import  calculate_atm_deq, did_grad_cp, convec, calculate_atm, t_start, growdown, growup, climate
 
 from .wavelength import get_cld_input_grid
@@ -1455,7 +1455,8 @@ class inputs():
         tmin = min_temp*(1-extension)
         tmax = max_temp*(1+extension)
 
-        bb , y2 , tp = set_bb(wno,delta_wno,nwno,ntmps,dt,tmin,tmax)
+        bb , y2 , tp = 0,0,0
+        #set_bb(wno,delta_wno,nwno,ntmps,dt,tmin,tmax)
 
         nofczns = self.inputs['climate']['nofczns']
         nstr= self.inputs['climate']['nstr']
@@ -3738,7 +3739,8 @@ class inputs():
         tmax = max_temp*(1+extension)
         ntmps = int((tmax-tmin)/dt)
         
-        bb , y2 , tp = set_bb(wno,delta_wno,nwno,ntmps,dt,tmin,tmax)
+        bb , y2 , tp = 0,0,0
+        #set_bb(wno,delta_wno,nwno,ntmps,dt,tmin,tmax)
 
         nofczns = self.inputs['climate']['nofczns']
         nstr= self.inputs['climate']['nstr']
@@ -4033,7 +4035,7 @@ class inputs():
             ntmps = int((tmax-tmin)/dt)
             
 
-            bb , y2 , tp = set_bb(wno,delta_wno,nwno,ntmps,dt,tmin,tmax)
+            #bb , y2 , tp = set_bb(wno,delta_wno,nwno,ntmps,dt,tmin,tmax)
 
         
 

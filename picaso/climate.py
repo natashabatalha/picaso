@@ -1195,7 +1195,7 @@ def climate( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU, W
             calc_type=1 # this line might change depending on Natasha's new function
             
             #for iubar,weights in zip(ugauss_angles,ugauss_weights):
-            flux_minus_all_i, flux_plus_all_i, flux_minus_midpt_all_i, flux_plus_midpt_all_i=get_thermal_1d_gfluxi(nlevel,wno,nwno,ng,nt,temperature,DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], pressure,ubar1,surf_reflect, ugauss_angles,ugauss_weights, tridiagonal,calc_type, bb , y2, tp, tmin, tmax)
+            flux_minus_all_i, flux_plus_all_i, flux_minus_midpt_all_i, flux_plus_midpt_all_i=get_thermal_1d_gfluxi(nlevel,wno,nwno,ng,nt,temperature,DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], pressure,ubar1,surf_reflect, ugauss_angles,ugauss_weights, tridiagonal,calc_type, dwni)#bb , y2, tp, tmin, tmax)
 
             flux_plus += flux_plus_all_i*gauss_wts[ig]#*weights
             flux_minus += flux_minus_all_i*gauss_wts[ig]#*weights

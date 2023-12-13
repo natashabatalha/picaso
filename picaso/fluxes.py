@@ -1546,11 +1546,62 @@ def get_reflected_1d_gfluxv(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,
     
     return flux_minus_all, flux_plus_all, flux_minus_midpt_all, flux_plus_midpt_all 
 
+@jit(nopython=True, cache=True)
+def blackbody_integrated(T, wave, dwave):
+    """
+    This computes the total energey per wavenumber bin needed for the climate calculation 
+    Note that this is different than the raw flux at an isolated wavenumber. Therefore this function is 
+    different than the blackbody function in `picaso.fluxes` which computes blackbody in raw 
+    cgs units. 
+    
+    Parameters 
+    ----------
+    T : float, array 
+        temperature in Kelvin 
+    wave : float, array 
+        wavenumber in cm-1 
+    dwave : float, array 
+        Wavenumber bins in cm-1 
+    
+    Returns 
+    -------
+    array 
+        num temperatures by num wavenumbers 
+        units of ergs/cm*2/s/cm-1 for *integrated* bins ()
+    """
+
+    h = 6.62607004e-27 # erg s 
+    c = 2.99792458e+10 # cm/s
+    k = 1.38064852e-16 #erg / K
+    c1 = 2*h*c**2
+    c2 = h*c/k
+    
+    #this number was tested for accuracy against the original number of bins (4)
+    #nbb 1 create three wavenumber bins (one on either side of center)
+    #It achieves <1% integration accuracy up to black bodies ~50 K for the 
+    #legacy 196 and 661 (for 661 max error is only 1e-3%) wavenumber grids. 
+    nbb = 1 
+
+    num_wave = len(wave)
+    num_T = len(T)
+
+    planck_sum = zeros((num_T, num_wave))
+
+    for i in range(num_wave):
+        for j in range(num_T):
+            for k in range(-nbb, nbb + 1, 1):
+                wavenum = wave[i] + k * dwave[i] / (2.0 * nbb)
+                #erg/s/cm2/(cm-1)
+                planck_sum[j, i] += c1 * (wavenum**3) / (exp(c2 * wavenum / T[j])-1)
+                
+    planck_sum /= (2 * nbb + 1.0)
+
+    return planck_sum
 
 @jit(nopython=True, cache=True,fastmath=True)
 def blackbody(t,w):
     """
-    Blackbody flux in cgs units in per unit wavelength
+    Blackbody flux in cgs units in per unit wavelength (cm)
 
     Parameters
     ----------
@@ -1561,7 +1612,7 @@ def blackbody(t,w):
     
     Returns
     -------
-    ndarray with shape ntemp x numwave
+    ndarray with shape ntemp x numwave in units of erg/cm/s2/cm
     """
     h = 6.62607004e-27 # erg s 
     c = 2.99792458e+10 # cm/s
@@ -2215,7 +2266,8 @@ def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel_3d, dtau_3d, w0_3d,cosb_3d
     return int_at_top #, int_down# numg x numt x nwno
 
 @jit(nopython=True, cache=True)
-def get_thermal_1d_gfluxi(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,surf_reflect,ugauss_angles,ugauss_weights, tridiagonal, calc_type , bb , y2, tp, tmin, tmax):
+def get_thermal_1d_gfluxi(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,surf_reflect,ugauss_angles,ugauss_weights, tridiagonal, calc_type ,dwno): 
+    #bb , y2, tp, tmin, tmax):
     """
     This function uses the source function method, which is outlined here : 
     https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JD094iD13p16287
@@ -2291,8 +2343,9 @@ def get_thermal_1d_gfluxi(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plev
     twopi = 2*pi#+pi #NEB REMOVING A PI FROM HERE BECAUSE WE ASSUME NO SYMMETRY!  ############
 
     #get matrix of blackbodies 
-    all_b = blackbody_climate(wno, tlevel, bb, y2, tp, tmin, tmax) #returns nlevel by nwave 
-    
+    #all_b = blackbody_climate(wno, tlevel, bb, y2, tp, tmin, tmax) #returns nlevel by nwave 
+    all_b = blackbody_integrated(tlevel, wno, dwno)
+
     b0 = all_b[0:-1,:]
     b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
 
@@ -3589,7 +3642,7 @@ def chapman(pressure, pm, hratio):
     chapman_func = exp(1.0+ hratio*log(pressure/pm)- (pressure/pm)**hratio) 
     return chapman_func
 
-def set_bb(wno,delta_wno,nwno,ntmps,dt,tmin,tmax):
+def set_bb_deprecate(wno,delta_wno,nwno,ntmps,dt,tmin,tmax):
     """
     Function to compute a grid of black bodies before the code runs. 
     This allows us to interpolate on a blackbody instead of computing the planck 
@@ -3651,7 +3704,7 @@ def set_bb(wno,delta_wno,nwno,ntmps,dt,tmin,tmax):
     
     return bb , y2 , tp
 
-def spline(x , y, n, yp0, ypn):
+def spline_deprecate(x , y, n, yp0, ypn):
     
     u=np.zeros(shape=(n))
     y2 = np.zeros(shape=(n))
@@ -3683,7 +3736,7 @@ def spline(x , y, n, yp0, ypn):
     
     return y2
 
-def planck_cgs(wave, T , dwave):
+def planck_cgs_deprecate(wave, T , dwave):
     # PLANCK FUNCTION RETURNS B IN CGS UNITS, ERGS CM-2 WAVENUMBER-1
     # wave IS WAVENUMBER IN CM-1
     # T IS IN KELVIN
@@ -3702,7 +3755,7 @@ def planck_cgs(wave, T , dwave):
 
 
 @jit(nopython=True, cache=True,fastmath=True)
-def planck_rad(iw, T, dT ,  tmin, tmax, bb , y2, tp):
+def planck_rad_deprecate(iw, T, dT ,  tmin, tmax, bb , y2, tp):
 
     if T < tmin :
        # itchx = 1
@@ -3725,7 +3778,7 @@ def planck_rad(iw, T, dT ,  tmin, tmax, bb , y2, tp):
 
 
 @jit(nopython=True, cache=True)
-def blackbody_climate(wave,temp, bb, y2, tp, tmin, tmax):
+def blackbody_climate_deprecate(wave,temp, bb, y2, tp, tmin, tmax):
 
     blackbody_array = np.zeros(shape=(len(temp),len(wave)))
     dT= 2.5
