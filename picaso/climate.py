@@ -412,7 +412,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
     tolx = tolf    # tolerance in fractional T change we are aiming for
 
     #both reflected and thermal
-    flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = climate(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
+    flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
             ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
             wno,nwno,ng,nt, nlevel, ngauss, gauss_wts,True, True)#True for reflected, True for thermal
@@ -611,7 +611,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                 # temperature has been perturbed
                 # now recalculate the IR fluxes, so call picaso with only thermal
 
-                flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = climate(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
+                flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
             ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
             wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, False, True) #false for reflected, True for thermal
@@ -820,7 +820,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                     temp[j1] = tmax- 0.1
             
             # re calculate thermal flux
-            flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = climate(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
+            flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
             ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
             wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, False, True) #false reflected, True thermal
@@ -1046,7 +1046,7 @@ def growdown(nlv,nstr, ngrow) :
     return nstr
 
 @jit(nopython=True, cache=True)
-def climate( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU, W0, 
+def get_fluxes( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU, W0, 
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
             ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
             wno,nwno,ng,nt, nlevel, ngauss, gauss_wts,reflected, thermal):
@@ -1228,6 +1228,10 @@ def climate( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU, W
         #if full output is requested add in flux at top for 3d plots
     
     return flux_net_v_layer, flux_net_v, flux_plus_v, flux_minus_v , flux_net_ir_layer, flux_net_ir, flux_plus_ir, flux_minus_ir
+
+#soon I will deprecate the function name "climate" as it is really confusing with what it 
+#actually does, which is just run the RT to get fluxes
+climate = get_fluxes
 
 def calculate_atm(bundle, opacityclass):
 

@@ -2,7 +2,7 @@ from .atmsetup import ATMSETUP
 from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_transit_1d, get_thermal_SH
 
 from .fluxes import tidal_flux, get_kzz#set_bb, 
-from .climate import  calculate_atm_deq, did_grad_cp, convec, calculate_atm, t_start, growdown, growup, climate
+from .climate import  calculate_atm_deq, did_grad_cp, convec, calculate_atm, t_start, growdown, growup, get_fluxes
 
 from .wavelength import get_cld_input_grid
 from .optics import RetrieveOpacities,compute_opacity,RetrieveCKs
@@ -3563,9 +3563,9 @@ class inputs():
             self.inputs['planet']['T_eff'] = 0
 
     def inputs_climate(self, temp_guess= None, pressure= None, rfaci = 1,nofczns = 1 ,
-        nstr = None,  rfacv = None, cloudy = False,
-        mh = None, CtoO = None, species = None, fsed = None, T_star = None, 
-        logg= None, metal=None, r_star= None, semi_major = None,r_planet=None, mieff_dir = None,m_planet=None,photochem=None,photochem_file=None,photochem_stfile = None,photonetwork_file = None,photonetworkct_file=None,tstop=1e7,psurf=10):
+        nstr = None,  rfacv = None, 
+        cloudy = False, mh = None, CtoO = None, species = None, fsed = None, mieff_dir = None,
+        photochem=False, photochem_file=None,photochem_stfile = None,photonetwork_file = None,photonetworkct_file=None,tstop=1e7,psurf=10):
         """
         Get Inputs for Climate run
 
@@ -3604,23 +3604,10 @@ class inputs():
             Cloud species to be included if cloudy
         fsed : float
             Sedimentation Efficiency (f_sed) if cloudy
-        T_star : float
-            Star effective temperature if irradiated
-        logg : float
-            Star log(g)
-        metal : float
-            Star Metallicity
-        r_star : float
-            Stellar Radius in R_sun
-        semi_major : float
-            Semi-major axis of Planet (AU)
-        r_planet : planet radius
-            Radius of Planet (Rj)
         mieff_dir: str
-        path to directory with mieff files for virga
-        
-
-        
+            path to directory with mieff files for virga
+        photochem : bool 
+            Turns off (False) and on (True) Photochem 
         """
         
         if cloudy: 
@@ -3656,16 +3643,9 @@ class inputs():
             self.inputs['climate']['mieff_dir'] = mieff_dir
         self.inputs['climate']['mh'] = mh
         self.inputs['climate']['CtoO'] = CtoO
-        
-        # star properties needed to change wv grid for diseq runs
-        self.inputs['climate']['T_star'] = T_star #K
-        self.inputs['climate']['r_star'] = r_star # solar
-        self.inputs['climate']['logg'] = logg # cgs
-        self.inputs['climate']['metal'] = metal # solar
-        self.inputs['climate']['semi_major'] = semi_major # au
-        self.inputs['climate']['r_planet'] = r_planet # jupiter radii
 
-        if photochem == True :
+
+        if photochem:
             if m_planet is None:
                 raiseExceptions("Supply planet mass if you want to run photochem")
             else:
@@ -4492,7 +4472,8 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
              rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
              cloudy, cld_species,mh,fsed,flag_hack, save_profile, 
              all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,
-             flux_net_ir_layer=None, flux_plus_ir_attop=None,first_call_ever=False):
+             flux_net_ir_layer=None, flux_plus_ir_attop=None,first_call_ever=False,
+             verbose=True):
     """
     Function iterating on the TP profile by calling tstart and changing opacities as well
     Parameters
@@ -4665,13 +4646,14 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
             grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts, save_profile, all_profiles)
         
-        if (temp <= min(opacityclass.cia_temps)).any():
-            wh = np.where(temp <= min(opacityclass.cia_temps))
-            if len(wh[0]) <= 30 :
-                print(len(wh[0])," points went off the opacity grid. Correcting those.")
-                temp = correct_profile(temp,pressure,wh,min(opacityclass.cia_temps))
-            else :
-                raise Exception('Many points in your profile went off the grid. Try re-starting from a different guess profile. Parametrized profiles can work better sometime as guess profiles.')
+        #NEB stage delete after confirmation from SM
+        #if (temp <= min(opacityclass.cia_temps)).any():
+        #    wh = np.where(temp <= min(opacityclass.cia_temps))
+        #    if len(wh[0]) <= 30 :
+        #        if verbose: print(len(wh[0])," points went below the opacity grid. Correcting those.")
+        #        temp = correct_profile(temp,pressure,wh,min(opacityclass.cia_temps))
+        #    else :
+        #        raise Exception('Many points in your profile went off the grid to lower temperatures. Try re-starting from a different guess profile. Parametrized profiles can work better sometime as guess profiles.')
         
         
         
@@ -4749,188 +4731,27 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         scalt= 1.5
 
         dtx= abs(temp-temp_old)
-        ert = np.sum(dtx)
-        
-        ## this is a terrible hack but it perhaps works
-        ## do this hack only during findstrat maybe ?
-        ## otherwise problematic
-        #####################################
-        # if flag_hack == True:
-        #    temp= 0.5*(temp+temp_old) 
-        #    print("Hack Activated")
-        #####################################   
+        ert = np.sum(dtx) 
         
         temp_old= np.copy(temp)
         
         ert = ert/(float(nlevel)*scalt)
         
         if ((iii > 0) & (ert < convt) & (taudif < taudif_tol)) :
-            print("Profile converged")
+            if verbose: print("Profile converged before itmx")
             conv_flag = 1
-            '''
-            if final == True :
-                itmx = 6
-                it_max = it_max
-            else :
-                itmx = 3
-                it_max= it_max
-            
-            if cloudy == 1:
-                for iprime in range(itmx):
-                    bundle = inputs(calculation='brown')
-                    bundle.phase_angle(0)
-                    bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
-                    bundle.add_pt( temp, pressure)
-    
-                    bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
-                    
-                    
-                    metallicity = 10**(mh) #atmospheric metallicity relative to Solar
-                    mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
-                    directory ='/Users/sagnickmukherjee/Documents/software/optics'
-            
-                    kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
-                    bundle.inputs['atmosphere']['profile']['kz'] = kzz
-        
-    
-                    cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
-                            mmw = mean_molecular_weight,full_output=False,climate=True)
-            
-                    opd_now, w0_now, g0_now = cld_out
-            
-                    opd_cld_climate[:,:,3], g0_cld_climate[:,:,3], w0_cld_climate[:,:,3] = opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2]
-                    opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2] = opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1]
-                    opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1] = opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0]
-                        
-                    opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now, g0_now, w0_now
-            
-            
-                    we0,we1,we2,we3 = 0.6,0.25,0.1,0.05
-            
-                    #sum_opd_clmt = (opd_cld_climate[:,:,0]+opd_cld_climate[:,:,1]+opd_cld_climate[:,:,2]+opd_cld_climate[:,:,3])
-                    sum_opd_clmt = (we0*opd_cld_climate[:,:,0]+we1*opd_cld_climate[:,:,1]+we2*opd_cld_climate[:,:,2]+we3*opd_cld_climate[:,:,3])
-                    opd_clmt = (we0*opd_cld_climate[:,:,0]+we1*opd_cld_climate[:,:,1]+we2*opd_cld_climate[:,:,2]+we3*opd_cld_climate[:,:,3])
-                    g0_clmt = (we0*opd_cld_climate[:,:,0]*g0_cld_climate[:,:,0]+we1*opd_cld_climate[:,:,1]*g0_cld_climate[:,:,1]+we2*opd_cld_climate[:,:,2]*g0_cld_climate[:,:,2]+we3*opd_cld_climate[:,:,3]*g0_cld_climate[:,:,3])/(sum_opd_clmt)
-                    w0_clmt = (we0*opd_cld_climate[:,:,0]*w0_cld_climate[:,:,0]+we1*opd_cld_climate[:,:,1]*w0_cld_climate[:,:,1]+we2*opd_cld_climate[:,:,2]*w0_cld_climate[:,:,2]+we3*opd_cld_climate[:,:,3]*w0_cld_climate[:,:,3])/(sum_opd_clmt)
-                    g0_clmt = np.nan_to_num(g0_clmt,nan=0.0)
-                    w0_clmt = np.nan_to_num(w0_clmt,nan=0.0)
-                    opd_clmt[np.where(opd_clmt <= 1e-5)] = 0.0
-            
-            
-                    df_cld = vj.picaso_format(opd_clmt, w0_clmt, g0_clmt)
-                    bundle.clouds(df=df_cld)
-                    #taudif = np.max(np.abs(opd_cld_climate[:,:,0]-opd_cld_climate[:,:,1]))
-                    #diff = (opd_cld_climate[:,:,0]-opd_cld_climate[:,:,1])/(0.5*(opd_cld_climate[:,:,0]+opd_cld_climate[:,:,1]))
-                    #diff = np.nan_to_num(diff,nan=0.0)
-                    #taudif = np.max(np.abs(diff))
-            
-                    #print("Max TAUCLD diff is", taudif, " Tau at layer 40 and wv 150 is ", opd_now[40,150])
-                    
-                    DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
-                    W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
-                    frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , \
-                    wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw =  calculate_atm(bundle, opacityclass)
-                
-                    temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(nofczns,nstr,it_max,conv,x_max_mult, 
-                    rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
-                    grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts, save_profile, all_profiles)
-                
-                
-                
-                    ert = 0.0 # avg temp change
-                    scalt= 1.0
-                    dtx= abs(temp-temp_old)
-                    ert = np.sum(dtx)
-                    temp_old= np.copy(temp)
-                '''
 
             return pressure, temp , dtdp, conv_flag, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate, flux_net_ir_layer, flux_plus_ir_attop
         
-        print("Big iteration is ",min(temp), iii)
-    conv_flag = 0
-    ## this is supposed to be useless so testing this
-    '''
-    if final == True :
-        itmx = 6
-        it_max = it_max
-    else :
-        itmx = 3
-        it_max= it_max
+        if verbose: print("Big iteration is ",min(temp), iii)
     
-    if cloudy == 1:
-        for iprime in range(itmx):
-            bundle = inputs(calculation='brown')
-            bundle.phase_angle(0)
-            bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
-            bundle.add_pt( temp, pressure)
-    
-            bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
-                    
-                    
-            metallicity = 10**(mh) #atmospheric metallicity relative to Solar
-            mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
-            directory ='/Users/sagnickmukherjee/Documents/software/optics'
-            
-            kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
-            bundle.inputs['atmosphere']['profile']['kz'] = kzz
-        
-    
-            cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
-                            mmw = mean_molecular_weight,full_output=False,climate=True)
-            
-            opd_now, w0_now, g0_now = cld_out
-            
-            opd_cld_climate[:,:,3], g0_cld_climate[:,:,3], w0_cld_climate[:,:,3] = opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2]
-            opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2] = opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1]
-            opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1] = opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0]
-                        
-            opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now, g0_now, w0_now
-            
-            
-            we0,we1,we2,we3 = 0.6,0.25,0.1,0.05
-            
-            #sum_opd_clmt = (opd_cld_climate[:,:,0]+opd_cld_climate[:,:,1]+opd_cld_climate[:,:,2]+opd_cld_climate[:,:,3])
-            sum_opd_clmt = (we0*opd_cld_climate[:,:,0]+we1*opd_cld_climate[:,:,1]+we2*opd_cld_climate[:,:,2]+we3*opd_cld_climate[:,:,3])
-            opd_clmt = (we0*opd_cld_climate[:,:,0]+we1*opd_cld_climate[:,:,1]+we2*opd_cld_climate[:,:,2]+we3*opd_cld_climate[:,:,3])
-            g0_clmt = (we0*opd_cld_climate[:,:,0]*g0_cld_climate[:,:,0]+we1*opd_cld_climate[:,:,1]*g0_cld_climate[:,:,1]+we2*opd_cld_climate[:,:,2]*g0_cld_climate[:,:,2]+we3*opd_cld_climate[:,:,3]*g0_cld_climate[:,:,3])/(sum_opd_clmt)
-            w0_clmt = (we0*opd_cld_climate[:,:,0]*w0_cld_climate[:,:,0]+we1*opd_cld_climate[:,:,1]*w0_cld_climate[:,:,1]+we2*opd_cld_climate[:,:,2]*w0_cld_climate[:,:,2]+we3*opd_cld_climate[:,:,3]*w0_cld_climate[:,:,3])/(sum_opd_clmt)
-            g0_clmt = np.nan_to_num(g0_clmt,nan=0.0)
-            w0_clmt = np.nan_to_num(w0_clmt,nan=0.0)
-            opd_clmt[np.where(opd_clmt <= 1e-5)] = 0.0
-            
-            
-            df_cld = vj.picaso_format(opd_clmt, w0_clmt, g0_clmt)
-            bundle.clouds(df=df_cld)
-            #taudif = np.max(np.abs(opd_cld_climate[:,:,0]-opd_cld_climate[:,:,1]))
-            #taudif = np.max(np.abs((opd_cld_climate[:,:,0]-opd_cld_climate[:,:,1])/opd_cld_climate[:,:,1]))
-            #diff = (opd_cld_climate[:,:,0]-opd_cld_climate[:,:,1])/(0.5*(opd_cld_climate[:,:,0]+opd_cld_climate[:,:,1]))
-            #diff = np.nan_to_num(diff,nan=0.0)
-            #taudif = np.max(np.abs(diff))
-            #print("Max TAUCLD diff is", taudif, " Tau at layer 40 and wv 150 is ", opd_now[40,150])
-                    
-            DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
-            W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
-            frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , \
-            wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw =  calculate_atm(bundle, opacityclass)
-                
-            temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(nofczns,nstr,it_max,conv,x_max_mult, 
-            rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
-            grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, ngauss, gauss_wts, save_profile, all_profiles)
-                
-    
-     
-            ert = 0.0 # avg temp change
-            scalt= 1.0
-            dtx= abs(temp-temp_old)
-            ert = np.sum(dtx)
-            temp_old= np.copy(temp)   
-            ert = ert/(float(nlevel)*scalt)
-    '''
+    #neb stage delete after confirm from JM
+    #conv_flag = 0
     
     if conv_flag == 0:
-        print("Not converged")
+        if verbose: print("Not converged")
     else :
-        print("Profile converged")
+        if verbose: print("Profile converged after itmx hit")
     return pressure, temp, dtdp, conv_flag, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop
 
 def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
@@ -5188,7 +5009,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
 
     DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw =  calculate_atm(bundle, opacityclass)
     
-    flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = climate(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
+    flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
             ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
             wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, False, True) #false for reflected, true for thermal
@@ -5196,29 +5017,6 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
       
     
     return pressure, temp, dtdp, nstr , flux_plus_ir_full, bundle.inputs['atmosphere']['profile'], all_profiles,opd_now,w0_now,g0_now
-
-@jit(nopython=True, cache=True)
-def correct_profile(temp,pressure,wh,min_temp):
-    '''
-    indices = wh[0]
-    for i in range(len(indices)):
-        if indices[i] == 0:
-            temp[indices[i]] = min_temp+0.5
-        elif (temp[indices[i]-1] > min_temp) and (temp[indices[i]+1]) > min_temp :
-            temp_prev = temp[indices[i]-1]
-            temp_next = temp[indices[i]+1]
-            press_prev = pressure[indices[i]-1]
-            press_next = pressure[indices[i]+1]
-            dtdlnp = (temp_next-temp_prev)/np.log(press_next/press_prev)
-            temp[indices[i]] = temp_prev +np.log(pressure[indices[i]]/press_prev)*dtdlnp
-        else :
-            temp[indices[i]] = min_temp+0.5
-            temp[indices[i]-1] = min_temp+0.5
-            temp[indices[i]+1] = min_temp + 0.5
-    '''
-
-
-    return temp
 
 def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             temp,pressure,FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
@@ -5428,7 +5226,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw =  calculate_atm_deq(bundle, opacityclass,on_fly=on_fly,gases_fly=gases_fly)
     if self_consistent_kzz == True :
                 
-        flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = climate(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
+        flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
         COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
         ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
         wno,nwno,ng,nt, nlevel, ngauss, gauss_wts,True, True)#True for reflected, True for thermal
@@ -5546,7 +5344,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
 
         if self_consistent_kzz == True :
                 
-            flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = climate(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
+            flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
             ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
             wno,nwno,ng,nt, nlevel, ngauss, gauss_wts,True, True)#True for reflected, True for thermal
@@ -5976,7 +5774,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
     #bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
     DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw =  calculate_atm_deq(bundle, opacityclass,on_fly=on_fly, gases_fly=gases_fly)
     
-    flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = climate(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
+    flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
             ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
             wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, False, True) #false for reflected, true for thermal
@@ -5996,4 +5794,34 @@ def OH_conc(temp,press,x_h2o,x_h2):
     n = press_cgs/(kb*temp)
     
     return x_oh*n
+
+
+
+'''
+12/13/2023 - NEB deprecated thi code from SM as it was not proven to help correct 
+profiles that went off the grid 
+
+@jit(nopython=True, cache=True)
+def correct_profile(temp,pressure,wh,min_temp):
+    
+    indices = wh[0]
+    for i in range(len(indices)):
+        if indices[i] == 0:
+            temp[indices[i]] = min_temp+0.5
+        elif (temp[indices[i]-1] > min_temp) and (temp[indices[i]+1]) > min_temp :
+            temp_prev = temp[indices[i]-1]
+            temp_next = temp[indices[i]+1]
+            press_prev = pressure[indices[i]-1]
+            press_next = pressure[indices[i]+1]
+            dtdlnp = (temp_next-temp_prev)/np.log(press_next/press_prev)
+            temp[indices[i]] = temp_prev +np.log(pressure[indices[i]]/press_prev)*dtdlnp
+        else :
+            temp[indices[i]] = min_temp+0.5
+            temp[indices[i]-1] = min_temp+0.5
+            temp[indices[i]+1] = min_temp + 0.5
+    
+
+
+    return temp
+'''
 
