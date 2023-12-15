@@ -6,7 +6,7 @@ import pickle as pk
 from scipy.linalg import solve_banded
 #from numpy.linalg import solve
 
-@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True)
 def slice_eq(array, lim, value):
     """Funciton to replace values with upper or lower limit
     """
@@ -16,7 +16,7 @@ def slice_eq(array, lim, value):
         array[i,:] = new     
     return array
 
-@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True)
 def slice_lt(array, lim):
     """Funciton to replace values with upper or lower limit
     """
@@ -26,7 +26,7 @@ def slice_lt(array, lim):
         array[i,:] = new     
     return array
 
-@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True)
 def slice_gt(array, lim):
     """Funciton to replace values with upper or lower limit
     """
@@ -46,7 +46,7 @@ def slice_rav(array, lim):
     new[where(new<-lim)] = -lim
     return new.reshape(shape)
 
-@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True)
 def numba_cumsum(mat):
     """Function to compute cumsum along axis=0 to bypass numba not allowing kwargs in 
     cumsum 
@@ -56,7 +56,7 @@ def numba_cumsum(mat):
         new_mat[:,i] = cumsum(mat[:,i])
     return new_mat
 
-@jit(nopython=True, cache=True)#, fastmath=True)
+@jit(nopython=True, cache=True)
 def setup_tri_diag(nlayer,nwno ,c_plus_up, c_minus_up, 
     c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
     gama, dtau, exptrm_positive,  exptrm_minus):
@@ -153,7 +153,7 @@ def setup_tri_diag(nlayer,nwno ,c_plus_up, c_minus_up,
 
     return A, B, C, D
 
-@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True)
 def setup_pent_diag(nlayer,nwno ,c_plus_up, c_minus_up, 
     c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
     gama, dtau, exptrm_positive,  exptrm_minus, g1, g2, exptrm, lamda):
@@ -256,7 +256,7 @@ def setup_pent_diag(nlayer,nwno ,c_plus_up, c_minus_up,
     return A, B, C, D, E, F
 
 
-@jit(nopython=True, cache=True)#, fastmath=True)
+@jit(nopython=True, cache=True)
 def tri_diag_solve(l, a, b, c, d):
     """
     Tridiagonal Matrix Algorithm solver, a b c d can be NumPy array type or Python list type.
@@ -977,7 +977,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 #    import sys; sys.exit()
     return xint_at_top #, flux_out, intensity
 
-@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True)
 def get_reflected_1d_newclima(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
@@ -1349,7 +1349,7 @@ def get_reflected_1d_newclima(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,g
     
     return xint_at_top, (flux_minus_all, flux_plus_all, flux_minus_midpt_all, flux_plus_midpt_all )
 
-@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True)
 def get_reflected_1d_gfluxv(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,
     surf_reflect,b_top,b_surface,ubar0, F0PI,tridiagonal, delta_approx):
     """
@@ -1598,7 +1598,7 @@ def blackbody_integrated(T, wave, dwave):
 
     return planck_sum
 
-@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True)
 def blackbody(t,w):
     """
     Blackbody flux in cgs units in per unit wavelength (cm)
@@ -3754,7 +3754,7 @@ def planck_cgs_deprecate(wave, T , dwave):
     return planck_sum
 
 
-@jit(nopython=True, cache=True,fastmath=True)
+@jit(nopython=True, cache=True)
 def planck_rad_deprecate(iw, T, dT ,  tmin, tmax, bb , y2, tp):
 
     if T < tmin :
