@@ -406,7 +406,7 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
                                         if change_hcn <= 1e-3:
                                             print("Stopping because Relative changes in CH4, NH3, SO2, H2O, CO, CO2, HCN are ", change_ch4," ",change_nh3," ",change_so2," ",change_h2o," ",change_co," ",change_co2," ",change_hcn)
                                             break
-            elif tn < 1e5:
+            elif np.logical_and(tn < 1e5,tn>0):
                 if change_ch4 <= 1e-13:
                     if change_nh3 <= 1e-13:
                         if change_so2 <= 1e-13:
