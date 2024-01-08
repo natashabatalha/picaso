@@ -14,7 +14,7 @@ from .photochem import run_photochem
 
 
 from virga import justdoit as vj
-from scipy.interpolate import UnivariateSpline
+from scipy.interpolate import UnivariateSpline, interp1d
 from scipy import special
 from numpy import exp, sqrt,log
 from numba import jit,njit
@@ -3126,10 +3126,11 @@ class inputs():
                  gravity_unit=u.Unit(self.inputs['planet']['gravity_unit']))#
         
         cloud_p.ptk(df =df, kz_min = kz_min, Teff = Teff, alpha_pressure = alpha_pressure)
-        out = vj.compute(cloud_p, as_dict=full_output,
+        out = vj.compute(cloud_p, as_dict=True,
                           directory=directory, do_virtual=do_virtual)
+        wno = 1e4/out['wave']
         if not full_output:
-            opd, w0, g0 = out
+            opd, w0, g0 = out['opd_per_layer'],out['single_scattering'],out['asymmetry']
             df = vj.picaso_format(opd, w0, g0)
         else: 
             opd, w0, g0 = out['opd_per_layer'],out['single_scattering'],out['asymmetry']
@@ -3139,7 +3140,7 @@ class inputs():
         #only pass through clouds 1d if clouds are one dimension 
         self.clouds(df=df)
         if full_output : return out
-        else: return opd, w0, g0
+        else: return opd, w0, g0, wno #added wno for the case of on_the_fly mixing needing 196 grid
     
     def virga_3d(self, condensates, directory,
         fsed=1, mh=1, mmw=2.2,kz_min=1e5,sig=2, full_output=False,
@@ -4746,7 +4747,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
                         mmw = mean_molecular_weight,full_output=False) #,climate=True)
             
-            opd_now, w0_now, g0_now = cld_out
+            opd_now, w0_now, g0_now, wv196 = cld_out
             
             opd_cld_climate[:,:,3], g0_cld_climate[:,:,3], w0_cld_climate[:,:,3] = opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2]
             opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2] = opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1]
@@ -4842,7 +4843,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
                         mmw = mean_molecular_weight,full_output=False)#,climate=True)
 
-            opd_now, w0_now, g0_now = cld_out
+            opd_now, w0_now, g0_now, wv196 = cld_out
             
             opd_cld_climate[:,:,3], g0_cld_climate[:,:,3], w0_cld_climate[:,:,3] = opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2]
             opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2] = opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1]
@@ -5357,7 +5358,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,t
         cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
                         mmw = mean_molecular_weight,full_output=False) #,climate=True)
         
-        opd_now, w0_now, g0_now = cld_out
+        opd_now, w0_now, g0_now, wv196 = cld_out
         df_cld = vj.picaso_format(opd_now, w0_now, g0_now)
         bundle.clouds(df=df_cld)
     else:
@@ -5613,13 +5614,32 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
                         mmw = mean_molecular_weight,full_output=False)#,climate=True)
             
-            opd_now, w0_now, g0_now = cld_out
+            opd_now, w0_now, g0_now, wv196 = cld_out
             
             opd_cld_climate[:,:,3], g0_cld_climate[:,:,3], w0_cld_climate[:,:,3] = opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2]
             opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2] = opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1]
             opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1] = opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0]
-                        
-            opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now, g0_now, w0_now
+            
+            #convert cld_out output to 661 grid for on_the_fly (similar to initiate_cld_matrices)
+            if on_fly == True:
+                wv661 = 1e4/opacityclass.wno
+
+                opd_now_661 =  np.zeros(shape=(len(opd_now[:,0]),len(wv661)))
+                g0_now_661,w0_now_661 = np.zeros_like(opd_now_661),np.zeros_like(opd_now_661)
+
+                for ilayer in range(len(opd_now[:,0])):
+                    fopd = interp1d(wv196,opd_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+                    fg0 = interp1d(wv196,g0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+                    fw0 = interp1d(wv196,w0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+
+                    opd_now_661[ilayer,:] = fopd(wv661)
+                    g0_now_661[ilayer,:] = fg0(wv661)
+                    w0_now_661[ilayer,:] = fw0(wv661)
+
+                opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now_661, g0_now_661, w0_now_661
+
+            else:
+                opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now, g0_now, w0_now
             
             #if np.sum(opd_cld_climate[:,:,1]) == 0 :
             #    w0,w1,w2,w3 = 1,0,0,0
@@ -5752,14 +5772,33 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
                         mmw = mean_molecular_weight,full_output=False)#,climate=True)
             
-            opd_now, w0_now, g0_now = cld_out
+            opd_now, w0_now, g0_now, wv196= cld_out
             
             opd_cld_climate[:,:,3], g0_cld_climate[:,:,3], w0_cld_climate[:,:,3] = opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2]
             opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2] = opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1]
             opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1] = opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0]
                         
-            opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now, g0_now, w0_now
-            
+            #convert cld_out output to 661 grid for on_the_fly (similar to initiate_cld_matrices)
+            if on_fly == True:
+                wv661 = 1e4/opacityclass.wno
+
+                opd_now_661 =  np.zeros(shape=(len(opd_now[:,0]),len(wv661)))
+                g0_now_661,w0_now_661 = np.zeros_like(opd_now_661),np.zeros_like(opd_now_661)
+
+                for ilayer in range(len(opd_now[:,0])):
+                    fopd = interp1d(wv196,opd_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+                    fg0 = interp1d(wv196,g0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+                    fw0 = interp1d(wv196,w0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+
+                    opd_now_661[ilayer,:] = fopd(wv661)
+                    g0_now_661[ilayer,:] = fg0(wv661)
+                    w0_now_661[ilayer,:] = fw0(wv661)
+
+                opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now_661, g0_now_661, w0_now_661
+
+            else:
+                opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now, g0_now, w0_now
+
             #if np.sum(opd_cld_climate[:,:,1]) == 0 :
             #    w0,w1,w2,w3 = 1,0,0,0
             #elif (np.sum(opd_cld_climate[:,:,1]) != 0) and (np.sum(opd_cld_climate[:,:,2]) == 0):
@@ -6274,7 +6313,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
                         mmw = mean_molecular_weight,full_output=False)#,climate=True)
         
-        opd_now, w0_now, g0_now = cld_out
+        opd_now, w0_now, g0_now, wv196 = cld_out
         df_cld = vj.picaso_format(opd_now, w0_now, g0_now)
         bundle.clouds(df=df_cld)  
     else:
