@@ -5620,27 +5620,23 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2] = opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1]
             opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1] = opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0]
             
-            #convert cld_out output to 661 grid for on_the_fly (similar to initiate_cld_matrices)
-            if on_fly == True:
-                wv661 = 1e4/opacityclass.wno
+            #convert cld_out output to 661 grid (similar to initiate_cld_matrices)
+            wv661 = 1e4/opacityclass.wno
 
-                opd_now_661 =  np.zeros(shape=(len(opd_now[:,0]),len(wv661)))
-                g0_now_661,w0_now_661 = np.zeros_like(opd_now_661),np.zeros_like(opd_now_661)
+            opd_now_661 =  np.zeros(shape=(len(opd_now[:,0]),len(wv661)))
+            g0_now_661,w0_now_661 = np.zeros_like(opd_now_661),np.zeros_like(opd_now_661)
 
-                for ilayer in range(len(opd_now[:,0])):
-                    fopd = interp1d(wv196,opd_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
-                    fg0 = interp1d(wv196,g0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
-                    fw0 = interp1d(wv196,w0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+            for ilayer in range(len(opd_now[:,0])):
+                fopd = interp1d(wv196,opd_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+                fg0 = interp1d(wv196,g0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+                fw0 = interp1d(wv196,w0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
 
-                    opd_now_661[ilayer,:] = fopd(wv661)
-                    g0_now_661[ilayer,:] = fg0(wv661)
-                    w0_now_661[ilayer,:] = fw0(wv661)
+                opd_now_661[ilayer,:] = fopd(wv661)
+                g0_now_661[ilayer,:] = fg0(wv661)
+                w0_now_661[ilayer,:] = fw0(wv661)
 
-                opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now_661, g0_now_661, w0_now_661
+            opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now_661, g0_now_661, w0_now_661
 
-            else:
-                opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now, g0_now, w0_now
-            
             #if np.sum(opd_cld_climate[:,:,1]) == 0 :
             #    w0,w1,w2,w3 = 1,0,0,0
             #elif (np.sum(opd_cld_climate[:,:,1]) != 0) and (np.sum(opd_cld_climate[:,:,2]) == 0):
@@ -5778,26 +5774,22 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2] = opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1]
             opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1] = opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0]
                         
-            #convert cld_out output to 661 grid for on_the_fly (similar to initiate_cld_matrices)
-            if on_fly == True:
-                wv661 = 1e4/opacityclass.wno
+            #convert cld_out output to 661 grid (similar to initiate_cld_matrices)
+            wv661 = 1e4/opacityclass.wno
 
-                opd_now_661 =  np.zeros(shape=(len(opd_now[:,0]),len(wv661)))
-                g0_now_661,w0_now_661 = np.zeros_like(opd_now_661),np.zeros_like(opd_now_661)
+            opd_now_661 =  np.zeros(shape=(len(opd_now[:,0]),len(wv661)))
+            g0_now_661,w0_now_661 = np.zeros_like(opd_now_661),np.zeros_like(opd_now_661)
 
-                for ilayer in range(len(opd_now[:,0])):
-                    fopd = interp1d(wv196,opd_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
-                    fg0 = interp1d(wv196,g0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
-                    fw0 = interp1d(wv196,w0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+            for ilayer in range(len(opd_now[:,0])):
+                fopd = interp1d(wv196,opd_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+                fg0 = interp1d(wv196,g0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+                fw0 = interp1d(wv196,w0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
 
-                    opd_now_661[ilayer,:] = fopd(wv661)
-                    g0_now_661[ilayer,:] = fg0(wv661)
-                    w0_now_661[ilayer,:] = fw0(wv661)
+                opd_now_661[ilayer,:] = fopd(wv661)
+                g0_now_661[ilayer,:] = fg0(wv661)
+                w0_now_661[ilayer,:] = fw0(wv661)
 
-                opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now_661, g0_now_661, w0_now_661
-
-            else:
-                opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now, g0_now, w0_now
+            opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now_661, g0_now_661, w0_now_661
 
             #if np.sum(opd_cld_climate[:,:,1]) == 0 :
             #    w0,w1,w2,w3 = 1,0,0,0
