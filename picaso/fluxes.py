@@ -1648,7 +1648,7 @@ def blackbody(t,w):
     return ((2.0*h*c**2.0)/(w**5.0))*(1.0/(exp((h*c)/outer(t, w*k)) - 1.0)) #* (w*w)
 
 @jit(nopython=True, cache=True)
-def get_thermal_1d_newclima(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,
+def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,
     surf_reflect, hard_surface, dwno, calc_type):
     """
     This function uses the source function method, which is outlined here : 
@@ -1878,7 +1878,7 @@ def get_thermal_1d_newclima(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,pl
     return flux_at_top , (flux_minus, flux_plus, flux_minus_mdpt, flux_plus_mdpt)
 
 @jit(nopython=True, cache=True)
-def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,
+def get_thermal_1d_deprecate(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,
     surf_reflect, hard_surface, tridiagonal):
     """
     This function uses the source function method, which is outlined here : 
@@ -2319,7 +2319,7 @@ def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel_3d, dtau_3d, w0_3d,cosb_3d
     return int_at_top #, int_down# numg x numt x nwno
 
 @jit(nopython=True, cache=True)
-def get_thermal_1d_gfluxi(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,surf_reflect,ugauss_angles,ugauss_weights, tridiagonal, calc_type ,dwno): 
+def get_thermal_1d_gfluxi_deprecate(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,surf_reflect,ugauss_angles,ugauss_weights, tridiagonal, calc_type ,dwno): 
     #bb , y2, tp, tmin, tmax):
     """
     This function uses the source function method, which is outlined here : 

@@ -1,6 +1,5 @@
 from .atmsetup import ATMSETUP
 from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_transit_1d, get_thermal_SH
-from .fluxes import get_thermal_1d_newclima
 
 from .fluxes import tidal_flux, get_kzz#,set_bb_deprecate 
 from .climate import  calculate_atm_deq, did_grad_cp, convec, calculate_atm, t_start, growdown, growup, get_fluxes
