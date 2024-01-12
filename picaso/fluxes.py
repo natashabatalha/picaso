@@ -37,6 +37,36 @@ def slice_gt(array, lim):
     return array
 
 @jit(nopython=True, cache=True)
+def slice_lt_cond(array, cond_array, cond, newval):
+    """Funciton to replace values with upper or lower limit
+    """
+    for i in range(array.shape[0]):
+        new = array[i,:] 
+        new_cond = cond_array[i,:]
+        new[where(new_cond<cond)] = newval
+        array[i,:] = new     
+    return array
+
+
+@jit(nopython=True, cache=True)
+def slice_lt_cond_arr(array, cond_array, cond, newarray):
+    """Funciton to replace values with upper or lower limit
+    """
+    shape = cond_array.shape#e.g. dtau
+
+    cond_array=cond_array.ravel()
+    new = array.ravel() #e.g. b0 
+    newarray1 = newarray[0:-1,:].ravel()
+    newarray2 = newarray[1:,:].ravel()
+
+    #for i in range(array.shape[0]):
+    replace1 = newarray1[where(cond_array<cond)]
+    replace2 = newarray2[where(cond_array<cond)]
+    new[where(cond_array<cond)] = 0.5*(replace1+replace2)
+    array = new.reshape(shape)    
+    return array
+
+@jit(nopython=True, cache=True)
 def slice_rav(array, lim):
     """Funciton to replace values with upper or lower limit
     """
@@ -1435,10 +1465,7 @@ def get_reflected_1d_gfluxv(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,
     #now define terms of Toon et al 1989 quadrature Table 1 
     #https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JD094iD13p16287
     #see table of terms 
-    
-    
-    
-    
+
     #terms not dependent on incident angle
     
     
@@ -1622,7 +1649,7 @@ def blackbody(t,w):
 
 @jit(nopython=True, cache=True)
 def get_thermal_1d_newclima(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,
-    surf_reflect, hard_surface, tridiagonal):
+    surf_reflect, hard_surface, dwno, calc_type):
     """
     This function uses the source function method, which is outlined here : 
     https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JD094iD13p16287
@@ -1674,9 +1701,10 @@ def get_thermal_1d_newclima(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,pl
         Surface reflectivity as a function of wavenumber. 
     hard_surface : int
         0 for no hard surface (e.g. Jupiter/Neptune), 1 for hard surface (terrestrial)
-    tridiagonal : int 
-        0 for tridiagonal, 1 for pentadiagonal
-
+    dwno : int 
+        delta wno needed for climate
+    calc_type : int 
+        0 for spectrum model, 1 for climate solver
     Returns
     -------
     numpy.ndarray
@@ -1686,33 +1714,39 @@ def get_thermal_1d_newclima(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,pl
     nlayer = nlevel - 1 #nlayers 
 
     mu1 = 0.5#0.88#0.5 #from Table 1 Toon  
-    twopi = pi#+pi #NEB REMOVING A PI FROM HERE BECAUSE WE ASSUME NO SYMMETRY! 
 
     #get matrix of blackbodies 
-    all_b = blackbody(tlevel, 1/wno) #returns nlevel by nwave   
+    if calc_type == 0: 
+        all_b = blackbody(tlevel, 1/wno) #returns nlevel by nwave   
+    elif calc_type==1:
+        all_b = blackbody_integrated(tlevel, wno, dwno)
+
     b0 = all_b[0:-1,:]
     b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
 
-    #hemispheric mean parameters from Tabel 1 toon 
-    #**originally written in terms of alpha which isn't in the table. 
-    #**changed to more closely resemble Toon (no change in actual values)
+    #hemispheric mean parameters from Tabe 1 toon 
+    g1 = 2.0 - w0*(1+cosb); g2 = w0*(1-cosb)
+
     alpha = sqrt( (1.-w0) / (1.-w0*cosb) )
-    g1 = 2 - w0*(1 + cosb) # (7-w0*(4+3*cosb))/4  # 
-    g2 = w0*(1 - cosb)     # -(1-w0*(4-3*cosb))/4 # 
-    lamda = alpha*(1.-w0*cosb)/mu1 #(g1**2 - g2**2)**0.5 #eqn 21 toon
-    gama = (1.-alpha)/(1.+alpha) #g2 / (g1 + lamda) #eqn 22 toon
-    g1_plus_g2 = mu1/(1.-w0*cosb) #effectively 1/(gamma1 + gamma2) .. second half of eqn.27
+    lamda = sqrt(g1**2 - g2**2) #eqn 21 toon 
+    gama = (g1-lamda)/g2 # #eqn 22 toon
+    
+    g1_plus_g2 = 1.0/(g1+g2) #second half of eqn.27
 
     #same as with reflected light, compute c_plus and c_minus 
     #these are eqns 27a & b in Toon89
     #_ups are evaluated at lower optical depth, TOA
     #_dows are evaluated at higher optical depth, bottom of atmosphere
-    c_plus_up = b0 + b1* g1_plus_g2 
-    c_minus_up = b0 - b1* g1_plus_g2
+    c_plus_up = 2*pi*mu1*(b0 + b1* g1_plus_g2) 
+    c_minus_up = 2*pi*mu1*(b0 - b1* g1_plus_g2)
+    #NOTE: to keep consistent with Toon, we keep these 2pis here. However, 
+    #in 3d cases where we no long assume azimuthal symmetry, we divide out 
+    #by 2pi when we multiply out the weights as seen in disco.compress_thermal 
 
-    c_plus_down = (b0 + b1 * dtau + b1 * g1_plus_g2)
-    c_minus_down = (b0 + b1 * dtau - b1 * g1_plus_g2)
-    # note there should be a factor of 2mu1 in c expressions, need to include that if mu1 not 0.5
+    c_plus_down = 2*pi*mu1*(b0 + b1 * dtau + b1 * g1_plus_g2) 
+    c_minus_down = 2*pi*mu1*(b0 + b1 * dtau - b1 * g1_plus_g2)
+
+
 
     #calculate exponential terms needed for the tridiagonal rotated layered method
     exptrm = lamda*dtau
@@ -1722,45 +1756,64 @@ def get_thermal_1d_newclima(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,pl
     exptrm_positive = exp(exptrm) 
     exptrm_minus = 1.0/exptrm_positive
 
+    #for flux heating calculations, the energy balance solver 
+    #does not like a fixed zero at the TOA. 
+    #to avoid a discontinuous kink at the last atmospher
+    #layer we create this "fake" boundary condition
+    #we imagine that the atmosphere continus up at an isothermal T and that 
+    #there is optical depth from above the top to infinity 
     tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
-    b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
+    #print(list(tau_top))
+    #tau_top = 26.75*plevel[0]/(plevel[1]-plevel[0]) 
+    b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:] * pi #  Btop=(1.-np.exp(-tautop/ubari))*B[0]
+    
     if hard_surface:
-        b_surface = all_b[-1,:] #for terrestrial, hard surface  
+        b_surface = all_b[-1,:]*pi #for terrestrial, hard surface  
     else: 
-        b_surface=all_b[-1,:] + b1[-1,:]*mu1 #(for non terrestrial)
+        b_surface= (all_b[-1,:] + b1[-1,:]*mu1)*pi #(for non terrestrial)
 
     #Now we need the terms for the tridiagonal rotated layered method
-    if tridiagonal==0:
-        A, B, C, D = setup_tri_diag(nlayer,nwno,  c_plus_up, c_minus_up, 
-                            c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
-                             gama, dtau, 
-                            exptrm_positive,  exptrm_minus) 
+    #pentadiagonal solver is left here because it may be useful someday 
+    #however, curret scipy implementation is too slow to use currently 
+    #if tridiagonal==0:
+    A, B, C, D = setup_tri_diag(nlayer,nwno,  c_plus_up, c_minus_up, 
+                        c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
+                         gama, dtau, 
+                        exptrm_positive,  exptrm_minus) 
+    #else:
+    #   A_, B_, C_, D_, E_, F_ = setup_pent_diag(nlayer,nwno,  c_plus_up, c_minus_up, 
+    #                       c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
+    #                        gama, dtau, 
+    #                       exptrm_positive,  exptrm_minus, g1,g2,exptrm,lamda) 
     positive = zeros((nlayer, nwno))
     negative = zeros((nlayer, nwno))
+
     #========================= Start loop over wavelength =========================
     L = nlayer+nlayer
     for w in range(nwno):
         #coefficient of posive and negative exponential terms 
-        if tridiagonal==0:
-            X = tri_diag_solve(L, A[:,w], B[:,w], C[:,w], D[:,w])
-            #unmix the coefficients
-            positive[:,w] = X[::2] + X[1::2] 
-            negative[:,w] = X[::2] - X[1::2]
+        X = tri_diag_solve(L, A[:,w], B[:,w], C[:,w], D[:,w])
+        #unmix the coefficients
+        positive[:,w] = X[::2] + X[1::2] 
+        negative[:,w] = X[::2] - X[1::2]
+        #else:
+        #   X = pent_diag_solve(L, A_[:,w], B_[:,w], C_[:,w], D_[:,w], E_[:,w], F_[:,w])
+        #   positive[:,w] = exptrm_minus[:,w] * (X[::2] + X[1::2])
+        #   negative[:,w] = X[::2] - X[1::2]
 
     #if you stop here this is regular ole 2 stream
-    f_up = pi*(positive * exptrm_positive + gama * negative * exptrm_minus + c_plus_up)
-
+    f_up = (positive * exptrm_positive + gama * negative * exptrm_minus + c_plus_up)
 
     #calculate everyting from Table 3 toon
-    alphax = ((1.0-w0)/(1.0-w0*cosb))**0.5
-    G = twopi*w0*positive*(1.0+cosb*alphax)/(1.0+alphax)#
-    H = twopi*w0*negative*(1.0-cosb*alphax)/(1.0+alphax)#
-    J = twopi*w0*positive*(1.0-cosb*alphax)/(1.0+alphax)#
-    K = twopi*w0*negative*(1.0+cosb*alphax)/(1.0+alphax)#
-    alpha1 = twopi*(b0+ b1*(mu1*w0*cosb/(1.0-w0*cosb)))
-    alpha2 = twopi*b1
-    sigma1 = twopi*(b0- b1*(mu1*w0*cosb/(1.0-w0*cosb)))
-    sigma2 = twopi*b1
+    #from here forward is source function technique in toon
+    G = (1/mu1 - lamda)*positive     
+    H = gama*(lamda + 1/mu1)*negative 
+    J = gama*(lamda + 1/mu1)*positive 
+    K = (1/mu1 - lamda)*negative     
+    alpha1 = 2*pi*(b0+b1*(g1_plus_g2 - mu1)) 
+    alpha2 = 2*pi*b1 
+    sigma1 = 2*pi*(b0-b1*(g1_plus_g2 - mu1)) 
+    sigma2 = 2*pi*b1 
 
     flux_minus = zeros((numg, numt,nlevel,nwno))
     flux_plus = zeros((numg, numt,nlevel,nwno))
@@ -1781,11 +1834,11 @@ def get_thermal_1d_newclima(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,pl
             iubar = ubar1[ng,nt]
 
             if hard_surface:
-                flux_plus[ng,nt,-1,:] = twopi * (b_surface ) # terrestrial
+                flux_plus[ng,nt,-1,:] = all_b[-1,:] *2*pi  # terrestrial flux /pi = intensity
             else:
-                flux_plus[ng,nt,-1,:] = twopi*( all_b[-1,:] + b1[-1,:] * iubar) #no hard surface
+                flux_plus[ng,nt,-1,:] = ( all_b[-1,:] + b1[-1,:] * iubar)*2*pi #no hard surface   
                 
-            flux_minus[ng,nt,0,:] = twopi * (1 - exp(-tau_top / iubar)) * all_b[0,:]
+            flux_minus[ng,nt,0,:] = (1 - exp(-tau_top / iubar)) * all_b[0,:] *2*pi
             
             exptrm_angle = exp( - dtau / iubar)
             exptrm_angle_mdpt = exp( -0.5 * dtau / iubar) 
@@ -2343,11 +2396,16 @@ def get_thermal_1d_gfluxi(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plev
     twopi = 2*pi#+pi #NEB REMOVING A PI FROM HERE BECAUSE WE ASSUME NO SYMMETRY!  ############
 
     #get matrix of blackbodies 
-    #all_b = blackbody_climate(wno, tlevel, bb, y2, tp, tmin, tmax) #returns nlevel by nwave 
+    #all_b = blackbody_climate_deprecate(wno, tlevel, bb, y2, tp, tmin, tmax) #returns nlevel by nwave 
     all_b = blackbody_integrated(tlevel, wno, dwno)
 
     b0 = all_b[0:-1,:]
     b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
+
+    #if dtau is less than 1e-6 set b1 to zero 
+    #neb-was in fortran but doesnt look needed, keep for now
+    #b1 = slice_lt_cond(b1, dtau, 1e-6, 0.0)
+    #b0 = slice_lt_cond_arr(b0, dtau, 1e-6, all_b)
 
     #hemispheric mean parameters from Tabe 1 toon 
     alpha = sqrt( (1.-w0) / (1.-w0*cosb) )
@@ -2373,6 +2431,7 @@ def get_thermal_1d_gfluxi(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plev
     exptrm_positive = exp(exptrm) 
     exptrm_minus = 1.0/exptrm_positive
 
+    #*
     tau_top = dtau[0,:]*plevel[0]/(plevel[1]-plevel[0]) #tried this.. no luck*exp(-1)# #tautop=dtau[0]*np.exp(-1)
     b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:]  # Btop=(1.-np.exp(-tautop/ubari))*B[0]
     #b_surface = all_b[-1,:] #for terrestrial, hard surface  
@@ -3684,7 +3743,7 @@ def set_bb_deprecate(wno,delta_wno,nwno,ntmps,dt,tmin,tmax):
         tp[it]= temp_bb
     #GET RID OF PLACK CGS     
         for ik in range(nwno):
-            x= planck_cgs(wno[ik],temp_bb,delta_wno[ik])
+            x= planck_cgs_deprecate(wno[ik],temp_bb,delta_wno[ik])
             if x > 0.0 :
                 bb[it,ik] = log(x)
             else:
@@ -3692,12 +3751,12 @@ def set_bb_deprecate(wno,delta_wno,nwno,ntmps,dt,tmin,tmax):
     
     dts = 0.02
     for ik in range(nwno):
-        yp_n= (-bb[ntmps-1,ik]+log(planck_cgs(wno[ik],tmax+dts,delta_wno[ik])))/dts
-        yp_0 = (-bb[0,ik]+log(planck_cgs(wno[ik],tmin+dts,delta_wno[ik])))/dts
+        yp_n= (-bb[ntmps-1,ik]+log(planck_cgs_deprecate(wno[ik],tmax+dts,delta_wno[ik])))/dts
+        yp_0 = (-bb[0,ik]+log(planck_cgs_deprecate(wno[ik],tmin+dts,delta_wno[ik])))/dts
         
         pass0=bb[:,ik]
 
-        y2x = spline(tp,pass0,ntmps,yp_0,yp_n)
+        y2x = spline_deprecate(tp,pass0,ntmps,yp_0,yp_n)
         
         
         y2[:,ik] = y2x
@@ -3785,7 +3844,7 @@ def blackbody_climate_deprecate(wave,temp, bb, y2, tp, tmin, tmax):
 
     for itemp in range(len(temp)):
         for iwave in range(len(wave)):
-            blackbody_array[itemp, iwave] = planck_rad(iwave, temp[itemp], dT ,  tmin, tmax, bb , y2, tp)
+            blackbody_array[itemp, iwave] = planck_rad_deprecate(iwave, temp[itemp], dT ,  tmin, tmax, bb , y2, tp)
 
     return blackbody_array
 
