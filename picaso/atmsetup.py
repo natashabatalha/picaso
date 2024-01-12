@@ -615,6 +615,9 @@ class ATMSETUP():
         df['level'] = {}
         df['level']['pressure'] = self.level['pressure']/ self.c.pconv #bars
         df['level']['temperature'] = self.level['temperature']
+        
+        if self.get_lvl_flux:
+            df['level'] = self.lvl_output
 
         df['latitude'] = self.latitude
         df['longitude'] = self.longitude
