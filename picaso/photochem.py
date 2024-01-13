@@ -53,6 +53,7 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
     # dont worry we flip back before exiting the function
     
     temp,pressure = np.flip(temp), np.flip(pressure)
+    nlevelmin1=len(temp)-1
     if np.logical_and(first == False, pc == None):
         raise ValueError('If this is not the first run, pc should be recycled')
 
@@ -157,7 +158,7 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
         if np.logical_and(np.flip(pressure)[np.max(quench_levels)] >=  pressure[ind_surf],eq_chem==False):
             raise Exception("You need a deeper Surface Pressure. Surface is ", pressure[ind_surf], " max quench is ",np.flip(pressure)[np.max(quench_levels)] )
         
-        new_quench = 90-quench_levels
+        new_quench = nlevelmin1-quench_levels
     
     # get anundances at the surface
     surf = np.empty(len(gas.species_names))
