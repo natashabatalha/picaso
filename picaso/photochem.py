@@ -48,7 +48,7 @@ def rhs(P, u, mubar, radius, mass, pt):
 
     return np.array([dz_dP])
 
-def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,filename = '111',stfilename='111',network=None,network_ct=None,first=True,pc=None,user_psurf=True):
+def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,filename = '111',stfilename='111',network=None,network_ct=None,first=True,pc=None,user_psurf=True,user_psurf_add=3):
     # somehow all photochemical models want stuff flipped
     # dont worry we flip back before exiting the function
     
@@ -148,7 +148,7 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
         quench_levels = quench_level(np.flip(pressure), np.flip(temp), np.flip(kzz) ,pressure*0+2.34, grav_quench, return_mix_timescale= False)
         print("Quench time max pressure is ",np.flip(pressure)[np.max(quench_levels)])
         if user_psurf == False:
-            pressure_surf = np.flip(pressure)[np.max(quench_levels)+3]
+            pressure_surf = np.flip(pressure)[np.max(quench_levels)+user_psurf_add]
             dist = np.abs(np.log10(pressure)-np.log10(pressure_surf))
             wh= np.where(dist == np.min(dist))
             ind_surf = wh[0][0]
