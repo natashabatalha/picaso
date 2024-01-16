@@ -1213,7 +1213,7 @@ def get_fluxes( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU
             
             #"""<<<<<<< NEWCLIMA
             hard_surface = 0 
-            _,out_therm_fluxes = get_thermal_1d_newclima(nlevel, wno,nwno,ng,nt,temperature,
+            _,out_therm_fluxes = get_thermal_1d(nlevel, wno,nwno,ng,nt,temperature,
                                             DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                             pressure,ubar1,
                                             surf_reflect, hard_surface, dwni, calc_type=1)

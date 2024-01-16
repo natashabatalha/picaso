@@ -290,7 +290,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                     #                                    DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                     #                                    atm.level['pressure'],ubar1,
                     #                                    atm.surf_reflect, atm.hard_surface, tridiagonal)
-                    flux,lvl_fluxes  = get_thermal_1d_newclima(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
+                    flux,lvl_fluxes  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
                                                         DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                                         atm.level['pressure'],ubar1,
                                                         atm.surf_reflect, atm.hard_surface,
