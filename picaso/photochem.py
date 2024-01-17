@@ -1,10 +1,10 @@
-#def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,
-#    tstop=None,filename = None,stfilename=None,network=None,
-#    network_ct= None,first=None,pc=None):
-#    raise Exception("Photochemistry not yet availble")
+def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,
+    tstop=None,filename = None,stfilename=None,network=None,
+    network_ct= None,first=None,pc=None):
+    raise Exception("Photochemistry not yet availble")
 
 
-import numpy as np
+"""import numpy as np
 from matplotlib import pyplot as plt
 import cantera as ct
 from scipy import constants as const
@@ -48,12 +48,10 @@ def rhs(P, u, mubar, radius, mass, pt):
 
     return np.array([dz_dP])
 
-def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,filename = '111',stfilename='111',network=None,network_ct=None,first=True,pc=None,user_psurf=True,user_psurf_add=3):
+def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,filename = '111',stfilename='111',network=None,network_ct=None,first=True,pc=None):
     # somehow all photochemical models want stuff flipped
     # dont worry we flip back before exiting the function
-    
     temp,pressure = np.flip(temp), np.flip(pressure)
-    nlevelmin1=len(temp)-1
     if np.logical_and(first == False, pc == None):
         raise ValueError('If this is not the first run, pc should be recycled')
 
@@ -63,7 +61,7 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
     gas = ct.Solution(network_ct)
 
     # Composition from VULCAN file (see vulcan_files/cfg_wasp39b_10Xsolar_evening20deg.py)
-    O_H = 5.37E-4*(10.0**logMH)*(0.8)
+    O_H = 5.37E-4*(10.0**logMH)*(0.2)
     C_H = 2.95E-4*(10.0**logMH)
     N_H = 7.08E-5*(10.0**logMH)
     S_H = 1.41E-5*(10.0**logMH)
@@ -137,7 +135,7 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
     dist = np.abs(np.log10(pressure)-np.log10(pressure_surf))
     wh= np.where(dist == np.min(dist))
     ind_surf = wh[0][0]
-    print('User surface pressure in bar =',pressure[ind_surf])
+    print('surface pressure in bar =',pressure[ind_surf])
     if pressure[ind_surf] == np.min(pressure):
         print('You are running Equilibrium Chemistry through photochem.')
         eq_chem=True
@@ -147,18 +145,11 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
     grav_quench = 6.67430e-11 *((float(mass.value))/1.0e3) / ((float(radius.value))/1.0e2)**2.0
     if first==True:
         quench_levels = quench_level(np.flip(pressure), np.flip(temp), np.flip(kzz) ,pressure*0+2.34, grav_quench, return_mix_timescale= False)
-        print("Quench time max pressure is ",np.flip(pressure)[np.max(quench_levels)])
-        if user_psurf == False:
-            pressure_surf = np.flip(pressure)[np.max(quench_levels)+user_psurf_add]
-            dist = np.abs(np.log10(pressure)-np.log10(pressure_surf))
-            wh= np.where(dist == np.min(dist))
-            ind_surf = wh[0][0]
-            print('Overwriting user surface pressure (as user_psurf is True) in bar =',pressure[ind_surf])
-
+        print(np.flip(pressure)[np.max(quench_levels)])
+        
         if np.logical_and(np.flip(pressure)[np.max(quench_levels)] >=  pressure[ind_surf],eq_chem==False):
             raise Exception("You need a deeper Surface Pressure. Surface is ", pressure[ind_surf], " max quench is ",np.flip(pressure)[np.max(quench_levels)] )
-        
-        new_quench = nlevelmin1-quench_levels
+        new_quench = 90-quench_levels
     
     # get anundances at the surface
     surf = np.empty(len(gas.species_names))
@@ -330,46 +321,6 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
                 change_so2 = diff_so2[wh[0][0]]/old_so2[wh[0][0]]
                 print("SO2 relative Change ",change_so2," tn ", tn)
             old_so2 = (pc_new.wrk.densities[ind,:]/pc_new.wrk.density).copy()
-            
-            sp = 'CO2'
-            ind = pc_new.dat.species_names.index(sp)
-            if tn > 0:
-                diff_co2 = np.abs((pc_new.wrk.densities[ind,:]/pc_new.wrk.density) - old_co2)
-                
-                wh = np.where(diff_co2  == np.max(diff_co2))
-                change_co2 = diff_co2[wh[0][0]]/old_co2[wh[0][0]]
-                print("CO2 relative Change ",change_co2," tn ", tn)
-            old_co2 = (pc_new.wrk.densities[ind,:]/pc_new.wrk.density).copy()
-
-            sp = 'H2O'
-            ind = pc_new.dat.species_names.index(sp)
-            if tn > 0:
-                diff_h2o = np.abs((pc_new.wrk.densities[ind,:]/pc_new.wrk.density) - old_h2o)
-                
-                wh = np.where(diff_h2o  == np.max(diff_h2o))
-                change_h2o = diff_h2o[wh[0][0]]/old_h2o[wh[0][0]]
-                print("H2O relative Change ",change_h2o," tn ", tn)
-            old_h2o = (pc_new.wrk.densities[ind,:]/pc_new.wrk.density).copy()
-
-            sp = 'CO'
-            ind = pc_new.dat.species_names.index(sp)
-            if tn > 0:
-                diff_co = np.abs((pc_new.wrk.densities[ind,:]/pc_new.wrk.density) - old_co)
-                
-                wh = np.where(diff_co  == np.max(diff_co))
-                change_co = diff_co[wh[0][0]]/old_co[wh[0][0]]
-                print("CO relative Change ",change_co," tn ", tn)
-            old_co = (pc_new.wrk.densities[ind,:]/pc_new.wrk.density).copy()
-
-            sp = 'HCN'
-            ind = pc_new.dat.species_names.index(sp)
-            if tn > 0:
-                diff_hcn = np.abs((pc_new.wrk.densities[ind,:]/pc_new.wrk.density) - old_hcn)
-                
-                wh = np.where(diff_hcn  == np.max(diff_hcn))
-                change_hcn = diff_hcn[wh[0][0]]/old_hcn[wh[0][0]]
-                print("HCN relative Change ",change_hcn," tn ", tn)
-            old_hcn = (pc_new.wrk.densities[ind,:]/pc_new.wrk.density).copy()
 
             
         
@@ -401,23 +352,8 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
                 if change_ch4 <= 1e-3:
                     if change_nh3 <= 1e-3:
                         if change_so2 <= 1e-3:
-                            if change_co2 <= 1e-3:
-                                if change_h2o <= 1e-3:
-                                    if change_co <= 1e-3:
-                                        if change_hcn <= 1e-3:
-                                            print("Stopping because Relative changes in CH4, NH3, SO2, H2O, CO, CO2, HCN are ", change_ch4," ",change_nh3," ",change_so2," ",change_h2o," ",change_co," ",change_co2," ",change_hcn)
-                                            break
-            elif np.logical_and(tn < 1e5,tn>0):
-                if change_ch4 <= 1e-13:
-                    if change_nh3 <= 1e-13:
-                        if change_so2 <= 1e-13:
-                            if change_co2 <= 1e-13:
-                                if change_h2o <= 1e-13:
-                                    if change_co <= 1e-13:
-                                        if change_hcn <= 1e-13:
-                                            print("Stopping early because Relative changes in CH4, NH3, SO2, H2O, CO, CO2, HCN are ", change_ch4," ",change_nh3," ",change_so2," ",change_h2o," ",change_co," ",change_co2," ",change_hcn)
-                                            break
-
+                            print("Stopping because Relative changes in CH4, NH3, SO2 are ", change_ch4," ",change_nh3," ",change_so2)
+                            break
             tn_prev = tn
             for i in range(100):
                 tn = pc_new.step()
@@ -455,7 +391,7 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
 
     return pc_new,output_array,species,np.flip(pressure)
 
-
+"""
 
       
     
