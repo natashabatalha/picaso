@@ -409,7 +409,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
 
     # here are other  convergence and tolerance criterias
 
-    step_max_tolerance = 0.03e0 # scaled maximum step size in line searches
+    step_max = 0.01e0 # scaled maximum step size in line searches
     alf = 1.e-4    # ? 
     alam2 = 0.0   # ? 
     tolmin=1.e-5   # ?
@@ -551,7 +551,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
             
         
         # define maximum T step size
-        step_max = step_max_tolerance*max(sqrt(sum_1),n_total*1.0)
+        step_max *= max(sqrt(sum_1),n_total*1.0)#step_max_tolerance*
         print('maximum scaled step size',step_max, n_total, sum_1)
         no =n_top_r
         
@@ -896,9 +896,9 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                 nao+= n_bot_a - n_strt_a
                         
             f= 0.5*sum
-            print('cond1:alam.lt.alamin',alam, alamin)
-            print('cond2:f.le.CCC',f,f_old + alf*alam*slope)
-            print('f,fold,alf,alam,slope',f,f_old,alf,alam,slope)
+            #print('cond1:alam.lt.alamin',alam, alamin)
+            #print('cond2:f.le.CCC',f,f_old + alf*alam*slope)
+            #print('f,fold,alf,alam,slope',f,f_old,alf,alam,slope)
             #First check: Is T too small to continue? 
             if alam < alamin :
                 #print(alam, alamin)
