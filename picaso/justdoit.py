@@ -1475,7 +1475,7 @@ class inputs():
         self.inputs['climate']['mh'] = mh
         self.inputs['climate']['CtoO'] = CtoO
 
-    def old_run_climate_model(self, opacityclass):
+    def deprecate_run_climate_model(self, opacityclass):
         """
         Top Function to run the Climate Model
 
@@ -1555,7 +1555,6 @@ class inputs():
         convt=5.0
         x_max_mult=7.0
         
-        #print('NEB FIRST PROFILE RUN')
         final = False
         pressure, temperature, dtdp, profile_flag = profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             TEMP1,pressure, F0PI, t_table, p_table, grad, cp, opacityclass, grav, 
@@ -1569,7 +1568,6 @@ class inputs():
         x_max_mult=7.0
 
 
-        #print('NEB SECOND PROFILE RUN')
         final = False
         pressure, temperature, dtdp, profile_flag = profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                     temperature,pressure, F0PI, t_table, p_table, grad, cp, opacityclass, grav, 
@@ -1577,7 +1575,8 @@ class inputs():
         
         pressure, temp, dtdp, nstr_new, flux_plus_final =find_strat(mieff_dir, pressure, temperature, dtdp ,F0PI, nofczns,nstr,x_max_mult,
                              t_table, p_table, grad, cp, opacityclass, grav, 
-                             rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed)
+                             rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed,
+                             verbose=verbose)
 
         
         return pressure , temp, dtdp, nstr_new, flux_plus_final
@@ -3727,7 +3726,7 @@ class inputs():
 
     def climate(self, opacityclass, save_all_profiles = False, as_dict=True,with_spec=False,
         save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False, kz = None, 
-        on_fly=False,gases_fly=None, chemeq_first=True):#,
+        on_fly=False,gases_fly=None, chemeq_first=True,verbose=True):#,
        
         """
         Top Function to run the Climate Model
@@ -3748,7 +3747,8 @@ class inputs():
             If you want to run MLT in convective zones and Moses in the radiative zones
         kz : array
             Kzz input array if user wants constant or whatever input profile (cgs)
-        
+        verbose : bool  
+            If True, triggers prints throughout code 
         """
         #save to user 
         all_out = {}
@@ -3848,7 +3848,10 @@ class inputs():
         
         if chemeq_first: pressure, temperature, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir,it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             TEMP1,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
-            rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , cloudy, cld_species,mh,fsed,flag_hack, save_profile,all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,first_call_ever=True)
+            rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , 
+            cloudy, cld_species,mh,fsed,flag_hack, save_profile,all_profiles,
+            opd_cld_climate,g0_cld_climate,w0_cld_climate,
+            first_call_ever=True, verbose=verbose)
 
         # second convergence call
         it_max= 7
@@ -3861,11 +3864,15 @@ class inputs():
         final = False
         if chemeq_first: pressure, temperature, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                     temperature,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
-                    rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack,save_profile,all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop )   
+                    rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final, cloudy, 
+                    cld_species, mh,fsed,flag_hack,save_profile,all_profiles,
+                    opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
+                    flux_plus_ir_attop, verbose=verbose )   
 
         if chemeq_first: pressure, temp, dtdp, nstr_new, flux_plus_final, df, all_profiles, opd_now,w0_now,g0_now =find_strat(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                              t_table, p_table, grad, cp, opacityclass, grav, 
-                             rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, save_profile,all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop)
+                             rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, save_profile,all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,
+                             verbose=verbose)
 
         
         if diseq_chem:
@@ -3884,20 +3891,20 @@ class inputs():
                 nstr[2] = 89
                 nstr[3],nstr[4],nstr[5] = 0,0,0
                 
-                print("2 conv Zones, so making small adjustments")
+                if verbose: print("2 conv Zones, so making small adjustments")
             elif (nstr[1] > 0) & (nstr[3] == 0):
                 if nstr[4] == 0:
                     nstr[1]+= del_zone #5#15
                 else:
                     nstr[1] += del_zone #5#15  
                     nstr[3], nstr[4] ,nstr[5] = 0,0,0#6#16
-                print("1 conv Zone, so making small adjustment")
+                if verbose: print("1 conv Zone, so making small adjustment")
             if nstr[1] >= nlevel -2 : # making sure we haven't pushed zones too deep
                 nstr[1] = nlevel -4
             if nstr[4] >= nlevel -2:
                 nstr[4] = nlevel -3
             
-            print("New NSTR status is ", nstr)
+            if verbose: print("New NSTR status is ", nstr)
 
             
 
@@ -3944,7 +3951,7 @@ class inputs():
             filename_db=os.path.join(__refdata__, 'climate_INPUTS/ck_cx_cont_opacities_661.db')
             
             if on_fly:
-                print("From now I will mix "+str(gases_fly)+" only on--the--fly")
+                if verbose: print("From now I will mix "+str(gases_fly)+" only on--the--fly")
                 #mhdeq and ctodeq will be auto by opannection
                 #NO Background, just CIA + whatever in gases_fly
                 #ck_db=os.path.join(__refdata__, 'climate_INPUTS/sonora_2020_feh'+mhdeq+'_co_'+CtoOdeq+'.data.196')
@@ -3964,7 +3971,6 @@ class inputs():
             if cloudy == 1:    
                 wv661 = 1e4/opacityclass.wno
                 opd_cld_climate,g0_cld_climate,w0_cld_climate = initiate_cld_matrices(opd_cld_climate,g0_cld_climate,w0_cld_climate,wv196,wv661)
-                print(np.shape(opd_cld_climate))
             
             #Rerun star so that F0PI can now be on the 
             #661 grid 
@@ -3996,7 +4002,7 @@ class inputs():
 
                 all_kzz = np.append(all_kzz, t_mix) # save kzz
 
-                print("Quench Levels are CO, CO2, NH3, HCN, PH3 ", quench_levels) # print quench levels
+                if verbose: print("Quench Levels are CO, CO2, NH3, HCN, PH3 ", quench_levels) # print quench levels
                 
                 final = False
                 #finall = False #### what is this thing?
@@ -4080,7 +4086,7 @@ class inputs():
             
             # diseq calculations start here actually
             
-            print("DOING DISEQ CALCULATIONS NOW")
+            if verbose: print("DOING DISEQ CALCULATIONS NOW")
             it_max= 7
             itmx= 5
             conv = 5.0
@@ -4094,12 +4100,17 @@ class inputs():
             
             pressure, temperature, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict  = profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
-            rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , cloudy, cld_species,mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile,all_profiles, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly)
+            rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , 
+            cloudy, cld_species,mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile,
+            all_profiles, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,
+            g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,
+            photo_inputs_dict,
+            on_fly=on_fly, gases_fly=gases_fly, verbose=verbose)
             
-            print(photo_inputs_dict)
             pressure, temp, dtdp, nstr_new, flux_plus_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,opd_now,g0_now,w0_now,photo_inputs_dict=find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                             t_table, p_table, grad, cp, opacityclass, grav, 
-                            rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly)
+                            rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly,
+                             verbose=verbose)
             
                 
 
@@ -4704,7 +4715,8 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                     DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
                     ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
                     wno,nwno,ng,nt,gweight,tweight, 
-                    ngauss, gauss_wts, save_profile, all_profiles)
+                    ngauss, gauss_wts, save_profile, all_profiles,
+                    verbose=verbose)
         
         #NEB stage delete after confirmation from SM
         #if (temp <= min(opacityclass.cia_temps)).any():
@@ -4814,7 +4826,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
 
 def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
              t_table, p_table, grad, cp, opacityclass, grav, 
-             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, cloudy, cld_species,mh,fsed,flag_hack, save_profile, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop):
+             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, cloudy, cld_species,mh,fsed,flag_hack, save_profile, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,verbose=1):
     """
     Function iterating on the TP profile by calling tstart and changing opacities as well
     Parameters
@@ -4881,7 +4893,9 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
         Maximum allowed Temp in the profile
     dwni : array
         Spectral interval corrections (dimension= nwvno)
-       
+    verbose: int 
+        If 0 nothing gets printed
+        If 1 this prints everything out 
         
     Returns
     -------
@@ -4909,7 +4923,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
         ratio = dtdp[nstr[1]-1]/grad_x[nstr[1]-1]
 
         if ratio > 1.8 :
-            print("Move up two levels")
+            if verbose: print("Move up two levels")
             ngrow = 2
             nstr = growup( 1, nstr , ngrow)
         else :
@@ -4920,8 +4934,11 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
             raise ValueError( "Convection zone grew to Top of atmosphere, Need to Stop")
         
         pressure, temp, dtdp, profile_flag, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir, it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
-            temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
-             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, save_profile, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop)
+                            temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
+                             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
+                             cloudy, cld_species, mh,fsed,flag_hack, save_profile, all_profiles, 
+                             opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
+                             flux_plus_ir_attop, verbose=verbose)
 
     # now for the 2nd convection zone
     dt_max = 0.0 #DTMAX
@@ -4940,9 +4957,9 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
         flag_final_convergence = 1
 
     if flag_final_convergence  == 0:
-        print(" convection zone status")
-        print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
-        print(nofczns)
+        if verbose: print(" convection zone status")
+        if verbose: print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
+        if verbose: print(nofczns)
 
         nofczns = 2
         nstr[4]= nstr[1]
@@ -4950,18 +4967,21 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
         nstr[1]= i_max
         nstr[2] = i_max
         nstr[3] = i_max #+ 1
-        print(nstr)
+        if verbose: print(nstr)
         if nstr[3] >= nstr[4] :
             #print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
             #print(nofczns)
             raise ValueError("Overlap happened !")
         pressure, temp, dtdp, profile_flag, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir, it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
-             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species,mh, fsed,flag_hack,save_profile, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop)
+             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
+             cloudy, cld_species,mh, fsed,flag_hack,save_profile, all_profiles,
+             opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
+             flux_plus_ir_attop, verbose=verbose)
 
         i_change = 1
         while i_change == 1 :
-            print("Grow Phase : Upper Zone")
+            if verbose: print("Grow Phase : Upper Zone")
             i_change = 0
 
             d1 = dtdp[nstr[1]-1]
@@ -4986,10 +5006,13 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
                         nstr[2] = nstr[5]
                         nstr[3] = 0
                         i_change = 1
-                print(nstr)
+                if verbose: print(nstr)
                 pressure, temp, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir, it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
-            temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
-             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack,save_profile, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop)
+                                temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
+                                 rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
+                                 cloudy, cld_species, mh,fsed,flag_hack,save_profile, all_profiles,
+                                 opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
+                                 flux_plus_ir_attop, verbose=verbose)
 
                 d1 = dtdp[nstr[1]-1]
                 d2 = dtdp[nstr[3]]
@@ -5006,10 +5029,13 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
                     nstr[2] = nstr[5]
                     nstr[3] = 0
                     i_change =1
-                print(nstr)
+                if verbose: print(nstr)
                 pressure, temp, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir, it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
                     temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
-                    rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack,save_profile, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop)
+                    rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
+                    cloudy, cld_species, mh,fsed,flag_hack,save_profile, all_profiles,
+                    opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
+                    flux_plus_ir_attop, verbose=verbose)
             
 
             flag_final_convergence = 1
@@ -5022,18 +5048,21 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
     ip2 = -10
 
     final = True
-    print("final",nstr)
+    if verbose: print("final",nstr)
     pressure, temp, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir, it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
                 temp,pressure, FOPI, t_table, p_table, grad, cp,opacityclass, grav, 
-                rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species,mh,fsed,flag_hack,save_profile, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop)
+                rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
+                cloudy, cld_species,mh,fsed,flag_hack,save_profile, all_profiles,
+                opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
+                flux_plus_ir_attop, verbose=verbose)
 
     #    else :
     #        raise ValueError("Some problem here with goto 125")
         
     if profile_flag == 0:
-        print("ENDING WITHOUT CONVERGING")
+        if verbose: print("ENDING WITHOUT CONVERGING")
     elif profile_flag == 1:
-        print("YAY ! ENDING WITH CONVERGENCE")
+        if verbose: print("YAY ! ENDING WITH CONVERGENCE")
         
     bundle = inputs(calculation='brown')
     bundle.phase_angle(0)
@@ -5078,7 +5107,11 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
 
 def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             temp,pressure,FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
-             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species,mh,fsed,flag_hack,quench_levels,kz,mmw, save_profile, all_profiles,self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict=None,on_fly=False,gases_fly=None ):
+             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
+             cloudy, cld_species,mh,fsed,flag_hack,quench_levels,kz,mmw, save_profile,
+              all_profiles,self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,
+              g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,
+              photo_inputs_dict=None,on_fly=False,gases_fly=None,verbose=True ):
     """
     Function iterating on the TP profile by calling tstart and changing opacities as well
     Parameters
@@ -5145,7 +5178,8 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         Maximum allowed Temp in the profile
     dwni : array
         Spectral interval corrections (dimension= nwvno)   
-        
+    verbose : bool 
+        If True, prints out messages 
     Returns
     -------
     array 
@@ -5309,7 +5343,8 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
             W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, FOPI, 
             single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
-            wno,nwno,ng,nt,gweight,tweight, ngauss, gauss_wts, save_profile, all_profiles)
+            wno,nwno,ng,nt,gweight,tweight, ngauss, gauss_wts, save_profile, all_profiles,
+            verbose=verbose)
         '''
         if (temp <= min(opacityclass.cia_temps)).any():
             wh = np.where(temp <= min(opacityclass.cia_temps))
@@ -5397,7 +5432,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             taudif = np.max(np.abs(diff))
             taudif_tol = 0.4*np.max(0.5*(opd_clmt+opd_prev_cld_step))
             
-            print("Max TAUCLD diff is", taudif, " Tau tolerance is ", taudif_tol)
+            if verbose: print("Max TAUCLD diff is", taudif, " Tau tolerance is ", taudif_tol)
 
         
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
@@ -5445,7 +5480,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         ert = ert/(float(nlevel)*scalt)
         
         if ((iii > 0) & (ert < convt) & (taudif < taudif_tol)) :
-            print("Profile converged")
+            if verbose: print("Profile converged")
             conv_flag = 1
             if final == True :
                 itmx = 6
@@ -5499,7 +5534,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             return pressure, temp , dtdp, conv_flag, qvmrs, qvmrs2, all_profiles, all_kzz, opd_cld_climate, g0_cld_climate, w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict
             
         
-        print("Big iteration is ",min(temp), iii)
+        if verbose: print("Big iteration is ",min(temp), iii)
     conv_flag = 0
     ## this is supposed to be useless so testing this
     '''
@@ -5553,15 +5588,15 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             conv_flag = 1
     '''
     if conv_flag == 0:
-        print("Not converged")
+        if verbose: print("Not converged")
     else :
-        print("Profile converged")
+        if verbose: print("Profile converged")
     
     return pressure, temp , dtdp, conv_flag, qvmrs, qvmrs2, all_profiles, all_kzz, opd_cld_climate, g0_cld_climate, w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict
     
 def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
              t_table, p_table, grad, cp, opacityclass, grav, 
-             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, cloudy, cld_species,mh,fsed,flag_hack, quench_levels, kz,mmw, save_profile, all_profiles,self_consistent_kzz ,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict=None,on_fly=False, gases_fly=None ):
+             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, cloudy, cld_species,mh,fsed,flag_hack, quench_levels, kz,mmw, save_profile, all_profiles,self_consistent_kzz ,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict=None,on_fly=False, gases_fly=None , verbose=1):
     """
     Function iterating on the TP profile by calling tstart and changing opacities as well
     Parameters
@@ -5628,6 +5663,9 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         Maximum allowed Temp in the profile
     dwni : array
         Spectral interval corrections (dimension= nwvno)   
+    verbose : int 
+        If 1= prints out all output 
+        If 0= does not print anything out
         
     Returns
     -------
@@ -5655,7 +5693,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         ratio = dtdp[nstr[1]-1]/grad_x[nstr[1]-1]
 
         if ratio > 1.8 :
-            print("Move up two levels")
+            if verbose: print("Move up two levels")
             ngrow = 2
             nstr = growup( 1, nstr , ngrow)
         else :
@@ -5666,7 +5704,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
             raise ValueError( "Convection zone grew to Top of atmosphere, Need to Stop")
         pressure, temp, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict = profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,\
             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav,rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw, save_profile, all_profiles, self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,\
-            w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly )
+            w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly , verbose=verbose)
 
     # now for the 2nd convection zone
     dt_max = 0.0 #DTMAX
@@ -5685,9 +5723,9 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         flag_final_convergence = 1
 
     if flag_final_convergence  == 0:
-        print(" convection zone status")
-        print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
-        print(nofczns)
+        if verbose: print(" convection zone status")
+        if verbose: print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
+        if verbose: print(nofczns)
 
         nofczns = 2
         nstr[4]= nstr[1]
@@ -5695,18 +5733,23 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         nstr[1]= i_max
         nstr[2] = i_max
         nstr[3] = i_max #+ 1
-        print(nstr)
+        if verbose: print(nstr)
         if nstr[3] >= nstr[4] :
             #print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
             #print(nofczns)
             raise ValueError("Overlap happened !")
         pressure, temp, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict = profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,\
             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, \
-             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species,mh, fsed,flag_hack, quench_levels, kz , mmw,save_profile, all_profiles, self_consistent_kzz, save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly )
+             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
+             cloudy, cld_species,mh, fsed,flag_hack, quench_levels, kz , mmw,
+             save_profile, all_profiles, self_consistent_kzz, save_kzz,all_kzz,
+             opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
+             flux_plus_ir_attop,photo_inputs_dict,
+             on_fly=on_fly, gases_fly=gases_fly, verbose=verbose )
 
         i_change = 1
         while i_change == 1 :
-            print("Grow Phase : Upper Zone")
+            if verbose: print("Grow Phase : Upper Zone")
             i_change = 0
 
             d1 = dtdp[nstr[1]-1]
@@ -5731,10 +5774,10 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
                         nstr[2] = nstr[5]
                         nstr[3] = 0
                         i_change = 1
-                print(nstr)
+                if verbose: print(nstr)
                 pressure, temp, dtdp, profile_flag,qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict = profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,\
             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, \
-             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw, save_profile, all_profiles,self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly)
+             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw, save_profile, all_profiles,self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, verbose=verbose)
 
                 d1 = dtdp[nstr[1]-1]
                 d2 = dtdp[nstr[3]]
@@ -5751,9 +5794,9 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
                     nstr[2] = nstr[5]
                     nstr[3] = 0
                     i_change =1
-                print(nstr)
+                if verbose: print(nstr)
                 pressure, temp, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict = profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult, \
-                                                        temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav,rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile, all_profiles, self_consistent_kzz, save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly)
+                                                        temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav,rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile, all_profiles, self_consistent_kzz, save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, verbose=verbose)
             
 
             flag_final_convergence = 1
@@ -5766,18 +5809,18 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
     ip2 = -10
 
     final = True
-    print("final",nstr)
+    if verbose: print("final",nstr)
     pressure, temp, dtdp, profile_flag,qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict = profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,\
                 temp,pressure, FOPI, t_table, p_table, grad, cp,opacityclass, grav, \
-                rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species,mh,fsed,flag_hack,quench_levels,kz, mmw,save_profile, all_profiles, self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly)
+                rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species,mh,fsed,flag_hack,quench_levels,kz, mmw,save_profile, all_profiles, self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, verbose=verbose)
 
     #    else :
     #        raise ValueError("Some problem here with goto 125")
         
     if profile_flag == 0:
-        print("ENDING WITHOUT CONVERGING")
+        if verbose: print("ENDING WITHOUT CONVERGING")
     elif profile_flag == 1:
-        print("YAY ! ENDING WITH CONVERGENCE")
+        if verbose: print("YAY ! ENDING WITH CONVERGENCE")
         
     bundle = inputs(calculation='brown')
     bundle.phase_angle(0)

@@ -334,7 +334,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
             ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,
             cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,
             constant_back,constant_forward,  wno,nwno,ng,nt,gweight,tweight, ngauss, gauss_wts, save_profile, all_profiles,
-            verbose):
+            verbose=1):
     """
     Module to iterate on the level TP profile to make the Net Flux as close to 0.
     Opacities/chemistry are not updated while iterating in this module.
@@ -545,7 +545,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
 
         # test if we are already at a root
         if (test/abs(tidal[0])) < 0.01*tolf :
-            print(" We are already at a root, tolf , test = ",0.01*tolf,", ",test/abs(tidal[0]))
+            if verbose: print(" We are already at a root, tolf , test = ",0.01*tolf,", ",test/abs(tidal[0]))
             flag_converge = 2
             dtdp=np.zeros(shape=(nlevel-1))
             for j in range(nlevel -1):
@@ -554,9 +554,15 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
             return   temp,  dtdp, flag_converge, flux_net_ir, flux_plus_ir[0,:], all_profiles
             
         
-        # define maximum T step size
+        # NEB NOTE about step max 
+        # In the original fortran code this was originally 
+        # step_max = step_max_tolerance*max(sqrt(sum_1),n_total*1.0) #where step_max_tolerance=0.03
+        # however when this was fixed, the code was progressing very slowly 
+        # therefore, we are keeping this in the code for now 
+        # the result of this is that there are sometimes large temperature 
+        # steps that might be problematic for edge cases that get too hot or too cold 
         step_max *= max(sqrt(sum_1),n_total*1.0)#step_max_tolerance*
-        print('maximum scaled step size',step_max, n_total, sum_1, its)
+        #if verbose: print('maximum scaled step size',step_max, n_total, sum_1, its)
         no =n_top_r
         
         i_count= 1 #icount
@@ -900,33 +906,24 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                 nao+= n_bot_a - n_strt_a
                         
             f= 0.5*sum
-            print('cond1:alam.lt.alamin',alam, alamin)
-            print('cond2:f.le.CCC',f,f_old + alf*alam*slope)
-            print('f,fold,alf,alam,slope',f,f_old,alf,alam,slope)
+            #if verbose: print('cond1:alam.lt.alamin',alam, alamin)
+            #if verbose: print('cond2:f.le.CCC',f,f_old + alf*alam*slope)
+            #if verbose: print('f,fold,alf,alam,slope',f,f_old,alf,alam,slope)
             #First check: Is T too small to continue? 
             if alam < alamin :
-                #print(alam, alamin)
                 check = True
-                print(' CONVERGED ON SMALL T STEP alam, alamin', alam, alamin)
-                #print("1st if")
-                #print(alam, alamin)
+                #if verbose: print(' CONVERGED ON SMALL T STEP alam, alamin', alam, alamin)
                 flag_converge, check = check_convergence(f_vec, n_total, tolf, check, f, dflux, tolmin, temp, temp_old, g , tolx)
  
             #Second check: Has the net flux decreased enough that we are happy in the line search
             #If so you can proceed
             elif f <= f_old + alf*alam*slope :
-                #print("2nd if")
-                
-                
-                print ('Exit with decreased f')
+                #if verbose: print ('Exit with decreased f')
                 flag_converge, check = check_convergence(f_vec, n_total, tolf, check, f, dflux, tolmin, temp, temp_old, g , tolx)
 
             #Else: Let's back track     
             else:
-                
-                # we backtrack
-                #print("3rd if")
-                print(' Now backtracking, f, fold, alf, alam, slope', f, f_old, alf, alam, slope)
+                #if verbose: print(' Now backtracking, f, fold, alf, alam, slope', f, f_old, alf, alam, slope)
                 if alam == 1.0:
                     
                     tmplam= -slope/ (2*(f-f_old-slope))
@@ -968,11 +965,10 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                 
                 flag_converge = 1 # to avoid getting stuck here unnecesarily.
                 temp = temp_old.copy() +0.5
-                print("Got stuck with temp NaN -- so escaping the while loop in tstart")
+                if verbose: print("Got stuck with temp NaN -- so escaping the while loop in tstart")
         
 
-        print("Iteration number ", its,", min , max temp ", min(temp),max(temp), ", flux balance ", flux_net[0]/abs(tidal[0]))
-        #print(f, f_old, tolf, np.max((temp-temp_old)/temp_old), tolx)
+        if verbose: print("Iteration number ", its,", min , max temp ", min(temp),max(temp), ", flux balance ", flux_net[0]/abs(tidal[0]))
         if save_profile == 1:
             all_profiles = np.append(all_profiles,temp_old)
         if flag_converge == 2 : # converged
@@ -981,17 +977,16 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
             for j in range(nlevel -1):
                 dtdp[j] = (log( temp[j]) - log( temp[j+1]))/(log(pressure[j]) - log(pressure[j+1]))
             
-            print("In t_start: Converged Solution in iterations ",its)
+            if verbose: print("In t_start: Converged Solution in iterations ",its)
             
            
            
             return   temp,  dtdp, flag_converge , flux_net_ir, flux_plus_ir[0,:] , all_profiles
         
-    print("Iterations exceeded it_max ! sorry ")#,np.max(dflux/tidal), tolf, np.max((temp-temp_old)/temp_old), tolx)
+    if verbose: print("Iterations exceeded it_max ! sorry ")
     dtdp=np.zeros(shape=(nlevel-1))
     for j in range(nlevel -1):
         dtdp[j] = (log( temp[j]) - log( temp[j+1]))/(log(pressure[j]) - log(pressure[j+1]))
-
 
     return temp, dtdp, flag_converge  , flux_net_ir_layer, flux_plus_ir[0,:], all_profiles
 
@@ -1165,8 +1160,7 @@ def get_fluxes( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU
             ng_clima,nt_clima=1,1
             ubar0_clima = ubar0*0+0.5
             ubar1_clima = ubar1*0+0.5
-
-            _, out_ref_fluxes = get_reflected_1d_newclima(nlevel, wno,nwno,ng_clima,nt_clima,
+            _, out_ref_fluxes = get_reflected_1d(nlevel, wno,nwno,ng_clima,nt_clima,
                                     DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
                                     GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
                                     DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
