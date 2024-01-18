@@ -1,6 +1,5 @@
 from .atmsetup import ATMSETUP
 from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_transit_1d, get_thermal_SH
-from .fluxes import get_reflected_1d_newclima
 
 from .fluxes import tidal_flux, get_kzz#,set_bb_deprecate 
 from .climate import  calculate_atm_deq, did_grad_cp, convec, calculate_atm, t_start, growdown, growup, get_fluxes
@@ -267,7 +266,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                         b_top=b_top)
                                         #get_toa_intensity=1, get_lvl_flux=0)"""
                     
-                    xint,lvl_fluxes = get_reflected_1d_newclima(nlevel, wno,nwno,ng,nt,
+                    xint,lvl_fluxes = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                     DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
                                     GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
                                     DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
