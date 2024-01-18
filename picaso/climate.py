@@ -2,7 +2,7 @@ import numpy as np
 import warnings
 from numba import jit, vectorize
 from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh, min, dot, array,log,log10
-from .fluxes import get_reflected_1d,get_thermal_1d,get_reflected_1d_gfluxv
+from .fluxes import get_reflected_1d,get_thermal_1d,get_reflected_1d_gfluxv, get_reflected_1d_newclima
 #from .fluxes import get_thermal_1d_newclima, get_thermal_1d_gfluxi #deprecated
 from .atmsetup import ATMSETUP
 from .optics import compute_opacity
@@ -327,7 +327,7 @@ def lu_backsubs(a, n, ntot, indx, b):
     return b
 
 # @logger.catch # Add this to track errors
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def t_start(nofczns,nstr,it_max,conv,x_max_mult, 
             rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
             grad, cp, tidal, tmin,tmax, dwni , bb , y2, tp, DTAU, TAU, W0, COSB, 
@@ -552,7 +552,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
         
         # define maximum T step size
         step_max *= max(sqrt(sum_1),n_total*1.0)#step_max_tolerance*
-        print('maximum scaled step size',step_max, n_total, sum_1)
+        print('maximum scaled step size',step_max, n_total, sum_1, its)
         no =n_top_r
         
         i_count= 1 #icount
@@ -896,9 +896,9 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                 nao+= n_bot_a - n_strt_a
                         
             f= 0.5*sum
-            #print('cond1:alam.lt.alamin',alam, alamin)
-            #print('cond2:f.le.CCC',f,f_old + alf*alam*slope)
-            #print('f,fold,alf,alam,slope',f,f_old,alf,alam,slope)
+            print('cond1:alam.lt.alamin',alam, alamin)
+            print('cond2:f.le.CCC',f,f_old + alf*alam*slope)
+            print('f,fold,alf,alam,slope',f,f_old,alf,alam,slope)
             #First check: Is T too small to continue? 
             if alam < alamin :
                 #print(alam, alamin)
@@ -1073,7 +1073,7 @@ def growdown(nlv,nstr, ngrow) :
 @jit(nopython=True, cache=True)
 def get_fluxes( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU, W0, 
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
+            ubar0,ubar1,cos_theta, F0PI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
             wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts,reflected, thermal):
     """
     Program to run RT for climate calculations. Runs the thermal and reflected module.
@@ -1154,8 +1154,8 @@ def get_fluxes( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU
         #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
         b_top = 0.0
         for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
-            """
-            <<<<<<< NEWCLIMA
+            #"""
+            #<<<<<<< NEWCLIMA
             #here only the fluxes are returned since we dont care about the outgoing intensity at the 
             #top, which is only used for albedo/ref light spectra
             ng_clima,nt_clima=1,1
@@ -1168,17 +1168,22 @@ def get_fluxes( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU
                                     DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
                                     surf_reflect, ubar0_clima,ubar1_clima,cos_theta, F0PI,
                                     single_phase,multi_phase,
-                                    frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal,
+                                    frac_a,frac_b,frac_c,constant_back,constant_forward, 
                                     get_toa_intensity=0, get_lvl_flux=1)
 
             flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v = out_ref_fluxes
+            
+            #import pickle as pk
+            #pk.dump([flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v], open('newclima.pk','wb'))
 
             flux_net_v_layer += (np.sum(flux_plus_midpt_all_v,axis=3)-np.sum(flux_minus_midpt_all_v,axis=3))*gauss_wts[ig]
             flux_net_v += (np.sum(flux_plus_all_v,axis=3)-np.sum(flux_minus_all_v,axis=3))*gauss_wts[ig]
 
-            ======="""
+            #======="""
             #nlevel = atm.c.nlevel
 
+            """
+            <<<<<<< GFLUXV
             ng_clima,nt_clima=1,1
             ubar0_clima = ubar0*0+0.5
             ubar1_clima = ubar1*0+0.5
@@ -1190,11 +1195,14 @@ def get_fluxes( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU
             delta_approx = 0 # assuming delta approx is already applied on opds 
                         
             flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v = get_reflected_1d_gfluxv(nlevel, wno,nwno, ng_clima,nt_clima, DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
-                                                                                       surf_reflect,b_top,b_surface,ubar0_clima, FOPI,tridiagonal, delta_approx)
+                                                                                       surf_reflect,b_top,b_surface,ubar0_clima, F0PI,tridiagonal, delta_approx)
             
-
+            import pickle as pk
+            pk.dump([flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v], open('gfluxv.pk','wb'))
+            
             flux_net_v_layer += (np.sum(flux_plus_midpt_all_v,axis=3)-np.sum(flux_minus_midpt_all_v,axis=3))*gauss_wts[ig]
             flux_net_v += (np.sum(flux_plus_all_v,axis=3)-np.sum(flux_minus_all_v,axis=3))*gauss_wts[ig]
+            """
 
             flux_plus_v += flux_plus_all_v*gauss_wts[ig]
             flux_minus_v += flux_minus_all_v*gauss_wts[ig]

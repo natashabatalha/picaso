@@ -1,5 +1,6 @@
 from .atmsetup import ATMSETUP
 from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_transit_1d, get_thermal_SH
+from .fluxes import get_reflected_1d_newclima
 
 from .fluxes import tidal_flux, get_kzz#,set_bb_deprecate 
 from .climate import  calculate_atm_deq, did_grad_cp, convec, calculate_atm, t_start, growdown, growup, get_fluxes
@@ -251,18 +252,39 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                     single_form=single_form) 
 
                 else:
-                    #getting intensities, not fluxes (which is why second return is null)
-                    xint = get_reflected_1d(nlevel, wno,nwno,ng,nt,
+                    if get_lvl_flux: 
+                        atm.get_lvl_flux=True
+                        atm.lvl_output_reflected = dict(flux_minus=0, flux_plus=0, flux_minus_mdpt=0, flux_plus_mdpt=0)
+                    else: 
+                        atm.get_lvl_flux=False
+
+                    """xint = get_reflected_1d(nlevel, wno,nwno,ng,nt,
+                                        DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
+                                        GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
+                                        DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
+                                        atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
+                                        single_phase,multi_phase,
+                                        frac_a,frac_b,frac_c,constant_back,constant_forward, toon_coefficients,
+                                        b_top=b_top)
+                                        #get_toa_intensity=1, get_lvl_flux=0)"""
+                    
+                    xint,lvl_fluxes = get_reflected_1d_newclima(nlevel, wno,nwno,ng,nt,
                                     DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
                                     GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
                                     DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
                                     atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
                                     single_phase,multi_phase,
-                                    frac_a,frac_b,frac_c,constant_back,constant_forward, toon_coefficients,
-                                    b_top=b_top)
-                                    #get_toa_intensity=1, get_lvl_flux=0)
+                                    frac_a,frac_b,frac_c,constant_back,constant_forward,
+                                    get_toa_intensity=1,get_lvl_flux=int(atm.get_lvl_flux),
+                                    toon_coefficients=toon_coefficients,b_top=b_top) 
 
                 xint_at_top += xint*gauss_wts[ig]
+
+                if get_lvl_flux: 
+                    atm.lvl_output_reflected['flux_minus']+=lvl_fluxes[0]*gauss_wts[ig]
+                    atm.lvl_output_reflected['flux_plus']+=lvl_fluxes[1]*gauss_wts[ig]
+                    atm.lvl_output_reflected['flux_minus_mdpt']+=lvl_fluxes[2]*gauss_wts[ig]
+                    atm.lvl_output_reflected['flux_plus_mdpt']+=lvl_fluxes[3]*gauss_wts[ig]
 
             #if full output is requested add in xint at top for 3d plots
             if full_output: 
@@ -277,7 +299,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
             if get_lvl_flux: 
                 atm.get_lvl_flux=True
-                atm.lvl_output = dict(flux_minus=0, flux_plus=0, flux_minus_mdpt=0, flux_plus_mdpt=0)
+                atm.lvl_output_thermal = dict(flux_minus=0, flux_plus=0, flux_minus_mdpt=0, flux_plus_mdpt=0)
             else: 
                 atm.get_lvl_flux=False
 
@@ -307,10 +329,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                                 atm.surf_reflect, stream, atm.hard_surface)
 
                 if get_lvl_flux: 
-                    atm.lvl_output['flux_minus']+=lvl_fluxes[0]*gauss_wts[ig]
-                    atm.lvl_output['flux_plus']+=lvl_fluxes[1]*gauss_wts[ig]
-                    atm.lvl_output['flux_minus_mdpt']+=lvl_fluxes[2]*gauss_wts[ig]
-                    atm.lvl_output['flux_plus_mdpt']+=lvl_fluxes[3]*gauss_wts[ig]
+                    atm.lvl_output_thermal['flux_minus']+=lvl_fluxes[0]*gauss_wts[ig]
+                    atm.lvl_output_thermal['flux_plus']+=lvl_fluxes[1]*gauss_wts[ig]
+                    atm.lvl_output_thermal['flux_minus_mdpt']+=lvl_fluxes[2]*gauss_wts[ig]
+                    atm.lvl_output_thermal['flux_plus_mdpt']+=lvl_fluxes[3]*gauss_wts[ig]
 
                 flux_at_top += flux*gauss_wts[ig]
                 
@@ -407,14 +429,14 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
         if  'reflected' in calculation:
             xint_at_top=0
             for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
-                #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
+                #use toon method  to get net cumulative fluxes 
                 xint  = get_reflected_3d(nlevel, wno,nwno,ng,nt,
                                                 DTAU_3d[:,:,:,:,ig], TAU_3d[:,:,:,:,ig], W0_3d[:,:,:,:,ig], COSB_3d[:,:,:,:,ig],GCOS2_3d[:,:,:,:,ig],
                                                 FTAU_CLD_3d[:,:,:,:,ig],FTAU_RAY_3d[:,:,:,:,ig],
                                                 DTAU_OG_3d[:,:,:,:,ig], TAU_OG_3d[:,:,:,:,ig], W0_OG_3d[:,:,:,:,ig], COSB_OG_3d[:,:,:,:,ig],
                                                 atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
                                                 single_phase,multi_phase,
-                                                frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal)
+                                                frac_a,frac_b,frac_c,constant_back,constant_forward)
                 xint_at_top += xint*gauss_wts[ig]
                 #if full output is requested add in xint at top for 3d plots
             if full_output: 
@@ -427,14 +449,11 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                 #the uncorrected raman single scattering 
                 flux  = get_thermal_3d(nlevel, wno,nwno,ng,nt,TLEVEL_3d,
                                             DTAU_OG_3d[:,:,:,:,ig], W0_no_raman_3d[:,:,:,:,ig], COSB_OG_3d[:,:,:,:,ig], 
-                                            PLEVEL_3d,ubar1, atm.surf_reflect, atm.hard_surface, tridiagonal)
+                                            PLEVEL_3d,ubar1, atm.surf_reflect, atm.hard_surface)
                 flux_at_top += flux*gauss_wts[ig]
             #if full output is requested add in flux at top for 3d plots
             if full_output: 
                 atm.flux_at_top = flux_at_top
-
-
-    #COMPRESS FULL TANGLE-GANGLE FLUX OUTPUT ONTO 1D FLUX GRID
 
     #set up initial returns
     returns = {}
@@ -443,14 +462,19 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     if 'transmission' in calculation: 
         returns['transit_depth'] = rprs2
 
+    #COMPRESS FULL TANGLE-GANGLE FLUX OUTPUT ONTO 1D FLUX GRID
 
     #for reflected light use compress_disco routine
     #this takes the intensity as a functin of tangle/gangle and creates a 1d spectrum
     if  ('reflected' in calculation):
         albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
         returns['albedo'] = albedo 
-        #returns['xint_at_top'] = xint_at_top 
-        #returns['intensity'] = intensity 
+
+        if get_lvl_flux: 
+            for i in atm.lvl_output_reflected.keys():
+                atm.lvl_output_reflected[i] = compress_disco(nwno,cos_theta,atm.lvl_output_reflected[i], gweight, tweight,F0PI)   
+
+
         #see equation 18 Batalha+2019 PICASO 
         returns['bond_albedo'] = (np.trapz(x=1/wno, y=albedo*opacityclass.unshifted_stellar_spec)/
                                     np.trapz(x=1/wno, y=opacityclass.unshifted_stellar_spec))
@@ -476,8 +500,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
             atm.thermal_flux_planet = thermal
 
         if get_lvl_flux: 
-            for i in atm.lvl_output.keys():
-                atm.lvl_output[i] = compress_thermal(nwno,atm.lvl_output[i], gweight, tweight)   
+            for i in atm.lvl_output_thermal.keys():
+                atm.lvl_output_thermal[i] = compress_thermal(nwno,atm.lvl_output_thermal[i], gweight, tweight)   
 
         #only need to return relative flux if not a browndwarf calculation
         if radius_star == 'nostar': 
@@ -505,19 +529,19 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
         else:
             returns['full_output'] = atm
 
-    if output_dir != None:
-        filename = output_dir
-        pk.dump({'pressure': atm.level['pressure'], 'temperature': atm.level['temperature'], 
-            'nlevel':nlevel, 'wno':wno, 'nwno':nwno, 'ng':ng, 'nt':nt, 
-            'dtau':DTAU, 'tau':TAU, 'w0':W0, 'cosb':COSB, 'gcos2':GCOS2,'ftcld':ftau_cld,'ftray': ftau_ray,
-            'dtau_og':DTAU_OG, 'tau_og':TAU_OG, 'w0_og':W0_OG, 'cosb_og':COSB_OG, 
-            'surf_reflect':atm.surf_reflect, 'ubar0':ubar0, 'ubar1':ubar1, 'costheta':cos_theta, 'F0PI':F0PI, 
-            'single_phase':single_phase, 'multi_phase':multi_phase, 
-            'frac_a':frac_a, 'frac_b':frac_b, 'frac_c':frac_c, 'constant_back':constant_back, 
-            'constant_forward':constant_forward, 'dim':dimension, 'stream':stream,
-            #'xint_at_top': xint_at_top, 'albedo': albedo, 'flux': flux_out, 'xint': intensity,
-            'b_top': b_top, 'gweight': gweight, 'tweight': tweight, 'gangle': gangle, 'tangle': tangle}, 
-            open(filename,'wb'), protocol=2)
+    #if output_dir != None:
+    #    filename = output_dir
+    #    pk.dump({'pressure': atm.level['pressure'], 'temperature': atm.level['temperature'], 
+    #        'nlevel':nlevel, 'wno':wno, 'nwno':nwno, 'ng':ng, 'nt':nt, 
+    #        'dtau':DTAU, 'tau':TAU, 'w0':W0, 'cosb':COSB, 'gcos2':GCOS2,'ftcld':ftau_cld,'ftray': ftau_ray,
+    #        'dtau_og':DTAU_OG, 'tau_og':TAU_OG, 'w0_og':W0_OG, 'cosb_og':COSB_OG, 
+    #        'surf_reflect':atm.surf_reflect, 'ubar0':ubar0, 'ubar1':ubar1, 'costheta':cos_theta, 'F0PI':F0PI, 
+    #        'single_phase':single_phase, 'multi_phase':multi_phase, 
+    #        'frac_a':frac_a, 'frac_b':frac_b, 'frac_c':frac_c, 'constant_back':constant_back, 
+    #        'constant_forward':constant_forward, 'dim':dimension, 'stream':stream,
+    #        #'xint_at_top': xint_at_top, 'albedo': albedo, 'flux': flux_out, 'xint': intensity,
+    #        'b_top': b_top, 'gweight': gweight, 'tweight': tweight, 'gangle': gangle, 'tangle': tangle}, 
+    #        open(filename,'wb'), protocol=2)
     return returns
 
 def _finditem(obj, key):

@@ -356,7 +356,7 @@ def pent_diag_solve(l, A, B, C, D, E, F):
 def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3d,gcos2_3d, ftau_cld_3d,ftau_ray_3d,
     dtau_og_3d, tau_og_3d, w0_og_3d, cosb_og_3d, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
-    frac_a, frac_b, frac_c, constant_back, constant_forward,tridiagonal):
+    frac_a, frac_b, frac_c, constant_back, constant_forward):
     """
     Computes toon fluxes given tau and everything is 3 dimensional. This is the exact same function 
     as `get_flux_geom_1d` but is kept separately so we don't have to do unecessary indexing for 
@@ -439,8 +439,7 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
     constant_forward : float 
         (Optional), If using the TTHG phase function. Must specify the assymetry of forward scatterer. 
         Remember, the output of A & M code does not separate back and forward scattering.
-    tridiagonal : int 
-        0 for tridiagonal, 1 for pentadiagonal 
+
     Returns
     -------
     intensity at the top of the atmosphere for all the different ubar1 and ubar2 
@@ -525,11 +524,11 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             b_surface = 0. + surf_reflect*ubar0[ng, nt]*F0PI*exp(-tau[-1, :]/ubar0[ng, nt])
 
             #Now we need the terms for the tridiagonal rotated layered method
-            if tridiagonal==0:
-                A, B, C, D = setup_tri_diag(nlayer,nwno,  c_plus_up, c_minus_up, 
-                                    c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
-                                     gama, dtau, 
-                                    exptrm_positive,  exptrm_minus) 
+            #if tridiagonal==0:
+            A, B, C, D = setup_tri_diag(nlayer,nwno,  c_plus_up, c_minus_up, 
+                                c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
+                                 gama, dtau, 
+                                exptrm_positive,  exptrm_minus) 
             #else:
             #   A_, B_, C_, D_, E_, F_ = setup_pent_diag(nlayer,nwno,  c_plus_up, c_minus_up, 
             #                       c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
@@ -542,11 +541,11 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             L = 2*nlayer
             for w in range(nwno):
                 #coefficient of posive and negative exponential terms 
-                if tridiagonal==0:
-                    X = tri_diag_solve(L, A[:,w], B[:,w], C[:,w], D[:,w])
-                    #unmix the coefficients
-                    positive[:,w] = X[::2] + X[1::2] 
-                    negative[:,w] = X[::2] - X[1::2]
+                #if tridiagonal==0:
+                X = tri_diag_solve(L, A[:,w], B[:,w], C[:,w], D[:,w])
+                #unmix the coefficients
+                positive[:,w] = X[::2] + X[1::2] 
+                negative[:,w] = X[::2] - X[1::2]
                 #else:
                 #   X = pent_diag_solve(L, A_[:,w], B_[:,w], C_[:,w], D_[:,w], E_[:,w], F_[:,w])
                 #   #unmix the coefficients
@@ -663,7 +662,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
     frac_a, frac_b, frac_c, constant_back, constant_forward,
-    toon_coefficients=0, tridiagonal=0, b_top=0):
+    toon_coefficients=0,b_top=0):
     """
     Computes toon fluxes given tau and everything is 1 dimensional. This is the exact same function 
     as `get_flux_geom_3d` but is kept separately so we don't have to do unecessary indexing for fast
@@ -746,8 +745,6 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
     constant_forward : float 
         (Optional), If using the TTHG phase function. Must specify the assymetry of forward scatterer. 
         Remember, the output of A & M code does not separate back and forward scattering.
-    tridiagonal : int 
-        0 for tridiagonal, 1 for pentadiagonal 
     toon_coefficients : int     
         0 for quadrature (default) 1 for eddington
 
@@ -826,11 +823,11 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             b_surface = 0. + surf_reflect*u0*F0PI*exp(-tau[-1, :]/u0)
 
             #Now we need the terms for the tridiagonal rotated layered method
-            if tridiagonal==0:
-                A, B, C, D = setup_tri_diag(nlayer,nwno,  c_plus_up, c_minus_up, 
-                                    c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
-                                     gama, dtau, 
-                                    exptrm_positive,  exptrm_minus) 
+            #if tridiagonal==0:
+            A, B, C, D = setup_tri_diag(nlayer,nwno,  c_plus_up, c_minus_up, 
+                                c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
+                                 gama, dtau, 
+                                exptrm_positive,  exptrm_minus) 
 
             #else:
             #   A_, B_, C_, D_, E_, F_ = setup_pent_diag(nlayer,nwno,  c_plus_up, c_minus_up, 
@@ -844,11 +841,11 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             L = 2*nlayer
             for w in range(nwno):
                 #coefficient of posive and negative exponential terms 
-                if tridiagonal==0:
-                    X = tri_diag_solve(L, A[:,w], B[:,w], C[:,w], D[:,w])
-                    #unmix the coefficients
-                    positive[:,w] = X[::2] + X[1::2] 
-                    negative[:,w] = X[::2] - X[1::2]
+                #if tridiagonal==0:
+                X = tri_diag_solve(L, A[:,w], B[:,w], C[:,w], D[:,w])
+                #unmix the coefficients
+                positive[:,w] = X[::2] + X[1::2] 
+                negative[:,w] = X[::2] - X[1::2]
 
                 #else: 
                 #   X = pent_diag_solve(L, A_[:,w], B_[:,w], C_[:,w], D_[:,w], E_[:,w], F_[:,w])
@@ -1007,11 +1004,14 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
 #    import sys; sys.exit()
     return xint_at_top #, flux_out, intensity
 
+
 @jit(nopython=True, cache=True)
 def get_reflected_1d_newclima(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
     dtau_og, tau_og, w0_og, cosb_og, 
     surf_reflect,ubar0, ubar1,cos_theta, F0PI,single_phase, multi_phase,
-    frac_a, frac_b, frac_c, constant_back, constant_forward, tridiagonal,get_toa_intensity,get_lvl_flux):
+    frac_a, frac_b, frac_c, constant_back, constant_forward, 
+    get_toa_intensity=1,get_lvl_flux=0,
+    toon_coefficients=0,b_top=0):
     """
     Computes toon fluxes given tau and everything is 1 dimensional. This is the exact same function 
     as `get_flux_geom_3d` but is kept separately so we don't have to do unecessary indexing for fast
@@ -1094,15 +1094,18 @@ def get_reflected_1d_newclima(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,g
     constant_forward : float 
         (Optional), If using the TTHG phase function. Must specify the assymetry of forward scatterer. 
         Remember, the output of A & M code does not separate back and forward scattering.
-    tridiagonal : int 
-        0 for tridiagonal, 1 for pentadiagonal 
+    get_toa_intensity : int 
+        (Optional) Default=1 is to only return the TOA intensity you would need for a 1D spectrum (1)
+        otherwise it will return zeros for TOA intensity 
+    get_lvl_flux : int 
+        (Optional) Default=0 is to only compute TOA intensity and NOT return the lvl fluxes so this needs 
+        to be flipped on for the climate calculations
+    toon_coefficients : int     
+        (Optional) 0 for quadrature (default) 1 for eddington
+
     Returns
     -------
     intensity at the top of the atmosphere for all the different ubar1 and ubar2 
-    To Do
-    -----
-    - F0PI Solar flux shouldn't always be 1.. Follow up to make sure that this isn't a bad 
-          hardwiring to solar, despite "relative albedo"
     """
     #these are only filled in if get_toa_intensity=1
     #outgoing intensity as a function of all the different angles
@@ -1126,32 +1129,41 @@ def get_reflected_1d_newclima(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,g
 
     #terms not dependent on incident angle
     sq3 = sqrt(3.)
-    g1  = (sq3*0.5)*(2. - w0*(1.+cosb)) #table 1 # (7-w0*(4+3*cosb))/4 #
-    g2  = (sq3*w0*0.5)*(1.-cosb)        #table 1 # -(1-w0*(4-3*cosb))/4 #
+    if toon_coefficients == 1:#eddington
+        g1  = (7-w0*(4+3*ftau_cld*cosb))/4 #(sq3*0.5)*(2. - w0*(1.+cosb)) #table 1 # 
+        g2  = -(1-w0*(4-3*ftau_cld*cosb))/4 #(sq3*w0*0.5)*(1.-cosb)        #table 1 # 
+    elif toon_coefficients == 0:#quadrature
+        g1  = (sq3*0.5)*(2. - w0*(1.+ftau_cld*cosb)) #table 1 # 
+        g2  = (sq3*w0*0.5)*(1.-ftau_cld*cosb)        #table 1 # 
+
     lamda = sqrt(g1**2 - g2**2)         #eqn 21
     gama  = (g1-lamda)/g2               #eqn 22
 
     #================ START CRAZE LOOP OVER ANGLE #================
     for ng in range(numg):
         for nt in range(numt):
-
-            g3  = 0.5*(1.-sq3*cosb*ubar0[ng, nt]) #(2-3*cosb*ubar0[ng,nt])/4#  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
+            u1 = ubar1[ng,nt]
+            u0 = ubar0[ng,nt]
+            if toon_coefficients == 1 : #eddington
+                g3  = (2-3*ftau_cld*cosb*u0)/4#0.5*(1.-sq3*cosb*ubar0[ng, nt]) #  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
+            elif toon_coefficients == 0 :#quadrature
+                g3  = 0.5*(1.-sq3*ftau_cld*cosb*u0) #  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
     
             # now calculate c_plus and c_minus (equation 23 and 24 toon)
             g4 = 1.0 - g3
-            denominator = lamda**2 - 1.0/ubar0[ng, nt]**2.0
+            denominator = lamda**2 - 1.0/u0**2.0
 
             #everything but the exponential 
-            a_minus = F0PI*w0* (g4*(g1 + 1.0/ubar0[ng, nt]) +g2*g3 ) / denominator
-            a_plus  = F0PI*w0*(g3*(g1-1.0/ubar0[ng, nt]) +g2*g4) / denominator
+            a_minus = F0PI*w0* (g4*(g1 + 1.0/u0) +g2*g3 ) / denominator
+            a_plus  = F0PI*w0*(g3*(g1-1.0/u0) +g2*g4) / denominator
 
             #add in exponential to get full eqn
             #_up is the terms evaluated at lower optical depths (higher altitudes)
             #_down is terms evaluated at higher optical depths (lower altitudes)
-            x = exp(-tau[:-1,:]/ubar0[ng, nt])
+            x = exp(-tau[:-1,:]/u0)
             c_minus_up = a_minus*x #CMM1
             c_plus_up  = a_plus*x #CPM1
-            x = exp(-tau[1:,:]/ubar0[ng, nt])
+            x = exp(-tau[1:,:]/u0)
             c_minus_down = a_minus*x #CM
             c_plus_down  = a_plus*x #CP
 
@@ -1165,13 +1177,13 @@ def get_reflected_1d_newclima(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,g
 
 
             #boundary conditions 
-            b_top = 0.0                                       
+            #b_top = 0.0                                       
 
-            b_surface = 0. + surf_reflect*ubar0[ng, nt]*F0PI*exp(-tau[-1, :]/ubar0[ng, nt])
+            b_surface = 0. + surf_reflect*u0*F0PI*exp(-tau[-1, :]/u0)
 
             #Now we need the terms for the tridiagonal rotated layered method
-            if tridiagonal==0:
-                A, B, C, D = setup_tri_diag(nlayer,nwno,  c_plus_up, c_minus_up, 
+            #if tridiagonal==0:
+            A, B, C, D = setup_tri_diag(nlayer,nwno,  c_plus_up, c_minus_up, 
                                     c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
                                      gama, dtau, 
                                     exptrm_positive,  exptrm_minus) 
@@ -1188,17 +1200,18 @@ def get_reflected_1d_newclima(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,g
             L = 2*nlayer
             for w in range(nwno):
                 #coefficient of posive and negative exponential terms 
-                if tridiagonal==0:
-                    X = tri_diag_solve(L, A[:,w], B[:,w], C[:,w], D[:,w])
-                    #unmix the coefficients
-                    positive[:,w] = X[::2] + X[1::2] 
-                    negative[:,w] = X[::2] - X[1::2]
+                #if tridiagonal==0:
+                X = tri_diag_solve(L, A[:,w], B[:,w], C[:,w], D[:,w])
+                #unmix the coefficients
+                positive[:,w] = X[::2] + X[1::2] 
+                negative[:,w] = X[::2] - X[1::2]
 
                 #else: 
                 #   X = pent_diag_solve(L, A_[:,w], B_[:,w], C_[:,w], D_[:,w], E_[:,w], F_[:,w])
                     #unmix the coefficients
                 #   positive[:,w] = exptrm_minus[:,w] * (X[::2] + X[1::2])
                 #   negative[:,w] = X[::2] - X[1::2]
+
             #========================= End loop over wavelength =========================
 
             #========================= Get fluxes if needed for climate =========================
@@ -1219,7 +1232,7 @@ def get_reflected_1d_newclima(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,g
                 flux_minus[-1, :], flux_plus[-1, :] = flux_zero_minus, flux_zero_plus 
                 
                 #add in direct flux term to the downwelling radiation, liou 182
-                flux_minus = flux_minus + ubar0[ng, nt]*F0PI*exp(-tau/ubar0[ng, nt])
+                flux_minus = flux_minus + u0*F0PI*exp(-tau/u0)
 
                 #now get midpoint values 
                 exptrm_positive_midpt = exp(0.5*exptrm) #EP
@@ -1244,7 +1257,7 @@ def get_reflected_1d_newclima(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,g
             #========================= End get fluxes if needed for climate =========================
 
 
-            #========================= Get intensities if needed for climate =========================
+            #========================= Get intensities if needed for spectrum =========================
             if get_toa_intensity:
                 ################################ BEGIN OPTIONS FOR MULTIPLE SCATTERING####################
                 #use expression for bottom flux to get the flux_plus and flux_minus at last
@@ -1264,13 +1277,13 @@ def get_reflected_1d_newclima(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,g
                     #this is a decent assumption because our second order legendre polynomial 
                     #is forced to be equal to the rayleigh phase function
                     ubar2 = 0.767  # 
-                    multi_plus = (1.0+1.5*cosb*ubar1[ng,nt] #!was 3
-                                    + gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
-                    multi_minus = (1.-1.5*cosb*ubar1[ng,nt] 
-                                    + gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
+                    multi_plus = (1.0+1.5*ftau_cld*cosb*u1 #!was 3
+                                    + gcos2*(3.0*ubar2*ubar2*u1*u1 - 1.0)/2.0)
+                    multi_minus = (1.-1.5*ftau_cld*cosb*u1 
+                                    + gcos2*(3.0*ubar2*ubar2*u1*u1 - 1.0)/2.0)
                 elif multi_phase ==1:#'N=1':
-                    multi_plus = 1.0+1.5*cosb*ubar1[ng,nt]  
-                    multi_minus = 1.-1.5*cosb*ubar1[ng,nt]
+                    multi_plus = 1.0+1.5*ftau_cld*cosb*u1  
+                    multi_minus = 1.-1.5*ftau_cld*cosb*u1
                 ################################ end options for multiple scatteirng ####################
 
                 G=positive*(multi_plus+gama*multi_minus)    *w0
@@ -1338,44 +1351,61 @@ def get_reflected_1d_newclima(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,g
                                 )
                             )
                 #exploring.... 
-                elif single_phase==4:#'P(HG) exact w/ approx costheta'
-                    deltaphi=0
-                    cos_theta_approx = (-ubar0[ng,nt])*ubar1[ng,nt] + sqrt(1-ubar1[ng,nt]**2)*sqrt(1-ubar0[ng,nt]**2)*cos(deltaphi)
-                    
-                    HG_forward =  (1-g_forward**2) /sqrt((1+g_forward**2+2*g_forward*cos_theta_approx)**3)    
-                    HG_back = (1-g_back**2)/sqrt((1+g_back**2+2*g_back*cos_theta_approx)**3)
+                #elif single_phase==4:#'P(HG) exact w/ approx costheta'
+                #    deltaphi=0
+                #    cos_theta_approx = (-ubar0[ng,nt])*ubar1[ng,nt] + sqrt(1-ubar1[ng,nt]**2)*sqrt(1-ubar0[ng,nt]**2)*cos(deltaphi)
+                #    
+                #    HG_forward =  (1-g_forward**2) /sqrt((1+g_forward**2+2*g_forward*cos_theta_approx)**3)    
+                #    HG_back = (1-g_back**2)/sqrt((1+g_back**2+2*g_back*cos_theta_approx)**3)
 
-                    p_single=(
-                            ftau_cld * (          #opacity of cloud / total opacity
-                                f * HG_forward  + #first term of TTHG: forward scattering
-                                (1-f) * HG_back   #second term of TTHG: backward scattering  
-                                )+  
-                            ftau_ray * (
-                                0.75*(1+cos_theta_approx**2.0) #rayleigh phase function
-                                )
-                            )
+                #    p_single=(
+                #            ftau_cld * (          #opacity of cloud / total opacity
+                #                f * HG_forward  + #first term of TTHG: forward scattering
+                #                (1-f) * HG_back   #second term of TTHG: backward scattering  
+                #                )+  
+                #            ftau_ray * (
+                #                0.75*(1+cos_theta_approx**2.0) #rayleigh phase function
+                #                )
+                #            )
 
                 
                 ################################ end options for direct scattering ####################
 
+                #in codes like DISORT the single and multiple scattering beams are reported separately
+                #in Rooney et al. 2023a we needed to separate these to 
+                #single_scat = zeros((nlevel,nwno))
+                #multi_scat = zeros((nlevel,nwno))
                 for i in range(nlayer-1,-1,-1):
+                    #single_scat[i,:] = ((w0_og[i,:]*F0PI/(4.*pi))
+                    #        *(p_single[i,:])*exp(-tau_og[i,:]/u0)
+                    #        *(1. - exp(-dtau_og[i,:]*(u0+u1)
+                    #        /(u0*u1)))*
+                    #        (u0/(u0+u1)))
+
+                    #multi_scat[i,:] = (A[i,:]*(1. - exp(-dtau[i,:] *(u0+1*u1)/(u0*u1)))*
+                    #        (u0/(u0+1*u1))
+                    #        +G[i,:]*(exp(exptrm[i,:]*1-dtau[i,:]/u1) - 1.0)/(lamda[i,:]*1*u1 - 1.0)
+                    #        +H[i,:]*(1. - exp(-exptrm[i,:]*1-dtau[i,:]/u1))/(lamda[i,:]*1*u1 + 1.0)
+                    #        )
+
                     #direct beam
-                    xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/ubar1[ng,nt]) 
+                    xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/u1) 
                             #single scattering albedo from sun beam (from ubar0 to ubar1)
                             +(w0_og[i,:]*F0PI/(4.*pi))
-                            *(p_single[i,:])*exp(-tau_og[i,:]/ubar0[ng,nt])
-                            *(1. - exp(-dtau_og[i,:]*(ubar0[ng,nt]+ubar1[ng,nt])
-                            /(ubar0[ng,nt]*ubar1[ng,nt])))*
-                            (ubar0[ng,nt]/(ubar0[ng,nt]+ubar1[ng,nt]))
+                            *(p_single[i,:])*exp(-tau_og[i,:]/u0)
+                            *(1. - exp(-dtau_og[i,:]*(u0+u1)
+                            /(u0*u1)))*
+                            (u0/(u0+u1))
                             #multiple scattering terms p_single
-                            +A[i,:]*(1. - exp(-dtau[i,:] *(ubar0[ng,nt]+1*ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
-                            (ubar0[ng,nt]/(ubar0[ng,nt]+1*ubar1[ng,nt]))
-                            +G[i,:]*(exp(exptrm[i,:]*1-dtau[i,:]/ubar1[ng,nt]) - 1.0)/(lamda[i,:]*1*ubar1[ng,nt] - 1.0)
-                            +H[i,:]*(1. - exp(-exptrm[i,:]*1-dtau[i,:]/ubar1[ng,nt]))/(lamda[i,:]*1*ubar1[ng,nt] + 1.0)
+                            +A[i,:]*(1. - exp(-dtau[i,:] *(u0+1*u1)/(u0*u1)))*
+                            (u0/(u0+1*u1))
+                            +G[i,:]*(exp(exptrm[i,:]*1-dtau[i,:]/u1) - 1.0)/(lamda[i,:]*1*u1 - 1.0)
+                            +H[i,:]*(1. - exp(-exptrm[i,:]*1-dtau[i,:]/u1))/(lamda[i,:]*1*u1 + 1.0)
                             )
 
+
                 xint_at_top[ng,nt,:] = xint[0,:]
-            #========================= End get intensities if needed for climate =========================
+            #========================= End get intensities if needed for spectrum =========================
     
     return xint_at_top, (flux_minus_all, flux_plus_all, flux_minus_midpt_all, flux_plus_midpt_all )
 
@@ -1422,7 +1452,6 @@ def get_reflected_1d_gfluxv(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,
         Surface Boundary Conditions
     ubar0 : ndarray of float 
         matrix of cosine of the incident angle from geometric.json
-    
     F0PI : array 
         Downward incident solar radiation
     delta_approx : int 
@@ -2112,7 +2141,7 @@ def get_thermal_1d_deprecate(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,p
 
 @jit(nopython=True, cache=True)
 def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel_3d, dtau_3d, w0_3d,cosb_3d,plevel_3d, ubar1,
-    surf_reflect, hard_surface, tridiagonal):
+    surf_reflect, hard_surface):
     """
     This function uses the source function method, which is outlined here : 
     https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/JD094iD13p16287
@@ -2159,8 +2188,7 @@ def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel_3d, dtau_3d, w0_3d,cosb_3d
     ubar1 : numpy.ndarray
         This is a matrix of ng by nt. This describes the outgoing incident angles and is generally
         computed in `picaso.disco`
-    tridiagonal : int 
-        Zero for tridiagonal solver. 1 for pentadiagonal (not yet implemented)
+
     Returns
     -------
     numpy.ndarray
@@ -2224,11 +2252,11 @@ def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel_3d, dtau_3d, w0_3d,cosb_3d
             else: 
                 b_surface= pi*(all_b[-1,:] + b1[-1,:]*mu1) #(for non terrestrial)
             #Now we need the terms for the tridiagonal rotated layered method
-            if tridiagonal==0:
-                A, B, C, D = setup_tri_diag(nlayer,nwno,  c_plus_up, c_minus_up, 
-                                    c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
-                                     gama, dtau, 
-                                    exptrm_positive,  exptrm_minus) 
+            #if tridiagonal==0:
+            A, B, C, D = setup_tri_diag(nlayer,nwno,  c_plus_up, c_minus_up, 
+                                c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
+                                 gama, dtau, 
+                                exptrm_positive,  exptrm_minus) 
             #else:
             #   A_, B_, C_, D_, E_, F_ = setup_pent_diag(nlayer,nwno,  c_plus_up, c_minus_up, 
             #                       c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
@@ -2241,11 +2269,11 @@ def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel_3d, dtau_3d, w0_3d,cosb_3d
             L = nlayer+nlayer
             for w in range(nwno):
                 #coefficient of posive and negative exponential terms 
-                if tridiagonal==0:
-                    X = tri_diag_solve(L, A[:,w], B[:,w], C[:,w], D[:,w])
-                    #unmix the coefficients
-                    positive[:,w] = X[::2] + X[1::2] #Y1+Y2 in toon (table 3)
-                    negative[:,w] = X[::2] - X[1::2] #Y1-Y2 in toon (table 3)
+                #if tridiagonal==0:
+                X = tri_diag_solve(L, A[:,w], B[:,w], C[:,w], D[:,w])
+                #unmix the coefficients
+                positive[:,w] = X[::2] + X[1::2] #Y1+Y2 in toon (table 3)
+                negative[:,w] = X[::2] - X[1::2] #Y1-Y2 in toon (table 3)
                 #else:
                 #   X = pent_diag_solve(L, A_[:,w], B_[:,w], C_[:,w], D_[:,w], E_[:,w], F_[:,w])
                 #   positive[:,w] = exptrm_minus[:,w] * (X[::2] + X[1::2])
