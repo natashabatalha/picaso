@@ -333,7 +333,8 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
             grad, cp, tidal, tmin,tmax, dwni , bb , y2, tp, DTAU, TAU, W0, COSB, 
             ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,
             cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,
-            constant_back,constant_forward,  wno,nwno,ng,nt,gweight,tweight, ngauss, gauss_wts, save_profile, all_profiles):
+            constant_back,constant_forward,  wno,nwno,ng,nt,gweight,tweight, ngauss, gauss_wts, save_profile, all_profiles,
+            verbose):
     """
     Module to iterate on the level TP profile to make the Net Flux as close to 0.
     Opacities/chemistry are not updated while iterating in this module.
@@ -388,6 +389,9 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
         Output of set_bb function in fluxes.py
     tp : array
         Output of set_bb function in fluxes.py
+    verbose : int
+        If verbose=0, nothing will print out
+        If verbose=1, everything will print out during the run, 
     
     Returns
     -------
