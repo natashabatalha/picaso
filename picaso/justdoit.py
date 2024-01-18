@@ -120,7 +120,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     #USED in TOON (if being used)
     single_phase = inputs['approx']['rt_params']['toon']['single_phase']
     toon_coefficients = inputs['approx']['rt_params']['toon']['toon_coefficients']
-    tridiagonal = 0 
     multi_phase = inputs['approx']['rt_params']['toon']['multi_phase']
 
     #USED in SH (if being used)
@@ -932,7 +931,6 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     single_phase = inputs['approx']['rt_params']['toon']['single_phase']
     #define delta eddington approximinations 
     delta_eddington = inputs['approx']['rt_params']['common']['delta_eddington']    
-    tridiagonal = 0 
     raman_approx = 2
 
     #parameters needed for the two term hg phase function. 
@@ -3908,7 +3906,7 @@ class inputs():
             bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
             DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
                 W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
-                frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , \
+                frac_a,frac_b,frac_c,constant_back,constant_forward, \
                 wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight =  calculate_atm(bundle, opacityclass)
             
             all_kzz= []
@@ -3923,7 +3921,7 @@ class inputs():
                 #flux_net_v_layer, flux_net_v, flux_plus_v, flux_minus_v , flux_net_ir_layer, flux_net_ir, flux_plus_ir, flux_minus_ir
                 flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, delta_wno, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
                 COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-                ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
+                ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
                 wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts,True, True)#True for reflected, True for thermal
 
                 flux_net_ir_layer = flux_net_ir_layer_full[:]
@@ -4638,7 +4636,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         if cloudy == 1 :
             DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
             W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
-            frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , \
+            frac_a,frac_b,frac_c,constant_back,constant_forward,  \
             wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight =  calculate_atm(bundle, opacityclass )
 
 
@@ -4692,7 +4690,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
 
     DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
         W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
-        frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , \
+        frac_a,frac_b,frac_c,constant_back,constant_forward, \
         wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight =  calculate_atm(bundle, opacityclass )
     
     ## begin bigger loop which gets opacities
@@ -4703,7 +4701,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                     rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
                     grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, 
                     DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-                    ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
+                    ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
                     wno,nwno,ng,nt,gweight,tweight, 
                     ngauss, gauss_wts, save_profile, all_profiles)
         
@@ -4785,7 +4783,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
 
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
         W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
-        frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , \
+        frac_a,frac_b,frac_c,constant_back,constant_forward,  \
         wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight  =  calculate_atm(bundle, opacityclass)
 
         ert = 0.0 # avg temp change
@@ -5044,7 +5042,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
     bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
 
     if cloudy == 1:
-        DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight  =  calculate_atm(bundle, opacityclass)
+        DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight  =  calculate_atm(bundle, opacityclass)
 
         metallicity = 10**(mh) #atmospheric metallicity relative to Solar
         mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
@@ -5066,11 +5064,11 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
     else:
         opd_now,w0_now,g0_now = 0,0,0
 
-    DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight  =  calculate_atm(bundle, opacityclass)
+    DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,  wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight  =  calculate_atm(bundle, opacityclass)
     
     flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
+            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
             wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts, False, True) #false for reflected, true for thermal
 
       
@@ -5281,13 +5279,13 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
 
     DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
         W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
-        frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , \
+        frac_a,frac_b,frac_c,constant_back,constant_forward, \
         wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw =  calculate_atm_deq(bundle, opacityclass,on_fly=on_fly,gases_fly=gases_fly)
     if self_consistent_kzz == True :
                 
         flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
         COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-        ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
+        ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
         wno,nwno,ng,nt, gweight,tweight,nlevel, ngauss, gauss_wts,True, True)#True for reflected, True for thermal
 
         flux_net_ir_layer = flux_net_ir_layer_full[:]
@@ -5305,7 +5303,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
             W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, FOPI, 
             single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
-            tridiagonal , wno,nwno,ng,nt,gweight,tweight, ngauss, gauss_wts, save_profile, all_profiles)
+            wno,nwno,ng,nt,gweight,tweight, ngauss, gauss_wts, save_profile, all_profiles)
         '''
         if (temp <= min(opacityclass.cia_temps)).any():
             wh = np.where(temp <= min(opacityclass.cia_temps))
@@ -5398,14 +5396,14 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
         W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
-        frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , \
+        frac_a,frac_b,frac_c,constant_back,constant_forward, \
         wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw =  calculate_atm_deq(bundle, opacityclass,on_fly=on_fly, gases_fly=gases_fly)
 
         if self_consistent_kzz == True :
                 
             flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
+            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,  
             wno,nwno,ng,nt, gweight,tweight, nlevel, ngauss, gauss_wts,True, True)#True for reflected, True for thermal
 
             flux_net_ir_layer = flux_net_ir_layer_full[:]
@@ -5809,7 +5807,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         qvmrs,qvmrs2 = 0,0
     
     if cloudy == 1:
-        DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw =  calculate_atm_deq(bundle, opacityclass,on_fly=on_fly, gases_fly=gases_fly)
+        DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw =  calculate_atm_deq(bundle, opacityclass,on_fly=on_fly, gases_fly=gases_fly)
         metallicity = 10**(0.0) #atmospheric metallicity relative to Solar
         mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
         # directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new661'
@@ -5831,11 +5829,11 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         opd_now,w0_now,g0_now = 0,0,0
     
     #bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
-    DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw =  calculate_atm_deq(bundle, opacityclass,on_fly=on_fly, gases_fly=gases_fly)
+    DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw =  calculate_atm_deq(bundle, opacityclass,on_fly=on_fly, gases_fly=gases_fly)
     
     flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
+            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
             wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts, False, True) #false for reflected, true for thermal
 
 

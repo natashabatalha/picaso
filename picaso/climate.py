@@ -2,8 +2,8 @@ import numpy as np
 import warnings
 from numba import jit, vectorize
 from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh, min, dot, array,log,log10
-from .fluxes import get_reflected_1d,get_thermal_1d,get_reflected_1d_gfluxv, get_reflected_1d_newclima
-#from .fluxes import get_thermal_1d_newclima, get_thermal_1d_gfluxi #deprecated
+from .fluxes import get_reflected_1d,get_thermal_1d,get_reflected_1d_newclima
+#from .fluxes import get_thermal_1d_newclima, get_thermal_1d_gfluxi,get_reflected_1d_gfluxv #deprecated
 from .atmsetup import ATMSETUP
 from .optics import compute_opacity
 from .disco import compress_thermal
@@ -333,7 +333,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
             grad, cp, tidal, tmin,tmax, dwni , bb , y2, tp, DTAU, TAU, W0, COSB, 
             ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,
             cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,
-            constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt,gweight,tweight, ngauss, gauss_wts, save_profile, all_profiles):
+            constant_back,constant_forward,  wno,nwno,ng,nt,gweight,tweight, ngauss, gauss_wts, save_profile, all_profiles):
     """
     Module to iterate on the level TP profile to make the Net Flux as close to 0.
     Opacities/chemistry are not updated while iterating in this module.
@@ -422,7 +422,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
     else:compute_reflected=True
     flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
+            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
             wno,nwno,ng,nt, gweight,tweight, nlevel, ngauss, gauss_wts,compute_reflected, True)#True for reflected, True for thermal
 
     # extract visible fluxes
@@ -625,7 +625,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
 
                 flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
+            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
             wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts, False, True) #false for reflected, True for thermal
 
 
@@ -840,7 +840,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
             # re calculate thermal flux
             flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
+            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
             wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts, False, True) #false reflected, True thermal
 
 
@@ -1073,7 +1073,7 @@ def growdown(nlv,nstr, ngrow) :
 @jit(nopython=True, cache=True)
 def get_fluxes( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU, W0, 
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-            ubar0,ubar1,cos_theta, F0PI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , 
+            ubar0,ubar1,cos_theta, F0PI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
             wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts,reflected, thermal):
     """
     Program to run RT for climate calculations. Runs the thermal and reflected module.
@@ -1301,7 +1301,6 @@ def calculate_atm(bundle, opacityclass):
     raman_approx =inputs['approx']['rt_params']['common']['raman']
     method = inputs['approx']['rt_method']
     stream = inputs['approx']['rt_params']['common']['stream']
-    tridiagonal = 0 
 
     #parameters needed for the two term hg phase function. 
     #Defaults are set in config.json
@@ -1401,7 +1400,7 @@ def calculate_atm(bundle, opacityclass):
     #mmw = np.mean(atm.layer['mmw'])
     mmw = atm.layer['mmw']
     
-    return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight
+    return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight
 
 
 def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None):
@@ -1425,7 +1424,6 @@ def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None):
     raman_approx =inputs['approx']['rt_params']['common']['raman']
     method = inputs['approx']['rt_method']
     stream = inputs['approx']['rt_params']['common']['stream']
-    tridiagonal = 0 
 
     #parameters needed for the two term hg phase function. 
     #Defaults are set in config.json
@@ -1522,4 +1520,4 @@ def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None):
     #mmw = np.mean(atm.layer['mmw'])
     mmw = atm.level['mmw']
     
-    return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, tridiagonal , wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw
+    return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw
