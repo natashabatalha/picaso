@@ -1475,113 +1475,6 @@ class inputs():
         self.inputs['climate']['mh'] = mh
         self.inputs['climate']['CtoO'] = CtoO
 
-    def deprecate_run_climate_model(self, opacityclass):
-        """
-        Top Function to run the Climate Model
-
-        Parameters
-        -----------
-        
-        """
-        #get necessary parameters from opacity ck-tables 
-        wno = opacityclass.wno
-        delta_wno = opacityclass.delta_wno
-        nwno = opacityclass.nwno
-        min_temp = min(opacityclass.temps)
-        max_temp = max(opacityclass.temps)
-
-        
-        
-        # first calculate the BB grid
-        ntmps = self.inputs['climate']['ntemp_bb_grid']
-        dt = self.inputs['climate']['dt_bb_grid']
-        #we will extend the black body grid 30% beyond the min and max temp of the 
-        #opacity grid just to be safe with the spline
-        extension = 0.3 
-        tmin = min_temp*(1-extension)
-        tmax = max_temp*(1+extension)
-
-        bb , y2 , tp = 0,0,0
-        #set_bb(wno,delta_wno,nwno,ntmps,dt,tmin,tmax)
-
-        nofczns = self.inputs['climate']['nofczns']
-        nstr= self.inputs['climate']['nstr']
-
-        rfaci= self.inputs['climate']['rfaci']
-        
-        #turn off stellar radiation if user has run "setup_nostar() function"
-        if 'nostar' in self.inputs['star']['database']:
-            rfacv=0.0 
-            F0PI = np.zeros(nwno) #+ 1.0
-        #otherwise assume that there is stellar irradiation 
-        else:
-            rfacv = self.inputs['climate']['rfacv']
-            r_star = self.inputs['star']['radius'] 
-            r_star_unit = self.inputs['star']['radius_unit'] 
-            semi_major = self.inputs['star']['semi_major']
-            semi_major_unit = self.inputs['star']['semi_major_unit'] 
-            
-
-            fine_flux_star  = self.inputs['star']['flux']  # erg/s/cm^2
-            F0PI = fine_flux_star * ((r_star/semi_major)**2)
-
-
-        TEMP1 = self.inputs['climate']['guess_temp']
-        pressure = self.inputs['climate']['pressure']
-        t_table = self.inputs['climate']['t_table']
-        p_table = self.inputs['climate']['p_table']
-        grad = self.inputs['climate']['grad']
-        cp = self.inputs['climate']['cp']
-
-
-        Teff = self.inputs['planet']['T_eff']
-        grav = 0.01*self.inputs['planet']['gravity'] # cgs to si
-        mh = float(self.inputs['climate']['mh']) if self.inputs['climate']['mh'] != None else 0.0
-        sigma_sb = 0.56687e-4 # stefan-boltzmann constant
-        
-        col_den = 1e6*(pressure[1:] -pressure[:-1] ) / (grav/0.01) # cgs g/cm^2
-        wave_in, nlevel, pm, hratio = 0.9, len(pressure), 0.001, 0.1
-        #tidal = tidal_flux(Teff, wave_in,nlevel, pressure, pm, hratio, col_den)
-        tidal = np.zeros_like(pressure) - sigma_sb *(Teff**4)
-        
-        cloudy = self.inputs['climate']['cloudy']
-        cld_species = self.inputs['climate']['cld_species']
-        fsed = self.inputs['climate']['fsed']
-        mieff_dir = self.inputs['climate']['mieff_dir']
-        # first conv call
-        it_max= 10
-        itmx= 7
-        conv = 10.0
-        convt=5.0
-        x_max_mult=7.0
-        
-        final = False
-        pressure, temperature, dtdp, profile_flag = profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
-            TEMP1,pressure, F0PI, t_table, p_table, grad, cp, opacityclass, grav, 
-            rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , cloudy, cld_species,mh,fsed )
-
-        # second convergence call
-        it_max= 7
-        itmx= 5
-        conv = 5.0
-        convt=4.0
-        x_max_mult=7.0
-
-
-        final = False
-        pressure, temperature, dtdp, profile_flag = profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
-                    temperature,pressure, F0PI, t_table, p_table, grad, cp, opacityclass, grav, 
-                    rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final, cloudy, cld_species, mh,fsed )   
-        
-        pressure, temp, dtdp, nstr_new, flux_plus_final =find_strat(mieff_dir, pressure, temperature, dtdp ,F0PI, nofczns,nstr,x_max_mult,
-                             t_table, p_table, grad, cp, opacityclass, grav, 
-                             rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed,
-                             verbose=verbose)
-
-        
-        return pressure , temp, dtdp, nstr_new, flux_plus_final
-   
-
     def setup_nostar(self):
         """
         Turns off planet specific things, so program can run as usual
@@ -3869,7 +3762,7 @@ class inputs():
                     opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
                     flux_plus_ir_attop, verbose=verbose )   
 
-        if chemeq_first: pressure, temp, dtdp, nstr_new, flux_plus_final, df, all_profiles, opd_now,w0_now,g0_now =find_strat(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
+        if chemeq_first: pressure, temp, dtdp, nstr_new, flux_plus_final, df, all_profiles, opd_now,w0_now,g0_now ,final_conv_flag=find_strat(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                              t_table, p_table, grad, cp, opacityclass, grav, 
                              rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, save_profile,all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,
                              verbose=verbose)
@@ -4107,7 +4000,7 @@ class inputs():
             photo_inputs_dict,
             on_fly=on_fly, gases_fly=gases_fly, verbose=verbose)
             
-            pressure, temp, dtdp, nstr_new, flux_plus_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,opd_now,g0_now,w0_now,photo_inputs_dict=find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
+            pressure, temp, dtdp, nstr_new, flux_plus_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,opd_now,g0_now,w0_now,photo_inputs_dict,final_conv_flag=find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                             t_table, p_table, grad, cp, opacityclass, grav, 
                             rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly,
                              verbose=verbose)
@@ -4129,6 +4022,8 @@ class inputs():
         all_out['dtdp'] = dtdp
         all_out['cvz_locs'] = nstr_new
         all_out['flux']=flux_plus_final
+        all_out['converged']=final_conv_flag
+        
         if save_all_profiles: all_out['all_profiles'] = all_profiles            
            
         if with_spec:
@@ -4826,7 +4721,10 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
 
 def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
              t_table, p_table, grad, cp, opacityclass, grav, 
-             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, cloudy, cld_species,mh,fsed,flag_hack, save_profile, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,verbose=1):
+             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, 
+             cloudy, cld_species,mh,fsed,flag_hack, save_profile, all_profiles, 
+             opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
+             flux_plus_ir_attop,verbose=1):
     """
     Function iterating on the TP profile by calling tstart and changing opacities as well
     Parameters
@@ -5103,7 +5001,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
 
       
     
-    return pressure, temp, dtdp, nstr , flux_plus_ir_full, bundle.inputs['atmosphere']['profile'], all_profiles,opd_now,w0_now,g0_now
+    return pressure, temp, dtdp, nstr , flux_plus_ir_full, bundle.inputs['atmosphere']['profile'], all_profiles,opd_now,w0_now,g0_now,profile_flag
 
 def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             temp,pressure,FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
@@ -5596,7 +5494,13 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     
 def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
              t_table, p_table, grad, cp, opacityclass, grav, 
-             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, cloudy, cld_species,mh,fsed,flag_hack, quench_levels, kz,mmw, save_profile, all_profiles,self_consistent_kzz ,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict=None,on_fly=False, gases_fly=None , verbose=1):
+             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, 
+             bb , y2 , tp, cloudy, cld_species,mh,fsed,flag_hack, 
+             quench_levels, kz,mmw, save_profile, all_profiles,
+             self_consistent_kzz ,save_kzz,all_kzz, 
+             opd_cld_climate,g0_cld_climate,w0_cld_climate,
+             flux_net_ir_layer, flux_plus_ir_attop,
+             photo_inputs_dict=None,on_fly=False, gases_fly=None , verbose=1):
     """
     Function iterating on the TP profile by calling tstart and changing opacities as well
     Parameters
@@ -5887,7 +5791,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
 
 
     
-    return pressure, temp, dtdp, nstr , flux_plus_ir_full, qvmrs, qvmrs2, bundle.inputs['atmosphere']['profile'], all_profiles, all_kzz,opd_now,w0_now,g0_now,photo_inputs_dict
+    return pressure, temp, dtdp, nstr , flux_plus_ir_full, qvmrs, qvmrs2, bundle.inputs['atmosphere']['profile'], all_profiles, all_kzz,opd_now,w0_now,g0_now,photo_inputs_dict,profile_flag
 
 #@jit(nopython=True, cache=True)
 def OH_conc(temp,press,x_h2o,x_h2):
