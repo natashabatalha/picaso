@@ -616,8 +616,12 @@ class ATMSETUP():
         df['level']['pressure'] = self.level['pressure']/ self.c.pconv #bars
         df['level']['temperature'] = self.level['temperature']
         
+        #return the level fluxes if the user requests that particular output
         if self.get_lvl_flux:
-            df['level'] = self.lvl_output
+            if not isinstance(getattr(self,'lvl_output_thermal',None), type(None)):
+                df['level']['thermal_fluxes'] = self.lvl_output_thermal
+            if not isinstance(getattr(self,'lvl_output_reflected',None), type(None)):    
+                df['level']['reflected_fluxes'] = self.lvl_output_reflected
 
         df['latitude'] = self.latitude
         df['longitude'] = self.longitude
