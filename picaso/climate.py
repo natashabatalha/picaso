@@ -1449,6 +1449,12 @@ def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None):
     #get geometry
     geom = inputs['disco']
 
+    ng, nt = geom['num_gangle'], geom['num_tangle']#1,1 #
+    gangle,gweight,tangle,tweight = geom['gangle'], geom['gweight'],geom['tangle'], geom['tweight']
+    lat, lon = geom['latitude'], geom['longitude']
+    cos_theta = geom['cos_theta']
+    ubar0, ubar1 = geom['ubar0'], geom['ubar1']
+    """
     ng, nt = 1,1 #geom['num_gangle'], geom['num_tangle']
     gangle,gweight,tangle,tweight = geom['gangle'], geom['gweight'],geom['tangle'], geom['tweight']
     lat, lon = geom['latitude'], geom['longitude']
@@ -1459,6 +1465,7 @@ def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None):
     ubar0 += 0.5
     ubar1 += 0.5
     #print(ubar0,ubar1)
+    """
 
     #set star parameters
     radius_star = inputs['star']['radius']
@@ -1520,4 +1527,4 @@ def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None):
     #mmw = np.mean(atm.layer['mmw'])
     mmw = atm.level['mmw']
     
-    return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw
+    return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight

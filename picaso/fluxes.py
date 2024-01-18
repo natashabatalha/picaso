@@ -1000,9 +1000,7 @@ def get_reflected_1d_deprecate(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,
             xint_at_top[ng,nt,:] = xint[0,:]
             #intensity[ng,nt,:,:] = xint
 
-#    import IPython; IPython.embed()
-#    import sys; sys.exit()
-    return xint_at_top #, flux_out, intensity
+    return xint_at_top 
 
 
 @jit(nopython=True, cache=True)
