@@ -10,7 +10,20 @@ import astropy.units as u
 
 __refdata__ = os.environ.get('picaso_refdata')
 
+def test_it_all(): 
+	#reflected 1d 
 
+	#thermal 1d 
+
+	#reflected 3d 
+
+	#thermal 3d 
+
+	#climate tests 
+
+	#transit 1d 
+	return 
+	
 def thermal_sh_test(single_phase = 'OTHG', output_dir = None, 
 	phase=True, method="toon", stream=2, toon_coefficients="quadrature", delta_eddington=True,
 	disort_data=False, phangle=0, tau=0.2):

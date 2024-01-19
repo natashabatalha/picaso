@@ -26,6 +26,7 @@ from scipy.stats import binned_statistic
 
 from .fluxes import blackbody, get_transit_1d
 from .opacity_factory import *
+from .climate import convec
 
 def mean_regrid(x, y, newx=None, R=None):
     """
@@ -2118,3 +2119,31 @@ def rt_heatmap(data,figure_kwargs={},cmap_kwargs={}):
     p.axis.major_label_text_font_size='12px'
     return p
 
+    
+def pt_adiabat(clima_out, input_class, plot=True):
+    """
+    Plot the PT profile with the adiabat 
+
+    Parameters
+    ----------
+    clima_out : dict
+        Full output from picaso 
+    input_class : justdoit.input
+        PICASO input class (e.g. the result of jdi.inputs()) 
+
+    Returns
+    -------
+    adiabat, dTdP, pressure 
+    """
+    layer_p = clima_out['spectrum_output']['full_output']['layer']['pressure']
+    
+    grad, cp = convec(clima_out['temperature'],clima_out['pressure'],
+                      input_class.inputs['climate']['t_table'], input_class.inputs['climate']['p_table'], 
+                      input_class.inputs['climate']['grad'], input_class.inputs['climate']['cp'])
+                      
+    plt.semilogy(clima_out['dtdp'], layer_p)
+    plt.semilogy(grad,layer_p) 
+    plt.ylim([1e2,1e-4]), 
+    plt.xlabel('dT/dP vs adiabat')
+    plt.ylabel('Pressure(bars)')
+    return cp, clima_out['dtdp'], layer_p
