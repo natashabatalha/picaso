@@ -1638,9 +1638,13 @@ class inputs():
                         fl+= 0.5*(flux_star[k-1] +flux_star[k])*abs((1.0/wno_star[k])-(1.0/wno_star[k-1]))
                 fine_flux_star[j] = fl
 
-            #where_are_NaNs = np.isnan(fine_flux_star)
-            
-            #fine_flux_star[where_are_NaNs] = 0   
+            #fix issue if there are zeros in certain bins 
+            mask = np.logical_or(np.isnan(fine_flux_star), fine_flux_star == 0)
+            if len(fine_wno_star[mask])>20:
+                print(f"Having to replace {len(fine_wno_star[mask])} zeros or nans in stellar spectra with interpolated values. It is advised you check this is correct and something has not gone wrong by plotting classname.inputs['star']['wno'] vs classname.inputs'star'['flux']")
+                non_zero_indices = np.where(~mask)
+                zero_nans = np.interp(fine_wno_star[mask], fine_wno_star[non_zero_indices], fine_flux_star[non_zero_indices])
+                fine_flux_star[mask] = zero_nans  
             
             opannection.unshifted_stellar_spec = fine_flux_star  
             bin_flux_star = fine_flux_star          
@@ -4023,7 +4027,7 @@ class inputs():
         all_out['cvz_locs'] = nstr_new
         all_out['flux']=flux_plus_final
         all_out['converged']=final_conv_flag
-        
+
         if save_all_profiles: all_out['all_profiles'] = all_profiles            
            
         if with_spec:
