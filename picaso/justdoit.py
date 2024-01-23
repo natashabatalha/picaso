@@ -5978,7 +5978,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
              save_profile, all_profiles, self_consistent_kzz, save_kzz,all_kzz,
              opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
              flux_plus_ir_attop,photo_inputs_dict,
-             on_fly=on_fly, gases_fly=gases_fly, verbose=verbose, , do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist=moist )
+             on_fly=on_fly, gases_fly=gases_fly, verbose=verbose, do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist=moist )
 
         i_change = 1
         while i_change == 1 :
