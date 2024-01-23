@@ -783,8 +783,8 @@ class RetrieveCKs():
         gpts_wts = np.reshape(np.array(data.iloc[end_temps+1:2+end_temps+int(2*self.ngauss/3),0:3]
                  .astype(float)).ravel()[1:-1], (self.ngauss,2))
 
-        self.gauss_pts = [i[0] for i in gpts_wts]
-        self.gauss_wts = [i[1] for i in gpts_wts]
+        self.gauss_pts = np.array([i[0] for i in gpts_wts])
+        self.gauss_wts = np.array([i[1] for i in gpts_wts])
 
         if not deq:
             kappa = np.array(data.iloc[3+end_temps+int(2*self.ngauss/3):-2,0:3].astype(float)).ravel()
@@ -871,8 +871,8 @@ class RetrieveCKs():
                 gpts_wts = np.reshape(np.array(data.iloc[end_temps+1:2+end_temps+int(2*self.ngauss/3),0:3]
                  .astype(float)).ravel()[:-2], (self.ngauss,2))
                 
-                self.gauss_pts = [i[0] for i in gpts_wts]
-                self.gauss_wts = [i[1] for i in gpts_wts]
+                self.gauss_pts = np.array([i[0] for i in gpts_wts])
+                self.gauss_wts = np.array([i[1] for i in gpts_wts])
             
                 kappa = np.array(
                     data.iloc[3+end_temps+int(2*self.ngauss/3):-2,0:3]
@@ -1071,8 +1071,8 @@ class RetrieveCKs():
                 gpts_wts = np.reshape(np.array(data.iloc[end_temps+1:2+end_temps+int(2*self.ngauss/3),0:3]
                  .astype(float)).ravel()[1:-1], (self.ngauss,2))
                 
-                self.gauss_pts = [i[0] for i in gpts_wts]
-                self.gauss_wts = [i[1] for i in gpts_wts]
+                self.gauss_pts = np.array([i[0] for i in gpts_wts])
+                self.gauss_wts = np.array([i[1] for i in gpts_wts])
             
                 kappa = np.array(
                     data.iloc[3+end_temps+int(2*self.ngauss/3):-2,0:3]
@@ -1160,8 +1160,8 @@ class RetrieveCKs():
         gpts_wts = np.reshape(np.array(data.iloc[end_temps+1:2+end_temps+int(2*self.ngauss/3),0:3]
          .astype(float)).ravel()[2:], (self.ngauss,2))
 
-        self.gauss_pts = [i[0] for i in gpts_wts]
-        self.gauss_wts = [i[1] for i in gpts_wts]
+        self.gauss_pts = np.array([i[0] for i in gpts_wts])
+        self.gauss_wts = np.array([i[1] for i in gpts_wts])
         
         
         #finally add pressure/temperature scale to abundances
@@ -1520,7 +1520,7 @@ class RetrieveCKs():
         
         #now get associated pressures 
         #p_log_low =  np.array([p_log_grid[i] for i in p_low_ind])
-        return [p_low_ind, p_hi_ind, t_low_ind, t_hi_ind], t_interp,p_interp
+        return np.array([p_low_ind, p_hi_ind, t_low_ind, t_hi_ind]), t_interp,p_interp
             
     def get_pre_mix_ck_nearest(self,atmosphere):
         """
@@ -2268,7 +2268,7 @@ class RetrieveOpacities():
 
         #monochromatic opacity option forces number of gauss points to 1
         self.ngauss = 1
-        self.gauss_wts = [1]
+        self.gauss_wts = np.array([1])
 
         if location == 'local':
             #self.conn = sqlite3.connect(db_filename, detect_types=sqlite3.PARSE_DECLTYPES)
