@@ -532,7 +532,7 @@ class GridFitter():
 
         if fig == None:
             if ax == None:
-                plt.style.use('seaborn-paper')
+                plt.style.use('seaborn-v0_8-colorblind')
                 plt.rcParams['figure.figsize'] = [7, 4]           # Figure dimensions
                 plt.rcParams['figure.dpi'] = 300
                 plt.rcParams['image.aspect'] = 1.2                       # Aspect ratio (the CCD is quite long!!!)
@@ -544,7 +544,7 @@ class GridFitter():
                 #cmap.set_bad('k',1.)
 
                 plt.rcParams['image.cmap'] = 'magma'                   # Colormap.
-                plt.rcParams['image.interpolation'] = None
+                plt.rcParams['image.interpolation'] = ''
                 plt.rcParams['image.origin'] = 'lower'
                 plt.rcParams['font.family'] = 'sans-serif'
                 plt.rcParams['font.serif'] = 'DejaVu Sans'
@@ -583,11 +583,11 @@ class GridFitter():
                     
                     if x_axis_type.get(parameters[iparam],'linear') == 'log':
                         xgrid = np.log10(xgrid)
-                    cycler = ax[irow,icol]._get_lines.prop_cycler
-                    col = next(cycler)['color']
+                    #cycler = ax[irow,icol]._get_lines.prop_cycler
+                    #col = next(cycler)['color']
                     ax[irow,icol].bar(xgrid, yprob,
                         width=[np.mean(abs(np.diff(xgrid)))/2]*len(xgrid), 
-                        color=col,edgecolor=col,
+                        #color=col,edgecolor=col,
                         linewidth=5,label=legend_label,alpha=0.2 )
                     ax[irow,icol].tick_params(axis='both',which='major',length =40, width=3,direction='in',labelsize=30)
                     ax[irow,icol].tick_params(axis='both',which='minor',length =10, width=2,direction='in',labelsize=30)
