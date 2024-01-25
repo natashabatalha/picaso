@@ -2146,4 +2146,4 @@ def pt_adiabat(clima_out, input_class, plot=True):
     plt.ylim([1e2,1e-4]), 
     plt.xlabel('dT/dP vs adiabat')
     plt.ylabel('Pressure(bars)')
-    return cp, clima_out['dtdp'], layer_p
+    return cp, grad, clima_out['dtdp'], layer_p
