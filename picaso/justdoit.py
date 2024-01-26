@@ -594,6 +594,13 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
     df : dict 
         This is the output of your spectrum and must include "full_output=True"
         For example, df = case.spectrum(opa, full_output=True)
+        It can also be the output of your climate run. For example, out=case.climate(..., withSpec=True)
+        If running climate you must run withSpec=True OR add output of case.spectrum to your output dictionary
+        by doing (for example): 
+        >> out = case.climate(..., withSpec=False)
+        >> #add any post processing steps you desire (e.g. case.atmosphere or case.clouds)
+        >> df = case.spectrum(opa, calculation='thermal')
+        >> out['spectrum_output'] = df
     picaso_class : picaso.inputs
         This is the original class that you made to do your run. 
         For example, case=jdi.inputs();followed by case.atmosphere(), case.clouds(), etc
