@@ -617,9 +617,26 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
     xarray.Dataset
         this xarray dataset can be easily passed to justdoit.input_xarray to run a spectrum 
         
-    """
-        
-    full_output = df['full_output'] if 'full_output' in df.keys() else  df['spectrum_output']['full_output']
+    """    
+    #NEB - full_output = df['full_output'] if 'full_output' in df.keys() else  df['spectrum_output']['full_output']
+    
+    #NEB - df from a climate run also contains parameters such as ['wavenumber','thermal','transit_depth'.. etc]
+    for ikey in df['spectrum_output'].keys(): 
+        #Dominic, is this a bad assumption?? 
+        #Here I am assuming that there are no overlapping keys between the climate output and the df['spectrum_output'] output
+        #this would be problematic if there is a clima_out['thermal'] (for example) that would get overwritte by a df['spectrum_output']['thermal']
+        df[ikey] = df['spectrum_output'][ikey]
+
+    #NEB - now you can define the full_output variable
+    #NEB - full_output = df['full_output']  else raise Excepti
+    if 'full_output' in df.keys(): 
+        full_output = df['full_output']
+    else: 
+        raise Exception("full_output is required. Either you need to run spectrum(opa, full_output=True) or add info to spectrum_output")
+    #NEB - end comments 
+
+
+
     df_atmo = picaso_class.inputs['atmosphere']['profile']
     molecules_included = full_output['weights']
     
@@ -643,7 +660,14 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
     if 'fpfs_reflected' in df.keys(): 
         if isinstance(df['fpfs_reflected'], np.ndarray): 
             data_vars['fpfs_reflected'] = (["wavelength"], df['fpfs_reflected'],{'units': 'erg/cm**2/s/cm/(erg/cm**2/s/cm)'})
-    
+
+    #NEB - climate data 
+    #NEB - other edits to make 
+    #now you can think about adding the other outputs from clima https://github.com/natashabatalha/picaso/issues/185
+    #e.g.
+    if 'dtdp' in df.keys(): 
+        data_vars['dtdp'] = (["pressure"], df['dtdp'],{'units': 'K/bar'})
+
     #atmospheric data data 
     for ikey in molecules_included:
         data_vars[ikey] = (["pressure"], df_atmo[ikey].values,{'units': 'v/v'})
