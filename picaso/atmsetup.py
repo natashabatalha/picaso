@@ -360,6 +360,7 @@ class ATMSETUP():
     def get_density(self):
         """
         Calculates density of atmospheres used on TP profile: LEVEL
+        units of cm-3
         """
         self.level['den'] = self.level['pressure'] / (self.c.k_b * self.level['temperature']) 
         return
@@ -615,6 +616,13 @@ class ATMSETUP():
         df['level'] = {}
         df['level']['pressure'] = self.level['pressure']/ self.c.pconv #bars
         df['level']['temperature'] = self.level['temperature']
+        
+        #return the level fluxes if the user requests that particular output
+        if self.get_lvl_flux:
+            if not isinstance(getattr(self,'lvl_output_thermal',None), type(None)):
+                df['level']['thermal_fluxes'] = self.lvl_output_thermal
+            if not isinstance(getattr(self,'lvl_output_reflected',None), type(None)):    
+                df['level']['reflected_fluxes'] = self.lvl_output_reflected
 
         df['latitude'] = self.latitude
         df['longitude'] = self.longitude
@@ -647,6 +655,15 @@ class ATMSETUP():
             x = self.flux_at_top
             df['thermal_unit'] = 'erg/cm2/s/cm'
             df['thermal_3d'] = x
+        except:
+            pass
+
+        try: 
+            x = self.flux_layers
+            df['layer']['flux_minus'] = self.flux_layers[0]
+            df['layer']['flux_plus'] = self.flux_layers[1]
+            df['layer']['flux_minus_mdpt'] = self.flux_layers[2]
+            df['layer']['flux_plus_mdpt'] = self.flux_layers[3]
         except:
             pass
 
