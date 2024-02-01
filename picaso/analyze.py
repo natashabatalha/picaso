@@ -22,8 +22,7 @@ from .justdoit import inputs, opannection, mean_regrid, u, input_xarray, copy
 from bokeh.palettes import Cividis
 from multiprocessing import Pool
 
-import dynesty
-from dynesty import utils as dyfunc
+
 
 class GridFitter(): 
     """
@@ -899,6 +898,12 @@ def detection_test(fitter, molecule, min_wavelength, max_wavelength,
     Computes the detection significance of a molecule given a grid name, data name, 
     filename
     """
+    try: 
+        import dynesty 
+        from dynesty import utils as dyfunc 
+    except ModuleNotFoundError: 
+        raise Exception('You are running a PICASO that requires the additional package `dynesty`. Please install with `pip install dynesty` and rerun this function')
+
     wlgrid_center = fitter.data[data_name]['wlgrid_center']
     y_data = fitter.data[data_name]['y_data']
     e_data = fitter.data[data_name]['e_data']
@@ -932,7 +937,7 @@ def detection_test(fitter, molecule, min_wavelength, max_wavelength,
             min_wavelength_add = min_wavelength
             max_wavelength_add = max_wavelength
 
-    case.atmosphere(df = og_atmo,exclude_mol=molecule, delim_whitespace=True)
+    case.atmosphere(df = og_atmo,exclude_mol=molecule)
     df= case.spectrum(opa, full_output=True,calculation='transmission') #note the new last key 
     wno, model_exclude  = df['wavenumber'] , df['transit_depth']
     wno, model_exclude = mean_regrid(wno,model_exclude,newx=np.sort(1e4/wlgrid_center))

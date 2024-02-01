@@ -75,7 +75,8 @@ setup(
           'virga-exo',
           'xarray',
           'bibtexparser',
-          'cantera==2.6'
+          'netcdf4', 
+          'h5netcdf'
           ], 
     zip_safe = False,
 )
