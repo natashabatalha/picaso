@@ -1406,7 +1406,7 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
             #========================= End get intensities if needed for spectrum =========================
     
     return xint_at_top, (flux_minus_all, flux_plus_all, flux_minus_midpt_all, flux_plus_midpt_all )
-
+    
 @jit(nopython=True, cache=True)
 def get_reflected_1d_gfluxv_deprecate(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,
     surf_reflect,b_top,b_surface,ubar0, F0PI,tridiagonal, delta_approx):

@@ -28,13 +28,13 @@ def get_cld_input_grid(filename_or_grid='wave_EGP.dat',grid661=False):
 		grid,dwni_new = np.loadtxt(os.path.join(__refdata__, 'climate_INPUTS/wvno_661'),usecols=[0,1],unpack=True)
 		return grid
 	if filename_or_grid == 'wave_EGP.dat':
-		grid = pd.read_csv(os.path.join(__refdata__, 'opacities',filename_or_grid), delim_whitespace=True)
+		grid = pd.read_csv(os.path.join(__refdata__, 'opacities',filename_or_grid), sep='\s+')
 		grid = grid.sort_values('wavenumber')['wavenumber'].values
 	elif isinstance(filename_or_grid, np.ndarray):
 		grid = np.sort(filename_or_grid)
 	elif (isinstance(filename_or_grid, str) & (filename_or_grid != 'wave_EGP.dat') & 
 		os.path.exists(filename_or_grid)):	
-		grid = pd.read_csv(os.path.join(filename_or_grid), delim_whitespace=True)
+		grid = pd.read_csv(os.path.join(filename_or_grid), sep='\s+')
 		if 'wavenumber' in grid.keys():
 			grid = grid.sort_values('wavenumber')['wavenumber'].values
 		else: 

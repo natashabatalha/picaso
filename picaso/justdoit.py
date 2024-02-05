@@ -1,5 +1,5 @@
 from .atmsetup import ATMSETUP
-from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_transit_1d, get_thermal_SH
+from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d
 
 from .fluxes import tidal_flux, get_kzz#,set_bb_deprecate 
 from .climate import  calculate_atm_deq, did_grad_cp, convec, calculate_atm, t_start, growdown, growup, get_fluxes
@@ -57,7 +57,7 @@ else:
 if not os.path.exists(os.environ.get('PYSYN_CDBS')): 
     raise Exception("You have not downloaded the Stellar reference data. Follow the installation instructions here: https://natashabatalha.github.io/picaso/installation.html#download-and-link-pysynphot-stellar-data. If you think you have already downloaded it then you likely just need to set your environment variable. You can use `os.environ['PYSYN_CDBS']=<yourpath>` directly in python if you run the line of code before you import PICASO.")
 
-
+#hello peter
 
 def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', 
     full_output=False, plot_opacity= False, as_dict=True):
@@ -301,6 +301,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
             else: 
                 atm.get_lvl_flux=False
 
+
             for ig in range(ngauss): # correlated-k - loop (which is different from gauss-tchevychev angle)
                 
                 #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
@@ -318,15 +319,16 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                                         wno*0, calc_type=0)
 
 
+
                 elif rt_method == 'SH':
-                    (flux, flux_out) = get_thermal_SH(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
+                    flux, flux_layers = get_thermal_SH(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
                                                 DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig], 
                                                 DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], 
                                                 W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                                 atm.level['pressure'], ubar1, 
                                                 atm.surf_reflect, stream, atm.hard_surface)
 
-                if get_lvl_flux: 
+                if ((rt_method == 'toon') & get_lvl_flux): 
                     atm.lvl_output_thermal['flux_minus']+=lvl_fluxes[0]*gauss_wts[ig]
                     atm.lvl_output_thermal['flux_plus']+=lvl_fluxes[1]*gauss_wts[ig]
                     atm.lvl_output_thermal['flux_minus_mdpt']+=lvl_fluxes[2]*gauss_wts[ig]
@@ -334,10 +336,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
                 flux_at_top += flux*gauss_wts[ig]
                 
+                
             #if full output is requested add in flux at top for 3d plots
             if full_output: 
                 atm.flux_at_top = flux_at_top
-
 
         
         if 'transmission' in calculation:
@@ -380,9 +382,16 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
             TAURAY_3d = np.zeros((nlayer, nwno, ng, nt, ngauss))  
 
         #get opacities at each facet
+        #sample MPI code 
+        #from mpi4py improt MPI
+        #comm = MPI.COMM_WORLD
+        #rank = comm.Get_rank()
+        #size = comm.Get_size()
+        #idx = rank-1 
+        #gts = [[g,t] for g in range(ng) for t in range(nt)]
         for g in range(ng):
             for t in range(nt): 
-
+                #g,t = gts[idx]
                 #edit atm class to only have subsection of 3d stuff 
                 atm_1d = copy.deepcopy(atm)
 
@@ -468,7 +477,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
         albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
         returns['albedo'] = albedo 
 
-        if get_lvl_flux: 
+        if ((rt_method == 'toon') & get_lvl_flux): 
             for i in atm.lvl_output_reflected.keys():
                 atm.lvl_output_reflected[i] = compress_disco(nwno,cos_theta,atm.lvl_output_reflected[i], gweight, tweight,F0PI)   
 
@@ -497,7 +506,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
         if full_output: 
             atm.thermal_flux_planet = thermal
 
-        if get_lvl_flux: 
+        if ((rt_method == 'toon') & get_lvl_flux): 
             for i in atm.lvl_output_thermal.keys():
                 atm.lvl_output_thermal[i] = compress_thermal(nwno,atm.lvl_output_thermal[i], gweight, tweight)   
 
@@ -2022,7 +2031,7 @@ class inputs():
             build_filename = 't'+ts[get_ind]+'g'+gs[get_ind]+'nc_m0.0.cmp.gz'
             if build_filename not in flist: 
                 raise Exception(f"The Sonora file you are looking for {build_filename} does not exist in your specified directory {sonora_path}. Please check that it is in there.")
-            ptchem = pd.read_csv(os.path.join(sonora_path,build_filename),delim_whitespace=True,compression='gzip')
+            ptchem = pd.read_csv(os.path.join(sonora_path,build_filename),sep='\s+',compression='gzip')
             ptchem = ptchem.rename(columns={'P(BARS)':'pressure',
                                             'TEMP':'temperature',
                                             'HE':'He'})
@@ -2105,7 +2114,7 @@ class inputs():
         #player = df['pressure'].values
         #tlayer  = df['temperature'].values
         
-        grid = pd.read_csv(filename,delim_whitespace=True)
+        grid = pd.read_csv(filename,sep='\s+')
         grid['pressure'] = 10**grid['pressure']
 
         self.chem_interp(grid)
@@ -2168,7 +2177,7 @@ class inputs():
 
         header = pd.read_csv(filename).keys()[0]
         cols = header.replace('T (K)','temperature').replace('P (bar)','pressure').split()
-        a = pd.read_csv(filename,delim_whitespace=True,skiprows=1,header=None, names=cols)
+        a = pd.read_csv(filename,sep='\s+',skiprows=1,header=None, names=cols)
         a['pressure']=10**a['pressure']
 
 
@@ -4291,7 +4300,7 @@ def HJ_pt_3d(as_xarray=False,add_kz=False, input_file = os.path.join(__refdata__
         file in base_cases/HJ_3d.pt
     """
     #input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')
-    threed_grid = pd.read_csv(input_file,delim_whitespace=True,names=['p','t','k'])
+    threed_grid = pd.read_csv(input_file,sep='\s+',names=['p','t','k'])
     all_lon= threed_grid.loc[np.isnan(threed_grid['k'])]['p'].values
     all_lat=  threed_grid.loc[np.isnan(threed_grid['k'])]['t'].values
     latlong_ind = np.concatenate((np.array(threed_grid.loc[np.isnan(threed_grid['k'])].index),[threed_grid.shape[0]] ))
@@ -4415,11 +4424,11 @@ def evolution_track(mass=1, age='all'):
             mass = f'00{imass}0'            
             if len(mass)==5:mass=mass[1:]
             cold = pd.read_csv(os.path.join(__refdata__, 'evolution','cold_start',f'model_seq.{mass}'),
-                skiprows=12,delim_whitespace=True,
+                skiprows=12,sep='\s+',
                     header=None,names=['age_years','logL','R_cm','Ts','Teff',
                                        'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
             hot = pd.read_csv(os.path.join(__refdata__, 'evolution','hot_start',f'model_seq.{mass}'),
-                skiprows=12,delim_whitespace=True,
+                skiprows=12,sep='\s+',
                     header=None,names=['age_years','logL','R_cm','Ts','Teff',
                                        'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
             if imass==1 :
@@ -4458,10 +4467,10 @@ def evolution_track(mass=1, age='all'):
         mass = int(valid_options[idx])
         mass = f'00{mass}0'
         if len(mass)==5:mass=mass[1:]
-        cold = pd.read_csv(os.path.join(__refdata__, 'evolution','cold_start',f'model_seq.{mass}'),skiprows=12,delim_whitespace=True,
+        cold = pd.read_csv(os.path.join(__refdata__, 'evolution','cold_start',f'model_seq.{mass}'),skiprows=12,sep='\s+',
                     header=None,names=['age_years','logL','R_cm','Ts','Teff',
                                        'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
-        hot = pd.read_csv(os.path.join(__refdata__, 'evolution','hot_start',f'model_seq.{mass}'),skiprows=12,delim_whitespace=True,
+        hot = pd.read_csv(os.path.join(__refdata__, 'evolution','hot_start',f'model_seq.{mass}'),skiprows=12,sep='\s+',
                     header=None,names=['age_years','logL','R_cm','Ts','Teff',
                                        'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
         #return only what we want
