@@ -592,9 +592,6 @@ def check_units(unit):
         #check if real unit
         return None
     
-xr = jdi.xr
-_finditem=jdi._finditem
-
 def output_xarray(df, picaso_class, add_output={}, savefile=None): 
     """
     This function converts all picaso output to xarray which is easy to save 
@@ -628,9 +625,14 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
     -------
     xarray.Dataset
         this xarray dataset can be easily passed to justdoit.input_xarray to run a spectrum 
-        
+    
+    Todo
+    ----
+    - figure out why pandas index are being returned for pressure and wavelenth 
+    - fix clouds wavenumber_layer which doesnt seem like it would work 
+    - add clima inputs : teff (or tint), number of convective zones
+    - cvs_locs array should be more clear
     """ 
-    #print("Creating Xarray data!")
     attrs = {}
     if not isinstance(_finditem(df, 'full_output'), type(None)): 
         #print("Found full_output!")
@@ -639,17 +641,20 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
     else: 
         raise Exception("full_output is required. Either you need to run spectrum(opa, full_output=True), climate(..., with_Spec=True), or create and add info to spectrum_output")
 
+    if not isinstance(_finditem(df, 'wavenumber'), type(None)):
+        wavenumber = _finditem(df, 'wavenumber')
+    else: 
+        raise Exception("wavenumber is required to be in df somewhere")
+        
+        
     #if they put in climate data, add it to xarray and create meta data
     if not isinstance(_finditem(df, 'dtdp'), type(None)): 
-        #print("Climate model detected, adding climate data!")
         attrs['climate_params'] = {}
     
     #is df_atmo ran with climate calculations or hi-res spectrum
     if not isinstance(_finditem(df, 'ptchem_df'), type(None)):
-        #print("P-T chemistry detected!")
         df_atmo = _finditem(df,'ptchem_df')
     else:
-        #print("no P-T chemistry detected...")
         df_atmo = picaso_class.inputs['atmosphere']['profile']
 
     #start with simple layer T
@@ -661,9 +666,6 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
     if not isinstance(_finditem(df, 'dtdp'), type(None)): 
         dtdp = _finditem(df,'dtdp')
         data_vars['dtdp'] = (["pressure_layer"], dtdp, {'units': 'K/bar'})
-
-
-    
    
     if not isinstance(_finditem(df, 'cvz_locs'), type(None)): #for metadata (converged) and other(all_profiles/nlevel)
         cvz_locs = _finditem(df, 'cvz_locs')
@@ -682,7 +684,6 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
             index_finish=nlevel*(i+1)
             data_vars['guess '+str(i+1)]= (["pressure"], all_profiles[index_start:index_finish],{'units': 'Kelvin'})
             
-    #print("Adding any spectral data...")
     #spectral data 
     if not isinstance(_finditem(df, 'thermal'), type(None)):
         thermal = _finditem(df,'thermal')
@@ -710,8 +711,8 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
     for ikey in molecules_included:
         data_vars[ikey] = (["pressure"], df_atmo[ikey].values,{'units': 'v/v'})
         
-    if 'kz' in picaso_class.inputs['atmosphere']['profile'].keys(): 
-        data_vars['kzz'] = (["pressure"], picaso_class.inputs['atmosphere']['profile']['kz'].values,{'units': 'cm**2/s'})
+    if 'kz' in df_atmo: 
+        data_vars['kzz'] = (["pressure"], df_atmo['kz'].values,{'units': 'cm**2/s'})
       
     #clouds if they exist 
     if 'clouds' in picaso_class.inputs: 
@@ -757,7 +758,7 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
         rp = planet_params.get('rp',np.nan) 
         
     #add required RP/MP or gravity
-    if (not np.isnan(mp) & (not np.isnan(rp))):
+    if (((not np.isnan(mp)) & (not np.isnan(rp))) & (((not isinstance(mp,str)) & (not isinstance(rp,str))))):
         attrs['planet_params']['mp'] = mp
         attrs['planet_params']['rp'] = rp
         assert isinstance(attrs['planet_params']['mp'],u.quantity.Quantity ), "User supplied mp in planet_params must be an astropy unit: e.g. 1*u.Unit('M_jup')"
@@ -845,8 +846,8 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
     
     
     coords=dict(
-            pressure=(["pressure"], picaso_class.inputs['atmosphere']['profile']['pressure'].values,{'units': 'bar'}),#required*
-            wavelength=(["wavelength"], 1e4/wavenumber,{'units': 'micron'})
+            pressure=(["pressure"], np.array(df_atmo['pressure'].values),{'units': 'bar'}),#required*
+            wavelength=(["wavelength"], np.array(1e4/wavenumber),{'units': 'micron'})
         )
     if 'clouds' in 'opd' in data_vars.keys(): 
         coords['wavenumber_layer'] = (["wavenumber_layer"], picaso_class.inputs['clouds']   ,{'units': 'cm**(-1)'})
@@ -860,8 +861,9 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
     )
     
     if isinstance(savefile, str): ds.to_netcdf(savefile)
-    #print("Finished!")
+
     return ds
+
 def input_xarray(xr_usr, opacity,p_reference=10, calculation='planet'):
     """
     This takes an input based on these standards and runs: 
