@@ -630,11 +630,10 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
         this xarray dataset can be easily passed to justdoit.input_xarray to run a spectrum 
         
     """ 
-    #neb-edit: remove all print statements before you push code 
-    print("Creating Xarray data!")
+    #print("Creating Xarray data!")
     attrs = {}
     if not isinstance(_finditem(df, 'full_output'), type(None)): 
-        print("Found full_output!")
+        #print("Found full_output!")
         full_output = _finditem(df, 'full_output')
         molecules_included = full_output['weights']
     else: 
@@ -642,15 +641,15 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
 
     #if they put in climate data, add it to xarray and create meta data
     if not isinstance(_finditem(df, 'dtdp'), type(None)): 
-        print("Climate model detected, adding climate data!")
+        #print("Climate model detected, adding climate data!")
         attrs['climate_params'] = {}
     
     #is df_atmo ran with climate calculations or hi-res spectrum
     if not isinstance(_finditem(df, 'ptchem_df'), type(None)):
-        print("P-T chemistry detected!")
+        #print("P-T chemistry detected!")
         df_atmo = _finditem(df,'ptchem_df')
     else:
-        print("no P-T chemistry detected...")
+        #print("no P-T chemistry detected...")
         df_atmo = picaso_class.inputs['atmosphere']['profile']
 
     #start with simple layer T
@@ -663,29 +662,9 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
         dtdp = _finditem(df,'dtdp')
         data_vars['dtdp'] = (["pressure_layer"], dtdp, {'units': 'K/bar'})
 
-    #neb-edit: we dont need to save this. Delete this block 
-    if not isinstance(_finditem(df, 'flux'), type(None)):
-        flux = _finditem(df,'flux')
-        for i in flux:
-            count=0
-            data_vars['flux'+str(count)] = (['wavelength'], i, {'units':'erg/cm**2/s/cm/(erg/cm**2/s/cm)'})
-            count+=1
 
-    #neb-edit: you did this correctly above so you do not need it again. Delete this block 
-    if not isinstance(_finditem(df, 'ptchem_df'), type(None)):
-        df_atmo = _finditem(df,'ptchem_df')
     
-    #neb-edit: wavenumber is a coordinate system, which 
-    #should not be stored as a data variable. Delete this block
-    if not isinstance(_finditem(df, 'wavenumber'), type(None)):
-        wavenumber = _finditem(df,'wavenumber')
-        data_vars['wavenumber']=(['flux'], wavenumber, {'units':'1/(erg/cm**2/s/cm/(erg/cm**2/s/cm))'})
-    
-    #neb-edit: redundant with what we have below in "adding spectral data". Delete this block
-    if not isinstance(_finditem(df, 'thermal'), type(None)):
-        thermal=_finditem(df, 'thermal')
-        data_vars['thermal']=(['wavelength'], thermal, {'units':'erg/cm**2/s/cm/(erg/cm**2/s/cm)'})
-    
+   
     if not isinstance(_finditem(df, 'cvz_locs'), type(None)): #for metadata (converged) and other(all_profiles/nlevel)
         cvz_locs = _finditem(df, 'cvz_locs')
         attrs['climate_params']['cvs_locs'] = cvz_locs
@@ -693,30 +672,17 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
     if not isinstance(_finditem(df, 'converged'), type(None)):
         converged = _finditem(df,'converged')
         attrs['climate_params']['converged'] = converged
-
-    #neb-edit: the great thing about xarrays is that units are stored with the array info so we do not need this
-    #delete this block
-    if not isinstance(_finditem(df, 'thermal_unit'), type(None)):
-        thermal_unit = _finditem(df, 'thermal_unit')
-        attrs['climate_params']['thermal_unit'] = thermal_unit
-
-    #neb-edit: effective temp is a universal parameter and not only a climate output 
-    #add to planet_params instead which is defined below 
-    if not isinstance(_finditem(df, 'effective_temperature'), type(None)):
-        effective_temp = _finditem(df, 'effective_temperature')
-        attrs['climate_params']['effective_temp'] = effective_temp
         
     if not isinstance(_finditem(df , 'all_profiles'), type(None)):
         all_profiles = _finditem(df , 'all_profiles')
-        #neb-edit: pressure might not be in the df it is not climate so replace df with df_atmo which you alrady successfully obtained 
-        nlevel = len(df['pressure'])
+        nlevel = len(df_atmo['pressure'])
         for i in range((int(len(all_profiles)/nlevel))): 
             #after each nlevel amount (ex: 91), restart guess count
             index_start=nlevel*i
             index_finish=nlevel*(i+1)
             data_vars['guess '+str(i+1)]= (["pressure"], all_profiles[index_start:index_finish],{'units': 'Kelvin'})
             
-    print("Adding any spectral data...")
+    #print("Adding any spectral data...")
     #spectral data 
     if not isinstance(_finditem(df, 'thermal'), type(None)):
         thermal = _finditem(df,'thermal')
@@ -766,6 +732,10 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
     planet_params = add_output.get('planet_params',{})
     attrs['planet_params'] = {}
     
+    if not isinstance(_finditem(df, 'effective_temperature'), type(None)):
+        effective_temp = _finditem(df, 'effective_temperature')
+        attrs['planet_params']['effective_temp'] = effective_temp
+
     #find gravity in picaso
     gravity = picaso_class.inputs['planet'].get('gravity',np.nan)
     if np.isfinite(gravity): 
@@ -890,7 +860,7 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
     )
     
     if isinstance(savefile, str): ds.to_netcdf(savefile)
-    print("Finished!")
+    #print("Finished!")
     return ds
 def input_xarray(xr_usr, opacity,p_reference=10, calculation='planet'):
     """
