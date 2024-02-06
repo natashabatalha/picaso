@@ -592,6 +592,9 @@ def check_units(unit):
         #check if real unit
         return None
     
+xr = jdi.xr
+_finditem=jdi._finditem
+
 def output_xarray(df, picaso_class, add_output={}, savefile=None): 
     """
     This function converts all picaso output to xarray which is easy to save 
@@ -627,8 +630,7 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
         this xarray dataset can be easily passed to justdoit.input_xarray to run a spectrum 
         
     """ 
-    #out=case.climate(..., withSpec=True) ['spectrum_output'] should have it
-
+    #neb-edit: remove all print statements before you push code 
     print("Creating Xarray data!")
     attrs = {}
     if not isinstance(_finditem(df, 'full_output'), type(None)): 
@@ -660,34 +662,53 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
     if not isinstance(_finditem(df, 'dtdp'), type(None)): 
         dtdp = _finditem(df,'dtdp')
         data_vars['dtdp'] = (["pressure_layer"], dtdp, {'units': 'K/bar'})
+
+    #neb-edit: we dont need to save this. Delete this block 
     if not isinstance(_finditem(df, 'flux'), type(None)):
         flux = _finditem(df,'flux')
         for i in flux:
             count=0
             data_vars['flux'+str(count)] = (['wavelength'], i, {'units':'erg/cm**2/s/cm/(erg/cm**2/s/cm)'})
             count+=1
+
+    #neb-edit: you did this correctly above so you do not need it again. Delete this block 
     if not isinstance(_finditem(df, 'ptchem_df'), type(None)):
         df_atmo = _finditem(df,'ptchem_df')
+    
+    #neb-edit: wavenumber is a coordinate system, which 
+    #should not be stored as a data variable. Delete this block
     if not isinstance(_finditem(df, 'wavenumber'), type(None)):
         wavenumber = _finditem(df,'wavenumber')
         data_vars['wavenumber']=(['flux'], wavenumber, {'units':'1/(erg/cm**2/s/cm/(erg/cm**2/s/cm))'})
+    
+    #neb-edit: redundant with what we have below in "adding spectral data". Delete this block
     if not isinstance(_finditem(df, 'thermal'), type(None)):
         thermal=_finditem(df, 'thermal')
         data_vars['thermal']=(['wavelength'], thermal, {'units':'erg/cm**2/s/cm/(erg/cm**2/s/cm)'})
+    
     if not isinstance(_finditem(df, 'cvz_locs'), type(None)): #for metadata (converged) and other(all_profiles/nlevel)
         cvz_locs = _finditem(df, 'cvz_locs')
         attrs['climate_params']['cvs_locs'] = cvz_locs
+        
     if not isinstance(_finditem(df, 'converged'), type(None)):
         converged = _finditem(df,'converged')
         attrs['climate_params']['converged'] = converged
+
+    #neb-edit: the great thing about xarrays is that units are stored with the array info so we do not need this
+    #delete this block
     if not isinstance(_finditem(df, 'thermal_unit'), type(None)):
         thermal_unit = _finditem(df, 'thermal_unit')
         attrs['climate_params']['thermal_unit'] = thermal_unit
+
+    #neb-edit: effective temp is a universal parameter and not only a climate output 
+    #add to planet_params instead which is defined below 
     if not isinstance(_finditem(df, 'effective_temperature'), type(None)):
         effective_temp = _finditem(df, 'effective_temperature')
         attrs['climate_params']['effective_temp'] = effective_temp
+        
     if not isinstance(_finditem(df , 'all_profiles'), type(None)):
         all_profiles = _finditem(df , 'all_profiles')
+        #neb-edit: pressure might not be in the df it is not climate so replace df with df_atmo which you alrady successfully obtained 
         nlevel = len(df['pressure'])
         for i in range((int(len(all_profiles)/nlevel))): 
             #after each nlevel amount (ex: 91), restart guess count
@@ -4113,10 +4134,7 @@ class inputs():
         all_out['converged']=final_conv_flag
 
         if save_all_profiles: all_out['all_profiles'] = all_profiles            
-        print("Before with spec")
-        print(with_spec)
         if with_spec:
-            print("with spec detected")
             opacityclass = opannection(ck=True, ck_db=opacityclass.ck_filename,deq=False)
             bundle = inputs(calculation='brown')
             bundle.phase_angle(0)
@@ -4124,7 +4142,7 @@ class inputs():
             bundle.premix_atmosphere(opacityclass,df)
             df_spec = bundle.spectrum(opacityclass,full_output=True)    
             all_out['spectrum_output'] = df_spec 
-        print(all_out.keys())
+
         #put cld output in all_out
         if cloudy == 1:
             df_cld = vj.picaso_format(opd_now, w0_now, g0_now)
