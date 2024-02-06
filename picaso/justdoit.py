@@ -1378,56 +1378,7 @@ class inputs():
         self.inputs['climate']['cp'] = np.array(cp_grad['specific_heat'])
 
 
-    def inputs_climate(self, temp_guess= None, pressure= None, nstr = None, nofczns = None , rfacv = None, rfaci = None, cloudy = False, mh = None, CtoO = None, species = None, fsed = None, mieff_dir = None):
-        """
-        Get Inputs for Climate run
-
-        Parameters
-        ----------
-        temp_guess : array 
-            Guess T(P) profile to begin with
-        pressure : array
-            Pressure Grid for climate code (this wont change on the fly)
-        nstr : array
-            NSTR vector describes state of the atmosphere:
-            0   is top layer [0]
-            1   is top layer of top convective region
-            2   is bottom layer of top convective region
-            3   is top layer of lower radiative region
-            4   is top layer of lower convective region
-            5   is bottom layer of lower convective region [nlayer-1]
-        rfacv : float
-            Fractional contribution of reflected light in net flux
-        rfaci : float
-            Fractional contribution of thermal light in net flux
-
-        
-        """
-
-        if self.inputs['planet']['T_eff'] == 0.0:
-            raise Exception('Need to specify Teff with jdi.input for climate run')
-        if self.inputs['planet']['gravity'] == 0.0:
-            raise Exception('Need to specify gravity with jdi.input for climate run')
-
-        
-        self.inputs['climate']['guess_temp'] = temp_guess
-        self.inputs['climate']['pressure'] = pressure
-        self.inputs['climate']['nstr'] = nstr
-        self.inputs['climate']['nofczns'] = nofczns
-        self.inputs['climate']['rfacv'] = rfacv
-        self.inputs['climate']['rfaci'] = rfaci
-        if cloudy:
-            self.inputs['climate']['cloudy'] = 1
-            self.inputs['climate']['cld_species'] = species
-            self.inputs['climate']['fsed'] = fsed
-            self.inputs['climate']['mieff_dir'] = mieff_dir
-        else :
-            self.inputs['climate']['cloudy'] = 0
-            self.inputs['climate']['cld_species'] = 0
-            self.inputs['climate']['fsed'] = 0
-            self.inputs['climate']['mieff_dir'] = mieff_dir
-        self.inputs['climate']['mh'] = mh
-        self.inputs['climate']['CtoO'] = CtoO
+    
 
     def old_run_climate_model(self, opacityclass):
         """
