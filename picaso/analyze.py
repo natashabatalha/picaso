@@ -637,6 +637,7 @@ class GridFitter():
         if add_ptchem: 
             all_pt = fitter.temperature[grid_name]
             all_chem = fitter.chemistry[grid_name]
+            mols = all_chem.keys()
 
         df_grid_params = pd.DataFrame(index = range(len(fitter.list_of_files[grid_name])))
         grid_params=[]
@@ -660,7 +661,6 @@ class GridFitter():
             spectra_square = []
             #and add pt/chem if we want
             if add_ptchem: 
-                mols = all_chem.keys()
                 pt_square = []
                 chem_square = {imol:[] for imol in mols}
 
