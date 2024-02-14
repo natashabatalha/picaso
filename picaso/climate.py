@@ -429,7 +429,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
     # here are other  convergence and tolerance criterias
 
     step_max = 0.01e0 # scaled maximum step size in line searches
-    alf = 1.e-4    # ? 
+    alf = 1.e-4    # ? #1e-3 in EGP code I have (JM), was 1e-4 in original PICASO code
     alam2 = 0.0   # ? 
     tolmin=1.e-5   # ?
     tolf = 5e-3    # tolerance in fractional Flux we are aiming for
@@ -580,6 +580,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
         
         # NEB NOTE about step max 
         # In the original fortran code this was originally 
+        # step_max_tolerance = 0.005
         # step_max = step_max_tolerance*max(sqrt(sum_1),n_total*1.0) #where step_max_tolerance=0.03
         # however when this was fixed, the code was progressing very slowly 
         # therefore, we are keeping this in the code for now 
@@ -949,9 +950,9 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                 nao+= n_bot_a - n_strt_a
                         
             f= 0.5*sum
-            #if verbose: print('cond1:alam.lt.alamin',alam, alamin)
-            #if verbose: print('cond2:f.le.CCC',f,f_old + alf*alam*slope)
-            #if verbose: print('f,fold,alf,alam,slope',f,f_old,alf,alam,slope)
+            # if verbose: print('cond1:alam.lt.alamin',alam, alamin)
+            # if verbose: print('cond2:f.le.CCC',f,f_old + alf*alam*slope)
+            # if verbose: print('f,fold,alf,alam,slope',f,f_old,alf,alam,slope)
             #First check: Is T too small to continue? 
             if alam < alamin :
                 check = True

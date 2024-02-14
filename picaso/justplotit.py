@@ -2143,7 +2143,7 @@ def pt_adiabat(clima_out, input_class, plot=True):
                       
     plt.semilogy(clima_out['dtdp'], layer_p)
     plt.semilogy(grad,layer_p) 
-    plt.ylim([1e2,1e-4]), 
+    plt.ylim([1e4,1e-4]), 
     plt.xlabel('dT/dP vs adiabat')
     plt.ylabel('Pressure(bars)')
     return cp, grad, clima_out['dtdp'], layer_p
