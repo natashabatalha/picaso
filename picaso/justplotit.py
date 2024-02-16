@@ -1531,6 +1531,63 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=pals.Spectral11,v
     kwargs : dict 
         Bokeh plotting kwargs for bokeh.Figure
     """
+
+    # kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',400))
+    # kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',600))
+    # if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
+    # if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
+    # kwargs['title'] = kwargs.get('title','Phase Curves')
+    # kwargs['y_axis_label'] = kwargs.get('y_axis_label',to_plot)
+    # kwargs['x_axis_label'] = kwargs.get('x_axis_label','Orbital Phase')
+    # kwargs['y_axis_type'] = kwargs.get('y_axis_type','linear')
+    # kwargs['x_axis_type'] = kwargs.get('x_axis_type','linear') 
+
+    # fig = figure(**kwargs)
+
+    # #check collapse
+    # if (isinstance(collapse, (float,int)) or isinstance(collapse, str)):
+    #     collapse = [collapse]
+    # elif isinstance(collapse, list): 
+    #     for i in collapse : assert isinstance(i,(float,int)), 'Can only supply list if it is a list of floats that represent the wavelength in micron.'
+    # else: 
+    #     raise Exception('Collapse must either be float, str or list')
+    # if len(collapse)>len(palette): 
+    #     if verbose: print('Switched color palette to accomodate more collapse input options')
+    #     palette = pals.magma(len(collapse))
+
+    # all_curves = np.zeros((len(allout.keys()), len(collapse)))
+    # all_ws = np.zeros(len(collapse))
+    # phases = np.array(list(allout.keys()))
+    
+    # for i,iphase in enumerate(phases):
+    #     for j,icol in enumerate(collapse): 
+    #         if icol in ['np.mean', 'np.sum']:
+    #             w,f =eval(icol)(allout[iphase]['wavenumber']), eval(icol)(allout[iphase][to_plot])
+    #             all_curves[i,j] = f 
+    #             all_ws[j] = w
+    #         else: 
+    #             w,f = mean_regrid(allout[iphase]['wavenumber'],
+    #                                allout[iphase][to_plot],R=R)
+    #             iw = np.argmin(abs(1e4/w-icol)) 
+    #             w,f = w[iw],f[iw]
+    #             all_curves[i,j] = f
+    #             all_ws[j] = w
+    # legend_it=[]  
+    # for i in range(len(collapse)): 
+    #     f = fig.line(phases*180/np.pi,all_curves[:,i],line_width=3,color=palette[i],
+    #             )
+        
+    #     legend_it.append((str(int(1e4/all_ws[i]*100)/100)+'um', [f]))
+
+    # legend = Legend(items=legend_it, location=(0, -20))
+    # legend.click_policy="mute"
+    # fig.add_layout(legend, 'left') 
+        
+    # fig.xgrid.grid_line_alpha=0
+    # fig.ygrid.grid_line_alpha=0
+    # plot_format(fig)
+    # return phases, all_curves, all_ws, fig
+
     kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',400))
     kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',600))
     if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
@@ -1593,7 +1650,9 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=pals.Spectral11,v
 
     #re-order phases such that brightest value is at phase=0 (only way to do this for reflected case)
     front_half_phases = phases[:len(phases)//2]
+    print("front_half_phases", front_half_phases)
     back_half_phases = phases[len(phases)//2:] - (2*np.pi)
+    print("back_half_phases", back_half_phases)
     reorder_phases = np.concatenate((back_half_phases, front_half_phases))
 
     #re-order all_curves such that brightest value is at phase=0 (only way to do this for reflected case)
