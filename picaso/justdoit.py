@@ -5567,7 +5567,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
         DTAU_clear, TAU_clear, W0_clear, COSB_clear,ftau_cld_clear, ftau_ray_clear,GCOS2_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear, COSB_OG_clear, \
             W0_no_raman_clear , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
             frac_a,frac_b,frac_c,constant_back,constant_forward, \
-            wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw, gweight, tweight =  calculate_atm_deq(bundle, opacityclass,fthin_cld, on_fly=on_fly,gases_fly=gases_fly, do_holes=True)
+            wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw, gweight, tweight =  calculate_atm_deq(bundle, opacityclass, on_fly=on_fly,gases_fly=gases_fly, do_holes=True, fthin_cld=fthin_cld)
 
     if self_consistent_kzz == True :
 
@@ -5729,7 +5729,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             DTAU_clear, TAU_clear, W0_clear, COSB_clear,ftau_cld_clear, ftau_ray_clear, GCOS2_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear, COSB_OG_clear, \
             W0_no_raman_clear , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
             frac_a,frac_b,frac_c,constant_back,constant_forward, \
-            wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw, gweight,tweight =  calculate_atm_deq(bundle, opacityclass, fthin_cld, on_fly=on_fly, gases_fly=gases_fly, do_holes=True)
+            wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw, gweight,tweight =  calculate_atm_deq(bundle, opacityclass, on_fly=on_fly,gases_fly=gases_fly, do_holes=True, fthin_cld=fthin_cld)
 
         if self_consistent_kzz == True :
             
@@ -6224,7 +6224,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
             wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts, False, True) #false for reflected, true for thermal
     
     if do_holes == True:
-        DTAU_clear, TAU_clear, W0_clear, COSB_clear,ftau_cld_clear, ftau_ray_clear, GCOS2_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear, COSB_OG_clear, W0_no_raman_clear, surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw, gweight, tweight =  calculate_atm_deq(bundle, opacityclass, fthin_cld, on_fly=on_fly, gases_fly=gases_fly, do_holes=True)
+        DTAU_clear, TAU_clear, W0_clear, COSB_clear,ftau_cld_clear, ftau_ray_clear, GCOS2_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear, COSB_OG_clear, W0_no_raman_clear, surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw, gweight, tweight =  calculate_atm_deq(bundle, opacityclass, on_fly=on_fly,gases_fly=gases_fly, do_holes=True, fthin_cld=fthin_cld)
     
         flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
                 COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
