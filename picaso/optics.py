@@ -633,7 +633,7 @@ def raman_pollack(nlayer,wave):
     qv = facv / SHIFT( WAVEL, -SHIFTV0 ) ** 4 * ( 3. * alpha_p2 + 2./3. * gamma_p2 )    
     """
     dat = pd.read_csv(os.path.join(os.environ.get('picaso_refdata'), 'opacities','raman_fortran.txt'),
-                        delim_whitespace=True, header=None, names = ['w','f'])
+                        sep='\s+', header=None, names = ['w','f'])
     #fill in matrix to match real raman format
     interp_raman = np.interp(wave, dat['w'].values, dat['f'].values, )
     raman_factor = np.zeros((nlayer, len(wave)))
@@ -665,7 +665,7 @@ class RetrieveCKs():
         #read in the full abundance file sot hat we can check the number of kcoefficient layers 
         #this should either be 1460 or 1060
         self.full_abunds =  pd.read_csv(os.path.join(self.ck_filename,'full_abunds'),
-            delim_whitespace=True)
+            sep='\s+')
         self.kcoeff_layers = self.full_abunds.shape[0]
 
         if deq == False :
@@ -722,7 +722,7 @@ class RetrieveCKs():
         run this function. Each specific line is accounted for.
         """
         data = pd.read_csv(os.path.join(self.ck_filename,'ascii_data'), 
-                  delim_whitespace=True,header=None, 
+                  sep='\s+',header=None, 
                   names=list(range(9)),dtype=str)
 
         num_species = int(data.iloc[0,0])
@@ -808,7 +808,7 @@ class RetrieveCKs():
         run this function. Each specific line is accounted for.
         """
         data = pd.read_csv(os.path.join(self.ck_filename,'ascii_data'), 
-                  delim_whitespace=True,header=None, 
+                  sep='\s+',header=None, 
                   names=list(range(9)),dtype=str)
 
         num_species = int(data.iloc[0,0])
@@ -1101,7 +1101,7 @@ class RetrieveCKs():
         run this function. Each specific line is accounted for.
         """
         data = pd.read_csv(os.path.join(self.ck_filename,'ascii_data'), 
-                  delim_whitespace=True,header=None, 
+                  sep='\s+',header=None, 
                   names=list(range(9)),dtype=str)
 
         num_species = int(data.iloc[0,0])
@@ -2279,7 +2279,7 @@ class RetrieveOpacities():
         
         #raman cross sections 
         self.raman_db = pd.read_csv(raman_data,
-                     delim_whitespace=True, skiprows=16,header=None, names=['ji','jf','vf','c','deltanu'])
+                     sep='\s+', skiprows=16,header=None, names=['ji','jf','vf','c','deltanu'])
         
         #compute available Rayleigh scatterers 
         self.get_available_rayleigh()

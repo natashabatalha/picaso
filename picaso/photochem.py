@@ -1,10 +1,8 @@
-def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,
-    tstop=None,filename = None,stfilename=None,network=None,
-    network_ct= None,first=None,pc=None):
+def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,filename = '111',stfilename='111',network=None,network_ct=None,first=True,pc=None,user_psurf=True,user_psurf_add=3):
     raise Exception("Photochemistry not yet availble")
 
-
-"""import numpy as np
+"""
+import numpy as np
 from matplotlib import pyplot as plt
 import cantera as ct
 from scipy import constants as const
@@ -391,7 +389,7 @@ def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,f
 
     return pc_new,output_array,species,np.flip(pressure)
 
-"""
 
+"""
       
     

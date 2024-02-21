@@ -60,8 +60,8 @@ setup(
   ],
   packages=['picaso'],
   install_requires=[
-          'numpy<1.25',
-          'bokeh>=2.3.0,<3.2.0',
+          'bokeh>=2.3.0,<3.3.0',
+          'numpy<1.27',
           'holoviews',
           'numba',
           'pandas',
@@ -75,6 +75,8 @@ setup(
           'virga-exo',
           'xarray',
           'bibtexparser',
+          'netcdf4', 
+          'h5netcdf'
           ], 
     zip_safe = False,
 )

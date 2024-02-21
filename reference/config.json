@@ -49,6 +49,7 @@
 		}
 	},
 	"approx":{
+		"get_layer_fluxes":0,
 		"p_reference":1,
 		"rt_method":"toon",
 		"rt_params":{

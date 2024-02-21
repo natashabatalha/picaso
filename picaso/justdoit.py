@@ -1,5 +1,5 @@
 from .atmsetup import ATMSETUP
-from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_transit_1d, get_thermal_SH
+from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d
 
 from .fluxes import tidal_flux, get_kzz#,set_bb_deprecate 
 from .climate import  calculate_atm_deq, did_grad_cp, convec, calculate_atm, t_start, growdown, growup, get_fluxes, moist_grad
@@ -57,7 +57,7 @@ else:
 if not os.path.exists(os.environ.get('PYSYN_CDBS')): 
     raise Exception("You have not downloaded the Stellar reference data. Follow the installation instructions here: https://natashabatalha.github.io/picaso/installation.html#download-and-link-pysynphot-stellar-data. If you think you have already downloaded it then you likely just need to set your environment variable. You can use `os.environ['PYSYN_CDBS']=<yourpath>` directly in python if you run the line of code before you import PICASO.")
 
-
+#hello peter
 
 def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', 
     full_output=False, plot_opacity= False, as_dict=True):
@@ -301,6 +301,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
             else: 
                 atm.get_lvl_flux=False
 
+
             for ig in range(ngauss): # correlated-k - loop (which is different from gauss-tchevychev angle)
                 
                 #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
@@ -318,15 +319,16 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                                         wno*0, calc_type=0)
 
 
+
                 elif rt_method == 'SH':
-                    (flux, flux_out) = get_thermal_SH(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
+                    flux, flux_layers = get_thermal_SH(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
                                                 DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig], 
                                                 DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], 
                                                 W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                                 atm.level['pressure'], ubar1, 
                                                 atm.surf_reflect, stream, atm.hard_surface)
 
-                if get_lvl_flux: 
+                if ((rt_method == 'toon') & get_lvl_flux): 
                     atm.lvl_output_thermal['flux_minus']+=lvl_fluxes[0]*gauss_wts[ig]
                     atm.lvl_output_thermal['flux_plus']+=lvl_fluxes[1]*gauss_wts[ig]
                     atm.lvl_output_thermal['flux_minus_mdpt']+=lvl_fluxes[2]*gauss_wts[ig]
@@ -334,10 +336,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
                 flux_at_top += flux*gauss_wts[ig]
                 
+                
             #if full output is requested add in flux at top for 3d plots
             if full_output: 
                 atm.flux_at_top = flux_at_top
-
 
         
         if 'transmission' in calculation:
@@ -380,9 +382,16 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
             TAURAY_3d = np.zeros((nlayer, nwno, ng, nt, ngauss))  
 
         #get opacities at each facet
+        #sample MPI code 
+        #from mpi4py improt MPI
+        #comm = MPI.COMM_WORLD
+        #rank = comm.Get_rank()
+        #size = comm.Get_size()
+        #idx = rank-1 
+        #gts = [[g,t] for g in range(ng) for t in range(nt)]
         for g in range(ng):
             for t in range(nt): 
-
+                #g,t = gts[idx]
                 #edit atm class to only have subsection of 3d stuff 
                 atm_1d = copy.deepcopy(atm)
 
@@ -468,7 +477,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
         albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
         returns['albedo'] = albedo 
 
-        if get_lvl_flux: 
+        if ((rt_method == 'toon') & get_lvl_flux): 
             for i in atm.lvl_output_reflected.keys():
                 atm.lvl_output_reflected[i] = compress_disco(nwno,cos_theta,atm.lvl_output_reflected[i], gweight, tweight,F0PI)   
 
@@ -497,7 +506,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
         if full_output: 
             atm.thermal_flux_planet = thermal
 
-        if get_lvl_flux: 
+        if ((rt_method == 'toon') & get_lvl_flux): 
             for i in atm.lvl_output_thermal.keys():
                 atm.lvl_output_thermal[i] = compress_thermal(nwno,atm.lvl_output_thermal[i], gweight, tweight)   
 
@@ -1424,86 +1433,7 @@ class inputs():
         self.inputs['climate']['cp'] = np.array(cp_grad['specific_heat'])
 
 
-    def inputs_climate(self, temp_guess= None, pressure= None, nstr = None, nofczns = None , rfacv = None, rfaci = None, cloudy = False, 
-                       mh = None, CtoO = None, species = None, fsed = None, mieff_dir = None, do_holes = False, fhole = None, fthin_cld = None, moistgrad = False):
-        """
-        Get Inputs for Climate run
-
-        Parameters
-        ----------
-        temp_guess : array 
-            Guess T(P) profile to begin with
-        pressure : array
-            Pressure Grid for climate code (this wont change on the fly)
-        nstr : array
-            NSTR vector describes state of the atmosphere:
-            0   is top layer [0]
-            1   is top layer of top convective region
-            2   is bottom layer of top convective region
-            3   is top layer of lower radiative region
-            4   is top layer of lower convective region
-            5   is bottom layer of lower convective region [nlayer-1]
-        rfacv : float
-            Fractional contribution of reflected light in net flux
-        rfaci : float
-            Fractional contribution of thermal light in net flux
-        cloudy : bool
-            Add self-consistent clouds to the calculation
-        do_holes : bool
-            Patchy cloud option with clearsky holes
-        fhole : float
-            Fraction of clearsky holes (from 0 to 1.0)
-        fthin_cld : float
-            Fraction of thin clouds in patchy cloud column (from 0 to 1.0), default 0 for clear sky column
-        moistgrad: bool
-            Use moist adiabat option
-
-        
-        """
-
-        if self.inputs['planet']['T_eff'] == 0.0:
-            raise Exception('Need to specify Teff with jdi.input for climate run')
-        if self.inputs['planet']['gravity'] == 0.0:
-            raise Exception('Need to specify gravity with jdi.input for climate run')
-
-        
-        self.inputs['climate']['guess_temp'] = temp_guess
-        self.inputs['climate']['pressure'] = pressure
-        self.inputs['climate']['nstr'] = nstr
-        self.inputs['climate']['nofczns'] = nofczns
-        self.inputs['climate']['rfacv'] = rfacv
-        self.inputs['climate']['rfaci'] = rfaci
-        if cloudy:
-            self.inputs['climate']['cloudy'] = 1
-            self.inputs['climate']['cld_species'] = species
-            self.inputs['climate']['fsed'] = fsed
-            self.inputs['climate']['mieff_dir'] = mieff_dir
-            if do_holes:
-                self.inputs['climate']['do_holes'] = True
-                self.inputs['climate']['fhole'] = fhole
-                if fthin_cld == None:
-                    self.inputs['climate']['fthin_cld'] = 0
-                else:
-                    self.inputs['climate']['fthin_cld'] = fthin_cld
-            else:
-                self.inputs['climate']['do_holes'] = False
-                self.inputs['climate']['fhole'] = 0
-                self.inputs['climate']['fthin_cld'] = 0
-        else :
-            self.inputs['climate']['cloudy'] = 0
-            self.inputs['climate']['cld_species'] = 0
-            self.inputs['climate']['fsed'] = 0
-            self.inputs['climate']['mieff_dir'] = mieff_dir
-            self.inputs['climate']['do_holes'] = False
-            self.inputs['climate']['fhole'] = 0
-            self.inputs['climate']['fthin_cld'] = 0
-            if do_holes:
-                print('Patchy cloud option only considered when clouds are enabled. Turning off patchy clouds')
-                self.inputs['climate']['do_holes'] = False
-
-        self.inputs['climate']['moistgrad'] = moistgrad
-        self.inputs['climate']['mh'] = mh
-        self.inputs['climate']['CtoO'] = CtoO
+    
 
     def setup_nostar(self):
         """
@@ -1935,10 +1865,10 @@ class inputs():
     def sonora(self, sonora_path, teff, chem='low'):
         """
         This queries Sonora temperature profile that can be downloaded from profiles.tar on 
-        Zenodo: [profile.tar file](https://zenodo.org/record/1309035#.Xo5GbZNKjGJ)
-        
-        Alterntiavely you can grab the sonora bobcat models here: 
-        https://zenodo.org/record/5063476/files/structures_m%2B0.0.tar.gz?download=1
+        Zenodo: 
+
+            - Bobcat Models: [profile.tar file](https://zenodo.org/record/1309035#.Xo5GbZNKjGJ)
+            - Elf OWL Models: [L Type Models](https://zenodo.org/records/10385987), [T Type Models](https://zenodo.org/records/10385821), [Y Type Models](https://zenodo.org/records/10381250)
 
         Note gravity is not an input because it grabs gravity from self. 
 
@@ -1978,7 +1908,7 @@ class inputs():
             build_filename = 't'+ts[get_ind]+'g'+gs[get_ind]+'nc_m0.0.cmp.gz'
             if build_filename not in flist: 
                 raise Exception(f"The Sonora file you are looking for {build_filename} does not exist in your specified directory {sonora_path}. Please check that it is in there.")
-            ptchem = pd.read_csv(os.path.join(sonora_path,build_filename),delim_whitespace=True,compression='gzip')
+            ptchem = pd.read_csv(os.path.join(sonora_path,build_filename),sep='\s+',compression='gzip')
             ptchem = ptchem.rename(columns={'P(BARS)':'pressure',
                                             'TEMP':'temperature',
                                             'HE':'He'})
@@ -2061,7 +1991,7 @@ class inputs():
         #player = df['pressure'].values
         #tlayer  = df['temperature'].values
         
-        grid = pd.read_csv(filename,delim_whitespace=True)
+        grid = pd.read_csv(filename,sep='\s+')
         grid['pressure'] = 10**grid['pressure']
 
         self.chem_interp(grid)
@@ -2124,7 +2054,7 @@ class inputs():
 
         header = pd.read_csv(filename).keys()[0]
         cols = header.replace('T (K)','temperature').replace('P (bar)','pressure').split()
-        a = pd.read_csv(filename,delim_whitespace=True,skiprows=1,header=None, names=cols)
+        a = pd.read_csv(filename,sep='\s+',skiprows=1,header=None, names=cols)
         a['pressure']=10**a['pressure']
 
 
@@ -3543,7 +3473,7 @@ class inputs():
             self.inputs['planet']['T_eff'] = 0
 
     def inputs_climate(self, temp_guess= None, pressure= None, rfaci = 1,nofczns = 1 ,
-        nstr = None,  rfacv = None, 
+        nstr = None,  rfacv = None, m_planet=None,r_planet=None,
         cloudy = False, mh = None, CtoO = None, species = None, fsed = None, mieff_dir = None,
         photochem=False, photochem_file=None,photochem_stfile = None,photonetwork_file = None,photonetworkct_file=None,tstop=1e7,psurf=10, fhole = None, do_holes = False, fthin_cld = None, moistgrad = False):
 
@@ -3668,6 +3598,9 @@ class inputs():
 
             if r_planet is None:
                 raiseExceptions("Supply planet radius if you want to run photochem")
+            else:
+                self.inputs['climate']['r_planet'] = r_planet
+
             if photochem_file is None:
                 raiseExceptions("Supply photochem_filename if you want to run photochem")
             else:
@@ -3780,7 +3713,8 @@ class inputs():
 
         Teff = self.inputs['planet']['T_eff']
         grav = 0.01*self.inputs['planet']['gravity'] # cgs to si
-        mh = float(self.inputs['climate']['mh']) if self.inputs['climate']['mh'] != None else 0.0
+        mh = self.inputs['climate']['mh']
+        mh = float(mh) if mh is not None else 0
         sigma_sb = 0.56687e-4 # stefan-boltzmann constant
         
         col_den = 1e6*(pressure[1:] -pressure[:-1] ) / (grav/0.01) # cgs g/cm^2
@@ -4083,10 +4017,10 @@ class inputs():
             #    nofczns = 2
             #    print("nofczns corrected") 
 
-
-            pressure, temperature, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict  = profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
-            temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
-            rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , 
+            if self.inputs['climate']['photochem']==False:
+                pressure, temperature, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,_  = profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
+                temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
+                rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , 
             cloudy, cld_species,mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile,
             all_profiles, self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,
             g0_cld_climate,
@@ -4094,11 +4028,21 @@ class inputs():
             photo_inputs_dict,
             on_fly=on_fly, gases_fly=gases_fly, verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist=moist)
             
-            pressure, temp, dtdp, nstr_new, flux_plus_final, flux_net_final, flux_net_ir_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,opd_now,g0_now,w0_now,photo_inputs_dict,final_conv_flag=find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
+                pressure, temp, dtdp, nstr_new, flux_plus_final, flux_net_final, flux_net_ir_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,opd_now,g0_now,w0_now,photo_inputs_dict,final_conv_flag=find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                             t_table, p_table, grad, cp, opacityclass, grav, 
                             rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly,
                              verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist = moist)
- 
+                
+            else:
+                print("Only doing Profiles and not extending/reducing CZs")
+                pressure, temperature, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict, df  = profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
+                temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
+                rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , cloudy, cld_species,mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile,all_profiles, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly)
+                nstr_new = nstr.copy()
+                flux_plus_final = flux_plus_ir_attop.copy()
+                temp=temperature.copy()
+
+
             #diseq stuff
             all_out['diseq_out'] = {}
             if save_all_kzz: all_out['diseq_out']['all_kzz'] = all_kzz
@@ -4137,9 +4081,13 @@ class inputs():
         else: 
             return pressure , temp, dtdp, nstr_new, flux_plus_final, df, all_profiles , opd_now,w0_now,g0_now
     
-    def call_photochem(self,temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=1e7,filename = None,stfilename=None,network=None,network_ct=None,first=True,pc=None):
-    
-        pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=first,pc=pc)
+    def call_photochem(self,temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=1e7,filename = None,stfilename=None,network=None,network_ct=None,first=True,pc=None,user_psurf=True,user_psurf_add=3):
+        p_target = np.logspace(np.log10(np.min(pressure)),np.log10(np.max(pressure)),180)
+        interp_function = interp1d(np.log10(pressure),np.log10(temp),bounds_error=False,fill_value='extrapolate')
+        interp_function_kzz = interp1d(np.log10(pressure),np.log10(kzz),bounds_error=False,fill_value='extrapolate')
+        interp_temp  = 10**interp_function(np.log10(p_target))
+        interp_kzz = 10**interp_function_kzz(np.log10(p_target))
+        pc,output_array,species,pressure = run_photochem(interp_temp,p_target,logMH, cto,pressure_surf,mass,radius,interp_kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=first,pc=pc,user_psurf=user_psurf,user_psurf_add=user_psurf_add)
         #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
         #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
         #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
@@ -4147,7 +4095,8 @@ class inputs():
         #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
 
         for i in range(len(species)):
-            self.inputs['atmosphere']['profile'][species[i]] = output_array[i,:]
+            interp_sp = interp1d(np.log10(p_target),np.log10(output_array[i,:]),bounds_error=False,fill_value='extrapolate')
+            self.inputs['atmosphere']['profile'][species[i]] = 10**interp_sp(np.log10(pressure))#output_array[i,:]
         return pc
 
 def get_targets():
@@ -4303,7 +4252,7 @@ def HJ_pt_3d(as_xarray=False,add_kz=False, input_file = os.path.join(__refdata__
         file in base_cases/HJ_3d.pt
     """
     #input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')
-    threed_grid = pd.read_csv(input_file,delim_whitespace=True,names=['p','t','k'])
+    threed_grid = pd.read_csv(input_file,sep='\s+',names=['p','t','k'])
     all_lon= threed_grid.loc[np.isnan(threed_grid['k'])]['p'].values
     all_lat=  threed_grid.loc[np.isnan(threed_grid['k'])]['t'].values
     latlong_ind = np.concatenate((np.array(threed_grid.loc[np.isnan(threed_grid['k'])].index),[threed_grid.shape[0]] ))
@@ -4427,11 +4376,11 @@ def evolution_track(mass=1, age='all'):
             mass = f'00{imass}0'            
             if len(mass)==5:mass=mass[1:]
             cold = pd.read_csv(os.path.join(__refdata__, 'evolution','cold_start',f'model_seq.{mass}'),
-                skiprows=12,delim_whitespace=True,
+                skiprows=12,sep='\s+',
                     header=None,names=['age_years','logL','R_cm','Ts','Teff',
                                        'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
             hot = pd.read_csv(os.path.join(__refdata__, 'evolution','hot_start',f'model_seq.{mass}'),
-                skiprows=12,delim_whitespace=True,
+                skiprows=12,sep='\s+',
                     header=None,names=['age_years','logL','R_cm','Ts','Teff',
                                        'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
             if imass==1 :
@@ -4470,10 +4419,10 @@ def evolution_track(mass=1, age='all'):
         mass = int(valid_options[idx])
         mass = f'00{mass}0'
         if len(mass)==5:mass=mass[1:]
-        cold = pd.read_csv(os.path.join(__refdata__, 'evolution','cold_start',f'model_seq.{mass}'),skiprows=12,delim_whitespace=True,
+        cold = pd.read_csv(os.path.join(__refdata__, 'evolution','cold_start',f'model_seq.{mass}'),skiprows=12,sep='\s+',
                     header=None,names=['age_years','logL','R_cm','Ts','Teff',
                                        'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
-        hot = pd.read_csv(os.path.join(__refdata__, 'evolution','hot_start',f'model_seq.{mass}'),skiprows=12,delim_whitespace=True,
+        hot = pd.read_csv(os.path.join(__refdata__, 'evolution','hot_start',f'model_seq.{mass}'),skiprows=12,sep='\s+',
                     header=None,names=['age_years','logL','R_cm','Ts','Teff',
                                        'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
         #return only what we want
@@ -5836,7 +5785,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
                 temp_old= np.copy(temp)
                 '''
             
-            return pressure, temp , dtdp, conv_flag, qvmrs, qvmrs2, all_profiles, all_kzz, opd_cld_climate, g0_cld_climate, w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict
+            return pressure, temp , dtdp, conv_flag, qvmrs, qvmrs2, all_profiles, all_kzz, opd_cld_climate, g0_cld_climate, w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,bundle.inputs['atmosphere']['profile']
             
         
         if verbose: print("Big iteration is ",min(temp), iii)
@@ -5897,7 +5846,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
     else :
         if verbose: print("Profile converged")
     
-    return pressure, temp , dtdp, conv_flag, qvmrs, qvmrs2, all_profiles, all_kzz, opd_cld_climate, g0_cld_climate, w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict
+    return pressure, temp , dtdp, conv_flag, qvmrs, qvmrs2, all_profiles, all_kzz, opd_cld_climate, g0_cld_climate, w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,None
     
 def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
              t_table, p_table, grad, cp, opacityclass, grav, 
@@ -6038,7 +5987,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         if nstr[1] < 5 :
             raise ValueError( "Convection zone grew to Top of atmosphere, Need to Stop")
         
-        pressure, temp, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict = profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
+        pressure, temp, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,_= profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, 
             final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw, save_profile, all_profiles, self_consistent_kzz,save_kzz,all_kzz,
             opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes,
@@ -6077,7 +6026,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
             #print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
             #print(nofczns)
             raise ValueError("Overlap happened !")
-        pressure, temp, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict = profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,\
+        pressure, temp, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,_= profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,\
             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, \
              rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
              cloudy, cld_species,mh, fsed,flag_hack, quench_levels, kz , mmw,
@@ -6113,8 +6062,8 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
                         nstr[2] = nstr[5]
                         nstr[3] = 0
                         i_change = 1
-                if verbose: print(nstr)
-                pressure, temp, dtdp, profile_flag,qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict = profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,\
+                print(nstr)
+                pressure, temp, dtdp, profile_flag,qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,_ = profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,\
             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, \
                 rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw, save_profile, all_profiles,self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, verbose=verbose,)
 
@@ -6148,8 +6097,8 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
     ip2 = -10
 
     final = True
-    if verbose: print("final",nstr)
-    pressure, temp, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict = profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
+    print("final",nstr)
+    pressure, temp, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,_ = profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
         temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
         rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw, save_profile, all_profiles, self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, verbose=verbose, do_holes=do_holes,fhole = fhole, fthin_cld=fthin_cld, moist = moist)
     #    else :
