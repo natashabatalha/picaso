@@ -3076,7 +3076,7 @@ class inputs():
         #only pass through clouds 1d if clouds are one dimension 
         self.clouds(df=df)
         if full_output : return out
-        else: return opd, w0, g0, wno #added wno for the case of on_the_fly mixing needing 196 grid
+        else: return opd, w0, g0, 1e4/wno #added wno for the case of on_the_fly mixing needing 196 grid
     
     def virga_3d(self, condensates, directory,
         fsed=1, mh=1, mmw=2.2,kz_min=1e5,sig=2, full_output=False,
@@ -5519,7 +5519,11 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1] = opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0]
             
             #convert cld_out output to 661 grid (similar to initiate_cld_matrices)
-            wv661 = 1e4/opacityclass.wno
+            wv661 = 1e4/opacityclass.wno[::-1] # testing old incorrect way to rule out virga issues
+            # wv661 = opacityclass.wno[::-1] # flip to match the order of wv196 from virga
+            # print(opacityclass.wno)
+            # print(wv196)
+            # print(wv661)
 
             opd_now_661 =  np.zeros(shape=(len(opd_now[:,0]),len(wv661)))
             g0_now_661,w0_now_661 = np.zeros_like(opd_now_661),np.zeros_like(opd_now_661)
