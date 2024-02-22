@@ -661,68 +661,68 @@ class GridFitter():
                                         sorted(df_grid_params[i].unique())])
         
         #if the grid were square what size would it be based on unique params
-        square_size = np.product([len(i) for i in grid_params_unique.values()])
-        if square_size != all_spectra.shape[0]:
-            #grid is not square let's fix that for interpolation 
-            spectra_square = []
-            #and add pt/chem if we want
-            if add_ptchem: 
-                pt_square = []
-                chem_square = {imol:[] for imol in mols}
+        square_size = np.prod([len(i) for i in grid_params_unique.values()])
+        #if square_size != all_spectra.shape[0]:
+        #grid is not square let's fix that for interpolation 
+        spectra_square = []
+        #and add pt/chem if we want
+        if add_ptchem: 
+            pt_square = []
+            chem_square = {imol:[] for imol in mols}
 
-            full_df_grid = pd.DataFrame(columns = grid_params_unique.keys(), 
-                                       index = range(square_size))
-            for i,icombo in enumerate(itertools.product(*grid_params_unique.values())): 
+        full_df_grid = pd.DataFrame(columns = grid_params_unique.keys(), 
+                                   index = range(square_size))
+        for i,icombo in enumerate(itertools.product(*grid_params_unique.values())): 
 
-                matches = df_grid_params.astype(float).eq(icombo)
-                matches_all_rows = matches.all(axis=1)
-                matches = df_grid_params.loc[matches_all_rows]
+            matches = df_grid_params.astype(float).eq(icombo)
+            matches_all_rows = matches.all(axis=1)
+            matches = df_grid_params.loc[matches_all_rows]
 
-                if len(matches.index)==0: 
-                    #if there are no matches then let's add a nan to that location
-                    full_df_grid.iloc[i,:] = icombo
-                    spectra_square += [[np.nan]*all_spectra.shape[1]]
-                    if add_ptchem: 
-                        pt_square += [[np.nan]*all_pt.shape[1]]
-                        for imol in mols:
-                            chem_square[imol] += [[np.nan]*all_chem[imol].shape[1]]
+            if len(matches.index)==0: 
+                #if there are no matches then let's add a nan to that location
+                full_df_grid.iloc[i,:] = icombo
+                spectra_square += [[np.nan]*all_spectra.shape[1]]
+                if add_ptchem: 
+                    pt_square += [[np.nan]*all_pt.shape[1]]
+                    for imol in mols:
+                        chem_square[imol] += [[np.nan]*all_chem[imol].shape[1]]
 
-                else: 
-                    #if there are matches then let's add in the corresponding value
-                    ind = matches.index[0]
-                    full_df_grid.iloc[i,:] = icombo
-                    spectra_square += [all_spectra[ind]]
-                    if add_ptchem: 
-                        pt_square += [all_pt[ind]]
-                        for imol in mols: 
-                            chem_square[imol] += [all_chem[imol][ind]]
+            else: 
+                #if there are matches then let's add in the corresponding value
+                ind = matches.index[0]
+                full_df_grid.iloc[i,:] = icombo
+                spectra_square += [all_spectra[ind]]
+                if add_ptchem: 
+                    pt_square += [all_pt[ind]]
+                    for imol in mols: 
+                        chem_square[imol] += [all_chem[imol][ind]]
 
-            #now we can properly reshape everything
-            spectra_square = np.reshape(spectra_square, 
-                                        [len(i) for i in grid_params_unique.values()]
-                                        +[all_spectra.shape[1]])
+        #now we can properly reshape everything
+        spectra_square = np.reshape(spectra_square, 
+                                    [len(i) for i in grid_params_unique.values()]
+                                    +[all_spectra.shape[1]])
 
-            if add_ptchem: 
-                pt_square = np.reshape(pt_square, [len(i) for i in grid_params_unique.values()]
-                                        +[all_pt.shape[1]])
-                for imol in mols: 
-                    chem_square[imol] = np.reshape(chem_square[imol], [len(i) for i in grid_params_unique.values()]
-                                        +[all_chem[imol].shape[1]])
-        else: 
-            #reshape all_spectra to be on npar1 x npar2 x npar3 etc 
-            spectra_square = np.reshape(all_spectra, 
-                                        [len(i) for i in grid_params_unique.values()]
-                                        +[all_spectra.shape[1]])
-            if add_ptchem: 
-                #reshape all_spectra to be on npar1 x npar2 x npar3 etc 
-                pt_square = np.reshape(all_pt, 
-                                        [len(i) for i in grid_params_unique.values()]
-                                        +[all_pt.shape[1]])
-                for imol in mols: 
-                    chem_square = {imol: np.reshape(all_chem[imol], 
-                                        [len(i) for i in grid_params_unique.values()]
-                                        +[all_chem[imol].shape[1]])
-                                    for imol in mols}
+        if add_ptchem: 
+            pt_square = np.reshape(pt_square, [len(i) for i in grid_params_unique.values()]
+                                    +[all_pt.shape[1]])
+            for imol in mols: 
+                chem_square[imol] = np.reshape(chem_square[imol], [len(i) for i in grid_params_unique.values()]
+                                    +[all_chem[imol].shape[1]])
+        """else: 
+                                    #reshape all_spectra to be on npar1 x npar2 x npar3 etc 
+                                    spectra_square = np.reshape(all_spectra, 
+                                                                [len(i) for i in grid_params_unique.values()]
+                                                                +[all_spectra.shape[1]])
+                                    if add_ptchem: 
+                                        #reshape all_spectra to be on npar1 x npar2 x npar3 etc 
+                                        pt_square = np.reshape(all_pt, 
+                                                                [len(i) for i in grid_params_unique.values()]
+                                                                +[all_pt.shape[1]])
+                                        for imol in mols: 
+                                            chem_square = {imol: np.reshape(all_chem[imol], 
+                                                                [len(i) for i in grid_params_unique.values()]
+                                                                +[all_chem[imol].shape[1]])
+                                                            for imol in mols}"""
         
 
         #lastly replace nans in grid with real values 
