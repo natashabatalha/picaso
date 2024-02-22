@@ -255,7 +255,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                 else:
                     if get_lvl_flux: 
                         atm.lvl_output_reflected = dict(flux_minus=0, flux_plus=0, flux_minus_mdpt=0, flux_plus_mdpt=0)
-                    else: 
 
                     """xint = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                         DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
@@ -298,7 +297,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
             if get_lvl_flux: 
                 atm.lvl_output_thermal = dict(flux_minus=0, flux_plus=0, flux_minus_mdpt=0, flux_plus_mdpt=0)
-            else: 
 
 
             for ig in range(ngauss): # correlated-k - loop (which is different from gauss-tchevychev angle)
