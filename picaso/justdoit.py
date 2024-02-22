@@ -138,7 +138,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     #save level fluxes in addition to the top of atmosphere fluxes?
     #default is false
     get_lvl_flux = inputs['approx'].get('get_lvl_flux',False)
-    atm.get_lvl_flux=get_lvl_flux
+
     
 
 
@@ -173,6 +173,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     #begin atm setup
     atm = ATMSETUP(inputs)
 
+
     #Add inputs to class 
     atm.surf_reflect = inputs['surface_reflect']
     atm.hard_surface = inputs['hard_surface']#0=no hard surface, 1=hard surface
@@ -180,6 +181,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     atm.planet.gravity = inputs['planet']['gravity']
     atm.planet.radius = inputs['planet']['radius']
     atm.planet.mass = inputs['planet']['mass']
+    atm.get_lvl_flux=get_lvl_flux
 
     if dimension == '1d':
         atm.get_profile()
