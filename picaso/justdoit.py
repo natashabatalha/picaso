@@ -14,7 +14,7 @@ from .photochem import run_photochem
 
 
 from virga import justdoit as vj
-from scipy.interpolate import UnivariateSpline
+from scipy.interpolate import UnivariateSpline, interp1d
 from scipy import special
 from numpy import exp, sqrt,log
 from numba import jit,njit
@@ -5169,8 +5169,25 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             opd_cld_climate[:,:,3], g0_cld_climate[:,:,3], w0_cld_climate[:,:,3] = opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2]
             opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2] = opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1]
             opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1] = opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0]
-                        
-            opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now, g0_now, w0_now
+           
+            # convert cld_out output to 661 grid similar to initiate_cld_matrices (JM)
+            wv196 = cld_out['wave']
+            wv661 = 1e4/opacityclass.wno[::-1] # flip to match the order of wv196 from virga
+
+            opd_now_661 =  np.zeros(shape=(len(opd_now[:,0]),len(wv661)))
+            g0_now_661,w0_now_661 = np.zeros_like(opd_now_661),np.zeros_like(opd_now_661)
+
+            for ilayer in range(len(opd_now[:,0])):
+                fopd = interp1d(wv196,opd_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+                fg0 = interp1d(wv196,g0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+                fw0 = interp1d(wv196,w0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+
+                opd_now_661[ilayer,:] = fopd(wv661)
+                g0_now_661[ilayer,:] = fg0(wv661)
+                w0_now_661[ilayer,:] = fw0(wv661)
+
+            opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now_661, g0_now_661, w0_now_661                         
+            # opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now, g0_now, w0_now
             
             #if np.sum(opd_cld_climate[:,:,1]) == 0 :
             #    w0,w1,w2,w3 = 1,0,0,0
@@ -5192,7 +5209,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             opd_clmt[np.where(opd_clmt <= 1e-5)] = 0.0
             
             
-            df_cld = vj.picaso_format(opd_clmt, w0_clmt, g0_clmt,pressure = cld_out['pressure'], wavenumber= 1e4/cld_out['wave'])
+            df_cld = vj.picaso_format(opd_clmt, w0_clmt, g0_clmt,pressure = cld_out['pressure'], wavenumber= wv661)
             bundle.clouds(df=df_cld)
 
     DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
@@ -5280,8 +5297,25 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             opd_cld_climate[:,:,3], g0_cld_climate[:,:,3], w0_cld_climate[:,:,3] = opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2]
             opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2] = opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1]
             opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1] = opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0]
-                        
-            opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now, g0_now, w0_now
+            
+            # convert cld_out output to 661 grid similar to initiate_cld_matrices (JM)
+            wv196 = cld_out['wave']
+            wv661 = 1e4/opacityclass.wno[::-1] # flip to match the order of wv196 from virga
+
+            opd_now_661 =  np.zeros(shape=(len(opd_now[:,0]),len(wv661)))
+            g0_now_661,w0_now_661 = np.zeros_like(opd_now_661),np.zeros_like(opd_now_661)
+
+            for ilayer in range(len(opd_now[:,0])):
+                fopd = interp1d(wv196,opd_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+                fg0 = interp1d(wv196,g0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+                fw0 = interp1d(wv196,w0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+
+                opd_now_661[ilayer,:] = fopd(wv661)
+                g0_now_661[ilayer,:] = fg0(wv661)
+                w0_now_661[ilayer,:] = fw0(wv661)
+
+            opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now_661, g0_now_661, w0_now_661                         
+            # opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now, g0_now, w0_now
             
             #if np.sum(opd_cld_climate[:,:,1]) == 0 :
             #    w0,w1,w2,w3 = 1,0,0,0
@@ -5303,7 +5337,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             opd_clmt[np.where(opd_clmt <= 1e-5)] = 0.0
             
             
-            df_cld = vj.picaso_format(opd_clmt, w0_clmt, g0_clmt,pressure = cld_out['pressure'], wavenumber= 1e4/cld_out['wave'])
+            df_cld = vj.picaso_format(opd_clmt, w0_clmt, g0_clmt,pressure = cld_out['pressure'], wavenumber= wv661)
             bundle.clouds(df=df_cld)
             
             diff = (opd_clmt-opd_prev_cld_step)
