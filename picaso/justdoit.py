@@ -2932,8 +2932,8 @@ class inputs():
     
     def virga(self, condensates, directory,
         fsed=1, b=1, eps=1e-2, param='const', 
-        mh=1, mmw=2.2, kz_min=1e5, sig=2, 
-        full_output=True, Teff=None, alpha_pressure=None, supsat=0,
+        mh=1, mmw=2.2, kz_min=1e5, sig=2,
+        Teff=None, alpha_pressure=None, supsat=0,
         gas_mmr=None, do_virtual=False, verbose=True): 
         """
         Runs virga cloud code based on the PT and Kzz profiles 
@@ -2989,12 +2989,10 @@ class inputs():
                  gravity_unit=u.Unit(self.inputs['planet']['gravity_unit']))#
         
         cloud_p.ptk(df =df, kz_min = kz_min, Teff = Teff, alpha_pressure = alpha_pressure)
-        out = vj.compute(cloud_p, as_dict=full_output,
+        out = vj.compute(cloud_p, as_dict=True,
                           directory=directory, do_virtual=do_virtual)
-        # if not full_output:
-        #     opd, w0, g0 = out
-        #     df = vj.picaso_format(opd, w0, g0)
-        # else: 
+
+
         opd, w0, g0 = out['opd_per_layer'],out['single_scattering'],out['asymmetry']
         pres = out['pressure']
         wno = 1e4/out['wave']
@@ -3002,10 +3000,9 @@ class inputs():
         #only pass through clouds 1d if clouds are one dimension 
         self.clouds(df=df)
         if full_output : return out
-        # else: return opd, w0, g0
     
     def virga_3d(self, condensates, directory,
-        fsed=1, mh=1, mmw=2.2,kz_min=1e5,sig=2, full_output=False,
+        fsed=1, mh=1, mmw=2.2,kz_min=1e5,sig=2,
         n_cpu=1,verbose=True,smooth_kz=False):
         """
         Runs virga cloud code based on the PT and Kzz profiles 
@@ -3727,11 +3724,13 @@ class inputs():
                     opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
                     flux_plus_ir_attop, verbose=verbose )   
 
-        if chemeq_first: pressure, temp, dtdp, nstr_new, flux_plus_final, df, all_profiles, opd_now,w0_now,g0_now, cld_out, final_conv_flag=find_strat(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
+        if chemeq_first: 
+            pressure, temp, dtdp, nstr_new, flux_plus_final, df, all_profiles, cld_out, final_conv_flag=find_strat(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                              t_table, p_table, grad, cp, opacityclass, grav, 
                              rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, save_profile,all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,
                              verbose=verbose)
 
+            opd_now,w0_now,g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
         
         if diseq_chem:
             #Starting with user's guess since there was no request to converge a chemeq profile first 
@@ -3965,10 +3964,11 @@ class inputs():
             photo_inputs_dict,
             on_fly=on_fly, gases_fly=gases_fly, verbose=verbose)
                 
-                pressure, temp, dtdp, nstr_new, flux_plus_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,opd_now,g0_now,w0_now,cld_out,photo_inputs_dict,final_conv_flag=find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
+                pressure, temp, dtdp, nstr_new, flux_plus_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,cld_out,photo_inputs_dict,final_conv_flag=find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                                 t_table, p_table, grad, cp, opacityclass, grav, 
                                 rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly,
                              verbose=verbose)
+                opd_now,w0_now,g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
                 
             else:
                 print("Only doing Profiles and not extending/reducing CZs")
@@ -4981,7 +4981,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
 
       
     
-    return pressure, temp, dtdp, nstr , flux_plus_ir_full, bundle.inputs['atmosphere']['profile'], all_profiles,opd_now,w0_now,g0_now, cld_out,profile_flag
+    return pressure, temp, dtdp, nstr , flux_plus_ir_full, bundle.inputs['atmosphere']['profile'], all_profiles, cld_out,profile_flag
 
 def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             temp,pressure,FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
@@ -5808,7 +5808,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
 
 
     
-    return pressure, temp, dtdp, nstr , flux_plus_ir_full, qvmrs, qvmrs2, bundle.inputs['atmosphere']['profile'], all_profiles, all_kzz,opd_now,w0_now,g0_now,cld_out,photo_inputs_dict,profile_flag
+    return pressure, temp, dtdp, nstr , flux_plus_ir_full, qvmrs, qvmrs2, bundle.inputs['atmosphere']['profile'], all_profiles, all_kzz,cld_out,photo_inputs_dict,profile_flag
 
 #@jit(nopython=True, cache=True)
 def OH_conc(temp,press,x_h2o,x_h2):
