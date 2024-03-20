@@ -2895,34 +2895,65 @@ class inputs():
         for i,iphase in enumerate(phases): 
             new_lat = self.inputs['disco'][iphase]['latitude']*180/np.pi#to degrees
             new_lon_og = self.inputs['disco'][iphase]['longitude']*180/np.pi#to degrees
+            print("You are in PICASO Master Branch")
             print("new_lon OG", new_lon_og)
             #Reflected case needs a step to ensure that the reflected crescent is at the correct point wrt the substellar point
             #This statement only works for 10x10 cases! I am working on expanding this to all grids soon if possible
             micro_shift = (abs(abs(new_lon_og[-1]) - abs(new_lon_og[-2])) - abs(abs(new_lon_og[0]) - abs(new_lon_og[1]))) / 2   #accounts for the difference in sizes between latxlon bins at phases!=0.
             #print("micro_shift", micro_shift)
-            if 76<new_lon_og[-1]< 77 and -77<new_lon_og[0]<-76 or 76<new_lon_og[0]<77 and -77<new_lon_og[-1]<-76:  # at full phase, no need for transfer. 
-                new_lon = new_lon_og
-                shift_back = 0
-            elif new_lon_og[-1] > 77 and new_lon_og[0] < 0 : #for first quarter of phases 
-                new_lon_transfer = abs(new_lon_og[-1]) - abs(new_lon_og[0]) # take the difference between the first lon and the last lon at each phase
-                new_lon = new_lon_og - new_lon_transfer - micro_shift # The 'transfer' will then shift each phase to the opposite side of the dayside hemisphere. This is crucial for weighting ng and nt correctly for spectrum.
-                #add total shift statement
-                shift_back = -new_lon_transfer - micro_shift
-            elif new_lon_og[-1] > 77 and new_lon_og[0] > 0:  # Second quarter of phases
-                new_lon_transfer = new_lon_og[-1] + new_lon_og[0]
-                new_lon = new_lon_og - new_lon_transfer - micro_shift
-                #print("new_lon 2nd Q", new_lon)
-                shift_back = -new_lon_transfer - micro_shift
-            elif new_lon_og[-1] < -77 and new_lon_og[0] < 0: # third quarter of phases
-                new_lon_transfer = new_lon_og[-1] + new_lon_og[0]
-                new_lon = new_lon_og - new_lon_transfer + micro_shift #new_lon_transfer here is negative, so we are adding
-                shift_back = -new_lon_transfer + micro_shift
-            elif new_lon_og[-1] < -77 and new_lon_og[0] > 0: #last quarter of phases 
-                new_lon_transfer = abs(new_lon_og[-1]) - abs(new_lon_og[0]) # take the difference between the first lon and the last lon at each phase
-                new_lon = new_lon_og + new_lon_transfer + micro_shift# The 'transfer' will then shift each phase to the opposite side of the dayside hemisphere. This is crucial for weighting ng and nt correctly for spectrum.
-                #add total shift statement
-                shift_back = new_lon_transfer + micro_shift
+            ng = self.inputs['disco'][iphase]['num_gangle'] # phase curve shift dependent on ngangles. Ng is used below to determine correct shift paramters
+            if ng == 6:
+                if 68<new_lon_og[-1]< 69 and -69<new_lon_og[0]<-68 or 68<new_lon_og[0]<69 and -69<new_lon_og[-1]<-68:  # at full phase, no need for transfer. 
+                    new_lon = new_lon_og
+                    shift_back = 0
+                elif new_lon_og[-1] > 69 and new_lon_og[0] < 0 : #for first quarter of phases 
+                    new_lon_transfer = abs(new_lon_og[-1]) - abs(new_lon_og[0]) # take the difference between the first lon and the last lon at each phase
+                    new_lon = new_lon_og - new_lon_transfer - micro_shift # The 'transfer' will then shift each phase to the opposite side of the dayside hemisphere. This is crucial for weighting ng and nt correctly for spectrum.
+                    #add total shift statement
+                    shift_back = -new_lon_transfer - micro_shift
+                elif new_lon_og[-1] > 69 and new_lon_og[0] > 0:  # Second quarter of phases
+                    new_lon_transfer = new_lon_og[-1] + new_lon_og[0]
+                    new_lon = new_lon_og - new_lon_transfer - micro_shift
+                    #print("new_lon 2nd Q", new_lon)
+                    shift_back = -new_lon_transfer - micro_shift
+                elif new_lon_og[-1] < -69 and new_lon_og[0] < 0: # third quarter of phases
+                    new_lon_transfer = new_lon_og[-1] + new_lon_og[0]
+                    new_lon = new_lon_og - new_lon_transfer + micro_shift #new_lon_transfer here is negative, so we are adding
+                    shift_back = -new_lon_transfer + micro_shift
+                elif new_lon_og[-1] < -69 and new_lon_og[0] > 0: #last quarter of phases 
+                    new_lon_transfer = abs(new_lon_og[-1]) - abs(new_lon_og[0]) # take the difference between the first lon and the last lon at each phase
+                    new_lon = new_lon_og + new_lon_transfer + micro_shift# The 'transfer' will then shift each phase to the opposite side of the dayside hemisphere. This is crucial for weighting ng and nt correctly for spectrum.
+                    #add total shift statement
+                    shift_back = new_lon_transfer + micro_shift
+            if ng >= 10:
+                if 76<new_lon_og[-1]< 77 and -77<new_lon_og[0]<-76 or 76<new_lon_og[0]<77 and -77<new_lon_og[-1]<-76:  # at full phase, no need for transfer. 
+                    new_lon = new_lon_og
+                    shift_back = 0
+                elif new_lon_og[-1] > 77 and new_lon_og[0] < 0 : #for first quarter of phases 
+                    new_lon_transfer = abs(new_lon_og[-1]) - abs(new_lon_og[0]) # take the difference between the first lon and the last lon at each phase
+                    new_lon = new_lon_og - new_lon_transfer - micro_shift # The 'transfer' will then shift each phase to the opposite side of the dayside hemisphere. This is crucial for weighting ng and nt correctly for spectrum.
+                    #add total shift statement
+                    shift_back = -new_lon_transfer - micro_shift
+                elif new_lon_og[-1] > 77 and new_lon_og[0] > 0:  # Second quarter of phases
+                    new_lon_transfer = new_lon_og[-1] + new_lon_og[0]
+                    new_lon = new_lon_og - new_lon_transfer - micro_shift
+                    #print("new_lon 2nd Q", new_lon)
+                    shift_back = -new_lon_transfer - micro_shift
+                elif new_lon_og[-1] < -77 and new_lon_og[0] < 0: # third quarter of phases
+                    new_lon_transfer = new_lon_og[-1] + new_lon_og[0]
+                    new_lon = new_lon_og - new_lon_transfer + micro_shift #new_lon_transfer here is negative, so we are adding
+                    shift_back = -new_lon_transfer + micro_shift
+                elif new_lon_og[-1] < -77 and new_lon_og[0] > 0: #last quarter of phases 
+                    new_lon_transfer = abs(new_lon_og[-1]) - abs(new_lon_og[0]) # take the difference between the first lon and the last lon at each phase
+                    new_lon = new_lon_og + new_lon_transfer + micro_shift# The 'transfer' will then shift each phase to the opposite side of the dayside hemisphere. This is crucial for weighting ng and nt correctly for spectrum.
+                    #add total shift statement
+                    shift_back = new_lon_transfer + micro_shift
 
+            if 'new_lon' in locals():
+                print(ng)
+            else:
+                raise Exception("""Only num_gangle = 6 or num_gangle >= 10 is currently accepted for reflected light phase curve calculations. Please adjust your phase-resolved spatial resolution.""")
+            
             #print("new_lon", new_lon)
             #append new lons and lats, used to create array below this for loop
             new_lat_totals.append(new_lat)
@@ -3087,30 +3118,61 @@ class inputs():
                 #micro_shift = (abs(abs(new_lon_og[-1]) - abs(new_lon_og[-2])) - abs(abs(new_lon_og[0]) - abs(new_lon_og[1]))) / 2   #accounts for the difference in sizes between latxlon bins at phases!=0.
                 new_lat = np.array(self.inputs['atmosphere']['profile']['lat2d_clouds'][i,:])#*180/np.pi
                 new_lon_og = np.array(self.inputs['atmosphere']['profile']['lon2d_clouds'][i,:])#*180/np.pi
+                #print("new_lon_og clouds", new_lon_og)
                 micro_shift = (abs(abs(new_lon_og[-1]) - abs(new_lon_og[-2])) - abs(abs(new_lon_og[0]) - abs(new_lon_og[1]))) / 2   #accounts for the difference in sizes between latxlon bins at phases!=0.
+                ng = self.inputs['disco'][iphase]['num_gangle'] # phase curve shift dependent on ngangles. Ng is used below to determine correct shift paramters
+                if ng == 6:
+                    if 68<new_lon_og[-1]< 69 and -69<new_lon_og[0]<-68 or 68<new_lon_og[0]<69 and -69<new_lon_og[-1]<-68:  # at full phase, no need for transfer. 
+                        new_lon = new_lon_og
+                        shift_back = 0
+                    elif new_lon_og[-1] > 69 and new_lon_og[0] < 0 : #for first quarter of phases 
+                        new_lon_transfer = abs(new_lon_og[-1]) - abs(new_lon_og[0]) # take the difference between the first lon and the last lon at each phase
+                        new_lon = new_lon_og - new_lon_transfer - micro_shift    # The 'transfer' will then shift each phase to the opposite side of the dayside hemisphere. This is crucial for weighting ng and nt correctly for spectrum.
+                        #add total shift statement
+                        shift_back = -new_lon_transfer - micro_shift
+                    elif new_lon_og[-1] > 69 and new_lon_og[0] > 0:  # Second quarter of phases
+                        new_lon_transfer = new_lon_og[-1] + new_lon_og[0]
+                        new_lon = new_lon_og - new_lon_transfer - micro_shift
+                        #print("new_lon 2nd Q", new_lon)
+                        shift_back = -new_lon_transfer - micro_shift
+                    elif new_lon_og[-1] < -69 and new_lon_og[0] < 0: # third quarter of phases
+                        new_lon_transfer = new_lon_og[-1] + new_lon_og[0]
+                        new_lon = new_lon_og - new_lon_transfer + micro_shift #new_lon_transfer here is negative, so we are adding
+                        shift_back = -new_lon_transfer + micro_shift # - 180
+                    elif new_lon_og[-1] < -69 and new_lon_og[0] > 0: #last quarter of phases 
+                        new_lon_transfer = abs(new_lon_og[-1]) - abs(new_lon_og[0]) # take the difference between the first lon and the last lon at each phase
+                        new_lon = new_lon_og + new_lon_transfer + micro_shift # The 'transfer' will then shift each phase to the opposite side of the dayside hemisphere. This is crucial for weighting ng and nt correctly for spectrum.
+                        #add total shift statement
+                        shift_back = new_lon_transfer + micro_shift # - 180
+                if ng >= 10:
+                    if 76<new_lon_og[-1]< 77 and -77<new_lon_og[0]<-76 or 76<new_lon_og[0]<77 and -77<new_lon_og[-1]<-76:  # at full phase, no need for transfer. 
+                        new_lon = new_lon_og
+                        shift_back = 0
+                    elif new_lon_og[-1] > 77 and new_lon_og[0] < 0 : #for first quarter of phases 
+                        new_lon_transfer = abs(new_lon_og[-1]) - abs(new_lon_og[0]) # take the difference between the first lon and the last lon at each phase
+                        new_lon = new_lon_og - new_lon_transfer - micro_shift # The 'transfer' will then shift each phase to the opposite side of the dayside hemisphere. This is crucial for weighting ng and nt correctly for spectrum.
+                        #add total shift statement
+                        shift_back = -new_lon_transfer - micro_shift
+                    elif new_lon_og[-1] > 77 and new_lon_og[0] > 0:  # Second quarter of phases
+                        new_lon_transfer = new_lon_og[-1] + new_lon_og[0]
+                        new_lon = new_lon_og - new_lon_transfer - micro_shift
+                        #print("new_lon 2nd Q", new_lon)
+                        shift_back = -new_lon_transfer - micro_shift
+                    elif new_lon_og[-1] < -77 and new_lon_og[0] < 0: # third quarter of phases
+                        new_lon_transfer = new_lon_og[-1] + new_lon_og[0]
+                        new_lon = new_lon_og - new_lon_transfer + micro_shift #new_lon_transfer here is negative, so we are adding
+                        shift_back = -new_lon_transfer + micro_shift - 180
+                    elif new_lon_og[-1] < -77 and new_lon_og[0] > 0: #last quarter of phases 
+                        new_lon_transfer = abs(new_lon_og[-1]) - abs(new_lon_og[0]) # take the difference between the first lon and the last lon at each phase
+                        new_lon = new_lon_og + new_lon_transfer + micro_shift # The 'transfer' will then shift each phase to the opposite side of the dayside hemisphere. This is crucial for weighting ng and nt correctly for spectrum.
+                        #add total shift statement
+                        shift_back = new_lon_transfer + micro_shift - 180
 
-                if 76<new_lon_og[-1]< 77 and -77<new_lon_og[0]<-76 or 76<new_lon_og[0]<77 and -77<new_lon_og[-1]<-76:  # at full phase, no need for transfer. 
-                    new_lon = new_lon_og
-                    shift_back = 0
-                elif new_lon_og[-1] > 77 and new_lon_og[0] < 0 : #for first quarter of phases 
-                    new_lon_transfer = abs(new_lon_og[-1]) - abs(new_lon_og[0]) # take the difference between the first lon and the last lon at each phase
-                    new_lon = new_lon_og - new_lon_transfer - micro_shift # The 'transfer' will then shift each phase to the opposite side of the dayside hemisphere. This is crucial for weighting ng and nt correctly for spectrum.
-                    #add total shift statement
-                    shift_back = -new_lon_transfer - micro_shift
-                elif new_lon_og[-1] > 77 and new_lon_og[0] > 0:  # Second quarter of phases
-                    new_lon_transfer = new_lon_og[-1] + new_lon_og[0]
-                    new_lon = new_lon_og - new_lon_transfer - micro_shift
-                    #print("new_lon 2nd Q", new_lon)
-                    shift_back = -new_lon_transfer - micro_shift
-                elif new_lon_og[-1] < -77 and new_lon_og[0] < 0: # third quarter of phases
-                    new_lon_transfer = new_lon_og[-1] + new_lon_og[0]
-                    new_lon = new_lon_og - new_lon_transfer + micro_shift #new_lon_transfer here is negative, so we are adding
-                    shift_back = -new_lon_transfer + micro_shift - 180
-                elif new_lon_og[-1] < -77 and new_lon_og[0] > 0: #last quarter of phases 
-                    new_lon_transfer = abs(new_lon_og[-1]) - abs(new_lon_og[0]) # take the difference between the first lon and the last lon at each phase
-                    new_lon = new_lon_og + new_lon_transfer + micro_shift # The 'transfer' will then shift each phase to the opposite side of the dayside hemisphere. This is crucial for weighting ng and nt correctly for spectrum.
-                    #add total shift statement
-                    shift_back = new_lon_transfer + micro_shift - 180
+                if 'new_lon' in locals():
+                    # variable exists
+                    print(ng)
+                else:
+                    raise Exception("""Only num_gangle = 6 or num_gangle >= 10 is currently accepted for reflected light phase curve calculations. Please adjust your phase-resolved spatial resolution.""")
 
                 new_lat_totals.append(new_lat)
                 new_lon_totals.append(new_lon)
@@ -3160,10 +3222,10 @@ class inputs():
             if plot: 
                 #new_phase_grid['opd'].isel(pressure=iz_plot,wno=iw_plot).plot(x='lon2d', y ='lat2d', col='phase',col_wrap=4)
                 new_phase_grid['opd'].isel(pressure=iz_plot,wno=iw_plot).plot(x='lon2d', y ='lat2d', col='phase',col_wrap=4)
-                from matplotlib.colors import LogNorm
-                data = new_phase_grid['opd'].isel(pressure=iz_plot, wno=iw_plot)#.plot(x='lon',y='lat', xlim=[-90, 90])
-                data.plot(x='lon2d', y='lat2d', col='phase',col_wrap=4, norm=LogNorm())
-                plt.show()
+                # from matplotlib.colors import LogNorm
+                # data = new_phase_grid['opd'].isel(pressure=iz_plot, wno=iw_plot)#.plot(x='lon',y='lat', xlim=[-90, 90])
+                # data.plot(x='lon2d', y='lat2d', col='phase',col_wrap=4, norm=LogNorm())
+                # plt.show()
 
                 # new_phase_grid['w0'].isel(pressure=iz_plot,wno=iw_plot).plot(x='lon2d', y ='lat2d', col='phase',col_wrap=4)
                 # from matplotlib.colors import LogNorm
