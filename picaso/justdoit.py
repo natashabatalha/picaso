@@ -56,11 +56,6 @@ else:
 if not os.path.exists(os.environ.get('PYSYN_CDBS')): 
     raise Exception("You have not downloaded the Stellar reference data. Follow the installation instructions here: https://natashabatalha.github.io/picaso/installation.html#download-and-link-pysynphot-stellar-data. If you think you have already downloaded it then you likely just need to set your environment variable. You can use `os.environ['PYSYN_CDBS']=<yourpath>` directly in python if you run the line of code before you import PICASO.")
 
-
-#p_single=[]
-#p_single_array=[]
-#p_single_output=[]
-#cos_theta_array=[]
 def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected', full_output=False, 
     plot_opacity= False, as_dict=True):
     """
@@ -3746,38 +3741,11 @@ class inputs():
         all_geom = self.inputs['disco']
         #print("all_geom", all_geom)
         all_profiles = self.inputs['atmosphere']['profile']
-        #all_profiles = self.inputs['atmosphere']['profile'][~np.isnan(self.inputs['atmosphere']['profile'])]
-        #all_profiles = self.inputs['atmosphere']['profile'].dropna(dim='lon', how='any')
-        #all_profiles = self.inputs['atmosphere']['profile'].dropna(dim=('phase','lon'), how='any')
-        #all_profiles = self.inputs['atmosphere']['profile'].where(self.inputs['atmosphere']['profile']['temperature'] != 0, drop=True)
-        #print("all_profiles", all_profiles['temperature'])
-        #all_profiles.to_dataframe().to_csv('all_profiles_out.csv')
         all_cld_profiles = self.inputs['clouds']['profile']
-        #all_cld_profiles = self.inputs['clouds']['profile'][~np.isnan(self.inputs['clouds']['profile'])]
-        # if 'clouds' in self.inputs and self.inputs['clouds']['profile'] is not None:
-        # #     #all_cld_profiles = self.inputs['clouds']['profile'].dropna(dim='lon', how='any')
-        # #     #all_cld_profiles = self.inputs['clouds']['profile'].dropna(dim=('phase','lon'), how='any')
-        #     all_cld_profiles = self.inputs['clouds']['profile'].where(~np.isnan(self.inputs['clouds']['profile']), drop=True)
-        # else:
-        #     all_cld_profiles=None
-
-        #print("all_geom", all_geom)
 
         def run_phases(iphase):
             self.inputs['phase_angle'] = iphase[1]
             self.inputs['atmosphere']['profile'] = all_profiles.isel(phase=iphase[0])
-
-            # # Added by CDH (3 lines)
-            # current_profile = all_profiles.isel(phase=iphase[0])
-            # variables_to_exclude_nans = ['temperature']
-
-            # for variable in variables_to_exclude_nans:
-            #     if variable in current_profile.variables:
-            #         current_profile[variable] = current_profile[variable].dropna(dim='lon', how='any')
-
-            # #current_profile = current_profile.dropna(dim='lon', how='any')
-            # self.inputs['atmosphere']['profile'] = current_profile
-            # #end addition
 
             print("Currently computing Phase", iphase)
 

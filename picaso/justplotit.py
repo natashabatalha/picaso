@@ -1568,8 +1568,6 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=pals.Spectral11,v
             else: 
                 w,f = mean_regrid(allout[iphase]['wavenumber'],
                                    allout[iphase][to_plot],R=R)
-                #w,f = mean_regrid(allout[iphase]['wavenumber'],
-                #                   np.isnan(allout[iphase][to_plot]),R=R)
                 iw = np.argmin(abs(1e4/w-icol)) 
                 w,f = w[iw],f[iw]
                 all_curves[i,j] = f

@@ -6,11 +6,6 @@ import pickle as pk
 from scipy.linalg import solve_banded
 #from numpy.linalg import solve
 
-#Stuff needed for 'LAB' scattering approximation
-import matplotlib.pyplot as plt
-import pandas as pd
-from scipy.interpolate import CubicSpline
-
 @jit(nopython=True, cache=True,fastmath=True)
 def slice_eq(array, lim, value):
     """Funciton to replace values with upper or lower limit
@@ -416,10 +411,6 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
         Remember, the output of A & M code does not separate back and forward scattering.
     tridiagonal : int 
         0 for tridiagonal, 1 for pentadiagonal
-    p_single : float64
-        single scattering intensity of atm and clouds
-    LargeKCl_405nm_Full_Spline : scipy.interpolate._cubic.CubicSpline
-        Interpolated cubic spline of laboratory data at full viewing angles
         
     Returns
     -------
@@ -444,8 +435,6 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
     sq3 = sqrt(3.)
     
     #================ START CRAZE LOOP OVER ANGLE #================
-
-    #p_single_totals=[] #need to comment this out for jit runs
 
     for ng in range(numg):
         for nt in range(numt):
@@ -586,8 +575,6 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             # p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
             # as opposed to the traditional:
             # p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2-2*cosb_og*cos_theta)**3) (NOTICE NEGATIVE)
-
-            #p_single_totals=[] #need to comment out for jit runs
             
             if single_phase==0:#'cahoy':
                 #Phase function for single scattering albedo frum Solar beam
@@ -938,16 +925,6 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                                                 /sqrt((1+g_back**2+2*g_back*cos_theta)**3))+            
                                 #rayleigh phase function
                                 ftau_ray*(0.75*(1+cos_theta**2.0)))
-            elif single_phase==4:#'LAB':
-                #Phase function as measured by ExCESS, extrapolated to full viewing angles
-                #p_single=(ftau_cld*cos_theta)
-
-                p_single = LargeKCl_405nm_Full_Spline(cos_theta)
-                #p_single = MeidumKCl_405nm_Full_Spline(cos_theta)
-                #p_single = SmallKCl_405nm_Full_Spline(cos_theta)
-                #p_single = LargeKCl_532nm_Full_Spline(cos_theta)
-                #p_single = MediumKCl_532nm_Full_Spline(cos_theta)
-                #p_single = SmallKCl_532nm_Full_Spline(cos_theta)
             
             #removing single form option from code 
             #single_form : int 
@@ -1339,8 +1316,24 @@ def get_reflected_1d_newclima(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,g
                 elif single_phase==4:#'LAB':
                     #Phase function as measured by ExCESS, extrapolated to full viewing angles
                     p_single=(ftau_cld*cos_theta)
+                #exploring.... 
+                elif single_phase==4:#'P(HG) exact w/ approx costheta'
+                    deltaphi=0
+                    cos_theta_approx = (-ubar0[ng,nt])*ubar1[ng,nt] + sqrt(1-ubar1[ng,nt]**2)*sqrt(1-ubar0[ng,nt]**2)*cos(deltaphi)
 
-                
+                    HG_forward =  (1-g_forward**2) /sqrt((1+g_forward**2+2*g_forward*cos_theta_approx)**3)    
+                    HG_back = (1-g_back**2)/sqrt((1+g_back**2+2*g_back*cos_theta_approx)**3)
+
+                    p_single=(
+                            ftau_cld * (          #opacity of cloud / total opacity
+                                f * HG_forward  + #first term of TTHG: forward scattering
+                                (1-f) * HG_back   #second term of TTHG: backward scattering  
+                                )+  
+                            ftau_ray * (
+                                0.75*(1+cos_theta_approx**2.0) #rayleigh phase function
+                                )
+                            )
+
                 ################################ end options for direct scattering ####################
 
                 for i in range(nlayer-1,-1,-1):
