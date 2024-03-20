@@ -11,88 +11,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.interpolate import CubicSpline
 
-## Define Laboratory data to be used in get_reflected_3d (single scattering approximations; ~Line 690) below
-## Make sure to change directories as needed
-
-#Large 405 nm
-LargeKCl_405nm_Full = pd.read_csv("./KCL_data/LargeKCl_405nm_Full.txt",header=0)
-LargeKCl_405nm_Full_Array = LargeKCl_405nm_Full.to_numpy() #convert to numpy array
-LargeKCl_405nm_cosd = LargeKCl_405nm_Full_Array[:,3] #extract 4th column (cos(theta))
-LargeKCl_405nm_Intensity = LargeKCl_405nm_Full_Array[:,2] #extract 3rd column (normalized intensity)
-LargeKCl_405nm_cosd_flip = np.flip(LargeKCl_405nm_cosd)  # Reverse these bc CubicSpline needs x in order of increasing
-LargeKCl_405nm_Intensity_flip = np.flip(LargeKCl_405nm_Intensity)
-# This spline is what we will be using hence forth. It describes (extrapolated; 0-180 deg) lab data using a series of piecewise polynomials in order to create a continuous set of functions wrt cos_theta
-LargeKCl_405nm_Full_Spline = CubicSpline(LargeKCl_405nm_cosd_flip, LargeKCl_405nm_Intensity_flip)
-#LargeKCl_405nm_Full_Spline = CubicSpline(LargeKCl_405nm_cosd, LargeKCl_405nm_Intensity_flip)
-#LargeKCl_405nm_Full_Final = LargeKCl_405nm_Full_Spline(LargeKCl_405nm_cosd_flip)
-
-#Medium 405 nm
-MediumKCl_405nm_Full = pd.read_csv("./KCL_data/MediumKCl_405nm_Full.txt",header=0)
-MediumKCl_405nm_Full_Array = MediumKCl_405nm_Full.to_numpy() #convert to numpy array
-MediumKCl_405nm_cosd = MediumKCl_405nm_Full_Array[:,3] #extract 4th column (cos(theta))
-MediumKCl_405nm_Intensity = MediumKCl_405nm_Full_Array[:,2] #extract 3rd column (normalized intensity)
-MediumKCl_405nm_cosd_flip = np.flip(MediumKCl_405nm_cosd)  # Reverse these bc CubicSpline needs x in order of increasing
-MediumKCl_405nm_Intensity_flip = np.flip(MediumKCl_405nm_Intensity)
-# This spline is what we will be using hence forth. It describes (extrapolated; 0-180 deg) lab data using a series of piecewise polynomials in order to create a continuous set of functions wrt cos_theta
-MediumKCl_405nm_Full_Spline = CubicSpline(MediumKCl_405nm_cosd_flip, MediumKCl_405nm_Intensity_flip)
-#MediumKCl_405nm_Full_Spline = CubicSpline(MediumKCl_405nm_cosd, MediumKCl_405nm_Intensity_flip)
-#MediumKCl_405nm_Full_Final = MediumKCl_405nm_Full_Spline(MediumKCl_405nm_cosd_flip)
-
-#Small 405 nm
-SmallKCl_405nm_Full = pd.read_csv("./KCL_data/SmallKCl_405nm_Full.txt",header=0)
-SmallKCl_405nm_Full_Array = SmallKCl_405nm_Full.to_numpy() #convert to numpy array
-SmallKCl_405nm_cosd = SmallKCl_405nm_Full_Array[:,3] #extract 4th column (cos(theta))
-SmallKCl_405nm_Intensity = SmallKCl_405nm_Full_Array[:,2] #extract 3rd column (normalized intensity)
-SmallKCl_405nm_cosd_flip = np.flip(SmallKCl_405nm_cosd)  # Reverse these bc CubicSpline needs x in order of increasing
-SmallKCl_405nm_Intensity_flip = np.flip(SmallKCl_405nm_Intensity)
-# This spline is what we will be using hence forth. It describes (extrapolated; 0-180 deg) lab data using a series of piecewise polynomials in order to create a continuous set of functions wrt cos_theta
-SmallKCl_405nm_Full_Spline = CubicSpline(SmallKCl_405nm_cosd_flip, SmallKCl_405nm_Intensity_flip)
-#SmallKCl_405nm_Full_Spline = CubicSpline(SmallKCl_405nm_cosd, SmallKCl_405nm_Intensity_flip)
-#SmallKCl_405nm_Full_Final = SmallKCl_405nm_Full_Spline(SmallKCl_405nm_cosd_flip)
-
-#Large 532 nm
-LargeKCl_532nm_Full = pd.read_csv("./KCL_data/LargeKCl_532nm_Full.txt",header=0)
-LargeKCl_532nm_Full_Array = LargeKCl_532nm_Full.to_numpy() #convert to numpy array
-LargeKCl_532nm_cosd = LargeKCl_532nm_Full_Array[:,3] #extract 4th column (cos(theta))
-LargeKCl_532nm_Intensity = LargeKCl_532nm_Full_Array[:,2] #extract 3rd column (normalized intensity)
-LargeKCl_532nm_cosd_flip = np.flip(LargeKCl_532nm_cosd)  # Reverse these bc CubicSpline needs x in order of increasing
-LargeKCl_532nm_Intensity_flip = np.flip(LargeKCl_532nm_Intensity)
-# This spline is what we will be using hence forth. It describes (extrapolated; 0-180 deg) lab data using a series of piecewise polynomials in order to create a continuous set of functions wrt cos_theta
-LargeKCl_532nm_Full_Spline = CubicSpline(LargeKCl_532nm_cosd_flip, LargeKCl_532nm_Intensity_flip)
-#LargeKCl_532nm_Full_Spline = CubicSpline(LargeKCl_532nm_cosd, LargeKCl_532nm_Intensity_flip)
-#LargeKCl_532nm_Full_Final = LargeKCl_532nm_Full_Spline(LargeKCl_532nm_cosd_flip)
-
-#Medium 532nm
-MediumKCl_532nm_Full = pd.read_csv("./KCL_data/MediumKCl_532nm_Full.txt",header=0)
-MediumKCl_532nm_Full_Array = MediumKCl_532nm_Full.to_numpy() #convert to numpy array
-MediumKCl_532nm_cosd = MediumKCl_532nm_Full_Array[:,3] #extract 4th column (cos(theta))
-MediumKCl_532nm_Intensity = MediumKCl_532nm_Full_Array[:,2] #extract 3rd column (normalized intensity)
-MediumKCl_532nm_cosd_flip = np.flip(MediumKCl_532nm_cosd)  # Reverse these bc CubicSpline needs x in order of increasing
-MediumKCl_532nm_Intensity_flip = np.flip(MediumKCl_532nm_Intensity)
-# This spline is what we will be using hence forth. It describes (extrapolated; 0-180 deg) lab data using a series of piecewise polynomials in order to create a continuous set of functions wrt cos_theta
-MediumKCl_532nm_Full_Spline = CubicSpline(MediumKCl_532nm_cosd_flip, MediumKCl_532nm_Intensity_flip)
-#MediumKCl_532nm_Full_Spline = CubicSpline(MediumKCl_532nm_cosd, MediumKCl_532nm_Intensity_flip)
-#MediumKCl_532nm_Full_Final = MediumKCl_532nm_Full_Spline(MediumKCl_532nm_cosd_flip)
-
-#Small 532 nm
-SmallKCl_532nm_Full = pd.read_csv("./KCL_data/SmallKCl_532nm_Full.txt",header=0)
-SmallKCl_532nm_Full_Array = SmallKCl_532nm_Full.to_numpy() #convert to numpy array
-SmallKCl_532nm_cosd = SmallKCl_532nm_Full_Array[:,3] #extract 4th column (cos(theta))
-SmallKCl_532nm_Intensity = SmallKCl_532nm_Full_Array[:,2] #extract 3rd column (normalized intensity)
-SmallKCl_532nm_cosd_flip = np.flip(SmallKCl_532nm_cosd)  # Reverse these bc CubicSpline needs x in order of increasing
-SmallKCl_532nm_Intensity_flip = np.flip(SmallKCl_532nm_Intensity)
-# This spline is what we will be using hence forth. It describes (extrapolated; 0-180 deg) lab data using a series of piecewise polynomials in order to create a continuous set of functions wrt cos_theta
-SmallKCl_532nm_Full_Spline = CubicSpline(SmallKCl_532nm_cosd_flip, SmallKCl_532nm_Intensity_flip)
-#SmallKCl_532nm_Full_Spline = CubicSpline(SmallKCl_532nm_cosd, SmallKCl_532nm_Intensity_flip)
-#SmallKCl_532nm_Full_Final = SmallKCl_532nm_Full_Spline(SmallKCl_532nm_cosd_flip)
-
-## For brevity in single_scattering approx loops
-#pp = LargeKCl_405nm_Full_Spline
-
-#for i in range(len(pp.x)-1):
-#    cos_theta_LAB = np.linspace(pp.x[i], pp.x[i+1], 10)
-#    p_single = np.polyval(pp.c[:,i],cos_theta-pp.x[i])
-
 @jit(nopython=True, cache=True,fastmath=True)
 def slice_eq(array, lim, value):
     """Funciton to replace values with upper or lower limit
@@ -409,12 +327,11 @@ def pent_diag_solve(l, A, B, C, D, E, F):
 
     return X
 
-@jit(nopython=True, cache=True)  ## comment out jit for this one to use lab data
-## Added LargeKCl_405nm_Full_Spline to second line of variables for LAB scattering approx
+@jit(nopython=True, cache=True)
 def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3d,gcos2_3d, ftau_cld_3d,ftau_ray_3d,
     dtau_og_3d, tau_og_3d, w0_og_3d, cosb_og_3d,
     surf_reflect,ubar0, ubar1,cos_theta,F0PI,single_phase, multi_phase,
-    frac_a, frac_b, frac_c, constant_back, constant_forward,tridiagonal):#, p_single):#, LargeKCl_405nm_Full_Spline):
+    frac_a, frac_b, frac_c, constant_back, constant_forward,tridiagonal):
     """
     Computes toon fluxes given tau and everything is 3 dimensional. This is the exact same function 
     as `get_flux_geom_1d` but is kept separately so we don't have to do unecessary indexing for 
@@ -706,70 +623,26 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
                                                 +(1-f)*(1-g_back**2)
                                                 /sqrt((1+g_back**2+2*g_back*cos_theta)**3))+            
                                 #rayleigh phase function
-                                ftau_ray*(0.75*(1+cos_theta**2.0)))
-                #print("p_single", p_single)
-                #p_single = np.nan_to_num(p_single, nan=0)
-            # #Phase function as measured by ExCESS, extrapolated to full viewing angles
-            # elif single_phase==4:#'LAB_405nm_Small':
-            #     p_single = SmallKCl_405nm_Full_Spline(-cos_theta)
-            #     #p_single = SmallKCl_405nm_Full_Final(cos_theta)
-            # elif single_phase==5: # 'LAB_405nm_Medium':
-            #     p_single = MediumKCl_405nm_Full_Spline(-cos_theta)
-            #     #p_single = MediumKCl_405nm_Full_Final(cos_theta)
-            # elif single_phase==6: # 'LAB_405nm_Large':
-            #     p_single = LargeKCl_405nm_Full_Spline(-cos_theta)
-            #     #p_single = LargeKCl_405nm_Full_Final(cos_theta)
-            # elif single_phase==7: # 'LAB_532nm_Small':
-            #     #p_single = np.float64(float(SmallKCl_532nm_Full_Spline(cos_theta)))
-            #     p_single = SmallKCl_532nm_Full_Spline(-cos_theta)
-            #     #p_single = SmallKCl_532nm_Full_Final(cos_theta)
-            # elif single_phase==8: # 'LAB_532nm_Medium':
-            #     p_single = MediumKCl_532nm_Full_Spline(-cos_theta)
-            #     #p_single = MediumKCl_532nm_Full_Final(cos_theta)
-            # elif single_phase==9: # 'LAB_532nm_Large':
-            #     p_single = LargeKCl_532nm_Full_Spline(-cos_theta)    
-            #     #p_single = LargeKCl_532nm_Full_Final(cos_theta)                                                      
+                                ftau_ray*(0.75*(1+cos_theta**2.0)))                                                     
                                                                         
             ################################ END OPTIONS FOR DIRECT SCATTERING####################
 
             for i in range(nlayer-1,-1,-1):
-                if single_phase>=4:#'LAB' - The lab phase fcns do not iterate over wavelength. Therefore we need to re-structure p_single in the equation below
-                #direct beam
-                #note when delta-eddington=off, then tau_single=tau, cosb_single=cosb, w0_single=w0, etc
-                    xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/u1)
-                            #single scattering albedo from sun beam (from ubar0 to ubar1)
-                            +(w0_og[i,:]*F0PI/(4.*pi))*
-                            (p_single)*exp(-tau_og[i,:]/u0)*
-                            (1. - exp(-dtau_og[i,:]*(u0+u1)/(u0*u1)))*
-                            (u0/(u0+u1))
-                            #three multiple scattering terms 
-                            +A[i,:]* (1. - exp(-dtau[i,:] *(u0+1*u1)/(u0*u1)))*
-                            (u0/(u0+1*u1))
-                            +G[i,:]*(exp(exptrm[i,:]*1-dtau[i,:]/u1) - 1.0)/(lamda[i,:]*1*u1 - 1.0)
-                            +H[i,:]*(1. - exp(-exptrm[i,:]*1-dtau[i,:]/u1))/(lamda[i,:]*1*u1 + 1.0))
-                            #thermal
-                    #p_single = p_single
-                elif single_phase<4:#For normal scattering approximations. This is what PICASO has originally
-                    xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/u1)
-                            #single scattering albedo from sun beam (from ubar0 to ubar1)
-                            +(w0_og[i,:]*F0PI/(4.*pi))*
-                            (p_single[i,:])*exp(-tau_og[i,:]/u0)*
-                            (1. - exp(-dtau_og[i,:]*(u0+u1)/(u0*u1)))*
-                            (u0/(u0+u1))
-                            #three multiple scattering terms 
-                            +A[i,:]* (1. - exp(-dtau[i,:] *(u0+1*u1)/(u0*u1)))*
-                            (u0/(u0+1*u1))
-                            +G[i,:]*(exp(exptrm[i,:]*1-dtau[i,:]/u1) - 1.0)/(lamda[i,:]*1*u1 - 1.0)
-                            +H[i,:]*(1. - exp(-exptrm[i,:]*1-dtau[i,:]/u1))/(lamda[i,:]*1*u1 + 1.0))
-                            #thermal
-                    #p_single = p_single[1,:]
+                xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/u1)
+                        #single scattering albedo from sun beam (from ubar0 to ubar1)
+                        +(w0_og[i,:]*F0PI/(4.*pi))*
+                        (p_single[i,:])*exp(-tau_og[i,:]/u0)*
+                        (1. - exp(-dtau_og[i,:]*(u0+u1)/(u0*u1)))*
+                        (u0/(u0+u1))
+                        #three multiple scattering terms 
+                        +A[i,:]* (1. - exp(-dtau[i,:] *(u0+1*u1)/(u0*u1)))*
+                        (u0/(u0+1*u1))
+                        +G[i,:]*(exp(exptrm[i,:]*1-dtau[i,:]/u1) - 1.0)/(lamda[i,:]*1*u1 - 1.0)
+                        +H[i,:]*(1. - exp(-exptrm[i,:]*1-dtau[i,:]/u1))/(lamda[i,:]*1*u1 + 1.0))
+                        #thermal
 
             #xint = np.nan_to_num(xint, nan=0)
             xint_at_top[ng,nt,:] = xint[0,:]  
-
-    #p_single_totals.append(p_single[1,:])
-    #p_single_array = np.array(p_single_totals)
-    #print("p_single_array", p_single_array)
 
     return xint_at_top# , p_single
 
