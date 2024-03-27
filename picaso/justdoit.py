@@ -2833,8 +2833,8 @@ class inputs():
         for i,iphase in enumerate(phases): 
             new_lat = self.inputs['disco'][iphase]['latitude']*180/np.pi#to degrees
             new_lon_og = self.inputs['disco'][iphase]['longitude']*180/np.pi#to degrees
-            print("You are in PICASO Master Branch")
-            print("new_lon OG", new_lon_og)
+
+
             #Reflected case needs a step to ensure that the reflected crescent is at the correct point wrt the substellar point
             #This statement only works for 10x10 cases! I am working on expanding this to all grids soon if possible
             micro_shift = (abs(abs(new_lon_og[-1]) - abs(new_lon_og[-2])) - abs(abs(new_lon_og[0]) - abs(new_lon_og[1]))) / 2   #accounts for the difference in sizes between latxlon bins at phases!=0.
@@ -2916,7 +2916,7 @@ class inputs():
         # Here we are manually creating a new xarray from scratch that has 'lon2d', 'lat2d', which have 'phase' as their 2nd dimension (neeeded for reflected case)
         # This is a temporary xarray that will be used to merge data variables (created above) with our new 2d coordinates.
         # We do it this way because xarray does not like when you add dimensions to existing coordinate system. This seems to be the only work around.
-        ds_New = jdi.xr.Dataset(
+        ds_New = xr.Dataset(
             data_vars=dict(
             ),
             coords=dict(
@@ -3100,7 +3100,7 @@ class inputs():
             stacked_phase_grid=xr.concat(list(shifted_grids.values()), pd.Index(list(shifted_grids.keys()), name='phase'), join='override')  ## join=override gets rid of errant lon values
 
             # put data into a dataset
-            ds_New = jdi.xr.Dataset(
+            ds_New = xr.Dataset(
                 data_vars=dict(
                 ),
                 coords=dict(
@@ -4547,7 +4547,7 @@ def brown_dwarf_cld():
 def single_phase_options(printout=True):
     """Retrieve all the options for direct radation"""
     if printout: print("Can also set functional form of forward/back scattering in approx['TTHG_params']")
-    return ['cahoy','OTHG','TTHG','TTHG_ray','LAB_405nm_Small','LAB_405nm_Medium','LAB_405nm_Large','LAB_532nm_Small','LAB_532nm_Medium','LAB_532nm_Large']
+    return ['cahoy','OTHG','TTHG','TTHG_ray']
 def multi_phase_options(printout=True):
     """Retrieve all the options for multiple scattering radiation"""
     if printout: print("Can also set delta_eddington=True/False in approx['delta_eddington']")
