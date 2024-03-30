@@ -494,14 +494,17 @@ class ATMSETUP():
             #then reshape and regrid inputs to be a nice matrix that is nlayer by nwave
             #total extinction optical depth 
             opd = np.reshape(cld_input['opd'].values, (self.c.nlayer,self.c.input_npts_wave))
+            opd = opd.astype(np.float64)
             if regrid: opd = regrid_cld(opd, self.input_wno, wno)
             self.layer['cloud'] = {'opd': opd}
             #cloud assymetry parameter
             g0 = np.reshape(cld_input['g0'].values, (self.c.nlayer,self.c.input_npts_wave))
+            g0 = g0.astype(np.float64)
             if regrid: g0 = regrid_cld(g0, self.input_wno, wno)
             self.layer['cloud']['g0'] = g0
             #cloud single scattering albedo 
             w0 = np.reshape(cld_input['w0'].values, (self.c.nlayer,self.c.input_npts_wave))
+            w0 = w0.astype(np.float64)
             if regrid: w0 = regrid_cld(w0, self.input_wno, wno)
             self.layer['cloud']['w0'] = w0  
 
