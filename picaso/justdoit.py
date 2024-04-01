@@ -3003,7 +3003,7 @@ class inputs():
     
     def virga_3d(self, condensates, directory,
         fsed=1, mh=1, mmw=2.2,kz_min=1e5,sig=2,
-        n_cpu=1,verbose=True,smooth_kz=False):
+        n_cpu=1,verbose=True,smooth_kz=False,full_output=False):
         """
         Runs virga cloud code based on the PT and Kzz profiles 
         that have been added to inptus class.
@@ -3025,6 +3025,8 @@ class inputs():
         smooth_kz : bool 
             If true, it uses the min_kz value and does a UnivariateSpline
             accross the kz values to smooth out the profile
+        full_output : bool  
+            Returns full output of virga model run
         """
         lat =self.inputs['atmosphere']['profile'].coords['lat'].values
         lon = self.inputs['atmosphere']['profile'].coords['lon'].values
