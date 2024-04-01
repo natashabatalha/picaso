@@ -832,8 +832,8 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
             
 
                
-        attrs['stellar_params'] = json.dumps(attrs['stellar_params'],cls=JsonCustomEncoder)
-        attrs['climate_params'] = json.dumps(attrs['climate_params'],cls=JsonCustomEncoder)
+        if 'stellar_params' in attrs.keys(): attrs['stellar_params'] = json.dumps(attrs['stellar_params'],cls=JsonCustomEncoder)
+        if 'climate_params' in attrs.keys(): attrs['climate_params'] = json.dumps(attrs['climate_params'],cls=JsonCustomEncoder)
         
         
     #add anything else requested by the user
@@ -849,7 +849,9 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
     if 'clouds' in 'opd' in data_vars.keys(): 
         coords['wavenumber_layer'] = (["wavenumber_layer"], picaso_class.inputs['clouds']   ,{'units': 'cm**(-1)'})
         coords['pressure_layer'] = (["pressure_layer"], full_output['layer']['pressure'] ,{'units': full_output['layer']['pressure_unit']})
-        
+    if 'dtdp' in data_vars.keys():
+        coords['pressure_layer'] = (["pressure_layer"], full_output['layer']['pressure'] ,{'units': full_output['layer']['pressure_unit']})
+
     # put data into a dataset where each
     ds = xr.Dataset(
         data_vars=data_vars,
