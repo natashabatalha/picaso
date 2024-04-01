@@ -67,6 +67,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Ziva18t"><img src="https://avatars.githubusercontent.com/u/107640508?v=4?s=100" width="100px;" alt="Ziva18t"/><br /><sub><b>Ziva18t</b></sub></a><br /><a href="https://github.com/natashabatalha/picaso/commits?author=Ziva18t" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://jamesmang.wixsite.com/jamesmang"><img src="https://avatars.githubusercontent.com/u/33335954?v=4?s=100" width="100px;" alt="James"/><br /><sub><b>James</b></sub></a><br /><a href="https://github.com/natashabatalha/picaso/commits?author=James-Mang" title="Code">💻</a> <a href="#research-James-Mang" title="Research">🔬</a></td>
     </tr>
   </tbody>
 </table>

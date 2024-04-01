@@ -152,6 +152,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "James-Mang",
+      "name": "James",
+      "avatar_url": "https://avatars.githubusercontent.com/u/33335954?v=4",
+      "profile": "https://jamesmang.wixsite.com/jamesmang",
+      "contributions": [
+        "code",
+        "research"
+      ]
     }
   ],
   "contributorsPerLine": 7,
