@@ -49,7 +49,8 @@
     "retrievals":"mukherjee20",
     "3d spectroscopy":"Adams2022ApJ",
     "phase curves":"Robbins2022ApJ",
-    "climate":"mukherjee22",
+    "climate chemeq":"mukherjee22",
+    "climate diseq":"Mukherjee2024",
     "virga clouds":"Rooney2022ApJ",
     "grid search":"JWSTERS_FirstLook"
 }
