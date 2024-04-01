@@ -88,7 +88,7 @@ class ATMSETUP():
 
         read_3d = self.input['atmosphere']['profile'] #huge dictionary with [lat][lon][bundle]
 
-        self.c.nlevel = self.input['atmosphere']['profile'].dims['pressure']
+        self.c.nlevel = self.input['atmosphere']['profile'].sizes['pressure']
         self.c.nlayer = self.c.nlevel - 1  
         ng , nt = self.c.ngangle, self.c.ntangle
 
@@ -527,7 +527,7 @@ class ATMSETUP():
             cld_input = self.input['clouds']['profile'] 
             cld_input = cld_input.sortby('wno').sortby('pressure')
             if regrid: cld_input = cld_input.interp(wno = wno)
-            if [i for i in cld_input.dims] != ["pressure","wno","lon", "lat"]:
+            if [i for i in cld_input.sizes] != ["pressure","wno","lon", "lat"]:
                 opd = cld_input['opd'].transpose("pressure","wno","lon", "lat").values
                 g0 = cld_input['g0'].transpose("pressure","wno","lon", "lat").values
                 w0 = cld_input['w0'].transpose("pressure","wno","lon", "lat").values
