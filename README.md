@@ -38,7 +38,7 @@ Anyone is free to use the [contributor bot to add their contribution](https://al
 ## Contributors
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-15-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-17-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
@@ -68,6 +68,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Ziva18t"><img src="https://avatars.githubusercontent.com/u/107640508?v=4?s=100" width="100px;" alt="Ziva18t"/><br /><sub><b>Ziva18t</b></sub></a><br /><a href="https://github.com/natashabatalha/picaso/commits?author=Ziva18t" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://jamesmang.wixsite.com/jamesmang"><img src="https://avatars.githubusercontent.com/u/33335954?v=4?s=100" width="100px;" alt="James"/><br /><sub><b>James</b></sub></a><br /><a href="https://github.com/natashabatalha/picaso/commits?author=James-Mang" title="Code">💻</a> <a href="#research-James-Mang" title="Research">🔬</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/astrocaroline"><img src="https://avatars.githubusercontent.com/u/10456842?v=4?s=100" width="100px;" alt="astrocaroline"/><br /><sub><b>astrocaroline</b></sub></a><br /><a href="#mentoring-astrocaroline" title="Mentoring">🧑‍🏫</a> <a href="#ideas-astrocaroline" title="Ideas, Planning, & Feedback">🤔</a> <a href="#fundingFinding-astrocaroline" title="Funding Finding">🔍</a> <a href="#research-astrocaroline" title="Research">🔬</a></td>
     </tr>
   </tbody>
 </table>
