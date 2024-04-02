@@ -2,14 +2,17 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import scipy as sp
+from scipy.interpolate import griddata
+cKDTree = sp.spatial.cKDTree
+optimize = sp.optimize
 
 import json
 import matplotlib.pyplot as plt
 import os
 from astropy.convolution import convolve, Box1DKernel, Gaussian1DKernel
 import astropy.units as u
-from scipy import optimize
 import glob
+import itertools
 
 from matplotlib.ticker import StrMethodFormatter
 
@@ -19,8 +22,7 @@ from .justdoit import inputs, opannection, mean_regrid, u, input_xarray, copy
 from bokeh.palettes import Cividis
 from multiprocessing import Pool
 
-import dynesty
-from dynesty import utils as dyfunc
+
 
 class GridFitter(): 
     """
@@ -43,10 +45,18 @@ class GridFitter():
     model_dir : str 
         Location of model grid. Should be a directory that points to 
         several files in the PICASO xarray format.
+        Only keep as None if user chooses 'init' as type
+    model_type : str , ('xarrays','user')
+        Default = xarray which points to a directly full of xarrays in picaso format 
+        Otherwise can input "user" which initializes the grid fitter without 
+        reading anything in. "user" gives users the flexibility to add  
+        in their own input
     to_fit : str 
         parameter to fit, default is transit_depth. other common is flux
     """
-    def __init__(self, grid_name, model_dir,to_fit='transit_depth', grid_dimensions=False, verbose=True):
+    def __init__(self, grid_name, model_dir=None,
+        to_fit='transit_depth', model_type='xarrays', save_chem=False, 
+        verbose=True):
         self.verbose=verbose
         
         self.grids = []
@@ -55,12 +65,17 @@ class GridFitter():
         self.overview = {}
         self.wavelength={}
         self.temperature={}
+        if save_chem: self.chemistry={}
         self.pressure={}
         self.spectra={}
+        self.interp_params={}
         
         #adds first grid
-        self.add_grid(grid_name, model_dir, to_fit=to_fit)
-
+        if model_type=='xarrays': 
+            self.add_grid(grid_name, model_dir, to_fit=to_fit, save_chem=save_chem)
+        elif model_type == 'user': 
+            self.grids += [grid_name]
+            
     def find_grid(self, grid_name, model_dir):
         """
         Makes sure the grid exists with proper nc files. Then, adds the file directory to self.list_of_files
@@ -76,11 +91,12 @@ class GridFitter():
             else: 
                 if self.verbose: print(f'Total number of models in grid is {nfiles}')
 
-    def add_grid(self,grid_name,model_dir,to_fit='transit_depth'):
+    def add_grid(self,grid_name,model_dir,to_fit='transit_depth',
+        save_chem=False):
         #loads in grid info
         self.grids += [grid_name]
         self.find_grid(grid_name, model_dir)
-        self.load_grid_params(grid_name,to_fit=to_fit)
+        self.load_grid_params(grid_name,to_fit=to_fit,save_chem=save_chem)
 
     def add_data(self, data_name, wlgrid_center,wlgrid_width,y_data,e_data): 
         """
@@ -119,7 +135,8 @@ class GridFitter():
         }
 
 
-    def load_grid_params(self,grid_name,to_fit='transit_depth'):
+    def load_grid_params(self,grid_name,to_fit='transit_depth',
+        save_chem=False):
         """
         This will read the grid parameters and set the array of parameters 
 
@@ -151,8 +168,12 @@ class GridFitter():
 
         #loop through grid files to get parameters
         for ct, filename in enumerate(self.list_of_files[grid_name]):
-
             ds = xr.open_dataset(filename)
+            if save_chem:
+                #grab everything on pressure grid thats not temperature
+                mols = [i for i in ds.data_vars.keys() if 
+                        'pressure' in ds.data_vars[i].coords 
+                       and i != 'temperature']
 
             if ct == 0:
                 nwave = len(ds['wavelength'].values)
@@ -162,13 +183,20 @@ class GridFitter():
                 temperature_grid = np.zeros(shape=(number_files,npress))
                 pressure_grid = np.zeros(shape=(number_files,npress))
                 wavelength = ds['wavelength'].values
+                if save_chem:
+                    molecule_dict = {}
+                    for imol in mols: 
+                        molecule_dict[imol]= np.zeros(
+                        shape=(number_files,npress))
             
             #start filling out grid parameters
             #seems like we need to save these?????
             temperature_grid[ct,:] = ds['temperature'].values[:]
             pressure_grid[ct,:] = ds['pressure'].values[:]
             spectra_grid[ct,:] = ds[to_fit].values[:] 
-
+            if save_chem:
+                for imol in mols: 
+                    molecule_dict[imol][ct,:] = ds[imol].values[:]
 
             # Read all the paramaters in the Xarray so that User can gain insight into the 
             # grid parameters
@@ -223,7 +251,8 @@ class GridFitter():
         self.pressure[grid_name] = pressure_grid
         self.temperature[grid_name] = temperature_grid
         self.spectra[grid_name] = spectra_grid
-
+        if save_chem: 
+            self.chemistry[grid_name] = molecule_dict
     def fit_all(self):
         for i in self.grids:
             for j in self.data.keys() :
@@ -312,7 +341,7 @@ class GridFitter():
         #finally compute the posteriors 
         for iattr in self.grid_params[grid_name].keys(): 
             for ikey in self.grid_params[grid_name][iattr].keys():
-                self.posteriors[grid_name][data_name][ikey] = self.get_posteriors(grid_name, data_name, ikey)
+                self.posteriors[grid_name][data_name][ikey] = self.get_chi_posteriors(grid_name, data_name, ikey)
     
     def print_best_fit(self, grid_name, data_name, verbose=True): 
         """
@@ -354,7 +383,7 @@ class GridFitter():
         BB
         '''
         fig = plt.figure(figsize=(18,10))
-        plt.style.use('seaborn-paper')
+        plt.style.use('seaborn-v0_8-paper')
         plt.rcParams['figure.figsize'] = [7, 4]           # Figure dimensions
         plt.rcParams['figure.dpi'] = 300
         plt.rcParams['image.aspect'] = 1.2                       # Aspect ratio (the CCD is quite long!!!)
@@ -366,6 +395,7 @@ class GridFitter():
         #cmap.set_bad('k',1.)
         
         plt.rcParams['image.cmap'] = 'magma'                   # Colormap.
+        plt.rcParams['image.interpolation'] = 'None'
         plt.rcParams['image.origin'] = 'lower'
         plt.rcParams['font.family'] = 'sans-serif'
         plt.rcParams['font.serif'] = 'DejaVu Sans'
@@ -392,8 +422,7 @@ class GridFitter():
         ii=0
         for igrid in grid_names:   
             for idata in data_names: 
-                cycler = ax['A']._get_lines.prop_cycler
-                color = next(cycler)['color']
+                color = ax['A']._get_lines.get_next_color()
 
                 wlgrid_center = self.data[idata]['wlgrid_center']
                 y_data = 100*self.data[idata]['y_data']
@@ -439,7 +468,7 @@ class GridFitter():
         return fig,ax
 
 
-    def get_posteriors(self, grid_name, data_name, parameter):
+    def get_chi_posteriors(self, grid_name, data_name, parameter):
         """
         Get posteriors (x,y) given a grid name, data name and parameter specified in grid_params
 
@@ -472,8 +501,72 @@ class GridFitter():
             
         return parameter_grid,prob
 
+    def plot_chi_posteriors(self, grid, data, max_row, max_col, input_parameters='all'):
+        """
+        Plots posteriors for a given parameter set and returns a dictionary of the best chance parameters
+        Parameters
+            ----------
+            grid_names : arr 
+                array of string grid name to plot 
+                must be in an arr, even if there is one string:
+                >>>percent_chance_dict = plot_chi_posteriors(['grid'], 'data')
+            data_names : str 
+                data names or string of single 
+            max_col : int
+                set max col # of plots
+            max_row : int
+                set max col # of plots
+            input_parameters : arr
+                array of string for each param to be plotted
+                default is every param
+        """
 
-    def plot_posteriors(self, grid_name, data_name,parameters, fig=None, ax=None,
+        scatter_args = dict(
+            marker='o',
+        )
+        percent_chance_dict={}
+        percent_chance_dict_val={}
+        grid_list=grid
+        parameters=[]
+        fig = plt.figure()
+        count=0
+        all_axs={}
+        for i in grid_list:
+            if input_parameters=='all':
+                parameters = self.posteriors[i][data].keys()
+            else:
+                for name in input_parameters:
+                    if name in self.posteriors[i][data].keys():
+                        parameters.append(name)
+            if len(parameters) > (max_row*max_col):
+                raise Exception("Max_row*max_col must be bigger than amount of parameters")
+            for param in parameters:
+                if param in all_axs.keys():
+                    ax = all_axs[param]
+                else:
+                    count+=1
+                    ax = fig.add_subplot(max_row, max_col, count)
+                param_val = self.posteriors[i][data][param][0]
+                prob = self.posteriors[i][data][param][1]
+                greatest_param, greatest_param_chance = np.argmax(prob), np.max(prob)
+                ax.plot(param_val, prob, **scatter_args, label=str(i))
+                ax.set_xlabel(str(param))
+                percent_chance_dict_val[param]={str(param_val[greatest_param])}
+                all_axs[param] = ax      
+            percent_chance_dict[i]=percent_chance_dict_val 
+        lines_labels = [iax.get_legend_handles_labels() for iax in fig.axes]
+        lines, llabels = [sum(lol, []) for lol in zip(*lines_labels)]
+        fig.legend(lines[0:len(grid_list)], llabels[0:len(grid_list)],
+        bbox_to_anchor=(0.5, 1.1),
+        fontsize=8,
+        loc = 'upper center', 
+                ncol=len(grid_list))
+        fig.tight_layout()
+        plt.show()
+        return percent_chance_dict, fig
+
+
+    def plot_chi_posteriors_deprecate(self, grid_name, data_name,parameters, fig=None, ax=None,
                        x_label_style={}, x_axis_type={}, label=''):
         """
         Plots posteriors for a given parameter set 
@@ -502,7 +595,7 @@ class GridFitter():
 
         if fig == None:
             if ax == None:
-                plt.style.use('seaborn-paper')
+                plt.style.use('seaborn-v0_8-colorblind')
                 plt.rcParams['figure.figsize'] = [7, 4]           # Figure dimensions
                 plt.rcParams['figure.dpi'] = 300
                 plt.rcParams['image.aspect'] = 1.2                       # Aspect ratio (the CCD is quite long!!!)
@@ -514,6 +607,7 @@ class GridFitter():
                 #cmap.set_bad('k',1.)
 
                 plt.rcParams['image.cmap'] = 'magma'                   # Colormap.
+                plt.rcParams['image.interpolation'] = 'None'
                 plt.rcParams['image.origin'] = 'lower'
                 plt.rcParams['font.family'] = 'sans-serif'
                 plt.rcParams['font.serif'] = 'DejaVu Sans'
@@ -552,11 +646,11 @@ class GridFitter():
                     
                     if x_axis_type.get(parameters[iparam],'linear') == 'log':
                         xgrid = np.log10(xgrid)
-                    cycler = ax[irow,icol]._get_lines.prop_cycler
-                    col = next(cycler)['color']
+                    #cycler = ax[irow,icol]._get_lines.prop_cycler
+                    #col = next(cycler)['color']
                     ax[irow,icol].bar(xgrid, yprob,
                         width=[np.mean(abs(np.diff(xgrid)))/2]*len(xgrid), 
-                        color=col,edgecolor=col,
+                        #color=col,edgecolor=col,
                         linewidth=5,label=legend_label,alpha=0.2 )
                     ax[irow,icol].tick_params(axis='both',which='major',length =40, width=3,direction='in',labelsize=30)
                     ax[irow,icol].tick_params(axis='both',which='minor',length =10, width=2,direction='in',labelsize=30)
@@ -568,6 +662,349 @@ class GridFitter():
         return fig, ax 
 
 
+    def prep_gridtrieval(self, grid_name,add_ptchem=False):
+        """
+        Preps the loaded grid for interpolated gridtrieval 
+        """
+        if add_ptchem:
+            sqr_spec , sqr_pt, sqr_chem, uniq, offset_prior,df_grid_params = self.transform_4_interp(grid_name, add_ptchem=add_ptchem)
+        else: 
+            sqr_spec , uniq, offset_prior,df_grid_params = self.transform_4_interp(grid_name, add_ptchem=add_ptchem)
+        
+        self.interp_params = {}
+        self.interp_params[grid_name] = {}
+        self.interp_params[grid_name]['offset_prior'] = offset_prior
+        self.interp_params[grid_name]['grid_parameters'] = df_grid_params
+        self.interp_params[grid_name]['grid_parameters_unique'] = uniq
+        self.interp_params[grid_name]['square_spectra_grid'] = sqr_spec
+
+        if add_ptchem:
+            self.interp_params[grid_name]['square_temp_grid'] = sqr_pt
+            self.interp_params[grid_name]['square_chem_grid'] = sqr_chem
+
+    def transform_4_interp(fitter, grid_name,add_ptchem=False):
+        """
+        Transforms the fitter output into a square grid with np.nan in place 
+        of spectra that are missing 
+        This allows us to use the custom grid interpolator for cases where spectra are 
+        available. for everything else it will use the non square grid 
+        
+        Parameters
+        ----------
+        fitter : analyze.GridFitter
+            class that has all the spectra information loaded 
+        grid_name : str 
+            Name of grid that you want to interpolate on
+        """
+        all_spectra = fitter.spectra[grid_name]
+        
+        if add_ptchem: 
+            all_pt = fitter.temperature[grid_name]
+            all_chem = fitter.chemistry[grid_name]
+            mols = all_chem.keys()
+            all_pressures = fitter.pressure[grid_name]
+            unique_ps = np.unique(all_pressures, axis=0)
+            if len(unique_ps)>1: 
+                raise Exception("""Detected non-uniform pressure grid.
+                Grid needs to be on a uniform pressure grid if you want to use the interpolate feature 
+                You can use the function analyze.interp_pressure_grid to adjust the grid data""")
+
+        df_grid_params = pd.DataFrame(index = range(len(fitter.list_of_files[grid_name])))
+        grid_params=[]
+        for i in fitter.grid_params[grid_name].keys():
+            for j in fitter.grid_params[grid_name][i].keys():
+                grid_params+=[j]
+                df_grid_params[j] = fitter.grid_params[grid_name][i][j]
+        grid_params_unique = {}
+
+        offset_pm = abs(2*(np.min(fitter.spectra[grid_name]) - 
+                           np.max(fitter.spectra[grid_name])))
+
+        for i in grid_params:
+            grid_params_unique[i]=np.array([float(i) for i in 
+                                        sorted(df_grid_params[i].unique())])
+        
+        #if the grid were square what size would it be based on unique params
+        square_size = np.prod([len(i) for i in grid_params_unique.values()])
+        #if square_size != all_spectra.shape[0]:
+        #grid is not square let's fix that for interpolation 
+        spectra_square = []
+        #and add pt/chem if we want
+        if add_ptchem: 
+            pt_square = []
+            chem_square = {imol:[] for imol in mols}
+
+        full_df_grid = pd.DataFrame(columns = grid_params_unique.keys(), 
+                                   index = range(square_size))
+        for i,icombo in enumerate(itertools.product(*grid_params_unique.values())): 
+
+            matches = df_grid_params.astype(float).eq(icombo)
+            matches_all_rows = matches.all(axis=1)
+            matches = df_grid_params.loc[matches_all_rows]
+
+            if len(matches.index)==0: 
+                #if there are no matches then let's add a nan to that location
+                full_df_grid.iloc[i,:] = icombo
+                spectra_square += [[np.nan]*all_spectra.shape[1]]
+                if add_ptchem: 
+                    pt_square += [[np.nan]*all_pt.shape[1]]
+                    for imol in mols:
+                        chem_square[imol] += [[np.nan]*all_chem[imol].shape[1]]
+
+            else: 
+                #if there are matches then let's add in the corresponding value
+                ind = matches.index[0]
+                full_df_grid.iloc[i,:] = icombo
+                spectra_square += [all_spectra[ind]]
+                if add_ptchem: 
+                    pt_square += [all_pt[ind]]
+                    for imol in mols: 
+                        chem_square[imol] += [all_chem[imol][ind]]
+
+        #now we can properly reshape everything
+        spectra_square = np.reshape(spectra_square, 
+                                    [len(i) for i in grid_params_unique.values()]
+                                    +[all_spectra.shape[1]])
+
+        if add_ptchem: 
+            pt_square = np.reshape(pt_square, [len(i) for i in grid_params_unique.values()]
+                                    +[all_pt.shape[1]])
+            for imol in mols: 
+                chem_square[imol] = np.reshape(chem_square[imol], [len(i) for i in grid_params_unique.values()]
+                                    +[all_chem[imol].shape[1]])
+        """else: 
+                                    #reshape all_spectra to be on npar1 x npar2 x npar3 etc 
+                                    spectra_square = np.reshape(all_spectra, 
+                                                                [len(i) for i in grid_params_unique.values()]
+                                                                +[all_spectra.shape[1]])
+                                    if add_ptchem: 
+                                        #reshape all_spectra to be on npar1 x npar2 x npar3 etc 
+                                        pt_square = np.reshape(all_pt, 
+                                                                [len(i) for i in grid_params_unique.values()]
+                                                                +[all_pt.shape[1]])
+                                        for imol in mols: 
+                                            chem_square = {imol: np.reshape(all_chem[imol], 
+                                                                [len(i) for i in grid_params_unique.values()]
+                                                                +[all_chem[imol].shape[1]])
+                                                            for imol in mols}"""
+        
+
+        #lastly replace nans in grid with real values 
+        def replace_nans(data):
+            #will first interpolate nearest neighbors 
+            #then it will replace nans with nearest neighbors
+            for imethod in ['linear','nearest']:
+                nan_coords = np.argwhere(np.isnan(data))
+
+                # Find the coordinates and values of non-NaN values
+                non_nan_coords = np.argwhere(~np.isnan(data))
+                non_nan_values = data[~np.isnan(data)]
+
+                # Perform interpolation to fill NaN values
+                filled_data = griddata(non_nan_coords, non_nan_values, nan_coords, method=imethod)
+
+                # Replace NaN values with interpolated values
+                data[np.isnan(data)] = filled_data
+            return data
+        #import time
+        #removing this because grid data takes way too long with 
+        #high res spectra 
+
+        #if np.argwhere(np.isnan(spectra_square)).shape[0]!=0: 
+        #    spectra_square = replace_nans(spectra_square)
+        #    print('finish spec', time.time()-start);start = time.time()
+
+        if add_ptchem:
+            if np.argwhere(np.isnan(pt_square)).shape[0]!=0: 
+                pt_square = replace_nans(pt_square)
+                for imol in chem_square.keys():
+                    chem_square[imol] = replace_nans(chem_square[imol])
+
+        if add_ptchem: 
+            return (spectra_square, pt_square, chem_square, 
+                                grid_params_unique, offset_pm,df_grid_params)
+        else :
+            return spectra_square, grid_params_unique, offset_pm,df_grid_params
+    
+    def interp_pressure_grid(self, new_press_grid ,grid_name):
+        """
+        This function will help you reinterpolate your grid to a new 
+        common pressure grid. 
+
+        Parameters
+        ----------
+        new_press_grid : ndarray    
+            new pressure grid in bars, ascending order 
+        grid_name : str 
+            name of grid you would like to reinterpolate
+        """
+        new_press_grid = np.sort(new_press_grid)
+        nlevels=len(new_press_grid)
+
+        #old stuff
+        all_pt = self.temperature[grid_name]
+        all_chem = self.chemistry[grid_name]
+        all_pressures = self.pressure[grid_name]
+
+        #double check we can actually interpolate with a ordered pressure grid
+        unique_ps = np.unique(all_pressures, axis=0)
+        for ips in unique_ps: 
+            if ips[0] != np.min(ips): 
+                raise Exception('Uh oh! Youve read in a grid that is not in ascending order. Please reorder before proceeding')
+
+        #define new stuff
+        new_all_pt = np.zeros((all_pt.shape[0], nlevels))
+        new_all_chem = {imol:np.zeros((all_chem[imol].shape[0], nlevels)) for imol in all_chem.keys()}
+        new_all_pressures = np.zeros((all_pressures.shape[0], nlevels))
+
+        #loop through and interpolate everything
+        new_logp = np.log10(new_press_grid)
+        for i in range(all_pt.shape[0]): 
+            new_all_pressures[i,:] = new_press_grid 
+            
+            old_logp = np.log10(all_pressures[i,:])
+            
+            new_all_pt[i,:] = np.interp(new_logp,old_logp,all_pt[i,:])
+            
+            for imol in new_all_chem.keys(): 
+                new_all_chem[imol][i,:] = 10**np.interp(new_logp,old_logp,np.log10(all_chem[imol][i,:]))
+        
+        self.temperature[grid_name] = new_all_pt
+        self.chemistry[grid_name] = new_all_chem
+        self.pressure[grid_name] = new_all_pressures  
+        return 
+
+    
+def custom_interp(final_goal,fitter,grid_name, to_interp='spectra',array_to_interp=None ): 
+    """
+    Custom interpolation routine that interpolates based on the nearest two neighbors
+    of each parameter. e.g. if interpolating M/H and C/O it will find the upper 
+    and lower M/H, C/O and interpolate between those four grid points. 
+    Currently, this does not handle cases that go off the grid. 
+    
+    Parameters
+    ----------
+    final_goal : array
+        Values on which to interpolate on in the order of grid_pars 
+        e.g. [mh_interp, co_interp]
+    fitter : analyze.GridFitter
+        See tutorial, provided loaded grid fitter tool
+    grid_name : str
+        name of grid provided to analyze.GridFitter
+    interp : str 
+        Default = 'spectra', this dictates the entity you want to interpolate 
+        Other option is to specify "custom" in this case you will have to 
+        add in a array of something else (e.g. temperature, chemistry). 
+    array_to_interp : array
+        Default = None, in this case it assumes you are fitting for the spectrum. 
+        Otherwise you have to input the array of what you want to input via this 
+        variable.
+        This array should be on an identical array as the spectra, except the last dimension
+        which might not be of wavelength (could be of pressure for instance)
+    
+    Returns
+    -------
+    ndarray
+        Final spectra interpolated onto final_goal values requested 
+    """
+
+    grid_points = fitter.interp_params[grid_name]['grid_parameters']
+    grid_pars = fitter.interp_params[grid_name]['grid_parameters_unique']
+
+    if 'spectra' in to_interp:
+        spectra = fitter.interp_params[grid_name]['square_spectra_grid']
+    else: 
+        spectra = array_to_interp
+
+    
+    #transform to list of unique values 
+    grid_pars = list(grid_pars.values())
+    hypercube = np.array(list(itertools.product([0,1],repeat=len(grid_pars))))
+    hilos = np.array([find_bounding_values(arr, val)[0] for arr, val in 
+                 zip(grid_pars, final_goal)])
+    hilos_inds = np.array([find_bounding_values(arr, val)[1] for arr, val in 
+                 zip(grid_pars, final_goal)])
+
+    #@jit(nopython=True)
+    def weight_interp(grid_pars, final_goal, spectra,hypercube,hilos, hilos_inds): 
+        weights = []
+        for i in range(len(final_goal)): 
+            weights += [(final_goal[i] - hilos[i,0])/(hilos[i,1] - hilos[i,0])]
+
+        weights = np.array(weights)#length of number of params
+        inv_weights = 1-weights
+        all_weights = np.array([inv_weights, weights]).T#same as inds
+
+        interp = 0 
+        for irow in hypercube: 
+            weight_multip = [all_weights[i][j] for i, j in enumerate(irow)]
+            inds = [hilos_inds[i][j] for i, j in enumerate(irow)]+[-1]
+            spec_interp = get_last_dimension(spectra, inds)
+            interp+= np.product(weight_multip)*spec_interp
+        return interp
+    interp = weight_interp(grid_pars, final_goal, spectra,hypercube, hilos,hilos_inds)
+    
+    if 'spectra' in to_interp:
+        #only fill this gap if you are fitting spectra which takes too long with the griddata method
+        if np.any(np.isnan(interp)):
+            tree = cKDTree(grid_points)
+            dd, inds = tree.query(final_goal, k=3)
+            weights = 1.0 / dd**2
+            interp = np.dot(weights , fitter.spectra[grid_name][inds]) / np.sum(weights)  
+        
+    return interp
+
+def get_last_dimension(arr, indices):
+    """
+    Given an array of any dimenion, returns the last dimension with the other 
+    dimensions specified by "indices". 
+    
+    for example, if arr = np.random.randn([4,4]) and indices = [1,-1], it would
+    return arr[1,:]. this is slightly confusing because -1 usually indicates last element, 
+    which is different from the use of ":". However, jit nopython cannot compare string 
+    elements. Therefore this code uses -1 in place of :. 
+    """
+    if len(indices) == 1 and indices[0] == -1:
+        return arr
+    elif len(indices) == 1:
+        return arr[indices[0]]
+    
+    return get_last_dimension(arr[indices[0]], indices[1:])
+
+def find_bounding_values(arr, value):
+    """
+    Given an array and a value this finds the values on each side of the array. 
+    If this locates a value on the edge, it returns the edge and the parameter to the 
+    right or left. If it is out of bounds it returns just the edge value 
+    
+    Parameters
+    ----------
+    arr : array
+        sorted array of values 
+    value : float 
+        float located within the bounds of the array specified 
+    """
+    # Find the indices of the elements that are less than or equal to the value
+    indices = np.where(arr <= value)[0]
+
+    # Check if the value is smaller than the smallest element in the array
+    if len(indices) == 0:
+        return [arr[0]]
+
+    # Check if the value is larger than the largest element in the array
+    if indices[-1] == len(arr) - 1:
+        lower = arr[-2]
+        upper = arr[-1]
+        ind_lower = indices[-1] - 1
+        ind_upper = indices[-1]
+    else:
+        # Get the elements at the indices and the next index
+        lower = arr[indices[-1]]
+        upper = arr[indices[-1] + 1]
+        ind_lower = indices[-1]
+        ind_upper =indices[-1] + 1 
+
+    return [lower, upper], [ind_lower,ind_upper ]
 
 def detection_test(fitter, molecule, min_wavelength, max_wavelength,
                    grid_name, data_name, 
@@ -578,6 +1015,12 @@ def detection_test(fitter, molecule, min_wavelength, max_wavelength,
     Computes the detection significance of a molecule given a grid name, data name, 
     filename
     """
+    try: 
+        import dynesty 
+        from dynesty import utils as dyfunc 
+    except ModuleNotFoundError: 
+        raise Exception('You are running a PICASO that requires the additional package `dynesty`. Please install with `pip install dynesty` and rerun this function')
+
     wlgrid_center = fitter.data[data_name]['wlgrid_center']
     y_data = fitter.data[data_name]['y_data']
     e_data = fitter.data[data_name]['e_data']
@@ -611,7 +1054,7 @@ def detection_test(fitter, molecule, min_wavelength, max_wavelength,
             min_wavelength_add = min_wavelength
             max_wavelength_add = max_wavelength
 
-    case.atmosphere(df = og_atmo,exclude_mol=molecule, delim_whitespace=True)
+    case.atmosphere(df = og_atmo,exclude_mol=molecule)
     df= case.spectrum(opa, full_output=True,calculation='transmission') #note the new last key 
     wno, model_exclude  = df['wavenumber'] , df['transit_depth']
     wno, model_exclude = mean_regrid(wno,model_exclude,newx=np.sort(1e4/wlgrid_center))
