@@ -24,7 +24,7 @@
    "outputs": [],
    "source": [
     "#for number #1 above point to the directory \n",
-    "ck_db = '/data/kcoeff_2020/sonora_2020_feh+000_co_100/sonora_2020_feh+000_co_100.data.196/'\n",
+    "ck_db = '/data/kcoeff_2020_v3/sonora_2020_feh+000_co_100.data.196/'\n",
     "#for number #2 above, point to the directory\n",
     "sonora_profile_db = '/data/sonora_profile/'"
    ]
@@ -314,7 +314,7 @@
    "name": "python",
    "nbconvert_exporter": "python",
    "pygments_lexer": "ipython3",
-   "version": "3.8.12"
+   "version": "3.11.5"
   },
   "toc": {
    "base_numbering": 1,
@@ -360,5 +360,5 @@
   }
  },
  "nbformat": 4,
- "nbformat_minor": 2
+ "nbformat_minor": 4
 }

@@ -1,24 +1,25 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>What is post-processing? &mdash; picaso 3.1 documentation</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/nbsphinx-code-cells.css" type="text/css" />
+  <title>What is post-processing? &mdash; picaso 3.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b76e3c8a" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=720011df" />
+
+  
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/doctools.js"></script>
+        <script src="../_static/documentation_options.js?v=828ea960"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -38,7 +39,7 @@
             picaso
           </a>
               <div class="version">
-                3.1
+                3.2
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -119,7 +120,7 @@
 <p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/9b_PostProcess3Dinput-Chemistry.ipynb">Download full notebook here</a></p>
 </div>
 <section id="What-is-post-processing?">
-<h1>What is post-processing?<a class="headerlink" href="#What-is-post-processing?" title="Permalink to this headline">¶</a></h1>
+<h1>What is post-processing?<a class="headerlink" href="#What-is-post-processing?" title="Link to this heading">¶</a></h1>
 <p>To run a full radiative transfer model and create a spectrum, at a minimum we need:</p>
 <ol class="arabic simple">
 <li><p>temperature-pressure profiles</p></li>
@@ -138,7 +139,7 @@
 <img alt="workflow-phase.png" src="../_images/workflow-phase.png" />
 </section>
 <section id="Post-Process-3D-Chemistry-Input">
-<h1>Post-Process 3D Chemistry Input<a class="headerlink" href="#Post-Process-3D-Chemistry-Input" title="Permalink to this headline">¶</a></h1>
+<h1>Post-Process 3D Chemistry Input<a class="headerlink" href="#Post-Process-3D-Chemistry-Input" title="Link to this heading">¶</a></h1>
 <p>In this notebook you will learn: 1. How to post- process chemistry to an existing xarray</p>
 <p>You should already know: 1. How to format and regrid an <code class="docutils literal notranslate"><span class="pre">xarray</span></code> dataset</p>
 <p>Next notebook you will learn: 1. How to create spectra and phase curves from 3D input</p>
@@ -164,7 +165,7 @@
 </div>
 </div>
 <section id="Post-Process-Chemistry:-User-Options">
-<h2>Post-Process Chemistry: User Options<a class="headerlink" href="#Post-Process-Chemistry:-User-Options" title="Permalink to this headline">¶</a></h2>
+<h2>Post-Process Chemistry: User Options<a class="headerlink" href="#Post-Process-Chemistry:-User-Options" title="Link to this heading">¶</a></h2>
 <ol class="arabic simple">
 <li><p>User-defined input: this would only be used to explore simplistic cases (e.g. 100% H2O, or 50/50 H2/H2O). It also might be the case that you have abundance models from elsewhere (e.g. 3D model or GCM) and want to add it to your pressure/temperature <code class="docutils literal notranslate"><span class="pre">xarray</span></code></p></li>
 <li><p>Computationally intensive route: Usually GCM output is at a very high spatial resolution – higher than what is needed to post-process spectra. If you want, you can grab chemistry for every single <code class="docutils literal notranslate"><span class="pre">lat</span></code> x <code class="docutils literal notranslate"><span class="pre">lon</span></code> point in your grid first. Then, regrid after.</p>
@@ -183,7 +184,7 @@
 <p>In this demo, we will do option #1 and #3 so that it can be self-contained and computationally fast, but you should explore what works best for your problem.</p>
 </section>
 <section id="Post-Process-Chemistry:-User-Defined-Input">
-<h2>Post-Process Chemistry: User Defined Input<a class="headerlink" href="#Post-Process-Chemistry:-User-Defined-Input" title="Permalink to this headline">¶</a></h2>
+<h2>Post-Process Chemistry: User Defined Input<a class="headerlink" href="#Post-Process-Chemistry:-User-Defined-Input" title="Link to this heading">¶</a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
@@ -213,7 +214,7 @@
 </div>
 </div>
 <section id="Add-chemistry-to-an-existing-GCM-xarray">
-<h3>Add chemistry to an existing GCM xarray<a class="headerlink" href="#Add-chemistry-to-an-existing-GCM-xarray" title="Permalink to this headline">¶</a></h3>
+<h3>Add chemistry to an existing GCM xarray<a class="headerlink" href="#Add-chemistry-to-an-existing-GCM-xarray" title="Link to this heading">¶</a></h3>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
@@ -236,7 +237,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.collections.QuadMesh at 0x7fddf4822820&gt;
+&lt;matplotlib.collections.QuadMesh at 0x7f889dd5f350&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -248,7 +249,7 @@
 </div>
 </section>
 <section id="Auto-regrid-all-3D-input">
-<h3>Auto-regrid all 3D input<a class="headerlink" href="#Auto-regrid-all-3D-input" title="Permalink to this headline">¶</a></h3>
+<h3>Auto-regrid all 3D input<a class="headerlink" href="#Auto-regrid-all-3D-input" title="Link to this heading">¶</a></h3>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
@@ -272,9 +273,9 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=20, ntangle=20, with p
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/home/nbatalh1/anaconda3/envs/picaso38/lib/python3.8/site-packages/xesmf/smm.py:130: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+/home/nbatalh1/anaconda3/envs/pic311/lib/python3.11/site-packages/xesmf/smm.py:131: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
   warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
-/home/nbatalh1/anaconda3/envs/picaso38/lib/python3.8/site-packages/xesmf/smm.py:130: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+/home/nbatalh1/anaconda3/envs/pic311/lib/python3.11/site-packages/xesmf/smm.py:131: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
   warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
 </pre></div></div>
 </div>
@@ -288,7 +289,7 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=20, ntangle=20, with p
 <p>Note there is no print warning about missing abundance info since we have added it directly to the input <code class="docutils literal notranslate"><span class="pre">xarray</span></code></p>
 </section>
 <section id="See-regridded-abundance-input">
-<h3>See regridded abundance input<a class="headerlink" href="#See-regridded-abundance-input" title="Permalink to this headline">¶</a></h3>
+<h3>See regridded abundance input<a class="headerlink" href="#See-regridded-abundance-input" title="Link to this heading">¶</a></h3>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
@@ -304,7 +305,7 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=20, ntangle=20, with p
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.collections.QuadMesh at 0x7fddf4773f10&gt;
+&lt;matplotlib.collections.QuadMesh at 0x7f8889cfd050&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -317,7 +318,7 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=20, ntangle=20, with p
 </section>
 </section>
 <section id="Post-Process-Chemistry:-Chemical-Equilibrium">
-<h2>Post-Process Chemistry: Chemical Equilibrium<a class="headerlink" href="#Post-Process-Chemistry:-Chemical-Equilibrium" title="Permalink to this headline">¶</a></h2>
+<h2>Post-Process Chemistry: Chemical Equilibrium<a class="headerlink" href="#Post-Process-Chemistry:-Chemical-Equilibrium" title="Link to this heading">¶</a></h2>
 <p>We will run this example on a very coarse (5x5) grid to make it faster.</p>
 <p>First step is the same a above but you will notice a warning that we have yet to add chemistry.</p>
 <div class="nbinput docutils container">
@@ -340,11 +341,20 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=5, ntangle=5, with pha
 verbose=True;Only one data variable included. Make sure to add in chemical abundances before trying to run spectra.
 </pre></div></div>
 </div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/home/nbatalh1/anaconda3/envs/pic311/lib/python3.11/site-packages/xesmf/smm.py:131: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+  warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
+</pre></div></div>
+</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/notebooks_9b_PostProcess3Dinput-Chemistry_16_1.png" src="../_images/notebooks_9b_PostProcess3Dinput-Chemistry_16_1.png" />
+<img alt="../_images/notebooks_9b_PostProcess3Dinput-Chemistry_16_2.png" src="../_images/notebooks_9b_PostProcess3Dinput-Chemistry_16_2.png" />
 </div>
 </div>
 <div class="nbinput nblast docutils container">
@@ -356,7 +366,7 @@ verbose=True;Only one data variable included. Make sure to add in chemical abund
 </div>
 </div>
 <section id="Plot-3D-Chemistry">
-<h3>Plot 3D Chemistry<a class="headerlink" href="#Plot-3D-Chemistry" title="Permalink to this headline">¶</a></h3>
+<h3>Plot 3D Chemistry<a class="headerlink" href="#Plot-3D-Chemistry" title="Link to this heading">¶</a></h3>
 <p>Now we can see structure that intuitively makes sense. Near the equator, where temperatures are hotter, there is less CH4.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
@@ -373,7 +383,7 @@ verbose=True;Only one data variable included. Make sure to add in chemical abund
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.collections.QuadMesh at 0x7fdec0e463d0&gt;
+&lt;matplotlib.collections.QuadMesh at 0x7f8889cd1390&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">

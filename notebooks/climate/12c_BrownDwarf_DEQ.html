@@ -1,24 +1,25 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry at Solar M/H and C/O &mdash; picaso 3.1 documentation</title>
-      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/nbsphinx-code-cells.css" type="text/css" />
+  <title>One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry at Solar M/H and C/O &mdash; picaso 3.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b76e3c8a" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=720011df" />
+
+  
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
-        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/documentation_options.js?v=828ea960"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -38,7 +39,7 @@
             picaso
           </a>
               <div class="version">
-                3.1
+                3.2
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -60,11 +61,8 @@
 <li class="toctree-l3"><a class="reference internal" href="12a_BrownDwarf.html">Brown Dwarfs</a></li>
 <li class="toctree-l3"><a class="reference internal" href="12b_Exoplanet.html">Planet</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">Brown Dwarfs w/ Disequilibrium Chemistry</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#Starting-up-the-Run">Starting up the Run</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#Initial-T(P)-Guess">Initial T(P) Guess</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#Initial-Convective-Zone-Guess">Initial Convective Zone Guess</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#Run-the-Climate-Code-with-disequilibrium-chemistry">Run the Climate Code with disequilibrium chemistry</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#Benchmark-with-Phillips-et-al-2020">Benchmark with Phillips et al 2020</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#First,-check-that-you-have-downloaded-and-placed-the-correlated-k-files-in-the-correct-folder">First, check that you have downloaded and placed the correlated-k files in the correct folder</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Setting-K_{zz}">Setting K<span class="math notranslate nohighlight">\(_{zz}\)</span></a></li>
 </ul>
 </li>
 </ul>
@@ -116,22 +114,87 @@
 <p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/climate/12c_BrownDwarf_DEQ.ipynb">Download full notebook here</a></p>
 </div>
 <section id="One-Dimensional-Climate-Models:-Brown-Dwarfs-w/-Disequilibrium-Chemistry-at-Solar-M/H-and-C/O">
-<h1>One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry at Solar M/H and C/O<a class="headerlink" href="#One-Dimensional-Climate-Models:-Brown-Dwarfs-w/-Disequilibrium-Chemistry-at-Solar-M/H-and-C/O" title="Permalink to this headline">¶</a></h1>
-<p>In this tutorial you will learn how to run 1d climate models with the effects of disequilibrium chemistry as was done in <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2022arXiv220814317M/abstract">Mukherjee et al. 2022</a> (note this should also be cited if using this code/tutorial).</p>
+<h1>One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry at Solar M/H and C/O<a class="headerlink" href="#One-Dimensional-Climate-Models:-Brown-Dwarfs-w/-Disequilibrium-Chemistry-at-Solar-M/H-and-C/O" title="Link to this heading">¶</a></h1>
+<p>In this tutorial you will learn how to run 1d climate models with the effects of disequilibrium chemistry as was done for the Elf-OWL Grid <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2024arXiv240200756M/abstract">Mukherjee et al. 2024</a> (note this should also be cited if using this code/tutorial).</p>
 <p>What you should already be familiar with:</p>
 <ul class="simple">
 <li><p><a class="reference external" href="https://natashabatalha.github.io/picaso/tutorials.html#basics-of-thermal-emission">basics of running/analyzing thermal spectra</a></p></li>
 <li><p><a class="reference external" href="https://natashabatalha.github.io/picaso/notebooks/workshops/ERS2021/ThermalEmissionTutorial.html">how to analyze thermal emission spectra</a></p></li>
 <li><p><a class="reference external" href="https://natashabatalha.github.io/picaso/notebooks/climate/12a_BrownDwarf.html">how to run a basic 1d brown dwarf tutorial</a></p></li>
 </ul>
-<p>What you will need to download to use this tutorial:</p>
+<p>What should have already downloaded:</p>
 <ol class="arabic simple">
-<li><p><a class="reference external" href="https://zenodo.org/record/6708165/files/m%2B0.0_co1.0.data.196.tar.zip?download=1">Download the m+0.0_co1.0.data.196</a> (28.4 Mb) 1060 196 Correlated-K table from Roxana Lupu to be used by the climate code for opacity. <strong>This is an older version of the C-K tables used in the first two tutorials and you will only need the solar C/O and solar M/H file as we have not yet enabled any chemical composition</strong></p></li>
+<li><p><a class="reference external" href="https://zenodo.org/record/5590989#.Yzy2YOzMI8a">Download</a> 1460 PT, 196 wno Correlated-K Tables from Roxana Lupu to be used by the climate code for opacity</p></li>
 <li><p><a class="reference external" href="https://zenodo.org/record/5063476/files/structures_m%2B0.0.tar.gz?download=1">Download</a> the sonora bobcat cloud free <code class="docutils literal notranslate"><span class="pre">structures_</span></code> file so that you can have a simple starting guess</p></li>
-<li><p>(Optional) <a class="reference external" href="http://perso.ens-lyon.fr/isabelle.baraffe/ATMO2020/ATMO_2020_models.tar.gz">Download</a> the <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2020A%26A...637A..38P/abstract">Phillips et al. 2020</a> models if you want to benchmark the diseq runs with an independent code</p></li>
 </ol>
-<div class="nbinput nblast docutils container">
+<p><strong>NEW:</strong></p>
+<ol class="arabic simple" start="3">
+<li><p><a class="reference external" href="https://doi.org/10.5281/zenodo.10895826">Download the .npy</a> and place them in picaso_refdata folder/climate_INPUTS/661/</p></li>
+</ol>
+<blockquote>
+<div><p><strong>NOTE:</strong> Tip for getting data from zenodo: pip install zenodo_get then it you can simply retrieve a zenodo posting via the command zenodo_get 10.5281/zenodo.10895826</p>
+</div></blockquote>
+<section id="First,-check-that-you-have-downloaded-and-placed-the-correlated-k-files-in-the-correct-folder">
+<h2>First, check that you have downloaded and placed the correlated-k files in the correct folder<a class="headerlink" href="#First,-check-that-you-have-downloaded-and-placed-the-correlated-k-files-in-the-correct-folder" title="Link to this heading">¶</a></h2>
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span><span class="p">;</span><span class="kn">import</span> <span class="nn">glob</span>
+<span class="c1">#</span>
+<span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">],</span><span class="s1">&#39;climate_INPUTS&#39;</span><span class="p">,</span><span class="s1">&#39;661&#39;</span><span class="p">,</span><span class="s1">&#39;*npy&#39;</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="c1">#should see a list of files e.g., &quot;/data/reference_data/picaso/reference/climate_INPUTS/661/AlH_1460.npy&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;/data/reference_data/picaso/reference/climate_INPUTS/661/AlH_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/C2H2_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/C2H4_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/C2H6_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/CaH_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/CH4_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/CO_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/CO2_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/CrH_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/Cs_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/Fe_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/FeH_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/H2_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/H2O_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/H2S_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/H3+_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/HCN_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/K_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/Li_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/LiCl_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/LiF_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/LiH_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/MgH_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/N2_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/Na_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/NH3_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/O2_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/O3_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/OCS_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/PH3_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/Rb_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/SiO_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/SO2_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/TiH_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/TiO_1460.npy&#39;,
+ &#39;/data/reference_data/picaso/reference/climate_INPUTS/661/VO_1460.npy&#39;]
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">warnings</span>
@@ -141,110 +204,81 @@
 <span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="o">%</span><span class="k">matplotlib</span> inline
-</pre></div>
+<span class="c1">#%matplotlib inline</span>
+<span class="kn">from</span> <span class="nn">astropy</span> <span class="kn">import</span> <span class="n">constants</span> <span class="k">as</span> <span class="n">const</span>
+<span class="kn">from</span> <span class="nn">astropy</span> <span class="kn">import</span> <span class="n">units</span> <span class="k">as</span> <span class="n">u</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<br/></pre></div>
 </div>
 </div>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ck_db</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;/data/ck_1060/m+0.0_co1.0.data.196&#39;</span>
-
-<span class="c1">#sonora bobcat cloud free structures file</span>
-<span class="n">sonora_profile_db</span> <span class="o">=</span> <span class="s1">&#39;/data/sonora_bobcat/structure/structures_m+0.0&#39;</span>
-<span class="n">phillips_2020_db</span> <span class="o">=</span> <span class="s1">&#39;/data/ATMO_2020_models/&#39;</span>
-</pre></div>
-</div>
-</div>
-<section id="Starting-up-the-Run">
-<h2>Starting up the Run<a class="headerlink" href="#Starting-up-the-Run" title="Permalink to this headline">¶</a></h2>
+<section id="Setting-up-Initial-Run-(highlighting-main-differences-for-disequilibrium)">
+<h3>Setting up Initial Run (highlighting main differences for disequilibrium)<a class="headerlink" href="#Setting-up-Initial-Run-(highlighting-main-differences-for-disequilibrium)" title="Link to this heading">¶</a></h3>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Notice The keyword ck is set to True because you want to use the correlated-k opacities for your calculation</span>
-<span class="c1"># and not the line by line opacities</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mh</span> <span class="o">=</span> <span class="s1">&#39;+000&#39;</span> <span class="c1">#log metallicity</span>
+<span class="n">CtoO</span> <span class="o">=</span> <span class="s1">&#39;100&#39;</span><span class="c1"># CtoO ratio relative to solar</span>
+
+<span class="n">ck_db</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;/data/kcoeff_2020_v3/sonora_2020_feh</span><span class="si">{</span><span class="n">mh</span><span class="si">}</span><span class="s1">_co_</span><span class="si">{</span><span class="n">CtoO</span><span class="si">}</span><span class="s1">.data.196&#39;</span>
+<span class="n">sonora_profile_db</span> <span class="o">=</span> <span class="s1">&#39;/data/sonora_bobcat/structure/structures_m+0.0&#39;</span> <span class="c1">#recommended download #2 above</span>
+
 <span class="n">opacity_ck</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">ck_db</span><span class="o">=</span><span class="n">ck_db</span><span class="p">)</span> <span class="c1"># grab your opacities</span>
-</pre></div>
+<br/></pre></div>
 </div>
 </div>
-<p>This should all look familiar as it is the same steps taken for the regular brown dwarf run.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">(</span><span class="n">calculation</span><span class="o">=</span><span class="s2">&quot;browndwarf&quot;</span><span class="p">,</span> <span class="n">climate</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="c1"># start a calculation</span>
 
-<span class="c1">#note you need to put the climate keyword to be True in order to do so</span>
-<span class="c1"># now you need to add these parameters to your calculation</span>
 
-<span class="n">teff</span><span class="o">=</span> <span class="mi">700</span> <span class="c1"># Effective Temperature of your Brown Dwarf in K</span>
-<span class="n">grav</span> <span class="o">=</span> <span class="mi">3160</span> <span class="c1"># Gravity of your brown dwarf in m/s/s</span>
+<span class="n">tint</span><span class="o">=</span> <span class="mi">700</span>
+<span class="n">grav</span> <span class="o">=</span> <span class="mi">316</span> <span class="c1"># Gravity of your Planet in m/s/s</span>
 
 <span class="n">cl_run</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">gravity</span><span class="o">=</span><span class="n">grav</span><span class="p">,</span> <span class="n">gravity_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;m/(s**2)&#39;</span><span class="p">))</span> <span class="c1"># input gravity</span>
-<span class="n">cl_run</span><span class="o">.</span><span class="n">effective_temp</span><span class="p">(</span><span class="n">teff</span><span class="p">)</span> <span class="c1"># input effective temperature</span>
-</pre></div>
+<span class="n">cl_run</span><span class="o">.</span><span class="n">effective_temp</span><span class="p">(</span><span class="n">tint</span><span class="p">)</span> <span class="c1"># input effective temperature</span>
+
+<span class="n">nlevel</span> <span class="o">=</span> <span class="mi">91</span>
+<br/></pre></div>
 </div>
 </div>
-</section>
-<section id="Initial-T(P)-Guess">
-<h2>Initial T(P) Guess<a class="headerlink" href="#Initial-T(P)-Guess" title="Permalink to this headline">¶</a></h2>
-<p>All same as before</p>
-<div class="nbinput nblast docutils container">
+<p>We recommend starting with Sonora-Bobcat models as an initial guess.</p>
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">nlevel</span> <span class="o">=</span> <span class="mi">91</span> <span class="c1"># number of plane-parallel levels in your code</span>
-
-<span class="c1">#Lets set the max and min at 1e-4 bars and 500 bars</span>
-
-<span class="c1">#Pmin = 1e-4 #bars</span>
-<span class="c1">#Pmax = 500 #bars</span>
-<span class="c1">#pressure=np.logspace(np.log10(Pmin),np.log10(Pmax),nlevel) # set your pressure grid</span>
-
-<span class="n">pressure_bobcat</span><span class="p">,</span><span class="n">temp_bobcat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                            <span class="n">sonora_profile_db</span><span class="p">,</span><span class="sa">f</span><span class="s2">&quot;t</span><span class="si">{</span><span class="n">teff</span><span class="si">}</span><span class="s2">g</span><span class="si">{</span><span class="n">grav</span><span class="si">}</span><span class="s2">nc_m0.0.dat&quot;</span><span class="p">),</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pressure</span><span class="p">,</span><span class="n">temp_guess</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                            <span class="n">sonora_profile_db</span><span class="p">,</span><span class="sa">f</span><span class="s2">&quot;t</span><span class="si">{</span><span class="n">tint</span><span class="si">}</span><span class="s2">g</span><span class="si">{</span><span class="n">grav</span><span class="si">}</span><span class="s2">nc_m0.0.dat&quot;</span><span class="p">),</span>
                             <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">skiprows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
-<span class="n">kz</span> <span class="o">=</span> <span class="n">temp_bobcat</span><span class="o">*</span><span class="mi">0</span> <span class="o">+</span> <span class="mf">1e4</span>
-<span class="n">self_consistent_kzz</span> <span class="o">=</span> <span class="kc">False</span>
-</pre></div>
-</div>
-</div>
-</section>
-<section id="Initial-Convective-Zone-Guess">
-<h2>Initial Convective Zone Guess<a class="headerlink" href="#Initial-Convective-Zone-Guess" title="Permalink to this headline">¶</a></h2>
-<p>This is all the same as the original Brown Dwarf tutorial. Here we will be a little more conservative with our convective zone guess as this is our first Disequilibrium run.</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">nofczns</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1"># number of convective zones initially. Let&#39;s not play with this for now.</span>
 
-<span class="n">nstr_upper</span> <span class="o">=</span> <span class="mi">86</span> <span class="c1"># top most level of guessed convective zone (we are just guessing nlevel-5)</span>
+
+<span class="n">nofczns</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1"># number of convective zones initially. Let&#39;s not play with this for now.</span>
+
+<span class="n">nstr_upper</span> <span class="o">=</span> <span class="mi">79</span> <span class="c1"># top most level of guessed convective zone</span>
 <span class="n">nstr_deep</span> <span class="o">=</span> <span class="n">nlevel</span> <span class="o">-</span><span class="mi">2</span> <span class="c1"># this is always the case. Dont change this</span>
-<span class="n">nstr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="n">nstr_upper</span><span class="p">,</span><span class="n">nstr_deep</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span> <span class="c1"># initial guess of convective zones</span>
+<span class="n">nstr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="n">nstr_upper</span><span class="p">,</span><span class="mi">89</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span> <span class="c1"># initial guess of convective zones</span>
 
 <span class="c1"># Here are some other parameters needed for the code.</span>
 <span class="n">rfacv</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="c1">#we are focused on a brown dwarf so let&#39;s keep this as is</span>
-</pre></div>
+<span class="nb">print</span><span class="p">(</span><span class="n">mh</span><span class="p">,</span><span class="n">CtoO</span><span class="p">,</span><span class="n">tint</span><span class="p">)</span>
+<br/></pre></div>
 </div>
 </div>
-<p>All the same here as well.</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
-</pre></div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span><span class="o">.</span><span class="n">inputs_climate</span><span class="p">(</span><span class="n">temp_guess</span><span class="o">=</span> <span class="n">temp_bobcat</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span> <span class="n">pressure_bobcat</span><span class="p">,</span>
-                      <span class="n">nstr</span> <span class="o">=</span> <span class="n">nstr</span><span class="p">,</span> <span class="n">nofczns</span> <span class="o">=</span> <span class="n">nofczns</span> <span class="p">,</span> <span class="n">rfacv</span> <span class="o">=</span> <span class="n">rfacv</span><span class="p">)</span>
-</pre></div>
-</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
++000 100 700
+</pre></div></div>
 </div>
 </section>
-<section id="Run-the-Climate-Code-with-disequilibrium-chemistry">
-<h2>Run the Climate Code with disequilibrium chemistry<a class="headerlink" href="#Run-the-Climate-Code-with-disequilibrium-chemistry" title="Permalink to this headline">¶</a></h2>
+</section>
 <section id="Setting-K_{zz}">
-<h3>Setting K<span class="math notranslate nohighlight">\(_{zz}\)</span><a class="headerlink" href="#Setting-K_{zz}" title="Permalink to this headline">¶</a></h3>
+<h2>Setting K<span class="math notranslate nohighlight">\(_{zz}\)</span><a class="headerlink" href="#Setting-K_{zz}" title="Link to this heading">¶</a></h2>
 <p>We will add one more concept which is the addition of K<span class="math notranslate nohighlight">\(_{zz}\)</span> [cm<span class="math notranslate nohighlight">\(^2\)</span>/s]. K<span class="math notranslate nohighlight">\(_{zz}\)</span> is the eddy diffusion constant, which sets the strength of vertical mixing. In <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> we have two options for K<span class="math notranslate nohighlight">\(_{zz}\)</span>:</p>
 <ol class="arabic simple">
 <li><p>Constant value: sets a constant at every atmospheric layer</p></li>
@@ -252,274 +286,336 @@
 </ol>
 <p><strong>New code parameters</strong>:</p>
 <ol class="arabic simple" start="0">
-<li><p><code class="docutils literal notranslate"><span class="pre">diseq_chem=True</span></code> : First we will turn on disequilibrium chemistry</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">diseq_chem=True</span></code> : Turns on disequilibrium chemistry</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">self_consistent_kzz</span></code> : (True/False) This solves self consistently for</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">save_all_kzz</span></code> : (True/False) Similar to <code class="docutils literal notranslate"><span class="pre">save_all_profiles</span></code> this saves your intermediate k_zz values if you are trying to solve for a <code class="docutils literal notranslate"><span class="pre">self_consistent_kzz=True</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">kz</span></code> : constant value if <code class="docutils literal notranslate"><span class="pre">self_consistent_kzz=False</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gases_fly</span></code> : <strong>Important</strong>: determines what gases to include in your climate calculation. if you remove one, it will remove the opacity contirubtion from that gas in your climate calculation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">chemeq_first</span></code> : Converges a chemical equilibrium model first (helpful for convergence)</p></li>
 </ol>
-</section>
-<section id="On-the-fly-mixing">
-<h3>On the fly mixing<a class="headerlink" href="#On-the-fly-mixing" title="Permalink to this headline">¶</a></h3>
-<p>In <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2022arXiv220814317M/abstract">Mukherjee et al. 2022</a> on-the-fly mixing of CO, CH4, NH3, and H2O was considered. There are some important assumptions for version 1 that the user needs to be aware:</p>
-<ol class="arabic simple">
-<li><p>We only allow solar C/O and solar M/H</p></li>
-<li><p>Only CO, CH4, NH3, and H2O will be mixed on the fly.</p></li>
-</ol>
-<p>Soon we will make this more flexible but want to make sure that V1 of the climate code is well-behaved for users before we open it up to all gases.</p>
+<p><strong>Which of those 6 do I need change change</strong></p>
+<p>Likely you will only be changing <code class="docutils literal notranslate"><span class="pre">kz</span></code> and/or, for example, playing around with a <code class="docutils literal notranslate"><span class="pre">self_consistent_kzz</span></code> vs a <code class="docutils literal notranslate"><span class="pre">constant</span> <span class="pre">profile</span></code>. Unless you are certain, we recommend the following set of <code class="docutils literal notranslate"><span class="pre">gases_fly</span></code> to remain unchanged.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#following elf-owl lets use a constant value for all pressures</span>
+<span class="n">kzval</span> <span class="o">=</span> <span class="n">pressure</span><span class="o">*</span><span class="mi">0</span><span class="o">+</span><span class="mf">1e2</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span><span class="o">.</span><span class="n">inputs_climate</span><span class="p">(</span><span class="n">temp_guess</span><span class="o">=</span> <span class="n">temp_guess</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span> <span class="n">pressure</span><span class="p">,</span>
+                                           <span class="n">nstr</span> <span class="o">=</span> <span class="n">nstr</span><span class="p">,</span> <span class="n">nofczns</span> <span class="o">=</span> <span class="n">nofczns</span> <span class="p">,</span> <span class="n">rfacv</span> <span class="o">=</span> <span class="n">rfacv</span><span class="p">,</span> <span class="n">mh</span> <span class="o">=</span><span class="n">mh</span><span class="p">,</span> <span class="n">CtoO</span> <span class="o">=</span> <span class="n">CtoO</span><span class="p">)</span>
+
+
+<span class="n">gases_fly</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;CO&#39;</span><span class="p">,</span><span class="s1">&#39;CH4&#39;</span><span class="p">,</span><span class="s1">&#39;H2O&#39;</span><span class="p">,</span><span class="s1">&#39;NH3&#39;</span><span class="p">,</span><span class="s1">&#39;CO2&#39;</span><span class="p">,</span><span class="s1">&#39;N2&#39;</span><span class="p">,</span><span class="s1">&#39;HCN&#39;</span><span class="p">,</span><span class="s1">&#39;H2&#39;</span><span class="p">,</span><span class="s1">&#39;PH3&#39;</span><span class="p">,</span><span class="s1">&#39;C2H2&#39;</span><span class="p">,</span><span class="s1">&#39;Na&#39;</span><span class="p">,</span><span class="s1">&#39;K&#39;</span><span class="p">,</span><span class="s1">&#39;TiO&#39;</span><span class="p">,</span><span class="s1">&#39;VO&#39;</span><span class="p">,</span><span class="s1">&#39;FeH&#39;</span><span class="p">]</span>
+
+<span class="n">out</span> <span class="o">=</span> <span class="n">cl_run</span><span class="o">.</span><span class="n">climate</span><span class="p">(</span><span class="n">opacity_ck</span><span class="p">,</span> <span class="n">save_all_profiles</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">as_dict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">with_spec</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">save_all_kzz</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">diseq_chem</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">self_consistent_kzz</span> <span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kz</span> <span class="o">=</span> <span class="n">kzval</span><span class="p">,</span>
+        <span class="n">on_fly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">gases_fly</span><span class="o">=</span><span class="n">gases_fly</span><span class="p">,</span> <span class="n">chemeq_first</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+1 conv Zone, so making small adjustment
+New NSTR status is  [ 0 79 89  0  0  0]
+From now I will mix [&#39;CO&#39;, &#39;CH4&#39;, &#39;H2O&#39;, &#39;NH3&#39;, &#39;CO2&#39;, &#39;N2&#39;, &#39;HCN&#39;, &#39;H2&#39;, &#39;PH3&#39;, &#39;C2H2&#39;, &#39;Na&#39;, &#39;K&#39;, &#39;TiO&#39;, &#39;VO&#39;, &#39;FeH&#39;] only on--the--fly
+Quench Levels are CO, CO2, NH3, HCN, PH3  [66 59 69 65]
+PH3 quenched at level 63
+DOING DISEQ CALCULATIONS NOW
+PH3 quenched at level 63
+Iteration number  0 , min , max temp  228.4687122158246 2719.70009044622 , flux balance  0.02379643790577486
+Iteration number  1 , min , max temp  223.4122783881029 2747.845757199295 , flux balance  0.005855307151646336
+Iteration number  2 , min , max temp  223.65825853647686 2747.180228403528 , flux balance  6.84958826277869e-05
+In t_start: Converged Solution in iterations  2
+PH3 quenched at level 63
+Quench Levels are CO, CO2, NH3, HCN  [66 60 68 64]
+Big iteration is  223.65825853647686 0
+Iteration number  0 , min , max temp  221.8104108970629 2747.8007870126216 , flux balance  0.0008430006191004585
+Iteration number  1 , min , max temp  221.7834737046501 2747.8026878470228 , flux balance  6.377315081609894e-06
+In t_start: Converged Solution in iterations  1
+PH3 quenched at level 63
+Quench Levels are CO, CO2, NH3, HCN  [66 60 68 64]
+Profile converged
+ convection zone status
+0 79 89 0 0 0
+1
+[ 0 65 65 65 79 89]
+PH3 quenched at level 63
+Iteration number  0 , min , max temp  220.5688370747329 2747.671304177 , flux balance  0.00015156615638153807
+Iteration number  1 , min , max temp  220.5348149397797 2747.671002662656 , flux balance  1.0509881549915634e-06
+In t_start: Converged Solution in iterations  1
+PH3 quenched at level 63
+Quench Levels are CO, CO2, NH3, HCN  [66 60 68 65]
+Big iteration is  220.5348149397797 0
+Iteration number  0 , min , max temp  220.04904176956381 2747.629626985311 , flux balance  3.781895550711609e-05
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 63
+Quench Levels are CO, CO2, NH3, HCN  [66 60 68 65]
+Profile converged
+Grow Phase : Upper Zone
+[ 0 64 65 65 79 89]
+PH3 quenched at level 63
+Iteration number  0 , min , max temp  219.32846502328812 2747.479463671103 , flux balance  3.652897700296355e-05
+Iteration number  1 , min , max temp  219.30780741192007 2747.4791367912844 , flux balance  3.053127377633008e-07
+In t_start: Converged Solution in iterations  1
+PH3 quenched at level 63
+Quench Levels are CO, CO2, NH3, HCN  [66 60 68 65]
+Big iteration is  219.30780741192007 0
+Iteration number  0 , min , max temp  219.60878373201044 2747.5270235988937 , flux balance  -6.034910814698173e-06
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 63
+Quench Levels are CO, CO2, NH3, HCN  [66 60 68 65]
+Profile converged
+[ 0 63 65 65 79 89]
+PH3 quenched at level 63
+Iteration number  0 , min , max temp  219.11327113563087 2747.2727472623956 , flux balance  8.21699017064154e-05
+Iteration number  1 , min , max temp  219.0988137695899 2747.27195968955 , flux balance  7.325540033907821e-07
+In t_start: Converged Solution in iterations  1
+PH3 quenched at level 63
+Quench Levels are CO, CO2, NH3, HCN  [66 60 68 65]
+Big iteration is  219.0988137695899 0
+Iteration number  0 , min , max temp  220.04587090507562 2747.385554064864 , flux balance  -2.009781264081523e-05
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 63
+Quench Levels are CO, CO2, NH3, HCN  [66 60 68 65]
+Profile converged
+[ 0 62 65 65 79 89]
+PH3 quenched at level 64
+Iteration number  0 , min , max temp  223.45168913201945 2747.1200769198817 , flux balance  0.0001655806819819537
+Iteration number  1 , min , max temp  223.4359262905261 2747.1189003236373 , flux balance  1.599359355353788e-06
+In t_start: Converged Solution in iterations  1
+PH3 quenched at level 63
+Quench Levels are CO, CO2, NH3, HCN  [66 60 68 65]
+Big iteration is  223.4359262905261 0
+Iteration number  0 , min , max temp  221.29369512319064 2747.2062702571134 , flux balance  1.7480571057486507e-05
+ We are already at a root, tolf , test =  5e-05 ,  1.7480571057486507e-05
+PH3 quenched at level 63
+Quench Levels are CO, CO2, NH3, HCN  [66 60 68 65]
+Profile converged
+[ 0 61 65 65 79 89]
+PH3 quenched at level 64
+Iteration number  0 , min , max temp  223.18079205442217 2746.9016411053 , flux balance  0.00020503249602211074
+Iteration number  1 , min , max temp  223.1930504675051 2746.899864788222 , flux balance  2.142786944712075e-06
+In t_start: Converged Solution in iterations  1
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 68 65]
+Big iteration is  223.1930504675051 0
+Iteration number  0 , min , max temp  225.770214612183 2747.0676584044977 , flux balance  -3.744002709368859e-05
+Iteration number  1 , min , max temp  225.7772350404269 2747.06741277766 , flux balance  -3.3697582755316545e-07
+In t_start: Converged Solution in iterations  1
+PH3 quenched at level 63
+Quench Levels are CO, CO2, NH3, HCN  [66 60 68 65]
+Profile converged
+[ 0 60 65 65 79 89]
+PH3 quenched at level 64
+Iteration number  0 , min , max temp  224.37013925105248 2746.7204107395355 , flux balance  0.0002159546232540936
+Iteration number  1 , min , max temp  224.32465587815454 2746.718040060723 , flux balance  2.3613265810506326e-06
+In t_start: Converged Solution in iterations  1
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 68 65]
+Big iteration is  224.32465587815454 0
+Iteration number  0 , min , max temp  225.98834504269192 2746.874077043952 , flux balance  -4.0770252207931085e-05
+Iteration number  1 , min , max temp  226.0049075554805 2746.873655266751 , flux balance  -4.1944764667596104e-07
+In t_start: Converged Solution in iterations  1
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 68 65]
+Profile converged
+[ 0 59 65 65 79 89]
+PH3 quenched at level 64
+Iteration number  0 , min , max temp  224.3226415573006 2746.5521133531606 , flux balance  0.00022578270738948542
+Iteration number  1 , min , max temp  224.2648247997471 2746.5497334773486 , flux balance  2.570488847316762e-06
+In t_start: Converged Solution in iterations  1
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 68 65]
+Big iteration is  224.2648247997471 0
+Iteration number  0 , min , max temp  225.92659941933903 2746.7049506478793 , flux balance  -4.627053394777188e-05
+Iteration number  1 , min , max temp  225.94368735176843 2746.704339344802 , flux balance  -5.292445305683144e-07
+In t_start: Converged Solution in iterations  1
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 68 65]
+Profile converged
+[ 0 58 65 65 79 89]
+PH3 quenched at level 64
+Iteration number  0 , min , max temp  224.31081441069972 2746.4194976743975 , flux balance  0.00022065249585450096
+Iteration number  1 , min , max temp  224.25667866402722 2746.4171666336233 , flux balance  2.60343798712728e-06
+In t_start: Converged Solution in iterations  1
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 68 65]
+Big iteration is  224.25667866402722 0
+Iteration number  0 , min , max temp  225.97997559075864 2746.5668395225257 , flux balance  -5.307114792858895e-05
+Iteration number  1 , min , max temp  225.99741675282547 2746.5660486917527 , flux balance  -6.83427854021894e-07
+In t_start: Converged Solution in iterations  1
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 68 65]
+Profile converged
+[ 0 58 66 66 79 89]
+PH3 quenched at level 64
+Iteration number  0 , min , max temp  226.66286652412995 2746.0311393002735 , flux balance  6.717700771538913e-05
+Iteration number  1 , min , max temp  226.6744885210479 2746.027318676578 , flux balance  3.8148428803394187e-07
+In t_start: Converged Solution in iterations  1
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 69 65]
+Big iteration is  226.6744885210479 0
+Iteration number  0 , min , max temp  227.21659265286513 2746.1567005874203 , flux balance  -2.234854139179267e-05
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 69 65]
+Profile converged
+[ 0 57 66 66 79 89]
+PH3 quenched at level 64
+Iteration number  0 , min , max temp  225.84278997991666 2745.7583443451485 , flux balance  0.00016296434459140238
+Iteration number  1 , min , max temp  225.80434311079225 2745.7526441214627 , flux balance  1.6675972935261093e-06
+In t_start: Converged Solution in iterations  1
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 69 65]
+Big iteration is  225.80434311079225 0
+Iteration number  0 , min , max temp  226.71518305381443 2746.004106574918 , flux balance  -6.802263138035716e-05
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 69 65]
+Profile converged
+[ 0 57 67 67 79 89]
+PH3 quenched at level 64
+Iteration number  0 , min , max temp  227.84642138094 2745.460803098823 , flux balance  -1.675462244490496e-05
+Iteration number  1 , min , max temp  227.86565376922078 2745.454572651484 , flux balance  -1.0015603426265223e-06
+In t_start: Converged Solution in iterations  1
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 69 65]
+Big iteration is  227.86565376922078 0
+Iteration number  0 , min , max temp  228.75213413918863 2745.588987196907 , flux balance  -5.018086032558749e-05
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 69 65]
+Profile converged
+[ 0 56 67 67 79 89]
+PH3 quenched at level 64
+Iteration number  0 , min , max temp  227.82122303825054 2745.2962772763053 , flux balance  9.393871185462201e-06
+Iteration number  1 , min , max temp  227.8099136180094 2745.2852754086935 , flux balance  -1.153148272143708e-06
+In t_start: Converged Solution in iterations  1
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 69 65]
+Big iteration is  227.8099136180094 0
+Iteration number  0 , min , max temp  228.75361934177303 2745.461458508484 , flux balance  -8.686804693931754e-05
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 69 65]
+Profile converged
+[ 0 55 67 67 79 89]
+PH3 quenched at level 64
+Iteration number  0 , min , max temp  228.26509349517426 2745.2520363954895 , flux balance  -3.7301699972560424e-05
+Iteration number  1 , min , max temp  228.26771752069033 2745.2422734845454 , flux balance  -2.158259256021005e-06
+In t_start: Converged Solution in iterations  1
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 69 65]
+Big iteration is  228.26771752069033 0
+Iteration number  0 , min , max temp  229.2039711461108 2745.3890826334714 , flux balance  -8.743704572535724e-05
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 69 65]
+Profile converged
+[ 0 55 68 68 79 89]
+PH3 quenched at level 64
+Iteration number  0 , min , max temp  230.27148587092253 2745.028702668952 , flux balance  -0.00010347517138005662
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 69 65]
+Big iteration is  230.27148587092253 0
+Iteration number  0 , min , max temp  230.7385722321025 2745.0997465965156 , flux balance  -3.66166919364084e-05
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 69 65]
+Profile converged
+[ 0 54 68 68 79 89]
+PH3 quenched at level 64
+Iteration number  0 , min , max temp  230.2272512869794 2744.9746006831774 , flux balance  -0.00018246973948655933
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 69 65]
+Big iteration is  230.2272512869794 0
+Iteration number  0 , min , max temp  230.83965698490243 2745.0411702919087 , flux balance  -6.524573884867093e-05
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 69 65]
+Profile converged
+[ 0 53 68 68 79 89]
+PH3 quenched at level 64
+Iteration number  0 , min , max temp  230.7948548523602 2745.009410438036 , flux balance  -0.00012906164134096078
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 69 65]
+Big iteration is  230.7948548523602 0
+Iteration number  0 , min , max temp  231.1000101462714 2745.0373383791884 , flux balance  -3.536367576979529e-05
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 69 65]
+Profile converged
+[ 0 53 69 69 79 89]
+PH3 quenched at level 64
+Iteration number  0 , min , max temp  231.2624628780323 2744.9489125751456 , flux balance  1.2258641329597043e-06
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 69 65]
+Big iteration is  231.2624628780323 0
+Iteration number  0 , min , max temp  231.32057346379273 2745.012585539453 , flux balance  -6.1452341618864596e-06
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 69 65]
+Profile converged
+final [ 0 53 69 69 79 89]
+PH3 quenched at level 64
+Iteration number  0 , min , max temp  231.3470106881548 2744.9590739123046 , flux balance  2.8971108257582678e-05
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 69 65]
+Big iteration is  231.3470106881548 0
+Iteration number  0 , min , max temp  231.34756672417055 2745.014810047904 , flux balance  1.320085681332785e-06
+In t_start: Converged Solution in iterations  0
+PH3 quenched at level 64
+Quench Levels are CO, CO2, NH3, HCN  [66 60 69 65]
+Profile converged
+YAY ! ENDING WITH CONVERGENCE
+PH3 quenched at level 64
+</pre></div></div>
+</div>
+<section id="Compare-Diseq-and-Chemeq-Climate-Profile">
+<h3>Compare Diseq and Chemeq Climate Profile<a class="headerlink" href="#Compare-Diseq-and-Chemeq-Climate-Profile" title="Link to this heading">¶</a></h3>
+<p>For the case we chose with very low kzz, and solar M/H the disequilibrium profile and bobcat profiles are identical!</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">out</span> <span class="o">=</span> <span class="n">cl_run</span><span class="o">.</span><span class="n">climate</span><span class="p">(</span><span class="n">opacity_ck</span><span class="p">,</span> <span class="n">save_all_profiles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">with_spec</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                    <span class="n">diseq_chem</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kz</span><span class="o">=</span><span class="n">kz</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span><span class="mf">1.7e-4</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">],</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">],</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Elf-OWL Style, Disequilibrium&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">temp_guess</span><span class="p">,</span><span class="n">pressure</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span><span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Bobcat, Chemical Equilibrium&#39;</span><span class="p">)</span>
 </pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-Iteration number  0 , min , max temp  220.37858713860058 2157.202305111695 , flux balance  1.4321185036683038e-06
-Iteration number  1 , min , max temp  220.10176185906062 2157.186839743511 , flux balance  3.6293963511708516e-10
-In t_start: Converged Solution in iterations  1
-Big iteration is  220.10176185906062 0
-Iteration number  0 , min , max temp  220.52732958495542 2157.9067469165043 , flux balance  3.509786289752064e-08
-In t_start: Converged Solution in iterations  0
-Profile converged
-Iteration number  0 , min , max temp  220.5842925322004 2157.996055314647 , flux balance  4.159136730322769e-09
-In t_start: Converged Solution in iterations  0
-Big iteration is  220.5842925322004 0
-Iteration number  0 , min , max temp  220.59166345425052 2158.005848583862 , flux balance  9.313321064306538e-10
-In t_start: Converged Solution in iterations  0
-Profile converged
-Iteration number  0 , min , max temp  220.59273106766537 2156.4807243401574 , flux balance  -6.426659079143445e-09
-In t_start: Converged Solution in iterations  0
-Big iteration is  220.59273106766537 0
-Iteration number  0 , min , max temp  220.59300837696887 2156.4960206378264 , flux balance  -6.927606944372195e-10
-In t_start: Converged Solution in iterations  0
-Profile converged
-final [ 0 85 89  0  0  0]
- We are already at a root, tolf , test =  5e-05 ,  1.0416278093431919e-05
-Big iteration is  220.59300837696887 0
- We are already at a root, tolf , test =  5e-05 ,  1.0416278093431919e-05
-Profile converged
-YAY ! ENDING WITH CONVERGENCE
-1 conv Zone, so making small adjustment
-New NSTR status is  [ 0 87 89  0  0  0]
-Quench Levels are CO, CO2, NH3, HCN, PH3  [78 71 81 77]
-PH3 quenched at level 76
-661
-DOING DISEQ CALCULATIONS NOW
-PH3 quenched at level 76
-Iteration number  0 , min , max temp  218.78981470957572 2169.462581086828 , flux balance  0.0066356567351585054
-Iteration number  1 , min , max temp  219.03032058249835 2169.2923890022666 , flux balance  4.116423680824079e-05
-Iteration number  2 , min , max temp  219.0315085968162 2169.2923258751466 , flux balance  8.664247833280977e-09
-In t_start: Converged Solution in iterations  2
-PH3 quenched at level 76
-Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Big iteration is  219.0315085968162 0
-Iteration number  0 , min , max temp  216.98018027911496 2169.4135155749013 , flux balance  0.00044896782405368676
-Iteration number  1 , min , max temp  216.95843047854694 2169.413997099947 , flux balance  2.078483002753605e-07
-In t_start: Converged Solution in iterations  1
-PH3 quenched at level 76
-Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Profile converged
-PH3 quenched at level 76
-Iteration number  0 , min , max temp  216.11107816147248 2155.536372160911 , flux balance  3.650986988016498e-05
-In t_start: Converged Solution in iterations  0
-PH3 quenched at level 76
-Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Big iteration is  216.11107816147248 0
-Iteration number  0 , min , max temp  215.8328958595726 2155.4702207013484 , flux balance  3.3467837648163033e-06
-In t_start: Converged Solution in iterations  0
-PH3 quenched at level 76
-Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Profile converged
-PH3 quenched at level 76
-Iteration number  0 , min , max temp  215.74760987713432 2152.969403304396 , flux balance  3.7282356060860876e-07
-In t_start: Converged Solution in iterations  0
-PH3 quenched at level 76
-Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Big iteration is  215.74760987713432 0
-Iteration number  0 , min , max temp  215.7228286796615 2152.9802019505855 , flux balance  5.8430143487040355e-08
-In t_start: Converged Solution in iterations  0
-PH3 quenched at level 76
-Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Profile converged
- convection zone status
-0 85 89 0 0 0
-1
-[ 0 72 72 72 85 89]
-PH3 quenched at level 76
-Iteration number  0 , min , max temp  215.71358664853605 2152.973377817694 , flux balance  4.084469697497511e-07
-In t_start: Converged Solution in iterations  0
-PH3 quenched at level 76
-Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Big iteration is  215.71358664853605 0
-Iteration number  0 , min , max temp  215.71234654608872 2152.974114953522 , flux balance  -9.630963433543795e-09
-In t_start: Converged Solution in iterations  0
-PH3 quenched at level 76
-Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Profile converged
-Grow Phase : Upper Zone
-[ 0 71 72 72 85 89]
-PH3 quenched at level 76
-Iteration number  0 , min , max temp  215.7291676897581 2152.942298814967 , flux balance  2.0110880472302973e-06
-In t_start: Converged Solution in iterations  0
-PH3 quenched at level 76
-Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Big iteration is  215.7291676897581 0
-Iteration number  0 , min , max temp  215.7357440489825 2152.93868046469 , flux balance  -1.983433967055345e-08
-In t_start: Converged Solution in iterations  0
-PH3 quenched at level 76
-Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Profile converged
-[ 0 71 73 73 85 89]
-PH3 quenched at level 76
-Iteration number  0 , min , max temp  215.7755502585758 2152.8963984958036 , flux balance  2.2221894436686587e-07
-In t_start: Converged Solution in iterations  0
-PH3 quenched at level 76
-Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Big iteration is  215.7755502585758 0
-Iteration number  0 , min , max temp  215.78538826143682 2152.8859101499274 , flux balance  -7.579754346594153e-08
-In t_start: Converged Solution in iterations  0
-PH3 quenched at level 76
-Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Profile converged
-[ 0 70 73 73 85 89]
-PH3 quenched at level 76
-Iteration number  0 , min , max temp  215.81549649074464 2152.8411982050625 , flux balance  -5.769850805420877e-07
-In t_start: Converged Solution in iterations  0
-PH3 quenched at level 76
-Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Big iteration is  215.81549649074464 0
-Iteration number  0 , min , max temp  215.82995551893686 2152.8357632365087 , flux balance  -3.072212621186509e-07
-In t_start: Converged Solution in iterations  0
-PH3 quenched at level 76
-Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Profile converged
-[ 0 69 73 73 85 89]
-PH3 quenched at level 76
-Iteration number  0 , min , max temp  215.84583564503927 2152.8217507229115 , flux balance  -1.246684896028194e-06
-In t_start: Converged Solution in iterations  0
-PH3 quenched at level 76
-Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Big iteration is  215.84583564503927 0
-Iteration number  0 , min , max temp  215.85303696944254 2152.8220009530482 , flux balance  -2.6927141237839446e-07
-In t_start: Converged Solution in iterations  0
-PH3 quenched at level 76
-Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Profile converged
-[ 0 69 74 74 85 89]
-PH3 quenched at level 76
-Iteration number  0 , min , max temp  215.86504159919122 2152.831306168204 , flux balance  4.074836392645075e-06
-In t_start: Converged Solution in iterations  0
-PH3 quenched at level 76
-Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Big iteration is  215.86504159919122 0
-Iteration number  0 , min , max temp  215.8674525422709 2152.8215821567355 , flux balance  1.0573936534410175e-08
-In t_start: Converged Solution in iterations  0
-PH3 quenched at level 76
-Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Profile converged
-[ 0 68 74 74 85 89]
-PH3 quenched at level 76
-Iteration number  0 , min , max temp  215.8530400211446 2152.864290379212 , flux balance  1.398572939488135e-05
-In t_start: Converged Solution in iterations  0
-PH3 quenched at level 76
-Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Big iteration is  215.8530400211446 0
-Iteration number  0 , min , max temp  215.840714730026 2152.8545571777804 , flux balance  1.3798711855748009e-06
-In t_start: Converged Solution in iterations  0
-PH3 quenched at level 76
-Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Profile converged
-final [ 0 68 74 74 85 89]
-PH3 quenched at level 76
-Iteration number  0 , min , max temp  215.83776622024584 2152.860843120966 , flux balance  5.277089291688508e-06
-In t_start: Converged Solution in iterations  0
-PH3 quenched at level 76
-Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Big iteration is  215.83776622024584 0
-Iteration number  0 , min , max temp  215.83352824722516 2152.8488391515602 , flux balance  2.38412086163181e-07
-In t_start: Converged Solution in iterations  0
-PH3 quenched at level 76
-Quench Levels are CO, CO2, NH3, HCN  [78 71 81 77]
-Profile converged
-YAY ! ENDING WITH CONVERGENCE
-PH3 quenched at level 76
-</pre></div></div>
-</div>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">out</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-dict_keys([&#39;diseq_out&#39;, &#39;pressure&#39;, &#39;temperature&#39;, &#39;ptchem_df&#39;, &#39;dtdp&#39;, &#39;cvz_locs&#39;, &#39;flux&#39;, &#39;all_profiles&#39;, &#39;spectrum_output&#39;])
-</pre></div></div>
-</div>
-</section>
-</section>
-<section id="Benchmark-with-Phillips-et-al-2020">
-<h2>Benchmark with Phillips et al 2020<a class="headerlink" href="#Benchmark-with-Phillips-et-al-2020" title="Permalink to this headline">¶</a></h2>
-<p>With all model runs it is important to benchmark with previously published models, especially with an independent model. We can benchmark the PICASo runs with the work from <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2020A%26A...637A..38P/abstract">Phillips et al 2020</a> to create the ATMO 2020 grid.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pphil_deq</span><span class="p">,</span><span class="n">tphil_deq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">phillips_2020_db</span><span class="p">,</span>
-                                              <span class="c1">#phillips directory structre</span>
-                                             <span class="s1">&#39;atmosphere_models&#39;</span><span class="p">,</span><span class="s1">&#39;NEQ_strong_compositions&#39;</span><span class="p">,</span>
-                                             <span class="s1">&#39;chem_T700_lg5.5_NEQ_strong.txt&#39;</span><span class="p">)</span>
-                                <span class="p">,</span><span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">))</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Pressure [Bars]&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Temperature [K]&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span><span class="mf">1e-4</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mi">2500</span><span class="p">)</span>
-
-<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">],</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">],</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">,</span><span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Our Run&quot;</span><span class="p">)</span>
-
-<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">tphil_deq</span><span class="p">,</span><span class="n">pphil_deq</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span><span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span><span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Phillips et al 2020&quot;</span><span class="p">)</span>
-
-
-<span class="n">plt</span><span class="o">.</span><span class="n">minorticks_on</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span><span class="n">which</span><span class="o">=</span><span class="s1">&#39;major&#39;</span><span class="p">,</span><span class="n">length</span> <span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">direction</span><span class="o">=</span><span class="s1">&#39;in&#39;</span><span class="p">,</span><span class="n">labelsize</span><span class="o">=</span><span class="mi">23</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span><span class="n">which</span><span class="o">=</span><span class="s1">&#39;minor&#39;</span><span class="p">,</span><span class="n">length</span> <span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">direction</span><span class="o">=</span><span class="s1">&#39;in&#39;</span><span class="p">,</span><span class="n">labelsize</span><span class="o">=</span><span class="mi">23</span><span class="p">)</span>
-
-<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
-
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;T$_{\rm eff}$= 700 K, log(g)=5.5, K$_{\rm zz}$=1e4&quot;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
-<br/><br/></pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Text(0.5, 1.0, &#39;T$_{\\rm eff}$= 700 K, log(g)=5.5, K$_{\\rm zz}$=1e4&#39;)
+[&lt;matplotlib.lines.Line2D at 0x7fc2a2362910&gt;]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/notebooks_climate_12c_BrownDwarf_DEQ_17_1.png" src="../../_images/notebooks_climate_12c_BrownDwarf_DEQ_17_1.png" />
+<img alt="../../_images/notebooks_climate_12c_BrownDwarf_DEQ_13_1.png" src="../../_images/notebooks_climate_12c_BrownDwarf_DEQ_13_1.png" />
 </div>
 </div>
+</section>
 </section>
 </section>
 

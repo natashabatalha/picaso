@@ -1,24 +1,25 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>What do I reference? &mdash; picaso 3.1 documentation</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/nbsphinx-code-cells.css" type="text/css" />
+  <title>What do I reference? &mdash; picaso 3.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b76e3c8a" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=720011df" />
+
+  
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/doctools.js"></script>
+        <script src="../_static/documentation_options.js?v=828ea960"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -38,7 +39,7 @@
             picaso
           </a>
               <div class="version">
-                3.1
+                3.2
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -111,7 +112,7 @@
 <p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/References.ipynb">Download full notebook here</a></p>
 </div>
 <section id="What-do-I-reference?">
-<h1>What do I reference?<a class="headerlink" href="#What-do-I-reference?" title="Permalink to this headline">¶</a></h1>
+<h1>What do I reference?<a class="headerlink" href="#What-do-I-reference?" title="Link to this heading">¶</a></h1>
 <p>This notebook shows you how to get the references you need based on: - your <code class="docutils literal notranslate"><span class="pre">full_output</span></code> data bundle - specified molecules - specified methods (e.g. 1d spectra vs climate)</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
@@ -132,14 +133,14 @@
 <span class="n">planet</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c1">#radians</span>
 <span class="n">planet</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">gravity</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span> <span class="n">gravity_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;m/(s**2)&#39;</span><span class="p">))</span> <span class="c1">#any astropy units available</span>
 <span class="n">planet</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span> <span class="mi">5000</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mf">4.0</span><span class="p">)</span> <span class="c1">#opacity db, pysynphot database, temp, metallicity, logg</span>
-<span class="n">planet</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_pt</span><span class="p">(),</span> <span class="n">delim_whitespace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">planet</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_pt</span><span class="p">(),</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;\s+&#39;</span><span class="p">)</span>
 <span class="n">full_output</span><span class="o">=</span><span class="n">planet</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span> <span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <section id="Get-opacity-data-references-based-on-model-output">
-<h2>Get opacity data references based on model output<a class="headerlink" href="#Get-opacity-data-references-based-on-model-output" title="Permalink to this headline">¶</a></h2>
-<div class="nbinput nblast docutils container">
+<h2>Get opacity data references based on model output<a class="headerlink" href="#Get-opacity-data-references-based-on-model-output" title="Link to this heading">¶</a></h2>
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
@@ -147,6 +148,16 @@
 <span class="n">opa_latex</span><span class="p">,</span> <span class="n">bibdb</span> <span class="o">=</span> <span class="n">refs</span><span class="o">.</span><span class="n">get_opa</span><span class="p">(</span><span class="n">full_output</span><span class="o">=</span><span class="n">full_output</span><span class="p">[</span><span class="s1">&#39;full_output&#39;</span><span class="p">])</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING:root:Unknown block type &lt;class &#39;bibtexparser.model.DuplicateBlockKeyBlock&#39;&gt;
+WARNING:root:Unknown block type &lt;class &#39;bibtexparser.model.DuplicateBlockKeyBlock&#39;&gt;
+WARNING:root:Unknown block type &lt;class &#39;bibtexparser.model.DuplicateBlockKeyBlock&#39;&gt;
+</pre></div></div>
 </div>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
@@ -180,7 +191,8 @@
         H2--N2 &amp;  \citet{Saumon12} \\
         H2--H &amp;  \citet{Saumon12} \\
         H2--CH4 &amp;  \citet{Saumon12} \\
-        H-bf &amp;  \citet{John1988H} \\
+        H-bf &amp;  \citet{Bell1987Hff} \\
+        H2- &amp;  \citet{bell1980free} \\
 
             \end{tabular}
             \caption{Line lists used to make PICASO Opacities}
@@ -203,41 +215,14 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[{&#39;adsnote&#39;: &#39;Provided by the SAO/NASA Astrophysics Data System&#39;,
-  &#39;adsurl&#39;: &#39;https://ui.adsabs.harvard.edu/abs/2017isms.confETJ08G&#39;,
-  &#39;doi&#39;: &#39;10.15278/isms.2017.TJ08&#39;,
-  &#39;pages&#39;: &#39;TJ08&#39;,
-  &#39;eid&#39;: &#39;TJ08&#39;,
-  &#39;month&#39;: &#39;June&#39;,
-  &#39;year&#39;: &#39;2017&#39;,
-  &#39;booktitle&#39;: &#39;72nd International Symposium on Molecular Spectroscopy&#39;,
-  &#39;keywords&#39;: &#39;Linelists&#39;,
-  &#39;title&#39;: &#39;{HITRAN2016: Part I. Line lists for H\\_2O, CO\\_2, O\\_3, N\\_2O, CO, CH\\_4, and O\\_2}&#39;,
-  &#39;author&#39;: &#39;{Gordon}, Iouli E. and {Rothman}, Laurence S. and {Tan}, Yan and {Kochanov}, Roman V. and {Hill}, Christian&#39;,
-  &#39;ENTRYTYPE&#39;: &#39;inproceedings&#39;,
-  &#39;ID&#39;: &#39;HITRAN2016&#39;},
- {&#39;adsnote&#39;: &#39;Provided by the SAO/NASA Astrophysics Data System&#39;,
-  &#39;adsurl&#39;: &#39;https://ui.adsabs.harvard.edu/abs/2016MNRAS.463..771M&#39;,
-  &#39;primaryclass&#39;: &#39;astro-ph.SR&#39;,
-  &#39;eprint&#39;: &#39;1609.06120&#39;,
-  &#39;archiveprefix&#39;: &#39;arXiv&#39;,
-  &#39;doi&#39;: &#39;10.1093/mnras/stw1969&#39;,
-  &#39;pages&#39;: &#39;771-793&#39;,
-  &#39;number&#39;: &#39;1&#39;,
-  &#39;volume&#39;: &#39;463&#39;,
-  &#39;month&#39;: &#39;November&#39;,
-  &#39;year&#39;: &#39;2016&#39;,
-  &#39;keywords&#39;: &#39;molecular data, opacity, astronomical data bases: miscellaneous, planets and satellites: atmospheres, brown dwarfs, stars: low-mass, Astrophysics - Solar and Stellar Astrophysics, Physics - Chemical Physics&#39;,
-  &#39;journal&#39;: &#39;\\mnras&#39;,
-  &#39;title&#39;: &#39;{ExoMol line lists - XVIII. The high-temperature spectrum of VO}&#39;,
-  &#39;author&#39;: &#39;{McKemmish}, Laura K. and {Yurchenko}, Sergei N. and\n{Tennyson}, Jonathan&#39;,
-  &#39;ENTRYTYPE&#39;: &#39;article&#39;,
-  &#39;ID&#39;: &#39;McKemmish16&#39;}]
+[Entry(entry_type=`inproceedings`, key=`HITRAN2016`, fields=`[Field(key=`author`, value=`{Gordon}, Iouli E. and {Rothman}, Laurence S. and {Tan}, Yan and {Kochanov}, Roman V. and {Hill}, Christian`, start_line=98), Field(key=`title`, value=`{HITRAN2016: Part I. Line lists for H\_2O, CO\_2, O\_3, N\_2O, CO, CH\_4, and O\_2}`, start_line=99), Field(key=`keywords`, value=`Linelists`, start_line=100), Field(key=`booktitle`, value=`72nd International Symposium on Molecular Spectroscopy`, start_line=101), Field(key=`year`, value=`2017`, start_line=102), Field(key=`month`, value=`jun`, start_line=103), Field(key=`eid`, value=`TJ08`, start_line=104), Field(key=`pages`, value=`TJ08`, start_line=105), Field(key=`doi`, value=`10.15278/isms.2017.TJ08`, start_line=106), Field(key=`adsurl`, value=`https://ui.adsabs.harvard.edu/abs/2017isms.confETJ08G`, start_line=107), Field(key=`adsnote`, value=`Provided by the SAO/NASA Astrophysics Data System`, start_line=108)]`, start_line=97),
+ Entry(entry_type=`article`, key=`McKemmish16`, fields=`[Field(key=`author`, value=`{McKemmish}, Laura K. and {Yurchenko}, Sergei N. and
+          {Tennyson}, Jonathan`, start_line=647), Field(key=`title`, value=`{ExoMol line lists - XVIII. The high-temperature spectrum of VO}`, start_line=649), Field(key=`journal`, value=`\mnras`, start_line=650), Field(key=`keywords`, value=`molecular data, opacity, astronomical data bases: miscellaneous, planets and satellites: atmospheres, brown dwarfs, stars: low-mass, Astrophysics - Solar and Stellar Astrophysics, Physics - Chemical Physics`, start_line=651), Field(key=`year`, value=`2016`, start_line=652), Field(key=`month`, value=`nov`, start_line=653), Field(key=`volume`, value=`463`, start_line=654), Field(key=`number`, value=`1`, start_line=655), Field(key=`pages`, value=`771-793`, start_line=656), Field(key=`doi`, value=`10.1093/mnras/stw1969`, start_line=657), Field(key=`archivePrefix`, value=`arXiv`, start_line=658), Field(key=`eprint`, value=`1609.06120`, start_line=659), Field(key=`primaryClass`, value=`astro-ph.SR`, start_line=660), Field(key=`adsurl`, value=`https://ui.adsabs.harvard.edu/abs/2016MNRAS.463..771M`, start_line=661), Field(key=`adsnote`, value=`Provided by the SAO/NASA Astrophysics Data System`, start_line=662)]`, start_line=646)]
 </pre></div></div>
 </div>
 <section id="Write-to-bibtex-file">
-<h3>Write to bibtex file<a class="headerlink" href="#Write-to-bibtex-file" title="Permalink to this headline">¶</a></h3>
-<div class="nbinput nblast docutils container">
+<h3>Write to bibtex file<a class="headerlink" href="#Write-to-bibtex-file" title="Link to this heading">¶</a></h3>
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
@@ -245,10 +230,23 @@
 </pre></div>
 </div>
 </div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING:root:Unknown block type &lt;class &#39;bibtexparser.model.DuplicateBlockKeyBlock&#39;&gt;
+WARNING:root:Unknown block type &lt;class &#39;bibtexparser.model.DuplicateBlockKeyBlock&#39;&gt;
+WARNING:root:Unknown block type &lt;class &#39;bibtexparser.model.DuplicateBlockKeyBlock&#39;&gt;
+WARNING:root:Unknown block type &lt;class &#39;bibtexparser.model.DuplicateBlockKeyBlock&#39;&gt;
+WARNING:root:Unknown block type &lt;class &#39;bibtexparser.model.DuplicateBlockKeyBlock&#39;&gt;
+WARNING:root:Unknown block type &lt;class &#39;bibtexparser.model.DuplicateBlockKeyBlock&#39;&gt;
+</pre></div></div>
+</div>
 </section>
 </section>
 <section id="Get-opacity-data-references-for-certain-molecules">
-<h2>Get opacity data references for certain molecules<a class="headerlink" href="#Get-opacity-data-references-for-certain-molecules" title="Permalink to this headline">¶</a></h2>
+<h2>Get opacity data references for certain molecules<a class="headerlink" href="#Get-opacity-data-references-for-certain-molecules" title="Link to this heading">¶</a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
@@ -298,36 +296,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[{&#39;adsnote&#39;: &#39;Provided by the SAO/NASA Astrophysics Data System&#39;,
-  &#39;adsurl&#39;: &#39;https://ui.adsabs.harvard.edu/abs/2018MNRAS.480.2597P&#39;,
-  &#39;primaryclass&#39;: &#39;astro-ph.EP&#39;,
-  &#39;eprint&#39;: &#39;1807.04529&#39;,
-  &#39;archiveprefix&#39;: &#39;arXiv&#39;,
-  &#39;doi&#39;: &#39;10.1093/mnras/sty1877&#39;,
-  &#39;pages&#39;: &#39;2597-2608&#39;,
-  &#39;number&#39;: &#39;2&#39;,
-  &#39;volume&#39;: &#39;480&#39;,
-  &#39;month&#39;: &#39;October&#39;,
-  &#39;year&#39;: &#39;2018&#39;,
-  &#39;keywords&#39;: &#39;molecular data; opacity; planets and satellites: atmospheres; stars: atmospheres; stars: low-mass, stars: brown dwarfs. astronomical data bases: miscellaneous, Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Solar and Stellar Astrophysics, Physics - Chemical Physics&#39;,
-  &#39;journal&#39;: &#39;\\mnras&#39;,
-  &#39;title&#39;: &#39;{ExoMol molecular line lists XXX: a complete high-accuracy line list for water}&#39;,
-  &#39;author&#39;: &#39;{Polyansky}, Oleg L. and {Kyuberis}, Aleksandra A. and {Zobov}, Nikolai F. and {Tennyson}, Jonathan and {Yurchenko}, Sergei N. and {Lodi}, Lorenzo&#39;,
-  &#39;ENTRYTYPE&#39;: &#39;article&#39;,
-  &#39;ID&#39;: &#39;Polyansky2018H2O&#39;},
- {&#39;abstract&#39;: &#39;Reliable infrared (IR) line lists are reported for the 13 isotopologues of carbon dioxide in HITRAN notation: 626, 636, 628, 627, 828, 727, 827, 638, 637, 737, 838, 738, and 646. Three IR lists are available for each istotopologue: a complete list at 296K, a reduced-size list at 296K, plus a reduced-size list at 1000K. They are denoted Ames-296K, Ames-296K.reduced and Ames-1000K.reduced. With J up to 150, and energy up to 18,000cm−1 above the zero point energy, these lists are expected to cover the temperature range up to 1500K. Line shape parameters including temperature dependence are calculated and reported for four temperature ranges: Mars, Earth, Venus, and Hotter (700–2000K). Comparisons are made against the available transition data in the HITRAN2012 models. Line position accuracy for most transitions up to 10,000–13,000cm−1 is better than 0.03–0.05cm−1. Computed transition intensities agree well with most HITRAN data but there exist suspicious exceptions for isotopologues. These line lists will expedite CO2 IR experimental data analysis and provide the scientific community with trustworthy alternatives for unknown IR bands. These line lists may be combined with existing experimental databases to facilitate the analysis of future laboratory experiments or astronomical observations.&#39;,
-  &#39;keywords&#39;: &#39;Carbon dioxide (CO), Isotopologues, IR line list, Line shape, Refined potential energy surface, Partition sum&#39;,
-  &#39;author&#39;: &#39;Xinchuan {Huang} and Robert R. Gamache and Richard S. Freedman and David W. Schwenke and Timothy J. Lee&#39;,
-  &#39;url&#39;: &#39;http://www.sciencedirect.com/science/article/pii/S0022407314002246&#39;,
-  &#39;doi&#39;: &#39;https://doi.org/10.1016/j.jqsrt.2014.05.015&#39;,
-  &#39;issn&#39;: &#39;0022-4073&#39;,
-  &#39;year&#39;: &#39;2014&#39;,
-  &#39;pages&#39;: &#39;134 - 144&#39;,
-  &#39;volume&#39;: &#39;147&#39;,
-  &#39;journal&#39;: &#39;Journal of Quantitative Spectroscopy and Radiative Transfer&#39;,
-  &#39;title&#39;: &#39;Reliable infrared line lists for 13 CO2 isotopologues up to E′=18,000cm−1 and 1500K, with line shape parameters&#39;,
-  &#39;ENTRYTYPE&#39;: &#39;article&#39;,
-  &#39;ID&#39;: &#39;HUANG2014reliable&#39;}]
+[Entry(entry_type=`article`, key=`Polyansky2018H2O`, fields=`[Field(key=`author`, value=`{Polyansky}, Oleg L. and {Kyuberis}, Aleksandra A. and {Zobov}, Nikolai F. and {Tennyson}, Jonathan and {Yurchenko}, Sergei N. and {Lodi}, Lorenzo`, start_line=203), Field(key=`title`, value=`{ExoMol molecular line lists XXX: a complete high-accuracy line list for water}`, start_line=204), Field(key=`journal`, value=`\mnras`, start_line=205), Field(key=`keywords`, value=`molecular data; opacity; planets and satellites: atmospheres; stars: atmospheres; stars: low-mass, stars: brown dwarfs. astronomical data bases: miscellaneous, Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Solar and Stellar Astrophysics, Physics - Chemical Physics`, start_line=206), Field(key=`year`, value=`2018`, start_line=207), Field(key=`month`, value=`oct`, start_line=208), Field(key=`volume`, value=`480`, start_line=209), Field(key=`number`, value=`2`, start_line=210), Field(key=`pages`, value=`2597-2608`, start_line=211), Field(key=`doi`, value=`10.1093/mnras/sty1877`, start_line=212), Field(key=`archivePrefix`, value=`arXiv`, start_line=213), Field(key=`eprint`, value=`1807.04529`, start_line=214), Field(key=`primaryClass`, value=`astro-ph.EP`, start_line=215), Field(key=`adsurl`, value=`https://ui.adsabs.harvard.edu/abs/2018MNRAS.480.2597P`, start_line=216), Field(key=`adsnote`, value=`Provided by the SAO/NASA Astrophysics Data System`, start_line=217)]`, start_line=202),
+ Entry(entry_type=`article`, key=`HUANG2014reliable`, fields=`[Field(key=`title`, value=`Reliable infrared line lists for 13 CO2 isotopologues up to E′=18,000cm−1 and 1500K, with line shape parameters`, start_line=412), Field(key=`journal`, value=`Journal of Quantitative Spectroscopy and Radiative Transfer`, start_line=413), Field(key=`volume`, value=`147`, start_line=414), Field(key=`pages`, value=`134 - 144`, start_line=415), Field(key=`year`, value=`2014`, start_line=416), Field(key=`issn`, value=`0022-4073`, start_line=417), Field(key=`doi`, value=`https://doi.org/10.1016/j.jqsrt.2014.05.015`, start_line=418), Field(key=`url`, value=`http://www.sciencedirect.com/science/article/pii/S0022407314002246`, start_line=419), Field(key=`author`, value=`Xinchuan {Huang} and Robert R. Gamache and Richard S. Freedman and David W. Schwenke and Timothy J. Lee`, start_line=420), Field(key=`keywords`, value=`Carbon dioxide (CO), Isotopologues, IR line list, Line shape, Refined potential energy surface, Partition sum`, start_line=421), Field(key=`abstract`, value=`Reliable infrared (IR) line lists are reported for the 13 isotopologues of carbon dioxide in HITRAN notation: 626, 636, 628, 627, 828, 727, 827, 638, 637, 737, 838, 738, and 646. Three IR lists are available for each istotopologue: a complete list at 296K, a reduced-size list at 296K, plus a reduced-size list at 1000K. They are denoted Ames-296K, Ames-296K.reduced and Ames-1000K.reduced. With J up to 150, and energy up to 18,000cm−1 above the zero point energy, these lists are expected to cover the temperature range up to 1500K. Line shape parameters including temperature dependence are calculated and reported for four temperature ranges: Mars, Earth, Venus, and Hotter (700–2000K). Comparisons are made against the available transition data in the HITRAN2012 models. Line position accuracy for most transitions up to 10,000–13,000cm−1 is better than 0.03–0.05cm−1. Computed transition intensities agree well with most HITRAN data but there exist suspicious exceptions for isotopologues. These line lists will expedite CO2 IR experimental data analysis and provide the scientific community with trustworthy alternatives for unknown IR bands. These line lists may be combined with existing experimental databases to facilitate the analysis of future laboratory experiments or astronomical observations.`, start_line=422)]`, start_line=411)]
 </pre></div></div>
 </div>
 </section>

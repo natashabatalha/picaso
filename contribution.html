@@ -1,20 +1,21 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Contributing to PICASO &mdash; picaso 3.1 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <title>Contributing to PICASO &mdash; picaso 3.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b76e3c8a" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
+        <script src="_static/documentation_options.js?v=828ea960"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -35,7 +36,7 @@
             picaso
           </a>
               <div class="version">
-                3.1
+                3.2
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -97,16 +98,16 @@
            <div itemprop="articleBody">
              
   <section id="contributing-to-picaso">
-<h1>Contributing to <code class="docutils literal notranslate"><span class="pre">PICASO</span></code><a class="headerlink" href="#contributing-to-picaso" title="Permalink to this headline">¶</a></h1>
+<h1>Contributing to <code class="docutils literal notranslate"><span class="pre">PICASO</span></code><a class="headerlink" href="#contributing-to-picaso" title="Link to this heading">¶</a></h1>
 <section id="pep-8-style-guide">
-<h2>PEP 8 Style Guide<a class="headerlink" href="#pep-8-style-guide" title="Permalink to this headline">¶</a></h2>
+<h2>PEP 8 Style Guide<a class="headerlink" href="#pep-8-style-guide" title="Link to this heading">¶</a></h2>
 <p>We generally follow <a class="reference external" href="https://www.python.org/dev/peps/pep-0008/#descriptive-naming-styles">PEP 8</a> styling. Below we emphasize the “must haves” of our code.</p>
 <ul class="simple">
 <li><p>Your code should read like a book. If you have ~10 lines of code without a comment you are commenting too infrequently.</p></li>
 <li><p>It is really important to style function headers uniformly using <a class="reference external" href="https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_numpy.html#example-numpy">NumPy style Python Docstrings</a>. This enables <a class="reference external" href="http://www.sphinx-doc.org/en/master/">sphinx</a> to auto read function headers. Below is an example, but <a class="reference external" href="https://numpydoc.readthedocs.io/en/latest/format.html#sections">look here</a> for a full list of headers.</p></li>
 </ul>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">foo</span><span class="p">(</span><span class="n">in1</span><span class="p">,</span> <span class="n">in2</span><span class="p">,</span><span class="n">in3</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Describe function thoroughly.</span>
 
 <span class="sd">    Add any relevant citations.</span>
@@ -157,16 +158,16 @@
 </div>
 </section>
 <section id="github-workflow">
-<h2>Github Workflow<a class="headerlink" href="#github-workflow" title="Permalink to this headline">¶</a></h2>
+<h2>Github Workflow<a class="headerlink" href="#github-workflow" title="Link to this heading">¶</a></h2>
 <p>Before contributing, consider submitting an issue request. Sometimes we may already be aware of an issue and can help you fix something faster.</p>
 <section id="clone-the-repository">
-<h3>1) Clone the repository<a class="headerlink" href="#clone-the-repository" title="Permalink to this headline">¶</a></h3>
+<h3>1) Clone the repository<a class="headerlink" href="#clone-the-repository" title="Link to this heading">¶</a></h3>
 <p>Clone the repository that you are interested in working on.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/natashabatalha/picaso.git
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/natashabatalha/picaso.git
 </pre></div>
 </div>
 <p>This will download a copy of the code to your computer. You will automatically be in the <code class="docutils literal notranslate"><span class="pre">master</span></code> branch upon downloading. You can track the dev branch like so:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git checkout dev
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>checkout<span class="w"> </span>dev
 </pre></div>
 </div>
 <p><strong>Side note: Important distinction between ``master`` and ``dev``</strong></p>
@@ -174,82 +175,82 @@
 <img alt="_images/github_flow.jpg" src="_images/github_flow.jpg" />
 </section>
 <section id="create-a-branch-off-of-dev-with-a-useful-name">
-<h3>2) Create a branch off of <code class="docutils literal notranslate"><span class="pre">dev</span></code> with a useful name<a class="headerlink" href="#create-a-branch-off-of-dev-with-a-useful-name" title="Permalink to this headline">¶</a></h3>
+<h3>2) Create a branch off of <code class="docutils literal notranslate"><span class="pre">dev</span></code> with a useful name<a class="headerlink" href="#create-a-branch-off-of-dev-with-a-useful-name" title="Link to this heading">¶</a></h3>
 <p>It’s likely you will be working on a specific subset of a bigger code project. Any changes you make on a new branch will not affect <code class="docutils literal notranslate"><span class="pre">master</span></code> or <code class="docutils literal notranslate"><span class="pre">dev</span></code>, so you can feel free to beat up the code without damaging anything that is fully tested.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git checkout -b myfeature dev
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>myfeature<span class="w"> </span>dev
 </pre></div>
 </div>
 </section>
 <section id="work-work-work-work">
-<h3>3) Work work work work…<a class="headerlink" href="#work-work-work-work" title="Permalink to this headline">¶</a></h3>
+<h3>3) Work work work work…<a class="headerlink" href="#work-work-work-work" title="Link to this heading">¶</a></h3>
 <p>Let’s pretend that <code class="docutils literal notranslate"><span class="pre">myfeature</span></code> entails working on <code class="docutils literal notranslate"><span class="pre">file1.py</span></code> and <code class="docutils literal notranslate"><span class="pre">file2.py</span></code>. After you are happy with an initial change, commit and push your changes.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1">#commit changes</span>
-git add file1.py file2.py
-git commit -m <span class="s1">&#39;added cool thing&#39;</span>
+git<span class="w"> </span>add<span class="w"> </span>file1.py<span class="w"> </span>file2.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s1">&#39;added cool thing&#39;</span>
 
 <span class="c1">#switch to dev branch</span>
-git checkout dev
+git<span class="w"> </span>checkout<span class="w"> </span>dev
 
 <span class="c1">#merge your changes</span>
-git merge --no-ff myfeature
+git<span class="w"> </span>merge<span class="w"> </span>--no-ff<span class="w"> </span>myfeature
 
 <span class="c1">#delete old branch</span>
-git branch -d myfeature
+git<span class="w"> </span>branch<span class="w"> </span>-d<span class="w"> </span>myfeature
 
 <span class="c1">#push to dev</span>
-git push origin dev
+git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>dev
 </pre></div>
 </div>
 <p>Many people ask: “How often should I commit??”. Choose something that works for you and stick to it. I try and work on smaller, individual tasks and commit when I feel I have finished something. If you try and do too much at once, your commit comments won’t make too much sense with what you have actually done. Remember, eventually someone will have to review your commits. If they are hard to parse, it will delay the merge of your work.</p>
 </section>
 <section id="final-merge-to-master">
-<h3>4) Final merge to <code class="docutils literal notranslate"><span class="pre">master</span></code><a class="headerlink" href="#final-merge-to-master" title="Permalink to this headline">¶</a></h3>
+<h3>4) Final merge to <code class="docutils literal notranslate"><span class="pre">master</span></code><a class="headerlink" href="#final-merge-to-master" title="Link to this heading">¶</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">master</span></code> is generally a protected branch, so talk to the admin or the team before proceeding. In general, merges to master are easiest done through <a class="reference external" href="https://github.com/natashabatalha/picaso">Github Online</a>. Near where the branches are listed, go to “New Pull Request”. Write a description of the new dev capability, and request a merge to master. And if all good then, done!!!</p>
 </section>
 </section>
 <section id="using-conda-enviornments">
-<h2>Using Conda Enviornments<a class="headerlink" href="#using-conda-enviornments" title="Permalink to this headline">¶</a></h2>
+<h2>Using Conda Enviornments<a class="headerlink" href="#using-conda-enviornments" title="Link to this heading">¶</a></h2>
 <p>Package control and version control is a pain. To make sure everyone is running on the same enviornment it will be beneficial if we are all work in the same environment. Here are the most pertinent commands you need to know.</p>
 <section id="create-your-own-environment">
-<h3>Create your own environment<a class="headerlink" href="#create-your-own-environment" title="Permalink to this headline">¶</a></h3>
+<h3>Create your own environment<a class="headerlink" href="#create-your-own-environment" title="Link to this heading">¶</a></h3>
 <p>To create your own environment with a specific name and python package:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda create --name your_env_name <span class="nv">python</span><span class="o">=</span><span class="m">3</span>.7 -y
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span>your_env_name<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.7<span class="w"> </span>-y
 </pre></div>
 </div>
 <p>If you have specific environment variables that need to be tied to here, then you can specify them. For example, in PICASO there is the environment variable <code class="docutils literal notranslate"><span class="pre">picaso_refdata</span></code> and <code class="docutils literal notranslate"><span class="pre">PYSYN_CDBS</span></code>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda activate your_env_name
-<span class="nb">cd</span> <span class="nv">$CONDA_PREFIX</span>
-mkdir -p ./etc/conda/activate.d
-mkdir -p ./etc/conda/deactivate.d
-touch ./etc/conda/activate.d/env_vars.sh
-touch ./etc/conda/deactivate.d/env_vars.sh
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>activate<span class="w"> </span>your_env_name
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$CONDA_PREFIX</span>
+mkdir<span class="w"> </span>-p<span class="w"> </span>./etc/conda/activate.d
+mkdir<span class="w"> </span>-p<span class="w"> </span>./etc/conda/deactivate.d
+touch<span class="w"> </span>./etc/conda/activate.d/env_vars.sh
+touch<span class="w"> </span>./etc/conda/deactivate.d/env_vars.sh
 </pre></div>
 </div>
 <p>Edit <code class="docutils literal notranslate"><span class="pre">./etc/conda/activate.d/env_vars.sh</span></code></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/sh</span>
 
-<span class="nb">export</span> <span class="nv">MY_VAR</span><span class="o">=</span><span class="s1">&#39;path/to/wherever/you/need&#39;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">MY_VAR</span><span class="o">=</span><span class="s1">&#39;path/to/wherever/you/need&#39;</span>
 </pre></div>
 </div>
 <p>And edit <code class="docutils literal notranslate"><span class="pre">./etc/conda/deactivate.d/env_vars.sh</span></code></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/sh</span>
 
-<span class="nb">unset</span> MY_VAR
+<span class="nb">unset</span><span class="w"> </span>MY_VAR
 </pre></div>
 </div>
 <p>No whenever you activate your environment, your variable name will be there. Whenever you deactivate your environment, it will go away.</p>
 </section>
 <section id="export-your-environment">
-<h3>Export your environment<a class="headerlink" href="#export-your-environment" title="Permalink to this headline">¶</a></h3>
+<h3>Export your environment<a class="headerlink" href="#export-your-environment" title="Link to this heading">¶</a></h3>
 <p>Another great aspect of conda enviornments is that they can be passed to one another.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda env <span class="nb">export</span> &gt; my_environment.yml
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>env<span class="w"> </span><span class="nb">export</span><span class="w"> </span>&gt;<span class="w"> </span>my_environment.yml
 </pre></div>
 </div>
 </section>
 <section id="create-enviornment-from-a-yml-file">
-<h3>Create enviornment from a <code class="docutils literal notranslate"><span class="pre">.yml</span></code> file<a class="headerlink" href="#create-enviornment-from-a-yml-file" title="Permalink to this headline">¶</a></h3>
+<h3>Create enviornment from a <code class="docutils literal notranslate"><span class="pre">.yml</span></code> file<a class="headerlink" href="#create-enviornment-from-a-yml-file" title="Link to this heading">¶</a></h3>
 <p>If someone passes you an environment file, you can easily create an environment from it !</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda env create -f environment.yml
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>environment.yml
 </pre></div>
 </div>
 </section>

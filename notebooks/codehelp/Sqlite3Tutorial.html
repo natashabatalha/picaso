@@ -1,24 +1,25 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SQLITE Tutorial &mdash; picaso 3.1 documentation</title>
-      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/nbsphinx-code-cells.css" type="text/css" />
+  <title>SQLITE Tutorial &mdash; picaso 3.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b76e3c8a" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=720011df" />
+
+  
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
-        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/documentation_options.js?v=828ea960"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -38,7 +39,7 @@
             picaso
           </a>
               <div class="version">
-                3.1
+                3.2
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -118,7 +119,7 @@
 <p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/codehelp/Sqlite3Tutorial.ipynb">Download full notebook here</a></p>
 </div>
 <section id="SQLITE-Tutorial">
-<h1>SQLITE Tutorial<a class="headerlink" href="#SQLITE-Tutorial" title="Permalink to this headline">¶</a></h1>
+<h1>SQLITE Tutorial<a class="headerlink" href="#SQLITE-Tutorial" title="Link to this heading">¶</a></h1>
 <p>This tutorial shows you how query the existing <code class="docutils literal notranslate"><span class="pre">opacity.db</span></code> and also shows you how to customize your own <code class="docutils literal notranslate"><span class="pre">opacity.db</span></code></p>
 <p>A lot of this code is embedded in PICASO.</p>
 <div class="nbinput nblast docutils container">
@@ -133,7 +134,7 @@
 </div>
 </div>
 <section id="Establishing-a-Connection-to-a-Database">
-<h2>Establishing a Connection to a Database<a class="headerlink" href="#Establishing-a-Connection-to-a-Database" title="Permalink to this headline">¶</a></h2>
+<h2>Establishing a Connection to a Database<a class="headerlink" href="#Establishing-a-Connection-to-a-Database" title="Link to this heading">¶</a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
@@ -177,9 +178,9 @@
 </div>
 </section>
 <section id="Using-SELECT-*-FROM-to-Query-Items">
-<h2>Using <code class="docutils literal notranslate"><span class="pre">SELECT</span> <span class="pre">*</span> <span class="pre">FROM</span></code> to Query Items<a class="headerlink" href="#Using-SELECT-*-FROM-to-Query-Items" title="Permalink to this headline">¶</a></h2>
+<h2>Using <code class="docutils literal notranslate"><span class="pre">SELECT</span> <span class="pre">*</span> <span class="pre">FROM</span></code> to Query Items<a class="headerlink" href="#Using-SELECT-*-FROM-to-Query-Items" title="Link to this heading">¶</a></h2>
 <section id="Get-from-header">
-<h3>Get from header<a class="headerlink" href="#Get-from-header" title="Permalink to this headline">¶</a></h3>
+<h3>Get from header<a class="headerlink" href="#Get-from-header" title="Link to this heading">¶</a></h3>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
@@ -193,7 +194,7 @@
 </div>
 </section>
 <section id="Get-Continuum-Opacity">
-<h3>Get Continuum Opacity<a class="headerlink" href="#Get-Continuum-Opacity" title="Permalink to this headline">¶</a></h3>
+<h3>Get Continuum Opacity<a class="headerlink" href="#Get-Continuum-Opacity" title="Link to this heading">¶</a></h3>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
@@ -302,7 +303,7 @@ array([ 75., 100., 125., 150., 175., 200., 225., 250., 275., 300.])
 </div>
 </section>
 <section id="Get-Molecular-Opacity">
-<h3>Get Molecular Opacity<a class="headerlink" href="#Get-Molecular-Opacity" title="Permalink to this headline">¶</a></h3>
+<h3>Get Molecular Opacity<a class="headerlink" href="#Get-Molecular-Opacity" title="Link to this heading">¶</a></h3>
 <p>Molecular opacities are on a specific P-T grid so we book keep them by assigning indices to each pair e.g (1: 1e-6 bar, 75 K, 2:1e-6, 80K.. and so on)</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
@@ -402,7 +403,7 @@ array([ 75., 100., 125., 150., 175., 200., 225., 250., 275., 300.])
 
 <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;SELECT molecule,ptid,opacity</span>
 <span class="s2">            FROM molecular</span>
-<span class="s2">            WHERE molecule in </span><span class="si">{}</span><span class="s2"></span>
+<span class="s2">            WHERE molecule in </span><span class="si">{}</span>
 <span class="s2">            AND ptid in </span><span class="si">{}</span><span class="s2">&quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">grab_moles</span><span class="p">)),</span> <span class="nb">str</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">ind_pt</span><span class="p">))))</span>
 <span class="n">data</span><span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
 <span class="n">data</span> <span class="c1">#gives you the molecule, ptid, and the opacity</span>
@@ -453,7 +454,7 @@ array([ 75., 100., 125., 150., 175., 200., 225., 250., 275., 300.])
 </section>
 </section>
 <section id="Creating-a-New-Database-from-Scratch">
-<h2>Creating a New Database from Scratch<a class="headerlink" href="#Creating-a-New-Database-from-Scratch" title="Permalink to this headline">¶</a></h2>
+<h2>Creating a New Database from Scratch<a class="headerlink" href="#Creating-a-New-Database-from-Scratch" title="Link to this heading">¶</a></h2>
 <p><strong>Note on molecule names</strong>: Because <code class="docutils literal notranslate"><span class="pre">picaso</span></code> uses dict formatting to handle opacities, users can easily swap in different molecules.</p>
 <p>For example, if I wanted to include CO2-H2 CIA absorption, I can add <code class="docutils literal notranslate"><span class="pre">CO2H2</span></code> to the molecules list below. However, it is only quasi-automated in this regaurd. Please contact <a class="reference external" href="mailto:natasha&#46;e&#46;batalha&#37;&#52;&#48;gmail&#46;com">natasha<span>&#46;</span>e<span>&#46;</span>batalha<span>&#64;</span>gmail<span>&#46;</span>com</a> if you are adding new CIA to the code.</p>
 <p><strong>Exceptions</strong>: The exceptions to this are non-CIA continuum opacities. Right now, the other sources of continuum enabled are <code class="docutils literal notranslate"><span class="pre">H2-</span></code>, <code class="docutils literal notranslate"><span class="pre">H-bf</span></code> and <code class="docutils literal notranslate"><span class="pre">H-ff</span></code> which have odd-ball formatting since they aren’t simple two molecules. <em>Please let me know if you want to see another continuum source added</em>.</p>
@@ -485,7 +486,7 @@ array([ 75., 100., 125., 150., 175., 200., 225., 250., 275., 300.])
 </div>
 </div>
 <section id="Build-Tables:-header,-continuum,-and-molecular-tables">
-<h3>Build Tables: header, continuum, and molecular tables<a class="headerlink" href="#Build-Tables:-header,-continuum,-and-molecular-tables" title="Permalink to this headline">¶</a></h3>
+<h3>Build Tables: header, continuum, and molecular tables<a class="headerlink" href="#Build-Tables:-header,-continuum,-and-molecular-tables" title="Link to this heading">¶</a></h3>
 <p>It is <strong>VERY</strong> important that these tables are structured the same way. If you think something should be edited, ping <a class="reference external" href="mailto:natasha&#46;e&#46;batalha&#37;&#52;&#48;gmail&#46;com">natasha<span>&#46;</span>e<span>&#46;</span>batalha<span>&#64;</span>gmail<span>&#46;</span>com</a></p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
@@ -531,7 +532,7 @@ array([ 75., 100., 125., 150., 175., 200., 225., 250., 275., 300.])
 </div>
 </section>
 <section id="Insert-header-info-(unit-and-wave-grid-info!)">
-<h3>Insert header info (unit and wave grid info!)<a class="headerlink" href="#Insert-header-info-(unit-and-wave-grid-info!)" title="Permalink to this headline">¶</a></h3>
+<h3>Insert header info (unit and wave grid info!)<a class="headerlink" href="#Insert-header-info-(unit-and-wave-grid-info!)" title="Link to this heading">¶</a></h3>
 <p>The units <strong>MUST</strong> be the same. The wave grid can be whatever as long as it’s consistent between continuum and molecular tables.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
@@ -547,7 +548,7 @@ array([ 75., 100., 125., 150., 175., 200., 225., 250., 275., 300.])
 </div>
 </section>
 <section id="Insert-continuum-opacity-to-database">
-<h3>Insert continuum opacity to database<a class="headerlink" href="#Insert-continuum-opacity-to-database" title="Permalink to this headline">¶</a></h3>
+<h3>Insert continuum opacity to database<a class="headerlink" href="#Insert-continuum-opacity-to-database" title="Link to this heading">¶</a></h3>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
@@ -564,7 +565,7 @@ array([ 75., 100., 125., 150., 175., 200., 225., 250., 275., 300.])
 </div>
 </section>
 <section id="Insert-molecular-opacity-to-database">
-<h3>Insert molecular opacity to database<a class="headerlink" href="#Insert-molecular-opacity-to-database" title="Permalink to this headline">¶</a></h3>
+<h3>Insert molecular opacity to database<a class="headerlink" href="#Insert-molecular-opacity-to-database" title="Link to this heading">¶</a></h3>
 <p>Again, make sure that your molecules are <strong>case-sensitive</strong>: e.g. Sodium should be <code class="docutils literal notranslate"><span class="pre">Na</span></code> not <code class="docutils literal notranslate"><span class="pre">NA</span></code></p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:

@@ -1,24 +1,25 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Phase Curves Part 1 &mdash; picaso 3.1 documentation</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/nbsphinx-code-cells.css" type="text/css" />
+  <title>Phase Curves Part 1 &mdash; picaso 3.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b76e3c8a" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=720011df" />
+
+  
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/doctools.js"></script>
+        <script src="../_static/documentation_options.js?v=828ea960"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -38,7 +39,7 @@
             picaso
           </a>
               <div class="version">
-                3.1
+                3.2
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -118,13 +119,8 @@
 <p class="admonition-title">Note</p>
 <p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/9e_PhaseCurves.ipynb">Download full notebook here</a></p>
 </div>
-<h1><p>Table of Contents</p>
-</h1><div class="toc"><ul class="toc-item"><li><p>1  Phase Curves Part 1</p>
-<ul class="toc-item"><li><p>1.1  Run Thermal Phase Curve w/ 3D Input</p>
-</li><li><p>1.2  Analyze Phase Curves</p>
-</li><li><p>1.3  Run Cloudy Thermal Phase Curve w/ 3D Input</p>
-</li></ul></li></ul></div><section id="Phase-Curves-Part-1">
-<h1>Phase Curves Part 1<a class="headerlink" href="#Phase-Curves-Part-1" title="Permalink to this headline">¶</a></h1>
+<section id="Phase-Curves-Part-1">
+<h1>Phase Curves Part 1<a class="headerlink" href="#Phase-Curves-Part-1" title="Link to this heading">¶</a></h1>
 <p><strong>Citation:</strong> <a class="reference external" href="http://arxiv.org/abs/2204.03545">Robbins-Blanch et al. 2022 “Cloudy and Cloud-free Thermal Phase Curves with PICASO: Applications to WASP-43b” ApJ</a></p>
 <p>From the previous two tutorials you should understand how:</p>
 <ol class="arabic simple">
@@ -454,7 +450,7 @@ if (force === true) {
 </script></div>
 </div>
 <section id="Run-Thermal-Phase-Curve-w/-3D-Input">
-<h2>Run Thermal Phase Curve w/ 3D Input<a class="headerlink" href="#Run-Thermal-Phase-Curve-w/-3D-Input" title="Permalink to this headline">¶</a></h2>
+<h2>Run Thermal Phase Curve w/ 3D Input<a class="headerlink" href="#Run-Thermal-Phase-Curve-w/-3D-Input" title="Link to this heading">¶</a></h2>
 <p>Computing a phase curve is identical to computing 3D spectra. The only difference is that you will need to <strong>rotate the GCM longitude grid such that the visible portion of the planet changes as the phase changes.</strong></p>
 <p>We can experiment with doing this with our original xarray input:</p>
 <div class="nbinput nblast docutils container">
@@ -474,7 +470,7 @@ if (force === true) {
 </div>
 </div>
 <section id="Add-Chemistry-(randomized-for-purposes-of-the-example)">
-<h3>Add Chemistry (randomized for purposes of the example)<a class="headerlink" href="#Add-Chemistry-(randomized-for-purposes-of-the-example)" title="Permalink to this headline">¶</a></h3>
+<h3>Add Chemistry (randomized for purposes of the example)<a class="headerlink" href="#Add-Chemistry-(randomized-for-purposes-of-the-example)" title="Link to this heading">¶</a></h3>
 <p>Add chemistry, if not already included in your GCM output. Here, we are using the user-defined input.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
@@ -549,6 +545,7 @@ if (force === true) {
 }
 
 html[theme=dark],
+body[data-theme=dark],
 body.vscode-dark {
   --xr-font-color0: rgba(255, 255, 255, 1);
   --xr-font-color2: rgba(255, 255, 255, 0.54);
@@ -561,7 +558,7 @@ body.vscode-dark {
 }
 
 .xr-wrap {
-  display: block;
+  display: block !important;
   min-width: 300px;
   max-width: 700px;
 }
@@ -778,6 +775,11 @@ body.vscode-dark {
   grid-column: 4;
 }
 
+.xr-index-preview {
+  grid-column: 2 / 5;
+  color: var(--xr-font-color2);
+}
+
 .xr-var-name,
 .xr-var-dims,
 .xr-var-dtype,
@@ -799,14 +801,16 @@ body.vscode-dark {
 }
 
 .xr-var-attrs,
-.xr-var-data {
+.xr-var-data,
+.xr-index-data {
   display: none;
   background-color: var(--xr-background-color) !important;
   padding-bottom: 5px !important;
 }
 
 .xr-var-attrs-in:checked ~ .xr-var-attrs,
-.xr-var-data-in:checked ~ .xr-var-data {
+.xr-var-data-in:checked ~ .xr-var-data,
+.xr-index-data-in:checked ~ .xr-index-data {
   display: block;
 }
 
@@ -816,13 +820,16 @@ body.vscode-dark {
 
 .xr-var-name span,
 .xr-var-data,
+.xr-index-name div,
+.xr-index-data,
 .xr-attrs {
   padding-left: 25px !important;
 }
 
 .xr-attrs,
 .xr-var-attrs,
-.xr-var-data {
+.xr-var-data,
+.xr-index-data {
   grid-column: 1 / -1;
 }
 
@@ -860,7 +867,8 @@ dl.xr-attrs {
 }
 
 .xr-icon-database,
-.xr-icon-file-text2 {
+.xr-icon-file-text2,
+.xr-no-icon {
   display: inline-block;
   vertical-align: middle;
   width: 1em;
@@ -869,18 +877,18 @@ dl.xr-attrs {
   stroke: currentColor;
   fill: currentColor;
 }
-</style><pre class='xr-text-repr-fallback'>&lt;xarray.Dataset&gt;
+</style><pre class='xr-text-repr-fallback'>&lt;xarray.Dataset&gt; Size: 10MB
 Dimensions:      (lon: 128, lat: 64, pressure: 53)
 Coordinates:
-  * lon          (lon) float64 -180.0 -177.2 -174.4 -171.6 ... 171.6 174.4 177.2
-  * lat          (lat) float64 -90.0 -87.19 -84.38 -81.56 ... 81.56 84.38 87.19
-  * pressure     (pressure) float64 170.6 120.5 85.15 ... 3.42e-06 2.416e-06
+  * lon          (lon) float64 1kB -180.0 -177.2 -174.4 ... 171.6 174.4 177.2
+  * lat          (lat) float64 512B -90.0 -87.19 -84.38 ... 81.56 84.38 87.19
+  * pressure     (pressure) float64 424B 170.6 120.5 ... 3.42e-06 2.416e-06
 Data variables:
-    temperature  (lon, lat, pressure) float64 1.896e+03 1.809e+03 ... 750.7
-    H2O          (lon, lat, pressure) float64 0.1771 0.1029 ... 0.168 0.1349
-    H2           (lon, lat, pressure) float64 0.8229 0.8971 ... 0.832 0.8651
+    temperature  (lon, lat, pressure) float64 3MB 1.896e+03 1.809e+03 ... 750.7
+    H2O          (lon, lat, pressure) float64 3MB 0.1689 0.1063 ... 0.1108
+    H2           (lon, lat, pressure) float64 3MB 0.8311 0.8937 ... 0.8892
 Attributes:
-    description:  coords with vectors</pre><div class='xr-wrap' hidden><div class='xr-header'><div class='xr-obj-type'>xarray.Dataset</div></div><ul class='xr-sections'><li class='xr-section-item'><input id='section-d239fe60-b34d-46ee-97a8-37651543146e' class='xr-section-summary-in' type='checkbox' disabled ><label for='section-d239fe60-b34d-46ee-97a8-37651543146e' class='xr-section-summary'  title='Expand/collapse section'>Dimensions:</label><div class='xr-section-inline-details'><ul class='xr-dim-list'><li><span class='xr-has-index'>lon</span>: 128</li><li><span class='xr-has-index'>lat</span>: 64</li><li><span class='xr-has-index'>pressure</span>: 53</li></ul></div><div class='xr-section-details'></div></li><li class='xr-section-item'><input id='section-a6f8ff51-7ebb-474b-8b44-71c5bee2591f' class='xr-section-summary-in' type='checkbox'  checked><label for='section-a6f8ff51-7ebb-474b-8b44-71c5bee2591f' class='xr-section-summary' >Coordinates: <span>(3)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>lon</span></div><div class='xr-var-dims'>(lon)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-180.0 -177.2 ... 174.4 177.2</div><input id='attrs-8558773d-26ef-4f3a-a057-d46706943aa3' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-8558773d-26ef-4f3a-a057-d46706943aa3' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-7c7ed0b7-5628-4ae6-a926-158f7d667c2e' class='xr-var-data-in' type='checkbox'><label for='data-7c7ed0b7-5628-4ae6-a926-158f7d667c2e' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>degrees</dd></dl></div><div class='xr-var-data'><pre>array([-180.    , -177.1875, -174.375 , -171.5625, -168.75  , -165.9375,
+    description:  coords with vectors</pre><div class='xr-wrap' style='display:none'><div class='xr-header'><div class='xr-obj-type'>xarray.Dataset</div></div><ul class='xr-sections'><li class='xr-section-item'><input id='section-194c2c5e-c908-4bab-9ddf-681f4f4107b5' class='xr-section-summary-in' type='checkbox' disabled ><label for='section-194c2c5e-c908-4bab-9ddf-681f4f4107b5' class='xr-section-summary'  title='Expand/collapse section'>Dimensions:</label><div class='xr-section-inline-details'><ul class='xr-dim-list'><li><span class='xr-has-index'>lon</span>: 128</li><li><span class='xr-has-index'>lat</span>: 64</li><li><span class='xr-has-index'>pressure</span>: 53</li></ul></div><div class='xr-section-details'></div></li><li class='xr-section-item'><input id='section-8cb4427e-1406-4c64-b598-841ba8bd4973' class='xr-section-summary-in' type='checkbox'  checked><label for='section-8cb4427e-1406-4c64-b598-841ba8bd4973' class='xr-section-summary' >Coordinates: <span>(3)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>lon</span></div><div class='xr-var-dims'>(lon)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-180.0 -177.2 ... 174.4 177.2</div><input id='attrs-eed5b7c2-5f17-488c-bea8-16792df87a81' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-eed5b7c2-5f17-488c-bea8-16792df87a81' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-1bfce29e-22cc-45d8-b2ee-4d0e11e5d233' class='xr-var-data-in' type='checkbox'><label for='data-1bfce29e-22cc-45d8-b2ee-4d0e11e5d233' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>degrees</dd></dl></div><div class='xr-var-data'><pre>array([-180.    , -177.1875, -174.375 , -171.5625, -168.75  , -165.9375,
        -163.125 , -160.3125, -157.5   , -154.6875, -151.875 , -149.0625,
        -146.25  , -143.4375, -140.625 , -137.8125, -135.    , -132.1875,
        -129.375 , -126.5625, -123.75  , -120.9375, -118.125 , -115.3125,
@@ -901,7 +909,7 @@ Attributes:
         123.75  ,  126.5625,  129.375 ,  132.1875,  135.    ,  137.8125,
         140.625 ,  143.4375,  146.25  ,  149.0625,  151.875 ,  154.6875,
         157.5   ,  160.3125,  163.125 ,  165.9375,  168.75  ,  171.5625,
-        174.375 ,  177.1875])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>lat</span></div><div class='xr-var-dims'>(lat)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-90.0 -87.19 -84.38 ... 84.38 87.19</div><input id='attrs-a2b9bab8-d993-439a-b31e-af09bd29517f' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-a2b9bab8-d993-439a-b31e-af09bd29517f' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-5aa417ef-71e4-409f-a67c-86aea1b92a00' class='xr-var-data-in' type='checkbox'><label for='data-5aa417ef-71e4-409f-a67c-86aea1b92a00' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>degrees</dd></dl></div><div class='xr-var-data'><pre>array([-90.    , -87.1875, -84.375 , -81.5625, -78.75  , -75.9375, -73.125 ,
+        174.375 ,  177.1875])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>lat</span></div><div class='xr-var-dims'>(lat)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-90.0 -87.19 -84.38 ... 84.38 87.19</div><input id='attrs-47077a76-7ad3-4f46-8fbe-ac69b5c25684' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-47077a76-7ad3-4f46-8fbe-ac69b5c25684' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-b3dfc42c-6ef6-420a-b59f-dfb400db4cc5' class='xr-var-data-in' type='checkbox'><label for='data-b3dfc42c-6ef6-420a-b59f-dfb400db4cc5' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>degrees</dd></dl></div><div class='xr-var-data'><pre>array([-90.    , -87.1875, -84.375 , -81.5625, -78.75  , -75.9375, -73.125 ,
        -70.3125, -67.5   , -64.6875, -61.875 , -59.0625, -56.25  , -53.4375,
        -50.625 , -47.8125, -45.    , -42.1875, -39.375 , -36.5625, -33.75  ,
        -30.9375, -28.125 , -25.3125, -22.5   , -19.6875, -16.875 , -14.0625,
@@ -910,7 +918,7 @@ Attributes:
         28.125 ,  30.9375,  33.75  ,  36.5625,  39.375 ,  42.1875,  45.    ,
         47.8125,  50.625 ,  53.4375,  56.25  ,  59.0625,  61.875 ,  64.6875,
         67.5   ,  70.3125,  73.125 ,  75.9375,  78.75  ,  81.5625,  84.375 ,
-        87.1875])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>pressure</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>170.6 120.5 ... 3.42e-06 2.416e-06</div><input id='attrs-c2b5a6de-646a-421c-a609-e15c01f4fe2b' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-c2b5a6de-646a-421c-a609-e15c01f4fe2b' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-624f0d53-df00-4b4a-8a6c-6a2b974f8a45' class='xr-var-data-in' type='checkbox'><label for='data-624f0d53-df00-4b4a-8a6c-6a2b974f8a45' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>bar</dd></dl></div><div class='xr-var-data'><pre>array([1.706410e+02, 1.205424e+02, 8.515232e+01, 6.015242e+01, 4.249225e+01,
+        87.1875])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>pressure</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>170.6 120.5 ... 3.42e-06 2.416e-06</div><input id='attrs-c7957d8a-3b3d-48b3-8859-1574a9591428' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-c7957d8a-3b3d-48b3-8859-1574a9591428' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-7f8741b9-7538-4ed3-bdb5-fce1db42e67e' class='xr-var-data-in' type='checkbox'><label for='data-7f8741b9-7538-4ed3-bdb5-fce1db42e67e' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>bar</dd></dl></div><div class='xr-var-data'><pre>array([1.706410e+02, 1.205424e+02, 8.515232e+01, 6.015242e+01, 4.249225e+01,
        3.001693e+01, 2.120425e+01, 1.497889e+01, 1.058123e+01, 7.474682e+00,
        5.280187e+00, 3.729975e+00, 2.634890e+00, 1.861312e+00, 1.314849e+00,
        9.288217e-01, 6.561286e-01, 4.634955e-01, 3.274177e-01, 2.312910e-01,
@@ -920,7 +928,7 @@ Attributes:
        8.893330e-04, 6.282334e-04, 4.437901e-04, 3.134976e-04, 2.214577e-04,
        1.564399e-04, 1.105106e-04, 7.806577e-05, 5.514641e-05, 3.895596e-05,
        2.751886e-05, 1.943959e-05, 1.373231e-05, 9.700637e-06, 6.852624e-06,
-       4.840759e-06, 3.419559e-06, 2.415609e-06])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-1ad0b029-9ddc-4aab-9e76-d51b90bcf06c' class='xr-section-summary-in' type='checkbox'  checked><label for='section-1ad0b029-9ddc-4aab-9e76-d51b90bcf06c' class='xr-section-summary' >Data variables: <span>(3)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span>temperature</span></div><div class='xr-var-dims'>(lon, lat, pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>1.896e+03 1.809e+03 ... 742.2 750.7</div><input id='attrs-7571ae9f-1128-457d-a1ce-462363b2b6bd' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-7571ae9f-1128-457d-a1ce-462363b2b6bd' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-74b3d0d4-b14e-4a8b-88f6-e7b2bf71c882' class='xr-var-data-in' type='checkbox'><label for='data-74b3d0d4-b14e-4a8b-88f6-e7b2bf71c882' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([[[1895.999275, 1809.121113, 1810.600187, ...,  752.67337 ,
+       4.840759e-06, 3.419559e-06, 2.415609e-06])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-ff761875-59e3-444e-a719-d49d003c73a9' class='xr-section-summary-in' type='checkbox'  checked><label for='section-ff761875-59e3-444e-a719-d49d003c73a9' class='xr-section-summary' >Data variables: <span>(3)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span>temperature</span></div><div class='xr-var-dims'>(lon, lat, pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>1.896e+03 1.809e+03 ... 742.2 750.7</div><input id='attrs-8f14a908-196e-4695-a4c8-97a0d9361ee2' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-8f14a908-196e-4695-a4c8-97a0d9361ee2' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-e269573b-342d-4500-8ce1-92fbd30d8142' class='xr-var-data-in' type='checkbox'><label for='data-e269573b-342d-4500-8ce1-92fbd30d8142' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([[[1895.999275, 1809.121113, 1810.600187, ...,  752.67337 ,
           746.530746,  749.708642],
         [1895.999275, 1809.121113, 1810.600187, ...,  752.67337 ,
           746.530746,  749.708642],
@@ -960,87 +968,113 @@ Attributes:
         [1895.488022, 1809.344052, 1811.008027, ...,  732.364899,
           713.620993,  715.700735],
         [1895.813241, 1809.5611  , 1811.11074 , ...,  759.095941,
-          742.249364,  750.667097]]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>H2O</span></div><div class='xr-var-dims'>(lon, lat, pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.1771 0.1029 ... 0.168 0.1349</div><input id='attrs-1fcd1c5a-d18c-4806-9ada-b364f6a91631' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-1fcd1c5a-d18c-4806-9ada-b364f6a91631' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-269bda1a-0b2a-400d-827b-cad4f43cbe7c' class='xr-var-data-in' type='checkbox'><label for='data-269bda1a-0b2a-400d-827b-cad4f43cbe7c' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>v/v</dd></dl></div><div class='xr-var-data'><pre>array([[[0.17714488, 0.10287164, 0.15654752, ..., 0.16877801,
-         0.11114168, 0.14492315],
-        [0.19527037, 0.11182937, 0.18183997, ..., 0.11324272,
-         0.14385794, 0.14337279],
-        [0.11415705, 0.15098461, 0.11845136, ..., 0.11514897,
-         0.1101533 , 0.17012223],
+          742.249364,  750.667097]]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>H2O</span></div><div class='xr-var-dims'>(lon, lat, pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.1689 0.1063 ... 0.1688 0.1108</div><input id='attrs-b3d83c22-522a-4052-b71d-ffc778ac1c65' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-b3d83c22-522a-4052-b71d-ffc778ac1c65' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-8d2d4143-1b50-4d71-8b3e-98ff0f67ea2e' class='xr-var-data-in' type='checkbox'><label for='data-8d2d4143-1b50-4d71-8b3e-98ff0f67ea2e' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>v/v</dd></dl></div><div class='xr-var-data'><pre>array([[[0.1689376 , 0.10633129, 0.13593056, ..., 0.16426404,
+         0.15942097, 0.16898774],
+        [0.13470425, 0.14084274, 0.11860508, ..., 0.18669522,
+         0.14326352, 0.12490472],
+        [0.15418501, 0.16983062, 0.17386293, ..., 0.13132651,
+         0.11070118, 0.17856531],
         ...,
-        [0.19190812, 0.1866397 , 0.10622377, ..., 0.11130571,
-         0.12597674, 0.1937278 ],
-        [0.10974803, 0.11520946, 0.16325687, ..., 0.12170785,
-         0.15557768, 0.16905683],
-        [0.16278212, 0.14465912, 0.12194946, ..., 0.17247274,
-         0.10368059, 0.12950482]],
+        [0.19014491, 0.16304479, 0.17919854, ..., 0.14052351,
+         0.16242598, 0.11473595],
+        [0.11207789, 0.10523718, 0.18204419, ..., 0.14742904,
+         0.11495648, 0.17027775],
+        [0.11225758, 0.19423358, 0.16591678, ..., 0.16318592,
+         0.16658039, 0.13812918]],
 
-       [[0.13774571, 0.17690966, 0.1591815 , ..., 0.16079349,
-         0.11260972, 0.16547398],
-        [0.19226011, 0.15549067, 0.17155024, ..., 0.1205713 ,
-         0.18648525, 0.11892388],
-        [0.14977762, 0.19647648, 0.10142537, ..., 0.19471366,
-         0.19561109, 0.16224364],
+       [[0.13848141, 0.14099286, 0.11506621, ..., 0.16474757,
+         0.17168735, 0.12764645],
+        [0.12509721, 0.13179419, 0.17893755, ..., 0.19244489,
+         0.14519184, 0.10966359],
+        [0.18178813, 0.13934557, 0.16358608, ..., 0.14931329,
+         0.17365395, 0.10528034],
 ...
-        [0.1782789 , 0.17717912, 0.16160602, ..., 0.19949664,
-         0.18423399, 0.19864249],
-        [0.11836914, 0.10973706, 0.19114016, ..., 0.18953855,
-         0.1717076 , 0.16123231],
-        [0.19728133, 0.19510532, 0.17486087, ..., 0.11441571,
-         0.12939823, 0.1435066 ]],
+        [0.17848825, 0.1360026 , 0.10199743, ..., 0.10120359,
+         0.1225994 , 0.14481788],
+        [0.11463508, 0.11671222, 0.19302754, ..., 0.14577077,
+         0.17785644, 0.13613727],
+        [0.11490045, 0.13302905, 0.18284985, ..., 0.15196593,
+         0.11002052, 0.19622537]],
 
-       [[0.14648646, 0.16422439, 0.15581269, ..., 0.16598761,
-         0.14806938, 0.12771357],
-        [0.16765648, 0.16847906, 0.15669935, ..., 0.14451671,
-         0.17601443, 0.15309035],
-        [0.130041  , 0.10349328, 0.17657074, ..., 0.15170418,
-         0.11922048, 0.11703656],
+       [[0.13125029, 0.13137853, 0.11299996, ..., 0.16933573,
+         0.10876197, 0.18705385],
+        [0.16205731, 0.15498658, 0.15411016, ..., 0.14480235,
+         0.17057398, 0.10709025],
+        [0.11646207, 0.19716278, 0.10849358, ..., 0.10527256,
+         0.14886345, 0.10397356],
         ...,
-        [0.11599791, 0.1099483 , 0.1093106 , ..., 0.19874034,
-         0.18196934, 0.15002056],
-        [0.1467084 , 0.12470865, 0.13047499, ..., 0.17339148,
-         0.12946996, 0.18759111],
-        [0.19000824, 0.1524072 , 0.19793891, ..., 0.16363624,
-         0.16799556, 0.13485482]]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>H2</span></div><div class='xr-var-dims'>(lon, lat, pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.8229 0.8971 ... 0.832 0.8651</div><input id='attrs-32399b72-e0a2-4f5f-bf26-3ed00eb646e5' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-32399b72-e0a2-4f5f-bf26-3ed00eb646e5' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-6d90424b-956d-4fad-b599-c4c978cf0eff' class='xr-var-data-in' type='checkbox'><label for='data-6d90424b-956d-4fad-b599-c4c978cf0eff' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>v/v</dd></dl></div><div class='xr-var-data'><pre>array([[[0.82285512, 0.89712836, 0.84345248, ..., 0.83122199,
-         0.88885832, 0.85507685],
-        [0.80472963, 0.88817063, 0.81816003, ..., 0.88675728,
-         0.85614206, 0.85662721],
-        [0.88584295, 0.84901539, 0.88154864, ..., 0.88485103,
-         0.8898467 , 0.82987777],
+        [0.16337119, 0.18367323, 0.14128797, ..., 0.15821427,
+         0.14500024, 0.14171619],
+        [0.16319406, 0.12160639, 0.17162296, ..., 0.16978067,
+         0.11169694, 0.14519537],
+        [0.13594106, 0.1372249 , 0.14115703, ..., 0.16087275,
+         0.16878466, 0.11078771]]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>H2</span></div><div class='xr-var-dims'>(lon, lat, pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.8311 0.8937 ... 0.8312 0.8892</div><input id='attrs-e75f3ff5-e6a1-4a9d-9ba9-6d7ae4b32995' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-e75f3ff5-e6a1-4a9d-9ba9-6d7ae4b32995' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-af58f47b-735a-4e22-8d3d-3c8cf54d5629' class='xr-var-data-in' type='checkbox'><label for='data-af58f47b-735a-4e22-8d3d-3c8cf54d5629' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>v/v</dd></dl></div><div class='xr-var-data'><pre>array([[[0.8310624 , 0.89366871, 0.86406944, ..., 0.83573596,
+         0.84057903, 0.83101226],
+        [0.86529575, 0.85915726, 0.88139492, ..., 0.81330478,
+         0.85673648, 0.87509528],
+        [0.84581499, 0.83016938, 0.82613707, ..., 0.86867349,
+         0.88929882, 0.82143469],
         ...,
-        [0.80809188, 0.8133603 , 0.89377623, ..., 0.88869429,
-         0.87402326, 0.8062722 ],
-        [0.89025197, 0.88479054, 0.83674313, ..., 0.87829215,
-         0.84442232, 0.83094317],
-        [0.83721788, 0.85534088, 0.87805054, ..., 0.82752726,
-         0.89631941, 0.87049518]],
+        [0.80985509, 0.83695521, 0.82080146, ..., 0.85947649,
+         0.83757402, 0.88526405],
+        [0.88792211, 0.89476282, 0.81795581, ..., 0.85257096,
+         0.88504352, 0.82972225],
+        [0.88774242, 0.80576642, 0.83408322, ..., 0.83681408,
+         0.83341961, 0.86187082]],
 
-       [[0.86225429, 0.82309034, 0.8408185 , ..., 0.83920651,
-         0.88739028, 0.83452602],
-        [0.80773989, 0.84450933, 0.82844976, ..., 0.8794287 ,
-         0.81351475, 0.88107612],
-        [0.85022238, 0.80352352, 0.89857463, ..., 0.80528634,
-         0.80438891, 0.83775636],
+       [[0.86151859, 0.85900714, 0.88493379, ..., 0.83525243,
+         0.82831265, 0.87235355],
+        [0.87490279, 0.86820581, 0.82106245, ..., 0.80755511,
+         0.85480816, 0.89033641],
+        [0.81821187, 0.86065443, 0.83641392, ..., 0.85068671,
+         0.82634605, 0.89471966],
 ...
-        [0.8217211 , 0.82282088, 0.83839398, ..., 0.80050336,
-         0.81576601, 0.80135751],
-        [0.88163086, 0.89026294, 0.80885984, ..., 0.81046145,
-         0.8282924 , 0.83876769],
-        [0.80271867, 0.80489468, 0.82513913, ..., 0.88558429,
-         0.87060177, 0.8564934 ]],
+        [0.82151175, 0.8639974 , 0.89800257, ..., 0.89879641,
+         0.8774006 , 0.85518212],
+        [0.88536492, 0.88328778, 0.80697246, ..., 0.85422923,
+         0.82214356, 0.86386273],
+        [0.88509955, 0.86697095, 0.81715015, ..., 0.84803407,
+         0.88997948, 0.80377463]],
 
-       [[0.85351354, 0.83577561, 0.84418731, ..., 0.83401239,
-         0.85193062, 0.87228643],
-        [0.83234352, 0.83152094, 0.84330065, ..., 0.85548329,
-         0.82398557, 0.84690965],
-        [0.869959  , 0.89650672, 0.82342926, ..., 0.84829582,
-         0.88077952, 0.88296344],
+       [[0.86874971, 0.86862147, 0.88700004, ..., 0.83066427,
+         0.89123803, 0.81294615],
+        [0.83794269, 0.84501342, 0.84588984, ..., 0.85519765,
+         0.82942602, 0.89290975],
+        [0.88353793, 0.80283722, 0.89150642, ..., 0.89472744,
+         0.85113655, 0.89602644],
         ...,
-        [0.88400209, 0.8900517 , 0.8906894 , ..., 0.80125966,
-         0.81803066, 0.84997944],
-        [0.8532916 , 0.87529135, 0.86952501, ..., 0.82660852,
-         0.87053004, 0.81240889],
-        [0.80999176, 0.8475928 , 0.80206109, ..., 0.83636376,
-         0.83200444, 0.86514518]]])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-ac0def2c-d91e-4c9b-8beb-dff3c99bd476' class='xr-section-summary-in' type='checkbox'  checked><label for='section-ac0def2c-d91e-4c9b-8beb-dff3c99bd476' class='xr-section-summary' >Attributes: <span>(1)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>description :</span></dt><dd>coords with vectors</dd></dl></div></li></ul></div></div></div>
+        [0.83662881, 0.81632677, 0.85871203, ..., 0.84178573,
+         0.85499976, 0.85828381],
+        [0.83680594, 0.87839361, 0.82837704, ..., 0.83021933,
+         0.88830306, 0.85480463],
+        [0.86405894, 0.8627751 , 0.85884297, ..., 0.83912725,
+         0.83121534, 0.88921229]]])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-8cdcb312-f05a-40f0-8e18-6b1af66471bd' class='xr-section-summary-in' type='checkbox'  ><label for='section-8cdcb312-f05a-40f0-8e18-6b1af66471bd' class='xr-section-summary' >Indexes: <span>(3)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-index-name'><div>lon</div></div><div class='xr-index-preview'>PandasIndex</div><div></div><input id='index-4e161b2e-ee4b-45cb-95cc-957cbe6d2ca2' class='xr-index-data-in' type='checkbox'/><label for='index-4e161b2e-ee4b-45cb-95cc-957cbe6d2ca2' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([   -180.0, -177.1875,  -174.375, -171.5625,   -168.75, -165.9375,
+        -163.125, -160.3125,    -157.5, -154.6875,
+       ...
+         151.875,  154.6875,     157.5,  160.3125,   163.125,  165.9375,
+          168.75,  171.5625,   174.375,  177.1875],
+      dtype=&#x27;float64&#x27;, name=&#x27;lon&#x27;, length=128))</pre></div></li><li class='xr-var-item'><div class='xr-index-name'><div>lat</div></div><div class='xr-index-preview'>PandasIndex</div><div></div><input id='index-b9a2f516-232d-4870-984d-4abddcb67bec' class='xr-index-data-in' type='checkbox'/><label for='index-b9a2f516-232d-4870-984d-4abddcb67bec' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([   -90.0, -87.1875,  -84.375, -81.5625,   -78.75, -75.9375,  -73.125,
+       -70.3125,    -67.5, -64.6875,  -61.875, -59.0625,   -56.25, -53.4375,
+        -50.625, -47.8125,    -45.0, -42.1875,  -39.375, -36.5625,   -33.75,
+       -30.9375,  -28.125, -25.3125,    -22.5, -19.6875,  -16.875, -14.0625,
+         -11.25,  -8.4375,   -5.625,  -2.8125,      0.0,   2.8125,    5.625,
+         8.4375,    11.25,  14.0625,   16.875,  19.6875,     22.5,  25.3125,
+         28.125,  30.9375,    33.75,  36.5625,   39.375,  42.1875,     45.0,
+        47.8125,   50.625,  53.4375,    56.25,  59.0625,   61.875,  64.6875,
+           67.5,  70.3125,   73.125,  75.9375,    78.75,  81.5625,   84.375,
+        87.1875],
+      dtype=&#x27;float64&#x27;, name=&#x27;lat&#x27;))</pre></div></li><li class='xr-var-item'><div class='xr-index-name'><div>pressure</div></div><div class='xr-index-preview'>PandasIndex</div><div></div><input id='index-0fd477ff-ccca-4b92-9741-0bf54283a719' class='xr-index-data-in' type='checkbox'/><label for='index-0fd477ff-ccca-4b92-9741-0bf54283a719' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([     170.641,     120.5424,     85.15232,     60.15242,     42.49225,
+           30.01693,     21.20425,     14.97889,     10.58123,     7.474682,
+           5.280187,     3.729975,      2.63489,     1.861312,     1.314849,
+          0.9288217,    0.6561286,    0.4634955,    0.3274177,     0.231291,
+          0.1633862,    0.1154176,   0.08153209,   0.05759505,    0.0406857,
+         0.02874077,   0.02030276,   0.01434206,   0.01013137,  0.007156898,
+        0.005055701,  0.003571396,  0.002522868,  0.001782179,  0.001258948,
+        0.000889333, 0.0006282334, 0.0004437901, 0.0003134976, 0.0002214577,
+       0.0001564399, 0.0001105106, 7.806577e-05, 5.514641e-05, 3.895596e-05,
+       2.751886e-05, 1.943959e-05, 1.373231e-05, 9.700637e-06, 6.852624e-06,
+       4.840759e-06, 3.419559e-06, 2.415609e-06],
+      dtype=&#x27;float64&#x27;, name=&#x27;pressure&#x27;))</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-1c62f50a-662b-4103-875c-ce459116181a' class='xr-section-summary-in' type='checkbox'  checked><label for='section-1c62f50a-662b-4103-875c-ce459116181a' class='xr-section-summary' >Attributes: <span>(1)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>description :</span></dt><dd>coords with vectors</dd></dl></div></li></ul></div></div></div>
 </div>
 <p>Setup phase curve grid by defining the type of phase curve (thermal or reflected) as well as the phase angle grid.</p>
 <p>If you have not gone through the previous tutorials on xarray, post processing input, and computing 3D spectra, we highly recommend you look at that documentation.</p>
@@ -1061,7 +1095,7 @@ Attributes:
 </div>
 </section>
 <section id="Determining-the-zero_point-and-the-shift-parameter">
-<h3>Determining the <code class="docutils literal notranslate"><span class="pre">zero_point</span></code> and the <code class="docutils literal notranslate"><span class="pre">shift</span></code> parameter<a class="headerlink" href="#Determining-the-zero_point-and-the-shift-parameter" title="Permalink to this headline">¶</a></h3>
+<h3>Determining the <code class="docutils literal notranslate"><span class="pre">zero_point</span></code> and the <code class="docutils literal notranslate"><span class="pre">shift</span></code> parameter<a class="headerlink" href="#Determining-the-zero_point-and-the-shift-parameter" title="Link to this heading">¶</a></h3>
 <p>Starting assumptions: - User input lat=0, lon=0 is the substellar point and phase=0 is the nightside transit</p>
 <p>If you want to change the zero point use <code class="docutils literal notranslate"><span class="pre">zero_point</span></code>: - options for zero_point include: ‘night_transit’ (default) or ‘secondary_eclipse’</p>
 <p>For each orbital <code class="docutils literal notranslate"><span class="pre">phase</span></code>, <code class="docutils literal notranslate"><span class="pre">picaso</span></code> will rotate the longitude grid <code class="docutils literal notranslate"><span class="pre">phase_i</span></code>+<code class="docutils literal notranslate"><span class="pre">shift_i</span></code>. For example: - For tidally locked planets <code class="docutils literal notranslate"><span class="pre">shift</span></code>=np.zeros(len(phases)). Meaning, the sub-stellar point never changes. - For non-tidally locked planets <code class="docutils literal notranslate"><span class="pre">shift</span></code> will depend on the eccentricity and orbital period of the planet</p>
@@ -1081,9 +1115,9 @@ Attributes:
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/home/nbatalh1/anaconda3/envs/picaso38/lib/python3.8/site-packages/xesmf/smm.py:130: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+/home/nbatalh1/anaconda3/envs/pic311/lib/python3.11/site-packages/xesmf/smm.py:131: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
   warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
-/home/nbatalh1/anaconda3/envs/picaso38/lib/python3.8/site-packages/xesmf/smm.py:130: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+/home/nbatalh1/anaconda3/envs/pic311/lib/python3.11/site-packages/xesmf/smm.py:131: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
   warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
 </pre></div></div>
 </div>
@@ -1091,7 +1125,7 @@ Attributes:
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/notebooks_9e_PhaseCurves_12_1.png" src="../_images/notebooks_9e_PhaseCurves_12_1.png" />
+<img alt="../_images/notebooks_9e_PhaseCurves_11_1.png" src="../_images/notebooks_9e_PhaseCurves_11_1.png" />
 </div>
 </div>
 <div class="nbinput docutils container">
@@ -1138,6 +1172,7 @@ Attributes:
 }
 
 html[theme=dark],
+body[data-theme=dark],
 body.vscode-dark {
   --xr-font-color0: rgba(255, 255, 255, 1);
   --xr-font-color2: rgba(255, 255, 255, 0.54);
@@ -1150,7 +1185,7 @@ body.vscode-dark {
 }
 
 .xr-wrap {
-  display: block;
+  display: block !important;
   min-width: 300px;
   max-width: 700px;
 }
@@ -1367,6 +1402,11 @@ body.vscode-dark {
   grid-column: 4;
 }
 
+.xr-index-preview {
+  grid-column: 2 / 5;
+  color: var(--xr-font-color2);
+}
+
 .xr-var-name,
 .xr-var-dims,
 .xr-var-dtype,
@@ -1388,14 +1428,16 @@ body.vscode-dark {
 }
 
 .xr-var-attrs,
-.xr-var-data {
+.xr-var-data,
+.xr-index-data {
   display: none;
   background-color: var(--xr-background-color) !important;
   padding-bottom: 5px !important;
 }
 
 .xr-var-attrs-in:checked ~ .xr-var-attrs,
-.xr-var-data-in:checked ~ .xr-var-data {
+.xr-var-data-in:checked ~ .xr-var-data,
+.xr-index-data-in:checked ~ .xr-index-data {
   display: block;
 }
 
@@ -1405,13 +1447,16 @@ body.vscode-dark {
 
 .xr-var-name span,
 .xr-var-data,
+.xr-index-name div,
+.xr-index-data,
 .xr-attrs {
   padding-left: 25px !important;
 }
 
 .xr-attrs,
 .xr-var-attrs,
-.xr-var-data {
+.xr-var-data,
+.xr-index-data {
   grid-column: 1 / -1;
 }
 
@@ -1449,7 +1494,8 @@ dl.xr-attrs {
 }
 
 .xr-icon-database,
-.xr-icon-file-text2 {
+.xr-icon-file-text2,
+.xr-no-icon {
   display: inline-block;
   vertical-align: middle;
   width: 1em;
@@ -1458,20 +1504,20 @@ dl.xr-attrs {
   stroke: currentColor;
   fill: currentColor;
 }
-</style><pre class='xr-text-repr-fallback'>&lt;xarray.Dataset&gt;
+</style><pre class='xr-text-repr-fallback'>&lt;xarray.Dataset&gt; Size: 184kB
 Dimensions:      (phase: 4, pressure: 53, lat: 6, lon: 6)
 Coordinates:
-  * pressure     (pressure) float64 170.6 120.5 85.15 ... 3.42e-06 2.416e-06
-  * lon          (lon) float64 -68.82 -41.39 -13.81 13.81 41.39 68.82
-  * lat          (lat) float64 64.29 38.57 12.86 -12.86 -38.57 -64.29
-  * phase        (phase) float64 0.0 2.094 4.189 6.283
+  * pressure     (pressure) float64 424B 170.6 120.5 ... 3.42e-06 2.416e-06
+  * lon          (lon) float64 48B -68.82 -41.39 -13.81 13.81 41.39 68.82
+  * lat          (lat) float64 48B 64.29 38.57 12.86 -12.86 -38.57 -64.29
+  * phase        (phase) float64 32B 0.0 2.094 4.189 6.283
 Data variables:
-    temperature  (phase, pressure, lat, lon) float64 1.898e+03 ... 550.3
-    H2O          (phase, pressure, lat, lon) float64 0.1545 0.1299 ... 0.163
-    H2           (phase, pressure, lat, lon) float64 0.8455 0.8701 ... 0.837
+    temperature  (phase, pressure, lat, lon) float64 61kB 1.898e+03 ... 550.3
+    H2O          (phase, pressure, lat, lon) float64 61kB 0.131 ... 0.1425
+    H2           (phase, pressure, lat, lon) float64 61kB 0.869 ... 0.8575
 Attributes:
     description:    coords with vectors
-    regrid_method:  bilinear</pre><div class='xr-wrap' hidden><div class='xr-header'><div class='xr-obj-type'>xarray.Dataset</div></div><ul class='xr-sections'><li class='xr-section-item'><input id='section-a0422506-807f-4b85-aab6-ebe1184ae2bf' class='xr-section-summary-in' type='checkbox' disabled ><label for='section-a0422506-807f-4b85-aab6-ebe1184ae2bf' class='xr-section-summary'  title='Expand/collapse section'>Dimensions:</label><div class='xr-section-inline-details'><ul class='xr-dim-list'><li><span class='xr-has-index'>phase</span>: 4</li><li><span class='xr-has-index'>pressure</span>: 53</li><li><span class='xr-has-index'>lat</span>: 6</li><li><span class='xr-has-index'>lon</span>: 6</li></ul></div><div class='xr-section-details'></div></li><li class='xr-section-item'><input id='section-8cad7a70-422e-4ca2-a5df-0141d9018a73' class='xr-section-summary-in' type='checkbox'  checked><label for='section-8cad7a70-422e-4ca2-a5df-0141d9018a73' class='xr-section-summary' >Coordinates: <span>(4)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>pressure</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>170.6 120.5 ... 3.42e-06 2.416e-06</div><input id='attrs-0660c05e-66a1-45a1-996e-49291f9f77e8' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-0660c05e-66a1-45a1-996e-49291f9f77e8' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-10f7d607-12d4-4442-81d5-509583850058' class='xr-var-data-in' type='checkbox'><label for='data-10f7d607-12d4-4442-81d5-509583850058' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>bar</dd></dl></div><div class='xr-var-data'><pre>array([1.706410e+02, 1.205424e+02, 8.515232e+01, 6.015242e+01, 4.249225e+01,
+    regrid_method:  bilinear</pre><div class='xr-wrap' style='display:none'><div class='xr-header'><div class='xr-obj-type'>xarray.Dataset</div></div><ul class='xr-sections'><li class='xr-section-item'><input id='section-cd22aada-067e-4464-b255-0247e3985323' class='xr-section-summary-in' type='checkbox' disabled ><label for='section-cd22aada-067e-4464-b255-0247e3985323' class='xr-section-summary'  title='Expand/collapse section'>Dimensions:</label><div class='xr-section-inline-details'><ul class='xr-dim-list'><li><span class='xr-has-index'>phase</span>: 4</li><li><span class='xr-has-index'>pressure</span>: 53</li><li><span class='xr-has-index'>lat</span>: 6</li><li><span class='xr-has-index'>lon</span>: 6</li></ul></div><div class='xr-section-details'></div></li><li class='xr-section-item'><input id='section-c45e9eec-dd2f-4545-a2ec-426f497099a2' class='xr-section-summary-in' type='checkbox'  checked><label for='section-c45e9eec-dd2f-4545-a2ec-426f497099a2' class='xr-section-summary' >Coordinates: <span>(4)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>pressure</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>170.6 120.5 ... 3.42e-06 2.416e-06</div><input id='attrs-a8ba0b42-fe89-45ab-b6d6-73cac8d08c9b' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-a8ba0b42-fe89-45ab-b6d6-73cac8d08c9b' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-fc229049-33f5-442a-ae95-93d599c91765' class='xr-var-data-in' type='checkbox'><label for='data-fc229049-33f5-442a-ae95-93d599c91765' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>bar</dd></dl></div><div class='xr-var-data'><pre>array([1.706410e+02, 1.205424e+02, 8.515232e+01, 6.015242e+01, 4.249225e+01,
        3.001693e+01, 2.120425e+01, 1.497889e+01, 1.058123e+01, 7.474682e+00,
        5.280187e+00, 3.729975e+00, 2.634890e+00, 1.861312e+00, 1.314849e+00,
        9.288217e-01, 6.561286e-01, 4.634955e-01, 3.274177e-01, 2.312910e-01,
@@ -1481,7 +1527,7 @@ Attributes:
        8.893330e-04, 6.282334e-04, 4.437901e-04, 3.134976e-04, 2.214577e-04,
        1.564399e-04, 1.105106e-04, 7.806577e-05, 5.514641e-05, 3.895596e-05,
        2.751886e-05, 1.943959e-05, 1.373231e-05, 9.700637e-06, 6.852624e-06,
-       4.840759e-06, 3.419559e-06, 2.415609e-06])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>lon</span></div><div class='xr-var-dims'>(lon)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-68.82 -41.39 ... 41.39 68.82</div><input id='attrs-e041297a-30f8-46ed-aa69-d2bdd69fd1ce' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-e041297a-30f8-46ed-aa69-d2bdd69fd1ce' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-08c61610-0cf2-42f0-b4c0-54c6abb12dfb' class='xr-var-data-in' type='checkbox'><label for='data-08c61610-0cf2-42f0-b4c0-54c6abb12dfb' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([-68.823099, -41.392173, -13.805058,  13.805058,  41.392173,  68.823099])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>lat</span></div><div class='xr-var-dims'>(lat)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>64.29 38.57 12.86 ... -38.57 -64.29</div><input id='attrs-3b7e668a-141c-47f8-9f15-8b38931efe2a' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-3b7e668a-141c-47f8-9f15-8b38931efe2a' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-8fb1b38e-437d-440b-ad17-504a343fad7b' class='xr-var-data-in' type='checkbox'><label for='data-8fb1b38e-437d-440b-ad17-504a343fad7b' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([ 64.285714,  38.571429,  12.857143, -12.857143, -38.571429, -64.285714])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>phase</span></div><div class='xr-var-dims'>(phase)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.0 2.094 4.189 6.283</div><input id='attrs-c1754359-770f-4efd-971f-dec030bc72bf' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-c1754359-770f-4efd-971f-dec030bc72bf' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-de576f2a-a9df-4443-a2da-eb34ac0dbf9b' class='xr-var-data-in' type='checkbox'><label for='data-de576f2a-a9df-4443-a2da-eb34ac0dbf9b' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([0.      , 2.094395, 4.18879 , 6.283185])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-7414cc99-1fc5-4e69-a993-66f3ca60b314' class='xr-section-summary-in' type='checkbox'  checked><label for='section-7414cc99-1fc5-4e69-a993-66f3ca60b314' class='xr-section-summary' >Data variables: <span>(3)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span>temperature</span></div><div class='xr-var-dims'>(phase, pressure, lat, lon)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>1.898e+03 1.898e+03 ... 455.9 550.3</div><input id='attrs-8f040fd9-12af-4e5e-8332-2f9274b5d24e' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-8f040fd9-12af-4e5e-8332-2f9274b5d24e' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-fffe7ef9-46d5-4443-8de2-1adf4c6f5fbe' class='xr-var-data-in' type='checkbox'><label for='data-fffe7ef9-46d5-4443-8de2-1adf4c6f5fbe' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([[[[1898.37281086, 1898.20139867, 1897.82842597, 1897.56273974,
+       4.840759e-06, 3.419559e-06, 2.415609e-06])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>lon</span></div><div class='xr-var-dims'>(lon)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-68.82 -41.39 ... 41.39 68.82</div><input id='attrs-a36d319a-0921-4ba5-9b16-61e8c06a4c12' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-a36d319a-0921-4ba5-9b16-61e8c06a4c12' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-59d04091-6158-4d07-b8ce-be767e05306e' class='xr-var-data-in' type='checkbox'><label for='data-59d04091-6158-4d07-b8ce-be767e05306e' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([-68.823099, -41.392173, -13.805058,  13.805058,  41.392173,  68.823099])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>lat</span></div><div class='xr-var-dims'>(lat)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>64.29 38.57 12.86 ... -38.57 -64.29</div><input id='attrs-f14ac79a-c04f-487d-ad28-de1a6364ddaa' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-f14ac79a-c04f-487d-ad28-de1a6364ddaa' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-f64ac581-9038-44eb-aaf3-7ef14ac4c777' class='xr-var-data-in' type='checkbox'><label for='data-f64ac581-9038-44eb-aaf3-7ef14ac4c777' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([ 64.285714,  38.571429,  12.857143, -12.857143, -38.571429, -64.285714])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>phase</span></div><div class='xr-var-dims'>(phase)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.0 2.094 4.189 6.283</div><input id='attrs-95c67b35-0a29-4d37-8035-8b57d12da96f' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-95c67b35-0a29-4d37-8035-8b57d12da96f' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-7558d327-d4dd-4d50-beed-984a50c6c45a' class='xr-var-data-in' type='checkbox'><label for='data-7558d327-d4dd-4d50-beed-984a50c6c45a' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([0.      , 2.094395, 4.18879 , 6.283185])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-76b10ed1-8a01-420d-bf94-544a67e802f7' class='xr-section-summary-in' type='checkbox'  checked><label for='section-76b10ed1-8a01-420d-bf94-544a67e802f7' class='xr-section-summary' >Data variables: <span>(3)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span>temperature</span></div><div class='xr-var-dims'>(phase, pressure, lat, lon)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>1.898e+03 1.898e+03 ... 455.9 550.3</div><input id='attrs-3acc37f7-8cb3-4cb4-99c7-4df18950d073' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-3acc37f7-8cb3-4cb4-99c7-4df18950d073' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-4fef90df-d538-442e-a948-b2766f80f9b8' class='xr-var-data-in' type='checkbox'><label for='data-4fef90df-d538-442e-a948-b2766f80f9b8' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([[[[1898.37281086, 1898.20139867, 1897.82842597, 1897.56273974,
           1897.65690172, 1898.10613804],
          [1895.960136  , 1896.25500685, 1896.2872431 , 1896.25338289,
           1895.9575547 , 1895.51101204],
@@ -1521,87 +1567,102 @@ Attributes:
          [ 660.36730448,  656.71512268,  608.85741255,  540.52558143,
            516.30464759,  497.87125508],
          [ 686.92417938,  646.54989409,  627.58374031,  595.23863091,
-           455.87075479,  550.32362074]]]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>H2O</span></div><div class='xr-var-dims'>(phase, pressure, lat, lon)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.1545 0.1299 ... 0.1406 0.163</div><input id='attrs-1056ba04-0f30-4b74-9e58-08499f1e669a' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-1056ba04-0f30-4b74-9e58-08499f1e669a' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-9df1c131-4195-4e2b-880a-193c38c9e687' class='xr-var-data-in' type='checkbox'><label for='data-9df1c131-4195-4e2b-880a-193c38c9e687' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>v/v</dd></dl></div><div class='xr-var-data'><pre>array([[[[0.15445583, 0.12991123, 0.14782209, 0.16621724, 0.1395545 ,
-          0.14302585],
-         [0.14594466, 0.13193708, 0.15194252, 0.16568469, 0.13660318,
-          0.14708409],
-         [0.1493152 , 0.13615208, 0.15038528, 0.16253166, 0.15555301,
-          0.15354742],
-         [0.16025963, 0.13730208, 0.1097493 , 0.16576065, 0.17725115,
-          0.14794673],
-         [0.14671748, 0.1541701 , 0.15434609, 0.18638151, 0.13623844,
-          0.1690444 ],
-         [0.13324022, 0.13771286, 0.15234874, 0.1514511 , 0.14923572,
-          0.14312407]],
+           455.87075479,  550.32362074]]]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>H2O</span></div><div class='xr-var-dims'>(phase, pressure, lat, lon)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.131 0.1201 ... 0.1121 0.1425</div><input id='attrs-27836a57-06ab-41bc-ac73-fa4ccb0beb84' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-27836a57-06ab-41bc-ac73-fa4ccb0beb84' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-22e42b66-4ca6-435f-bed8-167d0cd0b0ae' class='xr-var-data-in' type='checkbox'><label for='data-22e42b66-4ca6-435f-bed8-167d0cd0b0ae' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>v/v</dd></dl></div><div class='xr-var-data'><pre>array([[[[0.13097188, 0.12014628, 0.12861546, 0.18394806, 0.13845315,
+          0.10952226],
+         [0.15911291, 0.14155071, 0.15521662, 0.17355726, 0.18795445,
+          0.16328029],
+         [0.1449437 , 0.15925996, 0.15614118, 0.14923026, 0.14968708,
+          0.16158116],
+         [0.13315174, 0.12623899, 0.13645619, 0.16926124, 0.12943809,
+          0.13085347],
+         [0.15374376, 0.12574562, 0.1548493 , 0.13736609, 0.14646013,
+          0.14393538],
+         [0.12971873, 0.1617609 , 0.11565802, 0.18333944, 0.16756606,
+          0.14903678]],
 
-        [[0.14691295, 0.1457631 , 0.16769386, 0.17240661, 0.16170981,
-          0.13784105],
-         [0.1423578 , 0.1705172 , 0.13252203, 0.15109787, 0.17542623,
-          0.16276409],
-         [0.13666818, 0.15160348, 0.13554142, 0.14531374, 0.13371732,
-          0.14043825],
-         [0.18251753, 0.13180732, 0.1479562 , 0.15795377, 0.16414469,
+        [[0.14097606, 0.12791749, 0.15266039, 0.17868603, 0.1631163 ,
+          0.15863616],
+         [0.15360172, 0.1696528 , 0.17176238, 0.17221383, 0.13529115,
+          0.15733937],
+         [0.17223816, 0.16081524, 0.15918906, 0.16816438, 0.15890597,
+          0.14890078],
+         [0.13858212, 0.14955713, 0.11981574, 0.15294161, 0.1099201 ,
 ...
-          0.15577964],
-         [0.16323416, 0.15301696, 0.17561142, 0.16766178, 0.14884058,
-          0.15710979],
-         [0.15958059, 0.14466678, 0.16117468, 0.15456309, 0.11752289,
-          0.1522675 ],
-         [0.12535469, 0.13837008, 0.1502706 , 0.1680924 , 0.14973898,
-          0.16751758]],
+          0.1641931 ],
+         [0.11166851, 0.17216683, 0.13160866, 0.16639844, 0.13751539,
+          0.16769028],
+         [0.1360912 , 0.17033192, 0.17453184, 0.15061485, 0.18586298,
+          0.16754301],
+         [0.1743138 , 0.13024123, 0.16189892, 0.15999981, 0.133213  ,
+          0.13342665]],
 
-        [[0.12612891, 0.16461614, 0.13605696, 0.16733766, 0.13699817,
-          0.1411155 ],
-         [0.18145026, 0.17429503, 0.13399999, 0.19087389, 0.16386219,
-          0.13879477],
-         [0.15293677, 0.12917967, 0.13462652, 0.1485177 , 0.17555149,
-          0.15805686],
-         [0.14940803, 0.15407484, 0.13353988, 0.13028673, 0.15080778,
-          0.15420313],
-         [0.13035197, 0.14460562, 0.15145727, 0.18362921, 0.14475543,
-          0.16485052],
-         [0.14667296, 0.17412534, 0.12613673, 0.10896536, 0.1405966 ,
-          0.16296605]]]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>H2</span></div><div class='xr-var-dims'>(phase, pressure, lat, lon)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.8455 0.8701 ... 0.8594 0.837</div><input id='attrs-9459fc0b-8958-485e-bae0-d2ef95bf2961' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-9459fc0b-8958-485e-bae0-d2ef95bf2961' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-e2cc2de5-a256-414d-98c2-9a331b59f9d4' class='xr-var-data-in' type='checkbox'><label for='data-e2cc2de5-a256-414d-98c2-9a331b59f9d4' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>v/v</dd></dl></div><div class='xr-var-data'><pre>array([[[[0.84554417, 0.87008877, 0.85217791, 0.83378276, 0.8604455 ,
-          0.85697415],
-         [0.85405534, 0.86806292, 0.84805748, 0.83431531, 0.86339682,
-          0.85291591],
-         [0.8506848 , 0.86384792, 0.84961472, 0.83746834, 0.84444699,
-          0.84645258],
-         [0.83974037, 0.86269792, 0.8902507 , 0.83423935, 0.82274885,
-          0.85205327],
-         [0.85328252, 0.8458299 , 0.84565391, 0.81361849, 0.86376156,
-          0.8309556 ],
-         [0.86675978, 0.86228714, 0.84765126, 0.8485489 , 0.85076428,
-          0.85687593]],
+        [[0.13997703, 0.16926871, 0.17341798, 0.17519912, 0.16927149,
+          0.16496198],
+         [0.1503425 , 0.16118687, 0.15474895, 0.14528741, 0.13376895,
+          0.1711847 ],
+         [0.15210692, 0.16732699, 0.11481626, 0.13170642, 0.1708397 ,
+          0.15418235],
+         [0.13889934, 0.13892256, 0.16270057, 0.17665443, 0.11973703,
+          0.1537131 ],
+         [0.1823792 , 0.17847239, 0.14005366, 0.15316865, 0.14019662,
+          0.14175332],
+         [0.13121486, 0.13690401, 0.15301801, 0.12384294, 0.11212074,
+          0.14250959]]]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>H2</span></div><div class='xr-var-dims'>(phase, pressure, lat, lon)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.869 0.8799 ... 0.8879 0.8575</div><input id='attrs-4be6f3f0-0f01-43f4-a94f-0a2d501e8d15' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-4be6f3f0-0f01-43f4-a94f-0a2d501e8d15' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-116f3429-c8b6-4ee5-82f2-469d4b0b4a28' class='xr-var-data-in' type='checkbox'><label for='data-116f3429-c8b6-4ee5-82f2-469d4b0b4a28' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>v/v</dd></dl></div><div class='xr-var-data'><pre>array([[[[0.86902812, 0.87985372, 0.87138454, 0.81605194, 0.86154685,
+          0.89047774],
+         [0.84088709, 0.85844929, 0.84478338, 0.82644274, 0.81204555,
+          0.83671971],
+         [0.8550563 , 0.84074004, 0.84385882, 0.85076974, 0.85031292,
+          0.83841884],
+         [0.86684826, 0.87376101, 0.86354381, 0.83073876, 0.87056191,
+          0.86914653],
+         [0.84625624, 0.87425438, 0.8451507 , 0.86263391, 0.85353987,
+          0.85606462],
+         [0.87028127, 0.8382391 , 0.88434198, 0.81666056, 0.83243394,
+          0.85096322]],
 
-        [[0.85308705, 0.8542369 , 0.83230614, 0.82759339, 0.83829019,
-          0.86215895],
-         [0.8576422 , 0.8294828 , 0.86747797, 0.84890213, 0.82457377,
-          0.83723591],
-         [0.86333182, 0.84839652, 0.86445858, 0.85468626, 0.86628268,
-          0.85956175],
-         [0.81748247, 0.86819268, 0.8520438 , 0.84204623, 0.83585531,
+        [[0.85902394, 0.87208251, 0.84733961, 0.82131397, 0.8368837 ,
+          0.84136384],
+         [0.84639828, 0.8303472 , 0.82823762, 0.82778617, 0.86470885,
+          0.84266063],
+         [0.82776184, 0.83918476, 0.84081094, 0.83183562, 0.84109403,
+          0.85109922],
+         [0.86141788, 0.85044287, 0.88018426, 0.84705839, 0.8900799 ,
 ...
-          0.84422036],
-         [0.83676584, 0.84698304, 0.82438858, 0.83233822, 0.85115942,
-          0.84289021],
-         [0.84041941, 0.85533322, 0.83882532, 0.84543691, 0.88247711,
-          0.8477325 ],
-         [0.87464531, 0.86162992, 0.8497294 , 0.8319076 , 0.85026102,
-          0.83248242]],
+          0.8358069 ],
+         [0.88833149, 0.82783317, 0.86839134, 0.83360156, 0.86248461,
+          0.83230972],
+         [0.8639088 , 0.82966808, 0.82546816, 0.84938515, 0.81413702,
+          0.83245699],
+         [0.8256862 , 0.86975877, 0.83810108, 0.84000019, 0.866787  ,
+          0.86657335]],
 
-        [[0.87387109, 0.83538386, 0.86394304, 0.83266234, 0.86300183,
-          0.8588845 ],
-         [0.81854974, 0.82570497, 0.86600001, 0.80912611, 0.83613781,
-          0.86120523],
-         [0.84706323, 0.87082033, 0.86537348, 0.8514823 , 0.82444851,
-          0.84194314],
-         [0.85059197, 0.84592516, 0.86646012, 0.86971327, 0.84919222,
-          0.84579687],
-         [0.86964803, 0.85539438, 0.84854273, 0.81637079, 0.85524457,
-          0.83514948],
-         [0.85332704, 0.82587466, 0.87386327, 0.89103464, 0.8594034 ,
-          0.83703395]]]])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-3d4b9a40-7552-4bf5-9916-cbb820470b5c' class='xr-section-summary-in' type='checkbox'  checked><label for='section-3d4b9a40-7552-4bf5-9916-cbb820470b5c' class='xr-section-summary' >Attributes: <span>(2)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>description :</span></dt><dd>coords with vectors</dd><dt><span>regrid_method :</span></dt><dd>bilinear</dd></dl></div></li></ul></div></div></div>
+        [[0.86002297, 0.83073129, 0.82658202, 0.82480088, 0.83072851,
+          0.83503802],
+         [0.8496575 , 0.83881313, 0.84525105, 0.85471259, 0.86623105,
+          0.8288153 ],
+         [0.84789308, 0.83267301, 0.88518374, 0.86829358, 0.8291603 ,
+          0.84581765],
+         [0.86110066, 0.86107744, 0.83729943, 0.82334557, 0.88026297,
+          0.8462869 ],
+         [0.8176208 , 0.82152761, 0.85994634, 0.84683135, 0.85980338,
+          0.85824668],
+         [0.86878514, 0.86309599, 0.84698199, 0.87615706, 0.88787926,
+          0.85749041]]]])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-aae9d8ec-4f0a-4b4a-8659-cdfff78bc78f' class='xr-section-summary-in' type='checkbox'  ><label for='section-aae9d8ec-4f0a-4b4a-8659-cdfff78bc78f' class='xr-section-summary' >Indexes: <span>(4)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-index-name'><div>pressure</div></div><div class='xr-index-preview'>PandasIndex</div><div></div><input id='index-2a7c025e-a007-4cf3-ac09-8cd974209ffa' class='xr-index-data-in' type='checkbox'/><label for='index-2a7c025e-a007-4cf3-ac09-8cd974209ffa' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([     170.641,     120.5424,     85.15232,     60.15242,     42.49225,
+           30.01693,     21.20425,     14.97889,     10.58123,     7.474682,
+           5.280187,     3.729975,      2.63489,     1.861312,     1.314849,
+          0.9288217,    0.6561286,    0.4634955,    0.3274177,     0.231291,
+          0.1633862,    0.1154176,   0.08153209,   0.05759505,    0.0406857,
+         0.02874077,   0.02030276,   0.01434206,   0.01013137,  0.007156898,
+        0.005055701,  0.003571396,  0.002522868,  0.001782179,  0.001258948,
+        0.000889333, 0.0006282334, 0.0004437901, 0.0003134976, 0.0002214577,
+       0.0001564399, 0.0001105106, 7.806577e-05, 5.514641e-05, 3.895596e-05,
+       2.751886e-05, 1.943959e-05, 1.373231e-05, 9.700637e-06, 6.852624e-06,
+       4.840759e-06, 3.419559e-06, 2.415609e-06],
+      dtype=&#x27;float64&#x27;, name=&#x27;pressure&#x27;))</pre></div></li><li class='xr-var-item'><div class='xr-index-name'><div>lon</div></div><div class='xr-index-preview'>PandasIndex</div><div></div><input id='index-96a68f9f-50e5-467b-89ec-13c6c6b2a73b' class='xr-index-data-in' type='checkbox'/><label for='index-96a68f9f-50e5-467b-89ec-13c6c6b2a73b' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([ -68.82309876360053,  -41.39217282251545, -13.805057935714313,
+        13.805057935714313,   41.39217282251545,   68.82309876360053],
+      dtype=&#x27;float64&#x27;, name=&#x27;lon&#x27;))</pre></div></li><li class='xr-var-item'><div class='xr-index-name'><div>lat</div></div><div class='xr-index-preview'>PandasIndex</div><div></div><input id='index-58336f88-41f2-43a4-8d94-834710ed3329' class='xr-index-data-in' type='checkbox'/><label for='index-58336f88-41f2-43a4-8d94-834710ed3329' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([  64.28571428571428,   38.57142857142858,  12.857142857142858,
+       -12.857142857142858,  -38.57142857142858,  -64.28571428571428],
+      dtype=&#x27;float64&#x27;, name=&#x27;lat&#x27;))</pre></div></li><li class='xr-var-item'><div class='xr-index-name'><div>phase</div></div><div class='xr-index-preview'>PandasIndex</div><div></div><input id='index-4d54d638-cfd9-4711-9123-f51e21311b71' class='xr-index-data-in' type='checkbox'/><label for='index-4d54d638-cfd9-4711-9123-f51e21311b71' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([0.0, 2.0943951023931953, 4.1887902047863905, 6.283185307179586], dtype=&#x27;float64&#x27;, name=&#x27;phase&#x27;))</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-0183b4bb-939e-45e7-88b9-dc34982cbfa9' class='xr-section-summary-in' type='checkbox'  checked><label for='section-0183b4bb-939e-45e7-88b9-dc34982cbfa9' class='xr-section-summary' >Attributes: <span>(2)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>description :</span></dt><dd>coords with vectors</dd><dt><span>regrid_method :</span></dt><dd>bilinear</dd></dl></div></li></ul></div></div></div>
 </div>
 <p>Easy plotting different phases with <code class="docutils literal notranslate"><span class="pre">xarray</span></code> functionality (remember our H2O selection was random, so the plot will not be to enlightening)</p>
 <div class="nbinput docutils container">
@@ -1620,14 +1681,14 @@ Attributes:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;xarray.plot.facetgrid.FacetGrid at 0x7f4c2bb71430&gt;
+&lt;xarray.plot.facetgrid.FacetGrid at 0x7fe55044ecd0&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/notebooks_9e_PhaseCurves_15_1.png" src="../_images/notebooks_9e_PhaseCurves_15_1.png" />
+<img alt="../_images/notebooks_9e_PhaseCurves_14_1.png" src="../_images/notebooks_9e_PhaseCurves_14_1.png" />
 </div>
 </div>
 <p>Set gravity and stellar parameters as usual</p>
@@ -1654,7 +1715,7 @@ Attributes:
 </section>
 </section>
 <section id="Analyze-Phase-Curves">
-<h2>Analyze Phase Curves<a class="headerlink" href="#Analyze-Phase-Curves" title="Permalink to this headline">¶</a></h2>
+<h2>Analyze Phase Curves<a class="headerlink" href="#Analyze-Phase-Curves" title="Link to this heading">¶</a></h2>
 <p>All original plotting tools still work by selecting an individual phase</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
@@ -1677,7 +1738,7 @@ Attributes:
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area rendered_html docutils container">
-<div id="911b9883-0c63-4204-ab1a-1eeb1e8e2ff8" data-root-id="p1002" style="display: contents;"></div></div>
+<div id="4a526d64-9138-4262-ba59-b8bdae8ccefa" data-root-id="p1002" style="display: contents;"></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
@@ -1688,8 +1749,8 @@ Attributes:
 var element = document.currentScript.previousSibling.previousSibling;
 (function(root) {
   function embed_document(root) {
-  const docs_json = {"cf7420d9-c3cd-4e30-afaf-2674dc6b434a":{"version":"3.0.2","title":"Bokeh Application","defs":[],"roots":[{"type":"object","name":"Figure","id":"p1002","attributes":{"width":500,"height":345,"x_range":{"type":"object","name":"DataRange1d","id":"p1003"},"y_range":{"type":"object","name":"DataRange1d","id":"p1004"},"x_scale":{"type":"object","name":"LinearScale","id":"p1015"},"y_scale":{"type":"object","name":"LinearScale","id":"p1017"},"title":{"type":"object","name":"Title","id":"p1007"},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1054","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1048","attributes":{"selected":{"type":"object","name":"Selection","id":"p1049","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1050"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"xTOxu7NR+z/4IwvuHAz7Px51ZWM3x/o/8N43WAGD+j8oRXgNeT/6P75Fj8ic/Pk/QORM02q6+T8OUt174Xj5PyfTvRT/N/k/N7+x9MH3+D++nrd2KLj4P9hj/vkwefg/jr7a4dk6+D9CjLyVIf33PxtiJIEGwPc/ATKZE4eD9z8GCp7AoUf3P+ftp/9UDPc/bMoTTJ/R9j9aghwlf5f2P8wU0Q3zXfY/jdwKjfkk9j9e6GMtkez1P8hrLX24tPU/UkhmDm599T/ErrF2sEb1P1XYTU9+EPU/c9cKNdba9D/5f0HItqX0P4BmyqwecfQ/rPb0iQw99D8ooH4Kfwn0Pxoaitx01vM/3ryWseyj8z/B8Xc+5XHzP5O4TDtdQPM/1kJ3Y1MP8z8+pJR1xt7yP2uYdDO1rvI/lV0RYh5/8j/6o4fJAFDyP8qRDjVbIfI/e9vvcizz8T848H9Uc8XxPz46Fq4umPE/+nIFV11r8T+rCpQp/j7xP2Wj9AIQE/E/OZ8+w5Hn8D9NwWZNgrzwP8PhN4fgkfA/N7RLWatn8D+XoAOv4T3wP0eugXaCFPA/"},"shape":[54],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"kv+Ep6QJOUCv6RP54co9QLYcREscLDxAXPk8R7X8OED9sbMxUEk5QA+svoPQ3jRAxLsu3G/sMkDO1KENJQ8sQKS3o8oweCdAXs9Zc9dHIUDgdNGG5nQcQJBhRoRiCRZAtJZJikRSE0CceUAvTqIRQHlWeBOEmApAYgj7eqD0BEAGYKmwgg8DQBr8V059gPw/TmnjNTKG+T8BH384yXcAQGqD/CE1Jvo/zISSP4vo/T97XNsKaW72P2NewOujKP0/lXLhCmwL/z98kRqJMCsSQHr6QWEmVB9A/g1YVuVBJEBk370JqkMlQLQgEmUaEyNA9tLf0NIKIkAYQT6ZhlIfQAJfFGSUohpAuqsLIqe7E0BBIHq9O8kQQICo4ZNrVwhAUV8zb1/4BECEO5WL6mgAQM39Fzhhxf4/gNMKHcjo+D/94+Q6UIP7P8CDEIKoW/Q/XX+WrWLw9j87JGSkNRP9P3oWYv+MjAFAMZZ5RpOCEUC7jyKJ+lAgQPMDDdoHNh9AYtFfwU3OGEAA2LDZZEUTQANSr5hr1hFALXf21EXIBkCd8Tep/P4CQIV1EM8yVPc/"},"shape":[54],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1055","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1056"}}},"glyph":{"type":"object","name":"Line","id":"p1051","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#440154","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1052","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#440154","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1053","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#440154","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1063","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1057","attributes":{"selected":{"type":"object","name":"Selection","id":"p1058","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1059"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"xTOxu7NR+z/4IwvuHAz7Px51ZWM3x/o/8N43WAGD+j8oRXgNeT/6P75Fj8ic/Pk/QORM02q6+T8OUt174Xj5PyfTvRT/N/k/N7+x9MH3+D++nrd2KLj4P9hj/vkwefg/jr7a4dk6+D9CjLyVIf33PxtiJIEGwPc/ATKZE4eD9z8GCp7AoUf3P+ftp/9UDPc/bMoTTJ/R9j9aghwlf5f2P8wU0Q3zXfY/jdwKjfkk9j9e6GMtkez1P8hrLX24tPU/UkhmDm599T/ErrF2sEb1P1XYTU9+EPU/c9cKNdba9D/5f0HItqX0P4BmyqwecfQ/rPb0iQw99D8ooH4Kfwn0Pxoaitx01vM/3ryWseyj8z/B8Xc+5XHzP5O4TDtdQPM/1kJ3Y1MP8z8+pJR1xt7yP2uYdDO1rvI/lV0RYh5/8j/6o4fJAFDyP8qRDjVbIfI/e9vvcizz8T848H9Uc8XxPz46Fq4umPE/+nIFV11r8T+rCpQp/j7xP2Wj9AIQE/E/OZ8+w5Hn8D9NwWZNgrzwP8PhN4fgkfA/N7RLWatn8D+XoAOv4T3wP0eugXaCFPA/"},"shape":[54],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"EidYDperQkB2xztpp6NEQFWKwwv3eUNAodM07jFtQUDXRGpK+z5BQPZplbt1QD1AQ72fNdK0OkANK0R+7+U0QEseTlgJJTJABFqwiyKOLECaZJFU16EoQFEmqVAhdiRAklkL3S16IkAQTetqC0ohQLWoicBAXRxATn2tpf8VGEBmjgzM6EUWQBuK0tvYRBJAI2L2tSQZEUC6/hh11ooTQI3VAJhBihBANNxVDXrZEUAhivv4k8cMQFQysqi0QRFAVDxlU8WMEUDc2/e0dAQgQMS9bE1HayhAmQd5JvGtLUC51a1B+NIuQIUBhKdAdCtAxNwY0kmfKUDr8q0eidAmQNDNIJ1E8yNAK078x5XTHkA+4++IjssaQGjj6xSk4xRA4IvSVzc2EkANWhfxOV4OQFfMmf5uggxAQ9zAhr1UCECmrOcqdtMJQOXR9jFLIAVAQXaXM0pzBkCJxMdlwu8KQEu9rwKT7w1AqGOKlORZGUCdSOgG1xIlQA8DbCyJKCRAKDyoZWVQIEDNPxxkwIsaQE4MYnikVxhA4XIZayarEEA0U53Ay8YMQFQOTnKHSgNA"},"shape":[54],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1064","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1065"}}},"glyph":{"type":"object","name":"Line","id":"p1060","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#30678D","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1061","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#30678D","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1062","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#30678D","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1072","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1066","attributes":{"selected":{"type":"object","name":"Selection","id":"p1067","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1068"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"xTOxu7NR+z/4IwvuHAz7Px51ZWM3x/o/8N43WAGD+j8oRXgNeT/6P75Fj8ic/Pk/QORM02q6+T8OUt174Xj5PyfTvRT/N/k/N7+x9MH3+D++nrd2KLj4P9hj/vkwefg/jr7a4dk6+D9CjLyVIf33PxtiJIEGwPc/ATKZE4eD9z8GCp7AoUf3P+ftp/9UDPc/bMoTTJ/R9j9aghwlf5f2P8wU0Q3zXfY/jdwKjfkk9j9e6GMtkez1P8hrLX24tPU/UkhmDm599T/ErrF2sEb1P1XYTU9+EPU/c9cKNdba9D/5f0HItqX0P4BmyqwecfQ/rPb0iQw99D8ooH4Kfwn0Pxoaitx01vM/3ryWseyj8z/B8Xc+5XHzP5O4TDtdQPM/1kJ3Y1MP8z8+pJR1xt7yP2uYdDO1rvI/lV0RYh5/8j/6o4fJAFDyP8qRDjVbIfI/e9vvcizz8T848H9Uc8XxPz46Fq4umPE/+nIFV11r8T+rCpQp/j7xP2Wj9AIQE/E/OZ8+w5Hn8D9NwWZNgrzwP8PhN4fgkfA/N7RLWatn8D+XoAOv4T3wP0eugXaCFPA/"},"shape":[54],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"I5EmZwo4N0AY708y0sM7QFxfRT3nRDpAMYNSRxtWN0AxCBeVIKU3QK5RATa3lTNAXO/RcHPIMUCy/AM+KKQqQL3K1N44cCZA44v76YDIIEDv4e8fgiccQGqtyoetdxZAh52vPvsLFEDbY4mx9V4SQIIclKiJOg1AKLA3VXUHCECfnNwKMVMGQGM5Ms1KzAFA70A6HtJZAECkmtCCq80CQPYj6U8RVv8/rHDDwEPWAEBKItYUndn6P4AJYYWkuf8/dbghtXteAEAeQswt8/0QQNi9FJ/+LRxA8caCzYgPIkB5FQiwI98iQPF6fFAXESFAPs50b+84IEDCL/uT0R0cQB7b+nwK4BdA+RVxR9rSEUBfhAIPXl0OQN4a8T44IQZA9EPIs1gqA0BXfnVD3Sv+P13BNsI4Kfw/ebVmESXm9j8LEeYcgfz4P7kOW7hDpfI/P3rdFYiq9D9o5FiL1ZH5P4am+qeuuv4/+G1fngk2DkB0aeh5cD0cQDum+FSQ+hpAaTCTR4GBFUA95yoc/58QQBiPpicQ8A5Ak1seDcC3A0BOnk5JS0wAQKn6hSR96fM/"},"shape":[54],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1073","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1074"}}},"glyph":{"type":"object","name":"Line","id":"p1069","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#35B778","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1070","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#35B778","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1071","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#35B778","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1081","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1075","attributes":{"selected":{"type":"object","name":"Selection","id":"p1076","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1077"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"xTOxu7NR+z/4IwvuHAz7Px51ZWM3x/o/8N43WAGD+j8oRXgNeT/6P75Fj8ic/Pk/QORM02q6+T8OUt174Xj5PyfTvRT/N/k/N7+x9MH3+D++nrd2KLj4P9hj/vkwefg/jr7a4dk6+D9CjLyVIf33PxtiJIEGwPc/ATKZE4eD9z8GCp7AoUf3P+ftp/9UDPc/bMoTTJ/R9j9aghwlf5f2P8wU0Q3zXfY/jdwKjfkk9j9e6GMtkez1P8hrLX24tPU/UkhmDm599T/ErrF2sEb1P1XYTU9+EPU/c9cKNdba9D/5f0HItqX0P4BmyqwecfQ/rPb0iQw99D8ooH4Kfwn0Pxoaitx01vM/3ryWseyj8z/B8Xc+5XHzP5O4TDtdQPM/1kJ3Y1MP8z8+pJR1xt7yP2uYdDO1rvI/lV0RYh5/8j/6o4fJAFDyP8qRDjVbIfI/e9vvcizz8T848H9Uc8XxPz46Fq4umPE/+nIFV11r8T+rCpQp/j7xP2Wj9AIQE/E/OZ8+w5Hn8D9NwWZNgrzwP8PhN4fgkfA/N7RLWatn8D+XoAOv4T3wP0eugXaCFPA/"},"shape":[54],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"kv+Ep6QJOUCv6RP54co9QLYcREscLDxAXPk8R7X8OED9sbMxUEk5QA+svoPQ3jRAxLsu3G/sMkDO1KENJQ8sQKS3o8oweCdAXs9Zc9dHIUDgdNGG5nQcQJBhRoRiCRZAtJZJikRSE0CceUAvTqIRQHlWeBOEmApAYgj7eqD0BEAGYKmwgg8DQBr8V059gPw/TmnjNTKG+T8BH384yXcAQGqD/CE1Jvo/zISSP4vo/T97XNsKaW72P2NewOujKP0/lXLhCmwL/z98kRqJMCsSQHr6QWEmVB9A/g1YVuVBJEBk370JqkMlQLQgEmUaEyNA9tLf0NIKIkAYQT6ZhlIfQAJfFGSUohpAuqsLIqe7E0BBIHq9O8kQQICo4ZNrVwhAUV8zb1/4BECEO5WL6mgAQM39Fzhhxf4/gNMKHcjo+D/94+Q6UIP7P8CDEIKoW/Q/XX+WrWLw9j87JGSkNRP9P3oWYv+MjAFAMZZ5RpOCEUC7jyKJ+lAgQPMDDdoHNh9AYtFfwU3OGEAA2LDZZEUTQANSr5hr1hFALXf21EXIBkCd8Tep/P4CQIV1EM8yVPc/"},"shape":[54],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1082","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1083"}}},"glyph":{"type":"object","name":"Line","id":"p1078","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FDE724","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1079","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FDE724","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1080","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FDE724","line_alpha":0.2,"line_width":3}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1008","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1033"},{"type":"object","name":"WheelZoomTool","id":"p1034"},{"type":"object","name":"BoxZoomTool","id":"p1035","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1036","attributes":{"syncable":false,"level":"overlay","visible":false,"left_units":"canvas","right_units":"canvas","bottom_units":"canvas","top_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"SaveTool","id":"p1037"},{"type":"object","name":"ResetTool","id":"p1038"},{"type":"object","name":"HelpTool","id":"p1039"}]}},"left":[{"type":"object","name":"LinearAxis","id":"p1026","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1027","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1029"},"axis_label":"Spectrum","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1028"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}},{"type":"object","name":"Legend","id":"p1084","attributes":{"location":[0,0],"click_policy":"mute","items":[{"type":"object","name":"LegendItem","id":"p1085","attributes":{"label":{"type":"value","value":"0"},"renderers":[{"id":"p1054"}]}},{"type":"object","name":"LegendItem","id":"p1086","attributes":{"label":{"type":"value","value":"119"},"renderers":[{"id":"p1063"}]}},{"type":"object","name":"LegendItem","id":"p1087","attributes":{"label":{"type":"value","value":"239"},"renderers":[{"id":"p1072"}]}},{"type":"object","name":"LegendItem","id":"p1088","attributes":{"label":{"type":"value","value":"360"},"renderers":[{"id":"p1081"}]}}]}}],"below":[{"type":"object","name":"LinearAxis","id":"p1019","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1020","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1022"},"axis_label":"Wavelength [\u03bcm]","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1021"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}}],"center":[{"type":"object","name":"Grid","id":"p1025","attributes":{"axis":{"id":"p1019"}}},{"type":"object","name":"Grid","id":"p1032","attributes":{"dimension":1,"axis":{"id":"p1026"}}}]}}]}};
-  const render_items = [{"docid":"cf7420d9-c3cd-4e30-afaf-2674dc6b434a","roots":{"p1002":"911b9883-0c63-4204-ab1a-1eeb1e8e2ff8"},"root_ids":["p1002"]}];
+  const docs_json = {"ce0ff631-9693-4a25-b91a-ec406b914e64":{"version":"3.0.2","title":"Bokeh Application","defs":[],"roots":[{"type":"object","name":"Figure","id":"p1002","attributes":{"width":500,"height":345,"x_range":{"type":"object","name":"DataRange1d","id":"p1004"},"y_range":{"type":"object","name":"DataRange1d","id":"p1003"},"x_scale":{"type":"object","name":"LinearScale","id":"p1015"},"y_scale":{"type":"object","name":"LinearScale","id":"p1017"},"title":{"type":"object","name":"Title","id":"p1008"},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1054","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1048","attributes":{"selected":{"type":"object","name":"Selection","id":"p1049","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1050"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"xTOxu7NR+z/4IwvuHAz7Px51ZWM3x/o/8N43WAGD+j8oRXgNeT/6P75Fj8ic/Pk/QORM02q6+T8OUt174Xj5PyfTvRT/N/k/N7+x9MH3+D++nrd2KLj4P9hj/vkwefg/jr7a4dk6+D9CjLyVIf33PxtiJIEGwPc/ATKZE4eD9z8GCp7AoUf3P+ftp/9UDPc/bMoTTJ/R9j9aghwlf5f2P8wU0Q3zXfY/jdwKjfkk9j9e6GMtkez1P8hrLX24tPU/UkhmDm599T/ErrF2sEb1P1XYTU9+EPU/c9cKNdba9D/5f0HItqX0P4BmyqwecfQ/rPb0iQw99D8ooH4Kfwn0Pxoaitx01vM/3ryWseyj8z/B8Xc+5XHzP5O4TDtdQPM/1kJ3Y1MP8z8+pJR1xt7yP2uYdDO1rvI/lV0RYh5/8j/6o4fJAFDyP8qRDjVbIfI/e9vvcizz8T848H9Uc8XxPz46Fq4umPE/+nIFV11r8T+rCpQp/j7xP2Wj9AIQE/E/OZ8+w5Hn8D9NwWZNgrzwP8PhN4fgkfA/N7RLWatn8D+XoAOv4T3wP0eugXaCFPA/"},"shape":[54],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"F20fKmb2OEAUba4luq09QAQvK1AJETxAEgdVBBfnOEDPxuVA9jI5QOa3vn2i0TRAkUja6kTiMkDR0Hp1/QssQHpt+0HwdidAlQx2VYVMIUDhCnuhUX8cQACHI2sEEhZAbmx909ZYE0B4PIpbgKkRQPr/AqP1ogpAs9fdqID8BEBHrF6r5BUDQBdJHp/biPw/VAQyaWyO+T93qe6f2H0AQHEqsoafLPo/nPHe1J7z/T9kbxkq0nT2P4cb5ZhNK/0/geyue2oR/z86RYtR6hoSQFVZQNffIh9AHFNmqw8aJEA/78yW3RUlQF7rl3de6yJAnkyZIivmIUCUXJQdWRcfQMow4YiQcxpAdN3wsPWcE0AU23mo/rEQQHaLjLqSPAhA6XXDyMHhBEDQneFg5lkAQKg5jbcxof4/IDJLle/X+D9tLi2ZWGb7P1zZ3eAkSPQ/86WTA4XU9j+M63XNluH8P49IgNB1ZQFAPg8GIe5LEUBjKyaiyBUgQEYKgLdkwx5AInmP1Z1zGEA7APGT7f8SQEG45aBllxFAlwsH/wV/BkBkp5u41MECQDm+/rsMEfc/"},"shape":[54],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1055","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1056"}}},"glyph":{"type":"object","name":"Line","id":"p1051","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#440154","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1052","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#440154","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1053","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#440154","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1063","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1057","attributes":{"selected":{"type":"object","name":"Selection","id":"p1058","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1059"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"xTOxu7NR+z/4IwvuHAz7Px51ZWM3x/o/8N43WAGD+j8oRXgNeT/6P75Fj8ic/Pk/QORM02q6+T8OUt174Xj5PyfTvRT/N/k/N7+x9MH3+D++nrd2KLj4P9hj/vkwefg/jr7a4dk6+D9CjLyVIf33PxtiJIEGwPc/ATKZE4eD9z8GCp7AoUf3P+ftp/9UDPc/bMoTTJ/R9j9aghwlf5f2P8wU0Q3zXfY/jdwKjfkk9j9e6GMtkez1P8hrLX24tPU/UkhmDm599T/ErrF2sEb1P1XYTU9+EPU/c9cKNdba9D/5f0HItqX0P4BmyqwecfQ/rPb0iQw99D8ooH4Kfwn0Pxoaitx01vM/3ryWseyj8z/B8Xc+5XHzP5O4TDtdQPM/1kJ3Y1MP8z8+pJR1xt7yP2uYdDO1rvI/lV0RYh5/8j/6o4fJAFDyP8qRDjVbIfI/e9vvcizz8T848H9Uc8XxPz46Fq4umPE/+nIFV11r8T+rCpQp/j7xP2Wj9AIQE/E/OZ8+w5Hn8D9NwWZNgrzwP8PhN4fgkfA/N7RLWatn8D+XoAOv4T3wP0eugXaCFPA/"},"shape":[54],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"1zS3dD2yQkAqraNwRatEQBu0DGZigUNA405fZlZ0QUC5WJbQQkZBQBPpopQrTz1AAhah0oHBOkC3KjkuZPA0QLgUOtwBLTJAWPftD22YLEA9YDVRjKkoQDq3/SDNeSRAAg6QlrR8IkBD7VeDWkwhQK1mNcFFXRxABgHeoc4SGED8/BVHb0IWQJLmcoRLQRJAyG5rxKIVEUBqXVOK24kTQNHE1fQQiRBA4lpwBJXaEUBbrehZF8YMQE7OoSkVRRFA6b+tkduQEUC5ECvtNAwgQCEKI65rdyhAcXHGfp28LUCqd4sjy+AuQDFTti35gStAz+KGwWWtKUDdxRa1dN4mQLG6dOS2/yNAUAGVmcTnHkD2RolN/d0aQKHwSsif8hRAbXWZwV1CEkCi3wx5ZHMOQK06GJgUlAxAtFGcXKdmCEBTkNFfLuYJQE64S0YKLwVASC3vW62EBkCKieFyMwQLQKe0M6YtBA5ASbN2sSRuGUBYx0sZwiIlQCKMBSnwNyRA/jtIkINcIEAvqOJ3z58aQMlDpKuFaBhAjmjGaFW4EECNCVvLt94MQH4Yu+9WXANA"},"shape":[54],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1064","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1065"}}},"glyph":{"type":"object","name":"Line","id":"p1060","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#30678D","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1061","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#30678D","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1062","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#30678D","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1072","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1066","attributes":{"selected":{"type":"object","name":"Selection","id":"p1067","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1068"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"xTOxu7NR+z/4IwvuHAz7Px51ZWM3x/o/8N43WAGD+j8oRXgNeT/6P75Fj8ic/Pk/QORM02q6+T8OUt174Xj5PyfTvRT/N/k/N7+x9MH3+D++nrd2KLj4P9hj/vkwefg/jr7a4dk6+D9CjLyVIf33PxtiJIEGwPc/ATKZE4eD9z8GCp7AoUf3P+ftp/9UDPc/bMoTTJ/R9j9aghwlf5f2P8wU0Q3zXfY/jdwKjfkk9j9e6GMtkez1P8hrLX24tPU/UkhmDm599T/ErrF2sEb1P1XYTU9+EPU/c9cKNdba9D/5f0HItqX0P4BmyqwecfQ/rPb0iQw99D8ooH4Kfwn0Pxoaitx01vM/3ryWseyj8z/B8Xc+5XHzP5O4TDtdQPM/1kJ3Y1MP8z8+pJR1xt7yP2uYdDO1rvI/lV0RYh5/8j/6o4fJAFDyP8qRDjVbIfI/e9vvcizz8T848H9Uc8XxPz46Fq4umPE/+nIFV11r8T+rCpQp/j7xP2Wj9AIQE/E/OZ8+w5Hn8D9NwWZNgrzwP8PhN4fgkfA/N7RLWatn8D+XoAOv4T3wP0eugXaCFPA/"},"shape":[54],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"wtz8jlYrN0DtLE0dero7QJcDLe4zPDpAKqe01KVMN0BjtKoJW5w3QIawGci4ijNAZ6r4Vxq/MUBFbdZLE5IqQKlsWpGKYCZASRcg5My7IEDFwYyMWhIcQEoeXyLkZhZANDx7ZL39E0BvYwkgy1ESQGe4zum5Jg1A3aMKRiT3B0BgqPq4F0UGQEdYb9DcwQFALXrKrPxPAED2sbJdlMECQEXAMOrMQv8/sglbzJ3KAEABbaFg8cf6P7rcP0xRo/8/JUDTDEBSAEC83Z5fO/EQQKfPs2ZGIxxA4EyEQCoNIkC9C/UOzN4iQFSrqHDmDiFA8ruM9bE2IEAtfhL2GhUcQNJbVh7j1hdAIyW09t3IEUAChS+0OkkOQCKPrnr7DQZAPv53wjYaA0AlYa7hZA/+P45BbXFmEPw/m5hXCrXO9j9skUVg1eP4P3tXtlqakPI/wgSka9WV9D8CmYbo1nv5PzqB6Kobrv4/fLPtWJ8/DkApaA68K1QcQBcH56TxEBtAGg+RWVKRFUBpOpby+qgQQKFvFAxzAA9AQviwVPa4A0BGZjRfr0wAQHLq8RkO4/M/"},"shape":[54],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1073","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1074"}}},"glyph":{"type":"object","name":"Line","id":"p1069","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#35B778","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1070","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#35B778","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1071","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#35B778","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1081","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1075","attributes":{"selected":{"type":"object","name":"Selection","id":"p1076","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1077"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"xTOxu7NR+z/4IwvuHAz7Px51ZWM3x/o/8N43WAGD+j8oRXgNeT/6P75Fj8ic/Pk/QORM02q6+T8OUt174Xj5PyfTvRT/N/k/N7+x9MH3+D++nrd2KLj4P9hj/vkwefg/jr7a4dk6+D9CjLyVIf33PxtiJIEGwPc/ATKZE4eD9z8GCp7AoUf3P+ftp/9UDPc/bMoTTJ/R9j9aghwlf5f2P8wU0Q3zXfY/jdwKjfkk9j9e6GMtkez1P8hrLX24tPU/UkhmDm599T/ErrF2sEb1P1XYTU9+EPU/c9cKNdba9D/5f0HItqX0P4BmyqwecfQ/rPb0iQw99D8ooH4Kfwn0Pxoaitx01vM/3ryWseyj8z/B8Xc+5XHzP5O4TDtdQPM/1kJ3Y1MP8z8+pJR1xt7yP2uYdDO1rvI/lV0RYh5/8j/6o4fJAFDyP8qRDjVbIfI/e9vvcizz8T848H9Uc8XxPz46Fq4umPE/+nIFV11r8T+rCpQp/j7xP2Wj9AIQE/E/OZ8+w5Hn8D9NwWZNgrzwP8PhN4fgkfA/N7RLWatn8D+XoAOv4T3wP0eugXaCFPA/"},"shape":[54],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"F20fKmb2OEAUba4luq09QAQvK1AJETxAEgdVBBfnOEDPxuVA9jI5QOa3vn2i0TRAkUja6kTiMkDR0Hp1/QssQHpt+0HwdidAlQx2VYVMIUDhCnuhUX8cQACHI2sEEhZAbmx909ZYE0B4PIpbgKkRQPr/AqP1ogpAs9fdqID8BEBHrF6r5BUDQBdJHp/biPw/VAQyaWyO+T93qe6f2H0AQHEqsoafLPo/nPHe1J7z/T9kbxkq0nT2P4cb5ZhNK/0/geyue2oR/z86RYtR6hoSQFVZQNffIh9AHFNmqw8aJEA/78yW3RUlQF7rl3de6yJAnkyZIivmIUCUXJQdWRcfQMow4YiQcxpAdN3wsPWcE0AU23mo/rEQQHaLjLqSPAhA6XXDyMHhBEDQneFg5lkAQKg5jbcxof4/IDJLle/X+D9tLi2ZWGb7P1zZ3eAkSPQ/86WTA4XU9j+M63XNluH8P49IgNB1ZQFAPg8GIe5LEUBjKyaiyBUgQEYKgLdkwx5AInmP1Z1zGEA7APGT7f8SQEG45aBllxFAlwsH/wV/BkBkp5u41MECQDm+/rsMEfc/"},"shape":[54],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1082","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1083"}}},"glyph":{"type":"object","name":"Line","id":"p1078","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FDE724","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1079","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FDE724","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1080","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FDE724","line_alpha":0.2,"line_width":3}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1005","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1033"},{"type":"object","name":"WheelZoomTool","id":"p1034"},{"type":"object","name":"BoxZoomTool","id":"p1035","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1036","attributes":{"syncable":false,"level":"overlay","visible":false,"left_units":"canvas","right_units":"canvas","bottom_units":"canvas","top_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"SaveTool","id":"p1037"},{"type":"object","name":"ResetTool","id":"p1038"},{"type":"object","name":"HelpTool","id":"p1039"}]}},"left":[{"type":"object","name":"LinearAxis","id":"p1026","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1028","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1027"},"axis_label":"Spectrum","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1029"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}},{"type":"object","name":"Legend","id":"p1084","attributes":{"location":[0,0],"click_policy":"mute","items":[{"type":"object","name":"LegendItem","id":"p1085","attributes":{"label":{"type":"value","value":"0"},"renderers":[{"id":"p1054"}]}},{"type":"object","name":"LegendItem","id":"p1086","attributes":{"label":{"type":"value","value":"119"},"renderers":[{"id":"p1063"}]}},{"type":"object","name":"LegendItem","id":"p1087","attributes":{"label":{"type":"value","value":"239"},"renderers":[{"id":"p1072"}]}},{"type":"object","name":"LegendItem","id":"p1088","attributes":{"label":{"type":"value","value":"360"},"renderers":[{"id":"p1081"}]}}]}}],"below":[{"type":"object","name":"LinearAxis","id":"p1019","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1021","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1020"},"axis_label":"Wavelength [\u03bcm]","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1022"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}}],"center":[{"type":"object","name":"Grid","id":"p1025","attributes":{"axis":{"id":"p1019"}}},{"type":"object","name":"Grid","id":"p1032","attributes":{"dimension":1,"axis":{"id":"p1026"}}}]}}]}};
+  const render_items = [{"docid":"ce0ff631-9693-4a25-b91a-ec406b914e64","roots":{"p1002":"4a526d64-9138-4262-ba59-b8bdae8ccefa"},"root_ids":["p1002"]}];
   root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
   }
   if (root.Bokeh !== undefined) {
@@ -1713,7 +1774,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 </script></div>
 </div>
 <section id="Phase-Curve-Plotting-Tools:-Phase-Snaps">
-<h3>Phase Curve Plotting Tools: Phase Snaps<a class="headerlink" href="#Phase-Curve-Plotting-Tools:-Phase-Snaps" title="Permalink to this headline">¶</a></h3>
+<h3>Phase Curve Plotting Tools: Phase Snaps<a class="headerlink" href="#Phase-Curve-Plotting-Tools:-Phase-Snaps" title="Link to this heading">¶</a></h3>
 <p>Phase snaps allows you to show snapshots of what is happening at each phase that was computed. x,y,z axes can be swapped out for flexibility.</p>
 <ul class="simple">
 <li><p>Allowable x: <code class="docutils literal notranslate"><span class="pre">'longitude',</span> <span class="pre">'latitude',</span> <span class="pre">'pressure'</span></code></p></li>
@@ -1735,7 +1796,7 @@ list.</p></li>
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/notebooks_9e_PhaseCurves_23_0.png" src="../_images/notebooks_9e_PhaseCurves_23_0.png" />
+<img alt="../_images/notebooks_9e_PhaseCurves_22_0.png" src="../_images/notebooks_9e_PhaseCurves_22_0.png" />
 </div>
 </div>
 <div class="nbinput docutils container">
@@ -1752,7 +1813,7 @@ list.</p></li>
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/notebooks_9e_PhaseCurves_24_0.png" src="../_images/notebooks_9e_PhaseCurves_24_0.png" />
+<img alt="../_images/notebooks_9e_PhaseCurves_23_0.png" src="../_images/notebooks_9e_PhaseCurves_23_0.png" />
 </div>
 </div>
 <div class="nbinput docutils container">
@@ -1779,12 +1840,12 @@ Pressure at 0.0030016929695969906
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/notebooks_9e_PhaseCurves_25_1.png" src="../_images/notebooks_9e_PhaseCurves_25_1.png" />
+<img alt="../_images/notebooks_9e_PhaseCurves_24_1.png" src="../_images/notebooks_9e_PhaseCurves_24_1.png" />
 </div>
 </div>
 </section>
 <section id="Phase-Curve-Plotting-Tools:-Phase-Curves">
-<h3>Phase Curve Plotting Tools: Phase Curves<a class="headerlink" href="#Phase-Curve-Plotting-Tools:-Phase-Curves" title="Permalink to this headline">¶</a></h3>
+<h3>Phase Curve Plotting Tools: Phase Curves<a class="headerlink" href="#Phase-Curve-Plotting-Tools:-Phase-Curves" title="Link to this heading">¶</a></h3>
 <p>We can use the same <code class="docutils literal notranslate"><span class="pre">collapse</span></code> feature as in the <code class="docutils literal notranslate"><span class="pre">phase_snaps</span></code> tool to collapse the wavelength axis, when plotting phase curves. For example, we can select a single wavelength point at a given resolution, or we can average over all wavelengths.</p>
 <p>Allowable collapse: - <code class="docutils literal notranslate"><span class="pre">'np.mean'</span></code> or <code class="docutils literal notranslate"><span class="pre">np.sum</span></code> - float or list of float: wavelength in microns (will find the nearest value to this wavelength). Must be in wavenumber range.</p>
 <p>For <code class="docutils literal notranslate"><span class="pre">float</span></code> option, user must specify resolution.</p>
@@ -1804,7 +1865,7 @@ Pressure at 0.0030016929695969906
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area rendered_html docutils container">
-<div id="eef8adce-286e-4fea-a8d1-c0313683fb27" data-root-id="p1283" style="display: contents;"></div></div>
+<div id="506206d7-6d67-4e65-a19c-cdf1e04a4ac1" data-root-id="p1283" style="display: contents;"></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
@@ -1815,8 +1876,8 @@ Pressure at 0.0030016929695969906
 var element = document.currentScript.previousSibling.previousSibling;
 (function(root) {
   function embed_document(root) {
-  const docs_json = {"69856abe-b92e-4fb0-8431-53f342f28170":{"version":"3.0.2","title":"Bokeh Application","defs":[],"roots":[{"type":"object","name":"Figure","id":"p1283","attributes":{"height":400,"x_range":{"type":"object","name":"DataRange1d","id":"p1284"},"y_range":{"type":"object","name":"DataRange1d","id":"p1285"},"x_scale":{"type":"object","name":"LinearScale","id":"p1297"},"y_scale":{"type":"object","name":"LinearScale","id":"p1299"},"title":{"type":"object","name":"Title","id":"p1286","attributes":{"text":"Phase Curves"}},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1336","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1330","attributes":{"selected":{"type":"object","name":"Selection","id":"p1331","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1332"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"AAAAAAAAAAD///////9dQP///////21AAAAAAACAdkA="},"shape":[4],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"TCdA6sdmwj5Jlg4N12PPPhLw9DdoHMA+TCdA6sdmwj4="},"shape":[4],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1337","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1338"}}},"glyph":{"type":"object","name":"Line","id":"p1333","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#5e4fa2","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1334","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#5e4fa2","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1335","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#5e4fa2","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1345","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1339","attributes":{"selected":{"type":"object","name":"Selection","id":"p1340","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1341"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"AAAAAAAAAAD///////9dQP///////21AAAAAAACAdkA="},"shape":[4],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"uLz8p2Jruz71GzGA8FfRPlojybDfbcA+uLz8p2Jruz4="},"shape":[4],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1346","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1347"}}},"glyph":{"type":"object","name":"Line","id":"p1342","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#3288bd","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1343","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#3288bd","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1344","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#3288bd","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1354","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1348","attributes":{"selected":{"type":"object","name":"Selection","id":"p1349","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1350"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"AAAAAAAAAAD///////9dQP///////21AAAAAAACAdkA="},"shape":[4],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"XQjNuxJs7T443ohh0On1PmUqyQF07+s+XQjNuxJs7T4="},"shape":[4],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1355","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1356"}}},"glyph":{"type":"object","name":"Line","id":"p1351","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#66c2a5","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1352","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#66c2a5","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1353","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#66c2a5","line_alpha":0.2,"line_width":3}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1290","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1315"},{"type":"object","name":"WheelZoomTool","id":"p1316"},{"type":"object","name":"BoxZoomTool","id":"p1317","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1318","attributes":{"syncable":false,"level":"overlay","visible":false,"left_units":"canvas","right_units":"canvas","bottom_units":"canvas","top_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"SaveTool","id":"p1319"},{"type":"object","name":"ResetTool","id":"p1320"},{"type":"object","name":"HelpTool","id":"p1321"}]}},"left":[{"type":"object","name":"LinearAxis","id":"p1308","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1309","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1311"},"axis_label":"fpfs_thermal","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1310"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}},{"type":"object","name":"Legend","id":"p1357","attributes":{"location":[0,-20],"click_policy":"mute","items":[{"type":"object","name":"LegendItem","id":"p1358","attributes":{"label":{"type":"value","value":"1.09um"},"renderers":[{"id":"p1336"}]}},{"type":"object","name":"LegendItem","id":"p1359","attributes":{"label":{"type":"value","value":"1.39um"},"renderers":[{"id":"p1345"}]}},{"type":"object","name":"LegendItem","id":"p1360","attributes":{"label":{"type":"value","value":"1.59um"},"renderers":[{"id":"p1354"}]}}]}}],"below":[{"type":"object","name":"LinearAxis","id":"p1301","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1302","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1304"},"axis_label":"Orbital Phase","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1303"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}}],"center":[{"type":"object","name":"Grid","id":"p1307","attributes":{"axis":{"id":"p1301"},"grid_line_alpha":0}},{"type":"object","name":"Grid","id":"p1314","attributes":{"dimension":1,"axis":{"id":"p1308"},"grid_line_alpha":0}}]}}]}};
-  const render_items = [{"docid":"69856abe-b92e-4fb0-8431-53f342f28170","roots":{"p1283":"eef8adce-286e-4fea-a8d1-c0313683fb27"},"root_ids":["p1283"]}];
+  const docs_json = {"e1632d67-6e76-49c7-b9cc-c6196371842c":{"version":"3.0.2","title":"Bokeh Application","defs":[],"roots":[{"type":"object","name":"Figure","id":"p1283","attributes":{"height":400,"x_range":{"type":"object","name":"DataRange1d","id":"p1285"},"y_range":{"type":"object","name":"DataRange1d","id":"p1284"},"x_scale":{"type":"object","name":"LinearScale","id":"p1297"},"y_scale":{"type":"object","name":"LinearScale","id":"p1299"},"title":{"type":"object","name":"Title","id":"p1286","attributes":{"text":"Phase Curves"}},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1336","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1330","attributes":{"selected":{"type":"object","name":"Selection","id":"p1331","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1332"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"AAAAAAAAAAD///////9dQP///////21AAAAAAACAdkA="},"shape":[4],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"/6Z7n8o9wj6qPxzpcXnPPlNFoIrQFcA+/6Z7n8o9wj4="},"shape":[4],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1337","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1338"}}},"glyph":{"type":"object","name":"Line","id":"p1333","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#5e4fa2","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1334","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#5e4fa2","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1335","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#5e4fa2","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1345","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1339","attributes":{"selected":{"type":"object","name":"Selection","id":"p1340","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1341"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"AAAAAAAAAAD///////9dQP///////21AAAAAAACAdkA="},"shape":[4],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"SI+b1Bxyuz55C7gQsVbRPuvXnrHFY8A+SI+b1Bxyuz4="},"shape":[4],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1346","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1347"}}},"glyph":{"type":"object","name":"Line","id":"p1342","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#3288bd","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1343","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#3288bd","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1344","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#3288bd","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1354","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1348","attributes":{"selected":{"type":"object","name":"Selection","id":"p1349","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1350"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"AAAAAAAAAAD///////9dQP///////21AAAAAAACAdkA="},"shape":[4],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"5DTY6MNo7T7Xt1EXx/T1PnqtjTR+3Os+5DTY6MNo7T4="},"shape":[4],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1355","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1356"}}},"glyph":{"type":"object","name":"Line","id":"p1351","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#66c2a5","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1352","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#66c2a5","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1353","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#66c2a5","line_alpha":0.2,"line_width":3}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1288","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1315"},{"type":"object","name":"WheelZoomTool","id":"p1316"},{"type":"object","name":"BoxZoomTool","id":"p1317","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1318","attributes":{"syncable":false,"level":"overlay","visible":false,"left_units":"canvas","right_units":"canvas","bottom_units":"canvas","top_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"SaveTool","id":"p1319"},{"type":"object","name":"ResetTool","id":"p1320"},{"type":"object","name":"HelpTool","id":"p1321"}]}},"left":[{"type":"object","name":"LinearAxis","id":"p1308","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1310","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1309"},"axis_label":"fpfs_thermal","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1311"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}},{"type":"object","name":"Legend","id":"p1357","attributes":{"location":[0,-20],"click_policy":"mute","items":[{"type":"object","name":"LegendItem","id":"p1358","attributes":{"label":{"type":"value","value":"1.09um"},"renderers":[{"id":"p1336"}]}},{"type":"object","name":"LegendItem","id":"p1359","attributes":{"label":{"type":"value","value":"1.39um"},"renderers":[{"id":"p1345"}]}},{"type":"object","name":"LegendItem","id":"p1360","attributes":{"label":{"type":"value","value":"1.59um"},"renderers":[{"id":"p1354"}]}}]}}],"below":[{"type":"object","name":"LinearAxis","id":"p1301","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1303","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1302"},"axis_label":"Orbital Phase","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1304"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}}],"center":[{"type":"object","name":"Grid","id":"p1307","attributes":{"axis":{"id":"p1301"},"grid_line_alpha":0}},{"type":"object","name":"Grid","id":"p1314","attributes":{"dimension":1,"axis":{"id":"p1308"},"grid_line_alpha":0}}]}}]}};
+  const render_items = [{"docid":"e1632d67-6e76-49c7-b9cc-c6196371842c","roots":{"p1283":"506206d7-6d67-4e65-a19c-cdf1e04a4ac1"},"root_ids":["p1283"]}];
   root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
   }
   if (root.Bokeh !== undefined) {
@@ -1842,7 +1903,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 </section>
 </section>
 <section id="Run-Cloudy-Thermal-Phase-Curve-w/-3D-Input">
-<h2>Run Cloudy Thermal Phase Curve w/ 3D Input<a class="headerlink" href="#Run-Cloudy-Thermal-Phase-Curve-w/-3D-Input" title="Permalink to this headline">¶</a></h2>
+<h2>Run Cloudy Thermal Phase Curve w/ 3D Input<a class="headerlink" href="#Run-Cloudy-Thermal-Phase-Curve-w/-3D-Input" title="Link to this heading">¶</a></h2>
 <p>Here we will create a hypothetical cloud path and add it to our fake H2O profile to demonstrate the basics of running a cloudy phase curve</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
@@ -1895,14 +1956,14 @@ var element = document.currentScript.previousSibling.previousSibling;
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.collections.QuadMesh at 0x7f4c29e1f580&gt;
+&lt;matplotlib.collections.QuadMesh at 0x7fe788d0d990&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/notebooks_9e_PhaseCurves_29_1.png" src="../_images/notebooks_9e_PhaseCurves_29_1.png" />
+<img alt="../_images/notebooks_9e_PhaseCurves_28_1.png" src="../_images/notebooks_9e_PhaseCurves_28_1.png" />
 </div>
 </div>
 <div class="nbinput docutils container">
@@ -1936,15 +1997,24 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/home/nbatalh1/anaconda3/envs/pic311/lib/python3.11/site-packages/xesmf/smm.py:131: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+  warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
 <div class="output_area docutils container">
-<img alt="../_images/notebooks_9e_PhaseCurves_30_0.png" src="../_images/notebooks_9e_PhaseCurves_30_0.png" />
+<img alt="../_images/notebooks_9e_PhaseCurves_29_1.png" src="../_images/notebooks_9e_PhaseCurves_29_1.png" />
 </div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/notebooks_9e_PhaseCurves_30_1.png" src="../_images/notebooks_9e_PhaseCurves_30_1.png" />
+<img alt="../_images/notebooks_9e_PhaseCurves_29_2.png" src="../_images/notebooks_9e_PhaseCurves_29_2.png" />
 </div>
 </div>
 <p>Run cloudy phase curve!</p>
@@ -1978,7 +2048,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area rendered_html docutils container">
-<div id="41d12d35-93af-40cf-869b-50cd29da662d" data-root-id="p1543" style="display: contents;"></div></div>
+<div id="8c65bc67-75b9-4259-8c72-f7d23ea2424c" data-root-id="p1543" style="display: contents;"></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
@@ -1989,8 +2059,8 @@ var element = document.currentScript.previousSibling.previousSibling;
 var element = document.currentScript.previousSibling.previousSibling;
 (function(root) {
   function embed_document(root) {
-  const docs_json = {"13bf9efd-82c1-4c27-a8d6-73a0b124c105":{"version":"3.0.2","title":"Bokeh Application","defs":[],"roots":[{"type":"object","name":"Figure","id":"p1543","attributes":{"width":500,"height":345,"x_range":{"type":"object","name":"DataRange1d","id":"p1544"},"y_range":{"type":"object","name":"DataRange1d","id":"p1545"},"x_scale":{"type":"object","name":"LinearScale","id":"p1556"},"y_scale":{"type":"object","name":"LinearScale","id":"p1558"},"title":{"type":"object","name":"Title","id":"p1548"},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1595","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1589","attributes":{"selected":{"type":"object","name":"Selection","id":"p1590","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1591"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"xTOxu7NR+z/4IwvuHAz7Px51ZWM3x/o/8N43WAGD+j8oRXgNeT/6P75Fj8ic/Pk/QORM02q6+T8OUt174Xj5PyfTvRT/N/k/N7+x9MH3+D++nrd2KLj4P9hj/vkwefg/jr7a4dk6+D9CjLyVIf33PxtiJIEGwPc/ATKZE4eD9z8GCp7AoUf3P+ftp/9UDPc/bMoTTJ/R9j9aghwlf5f2P8wU0Q3zXfY/jdwKjfkk9j9e6GMtkez1P8hrLX24tPU/UkhmDm599T/ErrF2sEb1P1XYTU9+EPU/c9cKNdba9D/5f0HItqX0P4BmyqwecfQ/rPb0iQw99D8ooH4Kfwn0Pxoaitx01vM/3ryWseyj8z/B8Xc+5XHzP5O4TDtdQPM/1kJ3Y1MP8z8+pJR1xt7yP2uYdDO1rvI/lV0RYh5/8j/6o4fJAFDyP8qRDjVbIfI/e9vvcizz8T848H9Uc8XxPz46Fq4umPE/+nIFV11r8T+rCpQp/j7xP2Wj9AIQE/E/OZ8+w5Hn8D9NwWZNgrzwP8PhN4fgkfA/N7RLWatn8D+XoAOv4T3wP0eugXaCFPA/"},"shape":[54],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"/ovTKu9mJkBHcIFStzMsQPrkRzkeripAFO9/KM6RJ0ALvistDDIoQCsPqIyewCNAAP031/3NIUAhAXXvNKMZQM5vFq9B6xRAXGy96ldmDUBebY3YjaoHQEKd1KQDpwFAxi48xx/U/j9e4+6Ln0/7P7I7YnDPGfQ/70g4VAOi7j8vlzmZ0zPsP1LKt0Fn4uQ/xFGJ4RYj4j/jMxtZ92HmP3PObrwh4OE/7pKFEZWY4z/Z/J2omhreP0C1zcJsuOI/cf09BsI25D+KsbrBB6b8P6BOlUohewpAeaSjF2nOEUDHbsIUmccSQA3JVdTGDRFA54KfrRRTEEDZkG34n+0LQAZ1rn2fPAdA0cTB6JPPAEDiTFkkWif8P6uaY5bTMvM/FAlYV8p38D8z2Adpl07oP7HL0Mhv0+Y/p97pp21R4T8xOgqERu/jP2C3jyUmodo/qMQwXl7P3z9sgsmeiT3lP2hWcldmfus/qhbqsGJv/j/ZJhH2pAsOQMBc1UctxgxA8KfaQBLWBkBkOdtPVGEBQLh4oykCRQBAgfr5c+wO9D8grIVXlUrwPzmnswssv+I/"},"shape":[54],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1596","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1597"}}},"glyph":{"type":"object","name":"Line","id":"p1592","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#440154","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1593","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#440154","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1594","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#440154","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1604","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1598","attributes":{"selected":{"type":"object","name":"Selection","id":"p1599","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1600"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"xTOxu7NR+z/4IwvuHAz7Px51ZWM3x/o/8N43WAGD+j8oRXgNeT/6P75Fj8ic/Pk/QORM02q6+T8OUt174Xj5PyfTvRT/N/k/N7+x9MH3+D++nrd2KLj4P9hj/vkwefg/jr7a4dk6+D9CjLyVIf33PxtiJIEGwPc/ATKZE4eD9z8GCp7AoUf3P+ftp/9UDPc/bMoTTJ/R9j9aghwlf5f2P8wU0Q3zXfY/jdwKjfkk9j9e6GMtkez1P8hrLX24tPU/UkhmDm599T/ErrF2sEb1P1XYTU9+EPU/c9cKNdba9D/5f0HItqX0P4BmyqwecfQ/rPb0iQw99D8ooH4Kfwn0Pxoaitx01vM/3ryWseyj8z/B8Xc+5XHzP5O4TDtdQPM/1kJ3Y1MP8z8+pJR1xt7yP2uYdDO1rvI/lV0RYh5/8j/6o4fJAFDyP8qRDjVbIfI/e9vvcizz8T848H9Uc8XxPz46Fq4umPE/+nIFV11r8T+rCpQp/j7xP2Wj9AIQE/E/OZ8+w5Hn8D9NwWZNgrzwP8PhN4fgkfA/N7RLWatn8D+XoAOv4T3wP0eugXaCFPA/"},"shape":[54],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"e9n+vDuGIUDX7t2SFVoiQCNbga5MRSFA2DALeXVsH0BV44vCbY4eQB4/yABZJRtAhzT+lstRGUCbWJZc0xcWQBVE9++lGxRAV30sfrKHEUBfLqO2jO4PQPPGVU6yDg1AFjnR394rC0DWZV3O+YcJQIo1CgqkEQdA/5338JkzBUDPg5wG6oMDQL30D8O+cwFAJk6Fbk6cAED3AiEHVyoAQFEmSC6Gnfw/CpUaIU9n+z96pzCNzM34PwYUp6Ajc/g/6ZsZIgVZ9z8EekaS6gD8P1AYoLUDbgBAoMJAEZXRAUDQcjhgDLMBQOk+3UJ35v8/ws+q1BO6/T9Mvey4ZY36P2qze0wmoPc/t5PML0+L8z+KtChaCW3xP6MOkIzgNO0/ywOTBWZK6j+tbSGVG8DmP4YRvomh9eQ/0YnCwgqL4j+vOtXfIR/iP7ezYCR7QN8/6CfNVTon3j+ixDdgqHjfPyFQx93gL+A/OuJBravO5T/JGAp4sDfwP3sGw+1epu4/ZwKOnCAI6T8cwVevkynkP7A/e4h80uI/2SIcKAai2j/dTt2IVLnWP3VvsgepINA/"},"shape":[54],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1605","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1606"}}},"glyph":{"type":"object","name":"Line","id":"p1601","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#30678D","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1602","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#30678D","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1603","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#30678D","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1613","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1607","attributes":{"selected":{"type":"object","name":"Selection","id":"p1608","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1609"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"xTOxu7NR+z/4IwvuHAz7Px51ZWM3x/o/8N43WAGD+j8oRXgNeT/6P75Fj8ic/Pk/QORM02q6+T8OUt174Xj5PyfTvRT/N/k/N7+x9MH3+D++nrd2KLj4P9hj/vkwefg/jr7a4dk6+D9CjLyVIf33PxtiJIEGwPc/ATKZE4eD9z8GCp7AoUf3P+ftp/9UDPc/bMoTTJ/R9j9aghwlf5f2P8wU0Q3zXfY/jdwKjfkk9j9e6GMtkez1P8hrLX24tPU/UkhmDm599T/ErrF2sEb1P1XYTU9+EPU/c9cKNdba9D/5f0HItqX0P4BmyqwecfQ/rPb0iQw99D8ooH4Kfwn0Pxoaitx01vM/3ryWseyj8z/B8Xc+5XHzP5O4TDtdQPM/1kJ3Y1MP8z8+pJR1xt7yP2uYdDO1rvI/lV0RYh5/8j/6o4fJAFDyP8qRDjVbIfI/e9vvcizz8T848H9Uc8XxPz46Fq4umPE/+nIFV11r8T+rCpQp/j7xP2Wj9AIQE/E/OZ8+w5Hn8D9NwWZNgrzwP8PhN4fgkfA/N7RLWatn8D+XoAOv4T3wP0eugXaCFPA/"},"shape":[54],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"1ai5xpZvNUBms1kfM785QFH4CrJnXThAJcXy0pOlNUAt/900mvQ1QMHcJp/tLTJA2OLn5h1/MEBFG2G9W7IoQPrAV3+jxSRAsgS1yEEGH0B9OzzHrAMaQOmXsYMXwhRAae6Nq16IEkBIm7BkS/QQQBaZMZZ7CAtACKP+a21DBkB0nms42a0EQIPxUn/xkABAjYIL0JJw/j+ge8TfS00BQOh6Geth7vw/sMt697zb/j8EdHmtOcX4Pwa8K4ty7/w/mrbn2e7O/T8DnUyeJxEPQAt7VdXN3RlAyYdFva6hIEDiNOCqCGIhQM9tKyYYhh9Ah1YnN4gDHkDywMJavvkZQJe/zSlvARZAgUtNBxFmEEBHY0Y9MuULQKuXnsz/QQRABLLbi5ODAUCehHEvcXr7Py71hldSnvk/t0N/Um6/9D/3SbWshq72Pxm3YXbGzPA/3s/Yqy248j/UKRcPxjL3P6MeWbBfE/w/jfBA8fDxC0AI9p9L1U4aQJbJkfFpIxlARB9YJ3oKFEBcncgd/uwOQJ+4BzrwxgxAzjbPU81EAkBwCVRdfiL+P6x4w6/CTPI/"},"shape":[54],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1614","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1615"}}},"glyph":{"type":"object","name":"Line","id":"p1610","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#35B778","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1611","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#35B778","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1612","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#35B778","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1622","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1616","attributes":{"selected":{"type":"object","name":"Selection","id":"p1617","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1618"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"xTOxu7NR+z/4IwvuHAz7Px51ZWM3x/o/8N43WAGD+j8oRXgNeT/6P75Fj8ic/Pk/QORM02q6+T8OUt174Xj5PyfTvRT/N/k/N7+x9MH3+D++nrd2KLj4P9hj/vkwefg/jr7a4dk6+D9CjLyVIf33PxtiJIEGwPc/ATKZE4eD9z8GCp7AoUf3P+ftp/9UDPc/bMoTTJ/R9j9aghwlf5f2P8wU0Q3zXfY/jdwKjfkk9j9e6GMtkez1P8hrLX24tPU/UkhmDm599T/ErrF2sEb1P1XYTU9+EPU/c9cKNdba9D/5f0HItqX0P4BmyqwecfQ/rPb0iQw99D8ooH4Kfwn0Pxoaitx01vM/3ryWseyj8z/B8Xc+5XHzP5O4TDtdQPM/1kJ3Y1MP8z8+pJR1xt7yP2uYdDO1rvI/lV0RYh5/8j/6o4fJAFDyP8qRDjVbIfI/e9vvcizz8T848H9Uc8XxPz46Fq4umPE/+nIFV11r8T+rCpQp/j7xP2Wj9AIQE/E/OZ8+w5Hn8D9NwWZNgrzwP8PhN4fgkfA/N7RLWatn8D+XoAOv4T3wP0eugXaCFPA/"},"shape":[54],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"/ovTKu9mJkBHcIFStzMsQPrkRzkeripAFO9/KM6RJ0ALvistDDIoQCsPqIyewCNAAP031/3NIUAhAXXvNKMZQM5vFq9B6xRAXGy96ldmDUBebY3YjaoHQEKd1KQDpwFAxi48xx/U/j9e4+6Ln0/7P7I7YnDPGfQ/70g4VAOi7j8vlzmZ0zPsP1LKt0Fn4uQ/xFGJ4RYj4j/jMxtZ92HmP3PObrwh4OE/7pKFEZWY4z/Z/J2omhreP0C1zcJsuOI/cf09BsI25D+KsbrBB6b8P6BOlUohewpAeaSjF2nOEUDHbsIUmccSQA3JVdTGDRFA54KfrRRTEEDZkG34n+0LQAZ1rn2fPAdA0cTB6JPPAEDiTFkkWif8P6uaY5bTMvM/FAlYV8p38D8z2Adpl07oP7HL0Mhv0+Y/p97pp21R4T8xOgqERu/jP2C3jyUmodo/qMQwXl7P3z9sgsmeiT3lP2hWcldmfus/qhbqsGJv/j/ZJhH2pAsOQMBc1UctxgxA8KfaQBLWBkBkOdtPVGEBQLh4oykCRQBAgfr5c+wO9D8grIVXlUrwPzmnswssv+I/"},"shape":[54],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1623","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1624"}}},"glyph":{"type":"object","name":"Line","id":"p1619","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FDE724","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1620","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FDE724","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1621","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FDE724","line_alpha":0.2,"line_width":3}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1549","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1574"},{"type":"object","name":"WheelZoomTool","id":"p1575"},{"type":"object","name":"BoxZoomTool","id":"p1576","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1577","attributes":{"syncable":false,"level":"overlay","visible":false,"left_units":"canvas","right_units":"canvas","bottom_units":"canvas","top_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"SaveTool","id":"p1578"},{"type":"object","name":"ResetTool","id":"p1579"},{"type":"object","name":"HelpTool","id":"p1580"}]}},"left":[{"type":"object","name":"LinearAxis","id":"p1567","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1568","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1570"},"axis_label":"Spectrum","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1569"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}},{"type":"object","name":"Legend","id":"p1625","attributes":{"location":[0,0],"click_policy":"mute","items":[{"type":"object","name":"LegendItem","id":"p1626","attributes":{"label":{"type":"value","value":"0"},"renderers":[{"id":"p1595"}]}},{"type":"object","name":"LegendItem","id":"p1627","attributes":{"label":{"type":"value","value":"119"},"renderers":[{"id":"p1604"}]}},{"type":"object","name":"LegendItem","id":"p1628","attributes":{"label":{"type":"value","value":"239"},"renderers":[{"id":"p1613"}]}},{"type":"object","name":"LegendItem","id":"p1629","attributes":{"label":{"type":"value","value":"360"},"renderers":[{"id":"p1622"}]}}]}}],"below":[{"type":"object","name":"LinearAxis","id":"p1560","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1561","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1563"},"axis_label":"Wavelength [\u03bcm]","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1562"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}}],"center":[{"type":"object","name":"Grid","id":"p1566","attributes":{"axis":{"id":"p1560"}}},{"type":"object","name":"Grid","id":"p1573","attributes":{"dimension":1,"axis":{"id":"p1567"}}}]}}]}};
-  const render_items = [{"docid":"13bf9efd-82c1-4c27-a8d6-73a0b124c105","roots":{"p1543":"41d12d35-93af-40cf-869b-50cd29da662d"},"root_ids":["p1543"]}];
+  const docs_json = {"f9e40def-daf8-4004-9806-9df8527a49a4":{"version":"3.0.2","title":"Bokeh Application","defs":[],"roots":[{"type":"object","name":"Figure","id":"p1543","attributes":{"width":500,"height":345,"x_range":{"type":"object","name":"DataRange1d","id":"p1545"},"y_range":{"type":"object","name":"DataRange1d","id":"p1544"},"x_scale":{"type":"object","name":"LinearScale","id":"p1556"},"y_scale":{"type":"object","name":"LinearScale","id":"p1558"},"title":{"type":"object","name":"Title","id":"p1549"},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1595","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1589","attributes":{"selected":{"type":"object","name":"Selection","id":"p1590","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1591"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"xTOxu7NR+z/4IwvuHAz7Px51ZWM3x/o/8N43WAGD+j8oRXgNeT/6P75Fj8ic/Pk/QORM02q6+T8OUt174Xj5PyfTvRT/N/k/N7+x9MH3+D++nrd2KLj4P9hj/vkwefg/jr7a4dk6+D9CjLyVIf33PxtiJIEGwPc/ATKZE4eD9z8GCp7AoUf3P+ftp/9UDPc/bMoTTJ/R9j9aghwlf5f2P8wU0Q3zXfY/jdwKjfkk9j9e6GMtkez1P8hrLX24tPU/UkhmDm599T/ErrF2sEb1P1XYTU9+EPU/c9cKNdba9D/5f0HItqX0P4BmyqwecfQ/rPb0iQw99D8ooH4Kfwn0Pxoaitx01vM/3ryWseyj8z/B8Xc+5XHzP5O4TDtdQPM/1kJ3Y1MP8z8+pJR1xt7yP2uYdDO1rvI/lV0RYh5/8j/6o4fJAFDyP8qRDjVbIfI/e9vvcizz8T848H9Uc8XxPz46Fq4umPE/+nIFV11r8T+rCpQp/j7xP2Wj9AIQE/E/OZ8+w5Hn8D9NwWZNgrzwP8PhN4fgkfA/N7RLWatn8D+XoAOv4T3wP0eugXaCFPA/"},"shape":[54],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"3HkEEelbJkD+2rcq4hosQKgzqW50lypAYUftyOCBJ0AL+W8x2CAoQD8kZFk2uyNA4lBpdeDKIUDugUdDt7AZQDelKPXk+BRAkZlLOPKKDUBrcbWicswHQL0kc+M7wgFAxXStsBMA/z8IE3y1TXv7P85gFuZAOfQ/oSmKrufT7j9Icl7V8VzsPxJMwHF3/uQ/3a3kaQs94j+7nv2P/IfmP/QMDzGE+eE/xrkmiiW94z/VvZ91skveP1BnbvRF0+I/5Z/jvkpY5D8MEN/a15b8P62nncvaTApAE4LlT9ujEUDX6usCKJQSQGptm6Lr4hBAUhmfXmosEEAUZ+2/87ILQAlg92A4EAdAzC9RzM+1AEBs0uaUBgX8P+RvQbPpJvM/v/HBy9Zs8D8Tj/Zk6EjoP9tlgMVvwOY/enlmdX1W4T9IPpk4fOXjP9Lt7mdyn9o/lFXaev653z+T7P4gwRnlP310zGKWMus/2YO5aVTy/T/xCcqzRHsNQHC3t4EgOgxAnWCYE8ZnBkBVwhBfQw4BQCvcH9ey8f8/uwF/Cjm88z+2k+UHagbwP8wy4+G+euI/"},"shape":[54],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1596","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1597"}}},"glyph":{"type":"object","name":"Line","id":"p1592","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#440154","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1593","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#440154","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1594","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#440154","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1604","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1598","attributes":{"selected":{"type":"object","name":"Selection","id":"p1599","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1600"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"xTOxu7NR+z/4IwvuHAz7Px51ZWM3x/o/8N43WAGD+j8oRXgNeT/6P75Fj8ic/Pk/QORM02q6+T8OUt174Xj5PyfTvRT/N/k/N7+x9MH3+D++nrd2KLj4P9hj/vkwefg/jr7a4dk6+D9CjLyVIf33PxtiJIEGwPc/ATKZE4eD9z8GCp7AoUf3P+ftp/9UDPc/bMoTTJ/R9j9aghwlf5f2P8wU0Q3zXfY/jdwKjfkk9j9e6GMtkez1P8hrLX24tPU/UkhmDm599T/ErrF2sEb1P1XYTU9+EPU/c9cKNdba9D/5f0HItqX0P4BmyqwecfQ/rPb0iQw99D8ooH4Kfwn0Pxoaitx01vM/3ryWseyj8z/B8Xc+5XHzP5O4TDtdQPM/1kJ3Y1MP8z8+pJR1xt7yP2uYdDO1rvI/lV0RYh5/8j/6o4fJAFDyP8qRDjVbIfI/e9vvcizz8T848H9Uc8XxPz46Fq4umPE/+nIFV11r8T+rCpQp/j7xP2Wj9AIQE/E/OZ8+w5Hn8D9NwWZNgrzwP8PhN4fgkfA/N7RLWatn8D+XoAOv4T3wP0eugXaCFPA/"},"shape":[54],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"nk07HnyGIUAR+5V/hloiQDM59nqsRSFA2wNgrPhtH0AedDlwQJAeQPqJu9eNKBtANF7jLelTGUCFY504qhkWQH2GdxHlHBRAS0rTTz2IEUDBrDTW2u4PQLq6RLXzDQ1ABWmvwdUqC0CRMEQvmoYJQFNumxawDwdAQOxR0WExBUDVFr1/vIEDQKOS4TTkcAFAnU6o2WyZAEDe/U3ggigAQIvxCp5emfw/vQWTuhVk+z/w3hk6jsn4P5nR3FQmcPg/FyT0HMFW9z/0y3QhWAD8P28+Oo5dbABAJ+xuHZLOAUDOO+TVqq4BQMDyWS9Q4f8/imEfjiK2/T/lFW2sfov6P74WOLE7nvc/FLGJWOSK8z/0yZCwFW3xP8OIQcAlNe0/D/qMvWhK6j9jhBaKvr/mP/ekWCBL9OQ/QgxfME2K4j8LT+/TeB7iP5hmffM3P98/9qsLjdgk3j+u+ySItnTfP0tq7On6K+A/TB3Ko83F5T+87B+Jgy7wP00IpfuJk+4/m8oQeBP46D8kiKe6DR3kP4wzKD66xuI/cvZFYuWX2j/yoByyIa/WP4++smKzGtA/"},"shape":[54],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1605","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1606"}}},"glyph":{"type":"object","name":"Line","id":"p1601","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#30678D","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1602","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#30678D","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1603","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#30678D","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1613","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1607","attributes":{"selected":{"type":"object","name":"Selection","id":"p1608","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1609"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"xTOxu7NR+z/4IwvuHAz7Px51ZWM3x/o/8N43WAGD+j8oRXgNeT/6P75Fj8ic/Pk/QORM02q6+T8OUt174Xj5PyfTvRT/N/k/N7+x9MH3+D++nrd2KLj4P9hj/vkwefg/jr7a4dk6+D9CjLyVIf33PxtiJIEGwPc/ATKZE4eD9z8GCp7AoUf3P+ftp/9UDPc/bMoTTJ/R9j9aghwlf5f2P8wU0Q3zXfY/jdwKjfkk9j9e6GMtkez1P8hrLX24tPU/UkhmDm599T/ErrF2sEb1P1XYTU9+EPU/c9cKNdba9D/5f0HItqX0P4BmyqwecfQ/rPb0iQw99D8ooH4Kfwn0Pxoaitx01vM/3ryWseyj8z/B8Xc+5XHzP5O4TDtdQPM/1kJ3Y1MP8z8+pJR1xt7yP2uYdDO1rvI/lV0RYh5/8j/6o4fJAFDyP8qRDjVbIfI/e9vvcizz8T848H9Uc8XxPz46Fq4umPE/+nIFV11r8T+rCpQp/j7xP2Wj9AIQE/E/OZ8+w5Hn8D9NwWZNgrzwP8PhN4fgkfA/N7RLWatn8D+XoAOv4T3wP0eugXaCFPA/"},"shape":[54],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"pCkE04NiNUBBmvJdb7U5QKF2gOU2VDhA1lZbA6SbNUBmq8VVXes1QBCcNHhfIjJAVdZPlSx1MEAAsyAe+Z4oQGYONNjjtCRA+nHf4QHrHkAnZSkz8ewZQAO9J95MsBRAP2GpY0t5EkAmwowVU+YQQDbvSje68wpAx4A435kyBkA7py8RRZ8EQDpmZJBKhgBAEx/+NK1c/j83jZRhk0ABQB2U769R2vw/hOEerfHC/j8HuXZ/yrL4PyDYOqHM1/w/TTIwuta0/T+2B62UpPYOQFpqo9xY0hlAVA1sTvueIEBvShY6bWEhQH3h5O41gR9Att1MSGf+HUDzh89uXfAZQIryVKiT9xVAub/TpHpbEECtUMNe0c8LQNiWnCWWLQRAh9JYsYRyAUAtTMznJVz7PyCvQcE8hPk/zLNAQlam9D9pSL+tdJT2P46CpeoSt/A/JO7sqS6i8j/Azinqpxv3P2br8zGqBfw/BiRDA6L6C0CVAuTB9mQaQJ56YksyORlAXoKt/9cZFEBv/0IpTv4OQN1LDPPM1gxAUX4HuppFAkACYmYBYSL+P3dZHTx6RfI/"},"shape":[54],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1614","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1615"}}},"glyph":{"type":"object","name":"Line","id":"p1610","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#35B778","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1611","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#35B778","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1612","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#35B778","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1622","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1616","attributes":{"selected":{"type":"object","name":"Selection","id":"p1617","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1618"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"xTOxu7NR+z/4IwvuHAz7Px51ZWM3x/o/8N43WAGD+j8oRXgNeT/6P75Fj8ic/Pk/QORM02q6+T8OUt174Xj5PyfTvRT/N/k/N7+x9MH3+D++nrd2KLj4P9hj/vkwefg/jr7a4dk6+D9CjLyVIf33PxtiJIEGwPc/ATKZE4eD9z8GCp7AoUf3P+ftp/9UDPc/bMoTTJ/R9j9aghwlf5f2P8wU0Q3zXfY/jdwKjfkk9j9e6GMtkez1P8hrLX24tPU/UkhmDm599T/ErrF2sEb1P1XYTU9+EPU/c9cKNdba9D/5f0HItqX0P4BmyqwecfQ/rPb0iQw99D8ooH4Kfwn0Pxoaitx01vM/3ryWseyj8z/B8Xc+5XHzP5O4TDtdQPM/1kJ3Y1MP8z8+pJR1xt7yP2uYdDO1rvI/lV0RYh5/8j/6o4fJAFDyP8qRDjVbIfI/e9vvcizz8T848H9Uc8XxPz46Fq4umPE/+nIFV11r8T+rCpQp/j7xP2Wj9AIQE/E/OZ8+w5Hn8D9NwWZNgrzwP8PhN4fgkfA/N7RLWatn8D+XoAOv4T3wP0eugXaCFPA/"},"shape":[54],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"3HkEEelbJkD+2rcq4hosQKgzqW50lypAYUftyOCBJ0AL+W8x2CAoQD8kZFk2uyNA4lBpdeDKIUDugUdDt7AZQDelKPXk+BRAkZlLOPKKDUBrcbWicswHQL0kc+M7wgFAxXStsBMA/z8IE3y1TXv7P85gFuZAOfQ/oSmKrufT7j9Icl7V8VzsPxJMwHF3/uQ/3a3kaQs94j+7nv2P/IfmP/QMDzGE+eE/xrkmiiW94z/VvZ91skveP1BnbvRF0+I/5Z/jvkpY5D8MEN/a15b8P62nncvaTApAE4LlT9ujEUDX6usCKJQSQGptm6Lr4hBAUhmfXmosEEAUZ+2/87ILQAlg92A4EAdAzC9RzM+1AEBs0uaUBgX8P+RvQbPpJvM/v/HBy9Zs8D8Tj/Zk6EjoP9tlgMVvwOY/enlmdX1W4T9IPpk4fOXjP9Lt7mdyn9o/lFXaev653z+T7P4gwRnlP310zGKWMus/2YO5aVTy/T/xCcqzRHsNQHC3t4EgOgxAnWCYE8ZnBkBVwhBfQw4BQCvcH9ey8f8/uwF/Cjm88z+2k+UHagbwP8wy4+G+euI/"},"shape":[54],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1623","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1624"}}},"glyph":{"type":"object","name":"Line","id":"p1619","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FDE724","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1620","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FDE724","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1621","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FDE724","line_alpha":0.2,"line_width":3}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1546","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1574"},{"type":"object","name":"WheelZoomTool","id":"p1575"},{"type":"object","name":"BoxZoomTool","id":"p1576","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1577","attributes":{"syncable":false,"level":"overlay","visible":false,"left_units":"canvas","right_units":"canvas","bottom_units":"canvas","top_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"SaveTool","id":"p1578"},{"type":"object","name":"ResetTool","id":"p1579"},{"type":"object","name":"HelpTool","id":"p1580"}]}},"left":[{"type":"object","name":"LinearAxis","id":"p1567","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1569","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1568"},"axis_label":"Spectrum","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1570"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}},{"type":"object","name":"Legend","id":"p1625","attributes":{"location":[0,0],"click_policy":"mute","items":[{"type":"object","name":"LegendItem","id":"p1626","attributes":{"label":{"type":"value","value":"0"},"renderers":[{"id":"p1595"}]}},{"type":"object","name":"LegendItem","id":"p1627","attributes":{"label":{"type":"value","value":"119"},"renderers":[{"id":"p1604"}]}},{"type":"object","name":"LegendItem","id":"p1628","attributes":{"label":{"type":"value","value":"239"},"renderers":[{"id":"p1613"}]}},{"type":"object","name":"LegendItem","id":"p1629","attributes":{"label":{"type":"value","value":"360"},"renderers":[{"id":"p1622"}]}}]}}],"below":[{"type":"object","name":"LinearAxis","id":"p1560","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1562","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1561"},"axis_label":"Wavelength [\u03bcm]","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1563"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}}],"center":[{"type":"object","name":"Grid","id":"p1566","attributes":{"axis":{"id":"p1560"}}},{"type":"object","name":"Grid","id":"p1573","attributes":{"dimension":1,"axis":{"id":"p1567"}}}]}}]}};
+  const render_items = [{"docid":"f9e40def-daf8-4004-9806-9df8527a49a4","roots":{"p1543":"8c65bc67-75b9-4259-8c72-f7d23ea2424c"},"root_ids":["p1543"]}];
   root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
   }
   if (root.Bokeh !== undefined) {
@@ -2029,7 +2099,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area rendered_html docutils container">
-<div id="47b170ea-565d-420d-9421-b030177b01ca" data-root-id="p1876" style="display: contents;"></div></div>
+<div id="d8650c27-08c9-4a12-82a6-e070f796a3fe" data-root-id="p1876" style="display: contents;"></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
@@ -2040,8 +2110,8 @@ var element = document.currentScript.previousSibling.previousSibling;
 var element = document.currentScript.previousSibling.previousSibling;
 (function(root) {
   function embed_document(root) {
-  const docs_json = {"2dfb7c20-83ef-4c44-b7e6-c17d9f915bfc":{"version":"3.0.2","title":"Bokeh Application","defs":[],"roots":[{"type":"object","name":"Figure","id":"p1876","attributes":{"height":400,"x_range":{"type":"object","name":"DataRange1d","id":"p1877"},"y_range":{"type":"object","name":"DataRange1d","id":"p1878"},"x_scale":{"type":"object","name":"LinearScale","id":"p1890"},"y_scale":{"type":"object","name":"LinearScale","id":"p1892"},"title":{"type":"object","name":"Title","id":"p1879","attributes":{"text":"Phase Curves"}},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1929","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1923","attributes":{"selected":{"type":"object","name":"Selection","id":"p1924","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1925"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"AAAAAAAAAAD///////9dQP///////21AAAAAAACAdkA="},"shape":[4],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"zgBhDUzUrD7zCDbiK/mgPsOYlfWBcL0+zgBhDUzUrD4="},"shape":[4],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1930","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1931"}}},"glyph":{"type":"object","name":"Line","id":"p1926","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#5e4fa2","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1927","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#5e4fa2","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1928","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#5e4fa2","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1938","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1932","attributes":{"selected":{"type":"object","name":"Selection","id":"p1933","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1934"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"AAAAAAAAAAD///////9dQP///////21AAAAAAACAdkA="},"shape":[4],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"3AiABWy+oj5M6vhpXgG+Pv88d6knVr4+3AiABWy+oj4="},"shape":[4],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1939","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1940"}}},"glyph":{"type":"object","name":"Line","id":"p1935","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#3288bd","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1936","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#3288bd","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1937","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#3288bd","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1947","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1941","attributes":{"selected":{"type":"object","name":"Selection","id":"p1942","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1943"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"AAAAAAAAAAD///////9dQP///////21AAAAAAACAdkA="},"shape":[4],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"8g2NZwXi2j6deeghkCrXPkFOISZ55ek+8g2NZwXi2j4="},"shape":[4],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1948","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1949"}}},"glyph":{"type":"object","name":"Line","id":"p1944","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#66c2a5","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1945","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#66c2a5","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1946","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#66c2a5","line_alpha":0.2,"line_width":3}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1883","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1908"},{"type":"object","name":"WheelZoomTool","id":"p1909"},{"type":"object","name":"BoxZoomTool","id":"p1910","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1911","attributes":{"syncable":false,"level":"overlay","visible":false,"left_units":"canvas","right_units":"canvas","bottom_units":"canvas","top_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"SaveTool","id":"p1912"},{"type":"object","name":"ResetTool","id":"p1913"},{"type":"object","name":"HelpTool","id":"p1914"}]}},"left":[{"type":"object","name":"LinearAxis","id":"p1901","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1902","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1904"},"axis_label":"fpfs_thermal","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1903"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}},{"type":"object","name":"Legend","id":"p1950","attributes":{"location":[0,-20],"click_policy":"mute","items":[{"type":"object","name":"LegendItem","id":"p1951","attributes":{"label":{"type":"value","value":"1.09um"},"renderers":[{"id":"p1929"}]}},{"type":"object","name":"LegendItem","id":"p1952","attributes":{"label":{"type":"value","value":"1.39um"},"renderers":[{"id":"p1938"}]}},{"type":"object","name":"LegendItem","id":"p1953","attributes":{"label":{"type":"value","value":"1.59um"},"renderers":[{"id":"p1947"}]}}]}}],"below":[{"type":"object","name":"LinearAxis","id":"p1894","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1895","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1897"},"axis_label":"Orbital Phase","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1896"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}}],"center":[{"type":"object","name":"Grid","id":"p1900","attributes":{"axis":{"id":"p1894"},"grid_line_alpha":0}},{"type":"object","name":"Grid","id":"p1907","attributes":{"dimension":1,"axis":{"id":"p1901"},"grid_line_alpha":0}}]}}]}};
-  const render_items = [{"docid":"2dfb7c20-83ef-4c44-b7e6-c17d9f915bfc","roots":{"p1876":"47b170ea-565d-420d-9421-b030177b01ca"},"root_ids":["p1876"]}];
+  const docs_json = {"82adb895-97ec-4e4a-843c-2594311ea3a4":{"version":"3.0.2","title":"Bokeh Application","defs":[],"roots":[{"type":"object","name":"Figure","id":"p1876","attributes":{"height":400,"x_range":{"type":"object","name":"DataRange1d","id":"p1878"},"y_range":{"type":"object","name":"DataRange1d","id":"p1877"},"x_scale":{"type":"object","name":"LinearScale","id":"p1890"},"y_scale":{"type":"object","name":"LinearScale","id":"p1892"},"title":{"type":"object","name":"Title","id":"p1879","attributes":{"text":"Phase Curves"}},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1929","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1923","attributes":{"selected":{"type":"object","name":"Selection","id":"p1924","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1925"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"AAAAAAAAAAD///////9dQP///////21AAAAAAACAdkA="},"shape":[4],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"wcvzVc2ErD7kYVx0FfWgPiG/CP0hYr0+wcvzVc2ErD4="},"shape":[4],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1930","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1931"}}},"glyph":{"type":"object","name":"Line","id":"p1926","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#5e4fa2","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1927","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#5e4fa2","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1928","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#5e4fa2","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1938","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1932","attributes":{"selected":{"type":"object","name":"Selection","id":"p1933","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1934"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"AAAAAAAAAAD///////9dQP///////21AAAAAAACAdkA="},"shape":[4],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"/WdiJQrZoj6IQtYvA/29PuQX7e4dQb4+/WdiJQrZoj4="},"shape":[4],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1939","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1940"}}},"glyph":{"type":"object","name":"Line","id":"p1935","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#3288bd","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1936","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#3288bd","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1937","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#3288bd","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1947","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1941","attributes":{"selected":{"type":"object","name":"Selection","id":"p1942","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1943"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"AAAAAAAAAAD///////9dQP///////21AAAAAAACAdkA="},"shape":[4],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"nHpAuS/w2j7duUndfSzXPtv3aHYl0ek+nHpAuS/w2j4="},"shape":[4],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1948","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1949"}}},"glyph":{"type":"object","name":"Line","id":"p1944","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#66c2a5","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1945","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#66c2a5","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1946","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#66c2a5","line_alpha":0.2,"line_width":3}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1881","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1908"},{"type":"object","name":"WheelZoomTool","id":"p1909"},{"type":"object","name":"BoxZoomTool","id":"p1910","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1911","attributes":{"syncable":false,"level":"overlay","visible":false,"left_units":"canvas","right_units":"canvas","bottom_units":"canvas","top_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"SaveTool","id":"p1912"},{"type":"object","name":"ResetTool","id":"p1913"},{"type":"object","name":"HelpTool","id":"p1914"}]}},"left":[{"type":"object","name":"LinearAxis","id":"p1901","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1903","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1902"},"axis_label":"fpfs_thermal","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1904"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}},{"type":"object","name":"Legend","id":"p1950","attributes":{"location":[0,-20],"click_policy":"mute","items":[{"type":"object","name":"LegendItem","id":"p1951","attributes":{"label":{"type":"value","value":"1.09um"},"renderers":[{"id":"p1929"}]}},{"type":"object","name":"LegendItem","id":"p1952","attributes":{"label":{"type":"value","value":"1.39um"},"renderers":[{"id":"p1938"}]}},{"type":"object","name":"LegendItem","id":"p1953","attributes":{"label":{"type":"value","value":"1.59um"},"renderers":[{"id":"p1947"}]}}]}}],"below":[{"type":"object","name":"LinearAxis","id":"p1894","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1896","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1895"},"axis_label":"Orbital Phase","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1897"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}}],"center":[{"type":"object","name":"Grid","id":"p1900","attributes":{"axis":{"id":"p1894"},"grid_line_alpha":0}},{"type":"object","name":"Grid","id":"p1907","attributes":{"dimension":1,"axis":{"id":"p1901"},"grid_line_alpha":0}}]}}]}};
+  const render_items = [{"docid":"82adb895-97ec-4e4a-843c-2594311ea3a4","roots":{"p1876":"d8650c27-08c9-4a12-82a6-e070f796a3fe"},"root_ids":["p1876"]}];
   root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
   }
   if (root.Bokeh !== undefined) {
@@ -2078,7 +2148,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/notebooks_9e_PhaseCurves_35_0.png" src="../_images/notebooks_9e_PhaseCurves_35_0.png" />
+<img alt="../_images/notebooks_9e_PhaseCurves_34_0.png" src="../_images/notebooks_9e_PhaseCurves_34_0.png" />
 </div>
 </div>
 <div class="nbinput docutils container">
@@ -2098,7 +2168,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/notebooks_9e_PhaseCurves_36_0.png" src="../_images/notebooks_9e_PhaseCurves_36_0.png" />
+<img alt="../_images/notebooks_9e_PhaseCurves_35_0.png" src="../_images/notebooks_9e_PhaseCurves_35_0.png" />
 </div>
 </div>
 <div class="nbinput nblast docutils container">

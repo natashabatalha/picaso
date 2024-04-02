@@ -1,24 +1,25 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Handling 3D Inputs with PICASO &mdash; picaso 3.1 documentation</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/nbsphinx-code-cells.css" type="text/css" />
+  <title>Handling 3D Inputs with PICASO &mdash; picaso 3.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b76e3c8a" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=720011df" />
+
+  
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/doctools.js"></script>
+        <script src="../_static/documentation_options.js?v=828ea960"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -38,7 +39,7 @@
             picaso
           </a>
               <div class="version">
-                3.1
+                3.2
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -126,7 +127,7 @@
 </li><li><p>1.3  xesfm tutorial: Step-by-step regrid 3D GCM</p>
 </li><li><p>1.4  Regrid 3D GCM with PICASO</p>
 </li></ul></li></ul></div><section id="Handling-3D-Inputs-with-PICASO">
-<h1>Handling 3D Inputs with PICASO<a class="headerlink" href="#Handling-3D-Inputs-with-PICASO" title="Permalink to this headline">¶</a></h1>
+<h1>Handling 3D Inputs with PICASO<a class="headerlink" href="#Handling-3D-Inputs-with-PICASO" title="Link to this heading">¶</a></h1>
 <p>Many GCM groups have their files stored as <code class="docutils literal notranslate"><span class="pre">netCDF</span></code> files. Therefore, you may already be used to <code class="docutils literal notranslate"><span class="pre">xarray</span></code> format. If that is the case you will be able to directly input your xarray formatted data to <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> to get out post-processed spectra. If not though, this tutorial will walk you through how to structure your data in xarray format.</p>
 <p>What you will learn:</p>
 <ol class="arabic simple">
@@ -204,7 +205,7 @@ dict_keys([&#39;pressure&#39;, &#39;temperature&#39;, &#39;kzz&#39;, &#39;latitu
 </pre></div></div>
 </div>
 <section id="xarray-tutorial:-Convert-numpy-arrays-to-xarray-DataSet">
-<h2><code class="docutils literal notranslate"><span class="pre">xarray</span></code> tutorial: Convert <code class="docutils literal notranslate"><span class="pre">numpy</span></code> arrays to <code class="docutils literal notranslate"><span class="pre">xarray</span></code> DataSet<a class="headerlink" href="#xarray-tutorial:-Convert-numpy-arrays-to-xarray-DataSet" title="Permalink to this headline">¶</a></h2>
+<h2><code class="docutils literal notranslate"><span class="pre">xarray</span></code> tutorial: Convert <code class="docutils literal notranslate"><span class="pre">numpy</span></code> arrays to <code class="docutils literal notranslate"><span class="pre">xarray</span></code> DataSet<a class="headerlink" href="#xarray-tutorial:-Convert-numpy-arrays-to-xarray-DataSet" title="Link to this heading">¶</a></h2>
 <p>The comments with <code class="docutils literal notranslate"><span class="pre">required</span></code> next to them indicate that they are required for <code class="docutils literal notranslate"><span class="pre">picaso</span></code> to create a spectrum</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
@@ -278,6 +279,7 @@ dict_keys([&#39;pressure&#39;, &#39;temperature&#39;, &#39;kzz&#39;, &#39;latitu
 }
 
 html[theme=dark],
+body[data-theme=dark],
 body.vscode-dark {
   --xr-font-color0: rgba(255, 255, 255, 1);
   --xr-font-color2: rgba(255, 255, 255, 0.54);
@@ -290,7 +292,7 @@ body.vscode-dark {
 }
 
 .xr-wrap {
-  display: block;
+  display: block !important;
   min-width: 300px;
   max-width: 700px;
 }
@@ -507,6 +509,11 @@ body.vscode-dark {
   grid-column: 4;
 }
 
+.xr-index-preview {
+  grid-column: 2 / 5;
+  color: var(--xr-font-color2);
+}
+
 .xr-var-name,
 .xr-var-dims,
 .xr-var-dtype,
@@ -528,14 +535,16 @@ body.vscode-dark {
 }
 
 .xr-var-attrs,
-.xr-var-data {
+.xr-var-data,
+.xr-index-data {
   display: none;
   background-color: var(--xr-background-color) !important;
   padding-bottom: 5px !important;
 }
 
 .xr-var-attrs-in:checked ~ .xr-var-attrs,
-.xr-var-data-in:checked ~ .xr-var-data {
+.xr-var-data-in:checked ~ .xr-var-data,
+.xr-index-data-in:checked ~ .xr-index-data {
   display: block;
 }
 
@@ -545,13 +554,16 @@ body.vscode-dark {
 
 .xr-var-name span,
 .xr-var-data,
+.xr-index-name div,
+.xr-index-data,
 .xr-attrs {
   padding-left: 25px !important;
 }
 
 .xr-attrs,
 .xr-var-attrs,
-.xr-var-data {
+.xr-var-data,
+.xr-index-data {
   grid-column: 1 / -1;
 }
 
@@ -589,7 +601,8 @@ dl.xr-attrs {
 }
 
 .xr-icon-database,
-.xr-icon-file-text2 {
+.xr-icon-file-text2,
+.xr-no-icon {
   display: inline-block;
   vertical-align: middle;
   width: 1em;
@@ -598,16 +611,16 @@ dl.xr-attrs {
   stroke: currentColor;
   fill: currentColor;
 }
-</style><pre class='xr-text-repr-fallback'>&lt;xarray.Dataset&gt;
+</style><pre class='xr-text-repr-fallback'>&lt;xarray.Dataset&gt; Size: 3MB
 Dimensions:      (lon: 128, lat: 64, pressure: 53)
 Coordinates:
-  * lon          (lon) float64 -180.0 -177.2 -174.4 -171.6 ... 171.6 174.4 177.2
-  * lat          (lat) float64 -90.0 -87.19 -84.38 -81.56 ... 81.56 84.38 87.19
-  * pressure     (pressure) float64 170.6 120.5 85.15 ... 3.42e-06 2.416e-06
+  * lon          (lon) float64 1kB -180.0 -177.2 -174.4 ... 171.6 174.4 177.2
+  * lat          (lat) float64 512B -90.0 -87.19 -84.38 ... 81.56 84.38 87.19
+  * pressure     (pressure) float64 424B 170.6 120.5 ... 3.42e-06 2.416e-06
 Data variables:
-    temperature  (lon, lat, pressure) float64 1.896e+03 1.809e+03 ... 750.7
+    temperature  (lon, lat, pressure) float64 3MB 1.896e+03 1.809e+03 ... 750.7
 Attributes:
-    description:  coords with vectors</pre><div class='xr-wrap' hidden><div class='xr-header'><div class='xr-obj-type'>xarray.Dataset</div></div><ul class='xr-sections'><li class='xr-section-item'><input id='section-863bed6d-8785-47df-af1d-c66a859e4648' class='xr-section-summary-in' type='checkbox' disabled ><label for='section-863bed6d-8785-47df-af1d-c66a859e4648' class='xr-section-summary'  title='Expand/collapse section'>Dimensions:</label><div class='xr-section-inline-details'><ul class='xr-dim-list'><li><span class='xr-has-index'>lon</span>: 128</li><li><span class='xr-has-index'>lat</span>: 64</li><li><span class='xr-has-index'>pressure</span>: 53</li></ul></div><div class='xr-section-details'></div></li><li class='xr-section-item'><input id='section-180c6806-ec47-47f8-88c0-72bd2143318d' class='xr-section-summary-in' type='checkbox'  checked><label for='section-180c6806-ec47-47f8-88c0-72bd2143318d' class='xr-section-summary' >Coordinates: <span>(3)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>lon</span></div><div class='xr-var-dims'>(lon)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-180.0 -177.2 ... 174.4 177.2</div><input id='attrs-ad474533-a1c2-44e2-a41e-d44e8148cda3' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-ad474533-a1c2-44e2-a41e-d44e8148cda3' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-8d4cb0a0-bcdc-4d38-ac5f-81b8de12177c' class='xr-var-data-in' type='checkbox'><label for='data-8d4cb0a0-bcdc-4d38-ac5f-81b8de12177c' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>degrees</dd></dl></div><div class='xr-var-data'><pre>array([-180.    , -177.1875, -174.375 , -171.5625, -168.75  , -165.9375,
+    description:  coords with vectors</pre><div class='xr-wrap' style='display:none'><div class='xr-header'><div class='xr-obj-type'>xarray.Dataset</div></div><ul class='xr-sections'><li class='xr-section-item'><input id='section-2a4d02e0-b53a-4d99-97df-5b8f9bb8b46a' class='xr-section-summary-in' type='checkbox' disabled ><label for='section-2a4d02e0-b53a-4d99-97df-5b8f9bb8b46a' class='xr-section-summary'  title='Expand/collapse section'>Dimensions:</label><div class='xr-section-inline-details'><ul class='xr-dim-list'><li><span class='xr-has-index'>lon</span>: 128</li><li><span class='xr-has-index'>lat</span>: 64</li><li><span class='xr-has-index'>pressure</span>: 53</li></ul></div><div class='xr-section-details'></div></li><li class='xr-section-item'><input id='section-58497a65-9614-430c-943e-fc8a684447cd' class='xr-section-summary-in' type='checkbox'  checked><label for='section-58497a65-9614-430c-943e-fc8a684447cd' class='xr-section-summary' >Coordinates: <span>(3)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>lon</span></div><div class='xr-var-dims'>(lon)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-180.0 -177.2 ... 174.4 177.2</div><input id='attrs-69e95f17-36e0-41b1-bc96-f6a46b566186' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-69e95f17-36e0-41b1-bc96-f6a46b566186' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-3d27a9f1-921f-44a1-b25b-3d35980bacb9' class='xr-var-data-in' type='checkbox'><label for='data-3d27a9f1-921f-44a1-b25b-3d35980bacb9' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>degrees</dd></dl></div><div class='xr-var-data'><pre>array([-180.    , -177.1875, -174.375 , -171.5625, -168.75  , -165.9375,
        -163.125 , -160.3125, -157.5   , -154.6875, -151.875 , -149.0625,
        -146.25  , -143.4375, -140.625 , -137.8125, -135.    , -132.1875,
        -129.375 , -126.5625, -123.75  , -120.9375, -118.125 , -115.3125,
@@ -628,7 +641,7 @@ Attributes:
         123.75  ,  126.5625,  129.375 ,  132.1875,  135.    ,  137.8125,
         140.625 ,  143.4375,  146.25  ,  149.0625,  151.875 ,  154.6875,
         157.5   ,  160.3125,  163.125 ,  165.9375,  168.75  ,  171.5625,
-        174.375 ,  177.1875])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>lat</span></div><div class='xr-var-dims'>(lat)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-90.0 -87.19 -84.38 ... 84.38 87.19</div><input id='attrs-d224732d-801e-4378-aeeb-fbef7df5af91' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-d224732d-801e-4378-aeeb-fbef7df5af91' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-510bdf81-1837-4719-82ad-f6157ba6df5f' class='xr-var-data-in' type='checkbox'><label for='data-510bdf81-1837-4719-82ad-f6157ba6df5f' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>degrees</dd></dl></div><div class='xr-var-data'><pre>array([-90.    , -87.1875, -84.375 , -81.5625, -78.75  , -75.9375, -73.125 ,
+        174.375 ,  177.1875])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>lat</span></div><div class='xr-var-dims'>(lat)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-90.0 -87.19 -84.38 ... 84.38 87.19</div><input id='attrs-03c82701-574e-41df-bb6c-91884de892e8' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-03c82701-574e-41df-bb6c-91884de892e8' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-b8c734d9-dc4d-4c7d-b258-d1090d0082ae' class='xr-var-data-in' type='checkbox'><label for='data-b8c734d9-dc4d-4c7d-b258-d1090d0082ae' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>degrees</dd></dl></div><div class='xr-var-data'><pre>array([-90.    , -87.1875, -84.375 , -81.5625, -78.75  , -75.9375, -73.125 ,
        -70.3125, -67.5   , -64.6875, -61.875 , -59.0625, -56.25  , -53.4375,
        -50.625 , -47.8125, -45.    , -42.1875, -39.375 , -36.5625, -33.75  ,
        -30.9375, -28.125 , -25.3125, -22.5   , -19.6875, -16.875 , -14.0625,
@@ -637,7 +650,7 @@ Attributes:
         28.125 ,  30.9375,  33.75  ,  36.5625,  39.375 ,  42.1875,  45.    ,
         47.8125,  50.625 ,  53.4375,  56.25  ,  59.0625,  61.875 ,  64.6875,
         67.5   ,  70.3125,  73.125 ,  75.9375,  78.75  ,  81.5625,  84.375 ,
-        87.1875])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>pressure</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>170.6 120.5 ... 3.42e-06 2.416e-06</div><input id='attrs-a60bd62a-5ffb-40ef-bc1a-fe8f071a1000' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-a60bd62a-5ffb-40ef-bc1a-fe8f071a1000' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-ce9f3297-7f8e-4e57-a7c3-62968d81de37' class='xr-var-data-in' type='checkbox'><label for='data-ce9f3297-7f8e-4e57-a7c3-62968d81de37' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>bar</dd></dl></div><div class='xr-var-data'><pre>array([1.706410e+02, 1.205424e+02, 8.515232e+01, 6.015242e+01, 4.249225e+01,
+        87.1875])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>pressure</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>170.6 120.5 ... 3.42e-06 2.416e-06</div><input id='attrs-a59bd2b5-e109-4fee-bef1-dd2859e00178' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-a59bd2b5-e109-4fee-bef1-dd2859e00178' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-5ba564a2-7127-430b-a09c-d9101a8081da' class='xr-var-data-in' type='checkbox'><label for='data-5ba564a2-7127-430b-a09c-d9101a8081da' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>bar</dd></dl></div><div class='xr-var-data'><pre>array([1.706410e+02, 1.205424e+02, 8.515232e+01, 6.015242e+01, 4.249225e+01,
        3.001693e+01, 2.120425e+01, 1.497889e+01, 1.058123e+01, 7.474682e+00,
        5.280187e+00, 3.729975e+00, 2.634890e+00, 1.861312e+00, 1.314849e+00,
        9.288217e-01, 6.561286e-01, 4.634955e-01, 3.274177e-01, 2.312910e-01,
@@ -647,7 +660,7 @@ Attributes:
        8.893330e-04, 6.282334e-04, 4.437901e-04, 3.134976e-04, 2.214577e-04,
        1.564399e-04, 1.105106e-04, 7.806577e-05, 5.514641e-05, 3.895596e-05,
        2.751886e-05, 1.943959e-05, 1.373231e-05, 9.700637e-06, 6.852624e-06,
-       4.840759e-06, 3.419559e-06, 2.415609e-06])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-a0247d3f-8c60-46c5-b776-d5bed52c52f8' class='xr-section-summary-in' type='checkbox'  checked><label for='section-a0247d3f-8c60-46c5-b776-d5bed52c52f8' class='xr-section-summary' >Data variables: <span>(1)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span>temperature</span></div><div class='xr-var-dims'>(lon, lat, pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>1.896e+03 1.809e+03 ... 742.2 750.7</div><input id='attrs-5dba85b3-e3b4-4d23-86d1-014043886f2d' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-5dba85b3-e3b4-4d23-86d1-014043886f2d' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-f12cb60b-fd0d-413b-8944-93625bcc1142' class='xr-var-data-in' type='checkbox'><label for='data-f12cb60b-fd0d-413b-8944-93625bcc1142' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([[[1895.999275, 1809.121113, 1810.600187, ...,  752.67337 ,
+       4.840759e-06, 3.419559e-06, 2.415609e-06])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-62a67028-9df5-495c-8794-a1b8378e9ee3' class='xr-section-summary-in' type='checkbox'  checked><label for='section-62a67028-9df5-495c-8794-a1b8378e9ee3' class='xr-section-summary' >Data variables: <span>(1)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span>temperature</span></div><div class='xr-var-dims'>(lon, lat, pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>1.896e+03 1.809e+03 ... 742.2 750.7</div><input id='attrs-5fc3c44c-4279-4e6b-8ad2-2865a0d5401d' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-5fc3c44c-4279-4e6b-8ad2-2865a0d5401d' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-fa03742a-b7f7-4ea6-831f-3cbf92c06b88' class='xr-var-data-in' type='checkbox'><label for='data-fa03742a-b7f7-4ea6-831f-3cbf92c06b88' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([[[1895.999275, 1809.121113, 1810.600187, ...,  752.67337 ,
           746.530746,  749.708642],
         [1895.999275, 1809.121113, 1810.600187, ...,  752.67337 ,
           746.530746,  749.708642],
@@ -687,11 +700,37 @@ Attributes:
         [1895.488022, 1809.344052, 1811.008027, ...,  732.364899,
           713.620993,  715.700735],
         [1895.813241, 1809.5611  , 1811.11074 , ...,  759.095941,
-          742.249364,  750.667097]]])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-2756145c-64d0-4dd2-98ca-f2ecc0237ff0' class='xr-section-summary-in' type='checkbox'  checked><label for='section-2756145c-64d0-4dd2-98ca-f2ecc0237ff0' class='xr-section-summary' >Attributes: <span>(1)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>description :</span></dt><dd>coords with vectors</dd></dl></div></li></ul></div></div></div>
+          742.249364,  750.667097]]])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-68af74cf-ad60-4e28-919f-7b2a7247fde2' class='xr-section-summary-in' type='checkbox'  ><label for='section-68af74cf-ad60-4e28-919f-7b2a7247fde2' class='xr-section-summary' >Indexes: <span>(3)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-index-name'><div>lon</div></div><div class='xr-index-preview'>PandasIndex</div><div></div><input id='index-3feb1ec6-4d1a-4a14-a962-5a6063865f19' class='xr-index-data-in' type='checkbox'/><label for='index-3feb1ec6-4d1a-4a14-a962-5a6063865f19' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([   -180.0, -177.1875,  -174.375, -171.5625,   -168.75, -165.9375,
+        -163.125, -160.3125,    -157.5, -154.6875,
+       ...
+         151.875,  154.6875,     157.5,  160.3125,   163.125,  165.9375,
+          168.75,  171.5625,   174.375,  177.1875],
+      dtype=&#x27;float64&#x27;, name=&#x27;lon&#x27;, length=128))</pre></div></li><li class='xr-var-item'><div class='xr-index-name'><div>lat</div></div><div class='xr-index-preview'>PandasIndex</div><div></div><input id='index-e3a6bf9d-4e83-4b20-a709-d3e0d679afbb' class='xr-index-data-in' type='checkbox'/><label for='index-e3a6bf9d-4e83-4b20-a709-d3e0d679afbb' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([   -90.0, -87.1875,  -84.375, -81.5625,   -78.75, -75.9375,  -73.125,
+       -70.3125,    -67.5, -64.6875,  -61.875, -59.0625,   -56.25, -53.4375,
+        -50.625, -47.8125,    -45.0, -42.1875,  -39.375, -36.5625,   -33.75,
+       -30.9375,  -28.125, -25.3125,    -22.5, -19.6875,  -16.875, -14.0625,
+         -11.25,  -8.4375,   -5.625,  -2.8125,      0.0,   2.8125,    5.625,
+         8.4375,    11.25,  14.0625,   16.875,  19.6875,     22.5,  25.3125,
+         28.125,  30.9375,    33.75,  36.5625,   39.375,  42.1875,     45.0,
+        47.8125,   50.625,  53.4375,    56.25,  59.0625,   61.875,  64.6875,
+           67.5,  70.3125,   73.125,  75.9375,    78.75,  81.5625,   84.375,
+        87.1875],
+      dtype=&#x27;float64&#x27;, name=&#x27;lat&#x27;))</pre></div></li><li class='xr-var-item'><div class='xr-index-name'><div>pressure</div></div><div class='xr-index-preview'>PandasIndex</div><div></div><input id='index-2bc6815d-9cd4-4fca-a7cc-8f49b4a63549' class='xr-index-data-in' type='checkbox'/><label for='index-2bc6815d-9cd4-4fca-a7cc-8f49b4a63549' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([     170.641,     120.5424,     85.15232,     60.15242,     42.49225,
+           30.01693,     21.20425,     14.97889,     10.58123,     7.474682,
+           5.280187,     3.729975,      2.63489,     1.861312,     1.314849,
+          0.9288217,    0.6561286,    0.4634955,    0.3274177,     0.231291,
+          0.1633862,    0.1154176,   0.08153209,   0.05759505,    0.0406857,
+         0.02874077,   0.02030276,   0.01434206,   0.01013137,  0.007156898,
+        0.005055701,  0.003571396,  0.002522868,  0.001782179,  0.001258948,
+        0.000889333, 0.0006282334, 0.0004437901, 0.0003134976, 0.0002214577,
+       0.0001564399, 0.0001105106, 7.806577e-05, 5.514641e-05, 3.895596e-05,
+       2.751886e-05, 1.943959e-05, 1.373231e-05, 9.700637e-06, 6.852624e-06,
+       4.840759e-06, 3.419559e-06, 2.415609e-06],
+      dtype=&#x27;float64&#x27;, name=&#x27;pressure&#x27;))</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-0eab4613-ba75-4d8a-be01-1f3e49a0634e' class='xr-section-summary-in' type='checkbox'  checked><label for='section-0eab4613-ba75-4d8a-be01-1f3e49a0634e' class='xr-section-summary' >Attributes: <span>(1)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>description :</span></dt><dd>coords with vectors</dd></dl></div></li></ul></div></div></div>
 </div>
 </section>
 <section id="xarray-tutorial:-Easy-plotting">
-<h2><code class="docutils literal notranslate"><span class="pre">xarray</span></code> tutorial: Easy plotting<a class="headerlink" href="#xarray-tutorial:-Easy-plotting" title="Permalink to this headline">¶</a></h2>
+<h2><code class="docutils literal notranslate"><span class="pre">xarray</span></code> tutorial: Easy plotting<a class="headerlink" href="#xarray-tutorial:-Easy-plotting" title="Link to this heading">¶</a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
@@ -706,7 +745,7 @@ Attributes:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.collections.QuadMesh at 0x7f509f2914c0&gt;
+&lt;matplotlib.collections.QuadMesh at 0x7fcd87450e50&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -718,11 +757,11 @@ Attributes:
 </div>
 </section>
 <section id="xesmf-tutorial:-Step-by-step-regrid-3D-GCM">
-<h2><code class="docutils literal notranslate"><span class="pre">xesmf</span></code> tutorial: Step-by-step regrid 3D GCM<a class="headerlink" href="#xesmf-tutorial:-Step-by-step-regrid-3D-GCM" title="Permalink to this headline">¶</a></h2>
+<h2><code class="docutils literal notranslate"><span class="pre">xesmf</span></code> tutorial: Step-by-step regrid 3D GCM<a class="headerlink" href="#xesmf-tutorial:-Step-by-step-regrid-3D-GCM" title="Link to this heading">¶</a></h2>
 <p>The biggest complication with moving to 3D is making sure that the latitude/longitude grids of some users GCM and <code class="docutils literal notranslate"><span class="pre">picaso</span></code> line up properly. <code class="docutils literal notranslate"><span class="pre">picaso</span></code> computes a flux integration on specific <code class="docutils literal notranslate"><span class="pre">gauss</span></code> and <code class="docutils literal notranslate"><span class="pre">tchebychev</span></code> angles. <strong>Meaning, your GCM input will need to be regridded to fit our angles.</strong> Luckily, as you will see below, it is very easy to do this!</p>
 <p>First, we will show you how this is done using <code class="docutils literal notranslate"><span class="pre">xesmf</span></code>, then we will introduce the <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> function that leverages these same techniques.</p>
 <section id="Step-1)-Get-latitude/longitude-grid-used-by-picaso">
-<h3>Step 1) Get latitude/longitude grid used by <code class="docutils literal notranslate"><span class="pre">picaso</span></code><a class="headerlink" href="#Step-1)-Get-latitude/longitude-grid-used-by-picaso" title="Permalink to this headline">¶</a></h3>
+<h3>Step 1) Get latitude/longitude grid used by <code class="docutils literal notranslate"><span class="pre">picaso</span></code><a class="headerlink" href="#Step-1)-Get-latitude/longitude-grid-used-by-picaso" title="Link to this heading">¶</a></h3>
 <p><strong>G</strong>auss angles are essentially equivalent to lon<strong>G</strong>itudes</p>
 <p><strong>T</strong>chebychev angles are essentially equivalent to la<strong>T</strong>itudes.</p>
 <div class="nbinput nblast docutils container">
@@ -739,7 +778,7 @@ Attributes:
 </div>
 </section>
 <section id="Step-2)-Create-the-xesmf-regridder">
-<h3>Step 2) Create the <code class="docutils literal notranslate"><span class="pre">xesmf</span></code> regridder<a class="headerlink" href="#Step-2)-Create-the-xesmf-regridder" title="Permalink to this headline">¶</a></h3>
+<h3>Step 2) Create the <code class="docutils literal notranslate"><span class="pre">xesmf</span></code> regridder<a class="headerlink" href="#Step-2)-Create-the-xesmf-regridder" title="Link to this heading">¶</a></h3>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
@@ -759,7 +798,7 @@ Attributes:
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/home/nbatalh1/anaconda3/envs/picaso38/lib/python3.8/site-packages/xesmf/smm.py:130: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+/home/nbatalh1/anaconda3/envs/pic311/lib/python3.11/site-packages/xesmf/smm.py:131: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
   warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
 </pre></div></div>
 </div>
@@ -778,7 +817,7 @@ Attributes:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.collections.QuadMesh at 0x7f509be9f940&gt;
+&lt;matplotlib.collections.QuadMesh at 0x7fcd7e5913d0&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -791,7 +830,7 @@ Attributes:
 </section>
 </section>
 <section id="Regrid-3D-GCM-with-PICASO">
-<h2>Regrid 3D GCM with PICASO<a class="headerlink" href="#Regrid-3D-GCM-with-PICASO" title="Permalink to this headline">¶</a></h2>
+<h2>Regrid 3D GCM with PICASO<a class="headerlink" href="#Regrid-3D-GCM-with-PICASO" title="Link to this heading">¶</a></h2>
 <p>The above code is all the PICASO built in function does – in addition to completing some checks to make sure that your model run is on the same grid as what you are wanting PICASO run.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
@@ -802,7 +841,7 @@ Attributes:
 </div>
 </div>
 <section id="DIY-Option-1">
-<h3>DIY Option 1<a class="headerlink" href="#DIY-Option-1" title="Permalink to this headline">¶</a></h3>
+<h3>DIY Option 1<a class="headerlink" href="#DIY-Option-1" title="Link to this heading">¶</a></h3>
 <p>For completeness, first here is the function <code class="docutils literal notranslate"><span class="pre">picaso</span></code> uses internally. You might use this if you want to manipulate results before supplying <code class="docutils literal notranslate"><span class="pre">picaso</span></code> with your final input.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
@@ -823,18 +862,18 @@ Attributes:
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area docutils container">
+<div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-verbose=True;Only one data variable included. Make sure to add in chemical abundances before trying to run spectra.
+/home/nbatalh1/anaconda3/envs/pic311/lib/python3.11/site-packages/xesmf/smm.py:131: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+  warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area stderr docutils container">
+<div class="output_area docutils container">
 <div class="highlight"><pre>
-/home/nbatalh1/anaconda3/envs/picaso38/lib/python3.8/site-packages/xesmf/smm.py:130: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
-  warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
+verbose=True;Only one data variable included. Make sure to add in chemical abundances before trying to run spectra.
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -846,7 +885,7 @@ verbose=True;Only one data variable included. Make sure to add in chemical abund
 </div>
 </section>
 <section id="Easiest-Option-2">
-<h3>Easiest Option 2<a class="headerlink" href="#Easiest-Option-2" title="Permalink to this headline">¶</a></h3>
+<h3>Easiest Option 2<a class="headerlink" href="#Easiest-Option-2" title="Link to this heading">¶</a></h3>
 <p>Use the regular <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> workflow to regrid your 3d input</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:

@@ -1,24 +1,25 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>One-Dimensional Climate Models: The Basics of Planets &mdash; picaso 3.1 documentation</title>
-      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/nbsphinx-code-cells.css" type="text/css" />
+  <title>One-Dimensional Climate Models: The Basics of Planets &mdash; picaso 3.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b76e3c8a" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=720011df" />
+
+  
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
-        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/documentation_options.js?v=828ea960"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -38,7 +39,7 @@
             picaso
           </a>
               <div class="version">
-                3.1
+                3.2
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -115,7 +116,7 @@
 <p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/climate/12b_Exoplanet.ipynb">Download full notebook here</a></p>
 </div>
 <section id="One-Dimensional-Climate-Models:-The-Basics-of-Planets">
-<h1>One-Dimensional Climate Models: The Basics of Planets<a class="headerlink" href="#One-Dimensional-Climate-Models:-The-Basics-of-Planets" title="Permalink to this headline">¶</a></h1>
+<h1>One-Dimensional Climate Models: The Basics of Planets<a class="headerlink" href="#One-Dimensional-Climate-Models:-The-Basics-of-Planets" title="Link to this heading">¶</a></h1>
 <p>In this tutorial you will learn the very basics of running 1D climate runs. For a more in depth look at the climate code check out <a class="reference external" href="https://arxiv.org/abs/2208.07836">Mukherjee et al. 2022</a> (note this should also be cited if using this code/tutorial).</p>
 <p>What you should already be familiar with:</p>
 <ul class="simple">
@@ -127,7 +128,7 @@
 <ol class="arabic simple">
 <li><p><a class="reference external" href="https://zenodo.org/record/5590989#.Yzy2YOzMI8a">Download</a> 196 Correlated-K Tables from Roxana Lupu to be used by the climate code for opacity (if you completed the brown dwarf tutorial you should already have this)</p></li>
 </ol>
-<p><strong>Note</strong>: the two files above are dependent on metallicity and C/O. For this tutorial we will stick to solar M/H and solar C/O, but note that you can change that in the future.</p>
+<p><strong>Note</strong>: the two files above are dependent on metallicity and C/O.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
@@ -148,10 +149,9 @@
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#1 ck tables from roxana</span>
-<span class="n">mh</span> <span class="o">=</span> <span class="s1">&#39;+100&#39;</span><span class="c1">#&#39;+1.0&#39; #log metallicity</span>
-<span class="n">CtoO</span> <span class="o">=</span> <span class="s1">&#39;100&#39;</span><span class="c1">#&#39;1.0&#39; # CtoO ratio</span>
-
-<span class="n">ck_db</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;/data/kcoeff_2020/sonora_2020_feh</span><span class="si">{</span><span class="n">mh</span><span class="si">}</span><span class="s1">_co_</span><span class="si">{</span><span class="n">CtoO</span><span class="si">}</span><span class="s1">/sonora_2020_feh</span><span class="si">{</span><span class="n">mh</span><span class="si">}</span><span class="s1">_co_</span><span class="si">{</span><span class="n">CtoO</span><span class="si">}</span><span class="s1">.data.196&#39;</span>
+<span class="n">mh</span> <span class="o">=</span> <span class="s1">&#39;+100&#39;</span><span class="c1">#&#39;+1.0&#39; #log metallicity, 10xSolar</span>
+<span class="n">CtoO</span> <span class="o">=</span> <span class="s1">&#39;100&#39;</span><span class="c1">#&#39;1.0&#39; # CtoO ratio, Solar C/O</span>
+<span class="n">ck_db</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;/data/kcoeff_2020_v3/sonora_2020_feh</span><span class="si">{</span><span class="n">mh</span><span class="si">}</span><span class="s1">_co_</span><span class="si">{</span><span class="n">CtoO</span><span class="si">}</span><span class="s1">.data.196&#39;</span>
 </pre></div>
 </div>
 </div>
@@ -166,14 +166,14 @@
 </div>
 </div>
 <section id="Starting-up-the-Run">
-<h2>Starting up the Run<a class="headerlink" href="#Starting-up-the-Run" title="Permalink to this headline">¶</a></h2>
+<h2>Starting up the Run<a class="headerlink" href="#Starting-up-the-Run" title="Link to this heading">¶</a></h2>
 <p>You will notice that starting a run is nearly identical as running a spectrum and brown dwarf climate model. However, how we will add <code class="docutils literal notranslate"><span class="pre">climate=True</span></code> to our inputs flag. We will also specify <code class="docutils literal notranslate"><span class="pre">planet</span></code> in this case, which will turn on the irradiation the object is receiving.</p>
 <p>New Parameter (was also used in the Brown Dwarf tutorial): <strong>Effective Temperature</strong>. This excerpt from <a class="reference external" href="https://arxiv.org/pdf/1804.08149.pdf">Modeling Exoplanetary Atmospheres (Fortney et al)</a> provides a thorough description and more reading, if you are interested.</p>
 <blockquote>
 <div><p>If the effective temperature, <span class="math notranslate nohighlight">\(T_{eff}\)</span>, is defined as the temperature of a blackbody of the same radius that would emit the equivalent flux as the real planet, <span class="math notranslate nohighlight">\(T_{eff}\)</span> and <span class="math notranslate nohighlight">\(T_{eq}\)</span> can be simply related. This relation requires the inclusion of a third temperature, <span class="math notranslate nohighlight">\(T_{int}\)</span>, the intrinsic effective temperature, that describes the flux from the planet’s interior. These temperatures are related by:</p>
 </div></blockquote>
 <blockquote>
-<div><p><span class="math notranslate nohighlight">\(T_{eff} = T_{int} + T_{eq}\)</span></p>
+<div><p><span class="math notranslate nohighlight">\(T_{eff}^4 = T_{int}^4 + T_{eq}^4\)</span></p>
 <p>We then recover our limiting cases: if a planet is self-luminous (like a young giant planet) and far from its parent star, <span class="math notranslate nohighlight">\(T_{eff} \approx T_{int}\)</span>; for most rocky planets, or any planets under extreme stellar irradiation, <span class="math notranslate nohighlight">\(T_{eff} \approx T_{eq}\)</span>.</p>
 </div></blockquote>
 <div class="nbinput nblast docutils container">
@@ -212,7 +212,7 @@
 </div>
 </section>
 <section id="Initial-T(P)-Guess">
-<h2>Initial T(P) Guess<a class="headerlink" href="#Initial-T(P)-Guess" title="Permalink to this headline">¶</a></h2>
+<h2>Initial T(P) Guess<a class="headerlink" href="#Initial-T(P)-Guess" title="Link to this heading">¶</a></h2>
 <p>Every calculation requires an initial guess of the pressure temperature profile. The code will iterate from there to find the correct solution. A few tips:</p>
 <ol class="arabic simple">
 <li><p>We recommend <strong>using typically 51-91 atmospheric pressure levels</strong>. Too many pressure layers increases the computational time required for convergence. Too little layers makes the atmospheric grid too coarse for an accurate calculation.</p></li>
@@ -234,7 +234,7 @@
 </div>
 </section>
 <section id="Initial-Convective-Zone-Guess">
-<h2>Initial Convective Zone Guess<a class="headerlink" href="#Initial-Convective-Zone-Guess" title="Permalink to this headline">¶</a></h2>
+<h2>Initial Convective Zone Guess<a class="headerlink" href="#Initial-Convective-Zone-Guess" title="Link to this heading">¶</a></h2>
 <p>You also need to have a crude guess of the convective zone of your atmosphere. Generally the deeper atmosphere is always convective. Again a good guess is always the published SONORA grid of models for this. But lets assume that the bottom 7 levels of the atmosphere is convective.</p>
 <p><strong>New Parameters:</strong></p>
 <ol class="arabic simple">
@@ -270,7 +270,7 @@ rst should be set at 1.</p>
 </div>
 </section>
 <section id="Run-the-Climate-Code">
-<h2>Run the Climate Code<a class="headerlink" href="#Run-the-Climate-Code" title="Permalink to this headline">¶</a></h2>
+<h2>Run the Climate Code<a class="headerlink" href="#Run-the-Climate-Code" title="Link to this heading">¶</a></h2>
 <p>The actual climate code can be run with the cl_run.run command. The save_all_profiles is set to True to save the T(P) profile at all steps. The code will now iterate from your guess to reach the correct atmospheric solution for your brown dwarf of interest.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
@@ -285,47 +285,48 @@ rst should be set at 1.</p>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Iteration number  0 , min , max temp  852.5359869309033 2411.0335906418527 , flux balance  -24.379071320271702
-Iteration number  1 , min , max temp  830.9386410218228 2666.0005227762585 , flux balance  10.33100910952813
-Iteration number  2 , min , max temp  830.1165001509353 2623.139934259573 , flux balance  0.06873029139309735
-Iteration number  3 , min , max temp  830.1152597822669 2621.5404971207217 , flux balance  1.819849215116087e-05
-In t_start: Converged Solution in iterations  3
-Big iteration is  830.1152597822669 0
-Iteration number  0 , min , max temp  825.5339909083517 2805.91650264145 , flux balance  0.4708127372179696
-Iteration number  1 , min , max temp  825.4966154738055 2785.634166142838 , flux balance  0.00038375328331655335
-Iteration number  2 , min , max temp  825.4966070978521 2785.3531488604617 , flux balance  8.684466774843989e-08
+Iteration number  0 , min , max temp  859.054155942838 2289.478427903662 , flux balance  -46.15847181591005
+Iteration number  1 , min , max temp  835.3574006260803 2777.6878509379635 , flux balance  17.82965190850441
+Iteration number  2 , min , max temp  834.2722222145496 2653.4220211996176 , flux balance  0.2594411932152453
+Iteration number  3 , min , max temp  834.2651124752114 2639.2957580270786 , flux balance  0.0012104268509236513
+Iteration number  4 , min , max temp  834.2650775441722 2639.0924332789596 , flux balance  5.499585765882438e-06
+In t_start: Converged Solution in iterations  4
+Big iteration is  834.2650775441722 0
+Iteration number  0 , min , max temp  834.0393684187401 2734.9589459834865 , flux balance  -3.660621966940465
+Iteration number  1 , min , max temp  833.7618986334929 2823.879709982079 , flux balance  0.12744719833424106
+Iteration number  2 , min , max temp  833.7602101385852 2819.106469079621 , flux balance  0.0007067647384675832
 In t_start: Converged Solution in iterations  2
-Big iteration is  825.4966070978521 1
-Iteration number  0 , min , max temp  823.548132478926 2885.355813317214 , flux balance  0.009725340041169577
-Iteration number  1 , min , max temp  823.540316423796 2879.631043248533 , flux balance  2.195166294913897e-06
+Big iteration is  833.7602101385852 1
+Iteration number  0 , min , max temp  834.6507021802025 2930.3758747219267 , flux balance  -0.14424565099125855
+Iteration number  1 , min , max temp  834.7484053262953 2933.850480135399 , flux balance  -0.0002867399420656116
 In t_start: Converged Solution in iterations  1
-Big iteration is  823.540316423796 2
-Iteration number  0 , min , max temp  822.4003339874706 2938.677844109929 , flux balance  0.0003049894867025148
-Iteration number  1 , min , max temp  822.3979077904802 2936.702323477948 , flux balance  6.384919668784316e-08
+Big iteration is  834.7484053262953 2
+Iteration number  0 , min , max temp  835.3849918816801 3018.1228722038486 , flux balance  -0.0001937036980519201
+Iteration number  1 , min , max temp  835.3874378060507 3014.557263577295 , flux balance  2.4716598291939565e-07
 In t_start: Converged Solution in iterations  1
-Profile converged
-Iteration number  0 , min , max temp  821.8005806273717 2972.1715453125285 , flux balance  4.203193551330716e-05
-Iteration number  1 , min , max temp  821.799861987889 2971.4807771008936 , flux balance  7.2364423179789425e-09
+Profile converged before itmx
+Iteration number  0 , min , max temp  835.7816725005212 3070.631061776754 , flux balance  8.60778296513762e-05
+Iteration number  1 , min , max temp  835.7834656038983 3069.1460884516528 , flux balance  3.740806372413759e-07
 In t_start: Converged Solution in iterations  1
-Big iteration is  821.799861987889 0
-Iteration number  0 , min , max temp  821.3805218372673 2991.9549138883535 , flux balance  1.543341075557958e-05
-Iteration number  1 , min , max temp  821.3799337808663 2991.730259784544 , flux balance  2.4113479058770514e-09
+Big iteration is  835.7834656038983 0
+Iteration number  0 , min , max temp  836.0058826361692 3105.051279473138 , flux balance  4.2639690072613516e-05
+Iteration number  1 , min , max temp  836.0069497529855 3104.474012120312 , flux balance  1.8151256338186683e-07
 In t_start: Converged Solution in iterations  1
-Profile converged
+Profile converged before itmx
 Move up two levels
-Iteration number  0 , min , max temp  821.0305201577509 2789.5750987218385 , flux balance  6.741515517062906e-06
+Iteration number  0 , min , max temp  836.1272490822133 2814.4533222676664 , flux balance  5.112756588168638e-06
 In t_start: Converged Solution in iterations  0
-Big iteration is  821.0305201577509 0
-Iteration number  0 , min , max temp  820.7979304411604 2789.5759621005814 , flux balance  3.2863330804689055e-06
+Big iteration is  836.1272490822133 0
+Iteration number  0 , min , max temp  836.1924392218433 2814.4531485178004 , flux balance  -8.640664528425539e-07
 In t_start: Converged Solution in iterations  0
-Profile converged
+Profile converged before itmx
 final [ 0 83 89  0  0  0]
-Iteration number  0 , min , max temp  820.6383472444317 2789.576710156944 , flux balance  1.70068226038012e-06
+Iteration number  0 , min , max temp  836.2271503391952 2814.453648097963 , flux balance  -1.987533884891869e-06
 In t_start: Converged Solution in iterations  0
-Big iteration is  820.6383472444317 0
-Iteration number  0 , min , max temp  820.5268293418806 2789.576971037615 , flux balance  9.233485265912185e-07
+Big iteration is  836.2271503391952 0
+Iteration number  0 , min , max temp  836.2456450333358 2814.4538672423496 , flux balance  -1.4208921069493005e-06
 In t_start: Converged Solution in iterations  0
-Profile converged
+Profile converged before itmx
 YAY ! ENDING WITH CONVERGENCE
 </pre></div></div>
 </div>
@@ -373,7 +374,7 @@ Text(0.5, 1.0, &#39;T$_{\\rm eff}$= 1000 K, log(g)=5.0&#39;)
 </div>
 </div>
 <section id="Brightness-Temperature">
-<h3>Brightness Temperature<a class="headerlink" href="#Brightness-Temperature" title="Permalink to this headline">¶</a></h3>
+<h3>Brightness Temperature<a class="headerlink" href="#Brightness-Temperature" title="Link to this heading">¶</a></h3>
 <p>Checking the brightness temperature serves many useful purposes:</p>
 <ol class="arabic simple">
 <li><p>Intuition building. Allows you to see what corresponding temperature are you sensitive to at each wavelength</p></li>
@@ -400,6 +401,25 @@ Text(0.5, 1.0, &#39;T$_{\\rm eff}$= 1000 K, log(g)=5.0&#39;)
 </div>
 <div class="output_area docutils container">
 <img alt="../../_images/notebooks_climate_12b_Exoplanet_21_0.png" src="../../_images/notebooks_climate_12b_Exoplanet_21_0.png" />
+</div>
+</div>
+</section>
+<section id="Check-Adiabat">
+<h3>Check Adiabat<a class="headerlink" href="#Check-Adiabat" title="Link to this heading">¶</a></h3>
+<p>This plot and datareturn is helpful to check that there have been no issues with where the code has found the location of the convective zone(s). See below, dTdP never exceeds the adiabat.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">adiabat</span><span class="p">,</span> <span class="n">dtdp</span><span class="p">,</span> <span class="n">pressure</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">pt_adiabat</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">cl_run</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_climate_12b_Exoplanet_23_0.png" src="../../_images/notebooks_climate_12b_Exoplanet_23_0.png" />
 </div>
 </div>
 </section>

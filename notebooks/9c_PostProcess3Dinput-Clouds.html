@@ -1,24 +1,25 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Post-Process 3D Clouds Input &mdash; picaso 3.1 documentation</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/nbsphinx-code-cells.css" type="text/css" />
+  <title>Post-Process 3D Clouds Input &mdash; picaso 3.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b76e3c8a" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=720011df" />
+
+  
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/doctools.js"></script>
+        <script src="../_static/documentation_options.js?v=828ea960"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -38,7 +39,7 @@
             picaso
           </a>
               <div class="version">
-                3.1
+                3.2
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -119,7 +120,7 @@
 <p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/9c_PostProcess3Dinput-Clouds.ipynb">Download full notebook here</a></p>
 </div>
 <section id="Post-Process-3D-Clouds-Input">
-<h1>Post-Process 3D Clouds Input<a class="headerlink" href="#Post-Process-3D-Clouds-Input" title="Permalink to this headline">¶</a></h1>
+<h1>Post-Process 3D Clouds Input<a class="headerlink" href="#Post-Process-3D-Clouds-Input" title="Link to this heading">¶</a></h1>
 <p>There are many cases were you may want to post-process components from a 3D GCM output. Post-processing is used to compensate for simplicities, or assumptions within a GCM. For example, you may want to post-process clouds on your output spectra, even if your initial GCM run did not include the effects of clouds.</p>
 <p>In this notebook you will learn: 1. How to post- process clouds using simple box model 2. How to post- process clouds using <code class="docutils literal notranslate"><span class="pre">virga</span></code></p>
 <p>You should already know: 1. How to format and regrid an <code class="docutils literal notranslate"><span class="pre">xarray</span></code> dataset</p>
@@ -146,7 +147,7 @@
 </div>
 </div>
 <section id="Post-Process-Clouds:-User-Options">
-<h2>Post-Process Clouds: User Options<a class="headerlink" href="#Post-Process-Clouds:-User-Options" title="Permalink to this headline">¶</a></h2>
+<h2>Post-Process Clouds: User Options<a class="headerlink" href="#Post-Process-Clouds:-User-Options" title="Link to this heading">¶</a></h2>
 <ol class="arabic simple">
 <li><p>User-defined input: this would only be used to explore simplistic cases (e.g. 100% H2O, or 50/50 H2/H2O). It also might be the case that you have abundance models from elsewhere (e.g. 3D model or GCM) and want to add it to your pressure/temperature <code class="docutils literal notranslate"><span class="pre">xarray</span></code></p></li>
 <li><p>Computationally intensive route: Usually GCM output is at a very high spatial resolution – higher than what is needed to post-process spectra. If you want, you can grab chemistry for every single <code class="docutils literal notranslate"><span class="pre">lat</span></code> x <code class="docutils literal notranslate"><span class="pre">lon</span></code> point in your grid first. Then, regrid after.</p>
@@ -165,7 +166,7 @@
 <p>In this demo, we will do option #1 and #3 so that it can be self-contained and computationally fast, but you should explore what works best for your problem.</p>
 </section>
 <section id="Post-Process-Clouds:-User-Defined-Input">
-<h2>Post-Process Clouds: User Defined Input<a class="headerlink" href="#Post-Process-Clouds:-User-Defined-Input" title="Permalink to this headline">¶</a></h2>
+<h2>Post-Process Clouds: User Defined Input<a class="headerlink" href="#Post-Process-Clouds:-User-Defined-Input" title="Link to this heading">¶</a></h2>
 <p>Very similar to chemistry process, we can create an xarray that has our cloud output. Note that for clouds there is a fourth dimension (wavelength)</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
@@ -208,7 +209,7 @@
 </div>
 </div>
 <section id="Visualize-Cloud-Input">
-<h3>Visualize Cloud Input<a class="headerlink" href="#Visualize-Cloud-Input" title="Permalink to this headline">¶</a></h3>
+<h3>Visualize Cloud Input<a class="headerlink" href="#Visualize-Cloud-Input" title="Link to this heading">¶</a></h3>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
@@ -223,7 +224,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.collections.QuadMesh at 0x7f844c284b20&gt;
+&lt;matplotlib.collections.QuadMesh at 0x7f284b723410&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -235,7 +236,7 @@
 </div>
 </section>
 <section id="Add-clouds-to-picaso-bundle">
-<h3>Add clouds to <code class="docutils literal notranslate"><span class="pre">picaso</span></code> bundle<a class="headerlink" href="#Add-clouds-to-picaso-bundle" title="Permalink to this headline">¶</a></h3>
+<h3>Add clouds to <code class="docutils literal notranslate"><span class="pre">picaso</span></code> bundle<a class="headerlink" href="#Add-clouds-to-picaso-bundle" title="Link to this heading">¶</a></h3>
 <p>As a recap, in the steps below we: 1. Initiate a new run (jdi.inputs) 2. Define the geometry of the run (phase_angle) 3. Set the pressure-temperature-lat-lon profile (atmosphere_3d)</p>
 <p>Note here we are not worrying about chemical abundances (see post process chem tutorial). We will combine both clouds and chemistry steps in the next tutorial on 3D Spectra.</p>
 <div class="nbinput docutils container">
@@ -255,7 +256,7 @@
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/home/nbatalh1/anaconda3/envs/picaso38/lib/python3.8/site-packages/xesmf/smm.py:130: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+/home/nbatalh1/anaconda3/envs/pic311/lib/python3.11/site-packages/xesmf/smm.py:131: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
   warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
 </pre></div></div>
 </div>
@@ -271,18 +272,18 @@
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area stderr docutils container">
+<div class="output_area docutils container">
 <div class="highlight"><pre>
-/home/nbatalh1/anaconda3/envs/picaso38/lib/python3.8/site-packages/xesmf/smm.py:130: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
-  warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
+verbose=True;regrid=True; Regridding 3D output to ngangle=4, ntangle=4, with phase=0.
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area docutils container">
+<div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-verbose=True;regrid=True; Regridding 3D output to ngangle=4, ntangle=4, with phase=0.
+/home/nbatalh1/anaconda3/envs/pic311/lib/python3.11/site-packages/xesmf/smm.py:131: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+  warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -315,7 +316,7 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=4, ntangle=4, with pha
 </div>
 </section>
 <section id="See-other-regridded-variables">
-<h3>See other regridded variables<a class="headerlink" href="#See-other-regridded-variables" title="Permalink to this headline">¶</a></h3>
+<h3>See other regridded variables<a class="headerlink" href="#See-other-regridded-variables" title="Link to this heading">¶</a></h3>
 <p>All the elements of your data bundle have been regridded! Though for now this is not too interesting since we have set the asymmetry to a constant value of 0.8</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
@@ -332,7 +333,7 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=4, ntangle=4, with pha
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.collections.QuadMesh at 0x7f8440445ac0&gt;
+&lt;matplotlib.collections.QuadMesh at 0x7f283de17bd0&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -345,7 +346,7 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=4, ntangle=4, with pha
 </section>
 </section>
 <section id="Post-Process-Clouds:-virga-cloud-model">
-<h2>Post-Process Clouds: <code class="docutils literal notranslate"><span class="pre">virga</span></code> cloud model<a class="headerlink" href="#Post-Process-Clouds:-virga-cloud-model" title="Permalink to this headline">¶</a></h2>
+<h2>Post-Process Clouds: <code class="docutils literal notranslate"><span class="pre">virga</span></code> cloud model<a class="headerlink" href="#Post-Process-Clouds:-virga-cloud-model" title="Link to this heading">¶</a></h2>
 <p>We will run this example on a very coarse (5x5) grid to make it faster. Note that similar to the <code class="docutils literal notranslate"><span class="pre">chemeq_3d</span></code> routine, running <code class="docutils literal notranslate"><span class="pre">virga_3d</span></code> will just run <code class="docutils literal notranslate"><span class="pre">ngangle</span></code>x<code class="docutils literal notranslate"><span class="pre">ntangle</span></code> 1d models. <strong>There is no transport of particles in the vertical/horizontal direction.</strong></p>
 <p><strong>NOTE!!</strong> If you are not familiar with <code class="docutils literal notranslate"><span class="pre">virga</span></code> models it is highly recommended that you start in one-dimension first. <a class="reference external" href="https://natashabatalha.github.io/virga/notebooks/1_GettingStarted.html">You can review the tutorials here</a>. This tutorial will not explain the required <code class="docutils literal notranslate"><span class="pre">virga</span></code> inputs.</p>
 <div class="nbinput docutils container">
@@ -371,11 +372,20 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=4, ntangle=4, with pha
 verbose=True;regrid=True; Regridding 3D output to ngangle=10, ntangle=10, with phase=0.
 </pre></div></div>
 </div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/home/nbatalh1/anaconda3/envs/pic311/lib/python3.11/site-packages/xesmf/smm.py:131: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+  warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
+</pre></div></div>
+</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/notebooks_9c_PostProcess3Dinput-Clouds_17_1.png" src="../_images/notebooks_9c_PostProcess3Dinput-Clouds_17_1.png" />
+<img alt="../_images/notebooks_9c_PostProcess3Dinput-Clouds_17_2.png" src="../_images/notebooks_9c_PostProcess3Dinput-Clouds_17_2.png" />
 </div>
 </div>
 <p>Run Virga!</p>
@@ -385,7 +395,7 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=10, ntangle=10, with p
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mieff_directory</span> <span class="o">=</span> <span class="s1">&#39;/data/virga/&#39;</span>
 <span class="n">clds</span> <span class="o">=</span> <span class="n">case_3d</span><span class="o">.</span><span class="n">virga_3d</span><span class="p">([</span><span class="s1">&#39;MnS&#39;</span><span class="p">],</span> <span class="n">mieff_directory</span><span class="p">,</span><span class="n">fsed</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">kz_min</span><span class="o">=</span><span class="mf">1e10</span><span class="p">,</span>
-                        <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">n_cpu</span><span class="o">=</span><span class="mi">3</span>
+                        <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">n_cpu</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">full_output</span><span class="o">=</span><span class="kc">True</span>
                        <span class="p">)</span>
 </pre></div>
 </div>
@@ -411,9 +421,9 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=10, ntangle=10, with p
 </div>
 </div>
 <section id="Trouble-Shooting-Negative-Kz-Values-(smooth_kz)">
-<h3>Trouble Shooting Negative Kz Values (smooth_kz)<a class="headerlink" href="#Trouble-Shooting-Negative-Kz-Values-(smooth_kz)" title="Permalink to this headline">¶</a></h3>
+<h3>Trouble Shooting Negative Kz Values (smooth_kz)<a class="headerlink" href="#Trouble-Shooting-Negative-Kz-Values-(smooth_kz)" title="Link to this heading">¶</a></h3>
 <p>GCM runs produce both positive and negative K_z values. A negative K_z represents downdrafts, which cannot be accounted for in <code class="docutils literal notranslate"><span class="pre">virga</span></code>. In fact, <code class="docutils literal notranslate"><span class="pre">virga</span></code> has a default minimum value of 1e5 cm<span class="math notranslate nohighlight">\(^2\)</span>/s. For the above run, note I used a very large kz_min value of 1e10cm<span class="math notranslate nohighlight">\(^2\)</span>/s. The smaller the k_z value, the values create small particles. Let’s take at some of the difficulty with smoothing over K_z profiles:</p>
-<div class="nbinput nblast docutils container">
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
@@ -423,6 +433,15 @@ verbose=True;regrid=True; Regridding 3D output to ngangle=10, ntangle=10, with p
 <span class="n">test</span><span class="o">.</span><span class="n">atmosphere_3d</span><span class="p">(</span><span class="n">gcm_out</span><span class="p">,</span> <span class="n">regrid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/home/nbatalh1/anaconda3/envs/pic311/lib/python3.11/site-packages/xesmf/smm.py:131: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+  warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
+</pre></div></div>
 </div>
 <p>Explore some profiles in our 3d Kz grid</p>
 <div class="nbinput docutils container">
@@ -753,7 +772,7 @@ if (force === true) {
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area rendered_html docutils container">
-<div id="e6a13473-48dd-445f-b0bb-68b33d71f34a" data-root-id="p1002" style="display: contents;"></div></div>
+<div id="9d3868d2-c985-4ccc-9e54-c0b58239561f" data-root-id="p1002" style="display: contents;"></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
@@ -764,8 +783,8 @@ if (force === true) {
 var element = document.currentScript.previousSibling.previousSibling;
 (function(root) {
   function embed_document(root) {
-  const docs_json = {"b2a23e94-79f7-4086-9df2-e420be2aa077":{"version":"3.0.2","title":"Bokeh Application","defs":[],"roots":[{"type":"object","name":"Figure","id":"p1002","attributes":{"width":300,"height":300,"x_range":{"type":"object","name":"Range1d","id":"p1011","attributes":{"start":-100000000000.0,"end":100000000000.0}},"y_range":{"type":"object","name":"Range1d","id":"p1013","attributes":{"start":100.0,"end":1e-06}},"x_scale":{"type":"object","name":"LinearScale","id":"p1015"},"y_scale":{"type":"object","name":"LogScale","id":"p1017"},"title":{"type":"object","name":"Title","id":"p1008"},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1054","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1048","attributes":{"selected":{"type":"object","name":"Selection","id":"p1049","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1050"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ls8U8MgVCUJgQfLRSPUhQsrInK3sIyVCufz7qH8AGEJlLQC0+wEEQozCq4Qsq+TBTmS5rKgyFcIsQ8m4S2kowjQb2Wj1oy/CgEj7MGE4LcIDuk1QNMwuwjZ7QKlXTTHCS3auSga1McK4p11iAdgvwuVj04ymvinCIXiRboNpJMLcuNbqqUEkwrwYwVh1BSjCMLtD5EtrKMLaK+dsgtEjwjRj6Uz9ahnCA/6pmm/vB8IvsdeiOhXwwbxJEvTMFd3BQ8vHYOPN38H/sI7chbHmwenVLZu0IvHBHIoQnUsl9cGArWact4XzwS0SPzv7FOrBzv1o2Kxu18EDa1r7vLC/wV8pEyonb9zBVsYrtj/838FUqhDGxL3BQbEJqidDHOFBhMBYPntE7kGJCv26bYryQUx4SdQ2vu1BS1PfHEHk40EmxBCHDZXdQR0ZoH9OxqVBaae3U+/oqkFaw44cJ0KzwUMujPBPadLB4If96nMl0cEfaVfvVnzHwY/j+VXIzsPBXszT2G6iwMGYVKU/QpixwRr3md1TeqnBRk0etbrhosERF0pC6UKpwQ=="},"shape":[53],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"ui6CF3tDxD4VX/Fwcq/MPotcsrO5TdQ+9qMz8fK93D6z6bRl/VfkPk3frVB6zOw+Nzzoc0Zi9D4tqdmoCdv8PhPu7ZeUbAQ/CWkzOKDpDD8EmWK353YUP1sfxaY9+Bw/FjwygkCBJD94ymso4wYtP7jYevCdizQ/ces9948VPT+Z7SD0AJZEP0iCOxNEJE0/U/swH2mgVD8YzlEhADNdP+YBq3HWqmQ/9pCsoMJBbT+l8EBnSbV0P6bonC2NUH0/UGiCdsG/hD+mFkK1Xl+NPyfI3yg/ypQ/SPHYbDhunT95adSNwdSkPyOuUjAZfa0/HOEffEnftD/P/2EBAoy9P0sRz8jW6cQ/K/htiPGazT8ja2heafTUP3f2lQfpqd0/agzfZwH/5D99FSpJ6LjtP1Xa4hqfCfU/CXB6F+/H/T+jdVQ1QRQFQEku/yH91g1Asg5HV+keFUDe/8cJE+YdQH3ogvqWKSVATMPwETH1LUA/NV66STQ1QD9SRIZVBD5AXrpJDAI/RUDPoKF/ghNOQLahYpy/SVVAbVZ9rrYiXkCNl24Sg1RlQA=="},"shape":[53],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1055","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1056"}}},"glyph":{"type":"object","name":"Line","id":"p1051","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#1f77b4"}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1052","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#1f77b4","line_alpha":0.1}},"muted_glyph":{"type":"object","name":"Line","id":"p1053","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#1f77b4","line_alpha":0.2}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1009","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1033"},{"type":"object","name":"WheelZoomTool","id":"p1034"},{"type":"object","name":"BoxZoomTool","id":"p1035","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1036","attributes":{"syncable":false,"level":"overlay","visible":false,"left_units":"canvas","right_units":"canvas","bottom_units":"canvas","top_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"SaveTool","id":"p1037"},{"type":"object","name":"ResetTool","id":"p1038"},{"type":"object","name":"HelpTool","id":"p1039"}]}},"left":[{"type":"object","name":"LogAxis","id":"p1026","attributes":{"ticker":{"type":"object","name":"LogTicker","id":"p1028","attributes":{"num_minor_ticks":10,"mantissas":[1,5]}},"formatter":{"type":"object","name":"LogTickFormatter","id":"p1027"},"axis_label":"pressure (bars)","major_label_policy":{"type":"object","name":"AllLabels","id":"p1029"}}}],"below":[{"type":"object","name":"LinearAxis","id":"p1019","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1021","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1020"},"axis_label":"Kz (cm2/s)","major_label_policy":{"type":"object","name":"AllLabels","id":"p1022"}}}],"center":[{"type":"object","name":"Grid","id":"p1025","attributes":{"axis":{"id":"p1019"}}},{"type":"object","name":"Grid","id":"p1032","attributes":{"dimension":1,"axis":{"id":"p1026"}}}]}}]}};
-  const render_items = [{"docid":"b2a23e94-79f7-4086-9df2-e420be2aa077","roots":{"p1002":"e6a13473-48dd-445f-b0bb-68b33d71f34a"},"root_ids":["p1002"]}];
+  const docs_json = {"4f3c72e3-1595-4430-9d8b-c86204d0916c":{"version":"3.0.2","title":"Bokeh Application","defs":[],"roots":[{"type":"object","name":"Figure","id":"p1002","attributes":{"width":300,"height":300,"x_range":{"type":"object","name":"Range1d","id":"p1011","attributes":{"start":-100000000000.0,"end":100000000000.0}},"y_range":{"type":"object","name":"Range1d","id":"p1013","attributes":{"start":100.0,"end":1e-06}},"x_scale":{"type":"object","name":"LinearScale","id":"p1015"},"y_scale":{"type":"object","name":"LogScale","id":"p1017"},"title":{"type":"object","name":"Title","id":"p1005"},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1054","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1048","attributes":{"selected":{"type":"object","name":"Selection","id":"p1049","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1050"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ls8U8MgVCUJgQfLRSPUhQsrInK3sIyVCufz7qH8AGEJlLQC0+wEEQozCq4Qsq+TBTmS5rKgyFcIsQ8m4S2kowjQb2Wj1oy/CgEj7MGE4LcIDuk1QNMwuwjZ7QKlXTTHCS3auSga1McK4p11iAdgvwuVj04ymvinCIXiRboNpJMLcuNbqqUEkwrwYwVh1BSjCMLtD5EtrKMLaK+dsgtEjwjRj6Uz9ahnCA/6pmm/vB8IvsdeiOhXwwbxJEvTMFd3BQ8vHYOPN38H/sI7chbHmwenVLZu0IvHBHIoQnUsl9cGArWact4XzwS0SPzv7FOrBzv1o2Kxu18EDa1r7vLC/wV8pEyonb9zBVsYrtj/838FUqhDGxL3BQbEJqidDHOFBhMBYPntE7kGJCv26bYryQUx4SdQ2vu1BS1PfHEHk40EmxBCHDZXdQR0ZoH9OxqVBaae3U+/oqkFaw44cJ0KzwUMujPBPadLB4If96nMl0cEfaVfvVnzHwY/j+VXIzsPBXszT2G6iwMGYVKU/QpixwRr3md1TeqnBRk0etbrhosERF0pC6UKpwQ=="},"shape":[53],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"ui6CF3tDxD4VX/Fwcq/MPotcsrO5TdQ+9qMz8fK93D6z6bRl/VfkPk3frVB6zOw+Nzzoc0Zi9D4tqdmoCdv8PhPu7ZeUbAQ/CWkzOKDpDD8EmWK353YUP1sfxaY9+Bw/FjwygkCBJD94ymso4wYtP7jYevCdizQ/ces9948VPT+Z7SD0AJZEP0iCOxNEJE0/U/swH2mgVD8YzlEhADNdP+YBq3HWqmQ/9pCsoMJBbT+l8EBnSbV0P6bonC2NUH0/UGiCdsG/hD+mFkK1Xl+NPyfI3yg/ypQ/SPHYbDhunT95adSNwdSkPyOuUjAZfa0/HOEffEnftD/P/2EBAoy9P0sRz8jW6cQ/K/htiPGazT8ja2heafTUP3f2lQfpqd0/agzfZwH/5D99FSpJ6LjtP1Xa4hqfCfU/CXB6F+/H/T+jdVQ1QRQFQEku/yH91g1Asg5HV+keFUDe/8cJE+YdQH3ogvqWKSVATMPwETH1LUA/NV66STQ1QD9SRIZVBD5AXrpJDAI/RUDPoKF/ghNOQLahYpy/SVVAbVZ9rrYiXkCNl24Sg1RlQA=="},"shape":[53],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1055","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1056"}}},"glyph":{"type":"object","name":"Line","id":"p1051","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#1f77b4"}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1052","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#1f77b4","line_alpha":0.1}},"muted_glyph":{"type":"object","name":"Line","id":"p1053","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#1f77b4","line_alpha":0.2}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1006","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1033"},{"type":"object","name":"WheelZoomTool","id":"p1034"},{"type":"object","name":"BoxZoomTool","id":"p1035","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1036","attributes":{"syncable":false,"level":"overlay","visible":false,"left_units":"canvas","right_units":"canvas","bottom_units":"canvas","top_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"SaveTool","id":"p1037"},{"type":"object","name":"ResetTool","id":"p1038"},{"type":"object","name":"HelpTool","id":"p1039"}]}},"left":[{"type":"object","name":"LogAxis","id":"p1026","attributes":{"ticker":{"type":"object","name":"LogTicker","id":"p1029","attributes":{"num_minor_ticks":10,"mantissas":[1,5]}},"formatter":{"type":"object","name":"LogTickFormatter","id":"p1027"},"axis_label":"pressure (bars)","major_label_policy":{"type":"object","name":"AllLabels","id":"p1028"}}}],"below":[{"type":"object","name":"LinearAxis","id":"p1019","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1022","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1020"},"axis_label":"Kz (cm2/s)","major_label_policy":{"type":"object","name":"AllLabels","id":"p1021"}}}],"center":[{"type":"object","name":"Grid","id":"p1025","attributes":{"axis":{"id":"p1019"}}},{"type":"object","name":"Grid","id":"p1032","attributes":{"dimension":1,"axis":{"id":"p1026"}}}]}}]}};
+  const render_items = [{"docid":"4f3c72e3-1595-4430-9d8b-c86204d0916c","roots":{"p1002":"9d3868d2-c985-4ccc-9e54-c0b58239561f"},"root_ids":["p1002"]}];
   root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
   }
   if (root.Bokeh !== undefined) {
@@ -808,7 +827,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/tmp/ipykernel_47549/2109147401.py:3: RuntimeWarning: invalid value encountered in log10
+/tmp/ipykernel_110649/2109147401.py:3: RuntimeWarning: invalid value encountered in log10
   y = np.log10(df[&#39;kz&#39;].values)
 </pre></div></div>
 </div>
@@ -831,7 +850,7 @@ var element = document.currentScript.previousSibling.previousSibling;
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area rendered_html docutils container">
-<div id="e000f82f-0d99-46b4-8f68-b809d87a1bbc" data-root-id="p1146" style="display: contents;"></div></div>
+<div id="fc9ff1dc-8e77-494b-9b29-4d6f26321f23" data-root-id="p1146" style="display: contents;"></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
@@ -842,8 +861,8 @@ var element = document.currentScript.previousSibling.previousSibling;
 var element = document.currentScript.previousSibling.previousSibling;
 (function(root) {
   function embed_document(root) {
-  const docs_json = {"e2965631-b273-4d5a-8247-d9a82896e5d0":{"version":"3.0.2","title":"Bokeh Application","defs":[],"roots":[{"type":"object","name":"Figure","id":"p1146","attributes":{"width":300,"height":300,"x_range":{"type":"object","name":"Range1d","id":"p1155","attributes":{"start":100000.0,"end":100000000000.0}},"y_range":{"type":"object","name":"Range1d","id":"p1157","attributes":{"start":100.0,"end":1e-06}},"x_scale":{"type":"object","name":"LogScale","id":"p1159"},"y_scale":{"type":"object","name":"LogScale","id":"p1161"},"title":{"type":"object","name":"Title","id":"p1152"},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1198","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1192","attributes":{"selected":{"type":"object","name":"Selection","id":"p1193","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1194"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ls8U8MgVCUJgQfLRSPUhQsrInK3sIyVCufz7qH8AGEJlLQC0+wEEQozCq4Qsq+TBTmS5rKgyFcIsQ8m4S2kowjQb2Wj1oy/CgEj7MGE4LcIDuk1QNMwuwjZ7QKlXTTHCS3auSga1McK4p11iAdgvwuVj04ymvinCIXiRboNpJMLcuNbqqUEkwrwYwVh1BSjCMLtD5EtrKMLaK+dsgtEjwjRj6Uz9ahnCA/6pmm/vB8IvsdeiOhXwwbxJEvTMFd3BQ8vHYOPN38H/sI7chbHmwenVLZu0IvHBHIoQnUsl9cGArWact4XzwS0SPzv7FOrBzv1o2Kxu18EDa1r7vLC/wV8pEyonb9zBVsYrtj/838FUqhDGxL3BQbEJqidDHOFBhMBYPntE7kGJCv26bYryQUx4SdQ2vu1BS1PfHEHk40EmxBCHDZXdQR0ZoH9OxqVBaae3U+/oqkFaw44cJ0KzwUMujPBPadLB4If96nMl0cEfaVfvVnzHwY/j+VXIzsPBXszT2G6iwMGYVKU/QpixwRr3md1TeqnBRk0etbrhosERF0pC6UKpwQ=="},"shape":[53],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"ui6CF3tDxD4VX/Fwcq/MPotcsrO5TdQ+9qMz8fK93D6z6bRl/VfkPk3frVB6zOw+Nzzoc0Zi9D4tqdmoCdv8PhPu7ZeUbAQ/CWkzOKDpDD8EmWK353YUP1sfxaY9+Bw/FjwygkCBJD94ymso4wYtP7jYevCdizQ/ces9948VPT+Z7SD0AJZEP0iCOxNEJE0/U/swH2mgVD8YzlEhADNdP+YBq3HWqmQ/9pCsoMJBbT+l8EBnSbV0P6bonC2NUH0/UGiCdsG/hD+mFkK1Xl+NPyfI3yg/ypQ/SPHYbDhunT95adSNwdSkPyOuUjAZfa0/HOEffEnftD/P/2EBAoy9P0sRz8jW6cQ/K/htiPGazT8ja2heafTUP3f2lQfpqd0/agzfZwH/5D99FSpJ6LjtP1Xa4hqfCfU/CXB6F+/H/T+jdVQ1QRQFQEku/yH91g1Asg5HV+keFUDe/8cJE+YdQH3ogvqWKSVATMPwETH1LUA/NV66STQ1QD9SRIZVBD5AXrpJDAI/RUDPoKF/ghNOQLahYpy/SVVAbVZ9rrYiXkCNl24Sg1RlQA=="},"shape":[53],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1199","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1200"}}},"glyph":{"type":"object","name":"Line","id":"p1195","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#1f77b4"}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1196","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#1f77b4","line_alpha":0.1}},"muted_glyph":{"type":"object","name":"Line","id":"p1197","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#1f77b4","line_alpha":0.2}}}},{"type":"object","name":"GlyphRenderer","id":"p1207","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1201","attributes":{"selected":{"type":"object","name":"Selection","id":"p1202","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1203"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"0i7W0I9CH0J/6PJuqREZQpX4APJGmRRCVPvEFmFREUKeJQ9cqMANQtKX9fnOEwpCiQXiK85JB0LpVciqRikFQvAFw6uWiQNCvkwXRHlNAkKwV+gpdl8BQuZFttB7rwBC+LbRuzgxAEJq0+eC57X/QZpdbHdvSf9B172gQXMP/0FhdAeDzfv+QZINyNsiA/9BlfkmSmsa/0Ec5ih7pTb/QeCDMZyxTP9B0Ip/slNR/0GETwLEXTn/QQItZr8B+v5B/nuZSUiJ/kE3PT/Upd79QXWEarai8/xBsI/JEIbE+0FzQp4W7VD6QZy2Ocg4nPhBVB1qx7it9kEfOQRmgZD0QW/jlCPiUvJB86XUQH4F8EE/IKf1M3TrQcqAE2h0BOdBKmcsfYDb4kFbDCj7wibeQTkvFYg1fddBgcTF6YPO0UEKzoF9MjzKQbppVSMawcJBoLecn6v7uUGgt5yfq/u5QaC3nJ+r+7lBoLecn6v7uUGgt5yfq/u5QaC3nJ+r+7lBoLecn6v7uUGgt5yfq/u5QaC3nJ+r+7lBoLecn6v7uUGgt5yfq/u5QQ=="},"shape":[53],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"ui6CF3tDxD4VX/Fwcq/MPotcsrO5TdQ+9qMz8fK93D6z6bRl/VfkPk3frVB6zOw+Nzzoc0Zi9D4tqdmoCdv8PhPu7ZeUbAQ/CWkzOKDpDD8EmWK353YUP1sfxaY9+Bw/FjwygkCBJD94ymso4wYtP7jYevCdizQ/ces9948VPT+Z7SD0AJZEP0iCOxNEJE0/U/swH2mgVD8YzlEhADNdP+YBq3HWqmQ/9pCsoMJBbT+l8EBnSbV0P6bonC2NUH0/UGiCdsG/hD+mFkK1Xl+NPyfI3yg/ypQ/SPHYbDhunT95adSNwdSkPyOuUjAZfa0/HOEffEnftD/P/2EBAoy9P0sRz8jW6cQ/K/htiPGazT8ja2heafTUP3f2lQfpqd0/agzfZwH/5D99FSpJ6LjtP1Xa4hqfCfU/CXB6F+/H/T+jdVQ1QRQFQEku/yH91g1Asg5HV+keFUDe/8cJE+YdQH3ogvqWKSVATMPwETH1LUA/NV66STQ1QD9SRIZVBD5AXrpJDAI/RUDPoKF/ghNOQLahYpy/SVVAbVZ9rrYiXkCNl24Sg1RlQA=="},"shape":[53],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1208","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1209"}}},"glyph":{"type":"object","name":"Line","id":"p1204","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"red"}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1205","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"red","line_alpha":0.1}},"muted_glyph":{"type":"object","name":"Line","id":"p1206","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"red","line_alpha":0.2}}}},{"type":"object","name":"GlyphRenderer","id":"p1216","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1210","attributes":{"selected":{"type":"object","name":"Selection","id":"p1211","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1212"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ls8U8MgVCUJhQfLRSPUhQsbInK3sIyVCt/z7qH8AGEJqLQC0+wEEQlGqEMbEvcFBtAmqJ0Mc4UF/wFg+e0TuQYsK/bptivJBSnhJ1Da+7UFJU98cQeTjQSLEEIcNld1BHhmgf07GpUFmp7dT7+iqQQ=="},"shape":[14],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"vS6CF3tDxD4WX/Fwcq/MPotcsrO5TdQ+/aMz8fK93D636bRl/VfkPiNraF5p9NQ/d/aVB+mp3T9qDN9nAf/kP30VKknouO0/VdriGp8J9T8JcHoX78f9P6N1VDVBFAVASS7/If3WDUCyDkdX6R4VQA=="},"shape":[14],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1217","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1218"}}},"glyph":{"type":"object","name":"Circle","id":"p1213","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"size":{"type":"value","value":7},"line_color":{"type":"value","value":"red"},"fill_color":{"type":"value","value":"red"},"hatch_color":{"type":"value","value":"red"}}},"nonselection_glyph":{"type":"object","name":"Circle","id":"p1214","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"size":{"type":"value","value":7},"line_color":{"type":"value","value":"red"},"line_alpha":{"type":"value","value":0.1},"fill_color":{"type":"value","value":"red"},"fill_alpha":{"type":"value","value":0.1},"hatch_color":{"type":"value","value":"red"},"hatch_alpha":{"type":"value","value":0.1}}},"muted_glyph":{"type":"object","name":"Circle","id":"p1215","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"size":{"type":"value","value":7},"line_color":{"type":"value","value":"red"},"line_alpha":{"type":"value","value":0.2},"fill_color":{"type":"value","value":"red"},"fill_alpha":{"type":"value","value":0.2},"hatch_color":{"type":"value","value":"red"},"hatch_alpha":{"type":"value","value":0.2}}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1153","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1177"},{"type":"object","name":"WheelZoomTool","id":"p1178"},{"type":"object","name":"BoxZoomTool","id":"p1179","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1180","attributes":{"syncable":false,"level":"overlay","visible":false,"left_units":"canvas","right_units":"canvas","bottom_units":"canvas","top_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"SaveTool","id":"p1181"},{"type":"object","name":"ResetTool","id":"p1182"},{"type":"object","name":"HelpTool","id":"p1183"}]}},"left":[{"type":"object","name":"LogAxis","id":"p1170","attributes":{"ticker":{"type":"object","name":"LogTicker","id":"p1172","attributes":{"num_minor_ticks":10,"mantissas":[1,5]}},"formatter":{"type":"object","name":"LogTickFormatter","id":"p1171"},"axis_label":"pressure (bars)","major_label_policy":{"type":"object","name":"AllLabels","id":"p1173"}}}],"below":[{"type":"object","name":"LogAxis","id":"p1163","attributes":{"ticker":{"type":"object","name":"LogTicker","id":"p1165","attributes":{"num_minor_ticks":10,"mantissas":[1,5]}},"formatter":{"type":"object","name":"LogTickFormatter","id":"p1164"},"axis_label":"Kz (cm2/s)","major_label_policy":{"type":"object","name":"AllLabels","id":"p1166"}}}],"center":[{"type":"object","name":"Grid","id":"p1169","attributes":{"axis":{"id":"p1163"}}},{"type":"object","name":"Grid","id":"p1176","attributes":{"dimension":1,"axis":{"id":"p1170"}}}]}}]}};
-  const render_items = [{"docid":"e2965631-b273-4d5a-8247-d9a82896e5d0","roots":{"p1146":"e000f82f-0d99-46b4-8f68-b809d87a1bbc"},"root_ids":["p1146"]}];
+  const docs_json = {"ca43d352-dbd6-4c34-92ef-a35138f1db9d":{"version":"3.0.2","title":"Bokeh Application","defs":[],"roots":[{"type":"object","name":"Figure","id":"p1146","attributes":{"width":300,"height":300,"x_range":{"type":"object","name":"Range1d","id":"p1155","attributes":{"start":100000.0,"end":100000000000.0}},"y_range":{"type":"object","name":"Range1d","id":"p1157","attributes":{"start":100.0,"end":1e-06}},"x_scale":{"type":"object","name":"LogScale","id":"p1159"},"y_scale":{"type":"object","name":"LogScale","id":"p1161"},"title":{"type":"object","name":"Title","id":"p1149"},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1198","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1192","attributes":{"selected":{"type":"object","name":"Selection","id":"p1193","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1194"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ls8U8MgVCUJgQfLRSPUhQsrInK3sIyVCufz7qH8AGEJlLQC0+wEEQozCq4Qsq+TBTmS5rKgyFcIsQ8m4S2kowjQb2Wj1oy/CgEj7MGE4LcIDuk1QNMwuwjZ7QKlXTTHCS3auSga1McK4p11iAdgvwuVj04ymvinCIXiRboNpJMLcuNbqqUEkwrwYwVh1BSjCMLtD5EtrKMLaK+dsgtEjwjRj6Uz9ahnCA/6pmm/vB8IvsdeiOhXwwbxJEvTMFd3BQ8vHYOPN38H/sI7chbHmwenVLZu0IvHBHIoQnUsl9cGArWact4XzwS0SPzv7FOrBzv1o2Kxu18EDa1r7vLC/wV8pEyonb9zBVsYrtj/838FUqhDGxL3BQbEJqidDHOFBhMBYPntE7kGJCv26bYryQUx4SdQ2vu1BS1PfHEHk40EmxBCHDZXdQR0ZoH9OxqVBaae3U+/oqkFaw44cJ0KzwUMujPBPadLB4If96nMl0cEfaVfvVnzHwY/j+VXIzsPBXszT2G6iwMGYVKU/QpixwRr3md1TeqnBRk0etbrhosERF0pC6UKpwQ=="},"shape":[53],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"ui6CF3tDxD4VX/Fwcq/MPotcsrO5TdQ+9qMz8fK93D6z6bRl/VfkPk3frVB6zOw+Nzzoc0Zi9D4tqdmoCdv8PhPu7ZeUbAQ/CWkzOKDpDD8EmWK353YUP1sfxaY9+Bw/FjwygkCBJD94ymso4wYtP7jYevCdizQ/ces9948VPT+Z7SD0AJZEP0iCOxNEJE0/U/swH2mgVD8YzlEhADNdP+YBq3HWqmQ/9pCsoMJBbT+l8EBnSbV0P6bonC2NUH0/UGiCdsG/hD+mFkK1Xl+NPyfI3yg/ypQ/SPHYbDhunT95adSNwdSkPyOuUjAZfa0/HOEffEnftD/P/2EBAoy9P0sRz8jW6cQ/K/htiPGazT8ja2heafTUP3f2lQfpqd0/agzfZwH/5D99FSpJ6LjtP1Xa4hqfCfU/CXB6F+/H/T+jdVQ1QRQFQEku/yH91g1Asg5HV+keFUDe/8cJE+YdQH3ogvqWKSVATMPwETH1LUA/NV66STQ1QD9SRIZVBD5AXrpJDAI/RUDPoKF/ghNOQLahYpy/SVVAbVZ9rrYiXkCNl24Sg1RlQA=="},"shape":[53],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1199","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1200"}}},"glyph":{"type":"object","name":"Line","id":"p1195","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#1f77b4"}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1196","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#1f77b4","line_alpha":0.1}},"muted_glyph":{"type":"object","name":"Line","id":"p1197","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#1f77b4","line_alpha":0.2}}}},{"type":"object","name":"GlyphRenderer","id":"p1207","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1201","attributes":{"selected":{"type":"object","name":"Selection","id":"p1202","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1203"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"0S7W0I9CH0Jw6PJuqREZQoj4APJGmRRCSfvEFmFREUKfJQ9cqMANQsOX9fnOEwpCfAXiK85JB0LdVciqRikFQuUFw6uWiQNCqUwXRHlNAkKcV+gpdl8BQtxFttB7rwBC7rbRuzgxAEJp0+eC57X/QWNdbHdvSf9BtL2gQXMP/0E9dAeDzfv+QW4NyNsiA/9Bg/kmSmsa/0H35Sh7pTb/QbuDMZyxTP9Bq4p/slNR/0FfTwLEXTn/Qd0sZr8B+v5B2XuZSUiJ/kEmPT/Upd79QWOEarai8/xBkY/JEIbE+0FzQp4W7VD6QYC2Ocg4nPhBRx1qx7it9kEfOQRmgZD0QW/jlCPiUvJB6qXUQH4F8EE+IKf1M3TrQbyAE2h0BOdBK2csfYDb4kFKDCj7wibeQSwvFYg1fddBgcTF6YPO0UEJzoF9MjzKQbppVSMawcJBoLecn6v7uUGgt5yfq/u5QaC3nJ+r+7lBoLecn6v7uUGgt5yfq/u5QaC3nJ+r+7lBoLecn6v7uUGgt5yfq/u5QaC3nJ+r+7lBoLecn6v7uUGgt5yfq/u5QQ=="},"shape":[53],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"ui6CF3tDxD4VX/Fwcq/MPotcsrO5TdQ+9qMz8fK93D6z6bRl/VfkPk3frVB6zOw+Nzzoc0Zi9D4tqdmoCdv8PhPu7ZeUbAQ/CWkzOKDpDD8EmWK353YUP1sfxaY9+Bw/FjwygkCBJD94ymso4wYtP7jYevCdizQ/ces9948VPT+Z7SD0AJZEP0iCOxNEJE0/U/swH2mgVD8YzlEhADNdP+YBq3HWqmQ/9pCsoMJBbT+l8EBnSbV0P6bonC2NUH0/UGiCdsG/hD+mFkK1Xl+NPyfI3yg/ypQ/SPHYbDhunT95adSNwdSkPyOuUjAZfa0/HOEffEnftD/P/2EBAoy9P0sRz8jW6cQ/K/htiPGazT8ja2heafTUP3f2lQfpqd0/agzfZwH/5D99FSpJ6LjtP1Xa4hqfCfU/CXB6F+/H/T+jdVQ1QRQFQEku/yH91g1Asg5HV+keFUDe/8cJE+YdQH3ogvqWKSVATMPwETH1LUA/NV66STQ1QD9SRIZVBD5AXrpJDAI/RUDPoKF/ghNOQLahYpy/SVVAbVZ9rrYiXkCNl24Sg1RlQA=="},"shape":[53],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1208","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1209"}}},"glyph":{"type":"object","name":"Line","id":"p1204","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"red"}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1205","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"red","line_alpha":0.1}},"muted_glyph":{"type":"object","name":"Line","id":"p1206","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"red","line_alpha":0.2}}}},{"type":"object","name":"GlyphRenderer","id":"p1216","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1210","attributes":{"selected":{"type":"object","name":"Selection","id":"p1211","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1212"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ls8U8MgVCUJhQfLRSPUhQsbInK3sIyVCt/z7qH8AGEJqLQC0+wEEQlGqEMbEvcFBtAmqJ0Mc4UF/wFg+e0TuQYsK/bptivJBSnhJ1Da+7UFJU98cQeTjQSLEEIcNld1BHhmgf07GpUFmp7dT7+iqQQ=="},"shape":[14],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"vS6CF3tDxD4WX/Fwcq/MPotcsrO5TdQ+/aMz8fK93D636bRl/VfkPiNraF5p9NQ/d/aVB+mp3T9qDN9nAf/kP30VKknouO0/VdriGp8J9T8JcHoX78f9P6N1VDVBFAVASS7/If3WDUCyDkdX6R4VQA=="},"shape":[14],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1217","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1218"}}},"glyph":{"type":"object","name":"Circle","id":"p1213","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"size":{"type":"value","value":7},"line_color":{"type":"value","value":"red"},"fill_color":{"type":"value","value":"red"},"hatch_color":{"type":"value","value":"red"}}},"nonselection_glyph":{"type":"object","name":"Circle","id":"p1214","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"size":{"type":"value","value":7},"line_color":{"type":"value","value":"red"},"line_alpha":{"type":"value","value":0.1},"fill_color":{"type":"value","value":"red"},"fill_alpha":{"type":"value","value":0.1},"hatch_color":{"type":"value","value":"red"},"hatch_alpha":{"type":"value","value":0.1}}},"muted_glyph":{"type":"object","name":"Circle","id":"p1215","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"size":{"type":"value","value":7},"line_color":{"type":"value","value":"red"},"line_alpha":{"type":"value","value":0.2},"fill_color":{"type":"value","value":"red"},"fill_alpha":{"type":"value","value":0.2},"hatch_color":{"type":"value","value":"red"},"hatch_alpha":{"type":"value","value":0.2}}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1150","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1177"},{"type":"object","name":"WheelZoomTool","id":"p1178"},{"type":"object","name":"BoxZoomTool","id":"p1179","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1180","attributes":{"syncable":false,"level":"overlay","visible":false,"left_units":"canvas","right_units":"canvas","bottom_units":"canvas","top_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"SaveTool","id":"p1181"},{"type":"object","name":"ResetTool","id":"p1182"},{"type":"object","name":"HelpTool","id":"p1183"}]}},"left":[{"type":"object","name":"LogAxis","id":"p1170","attributes":{"ticker":{"type":"object","name":"LogTicker","id":"p1173","attributes":{"num_minor_ticks":10,"mantissas":[1,5]}},"formatter":{"type":"object","name":"LogTickFormatter","id":"p1171"},"axis_label":"pressure (bars)","major_label_policy":{"type":"object","name":"AllLabels","id":"p1172"}}}],"below":[{"type":"object","name":"LogAxis","id":"p1163","attributes":{"ticker":{"type":"object","name":"LogTicker","id":"p1166","attributes":{"num_minor_ticks":10,"mantissas":[1,5]}},"formatter":{"type":"object","name":"LogTickFormatter","id":"p1164"},"axis_label":"Kz (cm2/s)","major_label_policy":{"type":"object","name":"AllLabels","id":"p1165"}}}],"center":[{"type":"object","name":"Grid","id":"p1169","attributes":{"axis":{"id":"p1163"}}},{"type":"object","name":"Grid","id":"p1176","attributes":{"dimension":1,"axis":{"id":"p1170"}}}]}}]}};
+  const render_items = [{"docid":"ca43d352-dbd6-4c34-92ef-a35138f1db9d","roots":{"p1146":"fc9ff1dc-8e77-494b-9b29-4d6f26321f23"},"root_ids":["p1146"]}];
   root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
   }
   if (root.Bokeh !== undefined) {

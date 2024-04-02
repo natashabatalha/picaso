@@ -2,11 +2,12 @@
  "cells": [
   {
    "cell_type": "markdown",
+   "id": "2d72d361",
    "metadata": {},
    "source": [
     "# One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry at Solar M/H and C/O\n",
     "\n",
-    "In this tutorial you will learn how to run 1d climate models with the effects of disequilibrium chemistry as was done in [Mukherjee et al. 2022](https://ui.adsabs.harvard.edu/abs/2022arXiv220814317M/abstract) (note this should also be cited if using this code/tutorial). \n",
+    "In this tutorial you will learn how to run 1d climate models with the effects of disequilibrium chemistry as was done for the Elf-OWL Grid [Mukherjee et al. 2024](https://ui.adsabs.harvard.edu/abs/2024arXiv240200756M/abstract) (note this should also be cited if using this code/tutorial). \n",
     "\n",
     "What you should already be familiar with: \n",
     "\n",
@@ -15,17 +16,45 @@
     "- [how to run a basic 1d brown dwarf tutorial](https://natashabatalha.github.io/picaso/notebooks/climate/12a_BrownDwarf.html)\n",
     "\n",
     "\n",
-    "What you will need to download to use this tutorial: \n",
+    "What should have already downloaded: \n",
     "\n",
-    "1. [Download the m+0.0_co1.0.data.196](https://zenodo.org/record/6708165/files/m%2B0.0_co1.0.data.196.tar.zip?download=1) (28.4 Mb) 1060 196 Correlated-K table from Roxana Lupu to be used by the climate code for opacity. **This is an older version of the C-K tables used in the first two tutorials and you will only need the solar C/O and solar M/H file as we have not yet enabled any chemical composition**\n",
+    "1. [Download](https://zenodo.org/record/5590989#.Yzy2YOzMI8a) 1460 PT, 196 wno Correlated-K Tables from Roxana Lupu to be used by the climate code for opacity \n",
     "2. [Download](https://zenodo.org/record/5063476/files/structures_m%2B0.0.tar.gz?download=1) the sonora bobcat cloud free `structures_` file so that you can have a simple starting guess \n",
-    "3. (Optional) [Download](http://perso.ens-lyon.fr/isabelle.baraffe/ATMO2020/ATMO_2020_models.tar.gz) the [Phillips et al. 2020](https://ui.adsabs.harvard.edu/abs/2020A%26A...637A..38P/abstract) models if you want to benchmark the diseq runs with an independent code\n",
-    "\n"
+    "\n",
+    "**NEW:**\n",
+    "\n",
+    "3. [Download the .npy](https://doi.org/10.5281/zenodo.10895826) and place them in picaso_refdata folder/climate_INPUTS/661/\n",
+    "\n",
+    "> **_NOTE:_**  Tip for getting data from zenodo: pip install zenodo_get then it you can simply retrieve a zenodo posting via the command zenodo_get 10.5281/zenodo.10895826 \n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "ebb85a88-a88d-497e-a224-a8df6e738a43",
+   "metadata": {},
+   "source": [
+    "### First, check that you have downloaded and placed the correlated-k files in the correct folder"
    ]
   },
   {
    "cell_type": "code",
    "execution_count": null,
+   "id": "6d1b911a-9ae9-4284-8d1f-e25227536ebb",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import os;import glob\n",
+    "#\n",
+    "glob.glob(\n",
+    "    os.path.join(os.environ['picaso_refdata'],'climate_INPUTS','661','*npy')\n",
+    ")\n",
+    "#should see a list of files e.g., \"/data/reference_data/picaso/reference/climate_INPUTS/661/AlH_1460.npy\""
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "5e0676d7-2757-47cb-8e75-047ebb27f80f",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -36,143 +65,92 @@
     "import astropy.units as u\n",
     "import numpy as np\n",
     "import matplotlib.pyplot as plt\n",
-    "%matplotlib inline"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "ck_db = f'/data/ck_1060/m+0.0_co1.0.data.196'\n",
-    "\n",
-    "#sonora bobcat cloud free structures file\n",
-    "sonora_profile_db = '/data/sonora_bobcat/structure/structures_m+0.0'\n",
-    "phillips_2020_db = '/data/ATMO_2020_models/'"
+    "#%matplotlib inline\n",
+    "from astropy import constants as const\n",
+    "from astropy import units as u\n",
+    "import sys\n",
+    "import pandas as pd\n"
    ]
   },
   {
    "cell_type": "markdown",
+   "id": "5de858d5-3e25-4634-a60b-ad339fd9ee06",
    "metadata": {},
    "source": [
-    "## Starting up the Run"
+    "## Setting up Initial Run (highlighting main differences for disequilibrium)"
    ]
   },
   {
    "cell_type": "code",
    "execution_count": null,
+   "id": "3d5079c4-7677-4a03-aa0d-a2850c5cabcc",
    "metadata": {},
    "outputs": [],
    "source": [
-    "# Notice The keyword ck is set to True because you want to use the correlated-k opacities for your calculation\n",
-    "# and not the line by line opacities\n",
-    "opacity_ck = jdi.opannection(ck_db=ck_db) # grab your opacities"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "This should all look familiar as it is the same steps taken for the regular brown dwarf run."
+    "mh = '+000' #log metallicity\n",
+    "CtoO = '100'# CtoO ratio relative to solar\n",
+    "\n",
+    "ck_db = f'/data/kcoeff_2020_v3/sonora_2020_feh{mh}_co_{CtoO}.data.196'\n",
+    "sonora_profile_db = '/data/sonora_bobcat/structure/structures_m+0.0' #recommended download #2 above\n",
+    "\n",
+    "opacity_ck = jdi.opannection(ck_db=ck_db) # grab your opacities\n"
    ]
   },
   {
    "cell_type": "code",
    "execution_count": null,
+   "id": "8cf8bc9e-b19b-4180-a77a-376b854c7afe",
    "metadata": {},
    "outputs": [],
    "source": [
-    "cl_run = jdi.inputs(calculation=\"browndwarf\", climate = True) # start a calculation \n",
+    "cl_run = jdi.inputs(calculation=\"browndwarf\", climate = True) # start a calculation\n",
     "\n",
-    "#note you need to put the climate keyword to be True in order to do so\n",
-    "# now you need to add these parameters to your calculation  \n",
     "\n",
-    "teff= 700 # Effective Temperature of your Brown Dwarf in K\n",
-    "grav = 3160 # Gravity of your brown dwarf in m/s/s \n",
+    "tint= 700 \n",
+    "grav = 316 # Gravity of your Planet in m/s/s\n",
     "\n",
     "cl_run.gravity(gravity=grav, gravity_unit=u.Unit('m/(s**2)')) # input gravity\n",
-    "cl_run.effective_temp(teff) # input effective temperature"
+    "cl_run.effective_temp(tint) # input effective temperature\n",
+    "\n",
+    "nlevel = 91 \n"
    ]
   },
   {
    "cell_type": "markdown",
+   "id": "6f4ad063-2b66-429e-8221-fb34a4077335",
    "metadata": {},
    "source": [
-    "## Initial T(P)  Guess \n",
-    "\n",
-    "All same as before"
+    "We recommend starting with Sonora-Bobcat models as an initial guess. "
    ]
   },
   {
    "cell_type": "code",
    "execution_count": null,
+   "id": "8325ae68-7c4e-489e-a99d-3a10cbd39cba",
    "metadata": {},
    "outputs": [],
    "source": [
-    "nlevel = 91 # number of plane-parallel levels in your code\n",
-    "\n",
-    "#Lets set the max and min at 1e-4 bars and 500 bars\n",
-    "\n",
-    "#Pmin = 1e-4 #bars\n",
-    "#Pmax = 500 #bars\n",
-    "#pressure=np.logspace(np.log10(Pmin),np.log10(Pmax),nlevel) # set your pressure grid\n",
-    "\n",
-    "pressure_bobcat,temp_bobcat = np.loadtxt(jdi.os.path.join(\n",
-    "                            sonora_profile_db,f\"t{teff}g{grav}nc_m0.0.dat\"),\n",
+    "pressure,temp_guess = np.loadtxt(jdi.os.path.join(\n",
+    "                            sonora_profile_db,f\"t{tint}g{grav}nc_m0.0.dat\"),\n",
     "                            usecols=[1,2],unpack=True, skiprows = 1)\n",
-    "kz = temp_bobcat*0 + 1e4\n",
-    "self_consistent_kzz = False"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "## Initial Convective Zone Guess\n",
     "\n",
-    "This is all the same as the original Brown Dwarf tutorial. Here we will be a little more conservative with our convective zone guess as this is our first Disequilibrium run. "
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "\n",
     "nofczns = 1 # number of convective zones initially. Let's not play with this for now.\n",
     "\n",
-    "nstr_upper = 86 # top most level of guessed convective zone (we are just guessing nlevel-5)\n",
+    "nstr_upper = 79 # top most level of guessed convective zone\n",
     "nstr_deep = nlevel -2 # this is always the case. Dont change this\n",
-    "nstr = np.array([0,nstr_upper,nstr_deep,0,0,0]) # initial guess of convective zones\n",
+    "nstr = np.array([0,nstr_upper,89,0,0,0]) # initial guess of convective zones\n",
     "\n",
     "# Here are some other parameters needed for the code.\n",
-    "rfacv = 0.0 #we are focused on a brown dwarf so let's keep this as is"
+    "rfacv = 0.0 #we are focused on a brown dwarf so let's keep this as is\n",
+    "print(mh,CtoO,tint)\n"
    ]
   },
   {
    "cell_type": "markdown",
+   "id": "b3117928-c7b4-4101-a932-be83c78ccc6a",
    "metadata": {},
    "source": [
-    "All the same here as well. "
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "cl_run.inputs_climate(temp_guess= temp_bobcat, pressure= pressure_bobcat, \n",
-    "                      nstr = nstr, nofczns = nofczns , rfacv = rfacv)"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "## Run the Climate Code with disequilibrium chemistry\n",
-    "\n",
     "### Setting K$_{zz}$\n",
     "\n",
     "We will add one more concept which is the addition of  K$_{zz}$ [cm$^2$/s]. K$_{zz}$ is the eddy diffusion constant, which sets the strength of vertical mixing. In `PICASO` we have two options for  K$_{zz}$: \n",
@@ -180,81 +158,70 @@
     " 1. Constant value: sets a constant at every atmospheric layer\n",
     " 2. Self consistent (see Eqn. 27 and 28 in [Mukherjee et al 2022](https://arxiv.org/pdf/2208.07836.pdf))\n",
     "\n",
+    "\n",
     "**New code parameters**: \n",
     "\n",
-    "0. `diseq_chem=True` : First we will turn on disequilibrium chemistry\n",
+    "0. `diseq_chem=True` : Turns on disequilibrium chemistry\n",
     "1. `self_consistent_kzz` : (True/False) This solves self consistently for \n",
     "2. `save_all_kzz` : (True/False) Similar to `save_all_profiles` this saves your intermediate k_zz values if you are trying to solve for a `self_consistent_kzz=True`.\n",
     "3. `kz` : constant value if `self_consistent_kzz=False`\n",
+    "4. `gases_fly` : **Important**: determines what gases to include in your climate calculation. if you remove one, it will remove the opacity contirubtion from that gas in your climate calculation\n",
+    "5. `chemeq_first` : Converges a chemical equilibrium model first (helpful for convergence)\n",
     "\n",
-    "### On the fly mixing \n",
+    "**Which of those 6 do I need change change**\n",
     "\n",
-    "In [Mukherjee et al. 2022](https://ui.adsabs.harvard.edu/abs/2022arXiv220814317M/abstract) on-the-fly mixing of CO, CH4, NH3, and H2O was considered. There are some important assumptions for version 1 that the user needs to be aware: \n",
-    "\n",
-    "1. We only allow solar C/O and solar M/H \n",
-    "2. Only CO, CH4, NH3, and H2O will be mixed on the fly. \n",
-    "\n",
-    "Soon we will make this more flexible but want to make sure that V1 of the climate code is well-behaved for users before we open it up to all gases. "
+    "Likely you will only be changing `kz` and/or, for example, playing around with a `self_consistent_kzz` vs a `constant profile`. Unless you are certain, we recommend the following set of `gases_fly` to remain unchanged. \n"
    ]
   },
   {
    "cell_type": "code",
    "execution_count": null,
+   "id": "dd563701-7b34-4b99-8b4d-5f91bdb11970",
    "metadata": {},
    "outputs": [],
    "source": [
-    "out = cl_run.climate(opacity_ck, save_all_profiles=True,with_spec=True,\n",
-    "                    diseq_chem=True, kz=kz)"
+    "#following elf-owl lets use a constant value for all pressures\n",
+    "kzval = pressure*0+1e2"
    ]
   },
   {
    "cell_type": "code",
    "execution_count": null,
+   "id": "05142f70-6d40-432a-ab47-0398d272a035",
    "metadata": {},
    "outputs": [],
    "source": [
-    "out.keys()"
+    "cl_run.inputs_climate(temp_guess= temp_guess, pressure= pressure,\n",
+    "                                           nstr = nstr, nofczns = nofczns , rfacv = rfacv, mh =mh, CtoO = CtoO)\n",
+    "\n",
+    "\n",
+    "gases_fly = ['CO','CH4','H2O','NH3','CO2','N2','HCN','H2','PH3','C2H2','Na','K','TiO','VO','FeH']\n",
+    "\n",
+    "out = cl_run.climate(opacity_ck, save_all_profiles = True, as_dict=True,with_spec=True,\n",
+    "        save_all_kzz = False, diseq_chem = True, self_consistent_kzz =False, kz = kzval,\n",
+    "        on_fly=True,gases_fly=gases_fly, chemeq_first=False)\n"
    ]
   },
   {
    "cell_type": "markdown",
+   "id": "05138391-c05c-43b1-a422-e544d3a3cb89",
    "metadata": {},
    "source": [
-    "## Benchmark with Phillips et al 2020\n",
-    "With all model runs it is important to benchmark with previously published models, especially with an independent model. We can benchmark the PICASo runs with the work from [Phillips et al 2020](https://ui.adsabs.harvard.edu/abs/2020A%26A...637A..38P/abstract) to create the ATMO 2020 grid. "
+    "## Compare Diseq and Chemeq Climate Profile \n",
+    "\n",
+    "For the case we chose with very low kzz, and solar M/H the disequilibrium profile and bobcat profiles are identical! "
    ]
   },
   {
    "cell_type": "code",
    "execution_count": null,
+   "id": "71729e76-b6dd-4e38-aa48-65204276da8a",
    "metadata": {},
    "outputs": [],
    "source": [
-    "pphil_deq,tphil_deq = np.loadtxt(jdi.os.path.join(phillips_2020_db, \n",
-    "                                              #phillips directory structre\n",
-    "                                             'atmosphere_models','NEQ_strong_compositions',\n",
-    "                                             'chem_T700_lg5.5_NEQ_strong.txt')\n",
-    "                                ,usecols=[1,2],unpack=True)\n",
-    "\n",
-    "plt.figure(figsize=(10,10))\n",
-    "plt.ylabel(\"Pressure [Bars]\", fontsize=25)\n",
-    "plt.xlabel('Temperature [K]', fontsize=25)\n",
-    "plt.ylim(500,1e-4)\n",
-    "plt.xlim(100,2500)\n",
-    "\n",
-    "plt.semilogy(out['temperature'],out['pressure'],color=\"r\",linewidth=3,label=\"Our Run\")\n",
-    "\n",
-    "plt.semilogy(tphil_deq,pphil_deq,color=\"k\",linestyle=\"--\",linewidth=3,label=\"Phillips et al 2020\")\n",
-    "\n",
-    "\n",
-    "plt.minorticks_on()\n",
-    "plt.tick_params(axis='both',which='major',length =30, width=2,direction='in',labelsize=23)\n",
-    "plt.tick_params(axis='both',which='minor',length =10, width=2,direction='in',labelsize=23)\n",
-    "\n",
-    "plt.legend(fontsize=15)\n",
-    "\n",
-    "plt.title(r\"T$_{\\rm eff}$= 700 K, log(g)=5.5, K$_{\\rm zz}$=1e4\",fontsize=25)\n",
-    "\n"
+    "plt.ylim(200,1.7e-4)\n",
+    "plt.semilogy(out['temperature'],out['pressure'],\"r\", label='Elf-OWL Style, Disequilibrium')\n",
+    "plt.semilogy(temp_guess,pressure,color=\"k\",linestyle=\"--\", label='Bobcat, Chemical Equilibrium')"
    ]
   }
  ],
@@ -274,20 +241,7 @@
    "name": "python",
    "nbconvert_exporter": "python",
    "pygments_lexer": "ipython3",
-   "version": "3.8.12"
-  },
-  "toc": {
-   "base_numbering": 1,
-   "nav_menu": {},
-   "number_sections": true,
-   "sideBar": true,
-   "skip_h1_title": false,
-   "title_cell": "Table of Contents",
-   "title_sidebar": "Contents",
-   "toc_cell": true,
-   "toc_position": {},
-   "toc_section_display": true,
-   "toc_window_display": false
+   "version": "3.11.5"
   },
   "varInspector": {
    "cols": {
@@ -320,5 +274,5 @@
   }
  },
  "nbformat": 4,
- "nbformat_minor": 4
+ "nbformat_minor": 5
 }
