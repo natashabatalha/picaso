@@ -5113,9 +5113,9 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     bundle.add_pt( temp, pressure)
     #### to get the last Kzz in the calculation
     
-    print('profile kz before calc:',kz) #JM printouts for deq nan issue
-    print('profile mmw before calc:',mmw)
-    print('profile all_kzz before calc:',all_kzz)
+    # print('profile kz before calc:',kz) #JM printouts for deq nan issue
+    # print('profile mmw before calc:',mmw)
+    # print('profile all_kzz before calc:',all_kzz)
     if photo_inputs_dict['yesorno'] == False:
         k_b = 1.38e-23 # boltzmann constant
         m_p = 1.66e-27 # proton mass
@@ -5127,12 +5127,13 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         con  = k_b/(mmw*m_p)
 
         scale_H = con * temp*1e2/(grav)
+        if self_consistent_kzz == True: #bookkeeping to make sure kzz isn't recalculated unless self-consistent cases *JM
+            kz = scale_H**2/all_kzz[-len(temp):] ## level mixing timescales
 
-        kz = scale_H**2/all_kzz[-len(temp):] ## level mixing timescales
-        print('profile temp:',temp)
-        print('kz:',kz)
+        # print('profile temp:',temp) #JM printouts for deq nan issue
+        # print('kz:',kz)
         quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale=True)
-        print('t_mix:',t_mix)
+        # print('t_mix:',t_mix)
         if save_kzz == 1:
             all_kzz = np.append(all_kzz,t_mix)
         qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix)
@@ -5171,9 +5172,14 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             # directory = '/home/jjm6243/dev_virga/'
             directory = mieff_dir
 
-            kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
-            bundle.inputs['atmosphere']['profile']['kz'] = kzz
-            photo_inputs_dict['kz'] = kzz
+            if self_consistent_kzz == True:
+                kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
+                bundle.inputs['atmosphere']['profile']['kz'] = kzz
+                photo_inputs_dict['kz'] = kzz
+            
+            else:
+                bundle.inputs['atmosphere']['profile']['kz'] = kz
+                photo_inputs_dict['kz'] = kz
 
             cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
                         mmw = mean_molecular_weight)#,climate=True)
@@ -5270,10 +5276,10 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
         bundle.add_pt( temp, pressure)
         if photo_inputs_dict['yesorno'] == False:
-            print('loop temp:',temp)
-            print('loop kz:',kz)
+            # print('loop temp:',temp) #JM printouts for deq nan issue
+            # print('loop kz:',kz)
             quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale=True)
-            print('loop t_mix:',t_mix)
+            # print('loop t_mix:',t_mix)
             
             qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix)
             print("Quench Levels are CO, CO2, NH3, HCN ", quench_levels)
@@ -5301,10 +5307,13 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             # directory = '/home/jjm6243/dev_virga/'
             directory = mieff_dir
 
-            kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
-            bundle.inputs['atmosphere']['profile']['kz'] = kzz
-            photo_inputs_dict['kz'] =kzz
-        
+            if self_consistent_kzz == True:
+                kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
+                bundle.inputs['atmosphere']['profile']['kz'] = kzz
+                photo_inputs_dict['kz'] =kzz
+            else:
+                bundle.inputs['atmosphere']['profile']['kz'] = kz
+                photo_inputs_dict['kz'] = kz
     
             cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
                         mmw = mean_molecular_weight)#,climate=True)
@@ -5639,9 +5648,9 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         
         if nstr[1] < 5 :
             raise ValueError( "Convection zone grew to Top of atmosphere, Need to Stop")
-        print('find_strat_deq input temp:',temp)
-        print('find_strat_deq mmw profile input:',mmw)
-        print('find_strat_deq first profile_deq call')
+        # print('find_strat_deq input temp:',temp) *JM print debugging
+        # print('find_strat_deq mmw profile input:',mmw)
+        # print('find_strat_deq first profile_deq call')
         pressure, temp, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,cld_out,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,_= profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,\
             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav,rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw, save_profile, all_profiles, self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,\
             w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly , verbose=verbose)
@@ -5777,7 +5786,8 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
 
         scale_H = con * temp*1e2/(grav)
 
-        kz = scale_H**2/all_kzz[-len(temp):] ## level mixing timescales
+        if self_consistent_kzz == True:
+            kz = scale_H**2/all_kzz[-len(temp):] ## level mixing timescales
 
         quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale=True)
 
@@ -5804,8 +5814,12 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         directory = mieff_dir
 
         calc_type =0
-        kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
-        bundle.inputs['atmosphere']['profile']['kz'] = kzz
+
+        if self_consistent_kzz == True :
+            kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
+            bundle.inputs['atmosphere']['profile']['kz'] = kzz
+        else:
+            bundle.inputs['atmosphere']['profile']['kz'] = kz
 
 
         cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
