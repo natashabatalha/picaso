@@ -3859,7 +3859,8 @@ class inputs():
             if self.inputs['climate']['photochem']==False:
                 quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale= True) # determine quench levels
 
-                all_kzz = np.append(all_kzz, t_mix) # save kzz
+                # all_kzz = np.append(all_kzz, t_mix) # save kzz
+                all_kzz = np.append(all_kzz, kz) # save kzz #JM changed to not convert from t_mix
 
                 if verbose: print("Quench Levels are CO, CO2, NH3, HCN, PH3 ", quench_levels) # print quench levels
                 
@@ -3965,8 +3966,8 @@ class inputs():
             g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,
             photo_inputs_dict,
             on_fly=on_fly, gases_fly=gases_fly, verbose=verbose)
-                print('find_strat_deq, kz input:',kz)
-                print('find_strat_deq, all_kzz input:',all_kzz)
+                print('find_strat_deq, kz input:',kz) #JM printout for deq nan debugging
+                # print('find_strat_deq, all_kzz input:',all_kzz)
                 pressure, temp, dtdp, nstr_new, flux_plus_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,cld_out,photo_inputs_dict,final_conv_flag=find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                                 t_table, p_table, grad, cp, opacityclass, grav, 
                                 rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly,
@@ -4537,8 +4538,6 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             
             metallicity = 10**(mh) #atmospheric metallicity relative to Solar
             mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
-            # directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new'
-            # directory = '/home/jjm6243/dev_virga/'
             directory = mieff_dir
             
             kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
@@ -4623,8 +4622,6 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             
             metallicity = 10**(mh) #atmospheric metallicity relative to Solar
             mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
-            # directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new'
-            # directory = '/home/jjm6243/dev_virga/'
             directory = mieff_dir
 
             kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
@@ -4960,8 +4957,6 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
 
         metallicity = 10**(mh) #atmospheric metallicity relative to Solar
         mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
-        # directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new'
-        # directory = '/home/jjm6243/dev_virga/'
         directory = mieff_dir
 
         calc_type =0
@@ -5117,25 +5112,26 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     # print('profile mmw before calc:',mmw)
     # print('profile all_kzz before calc:',all_kzz)
     if photo_inputs_dict['yesorno'] == False:
-        k_b = 1.38e-23 # boltzmann constant
-        m_p = 1.66e-27 # proton mass
+        # k_b = 1.38e-23 # boltzmann constant
+        # m_p = 1.66e-27 # proton mass
         
-        if len(mmw) < len(temp):
-            print('mmw appended')
-            mmw = np.append(mmw,mmw[-1])
-            print('profile mmw after append:',mmw)
-        con  = k_b/(mmw*m_p)
+        # if len(mmw) < len(temp):
+        #     # print('mmw appended')
+        #     mmw = np.append(mmw,mmw[-1])
+        #     # print('profile mmw after append:',mmw)
+        # con  = k_b/(mmw*m_p)
 
-        scale_H = con * temp*1e2/(grav)
+        # scale_H = con * temp*1e2/(grav)
         if self_consistent_kzz == True: #bookkeeping to make sure kzz isn't recalculated unless self-consistent cases *JM
-            kz = scale_H**2/all_kzz[-len(temp):] ## level mixing timescales
-
+        #     kz = scale_H**2/all_kzz[-len(temp):] ## level mixing timescales
+            kz = all_kzz[-len(temp):] ## JM changed to not convert from t_mix to kz
         # print('profile temp:',temp) #JM printouts for deq nan issue
         # print('kz:',kz)
         quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale=True)
         # print('t_mix:',t_mix)
         if save_kzz == 1:
-            all_kzz = np.append(all_kzz,t_mix)
+            # all_kzz = np.append(all_kzz,t_mix)
+            all_kzz = np.append(all_kzz, kz) #JM changed to not convert from t_mix to kz
         qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix)
     else :
         bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
@@ -5168,14 +5164,13 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             
             metallicity = 10**(0) #atmospheric metallicity relative to Solar
             mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
-            # directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new661'
-            # directory = '/home/jjm6243/dev_virga/'
             directory = mieff_dir
 
             if self_consistent_kzz == True:
                 kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
                 bundle.inputs['atmosphere']['profile']['kz'] = kzz
                 photo_inputs_dict['kz'] = kzz
+                # print('virga kz:',kzz)
             
             else:
                 bundle.inputs['atmosphere']['profile']['kz'] = kz
@@ -5278,6 +5273,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         if photo_inputs_dict['yesorno'] == False:
             # print('loop temp:',temp) #JM printouts for deq nan issue
             # print('loop kz:',kz)
+            # print('loop mmw:',mmw)
             quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale=True)
             # print('loop t_mix:',t_mix)
             
@@ -5303,18 +5299,17 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             
             metallicity = 10**(0) #atmospheric metallicity relative to Solar
             mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
-            # directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new661'
-            # directory = '/home/jjm6243/dev_virga/'
             directory = mieff_dir
 
             if self_consistent_kzz == True:
                 kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
                 bundle.inputs['atmosphere']['profile']['kz'] = kzz
                 photo_inputs_dict['kz'] =kzz
+                # print('virga kz:',kzz)
             else:
                 bundle.inputs['atmosphere']['profile']['kz'] = kz
                 photo_inputs_dict['kz'] = kz
-    
+
             cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
                         mmw = mean_molecular_weight)#,climate=True)
             
@@ -5395,7 +5390,8 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             photo_inputs_dict['kz'] = kz
         if save_kzz == 1: 
             if photo_inputs_dict['yesorno'] == False:
-                all_kzz = np.append(all_kzz,t_mix)
+                # all_kzz = np.append(all_kzz,t_mix)
+                all_kzz = np.append(all_kzz, kz) #JM changed to not convert from t_mix to kz
             else:
                 all_kzz = np.append(all_kzz,kz)
 
@@ -5777,18 +5773,20 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
     bundle.add_pt( temp, pressure)
 
     if photo_inputs_dict['yesorno'] == False:
-        k_b = 1.38e-23 # boltzmann constant
-        m_p = 1.66e-27 # proton mass
+        # k_b = 1.38e-23 # boltzmann constant
+        # m_p = 1.66e-27 # proton mass
 
-        if len(mmw) < len(temp):
-            mmw = np.append(mmw,mmw[-1])
-        con  = k_b/(mmw*m_p)
+        # if len(mmw) < len(temp):
+        #     mmw = np.append(mmw,mmw[-1])
+        # con  = k_b/(mmw*m_p)
 
-        scale_H = con * temp*1e2/(grav)
+        # scale_H = con * temp*1e2/(grav)
 
         if self_consistent_kzz == True:
-            kz = scale_H**2/all_kzz[-len(temp):] ## level mixing timescales
+        #     kz = scale_H**2/all_kzz[-len(temp):] ## level mixing timescales
+            kz = all_kzz[-len(temp):] #JM updated kz from profile_deq()
 
+        # print('find_strat_deq kz:',kz)
         quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale=True)
 
         qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix)
@@ -5809,8 +5807,6 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight =  calculate_atm_deq(bundle, opacityclass,on_fly=on_fly, gases_fly=gases_fly)
         metallicity = 10**(0.0) #atmospheric metallicity relative to Solar
         mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
-        # directory ='/Users/sagnickmukherjee/Documents/GitHub/virga/refr_new661'
-        # directory = '/home/jjm6243/dev_virga/'
         directory = mieff_dir
 
         calc_type =0
@@ -5821,7 +5817,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         else:
             bundle.inputs['atmosphere']['profile']['kz'] = kz
 
-
+        # print('virga kz:',kz)
         cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
                         mmw = mean_molecular_weight)#,climate=True)
         
