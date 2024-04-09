@@ -38,9 +38,9 @@ def quench_level(pressure, temp, kz,mmw, grav, return_mix_timescale = False):
     k_b = 1.38e-23 # boltzmann constant
     m_p = 1.66e-27 # proton mass
     nlevel = len(temp)
-    print('quench mmw before nlevel:',mmw)
+    # print('quench mmw before nlevel:',mmw)
     if len(mmw) < nlevel:
-        print('quench mmw appended')
+        # print('quench mmw appended')
         mmw = np.append(mmw,mmw[-1])
     quench_levels = np.zeros(shape=(4))
     quench_levels  = quench_levels.astype(int)
