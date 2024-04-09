@@ -333,7 +333,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
             grad, cp, tidal, tmin,tmax, dwni , bb , y2, tp, DTAU, TAU, W0, COSB, 
             ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,
             cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,
-            constant_back,constant_forward,  wno,nwno,ng,nt,gweight,tweight, ngauss, gauss_wts, save_profile, all_profiles,
+            constant_back,constant_forward,  wno,nwno,ng,nt,gweight,tweight, ngauss, gauss_wts, save_profile, all_profiles, teff,
             verbose=1):
     """
     Module to iterate on the level TP profile to make the Net Flux as close to 0.
@@ -556,12 +556,15 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
         
         # NEB NOTE about step max 
         # In the original fortran code this was originally 
-        # step_max = step_max_tolerance*max(sqrt(sum_1),n_total*1.0) #where step_max_tolerance=0.03
+        if teff <= 300:
+            step_max_tolerance = 0.005
+            step_max = step_max_tolerance*max(sqrt(sum_1),n_total*1.0) #where step_max_tolerance=0.03
         # however when this was fixed, the code was progressing very slowly 
         # therefore, we are keeping this in the code for now 
         # the result of this is that there are sometimes large temperature 
         # steps that might be problematic for edge cases that get too hot or too cold 
-        step_max *= max(sqrt(sum_1),n_total*1.0)#step_max_tolerance*
+        else:
+            step_max *= max(sqrt(sum_1),n_total*1.0)#step_max_tolerance*
         #if verbose: print('maximum scaled step size',step_max, n_total, sum_1, its)
         no =n_top_r
         

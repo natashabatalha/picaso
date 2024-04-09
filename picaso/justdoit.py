@@ -3622,7 +3622,8 @@ class inputs():
         #we will extend the black body grid 30% beyond the min and max temp of the 
         #opacity grid just to be safe with the spline
         extension = 0.3 
-        tmin = min_temp*(1-extension)
+        # tmin = min_temp*(1-extension)
+        tmin = 10
         tmax = max_temp*(1+extension)
         ntmps = int((tmax-tmin)/dt)
         
@@ -3930,7 +3931,8 @@ class inputs():
             dt = self.inputs['climate']['dt_bb_grid']
             
             extension = 0.3 
-            tmin = min_temp*(1-extension)
+            # tmin = min_temp*(1-extension)
+            tmin = 10 #JM changed to 10K for the cold cases
             tmax = max_temp*(1+extension)
 
             ntmps = int((tmax-tmin)/dt)
@@ -4584,6 +4586,10 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         frac_a,frac_b,frac_c,constant_back,constant_forward, \
         wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight =  calculate_atm(bundle, opacityclass )
     
+    #calculate teff for t_start solver
+    sigmab =  0.56687e-4 #cgs
+    target_teff = (abs(tidal[0])/sigmab)**0.25
+    
     ## begin bigger loop which gets opacities
     for iii in range(itmx):
         
@@ -4594,7 +4600,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                     DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
                     ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
                     wno,nwno,ng,nt,gweight,tweight, 
-                    ngauss, gauss_wts, save_profile, all_profiles,
+                    ngauss, gauss_wts, save_profile, all_profiles, target_teff,
                     verbose=verbose)
         
         #NEB stage delete after confirmation from SM
@@ -5244,6 +5250,10 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     
         kz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
         photo_inputs_dict['kz'] = kz
+
+    #calculate teff for t_start solver
+    target_teff = 500 #Increased to 500K so that t_start doesn't use EGP step_max solver for deq cases, a little hacky (JM)
+
     ## begin bigger loop which gets opacities
     for iii in range(itmx):
         
@@ -5253,7 +5263,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
             W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, FOPI, 
             single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
-            wno,nwno,ng,nt,gweight,tweight, ngauss, gauss_wts, save_profile, all_profiles,
+            wno,nwno,ng,nt,gweight,tweight, ngauss, gauss_wts, save_profile, all_profiles, target_teff,
             verbose=verbose)
         '''
         if (temp <= min(opacityclass.cia_temps)).any():
