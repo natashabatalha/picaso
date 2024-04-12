@@ -1974,7 +1974,7 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
 
         ax['A'].set_xlabel('Temperature [K]',fontsize=30)
         ax['A'].set_ylabel('Pressure [Bars]',fontsize=30)
-        ax['A'].set_xlim(200,2900)
+        ax['A'].set_xlim(0,2900)
         ax['A'].set_ylim(205,1.8e-4)
         ax['B'].set_xlabel('Abundance [V/V]',fontsize=30)
         ax['B'].set_ylabel('Pressure [Bars]',fontsize=30)
@@ -2187,7 +2187,7 @@ def pt_adiabat(clima_out, input_class, plot=True):
                       
     plt.semilogy(clima_out['dtdp'], layer_p)
     plt.semilogy(grad,layer_p) 
-    plt.ylim([1e2,1e-4]), 
+    plt.ylim([1e4,1e-4]), 
     plt.xlabel('dT/dP vs adiabat')
     plt.ylabel('Pressure(bars)')
-    return cp, clima_out['dtdp'], layer_p
+    return cp, grad, clima_out['dtdp'], layer_p

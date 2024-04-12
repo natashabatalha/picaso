@@ -3844,7 +3844,7 @@ def planck_rad_deprecate(iw, T, dT ,  tmin, tmax, bb , y2, tp):
 
     if T < tmin :
        # itchx = 1
-        T= tmax
+        T= tmin #originally set = tmax JM
     elif T > tmax :
        # itchx = 1
         T=tmax
@@ -3876,7 +3876,7 @@ def blackbody_climate_deprecate(wave,temp, bb, y2, tp, tmin, tmax):
 
 # still not developed fully. virga has a function already maybe just use that
 @jit(nopython=True, cache=True)
-def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr):
+def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds = None, moist = None):
 
     grav_cgs = grav*1e2
     p_cgs = pressure *1e6
@@ -3964,7 +3964,10 @@ def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,
         pbar = 0.5*(p_cgs[j] +p_cgs[j+1])
         # weirdly layer routine of eddysed uses did_grad with pressures in cgs
         # supposed to be used with pressure in bars
-        grad_x,cp_x = did_grad_cp(tbar, pbar, t_table, p_table, grad, cp, calc_type)
+        if moist == True:
+            grad_x,cp_x = moist_grad(tbar, pbar, t_table, p_table, grad, cp, calc_type, output_abunds, j)
+        else:
+            grad_x,cp_x = did_grad_cp(tbar, pbar, t_table, p_table, grad, cp, calc_type)
         lapse_ratio[j] = min(np.array([1.0, -dtdp/grad_x]))
         
     
@@ -4004,122 +4007,4 @@ def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,
     
     return kz
 
-
-@jit(nopython=True, cache=True)
-def did_grad_cp( t, p, t_table, p_table, grad, cp, calc_type):
-    """
-    Parameters
-    ----------
-    t : float
-        Temperature  value
-    p : float 
-        Pressure value
-    t_table : array 
-        array of Temperature values with 53 entries
-    p_table : array 
-        array of Pressure value with 26 entries
-    grad : array 
-        array of gradients of dimension 53*26
-    cp : array 
-        array of cp of dimension 53*26
-    calc_type : int 
-        not used to make compatible with nopython. 
-    
-    Returns
-    -------
-    float 
-        grad_x,cp_x
-    
-    """
-    # Python version of DIDGRAD function in convec.f in EGP
-    # This has been benchmarked with the fortran version
-    
-       
-    temp_log= log10(t)
-    pres_log= log10(p)
-    
-    pos_t = locate(t_table, temp_log)
-    pos_p = locate(p_table, pres_log)
-
-    ipflag=0
-    if pos_p ==0: ## lowest pressure point
-        factkp= 0.0
-        ipflag=1
-    elif pos_p ==25 : ## highest pressure point
-        factkp= 1.0
-        pos_p=24  ## use highest point
-        ipflag=1
-
-    itflag=0
-    if pos_t ==0: ## lowest pressure point
-        factkt= 0.0
-        itflag=1
-    elif pos_t == 52 : ## highest temp point
-        factkt= 1.0
-        pos_t=51 ## use highest point
-        itflag=1
-    
-    if (pos_p > 0) and (pos_p < 26) and (ipflag == 0):
-        factkp= (-p_table[pos_p]+pres_log)/(p_table[pos_p+1]-p_table[pos_p])
-    
-    if (pos_t > 0) and (pos_t < 53) and (itflag == 0):
-        factkt= (-t_table[pos_t]+temp_log)/(t_table[pos_t+1]-t_table[pos_t])
-
-    
-    gp1 = grad[pos_t,pos_p]
-    gp2 = grad[pos_t+1,pos_p]
-    gp3 = grad[pos_t+1,pos_p+1]
-    gp4 = grad[pos_t,pos_p+1]
-
-    cp1 = cp[pos_t,pos_p]
-    cp2 = cp[pos_t+1,pos_p]
-    cp3 = cp[pos_t+1,pos_p+1]
-    cp4 = cp[pos_t,pos_p+1]
-
-
-    
-
-    grad_x = (1.0-factkt)*(1.0-factkp)*gp1 + factkt*(1.0-factkp)*gp2 + factkt*factkp*gp3 + (1.0-factkt)*factkp*gp4
-    cp_x= (1.0-factkt)*(1.0-factkp)*cp1 + factkt*(1.0-factkp)*cp2 + factkt*factkp*cp3 + (1.0-factkt)*factkp*cp4
-    cp_x= 10**cp_x
-    
-    
-    return grad_x,cp_x
-
-@jit(nopython=True, cache=True)
-def locate(array,value):
-    """
-    Parameters
-    ----------
-    array : array
-        Array to be searched.
-    value : float 
-        Value to be searched for.
-    
-    
-    Returns
-    -------
-    int 
-        location of nearest point by bisection method 
-    
-    """
-    # this is from numerical recipes
-    
-    n = len(array)
-    
-    
-    jl = 0
-    ju = n
-    while (ju-jl > 1):
-        jm=int(0.5*(ju+jl)) 
-        if (value >= array[jm]):
-            jl=jm
-        else:
-            ju=jm
-    
-    if (value <= array[0]): # if value lower than first point
-        jl=0
-    elif (value >= array[-1]): # if value higher than first point
-        jl= n-1
-    
-    return jl
+from .climate import moist_grad, did_grad_cp

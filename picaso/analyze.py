@@ -1232,7 +1232,6 @@ def plot_atmosphere(location,bf_filename,gas_names=None,fig=None,ax=None,linesty
                 #cmap.set_bad('k',1.)
 
                 plt.rcParams['image.cmap'] = 'magma'                   # Colormap.
-                plt.rcParams['image.interpolation'] = None
                 plt.rcParams['image.origin'] = 'lower'
                 plt.rcParams['font.family'] = 'serif'
                 plt.rcParams['font.serif'] = 'DejaVu Sans'
