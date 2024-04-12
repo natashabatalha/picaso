@@ -38,15 +38,20 @@ def quench_level(pressure, temp, kz,mmw, grav, return_mix_timescale = False):
     k_b = 1.38e-23 # boltzmann constant
     m_p = 1.66e-27 # proton mass
     nlevel = len(temp)
+    # print('quench mmw before nlevel:',mmw)
     if len(mmw) < nlevel:
+        # print('quench mmw appended')
         mmw = np.append(mmw,mmw[-1])
     quench_levels = np.zeros(shape=(4))
     quench_levels  = quench_levels.astype(int)
 
     con  = k_b/(mmw*m_p)
-
+    # print('quench mmw:',mmw) #JM deq nan issue
     scale_H = con * temp*1e2/(grav) #cgs
-    	
+    # print('quench temp input:',temp)
+    # print('quench con:',con)
+    # print('quench grav:',grav)
+    # print('Scale Height:',scale_H)
     t_mix = scale_H**2/kz ## level mixing timescales
     # this is the CO- CH4 - H2O quench level 
     t_chem_co = (3.0e-6/pressure)*np.exp(42000/temp) ## level chemical timescale (Zahnle and Marley 2014)

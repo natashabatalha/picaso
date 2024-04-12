@@ -638,6 +638,12 @@ class GridFitter():
             all_pt = fitter.temperature[grid_name]
             all_chem = fitter.chemistry[grid_name]
             mols = all_chem.keys()
+            all_pressures = fitter.pressure[grid_name]
+            unique_ps = np.unique(all_pressures, axis=0)
+            if len(unique_ps)>1: 
+                raise Exception("""Detected non-uniform pressure grid.
+                Grid needs to be on a uniform pressure grid if you want to use the interpolate feature 
+                You can use the function analyze.interp_pressure_grid to adjust the grid data""")
 
         df_grid_params = pd.DataFrame(index = range(len(fitter.list_of_files[grid_name])))
         grid_params=[]
@@ -655,68 +661,68 @@ class GridFitter():
                                         sorted(df_grid_params[i].unique())])
         
         #if the grid were square what size would it be based on unique params
-        square_size = np.product([len(i) for i in grid_params_unique.values()])
-        if square_size != all_spectra.shape[0]:
-            #grid is not square let's fix that for interpolation 
-            spectra_square = []
-            #and add pt/chem if we want
-            if add_ptchem: 
-                pt_square = []
-                chem_square = {imol:[] for imol in mols}
+        square_size = np.prod([len(i) for i in grid_params_unique.values()])
+        #if square_size != all_spectra.shape[0]:
+        #grid is not square let's fix that for interpolation 
+        spectra_square = []
+        #and add pt/chem if we want
+        if add_ptchem: 
+            pt_square = []
+            chem_square = {imol:[] for imol in mols}
 
-            full_df_grid = pd.DataFrame(columns = grid_params_unique.keys(), 
-                                       index = range(square_size))
-            for i,icombo in enumerate(itertools.product(*grid_params_unique.values())): 
+        full_df_grid = pd.DataFrame(columns = grid_params_unique.keys(), 
+                                   index = range(square_size))
+        for i,icombo in enumerate(itertools.product(*grid_params_unique.values())): 
 
-                matches = df_grid_params.astype(float).eq(icombo)
-                matches_all_rows = matches.all(axis=1)
-                matches = df_grid_params.loc[matches_all_rows]
+            matches = df_grid_params.astype(float).eq(icombo)
+            matches_all_rows = matches.all(axis=1)
+            matches = df_grid_params.loc[matches_all_rows]
 
-                if len(matches.index)==0: 
-                    #if there are no matches then let's add a nan to that location
-                    full_df_grid.iloc[i,:] = icombo
-                    spectra_square += [[np.nan]*all_spectra.shape[1]]
-                    if add_ptchem: 
-                        pt_square += [[np.nan]*all_pt.shape[1]]
-                        for imol in mols:
-                            chem_square[imol] += [[np.nan]*all_chem[imol].shape[1]]
+            if len(matches.index)==0: 
+                #if there are no matches then let's add a nan to that location
+                full_df_grid.iloc[i,:] = icombo
+                spectra_square += [[np.nan]*all_spectra.shape[1]]
+                if add_ptchem: 
+                    pt_square += [[np.nan]*all_pt.shape[1]]
+                    for imol in mols:
+                        chem_square[imol] += [[np.nan]*all_chem[imol].shape[1]]
 
-                else: 
-                    #if there are matches then let's add in the corresponding value
-                    ind = matches.index[0]
-                    full_df_grid.iloc[i,:] = icombo
-                    spectra_square += [all_spectra[ind]]
-                    if add_ptchem: 
-                        pt_square += [all_pt[ind]]
-                        for imol in mols: 
-                            chem_square[imol] += [all_chem[imol][ind]]
+            else: 
+                #if there are matches then let's add in the corresponding value
+                ind = matches.index[0]
+                full_df_grid.iloc[i,:] = icombo
+                spectra_square += [all_spectra[ind]]
+                if add_ptchem: 
+                    pt_square += [all_pt[ind]]
+                    for imol in mols: 
+                        chem_square[imol] += [all_chem[imol][ind]]
 
-            #now we can properly reshape everything
-            spectra_square = np.reshape(spectra_square, 
-                                        [len(i) for i in grid_params_unique.values()]
-                                        +[all_spectra.shape[1]])
+        #now we can properly reshape everything
+        spectra_square = np.reshape(spectra_square, 
+                                    [len(i) for i in grid_params_unique.values()]
+                                    +[all_spectra.shape[1]])
 
-            if add_ptchem: 
-                pt_square = np.reshape(pt_square, [len(i) for i in grid_params_unique.values()]
-                                        +[all_pt.shape[1]])
-                for imol in mols: 
-                    chem_square[imol] = np.reshape(chem_square[imol], [len(i) for i in grid_params_unique.values()]
-                                        +[all_chem[imol].shape[1]])
-        else: 
-            #reshape all_spectra to be on npar1 x npar2 x npar3 etc 
-            spectra_square = np.reshape(all_spectra, 
-                                        [len(i) for i in grid_params_unique.values()]
-                                        +[all_spectra.shape[1]])
-            if add_ptchem: 
-                #reshape all_spectra to be on npar1 x npar2 x npar3 etc 
-                pt_square = np.reshape(all_pt, 
-                                        [len(i) for i in grid_params_unique.values()]
-                                        +[all_pt.shape[1]])
-                for imol in mols: 
-                    chem_square = {imol: np.reshape(all_chem[imol], 
-                                        [len(i) for i in grid_params_unique.values()]
-                                        +[all_chem[imol].shape[1]])
-                                    for imol in mols}
+        if add_ptchem: 
+            pt_square = np.reshape(pt_square, [len(i) for i in grid_params_unique.values()]
+                                    +[all_pt.shape[1]])
+            for imol in mols: 
+                chem_square[imol] = np.reshape(chem_square[imol], [len(i) for i in grid_params_unique.values()]
+                                    +[all_chem[imol].shape[1]])
+        """else: 
+                                    #reshape all_spectra to be on npar1 x npar2 x npar3 etc 
+                                    spectra_square = np.reshape(all_spectra, 
+                                                                [len(i) for i in grid_params_unique.values()]
+                                                                +[all_spectra.shape[1]])
+                                    if add_ptchem: 
+                                        #reshape all_spectra to be on npar1 x npar2 x npar3 etc 
+                                        pt_square = np.reshape(all_pt, 
+                                                                [len(i) for i in grid_params_unique.values()]
+                                                                +[all_pt.shape[1]])
+                                        for imol in mols: 
+                                            chem_square = {imol: np.reshape(all_chem[imol], 
+                                                                [len(i) for i in grid_params_unique.values()]
+                                                                +[all_chem[imol].shape[1]])
+                                                            for imol in mols}"""
         
 
         #lastly replace nans in grid with real values 
@@ -736,7 +742,7 @@ class GridFitter():
                 # Replace NaN values with interpolated values
                 data[np.isnan(data)] = filled_data
             return data
-        import time
+        #import time
         #removing this because grid data takes way too long with 
         #high res spectra 
 
@@ -755,7 +761,54 @@ class GridFitter():
                                 grid_params_unique, offset_pm,df_grid_params)
         else :
             return spectra_square, grid_params_unique, offset_pm,df_grid_params
+    
+    def interp_pressure_grid(self, new_press_grid ,grid_name):
+        """
+        This function will help you reinterpolate your grid to a new 
+        common pressure grid. 
 
+        Parameters
+        ----------
+        new_press_grid : ndarray    
+            new pressure grid in bars, ascending order 
+        grid_name : str 
+            name of grid you would like to reinterpolate
+        """
+        new_press_grid = np.sort(new_press_grid)
+        nlevels=len(new_press_grid)
+
+        #old stuff
+        all_pt = self.temperature[grid_name]
+        all_chem = self.chemistry[grid_name]
+        all_pressures = self.pressure[grid_name]
+
+        #double check we can actually interpolate with a ordered pressure grid
+        unique_ps = np.unique(all_pressures, axis=0)
+        for ips in unique_ps: 
+            if ips[0] != np.min(ips): 
+                raise Exception('Uh oh! Youve read in a grid that is not in ascending order. Please reorder before proceeding')
+
+        #define new stuff
+        new_all_pt = np.zeros((all_pt.shape[0], nlevels))
+        new_all_chem = {imol:np.zeros((all_chem[imol].shape[0], nlevels)) for imol in all_chem.keys()}
+        new_all_pressures = np.zeros((all_pressures.shape[0], nlevels))
+
+        #loop through and interpolate everything
+        new_logp = np.log10(new_press_grid)
+        for i in range(all_pt.shape[0]): 
+            new_all_pressures[i,:] = new_press_grid 
+            
+            old_logp = np.log10(all_pressures[i,:])
+            
+            new_all_pt[i,:] = np.interp(new_logp,old_logp,all_pt[i,:])
+            
+            for imol in new_all_chem.keys(): 
+                new_all_chem[imol][i,:] = 10**np.interp(new_logp,old_logp,np.log10(all_chem[imol][i,:]))
+        
+        self.temperature[grid_name] = new_all_pt
+        self.chemistry[grid_name] = new_all_chem
+        self.pressure[grid_name] = new_all_pressures  
+        return 
 
     
 def custom_interp(final_goal,fitter,grid_name, to_interp='spectra',array_to_interp=None ): 
