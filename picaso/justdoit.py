@@ -4024,7 +4024,7 @@ class inputs():
             w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,
             photo_inputs_dict,
             on_fly=on_fly, gases_fly=gases_fly, verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist=moist)
-                print('find_strat_deq, kz input:',kz) #JM printout for deq nan debugging
+                # print('find_strat_deq, kz input:',kz) #JM printout for deq nan debugging
                 # print('find_strat_deq, all_kzz input:',all_kzz)
                 pressure, temp, dtdp, nstr_new, flux_plus_final,flux_net_final, flux_net_ir_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,cld_out,photo_inputs_dict,final_conv_flag=find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                                 t_table, p_table, grad, cp, opacityclass, grav, 
@@ -6024,7 +6024,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav,rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw, save_profile, all_profiles, self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,\
             w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly ,do_holes=do_holes,
             fhole = fhole, fthin_cld=fthin_cld, moist = moist, verbose=verbose)
-    print('made it out of first profile_deq call in find_strat_deq')
+    # print('made it out of first profile_deq call in find_strat_deq')
     
     # now for the 2nd convection zone
     dt_max = 0.0 #DTMAX
