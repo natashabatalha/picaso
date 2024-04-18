@@ -2,7 +2,7 @@ from .atmsetup import ATMSETUP
 from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d
 
 from .fluxes import tidal_flux, get_kzz#,set_bb_deprecate 
-from .climate import  calculate_atm_deq, did_grad_cp, convec, calculate_atm, t_start, growdown, growup, get_fluxes
+from .climate import  calculate_atm_deq, did_grad_cp, convec, calculate_atm, t_start, growdown, growup, get_fluxes, moist_grad
 
 from .wavelength import get_cld_input_grid
 from .optics import RetrieveOpacities,compute_opacity,RetrieveCKs
@@ -2991,8 +2991,6 @@ class inputs():
         cloud_p.ptk(df =df, kz_min = kz_min, Teff = Teff, alpha_pressure = alpha_pressure)
         out = vj.compute(cloud_p, as_dict=True,
                           directory=directory, do_virtual=do_virtual)
-
-
         opd, w0, g0 = out['opd_per_layer'],out['single_scattering'],out['asymmetry']
         pres = out['pressure']
         wno = 1e4/out['wave']
@@ -3468,7 +3466,10 @@ class inputs():
     def inputs_climate(self, temp_guess= None, pressure= None, rfaci = 1,nofczns = 1 ,
         nstr = None,  rfacv = None, m_planet=None,r_planet=None,
         cloudy = False, mh = None, CtoO = None, species = None, fsed = None, mieff_dir = None,
-        photochem=False, photochem_file=None,photochem_stfile = None,photonetwork_file = None,photonetworkct_file=None,tstop=1e7,psurf=10):
+        photochem=False, photochem_file=None,photochem_stfile = None,photonetwork_file = None,
+        photonetworkct_file=None,tstop=1e7,psurf=10, fhole = None, do_holes = False, fthin_cld = None, 
+        beta = 1, virga_param = 'const', moistgrad = False):
+
         """
         Get Inputs for Climate run
 
@@ -3511,6 +3512,21 @@ class inputs():
             path to directory with mieff files for virga
         photochem : bool 
             Turns off (False) and on (True) Photochem 
+            path to directory with mieff files for virga
+        do_holes : bool
+            Patchy cloud option with clearsky holes
+        fhole : float
+            Fraction of clearsky holes (from 0 to 1.0)
+        fthin_cld : float
+            Fraction of thin clouds in patchy cloud column (from 0 to 1.0), default 0 for clear sky column
+        beta : float
+            Denominator of exponential in sedimentation efficiency
+        virga_param : str
+            Virga parameterization for cloud model, either 'const' or 'exp'
+        moistgrad: bool
+            Moist adiabatic gradient option
+
+        
         """
         
         if cloudy: 
@@ -3521,6 +3537,9 @@ class inputs():
             #dummy values only used for cloud model
             mh = 0 
             CtoO = 0 
+        else:
+            mh = 0
+            CtoO = 0
 
         if self.inputs['planet']['T_eff'] == 0.0:
             raise Exception('Need to specify Teff with jdi.input for climate run')
@@ -3539,11 +3558,38 @@ class inputs():
             self.inputs['climate']['cld_species'] = species
             self.inputs['climate']['fsed'] = fsed
             self.inputs['climate']['mieff_dir'] = mieff_dir
+            self.inputs['climate']['virga_param'] = virga_param
+            if virga_param != 'exp': #just another catch in case user tries to change beta with const. fsed
+                self.inputs['climate']['beta'] = 1
+            else:
+                self.inputs['climate']['beta'] = beta 
+            if do_holes:
+                self.inputs['climate']['do_holes'] = True
+                self.inputs['climate']['fhole'] = fhole
+                if fthin_cld == None:
+                    self.inputs['climate']['fthin_cld'] = 0
+                else:
+                    self.inputs['climate']['fthin_cld'] = fthin_cld
+            else:
+                self.inputs['climate']['do_holes'] = False
+                self.inputs['climate']['fhole'] = 0
+                self.inputs['climate']['fthin_cld'] = 0
         else :
             self.inputs['climate']['cloudy'] = 0
             self.inputs['climate']['cld_species'] = 0
             self.inputs['climate']['fsed'] = 0
             self.inputs['climate']['mieff_dir'] = mieff_dir
+            self.inputs['climate']['do_holes'] = False
+            self.inputs['climate']['fhole'] = 0
+            self.inputs['climate']['fthin_cld'] = 0
+            self.inputs['climate']['beta'] = 1
+            self.inputs['climate']['virga_param'] = 'const'
+            if do_holes:
+                print('Patchy cloud option only considered when clouds are enabled. Turning off patchy clouds')
+                self.inputs['climate']['do_holes'] = False
+
+        self.inputs['climate']['moistgrad'] = moistgrad
+
         self.inputs['climate']['mh'] = mh
         self.inputs['climate']['CtoO'] = CtoO
 
@@ -3625,6 +3671,7 @@ class inputs():
         # tmin = min_temp*(1-extension)
         tmin = 10
         tmax = max_temp*(1+extension)
+        # tmax = 20000
         ntmps = int((tmax-tmin)/dt)
         
         bb , y2 , tp = 0,0,0
@@ -3666,6 +3713,7 @@ class inputs():
         p_table = self.inputs['climate']['p_table']
         grad = self.inputs['climate']['grad']
         cp = self.inputs['climate']['cp']
+        moist = self.inputs['climate']['moistgrad']
 
 
         Teff = self.inputs['planet']['T_eff']
@@ -3679,10 +3727,16 @@ class inputs():
         #tidal = tidal_flux(Teff, wave_in,nlevel, pressure, pm, hratio, col_den)
         tidal = np.zeros_like(pressure) - sigma_sb *(Teff**4)
         
+        # cloud inputs
         cloudy = self.inputs['climate']['cloudy']
         cld_species = self.inputs['climate']['cld_species']
         fsed = self.inputs['climate']['fsed']
         mieff_dir = self.inputs['climate']['mieff_dir']
+        do_holes = self.inputs['climate']['do_holes']
+        fhole = self.inputs['climate']['fhole']
+        fthin_cld = self.inputs['climate']['fthin_cld']
+        beta = self.inputs['climate']['beta']
+        param_flag = self.inputs['climate']['virga_param']
         
         opd_cld_climate = np.zeros(shape=(nlevel-1,nwno,4))
         g0_cld_climate = np.zeros(shape=(nlevel-1,nwno,4))
@@ -3701,13 +3755,12 @@ class inputs():
         final = False
         flag_hack = False
 
-        
         if chemeq_first: pressure, temperature, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,cld_out,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir,it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             TEMP1,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
             rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , 
             cloudy, cld_species,mh,fsed,flag_hack, save_profile,all_profiles,
-            opd_cld_climate,g0_cld_climate,w0_cld_climate,
-            first_call_ever=True, verbose=verbose)
+            opd_cld_climate,g0_cld_climate,w0_cld_climate,beta, param_flag,
+            fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, first_call_ever=True, verbose=verbose, moist = moist)
 
         # second convergence call
         it_max= 7
@@ -3722,14 +3775,14 @@ class inputs():
                     temperature,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
                     rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final, cloudy, 
                     cld_species, mh,fsed,flag_hack,save_profile,all_profiles,
-                    opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
-                    flux_plus_ir_attop, verbose=verbose )   
+                    opd_cld_climate,g0_cld_climate,w0_cld_climate,beta, param_flag,flux_net_ir_layer, 
+                    flux_plus_ir_attop, verbose=verbose,fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, moist = moist)   
 
         if chemeq_first: 
-            pressure, temp, dtdp, nstr_new, flux_plus_final, df, all_profiles, cld_out, final_conv_flag=find_strat(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
+            pressure, temp, dtdp, nstr_new, flux_plus_final,  flux_net_final, flux_net_ir_final, df, all_profiles, cld_out, final_conv_flag=find_strat(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                              t_table, p_table, grad, cp, opacityclass, grav, 
-                             rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, save_profile,all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,
-                             verbose=verbose)
+                             rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, save_profile,all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop, beta, param_flag,
+                             verbose=verbose,fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, moist = moist)
             if cloudy == 1:
                 opd_now,w0_now,g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
             else:
@@ -3779,6 +3832,13 @@ class inputs():
                 frac_a,frac_b,frac_c,constant_back,constant_forward, \
                 wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight =  calculate_atm(bundle, opacityclass)
             
+            # Clearsky profile, define others with _clear to avoid overwriting cloudy profile
+            if do_holes == True:
+                DTAU_clear, TAU_clear, W0_clear, COSB_clear,ftau_cld_clear, ftau_ray_clear,GCOS2_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear, COSB_OG_clear, \
+                    W0_no_raman_clear, surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
+                    frac_a,frac_b,frac_c,constant_back,constant_forward, \
+                    wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw, gweight,tweight =  calculate_atm(bundle, opacityclass, fthin_cld, do_holes=True)
+            
             all_kzz= []
             if save_all_kzz == True :
                 save_kzz = 1
@@ -3788,11 +3848,19 @@ class inputs():
             #here begins the self consistent Kzz calculation 
             # MLT plus some prescription in radiative zone
             if self_consistent_kzz or (not chemeq_first): 
-                #flux_net_v_layer, flux_net_v, flux_plus_v, flux_minus_v , flux_net_ir_layer, flux_net_ir, flux_plus_ir, flux_minus_ir
-                flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, delta_wno, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
-                COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-                ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
-                wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts,compute_reflected, True)#True for reflected, True for thermal
+
+                if do_holes == True:
+                    flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, delta_wno, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
+                    COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
+                    ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
+                    wno,nwno,ng,nt, nlevel, ngauss, gauss_wts,compute_reflected, True, fhole, DTAU_clear , TAU_clear , W0_clear , COSB_clear , 
+                    DTAU_OG_clear , TAU_OG_clear, W0_OG_clear,COSB_OG_clear , W0_no_raman_clear, do_holes=True)#True for reflected, True for thermal
+
+                else:                
+                    flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, delta_wno, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
+                    COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
+                    ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
+                    wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts,compute_reflected, True)#True for reflected, True for thermal
 
                 flux_net_ir_layer = flux_net_ir_layer_full[:]
                 flux_plus_ir_attop = flux_plus_ir_full[0,:] 
@@ -3800,7 +3868,8 @@ class inputs():
                 
                 # use mixing length theory to calculate Kzz profile
                 if self_consistent_kzz: 
-                    kz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
+                    output_abunds = bundle.inputs['atmosphere']['profile'].T.values
+                    kz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
             
             
             
@@ -3929,11 +3998,12 @@ class inputs():
             # first calculate the BB grid
             ntmps = self.inputs['climate']['ntemp_bb_grid']
             dt = self.inputs['climate']['dt_bb_grid']
-            
+
             extension = 0.3 
             # tmin = min_temp*(1-extension)
             tmin = 10 #JM changed to 10K for the cold cases
             tmax = max_temp*(1+extension)
+            # tmax = 20000
 
             ntmps = int((tmax-tmin)/dt)
             
@@ -3964,16 +4034,17 @@ class inputs():
                 temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
                 rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , 
             cloudy, cld_species,mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile,
-            all_profiles, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,
-            g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,
+            all_profiles, self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,
+            g0_cld_climate,
+            w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop, beta, param_flag,
             photo_inputs_dict,
-            on_fly=on_fly, gases_fly=gases_fly, verbose=verbose)
-                print('find_strat_deq, kz input:',kz) #JM printout for deq nan debugging
+            on_fly=on_fly, gases_fly=gases_fly, verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist=moist)
+                # print('find_strat_deq, kz input:',kz) #JM printout for deq nan debugging
                 # print('find_strat_deq, all_kzz input:',all_kzz)
-                pressure, temp, dtdp, nstr_new, flux_plus_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,cld_out,photo_inputs_dict,final_conv_flag=find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
+                pressure, temp, dtdp, nstr_new, flux_plus_final,flux_net_final, flux_net_ir_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,cld_out,photo_inputs_dict,final_conv_flag=find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                                 t_table, p_table, grad, cp, opacityclass, grav, 
-                                rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly,
-                             verbose=verbose)
+                                rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly,
+                             verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist = moist)
                 if cloudy == 1:
                     opd_now,w0_now,g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
                 else:
@@ -3983,7 +4054,7 @@ class inputs():
                 print("Only doing Profiles and not extending/reducing CZs")
                 pressure, temperature, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,cld_out,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict, df  = profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                 temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
-                rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , cloudy, cld_species,mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile,all_profiles, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly)
+                rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , cloudy, cld_species,mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile,all_profiles, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly)
                 nstr_new = nstr.copy()
                 flux_plus_final = flux_plus_ir_attop.copy()
                 temp=temperature.copy()
@@ -4004,6 +4075,7 @@ class inputs():
         all_out['dtdp'] = dtdp
         all_out['cvz_locs'] = nstr_new
         all_out['flux']=flux_plus_final
+        all_out['fnet/fnetir']=flux_net_final[0,0,:]/flux_net_ir_final
         all_out['converged']=final_conv_flag
 
         if save_all_profiles: all_out['all_profiles'] = all_profiles            
@@ -4420,9 +4492,10 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             temp,pressure,FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
              rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
              cloudy, cld_species,mh,fsed,flag_hack, save_profile, 
-             all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,
+             all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate, beta, param_flag,
              flux_net_ir_layer=None, flux_plus_ir_attop=None,first_call_ever=False,
-             verbose=True):
+             verbose=True,
+             do_holes = None, fhole = None, fthin_cld = None, moist = None):
     """
     Function iterating on the TP profile by calling tstart and changing opacities as well
     Parameters
@@ -4500,32 +4573,111 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     # taudif is fixed to be 0 here since it is needed only for clouds mh
     taudif = 0.0
     taudif_tol = 0.1
-    
-    # first calculate the convective zones
-    for nb in range(0,3*nofczns,3):
+
+    if moist == True:
+        #initiate bundle to use in moist adiabat case to grab abundances
+        bundle = inputs(calculation='brown')
+        bundle.phase_angle(0,num_gangle=10, num_tangle=1)
+        bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
+        bundle.add_pt( temp, pressure)
         
-        n_strt_b= nstr[nb+1]
-        n_ctop_b= n_strt_b+1
-        n_bot_b= nstr[nb+2] +1
+        bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
 
-        for j1 in range(n_ctop_b,n_bot_b+1): 
-            press = sqrt(pressure[j1-1]*pressure[j1])
-            calc_type =  0 # only need grad_x in return
-            grad_x, cp_x = did_grad_cp( temp[j1-1], press, t_table, p_table, grad, cp, calc_type)
-            temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
-    
-    temp_old= np.copy(temp)
+        #grab initial abundances for moist adiabat calculation
+        output_abunds = bundle.inputs['atmosphere']['profile'].T.values
 
+        for nb in range(0,3*nofczns,3):
+        
+            n_strt_b= nstr[nb+1]
+            n_ctop_b= n_strt_b+1
+            n_bot_b= nstr[nb+2] +1
 
+            for j1 in range(n_ctop_b,n_bot_b+1): 
+                press = sqrt(pressure[j1-1]*pressure[j1])
+                calc_type =  0 # only need grad_x in return
+                grad_x, cp_x = moist_grad( temp[j1-1], press, t_table, p_table, grad, cp, calc_type, output_abunds, j1-1)
+                temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
     
-    bundle = inputs(calculation='brown')
-    bundle.phase_angle(0,num_gangle=10, num_tangle=1)
-    bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
-    bundle.add_pt( temp, pressure)
-    
-    bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+        temp_old= np.copy(temp)
+        bundle.add_pt(temp, pressure)
+        bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+
+    else: #non moist adiabat case
+        # first calculate the convective zones
+        for nb in range(0,3*nofczns,3):
+            
+            n_strt_b= nstr[nb+1]
+            n_ctop_b= n_strt_b+1
+            n_bot_b= nstr[nb+2] +1
+
+            for j1 in range(n_ctop_b,n_bot_b+1): 
+                press = sqrt(pressure[j1-1]*pressure[j1])
+                calc_type =  0 # only need grad_x in return
+                grad_x, cp_x = did_grad_cp( temp[j1-1], press, t_table, p_table, grad, cp, calc_type)
+                temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
+        
+        temp_old= np.copy(temp)
+
+        bundle = inputs(calculation='brown')
+        bundle.phase_angle(0,num_gangle=10, num_tangle=1)
+        bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
+        bundle.add_pt( temp, pressure)
+        
+        bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+        output_abunds = bundle.inputs['atmosphere']['profile'].T.values
+
     if save_profile == 1:
             all_profiles = np.append(all_profiles,temp_old)
+
+    #testing goto 1235 in EGP profile.f (JM)
+    # if final == True:
+    #     it_max = it_max * 2
+    #     itmx = 6
+    #     for iii in range(itmx):
+    
+    #         if do_holes == True:
+    #             DTAU_clear, TAU_clear, W0_clear, COSB_clear,ftau_cld_clear, ftau_ray_clear,GCOS2_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear, COSB_OG_clear, \
+    #                 W0_no_raman_clear, surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
+    #                 frac_a,frac_b,frac_c,constant_back,constant_forward, \
+    #                 wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw, gweight, tweight =  calculate_atm(bundle, opacityclass, fthin_cld, do_holes=True)
+                
+    #             temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(
+    #                     nofczns,nstr,it_max,conv,x_max_mult, 
+    #                     rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
+    #                     grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, 
+    #                     DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman ,surf_reflect, 
+    #                     ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
+    #                     wno,nwno,ng,nt,gweight,tweight,      
+    #                     ngauss, gauss_wts, save_profile, all_profiles, output_abunds,
+    #                     fhole, DTAU_clear, TAU_clear, W0_clear, COSB_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear,COSB_OG_clear, 
+    #                     W0_no_raman_clear, verbose=verbose, do_holes = True, moist = moist)
+        
+    #         else:
+    #             DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
+    #                 W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
+    #                 frac_a,frac_b,frac_c,constant_back,constant_forward, \
+    #                 wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight =  calculate_atm(bundle, opacityclass )
+                
+    #             temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(
+    #                     nofczns,nstr,it_max,conv,x_max_mult, 
+    #                     rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
+    #                     grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, 
+    #                     DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
+    #                     ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
+    #                     wno,nwno,ng,nt,gweight,tweight, 
+    #                     ngauss, gauss_wts, save_profile, all_profiles,
+    #                     output_abunds, verbose=verbose, moist = moist)
+            
+    #         ert = 0.0
+    #         scalt = 1.0
+
+    #         dtx= abs(temp-temp_old)
+    #         ert = np.sum(dtx) 
+            
+    #         temp_old= np.copy(temp)
+
+    #         conv_flag = 1
+    #     return pressure, temp, dtdp, conv_flag, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop
     
     if first_call_ever == False:
         if cloudy == 1 :
@@ -4542,12 +4694,15 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
             directory = mieff_dir
             
-            kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
+            #get the abundances
+            output_abunds = bundle.inputs['atmosphere']['profile'].T.values
+                
+            kzz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
             bundle.inputs['atmosphere']['profile']['kz'] = kzz
         
 
             cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
-                        mmw = mean_molecular_weight) #,climate=True)
+                        mmw = mean_molecular_weight, b = beta, param = param_flag) #,climate=True)
             
             opd_now, w0_now, g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
             
@@ -4586,14 +4741,33 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         frac_a,frac_b,frac_c,constant_back,constant_forward, \
         wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight =  calculate_atm(bundle, opacityclass )
     
+    if do_holes == True:
+        DTAU_clear, TAU_clear, W0_clear, COSB_clear,ftau_cld_clear, ftau_ray_clear,GCOS2_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear, COSB_OG_clear, \
+            W0_no_raman_clear, surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
+            frac_a,frac_b,frac_c,constant_back,constant_forward, \
+            wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw, gweight, tweight =  calculate_atm(bundle, opacityclass, fthin_cld, do_holes=True)
+      
     #calculate teff for t_start solver
     sigmab =  0.56687e-4 #cgs
     target_teff = (abs(tidal[0])/sigmab)**0.25
     
     ## begin bigger loop which gets opacities
     for iii in range(itmx):
+
+        if do_holes == True:
+            temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(
+                    nofczns,nstr,it_max,conv,x_max_mult, 
+                    rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
+                    grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, 
+                    DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman ,surf_reflect, 
+                    ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
+                    wno,nwno,ng,nt,gweight,tweight,      
+                    ngauss, gauss_wts, save_profile, all_profiles, target_teff, output_abunds,
+                    fhole, DTAU_clear, TAU_clear, W0_clear, COSB_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear,COSB_OG_clear, 
+                    W0_no_raman_clear, verbose=verbose, do_holes = True, moist = moist)
         
-        temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(
+        else:
+            temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(
                     nofczns,nstr,it_max,conv,x_max_mult, 
                     rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
                     grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, 
@@ -4601,7 +4775,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                     ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
                     wno,nwno,ng,nt,gweight,tweight, 
                     ngauss, gauss_wts, save_profile, all_profiles, target_teff,
-                    verbose=verbose)
+                    output_abunds, verbose=verbose, moist = moist)
         
         #NEB stage delete after confirmation from SM
         #if (temp <= min(opacityclass.cia_temps)).any():
@@ -4630,11 +4804,14 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
             directory = mieff_dir
 
-            kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
+            #get the abundances
+            output_abunds = bundle.inputs['atmosphere']['profile'].T.values
+                
+            kzz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
             bundle.inputs['atmosphere']['profile']['kz'] = kzz
     
             cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
-                        mmw = mean_molecular_weight)#,climate=True)
+                        mmw = mean_molecular_weight, b = beta, param = param_flag)#,climate=True)
 
             opd_now, w0_now, g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
             
@@ -4697,6 +4874,55 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             if verbose: print("Profile converged before itmx")
             conv_flag = 1
 
+            # if final == True:
+            # #testing goto 1235 in EGP profile.f (JM)
+            #     it_max = it_max * 2
+            #     itmx = 6
+            # else:
+            #     itmx = 3
+            # for iii in range(itmx):
+        
+            #     if do_holes == True:
+            #         DTAU_clear, TAU_clear, W0_clear, COSB_clear,ftau_cld_clear, ftau_ray_clear,GCOS2_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear, COSB_OG_clear, \
+            #             W0_no_raman_clear, surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
+            #             frac_a,frac_b,frac_c,constant_back,constant_forward, \
+            #             wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw, gweight, tweight =  calculate_atm(bundle, opacityclass, fthin_cld, do_holes=True)
+                    
+            #         temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(
+            #                 nofczns,nstr,it_max,conv,x_max_mult, 
+            #                 rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
+            #                 grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, 
+            #                 DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman ,surf_reflect, 
+            #                 ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
+            #                 wno,nwno,ng,nt,gweight,tweight,      
+            #                 ngauss, gauss_wts, save_profile, all_profiles, output_abunds,
+            #                 fhole, DTAU_clear, TAU_clear, W0_clear, COSB_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear,COSB_OG_clear, 
+            #                 W0_no_raman_clear, verbose=verbose, do_holes = True, moist = moist)
+            
+            #     else:
+            #         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
+            #             W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
+            #             frac_a,frac_b,frac_c,constant_back,constant_forward, \
+            #             wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight =  calculate_atm(bundle, opacityclass )
+                    
+            #         temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(
+            #                 nofczns,nstr,it_max,conv,x_max_mult, 
+            #                 rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
+            #                 grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, 
+            #                 DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
+            #                 ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
+            #                 wno,nwno,ng,nt,gweight,tweight, 
+            #                 ngauss, gauss_wts, save_profile, all_profiles,
+            #                 output_abunds, verbose=verbose, moist = moist)
+                
+            #     ert = 0.0
+            #     scalt = 1.0
+
+            #     dtx= abs(temp-temp_old)
+            #     ert = np.sum(dtx) 
+                
+            #     temp_old= np.copy(temp)
+
             return pressure, temp , dtdp, conv_flag, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate, cld_out,flux_net_ir_layer, flux_plus_ir_attop
         
         if verbose: print("Big iteration is ",min(temp), iii)
@@ -4708,12 +4934,12 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         if verbose: print("Profile converged after itmx hit")
     return pressure, temp, dtdp, conv_flag, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate, cld_out,flux_net_ir_layer, flux_plus_ir_attop
 
-def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
-             t_table, p_table, grad, cp, opacityclass, grav, 
+def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,t_table, p_table, grad, cp, opacityclass, grav, 
              rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, 
-             cloudy, cld_species,mh,fsed,flag_hack, save_profile, all_profiles, 
+             cloudy, cld_species,mh,fsed,flag_hack, save_profile, 
+             all_profiles, 
              opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
-             flux_plus_ir_attop,verbose=1):
+             flux_plus_ir_attop, beta, param_flag, verbose=1, fhole = None, fthin_cld = None, do_holes = None, moist = None):
     """
     Function iterating on the TP profile by calling tstart and changing opacities as well
     Parameters
@@ -4782,7 +5008,15 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
         Spectral interval corrections (dimension= nwvno)
     verbose: int 
         If 0 nothing gets printed
-        If 1 this prints everything out 
+     do_holes : bool
+        Patchy cloud option with clearsky holes
+    fhole : float
+        Fraction of clearsky holes (from 0 to 1.0)
+    fthin_cld : float
+        Fraction of thin clouds in patchy cloud column (from 0 to 1.0), default 0 for clear sky column
+    moist: bool
+        Moist adiabat or not
+       If 1 this prints everything out 
         
     Returns
     -------
@@ -4804,7 +5038,20 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
     iend = 0 #?
     final = False
 
-    grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp)
+    #call bundle for moist adiabat option (moved out of if statement for numba issue)
+    bundle = inputs(calculation='brown')
+
+    bundle.phase_angle(0)
+    bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
+    bundle.add_pt( temp, pressure)
+    bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+
+    #get the abundances
+    output_abunds = bundle.inputs['atmosphere']['profile'].T.values
+    if moist == True:
+        grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, output_abunds, moist = True)
+    else:
+        grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, output_abunds, moist = False)
     # grad_x = 
     while dtdp[nstr[1]-1] >= subad*grad_x[nstr[1]-1] :
         ratio = dtdp[nstr[1]-1]/grad_x[nstr[1]-1]
@@ -4824,9 +5071,11 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
                             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
                              rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
                              cloudy, cld_species, mh,fsed,flag_hack, save_profile, all_profiles, 
-                             opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
-                             flux_plus_ir_attop, verbose=verbose)
+                             opd_cld_climate,g0_cld_climate,w0_cld_climate,beta, param_flag,flux_net_ir_layer, 
+                             flux_plus_ir_attop, verbose=verbose,
+            fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, moist = moist)
 
+    # if nofczns == 2: JM* #should be a flag here since this block in EGP is skipped if only 1 convective zone but convergence is better when enabled
     # now for the 2nd convection zone
     dt_max = 0.0 #DTMAX
     i_max = 0 #IMAX
@@ -4853,7 +5102,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
         nstr[5]= nstr[2]
         nstr[1]= i_max
         nstr[2] = i_max
-        nstr[3] = i_max #+ 1
+        nstr[3] = i_max #+ 1 #JM: Should be i_max + 1 according to EGP, but runs into ValueError when used
         if verbose: print(nstr)
         if nstr[3] >= nstr[4] :
             #print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
@@ -4861,10 +5110,11 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
             raise ValueError("Overlap happened !")
         pressure, temp, dtdp, profile_flag, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,cld_out,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir, it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
-             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
+                rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
              cloudy, cld_species,mh, fsed,flag_hack,save_profile, all_profiles,
-             opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
-             flux_plus_ir_attop, verbose=verbose)
+             opd_cld_climate,g0_cld_climate,w0_cld_climate,beta, param_flag,flux_net_ir_layer, 
+             flux_plus_ir_attop, verbose=verbose,
+                fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, moist = moist)
 
         i_change = 1
         while i_change == 1 :
@@ -4894,12 +5144,13 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
                         nstr[3] = 0
                         i_change = 1
                 if verbose: print(nstr)
+
                 pressure, temp, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,cld_out,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir, it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
                                 temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
                                  rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
                                  cloudy, cld_species, mh,fsed,flag_hack,save_profile, all_profiles,
-                                 opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
-                                 flux_plus_ir_attop, verbose=verbose)
+                                 opd_cld_climate,g0_cld_climate,w0_cld_climate,beta, param_flag,flux_net_ir_layer, 
+                                 flux_plus_ir_attop, verbose=verbose,fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, moist = moist)
 
                 d1 = dtdp[nstr[1]-1]
                 d2 = dtdp[nstr[3]]
@@ -4907,7 +5158,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
                 c2 = grad_x[nstr[3]]
             #Now grow the lower zone.
             while ((dtdp[nstr[4]-1] >= subad*grad_x[nstr[4]-1]) and nofczns > 1):
-                
+                    
                 ngrow = 1
                 nstr = growup( 2, nstr , ngrow)
                 #Now check to see if two zones have merged and stop further searching if so.
@@ -4917,13 +5168,13 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
                     nstr[3] = 0
                     i_change =1
                 if verbose: print(nstr)
+                  
                 pressure, temp, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,cld_out,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir, it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
                     temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
                     rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
                     cloudy, cld_species, mh,fsed,flag_hack,save_profile, all_profiles,
-                    opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
-                    flux_plus_ir_attop, verbose=verbose)
-            
+                    opd_cld_climate,g0_cld_climate,w0_cld_climate,beta, param_flag,flux_net_ir_layer, 
+                    flux_plus_ir_attop, verbose=verbose, fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, moist = moist)
 
             flag_final_convergence = 1
         
@@ -4936,12 +5187,14 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
 
     final = True
     if verbose: print("final",nstr)
+
     pressure, temp, dtdp, profile_flag, all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,cld_out,flux_net_ir_layer, flux_plus_ir_attop = profile(mieff_dir, it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
                 temp,pressure, FOPI, t_table, p_table, grad, cp,opacityclass, grav, 
                 rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
                 cloudy, cld_species,mh,fsed,flag_hack,save_profile, all_profiles,
-                opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
-                flux_plus_ir_attop, verbose=verbose)
+                opd_cld_climate,g0_cld_climate,w0_cld_climate,beta, param_flag,flux_net_ir_layer, 
+                flux_plus_ir_attop, verbose=verbose,
+            fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, moist = moist)
 
     #    else :
     #        raise ValueError("Some problem here with goto 125")
@@ -4966,12 +5219,16 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
         directory = mieff_dir
 
         calc_type =0
-        kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
+
+        #get the abundances
+        output_abunds = bundle.inputs['atmosphere']['profile'].T.values
+            
+        kzz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
         bundle.inputs['atmosphere']['profile']['kz'] = kzz
 
 
         cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
-                        mmw = mean_molecular_weight) #,climate=True)
+                        mmw = mean_molecular_weight, b = beta, param = param_flag) #,climate=True)
         
         opd_now, w0_now, g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
         df_cld = vj.picaso_format(opd_now, w0_now, g0_now,pressure = cld_out['pressure'], wavenumber= 1e4/cld_out['wave'])
@@ -4986,18 +5243,34 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
             ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
             wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts, False, True) #false for reflected, true for thermal
-
-      
     
-    return pressure, temp, dtdp, nstr , flux_plus_ir_full, bundle.inputs['atmosphere']['profile'], all_profiles, cld_out,profile_flag
+    #clearsky for patchy clouds
+    if do_holes == True:
+        DTAU_clear, TAU_clear, W0_clear, COSB_clear,ftau_cld_clear, ftau_ray_clear,GCOS2_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear, COSB_OG_clear, W0_no_raman_clear, surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw, gweight, tweight =  calculate_atm(bundle, opacityclass, fthin_cld, do_holes = True)
+    
+        flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, COSB,ftau_cld, 
+                ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, FOPI, single_phase,
+                multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, gweight, tweight, nlevel, ngauss, gauss_wts, 
+                False, True, fhole, DTAU_clear, TAU_clear, W0_clear, COSB_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear,COSB_OG_clear, W0_no_raman_clear, do_holes=True) 
+                #false for reflected, true for thermal
 
-def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
-            temp,pressure,FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
-             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
-             cloudy, cld_species,mh,fsed,flag_hack,quench_levels,kz,mmw, save_profile,
-              all_profiles,self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,
-              g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,
-              photo_inputs_dict=None,on_fly=False,gases_fly=None,verbose=True ):
+    #computing flux_net to output for diagnostics
+    flux_net = rfaci* flux_net_ir_full[:] + rfacv* flux_net_v_full[:] +tidal #fnet
+    flux_net_midpt = rfaci* flux_net_ir_layer_full[:] + rfacv* flux_net_v_layer_full[:] +tidal #fmnet
+    
+    return pressure, temp, dtdp, nstr , flux_plus_ir_full, flux_net, flux_net_ir_full, bundle.inputs['atmosphere']['profile'], all_profiles,cld_out,profile_flag
+
+
+def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, temp,pressure,FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
+                rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
+             
+                cloudy, cld_species,mh,fsed,flag_hack,quench_levels,kz,mmw, save_profile,
+              all_profiles,
+                self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,
+              g0_cld_climate,w0_cld_climate,
+                flux_net_ir_layer, flux_plus_ir_attop, beta, param_flag,
+              photo_inputs_dict=None,on_fly=False,gases_fly=False, do_holes = False, fhole = None,verbose=True, fthin_cld = None, moist = None):
+
     """
     Function iterating on the TP profile by calling tstart and changing opacities as well
     Parameters
@@ -5063,8 +5336,14 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     tmax : float
         Maximum allowed Temp in the profile
     dwni : array
-        Spectral interval corrections (dimension= nwvno)   
+        Spectral interval corrections (dimension= nwvno)
     verbose : bool 
+    do_holes : bool
+        Patchy cloud option with clearsky holes
+    fhole : float
+        Fraction of clearsky holes (from 0 to 1.0)
+    fthin_cld : float
+        Fraction of thin clouds in patchy cloud column (from 0 to 1.0), default 0 for clear sky column   
         If True, prints out messages 
     Returns
     -------
@@ -5081,32 +5360,53 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     # taudif is fixed to be 0 here since it is needed only for clouds
     taudif = 0.0
     taudif_tol = 0.1
-    
+
+    #run case if we are doing a moist adiabat
+    if moist == True:
+        bundle = inputs(calculation='brown')
+        bundle.phase_angle(0)
+        bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
+        bundle.add_pt( temp, pressure)
+
+        bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+        output_abunds = bundle.inputs['atmosphere']['profile'].T.values
     # first calculate the convective zones
-    for nb in range(0,3*nofczns,3):
+        for nb in range(0,3*nofczns,3):
+            
+            n_strt_b= nstr[nb+1]
+            n_ctop_b= n_strt_b+1
+            n_bot_b= nstr[nb+2] +1
+
+            for j1 in range(n_ctop_b,n_bot_b+1): 
+                press = sqrt(pressure[j1-1]*pressure[j1])
+                calc_type =  0 # only need grad_x in return
+                grad_x, cp_x = moist_grad( temp[j1-1], press, t_table, p_table, grad, cp, calc_type, output_abunds, j1-1)
+                temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
+
+    else:
+    # first calculate the convective zones
+        for nb in range(0,3*nofczns,3):
+            
+            n_strt_b= nstr[nb+1]
+            n_ctop_b= n_strt_b+1
+            n_bot_b= nstr[nb+2] +1
+
+            for j1 in range(n_ctop_b,n_bot_b+1): 
+                press = sqrt(pressure[j1-1]*pressure[j1])
+                calc_type =  0 # only need grad_x in return
+                grad_x, cp_x = did_grad_cp( temp[j1-1], press, t_table, p_table, grad, cp, calc_type)
+                temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
+        '''            
+        if (temp <= min(opacityclass.cia_temps)).any():
+                wh = np.where(temp <= min(opacityclass.cia_temps))
+                if len(wh[0]) <= 30 :
+                    print(len(wh[0])," points went off the opacity grid. Correcting those.")
+                    temp = correct_profile(temp,pressure,wh,min(opacityclass.cia_temps))
+                else :
+                    raise Exception('Many points in your profile went off the grid. Try re-starting from a different guess profile. Parametrized profiles can work better sometime as guess profiles.')
+        '''
         
-        n_strt_b= nstr[nb+1]
-        n_ctop_b= n_strt_b+1
-        n_bot_b= nstr[nb+2] +1
-
-        for j1 in range(n_ctop_b,n_bot_b+1): 
-            press = sqrt(pressure[j1-1]*pressure[j1])
-            calc_type =  0 # only need grad_x in return
-            grad_x, cp_x = did_grad_cp( temp[j1-1], press, t_table, p_table, grad, cp, calc_type)
-            temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
-    '''            
-    if (temp <= min(opacityclass.cia_temps)).any():
-            wh = np.where(temp <= min(opacityclass.cia_temps))
-            if len(wh[0]) <= 30 :
-                print(len(wh[0])," points went off the opacity grid. Correcting those.")
-                temp = correct_profile(temp,pressure,wh,min(opacityclass.cia_temps))
-            else :
-                raise Exception('Many points in your profile went off the grid. Try re-starting from a different guess profile. Parametrized profiles can work better sometime as guess profiles.')
-    '''
-    
     temp_old= np.copy(temp)
-
-
     
     bundle = inputs(calculation='brown')
     bundle.phase_angle(0)
@@ -5139,6 +5439,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             # all_kzz = np.append(all_kzz,t_mix)
             all_kzz = np.append(all_kzz, kz) #JM changed to not convert from t_mix to kz
         qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix)
+        output_abunds = bundle.inputs['atmosphere']['profile'].T.values
     else :
         bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
         pc= bundle.call_photochem(temp,pressure,photo_inputs_dict['mh'],photo_inputs_dict['CtoO'],photo_inputs_dict['psurf'],photo_inputs_dict['m_planet'],photo_inputs_dict['r_planet'],photo_inputs_dict['kz'],tstop=photo_inputs_dict['tstop'],filename = photo_inputs_dict['photochem_file'],stfilename =photo_inputs_dict['photochem_stfile'],network = photo_inputs_dict['photochem_network'],network_ct=photo_inputs_dict['photochem_networkct'],first=False,pc=photo_inputs_dict['pc'])
@@ -5147,6 +5448,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         quench_levels = np.array([0,0,0,0])
         photo_inputs_dict['pc'] = pc
         qvmrs, qvmrs2=0,0
+        output_abunds = bundle.inputs['atmosphere']['profile'].T.values
     
     #if save_profile == 1:
     #        all_profiles = np.append(all_profiles,bundle.inputs['atmosphere']['profile']['NH3'].values)
@@ -5171,6 +5473,9 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             metallicity = 10**(0) #atmospheric metallicity relative to Solar
             mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
             directory = mieff_dir
+            
+            #get the abundances
+            output_abunds = bundle.inputs['atmosphere']['profile'].T.values
 
             if self_consistent_kzz == True:
                 kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
@@ -5183,17 +5488,21 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                 photo_inputs_dict['kz'] = kz
 
             cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
-                        mmw = mean_molecular_weight)#,climate=True)
+                        mmw = mean_molecular_weight, b = beta, param = param_flag)#,climate=True)
             
             opd_now, w0_now, g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
             
             opd_cld_climate[:,:,3], g0_cld_climate[:,:,3], w0_cld_climate[:,:,3] = opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2]
             opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2] = opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1]
             opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1] = opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0]
-           
-            # convert cld_out output to 661 grid similar to initiate_cld_matrices (JM)
+            
+            #convert cld_out output to 661 grid (similar to initiate_cld_matrices)
             wv196 = cld_out['wave']
-            wv661 = 1e4/opacityclass.wno[::-1] # flip to match the order of wv196 from virga
+            wv661 = 1e4/opacityclass.wno[::-1] # testing old incorrect way to rule out virga issues
+            # wv661 = opacityclass.wno[::-1] # flip to match the order of wv196 from virga
+            # print(opacityclass.wno)
+            # print(wv196)
+            # print(wv661)
 
             opd_now_661 =  np.zeros(shape=(len(opd_now[:,0]),len(wv661)))
             g0_now_661,w0_now_661 = np.zeros_like(opd_now_661),np.zeros_like(opd_now_661)
@@ -5207,9 +5516,8 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                 g0_now_661[ilayer,:] = fg0(wv661)
                 w0_now_661[ilayer,:] = fw0(wv661)
 
-            opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now_661, g0_now_661, w0_now_661                         
-            # opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now, g0_now, w0_now
-            
+            opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now_661, g0_now_661, w0_now_661
+
             #if np.sum(opd_cld_climate[:,:,1]) == 0 :
             #    w0,w1,w2,w3 = 1,0,0,0
             #elif (np.sum(opd_cld_climate[:,:,1]) != 0) and (np.sum(opd_cld_climate[:,:,2]) == 0):
@@ -5237,18 +5545,35 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
         frac_a,frac_b,frac_c,constant_back,constant_forward, \
         wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight =  calculate_atm_deq(bundle, opacityclass,on_fly=on_fly,gases_fly=gases_fly)
+    
+    if do_holes == True:
+        DTAU_clear, TAU_clear, W0_clear, COSB_clear,ftau_cld_clear, ftau_ray_clear,GCOS2_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear, COSB_OG_clear, \
+            W0_no_raman_clear , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
+            frac_a,frac_b,frac_c,constant_back,constant_forward, \
+            wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw, gweight, tweight =  calculate_atm_deq(bundle, opacityclass, on_fly=on_fly,gases_fly=gases_fly, do_holes=True, fthin_cld=fthin_cld)
+
     if self_consistent_kzz == True :
-                
-        flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
-        COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-        ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
-        wno,nwno,ng,nt, gweight,tweight,nlevel, ngauss, gauss_wts,compute_reflected, True)#True for reflected, True for thermal
+
+        if do_holes == True:
+            flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
+            COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
+            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
+            wno,nwno,ng,nt, gweight, tweight, nlevel, ngauss, gauss_wts,compute_reflected, True, fhole, DTAU_clear, TAU_clear, W0_clear, COSB_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear,
+            COSB_OG_clear, W0_no_raman_clear, do_holes=True)#True for reflected, True for thermal
+        else:     
+            flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
+            COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
+            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
+            wno,nwno,ng,nt, gweight,tweight,nlevel, ngauss, gauss_wts,compute_reflected, True)#True for reflected, True for thermal
 
         flux_net_ir_layer = flux_net_ir_layer_full[:]
         flux_plus_ir_attop = flux_plus_ir_full[0,:] 
         calc_type = 0
     
-        kz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
+        #get the abundances
+        output_abunds = bundle.inputs['atmosphere']['profile'].T.values
+            
+        kz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
         photo_inputs_dict['kz'] = kz
 
     #calculate teff for t_start solver
@@ -5257,14 +5582,25 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     ## begin bigger loop which gets opacities
     for iii in range(itmx):
         
-        temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(nofczns,nstr,it_max,conv,x_max_mult, 
+        if do_holes == True:
+            temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(nofczns,nstr,it_max,conv,x_max_mult, 
             rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
             grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, 
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
             W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, FOPI, 
             single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
-            wno,nwno,ng,nt,gweight,tweight, ngauss, gauss_wts, save_profile, all_profiles, target_teff,
-            verbose=verbose)
+            wno,nwno,ng,nt, gweight, tweight,ngauss, gauss_wts, save_profile, all_profiles, target_teff,
+            output_abunds, fhole, DTAU_clear, TAU_clear, W0_clear, COSB_clear, DTAU_OG_clear, TAU_OG_clear, 
+            W0_OG_clear, COSB_OG_clear, W0_no_raman_clear, do_holes = True, verbose = verbose, moist = moist)
+        else:
+            temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(nofczns,nstr,it_max,conv,x_max_mult, 
+                rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
+                grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, 
+                COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
+                W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, FOPI, 
+                single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
+                wno,nwno,ng,nt,gweight,tweight, ngauss, gauss_wts, save_profile, all_profiles, target_teff,
+                output_abunds, verbose=verbose, moist = moist)
         '''
         if (temp <= min(opacityclass.cia_temps)).any():
             wh = np.where(temp <= min(opacityclass.cia_temps))
@@ -5311,6 +5647,9 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
             directory = mieff_dir
 
+            #get the abundances
+            output_abunds = bundle.inputs['atmosphere']['profile'].T.values
+
             if self_consistent_kzz == True:
                 kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
                 bundle.inputs['atmosphere']['profile']['kz'] = kzz
@@ -5319,9 +5658,9 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             else:
                 bundle.inputs['atmosphere']['profile']['kz'] = kz
                 photo_inputs_dict['kz'] = kz
-
+                
             cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
-                        mmw = mean_molecular_weight)#,climate=True)
+                        mmw = mean_molecular_weight, b = beta, param = param_flag)#,climate=True)
             
             opd_now, w0_now, g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
             
@@ -5385,18 +5724,34 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         frac_a,frac_b,frac_c,constant_back,constant_forward, \
         wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight =  calculate_atm_deq(bundle, opacityclass,on_fly=on_fly, gases_fly=gases_fly)
 
+        if do_holes == True:
+            DTAU_clear, TAU_clear, W0_clear, COSB_clear,ftau_cld_clear, ftau_ray_clear, GCOS2_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear, COSB_OG_clear, \
+            W0_no_raman_clear , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
+            frac_a,frac_b,frac_c,constant_back,constant_forward, \
+            wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw, gweight,tweight =  calculate_atm_deq(bundle, opacityclass, on_fly=on_fly,gases_fly=gases_fly, do_holes=True, fthin_cld=fthin_cld)
+
         if self_consistent_kzz == True :
-                
-            flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
-            COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,  
-            wno,nwno,ng,nt, gweight,tweight, nlevel, ngauss, gauss_wts,compute_reflected, True)#True for reflected if rfacv!=0, True for thermal
+            
+            if do_holes == True:
+                flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
+                COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
+                ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
+                wno,nwno,ng,nt, gweight, tweight, nlevel, ngauss, gauss_wts,compute_reflected, True,fhole, DTAU_clear, TAU_clear, W0_clear, COSB_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear,
+                COSB_OG_clear, W0_no_raman_clear, do_holes=True)#True for reflected, True for thermal
+            else:
+                flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
+                COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
+                ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,  
+                wno,nwno,ng,nt, gweight,tweight, nlevel, ngauss, gauss_wts,compute_reflected, True)#True for reflected if rfacv!=0, True for thermal
 
             flux_net_ir_layer = flux_net_ir_layer_full[:]
             flux_plus_ir_attop = flux_plus_ir_full[0,:] 
             calc_type = 0
         
-            kz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
+            #get the abundances
+            output_abunds = bundle.inputs['atmosphere']['profile'].T.values
+                
+            kz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
             photo_inputs_dict['kz'] = kz
         if save_kzz == 1: 
             if photo_inputs_dict['yesorno'] == False:
@@ -5543,12 +5898,14 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
 def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,
              t_table, p_table, grad, cp, opacityclass, grav, 
              rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, 
-             bb , y2 , tp, cloudy, cld_species,mh,fsed,flag_hack, 
+             bb , y2 , tp, cloudy, cld_species,mh,fsed,
+             flag_hack, 
              quench_levels, kz,mmw, save_profile, all_profiles,
              self_consistent_kzz ,save_kzz,all_kzz, 
              opd_cld_climate,g0_cld_climate,w0_cld_climate,
-             flux_net_ir_layer, flux_plus_ir_attop,
-             photo_inputs_dict=None,on_fly=False, gases_fly=None , verbose=1):
+             flux_net_ir_layer, flux_plus_ir_attop, beta, param_flag,
+             photo_inputs_dict=None, on_fly=False, gases_fly=None, do_holes=None, fhole = None, fthin_cld = None, moist = None, verbose=1):
+
     """
     Function iterating on the TP profile by calling tstart and changing opacities as well
     Parameters
@@ -5614,10 +5971,18 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
     tmax : float
         Maximum allowed Temp in the profile
     dwni : array
-        Spectral interval corrections (dimension= nwvno)   
+        Spectral interval corrections (dimension= nwvno)
     verbose : int 
         If 1= prints out all output 
         If 0= does not print anything out
+    do_holes : bool
+        Patchy cloud option with clearsky holes
+    fhole : float
+        Fraction of clearsky holes (from 0 to 1.0)
+    fthin_cld : float
+        Fraction of thin clouds in patchy cloud column (from 0 to 1.0), default 0 for clear sky column
+    moist: bool
+        Moist adiabat or not  
         
     Returns
     -------
@@ -5639,7 +6004,19 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
     iend = 0 #?
     final = False
 
-    grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp)
+    #call bundle for moist adiabat option (moved outside of if statement for numba issue with convec)
+    bundle = inputs(calculation='brown')
+
+    bundle.phase_angle(0)
+    bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
+    bundle.add_pt(temp, pressure)
+    bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+    #get the abundances
+    output_abunds = bundle.inputs['atmosphere']['profile'].T.values
+    if moist == True:
+        grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, output_abunds, moist = True)
+    else:
+        grad_x, cp_x =convec(temp,pressure, t_table, p_table, grad, cp, output_abunds, moist = False)
     # grad_x = 
     while dtdp[nstr[1]-1] >= subad*grad_x[nstr[1]-1] :
         ratio = dtdp[nstr[1]-1]/grad_x[nstr[1]-1]
@@ -5654,13 +6031,17 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         
         if nstr[1] < 5 :
             raise ValueError( "Convection zone grew to Top of atmosphere, Need to Stop")
+
+    # if nofczns == 2:  JM* #should be a flag here since this block in EGP is skipped if only 1 convective zone but convergence is better when enabled
         # print('find_strat_deq input temp:',temp) *JM print debugging
         # print('find_strat_deq mmw profile input:',mmw)
         # print('find_strat_deq first profile_deq call')
         pressure, temp, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,cld_out,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,_= profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,\
             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav,rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw, save_profile, all_profiles, self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,\
-            w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly , verbose=verbose)
-    print('made it out of first profile_deq call in find_strat_deq')
+            w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly ,do_holes=do_holes,
+            fhole = fhole, fthin_cld=fthin_cld, moist = moist, verbose=verbose)
+    # print('made it out of first profile_deq call in find_strat_deq')
+    
     # now for the 2nd convection zone
     dt_max = 0.0 #DTMAX
     i_max = 0 #IMAX
@@ -5672,7 +6053,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
             dt_max = add
             i_max =i
             break
-    
+        
     flag_final_convergence =0
     if i_max == 0 or dt_max/grad_x[i_max] < 0.02: # no superadiabaticity, we are done
         flag_final_convergence = 1
@@ -5687,7 +6068,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         nstr[5]= nstr[2]
         nstr[1]= i_max
         nstr[2] = i_max
-        nstr[3] = i_max #+ 1
+        nstr[3] = i_max #+ 1 #JM: Should be i_max + 1 according to EGP, but runs into ValueError when used
         if verbose: print(nstr)
         if nstr[3] >= nstr[4] :
             #print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
@@ -5699,8 +6080,8 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
              cloudy, cld_species,mh, fsed,flag_hack, quench_levels, kz , mmw,
              save_profile, all_profiles, self_consistent_kzz, save_kzz,all_kzz,
              opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
-             flux_plus_ir_attop,photo_inputs_dict,
-             on_fly=on_fly, gases_fly=gases_fly, verbose=verbose )
+             flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,
+             on_fly=on_fly, gases_fly=gases_fly, verbose=verbose, do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist=moist )
 
         i_change = 1
         while i_change == 1 :
@@ -5732,7 +6113,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
                 print(nstr)
                 pressure, temp, dtdp, profile_flag,qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,cld_out,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,_ = profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,\
             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, \
-             rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw, save_profile, all_profiles,self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, verbose=verbose)
+                rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw, save_profile, all_profiles,self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, verbose=verbose,)
 
                 d1 = dtdp[nstr[1]-1]
                 d2 = dtdp[nstr[3]]
@@ -5749,9 +6130,9 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
                     nstr[2] = nstr[5]
                     nstr[3] = 0
                     i_change =1
-                print(nstr)
+                if verbose: print(nstr)
                 pressure, temp, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,cld_out,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,_ = profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult, \
-                                                        temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav,rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile, all_profiles, self_consistent_kzz, save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly)
+                                                        temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav,rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile, all_profiles, self_consistent_kzz, save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist=moist,verbose=verbose)
             
 
             flag_final_convergence = 1
@@ -5765,9 +6146,10 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
 
     final = True
     print("final",nstr)
+
     pressure, temp, dtdp, profile_flag,qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,cld_out,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,_ = profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,\
                 temp,pressure, FOPI, t_table, p_table, grad, cp,opacityclass, grav, \
-                rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species,mh,fsed,flag_hack,quench_levels,kz, mmw,save_profile, all_profiles, self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, verbose=verbose)
+                rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species,mh,fsed,flag_hack,quench_levels,kz, mmw,save_profile, all_profiles, self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, verbose=verbose, do_holes=do_holes,fhole = fhole, fthin_cld=fthin_cld, moist = moist)
 
     #    else :
     #        raise ValueError("Some problem here with goto 125")
@@ -5821,6 +6203,9 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
 
         calc_type =0
 
+        #get the abundances
+        output_abunds = bundle.inputs['atmosphere']['profile'].T.values
+
         if self_consistent_kzz == True :
             kzz  = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr)
             bundle.inputs['atmosphere']['profile']['kz'] = kzz
@@ -5829,10 +6214,11 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
 
         # print('virga kz:',kz)
         cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
-                        mmw = mean_molecular_weight)#,climate=True)
+                        mmw = mean_molecular_weight, b = beta, param = param_flag)#,climate=True)
         
         opd_now, w0_now, g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
         df_cld = vj.picaso_format(opd_now, w0_now, g0_now,pressure = cld_out['pressure'], wavenumber= 1e4/cld_out['wave'])
+
         bundle.clouds(df=df_cld)  
     else:
         opd_now,w0_now,g0_now = 0,0,0
@@ -5845,10 +6231,21 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
             ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
             wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts, False, True) #false for reflected, true for thermal
-
-
     
-    return pressure, temp, dtdp, nstr , flux_plus_ir_full, qvmrs, qvmrs2, bundle.inputs['atmosphere']['profile'], all_profiles, all_kzz,cld_out,photo_inputs_dict,profile_flag
+    if do_holes == True:
+        DTAU_clear, TAU_clear, W0_clear, COSB_clear,ftau_cld_clear, ftau_ray_clear, GCOS2_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear, COSB_OG_clear, W0_no_raman_clear, surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw, gweight, tweight =  calculate_atm_deq(bundle, opacityclass, on_fly=on_fly,gases_fly=gases_fly, do_holes=True, fthin_cld=fthin_cld)
+    
+        flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
+                COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
+                ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
+                wno,nwno,ng,nt, gweight,tweight, nlevel, ngauss, gauss_wts, False, True, fhole, DTAU_clear, TAU_clear, W0_clear, COSB_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear,
+                COSB_OG_clear, W0_no_raman_clear, do_holes=True) #false for reflected, true for thermal
+
+    #computing flux_net to output for diagnostics
+    flux_net = rfaci* flux_net_ir_full[:] + rfacv* flux_net_v_full[:] +tidal #fnet
+    flux_net_midpt = rfaci* flux_net_ir_layer_full[:] + rfacv* flux_net_v_layer_full[:] +tidal #fmnet
+    
+    return pressure, temp, dtdp, nstr , flux_plus_ir_full, flux_net, flux_net_ir_full, qvmrs, qvmrs2, bundle.inputs['atmosphere']['profile'], all_profiles, all_kzz,cld_out,photo_inputs_dict,profile_flag
 
 #@jit(nopython=True, cache=True)
 def OH_conc(temp,press,x_h2o,x_h2):
@@ -5861,8 +6258,6 @@ def OH_conc(temp,press,x_h2o,x_h2):
     n = press_cgs/(kb*temp)
     
     return x_oh*n
-
-
 
 '''
 12/13/2023 - NEB deprecated thi code from SM as it was not proven to help correct 
