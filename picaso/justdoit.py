@@ -685,20 +685,20 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
         mp = planet_params.get('mp',np.nan) 
         
     rp = picaso_class.inputs['planet'].get('radius',np.nan)
-    if np.isfinite(mp):
+    if np.isfinite(rp):
         rp = rp * check_units(picaso_class.inputs['planet']['radius_unit'])
     else: 
         rp = planet_params.get('rp',np.nan) 
         
     #add required RP/MP or gravity
-    if (not np.isnan(mp) & (not np.isnan(rp))):
+    if (not np.isnan(gravity)): 
+        attrs['planet_params']['gravity'] = gravity
+        assert isinstance(attrs['planet_params']['gravity'],u.quantity.Quantity ), "User supplied gravity in planet_params must be an astropy unit: e.g. 1*u.Unit('m/s**2')"
+    elif (not np.isnan(mp) & (not np.isnan(rp))):
         attrs['planet_params']['mp'] = mp
         attrs['planet_params']['rp'] = rp
         assert isinstance(attrs['planet_params']['mp'],u.quantity.Quantity ), "User supplied mp in planet_params must be an astropy unit: e.g. 1*u.Unit('M_jup')"
         assert isinstance(attrs['planet_params']['rp'],u.quantity.Quantity ), "User supplied rp in planet_params must be an astropy unit: e.g. 1*u.Unit('R_jup')"
-    elif (not np.isnan(gravity)): 
-        attrs['planet_params']['gravity'] = gravity
-        assert isinstance(attrs['planet_params']['gravity'],u.quantity.Quantity ), "User supplied gravity in planet_params must be an astropy unit: e.g. 1*u.Unit('m/s**2')"
     else: 
         print('Mass and Radius, or gravity not provided in add_output, and wasn not found in picaso class')
     
