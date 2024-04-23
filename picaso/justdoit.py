@@ -3671,7 +3671,7 @@ class inputs():
         extension = 0.3 
         
         #add threshold for tmin for convergence *JM
-        if Teff >= 250:
+        if Teff > 300:
             tmin = min_temp*(1-extension)
         else:
             tmin = 10
@@ -4006,7 +4006,7 @@ class inputs():
 
             extension = 0.3
             #add threshold for tmin for convergence *JM
-            if Teff >= 250:
+            if Teff > 300:
                 tmin = min_temp*(1-extension)
             else:
                 tmin = 10
