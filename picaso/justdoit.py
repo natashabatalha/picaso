@@ -3671,10 +3671,10 @@ class inputs():
         extension = 0.3 
         
         #add threshold for tmin for convergence *JM
-        if Teff > 300:
-            tmin = min_temp*(1-extension)
-        else:
-            tmin = 10
+        # if Teff > 300:
+        #     tmin = min_temp*(1-extension)
+        # else:
+        tmin = 10
         tmax = max_temp*(1+extension)
         # tmax = 20000
         ntmps = int((tmax-tmin)/dt)
@@ -4006,10 +4006,10 @@ class inputs():
 
             extension = 0.3
             #add threshold for tmin for convergence *JM
-            if Teff > 300:
-                tmin = min_temp*(1-extension)
-            else:
-                tmin = 10
+            # if Teff > 300:
+            #     tmin = min_temp*(1-extension)
+            # else:
+            tmin = 10
             tmax = max_temp*(1+extension)
             # tmax = 20000
 

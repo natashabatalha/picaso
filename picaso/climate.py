@@ -580,7 +580,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
         
         # NEB NOTE about step max 
         # In the original fortran code this was originally 
-        if teff <= 300:
+        if teff <= 400:
             step_max_tolerance = 0.005
             step_max = step_max_tolerance*max(sqrt(sum_1),n_total*1.0) #where step_max_tolerance=0.03
         # however when this was fixed, the code was progressing very slowly 
