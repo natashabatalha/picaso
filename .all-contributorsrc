@@ -143,6 +143,37 @@
         "mentoring",
         "fundingFinding"
       ]
+    },
+    {
+      "login": "Ziva18t",
+      "name": "Ziva18t",
+      "avatar_url": "https://avatars.githubusercontent.com/u/107640508?v=4",
+      "profile": "https://github.com/Ziva18t",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "James-Mang",
+      "name": "James",
+      "avatar_url": "https://avatars.githubusercontent.com/u/33335954?v=4",
+      "profile": "https://jamesmang.wixsite.com/jamesmang",
+      "contributions": [
+        "code",
+        "research"
+      ]
+    },
+    {
+      "login": "astrocaroline",
+      "name": "astrocaroline",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10456842?v=4",
+      "profile": "https://github.com/astrocaroline",
+      "contributions": [
+        "mentoring",
+        "ideas",
+        "fundingFinding",
+        "research"
+      ]
     }
   ],
   "contributorsPerLine": 7,
@@ -150,5 +181,6 @@
   "repoType": "github",
   "repoHost": "https://github.com",
   "projectName": "picaso",
-  "projectOwner": "natashabatalha"
+  "projectOwner": "natashabatalha",
+  "commitType": "docs"
 }

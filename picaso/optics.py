@@ -302,7 +302,7 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
         single_scattering_cld[:,:,igauss] = atm.layer['cloud']['w0'] 
 
     if return_mode: 
-        taus_by_species['cloud'] = TAUCLD[:,:,0]*single_scattering_cld[:,:,0]
+        taus_by_species['cloud'] = TAUCLD[:,:,0]#*single_scattering_cld[:,:,0]
         return taus_by_species
         
     #====================== If user requests full output, add Tau's to atmosphere class=====
@@ -620,7 +620,7 @@ def raman_pollack(nlayer,wave):
     qv = facv / SHIFT( WAVEL, -SHIFTV0 ) ** 4 * ( 3. * alpha_p2 + 2./3. * gamma_p2 )    
     """
     dat = pd.read_csv(os.path.join(os.environ.get('picaso_refdata'), 'opacities','raman_fortran.txt'),
-                        delim_whitespace=True, header=None, names = ['w','f'])
+                        sep='\s+', header=None, names = ['w','f'])
     #fill in matrix to match real raman format
     interp_raman = np.interp(wave, dat['w'].values, dat['f'].values, )
     raman_factor = np.zeros((nlayer, len(wave)))
@@ -652,7 +652,7 @@ class RetrieveCKs():
         #read in the full abundance file sot hat we can check the number of kcoefficient layers 
         #this should either be 1460 or 1060
         self.full_abunds =  pd.read_csv(os.path.join(self.ck_filename,'full_abunds'),
-            delim_whitespace=True)
+            sep='\s+')
         self.kcoeff_layers = self.full_abunds.shape[0]
 
         if deq == False :
@@ -709,7 +709,7 @@ class RetrieveCKs():
         run this function. Each specific line is accounted for.
         """
         data = pd.read_csv(os.path.join(self.ck_filename,'ascii_data'), 
-                  delim_whitespace=True,header=None, 
+                  sep='\s+',header=None, 
                   names=list(range(9)),dtype=str)
 
         num_species = int(data.iloc[0,0])
@@ -770,8 +770,8 @@ class RetrieveCKs():
         gpts_wts = np.reshape(np.array(data.iloc[end_temps+1:2+end_temps+int(2*self.ngauss/3),0:3]
                  .astype(float)).ravel()[1:-1], (self.ngauss,2))
 
-        self.gauss_pts = [i[0] for i in gpts_wts]
-        self.gauss_wts = [i[1] for i in gpts_wts]
+        self.gauss_pts = np.array([i[0] for i in gpts_wts])
+        self.gauss_wts = np.array([i[1] for i in gpts_wts])
 
         if not deq:
             kappa = np.array(data.iloc[3+end_temps+int(2*self.ngauss/3):-2,0:3].astype(float)).ravel()
@@ -795,7 +795,7 @@ class RetrieveCKs():
         run this function. Each specific line is accounted for.
         """
         data = pd.read_csv(os.path.join(self.ck_filename,'ascii_data'), 
-                  delim_whitespace=True,header=None, 
+                  sep='\s+',header=None, 
                   names=list(range(9)),dtype=str)
 
         num_species = int(data.iloc[0,0])
@@ -858,8 +858,8 @@ class RetrieveCKs():
                 gpts_wts = np.reshape(np.array(data.iloc[end_temps+1:2+end_temps+int(2*self.ngauss/3),0:3]
                  .astype(float)).ravel()[:-2], (self.ngauss,2))
                 
-                self.gauss_pts = [i[0] for i in gpts_wts]
-                self.gauss_wts = [i[1] for i in gpts_wts]
+                self.gauss_pts = np.array([i[0] for i in gpts_wts])
+                self.gauss_wts = np.array([i[1] for i in gpts_wts])
             
                 kappa = np.array(
                     data.iloc[3+end_temps+int(2*self.ngauss/3):-2,0:3]
@@ -1058,8 +1058,8 @@ class RetrieveCKs():
                 gpts_wts = np.reshape(np.array(data.iloc[end_temps+1:2+end_temps+int(2*self.ngauss/3),0:3]
                  .astype(float)).ravel()[1:-1], (self.ngauss,2))
                 
-                self.gauss_pts = [i[0] for i in gpts_wts]
-                self.gauss_wts = [i[1] for i in gpts_wts]
+                self.gauss_pts = np.array([i[0] for i in gpts_wts])
+                self.gauss_wts = np.array([i[1] for i in gpts_wts])
             
                 kappa = np.array(
                     data.iloc[3+end_temps+int(2*self.ngauss/3):-2,0:3]
@@ -1088,7 +1088,7 @@ class RetrieveCKs():
         run this function. Each specific line is accounted for.
         """
         data = pd.read_csv(os.path.join(self.ck_filename,'ascii_data'), 
-                  delim_whitespace=True,header=None, 
+                  sep='\s+',header=None, 
                   names=list(range(9)),dtype=str)
 
         num_species = int(data.iloc[0,0])
@@ -1147,8 +1147,8 @@ class RetrieveCKs():
         gpts_wts = np.reshape(np.array(data.iloc[end_temps+1:2+end_temps+int(2*self.ngauss/3),0:3]
          .astype(float)).ravel()[2:], (self.ngauss,2))
 
-        self.gauss_pts = [i[0] for i in gpts_wts]
-        self.gauss_wts = [i[1] for i in gpts_wts]
+        self.gauss_pts = np.array([i[0] for i in gpts_wts])
+        self.gauss_wts = np.array([i[1] for i in gpts_wts])
         
         
         #finally add pressure/temperature scale to abundances
@@ -1400,6 +1400,16 @@ class RetrieveCKs():
             mix_feh =   ( bundle.inputs['atmosphere']['profile']['FeH'].values)
         else:
             mix_feh =   ( bundle.inputs['atmosphere']['profile']['FeH'].values)*0.0
+        
+        if 'SO2' in gases_fly:
+            mix_so2 =   ( bundle.inputs['atmosphere']['profile']['SO2'].values)
+        else:
+            mix_so2 =   ( bundle.inputs['atmosphere']['profile']['H2O'].values)*0.0
+
+        if 'H2S' in gases_fly:
+            mix_h2s =   ( bundle.inputs['atmosphere']['profile']['H2S'].values)
+        else:
+            mix_h2s =   ( bundle.inputs['atmosphere']['profile']['H2O'].values)*0.0
 
                 
         
@@ -1410,8 +1420,8 @@ class RetrieveCKs():
         # these nearest neighbors will be used for interpolation
         kappa_mixed = mix_all_gases_gasesfly(np.array(self.kappa_co),np.array(self.kappa_h2o),np.array(self.kappa_ch4),
                                     np.array(self.kappa_nh3),np.array(self.kappa_co2),np.array(self.kappa_n2),np.array(self.kappa_hcn),
-                                    np.array(self.kappa_h2),np.array(self.kappa_ph3),np.array(self.kappa_c2h2),np.array(self.kappa_na),np.array(self.kappa_k),np.array(self.kappa_tio),np.array(self.kappa_vo),np.array(self.kappa_feh),mix_co,mix_h2o,mix_ch4,mix_nh3,
-                                    mix_co2,mix_n2,mix_hcn,mix_h2,mix_ph3,mix_c2h2,mix_na,mix_k,mix_tio,mix_vo,mix_feh,
+                                    np.array(self.kappa_h2),np.array(self.kappa_ph3),np.array(self.kappa_c2h2),np.array(self.kappa_na),np.array(self.kappa_k),np.array(self.kappa_tio),np.array(self.kappa_vo),np.array(self.kappa_feh),np.array(self.kappa_so2),np.array(self.kappa_h2s),mix_co,mix_h2o,mix_ch4,mix_nh3,
+                                    mix_co2,mix_n2,mix_hcn,mix_h2,mix_ph3,mix_c2h2,mix_na,mix_k,mix_tio,mix_vo,mix_feh, mix_so2,mix_h2s,
                                     np.array(self.gauss_pts),np.array(self.gauss_wts),indices)
         kappa = np.zeros(shape=(len(mix_co)-1,self.nwno,self.ngauss))
         
@@ -1497,7 +1507,7 @@ class RetrieveCKs():
         
         #now get associated pressures 
         #p_log_low =  np.array([p_log_grid[i] for i in p_low_ind])
-        return [p_low_ind, p_hi_ind, t_low_ind, t_hi_ind], t_interp,p_interp
+        return np.array([p_low_ind, p_hi_ind, t_low_ind, t_hi_ind]), t_interp,p_interp
             
     def get_pre_mix_ck_nearest(self,atmosphere):
         """
@@ -1932,6 +1942,20 @@ class RetrieveCKs():
             array = np.load(path+'/FeH_1460.npy')
             self.kappa_feh = array*0-250.0
         
+        if 'SO2' in gases_fly:
+            array = np.load(path+'/SO2_1460.npy')
+            self.kappa_so2 = array
+        else:
+            array = np.load(path+'/SO2_1460.npy')
+            self.kappa_so2 = array*0-250.0
+
+        if 'H2S' in gases_fly:
+            array = np.load(path+'/H2S_1460.npy')
+            self.kappa_h2s = array
+        else:
+            array = np.load(path+'/H2S_1460.npy')
+            self.kappa_h2s = array*0-250.0
+        
     def get_new_wvno_grid_661(self):
         path = os.path.join(__refdata__, 'climate_INPUTS/')#'/Users/sagnickmukherjee/Documents/GitHub/Disequilibrium-Picaso/reference/climate_INPUTS/'
         wvno_new,dwni_new = np.loadtxt(path+"wvno_661",usecols=[0,1],unpack=True)
@@ -2231,7 +2255,7 @@ class RetrieveOpacities():
 
         #monochromatic opacity option forces number of gauss points to 1
         self.ngauss = 1
-        self.gauss_wts = [1]
+        self.gauss_wts = np.array([1])
 
         if location == 'local':
             #self.conn = sqlite3.connect(db_filename, detect_types=sqlite3.PARSE_DECLTYPES)
@@ -2242,7 +2266,7 @@ class RetrieveOpacities():
         
         #raman cross sections 
         self.raman_db = pd.read_csv(raman_data,
-                     delim_whitespace=True, skiprows=16,header=None, names=['ji','jf','vf','c','deltanu'])
+                     sep='\s+', skiprows=16,header=None, names=['ji','jf','vf','c','deltanu'])
         
         #compute available Rayleigh scatterers 
         self.get_available_rayleigh()
