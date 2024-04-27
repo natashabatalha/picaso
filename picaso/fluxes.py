@@ -602,7 +602,7 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             # p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
             # as opposed to the traditional:
             # p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2-2*cosb_og*cos_theta)**3) (NOTICE NEGATIVE)
-            
+
             if single_phase==0:#'cahoy':
                 #Phase function for single scattering albedo frum Solar beam
                 #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
@@ -637,8 +637,8 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
                                                 +(1-f)*(1-g_back**2)
                                                 /sqrt((1+g_back**2+2*g_back*cos_theta)**3))+            
                                 #rayleigh phase function
-                                ftau_ray*(0.75*(1+cos_theta**2.0)))                                                     
-                                                                        
+                                ftau_ray*(0.75*(1+cos_theta**2.0)))
+
             ################################ END OPTIONS FOR DIRECT SCATTERING####################
 
             for i in range(nlayer-1,-1,-1):
@@ -817,7 +817,7 @@ def get_reflected_1d_deprecate(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,
             exptrm = lamda*dtau
             #save from overflow 
             exptrm = slice_gt (exptrm, 35.0) 
-            
+
             exptrm_positive = exp(exptrm) #EP
             exptrm_minus = 1.0/exptrm_positive#EM
 

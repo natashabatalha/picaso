@@ -1,9 +1,6 @@
 from numba import jit
 from numpy import pi, zeros, cos, arcsin, sin, arccos,outer,array,sum,zeros, linspace
 from numpy import polynomial
-
-import numpy as np
-
 import json 
 import os 
 
@@ -39,7 +36,7 @@ def compute_disco(ng, nt, gangle, tangle, phase_angle):
     cos_theta = cos(phase_angle)
 
     # This if/else statement allows for full 0-360 phase curve calculations for the reflected case
-    if phase_angle <= np.pi:
+    if phase_angle <= pi:
         longitude = arcsin((gangle-(cos_theta-1.0)/(cos_theta+1.0))/(2.0/(cos_theta+1)))
     else: 
         longitude = - arcsin((gangle-(cos_theta-1.0)/(cos_theta+1.0))/(2.0/(cos_theta+1)))
