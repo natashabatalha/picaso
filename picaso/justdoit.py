@@ -20,7 +20,7 @@ from numpy import exp, sqrt,log
 from numba import jit,njit
 from scipy.io import FortranFile
 
-from picaso import justdoit as jdi
+
 
 import os
 import pickle as pk
@@ -44,6 +44,7 @@ from joblib import Parallel, delayed, cpu_count
 # from loguru import logger 
 __refdata__ = os.environ.get('picaso_refdata')
 __version__ = 3.2
+
 
 if not os.path.exists(__refdata__): 
     raise Exception("You have not downloaded the PICASO reference data. You can find it on github here: https://github.com/natashabatalha/picaso/tree/master/reference . If you think you have already downloaded it then you likely just need to set your environment variable. See instructions here: https://natashabatalha.github.io/picaso/installation.html#download-and-link-reference-documentation . You can use `os.environ['PYSYN_CDBS']=<yourpath>` directly in python if you run the line of code before you import PICASO.")
@@ -150,7 +151,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     
 
     #phase angle 
-    #phase_angle = inputs['phase_angle']
+    phase_angle = inputs['phase_angle']
     #get geometry
     geom = inputs['disco']
 
@@ -431,7 +432,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
             atm.tauray = TAURAY_3d
 
         if  'reflected' in calculation:
-            #p_single=[]
             xint_at_top=0
             for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
                 #use toon method  to get net cumulative fluxes 
@@ -4466,7 +4466,7 @@ def jupiter_cld():
 def HJ_pt():
     """Function to get Jupiter's PT profile"""
     return os.path.join(__refdata__, 'base_cases','HJ.pt')
-def HJ_pt_3d(as_xarray=False,add_kz=False):
+def HJ_pt_3d(as_xarray=False,add_kz=False, input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')):
     """Function to get Jupiter's PT profile
     
     Parameters
@@ -4475,6 +4475,9 @@ def HJ_pt_3d(as_xarray=False,add_kz=False):
         Returns as xarray, instead of dictionary
     add_kz : bool 
         Returns kzz along with PT info
+    input_file : str 
+        point to input file in the same format as mitgcm example 
+        file in base_cases/HJ_3d.pt
     """
     #input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')
     threed_grid = pd.read_csv(input_file,sep='\s+',names=['p','t','k'])
