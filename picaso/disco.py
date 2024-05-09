@@ -34,7 +34,13 @@ def compute_disco(ng, nt, gangle, tangle, phase_angle):
     """
     #this theta is defined from the frame of the downward propagating beam
     cos_theta = cos(phase_angle)
-    longitude = arcsin((gangle-(cos_theta-1.0)/(cos_theta+1.0))/(2.0/(cos_theta+1)))
+
+    # This if/else statement allows for full 0-360 phase curve calculations for the reflected case
+    if phase_angle <= pi:
+        longitude = arcsin((gangle-(cos_theta-1.0)/(cos_theta+1.0))/(2.0/(cos_theta+1)))
+    else: 
+        longitude = - arcsin((gangle-(cos_theta-1.0)/(cos_theta+1.0))/(2.0/(cos_theta+1)))
+
     colatitude = arccos(tangle)#colatitude = 90-latitude 
     latitude = pi/2-colatitude
     f = sin(colatitude) #define to eliminate repitition
