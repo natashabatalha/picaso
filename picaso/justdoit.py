@@ -685,20 +685,20 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
         mp = planet_params.get('mp',np.nan) 
         
     rp = picaso_class.inputs['planet'].get('radius',np.nan)
-    if np.isfinite(mp):
+    if np.isfinite(rp):
         rp = rp * check_units(picaso_class.inputs['planet']['radius_unit'])
     else: 
         rp = planet_params.get('rp',np.nan) 
         
     #add required RP/MP or gravity
-    if (not np.isnan(mp) & (not np.isnan(rp))):
+    if (not np.isnan(gravity)): 
+        attrs['planet_params']['gravity'] = gravity
+        assert isinstance(attrs['planet_params']['gravity'],u.quantity.Quantity ), "User supplied gravity in planet_params must be an astropy unit: e.g. 1*u.Unit('m/s**2')"
+    elif (not np.isnan(mp) & (not np.isnan(rp))):
         attrs['planet_params']['mp'] = mp
         attrs['planet_params']['rp'] = rp
         assert isinstance(attrs['planet_params']['mp'],u.quantity.Quantity ), "User supplied mp in planet_params must be an astropy unit: e.g. 1*u.Unit('M_jup')"
         assert isinstance(attrs['planet_params']['rp'],u.quantity.Quantity ), "User supplied rp in planet_params must be an astropy unit: e.g. 1*u.Unit('R_jup')"
-    elif (not np.isnan(gravity)): 
-        attrs['planet_params']['gravity'] = gravity
-        assert isinstance(attrs['planet_params']['gravity'],u.quantity.Quantity ), "User supplied gravity in planet_params must be an astropy unit: e.g. 1*u.Unit('m/s**2')"
     else: 
         print('Mass and Radius, or gravity not provided in add_output, and wasn not found in picaso class')
     
@@ -3667,9 +3667,14 @@ class inputs():
         dt = self.inputs['climate']['dt_bb_grid']
         #we will extend the black body grid 30% beyond the min and max temp of the 
         #opacity grid just to be safe with the spline
-        extension = 0.3 
-        # tmin = min_temp*(1-extension)
-        tmin = 10
+        Teff = self.inputs['planet']['T_eff']
+        extension = 0.8 
+
+        #add threshold for tmin for convergence *JM
+        if Teff > 300:
+            tmin = min_temp*(1-extension)
+        else:
+            tmin = 10
         tmax = max_temp*(1+extension)
         # tmax = 20000
         ntmps = int((tmax-tmin)/dt)
@@ -3999,9 +4004,12 @@ class inputs():
             ntmps = self.inputs['climate']['ntemp_bb_grid']
             dt = self.inputs['climate']['dt_bb_grid']
 
-            extension = 0.3 
-            # tmin = min_temp*(1-extension)
-            tmin = 10 #JM changed to 10K for the cold cases
+            extension = 0.8
+            #add threshold for tmin for convergence *JM
+            if Teff > 300:
+                tmin = min_temp*(1-extension)
+            else:
+                tmin = 10            
             tmax = max_temp*(1+extension)
             # tmax = 20000
 
