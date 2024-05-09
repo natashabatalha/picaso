@@ -1559,7 +1559,7 @@ def phase_snaps(allout, x = 'longitude', y = 'pressure', z='temperature',palette
 
     fig.tight_layout()
     return fig
-def phase_curve(allout, to_plot, collapse=None, R=100, palette=pals.Spectral11,verbose=True, **kwargs):
+def phase_curve(allout, to_plot, collapse=None, R=100, palette=pals.Spectral11,verbose=True, reorder_output=False, **kwargs):
     """
     Plots phase curves
     
@@ -1581,6 +1581,9 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=pals.Spectral11,v
         Print out low level warnings 
     kwargs : dict 
         Bokeh plotting kwargs for bokeh.Figure
+    reorder_output : bool
+        Returns sorted outputs, for better phase curve plotting.
+        re-orders phases such that brightest value is at phase=0
     """
 
     kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',400))
@@ -1669,8 +1672,9 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=pals.Spectral11,v
         fig2.ygrid.grid_line_alpha=0
         plot_format(fig2)
         show(fig2)
-
-    return phases, reorder_phases, all_curves, reorder_all_curves, all_ws, fig
+    if reorder_output:
+        return phases,all_curves, all_ws, fig
+    return reorder_phases, reorder_all_curves, all_ws, fig
 
 def thermal_contribution(full_output, tau_max=1.0,R=100,  **kwargs):
     """
