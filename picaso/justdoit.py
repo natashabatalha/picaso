@@ -3668,7 +3668,7 @@ class inputs():
         #we will extend the black body grid 30% beyond the min and max temp of the 
         #opacity grid just to be safe with the spline
         Teff = self.inputs['planet']['T_eff']
-        extension = 0.8 
+        extension = 0.3 
         
         #add threshold for tmin for convergence *JM
         if Teff > 300:
@@ -4004,7 +4004,7 @@ class inputs():
             ntmps = self.inputs['climate']['ntemp_bb_grid']
             dt = self.inputs['climate']['dt_bb_grid']
 
-            extension = 0.8
+            extension = 0.3
             #add threshold for tmin for convergence *JM
             if Teff > 300:
                 tmin = min_temp*(1-extension)
