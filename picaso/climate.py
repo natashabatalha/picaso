@@ -347,9 +347,10 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
             grad, cp, tidal, tmin,tmax, dwni , bb , y2, tp, DTAU, TAU, W0, COSB, 
             ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,
             cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,
-            constant_back,constant_forward, wno,nwno,ng,nt,gweight,tweight, ngauss, gauss_wts, save_profile, all_profiles, teff,
+            constant_back,constant_forward, wno,nwno,ng,nt,gweight,tweight, ngauss, gauss_wts, save_profile, all_profiles,
             output_abunds, fhole = None, DTAU_clear = None, TAU_clear = None, W0_clear = None, COSB_clear = None, 
-            DTAU_OG_clear = None, TAU_OG_clear = None, W0_OG_clear = None, COSB_OG_clear = None, W0_no_raman_clear = None, verbose=1, do_holes=None, moist = False):
+            DTAU_OG_clear = None, TAU_OG_clear = None, W0_OG_clear = None, COSB_OG_clear = None, W0_no_raman_clear = None, 
+            verbose=1, do_holes=None, moist = False, egp_stepmax = False):
     """
     Module to iterate on the level TP profile to make the Net Flux as close to 0.
     Opacities/chemistry are not updated while iterating in this module.
@@ -580,7 +581,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
         
         # NEB NOTE about step max 
         # In the original fortran code this was originally 
-        if teff <= 400:
+        if egp_stepmax == True:
             step_max_tolerance = 0.005
             step_max = step_max_tolerance*max(sqrt(sum_1),n_total*1.0) #where step_max_tolerance=0.03
         # however when this was fixed, the code was progressing very slowly 

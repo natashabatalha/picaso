@@ -4789,9 +4789,13 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             frac_a,frac_b,frac_c,constant_back,constant_forward, \
             wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw, gweight, tweight =  calculate_atm(bundle, opacityclass, fthin_cld, do_holes=True)
       
-    #calculate teff for t_start solver
+    #calculate teff for t_start solver type for better convergence
     sigmab =  0.56687e-4 #cgs
     target_teff = (abs(tidal[0])/sigmab)**0.25
+    if target_teff <= 400 and cloudy != 1: # don't use for cloudy runs, no difference so it's faster without it
+        egp_stepmax = True
+    else:
+        egp_stepmax = False
     
     ## begin bigger loop which gets opacities
     for iii in range(itmx):
@@ -4804,9 +4808,9 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                     DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman ,surf_reflect, 
                     ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
                     wno,nwno,ng,nt,gweight,tweight,      
-                    ngauss, gauss_wts, save_profile, all_profiles, target_teff, output_abunds,
+                    ngauss, gauss_wts, save_profile, all_profiles, output_abunds,
                     fhole, DTAU_clear, TAU_clear, W0_clear, COSB_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear,COSB_OG_clear, 
-                    W0_no_raman_clear, verbose=verbose, do_holes = True, moist = moist)
+                    W0_no_raman_clear, verbose=verbose, do_holes = True, moist = moist, egp_stepmax=egp_stepmax)
         
         else:
             temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(
@@ -4816,8 +4820,8 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                     DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
                     ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
                     wno,nwno,ng,nt,gweight,tweight, 
-                    ngauss, gauss_wts, save_profile, all_profiles, target_teff,
-                    output_abunds, verbose=verbose, moist = moist)
+                    ngauss, gauss_wts, save_profile, all_profiles,
+                    output_abunds, verbose=verbose, moist = moist, egp_stepmax=egp_stepmax)
         
         #NEB stage delete after confirmation from SM
         #if (temp <= min(opacityclass.cia_temps)).any():
@@ -5621,8 +5625,8 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
         kz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
         photo_inputs_dict['kz'] = kz
 
-    #calculate teff for t_start solver
-    target_teff = 500 #Increased to 500K so that t_start doesn't use EGP step_max solver for deq cases, a little hacky (JM)
+    # never use EGP stepmax solver for disequilibrium runs
+    egp_stepmax = False
 
     ## begin bigger loop which gets opacities
     for iii in range(itmx):
@@ -5634,9 +5638,9 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
             W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, FOPI, 
             single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
-            wno,nwno,ng,nt, gweight, tweight,ngauss, gauss_wts, save_profile, all_profiles, target_teff,
+            wno,nwno,ng,nt, gweight, tweight,ngauss, gauss_wts, save_profile, all_profiles,
             output_abunds, fhole, DTAU_clear, TAU_clear, W0_clear, COSB_clear, DTAU_OG_clear, TAU_OG_clear, 
-            W0_OG_clear, COSB_OG_clear, W0_no_raman_clear, do_holes = True, verbose = verbose, moist = moist)
+            W0_OG_clear, COSB_OG_clear, W0_no_raman_clear, do_holes = True, verbose = verbose, moist = moist, egp_stepmax=egp_stepmax)
         else:
             temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(nofczns,nstr,it_max,conv,x_max_mult, 
                 rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
@@ -5644,8 +5648,8 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
                 COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, 
                 W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, FOPI, 
                 single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
-                wno,nwno,ng,nt,gweight,tweight, ngauss, gauss_wts, save_profile, all_profiles, target_teff,
-                output_abunds, verbose=verbose, moist = moist)
+                wno,nwno,ng,nt,gweight,tweight, ngauss, gauss_wts, save_profile, all_profiles,
+                output_abunds, verbose=verbose, moist = moist, egp_stepmax=egp_stepmax)
         '''
         if (temp <= min(opacityclass.cia_temps)).any():
             wh = np.where(temp <= min(opacityclass.cia_temps))
