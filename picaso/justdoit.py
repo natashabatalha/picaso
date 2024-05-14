@@ -5670,7 +5670,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale=True)
             # print('loop t_mix:',t_mix)
             
-            qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout)
+            qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3)
             print("Quench Levels are CO, CO2, NH3, HCN ", quench_levels)
         else :
             bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
@@ -6182,7 +6182,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
                     i_change =1
                 if verbose: print(nstr)
                 pressure, temp, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,cld_out,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,_ = profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult, \
-                                                        temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav,rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile, all_profiles, self_consistent_kzz, save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist=moist,deq_rainout=deq_rainout,verbose=verbose)
+                                                        temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav,rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile, all_profiles, self_consistent_kzz, save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist=moist,deq_rainout=deq_rainout,quench_ph3=quench_ph3,verbose=verbose)
             
 
             flag_final_convergence = 1
