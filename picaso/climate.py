@@ -589,7 +589,10 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
         # the result of this is that there are sometimes large temperature 
         # steps that might be problematic for edge cases that get too hot or too cold 
         else:
-            step_max *= max(sqrt(sum_1),n_total*1.0)#step_max_tolerance*
+            # added this to help with smoother convergence for cloudy cases and also helps speed up convergence
+            # by a bit when running the default test cases
+            iteration_factor = max(0.01, (it_max - its) / it_max)
+            step_max *= max(sqrt(sum_1),n_total*1.0)*iteration_factor #step_max_tolerance*
         #if verbose: print('maximum scaled step size',step_max, n_total, sum_1, its)
         no =n_top_r
         

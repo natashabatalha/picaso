@@ -4792,9 +4792,10 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     #calculate teff for t_start solver type for better convergence
     sigmab =  0.56687e-4 #cgs
     target_teff = (abs(tidal[0])/sigmab)**0.25
-    if target_teff <= 400 and cloudy != 1: # don't use for cloudy runs, no difference so it's faster without it
+    # Don't use large step_max option for cold models, much better converged with smaller stepping unless it's cloudy
+    if target_teff <= 400 and cloudy != 1:
         egp_stepmax = True
-    else:
+    else: 
         egp_stepmax = False
     
     ## begin bigger loop which gets opacities
