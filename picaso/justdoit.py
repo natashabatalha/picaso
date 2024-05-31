@@ -4670,56 +4670,66 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
 
     if save_profile == 1:
             all_profiles = np.append(all_profiles,temp_old)
+    #calculate teff for t_start solver type for better convergence
+    sigmab =  0.56687e-4 #cgs
+    target_teff = (abs(tidal[0])/sigmab)**0.25
+    # Don't use large step_max option for cold models, much better converged with smaller stepping unless it's cloudy
+    if target_teff <= 400 and cloudy != 1:
+        egp_stepmax = True
+    else: 
+        egp_stepmax = False
 
     #testing goto 1235 in EGP profile.f (JM)
-    # if final == True:
-    #     it_max = it_max * 2
-    #     itmx = 6
-    #     for iii in range(itmx):
+    if final == True:
+        it_max = it_max * 2
+        itmx = 6
+        for iii in range(itmx):
     
-    #         if do_holes == True:
-    #             DTAU_clear, TAU_clear, W0_clear, COSB_clear,ftau_cld_clear, ftau_ray_clear,GCOS2_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear, COSB_OG_clear, \
-    #                 W0_no_raman_clear, surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
-    #                 frac_a,frac_b,frac_c,constant_back,constant_forward, \
-    #                 wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw, gweight, tweight =  calculate_atm(bundle, opacityclass, fthin_cld, do_holes=True)
+            if do_holes == True:
+                DTAU_clear, TAU_clear, W0_clear, COSB_clear,ftau_cld_clear, ftau_ray_clear,GCOS2_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear, COSB_OG_clear, \
+                    W0_no_raman_clear, surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
+                    frac_a,frac_b,frac_c,constant_back,constant_forward, \
+                    wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw, gweight, tweight =  calculate_atm(bundle, opacityclass, fthin_cld, do_holes=True)
                 
-    #             temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(
-    #                     nofczns,nstr,it_max,conv,x_max_mult, 
-    #                     rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
-    #                     grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, 
-    #                     DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman ,surf_reflect, 
-    #                     ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
-    #                     wno,nwno,ng,nt,gweight,tweight,      
-    #                     ngauss, gauss_wts, save_profile, all_profiles, output_abunds,
-    #                     fhole, DTAU_clear, TAU_clear, W0_clear, COSB_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear,COSB_OG_clear, 
-    #                     W0_no_raman_clear, verbose=verbose, do_holes = True, moist = moist)
+                temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(
+                        nofczns,nstr,it_max,conv,x_max_mult, 
+                        rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
+                        grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, 
+                        DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman ,surf_reflect, 
+                        ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
+                        wno,nwno,ng,nt,gweight,tweight,      
+                        ngauss, gauss_wts, save_profile, all_profiles, output_abunds,
+                        fhole, DTAU_clear, TAU_clear, W0_clear, COSB_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear,COSB_OG_clear, 
+                        W0_no_raman_clear, verbose=verbose, do_holes = True, moist = moist,egp_stepmax=egp_stepmax)
         
-    #         else:
-    #             DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
-    #                 W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
-    #                 frac_a,frac_b,frac_c,constant_back,constant_forward, \
-    #                 wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight =  calculate_atm(bundle, opacityclass )
+            else:
+                DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
+                    W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
+                    frac_a,frac_b,frac_c,constant_back,constant_forward, \
+                    wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight =  calculate_atm(bundle, opacityclass )
                 
-    #             temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(
-    #                     nofczns,nstr,it_max,conv,x_max_mult, 
-    #                     rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
-    #                     grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, 
-    #                     DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-    #                     ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
-    #                     wno,nwno,ng,nt,gweight,tweight, 
-    #                     ngauss, gauss_wts, save_profile, all_profiles,
-    #                     output_abunds, verbose=verbose, moist = moist)
+                temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(
+                        nofczns,nstr,it_max,conv,x_max_mult, 
+                        rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
+                        grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, 
+                        DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
+                        ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
+                        wno,nwno,ng,nt,gweight,tweight, 
+                        ngauss, gauss_wts, save_profile, all_profiles,
+                        output_abunds, verbose=verbose, moist = moist,egp_stepmax=egp_stepmax)
             
-    #         ert = 0.0
-    #         scalt = 1.0
+            ert = 0.0
+            scalt = 1.0
 
-    #         dtx= abs(temp-temp_old)
-    #         ert = np.sum(dtx) 
+            dtx= abs(temp-temp_old)
+            ert = np.sum(dtx) 
             
-    #         temp_old= np.copy(temp)
+            temp_old= np.copy(temp)
 
-    #         conv_flag = 1
-    #     return pressure, temp, dtdp, conv_flag, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop
+            conv_flag = 1
+
+            cld_out = 0 # don't need cld_out in this case, recalculated in outside loop in climate anyway
+        return pressure, temp , dtdp, conv_flag, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate, cld_out,flux_net_ir_layer, flux_plus_ir_attop
     
     if first_call_ever == False:
         if cloudy == 1 :
@@ -4788,15 +4798,6 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             W0_no_raman_clear, surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
             frac_a,frac_b,frac_c,constant_back,constant_forward, \
             wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw, gweight, tweight =  calculate_atm(bundle, opacityclass, fthin_cld, do_holes=True)
-      
-    #calculate teff for t_start solver type for better convergence
-    sigmab =  0.56687e-4 #cgs
-    target_teff = (abs(tidal[0])/sigmab)**0.25
-    # Don't use large step_max option for cold models, much better converged with smaller stepping unless it's cloudy
-    if target_teff <= 400 and cloudy != 1:
-        egp_stepmax = True
-    else: 
-        egp_stepmax = False
     
     ## begin bigger loop which gets opacities
     for iii in range(itmx):
@@ -6250,7 +6251,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
     
     if cloudy == 1:
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight =  calculate_atm_deq(bundle, opacityclass,on_fly=on_fly, gases_fly=gases_fly)
-        metallicity = 10**(0.0) #atmospheric metallicity relative to Solar
+        metallicity = 10**(mh) #atmospheric metallicity relative to Solar
         mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
         directory = mieff_dir
 
