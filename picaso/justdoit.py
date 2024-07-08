@@ -42,7 +42,7 @@ from joblib import Parallel, delayed, cpu_count
 # #testing error tracker
 # from loguru import logger 
 __refdata__ = os.environ.get('picaso_refdata')
-__version__ = 3.1
+__version__ = 3.2
 
 
 if not os.path.exists(__refdata__): 
@@ -600,6 +600,13 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
     df : dict 
         This is the output of your spectrum and must include "full_output=True"
         For example, df = case.spectrum(opa, full_output=True)
+        It can also be the output of your climate run. For example, out=case.climate(..., withSpec=True)
+        If running climate you must run withSpec=True OR add output of case.spectrum to your output dictionary
+        by doing (for example): 
+        >> out = case.climate(..., withSpec=False)
+        >> #add any post processing steps you desire (e.g. case.atmosphere or case.clouds)
+        >> df = case.spectrum(opa, calculation='thermal')
+        >> out['spectrum_output'] = df
     picaso_class : picaso.inputs
         This is the original class that you made to do your run. 
         For example, case=jdi.inputs();followed by case.atmosphere(), case.clouds(), etc
@@ -615,40 +622,94 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
     -------
     xarray.Dataset
         this xarray dataset can be easily passed to justdoit.input_xarray to run a spectrum 
-        
-    """
-        
-    full_output = df['full_output'] if 'full_output' in df.keys() else  df['spectrum_output']['full_output']
-    df_atmo = picaso_class.inputs['atmosphere']['profile']
-    molecules_included = full_output['weights']
     
+    Todo
+    ----
+    - figure out why pandas index are being returned for pressure and wavelenth 
+    - fix clouds wavenumber_layer which doesnt seem like it would work 
+    - add clima inputs : teff (or tint), number of convective zones
+    - cvs_locs array should be more clear
+    """ 
+    attrs = {}
+    if not isinstance(_finditem(df, 'full_output'), type(None)): 
+        #print("Found full_output!")
+        full_output = _finditem(df, 'full_output')
+        molecules_included = full_output['weights']
+    else: 
+        raise Exception("full_output is required. Either you need to run spectrum(opa, full_output=True), climate(..., with_Spec=True), or create and add info to spectrum_output")
+
+    if not isinstance(_finditem(df, 'wavenumber'), type(None)):
+        wavenumber = _finditem(df, 'wavenumber')
+    else: 
+        raise Exception("wavenumber is required to be in df somewhere")
+        
+        
+    #if they put in climate data, add it to xarray and create meta data
+    if not isinstance(_finditem(df, 'dtdp'), type(None)): 
+        attrs['climate_params'] = {}
+    
+    #is df_atmo ran with climate calculations or hi-res spectrum
+    if not isinstance(_finditem(df, 'ptchem_df'), type(None)):
+        df_atmo = _finditem(df,'ptchem_df')
+    else:
+        df_atmo = picaso_class.inputs['atmosphere']['profile']
+
     #start with simple layer T
     data_vars=dict(temperature = (["pressure"], 
                                   df_atmo['temperature'],
                                   {'units': 'Kelvin'}))
-    
+
+    #add climate data
+    if not isinstance(_finditem(df, 'dtdp'), type(None)): 
+        dtdp = _finditem(df,'dtdp')
+        data_vars['dtdp'] = (["pressure_layer"], dtdp, {'units': 'K/bar'})
+   
+    if not isinstance(_finditem(df, 'cvz_locs'), type(None)): #for metadata (converged) and other(all_profiles/nlevel)
+        cvz_locs = _finditem(df, 'cvz_locs')
+        attrs['climate_params']['cvs_locs'] = cvz_locs
+        
+    if not isinstance(_finditem(df, 'converged'), type(None)):
+        converged = _finditem(df,'converged')
+        attrs['climate_params']['converged'] = converged
+        
+    if not isinstance(_finditem(df , 'all_profiles'), type(None)):
+        all_profiles = _finditem(df , 'all_profiles')
+        nlevel = len(df_atmo['pressure'])
+        for i in range((int(len(all_profiles)/nlevel))): 
+            #after each nlevel amount (ex: 91), restart guess count
+            index_start=nlevel*i
+            index_finish=nlevel*(i+1)
+            data_vars['guess '+str(i+1)]= (["pressure"], all_profiles[index_start:index_finish],{'units': 'Kelvin'})
+            
     #spectral data 
-    if 'thermal' in df.keys(): 
-        data_vars['flux_emission'] = (["wavelength"], df['thermal'],{'units': 'erg/cm**2/s/cm'}) 
-    if 'transit_depth' in df.keys(): 
-        data_vars['transit_depth'] = (["wavelength"], df['transit_depth'],{'units': 'R_jup**2/R_jup**2'}) 
-    if 'temp_brightness' in df.keys(): 
-        data_vars['temp_brightness'] = (["wavelength"], df['temp_brightness'],{'units': 'Kelvin'})
-    if 'fpfs_thermal' in df.keys(): 
-        if isinstance(df['fpfs_thermal'], np.ndarray): 
-            data_vars['fpfs_emission'] = (["wavelength"], df['fpfs_thermal'],{'units': 'erg/cm**2/s/cm/(erg/cm**2/s/cm)'})
-    if 'albedo' in df.keys(): 
-        data_vars['albedo'] = (["wavelength"], df['albedo'],{'units': 'none'})
-    if 'fpfs_reflected' in df.keys(): 
-        if isinstance(df['fpfs_reflected'], np.ndarray): 
-            data_vars['fpfs_reflected'] = (["wavelength"], df['fpfs_reflected'],{'units': 'erg/cm**2/s/cm/(erg/cm**2/s/cm)'})
-    
+    if not isinstance(_finditem(df, 'thermal'), type(None)):
+        thermal = _finditem(df,'thermal')
+        data_vars['flux_emission'] = (["wavelength"], thermal,{'units': 'erg/cm**2/s/cm'}) 
+    if not isinstance(_finditem(df, 'transit_depth'), type(None)):
+        transit_depth = _finditem(df, 'transit_depth')
+        data_vars['transit_depth'] = (["wavelength"], transit_depth,{'units': 'R_jup**2/R_jup**2'}) 
+    if not isinstance(_finditem(df, 'temp_brightness'), type(None)): 
+        temp_brightness = _finditem(df, 'temp_brightness')
+        data_vars['temp_brightness'] = (["wavelength"], temp_brightness,{'units': 'Kelvin'})
+    if not isinstance(_finditem(df, 'fpfs_thermal'), type(None)):
+        fpfs_thermal= _finditem(df, 'fpfs_thermal')
+        if isinstance(fpfs_thermal, np.ndarray):
+            data_vars['fpfs_emission'] = (["wavelength"], fpfs_thermal,{'units': 'erg/cm**2/s/cm/(erg/cm**2/s/cm)'})
+    if not isinstance(_finditem(df, 'albedo'), type(None)): 
+        albedo=_finditem(df, 'albedo')
+        data_vars['albedo'] = (["wavelength"], albedo,{'units': 'none'})
+    if not isinstance(_finditem(df, 'fpfs_reflected'), type(None)): 
+        fpfs_reflected=_finditem(df, 'fpfs_reflected')
+        if isinstance(fpfs_reflected, np.ndarray): 
+            data_vars['fpfs_reflected'] = (["wavelength"], fpfs_reflected,{'units': 'erg/cm**2/s/cm/(erg/cm**2/s/cm)'})
+
+
     #atmospheric data data 
     for ikey in molecules_included:
         data_vars[ikey] = (["pressure"], df_atmo[ikey].values,{'units': 'v/v'})
         
-    if 'kz' in picaso_class.inputs['atmosphere']['profile'].keys(): 
-        data_vars['kzz'] = (["pressure"], picaso_class.inputs['atmosphere']['profile']['kz'].values,{'units': 'cm**2/s'})
+    if 'kz' in df_atmo: 
+        data_vars['kzz'] = (["pressure"], df_atmo['kz'].values,{'units': 'cm**2/s'})
       
     #clouds if they exist 
     if 'clouds' in picaso_class.inputs: 
@@ -658,9 +719,8 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
                        (picaso_class.nlevel-1, 
                         len(picaso_class.inputs['clouds']['wavenumber'])))
 
-                data_vars[lbl]=(['pressure_cld','wavenumber_cld'],array,{'units': 'unitless'})
+                data_vars[lbl]=(['pressure_layer','wavenumber_layer'],array,{'units': 'unitless'})
     
-    attrs = {}
     #basic info
     for ikey in ['author','code','doi','contact']:
         if add_output.get(ikey,'optional') != 'optional':
@@ -670,6 +730,10 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
     planet_params = add_output.get('planet_params',{})
     attrs['planet_params'] = {}
     
+    if not isinstance(_finditem(df, 'effective_temperature'), type(None)):
+        effective_temp = _finditem(df, 'effective_temperature')
+        attrs['planet_params']['effective_temp'] = effective_temp
+
     #find gravity in picaso
     gravity = picaso_class.inputs['planet'].get('gravity',np.nan)
     if np.isfinite(gravity): 
@@ -694,7 +758,7 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
     if (not np.isnan(gravity)): 
         attrs['planet_params']['gravity'] = gravity
         assert isinstance(attrs['planet_params']['gravity'],u.quantity.Quantity ), "User supplied gravity in planet_params must be an astropy unit: e.g. 1*u.Unit('m/s**2')"
-    elif (not np.isnan(mp) & (not np.isnan(rp))):
+    elif (((not np.isnan(mp)) & (not np.isnan(rp))) & (((not isinstance(mp,str)) & (not isinstance(rp,str))))):
         attrs['planet_params']['mp'] = mp
         attrs['planet_params']['rp'] = rp
         assert isinstance(attrs['planet_params']['mp'],u.quantity.Quantity ), "User supplied mp in planet_params must be an astropy unit: e.g. 1*u.Unit('M_jup')"
@@ -768,7 +832,8 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
             
 
                
-        attrs['stellar_params'] = json.dumps(attrs['stellar_params'],cls=JsonCustomEncoder)
+        if 'stellar_params' in attrs.keys(): attrs['stellar_params'] = json.dumps(attrs['stellar_params'],cls=JsonCustomEncoder)
+        if 'climate_params' in attrs.keys(): attrs['climate_params'] = json.dumps(attrs['climate_params'],cls=JsonCustomEncoder)
         
         
     #add anything else requested by the user
@@ -778,13 +843,15 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
     
     
     coords=dict(
-            pressure=(["pressure"], picaso_class.inputs['atmosphere']['profile']['pressure'].values,{'units': 'bar'}),#required*
-            wavelength=(["wavelength"], 1e4/df['wavenumber'],{'units': 'micron'})
+            pressure=(["pressure"], np.array(df_atmo['pressure'].values),{'units': 'bar'}),#required*
+            wavelength=(["wavelength"], np.array(1e4/wavenumber),{'units': 'micron'})
         )
     if 'clouds' in 'opd' in data_vars.keys(): 
-        coords['wavenumber_cld'] = (["wavenumber_cld"], picaso_class.inputs['clouds']['wavenumber'],{'units': 'cm**(-1)'})
-        coords['pressure_cld'] = (["pressure_cld"], full_output['layer']['pressure'] ,{'units': full_output['layer']['pressure_unit']})
-        
+        coords['wavenumber_layer'] = (["wavenumber_layer"], picaso_class.inputs['clouds']   ,{'units': 'cm**(-1)'})
+        coords['pressure_layer'] = (["pressure_layer"], full_output['layer']['pressure'] ,{'units': full_output['layer']['pressure_unit']})
+    if 'dtdp' in data_vars.keys():
+        coords['pressure_layer'] = (["pressure_layer"], full_output['layer']['pressure'] ,{'units': full_output['layer']['pressure_unit']})
+
     # put data into a dataset where each
     ds = xr.Dataset(
         data_vars=data_vars,
@@ -793,7 +860,9 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
     )
     
     if isinstance(savefile, str): ds.to_netcdf(savefile)
+
     return ds
+
 def input_xarray(xr_usr, opacity,p_reference=10, calculation='planet'):
     """
     This takes an input based on these standards and runs: 
@@ -1816,7 +1885,7 @@ class inputs():
             qvmrs[1] = self.inputs['atmosphere']['profile']['H2O'][quench_levels[0]]
             qvmrs[2] = self.inputs['atmosphere']['profile']['CO'][quench_levels[0]]
         
-            qvmrs2[0] = self.inputs['atmosphere']['profile']['CO2'][quench_levels[1]]
+            qvmrs2[0] = self.inputs['atmosphere']['profile']['CO2'][quench_levels[0]] #change to quench point of CO-H2O-CH4 *JM
 
             qvmrs[3] = self.inputs['atmosphere']['profile']['NH3'][quench_levels[2]]
             qvmrs2[1] = self.inputs['atmosphere']['profile']['N2'][quench_levels[2]]
@@ -1853,8 +1922,8 @@ class inputs():
                     # if dq_ch4[i] > 0:
                         self.inputs['atmosphere']['profile']['CH4'][i] = pvap_ch4
             
-            # then quench co2
-            self.inputs['atmosphere']['profile']['CO2'][0:quench_levels[1]+1] = self.inputs['atmosphere']['profile']['CO2'][0:quench_levels[1]+1]*0.0 + qvmrs2[0]
+            # then quench co2, changed to CO/CH4/H2O quench point *JM
+            self.inputs['atmosphere']['profile']['CO2'][0:quench_levels[0]+1] = self.inputs['atmosphere']['profile']['CO2'][0:quench_levels[0]+1]*0.0 + qvmrs2[0]
 
             # then quench nh3 and n2
             self.inputs['atmosphere']['profile']['NH3'][0:quench_levels[2]+1] = self.inputs['atmosphere']['profile']['NH3'][0:quench_levels[2]+1]*0.0 + qvmrs[3]
@@ -3031,7 +3100,7 @@ class inputs():
     
     def virga_3d(self, condensates, directory,
         fsed=1, mh=1, mmw=2.2,kz_min=1e5,sig=2,
-        n_cpu=1,verbose=True,smooth_kz=False):
+        n_cpu=1,verbose=True,smooth_kz=False,full_output=False):
         """
         Runs virga cloud code based on the PT and Kzz profiles 
         that have been added to inptus class.
@@ -3053,6 +3122,8 @@ class inputs():
         smooth_kz : bool 
             If true, it uses the min_kz value and does a UnivariateSpline
             accross the kz values to smooth out the profile
+        full_output : bool  
+            Returns full output of virga model run
         """
         lat =self.inputs['atmosphere']['profile'].coords['lat'].values
         lon = self.inputs['atmosphere']['profile'].coords['lon'].values
@@ -4121,7 +4192,6 @@ class inputs():
         all_out['converged']=final_conv_flag
 
         if save_all_profiles: all_out['all_profiles'] = all_profiles            
-           
         if with_spec:
             opacityclass = opannection(ck=True, ck_db=opacityclass.ck_filename,deq=False)
             bundle = inputs(calculation='brown')

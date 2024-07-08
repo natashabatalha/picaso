@@ -501,8 +501,72 @@ class GridFitter():
             
         return parameter_grid,prob
 
+    def plot_chi_posteriors(self, grid, data, max_row, max_col, input_parameters='all'):
+        """
+        Plots posteriors for a given parameter set and returns a dictionary of the best chance parameters
+        Parameters
+            ----------
+            grid_names : arr 
+                array of string grid name to plot 
+                must be in an arr, even if there is one string:
+                >>>percent_chance_dict = plot_chi_posteriors(['grid'], 'data')
+            data_names : str 
+                data names or string of single 
+            max_col : int
+                set max col # of plots
+            max_row : int
+                set max col # of plots
+            input_parameters : arr
+                array of string for each param to be plotted
+                default is every param
+        """
 
-    def plot_chi_posteriors(self, grid_name, data_name,parameters, fig=None, ax=None,
+        scatter_args = dict(
+            marker='o',
+        )
+        percent_chance_dict={}
+        percent_chance_dict_val={}
+        grid_list=grid
+        parameters=[]
+        fig = plt.figure()
+        count=0
+        all_axs={}
+        for i in grid_list:
+            if input_parameters=='all':
+                parameters = self.posteriors[i][data].keys()
+            else:
+                for name in input_parameters:
+                    if name in self.posteriors[i][data].keys():
+                        parameters.append(name)
+            if len(parameters) > (max_row*max_col):
+                raise Exception("Max_row*max_col must be bigger than amount of parameters")
+            for param in parameters:
+                if param in all_axs.keys():
+                    ax = all_axs[param]
+                else:
+                    count+=1
+                    ax = fig.add_subplot(max_row, max_col, count)
+                param_val = self.posteriors[i][data][param][0]
+                prob = self.posteriors[i][data][param][1]
+                greatest_param, greatest_param_chance = np.argmax(prob), np.max(prob)
+                ax.plot(param_val, prob, **scatter_args, label=str(i))
+                ax.set_xlabel(str(param))
+                percent_chance_dict_val[param]={str(param_val[greatest_param])}
+                all_axs[param] = ax      
+            percent_chance_dict[i]=percent_chance_dict_val 
+        lines_labels = [iax.get_legend_handles_labels() for iax in fig.axes]
+        lines, llabels = [sum(lol, []) for lol in zip(*lines_labels)]
+        fig.legend(lines[0:len(grid_list)], llabels[0:len(grid_list)],
+        bbox_to_anchor=(0.5, 1.1),
+        fontsize=8,
+        loc = 'upper center', 
+                ncol=len(grid_list))
+        fig.tight_layout()
+        plt.show()
+        return percent_chance_dict, fig
+
+
+    def plot_chi_posteriors_deprecate(self, grid_name, data_name,parameters, fig=None, ax=None,
                        x_label_style={}, x_axis_type={}, label=''):
         """
         Plots posteriors for a given parameter set 
@@ -543,7 +607,7 @@ class GridFitter():
                 #cmap.set_bad('k',1.)
 
                 plt.rcParams['image.cmap'] = 'magma'                   # Colormap.
-                plt.rcParams['image.interpolation'] = ''
+                plt.rcParams['image.interpolation'] = 'None'
                 plt.rcParams['image.origin'] = 'lower'
                 plt.rcParams['font.family'] = 'sans-serif'
                 plt.rcParams['font.serif'] = 'DejaVu Sans'

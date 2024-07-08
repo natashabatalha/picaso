@@ -204,7 +204,9 @@ def bin_errors(newx, oldx, dy):
     return err
 
 
-def mixing_ratio(full_output,limit=50,ng=None,nt=None, **kwargs):
+def mixing_ratio(full_output,limit=50,ng=None,nt=None, plot_type='bokeh',
+        molecules=None,
+        **kwargs):
     """Returns plot of mixing ratios 
 
     Parameters
@@ -214,10 +216,13 @@ def mixing_ratio(full_output,limit=50,ng=None,nt=None, **kwargs):
     limit : int
         Limits the number of curves to 20. Will plot the top 20 molecules 
         with highest max(abundance). Limit must be >=3. 
+    molecules : list 
+        Directly specify which molecule to plot 
+    plot_type : str 
+        Options are "bokeh" or "matplotlib". Default is bokeh
     **kwargs : dict 
         Any key word argument for bokeh.figure() 
     """
-    molecules = full_output['weights'].keys()
     #set plot defaults
     if ((ng==None) & (nt==None)):
         pressure = full_output['layer']['pressure']
