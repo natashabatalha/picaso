@@ -3709,7 +3709,7 @@ class inputs():
         else:
             tmin = 10
         tmax = max_temp*(1+extension)
-        # tmax = 20000
+        # tmax = 10000
         ntmps = int((tmax-tmin)/dt)
         
         bb , y2 , tp = 0,0,0
@@ -4045,7 +4045,7 @@ class inputs():
             else:
                 tmin = 10
             tmax = max_temp*(1+extension)
-            # tmax = 20000
+            # tmax = 10000
 
             ntmps = int((tmax-tmin)/dt)
             
