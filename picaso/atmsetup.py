@@ -330,7 +330,9 @@ class ATMSETUP():
                     el, num = sep
                 #default isotope
                 if iso_num=='main':
-                    iso_num = list(ele[el].isotopes.keys())[0] 
+                    #select the main isotope off according to that with the highest relative abundance
+                    main_iso = np.argmax([ele[el].isotopes[i].abundance for i in ele[el].isotopes.keys()])
+                    iso_num = list(ele[el].isotopes.keys())[main_iso] 
                 totmass += ele[el].isotopes[iso_num].mass*float(num)
 
             weights[i]=totmass
