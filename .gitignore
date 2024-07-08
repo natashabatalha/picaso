@@ -9,6 +9,7 @@
 *.swn
 *.swo
 *.csv
+*.npy
 
 # Jupyter Notebooks
 .ipynb_checkpoints

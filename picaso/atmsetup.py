@@ -88,7 +88,7 @@ class ATMSETUP():
 
         read_3d = self.input['atmosphere']['profile'] #huge dictionary with [lat][lon][bundle]
 
-        self.c.nlevel = self.input['atmosphere']['profile'].dims['pressure']
+        self.c.nlevel = self.input['atmosphere']['profile'].sizes['pressure']
         self.c.nlayer = self.c.nlevel - 1  
         ng , nt = self.c.ngangle, self.c.ntangle
 
@@ -330,7 +330,9 @@ class ATMSETUP():
                     el, num = sep
                 #default isotope
                 if iso_num=='main':
-                    iso_num = list(ele[el].isotopes.keys())[0] 
+                    #select the main isotope off according to that with the highest relative abundance
+                    main_iso = np.argmax([ele[el].isotopes[i].abundance for i in ele[el].isotopes.keys()])
+                    iso_num = list(ele[el].isotopes.keys())[main_iso] 
                 totmass += ele[el].isotopes[iso_num].mass*float(num)
 
             weights[i]=totmass
@@ -527,7 +529,7 @@ class ATMSETUP():
             cld_input = self.input['clouds']['profile'] 
             cld_input = cld_input.sortby('wno').sortby('pressure')
             if regrid: cld_input = cld_input.interp(wno = wno)
-            if [i for i in cld_input.dims] != ["pressure","wno","lon", "lat"]:
+            if [i for i in cld_input.sizes] != ["pressure","wno","lon", "lat"]:
                 opd = cld_input['opd'].transpose("pressure","wno","lon", "lat").values
                 g0 = cld_input['g0'].transpose("pressure","wno","lon", "lat").values
                 w0 = cld_input['w0'].transpose("pressure","wno","lon", "lat").values

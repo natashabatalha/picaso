@@ -22,7 +22,7 @@ import picaso.justdoit as jdi
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-sys.path.insert(0, os.path.abspath('/Users/nbatalh1/Documents/codes/PICASO/picaso/'))
+sys.path.insert(0, os.path.abspath('/home/nbatalh1/codes/picaso/'))#/Users/nbatalh1/Documents/codes/PICASO/picaso/'))
 
 
 # -- General configuration ------------------------------------------------
@@ -39,7 +39,8 @@ extensions = ['sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
     'sphinx.ext.githubpages',
     'sphinx.ext.napoleon',
-    'nbsphinx']
+    'nbsphinx']#,
+    #'sphinxcontrib.applehelp']
 
 nbsphinx_allow_errors = False
 
@@ -76,7 +77,7 @@ release = str(jdi.__version__)
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'#None
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
