@@ -42,7 +42,7 @@ from joblib import Parallel, delayed, cpu_count
 # #testing error tracker
 # from loguru import logger 
 __refdata__ = os.environ.get('picaso_refdata')
-__version__ = 3.2
+__version__ = 3.2.1
 
 
 if not os.path.exists(__refdata__): 
