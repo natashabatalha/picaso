@@ -1816,7 +1816,7 @@ class inputs():
             qvmrs[1] = self.inputs['atmosphere']['profile']['H2O'][quench_levels[0]]
             qvmrs[2] = self.inputs['atmosphere']['profile']['CO'][quench_levels[0]]
         
-            qvmrs2[0] = self.inputs['atmosphere']['profile']['CO2'][quench_levels[1]]
+            qvmrs2[0] = self.inputs['atmosphere']['profile']['CO2'][quench_levels[0]] #change to quench point of CO-H2O-CH4 *JM
 
             qvmrs[3] = self.inputs['atmosphere']['profile']['NH3'][quench_levels[2]]
             qvmrs2[1] = self.inputs['atmosphere']['profile']['N2'][quench_levels[2]]
@@ -1853,8 +1853,8 @@ class inputs():
                     # if dq_ch4[i] > 0:
                         self.inputs['atmosphere']['profile']['CH4'][i] = pvap_ch4
             
-            # then quench co2
-            self.inputs['atmosphere']['profile']['CO2'][0:quench_levels[1]+1] = self.inputs['atmosphere']['profile']['CO2'][0:quench_levels[1]+1]*0.0 + qvmrs2[0]
+            # then quench co2, changed to CO/CH4/H2O quench point *JM
+            self.inputs['atmosphere']['profile']['CO2'][0:quench_levels[0]+1] = self.inputs['atmosphere']['profile']['CO2'][0:quench_levels[0]+1]*0.0 + qvmrs2[0]
 
             # then quench nh3 and n2
             self.inputs['atmosphere']['profile']['NH3'][0:quench_levels[2]+1] = self.inputs['atmosphere']['profile']['NH3'][0:quench_levels[2]+1]*0.0 + qvmrs[3]
