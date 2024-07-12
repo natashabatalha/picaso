@@ -3818,6 +3818,7 @@ class inputs():
 
         TEMP1 = self.inputs['climate']['guess_temp']
         all_profiles=np.append(all_profiles,TEMP1)
+        all_opd = np.append(all_opd,np.zeros(90)) # just so the opd tracking matches the profile
         pressure = self.inputs['climate']['pressure']
         t_table = self.inputs['climate']['t_table']
         p_table = self.inputs['climate']['p_table']
@@ -5489,6 +5490,9 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,t
         opd_now, w0_now, g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
         df_cld = vj.picaso_format(opd_now, w0_now, g0_now,pressure = cld_out['pressure'], wavenumber= 1e4/cld_out['wave'])
         bundle.clouds(df=df_cld)
+
+        if save_profile == 1: # save cld here because not saved in profile when final is True
+            all_opd = np.append(all_opd,df_cld['opd'].values[55::196])
     else:
         opd_now,w0_now,g0_now = 0,0,0
         cld_out = 0
