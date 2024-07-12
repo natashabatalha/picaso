@@ -422,6 +422,8 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
 
     # -- SM -- needs a lot of documentation
 
+    cldsave_count = 0 # used to track how many cloud profiles to save outside of loop for animation *JM
+
     #Climate default is to run both reflected and thermal. Though sometimes, in most cases we only want thermal.
     eps=1e-4
 
@@ -576,7 +578,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
             for j in range(nlevel -1):
                 dtdp[j] = (log( temp[j]) - log( temp[j+1]))/(log(pressure[j]) - log(pressure[j+1]))
             
-            return   temp,  dtdp, flag_converge, flux_net_ir, flux_plus_ir[0,:], all_profiles
+            return   temp,  dtdp, flag_converge, flux_net_ir, flux_plus_ir[0,:], all_profiles, cldsave_count
             
         
         # NEB NOTE about step max 
@@ -1022,6 +1024,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
 
         if save_profile == 1:
             all_profiles = np.append(all_profiles,temp_old)
+            cldsave_count += 1
         if flag_converge == 2 : # converged
             # calculate  lapse rate
             dtdp=np.zeros(shape=(nlevel-1))
@@ -1032,14 +1035,14 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
             
            
            
-            return   temp,  dtdp, flag_converge , flux_net_ir, flux_plus_ir[0,:] , all_profiles
+            return   temp,  dtdp, flag_converge , flux_net_ir, flux_plus_ir[0,:] , all_profiles, cldsave_count
         
     if verbose: print("Iterations exceeded it_max ! sorry ")
     dtdp=np.zeros(shape=(nlevel-1))
     for j in range(nlevel -1):
         dtdp[j] = (log( temp[j]) - log( temp[j+1]))/(log(pressure[j]) - log(pressure[j+1]))
 
-    return temp, dtdp, flag_converge  , flux_net_ir_layer, flux_plus_ir[0,:], all_profiles
+    return temp, dtdp, flag_converge  , flux_net_ir_layer, flux_plus_ir[0,:], all_profiles, cldsave_count
 
 @jit(nopython=True, cache=True)
 def check_convergence(f_vec, n_total, tolf, check, f, dflux, tolmin, temp, temp_old, g , tolx):
