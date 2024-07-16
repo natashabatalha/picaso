@@ -3613,7 +3613,6 @@ class inputs():
             path to directory with mieff files for virga
         photochem : bool 
             Turns off (False) and on (True) Photochem 
-            path to directory with mieff files for virga
         do_holes : bool
             Patchy cloud option with clearsky holes
         fhole : float
@@ -4227,16 +4226,29 @@ class inputs():
         interp_function_kzz = interp1d(np.log10(pressure),np.log10(kzz),bounds_error=False,fill_value='extrapolate')
         interp_temp  = 10**interp_function(np.log10(p_target))
         interp_kzz = 10**interp_function_kzz(np.log10(p_target))
-        pc,output_array,species,pressure = run_photochem(interp_temp,p_target,logMH, cto,pressure_surf,mass,radius,interp_kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=first,pc=pc,user_psurf=user_psurf,user_psurf_add=user_psurf_add)
+        pc,output_array,species,pressure_phot = run_photochem(interp_temp,p_target,logMH, cto,pressure_surf,mass,radius,interp_kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=first,pc=pc,user_psurf=user_psurf,user_psurf_add=user_psurf_add)
         #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
         #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
         #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
         #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
         #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
-
+#        wh = np.where(np.flip(pc.wrk.pressure/1e6)[-1] < pressure_phot)
+ #       pressure_joined = np.concatenate([np.flip(pc.wrk.pressure/1e6),pressure_phot[wh][1:]])
         for i in range(len(species)):
-            interp_sp = interp1d(np.log10(p_target),np.log10(output_array[i,:]),bounds_error=False,fill_value='extrapolate')
-            self.inputs['atmosphere']['profile'][species[i]] = 10**interp_sp(np.log10(pressure))#output_array[i,:]
+            wh=np.where(output_array[i,:] <= 0.0)
+            if len(wh[0]) >0:
+                
+                output_array[i,:][wh]=1e-40
+            interp_sp = interp1d(np.log10(pressure_phot),np.log10(output_array[i,:]),bounds_error=False,fill_value='extrapolate')
+            sp_arr = 10**interp_sp(np.log10(pressure))
+            wh2=np.where(sp_arr <= 0.0)
+            if len(wh2[0]) >0:
+                
+                sp_arr[wh2]=1e-40
+            
+            self.inputs['atmosphere']['profile'][species[i]] = sp_arr #10**interp_sp(np.log10(pressure))#output_array[i,:]
+        self.inputs['atmosphere']['profile']['pressure']= pressure
+        
         return pc
 
 def get_targets():
