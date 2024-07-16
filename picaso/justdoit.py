@@ -82,9 +82,22 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
         If false, returns the atmosphere class, which can be used for debugging. 
         The class is clunky to navigate so if you are consiering navigating through this, ping one of the 
         developers. 
+    calculation : str 
+        Any combination of "reflected", "thermal" , "transmission". FOr example, 
+        "reflected+thermal" would give you the dictionary output for those two calculations. 
+        The other option is "rt_input" which does not run 
+        any radiative transfer and instead directly returns the output for 
+        `get_reflected_1d`, `get_thermal_1d` and `get_transit_1d`. 
+
     Return
     ------
-    dictionary with albedos or fluxes or both (depending on what calculation type)
+    if calculation="reflected", "thermal" , and/or "transmission"
+        dictionary with albedos or fluxes or both (depending on what calculation type)
+    if calculation='rt_input'
+        tuple, tuple, tuple 
+        input for get_reflected_1d
+        input for get_thermal_1d
+        input get_transit_1d
     """
     inputs = bundle.inputs
 
@@ -234,6 +247,33 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman, f_deltaM= compute_opacity(
             atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
             full_output=full_output, plot_opacity=plot_opacity)
+
+        #if 1d, rt test just returns the radiative transfer outputs 
+        #for get_reflected_1d, get_thermal_1d, get_transit_1d
+        #spits out output just for gauss=0 
+        if 'rt_input' in calculation: 
+            ig = 0 
+            input_for_get_ref_1d = (nlevel, wno,nwno,ng,nt,
+                                    DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
+                                    GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
+                                    DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
+                                    atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
+                                    single_phase,multi_phase,
+                                    frac_a,frac_b,frac_c,constant_back,constant_forward,
+                                    1, int(atm.get_lvl_flux),#get_toa_intensity,get_lvl_flux=
+                                    toon_coefficients,b_top)
+            input_for_get_therm_1d = (nlevel, wno,nwno,ng,nt,atm.level['temperature'],
+                                                        DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
+                                                        atm.level['pressure'],ubar1,
+                                                        atm.surf_reflect, atm.hard_surface,
+                                                        #setting wno to zero since only used for climate, calctype only gets TOA flx 
+                                                        wno*0, 0)#calc_type=0
+            input_for_get_trans_1d = (atm.level['z'],atm.level['dz'],
+                                  nlevel, nwno, radius_star, atm.layer['mmw'], 
+                                  atm.c.k_b, atm.c.amu, atm.level['pressure'], 
+                                  atm.level['temperature'], atm.layer['colden'],
+                                  DTAU_OG[:,:,ig])
+            return input_for_get_ref_1d, input_for_get_therm_1d, input_for_get_trans_1d
 
         if  'reflected' in calculation:
             xint_at_top = 0 
