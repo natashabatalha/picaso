@@ -1,5 +1,5 @@
 import cupy as cp 
-import nvtx
+#import nvtx
 import math
 import numba.cuda
 from numba import jit, vectorize
@@ -45,7 +45,7 @@ def get_transit_1d_cupy(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
     array 
         Rp**2 /Rs**2 as a function of wavelength 
     """    
-    rng = nvtx.start_range(message="transfer memory", color="blue")
+    #rng = nvtx.start_range(message="transfer memory", color="blue")
     #transfer data to numpy
     z = cp.asarray(z)
     dz = cp.asarray(dz)
@@ -54,7 +54,7 @@ def get_transit_1d_cupy(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
     tlayer = cp.asarray(tlayer)
     colden= cp.asarray(colden)
     DTAU= cp.asarray(DTAU)
-    nvtx.end_range(rng)
+    #nvtx.end_range(rng)
     
     mmw = mmw * amu #make sure mmw in grams
     
