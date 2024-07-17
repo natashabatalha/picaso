@@ -1490,7 +1490,7 @@ def get_wvno_grid(filename, min_wavelength=None, max_wavelength=None, R=None):
     return wvno_low,wvno_high
 
 def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
-    output_directory,
+    output_dir,
     wv_file_name=None,
     order=4,gfrac=0.95,dir_kark_ch4=None,alkali_dir=None,
     min_wavelength=None, max_wavelength=None, R=None, 
