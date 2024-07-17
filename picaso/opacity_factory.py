@@ -11,7 +11,7 @@ import math
 from scipy.io import FortranFile
 import glob
 from scipy.stats import binned_statistic
-
+import h5py
 
 __refdata__ = os.environ.get('picaso_refdata')
 
@@ -800,6 +800,7 @@ def insert_molecular_1060(molecule, min_wavelength, max_wavelength, new_R,
     conn.commit()
     conn.close()
     return new_wvno_grid
+
 #import spectres
 def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory, new_db,
                           new_R=None,new_dwno=None, 
@@ -1488,6 +1489,158 @@ def get_wvno_grid(filename, min_wavelength=None, max_wavelength=None, R=None):
         wvno_high = 0.5*(2*wvno_new + dwni_new)
     return wvno_low,wvno_high
 
+def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
+    output_directory,
+    wv_file_name=None,
+    order=4,gfrac=0.95,dir_kark_ch4=None,alkali_dir=None,
+    min_wavelength=None, max_wavelength=None, R=None, 
+    new_wno=None, new_dwno=None,
+    verbose=True):
+    """
+    Function to generate correlated-K tables for each individual gas
+    
+    Parameters
+    ----------
+    molecule : str 
+        Name of molecule 
+    og_directory : str 
+        Directory of all the cross sections that include folders e.g. "H2O", "CH4"
+    alkali_dir : str 
+        Alakalis directory
+    wv_file_name : str 
+        (optional) file name with wavelength. First column wavenumber, second column delta wavenumber 
+        Must supply this OR combo of min, max wavelength and R
+    order : int     
+        (Optional) Gauss Legendre order which by default is set to 4, with the double gauss method 
+    gfrac : int     
+        (Optional) Double-gauss method of splitting up the gauss points, by default we use 0.95 
+    dir_kark_ch4 : str 
+        (Optional) directory of additional karkochka methane 
+    alkali_dir : str 
+        (Optional) Directory of alkalis or "individual_file" which is the method to use for Roxana Lupus data. 
+    verbose: bool 
+        (Optional) prints out status of which p,t, point the code is at 
+
+    """
+
+    chem_grid = pd.read_csv(chemistry_file, sep='\s+')
+
+
+    grid_file = os.path.join(og_directory,'grid1460.csv')
+
+
+    npres = 20 
+    ntemp = 73 
+    ngauss = order*2 
+
+    s1460 = pd.read_csv(grid_file,dtype=str)
+    #all pressures
+    pres=s1460['pressure_bar'].values.astype(float)
+    #all temperatures
+    temp=s1460['temperature_K'].values.astype(float)
+
+    #file_num
+    ifile=s1460['file_number'].values.astype(int)
+
+    with h5py.File(os.path.join(output_dir,"high_res_sums.hdf5"), "w") as f:
+        f.attrs['chemistry_file'] = chemistry_file
+        f.create_dataset('ck_molecules', data=molecules)
+        f.create_dataset('pressure_bar', data=pres)
+        f.create_dataset('temperature_K', data=temp)
+        f.create_dataset('file_number', data=ifile)
+
+    #alkalis are created using the sep.alkali from a fortran file 
+    alks = ['Na','K','Rb','Cs','Li']
+
+    for i,p,t in zip(ifile,pres,temp):
+        total_sum = 0 
+        
+        for molecule in ck_molecules:
+            if molecule in alks: 
+                if alkali_dir == 'alkalis':
+                    mol_dir = os.path.join(og_directory,alkali_dir)
+                elif alkali_dir == 'individual_file':
+                    mol_dir = os.path.join(og_directory,molecule)
+                else: 
+                    mol_dir = alkali_dir
+            else:
+                mol_dir = os.path.join(og_directory,molecule)
+
+
+            #determine file type    
+            find_p_files = glob.glob(os.path.join(mol_dir,'*p_*'))
+            find_npy_files = glob.glob(os.path.join(mol_dir,'*npy*'))
+            find_txt_files =  glob.glob(os.path.join(mol_dir,'*txt*'))
+
+            if len(find_p_files)>1000:
+                ftype = 'fortran_binary'
+            elif len(find_npy_files)>1000:
+                ftype = 'python'
+            elif len(find_txt_files)>1000:
+                ftype='lupu_txt'
+            else:
+                raise Exception('Could not find npy or p_ files. npy are assumed to be read via np.load, where as p_ files are assumed to be unformatted binary or alkali files')
+
+
+            read_fits = os.path.join(mol_dir,'readomni.fits' )
+            lupu_wave= os.path.join(mol_dir,'wavelengths.txt' )
+            if os.path.exists(read_fits):
+                # Get Richard's READ ME information
+                hdulist = fits.open(read_fits)
+                sfits = hdulist[1].data
+                numw = sfits['Valid rows'] #defines number of wavelength points for each 1060 layer
+                delwn = sfits['Delta Wavenum'] #defines constant delta wavenumber for each 1060 layer
+                start = sfits['Start Wavenum'] #defines starting wave number for each 1060 layer
+            elif os.path.exists(lupu_wave):
+                og_wvno_grid = 1e4/pd.read_csv(lupu_wave).values[:,0]
+                numw,delwn,start=np.nan,np.nan,np.nan
+            else: 
+                #ehsan makes his opacities on uniform 
+                numw = s1460['number_wave_pts'].values.astype(int)
+                delwn = s1460['delta_wavenumber'].values.astype(float)
+                start = s1460['start_wavenumber'].values.astype(float)
+                
+            if not isinstance(wv_file_name,type(None)):
+                wvno_low,wvno_high = get_wvno_grid(wv_file_name)
+            elif ((not isinstance(new_wno,type(None)))  &  
+                (not isinstance(new_dwno,type(None)))):
+                wvno_low = 0.5*(2*new_wno - new_dwno)
+                wvno_high = 0.5*(2*new_wno + new_dwno)
+            else: 
+                wvno_low,wvno_high = get_wvno_grid(None, min_wavelength, max_wavelength, R)
+        
+            #path to data
+            if 'fortran' in ftype:
+                fdata = os.path.join(mol_dir, 'p_'+str(int(i)))
+            elif 'python' in ftype: 
+                fdata = os.path.join(mol_dir, str(int(i))+'.npy')
+            elif 'lupu' in ftype: 
+                mbar = pres*1e3
+                fdata = os.path.join(mol_dir,f'{molecule}_{mbar:.2e}mbar_{temp:.0f}K.txt') 
+            
+            #Grab 1460 in various format data
+            if 'lupu' in ftype: 
+                dset =  pd.read_csv(fdata,skiprows=2).values[:,0]
+            elif molecule in alks:
+                dset = pd.read_csv(fdata)
+                og_wvno_grid = dset['wno'].values.astype(float)
+                dset = dset[molecule].values.astype(float)
+            elif 'fortran' in ftype: 
+                dset = np.fromfile(fdata, dtype=float) 
+                og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]
+            elif 'python' in ftype: 
+                dset = np.load(open(fdata,'rb'))
+                og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]      
+
+            
+            weight = chem_grid.loc[i-1,molecule]
+
+            total_sum += weight*dset
+        
+        with h5py.File(os.path.join(output_dir,"high_res_sums.hdf5"), "r+") as f:
+            dataset = f.create_dataset(f'sum_{i}', data=total_sum)
+        print('completed',i,p,t)
+
 def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
     order=4,gfrac=0.95,dir_kark_ch4=None,alkali_dir=None,
     min_wavelength=None, max_wavelength=None, R=None, 
@@ -1622,26 +1775,28 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
             
             
             linelist = dset[wh]
-            linelist += 1e-200
-            wh2 = np.where(linelist < 0.0)
+
+            #make sure nothing is negative or non zero
+            #linelist += 1e-200
+            wh2 = np.where(linelist <= 0.0)
             if len(linelist[wh2]) > 0:
-                
-                for icorr in range(len(linelist)):
-                    if linelist[icorr] < 0:
-                        linelist[icorr] = 1e-200
+                linelist[wh2] = 1e-200
+                #for icorr in range(len(linelist)):
+                #    if linelist[icorr] < 0:
+                #        linelist[icorr] = 1e-200
                 
             if len(linelist) == 0:
-                data = np.sort(np.zeros(10)-250.0)
-                
+                data = np.sort(np.zeros(10)-200.0)
             else:
                 data = np.sort(np.log(linelist))
                         
             wvno_now = 0.5*(wvlow_temp+wvhigh_temp)
 
+            #use kark CH4 for less than 1 micron
             if ((molecule == 'CH4') & (isinstance(dir_kark_ch4, str)) & (t<500)) & (1e4/wvno_now < 1.0): # short of 1 microns
                 opa_k,loc = get_kark_CH4(dir_kark_ch4,wvno_now, t)
-                
                 data = np.sort(np.log(opa_k*(1+np.zeros(100))))
+            
             if len(data) > 1:
                 x = np.arange(len(data))/(len(data)-1.)
 
@@ -1649,7 +1804,7 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
         
                 k_coeff_arr[ctp,ctt,iwvbin,:] = k_coeff[:]
             else :
-                k_coeff_arr[ctp,ctt,iwvbin,:] += -250.00
+                k_coeff_arr[ctp,ctt,iwvbin,:] += -200.00
 
         ctp+=1
         

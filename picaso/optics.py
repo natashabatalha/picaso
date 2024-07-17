@@ -12,6 +12,7 @@ from bokeh.palettes import inferno
 from astropy.io import fits
 import io 
 import sqlite3
+import h5py
 import math
 from scipy.io import FortranFile
 from .deq_chem import mix_all_gases
@@ -633,6 +634,7 @@ class RetrieveCKs():
     This will be the class to retrieve correlated-k tables from the database. 
     Right now this is in beta mode and is retrieving the direct heritage 
     196 grid files. 
+
     Parameters
     ----------
     ck_dir : str 
@@ -645,19 +647,31 @@ class RetrieveCKs():
     wave_range : list 
         NOT FUNCTIONAL YET. 
         Wavelength range to compuate in the format [min micron, max micron]
+    deq : bool 
+        Either runs disequilibrium chemistry or not 
+    on_fly : bool, deprecated
+        deprecated, used to turn on and off the old method of doing diseq with 
     """
     def __init__(self, ck_dir, cont_dir, wave_range=None, 
-        deq=False, on_fly=False,gases_fly=None):
+        deq=False, gases_fly=None, on_fly=False):
         self.ck_filename = ck_dir
-        #read in the full abundance file sot hat we can check the number of kcoefficient layers 
-        #this should either be 1460 or 1060
-        self.full_abunds =  pd.read_csv(os.path.join(self.ck_filename,'full_abunds'),
-            sep='\s+')
-        self.kcoeff_layers = self.full_abunds.shape[0]
+
+        #check to see if new hdf5 files are being used 
+        if 'hdf5' in self.ck_filename: 
+            self.get_h5_data()
+
+        else: 
+            #read in the full abundance file sot hat we can check the number of kcoefficient layers 
+            #this should either be 1460 or 1060
+            self.full_abunds =  pd.read_csv(os.path.join(self.ck_filename,'full_abunds'),
+                sep='\s+')
+            self.kcoeff_layers = self.full_abunds.shape[0]
 
         if deq == False :
         #choose get data function based on layer number
-            if self.kcoeff_layers==1060: 
+            if 'hdf5' in self.ck_filename: 
+                pass
+            elif self.kcoeff_layers==1060: 
                 self.get_legacy_data_1060(wave_range,deq=deq) #wave_range not used yet
             elif self.kcoeff_layers==1460:
                 self.get_legacy_data_1460(wave_range) #wave_range not used yet
@@ -669,26 +683,13 @@ class RetrieveCKs():
             self.get_available_continuum()
             self.get_available_rayleigh()
             self.run_cia_spline()
-            
         
-        elif (deq == True) and (on_fly == False) :
-            #this option follows the old method where we used 
-            #661 fortran files computed by T.Karidali
-            #this is why we have to use the 1060 files instead 
-            #of the 1460 files
-            self.get_legacy_data_1060(wave_range,deq=deq)
-            self.get_new_wvno_grid_661()
-            
-            opa_filepath  = os.path.join(__refdata__, 'climate_INPUTS/661')
-            self.load_kcoeff_arrays(opa_filepath)
-            self.db_filename = cont_dir
-            self.get_available_continuum()
-            self.get_available_rayleigh()
-            self.run_cia_spline_661()
-        
-        elif (deq == True) and (on_fly== True) :
+        elif deq == True : # ) and (on_fly== True) :
             #self.get_gauss_pts_661_1460() repetetive code function
-            self.get_legacy_data_1460(wave_range)
+            
+            if 'hdf5' not in self.ck_filename: 
+                self.get_legacy_data_1460(wave_range)
+            
             self.get_new_wvno_grid_661()
             
             opa_filepath  = os.path.join(__refdata__, 'climate_INPUTS/661')
@@ -697,7 +698,48 @@ class RetrieveCKs():
             self.get_available_continuum()
             self.get_available_rayleigh()
             self.run_cia_spline_661()
+
+        
+        #elif (deq == True) and (on_fly == False) :
+            #this option follows the old method where we used 
+            #661 fortran files computed by T.Karidali
+            #this is why we have to use the 1060 files instead 
+            #of the 1460 files
+        #    self.get_legacy_data_1060(wave_range,deq=deq)
+        #    self.get_new_wvno_grid_661()
+            
+        #    opa_filepath  = os.path.join(__refdata__, 'climate_INPUTS/661')
+        #    self.load_kcoeff_arrays(opa_filepath)
+        #    self.db_filename = cont_dir
+        #    self.get_available_continuum()
+        #    self.get_available_rayleigh()
+        #    self.run_cia_spline_661()
         return
+
+    def get_h5_data(self):
+        """
+        Reads in new h5py formatted data
+        """
+        with h5py.File(self.ck_filename, "r") as f:
+            self.molecules = [x.decode('utf-8') for x in f["molecules_ck"][:]]
+            self.wno = f["wno"][:]
+            self.delta_wno = f["delta_wno"][:]   
+            self.pressures = f["pressures"][:]   
+            self.temps = f["temperatures"][:]   
+            self.gauss_pts = f["gauss_pts"][:]  
+            self.gauss_wts = f["gauss_wts"][:] 
+            #want the axes to be [npressure, ntemperature, nwave, ngauss ]
+            self.kappa =f["kcoeffs"][:] 
+            self.full_abunds =  pd.DataFrame(data=f["abunds"][:] ,
+                                             columns=[x.decode('utf-8') for x in f["abunds_map"][:]])
+            
+        self.kcoeff_layers = self.full_abunds.shape[0]
+        self.nwno = len(self.wno)
+        self.ngauss = len(self.gauss_pts)     
+        #number of pressure points that exist for each temperature 
+        self.nc_p = self.full_abunds.groupby('temperature').size().values
+
+
 
     def get_legacy_data_1060(self,wave_range, deq=False):
         """
