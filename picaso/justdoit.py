@@ -3636,12 +3636,12 @@ class inputs():
             # raise Exception('Cloudy functionality still in beta fosrm and not ready for public use.')
         
         elif photochem == False: 
-            #dummy values only used for cloud model
+            # dummy values only used for cloud model
             mh = 0 
             CtoO = 0 
-        else:
-            mh = 0
-            CtoO = 0
+        # else:
+            # mh = 0
+            # CtoO = 0
 
         if self.inputs['planet']['T_eff'] == 0.0:
             raise Exception('Need to specify Teff with jdi.input for climate run')
