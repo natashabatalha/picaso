@@ -1548,6 +1548,8 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
         f.create_dataset('pressure_bar', data=pres)
         f.create_dataset('temperature_K', data=temp)
         f.create_dataset('file_number', data=ifile)
+        f.create_dataset('abunds', data=chem_grid)
+        f.create_dataset('abunds_map', data=list(chem_grid.keys()))
 
     #alkalis are created using the sep.alkali from a fortran file 
     alks = ['Na','K','Rb','Cs','Li']
@@ -1644,7 +1646,8 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
 def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
     order=4,gfrac=0.95,dir_kark_ch4=None,alkali_dir=None,
     min_wavelength=None, max_wavelength=None, R=None, 
-    verbose=True):
+    verbose=True, new_wno=None, 
+    new_dwno=None, climate_file=False):
     """
     Function to generate correlated-K tables for each individual gas
     
@@ -1658,7 +1661,8 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
         Alakalis directory
     wv_file_name : str 
         (optional) file name with wavelength. First column wavenumber, second column delta wavenumber 
-        Must supply this OR combo of min, max wavelength and R
+        Must supply this OR combo of min, max wavelength and R 
+        OR new_wno and new_dwno
     order : int     
         (Optional) Gauss Legendre order which by default is set to 4, with the double gauss method 
     gfrac : int     
@@ -1671,6 +1675,8 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
         (Optional) prints out status of which p,t, point the code is at 
 
     """
+    # ASSUMING 1460 P-T GRID FOR THIS
+
     grid_file = os.path.join(og_directory,'grid1460.csv')
     npres = 20 
     ntemp = 73 
@@ -1697,11 +1703,14 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
     else:
         mol_dir = os.path.join(og_directory,molecule)
 
+    
+    # DETERMINE WHAT KIND OF FILES WE ARE DEALING WITH #
 
     #determine file type    
     find_p_files = glob.glob(os.path.join(mol_dir,'*p_*'))
     find_npy_files = glob.glob(os.path.join(mol_dir,'*npy*'))
     find_txt_files =  glob.glob(os.path.join(mol_dir,'*txt*'))
+    #find_h5_files =  glob.glob(os.path.join(mol_dir,'*hdf5*'))
 
     if len(find_p_files)>1000:
         ftype = 'fortran_binary'
@@ -1709,10 +1718,13 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
         ftype = 'python'
     elif len(find_txt_files)>1000:
         ftype='lupu_txt'
+    elif 'hdf5' in mol_dir:
+        ftype='hdf5'
     else:
         raise Exception('Could not find npy or p_ files. npy are assumed to be read via np.load, where as p_ files are assumed to be unformatted binary or alkali files')
 
 
+    # GET HIGH RES WAVELENGTH GRID #
     read_fits = os.path.join(mol_dir,'readomni.fits' )
     lupu_wave= os.path.join(mol_dir,'wavelengths.txt' )
     if os.path.exists(read_fits):
@@ -1731,16 +1743,28 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
         delwn = s1460['delta_wavenumber'].values.astype(float)
         start = s1460['start_wavenumber'].values.astype(float)
     
+    # COMPUTE GAUSS PTS AND WEIGHTS # 
     gi,wi = g_w_2gauss(order,gfrac)
     
+    # GET CK WAVENUMBER GRID BY COMPUTING LOWER AND UPPER WAVENUM EDGES # 
     if not isinstance(wv_file_name,type(None)):
         wvno_low,wvno_high = get_wvno_grid(wv_file_name)
+    elif ((not isinstance(new_wno,type(None)))  &  
+        (not isinstance(new_dwno,type(None)))):
+        wvno_low = 0.5*(2*new_wno - new_dwno)
+        wvno_high = 0.5*(2*new_wno + new_dwno)
     else: 
         wvno_low,wvno_high = get_wvno_grid(None, min_wavelength, max_wavelength, R)
+
+    # SETUP ZERO ARRAY OF KCOEFFS #  
     k_coeff_arr = np.zeros(shape=(npres,ntemp,len(wvno_low),ngauss))
+    
+
+    # START LOOP OVER 1460 P-T POINTS # 
     ctp,ctt = 0,0
     for i,p,t in zip(ifile,pres,temp):  
-        #path to data
+        
+        # SET PATH TO FILE READS DEPENDING ON FILE TYPE # 
         if 'fortran' in ftype:
             fdata = os.path.join(mol_dir, 'p_'+str(int(i)))
         elif 'python' in ftype: 
@@ -1748,7 +1772,11 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
         elif 'lupu' in ftype: 
             mbar = pres*1e3
             fdata = os.path.join(mol_dir,f'{molecule}_{mbar:.2e}mbar_{temp:.0f}K.txt') 
-        
+        elif 'hdf5' in ftype: 
+            #this is the key for the hdf5 dataset
+            fdata = mol_dir
+            fdata_key = f'sum_{int(i)}'
+
         #Grab 1460 in various format data
         if 'lupu' in ftype: 
             dset =  pd.read_csv(fdata,skiprows=2).values[:,0]
@@ -1762,8 +1790,11 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
         elif 'python' in ftype: 
             dset = np.load(open(fdata,'rb'))
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]      
+        elif 'hdf5' in ftype: 
+            with h5py.File(fdata,'r') as f:
+                dset = f[fdata_key][:]
+            og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]
 
-        
     
             
         for iwvbin in range(len(wvno_low)):
@@ -1771,8 +1802,6 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
             wvhigh_temp = wvno_high[iwvbin]
             
             wh = np.where(np.logical_and((og_wvno_grid > wvlow_temp),(og_wvno_grid <=  wvhigh_temp)))
-            
-            
             
             linelist = dset[wh]
 
@@ -1793,9 +1822,10 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
             wvno_now = 0.5*(wvlow_temp+wvhigh_temp)
 
             #use kark CH4 for less than 1 micron
-            if ((molecule == 'CH4') & (isinstance(dir_kark_ch4, str)) & (t<500)) & (1e4/wvno_now < 1.0): # short of 1 microns
-                opa_k,loc = get_kark_CH4(dir_kark_ch4,wvno_now, t)
-                data = np.sort(np.log(opa_k*(1+np.zeros(100))))
+            # we do not want kark CH4 in cks
+            #if ((molecule == 'CH4') & (isinstance(dir_kark_ch4, str)) & (t<500)) & (1e4/wvno_now < 1.0): # short of 1 microns
+            #    opa_k,loc = get_kark_CH4(dir_kark_ch4,wvno_now, t)
+            #    data = np.sort(np.log(opa_k*(1+np.zeros(100))))
             
             if len(data) > 1:
                 x = np.arange(len(data))/(len(data)-1.)
@@ -1815,7 +1845,45 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
         
 
         if verbose: print(i,p,t)
-    return k_coeff_arr
+    
+    if  isinstance(climate_file, type(None)):
+        return k_coeff_arr
+    
+    else: 
+        # RETURN HDF5 FILE IN FORMAT FOR PICASO CLIMATE CODE
+        attrs={}
+        ck_data = {
+            'pressures':(pres,'bars'),
+            'temperatures':(temp,'Kelvin'),
+            'wno':(new_wno,'cm**(-1)'),
+            'delta_wno':(new_dwno,'cm**(-1)'),
+            'gauss_pts':(gi,'gauss points created with double gauss method'),
+            'gauss_wts':(wi,'gauss weights created with double gauss method'),
+            'kcoeffs':(k_coeff_arr,'k coefficients on a pressure x temperature x wavenumber x gauss pts array'),#p,t,w,g
+        }
+
+        # the exact keys will depend on if it's sum weighted or not
+        # we determine if it is sum weighted by whether or not 
+        # the ck_molecules key is in there         
+        if 'hdf5' in fdata:
+            with h5py.File(fdata,'r') as f:
+                if 'ck_molecules' in f.keys():
+                    ck_molecules = [x.decode('utf-8') for x in f['ck_molecules'][:]]
+                    ck_data['abunds']=(f['abunds'][:],'matrix of abundances in v/v units. Order of first axes of array is defined with abunds_map key and second as a function of P and T indices also included in abunds_map'),#dataframe [nmolecule, n_pt points]
+                    ck_data['abunds_map']=(
+                        [x.decode('utf-8') for x in f['abunds_map'][:]], 'array of strings that defines the order of abunds key'),
+                    ck_data['ck_molecules']=(ck_molecules,('molecules included in the ck weighted table'))
+                    
+                    attrs['chemistry_file'] = f.attrs['chemistry_file']
+        
+        with h5py.File(climate_file, "w") as f:
+            # Create datasets for each key-value pair
+            for key, (value, attribute) in ck_data.items():
+                dataset = f.create_dataset(key, data=value)
+                # Add attribute to the dataset
+                dataset.attrs["description"] = attribute
+                for key, value in attrs.items():
+                    f.attrs[key] = value
 
 #keeping old name here for Sagnick
 func_read_gas = compute_ck_molecular
