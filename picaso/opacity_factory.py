@@ -1870,9 +1870,9 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
                 if 'ck_molecules' in f.keys():
                     ck_molecules = [x.decode('utf-8') for x in f['ck_molecules'][:]]
                     ck_data['abunds']=(f['abunds'][:],
-                                    'matrix of abundances in v/v units. Order of first axes of array is defined with abunds_map key and second as a function of P and T indices also included in abunds_map'),#dataframe [nmolecule, n_pt points]
+                                    'matrix of abundances in v/v units. Order of first axes of array is defined with abunds_map key and second as a function of P and T indices also included in abunds_map')#dataframe [nmolecule, n_pt points]
                     ck_data['abunds_map']=(
-                        [x.decode('utf-8') for x in f['abunds_map'][:]], 'array of strings that defines the order of abunds key'),
+                        [x.decode('utf-8') for x in f['abunds_map'][:]], 'array of strings that defines the order of abunds key')
                     ck_data['ck_molecules']=(ck_molecules,'molecules included in the ck weighted table')
                     
                     attrs['chemistry_file'] = f.attrs['chemistry_file']
