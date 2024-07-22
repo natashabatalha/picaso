@@ -1647,7 +1647,7 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
     order=4,gfrac=0.95,dir_kark_ch4=None,alkali_dir=None,
     min_wavelength=None, max_wavelength=None, R=None, 
     verbose=True, new_wno=None, 
-    new_dwno=None, climate_file=False):
+    new_dwno=None, climate_file=None):
     """
     Function to generate correlated-K tables for each individual gas
     
@@ -1869,10 +1869,11 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
             with h5py.File(fdata,'r') as f:
                 if 'ck_molecules' in f.keys():
                     ck_molecules = [x.decode('utf-8') for x in f['ck_molecules'][:]]
-                    ck_data['abunds']=(f['abunds'][:],'matrix of abundances in v/v units. Order of first axes of array is defined with abunds_map key and second as a function of P and T indices also included in abunds_map'),#dataframe [nmolecule, n_pt points]
+                    ck_data['abunds']=(f['abunds'][:],
+                                    'matrix of abundances in v/v units. Order of first axes of array is defined with abunds_map key and second as a function of P and T indices also included in abunds_map'),#dataframe [nmolecule, n_pt points]
                     ck_data['abunds_map']=(
                         [x.decode('utf-8') for x in f['abunds_map'][:]], 'array of strings that defines the order of abunds key'),
-                    ck_data['ck_molecules']=(ck_molecules,('molecules included in the ck weighted table'))
+                    ck_data['ck_molecules']=(ck_molecules,'molecules included in the ck weighted table')
                     
                     attrs['chemistry_file'] = f.attrs['chemistry_file']
         
