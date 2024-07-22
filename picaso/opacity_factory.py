@@ -1644,7 +1644,8 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
             
             weight = chem_grid.loc[i-1,molecule]
 
-            if np.any(uniform_wno_grid_all!=og_wvno_grid): 
+            #get everything on to unifrm grid 
+            if are_arrays_different(uniform_wno_grid_all,og_wvno_grid): 
                 dset = np.interp(uniform_wno_grid_all,og_wvno_grid, dset)
 
             total_sum += weight*dset
@@ -1652,6 +1653,36 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
         with h5py.File(os.path.join(output_dir,"high_res_sums.hdf5"), "r+") as f:
             dataset = f.create_dataset(f'sum_{i}', data=total_sum)
         print('completed',i,p,t)
+
+def are_arrays_different(arr1, arr2):
+    """Checks if two arrays are different, even if they have different sizes.
+    
+    Parameters
+    ----------
+    arr1: array, float 
+        The first array.
+    arr2: array , float
+        The second array.
+    
+    Returns
+    -------
+    
+        bool
+        True if the arrays are different, False otherwise.
+    """
+    
+    # Convert to NumPy arrays for efficient operations
+    arr1 = np.array(arr1)
+    arr2 = np.array(arr2)
+    
+    # Check if lengths are different
+    if len(arr1) != len(arr2):
+    return True
+    
+    # Check if elements are different
+    return not np.array_equal(arr1, arr2)
+    
+a
 
 def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
     order=4,gfrac=0.95,dir_kark_ch4=None,alkali_dir=None,

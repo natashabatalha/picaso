@@ -721,7 +721,7 @@ class RetrieveCKs():
         Reads in new h5py formatted data
         """
         with h5py.File(self.ck_filename, "r") as f:
-            self.molecules = [x.decode('utf-8') for x in f["molecules_ck"][:]]
+            self.molecules = [x.decode('utf-8') for x in f["ck_molecules"][:]]
             self.wno = f["wno"][:]
             self.delta_wno = f["delta_wno"][:]   
             self.pressures = f["pressures"][:]   
@@ -737,6 +737,8 @@ class RetrieveCKs():
         self.nwno = len(self.wno)
         self.ngauss = len(self.gauss_pts)     
         #number of pressure points that exist for each temperature 
+        self.full_abunds['temperature'] = self.temps
+        self.full_abunds['pressure'] = self.pressures
         self.nc_p = self.full_abunds.groupby('temperature').size().values
 
 
@@ -1266,7 +1268,7 @@ class RetrieveCKs():
         #make sure to interp on log and inv array
         p_log_grid = np.unique(self.pressures)
         p_log_grid =np.log10(p_log_grid[p_log_grid>0])
-        t_inv_grid = 1/np.array(self.temps)
+        t_inv_grid = 1/np.array(np.unique(self.temps))
 
         #Now for the temp point on either side of our atmo grid
         #first the lower interp temp
