@@ -1677,12 +1677,10 @@ def are_arrays_different(arr1, arr2):
     
     # Check if lengths are different
     if len(arr1) != len(arr2):
-    return True
+        return True
     
     # Check if elements are different
     return not np.array_equal(arr1, arr2)
-    
-a
 
 def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
     order=4,gfrac=0.95,dir_kark_ch4=None,alkali_dir=None,
