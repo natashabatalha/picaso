@@ -1534,6 +1534,10 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
     ngauss = order*2 
 
     s1460 = pd.read_csv(grid_file,dtype=str)
+    numw_uni = s1460['number_wave_pts'].values.astype(int)
+    delwn_uni = s1460['delta_wavenumber'].values.astype(float)
+    start_uni = s1460['start_wavenumber'].values.astype(float)
+
     #all pressures
     pres=s1460['pressure_bar'].values.astype(float)
     #all temperatures
@@ -1555,6 +1559,9 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
     alks = ['Na','K','Rb','Cs','Li']
 
     for i,p,t in zip(ifile,pres,temp):
+
+        uniform_wno_grid_all = np.arange(numw_uni[i-1])*delwn_uni[i-1]+start_uni[i-1] 
+
         total_sum = 0 
         
         for molecule in ck_molecules:
@@ -1598,9 +1605,9 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
                 numw,delwn,start=np.nan,np.nan,np.nan
             else: 
                 #ehsan makes his opacities on uniform 
-                numw = s1460['number_wave_pts'].values.astype(int)
-                delwn = s1460['delta_wavenumber'].values.astype(float)
-                start = s1460['start_wavenumber'].values.astype(float)
+                numw = numw_uni
+                delwn = delwn_uni
+                start = start_uni
                 
             if not isinstance(wv_file_name,type(None)):
                 wvno_low,wvno_high = get_wvno_grid(wv_file_name)
@@ -1636,6 +1643,9 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
 
             
             weight = chem_grid.loc[i-1,molecule]
+
+            if np.any(uniform_wno_grid_all!=og_wvno_grid): 
+                dset = np.interp(uniform_wno_grid_all,og_wvno_grid, dset)
 
             total_sum += weight*dset
         
