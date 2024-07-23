@@ -1490,10 +1490,9 @@ def get_wvno_grid(filename, min_wavelength=None, max_wavelength=None, R=None):
     return wvno_low,wvno_high
 
 def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
-    output_dir,
-    wv_file_name=None,
-    order=4,gfrac=0.95,dir_kark_ch4=None,alkali_dir=None,
-    min_wavelength=None, max_wavelength=None, R=None, 
+    output_dir,output_filename,
+    wv_file_name=None,alkali_dir=None,
+    min_max_wavelength=None, R=None, 
     new_wno=None, new_dwno=None,
     verbose=True):
     """
@@ -1510,14 +1509,12 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
     wv_file_name : str 
         (optional) file name with wavelength. First column wavenumber, second column delta wavenumber 
         Must supply this OR combo of min, max wavelength and R
-    order : int     
-        (Optional) Gauss Legendre order which by default is set to 4, with the double gauss method 
-    gfrac : int     
-        (Optional) Double-gauss method of splitting up the gauss points, by default we use 0.95 
-    dir_kark_ch4 : str 
-        (Optional) directory of additional karkochka methane 
-    alkali_dir : str 
-        (Optional) Directory of alkalis or "individual_file" which is the method to use for Roxana Lupus data. 
+    min_max_wavelength : list,float 
+        (optional) minimum and maximum wavelength if not inputting array or filename in micron e.g. [0.3,300]    
+    new_wno : array, float  
+        (optional) new wavenumber grid in cm-1 
+    new_dwno : array, float 
+        (optional) delta wavenumber grid in cm-1 
     verbose: bool 
         (Optional) prints out status of which p,t, point the code is at 
 
@@ -1528,10 +1525,6 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
 
     grid_file = os.path.join(og_directory,'grid1460.csv')
 
-
-    npres = 20 
-    ntemp = 73 
-    ngauss = order*2 
 
     s1460 = pd.read_csv(grid_file,dtype=str)
     numw_uni = s1460['number_wave_pts'].values.astype(int)
@@ -1616,7 +1609,8 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
                 wvno_low = 0.5*(2*new_wno - new_dwno)
                 wvno_high = 0.5*(2*new_wno + new_dwno)
             else: 
-                wvno_low,wvno_high = get_wvno_grid(None, min_wavelength, max_wavelength, R)
+                min_max_wavelength = sorted(min_max_wavelength)
+                wvno_low,wvno_high = get_wvno_grid(None, min_max_wavelength[0], min_max_wavelength[1], R)
         
             #path to data
             if 'fortran' in ftype:
@@ -1650,9 +1644,10 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
 
             total_sum += weight*dset
         
-        with h5py.File(os.path.join(output_dir,"high_res_sums.hdf5"), "r+") as f:
+        with h5py.File(os.path.join(output_dir,output_filename), "r+") as f:
             dataset = f.create_dataset(f'sum_{i}', data=total_sum)
-        print('completed',i,p,t)
+        
+        if verbose: print('completed',i,p,t)
 
 def are_arrays_different(arr1, arr2):
     """Checks if two arrays are different, even if they have different sizes.
