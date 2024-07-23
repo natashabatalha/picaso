@@ -1511,6 +1511,8 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
         Must supply this OR combo of min, max wavelength and R
     min_max_wavelength : list,float 
         (optional) minimum and maximum wavelength if not inputting array or filename in micron e.g. [0.3,300]    
+    R : float 
+        (optional) resolution if inputing a min_max_wavelenth 
     new_wno : array, float  
         (optional) new wavenumber grid in cm-1 
     new_dwno : array, float 
@@ -1677,34 +1679,44 @@ def are_arrays_different(arr1, arr2):
     # Check if elements are different
     return not np.array_equal(arr1, arr2)
 
-def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
-    order=4,gfrac=0.95,dir_kark_ch4=None,alkali_dir=None,
-    min_wavelength=None, max_wavelength=None, R=None, 
-    verbose=True, new_wno=None, 
-    new_dwno=None, climate_file=None):
+def compute_ck_molecular(molecule,og_directory,
+    order=4,gfrac=0.95,alkali_dir=None,
+    wv_file_name=None,
+    min_max_wavelength=None, R=None, 
+    new_wno=None, 
+    new_dwno=None, climate_filename=None,verbose=True):
     """
     Function to generate correlated-K tables for each individual gas
     
     Parameters
     ----------
     molecule : str 
-        Name of molecule 
+        Name of molecule OR name of hdf5 climate file. 
+        E.g. could be "H2O" which is the directory where cross section 
+        files live. Or it could be "feh_000_co_+100.hdf5" which is located in 
+        og_directory 
     og_directory : str 
         Directory of all the cross sections that include folders e.g. "H2O", "CH4"
-    alkali_dir : str 
-        Alakalis directory
+        OR the directory where the sum weighted hdf5 file is
     wv_file_name : str 
         (optional) file name with wavelength. First column wavenumber, second column delta wavenumber 
-        Must supply this OR combo of min, max wavelength and R 
-        OR new_wno and new_dwno
+        Must supply this OR combo of min, max wavelength and R
+    min_max_wavelength : list,float 
+        (optional) minimum and maximum wavelength if not inputting array or filename in micron e.g. [0.3,300]    
+    R : float 
+        (optional) resolution if inputing a min and max wavelength
+    new_wno : array, float  
+        (optional) new wavenumber grid in cm-1 
+    new_dwno : array, float 
+        (optional) delta wavenumber grid in cm-1 
     order : int     
-        (Optional) Gauss Legendre order which by default is set to 4, with the double gauss method 
+        (Default=4)  Gauss Legendre order which by default is set to 4, with the double gauss method 
     gfrac : int     
-        (Optional) Double-gauss method of splitting up the gauss points, by default we use 0.95 
-    dir_kark_ch4 : str 
-        (Optional) directory of additional karkochka methane 
+        (Default=0.95) Double-gauss method of splitting up the gauss points, by default we use 0.95 
     alkali_dir : str 
         (Optional) Directory of alkalis or "individual_file" which is the method to use for Roxana Lupus data. 
+    climate_filename : str  
+        (Optional) Name of climate file if saving output as hdf5
     verbose: bool 
         (Optional) prints out status of which p,t, point the code is at 
 
@@ -1712,8 +1724,7 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
     # ASSUMING 1460 P-T GRID FOR THIS
 
     grid_file = os.path.join(og_directory,'grid1460.csv')
-    npres = 20 
-    ntemp = 73 
+
     ngauss = order*2 
 
     s1460 = pd.read_csv(grid_file,dtype=str)
@@ -1788,7 +1799,8 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
         wvno_low = 0.5*(2*new_wno - new_dwno)
         wvno_high = 0.5*(2*new_wno + new_dwno)
     else: 
-        wvno_low,wvno_high = get_wvno_grid(None, min_wavelength, max_wavelength, R)
+        min_max_wavelength = sorted(min_max_wavelength)
+        wvno_low,wvno_high = get_wvno_grid(None, min_max_wavelength[0], min_max_wavelength[1], R)
 
     # SETUP ZERO ARRAY OF KCOEFFS #  
     k_coeff_arr = np.zeros(shape=(npres,ntemp,len(wvno_low),ngauss))
@@ -1840,13 +1852,9 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
             linelist = dset[wh]
 
             #make sure nothing is negative or non zero
-            #linelist += 1e-200
             wh2 = np.where(linelist <= 0.0)
             if len(linelist[wh2]) > 0:
                 linelist[wh2] = 1e-200
-                #for icorr in range(len(linelist)):
-                #    if linelist[icorr] < 0:
-                #        linelist[icorr] = 1e-200
                 
             if len(linelist) == 0:
                 data = np.sort(np.zeros(10)-200.0)
@@ -1855,11 +1863,6 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
                         
             wvno_now = 0.5*(wvlow_temp+wvhigh_temp)
 
-            #use kark CH4 for less than 1 micron
-            # we do not want kark CH4 in cks
-            #if ((molecule == 'CH4') & (isinstance(dir_kark_ch4, str)) & (t<500)) & (1e4/wvno_now < 1.0): # short of 1 microns
-            #    opa_k,loc = get_kark_CH4(dir_kark_ch4,wvno_now, t)
-            #    data = np.sort(np.log(opa_k*(1+np.zeros(100))))
             
             if len(data) > 1:
                 x = np.arange(len(data))/(len(data)-1.)
@@ -1880,7 +1883,7 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
 
         if verbose: print(i,p,t)
     
-    if  isinstance(climate_file, type(None)):
+    if  isinstance(climate_filename, type(None)):
         return k_coeff_arr
     
     else: 
@@ -1911,7 +1914,7 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
                     
                     attrs['chemistry_file'] = f.attrs['chemistry_file']
         
-        with h5py.File(climate_file, "w") as f:
+        with h5py.File(climate_filename, "w") as f:
             # Create datasets for each key-value pair
             for key, (value, attribute) in ck_data.items():
                 dataset = f.create_dataset(key, data=value)
