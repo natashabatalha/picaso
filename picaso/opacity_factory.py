@@ -1541,7 +1541,7 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
     #file_num
     ifile=s1460['file_number'].values.astype(int)
 
-    with h5py.File(os.path.join(output_dir,"high_res_sums.hdf5"), "w") as f:
+    with h5py.File(os.path.join(output_dir,output_filename), "w") as f:
         f.attrs['chemistry_file'] = chemistry_file
         f.create_dataset('ck_molecules', data=ck_molecules)
         f.create_dataset('pressure_bar', data=pres)
