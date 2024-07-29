@@ -1537,6 +1537,9 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
     pres=s1460['pressure_bar'].values.astype(float)
     #all temperatures
     temp=s1460['temperature_K'].values.astype(float)
+    
+    npres = len(np.unique(pres))
+    ntemp = len(np.unique(temp))
 
     #file_num
     ifile=s1460['file_number'].values.astype(int)
@@ -1732,6 +1735,9 @@ def compute_ck_molecular(molecule,og_directory,
     pres=s1460['pressure_bar'].values.astype(float)
     #all temperatures
     temp=s1460['temperature_K'].values.astype(float)
+
+    npres = len(np.unique(pres))
+    ntemp = len(np.unique(temp))
 
     #file_num
     ifile=s1460['file_number'].values.astype(int)
