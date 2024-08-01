@@ -176,29 +176,15 @@ def mix_all_gases(kappa1,kappa2,kappa3,kappa4,kappa5,mix1,mix2,mix3,mix4,mix5,ga
 @jit(nopython=True, cache=True)
 def mix_all_gases_gasesfly(kappas,mixes,gauss_pts, gauss_wts,indices):
     """
-    Function to perform "on-the-fly" mixing of 5 opacity sources from Amundsen et al. (2017)
+    Function to perform "on-the-fly" mixing of any number of 
+    opacity sources from Amundsen et al. (2017)
+    
     Parameters
     ----------
-    kappa1 : array
-        K-coefficients of gas mixture 1
-    kappa2 : array 
-        K-coefficients of gas mixture 2
-    kappa3 : array 
-        K-coefficients of gas mixture 3
-    kappa4 : array
-        K-coefficients of gas mixture 4
-    kappa5 : array
-        K-coefficients of gas mixture 5
-    mix1 : array
-        mixing ratios of gas mixture 1
-    mix2 : array 
-        mixing ratios of gas mixture 2
-    mix3 : array 
-        mixing ratios of gas mixture 3
-    mix4 : array
-        mixing ratios of gas mixture 4
-    mix5 : array
-        mixing ratios of gas mixture 5
+    kappas : list of arrays
+        K-coefficients of each gas
+    mixes : array 
+        mixing ratios (by layer) for each gas
     gauss_pts : array
         Gauss points of the K-coefficients
     gauss_wts : array
@@ -215,7 +201,7 @@ def mix_all_gases_gasesfly(kappas,mixes,gauss_pts, gauss_wts,indices):
     
     Nk=len(gauss_wts) # number of gauss points
     Nlayer = len(indices[0]) # number of atmosphere layers
-    #neb-nwno = kappa1.shape[2]
+
     nwno = kappas[0].shape[2]
     
     kappa_mixed = np.zeros(shape=(Nlayer,nwno,Nk,4))  # array to be returned
@@ -228,10 +214,6 @@ def mix_all_gases_gasesfly(kappas,mixes,gauss_pts, gauss_wts,indices):
                     kappas_at_ind = [ikappa[p_ind,t_ind,iw,:] for ikappa in kappas]
                     mix_at_ilayer = [imix[ilayer] for imix in mixes]
                     kmix_bin = do_mixing_mono_gasesfly(kappas_at_ind,mix_at_ilayer,gauss_pts,gauss_wts)
-
-                    #neb-kmix_bin = do_mixing_mono_gasesfly([kappa1[p_ind,t_ind,iw,:],kappa2[p_ind,t_ind,iw,:],kappa3[p_ind,t_ind,iw,:],kappa4[p_ind,t_ind,iw,:],kappa5[p_ind,t_ind,iw,:],
-                    #                                                        kappa6[p_ind,t_ind,iw,:],kappa7[p_ind,t_ind,iw,:],kappa8[p_ind,t_ind,iw,:],kappa9[p_ind,t_ind,iw,:],kappa10[p_ind,t_ind,iw,:],kappa11[p_ind,t_ind,iw,:],kappa12[p_ind,t_ind,iw,:],kappa13[p_ind,t_ind,iw,:],kappa14[p_ind,t_ind,iw,:],kappa15[p_ind,t_ind,iw,:],kappa16[p_ind,t_ind,iw,:],kappa17[p_ind,t_ind,iw,:]],
-                    #                [mix1[ilayer],mix2[ilayer],mix3[ilayer],mix4[ilayer],mix5[ilayer],mix6[ilayer],mix7[ilayer],mix8[ilayer],mix9[ilayer],mix10[ilayer],mix11[ilayer],mix12[ilayer],mix13[ilayer],mix14[ilayer],mix15[ilayer],mix16[ilayer],mix17[ilayer]],gauss_pts,gauss_wts)
 
                     kappa_mixed[ilayer,iw,:,ct] = kmix_bin
 
