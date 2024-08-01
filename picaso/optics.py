@@ -1375,6 +1375,12 @@ class RetrieveCKs():
         """
         Top Function to perform "on-the-fly" mixing and then interpolating of 5 opacity sources from Amundsen et al. (2017)
         """
+        nlayer=atmosphere.c.nlayer
+        mixes = []
+        for imol in gases_fly: 
+            mixes += [bundle.inputs['atmosphere']['profile'][imol].values]
+        """
+        neb-deprecate
         if 'CO' in gases_fly:
             mix_co =   bundle.inputs['atmosphere']['profile']['CO'].values # mixing ratio of CO
         else:
@@ -1454,23 +1460,30 @@ class RetrieveCKs():
             mix_h2s =   ( bundle.inputs['atmosphere']['profile']['H2S'].values)
         else:
             mix_h2s =   ( bundle.inputs['atmosphere']['profile']['H2O'].values)*0.0
-
+        """
                 
         
-
         indices, t_interp,p_interp = self.get_mixing_indices(atmosphere) # gets nearest neighbor indices
 
         # Mix all opacities in the four nearest neighbors of your T(P) profile
         # these nearest neighbors will be used for interpolation
-        kappa_mixed = mix_all_gases_gasesfly(np.array(self.kappa_co),np.array(self.kappa_h2o),np.array(self.kappa_ch4),
-                                    np.array(self.kappa_nh3),np.array(self.kappa_co2),np.array(self.kappa_n2),np.array(self.kappa_hcn),
-                                    np.array(self.kappa_h2),np.array(self.kappa_ph3),np.array(self.kappa_c2h2),np.array(self.kappa_na),np.array(self.kappa_k),np.array(self.kappa_tio),np.array(self.kappa_vo),np.array(self.kappa_feh),np.array(self.kappa_so2),np.array(self.kappa_h2s),mix_co,mix_h2o,mix_ch4,mix_nh3,
-                                    mix_co2,mix_n2,mix_hcn,mix_h2,mix_ph3,mix_c2h2,mix_na,mix_k,mix_tio,mix_vo,mix_feh, mix_so2,mix_h2s,
+        
+        """
+        neb-deprecate
+        kappa_mixed = mix_all_gases_gasesfly([np.array(self.kappa_co),np.array(self.kappa_h2o),np.array(self.kappa_ch4),
+                                            np.array(self.kappa_nh3),np.array(self.kappa_co2),np.array(self.kappa_n2),np.array(self.kappa_hcn),
+                                            np.array(self.kappa_h2),np.array(self.kappa_ph3),np.array(self.kappa_c2h2),np.array(self.kappa_na),np.array(self.kappa_k),np.array(self.kappa_tio),np.array(self.kappa_vo),np.array(self.kappa_feh),np.array(self.kappa_so2),np.array(self.kappa_h2s)],
+                                            [mix_co,mix_h2o,mix_ch4,mix_nh3,
+                                            mix_co2,mix_n2,mix_hcn,mix_h2,mix_ph3,mix_c2h2,mix_na,mix_k,mix_tio,mix_vo,mix_feh, mix_so2,mix_h2s],
                                     np.array(self.gauss_pts),np.array(self.gauss_wts),indices)
-        kappa = np.zeros(shape=(len(mix_co)-1,self.nwno,self.ngauss))
+        """
+        kappa_mixed = mix_all_gases_gasesfly(self.kappas,mixes,
+                        np.array(self.gauss_pts),np.array(self.gauss_wts),indices)
+
+        kappa = np.zeros(shape=(nlayer,self.nwno,self.ngauss))
         
         # now perform the old nearest neighbor interpolation to produce final opacities
-        for i in range(len(mix_co)-1):
+        for i in range(nlayer):
             kappa[i,:,:] = (((1-t_interp[i])* (1-p_interp[i]) * kappa_mixed[i,:,:,0]) +
                         ((t_interp[i])  * (1-p_interp[i]) * kappa_mixed[i,:,:,1]) + 
                         ((t_interp[i])  * (p_interp[i])   * kappa_mixed[i,:,:,3]) + 
@@ -1881,6 +1894,13 @@ class RetrieveCKs():
         gases_fly : bool 
             Specifies what gasses to mix on the fly 
         """
+        self.kappas = []
+        for imol in gases_fly: 
+            array = np.load(path+f'/{imol}_1460.npy')
+            self.kappas += [array]
+
+        """
+        neb-deprecate
         if 'H2O' in gases_fly:
             array = np.load(path+'/H2O_1460.npy')
             self.kappa_h2o = array
@@ -1999,7 +2019,8 @@ class RetrieveCKs():
         else:
             array = np.load(path+'/H2S_1460.npy')
             self.kappa_h2s = array*0-250.0
-        
+        """
+
     def get_new_wvno_grid_661(self):
         path = os.path.join(__refdata__, 'climate_INPUTS/')#'/Users/sagnickmukherjee/Documents/GitHub/Disequilibrium-Picaso/reference/climate_INPUTS/'
         wvno_new,dwni_new = np.loadtxt(path+"wvno_661",usecols=[0,1],unpack=True)
