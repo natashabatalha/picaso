@@ -5,21 +5,26 @@ from numba import types
 from scipy import constants as const
 from scipy import integrate
 from tempfile import NamedTemporaryFile
+import copy
 
 import pkg_resources
 import warnings
 if pkg_resources.get_distribution("photochem").version != '0.5.6':
     warnings.warn('You have photochem version '+pkg_resources.get_distribution("photochem").version
                   +' installed, but version 0.5.6 is recommended.')
-from photochem import EvoAtmosphere, PhotoException
+from photochem import EvoAtmosphere, PhotoException, zahnle_earth
 from photochem import equilibrate
-from photochem.utils._format import yaml, FormatSettings_main, MyDumper
+from photochem.utils._format import yaml, FormatSettings_main, MyDumper, FormatReactions_main
     
 @nb.cfunc(nb.double(nb.double, nb.double, nb.double))
 def custom_binary_diffusion_fcn(mu_i, mubar, T):
     # Equation 6 in Gladstone et al. (1996)
     b = 3.64e-5*T**(1.75-1.0)*7.3439e21*np.sqrt(2.01594/mu_i)
     return b
+
+###
+### Extension of EvoAtmosphere class for gas giants
+###
 
 class EvoAtmosphereGasGiant(EvoAtmosphere):
 
@@ -617,6 +622,10 @@ class EvoAtmosphereGasGiant(EvoAtmosphere):
 
         self.prep_atmosphere(self.wrk.usol)
 
+###
+### Some PICASO specific methods for the class
+###
+
     def add_concentrations_to_picaso_df(self, df):
         """Adds photochem concentrations to a PICASO "profile" DataFrame
 
@@ -749,94 +758,10 @@ class EvoAtmosphereGasGiant(EvoAtmosphere):
         # Return a DataFrame with the Photochem chemistry
         return self.add_concentrations_to_picaso_df(df)
 
-class Metallicity():
+###
+### Helper functions for the EvoAtmosphereGasGiant class
+###
 
-    def __init__(self, filename):
-        """A simple Metallicity calculator.
-
-        Parameters
-        ----------
-        filename : str
-            Path to a thermodynamic file
-        """
-        self.gas = equilibrate.ChemEquiAnalysis(filename)
-
-    def composition(self, T, P, CtoO, metal, rainout_condensed_atoms = True):
-        """Given a T-P profile, C/O ratio and metallicity, the code
-        computes chemical equilibrium composition.
-
-        Parameters
-        ----------
-        T : ndarray[dim=1,float64]
-            Temperature in K
-        P : ndarray[dim=1,float64]
-            Pressure in dynes/cm^2
-        CtoO : float
-            The C / O ratio relative to solar. CtoO = 1 would be the same
-            composition as solar.
-        metal : float
-            Metallicity relative to solar.
-        rainout_condensed_atoms : bool, optional
-            If True, then the code will rainout atoms that condense.
-
-        Returns
-        -------
-        dict
-            Composition at chemical equilibrium.
-        """
-
-        # Check T and P
-        if isinstance(T, float) or isinstance(T, int):
-            T = np.array([T],np.float64)
-        if isinstance(P, float) or isinstance(P, int):
-            P = np.array([P],np.float64)
-        if not isinstance(P, np.ndarray):
-            raise ValueError('"P" must by an np.ndarray')
-        if not isinstance(T, np.ndarray):
-            raise ValueError('"P" must by an np.ndarray')
-        if T.ndim != 1:
-            raise ValueError('"T" must have one dimension')
-        if P.ndim != 1:
-            raise ValueError('"P" must have one dimension')
-        if T.shape[0] != P.shape[0]:
-            raise ValueError('"P" and "T" must be the same length')
-        # Check CtoO and metal
-        if CtoO <= 0:
-            raise ValueError('"CtoO" must be greater than 0')
-        if metal <= 0:
-            raise ValueError('"metal" must be greater than 0')
-
-        # For output
-        out = {}
-        for sp in self.gas.gas_names:
-            out[sp] = np.empty(P.shape[0])
-        mubar = np.empty(P.shape[0])
-        
-        molfracs_atoms = self.gas.molfracs_atoms_sun
-        for i,sp in enumerate(self.gas.atoms_names):
-            if sp != 'H' and sp != 'He':
-                molfracs_atoms[i] = self.gas.molfracs_atoms_sun[i]*metal
-        molfracs_atoms = molfracs_atoms/np.sum(molfracs_atoms)
-
-        # Adjust C and O to get desired C/O ratio. CtoO is relative to solar
-        indC = self.gas.atoms_names.index('C')
-        indO = self.gas.atoms_names.index('O')
-        x = CtoO*(molfracs_atoms[indC]/molfracs_atoms[indO])
-        a = (x*molfracs_atoms[indO] - molfracs_atoms[indC])/(1+x)
-        molfracs_atoms[indC] = molfracs_atoms[indC] + a
-        molfracs_atoms[indO] = molfracs_atoms[indO] - a
-
-        # Compute chemical equilibrium at all altitudes
-        for i in range(P.shape[0]):
-            self.gas.solve(P[i], T[i], molfracs_atoms=molfracs_atoms)
-            for j,sp in enumerate(self.gas.gas_names):
-                out[sp][i] = self.gas.molfracs_species_gas[j]
-            mubar[i] = self.gas.mubar
-            if rainout_condensed_atoms:
-                molfracs_atoms = self.gas.molfracs_atoms_gas
-
-        return out, mubar
-    
 @nb.njit()
 def CH4_CO_quench_timescale(T, P):
     "T in K, P in dynes/cm^2, tq in s. Equation 11."
@@ -987,6 +912,102 @@ def compute_altitude_of_PT(P, P_ref, T, mubar, planet_radius, planet_mass, P_top
 
     return P_, T_, mubar_, z_
 
+###
+### A simple metallicity calculator
+###
+
+class Metallicity():
+
+    def __init__(self, filename):
+        """A simple Metallicity calculator.
+
+        Parameters
+        ----------
+        filename : str
+            Path to a thermodynamic file
+        """
+        self.gas = equilibrate.ChemEquiAnalysis(filename)
+
+    def composition(self, T, P, CtoO, metal, rainout_condensed_atoms = True):
+        """Given a T-P profile, C/O ratio and metallicity, the code
+        computes chemical equilibrium composition.
+
+        Parameters
+        ----------
+        T : ndarray[dim=1,float64]
+            Temperature in K
+        P : ndarray[dim=1,float64]
+            Pressure in dynes/cm^2
+        CtoO : float
+            The C / O ratio relative to solar. CtoO = 1 would be the same
+            composition as solar.
+        metal : float
+            Metallicity relative to solar.
+        rainout_condensed_atoms : bool, optional
+            If True, then the code will rainout atoms that condense.
+
+        Returns
+        -------
+        dict
+            Composition at chemical equilibrium.
+        """
+
+        # Check T and P
+        if isinstance(T, float) or isinstance(T, int):
+            T = np.array([T],np.float64)
+        if isinstance(P, float) or isinstance(P, int):
+            P = np.array([P],np.float64)
+        if not isinstance(P, np.ndarray):
+            raise ValueError('"P" must by an np.ndarray')
+        if not isinstance(T, np.ndarray):
+            raise ValueError('"P" must by an np.ndarray')
+        if T.ndim != 1:
+            raise ValueError('"T" must have one dimension')
+        if P.ndim != 1:
+            raise ValueError('"P" must have one dimension')
+        if T.shape[0] != P.shape[0]:
+            raise ValueError('"P" and "T" must be the same length')
+        # Check CtoO and metal
+        if CtoO <= 0:
+            raise ValueError('"CtoO" must be greater than 0')
+        if metal <= 0:
+            raise ValueError('"metal" must be greater than 0')
+
+        # For output
+        out = {}
+        for sp in self.gas.gas_names:
+            out[sp] = np.empty(P.shape[0])
+        mubar = np.empty(P.shape[0])
+        
+        molfracs_atoms = self.gas.molfracs_atoms_sun
+        for i,sp in enumerate(self.gas.atoms_names):
+            if sp != 'H' and sp != 'He':
+                molfracs_atoms[i] = self.gas.molfracs_atoms_sun[i]*metal
+        molfracs_atoms = molfracs_atoms/np.sum(molfracs_atoms)
+
+        # Adjust C and O to get desired C/O ratio. CtoO is relative to solar
+        indC = self.gas.atoms_names.index('C')
+        indO = self.gas.atoms_names.index('O')
+        x = CtoO*(molfracs_atoms[indC]/molfracs_atoms[indO])
+        a = (x*molfracs_atoms[indO] - molfracs_atoms[indC])/(1+x)
+        molfracs_atoms[indC] = molfracs_atoms[indC] + a
+        molfracs_atoms[indO] = molfracs_atoms[indO] - a
+
+        # Compute chemical equilibrium at all altitudes
+        for i in range(P.shape[0]):
+            self.gas.solve(P[i], T[i], molfracs_atoms=molfracs_atoms)
+            for j,sp in enumerate(self.gas.gas_names):
+                out[sp][i] = self.gas.molfracs_species_gas[j]
+            mubar[i] = self.gas.mubar
+            if rainout_condensed_atoms:
+                molfracs_atoms = self.gas.molfracs_atoms_gas
+
+        return out, mubar
+
+###
+### Template input files for Photochem
+###
+
 ATMOSPHERE_INIT = \
 """alt      den        temp       eddy                       
 0.0      1          1000       1e6              
@@ -1024,3 +1045,145 @@ boundary-conditions:
   lower-boundary: {type: Moses}
   upper-boundary: {type: veff, veff: 0}
 """
+
+###
+### A series of functions for generating reactions and thermo files.
+###
+
+def mechanism_with_atoms(dat, atoms_names):
+
+    atoms = []
+    exclude_atoms = []
+    for i,at in enumerate(dat['atoms']):
+        if at['name'] in atoms_names:
+            atoms.append(at)
+        else:
+            exclude_atoms.append(at['name'])
+
+    species = []
+    comp = {}
+    comp['hv'] = []
+    comp['M'] = []
+    for i,sp in enumerate(dat['species']):
+        comp[sp['name']] = [key for key in sp['composition'] if sp['composition'][key] > 0]
+
+        exclude = False
+        for tmp in comp[sp['name']]:
+            if tmp in exclude_atoms:
+                exclude = True
+                break
+        if not exclude:
+            species.append(sp)
+
+    if "particles" in dat:
+        particles = []
+        for i,sp in enumerate(dat['particles']):
+            comp_tmp = [key for key in sp['composition'] if sp['composition'][key] > 0]
+
+            exclude = False
+            for tmp in comp_tmp:
+                if tmp in exclude_atoms:
+                    exclude = True
+                    break
+            if not exclude:
+                particles.append(sp)
+
+    if "reactions" in dat:
+        reactions = []
+        for i,rx in enumerate(dat['reactions']):
+            eq = rx['equation']
+            eq = eq.replace('(','').replace(')','')
+            if '<=>' in eq:
+                split_str = '<=>'
+            else:
+                split_str = '=>'
+    
+            a,b = eq.split(split_str)
+            a = a.split('+')
+            b = b.split('+')
+            a = [a1.strip() for a1 in a]
+            b = [b1.strip() for b1 in b]
+            sp = a + b
+    
+            exclude = False
+            for s in sp:
+                for tmp in comp[s]:
+                    if tmp in exclude_atoms:
+                        exclude = True
+                        break
+                if exclude:
+                    break
+            if not exclude:
+                reactions.append(rx)
+                
+    out = dat
+    out['atoms'] = atoms
+    out['species'] = species
+    if 'particles' in dat:
+        out['particles'] = particles
+    if 'reactions' in dat:
+        out['reactions'] = reactions
+
+    return out
+
+def remove_reaction_particles(dat):
+    if "particles" in dat:
+        particles = []
+        for i, particle in enumerate(dat['particles']):
+            if particle['formation'] != "reaction":
+                particles.append(particle)
+        dat['particles'] = particles
+
+    return dat
+
+def generate_zahnle_reaction_thermo_file(atoms_names):
+
+    if 'H' not in atoms_names or 'He' not in atoms_names:
+        raise Exception('H and He must be in atoms_names')
+
+    with open(zahnle_earth,'r') as f:
+        rxns = yaml.load(f,Loader=yaml.Loader)
+    # Make a deep copy for later
+    rxns_copy = copy.deepcopy(rxns)
+
+    out_rxns = mechanism_with_atoms(rxns, atoms_names)
+    out_rxns = remove_reaction_particles(out_rxns)
+
+    with open(zahnle_earth.replace('zahnle_earth.yaml','condensate_thermo.yaml'),'r') as f:
+        thermo = yaml.load(f, Loader=yaml.Loader)
+
+    # Delete information that is not needed
+    for i,atom in enumerate(rxns_copy['atoms']):
+        del rxns_copy['atoms'][i]['redox'] 
+    if 'particles' in rxns_copy:
+        del rxns_copy['particles']
+    del rxns_copy['reactions']
+
+    # Add condensates
+    for i,sp in enumerate(thermo['species']):
+        rxns_copy['species'].append(sp)
+
+    out_thermo = mechanism_with_atoms(rxns_copy, atoms_names)
+
+    return out_rxns, out_thermo
+
+def generate_photochem_rx_and_thermo_files(atoms_names=['H','He','N','O','C','S'], 
+                                           rxns_filename='photochem_rxns.yaml', thermo_filename='photochem_thermo.yaml'):
+    """Generates input reactions and thermodynamic files for photochem.
+
+    Parameters
+    ----------
+    atoms_names : list, optional
+        Atoms to include in the thermodynamics, by default ['H','He','N','O','C','S']
+    rxns_filename : str, optional
+        Name of output reactions file, by default 'photochem_rxns.yaml'
+    thermo_filename : str, optional
+        Name of output thermodynamic file, by default 'photochem_thermo.yaml'
+    """    
+    rxns, thermo = generate_zahnle_reaction_thermo_file(atoms_names)
+    rxns = FormatReactions_main(rxns)
+    with open(rxns_filename,'w') as f:
+        yaml.dump(rxns,f,Dumper=MyDumper,sort_keys=False,width=70)
+    thermo = FormatReactions_main(thermo)
+    with open(thermo_filename,'w') as f:
+        yaml.dump(thermo,f,Dumper=MyDumper,sort_keys=False,width=70)
