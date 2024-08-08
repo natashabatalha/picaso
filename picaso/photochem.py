@@ -1,3 +1,11 @@
+"""
+This module contains wrappers for the "Photochem" photochemical
+model (https://github.com/Nicholaswogan/photochem). These wrappers are 
+called in "justdoit.py" during climate simulations if photochemistry
+is turned on. The only function useful for general users is 
+`generate_photochem_rx_and_thermo_file`, which can generate reaction and 
+thermodynamic files used for initializing Photochem
+"""
 
 import numpy as np
 import numba as nb
