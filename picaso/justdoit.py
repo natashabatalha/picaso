@@ -10,7 +10,6 @@ from .disco import get_angles_1d, get_angles_3d, compute_disco, compress_disco, 
 from .justplotit import numba_cumsum, find_nearest_2d, mean_regrid
 from .deq_chem import quench_level,initiate_cld_matrices
 from .build_3d_input import regrid_xarray
-from .photochem import run_photochem
 
 
 from virga import justdoit as vj
@@ -3565,12 +3564,11 @@ class inputs():
             self.inputs['planet']['T_eff'] = 0
 
     def inputs_climate(self, temp_guess= None, pressure= None, rfaci = 1,nofczns = 1 ,
-        nstr = None,  rfacv = None, m_planet=None,r_planet=None,
+        nstr = None,  rfacv = None,
         cloudy = False, mh = None, CtoO = None, species = None, fsed = None, mieff_dir = None,
-        photochem=False, photochem_file=None,photochem_stfile = None,photonetwork_file = None,
-        photonetworkct_file=None,tstop=1e7,psurf=10, fhole = None, do_holes = False, fthin_cld = None, 
+        photochem=False, photochem_init_args=None,
+        fhole = None, do_holes = False, fthin_cld = None, 
         beta = 1, virga_param = 'const', moistgrad = False, deq_rainout= False, quench_ph3 = True):
-
         """
         Get Inputs for Climate run
 
@@ -3580,6 +3578,12 @@ class inputs():
             Guess T(P) profile to begin with
         pressure : array
             Pressure Grid for climate code (this wont change on the fly)
+        rfaci : float
+            Default=1, Fractional contribution of thermal light in net flux
+            Usually this is kept at one and then the redistribution is controlled 
+            via rfacv
+        nofczns : integer
+            Number of guessed Convective Zones. 1 or 2
         nstr : array
             NSTR vector describes state of the atmosphere:
             0   is top layer [0]
@@ -3588,17 +3592,11 @@ class inputs():
             3   is top layer of lower radiative region
             4   is top layer of lower convective region
             5   is bottom layer of lower convective region [nlayer-1]
-        nofczns : integer
-            Number of guessed Convective Zones. 1 or 2
         rfacv : float
             Fractional contribution of reflected light in net flux.
             =0 for no stellar irradition, 
             =0.5 for full day-night heat redistribution
             =1 for dayside
-        rfaci : float
-            Default=1, Fractional contribution of thermal light in net flux
-            Usually this is kept at one and then the redistribution is controlled 
-            via rfacv
         cloudy : bool
             Include Clouds or not (True or False)
         mh : string
@@ -3613,10 +3611,26 @@ class inputs():
             path to directory with mieff files for virga
         photochem : bool 
             Turns off (False) and on (True) Photochem 
-        do_holes : bool
-            Patchy cloud option with clearsky holes
+        photochem_init_args : dict
+            Dictionary containing initialization arguments for photochem. Should contain the following keys
+            - "mechanism_file" : str
+                Path to the file describing the reaction mechanism
+            - "stellar_flux_file" : str
+                Path to the file describing the stellar UV flux.
+            - "planet_mass" : float
+                Planet mass in grams
+            - "planet_radius" : float
+                Planet radius in cm
+            - "nz" : int, optional
+                The number of layers in the photochemical model, by default 100
+            - "P_ref" : float, optional
+                Pressure level corresponding to the planet_radius, by default 1e6 dynes/cm^2
+            - "thermo_file" : str, optional
+                Optionally include a dedicated thermodynamic file.
         fhole : float
             Fraction of clearsky holes (from 0 to 1.0)
+        do_holes : bool
+            Patchy cloud option with clearsky holes
         fthin_cld : float
             Fraction of thin clouds in patchy cloud column (from 0 to 1.0), default 0 for clear sky column
         beta : float
@@ -3625,16 +3639,16 @@ class inputs():
             Virga parameterization for cloud model, either 'const' or 'exp'
         moistgrad: bool
             Moist adiabatic gradient option
-        deq_rainout: bool
+        deq_rainout : bool
             If True, will rainout volatiles like H2O, CH4 and NH3 in diseq runs as in equilibrium model when applicable
-
-        
+        quench_ph3 : bool
+            Switch for turning on/off PH3 quenching
         """
         
         if cloudy: 
             print("Cloudy functionality still in beta form and not ready for public use.")
             # raise Exception('Cloudy functionality still in beta fosrm and not ready for public use.')
-        
+
         elif photochem == False: 
             # dummy values only used for cloud model
             mh = 0 
@@ -3697,36 +3711,10 @@ class inputs():
         self.inputs['climate']['mh'] = mh
         self.inputs['climate']['CtoO'] = CtoO
 
-
-        if photochem:
-            if m_planet is None:
-                raiseExceptions("Supply planet mass if you want to run photochem")
-            else:
-                self.inputs['climate']['m_planet'] = m_planet
-
-            if r_planet is None:
-                raiseExceptions("Supply planet radius if you want to run photochem")
-            else:
-                self.inputs['climate']['r_planet'] = r_planet
-
-            if photochem_file is None:
-                raiseExceptions("Supply photochem_filename if you want to run photochem")
-            else:
-                self.inputs['climate']['photochem_file'] =photochem_file
-
-            if photochem_stfile is None:
-                raiseExceptions("Supply photochem star filename if you want to run photochem")
-            else:
-                self.inputs['climate']['photochem_stfile'] =photochem_stfile
-            self.inputs['climate']['tstop'] =tstop
-            self.inputs['climate']['psurf'] =psurf
-            self.inputs['climate']['photochem'] =photochem
-            self.inputs['climate']['photochem_network'] =photonetwork_file
-            self.inputs['climate']['photochem_networkct'] =photonetworkct_file
-            
-
-        else:
-            self.inputs['climate']['photochem'] =False
+        self.inputs['climate']['photochem'] = photochem
+        if self.inputs['climate']['photochem']:
+            from .photochem import EvoAtmosphereGasGiant
+            self.inputs['climate']['pc'] = EvoAtmosphereGasGiant(**photochem_init_args)
 
     def climate(self, opacityclass, save_all_profiles = False, as_dict=True,with_spec=False,
         save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False, kz = None, 
@@ -4076,30 +4064,29 @@ class inputs():
                 photo_inputs_dict = {}
                 photo_inputs_dict['yesorno'] = False
             else :
+                # Compute chemical equilibrium composition using pre-computed grid
                 bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+                
+                # Compute photochemical steady-state, and load it into `bundle.inputs['atmosphere']['profile']`. Here,
+                # we use chemical equilibrium + quenching as an initial guess.
+                pc = self.inputs['climate']['pc']
+                bundle.inputs['atmosphere']['profile'] = pc.run_for_picaso(
+                    bundle.inputs['atmosphere']['profile'], 
+                    float(self.inputs['climate']['mh']), 
+                    float(self.inputs['climate']['CtoO']), 
+                    kz, 
+                    True
+                )
 
-                pc= bundle.call_photochem(temp,pressure,float(self.inputs['climate']['mh']),float(self.inputs['climate']['CtoO']),self.inputs['climate']['psurf'],self.inputs['climate']['m_planet'],self.inputs['climate']['r_planet'],kz,tstop=self.inputs['climate']['tstop'],filename = self.inputs['climate']['photochem_file'],stfilename = self.inputs['climate']['photochem_stfile'],network = self.inputs['climate']['photochem_network'],network_ct = self.inputs['climate']['photochem_networkct'],first=True,pc=None)
                 all_kzz = np.append(all_kzz, kz)
                 quench_levels = np.array([0,0,0,0])
                 photo_inputs_dict = {}
+                # Save some information, to be used in later photochem calls.
                 photo_inputs_dict['yesorno'] = True
                 photo_inputs_dict['mh'] = float(self.inputs['climate']['mh'])
                 photo_inputs_dict['CtoO'] = float(self.inputs['climate']['CtoO'])
-                photo_inputs_dict['psurf'] = self.inputs['climate']['psurf']
-                photo_inputs_dict['m_planet'] = self.inputs['climate']['m_planet']
-                photo_inputs_dict['r_planet'] = self.inputs['climate']['r_planet']
-                photo_inputs_dict['tstop']=self.inputs['climate']['tstop']
-                photo_inputs_dict['photochem_file']=self.inputs['climate']['photochem_file']
-                photo_inputs_dict['photochem_stfile']=self.inputs['climate']['photochem_stfile']
-                photo_inputs_dict['photochem_network']=self.inputs['climate']['photochem_network']
-                photo_inputs_dict['photochem_networkct']=self.inputs['climate']['photochem_networkct']
                 photo_inputs_dict['pc'] = pc
                 photo_inputs_dict['kz'] = kz
-                
-
-
-
-
 
             wno = opacityclass.wno
             delta_wno = opacityclass.delta_wno
@@ -4222,37 +4209,6 @@ class inputs():
             return all_out
         else: 
             return pressure , temp, dtdp, nstr_new, flux_plus_final, df, all_profiles , opd_now,w0_now,g0_now
-    
-    def call_photochem(self,temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=1e7,filename = None,stfilename=None,network=None,network_ct=None,first=True,pc=None,user_psurf=True,user_psurf_add=3):
-        p_target = np.logspace(np.log10(np.min(pressure)),np.log10(np.max(pressure)),180)
-        interp_function = interp1d(np.log10(pressure),np.log10(temp),bounds_error=False,fill_value='extrapolate')
-        interp_function_kzz = interp1d(np.log10(pressure),np.log10(kzz),bounds_error=False,fill_value='extrapolate')
-        interp_temp  = 10**interp_function(np.log10(p_target))
-        interp_kzz = 10**interp_function_kzz(np.log10(p_target))
-        pc,output_array,species,pressure_phot = run_photochem(interp_temp,p_target,logMH, cto,pressure_surf,mass,radius,interp_kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=first,pc=pc,user_psurf=user_psurf,user_psurf_add=user_psurf_add)
-        #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
-        #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
-        #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
-        #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
-        #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
-#        wh = np.where(np.flip(pc.wrk.pressure/1e6)[-1] < pressure_phot)
- #       pressure_joined = np.concatenate([np.flip(pc.wrk.pressure/1e6),pressure_phot[wh][1:]])
-        for i in range(len(species)):
-            wh=np.where(output_array[i,:] <= 0.0)
-            if len(wh[0]) >0:
-                
-                output_array[i,:][wh]=1e-40
-            interp_sp = interp1d(np.log10(pressure_phot),np.log10(output_array[i,:]),bounds_error=False,fill_value='extrapolate')
-            sp_arr = 10**interp_sp(np.log10(pressure))
-            wh2=np.where(sp_arr <= 0.0)
-            if len(wh2[0]) >0:
-                
-                sp_arr[wh2]=1e-40
-            
-            self.inputs['atmosphere']['profile'][species[i]] = sp_arr #10**interp_sp(np.log10(pressure))#output_array[i,:]
-        self.inputs['atmosphere']['profile']['pressure']= pressure
-        
-        return pc
 
 def get_targets():
     """Function to grab available targets using exoplanet archive data. 
@@ -5719,12 +5675,26 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
         qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3)
         output_abunds = bundle.inputs['atmosphere']['profile'].T.values
     else :
+        # Compute chemical equilibrium composition by interpolating pre-computed grid
         bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
-        pc= bundle.call_photochem(temp,pressure,photo_inputs_dict['mh'],photo_inputs_dict['CtoO'],photo_inputs_dict['psurf'],photo_inputs_dict['m_planet'],photo_inputs_dict['r_planet'],photo_inputs_dict['kz'],tstop=photo_inputs_dict['tstop'],filename = photo_inputs_dict['photochem_file'],stfilename =photo_inputs_dict['photochem_stfile'],network = photo_inputs_dict['photochem_network'],network_ct=photo_inputs_dict['photochem_networkct'],first=False,pc=photo_inputs_dict['pc'])
-        photo_inputs_dict['pc'] = pc
+
+        # Unpack photochem object
+        pc = photo_inputs_dict['pc']
+
+        # Update the DataFrame with chemistry from previous Photochem run.
+        # This will give Photochem a good initial starting guess.
+        bundle.inputs['atmosphere']['profile'] = pc.add_concentrations_to_picaso_df(bundle.inputs['atmosphere']['profile'])
+
+        # Run Photochem
+        bundle.inputs['atmosphere']['profile'] = pc.run_for_picaso(
+            bundle.inputs['atmosphere']['profile'], 
+            photo_inputs_dict['mh'], 
+            photo_inputs_dict['CtoO'], 
+            photo_inputs_dict['kz'], 
+            False
+        )
         all_kzz = np.append(all_kzz, kz)
         quench_levels = np.array([0,0,0,0])
-        photo_inputs_dict['pc'] = pc
         qvmrs, qvmrs2=0,0
         output_abunds = bundle.inputs['atmosphere']['profile'].T.values
     
@@ -5904,12 +5874,26 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3)
             print("Quench Levels are CO, CO2, NH3, HCN ", quench_levels)
         else :
+            # Compute chemical equilibrium composition by interpolating pre-computed grid
             bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
-            pc= bundle.call_photochem(temp,pressure,photo_inputs_dict['mh'],photo_inputs_dict['CtoO'],photo_inputs_dict['psurf'],photo_inputs_dict['m_planet'],photo_inputs_dict['r_planet'],photo_inputs_dict['kz'],tstop=photo_inputs_dict['tstop'],filename = photo_inputs_dict['photochem_file'],stfilename =photo_inputs_dict['photochem_stfile'],network = photo_inputs_dict['photochem_network'],network_ct=photo_inputs_dict['photochem_networkct'],first=False,pc=photo_inputs_dict['pc'])
-            photo_inputs_dict['pc'] = pc
+            
+            # Unpack photochem object
+            pc = photo_inputs_dict['pc']
+            
+            # Update the DataFrame with chemistry from previous Photochem run.
+            # This will give Photochem a good initial starting guess.
+            bundle.inputs['atmosphere']['profile'] = pc.add_concentrations_to_picaso_df(bundle.inputs['atmosphere']['profile'])
+            
+            # Run Photochem
+            bundle.inputs['atmosphere']['profile'] = pc.run_for_picaso(
+                bundle.inputs['atmosphere']['profile'], 
+                photo_inputs_dict['mh'], 
+                photo_inputs_dict['CtoO'], 
+                photo_inputs_dict['kz'], 
+                False
+            )
             all_kzz = np.append(all_kzz, kz)
             quench_levels = np.array([0,0,0,0])
-            photo_inputs_dict['pc'] = pc
             qvmrs, qvmrs2=0,0
             photo_inputs_dict['kz'] = kz
         
@@ -6592,15 +6576,29 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
 
         qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3)
     else :
+        # Compute chemical equilibrium composition by interpolating pre-computed grid
         bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
         
-
+        # This line was here previously, so I'm keeping it.
         kz = all_kzz[-len(temp):] ## level mixing timescales
-        pc= bundle.call_photochem(temp,pressure,photo_inputs_dict['mh'],photo_inputs_dict['CtoO'],photo_inputs_dict['psurf'],photo_inputs_dict['m_planet'],photo_inputs_dict['r_planet'],photo_inputs_dict['kz'],tstop=photo_inputs_dict['tstop'],filename = photo_inputs_dict['photochem_file'],stfilename =photo_inputs_dict['photochem_stfile'],network = photo_inputs_dict['photochem_network'],network_ct=photo_inputs_dict['photochem_networkct'],first=False,pc=photo_inputs_dict['pc'])
-        photo_inputs_dict['pc'] = pc
+
+        # Unpack photochem object
+        pc = photo_inputs_dict['pc']
+
+        # Update the DataFrame with chemistry from previous Photochem run.
+        # This will give Photochem a good initial starting guess.
+        bundle.inputs['atmosphere']['profile'] = pc.add_concentrations_to_picaso_df(bundle.inputs['atmosphere']['profile'])
+        
+        # Run Photochem
+        bundle.inputs['atmosphere']['profile'] = pc.run_for_picaso(
+            bundle.inputs['atmosphere']['profile'], 
+            photo_inputs_dict['mh'], 
+            photo_inputs_dict['CtoO'], 
+            photo_inputs_dict['kz'], 
+            False
+        )
         all_kzz = np.append(all_kzz, kz)
         quench_levels = np.array([0,0,0,0])
-        photo_inputs_dict['pc'] = pc
         
         qvmrs,qvmrs2 = 0,0
     
