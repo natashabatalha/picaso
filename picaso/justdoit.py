@@ -3713,6 +3713,7 @@ class inputs():
 
         self.inputs['climate']['photochem'] = photochem
         if self.inputs['climate']['photochem']:
+            # Import and initialize the photochemical code.
             from .photochem import EvoAtmosphereGasGiant
             self.inputs['climate']['pc'] = EvoAtmosphereGasGiant(**photochem_init_args)
 

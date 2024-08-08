@@ -5,8 +5,12 @@ from numba import types
 from scipy import constants as const
 from scipy import integrate
 from tempfile import NamedTemporaryFile
-import os
 
+import pkg_resources
+import warnings
+if pkg_resources.get_distribution("photochem").version != '0.5.6':
+    warnings.warn('You have photochem version '+pkg_resources.get_distribution("photochem").version
+                  +' installed, but version 0.5.6 is recommended.')
 from photochem import EvoAtmosphere, PhotoException
 from photochem import equilibrate
 from photochem.utils._format import yaml, FormatSettings_main, MyDumper
@@ -37,7 +41,7 @@ class EvoAtmosphereGasGiant(EvoAtmosphere):
             The number of layers in the photochemical model, by default 100
         P_ref : float, optional
             Pressure level corresponding to the planet_radius, by default 1e6 dynes/cm^2
-        thermo_file: str, optional
+        thermo_file : str, optional
             Optionally include a dedicated thermodynamic file.
         """        
         
@@ -48,9 +52,9 @@ class EvoAtmosphereGasGiant(EvoAtmosphere):
         sol['planet']['planet-radius'] = float(planet_radius)
         sol['planet']['photon-scale-factor'] = float(photon_scale_factor)
         sol = FormatSettings_main(sol)
-        with NamedTemporaryFile('w',suffix='.txt',delete=False) as ff:
+        with NamedTemporaryFile('w',suffix='.txt') as ff:
             ff.write(ATMOSPHERE_INIT)
-            ff.close()
+            ff.flush()
             with NamedTemporaryFile('w',suffix='.yaml') as f:
                 yaml.dump(sol,f,Dumper=MyDumper)
                 super().__init__(
@@ -59,7 +63,6 @@ class EvoAtmosphereGasGiant(EvoAtmosphere):
                     stellar_flux_file,
                     ff.name
                 )
-            os.remove(ff.name)
 
         # Save inputs that matter
         self.planet_radius = planet_radius
@@ -115,18 +118,6 @@ class EvoAtmosphereGasGiant(EvoAtmosphere):
         self.total_step_counter = None
         self.nerrors = None
         self.robust_stepper_initialized = None
-
-    def initialize_to_climate_equilibrium_PT_picaso(self, df, Kzz_in, metallicity, CtoO, rainout_condensed_atoms=True):
-        """Idential to `initialize_to_climate_equilibrium_PT`, accepts a Pandas DataFrame
-        which holds `pressure` in bar, `temperature` in K. The order of input arrays are flipped 
-        (i.e., first element is TOA) following the PICASO convention.
-        """
-        P_in = df['pressure'].to_numpy()
-        T_in = df['temperature'].to_numpy()
-
-        self.initialize_to_climate_equilibrium_PT(P_in[::-1].copy()*1e6, T_in[::-1].copy(), Kzz_in[::-1].copy(), 
-                                                  metallicity, CtoO, rainout_condensed_atoms)
-        
 
     def initialize_to_climate_equilibrium_PT(self, P_in, T_in, Kzz_in, metallicity, CtoO, rainout_condensed_atoms=True):
         """Initialized the photochemical model to a climate model result that assumes chemical equilibrium
@@ -229,30 +220,6 @@ class EvoAtmosphereGasGiant(EvoAtmosphere):
         self.ind_b = np.argmin(np.abs(P1 - P1[ind]*self.BOA_pressure_factor))
         
         self._initialize_atmosphere(P1, T1, Kzz1, z1, mix1)
-
-    def reinitialize_to_new_climate_PT_picaso(self, df, Kzz_in):
-        """Idential to `reinitialize_to_new_climate_PT`, except accepts a PICASO df which contains
-        `pressure` in bar, `temperature` in K, and mixing ratios. The order of input arrays are flipped 
-        (i.e., first element is TOA) following the PICASO convention. 
-        """
-
-        P_in = df['pressure'].to_numpy()[::-1].copy()*1e6
-        T_in = df['temperature'].to_numpy()[::-1].copy()
-        species_names = self.dat.species_names[:(-2-self.dat.nsl)]
-        mix = {}
-        for key in df:
-            if key in species_names:
-                mix[key] = df[key].to_numpy()[::-1].copy()
-
-        # normalize
-        mix_tot = np.zeros(P_in.shape[0])
-        for key in mix:
-            mix_tot += mix[key]
-        for key in mix:
-            mix[key] = mix[key]/mix_tot
-
-        self.reinitialize_to_new_climate_PT(P_in, T_in, Kzz_in[::-1].copy(), mix)
-
 
     def reinitialize_to_new_climate_PT(self, P_in, T_in, Kzz_in, mix):
         """Reinitializes the photochemical model to the input P, T, Kzz, and mixing ratios
@@ -374,45 +341,6 @@ class EvoAtmosphereGasGiant(EvoAtmosphere):
                 self.set_lower_bc(sp, bc_type='press', press=Pi)
 
         self.prep_atmosphere(self.wrk.usol)
-
-    def add_concentrations_to_picaso_df(self, df):
-        """Adds photochem concentrations to a PICASO "profile" DataFrame
-
-        Parameters
-        ----------
-        df : DataFrame
-            Pandas DataFrame from PICASO, containing "pressure" in bar, "temperature" in
-            K, and gas concentrations in mixing ratios.
-
-        Returns
-        -------
-        DataFrame
-            Pandas DataFrame with Photochem result added. Mixing ratios are normalized so that
-            they sum to 1.
-        """        
-
-        # Get the photochem results
-        sol = self.return_atmosphere_climate_grid()
-
-        # Check to make sure P in df match what is in photochem
-        if not np.all(np.isclose(df['pressure'].to_numpy()[::-1].copy()*1e6, self.P_clima_grid)):
-            raise Exception('The pressures in `df` does not match the climate grid in photochem')
-
-        # Add mixing ratios to df
-        for key in sol:
-            if key not in ['pressure','temperature','Kzz']:
-                df[key] = sol[key][::-1].copy()
-
-        # Renormalized so that mixing ratios sum to 1
-        mix_tot = np.zeros(len(df['pressure']))
-        for key in df:
-            if key not in ['pressure', 'temperature']:
-                mix_tot += df[key].to_numpy()
-        for key in df:
-            if key not in ['pressure', 'temperature']:
-                df[key] = df[key]/mix_tot
-
-        return df
 
     def return_atmosphere_climate_grid(self):
         """Returns a dictionary with temperature, Kzz and mixing ratios
@@ -689,14 +617,129 @@ class EvoAtmosphereGasGiant(EvoAtmosphere):
 
         self.prep_atmosphere(self.wrk.usol)
 
+    def add_concentrations_to_picaso_df(self, df):
+        """Adds photochem concentrations to a PICASO "profile" DataFrame
+
+        Parameters
+        ----------
+        df : DataFrame
+            A PICASO "inputs['atmosphere']['profile']" DataFrame containing pressure (bar), 
+            temperature (K), and gas concentrations in volume mixing ratios.
+
+        Returns
+        -------
+        DataFrame
+            Pandas DataFrame with Photochem result added. Mixing ratios are normalized so that
+            they sum to 1.
+        """        
+
+        # Get the photochem results
+        sol = self.return_atmosphere_climate_grid()
+
+        # Check to make sure P in df match what is in photochem
+        if not np.all(np.isclose(df['pressure'].to_numpy()[::-1].copy()*1e6, self.P_clima_grid)):
+            raise Exception('The pressures in `df` does not match the climate grid in photochem')
+
+        # Add mixing ratios to df
+        for key in sol:
+            if key not in ['pressure','temperature','Kzz']:
+                df[key] = sol[key][::-1].copy()
+
+        # Renormalized so that mixing ratios sum to 1
+        mix_tot = np.zeros(len(df['pressure']))
+        for key in df:
+            if key not in ['pressure', 'temperature', 'kz']:
+                mix_tot += df[key].to_numpy()
+        for key in df:
+            if key not in ['pressure', 'temperature', 'kz']:
+                df[key] = df[key]/mix_tot
+
+        return df
+
+    def initialize_to_climate_equilibrium_PT_picaso(self, df, Kzz_in, metallicity, CtoO, rainout_condensed_atoms=True):
+        """Wrapper to `initialize_to_climate_equilibrium_PT`, which accepts a Pandas DataFrame
+        containing the input pressure (bar) and temperature (K). The order of all input arrays 
+        flipped (i.e., first element is TOA) following the PICASO convention.
+
+        Parameters
+        ----------
+        df : DataFrame
+            A PICASO "inputs['atmosphere']['profile']" DataFrame containing pressure (bar), 
+            temperature (K). 
+        Kzz_in : ndarray[dim=1,float64]
+            Eddy diffusion (cm^2/s) array corresponding to each pressure level in df['pressure']
+        """
+        P_in = df['pressure'].to_numpy()
+        T_in = df['temperature'].to_numpy()
+
+        self.initialize_to_climate_equilibrium_PT(P_in[::-1].copy()*1e6, T_in[::-1].copy(), Kzz_in[::-1].copy(), 
+                                                  metallicity, CtoO, rainout_condensed_atoms)
+        
+    def reinitialize_to_new_climate_PT_picaso(self, df, Kzz_in):
+        """Wrapper to `reinitialize_to_new_climate_PT`, which accepts a Pandas DataFrame which contains
+        `pressure` in bar, `temperature` in K, and mixing ratios. The order of input arrays are flipped 
+        (i.e., first element is TOA) following the PICASO convention. 
+
+        Parameters
+        ----------
+        df : DataFrame
+            A PICASO "inputs['atmosphere']['profile']" DataFrame containing pressure (bar), 
+            temperature (K), and gas concentrations in volume mixing ratios. 
+        Kzz_in : ndarray[dim=1,float64]
+            Eddy diffusion (cm^2/s) array corresponding to each pressure level in df['pressure']
+        """
+
+        P_in = df['pressure'].to_numpy()[::-1].copy()*1e6
+        T_in = df['temperature'].to_numpy()[::-1].copy()
+        species_names = self.dat.species_names[:(-2-self.dat.nsl)]
+        mix = {}
+        for key in df:
+            if key in species_names:
+                mix[key] = df[key].to_numpy()[::-1].copy()
+
+        # normalize
+        mix_tot = np.zeros(P_in.shape[0])
+        for key in mix:
+            mix_tot += mix[key]
+        for key in mix:
+            mix[key] = mix[key]/mix_tot
+
+        self.reinitialize_to_new_climate_PT(P_in, T_in, Kzz_in[::-1].copy(), mix)
+
     def run_for_picaso(self, df, log10metallicity, CtoO, Kzz, first_run, rainout_condensed_atoms=True):
+        """Runs the Photochemical model to steady-state using inputs from the PICASO climate model.
+
+        Parameters
+        ----------
+        df : DataFrame
+            A PICASO "inputs['atmosphere']['profile']" DataFrame containing pressure (bar), 
+            temperature (K), and gas concentrations in volume mixing ratios. The first element
+            of each array is the top of the atomsphere (i.e. order is flipped).
+        log10metallicity : float
+            log10 metallicity relative to solar.
+        CtoO : float
+            The C/O ratio relative to solar.
+        Kzz : ndarray[dim=1,float64]
+            Eddy diffusion (cm^2/s) corresponding to each pressure in df['pressure'].
+        first_run : bool
+            If this is the first photochem call, then this should be True
+        rainout_condensed_atoms : bool, optional
+            If True and `first_run` is True, then the code rains out condensed
+            atoms when guesing the initial solution, by default True.
+
+        Returns
+        -------
+        DataFrame
+            A PICASO "inputs['atmosphere']['profile']" DataFrame similar to the input, except
+            steady-state photochemistry gas concentrations are loaded in.
+        """        
 
         # Initialize Photochem to `df`
         if first_run:
             self.initialize_to_climate_equilibrium_PT_picaso(df, Kzz, 10.0**log10metallicity, CtoO, rainout_condensed_atoms)
         else:
             self.reinitialize_to_new_climate_PT_picaso(df, Kzz)
-            if not np.isclose(self.metallicity, 10.0**log10metallicity) or not self.CtoO == CtoO:
+            if not np.isclose(self.metallicity, 10.0**log10metallicity) or not np.isclose(self.CtoO, CtoO):
                 raise Exception('`metallicity` or `CtoO` does not match.')
 
         # Compute steady state 
