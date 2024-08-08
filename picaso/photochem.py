@@ -23,6 +23,10 @@ if pkg_resources.get_distribution("photochem").version != '0.5.6':
 from photochem import EvoAtmosphere, PhotoException, zahnle_earth
 from photochem import equilibrate
 from photochem.utils._format import yaml, FormatSettings_main, MyDumper, FormatReactions_main
+
+# Turn off Panda's performance warnings
+import pandas as pd
+warnings.simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
     
 @nb.cfunc(nb.double(nb.double, nb.double, nb.double))
 def custom_binary_diffusion_fcn(mu_i, mubar, T):
@@ -657,8 +661,9 @@ class EvoAtmosphereGasGiant(EvoAtmosphere):
         if not np.all(np.isclose(df['pressure'].to_numpy()[::-1].copy()*1e6, self.P_clima_grid)):
             raise Exception('The pressures in `df` does not match the climate grid in photochem')
 
-        # Add mixing ratios to df
-        for key in sol:
+        # Add mixing ratios to df. Make sure to exclude particles.
+        species_names = self.dat.species_names[self.dat.np:(-2-self.dat.nsl)]
+        for key in species_names:
             if key not in ['pressure','temperature','Kzz']:
                 df[key] = sol[key][::-1].copy()
 
