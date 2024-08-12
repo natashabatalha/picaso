@@ -1,498 +1,1202 @@
-#def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,filename = '111',stfilename='111',network=None,network_ct=None,first=True,pc=None,user_psurf=True,user_psurf_add=3):
-#    raise Exception("Photochemistry not yet availble")
-
+"""
+This module contains wrappers for the "Photochem" photochemical
+model (https://github.com/Nicholaswogan/photochem). These wrappers are 
+called in "justdoit.py" during climate simulations if photochemistry
+is turned on. The only function useful for general users is 
+`generate_photochem_rx_and_thermo_file`, which can generate reaction and 
+thermodynamic files used for initializing Photochem
+"""
 
 import numpy as np
-from matplotlib import pyplot as plt
-import cantera as ct
+import numba as nb
+from numba import types
 from scipy import constants as const
 from scipy import integrate
-from astropy import constants
-import pickle
-#import utils
-#import planets
-from photochem.utils._format import  MyDumper, Loader, yaml, FormatReactions_main
-from photochem.utils import photochem2cantera
-from photochem import Atmosphere, EvoAtmosphere, PhotoException
-from .deq_chem import quench_level
-import yaml
+from tempfile import NamedTemporaryFile
+import copy
 
-try:
-    from yaml import CLoader as Loader, CDumper as Dumper
-except ImportError:
-    from yaml import Loader, Dumper
+import pkg_resources
+import warnings
+if pkg_resources.get_distribution("photochem").version != '0.5.6':
+    warnings.warn('You have photochem version '+pkg_resources.get_distribution("photochem").version
+                  +' installed, but version 0.5.6 is recommended.')
+from photochem import EvoAtmosphere, PhotoException, zahnle_earth
+from photochem import equilibrate
+from photochem.utils._format import yaml, FormatSettings_main, MyDumper, FormatReactions_main
 
-class flowmap( dict ): pass
-def flowmap_rep(dumper, data):
-    return dumper.represent_mapping( u'tag:yaml.org,2002:map', data, flow_style=True)
+# Turn off Panda's performance warnings
+import pandas as pd
+warnings.simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
+    
+@nb.cfunc(nb.double(nb.double, nb.double, nb.double))
+def custom_binary_diffusion_fcn(mu_i, mubar, T):
+    # Equation 6 in Gladstone et al. (1996)
+    b = 3.64e-5*T**(1.75-1.0)*7.3439e21*np.sqrt(2.01594/mu_i)
+    return b
 
-class blockseqtrue( list ): pass
-def blockseqtrue_rep(dumper, data):
-    return dumper.represent_sequence( u'tag:yaml.org,2002:seq', data, flow_style=True )
-yaml.add_representer(blockseqtrue, blockseqtrue_rep)
-yaml.add_representer(flowmap, flowmap_rep)
+###
+### Extension of EvoAtmosphere class for gas giants
+###
 
+class EvoAtmosphereGasGiant(EvoAtmosphere):
 
+    def __init__(self, mechanism_file, stellar_flux_file, planet_mass, planet_radius, 
+                 nz=100, photon_scale_factor=1.0, P_ref=1.0e6, thermo_file=None):
+        """Initializes the code
 
-class TempPress:
+        Parameters
+        ----------
+        mechanism_file : str
+            Path to the file describing the reaction mechanism
+        stellar_flux_file : str
+            Path to the file describing the stellar UV flux.
+        planet_mass : float
+            Planet mass in grams
+        planet_radius : float
+            Planet radius in cm
+        nz : int, optional
+            The number of layers in the photochemical model, by default 100
+        P_ref : float, optional
+            Pressure level corresponding to the planet_radius, by default 1e6 dynes/cm^2
+        thermo_file : str, optional
+            Optionally include a dedicated thermodynamic file.
+        """        
+        
+        # First, initialize photochemical model with dummy inputs
+        sol = yaml.safe_load(SETTINGS_TEMPLATE)
+        sol['atmosphere-grid']['number-of-layers'] = int(nz)
+        sol['planet']['planet-mass'] = float(planet_mass)
+        sol['planet']['planet-radius'] = float(planet_radius)
+        sol['planet']['photon-scale-factor'] = float(photon_scale_factor)
+        sol = FormatSettings_main(sol)
+        with NamedTemporaryFile('w',suffix='.txt') as ff:
+            ff.write(ATMOSPHERE_INIT)
+            ff.flush()
+            with NamedTemporaryFile('w',suffix='.yaml') as f:
+                yaml.dump(sol,f,Dumper=MyDumper)
+                super().__init__(
+                    mechanism_file,
+                    f.name,
+                    stellar_flux_file,
+                    ff.name
+                )
 
-    def __init__(self, P, T):
-        self.log10P = np.log10(P)[::-1]
-        self.T = T[::-1]
+        # Save inputs that matter
+        self.planet_radius = planet_radius
+        self.planet_mass = planet_mass
+        self.P_ref = P_ref
 
-    def temperature(self, P):
-        return np.interp(np.log10(P), self.log10P, self.T)
+        # Parameters using during initialization
+        # The factor of pressure the atmosphere extends
+        # compared to predicted quench points of gases
+        self.BOA_pressure_factor = 5.0
+        # If True, then the guessed initial condition will used
+        # quenching relations as an initial guess
+        self.initial_cond_with_quenching = True
+        # For computing chemical equilibrium at a metallicity.
+        if thermo_file is None:
+            thermo_file = mechanism_file
+        self.m = Metallicity(thermo_file)
 
+        # Parameters for determining steady state
+        self.TOA_pressure_avg = 1.0e-7*1e6 # mean TOA pressure (dynes/cm^2)
+        self.max_dT_tol = 5 # The permitted difference between T in photochem and desired T
+        self.max_dlog10edd_tol = 0.2 # The permitted difference between Kzz in photochem and desired Kzz
+        self.freq_update_PTKzz = 1000 # step frequency to update PTKzz profile.
+        self.max_total_step = 100_000 # Maximum total allowed steps before giving up
+        self.min_step_conv = 300 # Min internal steps considered before convergence is allowed
+        self.verbose = True # print information or not?
+        self.freq_print = 100 # Frequency in which to print
+
+        # Values in photochem to adjust
+        self.var.verbose = 0
+        self.var.upwind_molec_diff = True
+        self.var.autodiff = True # Turn on autodiff
+        self.var.atol = 1.0e-18
+        self.var.conv_min_mix = 1e-10 # Min mix to consider during convergence check
+        self.var.conv_longdy = 0.01 # threshold relative change that determines convergence
+        self.var.custom_binary_diffusion_fcn = custom_binary_diffusion_fcn
+
+        # Values that will be needed later. All of these set
+        # in `initialize_to_climate_equilibrium_PT`
+        self.P_clima_grid = None # The climate grid
+        self.metallicity = None
+        self.CtoO = None
+        # Below for interpolation
+        self.log10P_interp = None
+        self.T_interp = None
+        self.log10edd_interp = None
+        self.P_desired = None
+        self.T_desired = None
+        self.Kzz_desired = None
+        # Index of climate grid that is bottom of photochemical grid
+        self.ind_b = None
+        # information needed during robust stepping
+        self.total_step_counter = None
+        self.nerrors = None
+        self.robust_stepper_initialized = None
+
+    def initialize_to_climate_equilibrium_PT(self, P_in, T_in, Kzz_in, metallicity, CtoO, rainout_condensed_atoms=True):
+        """Initialized the photochemical model to a climate model result that assumes chemical equilibrium
+        at some metallicity and C/O ratio.
+
+        Parameters
+        ----------
+        P_in : ndarray[dim=1,double]
+            The pressures in the climate grid (dynes/cm^2). P_in[0] is pressure at
+            the deepest layer of the atmosphere
+        T_in : ndarray[dim1,double]
+            The temperatures in the climate grid corresponding to P_in (K)
+        Kzz_in : ndarray[dim1,double]
+            The eddy diffusion at each pressure P_in (cm^2/s)
+        metallicity : float
+            Metallicity relative to solar.
+        CtoO : float
+            C/O ratio relative to solar. So CtoO = 1 is solar C/O ratio.
+            CtoO = 2 is twice the solar C/O ratio.
+        """
+
+        if P_in.shape[0] != T_in.shape[0]:
+            raise Exception('Input P and T must have same shape')
+        if P_in.shape[0] != Kzz_in.shape[0]:
+            raise Exception('Input P and Kzz must have same shape')
+
+        # Save inputs
+        self.P_clima_grid = P_in
+        self.metallicity = metallicity
+        self.CtoO = CtoO
+
+        # Compute chemical equilibrium along the whole P-T profile
+        mix, mubar = self.m.composition(T_in, P_in, CtoO, metallicity, rainout_condensed_atoms)
+
+        if self.TOA_pressure_avg*3 > P_in[-1]:
+            raise Exception('The photochemical grid needs to extend above the climate grid')
+
+        # Altitude of P-T grid
+        P1, T1, mubar1, z1 = compute_altitude_of_PT(P_in, self.P_ref, T_in, mubar, self.planet_radius, self.planet_mass, self.TOA_pressure_avg)
+        # If needed, extrapolate Kzz and mixing ratios
+        if P1.shape[0] != Kzz_in.shape[0]:
+            Kzz1 = np.append(Kzz_in,Kzz_in[-1])
+            mix1 = {}
+            for sp in mix:
+                mix1[sp] = np.append(mix[sp],mix[sp][-1])
+        else:
+            Kzz1 = Kzz_in.copy()
+            mix1 = mix
+
+        # The gravity
+        grav1 = gravity(self.planet_radius, self.planet_mass, z1)
+
+        # Next, we compute the quench levels
+        quench_levels = determine_quench_levels(T1, P1, Kzz1, mubar1, grav1)
+        ind = np.min(quench_levels) # the deepest quench level
+
+        # If desired, this bit applies quenched initial conditions, and recomputes
+        # the altitude profile for this new mubar.
+        if self.initial_cond_with_quenching:
+
+            # Apply quenching to mixing ratios
+            mix1['CH4'][quench_levels[0]:] = mix1['CH4'][quench_levels[0]]
+            mix1['CO'][quench_levels[0]:] = mix1['CO'][quench_levels[0]]
+            mix1['CO2'][quench_levels[1]:] = mix1['CO2'][quench_levels[1]]
+            mix1['NH3'][quench_levels[2]:] = mix1['NH3'][quench_levels[2]]
+            mix1['HCN'][quench_levels[3]:] = mix1['HCN'][quench_levels[3]]
+
+            # Quenching out H2 at the CH4 level seems to work well
+            mix1['H2'][quench_levels[0]:] = mix1['H2'][quench_levels[0]]
+
+            # Normalize mixing ratios
+            mix_tot = np.zeros(mix1['CH4'].shape[0])
+            for key in mix1:
+                mix_tot += mix1[key]
+            for key in mix1:
+                mix1[key] = mix1[key]/mix_tot
+
+            # Compute mubar again
+            mubar1[:] = 0.0
+            for i,sp in enumerate(self.dat.species_names[:-2]):
+                if sp in mix1:
+                    for j in range(P1.shape[0]):
+                        mubar1[j] += mix1[sp][j]*self.dat.species_mass[i]
+
+            # Update z1 to get a new altitude profile
+            P1, T1, mubar1, z1 = compute_altitude_of_PT(P1, self.P_ref, T1, mubar1, self.planet_radius, self.planet_mass, self.TOA_pressure_avg)
+
+        # Save P-T-Kzz for later interpolation and corrections
+        self.log10P_interp = np.log10(P1.copy()[::-1])
+        self.T_interp = T1.copy()[::-1]
+        self.log10edd_interp = np.log10(Kzz1.copy()[::-1])
+        self.P_desired = P1.copy()
+        self.T_desired = T1.copy()
+        self.Kzz_desired = Kzz1.copy()
+
+        # Bottom of photochemical model will be at a pressure a factor
+        # larger than the predicted quench pressure.
+        if P1[ind]*self.BOA_pressure_factor > P1[0]:
+            raise Exception('BOA in photochemical model wants to be deeper than BOA of climate model.')
+        self.ind_b = np.argmin(np.abs(P1 - P1[ind]*self.BOA_pressure_factor))
+        
+        self._initialize_atmosphere(P1, T1, Kzz1, z1, mix1)
+
+    def reinitialize_to_new_climate_PT(self, P_in, T_in, Kzz_in, mix):
+        """Reinitializes the photochemical model to the input P, T, Kzz, and mixing ratios
+        from the climate model.
+
+        Parameters
+        ----------
+        P_in : ndarray[ndim=1,double]
+            Pressure grid in climate model (dynes/cm^2).
+        T_in : ndarray[ndim=1,double]
+            Temperatures corresponding to P_in (K)
+        Kzz_in : ndarray[ndim,double]
+            Eddy diffusion coefficients at each pressure level (cm^2/s)
+        mix : dict
+            Mixing ratios of all species in the atmosphere
+
+        """        
+
+        if self.P_clima_grid is None:
+            raise Exception('This routine can only be called after `initialize_to_climate_equilibrium_PT`')
+        if not np.all(np.isclose(self.P_clima_grid,P_in)):
+            raise Exception('Input pressure grid does not match saved pressure grid')
+        if P_in.shape[0] != T_in.shape[0]:
+            raise Exception('Input P and T must have same shape')
+        if P_in.shape[0] != Kzz_in.shape[0]:
+            raise Exception('Input P and Kzz must have same shape')
+        for key in mix:
+            if P_in.shape[0] != mix[key].shape[0]:
+                raise Exception('Input P and mix must have same shape')
+        species_names = self.dat.species_names[:(-2-self.dat.nsl)]
+        if set(list(mix.keys())) != set(species_names):
+            raise Exception('Some species are missing from input mix') 
+        
+        # Compute mubar
+        mubar = np.zeros(T_in.shape[0])
+        species_mass = self.dat.species_mass
+        particle_names = self.dat.species_names[:self.dat.np]
+        for sp in mix:
+            if sp not in particle_names:
+                ind = species_names.index(sp)
+                mubar = mubar + mix[sp]*species_mass[ind]
+
+        # Compute altitude of P-T grid
+        P1, T1, mubar1, z1 = compute_altitude_of_PT(P_in, self.P_ref, T_in, mubar, self.planet_radius, self.planet_mass, self.TOA_pressure_avg)
+        # If needed, extrapolte Kzz and mixing ratios
+        if P1.shape[0] != Kzz_in.shape[0]:
+            Kzz1 = np.append(Kzz_in,Kzz_in[-1])
+            mix1 = {}
+            for sp in mix:
+                mix1[sp] = np.append(mix[sp],mix[sp][-1])
+        else:
+            Kzz1 = Kzz_in.copy()
+            mix1 = mix
+
+        # Save P-T-Kzz for later interpolation and corrections
+        self.log10P_interp = np.log10(P1.copy()[::-1])
+        self.T_interp = T1.copy()[::-1]
+        self.log10edd_interp = np.log10(Kzz1.copy()[::-1])
+        self.P_desired = P1.copy()
+        self.T_desired = T1.copy()
+        self.Kzz_desired = Kzz1.copy()
+
+        self._initialize_atmosphere(P1, T1, Kzz1, z1, mix1)
+
+    def _initialize_atmosphere(self, P1, T1, Kzz1, z1, mix1):
+        "Little helper function preventing code duplication."
+
+        # Compute TOA index
+        ind_t = np.argmin(np.abs(P1 - self.TOA_pressure_avg))
+
+        # Shift z profile so that zero is at photochem BOA
+        z1_p = z1 - z1[self.ind_b]
+
+        # Calculate the photochemical grid
+        z_top = z1_p[ind_t]
+        z_bottom = 0.0
+        dz = (z_top - z_bottom)/self.var.nz
+        z_p = np.empty(self.var.nz)
+        z_p[0] = dz/2.0
+        for i in range(1,self.var.nz):
+            z_p[i] = z_p[i-1] + dz
+
+        # Now, we interpolate all values to the photochemical grid
+        P_p = 10.0**np.interp(z_p, z1_p, np.log10(P1))
+        T_p = np.interp(z_p, z1_p, T1)
+        Kzz_p = 10.0**np.interp(z_p, z1_p, np.log10(Kzz1))
+        mix_p = {}
+        for sp in mix1:
+            mix_p[sp] = 10.0**np.interp(z_p, z1_p, np.log10(mix1[sp]))
+        k_boltz = const.k*1e7
+        den_p = P_p/(k_boltz*T_p)
+
+        # Compute new planet radius
+        planet_radius_new = self.planet_radius + z1[self.ind_b]
+
+        # Update photochemical model grid
+        self.dat.planet_radius = planet_radius_new
+        self.update_vertical_grid(TOA_alt=z_top) # this will update gravity for new planet radius
+        self.set_temperature(T_p)
+        self.var.edd = Kzz_p
+        usol = np.ones(self.wrk.usol.shape)*1e-40
+        species_names = self.dat.species_names[:(-2-self.dat.nsl)]
+        for sp in mix_p:
+            if sp in species_names:
+                ind = species_names.index(sp)
+                usol[ind,:] = mix_p[sp]*den_p
+        self.wrk.usol = usol
+
+        # Now set boundary conditions
+        for i,sp in enumerate(species_names):
+            if i >= self.dat.np:
+                self.set_lower_bc(sp, bc_type='Moses') # gas
+            else:
+                self.set_lower_bc(sp, bc_type='vdep', vdep=0.0) # particle
+        particle_names = self.dat.species_names[:self.dat.np]
+        for sp in mix_p:
+            if sp not in particle_names:
+                Pi = P_p[0]*mix_p[sp][0]
+                self.set_lower_bc(sp, bc_type='press', press=Pi)
+
+        self.prep_atmosphere(self.wrk.usol)
+
+    def return_atmosphere_climate_grid(self):
+        """Returns a dictionary with temperature, Kzz and mixing ratios
+        on the climate model grid.
+
+        Returns
+        -------
+        dict
+            Contains temperature, Kzz, and mixing ratios.
+        """ 
+        if self.P_clima_grid is None:
+            raise Exception('This routine can only be called after `initialize_to_climate_equilibrium_PT`')
+
+        # return full atmosphere
+        out = self.return_atmosphere()
+
+        # Interpolate full atmosphere to clima grid
+        sol = {}
+        sol['pressure'] = self.P_clima_grid.copy()
+        log10Pclima = np.log10(self.P_clima_grid[::-1]).copy()
+        log10P = np.log10(out['pressure'][::-1]).copy()
+
+        T = np.interp(log10Pclima, log10P, out['temperature'][::-1].copy())
+        sol['temperature'] = T[::-1].copy()
+
+        Kzz = np.interp(log10Pclima, log10P, np.log10(out['Kzz'][::-1].copy()))
+        sol['Kzz'] = 10.0**Kzz[::-1].copy()
+
+        for key in out:
+            if key not in ['pressure','temperature','Kzz']:
+                tmp = np.log10(np.clip(out[key][::-1].copy(),a_min=1e-100,a_max=np.inf))
+                mix = np.interp(log10Pclima, log10P, tmp)
+                sol[key] = 10.0**mix[::-1].copy()
+
+        return sol
+
+    def return_atmosphere(self, include_deep_atmosphere = True, equilibrium = False, rainout_condensed_atoms = True):
+        """Returns a dictionary with temperature, Kzz and mixing ratios
+        on the photochemical grid.
+
+        Parameters
+        ----------
+        include_deep_atmosphere : bool, optional
+            If True, then results will include portions of the deep
+            atomsphere that are not part of the photochemical grid, by default True
+
+        Returns
+        -------
+        dict
+            Contains temperature, Kzz, and mixing ratios.
+        """        
+
+        if self.P_clima_grid is None:
+            raise Exception('This routine can only be called after `initialize_to_climate_equilibrium_PT`')
+
+        out = {}
+        out['pressure'] = self.wrk.pressure_hydro
+        out['temperature'] = self.var.temperature
+        out['Kzz'] = self.var.edd
+        species_names = self.dat.species_names[:(-2-self.dat.nsl)]
+        if equilibrium:
+            mix, mubar = self.m.composition(out['temperature'], out['pressure'], self.CtoO, self.metallicity, rainout_condensed_atoms)
+            for key in mix:
+                out[key] = mix[key]
+            for key in species_names[:self.dat.np]:
+                out[key] = np.zeros(mix['H2'].shape[0])
+        else:
+            for i,sp in enumerate(species_names):
+                mix = self.wrk.usol[i,:]/self.wrk.density
+                out[sp] = mix
+
+        if not include_deep_atmosphere:
+            return out
+
+        # Prepend the deeper atmosphere, which we will assume is at Equilibrium
+        inds = np.where(self.P_desired > self.wrk.pressure_hydro[0])
+        out1 = {}
+        out1['pressure'] = self.P_desired[inds]
+        out1['temperature'] = self.T_desired[inds]
+        out1['Kzz'] = self.Kzz_desired[inds]
+        mix, mubar = self.m.composition(out1['temperature'], out1['pressure'], self.CtoO, self.metallicity, rainout_condensed_atoms)
+        
+        out['pressure'] = np.append(out1['pressure'],out['pressure'])
+        out['temperature'] = np.append(out1['temperature'],out['temperature'])
+        out['Kzz'] = np.append(out1['Kzz'],out['Kzz'])
+        for i,sp in enumerate(species_names):
+            if sp in mix:
+                out[sp] = np.append(mix[sp],out[sp])
+            else:
+                out[sp] = np.append(np.zeros(mix['H2'].shape[0]),out[sp])
+
+        return out
+    
+    def initialize_robust_stepper(self, usol):
+        """Initialized a robust integrator.
+
+        Parameters
+        ----------
+        usol : ndarray[double,dim=2]
+            Input number densities
+        """        
+        if self.P_clima_grid is None:
+            raise Exception('This routine can only be called after `initialize_to_climate_equilibrium_PT`')
+        
+        self.total_step_counter = 0
+        self.nerrors = 0
+        self.initialize_stepper(usol)
+        self.robust_stepper_initialized = True
+
+    def robust_step(self):
+        """Takes a single robust integrator step
+
+        Returns
+        -------
+        tuple
+            The tuple contains two bools `give_up, reached_steady_state`. If give_up is True
+            then the algorithm things it is time to give up on reaching a steady state. If
+            reached_steady_state then the algorithm has reached a steady state within
+            tolerance.
+        """        
+        if self.P_clima_grid is None:
+            raise Exception('This routine can only be called after `initialize_to_climate_equilibrium_PT`')
+
+        if not self.robust_stepper_initialized:
+            raise Exception('This routine can only be called after `initialize_robust_stepper`')
+
+        give_up = False
+        reached_steady_state = False
+
+        for i in range(1):
+            try:
+                self.step()
+                self.total_step_counter += 1
+            except PhotoException as e:
+                # If there is an error, lets reinitialize, but get rid of any
+                # negative numbers
+                usol = np.clip(self.wrk.usol.copy(),a_min=1.0e-40,a_max=np.inf)
+                self.initialize_stepper(usol)
+                self.nerrors += 1
+
+                if self.nerrors > 10:
+                    give_up = True
+                    break
+
+            # convergence checking
+            converged = self.check_for_convergence()
+
+            # Compute the max difference between the P-T profile in photochemical model
+            # and the desired P-T profile
+            T_p = np.interp(np.log10(self.wrk.pressure_hydro.copy()[::-1]), self.log10P_interp, self.T_interp)
+            T_p = T_p.copy()[::-1]
+            max_dT = np.max(np.abs(T_p - self.var.temperature))
+
+            # Compute the max difference between the P-edd profile in photochemical model
+            # and the desired P-edd profile
+            log10edd_p = np.interp(np.log10(self.wrk.pressure_hydro.copy()[::-1]), self.log10P_interp, self.log10edd_interp)
+            log10edd_p = log10edd_p.copy()[::-1]
+            max_dlog10edd = np.max(np.abs(log10edd_p - np.log10(self.var.edd)))
+
+            # TOA pressure
+            TOA_pressure = self.wrk.pressure_hydro[-1]
+
+            condition1 = converged and self.wrk.nsteps > self.min_step_conv or self.wrk.tn > self.var.equilibrium_time
+            condition2 = max_dT < self.max_dT_tol and max_dlog10edd < self.max_dlog10edd_tol and self.TOA_pressure_avg/3 < TOA_pressure < self.TOA_pressure_avg*3
+
+            if condition1 and condition2:
+                if self.verbose:
+                    print('nsteps = %i  longdy = %.1e  max_dT = %.1e  max_dlog10edd = %.1e  TOA_pressure = %.1e'% \
+                        (self.total_step_counter, self.wrk.longdy, max_dT, max_dlog10edd, TOA_pressure/1e6))
+                # success!
+                reached_steady_state = True
+                break
+
+            if not (self.wrk.nsteps % self.freq_update_PTKzz) or (condition1 and not condition2):
+                # After ~1000 steps, lets update P,T, edd and vertical grid, if possible.
+                try:
+                    self.set_press_temp_edd(self.P_desired,self.T_desired,self.Kzz_desired,hydro_pressure=True)
+                except PhotoException:
+                    pass
+                try:
+                    self.update_vertical_grid(TOA_pressure=self.TOA_pressure_avg)
+                except PhotoException:
+                    pass
+                self.initialize_stepper(self.wrk.usol)
+
+            if self.total_step_counter > self.max_total_step:
+                give_up = True
+                break
+
+            if not (self.wrk.nsteps % self.freq_print) and self.verbose:
+                print('nsteps = %i  longdy = %.1e  max_dT = %.1e  max_dlog10edd = %.1e  TOA_pressure = %.1e'% \
+                    (self.total_step_counter, self.wrk.longdy, max_dT, max_dlog10edd, TOA_pressure/1e6))
+                
+        return give_up, reached_steady_state
+    
+    def find_steady_state(self):
+        """Attempts to find a photochemical steady state.
+
+        Returns
+        -------
+        bool
+            If True, then the routine was successful.
+        """    
+
+        self.initialize_robust_stepper(self.wrk.usol)
+        success = True
+        while True:
+            give_up, reached_steady_state = self.robust_step()
+            if reached_steady_state:
+                break
+            if give_up:
+                success = False
+                break
+        return success
+    
+    def model_state_to_dict(self):
+        """Returns a dictionary containing all information needed to reinitialize the atmospheric
+        state. This dictionary can be used as an input to "initialize_from_dict".
+        """
+
+        if self.P_clima_grid is None:
+            raise Exception('This routine can only be called after `initialize_to_climate_equilibrium_PT`')
+
+        out = {}
+        out['P_clima_grid'] = self.P_clima_grid
+        out['metallicity'] = self.metallicity
+        out['CtoO'] = self.CtoO
+        out['log10P_interp'] = self.log10P_interp
+        out['T_interp'] = self.T_interp
+        out['log10edd_interp'] = self.log10edd_interp
+        out['P_desired'] = self.P_desired
+        out['T_desired'] = self.T_desired
+        out['Kzz_desired'] = self.Kzz_desired
+        out['ind_b'] = self.ind_b
+        out['planet_radius_new'] = self.dat.planet_radius
+        out['top_atmos'] = self.var.top_atmos
+        out['temperature'] = self.var.temperature
+        out['edd'] = self.var.edd
+        out['usol'] = self.wrk.usol
+        out['P_i_surf'] = (self.wrk.usol[self.dat.np:,0]/self.wrk.density[0])*self.wrk.pressure[0]
+
+        return out
+
+    def initialize_from_dict(self, out):
+        """Initializes the model from a dictionary created by the "model_state_to_dict" routine.
+        """
+
+        self.P_clima_grid = out['P_clima_grid']
+        self.metallicity = out['metallicity']
+        self.CtoO = out['CtoO']
+        self.log10P_interp = out['log10P_interp']
+        self.T_interp = out['T_interp']
+        self.log10edd_interp = out['log10edd_interp']
+        self.P_desired = out['P_desired']
+        self.T_desired = out['T_desired']
+        self.Kzz_desired = out['Kzz_desired']
+        self.ind_b = out['ind_b']
+        self.dat.planet_radius = out['planet_radius_new']
+        self.update_vertical_grid(TOA_alt=out['top_atmos'])
+        self.set_temperature(out['temperature'])
+        self.var.edd = out['edd']
+        self.wrk.usol = out['usol']
+
+        # Now set boundary conditions
+        species_names = self.dat.species_names[:(-2-self.dat.nsl)]
+        for i,sp in enumerate(species_names):
+            if i >= self.dat.np:
+                self.set_lower_bc(sp, bc_type='Moses') # gas
+            else:
+                self.set_lower_bc(sp, bc_type='vdep', vdep=0.0) # particle
+        species_names = self.dat.species_names[self.dat.np:(-2-self.dat.nsl)]
+        for i,sp in enumerate(species_names):
+            self.set_lower_bc(sp, bc_type='press', press=out['P_i_surf'][i])
+
+        self.prep_atmosphere(self.wrk.usol)
+
+###
+### Some PICASO specific methods for the class
+###
+
+    def add_concentrations_to_picaso_df(self, df):
+        """Adds photochem concentrations to a PICASO "profile" DataFrame
+
+        Parameters
+        ----------
+        df : DataFrame
+            A PICASO "inputs['atmosphere']['profile']" DataFrame containing pressure (bar), 
+            temperature (K), and gas concentrations in volume mixing ratios.
+
+        Returns
+        -------
+        DataFrame
+            Pandas DataFrame with Photochem result added. Mixing ratios are normalized so that
+            they sum to 1.
+        """        
+
+        # Get the photochem results
+        sol = self.return_atmosphere_climate_grid()
+
+        # Check to make sure P in df match what is in photochem
+        if not np.all(np.isclose(df['pressure'].to_numpy()[::-1].copy()*1e6, self.P_clima_grid)):
+            raise Exception('The pressures in `df` does not match the climate grid in photochem')
+
+        # Add mixing ratios to df. Make sure to exclude particles.
+        species_names = self.dat.species_names[self.dat.np:(-2-self.dat.nsl)]
+        for key in species_names:
+            if key not in ['pressure','temperature','Kzz']:
+                df[key] = sol[key][::-1].copy()
+
+        # Renormalized so that mixing ratios sum to 1
+        mix_tot = np.zeros(len(df['pressure']))
+        for key in df:
+            if key not in ['pressure', 'temperature', 'kz']:
+                mix_tot += df[key].to_numpy()
+        for key in df:
+            if key not in ['pressure', 'temperature', 'kz']:
+                df[key] = df[key]/mix_tot
+
+        return df
+
+    def initialize_to_climate_equilibrium_PT_picaso(self, df, Kzz_in, metallicity, CtoO, rainout_condensed_atoms=True):
+        """Wrapper to `initialize_to_climate_equilibrium_PT`, which accepts a Pandas DataFrame
+        containing the input pressure (bar) and temperature (K). The order of all input arrays 
+        flipped (i.e., first element is TOA) following the PICASO convention.
+
+        Parameters
+        ----------
+        df : DataFrame
+            A PICASO "inputs['atmosphere']['profile']" DataFrame containing pressure (bar), 
+            temperature (K). 
+        Kzz_in : ndarray[dim=1,float64]
+            Eddy diffusion (cm^2/s) array corresponding to each pressure level in df['pressure']
+        """
+        P_in = df['pressure'].to_numpy()
+        T_in = df['temperature'].to_numpy()
+
+        self.initialize_to_climate_equilibrium_PT(P_in[::-1].copy()*1e6, T_in[::-1].copy(), Kzz_in[::-1].copy(), 
+                                                  metallicity, CtoO, rainout_condensed_atoms)
+        
+    def reinitialize_to_new_climate_PT_picaso(self, df, Kzz_in):
+        """Wrapper to `reinitialize_to_new_climate_PT`, which accepts a Pandas DataFrame which contains
+        `pressure` in bar, `temperature` in K, and mixing ratios. The order of input arrays are flipped 
+        (i.e., first element is TOA) following the PICASO convention. 
+
+        Parameters
+        ----------
+        df : DataFrame
+            A PICASO "inputs['atmosphere']['profile']" DataFrame containing pressure (bar), 
+            temperature (K), and gas concentrations in volume mixing ratios. 
+        Kzz_in : ndarray[dim=1,float64]
+            Eddy diffusion (cm^2/s) array corresponding to each pressure level in df['pressure']
+        """
+
+        P_in = df['pressure'].to_numpy()[::-1].copy()*1e6
+        T_in = df['temperature'].to_numpy()[::-1].copy()
+        species_names = self.dat.species_names[:(-2-self.dat.nsl)]
+        mix = {}
+        for key in df:
+            if key in species_names:
+                mix[key] = df[key].to_numpy()[::-1].copy()
+
+        # normalize
+        mix_tot = np.zeros(P_in.shape[0])
+        for key in mix:
+            mix_tot += mix[key]
+        for key in mix:
+            mix[key] = mix[key]/mix_tot
+
+        self.reinitialize_to_new_climate_PT(P_in, T_in, Kzz_in[::-1].copy(), mix)
+
+    def run_for_picaso(self, df, log10metallicity, CtoO, Kzz, first_run, rainout_condensed_atoms=True):
+        """Runs the Photochemical model to steady-state using inputs from the PICASO climate model.
+
+        Parameters
+        ----------
+        df : DataFrame
+            A PICASO "inputs['atmosphere']['profile']" DataFrame containing pressure (bar), 
+            temperature (K), and gas concentrations in volume mixing ratios. The first element
+            of each array is the top of the atomsphere (i.e. order is flipped).
+        log10metallicity : float
+            log10 metallicity relative to solar.
+        CtoO : float
+            The C/O ratio relative to solar.
+        Kzz : ndarray[dim=1,float64]
+            Eddy diffusion (cm^2/s) corresponding to each pressure in df['pressure'].
+        first_run : bool
+            If this is the first photochem call, then this should be True
+        rainout_condensed_atoms : bool, optional
+            If True and `first_run` is True, then the code rains out condensed
+            atoms when guesing the initial solution, by default True.
+
+        Returns
+        -------
+        DataFrame
+            A PICASO "inputs['atmosphere']['profile']" DataFrame similar to the input, except
+            steady-state photochemistry gas concentrations are loaded in.
+        """        
+
+        # Initialize Photochem to `df`
+        if first_run:
+            self.initialize_to_climate_equilibrium_PT_picaso(df, Kzz, 10.0**log10metallicity, CtoO, rainout_condensed_atoms)
+        else:
+            self.reinitialize_to_new_climate_PT_picaso(df, Kzz)
+            if not np.isclose(self.metallicity, 10.0**log10metallicity) or not np.isclose(self.CtoO, CtoO):
+                raise Exception('`metallicity` or `CtoO` does not match.')
+
+        # Compute steady state 
+        success = self.find_steady_state()
+        assert success
+
+        # Return a DataFrame with the Photochem chemistry
+        return self.add_concentrations_to_picaso_df(df)
+
+###
+### Helper functions for the EvoAtmosphereGasGiant class
+###
+
+@nb.njit()
+def CH4_CO_quench_timescale(T, P):
+    "T in K, P in dynes/cm^2, tq in s. Equation 11."
+    P_bars = P/1.0e6
+    tq = 3.0e-6*P_bars**-1*np.exp(42_000.0/T)
+    return tq
+
+@nb.njit()
+def NH3_quench_timescale(T, P):
+    "T in K, P in dynes/cm^2, tq in s. Equation 32."
+    P_bars = P/1.0e6
+    tq = 1.0e-7*P_bars**-1*np.exp(52_000.0/T)
+    return tq
+
+@nb.njit()
+def HCN_quench_timescale(T, P):
+    "T in K, P in dynes/cm^2, tq in s. From PICASO."
+    P_bars = P/1.0e6
+    tq = (1.5e-4/(P_bars*(3.0**0.7)))*np.exp(36_000.0/T)
+    return tq
+
+@nb.njit()
+def CO2_quench_timescale(T, P):
+    "T in K, P in dynes/cm^2, tq in s. Equation 44."
+    P_bars = P/1.0e6
+    tq = 1.0e-10*P_bars**-0.5*np.exp(38_000.0/T)
+    return tq
+
+@nb.njit()
+def scale_height(T, mubar, grav):
+    "All inputs are CGS."
+    k_boltz = const.k*1e7
+    H = (const.Avogadro*k_boltz*T)/(mubar*grav)
+    return H
+
+@nb.njit()
+def determine_quench_levels(T, P, Kzz, mubar, grav):
+
+    # Mixing timescale
+    tau_mix = scale_height(T, mubar, grav)**2/Kzz
+
+    # Quenching timescales
+    tau_CH4 = CH4_CO_quench_timescale(T, P)
+    tau_CO2 = CO2_quench_timescale(T, P)
+    tau_NH3 = NH3_quench_timescale(T, P)
+    tau_HCN = HCN_quench_timescale(T, P)
+
+    # Quench level is when the chemistry timescale
+    # exceeds the mixing timescale.
+    quench_levels = np.zeros(4, dtype=np.int32)
+    
+    for i in range(P.shape[0]):
+        quench_levels[0] = i
+        if tau_CH4[i] > tau_mix[i]:
+            break
+
+    for i in range(P.shape[0]):
+        quench_levels[1] = i
+        if tau_CO2[i] > tau_mix[i]:
+            break
+
+    for i in range(P.shape[0]):
+        quench_levels[2] = i
+        if tau_NH3[i] > tau_mix[i]:
+            break
+
+    for i in range(P.shape[0]):
+        quench_levels[3] = i
+        if tau_HCN[i] > tau_mix[i]:
+            break
+
+    return quench_levels
+
+@nb.njit()
+def deepest_quench_level(T, P, Kzz, mubar, grav):
+    quench_levels = determine_quench_levels(T, P, Kzz, mubar, grav)
+    return np.min(quench_levels)
+    
+@nb.experimental.jitclass()
+class TempPressMubar:
+
+    log10P : types.double[:]
+    T : types.double[:]
+    mubar : types.double[:]
+
+    def __init__(self, P, T, mubar):
+        self.log10P = np.log10(P)[::-1].copy()
+        self.T = T[::-1].copy()
+        self.mubar = mubar[::-1].copy()
+
+    def temperature_mubar(self, P):
+        T = np.interp(np.log10(P), self.log10P, self.T)
+        mubar = np.interp(np.log10(P), self.log10P, self.mubar)
+        return T, mubar
+
+@nb.njit()
 def gravity(radius, mass, z):
-    G_grav = 6.67430e-11
+    G_grav = const.G
     grav = G_grav * (mass/1.0e3) / ((radius + z)/1.0e2)**2.0
     grav = grav*1.0e2 # convert to cgs
     return grav
 
-def rhs(P, u, mubar, radius, mass, pt):
-
+@nb.njit()
+def hydrostatic_equation(P, u, planet_radius, planet_mass, ptm):
     z = u[0]
-    grav = gravity(radius, mass, z)
-    T = pt.temperature(P)
+    grav = gravity(planet_radius, planet_mass, z)
+    T, mubar = ptm.temperature_mubar(P)
     k_boltz = const.Boltzmann*1e7
-
     dz_dP = -(k_boltz*T*const.Avogadro)/(mubar*grav*P)
-
     return np.array([dz_dP])
 
-def run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop,filename = '111',stfilename='111',network=None,network_ct=None,first=True,pc=None,user_psurf=True,user_psurf_add=3):
-    # somehow all photochemical models want stuff flipped
-    # dont worry we flip back before exiting the function
-    
-    temp,pressure = np.flip(temp), np.flip(pressure)
-    nlevelmin1=len(temp)-1
-    if np.logical_and(first == False, pc == None):
-        raise ValueError('If this is not the first run, pc should be recycled')
+def compute_altitude_of_PT(P, P_ref, T, mubar, planet_radius, planet_mass, P_top):
+    ptm = TempPressMubar(P, T, mubar)
+    args = (planet_radius, planet_mass, ptm)
 
-    print(logMH,cto)    
-    # mass and radius in cm
-    CtoO = 0.458*cto
-    gas = ct.Solution(network_ct)
-
-    # Composition from VULCAN file (see vulcan_files/cfg_wasp39b_10Xsolar_evening20deg.py)
-    O_H = 5.37E-4*(10.0**logMH)*(0.8)
-    C_H = 2.95E-4*(10.0**logMH)
-    N_H = 7.08E-5*(10.0**logMH)
-    S_H = 1.41E-5*(10.0**logMH)
-    He_H = 0.0838
-
-    y = (C_H+O_H)/(CtoO*O_H + O_H)
-    x =y* (CtoO  *O_H)/C_H
-    
-    C_H,O_H =  x*C_H,y*O_H
-
-    comp = {}
-    comp['H'] = 1.0
-    comp['O'] = O_H
-    comp['C'] = C_H
-    comp['N'] = N_H
-    comp['S'] = S_H
-    comp['He'] = He_H
-
-    # compute chemical equilibrium at every atmospheric pressure
-    sol = {}
-    for key in gas.species_names:
-        sol[key] = np.empty(pressure.shape[0])
-
-    # compute equilibrium
-    for i in range(pressure.shape[0]):
-        gas.TPX = temp[i], pressure[i]*1e5, comp
-        gas.equilibrate('TP')
-
-        for j,sp in enumerate(gas.species_names):
-            sol[sp][i] = gas.X[j]
-    
-    setting_template_text = \
-        '''
-        atmosphere-grid:
-            bottom: 0.0
-            top: 15000.0e5
-            number-of-layers: 100
-
-        photolysis-grid:
-            regular-grid: true
-            lower-wavelength: 92.5
-            upper-wavelength: 855.0
-            number-of-bins: 200
-
-        planet:
-#            background-gas: H2
-#            surface-pressure: 1.047
-            planet-mass: 5.314748872540942e+29
-            planet-radius: 9079484000.0
-            surface-albedo: 0.0
-            solar-zenith-angle: 83.0
-            hydrogen-escape:
-                type: none
-            default-gas-lower-boundary: Moses
-            water:
-                fix-water-in-troposphere: false
-                gas-rainout: false
-                water-condensation: true
-                condensation-rate: {A: 1.0e-8, rhc: 1, rh0: 1.05}
-                
-        boundary-conditions:
-        - name: O1D
-          type: short lived
-        - name: N2D
-          type: short lived
-        '''
-    setting_template = yaml.safe_load(setting_template_text)
-    
-    
-    
-    dist = np.abs(np.log10(pressure)-np.log10(pressure_surf))
-    wh= np.where(dist == np.min(dist))
-    ind_surf = wh[0][0]
-    print('User surface pressure in bar =',pressure[ind_surf])
-    if pressure[ind_surf] == np.min(pressure):
-        print('You are running Equilibrium Chemistry through photochem.')
-        eq_chem=True
+    if P_top < P[-1]:
+        # If P_top is lower P than P grid, then we extend it
+        P_top_ = P_top
+        P_ = np.append(P,P_top_)
+        T_ = np.append(T,T[-1])
+        mubar_ = np.append(mubar,mubar[-1])
     else:
-        print('You are running Disequilibrium Chemistry through photochem.')
-        eq_chem=False
-    grav_quench = 6.67430e-11 *((float(mass.value))/1.0e3) / ((float(radius.value))/1.0e2)**2.0
-    if first==True:
-        quench_levels = quench_level(np.flip(pressure), np.flip(temp), np.flip(kzz) ,pressure*0+2.34, grav_quench, return_mix_timescale= False)
-        print("Quench time max pressure is ",np.flip(pressure)[np.max(quench_levels)])
-        if user_psurf == False:
-            pressure_surf = np.flip(pressure)[np.max(quench_levels)+user_psurf_add]
-            dist = np.abs(np.log10(pressure)-np.log10(pressure_surf))
-            wh= np.where(dist == np.min(dist))
-            ind_surf = wh[0][0]
-            print('Overwriting user surface pressure (as user_psurf is True) in bar =',pressure[ind_surf])
+        P_top_ = P[-1]
+        P_ = P.copy()
+        T_ = T.copy()
+        mubar_ = mubar.copy()
 
-        if np.logical_and(np.flip(pressure)[np.max(quench_levels)] >=  pressure[ind_surf],eq_chem==False):
-            raise Exception("You need a deeper Surface Pressure. Surface is ", pressure[ind_surf], " max quench is ",np.flip(pressure)[np.max(quench_levels)] )
+    # Make sure P_ref is in the P grid
+    if P_ref > P_[0] or P_ref < P_[-1]:
+        raise Exception('Reference pressure must be within P grid.')
+    
+    # Find first index with lower pressure than P_ref
+    ind = 0
+    for i in range(P_.shape[0]):
+        if P_[i] < P_ref:
+            ind = i
+            break
+
+    # Integrate from P_ref to TOA
+    out2 = integrate.solve_ivp(hydrostatic_equation, [P_ref, P_[-1]], np.array([0.0]), t_eval=P_[ind:], args=args, rtol=1e-6)
+    assert out2.success
+    # Integrate from P_ref to BOA
+    out1 = integrate.solve_ivp(hydrostatic_equation, [P_ref, P_[0]], np.array([0.0]), t_eval=P_[:ind][::-1], args=args, rtol=1e-6)
+    assert out1.success
+
+    # Stitch together
+    z_ = np.append(out1.y[0][::-1],out2.y[0])
+
+    return P_, T_, mubar_, z_
+
+###
+### A simple metallicity calculator
+###
+
+class Metallicity():
+
+    def __init__(self, filename):
+        """A simple Metallicity calculator.
+
+        Parameters
+        ----------
+        filename : str
+            Path to a thermodynamic file
+        """
+        self.gas = equilibrate.ChemEquiAnalysis(filename)
+
+    def composition(self, T, P, CtoO, metal, rainout_condensed_atoms = True):
+        """Given a T-P profile, C/O ratio and metallicity, the code
+        computes chemical equilibrium composition.
+
+        Parameters
+        ----------
+        T : ndarray[dim=1,float64]
+            Temperature in K
+        P : ndarray[dim=1,float64]
+            Pressure in dynes/cm^2
+        CtoO : float
+            The C / O ratio relative to solar. CtoO = 1 would be the same
+            composition as solar.
+        metal : float
+            Metallicity relative to solar.
+        rainout_condensed_atoms : bool, optional
+            If True, then the code will rainout atoms that condense.
+
+        Returns
+        -------
+        dict
+            Composition at chemical equilibrium.
+        """
+
+        # Check T and P
+        if isinstance(T, float) or isinstance(T, int):
+            T = np.array([T],np.float64)
+        if isinstance(P, float) or isinstance(P, int):
+            P = np.array([P],np.float64)
+        if not isinstance(P, np.ndarray):
+            raise ValueError('"P" must by an np.ndarray')
+        if not isinstance(T, np.ndarray):
+            raise ValueError('"P" must by an np.ndarray')
+        if T.ndim != 1:
+            raise ValueError('"T" must have one dimension')
+        if P.ndim != 1:
+            raise ValueError('"P" must have one dimension')
+        if T.shape[0] != P.shape[0]:
+            raise ValueError('"P" and "T" must be the same length')
+        # Check CtoO and metal
+        if CtoO <= 0:
+            raise ValueError('"CtoO" must be greater than 0')
+        if metal <= 0:
+            raise ValueError('"metal" must be greater than 0')
+
+        # For output
+        out = {}
+        for sp in self.gas.gas_names:
+            out[sp] = np.empty(P.shape[0])
+        mubar = np.empty(P.shape[0])
         
-        new_quench = nlevelmin1-quench_levels
-    
-    # get anundances at the surface
-    surf = np.empty(len(gas.species_names))
-    if eq_chem == False:
-        deeper_surf = np.zeros(shape=(len(gas.species_names),len(pressure[:ind_surf])))
-    else:
-        deeper_surf = np.zeros(shape=(len(gas.species_names),len(pressure[:ind_surf+1])))
+        molfracs_atoms = self.gas.molfracs_atoms_sun
+        for i,sp in enumerate(self.gas.atoms_names):
+            if sp != 'H' and sp != 'He':
+                molfracs_atoms[i] = self.gas.molfracs_atoms_sun[i]*metal
+        molfracs_atoms = molfracs_atoms/np.sum(molfracs_atoms)
 
-    species_cantera = gas.species_names
-    for i,sp in enumerate(gas.species_names):
-        surf[i] = sol[sp][ind_surf]
-        if eq_chem == False:
-            deeper_surf[i,:] = sol[sp][:ind_surf]
+        # Adjust C and O to get desired C/O ratio. CtoO is relative to solar
+        indC = self.gas.atoms_names.index('C')
+        indO = self.gas.atoms_names.index('O')
+        x = CtoO*(molfracs_atoms[indC]/molfracs_atoms[indO])
+        a = (x*molfracs_atoms[indO] - molfracs_atoms[indC])/(1+x)
+        molfracs_atoms[indC] = molfracs_atoms[indC] + a
+        molfracs_atoms[indO] = molfracs_atoms[indO] - a
+
+        # Compute chemical equilibrium at all altitudes
+        for i in range(P.shape[0]):
+            self.gas.solve(P[i], T[i], molfracs_atoms=molfracs_atoms)
+            for j,sp in enumerate(self.gas.gas_names):
+                out[sp][i] = self.gas.molfracs_species_gas[j]
+            mubar[i] = self.gas.mubar
+            if rainout_condensed_atoms:
+                molfracs_atoms = self.gas.molfracs_atoms_gas
+
+        return out, mubar
+
+###
+### Template input files for Photochem
+###
+
+ATMOSPHERE_INIT = \
+"""alt      den        temp       eddy                       
+0.0      1          1000       1e6              
+1.0e3    1          1000       1e6         
+"""
+
+SETTINGS_TEMPLATE = \
+"""
+atmosphere-grid:
+  bottom: 0.0
+  top: atmospherefile
+  number-of-layers: NULL
+
+photolysis-grid:
+  regular-grid: true
+  lower-wavelength: 92.5
+  upper-wavelength: 855.0
+  number-of-bins: 200
+
+planet:
+  planet-mass: NULL
+  planet-radius: NULL
+  surface-albedo: 0.0
+  solar-zenith-angle: 60.0
+  hydrogen-escape:
+    type: none
+  default-gas-lower-boundary: Moses
+  water:
+    fix-water-in-troposphere: false
+    gas-rainout: false
+    water-condensation: false
+
+boundary-conditions:
+- name: He
+  lower-boundary: {type: Moses}
+  upper-boundary: {type: veff, veff: 0}
+"""
+
+###
+### A series of functions for generating reactions and thermo files.
+###
+
+def mechanism_with_atoms(dat, atoms_names):
+
+    atoms = []
+    exclude_atoms = []
+    for i,at in enumerate(dat['atoms']):
+        if at['name'] in atoms_names:
+            atoms.append(at)
         else:
-            deeper_surf[i,:] = sol[sp][:ind_surf+1]
-    if eq_chem==False:
-        bc_list = []
-        for i,sp in enumerate(gas.species_names):
-            
-            if surf[i] > 1e-6 :
-                if sp != 'O1D':
-                    if sp != 'N2D':
-                        
-                        lb = {"type": "press", "press": float(surf[i]*pressure[ind_surf]*1e6)} # in dyne/cm^2
-                        ub = {"type": "veff", "veff": 0.0}
-                        entry = {}
-                        entry['name'] = sp
-                        entry['lower-boundary'] = lb
-                        entry['upper-boundary'] = ub
-                        
-                        bc_list.append(entry)
-                else:
-                    pass
+            exclude_atoms.append(at['name'])
 
-        # add these boundary conditions to the settings file
-        for bc in bc_list:
-            setting_template['boundary-conditions'].append(bc)
+    species = []
+    comp = {}
+    comp['hv'] = []
+    comp['M'] = []
+    for i,sp in enumerate(dat['species']):
+        comp[sp['name']] = [key for key in sp['composition'] if sp['composition'][key] > 0]
 
-        pt = TempPress(pressure, temp)
-        radius = float(radius.value) #planets.WASP39b.radius*(constants.R_jup.value)*1e2
-        mass = float(mass.value)#planets.WASP39b.mass*(constants.M_jup.value)*1e3
-        
-        # Here, we must guess the mean molecular weight
-        mubar = 4*surf[gas.species_names.index('He')] + 2*(1.0-surf[gas.species_names.index('He')])
-        P0 = pressure[ind_surf]
-        
-        z0 = 0.0
-        args = (mubar, radius, mass, pt)
-
-        # Integrate the hydrostatic equation to get T(z)
-        out = integrate.solve_ivp(rhs, [P0, 1e-8], np.array([z0]), t_eval=pressure[ind_surf:], args=args)
-
-        press_subset = pressure[ind_surf:]
-        temp_subset = temp[ind_surf:]
-
-        alt = out.y[0]/1e5
-        den = (press_subset*1e6)/(const.Boltzmann*1e7*temp_subset)
-
-        # eddy diffusion. From the SO2 paper
-        eddy = kzz[ind_surf:]
-
-        fmt = '{:25}'
-        if first==False:
-            density_pc = pc.wrk.density
-        with open(filename+'_init.txt', 'w') as f:
-            f.write(fmt.format('alt'))
-            f.write(fmt.format('press'))
-            f.write(fmt.format('den'))
-            f.write(fmt.format('temp'))
-            f.write(fmt.format('eddy'))
-
-            for key in sol:
-                f.write(fmt.format(key))
-            
-            f.write('\n')
-
-            for i in range(press_subset.shape[0]):
-                f.write(fmt.format('%e'%alt[i]))
-                f.write(fmt.format('%e'%press_subset[i]))
-                f.write(fmt.format('%e'%den[i]))
-                f.write(fmt.format('%e'%temp_subset[i]))
-                f.write(fmt.format('%e'%eddy[i]))
-
-                # We use chemical equilibrium as an initial condition
-                if first == True:
-                    for key in sol:
-                        if key == 'CH4':
-                            sol[key][new_quench[0]:] = sol[key][new_quench[0]:]*0 + sol[key][new_quench[0]]    
-                        if key == 'CO':
-                            sol[key][new_quench[0]:] = sol[key][new_quench[0]:]*0 + sol[key][new_quench[0]]
-                        if key == 'H2O':
-                            sol[key][new_quench[0]:] = sol[key][new_quench[0]:]*0 + sol[key][new_quench[0]]
-                        if key == 'CO2':
-                            sol[key][new_quench[1]:] = sol[key][new_quench[1]:]*0 + sol[key][new_quench[1]]
-
-                        if key == 'NH3':
-                            sol[key][new_quench[2]:] = sol[key][new_quench[2]:]*0 + sol[key][new_quench[2]]
-                        if key == 'HCN':
-                            sol[key][new_quench[3]:] = sol[key][new_quench[3]:]*0 + sol[key][new_quench[3]]
-                            
-                        f.write(fmt.format('%e'%sol[key][i+ind_surf]))
-                else:
-                    for key in sol:
-                        
-                        ind = pc.dat.species_names.index(key)
-                        abund_write = np.abs(pc.wrk.densities[ind,i]/density_pc[i])
-                        f.write(fmt.format('%e'%abund_write))
-                        
-                f.write('\n')
-
-        setting_template['atmosphere-grid']['top'] = 'atmospherefile'#float(alt[-1]*1e5)
-        setting_template['atmosphere-grid']['number-of-layers'] = len(alt)
-        #setting_template['planet']['surface-pressure'] = float(P0)
-        setting_template['planet']['planet-mass'] = mass
-        setting_template['planet']['planet-radius'] = radius
-        print(setting_template['planet'])
-        setting_template = FormatSettings_main(setting_template)
-        with open(filename+'_settings.yaml','w') as f:
-            yaml.dump(setting_template,f,Dumper=MyDumper,sort_keys=False)
-        
-        
-        
-        pc_new = EvoAtmosphere(network,\
-                    filename+"_settings.yaml",\
-                    stfilename,\
-                    filename+"_init.txt")
-        pc_new.var.autodiff = True
-        pc_new.var.atol = 1e-13
-        pc_new.var.rtol = 1e-3
-        pc_new.var.verbose = 0
-        pc_new.var.conv_min_mix = 1e-10
-        pc_new.var.conv_longdy = 0.05 
-        pc_new.var.conv_longdydt=1e-4    
-
-        #usol = pc_new.wrk.usol.copy()
-        # usol[pc.dat.species_names.index('CH4'),:] = 1.0e-6
-        #pc_new.initialize_stepper(usol)
-        #tn = 0
-
-
-        P_photochem_copy = pc_new.wrk.pressure
-        T_photochem_copy = pc_new.var.temperature
-        edd_photochem_copy = pc_new.var.edd
-    
-    # Flip order an get log10 for interpolation purposes
-        log10P_interp = np.log10(P_photochem_copy.copy()[::-1])
-        T_interp = T_photochem_copy.copy()[::-1]
-        log10edd_interp = np.log10(edd_photochem_copy.copy()[::-1])
-
-    # initialize
-        pc_new.initialize_stepper(pc_new.wrk.usol)
-        atol_counter = 0
-        nerrors = 0
-        max_dT_tol = 10 # Kelvin
-        max_dlog10edd_tol = 0.2 # log10 units
-
-       
-        TOA_pressure_avg = np.min(pressure) # bars
-        TOA_pressure_min = 1e-1*TOA_pressure_avg # bars
-        TOA_pressure_max = 2*TOA_pressure_avg # bars
-        atol_min = 1e-14
-        atol_max= 1e-12
-        retry_counter = 0    
-        while True:
-            #sol = mole_fraction_dict(pc_new)
-            try:
-                tn = pc_new.step()
-                atol_counter += 1
-            except PhotoException as e:
-                # If there is an error, lets reinitialize, but get rid of any
-                # negative numbers
-                usol = np.clip(pc_new.wrk.usol.copy(),a_min=1.0e-40,a_max=np.inf)
-                pc_new.initialize_stepper(usol)
-                nerrors += 1
-
-                if nerrors > 10:
-                    raise Exception('Repeated errors in photochemical integration!')
-
-                continue
-
-        # convergence checking
-            converged = pc_new.check_for_convergence()
-
-            # Compute the max difference between the P-T profile in photochemical model
-            # and the desired P-T profile
-            T_p_now = np.interp(np.log10(pc_new.wrk.pressure.copy()[::-1]), log10P_interp, T_interp)
-            T_p_now = T_p_now.copy()[::-1]
-            max_dT = np.max(np.abs(T_p_now - pc_new.var.temperature))
-
-            # Compute the max difference between the P-edd profile in photochemical model
-            # and the desired P-edd profile
-            log10edd_p_now = np.interp(np.log10(pc_new.wrk.pressure.copy()[::-1]), log10P_interp, log10edd_interp)
-            log10edd_p_now = log10edd_p_now.copy()[::-1]
-            max_dlog10edd = np.max(np.abs(log10edd_p_now - np.log10(pc_new.var.edd)))
-
-            TOA_pressure = pc_new.wrk.pressure[-1]/1e6 # bars
-
-#            if converged and pc_new.wrk.nsteps > 200 and max_dT < max_dT_tol and max_dlog10edd < max_dlog10edd_tol and TOA_pressure_min < TOA_pressure < TOA_pressure_max:
-                # converged!
-#                print("WOOHOO ! PHOTOCHEM HAS CONVERGED !")
-#                break
-            if converged and pc_new.wrk.nsteps > 500:
-                print("WOOHOO ! PHOTOCHEM HAS CONVERGED !")
+        exclude = False
+        for tmp in comp[sp['name']]:
+            if tmp in exclude_atoms:
+                exclude = True
                 break
+        if not exclude:
+            species.append(sp)
 
+    if "particles" in dat:
+        particles = []
+        for i,sp in enumerate(dat['particles']):
+            comp_tmp = [key for key in sp['composition'] if sp['composition'][key] > 0]
 
-#            if atol_counter > 5000:
-                # Convergence has not happened after 10000 steps, so we try a new atol
-#                print("After 10000 atol iterations our code has not converged.")
-               
-#                pc_new.var.atol = 10.0**np.random.uniform(low=np.log10(atol_min),high=np.log10(atol_max))
-#                pc_new.initialize_stepper(pc_new.wrk.usol)
-#                atol_counter = 0
-#                print("Restarting with atol=",pc_new.var.atol)
-#                retry_counter+=1
-#                continue
-        
-#            if not (pc_new.wrk.nsteps % 1000):
-                # After 1000 steps, lets update P,T, edd and vertical grid
-#                try:
-#                    print('Updating TP grid')
-#                    pc_new.set_press_temp_edd(P_photochem_copy,T_photochem_copy,edd_photochem_copy,hydro_pressure=False)
-#                    pc_new.update_vertical_grid(TOA_pressure=TOA_pressure_avg*1e6)
-#                    pc_new.initialize_stepper(pc_new.wrk.usol)
-#                    print("Update TP grid Complete")
-#                except PhotoException as e:
-#                    print("Updating TP led to error, so hoping for the best and continuing on....")
-#                    continue
-            if not (pc_new.wrk.nsteps % 100):
-                print('Steps=', pc_new.wrk.nsteps)
-                print('longdy = %.1e,  max_dT = %.1e,  max_dlog10edd = %.1e,  TOA_pressure = %.1e,  '% \
-                    (pc_new.wrk.longdy, max_dT, max_dlog10edd, TOA_pressure))
-                
-    #        if retry_counter >= 3:
-    #            break
-                    #raise Exception('This is not working after 10 tries with different atol, try changing surface')
-            
-        
-            
-            
-        
-    #pc.out2atmosphere_txt(filename="WASP39b/"+filename+"_init.txt", overwrite=True, clip=True)
-    #species = ['CH4','CO','CO2','H2O','HCN','NH3','H','H2','He','C2H2','C2H4','C2H6','SO2','H2S']
-    species = species_cantera
-    output_array = np.zeros(shape=(len(species),len(pressure)))
-    if eq_chem==False:
-        for i,sp in enumerate(species):
-                
-                ind = pc_new.dat.species_names.index(sp)
-                ind_cantera = species_cantera.index(sp)
-                
-                
-                tmp = pc_new.wrk.densities[ind,:]/pc_new.wrk.density
-                #ax.plot(tmp,pc.wrk.pressure/1e6,label=sp,color=color[i])
-                #ax.plot(deeper_surf[ind_cantera,:],pressure[:ind_surf],linestyle="--",color=color[i])
-                output_array[i,:] = np.flip(np.concatenate([deeper_surf[ind_cantera,:],tmp]))
-    else:
-        for i,sp in enumerate(species):
-                
-                
-                ind_cantera = species_cantera.index(sp)
-                
-                
-                
-                #ax.plot(tmp,pc.wrk.pressure/1e6,label=sp,color=color[i])
-                #ax.plot(deeper_surf[ind_cantera,:],pressure[:ind_surf],linestyle="--",color=color[i])
-                output_array[i,:] = np.flip(deeper_surf[ind_cantera,:])
-        pc_new = {'eq_chem'}
-    if pc_new == {'eq_chem'}:
-        p_output=np.flip(pressure)
-    else:
-        p_output= np.concatenate([np.flip(pc_new.wrk.pressure/1e6),np.flip(pressure[:ind_surf])])
-    return pc_new,output_array,species,p_output
+            exclude = False
+            for tmp in comp_tmp:
+                if tmp in exclude_atoms:
+                    exclude = True
+                    break
+            if not exclude:
+                particles.append(sp)
 
-
-def mole_fraction_dict(pc):
-    sol = {}
-    for i,sp in enumerate(pc.dat.species_names[:-2]):
-        ind = pc.dat.species_names.index(sp)
-        mix = pc.wrk.densities[ind,:]/pc.wrk.density
-        sol[sp] = mix
-    sol['alt'] = pc.var.z/1e5 # km
-    sol['temp'] = pc.var.temperature # K
-    sol['pressure'] = pc.wrk.pressure # dynes/cm^2
-    sol['density'] = pc.wrk.density # molecules/cm^3
-    return sol     
-
-def FormatSettings_main(data):
+    if "reactions" in dat:
+        reactions = []
+        for i,rx in enumerate(dat['reactions']):
+            eq = rx['equation']
+            eq = eq.replace('(','').replace(')','')
+            if '<=>' in eq:
+                split_str = '<=>'
+            else:
+                split_str = '=>'
     
-    if 'planet' in data:
-        if "rainout-species" in data['planet']['water'].keys():
-            data['planet']['water']['rainout-species'] = blockseqtrue(data['planet']['water']['rainout-species'])
-
-        if "condensation-rate" in data['planet']['water'].keys():
-            data['planet']['water']['condensation-rate'] = flowmap(data['planet']['water']['condensation-rate'])
+            a,b = eq.split(split_str)
+            a = a.split('+')
+            b = b.split('+')
+            a = [a1.strip() for a1 in a]
+            b = [b1.strip() for b1 in b]
+            sp = a + b
     
-    #if 'particles' in data:
-    #    for i in range(len(data['particles'])):
-    #        if "condensation-rate" in data['particles'][i]:
-    #            data['particles'][i]["condensation-rate"] = \
-    #            flowmap(data['particles'][i]["condensation-rate"])
+            exclude = False
+            for s in sp:
+                for tmp in comp[s]:
+                    if tmp in exclude_atoms:
+                        exclude = True
+                        break
+                if exclude:
+                    break
+            if not exclude:
+                reactions.append(rx)
+                
+    out = dat
+    out['atoms'] = atoms
+    out['species'] = species
+    if 'particles' in dat:
+        out['particles'] = particles
+    if 'reactions' in dat:
+        out['reactions'] = reactions
 
-    if 'boundary-conditions' in data:
-        for i in range(len(data['boundary-conditions'])):
-            if "lower-boundary" in data['boundary-conditions'][i]:
-                order = ['type','vdep','mix','flux','height','press']
-                copy = data['boundary-conditions'][i]['lower-boundary'].copy()
-                data['boundary-conditions'][i]['lower-boundary'].clear()
-                for key in order:
-                    if key in copy.keys():
-                        data['boundary-conditions'][i]['lower-boundary'][key] = copy[key]
+    return out
 
-                data['boundary-conditions'][i]['lower-boundary'] = flowmap(data['boundary-conditions'][i]['lower-boundary'])
+def remove_reaction_particles(dat):
+    if "particles" in dat:
+        particles = []
+        for i, particle in enumerate(dat['particles']):
+            if particle['formation'] != "reaction":
+                particles.append(particle)
+        dat['particles'] = particles
 
-                order = ['type','veff','flux']
-                copy = data['boundary-conditions'][i]['upper-boundary'].copy()
-                data['boundary-conditions'][i]['upper-boundary'].clear()
-                for key in order:
-                    if key in copy.keys():
-                        data['boundary-conditions'][i]['upper-boundary'][key] = copy[key]
+    return dat
 
-                data['boundary-conditions'][i]['upper-boundary'] = flowmap(data['boundary-conditions'][i]['upper-boundary'])
-        
-    return data 
-    
+def generate_zahnle_reaction_thermo_file(atoms_names):
+
+    if 'H' not in atoms_names or 'He' not in atoms_names:
+        raise Exception('H and He must be in atoms_names')
+
+    with open(zahnle_earth,'r') as f:
+        rxns = yaml.load(f,Loader=yaml.Loader)
+    # Make a deep copy for later
+    rxns_copy = copy.deepcopy(rxns)
+
+    out_rxns = mechanism_with_atoms(rxns, atoms_names)
+    out_rxns = remove_reaction_particles(out_rxns)
+
+    with open(zahnle_earth.replace('zahnle_earth.yaml','condensate_thermo.yaml'),'r') as f:
+        thermo = yaml.load(f, Loader=yaml.Loader)
+
+    # Delete information that is not needed
+    for i,atom in enumerate(rxns_copy['atoms']):
+        del rxns_copy['atoms'][i]['redox'] 
+    if 'particles' in rxns_copy:
+        del rxns_copy['particles']
+    del rxns_copy['reactions']
+
+    # Add condensates
+    for i,sp in enumerate(thermo['species']):
+        rxns_copy['species'].append(sp)
+
+    out_thermo = mechanism_with_atoms(rxns_copy, atoms_names)
+
+    return out_rxns, out_thermo
+
+def generate_photochem_rx_and_thermo_files(atoms_names=['H','He','N','O','C','S'], 
+                                           rxns_filename='photochem_rxns.yaml', thermo_filename='photochem_thermo.yaml'):
+    """Generates input reactions and thermodynamic files for photochem.
+
+    Parameters
+    ----------
+    atoms_names : list, optional
+        Atoms to include in the thermodynamics, by default ['H','He','N','O','C','S']
+    rxns_filename : str, optional
+        Name of output reactions file, by default 'photochem_rxns.yaml'
+    thermo_filename : str, optional
+        Name of output thermodynamic file, by default 'photochem_thermo.yaml'
+    """    
+    rxns, thermo = generate_zahnle_reaction_thermo_file(atoms_names)
+    rxns = FormatReactions_main(rxns)
+    with open(rxns_filename,'w') as f:
+        yaml.dump(rxns,f,Dumper=MyDumper,sort_keys=False,width=70)
+    thermo = FormatReactions_main(thermo)
+    with open(thermo_filename,'w') as f:
+        yaml.dump(thermo,f,Dumper=MyDumper,sort_keys=False,width=70)
