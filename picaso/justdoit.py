@@ -13,7 +13,7 @@ from .build_3d_input import regrid_xarray
 
 
 from virga import justdoit as vj
-from scipy.interpolate import UnivariateSpline, interp1d
+from scipy.interpolate import UnivariateSpline, interp1d,RegularGridInterpolator
 from scipy import special
 from numpy import exp, sqrt,log
 from numba import jit,njit
@@ -1955,6 +1955,77 @@ class inputs():
         
         return qvmrs, qvmrs2
     
+    def premix_atmosphere_photochem(self, opa, df=None, filename=None,firsttime=False,mh_interp=None,cto_interp=None, **pd_kwargs):
+        """
+        Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
+        Sets number of layers in model.  
+        Parameters
+        ----------
+        opa : class 
+            Opacity class from opannection : RetrieveCks() 
+        df : pandas.DataFrame or dict
+            (Optional) Dataframe with volume mixing ratios and pressure, temperature profile. 
+            Must contain pressure (bars) at least one molecule
+        filename : str 
+            (Optional) Filename with pressure, temperature and volume mixing ratios.
+            Must contain pressure at least one molecule
+        exclude_mol : list of str 
+            (Optional) List of molecules to ignore from file
+        pd_kwargs : kwargs 
+            Key word arguments for pd.read_csv to read in supplied atmosphere file 
+        """
+        print("PLEASE BEWARE THAT I AM LINEARLY INTERPOLATING BETWEEN SONORA CHEMISTRY TABLES")
+        print("THIS IS MAINLY NEEDED FOR CAPTURING THE ALKALI METALS OUTSIDE OF THE 1D PHOTOCHEM NETWORK")
+
+        if firsttime==True:
+            print("DOING THIS FOR THE FIRST TIME SO MIGHT TAKE SOME TIME")
+            
+            mh_target = mh_interp#float(self.inputs['climate']['mh'])
+            cto_target = cto_interp#float(self.inputs['climate']['CtoO'])
+            path= os.path.join(__refdata__, 'climate_INPUTS','sonora_master_arr.npz')
+            sonora_arr = np.load(path)
+            mh_arr = sonora_arr['mh']
+            cto_arr = sonora_arr['cto']
+            sp_arr = sonora_arr['species']
+            main_arr = sonora_arr['sonora']
+            pressure_sonora= sonora_arr['pressure']
+            temp_sonora=sonora_arr['temp']
+            
+            df_interp_abun=pd.DataFrame(columns=sp_arr,index=np.arange(0,1460,1),dtype='float')
+
+            
+            for i in range(len(sp_arr)):
+                if np.logical_and(sp_arr[i] != 'pressure',sp_arr[i] != 'temperature'):
+                    for ct in range(1460):
+                        func = RegularGridInterpolator((mh_arr,cto_arr),np.log10(main_arr[:,:,ct,i]),bounds_error=False, fill_value=None)
+                        df_interp_abun[sp_arr[i]][ct]= 10**func((mh_target,cto_target))
+                        if df_interp_abun[sp_arr[i]][ct] <0:
+                            df_interp_abun[sp_arr[i]][ct]=0.0
+            df_interp_abun['pressure']= pressure_sonora
+            df_interp_abun['temperature']= temp_sonora
+
+            opa.full_abunds=df_interp_abun
+
+        if not isinstance(df, type(None)):
+            if ((not isinstance(df, dict )) & (not isinstance(df, pd.core.frame.DataFrame ))): 
+                raise Exception("df must be pandas DataFrame or dictionary")
+            else:
+                self.nlevel=df.shape[0] 
+        elif not isinstance(filename, type(None)):
+            df = pd.read_csv(filename, **pd_kwargs)
+            self.nlevel=df.shape[0] 
+
+        if 'pressure' not in df.keys(): 
+            raise Exception("Check column names. `pressure` must be included.")
+
+        if ('temperature' not in df.keys()):
+            raise Exception("`temperature` not specified as a column/key name")
+        self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
+
+        #Turn off raman for 196 premix calculations 
+        self.inputs['approx']['rt_params']['common']['raman'] = 2
+
+        self.chem_interp(opa.full_abunds)
 
     
     def sonora(self, sonora_path, teff, chem='low'):
@@ -4066,7 +4137,7 @@ class inputs():
                 photo_inputs_dict['yesorno'] = False
             else :
                 # Compute chemical equilibrium composition using pre-computed grid
-                bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+                bundle.premix_atmosphere_photochem(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],firsttime=True,mh_interp=float(self.inputs['climate']['mh']),cto_interp=float(self.inputs['climate']['CtoO']))
                 
                 # Compute photochemical steady-state, and load it into `bundle.inputs['atmosphere']['profile']`. Here,
                 # we use chemical equilibrium + quenching as an initial guess.
@@ -5677,7 +5748,8 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
         output_abunds = bundle.inputs['atmosphere']['profile'].T.values
     else :
         # Compute chemical equilibrium composition by interpolating pre-computed grid
-        bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+        #bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+        bundle.premix_atmosphere_photochem(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],mh_interp=photo_inputs_dict['mh'],cto_interp=photo_inputs_dict['CtoO'])
 
         # Unpack photochem object
         pc = photo_inputs_dict['pc']
@@ -5876,8 +5948,9 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             print("Quench Levels are CO, CO2, NH3, HCN ", quench_levels)
         else :
             # Compute chemical equilibrium composition by interpolating pre-computed grid
-            bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
-            
+            #bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+            bundle.premix_atmosphere_photochem(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],mh_interp=photo_inputs_dict['mh'],cto_interp=photo_inputs_dict['CtoO'])
+
             # Unpack photochem object
             pc = photo_inputs_dict['pc']
             
@@ -6578,8 +6651,9 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3)
     else :
         # Compute chemical equilibrium composition by interpolating pre-computed grid
-        bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
-        
+        #bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+        bundle.premix_atmosphere_photochem(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],mh_interp=photo_inputs_dict['mh'],cto_interp=photo_inputs_dict['CtoO'])
+
         # This line was here previously, so I'm keeping it.
         kz = all_kzz[-len(temp):] ## level mixing timescales
 
