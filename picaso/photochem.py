@@ -266,11 +266,12 @@ class EvoAtmosphereGasGiant(EvoAtmosphere):
         for key in mix:
             if P_in.shape[0] != mix[key].shape[0]:
                 raise Exception('Input P and mix must have same shape')
-        species_names = self.dat.species_names[:(-2-self.dat.nsl)]
-        if set(list(mix.keys())) != set(species_names):
+        # Require all gases be specified. Particles can be ignored.
+        if set(list(mix.keys())) != set(self.dat.species_names[self.dat.np:(-2-self.dat.nsl)]):
             raise Exception('Some species are missing from input mix') 
         
         # Compute mubar
+        species_names = self.dat.species_names[:(-2-self.dat.nsl)]
         mubar = np.zeros(T_in.shape[0])
         species_mass = self.dat.species_mass
         particle_names = self.dat.species_names[:self.dat.np]
