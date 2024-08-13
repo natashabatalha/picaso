@@ -3725,11 +3725,11 @@ class inputs():
         if rfacv==0:compute_reflected=False
         else:compute_reflected=True
 
-        all_profiles= []
         save_profile = bool(save_all_profiles)
 
         TEMP1 = self.inputs['climate']['guess_temp']
-        all_profiles=np.append(all_profiles,TEMP1)
+        all_profiles = np.empty((1,len(TEMP1)))
+        all_profiles[0,:] = TEMP1
         pressure = self.inputs['climate']['pressure']
         t_table = self.inputs['climate']['t_table']
         p_table = self.inputs['climate']['p_table']
@@ -4590,7 +4590,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
     
     temp_old= np.copy(temp)
-
+    
 
     
     bundle = inputs(calculation='brown')
@@ -4600,7 +4600,8 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     
     bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
     if save_profile == 1:
-            all_profiles = np.append(all_profiles,temp_old)
+        all_profiles = np.vstack((all_profiles, temp_old.reshape((1,len(temp_old)))))
+        
     
     if first_call_ever == False:
         if cloudy == 1 :
@@ -4665,7 +4666,6 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     
     ## begin bigger loop which gets opacities
     for iii in range(itmx):
-        
         temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(
                     nofczns,nstr,it_max,conv,x_max_mult, 
                     rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
