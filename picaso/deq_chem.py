@@ -100,10 +100,6 @@ def quench_level(pressure, temp, kz,mmw, grav, return_mix_timescale = False):
             quench_levels[3] = j
             break
     
-    
-    
-    
-
     if return_mix_timescale == False :
         return quench_levels
     elif return_mix_timescale == True :
