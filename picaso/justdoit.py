@@ -38,6 +38,7 @@ from astropy.utils.misc import JsonCustomEncoder
 import math
 import xarray as xr
 from joblib import Parallel, delayed, cpu_count
+import h5py
 
 # #testing error tracker
 # from loguru import logger 
@@ -3660,8 +3661,9 @@ class inputs():
         -----------
         opacityclass : class
             Opacity class from `justdoit.opannection`
-        save_all_profiles : bool
-            If you want to save and return all iterations in the T(P) profile,True/False
+        save_all_profiles : bool or str
+            If you want to save and return all iterations in the T(P) profile, True/False.
+            If str, specifies a path to which all iterations are written as an HDF5 file.
         with_spec : bool 
             Runs picaso spectrum at the end to get the full converged outputs, Default=False
         save_all_kzz : bool
@@ -3724,10 +3726,7 @@ class inputs():
         else:compute_reflected=True
 
         all_profiles= []
-        if save_all_profiles:
-            save_profile = 1
-        else :
-            save_profile = 0
+        save_profile = bool(save_all_profiles)
 
         TEMP1 = self.inputs['climate']['guess_temp']
         all_profiles=np.append(all_profiles,TEMP1)
@@ -4088,6 +4087,16 @@ class inputs():
             df_cld = vj.picaso_format(opd_now, w0_now, g0_now, pressure = cld_out['pressure'], wavenumber=1e4/cld_out['wave'])
             all_out['cld_output_picaso'] = df_cld
             all_out['virga_output'] = cld_out
+        if isinstance(save_all_profiles, str):
+            if verbose:
+                print(f"Saving all T(P) profiles to {save_all_profiles}")
+            profiles_file = h5py.File(save_all_profiles, 'w')
+            gp = profiles_file.create_group("all_profiles")
+            num_digits = len(str(len(all_profiles)))
+            for (i, profile_to_save) in enumerate(all_profiles):
+                i_str = str(i).zfill(num_digits)
+                gp.create_dataset(f"pt_{i_str}", data=profile_to_save)
+            profiles_file.close()
         if as_dict: 
             return all_out
         else: 
