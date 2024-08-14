@@ -1487,7 +1487,7 @@ def get_wvno_grid(filename, min_wavelength=None, max_wavelength=None, R=None):
         dwni_new = np.array([dwni_new[0]] + dwni_new)
         wvno_low = 0.5*(2*wvno_new - dwni_new)
         wvno_high = 0.5*(2*wvno_new + dwni_new)
-    return wvno_low,wvno_high
+    return wvno_low,wvno_high,wvno_new,dwni_new
 
 def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
     output_dir,output_filename,
@@ -1608,14 +1608,14 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
                 start = start_uni
                 
             if not isinstance(wv_file_name,type(None)):
-                wvno_low,wvno_high = get_wvno_grid(wv_file_name)
+                wvno_low,wvno_high,new_wno,new_dwno = get_wvno_grid(wv_file_name)
             elif ((not isinstance(new_wno,type(None)))  &  
                 (not isinstance(new_dwno,type(None)))):
                 wvno_low = 0.5*(2*new_wno - new_dwno)
                 wvno_high = 0.5*(2*new_wno + new_dwno)
             else: 
                 min_max_wavelength = sorted(min_max_wavelength)
-                wvno_low,wvno_high = get_wvno_grid(None, min_max_wavelength[0], min_max_wavelength[1], R)
+                wvno_low,wvno_high,new_wno,new_dwno = get_wvno_grid(None, min_max_wavelength[0], min_max_wavelength[1], R)
         
             #path to data
             if 'fortran' in ftype:
@@ -1799,14 +1799,14 @@ def compute_ck_molecular(molecule,og_directory,
     
     # GET CK WAVENUMBER GRID BY COMPUTING LOWER AND UPPER WAVENUM EDGES # 
     if not isinstance(wv_file_name,type(None)):
-        wvno_low,wvno_high = get_wvno_grid(wv_file_name)
+        wvno_low,wvno_high,new_wno,new_dwno = get_wvno_grid(wv_file_name)
     elif ((not isinstance(new_wno,type(None)))  &  
         (not isinstance(new_dwno,type(None)))):
         wvno_low = 0.5*(2*new_wno - new_dwno)
         wvno_high = 0.5*(2*new_wno + new_dwno)
     else: 
         min_max_wavelength = sorted(min_max_wavelength)
-        wvno_low,wvno_high = get_wvno_grid(None, min_max_wavelength[0], min_max_wavelength[1], R)
+        wvno_low,wvno_high,new_wno,new_dwno = get_wvno_grid(None, min_max_wavelength[0], min_max_wavelength[1], R)
 
     # SETUP ZERO ARRAY OF KCOEFFS #  
     k_coeff_arr = np.zeros(shape=(npres,ntemp,len(wvno_low),ngauss))
