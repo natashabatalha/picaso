@@ -2,7 +2,6 @@ from .elements import ELEMENTS as ele
 import json 
 import os
 import re
-from .io_utils import read_json
 import astropy.units as u
 import astropy.constants as c
 import pandas as pd
