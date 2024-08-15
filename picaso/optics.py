@@ -742,7 +742,8 @@ class RetrieveCKs():
         self.full_abunds['temperature'] = self.temps
         self.full_abunds['pressure'] = self.pressures
         self.nc_p = self.full_abunds.groupby('temperature').size().values
-
+        #finally we want the unique values of temperature
+        self.temps = np.unique(self.full_abunds['temperature'])
 
 
 
@@ -1293,7 +1294,7 @@ class RetrieveCKs():
         for imol in gases_fly: 
             if os.path.join(path,f'{imol}_1460.hdf5') in check_hdf5:
                 with h5py.File(os.path.join(path,f'{imol}_1460.hdf5'), "r") as f:
-                    #in a future code version we could get these things from the hdf5 file
+                    #in a future code version we could get these things from the hdf5 file and not assume the 661 table
                     #self.wno = f["wno"][:]
                     #self.delta_wno = f["delta_wno"][:]   
                     #self.pressures = f["pressures"][:]   
