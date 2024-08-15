@@ -1291,7 +1291,7 @@ class RetrieveCKs():
         self.kappas = []
         for imol in gases_fly: 
             if os.path.join(path,f'{imol}_1460.hdf5') in check_hdf5:
-                with h5py.File(self.ck_filename, "r") as f:
+                with h5py.File(os.path.join(path,f'{imol}_1460.hdf5'), "r") as f:
                     #in a future code version we could get these things from the hdf5 file
                     #self.wno = f["wno"][:]
                     #self.delta_wno = f["delta_wno"][:]   
