@@ -1,6 +1,7 @@
 from .deq_chem import mix_all_gases_gasesfly
 from .rayleigh import Rayleigh
 
+import warnings
 import pandas as pd
 import numpy as np
 from numpy import log10
@@ -1302,7 +1303,8 @@ class RetrieveCKs():
                     #want the axes to be [npressure, ntemperature, nwave, ngauss ]
                     array = f["kcoeffs"][:] 
             elif os.path.join(path,f'{imol}_1460.npy') in check_npy:
-                print('Warning: npy files for DEQ will be deprecated in a future PICASO udpate. Please download the hdf5 files, explanation here https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html')
+                msg = 'Warning: npy files for DEQ will be deprecated in a future PICASO udpate. Please download the hdf5 files, explanation here https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html'
+                warnings.warn(msg, UserWarning)
                 array = np.load(os.path.join(path,f'{imol}_1460.npy'))
             else: 
                 raise Exception('hdf5 or npy ck tables for individual molecules not found in {path}. Please see tutorial documentation https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html to make sure you have downloaded the needed files and placed them in this folder')
