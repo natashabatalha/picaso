@@ -3248,7 +3248,7 @@ class inputs():
             raise Exception('PICASO has moved to only accept xarray input. Please see GCM 3D input tutorials to learn how to reformat your input. ')
 
         #check for cloud properties
-        if 'opd' not in ds: raise Exception("Must include 'opd' (optical detph) as data component")
+        if 'opd' not in ds: raise Exception("Must include 'opd' (optical depth) as data component")
         if 'g0' not in ds: raise Exception("Must include 'g0' (assymetry) as data component")
         if 'w0' not in ds: raise Exception("Must include 'w0' (single scattering) as data component")
         
@@ -3599,8 +3599,12 @@ class inputs():
             Default=1, Fractional contribution of thermal light in net flux
             Usually this is kept at one and then the redistribution is controlled 
             via rfacv
-        cloudy : bool
-            Include Clouds or not (True or False)
+        cloudy : str
+            How to use cloud models: 
+            "cloudless" for no cloud
+            "postprocessed" for only impacting spectra and not temperature
+            "singleiterated" for the initial cloud profile, not updated with each temperature profile
+            "selfconsistent" for fully operating within the climate convergence
         mh : string
             Metallicity string for 1060 grid, '+0.5','0.0','-0.5'.
         CtoO : string
@@ -3631,7 +3635,8 @@ class inputs():
         
         """
         
-        if cloudy: 
+        assert isinstance(cloudy, str)
+        if cloudy != "cloudless": 
             print("Cloudy functionality still in beta form and not ready for public use.")
             # raise Exception('Cloudy functionality still in beta fosrm and not ready for public use.')
         
@@ -3655,8 +3660,8 @@ class inputs():
         self.inputs['climate']['nofczns'] = nofczns
         self.inputs['climate']['rfacv'] = rfacv
         self.inputs['climate']['rfaci'] = rfaci
-        if cloudy:
-            self.inputs['climate']['cloudy'] = 1
+        if cloudy != "cloudless":
+            self.inputs['climate']['cloudy'] = cloudy
             self.inputs['climate']['cld_species'] = species
             self.inputs['climate']['fsed'] = fsed
             self.inputs['climate']['mieff_dir'] = mieff_dir
@@ -3677,7 +3682,7 @@ class inputs():
                 self.inputs['climate']['fhole'] = 0
                 self.inputs['climate']['fthin_cld'] = 0
         else :
-            self.inputs['climate']['cloudy'] = 0
+            self.inputs['climate']['cloudy'] = "cloudless"
             self.inputs['climate']['cld_species'] = 0
             self.inputs['climate']['fsed'] = 0
             self.inputs['climate']['mieff_dir'] = mieff_dir
@@ -3854,7 +3859,6 @@ class inputs():
         g0_cld_climate = np.zeros(shape=(nlevel-1,nwno,4))
         w0_cld_climate = np.zeros(shape=(nlevel-1,nwno,4))
 
-
         # first conv call
         
         it_max= 10   ### inner loop calls
@@ -3895,8 +3899,8 @@ class inputs():
                              t_table, p_table, grad, cp, opacityclass, grav, 
                              rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, save_profile,all_profiles, all_opd, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop, beta, param_flag,
                              verbose=verbose,fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, moist = moist)
-            if cloudy == 1:
-                opd_now,w0_now,g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
+            if cloudy == "selfconsistent" or cloudy == "singleiterated":
+                opd_now, w0_now, g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
             else:
                 opd_now,w0_now,g0_now = 0,0,0
         
@@ -4009,7 +4013,7 @@ class inputs():
         
             
             
-            if cloudy == 1:    
+            if cloudy == "selfconsistent":    
                 wv661 = 1e4/opacityclass.wno
                 opd_cld_climate,g0_cld_climate,w0_cld_climate = initiate_cld_matrices(opd_cld_climate,g0_cld_climate,w0_cld_climate,wv196,wv661)
             
@@ -4159,9 +4163,14 @@ class inputs():
                                 t_table, p_table, grad, cp, opacityclass, grav, 
                                 rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, all_opd, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly,
                              verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist = moist,deq_rainout=deq_rainout,quench_ph3=quench_ph3)
-                if cloudy == 1:
+                if cloudy == "selfconsistent":
                     opd_now,w0_now,g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
+                elif cloudy == "postprocessed" or cloudy == "singleiterated":
+                    raise Exception("Need to figure out what to do here")
+                elif cloudy == "cloudless":
+                    opd_now,w0_now,g0_now = 0,0,0
                 else:
+                    warnings.warn("Deprecating input for 'cloudy' other than selfconsistent, singleiterated, postprocessed, and cloudless; will assume cloudless")
                     opd_now,w0_now,g0_now = 0,0,0
                 
             else:
@@ -4196,7 +4205,7 @@ class inputs():
         all_out['converged']=final_conv_flag
 
         #put cld output in all_out
-        if cloudy == 1:
+        if cloudy == "selfconsistent" or cloudy == "singleiterated":
             df_cld = vj.picaso_format(opd_now, w0_now, g0_now, pressure = cld_out['pressure'], wavenumber=1e4/cld_out['wave'])
             all_out['cld_output_picaso'] = df_cld
             all_out['virga_output'] = cld_out
@@ -4213,7 +4222,7 @@ class inputs():
             bundle.phase_angle(0)
             bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
             bundle.premix_atmosphere(opacityclass,df)
-            if cloudy == 1:
+            if cloudy == "postprocessed" or cloudy == "singleiterated" or cloudy == "selfconsistent":
                 bundle.clouds(df=df_cld)
             df_spec = bundle.spectrum(opacityclass,full_output=True)    
             all_out['spectrum_output'] = df_spec 
@@ -4769,17 +4778,16 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     sigmab =  0.56687e-4 #cgs
     target_teff = (abs(tidal[0])/sigmab)**0.25
     # Don't use large step_max option for cold models, much better converged with smaller stepping unless it's cloudy
-    if target_teff <= 400 and cloudy != 1:
-        egp_stepmax = True
-    else: 
-        egp_stepmax = False
+    egp_stepmax = (target_teff <= 400 and cloudy != "selfconsistent")
 
     #testing goto 1235 in EGP profile.f (JM)
     if final == True:
         it_max = it_max * 2
         itmx = 6
         for iii in range(itmx):
-            if cloudy == 1 :
+            if cloudy == "postprocessed" or cloudy == "singleiterated":
+                raise Exception("Need to figure out how to handle postprocessed or single-iterated here!")
+            elif cloudy == "selfconsistent":
                 DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
                 W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
                 frac_a,frac_b,frac_c,constant_back,constant_forward,  \
@@ -4869,7 +4877,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                         ngauss, gauss_wts, save_profile, all_profiles,
                         output_abunds, verbose=verbose, moist = moist,egp_stepmax=egp_stepmax)
             
-            if cloudy == 1 and save_profile == 1:
+            if cloudy != "cloudless" and save_profile == 1:
                 for i in range(cldsave_count):
                     all_opd = np.append(all_opd,df_cld['opd'].values[55::196]) #save opd at 4 micron
             
@@ -4886,7 +4894,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         return pressure, temp , dtdp, conv_flag, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate, cld_out,flux_net_ir_layer, flux_plus_ir_attop, all_opd
     
     if first_call_ever == False:
-        if cloudy == 1 :
+        if cloudy == "selfconsistent":
             DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
             W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
             frac_a,frac_b,frac_c,constant_back,constant_forward,  \
@@ -5001,7 +5009,9 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
         #if save_profile == 1:
         #    all_profiles = np.append(all_profiles,bundle.inputs['atmosphere']['profile']['NH3'].values)
-        if cloudy == 1 :
+        if cloudy == "postprocessed" or cloudy == "singleiterated":
+            raise Exception("Need to figure out how to handle postprocessed or single-iterated here!")
+        elif cloudy == "selfconsistent":
             we0,we1,we2,we3 = 0.25,0.25,0.25,0.25
             opd_prev_cld_step = (we0*opd_cld_climate[:,:,0]+we1*opd_cld_climate[:,:,1]+we2*opd_cld_climate[:,:,2]+we3*opd_cld_climate[:,:,3]) # last average
             
@@ -5483,7 +5493,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,t
     
     bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
 
-    if cloudy == 1:
+    if cloudy == "selfconsistent" or cloudy == "postprocessed":
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight  =  calculate_atm(bundle, opacityclass)
 
         metallicity = 10**(mh) #atmospheric metallicity relative to Solar
