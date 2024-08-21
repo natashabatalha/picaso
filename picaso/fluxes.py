@@ -1795,7 +1795,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:] * pi #  Btop=(1.-np.exp(-tautop/ubari))*B[0]
     
     if hard_surface:
-        b_surface = all_b[-1,:]*pi #for terrestrial, hard surface  
+        emissivity = 1.0 - surf_reflect #Emissivity is 1 - surface reflectivity
+        b_surface =  emissivity*all_b[-1,:]*pi #for terrestrial, hard surface  
     else: 
         b_surface= (all_b[-1,:] + b1[-1,:]*mu1)*pi #(for non terrestrial)
 
@@ -1861,7 +1862,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
             iubar = ubar1[ng,nt]
 
             if hard_surface:
-                flux_plus[ng,nt,-1,:] = all_b[-1,:] *2*pi  # terrestrial flux /pi = intensity
+                emissivity = 1.0 - surf_reflect #Emissivity is 1 - surface reflectivity
+                flux_plus[ng,nt,-1,:] = emissivity*all_b[-1,:] *2*pi  # terrestrial flux /pi = intensity
             else:
                 flux_plus[ng,nt,-1,:] = ( all_b[-1,:] + b1[-1,:] * iubar)*2*pi #no hard surface   
                 
