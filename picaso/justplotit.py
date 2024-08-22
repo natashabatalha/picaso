@@ -1673,8 +1673,8 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=pals.Spectral11,v
         plot_format(fig2)
         show(fig2)
     if reorder_output:
-        return phases,all_curves, all_ws, fig
-    return reorder_phases, reorder_all_curves, all_ws, fig
+        return reorder_phases, reorder_all_curves, all_ws, fig
+    return phases, all_curves, all_ws, fig
 
 def thermal_contribution(full_output, tau_max=1.0,R=100,  **kwargs):
     """
