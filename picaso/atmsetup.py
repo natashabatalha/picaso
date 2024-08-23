@@ -111,12 +111,17 @@ class ATMSETUP():
         electrons = False
         for g in range(ng):
             for t in range(nt):
-                ilat = list(read_3d.coords['lat'].values.astype(np.float32)).index(np.float32(latitude[t]))
-                ilon = list(read_3d.coords['lon'].values.astype(np.float32)).index(np.float32(longitude[g]))
+                if 'lat2d' in read_3d.coords:  # For phase curve, use lat2d and lon2d
+                    ilat = list(read_3d.coords['lat2d'].values.astype(np.float32)).index(np.float32(latitude[t]))
+                    ilon = list(read_3d.coords['lon2d'].values.astype(np.float32)).index(np.float32(longitude[g]))
+                else:  # For normal 3D calculations, use lat and lon
+                    ilat = list(read_3d.coords['lat'].values.astype(np.float32)).index(np.float32(latitude[t]))
+                    ilon = list(read_3d.coords['lon'].values.astype(np.float32)).index(np.float32(longitude[g]))
                 #read = read_3d[int(latitude[t])][int(longitude[g])].sort_values('pressure').reset_index(drop=True)
                 read = read_3d.isel(lon=ilon,lat=ilat).to_pandas().reset_index().drop(['lat','lon'],axis=1).sort_values('pressure')
                 if 'phase' in read.keys():
                     read=read.drop('phase',axis=1)
+
                 #on the first pass look through all the molecules, parse out the electrons and 
                 #add warnings for molecules that aren't recognized
                 if first:
