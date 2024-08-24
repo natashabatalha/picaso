@@ -1559,7 +1559,10 @@ def phase_snaps(allout, x = 'longitude', y = 'pressure', z='temperature',palette
 
     fig.tight_layout()
     return fig
-def phase_curve(allout, to_plot, collapse=None, R=100, palette=pals.Spectral11,verbose=True, reorder_output=False, **kwargs):
+
+def phase_curve(allout, to_plot, collapse=None, R=100, 
+    palette=pals.Spectral11,verbose=True, 
+    reorder_output=False, **kwargs):
     """
     Plots phase curves
     
@@ -1641,21 +1644,21 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=pals.Spectral11,v
     fig.ygrid.grid_line_alpha=0
     plot_format(fig)
 
-    print("phases", phases)
-    print("all_curves",all_curves)
+    #if verbose: print("phases", phases)
+    #if verbose: print("all_curves",all_curves)
 
     #re-order phases such that brightest value is at phase=0 (only way to do this for reflected case)
     front_half_phases = phases[:len(phases)//2]
-    print("front_half_phases", front_half_phases)
+    #print("front_half_phases", front_half_phases)
     back_half_phases = phases[len(phases)//2:] - (2*np.pi)
-    print("back_half_phases", back_half_phases)
+    #print("back_half_phases", back_half_phases)
     reorder_phases = np.concatenate((back_half_phases, front_half_phases))
 
     #re-order all_curves such that brightest value is at phase=0 (only way to do this for reflected case)
     front_half_all_curves = all_curves[:len(all_curves)//2]
     back_half_all_curves = all_curves[len(all_curves)//2:]
     reorder_all_curves = np.concatenate((back_half_all_curves, front_half_all_curves))
-    print("Reorder all curves",reorder_all_curves)
+    #print("Reorder all curves",reorder_all_curves)
 
     if to_plot == "fpfs_reflected" or to_plot == "albedo":
         fig2 = figure(**kwargs)
@@ -1671,9 +1674,11 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=pals.Spectral11,v
         fig2.xgrid.grid_line_alpha=0
         fig2.ygrid.grid_line_alpha=0
         plot_format(fig2)
-        show(fig2)
+        #show(fig2)
+    
     if reorder_output:
         return reorder_phases, reorder_all_curves, all_ws, fig
+    
     return phases, all_curves, all_ws, fig
 
 def thermal_contribution(full_output, tau_max=1.0,R=100,  **kwargs):
