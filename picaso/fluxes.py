@@ -1352,9 +1352,9 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                                 0.75*(1+cos_theta**2.0) #rayleigh phase function
                                 )
                             )
-                elif single_phase==4:#'LAB':
-                    #Phase function as measured by ExCESS, extrapolated to full viewing angles
-                    p_single=(ftau_cld*cos_theta)
+                #elif single_phase==4:#'LAB':
+                #    #Phase function as measured by ExCESS, extrapolated to full viewing angles
+                #    p_single=(ftau_cld*cos_theta)
                 #exploring.... 
                 #elif single_phase==4:#'P(HG) exact w/ approx costheta'
                 #    deltaphi=0
