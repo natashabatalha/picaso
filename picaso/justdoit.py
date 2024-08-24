@@ -2674,7 +2674,11 @@ class inputs():
             shift = np.zeros(len(phases))
         
         if zero_point == 'night_transit':   ## does not work for reflected case!
-            shift = shift + 180
+            if 'reflected' in self.inputs['disco']['calculation']:
+                if verbose: print('Switching to zero point secondary_eclipse which is required for reflected light')
+                shift=shift
+            else:
+                shift = shift + 180
         elif zero_point == 'secondary_eclipse':
             shift=shift
         else: 
@@ -3629,7 +3633,7 @@ class inputs():
         
 
     def phase_curve(self, opacityclass,  full_output=False, 
-        plot_opacity= False,n_cpu =1 ): 
+        plot_opacity= False,n_cpu =1,verbose=True ): 
         """
         Run phase curve 
         Parameters
@@ -3653,7 +3657,7 @@ class inputs():
             self.inputs['phase_angle'] = iphase[1]
             self.inputs['atmosphere']['profile'] = all_profiles.isel(phase=iphase[0])
 
-            print("Currently computing Phase", iphase)
+            if verbose: print("Currently computing Phase", iphase)
 
             self.inputs['disco'] = all_geom[iphase[1]]
             if not isinstance(all_cld_profiles, type(None)):
