@@ -134,8 +134,11 @@ class ATMSETUP():
                             if i == 'e-':
                                 electrons = True
                             else: #don't raise exception, instead add user warning that a column has been automatically skipped
-                                self.add_warnings("Ignoring %s in input file, not recognized molecule" % i)
-                                warnings.warn("Ignoring %s in input file, not a recognized molecule" % i, UserWarning)
+                                #make sure no warnin for new lat/lon keys
+                                if 'lat' not in i:
+                                    if 'lon' not in i:
+                                        self.add_warnings("Ignoring %s in input file, not recognized molecule" % i)
+                                        warnings.warn("Ignoring %s in input file, not a recognized molecule" % i, UserWarning)
                     
                     first = False
                     self.weights = weights 
