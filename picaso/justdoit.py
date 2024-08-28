@@ -2678,6 +2678,7 @@ class inputs():
                 if verbose: print('Switching to zero point secondary_eclipse which is required for reflected light')
                 shift=shift
             else:
+                if verbose: print('The zero_point input will be deprecated in the next PICASO version as it does not work for the reflectd light case. Instead things can be reordered in the phase_curve function in justplotit.phase_curve using reorder_output keyword')                
                 shift = shift + 180
         elif zero_point == 'secondary_eclipse':
             shift=shift
