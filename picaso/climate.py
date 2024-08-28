@@ -327,7 +327,7 @@ def lu_backsubs(a, n, ntot, indx, b):
     return b
 
 # @logger.catch # Add this to track errors
-@jit(nopython=True, cache=True)
+@jit(nopython=True,cache=True)
 def t_start(nofczns,nstr,it_max,conv,x_max_mult, 
             rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
             grad, cp, tidal, tmin,tmax, dwni , bb , y2, tp, DTAU, TAU, W0, COSB, 
@@ -971,7 +971,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
         if verbose: print("Iteration number ", its,", min , max temp ", min(temp),max(temp), ", flux balance ", flux_net[0]/abs(tidal[0]))
 
         if save_profile == 1:
-            all_profiles = np.append(all_profiles,temp_old)
+            all_profiles = np.vstack((all_profiles, temp_old.reshape((1,len(temp_old)))))
         if flag_converge == 2 : # converged
             # calculate  lapse rate
             dtdp=np.zeros(shape=(nlevel-1))

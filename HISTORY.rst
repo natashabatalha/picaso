@@ -2,6 +2,9 @@
 
 History
 -------
+3.2 (2024-7-8)
+~~~~~~~~~~~~~~
+* Disequilibrium climate modeling
 
 3.1 (2023-3-23)
 ~~~~~~~~~~~~~~~

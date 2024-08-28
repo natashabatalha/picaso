@@ -39,11 +39,12 @@ from astropy.utils.misc import JsonCustomEncoder
 import math
 import xarray as xr
 from joblib import Parallel, delayed, cpu_count
+import h5py
 
 # #testing error tracker
 # from loguru import logger 
 __refdata__ = os.environ.get('picaso_refdata')
-__version__ = 3.2
+__version__ = '3.2.2'
 
 
 if not os.path.exists(__refdata__): 
@@ -51,7 +52,7 @@ if not os.path.exists(__refdata__):
 else: 
     ref_v = json.load(open(os.path.join(__refdata__,'config.json'))).get('version',2.3)
     
-    if __version__ > ref_v: 
+    if __version__ != str(ref_v): 
         warnings.warn(f"Your code version is {__version__} but your reference data version is {ref_v}. For some functionality you may experience Keyword errors. Please download the newest ref version or update your code: https://github.com/natashabatalha/picaso/tree/master/reference")
 
 
@@ -3881,8 +3882,9 @@ class inputs():
         -----------
         opacityclass : class
             Opacity class from `justdoit.opannection`
-        save_all_profiles : bool
-            If you want to save and return all iterations in the T(P) profile,True/False
+        save_all_profiles : bool or str
+            If you want to save and return all iterations in the T(P) profile, True/False.
+            If str, specifies a path to which all iterations are written as an HDF5 file.
         with_spec : bool 
             Runs picaso spectrum at the end to get the full converged outputs, Default=False
         save_all_kzz : bool
@@ -3944,14 +3946,11 @@ class inputs():
         if rfacv==0:compute_reflected=False
         else:compute_reflected=True
 
-        all_profiles= []
-        if save_all_profiles:
-            save_profile = 1
-        else :
-            save_profile = 0
+        save_profile = bool(save_all_profiles)
 
         TEMP1 = self.inputs['climate']['guess_temp']
-        all_profiles=np.append(all_profiles,TEMP1)
+        all_profiles = np.empty((1,len(TEMP1)))
+        all_profiles[0,:] = TEMP1
         pressure = self.inputs['climate']['pressure']
         t_table = self.inputs['climate']['t_table']
         p_table = self.inputs['climate']['p_table']
@@ -4309,6 +4308,16 @@ class inputs():
             df_cld = vj.picaso_format(opd_now, w0_now, g0_now, pressure = cld_out['pressure'], wavenumber=1e4/cld_out['wave'])
             all_out['cld_output_picaso'] = df_cld
             all_out['virga_output'] = cld_out
+        if isinstance(save_all_profiles, str):
+            if verbose:
+                print(f"Saving all T(P) profiles to {save_all_profiles}")
+            profiles_file = h5py.File(save_all_profiles, 'w')
+            gp = profiles_file.create_group("all_profiles")
+            num_digits = len(str(len(all_profiles)))
+            for (i, profile_to_save) in enumerate(all_profiles):
+                i_str = str(i).zfill(num_digits)
+                gp.create_dataset(f"pt_{i_str}", data=profile_to_save)
+            profiles_file.close()
         if as_dict: 
             return all_out
         else: 
@@ -4802,7 +4811,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
     
     temp_old= np.copy(temp)
-
+    
 
     
     bundle = inputs(calculation='brown')
@@ -4812,7 +4821,8 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     
     bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
     if save_profile == 1:
-            all_profiles = np.append(all_profiles,temp_old)
+        all_profiles = np.vstack((all_profiles, temp_old.reshape((1,len(temp_old)))))
+        
     
     if first_call_ever == False:
         if cloudy == 1 :
@@ -4877,7 +4887,6 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     
     ## begin bigger loop which gets opacities
     for iii in range(itmx):
-        
         temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles = t_start(
                     nofczns,nstr,it_max,conv,x_max_mult, 
                     rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
