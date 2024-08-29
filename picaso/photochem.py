@@ -89,7 +89,7 @@ class EvoAtmosphereGasGiant(EvoAtmosphere):
         # Parameters using during initialization
         # The factor of pressure the atmosphere extends
         # compared to predicted quench points of gases
-        self.BOA_pressure_factor = 5.0
+        self.BOA_pressure_factor = 1.0
         # If True, then the guessed initial condition will used
         # quenching relations as an initial guess
         self.initial_cond_with_quenching = True
@@ -99,7 +99,7 @@ class EvoAtmosphereGasGiant(EvoAtmosphere):
         self.m = Metallicity(thermo_file)
 
         # Parameters for determining steady state
-        self.TOA_pressure_avg = 1.0e-7*1e6 # mean TOA pressure (dynes/cm^2)
+        self.TOA_pressure_avg = 1.0e-5*1e6 # mean TOA pressure (dynes/cm^2)
         self.max_dT_tol = 5 # The permitted difference between T in photochem and desired T
         self.max_dlog10edd_tol = 0.2 # The permitted difference between Kzz in photochem and desired Kzz
         self.freq_update_PTKzz = 1000 # step frequency to update PTKzz profile.
@@ -1201,3 +1201,66 @@ def generate_photochem_rx_and_thermo_files(atoms_names=['H','He','N','O','C','S'
     thermo = FormatReactions_main(thermo)
     with open(thermo_filename,'w') as f:
         yaml.dump(thermo,f,Dumper=MyDumper,sort_keys=False,width=70)
+
+def set_equilibrium_composition_to_picaso_df(pc, mechanism_file, df, target_temp_abund = 1200):
+    """Sets elemetal composition in photochem equilibrium solver to the bottom of the atmosphere
+    composition in a picaso df.
+
+    Parameters
+    ----------
+    pc : EvoAtomsphereGasGiant
+        Photochem object
+    mechanism_file : str
+        Path to the reactions file
+    df : DataFrame
+        Pandas DataFrame describing the atmosphere
+    """    
+    
+    # Read the mechanism file
+    with open(mechanism_file,'r') as f:
+        data = yaml.load(f,Loader=yaml.Loader)
+    species_composition = {}
+    for i,sp in enumerate(data['species']):
+        species_composition[sp['name']] = sp['composition']
+    try:
+        for i,sp in enumerate(data['particles']):
+            species_composition[sp['name']] = sp['composition']
+    except KeyError:
+        pass
+    
+    # Build a composition dictionary
+    comp = {}
+    for i,atom in enumerate(data['atoms']):
+        comp[atom['name']] = 0.0
+
+    #find the closest layer to 1200 K to grab abundances from
+    try:
+        closest_layer_idx = np.argmin(np.abs(df['temperature'].values - target_temp_abund))
+        # Compute the composition of the deepest layer in PICASO df
+        for i,sp in enumerate(df):
+            if sp in species_composition:
+                for atom in species_composition[sp]:
+                    comp[atom] += species_composition[sp][atom]*df[sp].to_numpy()[closest_layer_idx]
+
+    except AttributeError:
+        closest_layer_idx = np.argmin(np.abs(df['temperature'] - target_temp_abund))
+        # Compute the composition of the deepest layer in PICASO df
+        for i,sp in enumerate(df['ptchem_df']):
+            if sp in species_composition:
+                for atom in species_composition[sp]:
+                    comp[atom] += species_composition[sp][atom]*df['ptchem_df'][sp].to_numpy()[closest_layer_idx]
+    
+    # Renormalize the composition
+    tot = 0.0
+    for key in comp:
+        tot += comp[key]
+    for key in comp:
+        comp[key] = comp[key]/tot
+    
+    # Convert composition to array
+    molfracs_atoms = np.empty(len(pc.m.gas.atoms_names))
+    for i,atom in enumerate(pc.m.gas.atoms_names):
+        molfracs_atoms[i] = comp[atom]
+
+    # Set composition in equilibrium solver
+    pc.m.gas.molfracs_atoms_sun = molfracs_atoms
