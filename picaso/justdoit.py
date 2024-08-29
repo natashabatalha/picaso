@@ -3637,7 +3637,7 @@ class inputs():
     def inputs_climate(self, temp_guess= None, pressure= None, rfaci = 1,nofczns = 1 ,
         nstr = None,  rfacv = None,
         cloudy = False, mh = None, CtoO = None, species = None, fsed = None, mieff_dir = None,
-        photochem=False, photochem_init_args=None,
+        photochem=False, photochem_init_args=None, sonora_abunds_photochem = False, df_sonora_photochem = None,
         fhole = None, do_holes = False, fthin_cld = None, 
         beta = 1, virga_param = 'const', moistgrad = False, deq_rainout= False, quench_ph3 = True):
         """
@@ -3698,6 +3698,8 @@ class inputs():
                 Pressure level corresponding to the planet_radius, by default 1e6 dynes/cm^2
             - "thermo_file" : str, optional
                 Optionally include a dedicated thermodynamic file.
+        sonora_abunds_photochem : bool
+            Turns on/off using Sonora equilibrium abundances for photochem initially
         fhole : float
             Fraction of clearsky holes (from 0 to 1.0)
         do_holes : bool
@@ -3783,6 +3785,9 @@ class inputs():
         self.inputs['climate']['CtoO'] = CtoO
 
         self.inputs['climate']['photochem'] = photochem
+        self.inputs['climate']['photochem_init_args'] = photochem_init_args
+        self.inputs['climate']['sonora_abunds_photochem'] = sonora_abunds_photochem
+        self.inputs['climate']['df_sonora_photochem'] = df_sonora_photochem
         if self.inputs['climate']['photochem']:
             # Import and initialize the photochemical code.
             from .photochem import EvoAtmosphereGasGiant
@@ -4142,21 +4147,50 @@ class inputs():
                 # Compute photochemical steady-state, and load it into `bundle.inputs['atmosphere']['profile']`. Here,
                 # we use chemical equilibrium + quenching as an initial guess.
                 pc = self.inputs['climate']['pc']
-                bundle.inputs['atmosphere']['profile'] = pc.run_for_picaso(
-                    bundle.inputs['atmosphere']['profile'], 
-                    float(self.inputs['climate']['mh']), 
-                    float(self.inputs['climate']['CtoO']), 
-                    kz, 
-                    True
-                )
+                sonora_abund_photochem = self.inputs['climate']['sonora_abunds_photochem']
+                df_sonora_photochem = self.inputs['climate']['df_sonora_photochem'] # temporary for testing, but in the future will need a better way to not require user input
+
+                if sonora_abund_photochem:
+                    from .photochem import set_equilibrium_composition_to_picaso_df
+                    # add option to start with premix_atmosphere_from sonora without photochem abundances
+                    # if Teff > 1000: # grabbing the right equilibrium composition around 1200 K for warmer objects
+                    set_equilibrium_composition_to_picaso_df(pc,self.inputs['climate']['photochem_init_args']['mechanism_file'],df_sonora_photochem,1200)
+                    # else: # grabbing the equilibrium composition above the CO2 quench for colder objects
+                    #     set_equilibrium_composition_to_picaso_df(pc,self.inputs['climate']['photochem_init_args']['mechanism_file'],bundle.inputs['atmosphere']['profile'],600)
+
+                    bundle.inputs['atmosphere']['profile'] = pc.run_for_picaso(
+                        bundle.inputs['atmosphere']['profile'], 
+                        float(0.0),
+                        float(1.0), 
+                        kz, 
+                        True
+                    )
+                else:
+                    bundle.inputs['atmosphere']['profile'] = pc.run_for_picaso(
+                        bundle.inputs['atmosphere']['profile'], 
+                        float(self.inputs['climate']['mh']), 
+                        float(self.inputs['climate']['CtoO']), 
+                        kz, 
+                        True
+                    )
 
                 all_kzz = np.append(all_kzz, kz)
                 quench_levels = np.array([0,0,0,0])
                 photo_inputs_dict = {}
                 # Save some information, to be used in later photochem calls.
                 photo_inputs_dict['yesorno'] = True
-                photo_inputs_dict['mh'] = float(self.inputs['climate']['mh'])
-                photo_inputs_dict['CtoO'] = float(self.inputs['climate']['CtoO'])
+
+                if sonora_abund_photochem:
+                    photo_inputs_dict['mh'] = 0.0 # needs to be solar for this to work
+                    photo_inputs_dict['CtoO'] = 1.0
+                    photo_inputs_dict['mechanism_file'] = self.inputs['climate']['photochem_init_args']['mechanism_file']
+                    photo_inputs_dict['sonora_abunds_photochem'] = sonora_abund_photochem
+                    photo_inputs_dict['df_sonora_photochem'] = df_sonora_photochem
+                else:
+                    photo_inputs_dict['mh'] = float(self.inputs['climate']['mh'])
+                    photo_inputs_dict['CtoO'] = float(self.inputs['climate']['CtoO'])
+                photo_inputs_dict['mh_interp'] = float(self.inputs['climate']['mh'])
+                photo_inputs_dict['CtoO_interp'] = float(self.inputs['climate']['CtoO'])
                 photo_inputs_dict['pc'] = pc
                 photo_inputs_dict['kz'] = kz
 
@@ -5767,7 +5801,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
     else :
         # Compute chemical equilibrium composition by interpolating pre-computed grid
         #bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
-        bundle.premix_atmosphere_photochem(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],mh_interp=photo_inputs_dict['mh'],cto_interp=photo_inputs_dict['CtoO'])
+        bundle.premix_atmosphere_photochem(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],mh_interp=photo_inputs_dict['mh_interp'],cto_interp=photo_inputs_dict['CtoO_interp'])
 
         # Unpack photochem object
         pc = photo_inputs_dict['pc']
@@ -5969,7 +6003,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
         else :
             # Compute chemical equilibrium composition by interpolating pre-computed grid
             #bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
-            bundle.premix_atmosphere_photochem(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],mh_interp=photo_inputs_dict['mh'],cto_interp=photo_inputs_dict['CtoO'])
+            bundle.premix_atmosphere_photochem(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],mh_interp=photo_inputs_dict['mh_interp'],cto_interp=photo_inputs_dict['CtoO_interp'])
 
             # Unpack photochem object
             pc = photo_inputs_dict['pc']
@@ -6674,7 +6708,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
     else :
         # Compute chemical equilibrium composition by interpolating pre-computed grid
         #bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
-        bundle.premix_atmosphere_photochem(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],mh_interp=photo_inputs_dict['mh'],cto_interp=photo_inputs_dict['CtoO'])
+        bundle.premix_atmosphere_photochem(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],mh_interp=photo_inputs_dict['mh_interp'],cto_interp=photo_inputs_dict['CtoO_interp'])
 
         # This line was here previously, so I'm keeping it.
         kz = all_kzz[-len(temp):] ## level mixing timescales
