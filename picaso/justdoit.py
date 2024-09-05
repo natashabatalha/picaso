@@ -3569,7 +3569,8 @@ class inputs():
         cloudy = False, mh = None, CtoO = None, species = None, fsed = None, mieff_dir = None,
         photochem=False, photochem_file=None,photochem_stfile = None,photonetwork_file = None,
         photonetworkct_file=None,tstop=1e7,psurf=10, fhole = None, do_holes = False, fthin_cld = None, 
-        beta = 1, virga_param = 'const', moistgrad = False, deq_rainout= False, quench_ph3 = True):
+        beta = 1, virga_param = 'const', moistgrad = False, deq_rainout= False, quench_ph3 = True,
+        opd_climate=None,):
 
         """
         Get Inputs for Climate run
@@ -3602,7 +3603,6 @@ class inputs():
         cloudy : str
             How to use cloud models: 
             "cloudless" for no cloud
-            "postprocessed" for only impacting spectra and not temperature
             "fixed" for the initial cloud profile, not updated with each temperature profile
             "selfconsistent" for fully operating within the climate convergence
         mh : string
@@ -3858,8 +3858,7 @@ class inputs():
         opd_cld_climate = np.zeros(shape=(nlevel-1,nwno,4))
         g0_cld_climate = np.zeros(shape=(nlevel-1,nwno,4))
         w0_cld_climate = np.zeros(shape=(nlevel-1,nwno,4))
-        print("Setting initial clouds to zero: jdi:3861")
-        
+
         # first conv call
         
         it_max= 10   ### inner loop calls
@@ -3894,14 +3893,12 @@ class inputs():
                     cld_species, mh,fsed,flag_hack,save_profile,all_profiles, all_opd,
                     opd_cld_climate,g0_cld_climate,w0_cld_climate,beta, param_flag,flux_net_ir_layer, 
                     flux_plus_ir_attop, verbose=verbose,fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, moist = moist)   
-        print("Got new cloud OPD/g0/w0 from 'profile': jdi:3897")
 
         if chemeq_first: 
             pressure, temp, dtdp, nstr_new, flux_plus_final,  flux_net_final, flux_net_ir_final, df, all_profiles, cld_out, final_conv_flag, all_opd =find_strat(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                              t_table, p_table, grad, cp, opacityclass, grav, 
                              rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, save_profile,all_profiles, all_opd, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop, beta, param_flag,
                              verbose=verbose,fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, moist = moist)
-            print("Got new cloud OPD/g0/w0 from 'find_strat': jdi:3904")
             if cloudy == "selfconsistent" or cloudy == "fixed":
                 opd_now, w0_now, g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
             else:
@@ -4019,7 +4016,6 @@ class inputs():
             if cloudy == "selfconsistent":    
                 wv661 = 1e4/opacityclass.wno
                 opd_cld_climate,g0_cld_climate,w0_cld_climate = initiate_cld_matrices(opd_cld_climate,g0_cld_climate,w0_cld_climate,wv196,wv661)
-                print("Initiating cloud matrices: jdi:4022")
             
             #Rerun star so that F0PI can now be on the 
             #661 grid 
@@ -4161,22 +4157,20 @@ class inputs():
             w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop, beta, param_flag,
             photo_inputs_dict,
             on_fly=on_fly, gases_fly=gases_fly, verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist=moist, deq_rainout=deq_rainout,quench_ph3=quench_ph3)
-                print("Got new cloud profiles from 'profile_deq': jdi:4164")
                 # print('find_strat_deq, kz input:',kz) #JM printout for deq nan debugging
                 # print('find_strat_deq, all_kzz input:',all_kzz)
                 pressure, temp, dtdp, nstr_new, flux_plus_final,flux_net_final, flux_net_ir_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,cld_out,photo_inputs_dict,final_conv_flag,all_opd=find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                                 t_table, p_table, grad, cp, opacityclass, grav, 
                                 rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, all_opd, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly,
                              verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist = moist,deq_rainout=deq_rainout,quench_ph3=quench_ph3)
-                print("Got new cloud profiles from 'find_strat_deq': jdi:4171")
                 if cloudy == "selfconsistent":
                     opd_now,w0_now,g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
-                elif cloudy == "postprocessed" or cloudy == "fixed":
+                elif cloudy == "fixed":
                     raise Exception("Need to figure out what to do here")
                 elif cloudy == "cloudless":
                     opd_now,w0_now,g0_now = 0,0,0
                 else:
-                    warnings.warn("Deprecating input for 'cloudy' other than selfconsistent, fixed, postprocessed, and cloudless; will assume cloudless")
+                    warnings.warn("Deprecating input for 'cloudy' other than selfconsistent, fixed, and cloudless; will assume cloudless")
                     opd_now,w0_now,g0_now = 0,0,0
                 
             else:
@@ -4185,13 +4179,12 @@ class inputs():
                 cloudy, cld_species,mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile,all_profiles, all_opd, self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,
                 g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop, beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, verbose=verbose, 
                 do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist=moist, deq_rainout=deq_rainout,quench_ph3=quench_ph3)
-                print("Got new cloud profiles from 'profile_deq': jdi:4188")
                 
                 pressure, temp, dtdp, nstr_new, flux_plus_final,flux_net_final, flux_net_ir_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,cld_out,photo_inputs_dict,final_conv_flag,all_opd=find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                     t_table, p_table, grad, cp, opacityclass, grav, rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, all_opd, self_consistent_kzz,save_kzz,all_kzz, 
                     opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly,
                     verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist = moist,deq_rainout=deq_rainout,quench_ph3=quench_ph3)
-                print("Got new cloud profiles from 'find_strat_deq': jdi:4188")
+
 
             #diseq stuff
             all_out['diseq_out'] = {}
@@ -4212,8 +4205,7 @@ class inputs():
         all_out['converged']=final_conv_flag
 
         #put cld output in all_out
-        print("Putting cloud output into all_out: jdi:4215")
-        if cloudy == "selfconsistent" or cloudy == "postprocessed":
+        if cloudy == "selfconsistent" or cloudy == "fixed":
             df_cld = vj.picaso_format(opd_now, w0_now, g0_now, pressure = cld_out['pressure'], wavenumber=1e4/cld_out['wave'])
             all_out['cld_output_picaso'] = df_cld
             all_out['virga_output'] = cld_out
@@ -4230,8 +4222,7 @@ class inputs():
             bundle.phase_angle(0)
             bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
             bundle.premix_atmosphere(opacityclass,df)
-            if cloudy == "postprocessed" or cloudy == "fixed" or cloudy == "selfconsistent":
-                print("Calling bundle.clouds: jdi:4234")
+            if cloudy == "fixed" or cloudy == "selfconsistent":
                 bundle.clouds(df=df_cld)
             df_spec = bundle.spectrum(opacityclass,full_output=True)    
             all_out['spectrum_output'] = df_spec 
@@ -4794,7 +4785,9 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         it_max = it_max * 2
         itmx = 6
         for iii in range(itmx):
-            if cloudy == "selfconsistent":
+            if cloudy == "fixed":
+                raise Exception("Need to figure out how to handle fixed here!")
+            elif cloudy == "selfconsistent":
                 DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
                 W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
                 frac_a,frac_b,frac_c,constant_back,constant_forward,  \
@@ -4844,15 +4837,11 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                 g0_clmt = np.nan_to_num(g0_clmt,nan=0.0)
                 w0_clmt = np.nan_to_num(w0_clmt,nan=0.0)
                 opd_clmt[np.where(opd_clmt <= 1e-5)] = 0.0
-            
+                
+                
                 df_cld = vj.picaso_format(opd_clmt, w0_clmt, g0_clmt, pressure = cld_out['pressure'], wavenumber= 1e4/cld_out['wave'])
                 bundle.clouds(df=df_cld)
-            elif cloudy == "fixed":
-                df_cld = vj.picaso_format(opd_cld_climate,g0_cld_climate,w0_cld_climate, pressure = pressure, wavenumber= 1e4/user_provided_wave)
-                # need to get "user_provided_wave" in here somehow...
-                bundle.clouds(df=df_cld)
             else:
-                # postprocessed and cloudless go here
                 cld_out = 0
     
             if do_holes == True:
@@ -4888,7 +4877,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                         ngauss, gauss_wts, save_profile, all_profiles,
                         output_abunds, verbose=verbose, moist = moist,egp_stepmax=egp_stepmax)
             
-            if not(cloudy == "cloudless" or cloudy == "postprocessed") and save_profile == 1:
+            if cloudy != "cloudless" and save_profile == 1:
                 for i in range(cldsave_count):
                     all_opd = np.append(all_opd,df_cld['opd'].values[55::196]) #save opd at 4 micron
             
@@ -4968,6 +4957,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
         frac_a,frac_b,frac_c,constant_back,constant_forward, \
         wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight =  calculate_atm(bundle, opacityclass )
+    # calculation of all opacities
     
     if do_holes == True:
         DTAU_clear, TAU_clear, W0_clear, COSB_clear,ftau_cld_clear, ftau_ray_clear,GCOS2_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear, COSB_OG_clear, \
@@ -4976,6 +4966,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw, gweight, tweight =  calculate_atm(bundle, opacityclass, fthin_cld, do_holes=True)
     
     ## begin bigger loop which gets opacities
+    # primary loop / outer for loop
     for iii in range(itmx):
 
         if do_holes == True:
@@ -5021,7 +5012,17 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         #if save_profile == 1:
         #    all_profiles = np.append(all_profiles,bundle.inputs['atmosphere']['profile']['NH3'].values)
         if cloudy == "fixed":
-            raise Exception("Need to figure out how to handle fixed here!")
+            level_pressure, wno = bundle.inputs['atmosphere']['profile']['pressure'], opacityclass.wno
+            opd_clmt = opd_cld_climate[:,:,0]
+            w0_clmt = w0_cld_climate[:,:,0]
+            g0_clmt = g0_cld_climate[:,:,0]
+            layer_pressure = np.sqrt(level_pressure.values[:-1] * level_pressure.values[1:])
+            df_cld = vj.picaso_format(opd_clmt, w0_clmt, g0_clmt, pressure=layer_pressure, wavenumber=wno)
+            bundle.clouds(df=df_cld)
+            diff = 0
+            taudif = 0
+            taudif_tol = 1
+            cld_out = "fixed"
         elif cloudy == "selfconsistent":
             we0,we1,we2,we3 = 0.25,0.25,0.25,0.25
             opd_prev_cld_step = (we0*opd_cld_climate[:,:,0]+we1*opd_cld_climate[:,:,1]+we2*opd_cld_climate[:,:,2]+we3*opd_cld_climate[:,:,3]) # last average
@@ -5081,7 +5082,6 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             
             print("Max TAUCLD diff is", taudif, " Tau tolerance is ", taudif_tol)
         else:
-            # postprocessed or cloudless
             cld_out = 0
 
 
@@ -5505,7 +5505,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,t
     
     bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
 
-    if cloudy == "selfconsistent" or cloudy == "postprocessed":
+    if cloudy == "selfconsistent":
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight  =  calculate_atm(bundle, opacityclass)
 
         metallicity = 10**(mh) #atmospheric metallicity relative to Solar
@@ -5939,7 +5939,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
         #if save_profile == 1:
         #    all_profiles = np.append(all_profiles,bundle.inputs['atmosphere']['profile']['NH3'].values)
         
-        if cloudy == 1 :
+        if cloudy == "selfconsistent":
             we0,we1,we2,we3 = 0.25,0.25,0.25,0.25
             opd_prev_cld_step = (we0*opd_cld_climate[:,:,0]+we1*opd_cld_climate[:,:,1]+we2*opd_cld_climate[:,:,2]+we3*opd_cld_climate[:,:,3]) # last average
             
@@ -6626,7 +6626,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         
         qvmrs,qvmrs2 = 0,0
     
-    if cloudy == 1:
+    if cloudy == "selfconsistent":
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight =  calculate_atm_deq(bundle, opacityclass,on_fly=on_fly, gases_fly=gases_fly)
         metallicity = 10**(mh) #atmospheric metallicity relative to Solar
         mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
