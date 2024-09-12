@@ -4777,7 +4777,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     if moist == True:
         #initiate bundle to use in moist adiabat case to grab abundances
         bundle = inputs(calculation='brown')
-        bundle.phase_angle(0,num_gangle=10, num_tangle=1)
+        bundle.phase_angle(0)
         bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
         bundle.add_pt( temp, pressure)
         
@@ -4797,10 +4797,6 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                 calc_type =  0 # only need grad_x in return
                 grad_x, cp_x = moist_grad( temp[j1-1], press, t_table, p_table, grad, cp, calc_type, output_abunds, j1-1)
                 temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
-    
-        temp_old= np.copy(temp)
-        bundle.add_pt(temp, pressure)
-        bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
 
     else: #non moist adiabat case
         # first calculate the convective zones
@@ -4816,15 +4812,15 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                 grad_x, cp_x = did_grad_cp( temp[j1-1], press, t_table, p_table, grad, cp, calc_type)
                 temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
         
-        temp_old= np.copy(temp)
+    temp_old= np.copy(temp)
 
-        bundle = inputs(calculation='brown')
-        bundle.phase_angle(0,num_gangle=10, num_tangle=1)
-        bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
-        bundle.add_pt( temp, pressure)
-        
-        bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
-        output_abunds = bundle.inputs['atmosphere']['profile'].T.values
+    bundle = inputs(calculation='brown')
+    bundle.phase_angle(0)
+    bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
+    bundle.add_pt( temp, pressure)
+    
+    bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+    output_abunds = bundle.inputs['atmosphere']['profile'].T.values
 
     if save_profile == 1:
             all_profiles = np.append(all_profiles,temp_old)
@@ -5844,7 +5840,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             # we0,we1,we2,we3 = 1.0,0.0,0.0,0.0
             opd_prev_cld_step = (we0*opd_cld_climate[:,:,0]+we1*opd_cld_climate[:,:,1]+we2*opd_cld_climate[:,:,2]+we3*opd_cld_climate[:,:,3]) # last average
             
-            metallicity = 10**(0) #atmospheric metallicity relative to Solar
+            metallicity = 10**(mh) #atmospheric metallicity relative to Solar
             mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
             directory = mieff_dir
             
@@ -5871,26 +5867,27 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1] = opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0]
             
             #convert cld_out output to 661 grid (similar to initiate_cld_matrices)
-            wv196 = cld_out['wave']
-            wv661 = 1e4/opacityclass.wno[::-1] # testing old incorrect way to rule out virga issues
+            # wv196 = cld_out['wave']
+            # wv661 = 1e4/opacityclass.wno[::-1] # testing old incorrect way to rule out virga issues
             # wv661 = opacityclass.wno[::-1] # flip to match the order of wv196 from virga
             # print(opacityclass.wno)
             # print(wv196)
             # print(wv661)
 
-            opd_now_661 =  np.zeros(shape=(len(opd_now[:,0]),len(wv661)))
-            g0_now_661,w0_now_661 = np.zeros_like(opd_now_661),np.zeros_like(opd_now_661)
+            # opd_now_661 =  np.zeros(shape=(len(opd_now[:,0]),len(wv661)))
+            # g0_now_661,w0_now_661 = np.zeros_like(opd_now_661),np.zeros_like(opd_now_661)
 
-            for ilayer in range(len(opd_now[:,0])):
-                fopd = interp1d(wv196,opd_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
-                fg0 = interp1d(wv196,g0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
-                fw0 = interp1d(wv196,w0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+            # for ilayer in range(len(opd_now[:,0])):
+            #     fopd = interp1d(wv196,opd_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+            #     fg0 = interp1d(wv196,g0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+            #     fw0 = interp1d(wv196,w0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
 
-                opd_now_661[ilayer,:] = fopd(wv661)
-                g0_now_661[ilayer,:] = fg0(wv661)
-                w0_now_661[ilayer,:] = fw0(wv661)
+            #     opd_now_661[ilayer,:] = fopd(wv661)
+            #     g0_now_661[ilayer,:] = fg0(wv661)
+            #     w0_now_661[ilayer,:] = fw0(wv661)
 
-            opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now_661, g0_now_661, w0_now_661
+            # opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now_661, g0_now_661, w0_now_661
+            opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now, g0_now, w0_now
 
             #if np.sum(opd_cld_climate[:,:,1]) == 0 :
             #    w0,w1,w2,w3 = 1,0,0,0
@@ -5913,7 +5910,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             opd_clmt[np.where(opd_clmt <= 1e-5)] = 0.0
             
             
-            df_cld = vj.picaso_format(opd_clmt, w0_clmt, g0_clmt,pressure = cld_out['pressure'], wavenumber= wv661)
+            df_cld = vj.picaso_format(opd_clmt, w0_clmt, g0_clmt,pressure = cld_out['pressure'], wavenumber= 1e4/cld_out['wave'])
             bundle.clouds(df=df_cld)
 
     DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
@@ -6034,7 +6031,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             # we0,we1,we2,we3 = 1.0,0.0,0.0,0.0
             opd_prev_cld_step = (we0*opd_cld_climate[:,:,0]+we1*opd_cld_climate[:,:,1]+we2*opd_cld_climate[:,:,2]+we3*opd_cld_climate[:,:,3]) # last average
             
-            metallicity = 10**(0) #atmospheric metallicity relative to Solar
+            metallicity = 10**(mh) #atmospheric metallicity relative to Solar
             mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
             directory = mieff_dir
 
@@ -6060,23 +6057,23 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1] = opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0]
             
             # convert cld_out output to 661 grid similar to initiate_cld_matrices (JM)
-            wv196 = cld_out['wave']
-            wv661 = 1e4/opacityclass.wno[::-1] # flip to match the order of wv196 from virga
+            # wv196 = cld_out['wave']
+            # wv661 = 1e4/opacityclass.wno[::-1] # flip to match the order of wv196 from virga
 
-            opd_now_661 =  np.zeros(shape=(len(opd_now[:,0]),len(wv661)))
-            g0_now_661,w0_now_661 = np.zeros_like(opd_now_661),np.zeros_like(opd_now_661)
+            # opd_now_661 =  np.zeros(shape=(len(opd_now[:,0]),len(wv661)))
+            # g0_now_661,w0_now_661 = np.zeros_like(opd_now_661),np.zeros_like(opd_now_661)
 
-            for ilayer in range(len(opd_now[:,0])):
-                fopd = interp1d(wv196,opd_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
-                fg0 = interp1d(wv196,g0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
-                fw0 = interp1d(wv196,w0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+            # for ilayer in range(len(opd_now[:,0])):
+            #     fopd = interp1d(wv196,opd_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+            #     fg0 = interp1d(wv196,g0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
+            #     fw0 = interp1d(wv196,w0_now[ilayer,:] , kind='cubic',fill_value="extrapolate")
 
-                opd_now_661[ilayer,:] = fopd(wv661)
-                g0_now_661[ilayer,:] = fg0(wv661)
-                w0_now_661[ilayer,:] = fw0(wv661)
+            #     opd_now_661[ilayer,:] = fopd(wv661)
+            #     g0_now_661[ilayer,:] = fg0(wv661)
+            #     w0_now_661[ilayer,:] = fw0(wv661)
 
-            opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now_661, g0_now_661, w0_now_661                         
-            # opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now, g0_now, w0_now
+            # opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now_661, g0_now_661, w0_now_661                         
+            opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now, g0_now, w0_now
             
             #if np.sum(opd_cld_climate[:,:,1]) == 0 :
             #    w0,w1,w2,w3 = 1,0,0,0
@@ -6099,7 +6096,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             opd_clmt[np.where(opd_clmt <= 1e-5)] = 0.0
             
             
-            df_cld = vj.picaso_format(opd_clmt, w0_clmt, g0_clmt,pressure = cld_out['pressure'], wavenumber= wv661)
+            df_cld = vj.picaso_format(opd_clmt, w0_clmt, g0_clmt,pressure = cld_out['pressure'], wavenumber= 1e4/cld_out['wave'])
             bundle.clouds(df=df_cld)
             
             diff = (opd_clmt-opd_prev_cld_step)
@@ -6108,7 +6105,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
 
             if save_profile == 1:
                 for i in range(cldsave_count):
-                    all_opd = np.append(all_opd,df_cld['opd'].values[55::196])
+                    all_opd = np.append(all_opd,df_cld['opd'].values[55::661])
             
             if verbose: print("Max TAUCLD diff is", taudif, " Tau tolerance is ", taudif_tol)
         else:
