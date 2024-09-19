@@ -3995,17 +3995,17 @@ def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,
     
     #### julien moses 2021
     
-    logp = np.log10(pressure)
-    wh = np.where(np.absolute(logp-(-3)) == np.min(np.absolute(logp-(-3))))
+    # logp = np.log10(pressure)
+    # wh = np.where(np.absolute(logp-(-3)) == np.min(np.absolute(logp-(-3))))
     
-    kzrad1 = (5e8/np.sqrt(pressure[nstr[0]:nstr[1]]))*(scale_h[wh]/(620*1e5))*((target_teff/1450)**4)
-    kzrad2 = (5e8/np.sqrt(pressure[nstr[3]:nstr[4]]))*(scale_h[wh]/(620*1e5))*((target_teff/1450)**4)
-    #
-    if nstr[3] != 0:
-        kz[nstr[0]:nstr[1]] = kzrad1#/100 #*10#kz[nstr[0]:nstr[1]]/1.0
-        kz[nstr[3]:nstr[4]] = kzrad2#/100 #*10 #kz[nstr[3]:nstr[4]]/1.0
-    else:
-        kz[nstr[0]:nstr[1]] = kzrad1#/100
+    # kzrad1 = (5e8/np.sqrt(pressure[nstr[0]:nstr[1]]))*(scale_h[wh]/(620*1e5))*((target_teff/1450)**4)
+    # kzrad2 = (5e8/np.sqrt(pressure[nstr[3]:nstr[4]]))*(scale_h[wh]/(620*1e5))*((target_teff/1450)**4)
+    # #
+    # if nstr[3] != 0:
+    #     kz[nstr[0]:nstr[1]] = kzrad1#/100 #*10#kz[nstr[0]:nstr[1]]/1.0
+    #     kz[nstr[3]:nstr[4]] = kzrad2#/100 #*10 #kz[nstr[3]:nstr[4]]/1.0
+    # else:
+    #     kz[nstr[0]:nstr[1]] = kzrad1#/100
     
     return kz
 

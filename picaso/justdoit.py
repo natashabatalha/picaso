@@ -4966,7 +4966,8 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             
             #get the abundances
             output_abunds = bundle.inputs['atmosphere']['profile'].T.values
-                
+            
+            # kzz = np.ones_like(pressure) * 1e5
             kzz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
             bundle.inputs['atmosphere']['profile']['kz'] = kzz
         
@@ -5077,16 +5078,17 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
 
             #get the abundances
             output_abunds = bundle.inputs['atmosphere']['profile'].T.values
-                
+
+            # kzz = np.ones_like(pressure) * 1e5
             kzz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
             bundle.inputs['atmosphere']['profile']['kz'] = kzz
 
-            # if final == True:
-            #     pass
-            # else:
-            if first_call_ever == True:
+            if final == True:
+                pass
+            else:
+            # if first_call_ever == True:
                 cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
-                        mmw = mean_molecular_weight, b = beta, param = param_flag)#,climate=True)
+                    mmw = mean_molecular_weight, b = beta, param = param_flag)#,climate=True)
 
             opd_now, w0_now, g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
             
@@ -5568,7 +5570,8 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,t
 
         #get the abundances
         output_abunds = bundle.inputs['atmosphere']['profile'].T.values
-            
+        
+        # kzz = np.ones_like(pressure) * 1e5
         kzz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
         bundle.inputs['atmosphere']['profile']['kz'] = kzz
 
