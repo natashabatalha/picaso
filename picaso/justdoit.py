@@ -3919,6 +3919,20 @@ class inputs():
         g0_cld_climate = np.zeros(shape=(nlevel-1,nwno,4))
         w0_cld_climate = np.zeros(shape=(nlevel-1,nwno,4))
 
+        # check mieff grid for virga if doing cloudy 
+        if cloudy == 1:
+            if mieff_dir is None:
+                raise Exception('Need to specify mieff_dir for cloudy runs')
+            # check if the mieff file is on 661 grid
+            miefftest = os.path.join(mieff_dir, [f for f in os.listdir(mieff_dir) if f.endswith('.mieff')][0])
+            with open(miefftest, 'r') as file:
+                gridsize = float(file.readline().split()[0])
+            
+            if diseq_chem and not chemeq_first and gridsize != 661:
+                raise Exception('Mieff grid is not on 661 grid.')
+            #raise warning temporarily until I can think of the best way to handle this
+            if diseq_chem and chemeq_first and gridsize == 661:
+                raise Exception('Currently cannot do chemical equilibrium first for disequilibrium runs with clouds')
 
         # first conv call
         
@@ -6049,8 +6063,11 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             else:
                 bundle.inputs['atmosphere']['profile']['kz'] = kz
                 photo_inputs_dict['kz'] = kz
-                
-            cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
+
+            if final == True:
+                pass
+            else:    
+                cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
                         mmw = mean_molecular_weight, b = beta, param = param_flag)#,climate=True)
             
             opd_now, w0_now, g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
