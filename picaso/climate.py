@@ -1020,7 +1020,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                 if verbose: print("Got stuck with temp NaN -- so escaping the while loop in tstart")
         
 
-        if verbose: print("Iteration number ", its,", min , max temp ", min(temp),max(temp), ", flux balance ", flux_net[0]/abs(tidal[0]))
+        if verbose and False: print("Iteration number ", its,", min , max temp ", min(temp),max(temp), ", flux balance ", flux_net[0]/abs(tidal[0]))
 
         if save_profile == 1:
             all_profiles = np.append(all_profiles,temp_old)
@@ -1037,7 +1037,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
            
             return   temp,  dtdp, flag_converge , flux_net_ir, flux_plus_ir[0,:] , all_profiles, cldsave_count
         
-    if verbose: print("Iterations exceeded it_max ! sorry ")
+    if verbose and False: print("Iterations exceeded it_max ! sorry ")
     dtdp=np.zeros(shape=(nlevel-1))
     for j in range(nlevel -1):
         dtdp[j] = (log( temp[j]) - log( temp[j+1]))/(log(pressure[j]) - log(pressure[j+1]))

@@ -10,6 +10,9 @@
 *.swo
 *.csv
 *.npy
+*.fits
+*.h5
+*.hdf5
 
 # Jupyter Notebooks
 .ipynb_checkpoints
@@ -24,3 +27,5 @@ dist/
 *.DS_Store
 
 *__pycache__/
+data/*
+grp/*
