@@ -2004,7 +2004,7 @@ class inputs():
             build_filename = 't'+ts[get_ind]+'g'+gs[get_ind]+'nc_m0.0.cmp.gz'
             if build_filename not in flist: 
                 raise Exception(f"The Sonora file you are looking for {build_filename} does not exist in your specified directory {sonora_path}. Please check that it is in there.")
-            ptchem = pd.read_csv(os.path.join(sonora_path,build_filename),sep='\s+',compression='gzip')
+            ptchem = pd.read_csv(os.path.join(sonora_path,build_filename),sep=r'\s+',compression='gzip')
             ptchem = ptchem.rename(columns={'P(BARS)':'pressure',
                                             'TEMP':'temperature',
                                             'HE':'He'})
@@ -2087,7 +2087,7 @@ class inputs():
         #player = df['pressure'].values
         #tlayer  = df['temperature'].values
         
-        grid = pd.read_csv(filename,sep='\s+')
+        grid = pd.read_csv(filename,sep=r'\s+')
         grid['pressure'] = 10**grid['pressure']
 
         self.chem_interp(grid)
@@ -2150,7 +2150,7 @@ class inputs():
 
         header = pd.read_csv(filename).keys()[0]
         cols = header.replace('T (K)','temperature').replace('P (bar)','pressure').split()
-        a = pd.read_csv(filename,sep='\s+',skiprows=1,header=None, names=cols)
+        a = pd.read_csv(filename,sep=r'\s+',skiprows=1,header=None, names=cols)
         a['pressure']=10**a['pressure']
 
 
@@ -4078,7 +4078,7 @@ class inputs():
 
                 qvmrs, qvmrs2= bundle.premix_atmosphere_diseq(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']], quench_levels= quench_levels,t_mix=t_mix, vol_rainout=deq_rainout,quench_ph3=quench_ph3)
                 #was for check SM
-                #bundle.inputs['atmosphere']['profile'].to_csv('/data/users/samukher/Disequilibrium-picaso/first_iteration_testpls300min500',sep='\t')
+                #bundle.inputs['atmosphere']['profile'].to_csv('/data/users/samukher/Disequilibrium-picaso/first_iteration_testpls300min500',sep=r'\t')
                 #raise SystemExit(0) 
                 photo_inputs_dict = {}
                 photo_inputs_dict['yesorno'] = False
@@ -4416,7 +4416,7 @@ def HJ_pt_3d(as_xarray=False,add_kz=False, input_file = os.path.join(__refdata__
         file in base_cases/HJ_3d.pt
     """
     #input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')
-    threed_grid = pd.read_csv(input_file,sep='\s+',names=['p','t','k'])
+    threed_grid = pd.read_csv(input_file,sep=r'\s+',names=['p','t','k'])
     all_lon= threed_grid.loc[np.isnan(threed_grid['k'])]['p'].values
     all_lat=  threed_grid.loc[np.isnan(threed_grid['k'])]['t'].values
     latlong_ind = np.concatenate((np.array(threed_grid.loc[np.isnan(threed_grid['k'])].index),[threed_grid.shape[0]] ))
@@ -4540,11 +4540,11 @@ def evolution_track(mass=1, age='all'):
             mass = f'00{imass}0'            
             if len(mass)==5:mass=mass[1:]
             cold = pd.read_csv(os.path.join(__refdata__, 'evolution','cold_start',f'model_seq.{mass}'),
-                skiprows=12,sep='\s+',
+                skiprows=12,sep=r'\s+',
                     header=None,names=['age_years','logL','R_cm','Ts','Teff',
                                        'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
             hot = pd.read_csv(os.path.join(__refdata__, 'evolution','hot_start',f'model_seq.{mass}'),
-                skiprows=12,sep='\s+',
+                skiprows=12,sep=r'\s+',
                     header=None,names=['age_years','logL','R_cm','Ts','Teff',
                                        'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
             if imass==1 :
@@ -4583,10 +4583,10 @@ def evolution_track(mass=1, age='all'):
         mass = int(valid_options[idx])
         mass = f'00{mass}0'
         if len(mass)==5:mass=mass[1:]
-        cold = pd.read_csv(os.path.join(__refdata__, 'evolution','cold_start',f'model_seq.{mass}'),skiprows=12,sep='\s+',
+        cold = pd.read_csv(os.path.join(__refdata__, 'evolution','cold_start',f'model_seq.{mass}'),skiprows=12,sep=r'\s+',
                     header=None,names=['age_years','logL','R_cm','Ts','Teff',
                                        'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
-        hot = pd.read_csv(os.path.join(__refdata__, 'evolution','hot_start',f'model_seq.{mass}'),skiprows=12,sep='\s+',
+        hot = pd.read_csv(os.path.join(__refdata__, 'evolution','hot_start',f'model_seq.{mass}'),skiprows=12,sep=r'\s+',
                     header=None,names=['age_years','logL','R_cm','Ts','Teff',
                                        'log rc','log Pc','log Tc','grav_cgs','Uth','Ugrav','log Lnuc'])
         #return only what we want
