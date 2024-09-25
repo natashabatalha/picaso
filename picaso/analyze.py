@@ -501,8 +501,72 @@ class GridFitter():
             
         return parameter_grid,prob
 
+    def plot_chi_posteriors(self, grid, data, max_row, max_col, input_parameters='all'):
+        """
+        Plots posteriors for a given parameter set and returns a dictionary of the best chance parameters
+        Parameters
+            ----------
+            grid_names : arr 
+                array of string grid name to plot 
+                must be in an arr, even if there is one string:
+                >>>percent_chance_dict = plot_chi_posteriors(['grid'], 'data')
+            data_names : str 
+                data names or string of single 
+            max_col : int
+                set max col # of plots
+            max_row : int
+                set max col # of plots
+            input_parameters : arr
+                array of string for each param to be plotted
+                default is every param
+        """
 
-    def plot_chi_posteriors(self, grid_name, data_name,parameters, fig=None, ax=None,
+        scatter_args = dict(
+            marker='o',
+        )
+        percent_chance_dict={}
+        percent_chance_dict_val={}
+        grid_list=grid
+        parameters=[]
+        fig = plt.figure()
+        count=0
+        all_axs={}
+        for i in grid_list:
+            if input_parameters=='all':
+                parameters = self.posteriors[i][data].keys()
+            else:
+                for name in input_parameters:
+                    if name in self.posteriors[i][data].keys():
+                        parameters.append(name)
+            if len(parameters) > (max_row*max_col):
+                raise Exception("Max_row*max_col must be bigger than amount of parameters")
+            for param in parameters:
+                if param in all_axs.keys():
+                    ax = all_axs[param]
+                else:
+                    count+=1
+                    ax = fig.add_subplot(max_row, max_col, count)
+                param_val = self.posteriors[i][data][param][0]
+                prob = self.posteriors[i][data][param][1]
+                greatest_param, greatest_param_chance = np.argmax(prob), np.max(prob)
+                ax.plot(param_val, prob, **scatter_args, label=str(i))
+                ax.set_xlabel(str(param))
+                percent_chance_dict_val[param]={str(param_val[greatest_param])}
+                all_axs[param] = ax      
+            percent_chance_dict[i]=percent_chance_dict_val 
+        lines_labels = [iax.get_legend_handles_labels() for iax in fig.axes]
+        lines, llabels = [sum(lol, []) for lol in zip(*lines_labels)]
+        fig.legend(lines[0:len(grid_list)], llabels[0:len(grid_list)],
+        bbox_to_anchor=(0.5, 1.1),
+        fontsize=8,
+        loc = 'upper center', 
+                ncol=len(grid_list))
+        fig.tight_layout()
+        plt.show()
+        return percent_chance_dict, fig
+
+
+    def plot_chi_posteriors_deprecate(self, grid_name, data_name,parameters, fig=None, ax=None,
                        x_label_style={}, x_axis_type={}, label=''):
         """
         Plots posteriors for a given parameter set 
@@ -543,7 +607,7 @@ class GridFitter():
                 #cmap.set_bad('k',1.)
 
                 plt.rcParams['image.cmap'] = 'magma'                   # Colormap.
-                plt.rcParams['image.interpolation'] = ''
+                plt.rcParams['image.interpolation'] = 'None'
                 plt.rcParams['image.origin'] = 'lower'
                 plt.rcParams['font.family'] = 'sans-serif'
                 plt.rcParams['font.serif'] = 'DejaVu Sans'
@@ -637,6 +701,13 @@ class GridFitter():
         if add_ptchem: 
             all_pt = fitter.temperature[grid_name]
             all_chem = fitter.chemistry[grid_name]
+            mols = all_chem.keys()
+            all_pressures = fitter.pressure[grid_name]
+            unique_ps = np.unique(all_pressures, axis=0)
+            if len(unique_ps)>1: 
+                raise Exception("""Detected non-uniform pressure grid.
+                Grid needs to be on a uniform pressure grid if you want to use the interpolate feature 
+                You can use the function analyze.interp_pressure_grid to adjust the grid data""")
 
         df_grid_params = pd.DataFrame(index = range(len(fitter.list_of_files[grid_name])))
         grid_params=[]
@@ -654,69 +725,68 @@ class GridFitter():
                                         sorted(df_grid_params[i].unique())])
         
         #if the grid were square what size would it be based on unique params
-        square_size = np.product([len(i) for i in grid_params_unique.values()])
-        if square_size != all_spectra.shape[0]:
-            #grid is not square let's fix that for interpolation 
-            spectra_square = []
-            #and add pt/chem if we want
-            if add_ptchem: 
-                mols = all_chem.keys()
-                pt_square = []
-                chem_square = {imol:[] for imol in mols}
+        square_size = np.prod([len(i) for i in grid_params_unique.values()])
+        #if square_size != all_spectra.shape[0]:
+        #grid is not square let's fix that for interpolation 
+        spectra_square = []
+        #and add pt/chem if we want
+        if add_ptchem: 
+            pt_square = []
+            chem_square = {imol:[] for imol in mols}
 
-            full_df_grid = pd.DataFrame(columns = grid_params_unique.keys(), 
-                                       index = range(square_size))
-            for i,icombo in enumerate(itertools.product(*grid_params_unique.values())): 
+        full_df_grid = pd.DataFrame(columns = grid_params_unique.keys(), 
+                                   index = range(square_size))
+        for i,icombo in enumerate(itertools.product(*grid_params_unique.values())): 
 
-                matches = df_grid_params.astype(float).eq(icombo)
-                matches_all_rows = matches.all(axis=1)
-                matches = df_grid_params.loc[matches_all_rows]
+            matches = df_grid_params.astype(float).eq(icombo)
+            matches_all_rows = matches.all(axis=1)
+            matches = df_grid_params.loc[matches_all_rows]
 
-                if len(matches.index)==0: 
-                    #if there are no matches then let's add a nan to that location
-                    full_df_grid.iloc[i,:] = icombo
-                    spectra_square += [[np.nan]*all_spectra.shape[1]]
-                    if add_ptchem: 
-                        pt_square += [[np.nan]*all_pt.shape[1]]
-                        for imol in mols:
-                            chem_square[imol] += [[np.nan]*all_chem[imol].shape[1]]
+            if len(matches.index)==0: 
+                #if there are no matches then let's add a nan to that location
+                full_df_grid.iloc[i,:] = icombo
+                spectra_square += [[np.nan]*all_spectra.shape[1]]
+                if add_ptchem: 
+                    pt_square += [[np.nan]*all_pt.shape[1]]
+                    for imol in mols:
+                        chem_square[imol] += [[np.nan]*all_chem[imol].shape[1]]
 
-                else: 
-                    #if there are matches then let's add in the corresponding value
-                    ind = matches.index[0]
-                    full_df_grid.iloc[i,:] = icombo
-                    spectra_square += [all_spectra[ind]]
-                    if add_ptchem: 
-                        pt_square += [all_pt[ind]]
-                        for imol in mols: 
-                            chem_square[imol] += [all_chem[imol][ind]]
+            else: 
+                #if there are matches then let's add in the corresponding value
+                ind = matches.index[0]
+                full_df_grid.iloc[i,:] = icombo
+                spectra_square += [all_spectra[ind]]
+                if add_ptchem: 
+                    pt_square += [all_pt[ind]]
+                    for imol in mols: 
+                        chem_square[imol] += [all_chem[imol][ind]]
 
-            #now we can properly reshape everything
-            spectra_square = np.reshape(spectra_square, 
-                                        [len(i) for i in grid_params_unique.values()]
-                                        +[all_spectra.shape[1]])
+        #now we can properly reshape everything
+        spectra_square = np.reshape(spectra_square, 
+                                    [len(i) for i in grid_params_unique.values()]
+                                    +[all_spectra.shape[1]])
 
-            if add_ptchem: 
-                pt_square = np.reshape(pt_square, [len(i) for i in grid_params_unique.values()]
-                                        +[all_pt.shape[1]])
-                for imol in mols: 
-                    chem_square[imol] = np.reshape(chem_square[imol], [len(i) for i in grid_params_unique.values()]
-                                        +[all_chem[imol].shape[1]])
-        else: 
-            #reshape all_spectra to be on npar1 x npar2 x npar3 etc 
-            spectra_square = np.reshape(all_spectra, 
-                                        [len(i) for i in grid_params_unique.values()]
-                                        +[all_spectra.shape[1]])
-            if add_ptchem: 
-                #reshape all_spectra to be on npar1 x npar2 x npar3 etc 
-                pt_square = np.reshape(all_pt, 
-                                        [len(i) for i in grid_params_unique.values()]
-                                        +[all_pt.shape[1]])
-                for imol in mols: 
-                    chem_square = {imol: np.reshape(all_chem[imol], 
-                                        [len(i) for i in grid_params_unique.values()]
-                                        +[all_chem[imol].shape[1]])
-                                    for imol in mols}
+        if add_ptchem: 
+            pt_square = np.reshape(pt_square, [len(i) for i in grid_params_unique.values()]
+                                    +[all_pt.shape[1]])
+            for imol in mols: 
+                chem_square[imol] = np.reshape(chem_square[imol], [len(i) for i in grid_params_unique.values()]
+                                    +[all_chem[imol].shape[1]])
+        """else: 
+                                    #reshape all_spectra to be on npar1 x npar2 x npar3 etc 
+                                    spectra_square = np.reshape(all_spectra, 
+                                                                [len(i) for i in grid_params_unique.values()]
+                                                                +[all_spectra.shape[1]])
+                                    if add_ptchem: 
+                                        #reshape all_spectra to be on npar1 x npar2 x npar3 etc 
+                                        pt_square = np.reshape(all_pt, 
+                                                                [len(i) for i in grid_params_unique.values()]
+                                                                +[all_pt.shape[1]])
+                                        for imol in mols: 
+                                            chem_square = {imol: np.reshape(all_chem[imol], 
+                                                                [len(i) for i in grid_params_unique.values()]
+                                                                +[all_chem[imol].shape[1]])
+                                                            for imol in mols}"""
         
 
         #lastly replace nans in grid with real values 
@@ -736,7 +806,7 @@ class GridFitter():
                 # Replace NaN values with interpolated values
                 data[np.isnan(data)] = filled_data
             return data
-        import time
+        #import time
         #removing this because grid data takes way too long with 
         #high res spectra 
 
@@ -755,7 +825,54 @@ class GridFitter():
                                 grid_params_unique, offset_pm,df_grid_params)
         else :
             return spectra_square, grid_params_unique, offset_pm,df_grid_params
+    
+    def interp_pressure_grid(self, new_press_grid ,grid_name):
+        """
+        This function will help you reinterpolate your grid to a new 
+        common pressure grid. 
 
+        Parameters
+        ----------
+        new_press_grid : ndarray    
+            new pressure grid in bars, ascending order 
+        grid_name : str 
+            name of grid you would like to reinterpolate
+        """
+        new_press_grid = np.sort(new_press_grid)
+        nlevels=len(new_press_grid)
+
+        #old stuff
+        all_pt = self.temperature[grid_name]
+        all_chem = self.chemistry[grid_name]
+        all_pressures = self.pressure[grid_name]
+
+        #double check we can actually interpolate with a ordered pressure grid
+        unique_ps = np.unique(all_pressures, axis=0)
+        for ips in unique_ps: 
+            if ips[0] != np.min(ips): 
+                raise Exception('Uh oh! Youve read in a grid that is not in ascending order. Please reorder before proceeding')
+
+        #define new stuff
+        new_all_pt = np.zeros((all_pt.shape[0], nlevels))
+        new_all_chem = {imol:np.zeros((all_chem[imol].shape[0], nlevels)) for imol in all_chem.keys()}
+        new_all_pressures = np.zeros((all_pressures.shape[0], nlevels))
+
+        #loop through and interpolate everything
+        new_logp = np.log10(new_press_grid)
+        for i in range(all_pt.shape[0]): 
+            new_all_pressures[i,:] = new_press_grid 
+            
+            old_logp = np.log10(all_pressures[i,:])
+            
+            new_all_pt[i,:] = np.interp(new_logp,old_logp,all_pt[i,:])
+            
+            for imol in new_all_chem.keys(): 
+                new_all_chem[imol][i,:] = 10**np.interp(new_logp,old_logp,np.log10(all_chem[imol][i,:]))
+        
+        self.temperature[grid_name] = new_all_pt
+        self.chemistry[grid_name] = new_all_chem
+        self.pressure[grid_name] = new_all_pressures  
+        return 
 
     
 def custom_interp(final_goal,fitter,grid_name, to_interp='spectra',array_to_interp=None ): 
@@ -1179,7 +1296,6 @@ def plot_atmosphere(location,bf_filename,gas_names=None,fig=None,ax=None,linesty
                 #cmap.set_bad('k',1.)
 
                 plt.rcParams['image.cmap'] = 'magma'                   # Colormap.
-                plt.rcParams['image.interpolation'] = None
                 plt.rcParams['image.origin'] = 'lower'
                 plt.rcParams['font.family'] = 'serif'
                 plt.rcParams['font.serif'] = 'DejaVu Sans'
