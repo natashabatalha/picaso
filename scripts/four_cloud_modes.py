@@ -16,6 +16,7 @@ import pickle
 import matplotlib
 matplotlib.rcParams['animation.embed_limit'] = 2**128
 import xarray
+from copy import deepcopy
 
 #1 ck tables from roxana
 mh = '+000'#'+0.0' #log metallicity
@@ -54,7 +55,7 @@ def twod_to_threed(arr, reps=4):
     """
     return np.repeat(arr[:, :, np.newaxis], reps, axis=2)
 
-# %%
+
 print("Setting up atmosphere for cloudless run")
 cl_run.inputs_climate(temp_guess= temp_bobcat, pressure= pressure_bobcat,
                       nstr = nstr, nofczns = nofczns , rfacv = rfacv, cloudy = "cloudless", mh = '0.0', 
@@ -62,9 +63,8 @@ cl_run.inputs_climate(temp_guess= temp_bobcat, pressure= pressure_bobcat,
                       mieff_dir = "~/projects/clouds/virga/refrind", do_holes = False, fhole = 0.5, fthin_cld = 0.9, moistgrad = False,
                       )
 
-out_cloudless = cl_run.climate(opacity_ck, save_all_profiles=True,with_spec=True)
+out_cloudless = deepcopy(cl_run.climate(opacity_ck, save_all_profiles=True,with_spec=True))
 
-# %%
 # Restart in order to make a postprocessed/fixed cloud profile
 bundle = jdi.inputs(calculation='brown')
 bundle.phase_angle(0)
@@ -118,14 +118,19 @@ cl_run.inputs["climate"]["w0_climate"] = twod_to_threed(postproc_cld_out["single
 cl_run.inputs["climate"]["g0_climate"] = twod_to_threed(postproc_cld_out["asymmetry"])
 
 print("Fixed run")
-out_fixed = cl_run.climate(opacity_ck, save_all_profiles=True,with_spec=True)
+out_fixed = deepcopy(cl_run.climate(opacity_ck, save_all_profiles=True,with_spec=True))
 
 print("Self-consistent run")
+cl_run.inputs_climate(temp_guess= temp_bobcat, pressure= pressure_bobcat,
+                      nstr = nstr, nofczns = nofczns , rfacv = rfacv, cloudy = "selfconsistent", mh = '0.0', 
+                      CtoO = '1.0',species = ['H2O'], fsed = 8.0, beta = 0.1, virga_param = 'const',
+                      mieff_dir = "~/projects/clouds/virga/refrind", do_holes = False, fhole = 0.5, fthin_cld = 0.9, moistgrad = False,
+                      )
 cl_run.inputs["climate"]["guess_temp"][np.isnan(out_fixed["temperature"])] = out_fixed["temperature"][0]
-cl_run.inputs["climate"]["cloudy"] = "selfconsistent"
 
-qout_selfconsistent = cl_run.climate(opacity_ck, save_all_profiles=True,with_spec=True)
+out_selfconsistent = deepcopy(cl_run.climate(opacity_ck, save_all_profiles=True,with_spec=True))
 
+# %%
 def calculate_spectrum(out, cld_out):
     opa_mon = jdi.opannection()
 
@@ -142,7 +147,7 @@ def calculate_spectrum(out, cld_out):
     wno, fp = df_spec1['wavenumber'], df_spec1['thermal'] #erg/cm2/s/cm
     xmicron = 1e4/wno
 
-    flamy = fp*1e-8  # per anstrom instead of per cm
+    flamy = fp*1e-8  
     sp = jdi.psyn.ArraySpectrum(xmicron, flamy,
                             waveunits='um',
                             fluxunits='FLAM')
@@ -155,12 +160,46 @@ def calculate_spectrum(out, cld_out):
     wno,fp = jdi.mean_regrid(1e4/wno,fp, R=200)
     return wno, fp
 
+# %%
+for (out, run_name) in zip(
+    [out_cloudless, out_cloudless, out_fixed, out_selfconsistent],
+    ["cloudless", "postprocessed", "fixed", "selfconsistent"]
+):
+    plt.semilogy(out["temperature"], out["pressure"], label=run_name)
+    
+plt.xlabel("Temperature (K)")
+plt.ylabel("Pressure (bar)")
+plt.gca().invert_yaxis()
+plt.legend()
+plt.show()
+
+# %%
+plt.rcParams['figure.dpi'] = 300
 for (out, cld_out, run_name) in zip(
     [out_cloudless, out_cloudless, out_fixed, out_selfconsistent],
     [None, postproc_cld_df, postproc_cld_df, out_selfconsistent['cld_output_picaso']],
     ["cloudless", "postprocessed", "fixed", "selfconsistent"]
 ):
     wno, fp = calculate_spectrum(out, cld_out)
-    np.save(f"data/four_clouds_testing/wno_{run_name}.npy", wno)
-    np.save(f"data/four_clouds_testing/fp_{run_name}.npy", fp)
+    plt.loglog(1e4/wno, fp, label=run_name)
+    np.save(f"../data/four_clouds_testing/wno_{run_name}.npy", wno)
+    np.save(f"../data/four_clouds_testing/fp_{run_name}.npy", fp)
+
+plt.xlabel("Wavelength (um)")
+plt.ylabel("Flux (erg/cm^2/s/Hz)")
+plt.legend()
+plt.show()
+# %%
+opd_fixed = twod_to_threed(postproc_cld_out["opd_per_layer"])[:,150,0]
+all_wavenumbers = np.unique(out_selfconsistent['cld_output_picaso'].wavenumber.values)
+df_selfconsistent = out_selfconsistent['cld_output_picaso']
+opd_selfconsistent = df_selfconsistent[df_selfconsistent.wavenumber == all_wavenumbers[150]].opd.values
+# %%
+plt.loglog(opd_fixed, out_selfconsistent["pressure"][:-1], label="Fixed")
+plt.loglog(opd_selfconsistent, out_selfconsistent["pressure"][:-1], label="Self-consistent")
+plt.legend()
+plt.gca().invert_yaxis()
+plt.xlabel("Optical depth")
+plt.ylabel("Pressure (bar)")
+plt.show()
 # %%

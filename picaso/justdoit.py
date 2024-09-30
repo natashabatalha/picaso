@@ -3072,7 +3072,7 @@ class inputs():
         verbose : bool 
             Turn off warnings 
         """
-        
+
         cloud_p = vj.Atmosphere(condensates,fsed=fsed,mh=mh,
                  mmw = mmw, sig =sig, b=b, eps=eps, param=param, supsat=supsat,
                  gas_mmr=gas_mmr, verbose=verbose) 
@@ -3899,7 +3899,7 @@ class inputs():
                              t_table, p_table, grad, cp, opacityclass, grav, 
                              rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, save_profile,all_profiles, all_opd, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop, beta, param_flag,
                              verbose=verbose,fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, moist = moist)
-            if cloudy == "selfconsistent" or cloudy == "fixed":
+            if cloudy == "selfconsistent":
                 opd_now, w0_now, g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
             else:
                 opd_now,w0_now,g0_now = 0,0,0
@@ -4205,7 +4205,7 @@ class inputs():
         all_out['converged']=final_conv_flag
 
         #put cld output in all_out
-        if cloudy == "selfconsistent" or cloudy == "fixed":
+        if cloudy == "selfconsistent":
             df_cld = vj.picaso_format(opd_now, w0_now, g0_now, pressure = cld_out['pressure'], wavenumber=1e4/cld_out['wave'])
             all_out['cld_output_picaso'] = df_cld
             all_out['virga_output'] = cld_out
@@ -4222,7 +4222,7 @@ class inputs():
             bundle.phase_angle(0)
             bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
             bundle.premix_atmosphere(opacityclass,df)
-            if cloudy == "fixed" or cloudy == "selfconsistent":
+            if cloudy == "selfconsistent":
                 bundle.clouds(df=df_cld)
             df_spec = bundle.spectrum(opacityclass,full_output=True)    
             all_out['spectrum_output'] = df_spec 
