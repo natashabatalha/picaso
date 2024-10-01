@@ -30,7 +30,7 @@ sonora_dat_db = '../data/sonora_bobcat/structures_m+0.0'
 
 cl_run = jdi.inputs(calculation="browndwarf", climate = True) # start a calculation
 
-teff = 250 # Effective Temperature of your Brown Dwarf in K
+teff = 500 # Effective Temperature of your Brown Dwarf in K
 grav = 316 # Gravity of your brown dwarf in m/s/s
 
 cl_run.gravity(gravity=grav, gravity_unit=u.Unit('m/(s**2)')) # input gravity
@@ -47,7 +47,7 @@ nofczns = 1 # number of convective zones initially
 nstr_upper = 60 # top most level of guessed convective zone
 nstr_deep = nlevel - 2 # this is always the case. Dont change this
 nstr = np.array([0,nstr_upper,nstr_deep,0,0,0])
-rfacv = 0.0 #we are focused on a brown dwarf so let's keep this as is
+rfacv = 0.5 #we are focused on a brown dwarf so let's keep this as is
 
 def twod_to_threed(arr, reps=4):
     """
@@ -112,14 +112,18 @@ print("Making clouds off cloudless run for post-processed/fixed")
 postproc_cld_out = bundle.virga(["H2O"],"~/projects/clouds/virga/refrind", fsed=8.0,mh=1.0,mmw = mean_molecular_weight, b = 0.1, param = 'const')
 postproc_cld_df = vj.picaso_format(postproc_cld_out["opd_per_layer"], postproc_cld_out["single_scattering"], postproc_cld_out["asymmetry"], postproc_cld_out["pressure"], 1e4 / postproc_cld_out["wave"])
 
-cl_run.inputs["climate"]["cloudy"] = "fixed x100"
-cl_run.inputs["climate"]["opd_climate"] = 100 * twod_to_threed(postproc_cld_out["opd_per_layer"])
+cl_run.inputs["climate"]["cloudy"] = "fixed"
+cl_run.inputs["climate"]["opd_climate"] = twod_to_threed(postproc_cld_out["opd_per_layer"])
 cl_run.inputs["climate"]["w0_climate"] = twod_to_threed(postproc_cld_out["single_scattering"])
 cl_run.inputs["climate"]["g0_climate"] = twod_to_threed(postproc_cld_out["asymmetry"])
 
 print("Fixed run")
 out_fixed = deepcopy(cl_run.climate(opacity_ck, save_all_profiles=True,with_spec=True))
 
+cl_run.inputs["climate"]["opd_climate"] = 100 * twod_to_threed(postproc_cld_out["opd_per_layer"])
+out_fixed100 = deepcopy(cl_run.climate(opacity_ck, save_all_profiles=True,with_spec=True))
+
+# %%
 print("Self-consistent run")
 cl_run.inputs_climate(temp_guess= temp_bobcat, pressure= pressure_bobcat,
                       nstr = nstr, nofczns = nofczns , rfacv = rfacv, cloudy = "selfconsistent", mh = '0.0', 
@@ -194,7 +198,6 @@ opd_fixed = twod_to_threed(postproc_cld_out["opd_per_layer"])[:,150,0]
 all_wavenumbers = np.unique(out_selfconsistent['cld_output_picaso'].wavenumber.values)
 df_selfconsistent = out_selfconsistent['cld_output_picaso']
 opd_selfconsistent = df_selfconsistent[df_selfconsistent.wavenumber == all_wavenumbers[150]].opd.values
-# %%
 plt.loglog(opd_fixed, out_selfconsistent["pressure"][:-1], label="Fixed")
 plt.loglog(opd_selfconsistent, out_selfconsistent["pressure"][:-1], label="Self-consistent")
 plt.legend()

@@ -9,6 +9,7 @@ def run_clouds_for_climate(cld_species, cloudy, fsed, beta, param_flag, bundle, 
     Handles the cloud modeling choice appropriately based on the requested cloud-climate coupling: "cloudless", "fixed", "selfconsistent".
     """
     # TODO give each call to this within profile and find_strat a consistent signature and output
+    cld_out = None
     df_cld = None
     diff = 0
     taudif = 0

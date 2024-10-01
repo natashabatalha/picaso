@@ -4824,7 +4824,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                         ngauss, gauss_wts, save_profile, all_profiles,
                         output_abunds, verbose=verbose, moist = moist,egp_stepmax=egp_stepmax)
             
-            if cloudy != "cloudless" and save_profile == 1:
+            if cloudy == "selfconsistent" and save_profile == 1:
                 for i in range(cldsave_count):
                     all_opd = np.append(all_opd,df_cld['opd'].values[55::196]) #save opd at 4 micron
             
