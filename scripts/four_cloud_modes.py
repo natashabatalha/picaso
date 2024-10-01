@@ -112,8 +112,8 @@ print("Making clouds off cloudless run for post-processed/fixed")
 postproc_cld_out = bundle.virga(["H2O"],"~/projects/clouds/virga/refrind", fsed=8.0,mh=1.0,mmw = mean_molecular_weight, b = 0.1, param = 'const')
 postproc_cld_df = vj.picaso_format(postproc_cld_out["opd_per_layer"], postproc_cld_out["single_scattering"], postproc_cld_out["asymmetry"], postproc_cld_out["pressure"], 1e4 / postproc_cld_out["wave"])
 
-cl_run.inputs["climate"]["cloudy"] = "fixed"
-cl_run.inputs["climate"]["opd_climate"] = twod_to_threed(postproc_cld_out["opd_per_layer"])
+cl_run.inputs["climate"]["cloudy"] = "fixed x100"
+cl_run.inputs["climate"]["opd_climate"] = 100 * twod_to_threed(postproc_cld_out["opd_per_layer"])
 cl_run.inputs["climate"]["w0_climate"] = twod_to_threed(postproc_cld_out["single_scattering"])
 cl_run.inputs["climate"]["g0_climate"] = twod_to_threed(postproc_cld_out["asymmetry"])
 
@@ -163,7 +163,7 @@ def calculate_spectrum(out, cld_out):
 # %%
 for (out, run_name) in zip(
     [out_cloudless, out_cloudless, out_fixed, out_selfconsistent],
-    ["cloudless", "postprocessed", "fixed", "selfconsistent"]
+    ["cloudless", "postprocessed", "fixed x100", "selfconsistent"]
 ):
     plt.semilogy(out["temperature"], out["pressure"], label=run_name)
     
@@ -178,7 +178,7 @@ plt.rcParams['figure.dpi'] = 300
 for (out, cld_out, run_name) in zip(
     [out_cloudless, out_cloudless, out_fixed, out_selfconsistent],
     [None, postproc_cld_df, postproc_cld_df, out_selfconsistent['cld_output_picaso']],
-    ["cloudless", "postprocessed", "fixed", "selfconsistent"]
+    ["cloudless", "postprocessed", "fixed x100", "selfconsistent"]
 ):
     wno, fp = calculate_spectrum(out, cld_out)
     plt.loglog(1e4/wno, fp, label=run_name)
@@ -199,6 +199,7 @@ plt.loglog(opd_fixed, out_selfconsistent["pressure"][:-1], label="Fixed")
 plt.loglog(opd_selfconsistent, out_selfconsistent["pressure"][:-1], label="Self-consistent")
 plt.legend()
 plt.gca().invert_yaxis()
+plt.xlim((1e-3, 1e3))
 plt.xlabel("Optical depth")
 plt.ylabel("Pressure (bar)")
 plt.show()
