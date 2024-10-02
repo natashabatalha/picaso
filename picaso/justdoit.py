@@ -3648,7 +3648,7 @@ class inputs():
         nstr = None,  rfacv = None,
         cloudy = False, mh = None, CtoO = None, species = None, fsed = None, mieff_dir = None,
         photochem=False, photochem_init_args=None, sonora_abunds_photochem = False, df_sonora_photochem = None,
-        fhole = None, do_holes = False, fthin_cld = None, 
+        photochem_TOA_pressure = 1e-7*1e6, fhole = None, do_holes = False, fthin_cld = None, 
         beta = 1, virga_param = 'const', moistgrad = False, deq_rainout= False, quench_ph3 = True, kinetic_CO2 = True):
         """
         Get Inputs for Climate run
@@ -3804,7 +3804,9 @@ class inputs():
         if self.inputs['climate']['photochem']:
             # Import and initialize the photochemical code.
             from .photochem import EvoAtmosphereGasGiant
-            self.inputs['climate']['pc'] = EvoAtmosphereGasGiant(**photochem_init_args)
+            pc = EvoAtmosphereGasGiant(**photochem_init_args)
+            pc.TOA_pressure_avg = photochem_TOA_pressure
+            self.inputs['climate']['pc'] = pc
 
     def climate(self, opacityclass, save_all_profiles = False, as_dict=True,with_spec=False,
         save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False, kz = None, 
@@ -6750,7 +6752,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         # Update the DataFrame with chemistry from previous Photochem run.
         # This will give Photochem a good initial starting guess.
         bundle.inputs['atmosphere']['profile'] = pc.add_concentrations_to_picaso_df(bundle.inputs['atmosphere']['profile'])
-        
+
         # Run Photochem
         bundle.inputs['atmosphere']['profile'] = pc.run_for_picaso(
             bundle.inputs['atmosphere']['profile'], 

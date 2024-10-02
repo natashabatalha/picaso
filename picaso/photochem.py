@@ -99,7 +99,7 @@ class EvoAtmosphereGasGiant(EvoAtmosphere):
         self.m = Metallicity(thermo_file)
 
         # Parameters for determining steady state
-        self.TOA_pressure_avg = 1.0e-5*1e6 # mean TOA pressure (dynes/cm^2)
+        self.TOA_pressure_avg = 1.0e-7*1e6 # mean TOA pressure (dynes/cm^2)
         self.max_dT_tol = 5 # The permitted difference between T in photochem and desired T
         self.max_dlog10edd_tol = 0.2 # The permitted difference between Kzz in photochem and desired Kzz
         self.freq_update_PTKzz = 1000 # step frequency to update PTKzz profile.
