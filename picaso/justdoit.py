@@ -3167,7 +3167,7 @@ class inputs():
         cloud_p.gravity(gravity=self.inputs['planet']['gravity'],
                  gravity_unit=u.Unit(self.inputs['planet']['gravity_unit']))#
         # print('virga temp:', df['temperatures'].values)
-        cloud_p.ptk(df =df, kz_min = kz_min, Teff = Teff, alpha_pressure = alpha_pressure)
+        cloud_p.ptk(df =df, kz_min = kz_min, latent_heat = True, Teff = Teff, alpha_pressure = alpha_pressure)
         out = vj.compute(cloud_p, as_dict=True,
                           directory=directory, do_virtual=do_virtual)
         opd, w0, g0 = out['opd_per_layer'],out['single_scattering'],out['asymmetry']
@@ -3710,6 +3710,8 @@ class inputs():
                 Optionally include a dedicated thermodynamic file.
         sonora_abunds_photochem : bool
             Turns on/off using Sonora equilibrium abundances for photochem initially
+        photochem_TOA_pressure: float
+            Pressure at the top of the atmosphere for photochem, by default 1e-7 bar. Unit must be in dynes/cm^2
         fhole : float
             Fraction of clearsky holes (from 0 to 1.0)
         do_holes : bool
@@ -6752,7 +6754,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         # Update the DataFrame with chemistry from previous Photochem run.
         # This will give Photochem a good initial starting guess.
         bundle.inputs['atmosphere']['profile'] = pc.add_concentrations_to_picaso_df(bundle.inputs['atmosphere']['profile'])
-
+        
         # Run Photochem
         bundle.inputs['atmosphere']['profile'] = pc.run_for_picaso(
             bundle.inputs['atmosphere']['profile'], 

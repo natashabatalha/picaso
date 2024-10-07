@@ -4006,6 +4006,27 @@ def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,
     #     kz[nstr[3]:nstr[4]] = kzrad2#/100 #*10 #kz[nstr[3]:nstr[4]]/1.0
     # else:
     #     kz[nstr[0]:nstr[1]] = kzrad1#/100
+
+    pm_range = 8 # aribitrary range to average over to get the mean kz *JM working on changing to be based on scale-height
+    kz_upper = [] # average the upper radiative zone kz
+    for i in range(nstr[0], nstr[1]):
+        start_index = np.maximum(nstr[0], i - pm_range)
+        end_index = np.minimum(nstr[1], i + pm_range)
+        kz_upper.append(np.mean(kz[start_index:end_index]))
+    kz_upper = np.array(kz_upper)
+
+    if nstr[3] != 0:
+        kz[nstr[0]:nstr[1]] = kz_upper
+
+        kz_lower = [] # average the lower radiative zone kz
+        for i in range(nstr[3], nstr[4]):
+            start_index = np.maximum(nstr[3], i - pm_range)
+            end_index = np.minimum(nstr[4], i + pm_range)
+            kz_lower.append(np.mean(kz[start_index:end_index]))
+        kz_lower = np.array(kz_lower)
+        kz[nstr[3]:nstr[4]] = kz_lower
+    else:
+        kz[nstr[0]:nstr[1]] = kz_upper
     
     return kz
 
