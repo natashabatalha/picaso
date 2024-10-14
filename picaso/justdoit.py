@@ -1809,7 +1809,7 @@ class inputs():
 
         self.chem_interp(opa.full_abunds)
 
-    def premix_atmosphere_diseq(self, opa, quench_levels,t_mix=None, df=None, filename=None, vol_rainout = False, quench_ph3 = True, kinetic_CO2 = True, **pd_kwargs):
+    def premix_atmosphere_diseq(self, opa, quench_levels,t_mix=None, df=None, filename=None, vol_rainout = False, quench_ph3 = True, kinetic_CO2 = True, no_ph3 = False, **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
         Sets number of layers in model.  
@@ -1870,7 +1870,8 @@ class inputs():
             # quench ph3 now
 
             self.inputs['atmosphere']['profile']['PH3'][0:quench_levels_ph3+1] = self.inputs['atmosphere']['profile']['PH3'][0:quench_levels_ph3+1]*0.0 + self.inputs['atmosphere']['profile']['PH3'][quench_levels_ph3]
-        
+        if no_ph3 == True:
+            self.inputs['atmosphere']['profile']['PH3'] = self.inputs['atmosphere']['profile']['PH3']*0.0
 
 
         
@@ -3649,7 +3650,7 @@ class inputs():
         cloudy = False, mh = None, CtoO = None, species = None, fsed = None, mieff_dir = None,
         photochem=False, photochem_init_args=None, sonora_abunds_photochem = False, df_sonora_photochem = None,
         photochem_TOA_pressure = 1e-7*1e6, fhole = None, do_holes = False, fthin_cld = None, 
-        beta = 1, virga_param = 'const', moistgrad = False, deq_rainout= False, quench_ph3 = True, kinetic_CO2 = True):
+        beta = 1, virga_param = 'const', moistgrad = False, deq_rainout= False, quench_ph3 = True, no_ph3 = False, kinetic_CO2 = True):
         """
         Get Inputs for Climate run
 
@@ -3728,6 +3729,8 @@ class inputs():
             If True, will rainout volatiles like H2O, CH4 and NH3 in diseq runs as in equilibrium model when applicable
         quench_ph3 : bool
             Switch for turning on/off PH3 quenching
+        no_ph3 : bool
+            Switch for zeroing out PH3 in diseq runs
         kinetic_CO2 : bool
             Switch for turning on/off kinetic CO2 prescription for diseq runs from Zahnle and Marley 2014
         """
@@ -3795,6 +3798,7 @@ class inputs():
         self.inputs['climate']['deq_rainout'] = deq_rainout
         self.inputs['climate']['quench_ph3'] = quench_ph3
         self.inputs['climate']['kinetic_CO2'] = kinetic_CO2
+        self.inputs['climate']['no_ph3'] = no_ph3
 
         self.inputs['climate']['mh'] = mh
         self.inputs['climate']['CtoO'] = CtoO
@@ -3909,6 +3913,7 @@ class inputs():
         deq_rainout = self.inputs['climate']['deq_rainout']
         quench_ph3 = self.inputs['climate']['quench_ph3']
         kinetic_CO2 = self.inputs['climate']['kinetic_CO2']
+        no_ph3 = self.inputs['climate']['no_ph3']
 
 
         Teff = self.inputs['planet']['T_eff']
@@ -4166,7 +4171,7 @@ class inputs():
 
                 # determine the chemistry now
 
-                qvmrs, qvmrs2= bundle.premix_atmosphere_diseq(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']], quench_levels= quench_levels,t_mix=t_mix, vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2)
+                qvmrs, qvmrs2= bundle.premix_atmosphere_diseq(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']], quench_levels= quench_levels,t_mix=t_mix, vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3)
                 #was for check SM
                 #bundle.inputs['atmosphere']['profile'].to_csv('/data/users/samukher/Disequilibrium-picaso/first_iteration_testpls300min500',sep='\t')
                 #raise SystemExit(0) 
@@ -4277,13 +4282,13 @@ class inputs():
             g0_cld_climate,
             w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop, beta, param_flag,
             photo_inputs_dict,
-            on_fly=on_fly, gases_fly=gases_fly, verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist=moist, deq_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2)
+            on_fly=on_fly, gases_fly=gases_fly, verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist=moist, deq_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3)
                 # print('find_strat_deq, kz input:',kz) #JM printout for deq nan debugging
                 # print('find_strat_deq, all_kzz input:',all_kzz)
                 pressure, temp, dtdp, nstr_new, flux_plus_final,flux_net_final, flux_net_ir_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,cld_out,photo_inputs_dict,final_conv_flag,all_opd, df_cld_final=find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                                 t_table, p_table, grad, cp, opacityclass, grav, 
                                 rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, all_opd, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly,
-                             verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist = moist,deq_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2)
+                             verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist = moist,deq_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3)
                 if cloudy == 1:
                     opd_now,w0_now,g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
                 else:
@@ -4294,12 +4299,12 @@ class inputs():
                 temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , 
                 cloudy, cld_species,mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile,all_profiles, all_opd, self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,
                 g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop, beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, verbose=verbose, 
-                do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist=moist, deq_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2)
+                do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist=moist, deq_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3)
                 
                 pressure, temp, dtdp, nstr_new, flux_plus_final,flux_net_final, flux_net_ir_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,cld_out,photo_inputs_dict,final_conv_flag,all_opd,df_cld_final=find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                     t_table, p_table, grad, cp, opacityclass, grav, rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, all_opd, self_consistent_kzz,save_kzz,all_kzz, 
                     opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly,
-                    verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist = moist,deq_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2)
+                    verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist = moist,deq_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3)
 
 
             #diseq stuff
@@ -5656,7 +5661,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
               g0_cld_climate,w0_cld_climate,
                 flux_net_ir_layer, flux_plus_ir_attop, beta, param_flag,
               photo_inputs_dict=None,on_fly=False,gases_fly=False, do_holes = False, 
-              fhole = None,verbose=True, fthin_cld = None, deq_rainout = False, quench_ph3=True, kinetic_CO2=True, moist = None):
+              fhole = None,verbose=True, fthin_cld = None, deq_rainout = False, quench_ph3=True, kinetic_CO2=True, no_ph3 = False, moist = None):
 
     """
     Function iterating on the TP profile by calling tstart and changing opacities as well
@@ -5827,7 +5832,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
         if save_kzz == 1:
             # all_kzz = np.append(all_kzz,t_mix)
             all_kzz = np.append(all_kzz, kz) #JM changed to not convert from t_mix to kz
-        qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2)
+        qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3=no_ph3)
         output_abunds = bundle.inputs['atmosphere']['profile'].T.values
     else :
         # Compute chemical equilibrium composition by interpolating pre-computed grid
@@ -6030,7 +6035,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale=True)
             # print('loop t_mix:',t_mix)
             
-            qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2)
+            qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3=no_ph3)
             print("Quench Levels are CO, CO2, NH3, HCN ", quench_levels)
         else :
             # Compute chemical equilibrium composition by interpolating pre-computed grid
@@ -6460,7 +6465,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
              opd_cld_climate,g0_cld_climate,w0_cld_climate,
              flux_net_ir_layer, flux_plus_ir_attop, beta, param_flag,
              photo_inputs_dict=None, on_fly=False, gases_fly=None, do_holes=None, 
-             fhole = None, fthin_cld = None, moist = None, deq_rainout = False, quench_ph3=True, kinetic_CO2=True, verbose=1):
+             fhole = None, fthin_cld = None, moist = None, deq_rainout = False, quench_ph3=True, kinetic_CO2=True, no_ph3 = False, verbose=1):
 
     """
     Function iterating on the TP profile by calling tstart and changing opacities as well
@@ -6597,7 +6602,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         pressure, temp, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,cld_out,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,_, all_opd= profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,\
             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav,rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw, save_profile, all_profiles, all_opd, self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,\
             w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly ,do_holes=do_holes,
-            fhole = fhole, fthin_cld=fthin_cld, moist = moist, deq_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, verbose=verbose)
+            fhole = fhole, fthin_cld=fthin_cld, moist = moist, deq_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3, verbose=verbose)
     # print('made it out of first profile_deq call in find_strat_deq')
     
     # now for the 2nd convection zone
@@ -6639,7 +6644,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
              save_profile, all_profiles, all_opd, self_consistent_kzz, save_kzz,all_kzz,
              opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
              flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,
-             on_fly=on_fly, gases_fly=gases_fly, verbose=verbose, do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist=moist,deq_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2)
+             on_fly=on_fly, gases_fly=gases_fly, verbose=verbose, do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist=moist,deq_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3)
 
         i_change = 1
         while i_change == 1 :
@@ -6671,7 +6676,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
                 print(nstr)
                 pressure, temp, dtdp, profile_flag,qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,cld_out,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,_, all_opd = profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,\
             temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, \
-                rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw, save_profile, all_profiles,all_opd,self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, verbose=verbose,deq_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2)
+                rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw, save_profile, all_profiles,all_opd,self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, verbose=verbose,deq_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3)
 
                 d1 = dtdp[nstr[1]-1]
                 d2 = dtdp[nstr[3]]
@@ -6690,7 +6695,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
                     i_change =1
                 if verbose: print(nstr)
                 pressure, temp, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,cld_out,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,_,all_opd = profile_deq(mieff_dir,it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult, \
-                                                        temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav,rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile, all_profiles, all_opd,self_consistent_kzz, save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist=moist,deq_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, verbose=verbose)
+                                                        temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav,rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, cloudy, cld_species, mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile, all_profiles, all_opd,self_consistent_kzz, save_kzz,all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, do_holes=do_holes, fhole = fhole, fthin_cld=fthin_cld, moist=moist,deq_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3, verbose=verbose)
             
 
             flag_final_convergence = 1
@@ -6739,7 +6744,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         # print('find_strat_deq kz:',kz)
         quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale=True)
 
-        qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2)
+        qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3=no_ph3)
     else :
         # Compute chemical equilibrium composition by interpolating pre-computed grid
         #bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
