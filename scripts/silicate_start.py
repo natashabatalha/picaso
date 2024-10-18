@@ -23,6 +23,7 @@ import matplotlib
 matplotlib.rcParams['animation.embed_limit'] = 2**128
 import xarray
 from copy import deepcopy
+from bokeh.plotting import show
 
 #1 ck tables from roxana
 mh = '+000'#'+0.0' #log metallicity
@@ -36,7 +37,7 @@ sonora_dat_db = '../data/sonora_bobcat/structures_m+0.0'
 
 cl_run = jdi.inputs(calculation="browndwarf", climate = True) # start a calculation
 
-teff = 1800 # Effective Temperature of your Brown Dwarf in K
+teff = 1500 # Effective Temperature of your Brown Dwarf in K
 grav = 100 # Gravity of your brown dwarf in m/s/s
 
 cl_run.gravity(gravity=grav, gravity_unit=u.Unit('m/(s**2)')) # input gravity
@@ -69,7 +70,6 @@ cl_run.inputs_climate(temp_guess= temp_bobcat, pressure= pressure_bobcat,
                       mieff_dir = "~/projects/clouds/virga/refrind", do_holes = False, fhole = 0.5, fthin_cld = 0.9, moistgrad = False,
                       )
 
-temp_guess_selfconsistent = deepcopy(temp_bobcat)
 # %%
 out_cloudless = deepcopy(cl_run.climate(opacity_ck, save_all_profiles=True,with_spec=True))
 
@@ -118,7 +118,7 @@ bundle.inputs['atmosphere']['profile']['temperature'] = temp
 bundle.inputs['atmosphere']['profile']['kz'] = kzz
 
 print("Making clouds off cloudless run for post-processed/fixed")
-postproc_cld_out = bundle.virga(["MgSiO3"],"~/projects/clouds/virga/refrind", fsed=1.0,mh=1.0,mmw = mean_molecular_weight, b = 0.1, param = 'const')
+postproc_cld_out = bundle.virga(["MgSiO3"],"~/projects/clouds/virga/refrind", fsed=8.0,mh=1.0,mmw = mean_molecular_weight, b = 0.1, param = 'const')
 postproc_cld_df = vj.picaso_format(postproc_cld_out["opd_per_layer"], postproc_cld_out["single_scattering"], postproc_cld_out["asymmetry"], postproc_cld_out["pressure"], 1e4 / postproc_cld_out["wave"])
 
 # %%
@@ -127,22 +127,22 @@ cl_run.inputs["climate"]["opd_climate"] = twod_to_threed(postproc_cld_out["opd_p
 cl_run.inputs["climate"]["w0_climate"] = twod_to_threed(postproc_cld_out["single_scattering"])
 cl_run.inputs["climate"]["g0_climate"] = twod_to_threed(postproc_cld_out["asymmetry"])
 
+# %%
 print("Fixed run")
 out_fixed = deepcopy(cl_run.climate(opacity_ck, save_all_profiles=True,with_spec=True))
-temp_guess_selfconsistent = deepcopy(out_fixed["temperature"])
 
+# %%
 cl_run.inputs["climate"]["opd_climate"] = 100 * twod_to_threed(postproc_cld_out["opd_per_layer"])
 out_fixed100 = deepcopy(cl_run.climate(opacity_ck, save_all_profiles=True,with_spec=True))
-
 # %%
 print("Self-consistent run")
-cl_run.inputs_climate(temp_guess=temp_guess_selfconsistent, pressure= pressure_bobcat,
+cl_run.inputs_climate(temp_guess=deepcopy(out_fixed["temperature"]), pressure= pressure_bobcat,
                       nstr = nstr, nofczns = nofczns , rfacv = rfacv, cloudy = "selfconsistent", mh = '0.0', 
-                      CtoO = '1.0',species = ['H2O'], fsed = 8.0, beta = 0.1, virga_param = 'const',
+                      CtoO = '1.0',species = ['MgSiO3'], fsed = 8.0, beta = 0.1, virga_param = 'const',
                       mieff_dir = "~/projects/clouds/virga/refrind", do_holes = False, fhole = 0.5, fthin_cld = 0.9, moistgrad = False,
                       )
+cl_run.inputs["climate"]["guess_temp"][np.isnan(out_fixed["temperature"])] = out_fixed["temperature"][0]
 
-# %%
 out_selfconsistent = deepcopy(cl_run.climate(opacity_ck, save_all_profiles=True,with_spec=True))
 
 # %%
@@ -177,8 +177,8 @@ def calculate_spectrum(out, cld_out):
 
 # %%
 for (out, run_name) in zip(
-    [out_cloudless, out_cloudless, out_fixed, out_fixed100, out_selfconsistent],
-    ["cloudless", "postprocessed", "fixed", "fixed x100", "selfconsistent"]
+    [out_cloudless, out_fixed, out_fixed100, out_selfconsistent],
+    ["cloudless/postproc", "fixed", "fixed x100", "selfconsistent"]
 ):
     plt.semilogy(out["temperature"], out["pressure"], label=run_name)
     

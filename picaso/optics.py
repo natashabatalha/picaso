@@ -15,6 +15,7 @@ import sqlite3
 import math
 from scipy.io import FortranFile
 from .deq_chem import mix_all_gases
+from icecream import ic
 
 __refdata__ = os.environ.get('picaso_refdata')
 #@jit(nopython=True)
@@ -300,6 +301,7 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
     for igauss in range(1,ngauss):raman_factor[:,:,igauss] = raman_factor[:,:,0]
 
     #====================== ADD CLOUD OPACITY====================== 
+    # print(f"Adding cloud opacity in the total atmospheric opacity, max = {np.max(atm.layer['cloud']['opd'])}")
     for igauss in range(ngauss):
         TAUCLD[:,:,igauss] = atm.layer['cloud']['opd'] #TAUCLD is the total extinction from cloud = (abs + scattering)
         asym_factor_cld[:,:,igauss] = atm.layer['cloud']['g0']

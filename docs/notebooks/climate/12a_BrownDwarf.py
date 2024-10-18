@@ -3,9 +3,6 @@ import os
 import numpy as np
 import time
 
-time.sleep(5)
-
-"""
 import warnings
 warnings.filterwarnings('ignore')
 import picaso.justdoit as jdi
@@ -59,6 +56,8 @@ nstr = np.array([0,nstr_upper,nstr_deep,0,0,0]) # initial guess of convective zo
 rfacv = 0.0 #we are focused on a brown dwarf so let's keep this as is
 
 cl_run.inputs_climate(temp_guess= temp_guess, pressure= pressure, 
-                      nstr = nstr, nofczns = nofczns , rfacv = rfacv)
+                      nstr = nstr, nofczns = nofczns , rfacv = rfacv, cloudy="cloudless")
 
-out = cl_run.climate(opacity_ck, save_all_profiles=True,with_spec=True)"""
+out = cl_run.climate(opacity_ck, save_all_profiles=True,with_spec=True)
+
+# %%
