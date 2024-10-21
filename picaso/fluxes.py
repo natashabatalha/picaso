@@ -4006,12 +4006,21 @@ def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,
     #     kz[nstr[3]:nstr[4]] = kzrad2#/100 #*10 #kz[nstr[3]:nstr[4]]/1.0
     # else:
     #     kz[nstr[0]:nstr[1]] = kzrad1#/100
+    pm_range = 8 # aribitrary range to average over to get the mean kz *JM working on changing to be based on scale height
+    dz = scale_h[1:] * (np.log((player[:-1]/1e6) / (player[1:]/1e6)))
+    z = np.zeros(nlevel - 1)
+    z[0] = dz[0]
+    for i in range(1, nlevel - 1):
+        z[i] = z[i - 1] + dz[i] 
 
-    pm_range = 8 # aribitrary range to average over to get the mean kz *JM working on changing to be based on scale-height
     kz_upper = [] # average the upper radiative zone kz
     for i in range(nstr[0], nstr[1]):
-        start_index = np.maximum(nstr[0], i - pm_range)
-        end_index = np.minimum(nstr[1], i + pm_range)
+        above_range = np.abs(i - (np.abs(z - (z[i] + 2*scale_h[i]))).argmin()) # find the index of the layer 1 scale height above the current layer
+        below_range = np.abs(i - (np.abs(z - (z[i] - 2*scale_h[i]))).argmin())
+        # start_index = np.maximum(nstr[0], i - pm_range)
+        # end_index = np.minimum(nstr[1], i + pm_range)
+        start_index = np.maximum(nstr[0], i - above_range)
+        end_index = np.minimum(nstr[1], i + below_range)
         kz_upper.append(np.mean(kz[start_index:end_index]))
     kz_upper = np.array(kz_upper)
 
@@ -4020,8 +4029,12 @@ def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,
 
         kz_lower = [] # average the lower radiative zone kz
         for i in range(nstr[3], nstr[4]):
-            start_index = np.maximum(nstr[3], i - pm_range)
-            end_index = np.minimum(nstr[4], i + pm_range)
+            above_range = np.abs(i - (np.abs(z - (z[i] + 2*scale_h[i]))).argmin()) # find the index of the layer 1 scale height above the current layer
+            below_range = np.abs(i - (np.abs(z - (z[i] - 2*scale_h[i]))).argmin())
+            start_index = np.maximum(nstr[3], i - above_range)
+            end_index = np.minimum(nstr[4], i + below_range)
+            # start_index = np.maximum(nstr[3], i - pm_range)
+            # end_index = np.minimum(nstr[4], i + pm_range)
             kz_lower.append(np.mean(kz[start_index:end_index]))
         kz_lower = np.array(kz_lower)
         kz[nstr[3]:nstr[4]] = kz_lower

@@ -3864,8 +3864,11 @@ class inputs():
             tmin = min_temp*(1-extension)
         else:
             tmin = 10
-        tmax = max_temp*(1+extension)
-        # tmax = 10000
+
+        if Teff > 1600:
+            tmax = 10000
+        else:
+            tmax = max_temp*(1+extension)
         ntmps = int((tmax-tmin)/dt)
         
         bb , y2 , tp = 0,0,0
@@ -4246,8 +4249,11 @@ class inputs():
                 tmin = min_temp*(1-extension)
             else:
                 tmin = 10
-            tmax = max_temp*(1+extension)
-            # tmax = 10000
+
+            if Teff > 1600:
+                tmax = 10000
+            else:
+                tmax = max_temp*(1+extension)
 
             ntmps = int((tmax-tmin)/dt)
             
