@@ -1,10 +1,4 @@
 # %%
-# Rewrite this into a silicate cloud case, 1500 K
-# Look on examples in the docs for putting in a parent star
-# log g = 4
-# Water clouds might be too scattering to warm the atmosphere
-
-# %%
 import sys
 import os
 import warnings
@@ -24,7 +18,9 @@ matplotlib.rcParams['animation.embed_limit'] = 2**128
 import xarray
 from copy import deepcopy
 from bokeh.plotting import show
+import h5py
 
+# %%
 #1 ck tables from roxana
 mh = '+000'#'+0.0' #log metallicity
 CtoO = '100'#'1.0' # CtoO ratio
@@ -150,7 +146,7 @@ def calculate_spectrum(out, cld_out):
     opa_mon = jdi.opannection()
 
     hi_res = jdi.inputs(calculation="browndwarf") # start a calculation
-    grav = 316 # Gravity of your brown dwarf in m/s/s
+    grav = 100 # Gravity of your brown dwarf in m/s/s
     hi_res.gravity(gravity=grav, gravity_unit=u.Unit('m/(s**2)')) # input gravity
 
     hi_res.atmosphere(df=out['ptchem_df'])
@@ -160,20 +156,8 @@ def calculate_spectrum(out, cld_out):
     df_spec1 = hi_res.spectrum(opa_mon, calculation='thermal', full_output= True)
 
     wno, fp = df_spec1['wavenumber'], df_spec1['thermal'] #erg/cm2/s/cm
-    xmicron = 1e4/wno
-
-    flamy = fp*1e-8  
-    sp = jdi.psyn.ArraySpectrum(xmicron, flamy,
-                            waveunits='um',
-                            fluxunits='FLAM')
-    sp.convert("um")
-    sp.convert('Fnu')  # erg/cm2/s/Hz
-
-    wno = sp.wave  # micron
-    fp = sp.flux  # erg/cm2/s/Hz
-    df_spec1['fluxnu'] = fp
-    wno,fp = jdi.mean_regrid(1e4/wno,fp, R=200)
-    return wno, fp
+    xcm = 1/wno
+    return xcm, fp, df_spec1['full_output']
 
 # %%
 for (out, run_name) in zip(
@@ -199,17 +183,18 @@ for (out, cld_out, run_name) in zip(
     [None, postproc_cld_df, postproc_cld_df, postproc_cld_df100, out_selfconsistent['cld_output_picaso']],
     ["cloudless", "postprocessed", "fixed", "fixed100", "selfconsistent"]
 ):
-    wno, fp = calculate_spectrum(out, cld_out)
-    plt.loglog(1e4/wno, fp, label=run_name)
-    np.save(f"../data/four_clouds_testing/wno_{run_name}.npy", wno)
-    np.save(f"../data/four_clouds_testing/fp_{run_name}.npy", fp)
+    xcm, fp, spec_out = calculate_spectrum(out, cld_out)
+    plt.loglog(xcm * 1e4, fp, label=run_name)
+    lam = np.flip(xcm) # cm
+    fp_lam = np.flip(fp) # erg/cm^2/s/cm
+    # print(run_name, (np.sum(np.diff(lam) * fp_lam[1:]) / 5.67e-5) ** (1/4))
 
 plt.xlabel("Wavelength (um)")
-plt.ylabel("Flux (erg/cm^2/s/Hz)")
+plt.ylabel("Flux (erg/cm^2/s/cm)")
 plt.legend()
 plt.show()
 # %%
-opd_fixed = twod_to_threed(postproc_cld_out["opd_per_layer"])[:,150,0]
+opd_fixed = twod_to_threed(postproc_cld_out["opd_per_layer"])[:,-150,0]
 all_wavenumbers = np.unique(out_selfconsistent['cld_output_picaso'].wavenumber.values)
 df_selfconsistent = out_selfconsistent['cld_output_picaso']
 opd_selfconsistent = df_selfconsistent[df_selfconsistent.wavenumber == all_wavenumbers[150]].opd.values
@@ -223,4 +208,21 @@ plt.ylabel("Pressure (bar)")
 plt.show()
 # %%
 show(cldplt.pt(postproc_cld_out))
+# %%
+plt.loglog(opd_selfconsistent, out_selfconsistent["pressure"][:-1], label="selfconsistent from climate")
+plt.loglog(spec_out["taucld"][:,26232,0], out_selfconsistent["pressure"][:-1], label="selfconsistent from spectrum out")
+plt.xlabel("OPD")
+plt.ylabel("Pressure (bar)")
+plt.gca().invert_yaxis()
+plt.legend()
+# %%
+with h5py.File(f"../data/four_clouds_testing/teff_{teff}_MgSiO3_browndwarf.h5", "w") as f:
+    f.create_dataset("pressure", data=out_cloudless["pressure"])
+    f.create_dataset("temp_cloudless", data=out_cloudless["temperature"])
+    f.create_dataset("temp_fixed", data=out_fixed["temperature"])
+    f.create_dataset("temp_fixed100", data=out_fixed100["temperature"])
+    f.create_dataset("temp_selfconsistent", data=out_selfconsistent["temperature"])
+    f.create_dataset("opd_fixed", data=opd_fixed)
+    f.create_dataset("opd_selfconsistent", data=opd_selfconsistent)
+    f.create_dataset("")
 # %%
