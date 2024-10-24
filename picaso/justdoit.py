@@ -14,7 +14,7 @@ from .photochem import run_photochem
 from .clouds import run_clouds_for_climate
 
 from virga import justdoit as vj
-from scipy.interpolate import UnivariateSpline, interp1d
+from scipy.interpolate import UnivariateSpline, interp1d,RegularGridInterpolator
 from scipy import special
 from numpy import exp, sqrt,log
 from numba import jit,njit
@@ -1956,6 +1956,77 @@ class inputs():
         
         return qvmrs, qvmrs2
     
+    def premix_atmosphere_photochem(self, opa, df=None, filename=None,firsttime=False,mh_interp=None,cto_interp=None, **pd_kwargs):
+        """
+        Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
+        Sets number of layers in model.  
+        Parameters
+        ----------
+        opa : class 
+            Opacity class from opannection : RetrieveCks() 
+        df : pandas.DataFrame or dict
+            (Optional) Dataframe with volume mixing ratios and pressure, temperature profile. 
+            Must contain pressure (bars) at least one molecule
+        filename : str 
+            (Optional) Filename with pressure, temperature and volume mixing ratios.
+            Must contain pressure at least one molecule
+        exclude_mol : list of str 
+            (Optional) List of molecules to ignore from file
+        pd_kwargs : kwargs 
+            Key word arguments for pd.read_csv to read in supplied atmosphere file 
+        """
+        print("PLEASE BEWARE THAT I AM LINEARLY INTERPOLATING BETWEEN SONORA CHEMISTRY TABLES")
+        print("THIS IS MAINLY NEEDED FOR CAPTURING THE ALKALI METALS OUTSIDE OF THE 1D PHOTOCHEM NETWORK")
+
+        if firsttime==True:
+            print("DOING THIS FOR THE FIRST TIME SO MIGHT TAKE SOME TIME")
+            
+            mh_target = mh_interp#float(self.inputs['climate']['mh'])
+            cto_target = cto_interp#float(self.inputs['climate']['CtoO'])
+            path= os.path.join(__refdata__, 'climate_INPUTS','sonora_master_arr.npz')
+            sonora_arr = np.load(path)
+            mh_arr = sonora_arr['mh']
+            cto_arr = sonora_arr['cto']
+            sp_arr = sonora_arr['species']
+            main_arr = sonora_arr['sonora']
+            pressure_sonora= sonora_arr['pressure']
+            temp_sonora=sonora_arr['temp']
+            
+            df_interp_abun=pd.DataFrame(columns=sp_arr,index=np.arange(0,1460,1),dtype='float')
+
+            
+            for i in range(len(sp_arr)):
+                if np.logical_and(sp_arr[i] != 'pressure',sp_arr[i] != 'temperature'):
+                    for ct in range(1460):
+                        func = RegularGridInterpolator((mh_arr,cto_arr),np.log10(main_arr[:,:,ct,i]),bounds_error=False, fill_value=None)
+                        df_interp_abun[sp_arr[i]][ct]= 10**func((mh_target,cto_target))
+                        if df_interp_abun[sp_arr[i]][ct] <0:
+                            df_interp_abun[sp_arr[i]][ct]=0.0
+            df_interp_abun['pressure']= pressure_sonora
+            df_interp_abun['temperature']= temp_sonora
+
+            opa.full_abunds=df_interp_abun
+
+        if not isinstance(df, type(None)):
+            if ((not isinstance(df, dict )) & (not isinstance(df, pd.core.frame.DataFrame ))): 
+                raise Exception("df must be pandas DataFrame or dictionary")
+            else:
+                self.nlevel=df.shape[0] 
+        elif not isinstance(filename, type(None)):
+            df = pd.read_csv(filename, **pd_kwargs)
+            self.nlevel=df.shape[0] 
+
+        if 'pressure' not in df.keys(): 
+            raise Exception("Check column names. `pressure` must be included.")
+
+        if ('temperature' not in df.keys()):
+            raise Exception("`temperature` not specified as a column/key name")
+        self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
+
+        #Turn off raman for 196 premix calculations 
+        self.inputs['approx']['rt_params']['common']['raman'] = 2
+
+        self.chem_interp(opa.full_abunds)
 
     
     def sonora(self, sonora_path, teff, chem='low'):
@@ -3565,13 +3636,11 @@ class inputs():
             self.inputs['planet']['T_eff'] = 0
 
     def inputs_climate(self, temp_guess= None, pressure= None, rfaci = 1,nofczns = 1 ,
-        nstr = None,  rfacv = None, m_planet=None,r_planet=None,
+        nstr = None,  rfacv = None,
         cloudy = False, mh = None, CtoO = None, species = None, fsed = None, mieff_dir = None,
-        photochem=False, photochem_file=None,photochem_stfile = None,photonetwork_file = None,
-        photonetworkct_file=None,tstop=1e7,psurf=10, fhole = None, do_holes = False, fthin_cld = None, 
-        beta = 1, virga_param = 'const', moistgrad = False, deq_rainout= False, quench_ph3 = True,
-        opd_climate=None,):
-
+        photochem=False, photochem_init_args=None, sonora_abunds_photochem = False, df_sonora_photochem = None,
+        fhole = None, do_holes = False, fthin_cld = None, 
+        beta = 1, virga_param = 'const', moistgrad = False, deq_rainout= False, quench_ph3 = True):
         """
         Get Inputs for Climate run
 
@@ -3581,6 +3650,12 @@ class inputs():
             Guess T(P) profile to begin with
         pressure : array
             Pressure Grid for climate code (this wont change on the fly)
+        rfaci : float
+            Default=1, Fractional contribution of thermal light in net flux
+            Usually this is kept at one and then the redistribution is controlled 
+            via rfacv
+        nofczns : integer
+            Number of guessed Convective Zones. 1 or 2
         nstr : array
             NSTR vector describes state of the atmosphere:
             0   is top layer [0]
@@ -3589,8 +3664,6 @@ class inputs():
             3   is top layer of lower radiative region
             4   is top layer of lower convective region
             5   is bottom layer of lower convective region [nlayer-1]
-        nofczns : integer
-            Number of guessed Convective Zones. 1 or 2
         rfacv : float
             Fractional contribution of reflected light in net flux.
             =0 for no stellar irradition, 
@@ -3617,10 +3690,28 @@ class inputs():
             path to directory with mieff files for virga
         photochem : bool 
             Turns off (False) and on (True) Photochem 
-        do_holes : bool
-            Patchy cloud option with clearsky holes
+        photochem_init_args : dict
+            Dictionary containing initialization arguments for photochem. Should contain the following keys
+            - "mechanism_file" : str
+                Path to the file describing the reaction mechanism
+            - "stellar_flux_file" : str
+                Path to the file describing the stellar UV flux.
+            - "planet_mass" : float
+                Planet mass in grams
+            - "planet_radius" : float
+                Planet radius in cm
+            - "nz" : int, optional
+                The number of layers in the photochemical model, by default 100
+            - "P_ref" : float, optional
+                Pressure level corresponding to the planet_radius, by default 1e6 dynes/cm^2
+            - "thermo_file" : str, optional
+                Optionally include a dedicated thermodynamic file.
+        sonora_abunds_photochem : bool
+            Turns on/off using Sonora equilibrium abundances for photochem initially
         fhole : float
             Fraction of clearsky holes (from 0 to 1.0)
+        do_holes : bool
+            Patchy cloud option with clearsky holes
         fthin_cld : float
             Fraction of thin clouds in patchy cloud column (from 0 to 1.0), default 0 for clear sky column
         beta : float
@@ -3629,17 +3720,17 @@ class inputs():
             Virga parameterization for cloud model, either 'const' or 'exp'
         moistgrad: bool
             Moist adiabatic gradient option
-        deq_rainout: bool
+        deq_rainout : bool
             If True, will rainout volatiles like H2O, CH4 and NH3 in diseq runs as in equilibrium model when applicable
-
-        
+        quench_ph3 : bool
+            Switch for turning on/off PH3 quenching
         """
         
         assert isinstance(cloudy, str)
         if cloudy != "cloudless": 
             print("Cloudy functionality still in beta form and not ready for public use.")
             # raise Exception('Cloudy functionality still in beta fosrm and not ready for public use.')
-        
+
         elif photochem == False: 
             # dummy values only used for cloud model
             mh = 0 
@@ -3702,36 +3793,14 @@ class inputs():
         self.inputs['climate']['mh'] = mh
         self.inputs['climate']['CtoO'] = CtoO
 
-
-        if photochem:
-            if m_planet is None:
-                raiseExceptions("Supply planet mass if you want to run photochem")
-            else:
-                self.inputs['climate']['m_planet'] = m_planet
-
-            if r_planet is None:
-                raiseExceptions("Supply planet radius if you want to run photochem")
-            else:
-                self.inputs['climate']['r_planet'] = r_planet
-
-            if photochem_file is None:
-                raiseExceptions("Supply photochem_filename if you want to run photochem")
-            else:
-                self.inputs['climate']['photochem_file'] =photochem_file
-
-            if photochem_stfile is None:
-                raiseExceptions("Supply photochem star filename if you want to run photochem")
-            else:
-                self.inputs['climate']['photochem_stfile'] =photochem_stfile
-            self.inputs['climate']['tstop'] =tstop
-            self.inputs['climate']['psurf'] =psurf
-            self.inputs['climate']['photochem'] =photochem
-            self.inputs['climate']['photochem_network'] =photonetwork_file
-            self.inputs['climate']['photochem_networkct'] =photonetworkct_file
-            
-
-        else:
-            self.inputs['climate']['photochem'] =False
+        self.inputs['climate']['photochem'] = photochem
+        self.inputs['climate']['photochem_init_args'] = photochem_init_args
+        self.inputs['climate']['sonora_abunds_photochem'] = sonora_abunds_photochem
+        self.inputs['climate']['df_sonora_photochem'] = df_sonora_photochem
+        if self.inputs['climate']['photochem']:
+            # Import and initialize the photochemical code.
+            from .photochem import EvoAtmosphereGasGiant
+            self.inputs['climate']['pc'] = EvoAtmosphereGasGiant(**photochem_init_args)
 
     def climate(self, opacityclass, save_all_profiles = False, as_dict=True,with_spec=False,
         save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False, kz = None, 
@@ -3899,7 +3968,7 @@ class inputs():
                     flux_plus_ir_attop, verbose=verbose,fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, moist = moist)   
 
         if chemeq_first: 
-            pressure, temp, dtdp, nstr_new, flux_plus_final,  flux_net_final, flux_net_ir_final, df, all_profiles, cld_out, final_conv_flag, all_opd =find_strat(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
+            pressure, temp, dtdp, nstr_new, flux_plus_final,  flux_net_final, flux_net_ir_final, df, all_profiles, cld_out, final_conv_flag, all_opd, df_cld_final =find_strat(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                              t_table, p_table, grad, cp, opacityclass, grav, 
                              rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, save_profile,all_profiles, all_opd, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop, beta, param_flag,
                              verbose=verbose,fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, moist = moist)
@@ -4084,30 +4153,58 @@ class inputs():
                 photo_inputs_dict = {}
                 photo_inputs_dict['yesorno'] = False
             else :
-                bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+                # Compute chemical equilibrium composition using pre-computed grid
+                bundle.premix_atmosphere_photochem(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],firsttime=True,mh_interp=float(self.inputs['climate']['mh']),cto_interp=float(self.inputs['climate']['CtoO']))
+                
+                # Compute photochemical steady-state, and load it into `bundle.inputs['atmosphere']['profile']`. Here,
+                # we use chemical equilibrium + quenching as an initial guess.
+                pc = self.inputs['climate']['pc']
+                sonora_abund_photochem = self.inputs['climate']['sonora_abunds_photochem']
+                df_sonora_photochem = self.inputs['climate']['df_sonora_photochem'] # temporary for testing, but in the future will need a better way to not require user input
 
-                pc= bundle.call_photochem(temp,pressure,float(self.inputs['climate']['mh']),float(self.inputs['climate']['CtoO']),self.inputs['climate']['psurf'],self.inputs['climate']['m_planet'],self.inputs['climate']['r_planet'],kz,tstop=self.inputs['climate']['tstop'],filename = self.inputs['climate']['photochem_file'],stfilename = self.inputs['climate']['photochem_stfile'],network = self.inputs['climate']['photochem_network'],network_ct = self.inputs['climate']['photochem_networkct'],first=True,pc=None)
+                if sonora_abund_photochem:
+                    from .photochem import set_equilibrium_composition_to_picaso_df
+                    # add option to start with premix_atmosphere_from sonora without photochem abundances
+                    # if Teff > 1000: # grabbing the right equilibrium composition around 1200 K for warmer objects
+                    set_equilibrium_composition_to_picaso_df(pc,self.inputs['climate']['photochem_init_args']['mechanism_file'],df_sonora_photochem,1200)
+                    # else: # grabbing the equilibrium composition above the CO2 quench for colder objects
+                    #     set_equilibrium_composition_to_picaso_df(pc,self.inputs['climate']['photochem_init_args']['mechanism_file'],bundle.inputs['atmosphere']['profile'],600)
+
+                    bundle.inputs['atmosphere']['profile'] = pc.run_for_picaso(
+                        bundle.inputs['atmosphere']['profile'], 
+                        float(0.0),
+                        float(1.0), 
+                        kz, 
+                        True
+                    )
+                else:
+                    bundle.inputs['atmosphere']['profile'] = pc.run_for_picaso(
+                        bundle.inputs['atmosphere']['profile'], 
+                        float(self.inputs['climate']['mh']), 
+                        float(self.inputs['climate']['CtoO']), 
+                        kz, 
+                        True
+                    )
+
                 all_kzz = np.append(all_kzz, kz)
                 quench_levels = np.array([0,0,0,0])
                 photo_inputs_dict = {}
+                # Save some information, to be used in later photochem calls.
                 photo_inputs_dict['yesorno'] = True
-                photo_inputs_dict['mh'] = float(self.inputs['climate']['mh'])
-                photo_inputs_dict['CtoO'] = float(self.inputs['climate']['CtoO'])
-                photo_inputs_dict['psurf'] = self.inputs['climate']['psurf']
-                photo_inputs_dict['m_planet'] = self.inputs['climate']['m_planet']
-                photo_inputs_dict['r_planet'] = self.inputs['climate']['r_planet']
-                photo_inputs_dict['tstop']=self.inputs['climate']['tstop']
-                photo_inputs_dict['photochem_file']=self.inputs['climate']['photochem_file']
-                photo_inputs_dict['photochem_stfile']=self.inputs['climate']['photochem_stfile']
-                photo_inputs_dict['photochem_network']=self.inputs['climate']['photochem_network']
-                photo_inputs_dict['photochem_networkct']=self.inputs['climate']['photochem_networkct']
+
+                if sonora_abund_photochem:
+                    photo_inputs_dict['mh'] = 0.0 # needs to be solar for this to work
+                    photo_inputs_dict['CtoO'] = 1.0
+                    photo_inputs_dict['mechanism_file'] = self.inputs['climate']['photochem_init_args']['mechanism_file']
+                    photo_inputs_dict['sonora_abunds_photochem'] = sonora_abund_photochem
+                    photo_inputs_dict['df_sonora_photochem'] = df_sonora_photochem
+                else:
+                    photo_inputs_dict['mh'] = float(self.inputs['climate']['mh'])
+                    photo_inputs_dict['CtoO'] = float(self.inputs['climate']['CtoO'])
+                photo_inputs_dict['mh_interp'] = float(self.inputs['climate']['mh'])
+                photo_inputs_dict['CtoO_interp'] = float(self.inputs['climate']['CtoO'])
                 photo_inputs_dict['pc'] = pc
                 photo_inputs_dict['kz'] = kz
-                
-
-
-
-
 
             wno = opacityclass.wno
             delta_wno = opacityclass.delta_wno
@@ -4163,7 +4260,7 @@ class inputs():
             on_fly=on_fly, gases_fly=gases_fly, verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist=moist, deq_rainout=deq_rainout,quench_ph3=quench_ph3)
                 # print('find_strat_deq, kz input:',kz) #JM printout for deq nan debugging
                 # print('find_strat_deq, all_kzz input:',all_kzz)
-                pressure, temp, dtdp, nstr_new, flux_plus_final,flux_net_final, flux_net_ir_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,cld_out,photo_inputs_dict,final_conv_flag,all_opd=find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
+                pressure, temp, dtdp, nstr_new, flux_plus_final,flux_net_final, flux_net_ir_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,cld_out,photo_inputs_dict,final_conv_flag,all_opd, df_cld_final=find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                                 t_table, p_table, grad, cp, opacityclass, grav, 
                                 rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, all_opd, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly,
                              verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist = moist,deq_rainout=deq_rainout,quench_ph3=quench_ph3)
@@ -4184,7 +4281,7 @@ class inputs():
                 g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop, beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, verbose=verbose, 
                 do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist=moist, deq_rainout=deq_rainout,quench_ph3=quench_ph3)
                 
-                pressure, temp, dtdp, nstr_new, flux_plus_final,flux_net_final, flux_net_ir_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,cld_out,photo_inputs_dict,final_conv_flag,all_opd=find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
+                pressure, temp, dtdp, nstr_new, flux_plus_final,flux_net_final, flux_net_ir_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,cld_out,photo_inputs_dict,final_conv_flag,all_opd,df_cld_final=find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                     t_table, p_table, grad, cp, opacityclass, grav, rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, all_opd, self_consistent_kzz,save_kzz,all_kzz, 
                     opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly,
                     verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist = moist,deq_rainout=deq_rainout,quench_ph3=quench_ph3)
@@ -4213,6 +4310,7 @@ class inputs():
             df_cld = vj.picaso_format(opd_now, w0_now, g0_now, pressure = cld_out['pressure'], wavenumber=1e4/cld_out['wave'])
             all_out['cld_output_picaso'] = df_cld
             all_out['virga_output'] = cld_out
+            all_out['cld_output_final'] = df_cld_final
 
         if save_all_profiles: 
             all_out['all_profiles'] = all_profiles 
@@ -4235,37 +4333,6 @@ class inputs():
             return all_out
         else: 
             return pressure , temp, dtdp, nstr_new, flux_plus_final, df, all_profiles , opd_now,w0_now,g0_now
-    
-    def call_photochem(self,temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=1e7,filename = None,stfilename=None,network=None,network_ct=None,first=True,pc=None,user_psurf=True,user_psurf_add=3):
-        p_target = np.logspace(np.log10(np.min(pressure)),np.log10(np.max(pressure)),180)
-        interp_function = interp1d(np.log10(pressure),np.log10(temp),bounds_error=False,fill_value='extrapolate')
-        interp_function_kzz = interp1d(np.log10(pressure),np.log10(kzz),bounds_error=False,fill_value='extrapolate')
-        interp_temp  = 10**interp_function(np.log10(p_target))
-        interp_kzz = 10**interp_function_kzz(np.log10(p_target))
-        pc,output_array,species,pressure_phot = run_photochem(interp_temp,p_target,logMH, cto,pressure_surf,mass,radius,interp_kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=first,pc=pc,user_psurf=user_psurf,user_psurf_add=user_psurf_add)
-        #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
-        #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
-        #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
-        #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
-        #pc,output_array,species,pressure = run_photochem(temp,pressure,logMH, cto,pressure_surf,mass,radius,kzz,tstop=tstop,filename = filename,stfilename=stfilename,network=network,network_ct= network_ct,first=False,pc=pc)
-#        wh = np.where(np.flip(pc.wrk.pressure/1e6)[-1] < pressure_phot)
- #       pressure_joined = np.concatenate([np.flip(pc.wrk.pressure/1e6),pressure_phot[wh][1:]])
-        for i in range(len(species)):
-            wh=np.where(output_array[i,:] <= 0.0)
-            if len(wh[0]) >0:
-                
-                output_array[i,:][wh]=1e-40
-            interp_sp = interp1d(np.log10(pressure_phot),np.log10(output_array[i,:]),bounds_error=False,fill_value='extrapolate')
-            sp_arr = 10**interp_sp(np.log10(pressure))
-            wh2=np.where(sp_arr <= 0.0)
-            if len(wh2[0]) >0:
-                
-                sp_arr[wh2]=1e-40
-            
-            self.inputs['atmosphere']['profile'][species[i]] = sp_arr #10**interp_sp(np.log10(pressure))#output_array[i,:]
-        self.inputs['atmosphere']['profile']['pressure']= pressure
-        
-        return pc
 
 def get_targets():
     """Function to grab available targets using exoplanet archive data. 
@@ -4782,67 +4849,125 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     sigmab =  0.56687e-4 #cgs
     target_teff = (abs(tidal[0])/sigmab)**0.25
     # Don't use large step_max option for cold models, much better converged with smaller stepping unless it's cloudy
-    egp_stepmax = (target_teff <= 400 and cloudy != "selfconsistent")
+    if target_teff <= 400 and cloudy != "selfconsistent":
+        egp_stepmax = True
+    # elif final == True:
+    #     egp_stepmax = True
+    else: 
+        egp_stepmax = False
 
-    #testing goto 1235 in EGP profile.f (JM)
-    if final == True:
-        it_max = it_max * 2
-        itmx = 6
-        for iii in range(itmx):
-            DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
-            W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
-            frac_a,frac_b,frac_c,constant_back,constant_forward,  \
-            wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight =  calculate_atm(bundle, opacityclass )
-            cld_out, df_cld, diff, tau_dif, taudif_tol = run_clouds_for_climate(cld_species, cloudy, fsed, beta, param_flag, bundle, opacityclass, mieff_dir, opd_cld_climate, g0_cld_climate, w0_cld_climate, mh, pressure, temp, grav, mmw, tidal, flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist, verbose=verbose)
+    # # testing goto 1235 in EGP profile.f (JM)
+    # if final == True:
+    #     it_max = it_max * 2
+    #     itmx = 6
+    #     for iii in range(itmx):
+    #         if cloudy == 1 :
+    #             DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
+    #             W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
+    #             frac_a,frac_b,frac_c,constant_back,constant_forward,  \
+    #             wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight =  calculate_atm(bundle, opacityclass )
+
+
+    #             we0,we1,we2,we3 = 0.25,0.25,0.25,0.25
+    #             # we0,we1,we2,we3 = 1.0,0.0,0.0,0.0
+    #             opd_prev_cld_step = (we0*opd_cld_climate[:,:,0]+we1*opd_cld_climate[:,:,1]+we2*opd_cld_climate[:,:,2]+we3*opd_cld_climate[:,:,3]) # last average
+                
+    #             metallicity = 10**(mh) #atmospheric metallicity relative to Solar
+    #             mean_molecular_weight = np.mean(mmw) # atmospheric mean molecular weight
+    #             directory = mieff_dir
+                
+    #             #get the abundances
+    #             output_abunds = bundle.inputs['atmosphere']['profile'].T.values
+                    
+    #             kzz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
+    #             bundle.inputs['atmosphere']['profile']['kz'] = kzz
             
-            if do_holes == True:
-                DTAU_clear, TAU_clear, W0_clear, COSB_clear,ftau_cld_clear, ftau_ray_clear,GCOS2_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear, COSB_OG_clear, \
-                    W0_no_raman_clear, surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
-                    frac_a,frac_b,frac_c,constant_back,constant_forward, \
-                    wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw, gweight, tweight =  calculate_atm(bundle, opacityclass, fthin_cld, do_holes=True)
+
+    #             cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
+    #                         mmw = mean_molecular_weight, b = beta, param = param_flag) #,climate=True)
                 
-                temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles, cldsave_count = t_start(
-                        nofczns,nstr,it_max,conv,x_max_mult, 
-                        rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
-                        grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, 
-                        DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman ,surf_reflect, 
-                        ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
-                        wno,nwno,ng,nt,gweight,tweight,      
-                        ngauss, gauss_wts, save_profile, all_profiles, output_abunds,
-                        fhole, DTAU_clear, TAU_clear, W0_clear, COSB_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear,COSB_OG_clear, 
-                        W0_no_raman_clear, verbose=verbose, do_holes = True, moist = moist,egp_stepmax=egp_stepmax)
+    #             opd_now, w0_now, g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
+                
+    #             opd_cld_climate[:,:,3], g0_cld_climate[:,:,3], w0_cld_climate[:,:,3] = opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2]
+    #             opd_cld_climate[:,:,2], g0_cld_climate[:,:,2], w0_cld_climate[:,:,2] = opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1]
+    #             opd_cld_climate[:,:,1], g0_cld_climate[:,:,1], w0_cld_climate[:,:,1] = opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0]
+                            
+    #             opd_cld_climate[:,:,0], g0_cld_climate[:,:,0], w0_cld_climate[:,:,0] = opd_now, g0_now, w0_now
+                
+    #             #if np.sum(opd_cld_climate[:,:,1]) == 0 :
+    #             #    w0,w1,w2,w3 = 1,0,0,0
+    #             #elif (np.sum(opd_cld_climate[:,:,1]) != 0) and (np.sum(opd_cld_climate[:,:,2]) == 0):
+    #             #    w0,w1,w2,w3 = 0.5,0.5,0,0
+    #             #elif (np.sum(opd_cld_climate[:,:,2]) != 0) and (np.sum(opd_cld_climate[:,:,3]) == 0):
+    #             #    w0,w1,w2,w3 = 0.33,0.33,0.33,0
+    #             #else:
+    #             #    w0,w1,w2,w3 = 0.25,0.25,0.25,0.25
+    #             we0,we1,we2,we3 = 0.25,0.25,0.25,0.25
+    #             # we0,we1,we2,we3 = 1.0,0.0,0.0,0.0
+                
+    #             #sum_opd_clmt = (opd_cld_climate[:,:,0]+opd_cld_climate[:,:,1]+opd_cld_climate[:,:,2]+opd_cld_climate[:,:,3])
+    #             sum_opd_clmt = (we0*opd_cld_climate[:,:,0]+we1*opd_cld_climate[:,:,1]+we2*opd_cld_climate[:,:,2]+we3*opd_cld_climate[:,:,3])
+    #             opd_clmt = (we0*opd_cld_climate[:,:,0]+we1*opd_cld_climate[:,:,1]+we2*opd_cld_climate[:,:,2]+we3*opd_cld_climate[:,:,3])
+    #             g0_clmt = (we0*opd_cld_climate[:,:,0]*g0_cld_climate[:,:,0]+we1*opd_cld_climate[:,:,1]*g0_cld_climate[:,:,1]+we2*opd_cld_climate[:,:,2]*g0_cld_climate[:,:,2]+we3*opd_cld_climate[:,:,3]*g0_cld_climate[:,:,3])/(sum_opd_clmt)
+    #             w0_clmt = (we0*opd_cld_climate[:,:,0]*w0_cld_climate[:,:,0]+we1*opd_cld_climate[:,:,1]*w0_cld_climate[:,:,1]+we2*opd_cld_climate[:,:,2]*w0_cld_climate[:,:,2]+we3*opd_cld_climate[:,:,3]*w0_cld_climate[:,:,3])/(sum_opd_clmt)
+    #             g0_clmt = np.nan_to_num(g0_clmt,nan=0.0)
+    #             w0_clmt = np.nan_to_num(w0_clmt,nan=0.0)
+    #             opd_clmt[np.where(opd_clmt <= 1e-5)] = 0.0
+                
+                
+    #             df_cld = vj.picaso_format(opd_clmt, w0_clmt, g0_clmt, pressure = cld_out['pressure'], wavenumber= 1e4/cld_out['wave'])
+    #             bundle.clouds(df=df_cld)
+    #         else:
+    #             cld_out = 0
+    
+    #         if do_holes == True:
+    #             DTAU_clear, TAU_clear, W0_clear, COSB_clear,ftau_cld_clear, ftau_ray_clear,GCOS2_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear, COSB_OG_clear, \
+    #                 W0_no_raman_clear, surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
+    #                 frac_a,frac_b,frac_c,constant_back,constant_forward, \
+    #                 wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw, gweight, tweight =  calculate_atm(bundle, opacityclass, fthin_cld, do_holes=True)
+                
+    #             temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles, cldsave_count = t_start(
+    #                     nofczns,nstr,it_max,conv,x_max_mult, 
+    #                     rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
+    #                     grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, 
+    #                     DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman ,surf_reflect, 
+    #                     ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
+    #                     wno,nwno,ng,nt,gweight,tweight,      
+    #                     ngauss, gauss_wts, save_profile, all_profiles, output_abunds,
+    #                     fhole, DTAU_clear, TAU_clear, W0_clear, COSB_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear,COSB_OG_clear, 
+    #                     W0_no_raman_clear, verbose=verbose, do_holes = True, moist = moist,egp_stepmax=egp_stepmax)
         
-            else:
-                DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
-                    W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
-                    frac_a,frac_b,frac_c,constant_back,constant_forward, \
-                    wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight =  calculate_atm(bundle, opacityclass )
+    #         else:
+    #             DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
+    #                 W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
+    #                 frac_a,frac_b,frac_c,constant_back,constant_forward, \
+    #                 wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight =  calculate_atm(bundle, opacityclass )
                 
-                temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles, cldsave_count = t_start(
-                        nofczns,nstr,it_max,conv,x_max_mult, 
-                        rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
-                        grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, 
-                        DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-                        ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
-                        wno,nwno,ng,nt,gweight,tweight, 
-                        ngauss, gauss_wts, save_profile, all_profiles,
-                        output_abunds, verbose=verbose, moist = moist,egp_stepmax=egp_stepmax)
+    #             temp, dtdp, flag_converge, flux_net_ir_layer, flux_plus_ir_attop, all_profiles, cldsave_count = t_start(
+    #                     nofczns,nstr,it_max,conv,x_max_mult, 
+    #                     rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
+    #                     grad, cp, tidal,tmin,tmax,dwni, bb , y2, tp, DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, 
+    #                     DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
+    #                     ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
+    #                     wno,nwno,ng,nt,gweight,tweight, 
+    #                     ngauss, gauss_wts, save_profile, all_profiles,
+    #                     output_abunds, verbose=verbose, moist = moist,egp_stepmax=egp_stepmax)
             
             if cloudy == "selfconsistent" and save_profile == 1:
                 for i in range(cldsave_count):
                     all_opd = np.append(all_opd,df_cld['opd'].values[55::196]) #save opd at 4 micron
             
-            ert = 0.0
-            scalt = 1.0
+    #         ert = 0.0
+    #         scalt = 1.0
 
-            dtx= abs(temp-temp_old)
-            ert = np.sum(dtx) 
+    #         dtx= abs(temp-temp_old)
+    #         ert = np.sum(dtx) 
             
-            temp_old= np.copy(temp)
+    #         temp_old= np.copy(temp)
 
-            conv_flag = 1
+    #         conv_flag = 1
 
-        return pressure, temp , dtdp, conv_flag, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate, cld_out,flux_net_ir_layer, flux_plus_ir_attop, all_opd
+    #     return pressure, temp , dtdp, conv_flag, all_profiles, opd_cld_climate,g0_cld_climate,w0_cld_climate, cld_out,flux_net_ir_layer, flux_plus_ir_attop, all_opd
     
     if first_call_ever == False:
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
@@ -5361,8 +5486,9 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,t
         bundle.inputs['atmosphere']['profile']['kz'] = kzz
 
 
-        cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
+        cld_out_last = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
                         mmw = mean_molecular_weight, b = beta, param = param_flag) #,climate=True)
+        df_cld_last = vj.picaso_format(cld_out_last['opd_per_layer'],cld_out_last['single_scattering'],cld_out_last['asymmetry'],pressure = cld_out_last['pressure'], wavenumber= 1e4/cld_out_last['wave'])
         
         opd_now, w0_now, g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
         df_cld = vj.picaso_format(opd_now, w0_now, g0_now,pressure = cld_out['pressure'], wavenumber= 1e4/cld_out['wave'])
@@ -5373,6 +5499,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,t
     else:
         opd_now,w0_now,g0_now = 0,0,0
         cld_out = 0
+        df_cld_last = 0
 
     DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,  wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight  =  calculate_atm(bundle, opacityclass)
     
@@ -5395,7 +5522,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,t
     flux_net = rfaci* flux_net_ir_full[:] + rfacv* flux_net_v_full[:] +tidal #fnet
     flux_net_midpt = rfaci* flux_net_ir_layer_full[:] + rfacv* flux_net_v_layer_full[:] +tidal #fmnet
     
-    return pressure, temp, dtdp, nstr , flux_plus_ir_full, flux_net, flux_net_ir_full, bundle.inputs['atmosphere']['profile'], all_profiles,cld_out,profile_flag, all_opd
+    return pressure, temp, dtdp, nstr , flux_plus_ir_full, flux_net, flux_net_ir_full, bundle.inputs['atmosphere']['profile'], all_profiles,cld_out,profile_flag, all_opd, df_cld_last
 
 
 def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, temp,pressure,FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
@@ -5581,12 +5708,27 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
         qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3)
         output_abunds = bundle.inputs['atmosphere']['profile'].T.values
     else :
-        bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
-        pc= bundle.call_photochem(temp,pressure,photo_inputs_dict['mh'],photo_inputs_dict['CtoO'],photo_inputs_dict['psurf'],photo_inputs_dict['m_planet'],photo_inputs_dict['r_planet'],photo_inputs_dict['kz'],tstop=photo_inputs_dict['tstop'],filename = photo_inputs_dict['photochem_file'],stfilename =photo_inputs_dict['photochem_stfile'],network = photo_inputs_dict['photochem_network'],network_ct=photo_inputs_dict['photochem_networkct'],first=False,pc=photo_inputs_dict['pc'])
-        photo_inputs_dict['pc'] = pc
+        # Compute chemical equilibrium composition by interpolating pre-computed grid
+        #bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+        bundle.premix_atmosphere_photochem(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],mh_interp=photo_inputs_dict['mh_interp'],cto_interp=photo_inputs_dict['CtoO_interp'])
+
+        # Unpack photochem object
+        pc = photo_inputs_dict['pc']
+
+        # Update the DataFrame with chemistry from previous Photochem run.
+        # This will give Photochem a good initial starting guess.
+        bundle.inputs['atmosphere']['profile'] = pc.add_concentrations_to_picaso_df(bundle.inputs['atmosphere']['profile'])
+
+        # Run Photochem
+        bundle.inputs['atmosphere']['profile'] = pc.run_for_picaso(
+            bundle.inputs['atmosphere']['profile'], 
+            photo_inputs_dict['mh'], 
+            photo_inputs_dict['CtoO'], 
+            photo_inputs_dict['kz'], 
+            False
+        )
         all_kzz = np.append(all_kzz, kz)
         quench_levels = np.array([0,0,0,0])
-        photo_inputs_dict['pc'] = pc
         qvmrs, qvmrs2=0,0
         output_abunds = bundle.inputs['atmosphere']['profile'].T.values
     
@@ -5606,6 +5748,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
 
     if cloudy == "selfconsistent":
             we0,we1,we2,we3 = 0.25,0.25,0.25,0.25
+            # we0,we1,we2,we3 = 1.0,0.0,0.0,0.0
             opd_prev_cld_step = (we0*opd_cld_climate[:,:,0]+we1*opd_cld_climate[:,:,1]+we2*opd_cld_climate[:,:,2]+we3*opd_cld_climate[:,:,3]) # last average
             
             metallicity = 10**(0) #atmospheric metallicity relative to Solar
@@ -5665,6 +5808,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             #else:
             #    w0,w1,w2,w3 = 0.25,0.25,0.25,0.25
             we0,we1,we2,we3 = 0.25,0.25,0.25,0.25
+            # we0,we1,we2,we3 = 1.0,0.0,0.0,0.0
             
             #sum_opd_clmt = (opd_cld_climate[:,:,0]+opd_cld_climate[:,:,1]+opd_cld_climate[:,:,2]+opd_cld_climate[:,:,3])
             sum_opd_clmt = (we0*opd_cld_climate[:,:,0]+we1*opd_cld_climate[:,:,1]+we2*opd_cld_climate[:,:,2]+we3*opd_cld_climate[:,:,3])
@@ -5764,12 +5908,27 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3)
             print("Quench Levels are CO, CO2, NH3, HCN ", quench_levels)
         else :
-            bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
-            pc= bundle.call_photochem(temp,pressure,photo_inputs_dict['mh'],photo_inputs_dict['CtoO'],photo_inputs_dict['psurf'],photo_inputs_dict['m_planet'],photo_inputs_dict['r_planet'],photo_inputs_dict['kz'],tstop=photo_inputs_dict['tstop'],filename = photo_inputs_dict['photochem_file'],stfilename =photo_inputs_dict['photochem_stfile'],network = photo_inputs_dict['photochem_network'],network_ct=photo_inputs_dict['photochem_networkct'],first=False,pc=photo_inputs_dict['pc'])
-            photo_inputs_dict['pc'] = pc
+            # Compute chemical equilibrium composition by interpolating pre-computed grid
+            #bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+            bundle.premix_atmosphere_photochem(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],mh_interp=photo_inputs_dict['mh_interp'],cto_interp=photo_inputs_dict['CtoO_interp'])
+
+            # Unpack photochem object
+            pc = photo_inputs_dict['pc']
+            
+            # Update the DataFrame with chemistry from previous Photochem run.
+            # This will give Photochem a good initial starting guess.
+            bundle.inputs['atmosphere']['profile'] = pc.add_concentrations_to_picaso_df(bundle.inputs['atmosphere']['profile'])
+            
+            # Run Photochem
+            bundle.inputs['atmosphere']['profile'] = pc.run_for_picaso(
+                bundle.inputs['atmosphere']['profile'], 
+                photo_inputs_dict['mh'], 
+                photo_inputs_dict['CtoO'], 
+                photo_inputs_dict['kz'], 
+                False
+            )
             all_kzz = np.append(all_kzz, kz)
             quench_levels = np.array([0,0,0,0])
-            photo_inputs_dict['pc'] = pc
             qvmrs, qvmrs2=0,0
             photo_inputs_dict['kz'] = kz
         
@@ -5779,6 +5938,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
         
         if cloudy == "selfconsistent":
             we0,we1,we2,we3 = 0.25,0.25,0.25,0.25
+            # we0,we1,we2,we3 = 1.0,0.0,0.0,0.0
             opd_prev_cld_step = (we0*opd_cld_climate[:,:,0]+we1*opd_cld_climate[:,:,1]+we2*opd_cld_climate[:,:,2]+we3*opd_cld_climate[:,:,3]) # last average
             
             metallicity = 10**(0) #atmospheric metallicity relative to Solar
@@ -5834,6 +5994,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             #else:
             #    w0,w1,w2,w3 = 0.25,0.25,0.25,0.25
             we0,we1,we2,we3 = 0.25,0.25,0.25,0.25
+            # we0,we1,we2,we3 = 1.0,0.0,0.0,0.0
             
             #sum_opd_clmt = (opd_cld_climate[:,:,0]+opd_cld_climate[:,:,1]+opd_cld_climate[:,:,2]+opd_cld_climate[:,:,3])
             sum_opd_clmt = (we0*opd_cld_climate[:,:,0]+we1*opd_cld_climate[:,:,1]+we2*opd_cld_climate[:,:,2]+we3*opd_cld_climate[:,:,3])
@@ -6452,15 +6613,30 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
 
         qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3)
     else :
-        bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
-        
+        # Compute chemical equilibrium composition by interpolating pre-computed grid
+        #bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+        bundle.premix_atmosphere_photochem(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],mh_interp=photo_inputs_dict['mh_interp'],cto_interp=photo_inputs_dict['CtoO_interp'])
 
+        # This line was here previously, so I'm keeping it.
         kz = all_kzz[-len(temp):] ## level mixing timescales
-        pc= bundle.call_photochem(temp,pressure,photo_inputs_dict['mh'],photo_inputs_dict['CtoO'],photo_inputs_dict['psurf'],photo_inputs_dict['m_planet'],photo_inputs_dict['r_planet'],photo_inputs_dict['kz'],tstop=photo_inputs_dict['tstop'],filename = photo_inputs_dict['photochem_file'],stfilename =photo_inputs_dict['photochem_stfile'],network = photo_inputs_dict['photochem_network'],network_ct=photo_inputs_dict['photochem_networkct'],first=False,pc=photo_inputs_dict['pc'])
-        photo_inputs_dict['pc'] = pc
+
+        # Unpack photochem object
+        pc = photo_inputs_dict['pc']
+
+        # Update the DataFrame with chemistry from previous Photochem run.
+        # This will give Photochem a good initial starting guess.
+        bundle.inputs['atmosphere']['profile'] = pc.add_concentrations_to_picaso_df(bundle.inputs['atmosphere']['profile'])
+        
+        # Run Photochem
+        bundle.inputs['atmosphere']['profile'] = pc.run_for_picaso(
+            bundle.inputs['atmosphere']['profile'], 
+            photo_inputs_dict['mh'], 
+            photo_inputs_dict['CtoO'], 
+            photo_inputs_dict['kz'], 
+            False
+        )
         all_kzz = np.append(all_kzz, kz)
         quench_levels = np.array([0,0,0,0])
-        photo_inputs_dict['pc'] = pc
         
         qvmrs,qvmrs2 = 0,0
     
@@ -6482,9 +6658,13 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
             bundle.inputs['atmosphere']['profile']['kz'] = kz
 
         # print('virga kz:',kz)
-        cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
+        cld_out_last = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
                         mmw = mean_molecular_weight, b = beta, param = param_flag)#,climate=True)
+        df_cld_last = vj.picaso_format(cld_out_last['opd_per_layer'],cld_out_last['single_scattering'],cld_out_last['asymmetry'],pressure = cld_out_last['pressure'], wavenumber= 1e4/cld_out_last['wave'])
         
+        #testing using last cloud
+        # cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
+        #                 mmw = mean_molecular_weight, b = beta, param = param_flag)
         opd_now, w0_now, g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
         df_cld = vj.picaso_format(opd_now, w0_now, g0_now,pressure = cld_out['pressure'], wavenumber= 1e4/cld_out['wave'])
 
@@ -6492,6 +6672,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
     else:
         opd_now,w0_now,g0_now = 0,0,0
         cld_out = 0
+        df_cld_last = 0
     
     # bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout)
     DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight =  calculate_atm_deq(bundle, opacityclass,on_fly=on_fly, gases_fly=gases_fly)
@@ -6514,7 +6695,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
     flux_net = rfaci* flux_net_ir_full[:] + rfacv* flux_net_v_full[:] +tidal #fnet
     flux_net_midpt = rfaci* flux_net_ir_layer_full[:] + rfacv* flux_net_v_layer_full[:] +tidal #fmnet
     
-    return pressure, temp, dtdp, nstr , flux_plus_ir_full, flux_net, flux_net_ir_full, qvmrs, qvmrs2, bundle.inputs['atmosphere']['profile'], all_profiles,all_kzz,cld_out,photo_inputs_dict,profile_flag, all_opd
+    return pressure, temp, dtdp, nstr , flux_plus_ir_full, flux_net, flux_net_ir_full, qvmrs, qvmrs2, bundle.inputs['atmosphere']['profile'], all_profiles,all_kzz,cld_out,photo_inputs_dict,profile_flag, all_opd, df_cld_last
 
 #@jit(nopython=True, cache=True)
 def OH_conc(temp,press,x_h2o,x_h2):
