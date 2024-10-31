@@ -10,7 +10,6 @@ from .disco import get_angles_1d, get_angles_3d, compute_disco, compress_disco, 
 from .justplotit import numba_cumsum, find_nearest_2d, mean_regrid
 from .deq_chem import quench_level,initiate_cld_matrices
 from .build_3d_input import regrid_xarray
-from .photochem import run_photochem
 from .clouds import run_clouds_for_climate
 
 from virga import justdoit as vj
@@ -4953,10 +4952,6 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     #                     ngauss, gauss_wts, save_profile, all_profiles,
     #                     output_abunds, verbose=verbose, moist = moist,egp_stepmax=egp_stepmax)
             
-            if cloudy == "selfconsistent" and save_profile == 1:
-                for i in range(cldsave_count):
-                    all_opd = np.append(all_opd,df_cld['opd'].values[55::196]) #save opd at 4 micron
-            
     #         ert = 0.0
     #         scalt = 1.0
 
@@ -4974,7 +4969,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
         frac_a,frac_b,frac_c,constant_back,constant_forward,  \
         wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight =  calculate_atm(bundle, opacityclass )
-        cld_out, df_cld, diff, tau_dif, taudif_tol = run_clouds_for_climate(cld_species, cloudy, fsed, beta, param_flag, bundle, opacityclass, mieff_dir, opd_cld_climate, g0_cld_climate, w0_cld_climate, mh, pressure, temp, grav, mmw, tidal, flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist, verbose=verbose)
+        cld_out, df_cld, diff, taudif, taudif_tol = run_clouds_for_climate(cld_species, cloudy, fsed, beta, param_flag, bundle, opacityclass, mieff_dir, opd_cld_climate, g0_cld_climate, w0_cld_climate, mh, pressure, temp, grav, mmw, tidal, flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist, verbose=verbose)
         if cloudy == "selfconsistent":
             # adding a new array to save opd for a single wavelength to use for animation/tracking of convergence *JM
             if save_profile == 1:
@@ -5040,7 +5035,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
         #if save_profile == 1:
         #    all_profiles = np.append(all_profiles,bundle.inputs['atmosphere']['profile']['NH3'].values)
-        cld_out, df_cld, diff, tau_dif, taudif_tol = run_clouds_for_climate(cld_species, cloudy, fsed, beta, param_flag, bundle, opacityclass, mieff_dir, opd_cld_climate, g0_cld_climate, w0_cld_climate, mh, pressure, temp, grav, mmw, tidal, flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist, verbose=verbose)
+        cld_out, df_cld, diff, taudif, taudif_tol = run_clouds_for_climate(cld_species, cloudy, fsed, beta, param_flag, bundle, opacityclass, mieff_dir, opd_cld_climate, g0_cld_climate, w0_cld_climate, mh, pressure, temp, grav, mmw, tidal, flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist, verbose=verbose)
             
             # adding a new array to save opd for a single wavelength to use for animation/tracking of convergence *JM
         if save_profile == 1 and cloudy != "cloudless":
