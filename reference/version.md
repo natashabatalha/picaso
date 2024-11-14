@@ -1,3 +1,7 @@
+Version 3.3
+-----------
+- Reflected light phase curves (Hamill et al. 2024) 
+
 Version 3.2
 -----------
 - Disequilibrium Climate (Mukherjee et al. 2024) Elf-OWL models
