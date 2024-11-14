@@ -584,7 +584,6 @@
    "version": "3.11.5"
   },
   "nbsphinx": {
-   "execute": "never"
   },
   "toc": {
    "base_numbering": 1,
