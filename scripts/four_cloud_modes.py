@@ -65,7 +65,7 @@ def twod_to_threed(arr, reps=4):
 print("Setting up atmosphere for cloudless run")
 cl_run.inputs_climate(temp_guess= temp_bobcat, pressure= pressure_bobcat,
                       nstr = nstr, nofczns = nofczns , rfacv = rfacv, cloudy = "cloudless", mh = '0.0', 
-                      CtoO = '1.0',species = ['MgSiO3'], fsed = 1.0, beta = 0.1, virga_param = 'const',
+                      CtoO = '1.0',species = ['SiO2'], fsed = 1.0, beta = 0.1, virga_param = 'const',
                       mieff_dir = "~/projects/clouds/virga/refrind", do_holes = False, fhole = 0.5, fthin_cld = 0.9, moistgrad = False,
                       )
 
@@ -138,7 +138,7 @@ out_fixed100 = deepcopy(cl_run.climate(opacity_ck, save_all_profiles=True,with_s
 print("Self-consistent run")
 cl_run.inputs_climate(temp_guess=temp_guess_selfconsistent, pressure= pressure_bobcat,
                       nstr = nstr, nofczns = nofczns , rfacv = rfacv, cloudy = "selfconsistent", mh = '0.0', 
-                      CtoO = '1.0',species = ['H2O'], fsed = 8.0, beta = 0.1, virga_param = 'const',
+                      CtoO = '1.0',species = ['MgSiO3'], fsed = 8.0, beta = 0.1, virga_param = 'const',
                       mieff_dir = "~/projects/clouds/virga/refrind", do_holes = False, fhole = 0.5, fthin_cld = 0.9, moistgrad = False,
                       )
 

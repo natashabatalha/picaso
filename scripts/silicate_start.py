@@ -18,16 +18,18 @@ from copy import deepcopy
 from bokeh.plotting import show
 import h5py
 
+cloud_species = "MgSiO3"
+
 #1 ck tables from roxana
 mh = '+000'#'+0.0' #log metallicity
 CtoO = '100'#'1.0' # CtoO ratio
 
-ck_db = f"../data/kcoeff_2020/sonora_2020_feh{mh}_co_{CtoO}.data.196"
-
+ck_db = f"data/kcoeff_2020/sonora_2020_feh{mh}_co_{CtoO}.data.196"
+"""
 #sonora bobcat cloud free structures file
-sonora_profile_db = '../data/sonora_bobcat/structures_m+0.0'
-sonora_dat_db = '../data/sonora_bobcat/structures_m+0.0'
-
+sonora_profile_db = 'data/sonora_bobcat/structures_m+0.0'
+sonora_dat_db = 'data/sonora_bobcat/structures_m+0.0'
+"""
 def calculate_spectrum(out, cld_out):
     opa_mon = jdi.opannection()
 
@@ -45,23 +47,20 @@ def calculate_spectrum(out, cld_out):
     xcm = 1/wno
     return xcm, fp, df_spec1['full_output']
 
-for fsed in [1, 8]:
-    for teff in [1300, 1500, 1700, 1900]:
+for fsed in [3]:
+    for teff in [300]:
         print(f"fsed = {fsed}, effective temperature = {teff} K")
-        cl_run = jdi.inputs(calculation="browndwarf", climate = True) # start a calculation
-        grav = 100 # Gravity of your brown dwarf in m/s/s
+        cl_run = jdi.inputs(calculation="planet", climate = True) # start a calculation - need to not have "brown" in `calculation`. BD almost always means free-floating.
+        
+        grav = 10 # Gravity of your brown dwarf in m/s/s
         cl_run.gravity(gravity=grav, gravity_unit=u.Unit('m/(s**2)')) # input gravity
         cl_run.effective_temp(teff) # input effective temperature
 
         opacity_ck = jdi.opannection(ck_db=ck_db) # grab your opacities
 
         nlevel = 91 # number of plane-parallel levels in your code
-        pressure_bobcat,temp_bobcat = np.loadtxt(jdi.os.path.join(
-                                    sonora_profile_db,f"t{teff}g{grav}nc_m0.0.dat"),
-                                    usecols=[1,2],unpack=True, skiprows = 1)
-
         nofczns = 1 # number of convective zones initially
-        nstr_upper = 70 # top most level of guessed convective zone
+        nstr_upper = 88 # top most level of guessed convective zone
         nstr_deep = nlevel - 2 # this is always the case. Dont change this
         nstr = np.array([0,nstr_upper,nstr_deep,0,0,0])
         rfacv = 0.5
@@ -82,10 +81,12 @@ for fsed in [1, 8]:
             return np.repeat(arr[:, :, np.newaxis], reps, axis=2)
 
 
+        temp_guess = np.load("data/RCTE_cloud_free/profile_eq_planet_100_grav_4.5_mh_+0.0_CO_1.0_sm_0.0486_v_0.5_temp.npy")
         print("Setting up atmosphere for cloudless run")
-        cl_run.inputs_climate(temp_guess= temp_bobcat, pressure= pressure_bobcat,
+        pressure_grid = np.logspace(-6,3,91)
+        cl_run.inputs_climate(temp_guess= temp_guess, pressure=pressure_grid,
                             nstr = nstr, nofczns = nofczns , rfacv = rfacv, cloudy = "cloudless", mh = '0.0', 
-                            CtoO = '1.0',species = ['MgSiO3'], fsed = fsed, beta = 0.1, virga_param = 'const',
+                            CtoO = '1.0',species = [cloud_species], fsed = fsed, beta = 0.1, virga_param = 'const',
                             mieff_dir = "~/projects/clouds/virga/refrind", do_holes = False, fhole = 0.5, fthin_cld = 0.9, moistgrad = False,
                             )
 
@@ -136,21 +137,24 @@ for fsed in [1, 8]:
         bundle.inputs['atmosphere']['profile']['kz'] = kzz
 
         print("Making clouds off cloudless run for post-processed/fixed")
-        postproc_cld_out = bundle.virga(["MgSiO3"],"~/projects/clouds/virga/refrind", fsed=8.0,mh=1.0,mmw = mean_molecular_weight, b = 0.1, param = 'const')
+        postproc_cld_out = bundle.virga([cloud_species],"~/projects/clouds/virga/refrind", fsed=fsed,mh=1.0,mmw = mean_molecular_weight, b = 0.1, param = 'const')
         postproc_cld_df = vj.picaso_format(postproc_cld_out["opd_per_layer"], postproc_cld_out["single_scattering"], postproc_cld_out["asymmetry"], postproc_cld_out["pressure"], 1e4 / postproc_cld_out["wave"])
-
+        
+        print("Fixed run")
+        cl_run.inputs["climate"]["pressure"] = pressure_grid
+        cl_run.inputs["climate"]["nstr"] = np.array([0,nstr_upper,nstr_deep,0,0,0])
         cl_run.inputs["climate"]["cloudy"] = "fixed"
         cl_run.inputs["climate"]["opd_climate"] = twod_to_threed(postproc_cld_out["opd_per_layer"])
         cl_run.inputs["climate"]["w0_climate"] = twod_to_threed(postproc_cld_out["single_scattering"])
         cl_run.inputs["climate"]["g0_climate"] = twod_to_threed(postproc_cld_out["asymmetry"])
 
-        print("Fixed run")
         out_fixed = deepcopy(cl_run.climate(opacity_ck, save_all_profiles=True,with_spec=True))
 
         print("Self-consistent run")
-        cl_run.inputs_climate(temp_guess=deepcopy(out_fixed["temperature"]), pressure= pressure_bobcat,
-                            nstr = nstr, nofczns = nofczns , rfacv = rfacv, cloudy = "selfconsistent", mh = '0.0', 
-                            CtoO = '1.0',species = ['MgSiO3'], fsed = fsed, beta = 0.1, virga_param = 'const',
+        
+        cl_run.inputs_climate(temp_guess=deepcopy(out_fixed["temperature"]), pressure=pressure_grid,
+                            nstr = np.array([0,nstr_upper,nstr_deep,0,0,0]), nofczns = nofczns , rfacv = rfacv, cloudy = "selfconsistent", mh = '0.0', 
+                            CtoO = '1.0',species = [cloud_species], fsed = fsed, beta = 0.1, virga_param = 'const',
                             mieff_dir = "~/projects/clouds/virga/refrind", do_holes = False, fhole = 0.5, fthin_cld = 0.9, moistgrad = False,
                             )
         cl_run.inputs["climate"]["guess_temp"][np.isnan(out_fixed["temperature"])] = out_fixed["temperature"][0]
@@ -158,32 +162,7 @@ for fsed in [1, 8]:
         out_selfconsistent = deepcopy(cl_run.climate(opacity_ck, save_all_profiles=True,with_spec=True))
 
         for (out, cloudmode) in zip([out_cloudless, out_fixed, out_selfconsistent], ["cloudless", "fixed", "selfconsistent"]):
-            with open(f"../data/four_clouds_testing/pkl_outputs/teff_{teff}_fsed_{fsed}_MgSiO3_browndwarf_withstar_{cloudmode}.pkl", "wb") as handle:
+            with open(f"data/four_clouds_testing/pkl_outputs/teff_{teff}_fsed_{fsed}_{cloud_species}_browndwarf_withstar_{cloudmode}.pkl", "wb") as handle:
                 pickle.dump(out, handle)
-                        
-        """spectra = {}
-        for (out, cld_out, run_name) in zip(
-            [out_cloudless, out_cloudless, out_fixed, out_selfconsistent],
-            [None, postproc_cld_df, postproc_cld_df, out_selfconsistent['cld_output_picaso']],
-            ["cloudless", "postprocessed", "fixed", "selfconsistent"]
-        ):
-            xcm, fp, spec_out = calculate_spectrum(out, cld_out)
-            spectra["x_cm"] = xcm
-            spectra[run_name] = fp
-
-        opd_fixed = twod_to_threed(postproc_cld_out["opd_per_layer"])[:,-150,0]
-        all_wavenumbers = np.unique(out_selfconsistent['cld_output_picaso'].wavenumber.values)
-        df_selfconsistent = out_selfconsistent['cld_output_picaso']
-        opd_selfconsistent = df_selfconsistent[df_selfconsistent.wavenumber == all_wavenumbers[150]].opd.values
-
-        with h5py.File(f"../data/four_clouds_testing/teff_{teff}_MgSiO3_browndwarf_withstar.h5", "w") as f:
-            f.create_dataset("pressure", data=out_cloudless["pressure"])
-            f.create_dataset("temp_cloudless", data=out_cloudless["temperature"])
-            f.create_dataset("temp_fixed", data=out_fixed["temperature"])
-            f.create_dataset("temp_selfconsistent", data=out_selfconsistent["temperature"])
-            f.create_dataset("opd_fixed", data=opd_fixed)
-            f.create_dataset("opd_selfconsistent", data=opd_selfconsistent)
-            for k in spectra:
-                f.create_dataset("spectrum_" + k, data=spectra[k])"""
 
 # %%
