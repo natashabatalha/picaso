@@ -1835,7 +1835,7 @@ class inputs():
                 if self.inputs['atmosphere']['profile']['CH4'][i] > self.inputs['atmosphere']['profile']['CH4'][i+1]:
                     self.inputs['atmosphere']['profile']['CH4'][i] = self.inputs['atmosphere']['profile']['CH4'][i+1]
 
-    def premix_atmosphere_diseq(self, opa, quench_levels,t_mix=None, df=None, filename=None, vol_rainout = False, 
+    def premix_atmosphere_diseq(self, opa, quench_levels, teff, t_mix=None, df=None, filename=None, vol_rainout = False, 
                                 quench_ph3 = True, kinetic_CO2 = True, no_ph3 = False, cold_trap=False, **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
@@ -1844,6 +1844,8 @@ class inputs():
         ----------
         opa : class 
             Opacity class from opannection : RetrieveCks() 
+        teff : float
+            Effective temperature of the object
         df : pandas.DataFrame or dict
             (Optional) Dataframe with volume mixing ratios and pressure, temperature profile. 
             Must contain pressure (bars) at least one molecule
@@ -1874,7 +1876,26 @@ class inputs():
         if ('temperature' not in df.keys()):
             raise Exception("`temperature` not specified as a column/key name")
 
-        self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
+        # for super cold cases, most quench points are deep in the atmosphere, we don't want to run all models too deep. Use this
+        #   extapolation to temporarily capture the proper chemical abundances calculated but return to original df pressure grid later
+        if teff <= 175 and df['pressure'].values[-1] < 1e6:
+            #calculate dtdp to use to extrapolate thermal structure deeper
+            dtdp=np.zeros(shape=(self.nlevel-1))
+            temp = df['temperature'].values
+            pressure = df['pressure'].values
+            for j in range(self.nlevel -1):
+                dtdp[j] = (np.log( temp[j]) - np.log( temp[j+1]))/(np.log(pressure[j]) - np.log(pressure[j+1]))
+
+            # extend pressure down to 1e6 bars
+            extended_pressure = np.logspace(np.log10(pressure[-1]+100),6,10)
+            pressure = np.append(pressure, extended_pressure)
+            for i in np.arange(self.nlevel, self.nlevel+10):
+                new_temp = np.exp(np.log(temp[i-1]) - dtdp[-1] * (np.log(pressure[i-1]) - np.log(pressure[i])))
+                temp = np.append(temp, new_temp)
+
+            self.inputs['atmosphere']['profile'] = pd.DataFrame({'pressure': pressure, 'temperature': temp})
+        else:
+            self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
 
         #Turn off raman for 196 premix calculations 
         self.inputs['approx']['rt_params']['common']['raman'] = 2
@@ -1955,7 +1976,7 @@ class inputs():
             if cold_trap == True:
                 # invert h2o abundance to find first layer of condensation by looking for deviation from constant value
                 inverted_h2o = self.inputs['atmosphere']['profile']['H2O'][::-1]
-                cond_layer = self.nlevel - (np.where(inverted_h2o[6:] != inverted_h2o[6])[0][0] + 6) # skip bottom 6 layers to avoid deep layer abundances
+                cond_layer = self.nlevel - (np.where(inverted_h2o[10:] != inverted_h2o[10])[0][0] + 10) # skip bottom 6 layers to avoid deep layer abundances
                 # cond_layer = np.argmax(np.diff(self.inputs['atmosphere']['profile']['H2O']))
                 for i in range(cond_layer, -1, -1): 
                     if self.inputs['atmosphere']['profile']['H2O'][i] > self.inputs['atmosphere']['profile']['H2O'][i+1]:
@@ -1963,7 +1984,7 @@ class inputs():
 
                 # invert CH4 abundance to find first layer of condensation by looking for deviation from constant value
                 inverted_ch4 = self.inputs['atmosphere']['profile']['CH4'][::-1]
-                cond_layer = self.nlevel - (np.where(inverted_ch4[6:] != inverted_ch4[6])[0][0] + 6) # skip bottom 6 layers to avoid deep layer abundances
+                cond_layer = self.nlevel - (np.where(inverted_ch4[10:] != inverted_ch4[10])[0][0] + 10) # skip bottom 6 layers to avoid deep layer abundances
                 for i in range(cond_layer, -1, -1): 
                     if self.inputs['atmosphere']['profile']['CH4'][i] > self.inputs['atmosphere']['profile']['CH4'][i+1]:
                         self.inputs['atmosphere']['profile']['CH4'][i] = self.inputs['atmosphere']['profile']['CH4'][i+1]
@@ -1989,7 +2010,7 @@ class inputs():
             if cold_trap == True:
                 # invert nh3 abundance to find first layer of condensation by looking for deviation from constant value
                 inverted_nh3 = self.inputs['atmosphere']['profile']['NH3'][::-1]
-                cond_layer = self.nlevel - (np.where(inverted_nh3[6:] != inverted_nh3[6])[0][0] + 6) # skip bottom 6 layers to avoid deep layer abundances
+                cond_layer = self.nlevel - (np.where(inverted_nh3[10:] != inverted_nh3[10])[0][0] + 10) # skip bottom 6 layers to avoid deep layer abundances
                 for i in range(cond_layer, -1, -1): 
                     if self.inputs['atmosphere']['profile']['NH3'][i] > self.inputs['atmosphere']['profile']['NH3'][i+1]:
                         self.inputs['atmosphere']['profile']['NH3'][i] = self.inputs['atmosphere']['profile']['NH3'][i+1]
@@ -2015,9 +2036,17 @@ class inputs():
                 fCO2[:quench_levels[1]] = fCO2[quench_levels[1]]
                 self.inputs['atmosphere']['profile']['CO2'][:] = fCO2[:]
             
-            
+        # drop the last 10 layers that I had added on for cold cases to capture the chemistry to return to the same number of original layers
+        if teff <= 175:
+            self.inputs['atmosphere']['profile'] = self.inputs['atmosphere']['profile'].iloc[:-10]
+
+            # Check if CO2 is below 1e-10, if so, zero out the values
+            if self.inputs['atmosphere']['profile']['CO2'].max() < 1e-15:
+                self.inputs['atmosphere']['profile']['CO2'] = self.inputs['atmosphere']['profile']['CO2']*0.0
+            if self.inputs['atmosphere']['profile']['CO'].max() < 1e-15:
+                self.inputs['atmosphere']['profile']['CO'] = self.inputs['atmosphere']['profile']['CO']*0.0
         #self.inputs['atmosphere']['profile'][species] = pd.DataFrame(abunds)
-        
+
         return qvmrs, qvmrs2
     
     def premix_atmosphere_photochem(self, opa, df=None, filename=None,firsttime=False,mh_interp=None,cto_interp=None, **pd_kwargs):
@@ -4203,7 +4232,7 @@ class inputs():
                 FOPI = fine_flux_star * ((r_star/semi_major)**2)
             
             if self.inputs['climate']['photochem']==False:
-                quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale= True) # determine quench levels
+                quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, Teff, return_mix_timescale= True) # determine quench levels
 
                 # all_kzz = np.append(all_kzz, t_mix) # save kzz
                 all_kzz = np.append(all_kzz, kz) # save kzz #JM changed to not convert from t_mix
@@ -4233,7 +4262,7 @@ class inputs():
 
                 # determine the chemistry now
 
-                qvmrs, qvmrs2= bundle.premix_atmosphere_diseq(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']], quench_levels= quench_levels,t_mix=t_mix, vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3, cold_trap = cold_trap)
+                qvmrs, qvmrs2= bundle.premix_atmosphere_diseq(opacityclass, teff = Teff, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']], quench_levels= quench_levels,t_mix=t_mix, vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3, cold_trap = cold_trap)
                 #was for check SM
                 #bundle.inputs['atmosphere']['profile'].to_csv('/data/users/samukher/Disequilibrium-picaso/first_iteration_testpls300min500',sep='\t')
                 #raise SystemExit(0) 
@@ -5841,6 +5870,9 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
     taudif = 0.0
     taudif_tol = 0.1
 
+    sigmab =  0.56687e-4 #cgs
+    target_teff = (abs(tidal[0])/sigmab)**0.25
+
     #run case if we are doing a moist adiabat
     if moist == True:
         bundle = inputs(calculation='brown')
@@ -5913,12 +5945,12 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             kz = all_kzz[-len(temp):] ## JM changed to not convert from t_mix to kz
         # print('profile temp:',temp) #JM printouts for deq nan issue
         # print('kz:',kz)
-        quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale=True)
+        quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, target_teff, return_mix_timescale=True)
         # print('t_mix:',t_mix)
         if save_kzz == 1:
             # all_kzz = np.append(all_kzz,t_mix)
             all_kzz = np.append(all_kzz, kz) #JM changed to not convert from t_mix to kz
-        qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3=no_ph3, cold_trap = cold_trap)
+        qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, teff=target_teff, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3=no_ph3, cold_trap = cold_trap)
         output_abunds = bundle.inputs['atmosphere']['profile'].T.values
     else :
         # Compute chemical equilibrium composition by interpolating pre-computed grid
@@ -6075,8 +6107,6 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
         photo_inputs_dict['kz'] = kz
 
     # use EGP stepmax solver for colder disequilibrium runs
-    sigmab =  0.56687e-4 #cgs
-    target_teff = (abs(tidal[0])/sigmab)**0.25
     if target_teff <= 250 and cloudy != 1:
         egp_stepmax = True
     else: 
@@ -6123,10 +6153,10 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             # print('loop temp:',temp) #JM printouts for deq nan issue
             # print('loop kz:',kz)
             # print('loop mmw:',mmw)
-            quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale=True)
+            quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, target_teff, return_mix_timescale=True)
             # print('loop t_mix:',t_mix)
             
-            qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3=no_ph3, cold_trap = cold_trap)
+            qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, teff=target_teff, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3=no_ph3, cold_trap = cold_trap)
             print("Quench Levels are CO, CO2, NH3, HCN ", quench_levels)
         else :
             # Compute chemical equilibrium composition by interpolating pre-computed grid
@@ -6836,15 +6866,17 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         # con  = k_b/(mmw*m_p)
 
         # scale_H = con * temp*1e2/(grav)
+        sigmab =  0.56687e-4 #cgs
+        target_teff = (abs(tidal[0])/sigmab)**0.25
 
         if self_consistent_kzz == True:
         #     kz = scale_H**2/all_kzz[-len(temp):] ## level mixing timescales
             kz = all_kzz[-len(temp):] #JM updated kz from profile_deq()
 
         # print('find_strat_deq kz:',kz)
-        quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, return_mix_timescale=True)
+        quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, target_teff, return_mix_timescale=True)
 
-        qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3=no_ph3, cold_trap = cold_trap)
+        qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, teff=target_teff, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3=no_ph3, cold_trap = cold_trap)
     else :
         # Compute chemical equilibrium composition by interpolating pre-computed grid
         #bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])

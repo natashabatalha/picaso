@@ -14,7 +14,7 @@ import ast
 
 
 #@jit(nopython=True, cache=True)
-def quench_level(pressure, temp, kz,mmw, grav, return_mix_timescale = False):
+def quench_level(pressure, temp, kz,mmw, grav, Teff, return_mix_timescale = False):
     """
     Quench Level Calculation from T. Karilidi (Quench_Level routine)
     Parameters
@@ -27,6 +27,8 @@ def quench_level(pressure, temp, kz,mmw, grav, return_mix_timescale = False):
         array of Kz cm^2/s
     grav : float
         gravity cgs
+    Teff : float
+        effective temperature of the object [K]
     
     Returns
     -------
@@ -38,20 +40,36 @@ def quench_level(pressure, temp, kz,mmw, grav, return_mix_timescale = False):
     k_b = 1.38e-23 # boltzmann constant
     m_p = 1.66e-27 # proton mass
     nlevel = len(temp)
-    # print('quench mmw before nlevel:',mmw)
+
+    # for super cold cases, most quench points are deep in the atmosphere, we don't want to run all models too deep. Use this
+    #   extapolation to temporarily capture the proper chemical abundances calculated but return to original df pressure grid later
+    if Teff <= 175 and pressure[-1] < 1e6:
+        print('Pressure grid not deep enough, extending pressure grid to 1e6 bars for chemistry calculations')
+        #calculate dtdp to use to extrapolate thermal structure deeper
+        dtdp=np.zeros(shape=(nlevel-1))
+        for j in range(nlevel -1):
+            dtdp[j] = (np.log( temp[j]) - np.log( temp[j+1]))/(np.log(pressure[j]) - np.log(pressure[j+1]))
+
+        # extend pressure down to 1e6 bars
+        extended_pressure = np.logspace(np.log10(pressure[-1]+100),6,10)
+        pressure = np.append(pressure, extended_pressure)
+        for i in np.arange(nlevel, nlevel+10):
+            new_temp = np.exp(np.log(temp[i-1]) - dtdp[-1] * (np.log(pressure[i-1]) - np.log(pressure[i])))
+            temp = np.append(temp, new_temp)
+
     if len(mmw) < nlevel:
-        # print('quench mmw appended')
-        mmw = np.append(mmw,mmw[-1])
+        while len(mmw) < nlevel:
+            mmw = np.append(mmw, mmw[-1])
     quench_levels = np.zeros(shape=(4))
     quench_levels  = quench_levels.astype(int)
 
     con  = k_b/(mmw*m_p)
-    # print('quench mmw:',mmw) #JM deq nan issue
     scale_H = con * temp*1e2/(grav) #cgs
-    # print('quench temp input:',temp)
-    # print('quench con:',con)
-    # print('quench grav:',grav)
-    # print('Scale Height:',scale_H)
+
+    # temporary fix which works for constant kzz but needs to be changed for self-consistent kzz
+    if len(kz) < nlevel:
+        while len(kz) < nlevel:
+            kz = np.append(kz, kz[-1])
     t_mix = scale_H**2/kz ## level mixing timescales
     # this is the CO- CH4 - H2O quench level 
     t_chem_co = (3.0e-6/pressure)*np.exp(42000/temp) ## level chemical timescale (Zahnle and Marley 2014)
