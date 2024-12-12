@@ -56,6 +56,7 @@ def quench_level(pressure, temp, kz,mmw, grav, Teff, return_mix_timescale = Fals
         for i in np.arange(nlevel, nlevel+10):
             new_temp = np.exp(np.log(temp[i-1]) - dtdp[-1] * (np.log(pressure[i-1]) - np.log(pressure[i])))
             temp = np.append(temp, new_temp)
+        nlevel = len(temp)
 
     if len(mmw) < nlevel:
         while len(mmw) < nlevel:
