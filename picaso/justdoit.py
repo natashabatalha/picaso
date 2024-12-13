@@ -4971,7 +4971,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     sigmab =  0.56687e-4 #cgs
     target_teff = (abs(tidal[0])/sigmab)**0.25
     # Don't use large step_max option for cold models, much better converged with smaller stepping unless it's cloudy
-    if target_teff <= 400 and cloudy != 1:
+    if target_teff <= 400:# and cloudy != 1:
         egp_stepmax = True
     # elif final == True:
     #     egp_stepmax = True
@@ -6107,7 +6107,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
         photo_inputs_dict['kz'] = kz
 
     # use EGP stepmax solver for colder disequilibrium runs
-    if target_teff <= 250 and cloudy != 1:
+    if target_teff <= 250:# and cloudy != 1:
         egp_stepmax = True
     else: 
         egp_stepmax = False
