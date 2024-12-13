@@ -859,7 +859,7 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         interp_wvno_grid = create_grid(min_wavelength, max_wavelength, old_R)
         BINS = int(old_R/new_R)
     elif isinstance(new_dwno,(float, int)):
-        interp_wvno_grid = np.arange(1e4/max_wavelength,1e4/min_wavelength,  old_dwno)          
+        interp_wvno_grid = np.arange(1e4/max_wavelength,1e4/min_wavelength,  new_dwno)          
         BINS = int(new_dwno/old_dwno)
     elif insert_direct: 
         interp_wvno_grid = None 
