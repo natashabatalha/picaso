@@ -1878,7 +1878,7 @@ class inputs():
 
         # for super cold cases, most quench points are deep in the atmosphere, we don't want to run all models too deep. Use this
         #   extapolation to temporarily capture the proper chemical abundances calculated but return to original df pressure grid later
-        if teff <= 175 and df['pressure'].values[-1] < 1e6:
+        if teff <= 200 and df['pressure'].values[-1] < 1e6:
             #calculate dtdp to use to extrapolate thermal structure deeper
             dtdp=np.zeros(shape=(self.nlevel-1))
             temp = df['temperature'].values
@@ -2037,7 +2037,7 @@ class inputs():
                 self.inputs['atmosphere']['profile']['CO2'][:] = fCO2[:]
             
         # drop the last 10 layers that I had added on for cold cases to capture the chemistry to return to the same number of original layers
-        if teff <= 175:
+        if teff <= 200:
             self.inputs['atmosphere']['profile'] = self.inputs['atmosphere']['profile'].iloc[:-10]
 
             # Check if CO2 is below 1e-10, if so, zero out the values

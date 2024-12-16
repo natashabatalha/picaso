@@ -43,7 +43,7 @@ def quench_level(pressure, temp, kz,mmw, grav, Teff, return_mix_timescale = Fals
 
     # for super cold cases, most quench points are deep in the atmosphere, we don't want to run all models too deep. Use this
     #   extapolation to temporarily capture the proper chemical abundances calculated but return to original df pressure grid later
-    if Teff <= 175 and pressure[-1] < 1e6:
+    if Teff <= 200 and pressure[-1] < 1e6:
         print('Pressure grid not deep enough, extending pressure grid to 1e6 bars for chemistry calculations')
         #calculate dtdp to use to extrapolate thermal structure deeper
         dtdp=np.zeros(shape=(nlevel-1))
