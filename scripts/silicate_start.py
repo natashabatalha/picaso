@@ -25,11 +25,7 @@ mh = '+000'#'+0.0' #log metallicity
 CtoO = '100'#'1.0' # CtoO ratio
 
 ck_db = f"data/kcoeff_2020/sonora_2020_feh{mh}_co_{CtoO}.data.196"
-"""
-#sonora bobcat cloud free structures file
-sonora_profile_db = 'data/sonora_bobcat/structures_m+0.0'
-sonora_dat_db = 'data/sonora_bobcat/structures_m+0.0'
-"""
+
 def calculate_spectrum(out, cld_out):
     opa_mon = jdi.opannection()
 
@@ -80,10 +76,9 @@ for fsed in [3]:
             """
             return np.repeat(arr[:, :, np.newaxis], reps, axis=2)
 
-
         temp_guess = np.load("data/RCTE_cloud_free/profile_eq_planet_100_grav_4.5_mh_+0.0_CO_1.0_sm_0.0486_v_0.5_temp.npy")
         print("Setting up atmosphere for cloudless run")
-        pressure_grid = np.logspace(-6,3,91)
+        pressure_grid = np.logspace(-6,2,91)
         cl_run.inputs_climate(temp_guess= temp_guess, pressure=pressure_grid,
                             nstr = nstr, nofczns = nofczns , rfacv = rfacv, cloudy = "cloudless", mh = '0.0', 
                             CtoO = '1.0',species = [cloud_species], fsed = fsed, beta = 0.1, virga_param = 'const',
