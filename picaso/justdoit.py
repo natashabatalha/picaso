@@ -165,7 +165,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
     #set star parameters
     radius_star = inputs['star']['radius']
-    F0PI = np.zeros(nwno) + 1.
+    F0PI = np.zeros(nwno) + 1.#opacityclass.unshifted_stellar_spec
     b_top = 0.
     #semi major axis
     sa = inputs['star']['semi_major']
@@ -1626,7 +1626,6 @@ class inputs():
 
         #now convert to erg/cm2/s/wavenumber
         #flux_star = flux_star/wno_star**2
-
         wno_planet = opannection.wno
         #this adds stellar shifts 'self.raman_stellar_shifts' to the opacity class
         #the cross sections are computed later 
@@ -4331,6 +4330,11 @@ def brown_dwarf_pt():
 def brown_dwarf_cld():
     """Function to get rough Brown Dwarf cloud model with Teff=1270 K M/H=1xSolar, C/O=1xSolar, fsed=1"""
     return os.path.join(__refdata__, 'base_cases','t1270g200f1_m0.0_co1.0.cld')    
+def w17_data():
+    """Function to get WASP-17 Grant et al data from here 
+        https://zenodo.org/records/8360121/files/ExoTiC-MIRI.zip?download=1
+    """
+    return os.path.join(__refdata__, 'base_cases','Grant_etal_transmission_spectrum_vfinal_bin0.25_utc20230606_125313.nc')
 
 
 def single_phase_options(printout=True):
