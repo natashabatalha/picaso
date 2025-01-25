@@ -20,8 +20,6 @@ from numpy import exp, sqrt,log
 from numba import jit,njit
 from scipy.io import FortranFile
 
-
-
 import os
 import pickle as pk
 import numpy as np
@@ -30,9 +28,8 @@ import copy
 import json
 import warnings
 with warnings.catch_warnings():#
-
     warnings.filterwarnings("ignore")
-    import pysynphot as psyn
+import pysynphot as psyn
 import astropy.units as u
 import astropy.constants as c
 from astropy.utils.misc import JsonCustomEncoder
@@ -43,7 +40,7 @@ from joblib import Parallel, delayed, cpu_count
 # #testing error tracker
 # from loguru import logger 
 __refdata__ = os.environ.get('picaso_refdata')
-__version__ = 3.2
+__version__ = '3.3'
 
 
 if not os.path.exists(__refdata__): 
@@ -51,7 +48,7 @@ if not os.path.exists(__refdata__):
 else: 
     ref_v = json.load(open(os.path.join(__refdata__,'config.json'))).get('version',2.3)
     
-    if __version__ > ref_v: 
+    if __version__ != str(ref_v): 
         warnings.warn(f"Your code version is {__version__} but your reference data version is {ref_v}. For some functionality you may experience Keyword errors. Please download the newest ref version or update your code: https://github.com/natashabatalha/picaso/tree/master/reference")
 
 
@@ -166,7 +163,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
     #set star parameters
     radius_star = inputs['star']['radius']
-    F0PI = np.zeros(nwno) + 1.
+
+    #F0PI = np.zeros(nwno) + 1.
+    F0PI = opacityclass.unshifted_stellar_spec
+
     b_top = 0.
     #semi major axis
     sa = inputs['star']['semi_major']
@@ -296,8 +296,13 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
             flux_at_top = 0 
 
+            
+            # Get integrated fluxes per level even when not running climate calculation
             if get_lvl_flux: 
                 atm.lvl_output_thermal = dict(flux_minus=0, flux_plus=0, flux_minus_mdpt=0, flux_plus_mdpt=0)
+                calc_type=1
+            else: 
+                calc_type=0
 
 
             for ig in range(ngauss): # correlated-k - loop (which is different from gauss-tchevychev angle)
@@ -471,14 +476,29 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     #COMPRESS FULL TANGLE-GANGLE FLUX OUTPUT ONTO 1D FLUX GRID
 
     #for reflected light use compress_disco routine
-    #this takes the intensity as a functin of tangle/gangle and creates a 1d spectrum
+    #this takes the intensity as a function of tangle/gangle and creates a 1d spectrum
     if  ('reflected' in calculation):
         albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
         returns['albedo'] = albedo 
 
+
+        # This is attempt to get the compress_disco to return the integrated fluxes
+        # However, its mixing an albedo calc and an itegration calc I think
+
         if ((rt_method == 'toon') & get_lvl_flux): 
-            for i in atm.lvl_output_reflected.keys():
-                atm.lvl_output_reflected[i] = compress_disco(nwno,cos_theta,atm.lvl_output_reflected[i], gweight, tweight,F0PI)   
+            #for i in atm.lvl_output_reflected.keys():
+            for key, data in atm.lvl_output_reflected.items():
+                #atm.lvl_output_reflected[i] = compress_disco(nwno,cos_theta,atm.lvl_output_reflected[i], gweight, tweight,F0PI)   
+
+                # Get the number of layers to do the layer slicing
+                _, _, nlayer, nwno_data = data.shape
+
+                # Integrate each layer
+                # Have to feed in ones for FOPI, or you accidentally divide out the stellar spectrum
+                atm.lvl_output_reflected[key] = np.array([compress_disco(nwno_data,
+                                                                         cos_theta,
+                                                                         data[:, :, layer_idx, :],
+                                                                         gweight, tweight, np.zeros(nwno) + 1.) for layer_idx in range(nlayer)])
 
 
         #see equation 18 Batalha+2019 PICASO 
@@ -1036,7 +1056,11 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
 
     #set star parameters
     radius_star = inputs['star']['radius']
-    F0PI = np.zeros(nwno) + 1.
+
+    # I think that this gets overwritten later on by the second F0PI definition
+    #F0PI = np.zeros(nwno) + 1.
+    F0PI = opacityclass.unshifted_stellar_spec
+
     #semi major axis
     sa = inputs['star']['semi_major']
 
@@ -1629,7 +1653,11 @@ class inputs():
         #now convert to erg/cm2/s/wavenumber
         #flux_star = flux_star/wno_star**2
 
+        # Get a bool for whether we want level fluxes
+        get_lvl_flux=self.inputs['approx']['get_lvl_flux']
+
         wno_planet = opannection.wno
+
         #this adds stellar shifts 'self.raman_stellar_shifts' to the opacity class
         #the cross sections are computed later 
         if self.inputs['approx']['rt_params']['common']['raman'] == 0: 
@@ -1641,7 +1669,8 @@ class inputs():
             
             opannection.compute_stellar_shits(fine_wno_star, fine_flux_star)
             bin_flux_star = opannection.unshifted_stellar_spec
-        elif 'climate' in self.inputs['calculation']: 
+
+        elif ('climate' in self.inputs['calculation'] or (get_lvl_flux)):
             #stellar flux of star 
             #print(len(wno_planet),len(flux_star[0:-1]),len(flux_star[1:]))
             # np.diff(1/wno_star) is wavelength window in cm.
@@ -1673,7 +1702,7 @@ class inputs():
                 non_zero_indices = np.where(~mask)
                 zero_nans = np.interp(fine_wno_star[mask], fine_wno_star[non_zero_indices], fine_flux_star[non_zero_indices])
                 fine_flux_star[mask] = zero_nans  
-            
+
             opannection.unshifted_stellar_spec = fine_flux_star  
             bin_flux_star = fine_flux_star          
         else :

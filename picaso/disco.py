@@ -115,7 +115,7 @@ def get_angles_3d(num_gangle, num_tangle):
     return gangle,gweight,tangle,tweight
 
 @jit(nopython=True, cache=True)
-def compress_disco( nwno, cos_theta, xint_at_top, gweight, tweight,F0PI): 
+def compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight, F0PI): 
     """
     Last step in albedo code. Integrates over phase angle based on the 
     Gaussian-Chebychev weights in geometry.json 
@@ -145,7 +145,8 @@ def compress_disco( nwno, cos_theta, xint_at_top, gweight, tweight,F0PI):
     for ig in range(ng): 
         for it in range(nt): 
             albedo = albedo + xint_at_top[ig,it,:] * gweight[ig] * tweight[it]
-    albedo = sym_fac * 0.5 * albedo /F0PI * (cos_theta + 1.0)
+            
+    albedo = sym_fac * 0.5 * albedo / F0PI * (cos_theta + 1.0)
     return albedo
 
 @jit(nopython=True, cache=True)
