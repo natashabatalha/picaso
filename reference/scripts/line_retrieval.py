@@ -6,12 +6,18 @@
 # PICASO Retrieval Script Template for fitting a line to a spectrum
 
 # CTRL-F "CHANGEME" for areas you should consider changing
+# IF CHANGEME is commented out then it is just a suggestion 
+# IF CHANGEME is not commented you must change before proceeding 
+
 # Use this as a starting point for create a retrieval script 
 
-#Running with mpiexec command line 
-#mpiexec -n numprocs python -m mpi4py pyfile
-#for example: (-n specifies number of jobs)
-#mpiexec -n 5 python -m mpi4py run.py
+# HOW to run with OpenMPI
+
+# Running with mpiexec command line 
+
+# mpiexec -n numprocs python -m mpi4py pyfile
+# for example: (-n specifies number of jobs)
+# mpiexec -n 5 python -m mpi4py run.py
 
 import numpy as np
 import os 
@@ -19,6 +25,8 @@ import picaso.justdoit as jdi
 import picaso.analyze as lyz
 import xarray as xr
 
+
+# ## Step 1) Develop function to get data
 
 def get_data(): 
     """
@@ -176,9 +184,9 @@ def loglikelihood(cube):
         xdata,ydata,edata = DATA_DICT[ikey]
         xbin_model , y_model = jdi.mean_regrid(resultx, resulty, newx=xdata)#remember we put everything already sorted on wavenumber
 
-        #add offsets if they exist
+        #add offsets if they exist to the data
         offset = offset_all.get(ikey,0) #if offset for that instrument doesnt exist, return 0
-        y_model = y_model+offset 
+        ydata = ydata+offset 
 
         #add error inflation if they exist
         err_inf = err_inf_all.get(ikey,0) #if err inf term for that instrument doesnt exist, return 0
@@ -205,7 +213,7 @@ if __name__ == "__main__":
     import ultranest
     # CHANGEME based on what model you want to run 
     MODEL_TO_RUN = 'line'
-    ultranest_output= os.getcwd() # CHANGEME 
+    ultranest_output= sampler_output_pathCHANGEME # CHANGEME 
 
     DATA_DICT = get_data()
     PARAMS = getattr(param_set,MODEL_TO_RUN)
@@ -215,6 +223,6 @@ if __name__ == "__main__":
 
     
     sampler = ultranest.ReactiveNestedSampler(PARAMS, loglikelihood, PRIOR,
-        log_dir = ultranest_output)
+        log_dir = ultranest_output,resume=True)
     result = sampler.run()
 
