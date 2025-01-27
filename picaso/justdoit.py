@@ -319,9 +319,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                                         atm.level['pressure'],ubar1,
                                                         atm.surf_reflect, atm.hard_surface,
                                                         #setting wno to zero since only used for climate, calctype only gets TOA flx 
-                                                        wno*0, calc_type=0)
-
-
+                                                        wno*0,
+                                                        calc_type=calc_type)
+                    
 
                 elif rt_method == 'SH':
                     flux, flux_layers = get_thermal_SH(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
@@ -480,7 +480,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     if  ('reflected' in calculation):
         albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
         returns['albedo'] = albedo 
-
 
         # This is attempt to get the compress_disco to return the integrated fluxes
         # However, its mixing an albedo calc and an itegration calc I think
@@ -6177,4 +6176,3 @@ def correct_profile(temp,pressure,wh,min_temp):
 
     return temp
 '''
-
