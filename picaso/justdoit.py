@@ -43,7 +43,7 @@ from joblib import Parallel, delayed, cpu_count
 # #testing error tracker
 # from loguru import logger 
 __refdata__ = os.environ.get('picaso_refdata')
-__version__ = 3.2
+__version__ = '3.3'
 
 
 if not os.path.exists(__refdata__): 
@@ -51,7 +51,7 @@ if not os.path.exists(__refdata__):
 else: 
     ref_v = json.load(open(os.path.join(__refdata__,'config.json'))).get('version',2.3)
     
-    if __version__ > ref_v: 
+    if __version__ != str(ref_v): 
         warnings.warn(f"Your code version is {__version__} but your reference data version is {ref_v}. For some functionality you may experience Keyword errors. Please download the newest ref version or update your code: https://github.com/natashabatalha/picaso/tree/master/reference")
 
 
