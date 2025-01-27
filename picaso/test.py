@@ -10,6 +10,41 @@ import astropy.units as u
 
 __refdata__ = os.environ.get('picaso_refdata')
 
+
+def example_test(wave_range=[0.3,1], phase_angle=0, gravity=25):
+	"""
+	This tests the functionality of BLAH based on notebook BLAH 
+	
+	Parameters
+	----------
+	add parameters here 
+	"""
+
+	opacity = opannection(wave_range=wave_range) #lets just use all defaults
+
+	start_case = inputs()
+
+	#phase angle
+	start_case.phase_angle(0) #radians
+
+	#define gravity
+	start_case.gravity(gravity=25, gravity_unit=jdi.u.Unit('m/(s**2)')) #any astropy units available
+
+	#define star
+	start_case.star(opacity, 5000,0,4.0) #opacity db, pysynphot database, temp, metallicity, logg	
+
+	
+	start_case.atmosphere(filename=jdi.jupiter_pt(), delim_whitespace=True)
+
+	df = start_case.spectrum(opacity, calculation='reflected') 
+
+	#add informative name here for your file
+	#this file should be ascii, hdf5, or json
+	benchmark_spectrum = pd.read_csv(os.path.join(__refdata__,'testing','example_test.csv'))
+
+	#determine what you think is "good enough"
+	assert np.allclose(benchmark_spectrum , df['albedo'], .001),'Failed example_test unit test'
+
 def test_it_all(): 
 	#reflected 1d 
 
