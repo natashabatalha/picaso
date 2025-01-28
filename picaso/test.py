@@ -11,7 +11,7 @@ import astropy.units as u
 __refdata__ = os.environ.get('picaso_refdata')
 
 
-def example_test(wave_range=[0.3,1], phase_angle=0, gravity=25):
+def example_test(wave_range=[0.3,1], phase_angle=0, gravity=25, create_data=False):
 	"""
 	This tests the functionality of BLAH based on notebook BLAH 
 	
@@ -44,6 +44,9 @@ def example_test(wave_range=[0.3,1], phase_angle=0, gravity=25):
 
 	#determine what you think is "good enough"
 	assert np.allclose(benchmark_spectrum , df['albedo'], .001),'Failed example_test unit test'
+
+	if create_data: 
+		pd.DataFrame(dict(benchmark_spectrum=benchmark_spectrum)).to_csv('example_test.csv')
 
 def test_it_all(): 
 	#reflected 1d 
