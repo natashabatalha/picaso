@@ -4,7 +4,7 @@ Installation
 Python Version
 --------------
 
-Python >= 3.8 
+Python >= 3.11 
 
 Install with Git (recommended)
 ------------------------------
