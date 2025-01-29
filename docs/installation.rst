@@ -1,7 +1,7 @@
 Installation
 ============
 
-Python Version
+Python  Version
 --------------
 
 Python >= 3.11 
