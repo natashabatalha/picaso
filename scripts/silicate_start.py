@@ -24,7 +24,7 @@ cloud_species = "MgSiO3"
 mh = '+000'#'+0.0' #log metallicity
 CtoO = '100'#'1.0' # CtoO ratio
 
-ck_db = f"data/kcoeff_2020/sonora_2020_feh{mh}_co_{CtoO}.data.196"
+ck_db = f"../data/kcoeff_2020/sonora_2020_feh{mh}_co_{CtoO}.data.196"
 
 def calculate_spectrum(out, cld_out):
     opa_mon = jdi.opannection()
@@ -43,8 +43,8 @@ def calculate_spectrum(out, cld_out):
     xcm = 1/wno
     return xcm, fp, df_spec1['full_output']
 
-for fsed in [3]:
-    for teff in [300]:
+for fsed in [8]:
+    for teff in [1300, 1500, 1700, 1900]:
         print(f"fsed = {fsed}, effective temperature = {teff} K")
         cl_run = jdi.inputs(calculation="planet", climate = True) # start a calculation - need to not have "brown" in `calculation`. BD almost always means free-floating.
         
@@ -76,7 +76,7 @@ for fsed in [3]:
             """
             return np.repeat(arr[:, :, np.newaxis], reps, axis=2)
 
-        temp_guess = np.load("data/RCTE_cloud_free/profile_eq_planet_100_grav_4.5_mh_+0.0_CO_1.0_sm_0.0486_v_0.5_temp.npy")
+        temp_guess = np.load("../data/RCTE_cloud_free/profile_eq_planet_100_grav_4.5_mh_+0.0_CO_1.0_sm_0.0486_v_0.5_temp.npy")
         print("Setting up atmosphere for cloudless run")
         pressure_grid = np.logspace(-6,2,91)
         cl_run.inputs_climate(temp_guess= temp_guess, pressure=pressure_grid,
@@ -157,7 +157,7 @@ for fsed in [3]:
         out_selfconsistent = deepcopy(cl_run.climate(opacity_ck, save_all_profiles=True,with_spec=True))
 
         for (out, cloudmode) in zip([out_cloudless, out_fixed, out_selfconsistent], ["cloudless", "fixed", "selfconsistent"]):
-            with open(f"data/four_clouds_testing/pkl_outputs/teff_{teff}_fsed_{fsed}_{cloud_species}_browndwarf_withstar_{cloudmode}.pkl", "wb") as handle:
+            with open(f"../data/four_clouds_testing/pkl_outputs/teff_{teff}_fsed_{fsed}_{cloud_species}_browndwarf_withstar_{cloudmode}.pkl", "wb") as handle:
                 pickle.dump(out, handle)
 
 # %%
