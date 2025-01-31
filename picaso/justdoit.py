@@ -165,7 +165,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     radius_star = inputs['star']['radius']
 
     #F0PI = np.zeros(nwno) + 1.
-    F0PI = opacityclass.unshifted_stellar_spec
+    F0PI = opacityclass.unshifted_stellar_spec * ((inputs['star']['radius']/inputs['star']['semi_major'])**2)
 
     b_top = 0.
     #semi major axis
@@ -267,15 +267,16 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                         b_top=b_top)
                                         #get_toa_intensity=1, get_lvl_flux=0)"""
                     
+
                     xint,lvl_fluxes = get_reflected_1d(nlevel, wno,nwno,ng,nt,
-                                    DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
-                                    GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
-                                    DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
-                                    atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
-                                    single_phase,multi_phase,
-                                    frac_a,frac_b,frac_c,constant_back,constant_forward,
-                                    get_toa_intensity=1,get_lvl_flux=int(atm.get_lvl_flux),
-                                    toon_coefficients=toon_coefficients,b_top=b_top) 
+                                                    DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
+                                                    GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
+                                                    DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
+                                                    atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
+                                                    single_phase,multi_phase,
+                                                    frac_a,frac_b,frac_c,constant_back,constant_forward,
+                                                    get_toa_intensity=1,get_lvl_flux=int(atm.get_lvl_flux),
+                                                    toon_coefficients=toon_coefficients,b_top=b_top) 
 
                 xint_at_top += xint*gauss_wts[ig]
 
@@ -493,7 +494,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                 _, _, nlayer, nwno_data = data.shape
 
                 # Integrate each layer
-                # Have to feed in ones for FOPI, or you accidentally divide out the stellar spectrum
                 atm.lvl_output_reflected[key] = np.array([compress_disco(nwno_data,
                                                                          cos_theta,
                                                                          data[:, :, layer_idx, :],
@@ -1170,6 +1170,7 @@ def opannection(wave_range = None, filename_db = None, raman_db = None,
     """
     inputs = json.load(open(os.path.join(__refdata__,'config.json')))
 
+
     if isinstance(ck_db, type(None)): 
         #only allow raman if no correlated ck is used 
         if isinstance(raman_db,type(None)): raman_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['raman'])
@@ -1199,11 +1200,14 @@ def opannection(wave_range = None, filename_db = None, raman_db = None,
                 raise Exception('The CK filename that you have selected appears still be .tar.gz. Please unpack and rerun')
             else: 
                 raise Exception('The CK filename that you have selected does not exist. Please make sure you have downloaded and unpacked the right CK file.')
+            
         opacityclass=RetrieveCKs(
                     ck_db, 
                     filename_db, 
                     wave_range = wave_range, 
-                    deq=deq,on_fly=on_fly,gases_fly = gases_fly)
+                    deq=deq,
+                    on_fly=on_fly,
+                    gases_fly = gases_fly)
 
     return opacityclass
 
@@ -1653,7 +1657,7 @@ class inputs():
         #flux_star = flux_star/wno_star**2
 
         # Get a bool for whether we want level fluxes
-        get_lvl_flux=self.inputs['approx']['get_lvl_flux']
+        get_lvl_flux = self.inputs['approx'].get('get_lvl_flux', False)
 
         wno_planet = opannection.wno
 
@@ -1670,6 +1674,7 @@ class inputs():
             bin_flux_star = opannection.unshifted_stellar_spec
 
         elif ('climate' in self.inputs['calculation'] or (get_lvl_flux)):
+            """
             #stellar flux of star 
             #print(len(wno_planet),len(flux_star[0:-1]),len(flux_star[1:]))
             # np.diff(1/wno_star) is wavelength window in cm.
@@ -1701,6 +1706,30 @@ class inputs():
                 non_zero_indices = np.where(~mask)
                 zero_nans = np.interp(fine_wno_star[mask], fine_wno_star[non_zero_indices], fine_flux_star[non_zero_indices])
                 fine_flux_star[mask] = zero_nans  
+            
+            print("Isaac")
+            bolometric_flux = np.sum(fine_flux_star)
+            print(bolometric_flux)
+            print(5.67e-5 * 6000 ** 4)
+
+            """
+            fine_wno_star = wno_planet
+            fine_flux_star = np.zeros(len(wno_planet))
+
+            # Trapezoidal integration over bins
+            for j in range(len(wno_planet) - 1):
+                in_bin = (wno_star > wno_planet[j]) & (wno_star < wno_planet[j+1])
+                if np.any(in_bin):
+                    fine_flux_star[j] = np.trapz(flux_star[in_bin], 1 / wno_star[in_bin][::-1])
+
+            # Fix issue if there are zeros in certain bins
+            mask = np.logical_or(np.isnan(fine_flux_star), fine_flux_star == 0)
+            if len(fine_wno_star[mask]) > 20:
+                print(f"Having to replace {np.sum(mask)} zeros or nans in stellar spectra with interpolated values.
+                      It is advised you check this is correct and something has not gone wrong by plotting classname.inputs['star']['wno'] vs classname.inputs'star'['flux']")
+                non_zero_indices = np.where(~mask)
+                fine_flux_star[mask] = np.interp(fine_wno_star[mask], fine_wno_star[non_zero_indices], fine_flux_star[non_zero_indices])
+
 
             opannection.unshifted_stellar_spec = fine_flux_star  
             bin_flux_star = fine_flux_star          
@@ -4135,8 +4164,11 @@ class inputs():
                 #NO Background, just CIA + whatever in gases_fly
                 #ck_db=os.path.join(__refdata__, 'climate_INPUTS/sonora_2020_feh'+mhdeq+'_co_'+CtoOdeq+'.data.196')
                 opacityclass = opannection(ck=True, 
-                    ck_db=opacityclass.ck_filename,filename_db=filename_db,
-                    deq = True,on_fly=True,gases_fly=gases_fly)
+                                           ck_db=opacityclass.ck_filename,
+                                           filename_db=filename_db,
+                                           deq = True,
+                                           on_fly=True,
+                                           gases_fly=gases_fly)
             else:
                 #phillips comparison (discontinued) 
                 #background + gases 
@@ -4150,7 +4182,7 @@ class inputs():
             if cloudy == 1:    
                 wv661 = 1e4/opacityclass.wno
                 opd_cld_climate,g0_cld_climate,w0_cld_climate = initiate_cld_matrices(opd_cld_climate,g0_cld_climate,w0_cld_climate,wv196,wv661)
-            
+
             #Rerun star so that F0PI can now be on the 
             #661 grid 
             if 'nostar' in self.inputs['star']['database']:

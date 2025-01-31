@@ -705,10 +705,6 @@ class RetrieveCKs():
         else:
             # Otherwise, default to the pre-mixed method
             self.get_opacities = self.get_opacities
-
-
-
-
         return
 
     def get_h5_data(self):
