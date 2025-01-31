@@ -1674,7 +1674,6 @@ class inputs():
             bin_flux_star = opannection.unshifted_stellar_spec
 
         elif ('climate' in self.inputs['calculation'] or (get_lvl_flux)):
-            """
             #stellar flux of star 
             #print(len(wno_planet),len(flux_star[0:-1]),len(flux_star[1:]))
             # np.diff(1/wno_star) is wavelength window in cm.
@@ -1706,29 +1705,57 @@ class inputs():
                 non_zero_indices = np.where(~mask)
                 zero_nans = np.interp(fine_wno_star[mask], fine_wno_star[non_zero_indices], fine_flux_star[non_zero_indices])
                 fine_flux_star[mask] = zero_nans  
-            
-            print("Isaac")
-            bolometric_flux = np.sum(fine_flux_star)
-            print(bolometric_flux)
-            print(5.67e-5 * 6000 ** 4)
-
             """
-            fine_wno_star = wno_planet
+            # Initialize output arrays
             fine_flux_star = np.zeros(len(wno_planet))
+            fine_wno_star = wno_planet
 
-            # Trapezoidal integration over bins
-            for j in range(len(wno_planet) - 1):
-                in_bin = (wno_star > wno_planet[j]) & (wno_star < wno_planet[j+1])
-                if np.any(in_bin):
-                    fine_flux_star[j] = np.trapz(flux_star[in_bin], 1 / wno_star[in_bin][::-1])
+            # Integrate energy over bins
+            for j in range(len(wno_planet)-1):
+                fl = 0
+                for k in range(1, len(wno_star)):
+                    if (wno_star[k] > wno_planet[j]) and (wno_star[k] < wno_planet[j+1]):
+                        fl += 0.5 * (flux_star[k-1] + flux_star[k]) * abs((1.0 / wno_star[k]) - (1.0 / wno_star[k-1]))
+                fine_flux_star[j] = fl
 
-            # Fix issue if there are zeros in certain bins
-            mask = np.logical_or(np.isnan(fine_flux_star), fine_flux_star == 0)
-            if len(fine_wno_star[mask]) > 20:
-                print(f"Having to replace {np.sum(mask)} zeros or nans in stellar spectra with interpolated values.
-                      It is advised you check this is correct and something has not gone wrong by plotting classname.inputs['star']['wno'] vs classname.inputs'star'['flux']")
-                non_zero_indices = np.where(~mask)
+            # Interpolate missing values in log-space
+            log_wno_star = np.log10(wno_star)
+            log_flux_star = np.log10(np.maximum(flux_star, 1e-30))
+            f_interp = interp1d(log_wno_star, log_flux_star, kind='linear', 
+                                bounds_error=False, fill_value=np.log10(1e-30))
+
+            # Get interpolated values
+            log_flux_interp = f_interp(np.log10(wno_planet))
+            flux_interp = 10**log_flux_interp
+
+            # Combine both methods
+            mask = fine_flux_star < flux_interp
+            fine_flux_star[mask] = flux_interp[mask]
+
+            # Handle remaining zeros
+            mask = (fine_flux_star == 0) | np.isnan(fine_flux_star)
+            if np.sum(mask) > 20:
+                print(f"[DEBUG] Replacing {np.sum(mask)} zero bins using np.interp.")
+                non_zero_indices = np.where(~mask)[0]
                 fine_flux_star[mask] = np.interp(fine_wno_star[mask], fine_wno_star[non_zero_indices], fine_flux_star[non_zero_indices])
+
+            # Normalize to preserve total energy
+            original_sum = np.sum(-0.5 * np.diff(1.0 / wno_star) * (flux_star[:-1] + flux_star[1:]))
+            new_sum = np.sum(fine_flux_star)
+
+            if new_sum > 0:
+                fine_flux_star *= original_sum / new_sum
+
+            # Final diagnostics
+            print(f"[DEBUG] Final integrated flux: {np.sum(fine_flux_star):.4e} erg/cm^2/s")
+            print(f"[DEBUG] Reference blackbody flux: {5.67e-5 * 6000**4:.4e} erg/cm^2/s")
+            print(f"[DEBUG] Flux difference: {original_sum - new_sum:.4e} erg/cm^2/s")
+            print(list(fine_flux_star))
+            """
+
+
+
+
 
 
             opannection.unshifted_stellar_spec = fine_flux_star  
