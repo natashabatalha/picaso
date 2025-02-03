@@ -1880,7 +1880,7 @@ class inputs():
 
         # for super cold cases, most quench points are deep in the atmosphere, we don't want to run all models too deep. Use this
         #   extapolation to temporarily capture the proper chemical abundances calculated but return to original df pressure grid later
-        if teff <= 200 and df['pressure'].values[-1] < 1e6:
+        if teff <= 250 and df['pressure'].values[-1] < 1e6:
             #calculate dtdp to use to extrapolate thermal structure deeper
             dtdp=np.zeros(shape=(self.nlevel-1))
             temp = df['temperature'].values
@@ -2039,7 +2039,7 @@ class inputs():
                 self.inputs['atmosphere']['profile']['CO2'][:] = fCO2[:]
             
         # drop the last 10 layers that I had added on for cold cases to capture the chemistry to return to the same number of original layers
-        if teff <= 200:
+        if teff <= 250:
             self.inputs['atmosphere']['profile'] = self.inputs['atmosphere']['profile'].iloc[:-10]
 
             # Check if CO2 is below 1e-10, if so, zero out the values
@@ -5331,6 +5331,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             #get the abundances
             output_abunds = bundle.inputs['atmosphere']['profile'].T.values
             
+            calc_type = 0
             # kzz = np.ones_like(pressure) * 1e5
             kzz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
             bundle.inputs['atmosphere']['profile']['kz'] = kzz
@@ -5443,6 +5444,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
             #get the abundances
             output_abunds = bundle.inputs['atmosphere']['profile'].T.values
 
+            calc_type = 0
             # kzz = np.ones_like(pressure) * 1e5
             kzz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
             bundle.inputs['atmosphere']['profile']['kz'] = kzz
