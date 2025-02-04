@@ -1315,34 +1315,48 @@ class RetrieveCKs():
         self.delta_wno = dwni_new
         self.nwno = len(wvno_new)
 
+
+
+
     def get_continuum(self, atmosphere):
         """
-        Gets continuum opacity data and interpolates to correct wavelength grid.
-        Includes temperature interpolation and error checking.
-        
+        Retrieve continuum opacity data for the given atmosphere and interpolate
+        both in temperature and (if needed) in wavelength.
+
+        This function:
+        - Opens a local database connection.
+        - Determines the appropriate continuum temperatures for each atmospheric layer.
+        - Constructs SQL queries to retrieve opacity data for the nearest low and high temperatures.
+        - Interpolates the opacity between the two temperatures using inverse-temperature weighting.
+        - Interpolates the resulting opacity onto the correct wavelength grid only if necessary.
+
         Parameters
         ----------
-        atmosphere : class
-            Atmosphere class containing temperature, pressure, and molecule info
+        atmosphere : object
+            An atmosphere instance that contains:
+                - c.nlayer: number of layers.
+                - layer: a dictionary with keys 'temperature' and 'pressure'.
+                - continuum_molecules: list of continuum molecules (each given as a tuple; e.g. ('CIA', 'H2-H2')).
+                - c.pconv: pressure conversion factor.
         """
-        #open connection 
+        # Open a local connection.
         cur, conn = self.open_local()
 
         nlayer = atmosphere.c.nlayer
         tlayer = atmosphere.layer['temperature']
-        player = atmosphere.layer['pressure']/atmosphere.c.pconv
-        
         cia_molecules = atmosphere.continuum_molecules
 
-        # Initialize opacity dictionary with correct wavelength grid size
-        self.continuum_opa = {key[0]+key[1]:np.zeros((nlayer,self.nwno)) for key in cia_molecules}
+        # Initialize the continuum opacity dictionary.
+        # Each key is a molecule identifier (e.g. concatenation of molecule tuple elements)
+        # and the value is an array with shape (nlayer, self.nwno).
+        self.continuum_opa = {mol[0] + mol[1]: np.zeros((nlayer, self.nwno)) for mol in cia_molecules}
 
-        # Find nearest temperature points
+        # --- Determine the nearest temperatures for each layer ---
         sorted_cia_temps = np.sort(self.cia_temps)
         tcia_low = np.zeros_like(tlayer)
         tcia_high = np.zeros_like(tlayer)
-        
-        for t,i in zip(tlayer,range(len(tlayer))):
+
+        for i, t in enumerate(tlayer):
             diff = sorted_cia_temps - t
             if t <= sorted_cia_temps[0]:
                 tcia_low[i] = sorted_cia_temps[0]
@@ -1351,97 +1365,95 @@ class RetrieveCKs():
                 tcia_low[i] = sorted_cia_temps[-2]
                 tcia_high[i] = sorted_cia_temps[-1]
             else:
-                templow = max(diff[np.where(diff <= 0)])
-                temphigh = min(diff[np.where(diff > 0)])
-                tcia_low[i], tcia_high[i] = t+templow, t+temphigh
+                # For temperatures in between, choose the nearest lower and higher temperatures.
+                templow = max(diff[diff <= 0])
+                temphigh = min(diff[diff > 0])
+                tcia_low[i] = t + templow
+                tcia_high[i] = t + temphigh
 
-        # Build SQL queries
+        # --- Build SQL queries ---
         if len(tcia_low) == 1:
-            query_temp_low = """AND temperature= '{}' """.format(str(tcia_low[0]))
+            query_temp_low = "AND temperature = '{}'".format(str(tcia_low[0]))
         else:
-            query_temp_low = 'AND temperature in '+str(tuple(tcia_low))
-            
+            query_temp_low = "AND temperature in " + str(tuple(tcia_low))
         if len(tcia_high) == 1:
-            query_temp_high = """AND temperature= '{}' """.format(str(tcia_high[0]))
+            query_temp_high = "AND temperature = '{}'".format(str(tcia_high[0]))
         else:
-            query_temp_high = 'AND temperature in '+str(tuple(tcia_high))
+            query_temp_high = "AND temperature in " + str(tuple(tcia_high))
 
-        cia_mol = list(self.continuum_opa.keys())
-        if len(cia_mol) == 1:
-            query_mol = """WHERE molecule= '{}' """.format(str(cia_mol[0]))
+        # Molecule query.
+        cia_mol_keys = list(self.continuum_opa.keys())
+        if len(cia_mol_keys) == 1:
+            query_mol = "WHERE molecule = '{}'".format(cia_mol_keys[0])
         else:
-            query_mol = 'WHERE molecule in '+str(tuple(cia_mol))
+            query_mol = "WHERE molecule in " + str(tuple(cia_mol_keys))
 
-        # Get low temperature data
-        cur.execute("""SELECT molecule,temperature,opacity 
-                    FROM continuum 
-                    {} 
-                    {}""".format(query_mol, query_temp_low))
-        
+        # --- Retrieve low-temperature opacity data ---
+        cur.execute(
+            "SELECT molecule, temperature, opacity FROM continuum {} {}"
+            .format(query_mol, query_temp_low)
+        )
         data_low = cur.fetchall()
         if not data_low:
             raise ValueError("No low temperature opacity data found for the specified molecules")
-        data_low = dict((x+'_'+str(y), dat) for x, y, dat in data_low)
+        # Create a lookup dictionary with keys like "molecule_temperature".
+        data_low = {f"{mol}_{temp}": opa for mol, temp, opa in data_low}
 
-        # Get high temperature data
-        cur.execute("""SELECT molecule,temperature,opacity 
-                    FROM continuum 
-                    {} 
-                    {}""".format(query_mol, query_temp_high))
-        
+        # --- Retrieve high-temperature opacity data ---
+        cur.execute(
+            "SELECT molecule, temperature, opacity FROM continuum {} {}"
+            .format(query_mol, query_temp_high)
+        )
         data_high = cur.fetchall()
         if not data_high:
             raise ValueError("No high temperature opacity data found for the specified molecules")
-        data_high = dict((x+'_'+str(y), dat) for x, y, dat in data_high)
+        data_high = {f"{mol}_{temp}": opa for mol, temp, opa in data_high}
 
-        # Process each molecule
-        for i in self.continuum_opa.keys():
-            for jlow, jhigh, ind in zip(tcia_low, tcia_high, range(nlayer)):
-                # Temperature interpolation parameters
-                h = tcia_high[ind] - tcia_low[ind]
-                a = (tcia_high[ind] - tlayer[ind])/h
-                b = (tlayer[ind] - tcia_low[ind])/h
-                
-                t_inv = 1/tlayer[ind]
-                t_inv_low = 1/tcia_low[ind]
-                t_inv_hi = 1/tcia_high[ind]
-                
-                t_interp = ((t_inv - t_inv_low) / (t_inv_hi - t_inv_low))
+        # --- Process each molecule and layer ---
+        for molecule in self.continuum_opa.keys():
+            for ind in range(nlayer):
+                # Get temperatures for this layer.
+                t_low = tcia_low[ind]
+                t_high = tcia_high[ind]
+                t_actual = tlayer[ind]
+                h = t_high - t_low
+                if h == 0:
+                    raise ValueError(f"Zero temperature difference for layer {ind}: t_low and t_high are identical.")
 
-                # Check for required keys
-                low_key = i+'_'+str(jlow)
-                high_key = i+'_'+str(jhigh)
+                # Compute the interpolation factor using inverse temperature.
+                t_inv = 1 / t_actual
+                t_inv_low = 1 / t_low
+                t_inv_high = 1 / t_high
+                t_interp = (t_inv - t_inv_low) / (t_inv_high - t_inv_low)
+
+                # Construct the lookup keys.
+                low_key = f"{molecule}_{t_low}"
+                high_key = f"{molecule}_{t_high}"
                 if low_key not in data_low or high_key not in data_high:
-                    raise KeyError(f"Missing opacity data for molecule {i} at temperatures {jlow} or {jhigh}")
+                    raise KeyError(f"Missing opacity data for molecule {molecule} at temperatures {t_low} or {t_high}")
 
-                # Temperature interpolation
+                # Temperature interpolation in logarithmic space.
                 try:
-                    ln_kappa = np.exp(((1-t_interp) * np.log(data_low[low_key])) +
-                                    ((t_interp)   * np.log(data_high[high_key])))
+                    ln_kappa = np.exp((1 - t_interp) * np.log(data_low[low_key]) +
+                                    t_interp * np.log(data_high[high_key]))
                 except ValueError as e:
-                    raise ValueError(f"Error in temperature interpolation for molecule {i}: {str(e)}")
+                    raise ValueError(f"Error in temperature interpolation for molecule {molecule}: {str(e)}")
 
-                # Handle wavelength grid interpolation if needed
+                # --- Wavelength grid interpolation (only if necessary) ---
                 if len(ln_kappa) != self.nwno:
-                    try:
-                        # Create wavelength grid for original data
-                        original_wno = np.linspace(min(self.wno), max(self.wno), len(ln_kappa))
-                        
-                        # Check for monotonicity
-                        if not np.all(np.diff(original_wno) > 0):
-                            raise ValueError("Original wavelength grid must be monotonically increasing")
-                        
-                        # Interpolate to new wavelength grid
-                        ln_kappa = np.interp(self.wno, original_wno, ln_kappa)
-                        
-                    except Exception as e:
-                        raise ValueError(f"Error interpolating wavelength grid for molecule {i}: {str(e)}")
+                    original_wno = np.linspace(min(self.wno), max(self.wno), len(ln_kappa))
 
-                # Assign interpolated opacity
-                self.continuum_opa[i][ind,:] = ln_kappa
+                    # Verify that the original wavelength grid is monotonically increasing.
+                    if not np.all(np.diff(original_wno) > 0):
+                        raise ValueError("Original wavelength grid must be monotonically increasing")
+                    ln_kappa = np.interp(self.wno, original_wno, ln_kappa)
+
+                # Assign the (possibly interpolated) opacity data.
+                self.continuum_opa[molecule][ind, :] = ln_kappa
 
         conn.close()
-        
+
+
 
     def get_opacities(self, atmosphere,exclude_mol=1):
         """

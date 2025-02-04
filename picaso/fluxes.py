@@ -1752,7 +1752,7 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     if calc_type == 0: 
         all_b = blackbody(tlevel, 1/wno) #returns nlevel by nwave   
     elif calc_type==1:
-        all_b = blackbody_integrated(tlevel, wno, dwno)
+        all_b = blackbody_integrated(tlevel, wno, dwno)    
 
     b0 = all_b[0:-1,:]
     b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89

@@ -277,7 +277,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                                     frac_a,frac_b,frac_c,constant_back,constant_forward,
                                                     get_toa_intensity=1,get_lvl_flux=int(atm.get_lvl_flux),
                                                     toon_coefficients=toon_coefficients,b_top=b_top) 
-
+                                        
                 xint_at_top += xint*gauss_wts[ig]
 
                 if get_lvl_flux: 
@@ -315,6 +315,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                     #                                    DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                     #                                    atm.level['pressure'],ubar1,
                     #                                    atm.surf_reflect, atm.hard_surface, tridiagonal)
+
                     flux,lvl_fluxes  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
                                                         DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                                         atm.level['pressure'],ubar1,
@@ -1702,12 +1703,11 @@ class inputs():
             #fix issue if there are zeros in certain bins 
             mask = np.logical_or(np.isnan(fine_flux_star), fine_flux_star == 0)
             if len(fine_wno_star[mask])>20:
-                print(f"Having to replace {len(fine_wno_star[mask])} zeros or nans in stellar spectra with interpolated values. It is advised you check this is correct and something has not gone wrong by plotting classname.inputs['star']['wno'] vs classname.inputs'star'['flux']")
+                print(f"Having to replace {len(fine_wno_star[mask])} zeros or nans in stellar spectra with interpolated values.It is advised you check this is correct and something has not gone wrong by plotting classname.inputs['star']['wno'] vs classname.inputs'star'['flux']")
                 non_zero_indices = np.where(~mask)
                 zero_nans = np.interp(fine_wno_star[mask], fine_wno_star[non_zero_indices], fine_flux_star[non_zero_indices])
                 fine_flux_star[mask] = zero_nans  
             """
-
             # Ensure valid values for interpolation
             mask_valid = flux_star > 1e-30  
             if not np.all(mask_valid):
@@ -1736,8 +1736,8 @@ class inputs():
                 print(f"Having to replace {len(fine_wno_star[mask])} zeros or nans in stellar spectra")
                 non_zero_indices = np.where(~mask)[0]
                 fine_flux_star[mask] = np.interp(wno_planet[mask], wno_planet[non_zero_indices], fine_flux_star[non_zero_indices])
-
-
+            
+ 
             opannection.unshifted_stellar_spec = fine_flux_star  
             bin_flux_star = fine_flux_star          
         else :
@@ -4519,6 +4519,8 @@ def load_planet(df, opacity, phase_angle = 0, stellar_db='ck04models', verbose=F
         #define gravity
         start_case.gravity(mass=Mp, mass_unit=u.Unit('M_jup'),
                             radius=Rp, radius_unit=u.Unit('R_jup')) #any astropy units available
+        
+
 
         #define star
         start_case.star(opacity, temp,logmh,logg,radius=Rstar, radius_unit=u.Unit('R_sun'),
