@@ -6,7 +6,8 @@ import dynesty
 import pandas as pd
 
 
-from .justdoit import mean_regrid
+from .justdoit import mean_regrid,vj,u
+
 from .analyze import chi_squared
 from .justplotit import pals
 
@@ -17,10 +18,22 @@ from ultranest.plot import PredictionBand
 import ultranest.integrator as uint
 import os 
 import pickle as pk
+import re
 
 __refdata__ = os.environ.get('picaso_refdata')
 
-def setup_retrieval(rtype, script_filename, sampler_output_path, 
+allowed_keys={ 'grid':
+                    {'grid_location':str, 'grid_name':str,'to_fit':str}, 
+               'grid_virga':
+                    {'grid_location':str, 'grid_name':str,'to_fit':str,'opacity_filename_db':str, 'molecules':list, 'virga_mieff_dir':str,'cloud_species':list},
+               'grid_addchem':
+                    {'grid_location':str, 'grid_name':str,'to_fit':str,'opacity_filename_db':str, 'molecules':list},
+               'grid_flexcloud':
+                    {'grid_location':str, 'grid_name':str,'to_fit':str,'opacity_filename_db':str, 'molecules':list, 'virga_mieff_dir':str,'cloud_species':list}
+            
+            }
+
+def create_template(rtype, script_filename, sampler_output_path, 
     grid_kwargs={}):
     """
     Creates a Python script template with xarray and a function.
@@ -43,8 +56,13 @@ def setup_retrieval(rtype, script_filename, sampler_output_path,
     Returns:
         The generated script as a string, or None if saved to a file.
     """
-    assert rtype in ['line','grid'], "Only options for rtype are currently: ['line','grid']"
-    input_file = os.path.join(__refdata__, 'scripts',f'{rtype}_retrieval.py')
+    allowed = allowed_keys.keys()
+    assert rtype in allowed, f"Only options for rtype are currently: {allowed.keys()}"
+    
+    if 'grid_' in rtype: 
+        input_file = os.path.join(__refdata__, 'scripts',f'gridplus_retrieval.py')
+    else: 
+        input_file = os.path.join(__refdata__, 'scripts',f'{rtype}_retrieval.py')
 
     with open(input_file, 'r') as f:
         content = f.read()
@@ -52,27 +70,66 @@ def setup_retrieval(rtype, script_filename, sampler_output_path,
     # Modify the content by replacing 
     content = content.replace('sampler_output_pathCHANGEME',f"""'{sampler_output_path}'""")#.replace("var1=3", f"var1={new_value}")
 
-    #replace all grid kwargs 
-    if rtype =='grid':
-        #these are the only grid allowed keys so far 
-        allowed_keys={'grid_location':str, 'grid_name':str,
-                       'to_fit':str}
+    #replace all grid kwargs for the grid line
+    if 'grid' in rtype: 
         for ikey in grid_kwargs.keys(): 
-            if ikey not in allowed_keys.keys(): 
-                raise Exception(f"{ikey} is not yet supported key. Try these:",allowed_keys.keys())
+            if ikey not in allowed_keys[rtype].keys(): 
+                raise Exception(f"{ikey} is not yet supported key. Try these:",allowed_keys[rtype].keys())
             string = grid_kwargs.get(ikey,'CHANGEME')#if there is no key then just replace the value with CHANGEME for the user
             #if the replaceabel value is a string we will 
             #want to add it to the script with quotes 
             #otherwise just stick it in as expected 
-            if allowed_keys[ikey] == str: 
+            if allowed_keys[rtype][ikey] == str: 
                 replace = f"""'{string}'"""
-            if allowed_keys[ikey] == float:  
+            else:  
                 replace = f"""{string}"""
+
             content = content.replace(ikey+'CHANGEME',replace)
+    
+        #now remove the unecessary code blocks from the template 
+        #for the case where we have the grid_addon 
+        if 'grid_' in rtype: 
+            content = content.replace('rtypeCHANGEME',f"""'{rtype}'""")
+            allgrids = [i for i in allowed_keys.keys() if 'grid_' in i]
+            allgrids.pop(allgrids.index(rtype))
+            for gridtype in allgrids: 
+                content = remove_code_blocks(content,gridtype)
+
+        #now remove any left over tags that start with #[[ or #]]
+        content = remove_lines_with_markers(content)
 
     with open(script_filename, 'w') as f:
         f.write(content)
 
+def remove_lines_with_markers(text):
+    """Removes all lines from a string that contain either '#[[' or '#]]'.
+
+    Args:
+        text: The input string.
+
+    Returns:
+        The string with the specified lines removed.
+    """
+    lines = text.splitlines()
+    new_lines = [line for line in lines if not re.search(r"#\[\[|#\]\]", line)]  # More efficient
+    return "\n".join(new_lines)
+def remove_code_blocks(text, tag):
+    """
+    Removes blocks of text from a string that are delimited by '#[[tag' and '#]]tag' lines.
+
+    Args:
+        text: The input string.
+
+    Returns:
+        The string with the code blocks removed.  Returns the original string if no matching blocks are found.
+    """
+
+    # Use a regular expression to find and remove the blocks.  The re.DOTALL flag allows the . to match newlines.
+    # The ? makes the match non-greedy, so it matches the shortest possible block.
+    pattern = rf"#\[\[{tag}.*?#\]\]{tag}"  # More robust pattern
+    new_text = re.sub(pattern, "", text, flags=re.DOTALL)
+
+    return new_text
 
 ## BEGIN ALL RETR ANALYSIS TOOLS 
 
@@ -157,6 +214,10 @@ def get_evaluations(samples_equal, max_logl, model, n_draws, regrid=False,pressu
         List of strings to specify which chemicals to return 
         Default = ['temperature','H2O','CO2']
         If running a nonphysical model, make sure to set this to an empty list = []
+        This can ONLY be used if your `model_set` model has the key word argument 
+        `return_ptchem` which is either True/False. If True it should return 
+        the entire planet class in either dictionary or class format. e.g. 
+        {'opa db1':picaso.inputs class} or just picaso.inputs class
 
     Returns
     -------
@@ -172,9 +233,15 @@ def get_evaluations(samples_equal, max_logl, model, n_draws, regrid=False,pressu
     """
     returns = {}
     if len(pressure_bands)>0:
-        df = model(max_logl,return_ptchem=True)
-        returns['max_logl_ptchem'] = df 
-
+        picaso_class = model(max_logl,return_ptchem=True)
+        #users sometimes return a dictionary of classes 
+        if isinstance(picaso_class, dict): 
+            key = list(picaso_class.keys())[0]
+            returns['max_logl_ptchem'] = picaso_class[key].inputs['atmosphere']['profile']
+        else: 
+            returns['max_logl_ptchem'] = picaso_class.inputs['atmosphere']['profile']
+        df = returns['max_logl_ptchem'] 
+        
     returns['bands_spectra']={}
     if len(pressure_bands)>0: 
         returns['bands_ptchem']={i:{} for i in pressure_bands}
@@ -187,8 +254,13 @@ def get_evaluations(samples_equal, max_logl, model, n_draws, regrid=False,pressu
         x,y,of,er = model(samples_equal[idraw,:])
         
         if len(pressure_bands)>0:
-            chem = model(samples_equal[idraw,:], return_ptchem=True)
-        
+            picaso_class = model(samples_equal[idraw,:], return_ptchem=True)
+            #users sometimes return a dictionary of classes 
+            if isinstance(picaso_class, dict): 
+                key = list(picaso_class.keys())[0]
+                chem = picaso_class[key].inputs['atmosphere']['profile']
+            else: 
+                chem = picaso_class.inputs['atmosphere']['profile']        
         
         if isinstance(regrid,np.ndarray): 
             #assumed to be wavenumber grid 
@@ -631,3 +703,117 @@ def plot_pair(samples, params, pretty_labels=None,ranges=None,figsize=(11, 11), 
         
     fig = ax.ravel()[0].figure
     return fig, ax
+
+
+## Parameterizations 
+
+
+
+class Parameterize():
+    """
+    """
+    def __init__(self, load_cld_optical = None, mieff_dir = None):
+        """
+        picaso_inputs_class : class picaso.justdoit.inputs 
+            PICASO inputs class 
+        load_cld_optical : str
+            Load optical constants for a certain cloud species 
+            see virga.available to see available species you can load 
+        mieff_dir : str 
+            If a condensate species is supplied to load_cld_optical, then you must also supplie a mieff directory
+            
+        """
+
+        if isinstance(load_cld_optical, (str,list)):
+            if isinstance(load_cld_optical,str): load_cld_optical=[load_cld_optical]
+            if isinstance(mieff_dir, str):
+                if os.path.exists(mieff_dir):
+                    self.qext, self.qscat, self.cos_qscat, self.nwave, self.radius, self.wave_in = {},{},{},{},{},{}
+                    for isp in load_cld_optical:
+                        self.qext[isp], self.qscat[isp], self.cos_qscat[isp], self.nwave[isp], self.radius[isp], self.wave_in[isp]=vj.get_mie(
+                                    isp,directory=mieff_dir)
+                else: 
+                    raise Exception("path supplied through mieff_dir does not exist")
+            else: 
+                raise Exception("mieff_dir was not supplied as a str but needs to be if a condensate species was supplied through load_cld_optical")
+            
+        return 
+        
+    def add_class(self,picaso_inputs_class):
+        """Add a picaso class that loads in the pressure grid (at the very least) 
+        """
+        self.picaso = picaso_inputs_class
+        self.pressure_level = picaso_inputs_class.inputs['atmosphere']['profile']['pressure'].values
+        self.pressure_layer = np.sqrt(self.pressure_level [0:-1]*self.pressure_level [1:])
+        self.nlevel = len(self.pressure_level )
+        self.nlayer = self.nlevel -1 
+        
+    def flex_cloud(self, species, base_pressure, ndz, fsed, distribution, lognorm_kwargs = {'sigma':np.nan, 'lograd[cm]':np.nan}, 
+                  hansen_kwargs={'b':np.nan,'lograd[cm]':np.nan}): 
+        """
+        Given a base_pressure and fsed to set the exponential drop of the cloud integrate a particle 
+        radius distribution via gaussian or hansen distributions to get optical properties in picaso 
+        format. 
+
+        Parameters
+        ----------
+        species : str 
+            Name of species. Should already have been preloaded via Parameterize options in load_cld_optical
+        base_pressure : float 
+            base of the cloud deck in bars 
+        ndz : float 
+            number density of the cloud deck cgs 
+        fsed : float 
+            sedimentation efficiency 
+        distribution : str 
+            either lognormal or hansen 
+        lognorm_kwargs : dict 
+            diectionary with the format: {'sigma':np.nan, 'lograd[cm]':np.nan}
+            lograd[cm] median particle radius in cm 
+            sigma width of the distribtuion must be >1 
+        hansen_kwargs : dict 
+            dictionary with the format: {'b':np.nan,'lograd[cm]':np.nan}
+            lograd[cm] and b from Hansen+1971: https://web.gps.caltech.edu/~vijay/Papers/Polarisation/hansen-71b.pdf
+            lograd[cm] = a = effective particle radius 
+            b = varience of the particle radius 
+
+        Returns 
+        -------
+        pandas.DataFrame 
+            PICASO formatted cld input dataframe 
+        """
+        scale_h = 10 #just arbitrary as this gets fit for via fsed and ndz 
+        z = np.linspace(100,0,self.nlayer)
+        
+        logradius = np.log10(self.radius[species])
+        
+        if 'lognorm' in distribution:
+            sigma=lognorm_kwargs['sigma']
+            lograd=lognorm_kwargs['lograd[cm]']
+            
+            if np.isnan(sigma):
+                raise Exception('lognorm_kwargs have not been defined')
+            
+            dist = (1/(sigma * np.sqrt(2 * np.pi)) *
+                       np.exp( - (logradius - lograd)**2 / (2 * sigma**2)))
+        elif 'hansen' in distribution: 
+            a = 10**hansen_kwargs['lograd[cm]']
+            b = hansen_kwargs['b']
+            dist = (10**self.radius[species])**((1-3*b)/b)*np.exp(-self.radius[species]/(a*b))
+        else: 
+            raise Exception("Only lognormal and hansen distributions available")
+            
+        opd,w0,g0,wavenumber_grid=vj.calc_optics_user_r_dist(self.wave_in[species], ndz ,self.radius[species], u.cm,
+                                                              dist, self.qext[species], self.qscat[species], self.cos_qscat[species])
+        
+        opd_h = self.pressure_layer*0+10
+        opd_h[base_pressure<self.pressure_layer]=0
+        opd_h[base_pressure>=self.pressure_layer]=opd_h[base_pressure>=self.pressure_layer]*np.exp(
+                              -fsed*z[base_pressure>=self.pressure_layer]/scale_h)
+        opd_h = opd_h/np.max(opd_h)
+        
+        df_cld = vj.picaso_format_slab(base_pressure,opd, w0, g0, wavenumber_grid, self.pressure_layer, 
+                                          p_decay=opd_h)
+
+        return df_cld 
+
