@@ -1329,8 +1329,8 @@ class RetrieveCKs():
         player = atmosphere.layer['pressure']/atmosphere.c.pconv
     
         cia_molecules = atmosphere.continuum_molecules
+        #cia_molecules = [['H2', 'H2'], ['H2', 'CH4'], ['H2', 'He']]
 
-    
         self.continuum_opa = {key[0]+key[1]:np.zeros((nlayer,self.nwno)) for key in cia_molecules}
         #continuum
         #find nearest temp for cia grid
@@ -1415,7 +1415,7 @@ class RetrieveCKs():
 
         conn.close()
 
-    def get_opacities(self, atmosphere):
+    def get_opacities(self, atmosphere, exclude_mol=1):
         """
         Gets opacities from the premixed tables only 
 
@@ -1428,7 +1428,7 @@ class RetrieveCKs():
         self.get_continuum(atmosphere)
         self.get_pre_mix_ck(atmosphere)
     
-    def get_opacities_deq_onfly(self, atmosphere):
+    def get_opacities_deq_onfly(self, atmosphere, exclude_mol=1):
         """
         Gets opacities from the individual gas CK tables and mixes them 
         accordingly 
@@ -2120,6 +2120,7 @@ class RetrieveOpacities():
         tlayer =atmosphere.layer['temperature']
         player = atmosphere.layer['pressure']/atmosphere.c.pconv
         molecules = atmosphere.molecules
+
         cia_molecules = atmosphere.continuum_molecules        
         #struture opacity dictionary
         self.molecular_opa = {key:np.zeros((nlayer, self.nwno)) for key in molecules}
@@ -2176,7 +2177,7 @@ class RetrieveOpacities():
   
         conn.close() 
 
-    def get_opacities_nearest(self,atmosphere,  exclude_mol=1):
+    def get_opacities_nearest(self, atmosphere, exclude_mol=1):
         """
         Get's opacities using the atmosphere class
         """

@@ -225,7 +225,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
     if dimension == '1d':
         #lastly grab needed opacities for the problem
-        get_opacities(atm)
+        get_opacities(atm,exclude_mol=exclude_mol)
         #only need to get opacities for one pt profile
 
         #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
@@ -1087,6 +1087,8 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     #gets both continuum and needed rayleigh cross sections 
     #relies on continuum molecules are added into the opacity 
     #database. Rayleigh molecules are all in `rayleigh.py` 
+    print(opacityclass.rayleigh_molecules)
+
     atm.get_needed_continuum(opacityclass.rayleigh_molecules,
                              opacityclass.avail_continuum)
 
