@@ -2229,29 +2229,38 @@ class inputs():
 
         self.inputs['atmosphere']['profile'][species] = pd.DataFrame(abunds)
 
-    def add_pt(self, T, P):
+    def add_pt(self, T=None, P=None):
         """
         Adds temperature pressure profile to atmosphere
         Parameters
         ----------
         T : array
-            Temperature Array
+            Temperature Array in Kelbin
         P : array 
-            Pressure Array 
-        nlevel : int
-            # of atmospheric levels
+            Pressure Array in bars 
         
             
         Returns
         -------
-        T : numpy.array 
-            Temperature grid 
-        P : numpy.array
-            Pressure grid
+        DataFrame 
+            in PICASO format
+            also sets the nlevels and nlayers
+            temperature : numpy.array 
+                Temperature grid in Kelvin
+            pressure : numpy.array
+                Pressure grid in bars 
                 
         """
-        self.inputs['atmosphere']['profile']  = pd.DataFrame({'temperature': T, 'pressure': P})
-        self.nlevel=len(T) 
+        empty_dict = {}
+        if not isinstance(T,type(None)):
+            empty_dict['temperature']=T
+            self.nlevel=len(T) 
+        if not isinstance(P,type(None)):
+            empty_dict['pressure']=P
+            self.nlevel=len(P) 
+
+        self.inputs['atmosphere']['profile']  = pd.DataFrame(empty_dict)
+        
         # Return TP profile
         return self.inputs['atmosphere']['profile'] 
 
