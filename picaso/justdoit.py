@@ -225,7 +225,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
     if dimension == '1d':
         #lastly grab needed opacities for the problem
-        get_opacities(atm,exclude_mol=exclude_mol)
+        get_opacities(atm)
         #only need to get opacities for one pt profile
 
         #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington

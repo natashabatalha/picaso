@@ -698,13 +698,15 @@ class RetrieveCKs():
             self.get_available_rayleigh()
 
 
-        # Determine which function is used to get the function of getting opacities
         if isinstance(self.gases_fly, list) and len(self.gases_fly) > 0:
-            # If the user passes a list of gases, set get_opacities to the on-the-fly method
+            # If a list of gases is provided, use the on‐the‐fly method.
             self.get_opacities = self.get_opacities_deq_onfly
         else:
-            # Otherwise, default to the pre-mixed method
-            self.get_opacities = self.get_opacities
+            # Otherwise, use the premixed method.
+            self.get_opacities = self.__class__.get_opacities.__get__(self)
+
+
+
         return
 
     def get_h5_data(self):
@@ -1413,10 +1415,7 @@ class RetrieveCKs():
 
         conn.close()
 
-
-
-
-    def get_opacities(self, atmosphere,exclude_mol=1):
+    def get_opacities(self, atmosphere):
         """
         Gets opacities from the premixed tables only 
 
@@ -1429,7 +1428,7 @@ class RetrieveCKs():
         self.get_continuum(atmosphere)
         self.get_pre_mix_ck(atmosphere)
     
-    def get_opacities_deq_onfly(self, atmosphere, exclude_mol=1):
+    def get_opacities_deq_onfly(self, atmosphere):
         """
         Gets opacities from the individual gas CK tables and mixes them 
         accordingly 
@@ -1440,7 +1439,6 @@ class RetrieveCKs():
             Not yet functional for CK option since they are premixed. For individual 
             CK molecules, this will ignore the optical contribution from one molecule. 
         """
- 
         self.get_continuum(atmosphere)
         self.mix_my_opacities_gasesfly(atmosphere)
 
