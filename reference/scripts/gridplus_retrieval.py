@@ -292,9 +292,9 @@ class model_set:
         # 1. Grab parameters from your cube 
         final_goal = cube[0:len(grid_parameters_unique.keys())]
         ## using this formalism with index is a bit more "fool-proof" than relying on yourself to get the index number correct 
-        xrp = cube[param_set.grid_virga.index('xrp')]
+        xrp = cube[param_set.grid_addchem.index('xrp')]
         ## note here I am removing the log in front of log abundance
-        overwrite_moleculeCHANGEME = 10**cube[param_set.grid_virga.index('logoverwrite_moleculeCHANGEME')]
+        overwrite_moleculeCHANGEME = 10**cube[param_set.grid_addchem.index('logoverwrite_moleculeCHANGEME')]
 
         # 2. Reset the mass and radius based on the radius scaling factor
         for i in opacity.keys(): planet[i].gravity(mass=mass, mass_unit=jdi.u.Unit(mass_unit),
@@ -364,13 +364,13 @@ class model_set:
 
         final_goal = cube[0:len(grid_parameters_unique.keys())]
         ## using this formalism with index is a bit more "fool-proof" than relying on yourself to get the index number correct 
-        xrp = cube[param_set.grid_virga.index('xrp')]
+        xrp = cube[param_set.grid_flexcloud.index('xrp')]
         ## note here I am removing the log in front of fsed and kzz 
-        base_pressure  = 10**cube[param_set.grid_virga.index('logcldbar')]
-        fsed = 10**cube[param_set.grid_virga.index('logfsed')]
-        ndz = 10**cube[param_set.grid_virga.index('logndz')]
-        sigma= cube[param_set.grid_virga.index('sigma')]
-        eff_radius = 10**cube[param_set.grid_virga.index('lograd')]
+        base_pressure  = 10**cube[param_set.grid_flexcloud.index('logcldbar')]
+        fsed = 10**cube[param_set.grid_flexcloud.index('logfsed')]
+        ndz = 10**cube[param_set.grid_flexcloud.index('logndz')]
+        sigma= cube[param_set.grid_flexcloud.index('sigma')]
+        eff_radius = 10**cube[param_set.grid_flexcloud.index('lograd')]
 
         # 2. Reset the mass and radius based on the radius scaling factor
 
