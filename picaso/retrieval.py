@@ -27,7 +27,7 @@ allowed_keys={ 'grid':
                'grid_virga':
                     {'grid_location':str, 'grid_name':str,'to_fit':str,'opacity_filename_db':str, 'molecules':list, 'virga_mieff_dir':str,'cloud_species':list},
                'grid_addchem':
-                    {'grid_location':str, 'grid_name':str,'to_fit':str,'opacity_filename_db':str, 'molecules':list},
+                    {'grid_location':str, 'grid_name':str,'to_fit':str,'opacity_filename_db':str, 'molecules':list,'overwrite_molecule':None},
                'grid_flexcloud':
                     {'grid_location':str, 'grid_name':str,'to_fit':str,'opacity_filename_db':str, 'molecules':list, 'virga_mieff_dir':str,'cloud_species':list}
             
@@ -241,7 +241,7 @@ def get_evaluations(samples_equal, max_logl, model, n_draws, regrid=False,pressu
         else: 
             returns['max_logl_ptchem'] = picaso_class.inputs['atmosphere']['profile']
         df = returns['max_logl_ptchem'] 
-        
+
     returns['bands_spectra']={}
     if len(pressure_bands)>0: 
         returns['bands_ptchem']={i:{} for i in pressure_bands}

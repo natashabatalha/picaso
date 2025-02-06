@@ -164,7 +164,7 @@ class param_set:
     grid_virga = list(grid_parameters_unique.keys())+['xrp','logfsed','logkzz']
     #]]grid_virga
     #[[grid_addchem
-    grid_addchem = list(grid_parameters_unique.keys())+['xrp','logso2']
+    grid_addchem = list(grid_parameters_unique.keys())+['xrp','logoverwrite_moleculeCHANGEME']
     #]]grid_addchem
     #[[grid_flexcloud
     grid_flexcloud = list(grid_parameters_unique.keys())+['xrp','logcldbar','logfsed','logndz','sigma','lograd']
@@ -293,8 +293,8 @@ class model_set:
         final_goal = cube[0:len(grid_parameters_unique.keys())]
         ## using this formalism with index is a bit more "fool-proof" than relying on yourself to get the index number correct 
         xrp = cube[param_set.grid_virga.index('xrp')]
-        ## note here I am removing the log in front of logso2
-        SO2 = 10**cube[param_set.grid_virga.index('logso2')]
+        ## note here I am removing the log in front of log abundance
+        overwrite_moleculeCHANGEME = 10**cube[param_set.grid_virga.index('logoverwrite_moleculeCHANGEME')]
 
         # 2. Reset the mass and radius based on the radius scaling factor
         for i in opacity.keys(): planet[i].gravity(mass=mass, mass_unit=jdi.u.Unit(mass_unit),
@@ -319,7 +319,7 @@ class model_set:
               array_to_interp=fitter.interp_params[grid_name]['square_chem_grid'][imol])
         
         #add in our bonus chemistry 
-        df_chem['SO2'] = SO2
+        df_chem['overwrite_moleculeCHANGEME'] = overwrite_moleculeCHANGEME
 
         #5. Add chemistry and PT profile to PICASO atmosphere class 
         for i in opacity.keys(): planet[i].atmosphere(df=jdi.pd.DataFrame(df_chem),verbose=False)    
@@ -487,8 +487,8 @@ class prior_set:
         i = param_set.grid_addchem.index('xrp')
         params[i] = minn + (maxx-minn)*params[i]
         
-        #log SO2 
-        i = param_set.grid_addchem.index('logso2')
+        #log abundance 
+        i = param_set.grid_addchem.index('logoverwrite_moleculeCHANGEME')
         minn=-12; maxx=-4
         params[i] = minn + (maxx-minn)*params[i]
     #]]grid_addchem
