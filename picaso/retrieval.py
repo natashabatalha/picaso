@@ -22,7 +22,9 @@ import re
 
 __refdata__ = os.environ.get('picaso_refdata')
 
-allowed_keys={ 'grid':
+allowed_keys={ 'line':
+                    {},
+               'grid':
                     {'grid_location':str, 'grid_name':str,'to_fit':str}, 
                'grid_virga':
                     {'grid_location':str, 'grid_name':str,'to_fit':str,'opacity_filename_db':str, 'molecules':list, 'virga_mieff_dir':str,'cloud_species':list},
