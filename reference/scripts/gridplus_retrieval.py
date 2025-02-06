@@ -28,7 +28,8 @@ pd = jdi.pd
 import picaso.analyze as lyz
 import picaso.retrieval as prt
 import xarray as xr
-import matplotlib.pyplot as plt
+import ultranest
+
 
 
 # ## Step 1) Develop function to get data

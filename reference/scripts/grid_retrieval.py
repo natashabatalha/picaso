@@ -25,6 +25,7 @@ import os
 import picaso.justdoit as jdi
 import picaso.analyze as lyz
 import xarray as xr
+import ultranest 
 
 
 # ## Step 1) Develop function to get data
