@@ -1839,6 +1839,9 @@ class RetrieveOpacities():
         store this in the DB as well. However, because its so fast, it doesn't take 
         a lot of time, and because its non-temperature dependent, we only have to do 
         it once. 
+    query_method : str 
+        Default = 'nearest' can also choose 'linear' for interpolation
+
     Methods 
     -------
     db_connect 
@@ -1853,7 +1856,8 @@ class RetrieveOpacities():
     get_opacities 
         Gets opacities after user specifies atmospheric profile (e.g. full PT and Composition)
     """
-    def __init__(self, db_filename, raman_data, wave_range=None, location = 'local', resample=1):
+    def __init__(self, db_filename, raman_data, wave_range=None, location = 'local', resample=1,
+        query_method='nearest'):
 
         #monochromatic opacity option forces number of gauss points to 1
         self.ngauss = 1
@@ -1878,6 +1882,15 @@ class RetrieveOpacities():
 
         self.preload=False
 
+        if query_method=='nearest':
+            # If a list of gases is provided, use the on‐the‐fly method.
+            self.get_opacities = self.get_opacities_nearest
+        elif query_method=='linear':
+            # Otherwise, use the premixed method.
+            self.get_opacities = self.__class__.get_opacities.__get__(self)
+        else: 
+            raise Exception (f'Do not recognize query method for opacities: {query_method}. Options are nearest or linear')
+    
     def open_local(self):
         """Code needed to open up local database, interpret arrays from bytes and return cursor"""
         conn = sqlite3.connect(self.db_filename, detect_types=sqlite3.PARSE_DECLTYPES)

@@ -213,14 +213,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
     
     #opacity assumptions
-    query_method = inputs['opacities'].get('query',0)
     exclude_mol = inputs['atmosphere']['exclude_mol']
 
-    #only use nearest neighbor if not using CK method and not using specied by user
-    if ((query_method == 0) & (isinstance(getattr(opacityclass,'ck_filename',1),int))): 
-        get_opacities = opacityclass.get_opacities_nearest
-    elif ((query_method == 1) | (isinstance(getattr(opacityclass,'ck_filename',1),str))):
-        get_opacities = opacityclass.get_opacities
+    get_opacities = opacityclass.get_opacities
 
     nlevel = atm.c.nlevel
     nlayer = atm.c.nlayer
@@ -1104,12 +1099,8 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     no_opacities = [i for i in atm.molecules if i not in opacityclass.molecules]
     atm.add_warnings('No computed opacities for: '+','.join(no_opacities))
     atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
-    query_method = inputs['opacities'].get('query',0)
 
-    if query_method == 0: 
-        get_opacities = opacityclass.get_opacities_nearest
-    elif query_method == 1:
-        get_opacities = opacityclass.get_opacities
+    get_opacities = opacityclass.get_opacities
 
     nlevel = atm.c.nlevel
     nlayer = atm.c.nlayer
@@ -3594,7 +3585,7 @@ class inputs():
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='pollack',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
         p_reference=1, rt_method='toon', stream=2, toon_coefficients="quadrature",
-        single_form='explicit', calculate_fluxes='off', query='nearest_neighbor',
+        single_form='explicit', calculate_fluxes='off', 
         w_single_form='TTHG', w_multi_form='TTHG', psingle_form='TTHG', 
         w_single_rayleigh = 'on', w_multi_rayleigh='on', psingle_rayleigh='on', 
         get_lvl_flux = False):
@@ -3638,10 +3629,6 @@ class inputs():
         single_form : str 
             form of the phase function can either be written as an 'explicit' henyey greinstein 
             or it can be written as a 'legendre' expansion. Default is 'explicit'
-        query : str 
-            method to grab opacities. either "nearest_neighbor" or "interp" which 
-            interpolates based on 4 nearest neighbors. Default is nearest_neighbor
-            which is significantly faster.
         w_single_form : str 
             Single scattering phase function approximation for SH
         w_multi_form : str 
@@ -3697,9 +3684,6 @@ class inputs():
         self.inputs['approx']['rt_params']['SH']['w_multi_rayleigh'] = SH_rayleigh_options(printout=False).index(w_multi_rayleigh)
         self.inputs['approx']['rt_params']['SH']['psingle_rayleigh'] = SH_rayleigh_options(printout=False).index(psingle_rayleigh)
         self.inputs['approx']['rt_params']['SH']['calculate_fluxes'] = SH_calculate_fluxes_options(printout=False).index(calculate_fluxes)
-
-
-        self.inputs['opacities']['query'] = query_options().index(query)
 
         self.inputs['approx']['p_reference']= p_reference
         
@@ -4653,9 +4637,6 @@ def SH_calculate_fluxes_options(printout=True):
 def raman_options():
     """Retrieve options for raman scattering approximtions"""
     return ["oklopcic","pollack","none"]
-def query_options():
-    """Retrieve options for querying opacities """
-    return ["nearest_neighbor","interp"]
 
 def evolution_track(mass=1, age='all'):
     """
