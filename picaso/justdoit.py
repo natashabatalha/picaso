@@ -164,8 +164,11 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     #set star parameters
     radius_star = inputs['star']['radius']
 
-    #F0PI = np.zeros(nwno) + 1.
-    F0PI = opacityclass.unshifted_stellar_spec * ((inputs['star']['radius']/inputs['star']['semi_major'])**2)
+    #need to account for case where there is no star
+    if 'nostar' in inputs['star']['database']:
+        FOPI = np.zeros(opacityclass.nwno) + 1.0
+    else:
+        F0PI = opacityclass.unshifted_stellar_spec * ((inputs['star']['radius']/inputs['star']['semi_major'])**2)
 
     b_top = 0.
     #semi major axis
@@ -1057,9 +1060,12 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     #set star parameters
     radius_star = inputs['star']['radius']
 
-    # I think that this gets overwritten later on by the second F0PI definition
-    #F0PI = np.zeros(nwno) + 1.
-    F0PI = opacityclass.unshifted_stellar_spec
+    #need to account for case where there is no star
+    if 'nostar' in inputs['star']['database']:
+        FOPI = np.zeros(opacityclass.nwno) + 1.0
+    else:
+        F0PI = opacityclass.unshifted_stellar_spec * ((inputs['star']['radius']/inputs['star']['semi_major'])**2)
+
 
     #semi major axis
     sa = inputs['star']['semi_major']
