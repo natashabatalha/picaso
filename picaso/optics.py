@@ -1329,7 +1329,6 @@ class RetrieveCKs():
         player = atmosphere.layer['pressure']/atmosphere.c.pconv
     
         cia_molecules = atmosphere.continuum_molecules
-        #cia_molecules = [['H2', 'H2'], ['H2', 'CH4'], ['H2', 'He']]
 
         self.continuum_opa = {key[0]+key[1]:np.zeros((nlayer,self.nwno)) for key in cia_molecules}
         #continuum

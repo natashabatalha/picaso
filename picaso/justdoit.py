@@ -1093,7 +1093,6 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     #gets both continuum and needed rayleigh cross sections 
     #relies on continuum molecules are added into the opacity 
     #database. Rayleigh molecules are all in `rayleigh.py` 
-    print(opacityclass.rayleigh_molecules)
 
     atm.get_needed_continuum(opacityclass.rayleigh_molecules,
                              opacityclass.avail_continuum)
