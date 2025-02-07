@@ -2,6 +2,13 @@
 
 History
 -------
+3.3 (2024-11-12)
+~~~~~~~~~~~~~~~~
+* Reflected light phase curves 
+
+3.2 (2024-7-8)
+~~~~~~~~~~~~~~
+* Disequilibrium climate modeling
 
 3.1 (2023-3-23)
 ~~~~~~~~~~~~~~~
