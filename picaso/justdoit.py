@@ -20,7 +20,6 @@ from numpy import exp, sqrt,log
 from numba import jit,njit
 from scipy.io import FortranFile
 
-
 import os
 import pickle as pk
 import numpy as np
@@ -29,9 +28,8 @@ import copy
 import json
 import warnings
 with warnings.catch_warnings():#
-
     warnings.filterwarnings("ignore")
-    import pysynphot as psyn
+import pysynphot as psyn
 import astropy.units as u
 import astropy.constants as c
 from astropy.utils.misc import JsonCustomEncoder
@@ -42,7 +40,7 @@ from joblib import Parallel, delayed, cpu_count
 # #testing error tracker
 # from loguru import logger 
 __refdata__ = os.environ.get('picaso_refdata')
-__version__ = 3.2
+__version__ = '3.3'
 
 
 if not os.path.exists(__refdata__): 
@@ -50,7 +48,7 @@ if not os.path.exists(__refdata__):
 else: 
     ref_v = json.load(open(os.path.join(__refdata__,'config.json'))).get('version',2.3)
     
-    if __version__ > ref_v: 
+    if __version__ != str(ref_v): 
         warnings.warn(f"Your code version is {__version__} but your reference data version is {ref_v}. For some functionality you may experience Keyword errors. Please download the newest ref version or update your code: https://github.com/natashabatalha/picaso/tree/master/reference")
 
 
@@ -165,7 +163,13 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
     #set star parameters
     radius_star = inputs['star']['radius']
-    F0PI = np.zeros(nwno) + 1.
+
+    #need to account for case where there is no star
+    if 'nostar' in inputs['star']['database']:
+        FOPI = np.zeros(opacityclass.nwno) + 1.0
+    else:
+        F0PI = opacityclass.unshifted_stellar_spec * ((inputs['star']['radius']/inputs['star']['semi_major'])**2)
+
     b_top = 0.
     #semi major axis
     sa = inputs['star']['semi_major']
@@ -209,14 +213,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
     
     #opacity assumptions
-    query_method = inputs['opacities'].get('query',0)
     exclude_mol = inputs['atmosphere']['exclude_mol']
 
-    #only use nearest neighbor if not using CK method and not using specied by user
-    if ((query_method == 0) & (isinstance(getattr(opacityclass,'ck_filename',1),int))): 
-        get_opacities = opacityclass.get_opacities_nearest
-    elif ((query_method == 1) | (isinstance(getattr(opacityclass,'ck_filename',1),str))):
-        get_opacities = opacityclass.get_opacities
+    get_opacities = opacityclass.get_opacities
 
     nlevel = atm.c.nlevel
     nlayer = atm.c.nlayer
@@ -266,16 +265,17 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                         b_top=b_top)
                                         #get_toa_intensity=1, get_lvl_flux=0)"""
                     
-                    xint,lvl_fluxes = get_reflected_1d(nlevel, wno,nwno,ng,nt,
-                                    DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
-                                    GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
-                                    DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
-                                    atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
-                                    single_phase,multi_phase,
-                                    frac_a,frac_b,frac_c,constant_back,constant_forward,
-                                    get_toa_intensity=1,get_lvl_flux=int(atm.get_lvl_flux),
-                                    toon_coefficients=toon_coefficients,b_top=b_top) 
 
+                    xint,lvl_fluxes = get_reflected_1d(nlevel, wno,nwno,ng,nt,
+                                                    DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
+                                                    GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
+                                                    DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
+                                                    atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
+                                                    single_phase,multi_phase,
+                                                    frac_a,frac_b,frac_c,constant_back,constant_forward,
+                                                    get_toa_intensity=1,get_lvl_flux=int(atm.get_lvl_flux),
+                                                    toon_coefficients=toon_coefficients,b_top=b_top) 
+                                        
                 xint_at_top += xint*gauss_wts[ig]
 
                 if get_lvl_flux: 
@@ -295,8 +295,13 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
             flux_at_top = 0 
 
+            
+            # Get integrated fluxes per level even when not running climate calculation
             if get_lvl_flux: 
                 atm.lvl_output_thermal = dict(flux_minus=0, flux_plus=0, flux_minus_mdpt=0, flux_plus_mdpt=0)
+                calc_type=1
+            else: 
+                calc_type=0
 
 
             for ig in range(ngauss): # correlated-k - loop (which is different from gauss-tchevychev angle)
@@ -308,14 +313,15 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                     #                                    DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                     #                                    atm.level['pressure'],ubar1,
                     #                                    atm.surf_reflect, atm.hard_surface, tridiagonal)
+
                     flux,lvl_fluxes  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
                                                         DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                                         atm.level['pressure'],ubar1,
                                                         atm.surf_reflect, atm.hard_surface,
                                                         #setting wno to zero since only used for climate, calctype only gets TOA flx 
-                                                        wno*0, calc_type=0)
-
-
+                                                        wno*0,
+                                                        calc_type=calc_type)
+                    
 
                 elif rt_method == 'SH':
                     flux, flux_layers = get_thermal_SH(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
@@ -442,6 +448,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                                 single_phase,multi_phase,
                                                 frac_a,frac_b,frac_c,constant_back,constant_forward)
                 xint_at_top += xint*gauss_wts[ig]
+
                 #if full output is requested add in xint at top for 3d plots
             if full_output: 
                 atm.xint_at_top = xint_at_top
@@ -469,14 +476,27 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     #COMPRESS FULL TANGLE-GANGLE FLUX OUTPUT ONTO 1D FLUX GRID
 
     #for reflected light use compress_disco routine
-    #this takes the intensity as a functin of tangle/gangle and creates a 1d spectrum
+    #this takes the intensity as a function of tangle/gangle and creates a 1d spectrum
     if  ('reflected' in calculation):
         albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
         returns['albedo'] = albedo 
 
+        # This is attempt to get the compress_disco to return the integrated fluxes
+        # However, its mixing an albedo calc and an itegration calc I think
+
         if ((rt_method == 'toon') & get_lvl_flux): 
-            for i in atm.lvl_output_reflected.keys():
-                atm.lvl_output_reflected[i] = compress_disco(nwno,cos_theta,atm.lvl_output_reflected[i], gweight, tweight,F0PI)   
+            #for i in atm.lvl_output_reflected.keys():
+            for key, data in atm.lvl_output_reflected.items():
+                #atm.lvl_output_reflected[i] = compress_disco(nwno,cos_theta,atm.lvl_output_reflected[i], gweight, tweight,F0PI)   
+
+                # Get the number of layers to do the layer slicing
+                _, _, nlayer, nwno_data = data.shape
+
+                # Integrate each layer
+                atm.lvl_output_reflected[key] = np.array([compress_disco(nwno_data,
+                                                                         cos_theta,
+                                                                         data[:, :, layer_idx, :],
+                                                                         gweight, tweight, np.zeros(nwno) + 1.) for layer_idx in range(nlayer)])
 
 
         #see equation 18 Batalha+2019 PICASO 
@@ -1034,7 +1054,14 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
 
     #set star parameters
     radius_star = inputs['star']['radius']
-    F0PI = np.zeros(nwno) + 1.
+
+    #need to account for case where there is no star
+    if 'nostar' in inputs['star']['database']:
+        FOPI = np.zeros(opacityclass.nwno) + 1.0
+    else:
+        F0PI = opacityclass.unshifted_stellar_spec * ((inputs['star']['radius']/inputs['star']['semi_major'])**2)
+
+
     #semi major axis
     sa = inputs['star']['semi_major']
 
@@ -1061,6 +1088,7 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     #gets both continuum and needed rayleigh cross sections 
     #relies on continuum molecules are added into the opacity 
     #database. Rayleigh molecules are all in `rayleigh.py` 
+
     atm.get_needed_continuum(opacityclass.rayleigh_molecules,
                              opacityclass.avail_continuum)
 
@@ -1071,12 +1099,8 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     no_opacities = [i for i in atm.molecules if i not in opacityclass.molecules]
     atm.add_warnings('No computed opacities for: '+','.join(no_opacities))
     atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
-    query_method = inputs['opacities'].get('query',0)
 
-    if query_method == 0: 
-        get_opacities = opacityclass.get_opacities_nearest
-    elif query_method == 1:
-        get_opacities = opacityclass.get_opacities
+    get_opacities = opacityclass.get_opacities
 
     nlevel = atm.c.nlevel
     nlayer = atm.c.nlayer
@@ -1145,6 +1169,7 @@ def opannection(wave_range = None, filename_db = None, raman_db = None,
     """
     inputs = json.load(open(os.path.join(__refdata__,'config.json')))
 
+
     if isinstance(ck_db, type(None)): 
         #only allow raman if no correlated ck is used 
         if isinstance(raman_db,type(None)): raman_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['raman'])
@@ -1174,11 +1199,14 @@ def opannection(wave_range = None, filename_db = None, raman_db = None,
                 raise Exception('The CK filename that you have selected appears still be .tar.gz. Please unpack and rerun')
             else: 
                 raise Exception('The CK filename that you have selected does not exist. Please make sure you have downloaded and unpacked the right CK file.')
+            
         opacityclass=RetrieveCKs(
                     ck_db, 
                     filename_db, 
                     wave_range = wave_range, 
-                    deq=deq,on_fly=on_fly,gases_fly = gases_fly)
+                    deq=deq,
+                    on_fly=on_fly,
+                    gases_fly = gases_fly)
 
     return opacityclass
 
@@ -1627,7 +1655,11 @@ class inputs():
         #now convert to erg/cm2/s/wavenumber
         #flux_star = flux_star/wno_star**2
 
+        # Get a bool for whether we want level fluxes
+        get_lvl_flux = self.inputs['approx'].get('get_lvl_flux', False)
+
         wno_planet = opannection.wno
+
         #this adds stellar shifts 'self.raman_stellar_shifts' to the opacity class
         #the cross sections are computed later 
         if self.inputs['approx']['rt_params']['common']['raman'] == 0: 
@@ -1639,7 +1671,9 @@ class inputs():
             
             opannection.compute_stellar_shits(fine_wno_star, fine_flux_star)
             bin_flux_star = opannection.unshifted_stellar_spec
-        elif 'climate' in self.inputs['calculation']: 
+
+        elif ('climate' in self.inputs['calculation'] or (get_lvl_flux)):
+            """
             #stellar flux of star 
             #print(len(wno_planet),len(flux_star[0:-1]),len(flux_star[1:]))
             # np.diff(1/wno_star) is wavelength window in cm.
@@ -1667,11 +1701,41 @@ class inputs():
             #fix issue if there are zeros in certain bins 
             mask = np.logical_or(np.isnan(fine_flux_star), fine_flux_star == 0)
             if len(fine_wno_star[mask])>20:
-                print(f"Having to replace {len(fine_wno_star[mask])} zeros or nans in stellar spectra with interpolated values. It is advised you check this is correct and something has not gone wrong by plotting classname.inputs['star']['wno'] vs classname.inputs'star'['flux']")
+                print(f"Having to replace {len(fine_wno_star[mask])} zeros or nans in stellar spectra with interpolated values.It is advised you check this is correct and something has not gone wrong by plotting classname.inputs['star']['wno'] vs classname.inputs'star'['flux']")
                 non_zero_indices = np.where(~mask)
                 zero_nans = np.interp(fine_wno_star[mask], fine_wno_star[non_zero_indices], fine_flux_star[non_zero_indices])
                 fine_flux_star[mask] = zero_nans  
+            """
+            # Ensure valid values for interpolation
+            mask_valid = flux_star > 1e-30  
+            if not np.all(mask_valid):
+                wno_star, flux_star = wno_star[mask_valid], flux_star[mask_valid]
+
+            # Log-space interpolation
+            interpolator = interp1d(np.log10(wno_star), np.log10(flux_star), kind='linear',
+                                    fill_value='extrapolate', bounds_error=False)
+            fine_flux_star = 10**interpolator(np.log10(wno_planet))
+
+            # Compute binned flux using trapezoidal integration
+            fine_flux_star[:] = [np.trapz(fine_flux_star[(wno_planet >= wno_planet[i]) & 
+                                                        (wno_planet <= wno_planet[i+1])], 
+                                        x=-1/wno_planet[(wno_planet >= wno_planet[i]) & 
+                                                        (wno_planet <= wno_planet[i+1])]) 
+                                if i < len(wno_planet) - 1 else 0 for i in range(len(wno_planet))]
+
+            # Linear extrapolation for the last point
+            if len(wno_planet) > 2:
+                slope = (fine_flux_star[-2] - fine_flux_star[-3]) / (wno_planet[-2] - wno_planet[-3])
+                fine_flux_star[-1] = fine_flux_star[-2] + slope * (wno_planet[-1] - wno_planet[-2])
+
+            # Handle NaNs and zeros
+            mask = np.logical_or(np.isnan(fine_flux_star), fine_flux_star == 0)
+            if np.sum(mask) > 20:
+                print(f"Having to replace {len(fine_wno_star[mask])} zeros or nans in stellar spectra")
+                non_zero_indices = np.where(~mask)[0]
+                fine_flux_star[mask] = np.interp(wno_planet[mask], wno_planet[non_zero_indices], fine_flux_star[non_zero_indices])
             
+ 
             opannection.unshifted_stellar_spec = fine_flux_star  
             bin_flux_star = fine_flux_star          
         else :
@@ -2671,12 +2735,17 @@ class inputs():
         if isinstance(shift, type(None)):
             shift = np.zeros(len(phases))
         
-        if zero_point == 'night_transit':
-            shift = shift + 180
+        if zero_point == 'night_transit':   ## does not work for reflected case!
+            if 'reflected' in self.inputs['disco']['calculation']:
+                if verbose: print('Switching to zero point secondary_eclipse which is required for reflected light')
+                shift=shift
+            else:
+                if verbose: print('The zero_point input will be deprecated in the next PICASO version as it does not work for the reflectd light case. Instead things can be reordered in the phase_curve function in justplotit.phase_curve using reorder_output keyword')                
+                shift = shift + 180
         elif zero_point == 'secondary_eclipse':
-            shift=shift 
+            shift=shift
         else: 
-            raise Exception("Do not regocnize input zero point. Please specify: night_transit or secondary_eclipse")
+            raise Exception("Do not recognize input zero point. Please specify: night_transit or secondary_eclipse")
 
         self.inputs['shift'] = shift
 
@@ -2690,7 +2759,6 @@ class inputs():
         #check for temperature and pressure
         if 'temperature' not in ds: raise Exception('Must include temperature as data component')
         
-
         #check for pressure and change units if needed
         if 'pressure' not in ds.coords: 
             raise Exception("Must include pressure in coords and units")
@@ -2713,19 +2781,84 @@ class inputs():
         else :
             og_lat = ds.coords['lat'].values #degrees
             og_lon = ds.coords['lon'].values #degrees
-
+            pres = ds.coords['pressure'].values #bars  #adding this so I can add it explicitly to ds_New below
+            
         #store so we can rotate
         data_vars_og = {i:ds[i].values for i in ds.keys()}
         #run through phases and regrid each one
+        new_lat_totals = []
+        new_lon_totals = []
+        #new_lat_totals_og = []
+        new_lon_totals_og = []
         shifted_grids = {}
+
+        # Add if calculation = reflected here:
         for i,iphase in enumerate(phases): 
             new_lat = self.inputs['disco'][iphase]['latitude']*180/np.pi#to degrees
-            new_lon = self.inputs['disco'][iphase]['longitude']*180/np.pi#to degrees
-            total_shift = (iphase*180/np.pi + shift[i]) % 360 
+            new_lon_og = self.inputs['disco'][iphase]['longitude']*180/np.pi#to degrees
+
+
+            #Reflected case needs a step to ensure that the reflected crescent is at the correct point wrt the substellar point
+            #This statement only works for 10x10 cases! I am working on expanding this to all grids soon if possible
+            micro_shift = (abs(abs(new_lon_og[-1]) - abs(new_lon_og[-2])) - abs(abs(new_lon_og[0]) - abs(new_lon_og[1]))) / 2   #accounts for the difference in sizes between latxlon bins at phases!=0.
+            ng = self.inputs['disco'][iphase]['num_gangle'] # phase curve shift dependent on ngangles. Ng is used below to determine correct shift paramters
+            if ng == 6:
+                if 68<new_lon_og[-1]< 69 and -69<new_lon_og[0]<-68 or 68<new_lon_og[0]<69 and -69<new_lon_og[-1]<-68:  # at full phase, no need for transfer. 
+                    new_lon = new_lon_og
+                    shift_back = 0
+                elif new_lon_og[-1] > 69 and new_lon_og[0] < 0 : #for first quarter of phases 
+                    new_lon_transfer = abs(new_lon_og[-1]) - abs(new_lon_og[0]) # take the difference between the first lon and the last lon at each phase
+                    new_lon = new_lon_og - new_lon_transfer - micro_shift # The 'transfer' will then shift each phase to the opposite side of the dayside hemisphere. This is crucial for weighting ng and nt correctly for spectrum.
+                    #add total shift statement
+                    shift_back = -new_lon_transfer - micro_shift
+                elif new_lon_og[-1] > 69 and new_lon_og[0] > 0:  # Second quarter of phases
+                    new_lon_transfer = new_lon_og[-1] + new_lon_og[0]
+                    new_lon = new_lon_og - new_lon_transfer - micro_shift
+                    #print("new_lon 2nd Q", new_lon)
+                    shift_back = -new_lon_transfer - micro_shift
+                elif new_lon_og[-1] < -69 and new_lon_og[0] < 0: # third quarter of phases
+                    new_lon_transfer = new_lon_og[-1] + new_lon_og[0]
+                    new_lon = new_lon_og - new_lon_transfer + micro_shift #new_lon_transfer here is negative, so we are adding
+                    shift_back = -new_lon_transfer + micro_shift
+                elif new_lon_og[-1] < -69 and new_lon_og[0] > 0: #last quarter of phases 
+                    new_lon_transfer = abs(new_lon_og[-1]) - abs(new_lon_og[0]) # take the difference between the first lon and the last lon at each phase
+                    new_lon = new_lon_og + new_lon_transfer + micro_shift# The 'transfer' will then shift each phase to the opposite side of the dayside hemisphere. This is crucial for weighting ng and nt correctly for spectrum.
+                    #add total shift statement
+                    shift_back = new_lon_transfer + micro_shift
+            if ng >= 10:
+                if 76<new_lon_og[-1]< 77 and -77<new_lon_og[0]<-76 or 76<new_lon_og[0]<77 and -77<new_lon_og[-1]<-76:  # at full phase, no need for transfer. 
+                    new_lon = new_lon_og
+                    shift_back = 0
+                elif new_lon_og[-1] > 77 and new_lon_og[0] < 0 : #for first quarter of phases 
+                    new_lon_transfer = abs(new_lon_og[-1]) - abs(new_lon_og[0]) # take the difference between the first lon and the last lon at each phase
+                    new_lon = new_lon_og - new_lon_transfer - micro_shift # The 'transfer' will then shift each phase to the opposite side of the dayside hemisphere. This is crucial for weighting ng and nt correctly for spectrum.
+                    #add total shift statement
+                    shift_back = -new_lon_transfer - micro_shift
+                elif new_lon_og[-1] > 77 and new_lon_og[0] > 0:  # Second quarter of phases
+                    new_lon_transfer = new_lon_og[-1] + new_lon_og[0]
+                    new_lon = new_lon_og - new_lon_transfer - micro_shift
+                    #print("new_lon 2nd Q", new_lon)
+                    shift_back = -new_lon_transfer - micro_shift
+                elif new_lon_og[-1] < -77 and new_lon_og[0] < 0: # third quarter of phases
+                    new_lon_transfer = new_lon_og[-1] + new_lon_og[0]
+                    new_lon = new_lon_og - new_lon_transfer + micro_shift #new_lon_transfer here is negative, so we are adding
+                    shift_back = -new_lon_transfer + micro_shift
+                elif new_lon_og[-1] < -77 and new_lon_og[0] > 0: #last quarter of phases 
+                    new_lon_transfer = abs(new_lon_og[-1]) - abs(new_lon_og[0]) # take the difference between the first lon and the last lon at each phase
+                    new_lon = new_lon_og + new_lon_transfer + micro_shift# The 'transfer' will then shift each phase to the opposite side of the dayside hemisphere. This is crucial for weighting ng and nt correctly for spectrum.
+                    #add total shift statement
+                    shift_back = new_lon_transfer + micro_shift
+            
+            #append new lons and lats, used to create array below this for loop
+            new_lat_totals.append(new_lat)
+            new_lon_totals.append(new_lon)
+            new_lon_totals_og.append(new_lon_og)
+            self.inputs['disco'][iphase]['longitude'] = new_lon * np.pi/180   # changing lon around requires us to re-define self.inputs as well (needed for disco geom and also for clouds_4d)
+            total_shift = (iphase*180/np.pi + (shift[i] + shift_back)) % 360
+            #total_shift = (iphase*180/np.pi + shift[i]) % 360
             change_zero_pt = og_lon +  total_shift
             change_zero_pt[change_zero_pt>360]=change_zero_pt[change_zero_pt>360]%360 #such that always between -180 and 180
             change_zero_pt[change_zero_pt>180]=change_zero_pt[change_zero_pt>180]%180-180 #such that always between -180 and 180
-            #ds.coords['lon'].values = change_zero_pt
             split = np.argmin(abs(change_zero_pt + 180)) #find point where we should shift the grid
             for idata in data_vars_og.keys():
                 swap1 = data_vars_og[idata][0:split,:,:]
@@ -2733,14 +2866,45 @@ class inputs():
                 data = np.concatenate((swap2,swap1))
                 ds[idata].values = data
             shifted_grids[iphase] = regrid_xarray(ds, latitude=new_lat, longitude=new_lon)
-        new_phase_grid=xr.concat(list(shifted_grids.values()), pd.Index(list(shifted_grids.keys()), name='phase'))
+            
+            # we need arrays that are len(phase) x len(lon regrid) as array, not list.
+            # These are used to create 'lon2d' and 'lat2d', which are needed for reflected case.
+            new_lat_totals_array = np.array(new_lat_totals)
+            new_lon_totals_array = np.array(new_lon_totals)
+            new_lon_totals_og_array = np.array(new_lon_totals_og)
 
+        # This creates 'phase' as a coord 
+        stacked_phase_grid=xr.concat(list(shifted_grids.values()), pd.Index(list(shifted_grids.keys()), name='phase'), join='override')  ## join=override gets rid of errant lon values
+
+        # Here we are manually creating a new xarray from scratch that has 'lon2d', 'lat2d', which have 'phase' as their 2nd dimension (neeeded for reflected case)
+        # This is a temporary xarray that will be used to merge data variables (created above) with our new 2d coordinates.
+        # We do it this way because xarray does not like when you add dimensions to existing coordinate system. This seems to be the only work around.
+        ds_New = xr.Dataset(
+            data_vars=dict(
+            ),
+            coords=dict(
+                lon2d=(["phase","lon"], new_lon_totals_array,{'units': 'degrees'}), #required. Errors when named lon
+                lat2d=(["phase","lat"], new_lat_totals_array,{'units': 'degrees'}), #required
+                lon2d_clouds=(["phase","lon"], new_lon_totals_og_array,{'units': 'degrees'}), #This is the original coord system. We need to conserve this for clouds_4d
+                lat2d_clouds=(["phase","lat"], new_lat_totals_array,{'units': 'degrees'}), # lon2d_clouds and lat2d_clouds will be used for shift in clouds_4d. This is the only purpose of these two coords.
+                pressure=(["pressure"], pres,{'units': 'bar'}) #required
+            ),
+            attrs=dict(description="coords with vectors"),
+        )
+        new_phase_grid = ds_New 
+        
+        # Lets use merge with compat=override (use data_vars from 1st dataset) and join=right
+        # This creates an xarray with all of the variables from stacked_phase_grid (i.e., temperature and chemicals).
+        # This also creates an xarray with coords named 'lon2d' and 'lat2d' (as well as 'lon' and 'lat'). 'lon2d' and 'lat2d' have 'phase' as their second dimension, which is needed when we use reflected case.
+        new_phase_grid = xr.merge([stacked_phase_grid, new_phase_grid], compat='override', join='right')
+    
         if plot: 
-            new_phase_grid['temperature'].isel(pressure=iz_plot).plot(x='lon', y ='lat', col='phase',col_wrap=4)
+            new_phase_grid['temperature'].isel(pressure=iz_plot).plot(x='lon2d', y ='lat2d', col='phase',col_wrap=4)
+            #changed lon, lat to lon2d, lat2d
         
         self.inputs['atmosphere']['profile'] = new_phase_grid
 
-    def clouds_4d(self, ds=None, plot=True, iz_plot=0,iw_plot=0,verbose=True): 
+    def clouds_4d(self, ds=None, plot=True, iz_plot=0,iw_plot=0,verbose=True, calculation='reflected'): 
         """
         Regrids xarray 
         
@@ -2781,7 +2945,6 @@ class inputs():
         if 'g0' not in ds: raise Exception('Must include g0 as data component')
         if 'w0' not in ds: raise Exception('Must include w0 as data component')
         
-
         #check for pressure and change units if needed
         if 'pressure' not in ds.coords: 
             raise Exception("Must include pressure in coords and units")
@@ -2816,33 +2979,147 @@ class inputs():
         else :
             og_lat = ds.coords['lat'].values #degrees
             og_lon = ds.coords['lon'].values #degrees
+            pres = ds.coords['pressure'].values #bars  #adding this so I can add it explicitly to ds_New below
+        if 'reflected' in calculation:
+            #store so we can rotate
+            data_vars_og = {i:ds[i].values for i in ds.keys()}
+            #run through phases and regrid each one
+            new_lat_totals = []
+            new_lon_totals = []
+            shifted_grids = {}
+            for i,iphase in enumerate(phases): 
+                new_lat = np.array(self.inputs['atmosphere']['profile']['lat2d_clouds'][i,:])#*180/np.pi
+                new_lon_og = np.array(self.inputs['atmosphere']['profile']['lon2d_clouds'][i,:])#*180/np.pi
+                micro_shift = (abs(abs(new_lon_og[-1]) - abs(new_lon_og[-2])) - abs(abs(new_lon_og[0]) - abs(new_lon_og[1]))) / 2   #accounts for the difference in sizes between latxlon bins at phases!=0.
+                ng = self.inputs['disco'][iphase]['num_gangle'] # phase curve shift dependent on ngangles. Ng is used below to determine correct shift paramters
+                if ng == 6:
+                    if 68<new_lon_og[-1]< 69 and -69<new_lon_og[0]<-68 or 68<new_lon_og[0]<69 and -69<new_lon_og[-1]<-68:  # at full phase, no need for transfer. 
+                        new_lon = new_lon_og
+                        shift_back = 0
+                    elif new_lon_og[-1] > 69 and new_lon_og[0] < 0 : #for first quarter of phases 
+                        new_lon_transfer = abs(new_lon_og[-1]) - abs(new_lon_og[0]) # take the difference between the first lon and the last lon at each phase
+                        new_lon = new_lon_og - new_lon_transfer - micro_shift    # The 'transfer' will then shift each phase to the opposite side of the dayside hemisphere. This is crucial for weighting ng and nt correctly for spectrum.
+                        #add total shift statement
+                        shift_back = -new_lon_transfer - micro_shift
+                    elif new_lon_og[-1] > 69 and new_lon_og[0] > 0:  # Second quarter of phases
+                        new_lon_transfer = new_lon_og[-1] + new_lon_og[0]
+                        new_lon = new_lon_og - new_lon_transfer - micro_shift
+                        #print("new_lon 2nd Q", new_lon)
+                        shift_back = -new_lon_transfer - micro_shift
+                    elif new_lon_og[-1] < -69 and new_lon_og[0] < 0: # third quarter of phases
+                        new_lon_transfer = new_lon_og[-1] + new_lon_og[0]
+                        new_lon = new_lon_og - new_lon_transfer + micro_shift #new_lon_transfer here is negative, so we are adding
+                        shift_back = -new_lon_transfer + micro_shift # - 180
+                    elif new_lon_og[-1] < -69 and new_lon_og[0] > 0: #last quarter of phases 
+                        new_lon_transfer = abs(new_lon_og[-1]) - abs(new_lon_og[0]) # take the difference between the first lon and the last lon at each phase
+                        new_lon = new_lon_og + new_lon_transfer + micro_shift # The 'transfer' will then shift each phase to the opposite side of the dayside hemisphere. This is crucial for weighting ng and nt correctly for spectrum.
+                        #add total shift statement
+                        shift_back = new_lon_transfer + micro_shift # - 180
+                if ng >= 10:
+                    if 76<new_lon_og[-1]< 77 and -77<new_lon_og[0]<-76 or 76<new_lon_og[0]<77 and -77<new_lon_og[-1]<-76:  # at full phase, no need for transfer. 
+                        new_lon = new_lon_og
+                        shift_back = 0
+                    elif new_lon_og[-1] > 77 and new_lon_og[0] < 0 : #for first quarter of phases 
+                        new_lon_transfer = abs(new_lon_og[-1]) - abs(new_lon_og[0]) # take the difference between the first lon and the last lon at each phase
+                        new_lon = new_lon_og - new_lon_transfer - micro_shift # The 'transfer' will then shift each phase to the opposite side of the dayside hemisphere. This is crucial for weighting ng and nt correctly for spectrum.
+                        #add total shift statement
+                        shift_back = -new_lon_transfer - micro_shift
+                    elif new_lon_og[-1] > 77 and new_lon_og[0] > 0:  # Second quarter of phases
+                        new_lon_transfer = new_lon_og[-1] + new_lon_og[0]
+                        new_lon = new_lon_og - new_lon_transfer - micro_shift
+                        #print("new_lon 2nd Q", new_lon)
+                        shift_back = -new_lon_transfer - micro_shift
+                    elif new_lon_og[-1] < -77 and new_lon_og[0] < 0: # third quarter of phases
+                        new_lon_transfer = new_lon_og[-1] + new_lon_og[0]
+                        new_lon = new_lon_og - new_lon_transfer + micro_shift #new_lon_transfer here is negative, so we are adding
+                        shift_back = -new_lon_transfer + micro_shift - 180
+                    elif new_lon_og[-1] < -77 and new_lon_og[0] > 0: #last quarter of phases 
+                        new_lon_transfer = abs(new_lon_og[-1]) - abs(new_lon_og[0]) # take the difference between the first lon and the last lon at each phase
+                        new_lon = new_lon_og + new_lon_transfer + micro_shift # The 'transfer' will then shift each phase to the opposite side of the dayside hemisphere. This is crucial for weighting ng and nt correctly for spectrum.
+                        #add total shift statement
+                        shift_back = new_lon_transfer + micro_shift - 180
 
-        #store so we can rotate
-        data_vars_og = {i:ds[i].values for i in ds.keys()}
-        #run through phases and regrid each one
-        shifted_grids = {}
-        for i,iphase in enumerate(phases): 
-            new_lat = self.inputs['disco'][iphase]['latitude']*180/np.pi#to degrees
-            new_lon = self.inputs['disco'][iphase]['longitude']*180/np.pi#to degrees
-            total_shift = (iphase*180/np.pi + shift[i]) % 360 
-            change_zero_pt = og_lon +  total_shift
-            change_zero_pt[change_zero_pt>360]=change_zero_pt[change_zero_pt>360]%360 #such that always between -180 and 180
-            change_zero_pt[change_zero_pt>180]=change_zero_pt[change_zero_pt>180]%180-180 #such that always between -180 and 180
-            #ds.coords['lon'].values = change_zero_pt
-            split = np.argmin(abs(change_zero_pt + 180)) #find point where we should shift the grid
-            for idata in data_vars_og.keys():
-                swap1 = data_vars_og[idata][0:split,:,:]
-                swap2 = data_vars_og[idata][split:,:,:]
-                data = np.concatenate((swap2,swap1))
-                ds[idata].values = data
-            shifted_grids[iphase] = regrid_xarray(ds, latitude=new_lat, longitude=new_lon)
-        new_phase_grid=xr.concat(list(shifted_grids.values()), pd.Index(list(shifted_grids.keys()), name='phase'))
+                new_lat_totals.append(new_lat)
+                new_lon_totals.append(new_lon)
+                #total_shift = (iphase*180/np.pi + (shift[i] - shift_back)) % 360
+                # total_shift = (iphase*180/np.pi + (shift[i] + shift_back)) % 360
+                total_shift = (iphase*180/np.pi + shift[i]) % 360 
+                change_zero_pt = og_lon +  total_shift + shift_back
+                change_zero_pt[change_zero_pt>360]=change_zero_pt[change_zero_pt>360]%360 #such that always between -180 and 180
+                change_zero_pt[change_zero_pt>180]=change_zero_pt[change_zero_pt>180]%180-180 #such that always between -180 and 180
+                split = np.argmin(abs(change_zero_pt + 180)) #find point where we should shift the grid
+                for idata in data_vars_og.keys():
+                    swap1 = data_vars_og[idata][0:split,:,:]
+                    swap2 = data_vars_og[idata][split:,:,:]
+                    data = np.concatenate((swap2,swap1))
+                    ds[idata].values = data
+                shifted_grids[iphase] = regrid_xarray(ds, latitude=new_lat, longitude=new_lon)
 
-        if plot: 
-            new_phase_grid['opd'].isel(pressure=iz_plot,wno=iw_plot).plot(x='lon', y ='lat', col='phase',col_wrap=4)
-        
-        self.inputs['clouds']['profile'] = new_phase_grid
-        self.inputs['clouds']['wavenumber'] = ds.coords['wno'].values
+                ## we need a lon_total that is len(phase) x len(lon regrid) as ARRAY, not list
+                new_lat_totals_array = np.array(new_lat_totals)
+                new_lon_totals_array = np.array(new_lon_totals)
+
+            # creates phase as a coord
+            stacked_phase_grid=xr.concat(list(shifted_grids.values()), pd.Index(list(shifted_grids.keys()), name='phase'), join='override')  ## join=override gets rid of errant lon values
+
+            # put data into a dataset
+            ds_New = xr.Dataset(
+                data_vars=dict(
+                ),
+                coords=dict(
+                    lon2d=(["phase","lon"], new_lon_totals_array,{'units': 'degrees'}), #required. Errors when named lon
+                    lat2d=(["phase","lat"], new_lat_totals_array,{'units': 'degrees'}), #required
+                    pressure=(["pressure"], pres,{'units': 'bar'})#required*
+                ),
+                attrs=dict(description="coords with vectors"),
+            )
+            new_phase_grid = ds_New
+
+            # Now we need to add stacked_phase_grid Data Vars to new_phase_grid, and also add Phase to coords
+            
+            # Lets use merge with compat=override (use data_vars from 1st dataset)
+            # This adds a new, 2D coord named 'lon2d' (not 'lon') and 'lat2d' (not 'lon). Lon2d needs to be specified for phase_curve
+            new_phase_grid = xr.merge([stacked_phase_grid, new_phase_grid], compat='override', join='right')
+
+            #print(" Cloud Phase Grid XArray", new_phase_grid)
+
+            if plot: 
+                #new_phase_grid['opd'].isel(pressure=iz_plot,wno=iw_plot).plot(x='lon2d', y ='lat2d', col='phase',col_wrap=4)
+                new_phase_grid['opd'].isel(pressure=iz_plot,wno=iw_plot).plot(x='lon2d', y ='lat2d', col='phase',col_wrap=4)
+            
+            self.inputs['clouds']['profile'] = new_phase_grid
+            self.inputs['clouds']['wavenumber'] = ds.coords['wno'].values
+
+        elif 'thermal' in calculation: # copy-paste of original clouds_4d
+                #store so we can rotate
+            data_vars_og = {i:ds[i].values for i in ds.keys()}
+            #run through phases and regrid each one
+            shifted_grids = {}
+            for i,iphase in enumerate(phases): 
+                new_lat = self.inputs['disco'][iphase]['latitude']*180/np.pi#to degrees
+                new_lon = self.inputs['disco'][iphase]['longitude']*180/np.pi#to degrees
+                total_shift = (iphase*180/np.pi + shift[i]) % 360 
+                change_zero_pt = og_lon +  total_shift
+                change_zero_pt[change_zero_pt>360]=change_zero_pt[change_zero_pt>360]%360 #such that always between -180 and 180
+                change_zero_pt[change_zero_pt>180]=change_zero_pt[change_zero_pt>180]%180-180 #such that always between -180 and 180
+                #ds.coords['lon'].values = change_zero_pt
+                split = np.argmin(abs(change_zero_pt + 180)) #find point where we should shift the grid
+                for idata in data_vars_og.keys():
+                    swap1 = data_vars_og[idata][0:split,:,:]
+                    swap2 = data_vars_og[idata][split:,:,:]
+                    data = np.concatenate((swap2,swap1))
+                    ds[idata].values = data
+                shifted_grids[iphase] = regrid_xarray(ds, latitude=new_lat, longitude=new_lon)
+            new_phase_grid=xr.concat(list(shifted_grids.values()), pd.Index(list(shifted_grids.keys()), name='phase'))
+
+            if plot: 
+                new_phase_grid['opd'].isel(pressure=iz_plot,wno=iw_plot).plot(x='lon', y ='lat', col='phase',col_wrap=4)
+            
+            self.inputs['clouds']['profile'] = new_phase_grid
+            self.inputs['clouds']['wavenumber'] = ds.coords['wno'].values
+
+        else:
+            raise Exception("Must include 'reflected' or 'thermal' in calculation")
 
     def surface_reflect(self, albedo, wavenumber, old_wavenumber = None):
         """
@@ -3148,6 +3425,7 @@ class inputs():
         results = Parallel(n_jobs=n_cpu)(delayed(run_virga)(ilon,ilat) for ilon in range(ng) for ilat in range(nt))
         
         wno_grid = 1e4/results[0]['wave']
+        wno_grid_sorted = sorted(wno_grid)
         nwno = len(wno_grid)
         pres = results[0]['pressure']
 
@@ -3173,7 +3451,8 @@ class inputs():
                 lon=(["lon"], lon,{'units': 'degrees'}),#required
                 lat=(["lat"], lat,{'units': 'degrees'}),#required
                 pressure=(["pressure"], pres,{'units': 'bar'}),#required
-                wno=(["wno"], wno_grid,{'units': 'cm^(-1)'})#required for clouds
+                # wno=(["wno"], wno_grid,{'units': 'cm^(-1)'})#required for clouds
+                wno=(["wno"], wno_grid_sorted,{'units': 'cm^(-1)'})#required for clouds
             ),
             attrs=dict(description="coords with vectors"),
         )
@@ -3306,7 +3585,7 @@ class inputs():
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='pollack',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
         p_reference=1, rt_method='toon', stream=2, toon_coefficients="quadrature",
-        single_form='explicit', calculate_fluxes='off', query='nearest_neighbor',
+        single_form='explicit', calculate_fluxes='off', 
         w_single_form='TTHG', w_multi_form='TTHG', psingle_form='TTHG', 
         w_single_rayleigh = 'on', w_multi_rayleigh='on', psingle_rayleigh='on', 
         get_lvl_flux = False):
@@ -3350,10 +3629,6 @@ class inputs():
         single_form : str 
             form of the phase function can either be written as an 'explicit' henyey greinstein 
             or it can be written as a 'legendre' expansion. Default is 'explicit'
-        query : str 
-            method to grab opacities. either "nearest_neighbor" or "interp" which 
-            interpolates based on 4 nearest neighbors. Default is nearest_neighbor
-            which is significantly faster.
         w_single_form : str 
             Single scattering phase function approximation for SH
         w_multi_form : str 
@@ -3410,14 +3685,11 @@ class inputs():
         self.inputs['approx']['rt_params']['SH']['psingle_rayleigh'] = SH_rayleigh_options(printout=False).index(psingle_rayleigh)
         self.inputs['approx']['rt_params']['SH']['calculate_fluxes'] = SH_calculate_fluxes_options(printout=False).index(calculate_fluxes)
 
-
-        self.inputs['opacities']['query'] = query_options().index(query)
-
         self.inputs['approx']['p_reference']= p_reference
         
 
     def phase_curve(self, opacityclass,  full_output=False, 
-        plot_opacity= False,n_cpu =1 ): 
+        plot_opacity= False,n_cpu =1,verbose=True ): 
         """
         Run phase curve 
         Parameters
@@ -3433,12 +3705,16 @@ class inputs():
         phases = self.inputs['phase_angle']
         calculation = self.inputs['disco']['calculation']
         all_geom = self.inputs['disco']
+        #print("all_geom", all_geom)
         all_profiles = self.inputs['atmosphere']['profile']
         all_cld_profiles = self.inputs['clouds']['profile']
 
         def run_phases(iphase):
             self.inputs['phase_angle'] = iphase[1]
             self.inputs['atmosphere']['profile'] = all_profiles.isel(phase=iphase[0])
+
+            if verbose: print("Currently computing Phase", iphase)
+
             self.inputs['disco'] = all_geom[iphase[1]]
             if not isinstance(all_cld_profiles, type(None)):
                 self.inputs['clouds']['profile'] = all_cld_profiles.isel(phase=iphase[0])
@@ -3886,8 +4162,11 @@ class inputs():
                 #NO Background, just CIA + whatever in gases_fly
                 #ck_db=os.path.join(__refdata__, 'climate_INPUTS/sonora_2020_feh'+mhdeq+'_co_'+CtoOdeq+'.data.196')
                 opacityclass = opannection(ck=True, 
-                    ck_db=opacityclass.ck_filename,filename_db=filename_db,
-                    deq = True,on_fly=True,gases_fly=gases_fly)
+                                           ck_db=opacityclass.ck_filename,
+                                           filename_db=filename_db,
+                                           deq = True,
+                                           on_fly=True,
+                                           gases_fly=gases_fly)
             else:
                 #phillips comparison (discontinued) 
                 #background + gases 
@@ -3901,7 +4180,7 @@ class inputs():
             if cloudy == 1:    
                 wv661 = 1e4/opacityclass.wno
                 opd_cld_climate,g0_cld_climate,w0_cld_climate = initiate_cld_matrices(opd_cld_climate,g0_cld_climate,w0_cld_climate,wv196,wv661)
-            
+
             #Rerun star so that F0PI can now be on the 
             #661 grid 
             if 'nostar' in self.inputs['star']['database']:
@@ -4231,6 +4510,8 @@ def load_planet(df, opacity, phase_angle = 0, stellar_db='ck04models', verbose=F
         #define gravity
         start_case.gravity(mass=Mp, mass_unit=u.Unit('M_jup'),
                             radius=Rp, radius_unit=u.Unit('R_jup')) #any astropy units available
+        
+
 
         #define star
         start_case.star(opacity, temp,logmh,logg,radius=Rstar, radius_unit=u.Unit('R_sun'),
@@ -4356,9 +4637,6 @@ def SH_calculate_fluxes_options(printout=True):
 def raman_options():
     """Retrieve options for raman scattering approximtions"""
     return ["oklopcic","pollack","none"]
-def query_options():
-    """Retrieve options for querying opacities """
-    return ["nearest_neighbor","interp"]
 
 def evolution_track(mass=1, age='all'):
     """
@@ -5927,4 +6205,3 @@ def correct_profile(temp,pressure,wh,min_temp):
 
     return temp
 '''
-

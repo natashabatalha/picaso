@@ -654,9 +654,9 @@ class RetrieveCKs():
     on_fly : bool, deprecated
         deprecated, used to turn on and off the old method of doing diseq with 
     """
-    def __init__(self, ck_dir, cont_dir, wave_range=None, 
-        deq=False, gases_fly=None, on_fly=False):
+    def __init__(self, ck_dir, cont_dir, wave_range=None, deq=False, gases_fly=None, on_fly=False):
         self.ck_filename = ck_dir
+        self.gases_fly = gases_fly
 
         #check to see if new hdf5 files are being used 
         if 'hdf5' in self.ck_filename: 
@@ -665,8 +665,7 @@ class RetrieveCKs():
         else: 
             #read in the full abundance file sot hat we can check the number of kcoefficient layers 
             #this should either be 1460 or 1060
-            self.full_abunds =  pd.read_csv(os.path.join(self.ck_filename,'full_abunds'),
-                sep='\s+')
+            self.full_abunds =  pd.read_csv(os.path.join(self.ck_filename,'full_abunds'), sep='\s+')
             self.kcoeff_layers = self.full_abunds.shape[0]
 
         if deq == False :
@@ -686,36 +685,28 @@ class RetrieveCKs():
             self.get_available_rayleigh()
             #self.run_cia_spline() #not actually being used
         
-        elif deq == True : # ) and (on_fly== True) :
-            #self.get_gauss_pts_661_1460() repetetive code function
-            
+        elif deq == True:            
             if 'hdf5' not in self.ck_filename: 
                 self.get_legacy_data_1460(wave_range)
             
             self.get_new_wvno_grid_661()
             
             opa_filepath  = os.path.join(__refdata__, 'climate_INPUTS/661')
-            self.load_kcoeff_arrays_first(opa_filepath,gases_fly)
+            self.load_kcoeff_arrays_first(opa_filepath)
             self.db_filename = cont_dir
             self.get_available_continuum()
             self.get_available_rayleigh()
-            #self.run_cia_spline_661() #not actually being used
 
-        
-        #elif (deq == True) and (on_fly == False) :
-            #this option follows the old method where we used 
-            #661 fortran files computed by T.Karidali
-            #this is why we have to use the 1060 files instead 
-            #of the 1460 files
-        #    self.get_legacy_data_1060(wave_range,deq=deq)
-        #    self.get_new_wvno_grid_661()
-            
-        #    opa_filepath  = os.path.join(__refdata__, 'climate_INPUTS/661')
-        #    self.load_kcoeff_arrays(opa_filepath)
-        #    self.db_filename = cont_dir
-        #    self.get_available_continuum()
-        #    self.get_available_rayleigh()
-        #    self.run_cia_spline_661()
+
+        if isinstance(self.gases_fly, list) and len(self.gases_fly) > 0:
+            # If a list of gases is provided, use the on‐the‐fly method.
+            self.get_opacities = self.get_opacities_deq_onfly
+        else:
+            # Otherwise, use the premixed method.
+            self.get_opacities = self.__class__.get_opacities.__get__(self)
+
+
+
         return
 
     def get_h5_data(self):
@@ -730,8 +721,10 @@ class RetrieveCKs():
             self.temps = f["temperatures"][:]   
             self.gauss_pts = f["gauss_pts"][:]  
             self.gauss_wts = f["gauss_wts"][:] 
+
             #want the axes to be [npressure, ntemperature, nwave, ngauss ]
             self.kappa =f["kcoeffs"][:] 
+
             self.full_abunds =  pd.DataFrame(data=f["abunds"][:] ,
                                              columns=[x.decode('utf-8') for x in f["abunds_map"][:]])
             
@@ -1142,23 +1135,27 @@ class RetrieveCKs():
         self.molecular_opa = ln_kappa*6.02214086e+23  #avogadro constant!        
       
     
-    def mix_my_opacities_gasesfly(self,bundle,atmosphere,gases_fly):
+    def mix_my_opacities_gasesfly(self, atmosphere):
         """
         Top Function to perform "on-the-fly" mixing and then interpolating of 5 opacity sources from Amundsen et al. (2017)
         """
         nlayer=atmosphere.c.nlayer
+
+
+        #mixes = []
+        #for imol in self.gases_fly: 
+        #    mixes += [bundle.inputs['atmosphere']['profile'][imol].values]
+
         mixes = []
-        for imol in gases_fly: 
-            mixes += [bundle.inputs['atmosphere']['profile'][imol].values]
-                
-        
+        for imol in self.gases_fly: 
+            mixes += [atmosphere.layer['mixingratios'][imol].values]
+ 
         indices, t_interp,p_interp = self.get_mixing_indices(atmosphere) # gets nearest neighbor indices
 
         # Mix all opacities in the four nearest neighbors of your T(P) profile
         # these nearest neighbors will be used for interpolation
         
-        kappa_mixed = mix_all_gases_gasesfly(self.kappas,mixes,
-                        np.array(self.gauss_pts),np.array(self.gauss_wts),indices)
+        kappa_mixed = mix_all_gases_gasesfly(self.kappas,mixes, np.array(self.gauss_pts),np.array(self.gauss_wts),indices)
 
         kappa = np.zeros(shape=(nlayer,self.nwno,self.ngauss))
         
@@ -1275,7 +1272,7 @@ class RetrieveCKs():
         self.molecular_opa = np.exp(self.kappa[ind_p, ind_t, :, :])*6.02214086e+23  #avogadro constant!        
 
 
-    def load_kcoeff_arrays_first(self,path,gases_fly):
+    def load_kcoeff_arrays_first(self,path):
         """
         This loads and returns the kappa tables from
         opacity_factory.compute_ck_molecular()
@@ -1291,7 +1288,7 @@ class RetrieveCKs():
         check_hdf5=glob.glob(os.path.join(path,'*.hdf5'))
         check_npy=glob.glob(os.path.join(path,'*.npy'))
         self.kappas = []
-        for imol in gases_fly: 
+        for imol in self.gases_fly: 
             if os.path.join(path,f'{imol}_1460.hdf5') in check_hdf5:
                 with h5py.File(os.path.join(path,f'{imol}_1460.hdf5'), "r") as f:
                     #in a future code version we could get these things from the hdf5 file and not assume the 661 table
@@ -1320,6 +1317,9 @@ class RetrieveCKs():
         self.delta_wno = dwni_new
         self.nwno = len(wvno_new)
 
+
+
+
     def get_continuum(self, atmosphere):
         #open connection 
         cur, conn = self.open_local()
@@ -1330,7 +1330,6 @@ class RetrieveCKs():
     
         cia_molecules = atmosphere.continuum_molecules
 
-    
         self.continuum_opa = {key[0]+key[1]:np.zeros((nlayer,self.nwno)) for key in cia_molecules}
         #continuum
         #find nearest temp for cia grid
@@ -1414,9 +1413,8 @@ class RetrieveCKs():
                 self.continuum_opa[i][ind,:] = ln_kappa
 
         conn.close()
-        
 
-    def get_opacities(self, atmosphere,exclude_mol=1):
+    def get_opacities(self, atmosphere, exclude_mol=1):
         """
         Gets opacities from the premixed tables only 
 
@@ -1429,7 +1427,7 @@ class RetrieveCKs():
         self.get_continuum(atmosphere)
         self.get_pre_mix_ck(atmosphere)
     
-    def get_opacities_deq_onfly(self, bundle, atmosphere,gases_fly=None):
+    def get_opacities_deq_onfly(self, atmosphere, exclude_mol=1):
         """
         Gets opacities from the individual gas CK tables and mixes them 
         accordingly 
@@ -1440,9 +1438,8 @@ class RetrieveCKs():
             Not yet functional for CK option since they are premixed. For individual 
             CK molecules, this will ignore the optical contribution from one molecule. 
         """
- 
         self.get_continuum(atmosphere)
-        self.mix_my_opacities_gasesfly(bundle , atmosphere,gases_fly)
+        self.mix_my_opacities_gasesfly(atmosphere)
 
     def adapt_array(arr):
         """needed to interpret bytes to array"""
@@ -1553,17 +1550,21 @@ class RetrieveCKs():
         self.full_abunds['pressure']= self.pressures[self.pressures>0]
         self.full_abunds['temperature'] = np.concatenate([[i]*max(self.nc_p) for i in self.temps])[self.pressures>0]
 
+
     ###### BEGIN deprecated functions ######
     # These are all from the old Karilid method of diseq
     # The disequilibrium on the fly code replaces these 
-    def load_kcoeff_arrays_deprecate(self,path):
+    def load_kcoeff_arrays_deprecate(self, path):
         """
         This loads and returns the kappa tables from Theodora's bin_mol files
         will have this very hardcoded.
         use this func only once before run begins
         """
         max_wind = 670 # this can change as well but hopefully not
+
+
         n_windows = 661 # wait for 196 , then this is 196
+
         npres = 18 # max pres grid #
         ntemp = 60 # max temp grid #
 
@@ -1640,19 +1641,22 @@ class RetrieveCKs():
         self.kappa_nh3 = knh3[:,:,0:self.nwno,0:self.ngauss]
         self.kappa_ch4 = kch4[:,:,0:self.nwno,0:self.ngauss]
 
-    def mix_my_opacities_deprecate(self,bundle,atmosphere):
+    def mix_my_opacities_deprecate(self, atmosphere):
         """
         Top Function to perform "on-the-fly" mixing and then interpolating of 5 opacity sources from Amundsen et al. (2017)
         """
-        mix_co =   bundle.inputs['atmosphere']['profile']['CO'] # mixing ratio of CO
-        mix_h2o =  bundle.inputs['atmosphere']['profile']['H2O'] # mixing ratio of H2O
-        mix_ch4 =  bundle.inputs['atmosphere']['profile']['CH4'] # mixing ratio of CH4
-        mix_nh3 =  bundle.inputs['atmosphere']['profile']['NH3'] # mixing ratio of NH3
-        '''
-        mix_co2 =  bundle.inputs['atmosphere']['profile']['CO2'] # will mix now
-        mix_n2 =   bundle.inputs['atmosphere']['profile']['N2']
-        mix_hcn =   bundle.inputs['atmosphere']['profile']['HCN']
-        '''
+        #mix_co =   bundle.inputs['atmosphere']['profile']['CO'] # mixing ratio of CO
+        #mix_h2o =  bundle.inputs['atmosphere']['profile']['H2O'] # mixing ratio of H2O
+        #mix_ch4 =  bundle.inputs['atmosphere']['profile']['CH4'] # mixing ratio of CH4
+        #mix_nh3 =  bundle.inputs['atmosphere']['profile']['NH3'] # mixing ratio of NH3
+
+
+        # Access mixing ratios directly from the 'atmosphere.layer' structure
+        mix_co = atmosphere.layer['mixingratios']['CO'].values  # mixing ratio of CO
+        mix_h2o = atmosphere.layer['mixingratios']['H2O'].values  # mixing ratio of H2O
+        mix_ch4 = atmosphere.layer['mixingratios']['CH4'].values  # mixing ratio of CH4
+        mix_nh3 = atmosphere.layer['mixingratios']['NH3'].values  # mixing ratio of NH3
+
         mix_rest= np.zeros_like(mix_co) #mixing ratio of the rest of the atmosphere
         
         
@@ -1751,9 +1755,9 @@ class RetrieveCKs():
         self.full_abunds['pressure']= self.pressures[self.pressures>0]
         self.full_abunds['temperature'] = np.concatenate([[i]*max(self.nc_p) for i in self.temps])[self.pressures>0]
 
-    def get_opacities_deq_deprecate(self, bundle, atmosphere):
+    def get_opacities_deq_deprecate(self, atmosphere):
         self.get_continuum(atmosphere)
-        self.mix_my_opacities(bundle , atmosphere)
+        self.mix_my_opacities(atmosphere)
    
     def run_cia_spline_deprecate(self):
  
@@ -1835,6 +1839,9 @@ class RetrieveOpacities():
         store this in the DB as well. However, because its so fast, it doesn't take 
         a lot of time, and because its non-temperature dependent, we only have to do 
         it once. 
+    query_method : str 
+        Default = 'nearest' can also choose 'linear' for interpolation
+
     Methods 
     -------
     db_connect 
@@ -1849,7 +1856,8 @@ class RetrieveOpacities():
     get_opacities 
         Gets opacities after user specifies atmospheric profile (e.g. full PT and Composition)
     """
-    def __init__(self, db_filename, raman_data, wave_range=None,location = 'local',resample=1):
+    def __init__(self, db_filename, raman_data, wave_range=None, location = 'local', resample=1,
+        query_method='nearest'):
 
         #monochromatic opacity option forces number of gauss points to 1
         self.ngauss = 1
@@ -1864,13 +1872,25 @@ class RetrieveOpacities():
         
         #raman cross sections 
         self.raman_db = pd.read_csv(raman_data,
-                     sep='\s+', skiprows=16,header=None, names=['ji','jf','vf','c','deltanu'])
+                                    sep='\s+',
+                                    skiprows=16, 
+                                    header=None,
+                                    names=['ji','jf','vf','c','deltanu'])
         
         #compute available Rayleigh scatterers 
         self.get_available_rayleigh()
 
         self.preload=False
 
+        if query_method=='nearest':
+            # If a list of gases is provided, use the on‐the‐fly method.
+            self.get_opacities = self.get_opacities_nearest
+        elif query_method=='linear':
+            # Otherwise, use the premixed method.
+            self.get_opacities = self.__class__.get_opacities.__get__(self)
+        else: 
+            raise Exception (f'Do not recognize query method for opacities: {query_method}. Options are nearest or linear')
+    
     def open_local(self):
         """Code needed to open up local database, interpret arrays from bytes and return cursor"""
         conn = sqlite3.connect(self.db_filename, detect_types=sqlite3.PARSE_DECLTYPES)
@@ -2100,7 +2120,7 @@ class RetrieveOpacities():
         data =  dict((x+'_'+str(y), dat[::self.resample][self.loc]) for x,y,dat in data)       
         return data 
 
-    def get_opacities(self,atmosphere, exclude_mol=1):
+    def get_opacities(self, atmosphere, exclude_mol=1):
         """
         Get's opacities using the atmosphere class using interpolation for molecular, but not 
         continuum. Continuum opacity is grabbed via nearest neighbor methodology. 
@@ -2112,6 +2132,7 @@ class RetrieveOpacities():
         tlayer =atmosphere.layer['temperature']
         player = atmosphere.layer['pressure']/atmosphere.c.pconv
         molecules = atmosphere.molecules
+
         cia_molecules = atmosphere.continuum_molecules        
         #struture opacity dictionary
         self.molecular_opa = {key:np.zeros((nlayer, self.nwno)) for key in molecules}
@@ -2168,7 +2189,7 @@ class RetrieveOpacities():
   
         conn.close() 
 
-    def get_opacities_nearest(self,atmosphere,  exclude_mol=1):
+    def get_opacities_nearest(self, atmosphere, exclude_mol=1):
         """
         Get's opacities using the atmosphere class
         """
@@ -2209,7 +2230,7 @@ class RetrieveOpacities():
             else: 
                 fac = exclude_mol[i]
             for j,ind in zip(ind_pt,range(nlayer)): # multiply by avogadro constant 
-                self.molecular_opa[i][ind, :] = fac*data[i+'_'+str(j)]*6.02214086e+23 #add to opacity bundle
+                self.molecular_opa[i][ind, :] = fac*data[i+'_'+str(j)]*6.02214086e+23 #add to opacity
 
         #continuum
         #find nearest temp for cia grid
