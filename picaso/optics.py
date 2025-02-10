@@ -680,6 +680,8 @@ class RetrieveCKs():
                 raise Exception(f"There are {self.kcoeff_layers} in the full_abunds file. Currently only the 1060 or 1460 grids are supported. Please check your file input.")
             
             self.db_filename = cont_dir
+
+            #defines what continuum is available but does not load it
             self.get_available_continuum()
             self.get_available_rayleigh()
         
@@ -689,10 +691,13 @@ class RetrieveCKs():
                 self.get_legacy_data_1460(wave_range)
             
             self.get_new_wvno_grid_661()
+            
             #get avail continuum needs to be run before loader 
             #so that we can check if some molecules the user specified 
             #is actually a continuum mol
             self.db_filename = cont_dir
+
+            #defines what continuum is available but does not load it
             self.get_available_continuum()
 
             #now we can load the ktables for those gases defined in gases_fly
