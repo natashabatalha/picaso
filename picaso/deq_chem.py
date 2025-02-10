@@ -168,7 +168,6 @@ def mix_all_gases(kappa1,kappa2,kappa3,kappa4,kappa5,mix1,mix2,mix3,mix4,mix5,ga
     # k coefficients were raised to exponentials in do_mixing_mono routine so taking a log to take them back
     return np.log(kappa_mixed) # this array will be interpolated now
 
-
 @jit(nopython=True, cache=True)
 def mix_all_gases_gasesfly(kappas,mixes,gauss_pts, gauss_wts,indices):
     """
@@ -210,7 +209,6 @@ def mix_all_gases_gasesfly(kappas,mixes,gauss_pts, gauss_wts,indices):
                     kappas_at_ind = [ikappa[p_ind,t_ind,iw,:] for ikappa in kappas]
                     mix_at_ilayer = [imix[ilayer] for imix in mixes]
                     kmix_bin = do_mixing_mono_gasesfly(kappas_at_ind,mix_at_ilayer,gauss_pts,gauss_wts)
-
                     kappa_mixed[ilayer,iw,:,ct] = kmix_bin
 
                 ct+=1   
@@ -221,7 +219,9 @@ def mix_all_gases_gasesfly(kappas,mixes,gauss_pts, gauss_wts,indices):
 #@jit(nopython=True, cache=True)
 #def do_mixing_mono_gasesfly(kappa1_mono,kappa2_mono,kappa3_mono,kappa4_mono,kappa5_mono,
 #                          kappa6_mono,kappa7_mono,kappa8_mono,kappa9_mono,kappa10_mono,kappa11_mono,kappa12_mono,kappa13_mono,kappa14_mono,kappa15_mono,kappa16_mono,kappa17_mono,
-#                          mix1,mix2,mix3,mix4,mix5,mix6,mix7,mix8,mix9,mix10,mix11,mix12,mix13,mix14,mix15,mix16,mix17,gauss_pts,gauss_wts):
+# 
+#                         mix1,mix2,mix3,mix4,mix5,mix6,mix7,mix8,mix9,mix10,mix11,mix12,mix13,mix14,mix15,mix16,mix17,gauss_pts,gauss_wts):
+
 @jit(nopython=True, cache=True)
 def do_mixing_mono_gasesfly(kappas_mono,mixes,gauss_pts,gauss_wts):
     """

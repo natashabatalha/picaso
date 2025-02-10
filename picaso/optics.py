@@ -661,7 +661,6 @@ class RetrieveCKs():
         #check to see if new hdf5 files are being used 
         if 'hdf5' in self.ck_filename: 
             self.get_h5_data()
-
         else: 
             #read in the full abundance file sot hat we can check the number of kcoefficient layers 
             #this should either be 1460 or 1060
@@ -671,6 +670,7 @@ class RetrieveCKs():
         if deq == False :
         #choose get data function based on layer number
             if 'hdf5' in self.ck_filename: 
+                #if this is h5, ive already read in the data, so pass
                 pass
             elif self.kcoeff_layers==1060: 
                 self.get_legacy_data_1060(wave_range,deq=deq) #wave_range not used yet
@@ -680,21 +680,25 @@ class RetrieveCKs():
                 raise Exception(f"There are {self.kcoeff_layers} in the full_abunds file. Currently only the 1060 or 1460 grids are supported. Please check your file input.")
             
             self.db_filename = cont_dir
-            
             self.get_available_continuum()
             self.get_available_rayleigh()
-            #self.run_cia_spline() #not actually being used
         
         elif deq == True:            
             if 'hdf5' not in self.ck_filename: 
+                #if this is not an h5 file i still need to read in the legacy data
                 self.get_legacy_data_1460(wave_range)
             
             self.get_new_wvno_grid_661()
-            
-            opa_filepath  = os.path.join(__refdata__, 'climate_INPUTS/661')
-            self.load_kcoeff_arrays_first(opa_filepath)
+            #get avail continuum needs to be run before loader 
+            #so that we can check if some molecules the user specified 
+            #is actually a continuum mol
             self.db_filename = cont_dir
             self.get_available_continuum()
+
+            #now we can load the ktables for those gases defined in gases_fly
+            opa_filepath  = os.path.join(__refdata__, 'climate_INPUTS/661')
+            self.load_kcoeff_arrays_first(opa_filepath)
+            
             self.get_available_rayleigh()
 
 
@@ -1044,14 +1048,15 @@ class RetrieveCKs():
         """
         #open connection 
         cur, conn = self.open_local()
-
         #get temps
         cur.execute('SELECT temperature FROM continuum')
         self.cia_temps = np.unique(cur.fetchall())
         cur.execute('SELECT molecule FROM continuum')
         molecules = list(np.unique(cur.fetchall()))
         self.avail_continuum = molecules
-        
+        #close connection
+        conn.close()
+
     def get_pre_mix_ck(self,atmosphere):
         """
         Takes in atmosphere profile and returns an array which is 
@@ -1154,7 +1159,6 @@ class RetrieveCKs():
 
         # Mix all opacities in the four nearest neighbors of your T(P) profile
         # these nearest neighbors will be used for interpolation
-        
         kappa_mixed = mix_all_gases_gasesfly(self.kappas,mixes, np.array(self.gauss_pts),np.array(self.gauss_wts),indices)
 
         kappa = np.zeros(shape=(nlayer,self.nwno,self.ngauss))
@@ -1300,24 +1304,25 @@ class RetrieveCKs():
                     #self.gauss_wts = f["gauss_wts"][:] 
                     #want the axes to be [npressure, ntemperature, nwave, ngauss ]
                     array = f["kcoeffs"][:] 
+                    self.kappas += [array]
             elif os.path.join(path,f'{imol}_1460.npy') in check_npy:
                 msg = 'Warning: npy files for DEQ will be deprecated in a future PICASO udpate. Please download the hdf5 files, explanation here https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html'
                 warnings.warn(msg, UserWarning)
                 array = np.load(os.path.join(path,f'{imol}_1460.npy'))
+                self.kappas += [array]
+            elif imol in ''.join(self.avail_continuum):
+                msg = f'Found a CIA molecule, which doesnt require a correlated-K table. The gaseous opacity of {imol} will not be included unless you first create a CK table for it.'
+                warnings.warn(msg, UserWarning)    
+                self.gases_fly.pop(self.gases_fly.index(imol))        
             else: 
                 raise Exception('hdf5 or npy ck tables for individual molecules not found in {path}. Please see tutorial documentation https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html to make sure you have downloaded the needed files and placed them in this folder')
             
-            self.kappas += [array]
-
-
     def get_new_wvno_grid_661(self):
         path = os.path.join(__refdata__, 'climate_INPUTS/')#'/Users/sagnickmukherjee/Documents/GitHub/Disequilibrium-Picaso/reference/climate_INPUTS/'
         wvno_new,dwni_new = np.loadtxt(path+"wvno_661",usecols=[0,1],unpack=True)
         self.wno = wvno_new
         self.delta_wno = dwni_new
         self.nwno = len(wvno_new)
-
-
 
 
     def get_continuum(self, atmosphere):
@@ -1411,7 +1416,6 @@ class RetrieveCKs():
                                 ((t_interp)   * np.log(data_high[i+'_'+str(jhigh)])))
                 
                 self.continuum_opa[i][ind,:] = ln_kappa
-
         conn.close()
 
     def get_opacities(self, atmosphere, exclude_mol=1):
