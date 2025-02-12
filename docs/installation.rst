@@ -1,10 +1,12 @@
 Installation
 ============
 
-Python Version
---------------
+Python Version with Conda Environments
+--------------------------------------
 
-Python >= 3.8 
+Python >= 3.11 
+
+It is recommended you use Conda environments. Please check out `our conda environment tutorial <https://natashabatalha.github.io/picaso/contribution.html#using-conda-enviornments>`_.  
 
 Install with Git (recommended)
 ------------------------------

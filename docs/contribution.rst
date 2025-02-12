@@ -149,7 +149,7 @@ To create your own environment with a specific name and python package:
 
 .. code-block:: bash
 
-	conda create --name your_env_name python=3.7 -y
+	conda create --name your_env_name python=3.12 -y
 
 
 If you have specific environment variables that need to be tied to here, then you can specify them. For example, in PICASO there is the environment variable ``picaso_refdata`` and ``PYSYN_CDBS``: 
