@@ -1976,3 +1976,131 @@ def regrid(x, y, newx=None, R=None,statistic='mean'):
     return newx, y
 
 
+
+def add_metadata_item(db_path, key, value):
+    """Adds or updates a metadata item in the metadata table.
+
+    Args:
+        db_path: Path to the SQLite database file.
+        key: The metadata key.
+        value: The metadata value (will be stored as TEXT).
+    """
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+
+        # Check if the key already exists
+        cursor.execute("SELECT value FROM metadata WHERE key=?", (key,))
+        result = cursor.fetchone()
+
+        if result is None:
+            # Insert the metadata item if the key doesn't exist
+            cursor.execute("INSERT INTO metadata (key, value) VALUES (?, ?)", (key, value))
+            conn.commit()
+            print(f"Metadata item '{key}' added.")
+        else:
+            # Update the metadata item if the key already exists
+            cursor.execute("UPDATE metadata SET value=? WHERE key=?", (value, key))
+            conn.commit()
+            print(f"Metadata item '{key}' updated.")
+
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+
+def get_metadata_item(db_path, key):
+  """Retrieves a metadata item by key.
+
+  Args:
+      db_path: Path to the SQLite database file.
+      key: The metadata key.
+
+  Returns:
+      The metadata value associated with the key, or None if the key is not found.
+  """
+  try:
+      conn = sqlite3.connect(db_path)
+      cursor = conn.cursor()
+
+      cursor.execute("SELECT value FROM metadata WHERE key=?", (key,))
+      result = cursor.fetchone()
+
+      if result:
+          return result[0]  # Return the value (first element of the tuple)
+      else:
+          return None
+
+  except sqlite3.Error as e:
+      print(f"An error occurred: {e}")
+      return None  # Return None in case of error
+  finally:
+      if conn:
+          conn.close()
+def add_metadata_table(db_path):
+    """Adds a metadata table to the SQLite database if it doesn't exist.
+
+    Args:
+        db_path: Path to the SQLite database file.
+    """
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+
+        # Check if the metadata table already exists
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='metadata'")
+        result = cursor.fetchone()
+
+        if result is None:
+            # Create the metadata table if it doesn't exist.  Using TEXT for value
+            # allows for storing various data types as strings, including JSON.
+            cursor.execute("""
+                CREATE TABLE metadata (
+                    key TEXT PRIMARY KEY,
+                    value TEXT
+                )
+            """)
+            conn.commit()
+            print(f"Metadata table created in {db_path}")
+        else:
+            print(f"Metadata table already exists in {db_path}")
+
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+def add_all_metadata(filename, version_number, default, resolution, wavemin, wavemax, zenodo_doi):
+    """
+    Adds metadata to an opacity file
+
+    Parameters
+    ----------
+    filename : str 
+        sqlite name
+    version : str 
+        Version number it goes with 
+    default : bool 
+        Is this a default for this verison 
+    resolution : str 
+        resolution resampled to 
+    wavemin : str 
+        minimum wavelength in um 
+    wavemax : str 
+        maximum wavelength in um 
+    zenodo_doi : str 
+        zenodo posting 
+    """
+    add_metadata_table(filename)
+    if default: 
+        add = 'default_'
+    else: 
+        add = ''
+    add_metadata_item(f, 'version',add+version_number)
+    add_metadata_item(f, 'resolution',resolution)
+    add_metadata_item(f, 'wavemin',wavemin)
+    add_metadata_item(f, 'wavemax',wavemax)
+    add_metadata_item(f, 'zenodo',zenodo_doi)

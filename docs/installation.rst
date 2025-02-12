@@ -199,8 +199,8 @@ Where the folder ``grid/`` contains whatever ``pysynphot`` data files you have d
 	1. STScI serves these files in a few different places, with a few different file structures. **PySynphot only cares that the environment variable points to a path with a folder called `grid`. So do not worry if `grp/hst/cdbs` appears different.** 
 
 
-Additional Data Products
-========================
+Autodownloads
+=============
 
 .. toctree::
    :maxdepth: 2
