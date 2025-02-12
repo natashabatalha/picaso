@@ -9,9 +9,9 @@ import json
 data_config = {
     "resampled_opacity":{
         'default':{
-           'url':'https://zenodo.org/records/3759675/files/opacities.db?download=1',
-            'filename':'opacities.db',
-            'description':'7.34 GB file resampled at R=10,000 from 0.3-15um. This is sufficient for doing R=100 JWST calculations and serves as a good default opacity database for exploration.',
+           'url':'https://zenodo.org/records/14861730/files/opacities_0.3_15_R15000.db.tar.gz?download=1',
+            'filename':'opacities_0.3_15_R15000.db',
+            'description':'7.34 GB file resampled at R=15,000 from 0.3-15um. This is sufficient for doing R=100 JWST calculations and serves as a good default opacity database for exploration.',
             'default_destination':'$picaso_refdata/opacities/opacities.db'    
         },
         'R60000,0.6-6um':{

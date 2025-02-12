@@ -42,7 +42,7 @@ Below you will create an environment variable that points to this directory ``re
 Download Opacities 
 ------------------
 
-1) Download a the recommended default `Resampled Opacity File from Zenodo <https://doi.org/10.5281/zenodo.3759675>`_. 
+1) Download a the recommended default `Resampled Opacity File from Zenodo <https://zenodo.org/records/14861730>`_. 
 2) Once this is download rename and add it to `reference/opacities/opacities.db`. You will likely have to change the name of the file. 
 
 If you use the `picaso.data.get_data` function (see tutorial) it will do this for you automatically. 
@@ -86,7 +86,6 @@ Now you can check that your variable has been defined properly:
 	ls
 	base_cases chemistry config.json evolution opacities version.md
 
-Your opacities folder shown above should include the file ``opacities.db`` `file downloaded from zenodo <https://doi.org/10.5281/zenodo.3759675>`_. This is mostly a matter of preference, as PICASO allows you to point to an opacity directory. Personally, I like to store something with the reference data so that I don't have to constantly specify a folder path when running the code. 
 
 Method 2: Add directly to python code
 ````````````````````````````````````````
