@@ -35,12 +35,20 @@ Download PICASO Reference Data
 .. note::
 	`PICASO` >3.0 will not work with PICASO 2.3 reference folder. Please download the new reference folder if you are using PICASO 3.0 
 
-1) Download the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_. You should already this if you did a Git clone. **Make sure that your reference folder matches the version number of ``PICASO``**. Check the version number in the file ``reference/version.md``. 
+Download the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_. You should already this if you did a Git clone. **Make sure that your reference folder matches the version number of ``PICASO``**. Check the version number in the file ``reference/version.md``. 
 
 Below you will create an environment variable that points to this directory ``reference``. We will call this ``$picaso_refdata``. 
 
-2) Download a `Resampled Opacity File from Zenodo <https://doi.org/10.5281/zenodo.3759675>`_. Note that there are a few different versions. Any is acceptable depending on your resolution and wavelength needs. Put this db file in the `Opacities reference Folder you downloaded from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_. **You may need to rename it opacities.db and place into `reference/opacities` folder**. The file placed into reference/opacities will serve as your default file. You can point to other opacity files using justdoit.opannection. 
+Download Opacities 
+------------------
 
+1) Download a the recommended default `Resampled Opacity File from Zenodo <https://doi.org/10.5281/zenodo.3759675>`_. 
+2) Once this is download rename and add it to `reference/opacities/opacities.db`. You will likely have to change the name of the file. 
+
+If you use the `picaso.data.get_data` function (see tutorial) it will do this for you automatically. 
+
+.. note::
+	Note you can use `picaso.data.get_data() to help you downloaded opacities since there are a few diffrent databases available (see tutorial below). Any is acceptable as the default depending on your resolution and wavelength needs. Only one opacities.db file needs to exist in your referece/opacities folder. The others you just specify a path to in `picaso.justdoit.opannection`. 
 
 Create Environment Variable 
 ---------------------------
@@ -191,8 +199,8 @@ Where the folder ``grid/`` contains whatever ``pysynphot`` data files you have d
 	1. STScI serves these files in a few different places, with a few different file structures. **PySynphot only cares that the environment variable points to a path with a folder called `grid`. So do not worry if `grp/hst/cdbs` appears different.** 
 
 
-Additional Help Getting PICASO Data
-===================================
+Additional Data Products
+========================
 
 .. toctree::
    :maxdepth: 2
