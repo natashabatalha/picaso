@@ -174,6 +174,16 @@
         "fundingFinding",
         "research"
       ]
+    },
+    {
+      "login": "rewaclarkbush",
+      "name": "rewaclarkbush",
+      "avatar_url": "https://avatars.githubusercontent.com/u/85771931?v=4",
+      "profile": "https://github.com/rewaclarkbush",
+      "contributions": [
+        "code",
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
