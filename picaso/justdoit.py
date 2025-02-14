@@ -11,7 +11,7 @@ from .justplotit import numba_cumsum, find_nearest_2d, mean_regrid
 from .deq_chem import quench_level,initiate_cld_matrices
 from .build_3d_input import regrid_xarray
 from .photochem import run_photochem
-
+from .io_utils import write_all_profiles
 
 from virga import justdoit as vj
 from scipy.interpolate import UnivariateSpline, interp1d
@@ -3951,6 +3951,7 @@ class inputs():
         TEMP1 = self.inputs['climate']['guess_temp']
         all_profiles = np.empty((1,len(TEMP1)))
         all_profiles[0,:] = TEMP1
+        write_all_profiles(save_all_profiles, all_profiles)
         pressure = self.inputs['climate']['pressure']
         t_table = self.inputs['climate']['t_table']
         p_table = self.inputs['climate']['p_table']
@@ -3998,6 +3999,7 @@ class inputs():
             cloudy, cld_species,mh,fsed,flag_hack, save_profile,all_profiles,
             opd_cld_climate,g0_cld_climate,w0_cld_climate,
             first_call_ever=True, verbose=verbose)
+        write_all_profiles(save_all_profiles, all_profiles)
 
         # second convergence call
         it_max= 7
@@ -4014,12 +4016,14 @@ class inputs():
                     cld_species, mh,fsed,flag_hack,save_profile,all_profiles,
                     opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, 
                     flux_plus_ir_attop, verbose=verbose )   
+        write_all_profiles(save_all_profiles, all_profiles)
 
         if chemeq_first: 
             pressure, temp, dtdp, nstr_new, flux_plus_final, df, all_profiles, cld_out, final_conv_flag=find_strat(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                              t_table, p_table, grad, cp, opacityclass, grav, 
                              rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, save_profile,all_profiles,opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,
                              verbose=verbose)
+            write_all_profiles(save_all_profiles, all_profiles)
             if cloudy == 1:
                 opd_now,w0_now,g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
             else:
@@ -4251,16 +4255,17 @@ class inputs():
                 pressure, temperature, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,cld_out,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,_  = profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                 temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
                 rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , 
-            cloudy, cld_species,mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile,
-            all_profiles, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,
-            g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,
-            photo_inputs_dict,
-            on_fly=on_fly, gases_fly=gases_fly, verbose=verbose)
+                cloudy, cld_species,mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile,
+                all_profiles, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,
+                g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,
+                photo_inputs_dict,
+                on_fly=on_fly, gases_fly=gases_fly, verbose=verbose)
                 
                 pressure, temp, dtdp, nstr_new, flux_plus_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,cld_out,photo_inputs_dict,final_conv_flag=find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                                 t_table, p_table, grad, cp, opacityclass, grav, 
                                 rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly,
                              verbose=verbose)
+                write_all_profiles(save_all_profiles, all_profiles)
                 if cloudy == 1:
                     opd_now,w0_now,g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
                 else:
@@ -4271,6 +4276,7 @@ class inputs():
                 pressure, temperature, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,cld_out,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict, df  = profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                 temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
                 rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , cloudy, cld_species,mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile,all_profiles, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly)
+                write_all_profiles(save_all_profiles, all_profiles)
                 nstr_new = nstr.copy()
                 flux_plus_final = flux_plus_ir_attop.copy()
                 temp=temperature.copy()
@@ -4308,16 +4314,7 @@ class inputs():
             df_cld = vj.picaso_format(opd_now, w0_now, g0_now, pressure = cld_out['pressure'], wavenumber=1e4/cld_out['wave'])
             all_out['cld_output_picaso'] = df_cld
             all_out['virga_output'] = cld_out
-        if isinstance(save_all_profiles, str):
-            if verbose:
-                print(f"Saving all T(P) profiles to {save_all_profiles}")
-            profiles_file = h5py.File(save_all_profiles, 'w')
-            gp = profiles_file.create_group("all_profiles")
-            num_digits = len(str(len(all_profiles)))
-            for (i, profile_to_save) in enumerate(all_profiles):
-                i_str = str(i).zfill(num_digits)
-                gp.create_dataset(f"pt_{i_str}", data=profile_to_save)
-            profiles_file.close()
+        write_all_profiles(save_all_profiles, all_profiles)
         if as_dict: 
             return all_out
         else: 
