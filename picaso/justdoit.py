@@ -740,7 +740,7 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
         gravity = gravity * check_units(picaso_class.inputs['planet']['gravity_unit'])
     #otherwise find gravity from user input
     else: 
-        gravity = planet_params.get('logg', np.nan) 
+        gravity = planet_params.get('gravity', np.nan) 
     
     mp = picaso_class.inputs['planet'].get('mass',np.nan)
     if np.isfinite(mp):
@@ -910,12 +910,16 @@ def input_xarray(xr_usr, opacity,p_reference=10, calculation='planet'):
     mp = _finditem(planet_params,'mp')
     rp = _finditem(planet_params,'rp')
     logg = _finditem(planet_params,'logg')
+    gravity = _finditem(planet_params,'gravity')
 
     if ((not isinstance(mp, type(None))) & (not isinstance(rp, type(None)))):
         case.gravity(mass = mp['value'], mass_unit=u.Unit(mp['unit']),
                     radius=rp['value'], radius_unit=u.Unit(rp['unit']))
     elif (not isinstance(logg, type(None))): 
-        case.gravity(gravity = logg['value'], gravity_unit=u.Unit(logg['unit']))
+        case.gravity(gravity = 10**logg['value'], gravity_unit=u.Unit(logg['unit']))
+    elif (not isinstance(gravity, type(None))): 
+        case.gravity(gravity = gravity['value'], gravity_unit=u.Unit(gravity['unit']))
+
     else: 
         print('Mass and Radius or gravity not provided in xarray, user needs to run gravity function')
 
