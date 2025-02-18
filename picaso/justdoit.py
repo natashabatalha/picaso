@@ -1770,7 +1770,7 @@ class inputs():
                     if verbose: print("Turning off Raman for Non-H2 atmosphere")
                     self.inputs['approx']['rt_params']['common']['raman'] = 2
 
-    def premix_atmosphere(self, opa, df=None, filename=None, cold_trap = False, **pd_kwargs):
+    def premix_atmosphere(self, opa, df=None, filename=None, cold_trap = False, cld_species = None, **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
         Sets number of layers in model.  
@@ -1787,7 +1787,9 @@ class inputs():
         exclude_mol : list of str 
             (Optional) List of molecules to ignore from file
         cold_trap : bool
-            Option to cold trap volatile condensible species (H2O, CH4, NH3), default = False
+            Option to cold trap condensible species, default = False
+        cld_species : list of str
+            (Optional) List of condensing species
         pd_kwargs : kwargs 
             Key word arguments for pd.read_csv to read in supplied atmosphere file 
         """
@@ -1815,30 +1817,33 @@ class inputs():
 
         # # cold trap the condensibles
         if cold_trap == True:
-            # invert h2o abundance to find first layer of condensation by looking for deviation from constant value
-            inverted_h2o = self.inputs['atmosphere']['profile']['H2O'][::-1]
-            cond_layer = self.nlevel - (np.where(inverted_h2o[6:] != inverted_h2o[6])[0][0] + 6) # skip bottom 6 layers to avoid deep layer abundances
-            # cond_layer = np.argmax(np.diff(self.inputs['atmosphere']['profile']['H2O']))
-            for i in range(cond_layer, -1, -1): 
-                if self.inputs['atmosphere']['profile']['H2O'][i] > self.inputs['atmosphere']['profile']['H2O'][i+1]:
-                    self.inputs['atmosphere']['profile']['H2O'][i] = self.inputs['atmosphere']['profile']['H2O'][i+1]
-            
-            # invert nh3 abundance to find first layer of condensation by looking for deviation from constant value
-            inverted_nh3 = self.inputs['atmosphere']['profile']['NH3'][::-1]
-            cond_layer = self.nlevel - (np.where(inverted_nh3[6:] != inverted_nh3[6])[0][0] + 6) # skip bottom 6 layers to avoid deep layer abundances
-            for i in range(cond_layer, -1, -1): 
-                if self.inputs['atmosphere']['profile']['NH3'][i] > self.inputs['atmosphere']['profile']['NH3'][i+1]:
-                    self.inputs['atmosphere']['profile']['NH3'][i] = self.inputs['atmosphere']['profile']['NH3'][i+1]
+            if cld_species is None:
+                raise Exception("cold trapping can only be done when clouds are turned on, please turn on clouds and provide a list of condensing species")
+            for mol in cld_species:
+                # invert abundance to find first layer of condensation by looking for deviation from constant value
+                inverted = self.inputs['atmosphere']['profile'][mol][::-1]
+                # cutoff = int(0.1 * self.nlevel)  # Dynamically ignore bottom 10% of layers
+                # cond_layer = self.nlevel - (np.where(inverted[cutoff:] != inverted[cutoff])[0][0] + cutoff)
 
-            # invert CH4 abundance to find first layer of condensation by looking for deviation from constant value
-            inverted_ch4 = self.inputs['atmosphere']['profile']['CH4'][::-1]
-            cond_layer = self.nlevel - (np.where(inverted_ch4[6:] != inverted_ch4[6])[0][0] + 6) # skip bottom 6 layers to avoid deep layer abundances
-            for i in range(cond_layer, -1, -1): 
-                if self.inputs['atmosphere']['profile']['CH4'][i] > self.inputs['atmosphere']['profile']['CH4'][i+1]:
-                    self.inputs['atmosphere']['profile']['CH4'][i] = self.inputs['atmosphere']['profile']['CH4'][i+1]
+                # need to ignore the bottom 10% of layers to avoid the changes in deep atmosphere to properly identify condensation layer
+                cutoff = int(0.1 * self.nlevel)  # Dynamically ignore bottom 10% of layers
+                relevant_layers = inverted[:self.nlevel - cutoff]
+                grad = np.abs(np.gradient(relevant_layers))  # Compute abundance gradient
+
+                unique_vals, counts = np.unique(inverted, return_counts=True)
+                mode_value = unique_vals[np.argmax(counts)]
+                threshold = mode_value * 0.01 # Define a threshold for significant drop (adjustable)
+
+                # Find the first layer where the abundance starts to fall off
+                cond_idx = np.where(grad > threshold)[0]
+                cond_layer = self.nlevel - cutoff - cond_idx[0]
+
+                for i in range(cond_layer, -1, -1): 
+                    if self.inputs['atmosphere']['profile'][mol][i] > self.inputs['atmosphere']['profile'][mol][i+1]:
+                        self.inputs['atmosphere']['profile'][mol][i] = self.inputs['atmosphere']['profile'][mol][i+1]
 
     def premix_atmosphere_diseq(self, opa, quench_levels, teff, t_mix=None, df=None, filename=None, vol_rainout = False, 
-                                quench_ph3 = True, kinetic_CO2 = True, no_ph3 = False, cold_trap=False, **pd_kwargs):
+                                quench_ph3 = True, kinetic_CO2 = True, no_ph3 = False, cold_trap=False, cld_species = None, **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
         Sets number of layers in model.  
@@ -1859,7 +1864,9 @@ class inputs():
         vol_rainout : bool
             (Optional) If True, will rainout volatiles like H2O, CH4 and NH3 as in equilibrium model when applicable
         cold_trap : bool
-            Option to cold trap volatile condensible species (H2O, NH3), default = False
+            Option to cold trap condensible species, default = False
+        cld_species : list of str
+            (Optional) List of condensing species
         pd_kwargs : kwargs 
             Key word arguments for pd.read_csv to read in supplied atmosphere file 
         """
@@ -1974,23 +1981,6 @@ class inputs():
                     # if dq_ch4[i] > 0:
                         self.inputs['atmosphere']['profile']['CH4'][i] = pvap_ch4
             
-            # # cold trap the condensibles
-            if cold_trap == True:
-                # invert h2o abundance to find first layer of condensation by looking for deviation from constant value
-                inverted_h2o = self.inputs['atmosphere']['profile']['H2O'][::-1]
-                cond_layer = self.nlevel - (np.where(inverted_h2o[10:] != inverted_h2o[10])[0][0] + 10) # skip bottom 6 layers to avoid deep layer abundances
-                # cond_layer = np.argmax(np.diff(self.inputs['atmosphere']['profile']['H2O']))
-                for i in range(cond_layer, -1, -1): 
-                    if self.inputs['atmosphere']['profile']['H2O'][i] > self.inputs['atmosphere']['profile']['H2O'][i+1]:
-                        self.inputs['atmosphere']['profile']['H2O'][i] = self.inputs['atmosphere']['profile']['H2O'][i+1]
-
-                # invert CH4 abundance to find first layer of condensation by looking for deviation from constant value
-                inverted_ch4 = self.inputs['atmosphere']['profile']['CH4'][::-1]
-                cond_layer = self.nlevel - (np.where(inverted_ch4[10:] != inverted_ch4[10])[0][0] + 10) # skip bottom 6 layers to avoid deep layer abundances
-                for i in range(cond_layer, -1, -1): 
-                    if self.inputs['atmosphere']['profile']['CH4'][i] > self.inputs['atmosphere']['profile']['CH4'][i+1]:
-                        self.inputs['atmosphere']['profile']['CH4'][i] = self.inputs['atmosphere']['profile']['CH4'][i+1]
-            
             # then quench co2, changed to CO/CH4/H2O quench point *JM ( changed back to CO2 quench point for kinetics)
             self.inputs['atmosphere']['profile']['CO2'][0:quench_levels[1]+1] = self.inputs['atmosphere']['profile']['CO2'][0:quench_levels[1]+1]*0.0 + qvmrs2[0]
 
@@ -2008,14 +1998,29 @@ class inputs():
                 #         self.inputs['atmosphere']['profile']['NH3'][i] = self.inputs['atmosphere']['profile']['NH3'][i]*0.0 + qvmrs[3]
                     # if dq_nh3[i] > 0:
                     #     self.inputs['atmosphere']['profile']['NH3'][i] = self.inputs['atmosphere']['profile']['NH3'][i]*0.0 + qvmrs[3]  
-                
+            
+            # # cold trap the condensibles
             if cold_trap == True:
-                # invert nh3 abundance to find first layer of condensation by looking for deviation from constant value
-                inverted_nh3 = self.inputs['atmosphere']['profile']['NH3'][::-1]
-                cond_layer = self.nlevel - (np.where(inverted_nh3[10:] != inverted_nh3[10])[0][0] + 10) # skip bottom 6 layers to avoid deep layer abundances
-                for i in range(cond_layer, -1, -1): 
-                    if self.inputs['atmosphere']['profile']['NH3'][i] > self.inputs['atmosphere']['profile']['NH3'][i+1]:
-                        self.inputs['atmosphere']['profile']['NH3'][i] = self.inputs['atmosphere']['profile']['NH3'][i+1]
+                if cld_species is None:
+                    raise Exception("cold trapping can only be done when clouds are turned on, please turn on clouds and provide a list of condensing species")
+                for mol in cld_species:
+                    # invert abundance to find first layer of condensation by looking for deviation from constant value
+                    inverted = self.inputs['atmosphere']['profile'][mol][::-1]
+                    # cond_layer = self.nlevel - (np.where(inverted[10:] != inverted[10])[0][0] + 10)
+
+                    # need to ignore the bottom 20% of layers to avoid the changes in deep atmosphere to properly identify condensation layer
+                    cutoff = int(0.2 * self.nlevel)  # Dynamically ignore bottom 20% of layers
+                    relevant_layers = inverted[:self.nlevel - cutoff]
+                    grad = np.abs(np.gradient(relevant_layers))  # Compute abundance gradient
+                    threshold = np.mode(grad) * 0.01 # Define a threshold for significant drop (adjustable)
+
+                    # Find the first layer where the abundance starts to fall off
+                    cond_idx = np.where(grad > threshold)[0]
+                    cond_layer = self.nlevel - cond_idx[0]
+
+                    for i in range(cond_layer, -1, -1): 
+                        if self.inputs['atmosphere']['profile'][mol][i] > self.inputs['atmosphere']['profile'][mol][i+1]:
+                            self.inputs['atmosphere']['profile'][mol][i] = self.inputs['atmosphere']['profile'][mol][i+1]
 
             self.inputs['atmosphere']['profile']['N2'][0:quench_levels[2]+1] = self.inputs['atmosphere']['profile']['N2'][0:quench_levels[2]+1]*0.0 + qvmrs2[1]
 
@@ -4352,7 +4357,7 @@ class inputs():
             bundle.phase_angle(0,num_gangle=10, num_tangle=1)
             bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
             bundle.add_pt( temp, pressure)
-            bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],cold_trap = cold_trap)
+            bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],cold_trap = cold_trap, cld_species=cld_species)
             DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
                 W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
                 frac_a,frac_b,frac_c,constant_back,constant_forward, \
@@ -4483,7 +4488,7 @@ class inputs():
 
                 # determine the chemistry now
 
-                qvmrs, qvmrs2= bundle.premix_atmosphere_diseq(opacityclass, teff = Teff, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']], quench_levels= quench_levels,t_mix=t_mix, vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3, cold_trap = cold_trap)
+                qvmrs, qvmrs2= bundle.premix_atmosphere_diseq(opacityclass, teff = Teff, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']], quench_levels= quench_levels,t_mix=t_mix, vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3, cold_trap = cold_trap, cld_species=cld_species)
                 #was for check SM
                 #bundle.inputs['atmosphere']['profile'].to_csv('/data/users/samukher/Disequilibrium-picaso/first_iteration_testpls300min500',sep='\t')
                 #raise SystemExit(0) 
@@ -4658,7 +4663,7 @@ class inputs():
             bundle = inputs(calculation='brown')
             bundle.phase_angle(0)
             bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
-            bundle.premix_atmosphere(opacityclass,df,cold_trap = cold_trap)
+            bundle.premix_atmosphere(opacityclass,df,cold_trap = cold_trap, cld_species=cld_species)
             if cloudy == 1:
                 bundle.clouds(df=df_cld)
             df_spec = bundle.spectrum(opacityclass,full_output=True)    
@@ -5145,7 +5150,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
         bundle.add_pt( temp, pressure)
         
-        bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],cold_trap = cold_trap)
+        bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],cold_trap = cold_trap, cld_species=cld_species)
 
         #grab initial abundances for moist adiabat calculation
         output_abunds = bundle.inputs['atmosphere']['profile'].T.values
@@ -5183,7 +5188,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
     bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
     bundle.add_pt( temp, pressure)
     
-    bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],cold_trap = cold_trap)
+    bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],cold_trap = cold_trap, cld_species=cld_species)
     output_abunds = bundle.inputs['atmosphere']['profile'].T.values
 
     if save_profile == 1:
@@ -5429,7 +5434,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
         bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
         bundle.add_pt( temp, pressure)
         
-        bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],cold_trap = cold_trap)
+        bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],cold_trap = cold_trap, cld_species=cld_species)
         #if save_profile == 1:
         #    all_profiles = np.append(all_profiles,bundle.inputs['atmosphere']['profile']['NH3'].values)
         if cloudy == 1 :
@@ -5729,7 +5734,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,t
         Moist adiabat or not
        If 1 this prints everything out 
     cold_trap : bool
-        Force H2O and NH3 abundances to be cold trapped after condensation. Default = False
+        Option to cold trap condensible species, default = False
     Returns
     -------
     array 
@@ -5756,7 +5761,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,t
     bundle.phase_angle(0)
     bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
     bundle.add_pt( temp, pressure)
-    bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],cold_trap = cold_trap)
+    bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],cold_trap = cold_trap, cld_species=cld_species)
 
     #get the abundances
     output_abunds = bundle.inputs['atmosphere']['profile'].T.values
@@ -5921,7 +5926,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,t
     bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
     bundle.add_pt( temp, pressure)
     
-    bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],cold_trap = cold_trap)
+    bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],cold_trap = cold_trap, cld_species=cld_species)
 
     if cloudy == 1:
         # Stopped running new cloud routine here before getting final opacities and fluxes because 
@@ -6076,7 +6081,8 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
     no_ph3 : bool
         If True, remove PH3. Default = False
     cold_trap : bool
-        Force H2O and NH3 abundances to be cold trapped after condensation. Default = False
+        Option to cold trap condensible species, default = False
+
     Returns
     -------
     array 
@@ -6103,7 +6109,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
         bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
         bundle.add_pt( temp, pressure)
 
-        bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+        bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],cold_trap = cold_trap, cld_species=cld_species)
         output_abunds = bundle.inputs['atmosphere']['profile'].T.values
     # first calculate the convective zones
         for nb in range(0,3*nofczns,3):
@@ -6173,7 +6179,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
         if save_kzz == 1:
             # all_kzz = np.append(all_kzz,t_mix)
             all_kzz = np.append(all_kzz, kz) #JM changed to not convert from t_mix to kz
-        qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, teff=target_teff, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3=no_ph3, cold_trap = cold_trap)
+        qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, teff=target_teff, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3=no_ph3, cold_trap = cold_trap, cld_species=cld_species)
         output_abunds = bundle.inputs['atmosphere']['profile'].T.values
     else :
         # Compute chemical equilibrium composition by interpolating pre-computed grid
@@ -6379,7 +6385,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
             quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, target_teff, return_mix_timescale=True)
             # print('loop t_mix:',t_mix)
             
-            qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, teff=target_teff, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3=no_ph3, cold_trap = cold_trap)
+            qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, teff=target_teff, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3=no_ph3, cold_trap = cold_trap, cld_species=cld_species)
             print("Quench Levels are CO, CO2, NH3, HCN ", quench_levels)
         else :
             # Compute chemical equilibrium composition by interpolating pre-computed grid
@@ -6898,7 +6904,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
     no_ph3 : bool
         If True, remove PH3. Default = False
     cold_trap : bool
-        Force H2O and NH3 abundances to be cold trapped after condensation. Default = False
+        Option to cold trap condensible species, default = False
         
     Returns
     -------
@@ -6926,7 +6932,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
     bundle.phase_angle(0)
     bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
     bundle.add_pt(temp, pressure)
-    bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+    bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],cold_trap=cold_trap, cld_species=cld_species)
     #get the abundances
     output_abunds = bundle.inputs['atmosphere']['profile'].T.values
     if moist == True:
@@ -7099,7 +7105,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         # print('find_strat_deq kz:',kz)
         quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, target_teff, return_mix_timescale=True)
 
-        qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, teff=target_teff, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3=no_ph3, cold_trap = cold_trap)
+        qvmrs, qvmrs2 = bundle.premix_atmosphere_diseq(opacityclass, quench_levels=quench_levels, teff=target_teff, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],t_mix=t_mix,vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3=no_ph3, cold_trap = cold_trap, cld_species=cld_species)
     else :
         # Compute chemical equilibrium composition by interpolating pre-computed grid
         #bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
