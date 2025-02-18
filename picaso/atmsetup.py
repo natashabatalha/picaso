@@ -128,6 +128,12 @@ class ATMSETUP():
                         except:
                             if i == 'e-':
                                 electrons = True
+                            elif 'guess' in i: 
+                                #this name is often added to the xarray inupt so let's not spam the user with warnings 
+                                pass 
+                            elif 'kz' in i: 
+                                #this name is often added to the xarray inupt so let's not spam the user with warnings 
+                                pass 
                             else: #don't raise exception, instead add user warning that a column has been automatically skipped
                                 self.add_warnings("Ignoring %s in input file, not recognized molecule" % i)
                                 warnings.warn("Ignoring %s in input file, not a recognized molecule" % i, UserWarning)
