@@ -192,7 +192,14 @@ class ATMSETUP():
                 if i == 'e-':
                     self.level['electrons'] = read['e-'].values
                     self.layer['electrons'] = 0.5*(self.level['electrons'][1:] + self.level['electrons'][:-1])
-                else:                   #don't raise exception, instead add user warning that a column has been automatically skipped
+                elif 'guess' in i: 
+                    #this name is often added to the xarray inupt so let's not spam the user with warnings 
+                    pass 
+                elif 'kz' in i: 
+                    #this name is often added to the xarray inupt so let's not spam the user with warnings 
+                    pass 
+                else:                   
+                    #don't raise exception, instead add user warning that a column has been automatically skipped
                     self.add_warnings("Ignoring %s in input file, not recognized molecule" % i)
                     warnings.warn("Ignoring %s in input file, not a recognized molecule" % i, UserWarning)
         
