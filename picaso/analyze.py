@@ -22,7 +22,10 @@ from .justdoit import inputs, opannection, mean_regrid, u, input_xarray, copy
 from bokeh.palettes import Cividis
 from multiprocessing import Pool
 
-
+#these are all acceptable input meta data attributes that can GridFitter will look for 
+possible_params = {'planet_params': ['rp','mp','tint', 'heat_redis','p_reference','logkzz','kzz','mh','cto','p_quench','rainout','teff','logg','gravity','m_length'],
+                   'stellar_params' : ['rs','logg','steff','feh','ms'],
+                   'cld_params': ['opd','ssa','asy','p_cloud','haze_eff','fsed']}
 
 class GridFitter(): 
     """
@@ -196,9 +199,7 @@ class GridFitter():
         None 
             Creates self.overview, and self.grid_params
         """
-        possible_params = {'planet_params': ['rp','mp','tint', 'heat_redis','p_reference','logkzz','mh','cto','p_quench','rainout','teff','logg','m_length'],
-                           'stellar_params' : ['rs','logg','steff','feh','ms'],
-                           'cld_params': ['opd','ssa','asy','p_cloud','haze_eff','fsed']}
+        
 
         #define possible grid parameters
         self.grid_params[grid_name] = {i:{j:np.array([]) for j in possible_params[i]} for i in possible_params.keys()}
