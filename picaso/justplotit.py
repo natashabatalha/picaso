@@ -1970,12 +1970,12 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
                 np.copy(clima_out['all_profiles']))
     
     nlevel = len(t_eq)
-    mols_to_plot = {i:np.zeros(len(all_profiles_eq)) for i in molecules}
-    spec = np.zeros(shape =(int(len(all_profiles_eq)/nlevel),opacity.nwno))
+    nstep = all_profiles_eq.shape[0]
+    mols_to_plot = {i:np.zeros(all_profiles_eq.size) for i in molecules}
+    spec = np.zeros(shape =(nstep,opacity.nwno))
     
-    for i in range(int(len(all_profiles_eq)/nlevel)):
-        
-        picaso_bundle.add_pt(all_profiles_eq[i*nlevel:(i+1)*nlevel], 
+    for i in range(nstep):
+        picaso_bundle.add_pt(all_profiles_eq[i], 
                              p_eq)
 
         picaso_bundle.premix_atmosphere(opacity,picaso_bundle.inputs['atmosphere']['profile'])
@@ -2006,7 +2006,7 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
             # set the width ratios between the columns
             "width_ratios": [1,1,0.1,1,1,0.1,1,1]})
 
-    temp = all_profiles_eq[0*nlevel:(0+1)*nlevel]
+    temp = all_profiles_eq[0]
     lines = {}
     for imol,col in zip(molecules,Colorblind8):
         lines[imol], = ax['B'].loglog(mols_to_plot[imol][0:nlevel], p_eq,linewidth=3,color=col, label=imol)
@@ -2050,7 +2050,7 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
         return lines
     
     def animate(i):                       
-        lines['temp'].set_xdata(all_profiles_eq[i*nlevel:(i+1)*nlevel])
+        lines['temp'].set_xdata(all_profiles_eq[i])
         
         for imol in molecules:
             lines[imol].set_xdata(mols_to_plot[imol][i*nlevel:(i+1)*nlevel])
@@ -2058,7 +2058,7 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
         lines['spec'].set_ydata(spec[i,:][wh])
         return lines
 
-    ani = animation.FuncAnimation(fig, animate, frames=int(len(all_profiles_eq)/nlevel),init_func=init,interval=50, blit=False)
+    ani = animation.FuncAnimation(fig, animate, frames=nstep,init_func=init,interval=50, blit=False)
     plt.close()
     return ani
 
