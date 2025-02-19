@@ -22,7 +22,10 @@ from .justdoit import inputs, opannection, mean_regrid, u, input_xarray, copy
 from bokeh.palettes import Cividis
 from multiprocessing import Pool
 
-
+#these are all acceptable input meta data attributes that can GridFitter will look for 
+possible_params = {'planet_params': ['rp','mp','tint', 'heat_redis','p_reference','logkzz','kzz','mh','cto','p_quench','rainout','teff','logg','gravity','m_length'],
+                   'stellar_params' : ['rs','logg','steff','feh','ms'],
+                   'cld_params': ['opd','ssa','asy','p_cloud','haze_eff','fsed']}
 
 class GridFitter(): 
     """
@@ -53,11 +56,22 @@ class GridFitter():
         in their own input
     to_fit : str 
         parameter to fit, default is transit_depth. other common is flux
+        Needs to be included in the xarray file data_vars. 
+    save_chem : bool 
+        Usually the to_fit parameter is an observable (e.g. transit depth, flux, brightness temperature)
+        But sometimes we want to also save the pressure-temperature info, 
+        the chemistry, cloud info, ect so that we can interpolate those to create 
+        spectra on the fly in a "gridtrieval". save_chem=True saves all that additional 
+        info. 
+    force_square : bool 
+        Checks to see if the grid is square and throws an error if it is not. 
+        If set to False, this check is not done
     """
     def __init__(self, grid_name, model_dir=None,
         to_fit='transit_depth', model_type='xarrays', save_chem=False, 
-        verbose=True):
+        verbose=True, force_square=True):
         self.verbose=verbose
+        self.force_square=force_square
         
         self.grids = []
         self.list_of_files = {}
@@ -65,7 +79,9 @@ class GridFitter():
         self.overview = {}
         self.wavelength={}
         self.temperature={}
-        if save_chem: self.chemistry={}
+        self.save_chem=save_chem
+        if save_chem: 
+            self.chemistry={}
         self.pressure={}
         self.spectra={}
         self.interp_params={}
@@ -75,6 +91,8 @@ class GridFitter():
             self.add_grid(grid_name, model_dir, to_fit=to_fit, save_chem=save_chem)
         elif model_type == 'user': 
             self.grids += [grid_name]
+        else: 
+            raise Exception("model_type can only be 'user' or 'xarrays'")
             
     def find_grid(self, grid_name, model_dir):
         """
@@ -97,7 +115,8 @@ class GridFitter():
         self.grids += [grid_name]
         self.find_grid(grid_name, model_dir)
         self.load_grid_params(grid_name,to_fit=to_fit,save_chem=save_chem)
-
+        if self.force_square: 
+            self.check_square(grid_name)
     def add_data(self, data_name, wlgrid_center,wlgrid_width,y_data,e_data): 
         """
         Adds data to class 
@@ -134,6 +153,33 @@ class GridFitter():
         'posteriors': self.posteriors
         }
 
+    def check_square(self,grid_name): 
+        """This function will check to make sure that your grid is square and 
+        suggest values for you to remove )
+        """
+        unique_params = copy.deepcopy(self.overview[grid_name]['planet_params'])
+        keys = copy.deepcopy(list(unique_params.keys()))
+        for i in keys:
+            if isinstance(unique_params[i],np.float64):
+                unique_params.pop(i)
+
+        pairs = []
+        all_lists = [unique_params[i] for i in unique_params.keys()]
+        
+        for combination in itertools.product(*all_lists):
+            pairs += [combination]
+        square = pd.DataFrame(pairs,columns=unique_params.keys())
+
+        all_grid = pd.DataFrame(self.grid_params[grid_name]['planet_params'])
+
+        #check if all rows are the same 
+        merged_df = pd.merge(all_grid,square, on=all_grid.columns.tolist(), how='left', indicator='_merge')
+        non_overlapping_rows = merged_df[merged_df['_merge'] == 'left_only']
+        
+        if non_overlapping_rows.shape[0]>1: 
+            self.verbose: print('Grid is not square. These values are missing')
+            self.verbose: print(grid_pairs)
+            raise Exception('force_square=True therefore we are crashing GridFitter until the folder of models has a square grid. Please remove files that are making the grid not square.') 
 
     def load_grid_params(self,grid_name,to_fit='transit_depth',
         save_chem=False):
@@ -153,9 +199,7 @@ class GridFitter():
         None 
             Creates self.overview, and self.grid_params
         """
-        possible_params = {'planet_params': ['rp','mp','tint', 'heat_redis','p_reference','logkzz','mh','cto','p_quench','rainout','teff','logg','m_length'],
-                           'stellar_params' : ['rs','logg','steff','feh','ms'],
-                           'cld_params': ['opd','ssa','asy','p_cloud','haze_eff','fsed']}
+        
 
         #define possible grid parameters
         self.grid_params[grid_name] = {i:{j:np.array([]) for j in possible_params[i]} for i in possible_params.keys()}
@@ -662,10 +706,11 @@ class GridFitter():
         return fig, ax 
 
 
-    def prep_gridtrieval(self, grid_name,add_ptchem=False):
+    def prep_gridtrieval(self, grid_name):
         """
         Preps the loaded grid for interpolated gridtrieval 
         """
+        add_ptchem=self.save_chem
         if add_ptchem:
             sqr_spec , sqr_pt, sqr_chem, uniq, offset_prior,df_grid_params = self.transform_4_interp(grid_name, add_ptchem=add_ptchem)
         else: 
@@ -1453,3 +1498,4 @@ def _get_xarray_attr(attr_dict, parameter):
             #        param = param_flt
             #        pass            
     return param
+
