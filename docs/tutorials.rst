@@ -51,8 +51,9 @@ Relevant Citatons: `Adams et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022ApJ
    Post-Processing Chemistry for 3D runs </notebooks/9b_PostProcess3Dinput-Chemistry.ipynb>
    Post-Processing Clouds for 3D runs </notebooks/9c_PostProcess3Dinput-Clouds.ipynb>
    Modeling a 3D Spectrum (Adams et al. 2022)</notebooks/9d_3DSpectra.ipynb>
-   Modeling a Phase Curve pt 1 (Robbins-Blanch et al. 2022)</notebooks/9e_PhaseCurves.ipynb>
-   Modeling a Phase Curve pt 2 (Robbins-Blanch et al. 2022)</notebooks/9f_PhaseCurves-wChemEq.ipynb>
+   Modeling a Thermal Phase Curve pt 1 (Robbins-Blanch et al. 2022)</notebooks/9e_PhaseCurves.ipynb>
+   Modeling a Thermal Phase Curve pt 2 (Robbins-Blanch et al. 2022)</notebooks/9f_PhaseCurves-wChemEq.ipynb>
+   Modeling a Reflected Light Phase Curve (Hamill et al. 2024)</notebooks/9g_ReflectedPhaseCurve.ipynb>
 
 1D Climate Modeling
 -------------------
