@@ -1338,7 +1338,7 @@ class RetrieveCKs():
                 msg=f'hdf5 or npy ck tables for {imol} not found in {path}. Please see tutorial documentation https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html to make sure you have downloaded the needed files and placed them in this folder'
                 warnings.warn(msg, UserWarning)
                 gases_fly.pop(gases_fly.index(imol))
-        if len(gases_fly)==0: raise Exception('Uh oh. No molecules are left to mix. Its likely you have not downloaded the correct files. Please see tutorial documentation https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html to make sure you have downloaded the needed files and placed them in this folder'
+        if len(gases_fly)==0: raise Exception('Uh oh. No molecules are left to mix. Its likely you have not downloaded the correct files. Please see tutorial documentation https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html to make sure you have downloaded the needed files and placed them in this folder')
 
         self.gases_fly = gases_fly
 
