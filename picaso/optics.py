@@ -8,6 +8,7 @@ from numpy import log10
 import json
 import os
 import glob 
+import copy
 from numba import jit
 from bokeh.plotting import figure, show, output_file
 from bokeh.palettes import inferno
@@ -1294,10 +1295,11 @@ class RetrieveCKs():
         gases_fly : bool 
             Specifies what gasses to mix on the fly 
         """
+        gases_fly = copy.deepcopy(self.gases_fly)
         check_hdf5=glob.glob(os.path.join(path,'*.hdf5'))
         check_npy=glob.glob(os.path.join(path,'*.npy'))
         self.kappas = []
-        for imol in self.gases_fly: 
+        for imol in gases_fly: 
             if os.path.join(path,f'{imol}_1460.hdf5') in check_hdf5:
                 with h5py.File(os.path.join(path,f'{imol}_1460.hdf5'), "r") as f:
                     #in a future code version we could get these things from the hdf5 file and not assume the 661 table
@@ -1318,10 +1320,13 @@ class RetrieveCKs():
             elif imol in ''.join(self.avail_continuum):
                 msg = f'Found a CIA molecule, which doesnt require a correlated-K table. The gaseous opacity of {imol} will not be included unless you first create a CK table for it.'
                 warnings.warn(msg, UserWarning)    
-                self.gases_fly.pop(self.gases_fly.index(imol))        
+                gases_fly.pop(gases_fly.index(imol))        
             else: 
-                raise Exception('hdf5 or npy ck tables for individual molecules not found in {path}. Please see tutorial documentation https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html to make sure you have downloaded the needed files and placed them in this folder')
-            
+                msg=f'hdf5 or npy ck tables for individual molecules not found in {path}. Please see tutorial documentation https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html to make sure you have downloaded the needed files and placed them in this folder'
+                warnings.warn(msg, UserWarning)
+                gases_fly.pop(gases_fly.index(imol))
+        self.gases_fly = gases_fly
+
     def get_new_wvno_grid_661(self):
         path = os.path.join(__refdata__, 'climate_INPUTS/')#'/Users/sagnickmukherjee/Documents/GitHub/Disequilibrium-Picaso/reference/climate_INPUTS/'
         wvno_new,dwni_new = np.loadtxt(path+"wvno_661",usecols=[0,1],unpack=True)
