@@ -1,8 +1,9 @@
 from .atmsetup import ATMSETUP
 from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d
 
-from .fluxes import tidal_flux, get_kzz#,set_bb_deprecate 
+from .fluxes import tidal_flux, get_kzz
 from .climate import  calculate_atm_deq, did_grad_cp, convec, calculate_atm, t_start, growdown, growup, get_fluxes, moist_grad
+
 
 from .wavelength import get_cld_input_grid
 from .optics import RetrieveOpacities,compute_opacity,RetrieveCKs
@@ -19,8 +20,6 @@ from numpy import exp, sqrt,log
 from numba import jit,njit
 from scipy.io import FortranFile
 
-
-
 import os
 import pickle as pk
 import numpy as np
@@ -29,7 +28,6 @@ import copy
 import json
 import warnings
 with warnings.catch_warnings():#
-
     warnings.filterwarnings("ignore")
     import pysynphot as psyn
 import astropy.units as u
@@ -55,7 +53,7 @@ else:
 
 
 if not os.path.exists(os.environ.get('PYSYN_CDBS')): 
-    raise Exception("You have not downloaded the Stellar reference data. Follow the installation instructions here: https://natashabatalha.github.io/picaso/installation.html#download-and-link-pysynphot-stellar-data. If you think you have already downloaded it then you likely just need to set your environment variable. You can use `os.environ['PYSYN_CDBS']=<yourpath>` directly in python if you run the line of code before you import PICASO.")
+    warnings.warn("You have not downloaded the Stellar reference data. If you only plan on working on substellar objects that is okay but for exoplanets it will be required. Follow the installation instructions here: https://natashabatalha.github.io/picaso/installation.html#download-and-link-pysynphot-stellar-data. If you think you have already downloaded it then you likely just need to set your environment variable. You can use `os.environ['PYSYN_CDBS']=<yourpath>` directly in python if you run the line of code before you import PICASO.")
 
 #hello peter
 
@@ -165,7 +163,13 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
     #set star parameters
     radius_star = inputs['star']['radius']
-    F0PI = np.zeros(nwno) + 1.
+
+    #need to account for case where there is no star
+    if 'nostar' in inputs['star']['database']:
+        FOPI = np.zeros(opacityclass.nwno) + 1.0
+    else:
+        F0PI = opacityclass.unshifted_stellar_spec * ((inputs['star']['radius']/inputs['star']['semi_major'])**2)
+
     b_top = 0.
     #semi major axis
     sa = inputs['star']['semi_major']
@@ -209,14 +213,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
     
     #opacity assumptions
-    query_method = inputs['opacities'].get('query',0)
     exclude_mol = inputs['atmosphere']['exclude_mol']
 
-    #only use nearest neighbor if not using CK method and not using specied by user
-    if ((query_method == 0) & (isinstance(getattr(opacityclass,'ck_filename',1),int))): 
-        get_opacities = opacityclass.get_opacities_nearest
-    elif ((query_method == 1) | (isinstance(getattr(opacityclass,'ck_filename',1),str))):
-        get_opacities = opacityclass.get_opacities
+    get_opacities = opacityclass.get_opacities
 
     nlevel = atm.c.nlevel
     nlayer = atm.c.nlayer
@@ -266,16 +265,17 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                         b_top=b_top)
                                         #get_toa_intensity=1, get_lvl_flux=0)"""
                     
-                    xint,lvl_fluxes = get_reflected_1d(nlevel, wno,nwno,ng,nt,
-                                    DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
-                                    GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
-                                    DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
-                                    atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
-                                    single_phase,multi_phase,
-                                    frac_a,frac_b,frac_c,constant_back,constant_forward,
-                                    get_toa_intensity=1,get_lvl_flux=int(atm.get_lvl_flux),
-                                    toon_coefficients=toon_coefficients,b_top=b_top) 
 
+                    xint,lvl_fluxes = get_reflected_1d(nlevel, wno,nwno,ng,nt,
+                                                    DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
+                                                    GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
+                                                    DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
+                                                    atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
+                                                    single_phase,multi_phase,
+                                                    frac_a,frac_b,frac_c,constant_back,constant_forward,
+                                                    get_toa_intensity=1,get_lvl_flux=int(atm.get_lvl_flux),
+                                                    toon_coefficients=toon_coefficients,b_top=b_top) 
+                                        
                 xint_at_top += xint*gauss_wts[ig]
 
                 if get_lvl_flux: 
@@ -295,8 +295,13 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
             flux_at_top = 0 
 
+            
+            # Get integrated fluxes per level even when not running climate calculation
             if get_lvl_flux: 
                 atm.lvl_output_thermal = dict(flux_minus=0, flux_plus=0, flux_minus_mdpt=0, flux_plus_mdpt=0)
+                calc_type=1
+            else: 
+                calc_type=0
 
 
             for ig in range(ngauss): # correlated-k - loop (which is different from gauss-tchevychev angle)
@@ -308,14 +313,15 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                     #                                    DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                     #                                    atm.level['pressure'],ubar1,
                     #                                    atm.surf_reflect, atm.hard_surface, tridiagonal)
+
                     flux,lvl_fluxes  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
                                                         DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                                         atm.level['pressure'],ubar1,
                                                         atm.surf_reflect, atm.hard_surface,
                                                         #setting wno to zero since only used for climate, calctype only gets TOA flx 
-                                                        wno*0, calc_type=0)
-
-
+                                                        wno*0,
+                                                        calc_type=calc_type)
+                    
 
                 elif rt_method == 'SH':
                     flux, flux_layers = get_thermal_SH(nlevel, wno, nwno, ng, nt, atm.level['temperature'],
@@ -470,14 +476,27 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     #COMPRESS FULL TANGLE-GANGLE FLUX OUTPUT ONTO 1D FLUX GRID
 
     #for reflected light use compress_disco routine
-    #this takes the intensity as a functin of tangle/gangle and creates a 1d spectrum
+    #this takes the intensity as a function of tangle/gangle and creates a 1d spectrum
     if  ('reflected' in calculation):
         albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
         returns['albedo'] = albedo 
 
+        # This is attempt to get the compress_disco to return the integrated fluxes
+        # However, its mixing an albedo calc and an itegration calc I think
+
         if ((rt_method == 'toon') & get_lvl_flux): 
-            for i in atm.lvl_output_reflected.keys():
-                atm.lvl_output_reflected[i] = compress_disco(nwno,cos_theta,atm.lvl_output_reflected[i], gweight, tweight,F0PI)   
+            #for i in atm.lvl_output_reflected.keys():
+            for key, data in atm.lvl_output_reflected.items():
+                #atm.lvl_output_reflected[i] = compress_disco(nwno,cos_theta,atm.lvl_output_reflected[i], gweight, tweight,F0PI)   
+
+                # Get the number of layers to do the layer slicing
+                _, _, nlayer, nwno_data = data.shape
+
+                # Integrate each layer
+                atm.lvl_output_reflected[key] = np.array([compress_disco(nwno_data,
+                                                                         cos_theta,
+                                                                         data[:, :, layer_idx, :],
+                                                                         gweight, tweight, np.zeros(nwno) + 1.) for layer_idx in range(nlayer)])
 
 
         #see equation 18 Batalha+2019 PICASO 
@@ -1035,7 +1054,14 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
 
     #set star parameters
     radius_star = inputs['star']['radius']
-    F0PI = np.zeros(nwno) + 1.
+
+    #need to account for case where there is no star
+    if 'nostar' in inputs['star']['database']:
+        FOPI = np.zeros(opacityclass.nwno) + 1.0
+    else:
+        F0PI = opacityclass.unshifted_stellar_spec * ((inputs['star']['radius']/inputs['star']['semi_major'])**2)
+
+
     #semi major axis
     sa = inputs['star']['semi_major']
 
@@ -1062,6 +1088,7 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     #gets both continuum and needed rayleigh cross sections 
     #relies on continuum molecules are added into the opacity 
     #database. Rayleigh molecules are all in `rayleigh.py` 
+
     atm.get_needed_continuum(opacityclass.rayleigh_molecules,
                              opacityclass.avail_continuum)
 
@@ -1072,12 +1099,8 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     no_opacities = [i for i in atm.molecules if i not in opacityclass.molecules]
     atm.add_warnings('No computed opacities for: '+','.join(no_opacities))
     atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
-    query_method = inputs['opacities'].get('query',0)
 
-    if query_method == 0: 
-        get_opacities = opacityclass.get_opacities_nearest
-    elif query_method == 1:
-        get_opacities = opacityclass.get_opacities
+    get_opacities = opacityclass.get_opacities
 
     nlevel = atm.c.nlevel
     nlayer = atm.c.nlayer
@@ -1146,6 +1169,7 @@ def opannection(wave_range = None, filename_db = None, raman_db = None,
     """
     inputs = json.load(open(os.path.join(__refdata__,'config.json')))
 
+
     if isinstance(ck_db, type(None)): 
         #only allow raman if no correlated ck is used 
         if isinstance(raman_db,type(None)): raman_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['raman'])
@@ -1175,11 +1199,14 @@ def opannection(wave_range = None, filename_db = None, raman_db = None,
                 raise Exception('The CK filename that you have selected appears still be .tar.gz. Please unpack and rerun')
             else: 
                 raise Exception('The CK filename that you have selected does not exist. Please make sure you have downloaded and unpacked the right CK file.')
+            
         opacityclass=RetrieveCKs(
                     ck_db, 
                     filename_db, 
                     wave_range = wave_range, 
-                    deq=deq,on_fly=on_fly,gases_fly = gases_fly)
+                    deq=deq,
+                    on_fly=on_fly,
+                    gases_fly = gases_fly)
 
     return opacityclass
 
@@ -1628,7 +1655,11 @@ class inputs():
         #now convert to erg/cm2/s/wavenumber
         #flux_star = flux_star/wno_star**2
 
+        # Get a bool for whether we want level fluxes
+        get_lvl_flux = self.inputs['approx'].get('get_lvl_flux', False)
+
         wno_planet = opannection.wno
+
         #this adds stellar shifts 'self.raman_stellar_shifts' to the opacity class
         #the cross sections are computed later 
         if self.inputs['approx']['rt_params']['common']['raman'] == 0: 
@@ -1640,7 +1671,9 @@ class inputs():
             
             opannection.compute_stellar_shits(fine_wno_star, fine_flux_star)
             bin_flux_star = opannection.unshifted_stellar_spec
-        elif 'climate' in self.inputs['calculation']: 
+
+        elif ('climate' in self.inputs['calculation'] or (get_lvl_flux)):
+            """
             #stellar flux of star 
             #print(len(wno_planet),len(flux_star[0:-1]),len(flux_star[1:]))
             # np.diff(1/wno_star) is wavelength window in cm.
@@ -1668,11 +1701,41 @@ class inputs():
             #fix issue if there are zeros in certain bins 
             mask = np.logical_or(np.isnan(fine_flux_star), fine_flux_star == 0)
             if len(fine_wno_star[mask])>20:
-                print(f"Having to replace {len(fine_wno_star[mask])} zeros or nans in stellar spectra with interpolated values. It is advised you check this is correct and something has not gone wrong by plotting classname.inputs['star']['wno'] vs classname.inputs'star'['flux']")
+                print(f"Having to replace {len(fine_wno_star[mask])} zeros or nans in stellar spectra with interpolated values.It is advised you check this is correct and something has not gone wrong by plotting classname.inputs['star']['wno'] vs classname.inputs'star'['flux']")
                 non_zero_indices = np.where(~mask)
                 zero_nans = np.interp(fine_wno_star[mask], fine_wno_star[non_zero_indices], fine_flux_star[non_zero_indices])
                 fine_flux_star[mask] = zero_nans  
+            """
+            # Ensure valid values for interpolation
+            mask_valid = flux_star > 1e-30  
+            if not np.all(mask_valid):
+                wno_star, flux_star = wno_star[mask_valid], flux_star[mask_valid]
+
+            # Log-space interpolation
+            interpolator = interp1d(np.log10(wno_star), np.log10(flux_star), kind='linear',
+                                    fill_value='extrapolate', bounds_error=False)
+            fine_flux_star = 10**interpolator(np.log10(wno_planet))
+
+            # Compute binned flux using trapezoidal integration
+            fine_flux_star[:] = [np.trapz(fine_flux_star[(wno_planet >= wno_planet[i]) & 
+                                                        (wno_planet <= wno_planet[i+1])], 
+                                        x=-1/wno_planet[(wno_planet >= wno_planet[i]) & 
+                                                        (wno_planet <= wno_planet[i+1])]) 
+                                if i < len(wno_planet) - 1 else 0 for i in range(len(wno_planet))]
+
+            # Linear extrapolation for the last point
+            if len(wno_planet) > 2:
+                slope = (fine_flux_star[-2] - fine_flux_star[-3]) / (wno_planet[-2] - wno_planet[-3])
+                fine_flux_star[-1] = fine_flux_star[-2] + slope * (wno_planet[-1] - wno_planet[-2])
+
+            # Handle NaNs and zeros
+            mask = np.logical_or(np.isnan(fine_flux_star), fine_flux_star == 0)
+            if np.sum(mask) > 20:
+                print(f"Having to replace {len(fine_wno_star[mask])} zeros or nans in stellar spectra")
+                non_zero_indices = np.where(~mask)[0]
+                fine_flux_star[mask] = np.interp(wno_planet[mask], wno_planet[non_zero_indices], fine_flux_star[non_zero_indices])
             
+ 
             opannection.unshifted_stellar_spec = fine_flux_star  
             bin_flux_star = fine_flux_star          
         else :
@@ -3720,7 +3783,7 @@ class inputs():
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='pollack',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
         p_reference=1, rt_method='toon', stream=2, toon_coefficients="quadrature",
-        single_form='explicit', calculate_fluxes='off', query='nearest_neighbor',
+        single_form='explicit', calculate_fluxes='off', 
         w_single_form='TTHG', w_multi_form='TTHG', psingle_form='TTHG', 
         w_single_rayleigh = 'on', w_multi_rayleigh='on', psingle_rayleigh='on', 
         get_lvl_flux = False):
@@ -3764,10 +3827,6 @@ class inputs():
         single_form : str 
             form of the phase function can either be written as an 'explicit' henyey greinstein 
             or it can be written as a 'legendre' expansion. Default is 'explicit'
-        query : str 
-            method to grab opacities. either "nearest_neighbor" or "interp" which 
-            interpolates based on 4 nearest neighbors. Default is nearest_neighbor
-            which is significantly faster.
         w_single_form : str 
             Single scattering phase function approximation for SH
         w_multi_form : str 
@@ -3823,9 +3882,6 @@ class inputs():
         self.inputs['approx']['rt_params']['SH']['w_multi_rayleigh'] = SH_rayleigh_options(printout=False).index(w_multi_rayleigh)
         self.inputs['approx']['rt_params']['SH']['psingle_rayleigh'] = SH_rayleigh_options(printout=False).index(psingle_rayleigh)
         self.inputs['approx']['rt_params']['SH']['calculate_fluxes'] = SH_calculate_fluxes_options(printout=False).index(calculate_fluxes)
-
-
-        self.inputs['opacities']['query'] = query_options().index(query)
 
         self.inputs['approx']['p_reference']= p_reference
         
@@ -4416,8 +4472,11 @@ class inputs():
                 #NO Background, just CIA + whatever in gases_fly
                 #ck_db=os.path.join(__refdata__, 'climate_INPUTS/sonora_2020_feh'+mhdeq+'_co_'+CtoOdeq+'.data.196')
                 opacityclass = opannection(ck=True, 
-                    ck_db=opacityclass.ck_filename,filename_db=filename_db,
-                    deq = True,on_fly=True,gases_fly=gases_fly)
+                                           ck_db=opacityclass.ck_filename,
+                                           filename_db=filename_db,
+                                           deq = True,
+                                           on_fly=True,
+                                           gases_fly=gases_fly)
             else:
                 #phillips comparison (discontinued) 
                 #background + gases 
@@ -4431,7 +4490,7 @@ class inputs():
             if cloudy == 1:    
                 wv661 = 1e4/opacityclass.wno
                 opd_cld_climate,g0_cld_climate,w0_cld_climate = initiate_cld_matrices(opd_cld_climate,g0_cld_climate,w0_cld_climate,wv196,wv661)
-            
+
             #Rerun star so that F0PI can now be on the 
             #661 grid 
             if 'nostar' in self.inputs['star']['database']:
@@ -4794,6 +4853,8 @@ def load_planet(df, opacity, phase_angle = 0, stellar_db='ck04models', verbose=F
         #define gravity
         start_case.gravity(mass=Mp, mass_unit=u.Unit('M_jup'),
                             radius=Rp, radius_unit=u.Unit('R_jup')) #any astropy units available
+        
+
 
         #define star
         start_case.star(opacity, temp,logmh,logg,radius=Rstar, radius_unit=u.Unit('R_sun'),
@@ -4919,9 +4980,6 @@ def SH_calculate_fluxes_options(printout=True):
 def raman_options():
     """Retrieve options for raman scattering approximtions"""
     return ["oklopcic","pollack","none"]
-def query_options():
-    """Retrieve options for querying opacities """
-    return ["nearest_neighbor","interp"]
 
 def evolution_track(mass=1, age='all'):
     """
@@ -7232,4 +7290,3 @@ def correct_profile(temp,pressure,wh,min_temp):
 
     return temp
 '''
-

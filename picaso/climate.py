@@ -1609,10 +1609,13 @@ def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None, fthin_cl
     nlevel = atm.c.nlevel
     nlayer = atm.c.nlayer
     
-    if on_fly == False:
-        opacityclass.get_opacities_deq(bundle,atm)
-    else:
-        opacityclass.get_opacities_deq_onfly(bundle,atm,gases_fly=gases_fly)
+    opacityclass.get_opacities(atm)
+
+    #not needed anymore since we set this at the onset 
+    #if on_fly == False:
+    #    opacityclass.get_opacities_deq(bundle,atm)
+    #else:
+    #    opacityclass.get_opacities_deq_onfly(bundle,atm,gases_fly=gases_fly)
 
     #check if patchy clouds are requested
     if do_holes == True:
@@ -1620,6 +1623,9 @@ def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None, fthin_cl
         atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
         full_output=False, plot_opacity=False, fthin_cld = fthin_cld, do_holes = True)
 
+    #NEB? Why is this run twice when do_holes=True? 
+    #Nothing is actually done with this additional run, it looks like it is just overwriting what 
+    #has been done with the fthin and do_holes parameters. 
     DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman, f_deltaM= compute_opacity(
             atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
             full_output=False, plot_opacity=False)

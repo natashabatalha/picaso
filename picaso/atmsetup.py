@@ -2,7 +2,6 @@ from .elements import ELEMENTS as ele
 import json 
 import os
 import re
-from .io_utils import read_json
 import astropy.units as u
 import astropy.constants as c
 import pandas as pd
@@ -248,7 +247,6 @@ class ATMSETUP():
         self.continuum_molecules = []
 
         simple_names = [convert_to_simple(i) for i in self.molecules]
-        
         if "H2" in simple_names:
             self.continuum_molecules += [['H2','H2']]
         if ("H2" in simple_names) and ("He" in simple_names):
