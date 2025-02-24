@@ -2110,17 +2110,21 @@ class inputs():
                 for mol in cld_species:
                     # invert abundance to find first layer of condensation by looking for deviation from constant value
                     inverted = self.inputs['atmosphere']['profile'][mol][::-1]
-                    # cond_layer = self.nlevel - (np.where(inverted[10:] != inverted[10])[0][0] + 10)
+                    # cutoff = int(0.1 * self.nlevel)  # Dynamically ignore bottom 10% of layers
+                    # cond_layer = self.nlevel - (np.where(inverted[cutoff:] != inverted[cutoff])[0][0] + cutoff)
 
-                    # need to ignore the bottom 20% of layers to avoid the changes in deep atmosphere to properly identify condensation layer
-                    cutoff = int(0.2 * self.nlevel)  # Dynamically ignore bottom 20% of layers
+                    # need to ignore the bottom 10% of layers to avoid the changes in deep atmosphere to properly identify condensation layer
+                    cutoff = int(0.1 * self.nlevel)  # Dynamically ignore bottom 10% of layers
                     relevant_layers = inverted[:self.nlevel - cutoff]
                     grad = np.abs(np.gradient(relevant_layers))  # Compute abundance gradient
-                    threshold = np.mode(grad) * 0.01 # Define a threshold for significant drop (adjustable)
+
+                    unique_vals, counts = np.unique(inverted, return_counts=True)
+                    mode_value = unique_vals[np.argmax(counts)]
+                    threshold = mode_value * 0.01 # Define a threshold for significant drop (adjustable)
 
                     # Find the first layer where the abundance starts to fall off
                     cond_idx = np.where(grad > threshold)[0]
-                    cond_layer = self.nlevel - cond_idx[0]
+                    cond_layer = self.nlevel - cutoff - cond_idx[0]
 
                     for i in range(cond_layer, -1, -1): 
                         if self.inputs['atmosphere']['profile'][mol][i] > self.inputs['atmosphere']['profile'][mol][i+1]:
@@ -4756,8 +4760,12 @@ class inputs():
             all_out['all_profiles'] = all_profiles 
             all_out['all_opd'] = all_opd
         if with_spec:
-            # if diseq_chem: #still need to fix this for deq runs with clouds (196 grid df_cld but 661 grid opacity)
+            # if diseq_chem: #still need to fix this for deq runs (196 grid but 661 grid opacity)
             #     opacityclass = opannection(ck=True, ck_db=opacityclass.ck_filename,filename_db=filename_db, deq=True, on_fly=True, gases_fly = gases_fly)
+            #     bundle = inputs(calculation='brown')
+            #     bundle.phase_angle(0)
+            #     bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
+            #     bundle.premix_atmosphere_diseq(opacityclass,teff = Teff,df=df,quench_levels=quench_levels,t_mix=t_mix, vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3, cold_trap = cold_trap, cld_species=cld_species)
             # else:
             opacityclass = opannection(ck=True, ck_db=opacityclass.ck_filename,deq=False)
             bundle = inputs(calculation='brown')
