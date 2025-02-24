@@ -21,6 +21,7 @@ from numba import jit,njit
 from scipy.io import FortranFile
 
 import os
+import glob
 import pickle as pk
 import numpy as np
 import pandas as pd
@@ -1138,9 +1139,12 @@ def find_press(at_tau, a, b, c):
         at_press.append(np.interp([at_tau],a[:,iw],c)[0])
     return at_press
 
-def opannection(wave_range = None, filename_db = None, raman_db = None, 
-                resample=1, ck_db=None, deq= False, on_fly=False,
-                gases_fly =None,ck=False,
+def opannection(wave_range = None, filename_db = None, 
+                resample=1, method='resampled',
+                ck_db=None, raman_db = None, 
+                preload_gases='all',
+                #deq= False, on_fly=False,
+                #gases_fly =None,ck=False,
                 verbose=True):
     """
     Sets up database connection to opacities. 
@@ -1152,7 +1156,8 @@ def opannection(wave_range = None, filename_db = None, raman_db = None,
         Default : None, which pulls entire grid 
     filename_db : str 
         Filename of opacity database to query from 
-        Default is none which pulls opacity file that comes with distribution 
+        Default is none which pulls opacity file that 
+        comes with distribution 
     raman_db : str 
         Filename of raman opacity cross section 
         Default is none which pulls opacity file that comes with distribution 
@@ -1161,38 +1166,49 @@ def opannection(wave_range = None, filename_db = None, raman_db = None,
         This effectively takes opacity[::BINS] depending on what the 
         sampling requested is. Consult your local theorist before 
         using this. 
+    method : str 
+        By default method='resampled'
+        Other options include: ['preweighted','resortrebin']
     ck_db : str 
-        ASCII filename of ck file
+        Can be: 
+        - (required if method is preweighted) ASCII dir of ck file
+        - (required if method is preweighted) HDF5 filename 
+        - (optional) path to HDF5 directory, if none specified then assumed default in climate_INPUTS/661 folder
     verbose : bool 
         Error message to warn users about resampling. Can be turned off by supplying 
         verbose=False
     """
     inputs = json.load(open(os.path.join(__refdata__,'config.json')))
 
-
-    if isinstance(ck_db, type(None)): 
-        #only allow raman if no correlated ck is used 
+    if method == 'resampled':
+        #set raman database 
         if isinstance(raman_db,type(None)): raman_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['raman'])
         
+        #get default file if it was supplied
         if isinstance(filename_db,type(None)): 
             filename_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['opacity'])
             if not os.path.isfile(filename_db):
                 raise Exception(f'The default opacity file does not exist: {filename_db}. In order to have a default database please download one of the opacity files from Zenodo and place into this folder with the name opacities.db: https://zenodo.org/record/6928501#.Y2w4C-zMI8Y if you dont want a single default file then you just need to point to the opacity db using the keyword filename_db.')
+        #if a name is supplied check that it exists 
         elif not isinstance(filename_db,type(None) ): 
             if not os.path.isfile(filename_db):
                 raise Exception('The opacity file you have entered does not exist: '  + filename_db)
 
+        #if resampling was entered just warn users
         if resample != 1:
             if verbose:print("YOU ARE REQUESTING RESAMPLING!! This could degrade the precision of your spectral calculations so should be used with caution. If you are unsure check out this tutorial: https://natashabatalha.github.io/picaso/notebooks/10_ResamplingOpacities.html")
 
         opacityclass=RetrieveOpacities(
                     filename_db, 
                     raman_db,
-                    wave_range = wave_range, resample = resample)
-    else: 
+                    wave_range = wave_range, resample = resample)   
 
+    elif method == 'preweighted':
+
+        #get default continuum if nothing was specified
         if isinstance(filename_db,type(None)): 
             filename_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['ktable_continuum'])
+        
         if not os.path.exists(ck_db):
             if ck_db[-1] == '/':ck_db = ck_db[0:-1]
             if os.path.isfile(ck_db+'.tar.gz'): 
@@ -1203,11 +1219,36 @@ def opannection(wave_range = None, filename_db = None, raman_db = None,
         opacityclass=RetrieveCKs(
                     ck_db, 
                     filename_db, 
-                    wave_range = wave_range, 
-                    deq=deq,
-                    on_fly=on_fly,
-                    gases_fly = gases_fly)
+                    method='preweighted')
 
+    elif method == 'resortrebin':
+        #get default continuum if nothing was specified
+        if isinstance(filename_db,type(None)): 
+            #NEB TODO: we really ony need one continuum file, the rest can be interpolated down to the 196 grid. 
+            filename_db = os.path.join(__refdata__,'climate_INPUTS','ck_cx_cont_opacities_661.db')
+
+        #now we can load the ktables for those gases defined
+        if isinstance(ck_db ,type(None) ):
+            ck_db  = os.path.join(__refdata__, 'climate_INPUTS/661')
+            
+            if isinstance(preload_gases,str):
+                if preload_gases=='all':
+                    check_hdf5=glob.glob(os.path.join(ck_db ,'*.hdf5'))
+                    check_npy=glob.glob(os.path.join(ck_db,'*.npy'))
+                    if len(check_hdf5)>0:
+                        preload_gases = [i.split('/')[-1].split('_')[0] for i in check_hdf5]
+                    elif len(check_npy)>0:
+                        preload_gases = [i.split('/')[-1].split('_')[0] for i in check_npy]
+                    else:
+                        raise Exception(f'No .npy or .hdf5 molecule files were found in {ck_db}')
+
+        opacityclass=RetrieveCKs(
+                    ck_db, 
+                    filename_db, 
+                    method='resortrebin',
+                    preload_gases=preload_gases)
+    else: 
+        raise Exception("The only available opacity methods are: resortrebin, preweighted, and resampled")
     return opacityclass
 
 class inputs():

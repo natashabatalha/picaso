@@ -1,10 +1,12 @@
 from .deq_chem import mix_all_gases_gasesfly
 from .rayleigh import Rayleigh
+from .opacity_factory import g_w_2gauss
+from .deq_chem import mix_all_gases
 
 import warnings
 import pandas as pd
 import numpy as np
-from numpy import log10
+log10=np.log10
 import json
 import os
 import glob 
@@ -18,7 +20,6 @@ import sqlite3
 import h5py
 import math
 from scipy.io import FortranFile
-from .deq_chem import mix_all_gases
 
 __refdata__ = os.environ.get('picaso_refdata')
 #@jit(nopython=True)
@@ -668,7 +669,62 @@ class RetrieveCKs():
     on_fly : bool, deprecated
         deprecated, used to turn on and off the old method of doing diseq with 
     """
-    def __init__(self, ck_dir, cont_dir, wave_range=None, deq=False, gases_fly=None, on_fly=False):
+    def __init__(self,ck_dir,continuum_db,method='preweighted',preload_gases=[],
+        wave_range=None):
+        #ck_dir, cont_dir, wave_range=None, deq=False, gases_fly=None, on_fly=False):
+        self.ck_filename = ck_dir
+        self.continuum_db = continuum_db
+        
+
+        self.get_available_continuum()
+
+        if method=='preweighted':
+            #method to get opacities is preweighted 
+            self.get_opacities = self.get_opacities_preweighted
+
+            #if preweighted need to load in preweighted tables
+            #there are two options for that either the hdf5 files 
+            #or the legacy tables 
+
+            #check to see if new hdf5 files are being used 
+            if 'hdf5' in self.ck_filename: 
+                self.get_h5_data()
+            
+            #DEPRECATE warning -- this method will eventually be deprecated
+            else: 
+                #read in the full abundance file sot hat we can check the number of kcoefficient layers 
+                #this should either be 1460 or 1060
+                self.full_abunds =  pd.read_csv(os.path.join(self.ck_filename,'full_abunds'), sep='\s+')
+                self.kcoeff_layers = self.full_abunds.shape[0]
+                self.get_legacy_data_1460()
+                #defines what continuum is available but does not load it
+                self.get_available_continuum()
+                self.get_available_rayleigh()
+
+        elif method == 'resortrebin':
+            #method to get opacities is resort rebin
+            self.preload_gases = preload_gases
+
+            self.get_opacities = self.get_opacities_deq_onfly
+            
+            check_hdf5=glob.glob(os.path.join(self.ck_filename ,'*.hdf5'))
+            if len(check_hdf5)==0: 
+                #if there are no is not an h5 file i still need to read in the legacy data
+                #self.get_legacy_data_1460()
+                #when hdf5 is not supplied we have to get the legacy 661 info
+                self.get_new_wvno_grid_661()
+
+            self.load_kcoeff_arrays_first(self.ck_filename)
+            
+        else: 
+            raise Exception('Only resortrebin and preweighted are options for Correlated-Ks')
+
+        #NEB todo evaluate if this rayleigh is needed
+        self.get_available_rayleigh()
+
+        return
+
+    def __init___deprecate(self, ck_dir, cont_dir, wave_range=None, deq=False, gases_fly=None, on_fly=False):
         self.ck_filename = ck_dir
         self.gases_fly = gases_fly
 
@@ -729,7 +785,6 @@ class RetrieveCKs():
             self.get_opacities = self.__class__.get_opacities.__get__(self)
 
 
-
         return
 
     def get_h5_data(self):
@@ -763,7 +818,7 @@ class RetrieveCKs():
 
 
 
-    def get_legacy_data_1460(self,wave_range):
+    def get_legacy_data_1460(self):
         """
         Function to read the legacy data of the 1060 grid computed by Roxana Lupu. 
 
@@ -1086,11 +1141,11 @@ class RetrieveCKs():
         t = atmosphere.layer['temperature']
 
         t_inv = 1/t
-        p_log = np.log10(p)
+        p_log = log10(p)
 
         #make sure to interp on log and inv array
         p_log_grid = np.unique(self.pressures)
-        p_log_grid =np.log10(p_log_grid[p_log_grid>0])
+        p_log_grid =log10(p_log_grid[p_log_grid>0])
         t_inv_grid = 1/np.array(np.unique(self.temps))
 
         #Now for the temp point on either side of our atmo grid
@@ -1149,7 +1204,7 @@ class RetrieveCKs():
         t_interp = ((t_inv - t_inv_low) / (t_inv_hi - t_inv_low))[:,np.newaxis,np.newaxis]
         p_interp = ((p_log - p_log_low) / (p_log_hi - p_log_low))[:,np.newaxis,np.newaxis]
 
-        #log_abunds = np.log10(self.full_abunds.values)
+        #log_abunds = log10(self.full_abunds.values)
         ln_kappa = self.kappa
         ln_kappa = np.exp(((1-t_interp)* (1-p_interp) * ln_kappa[p_low_ind,t_low_ind,:,:]) +
                      ((t_interp)  * (1-p_interp) * ln_kappa[p_low_ind,t_hi_ind,:,:]) + 
@@ -1203,11 +1258,11 @@ class RetrieveCKs():
         
 
         t_inv = 1/t
-        p_log = np.log10(p)
+        p_log = log10(p)
 
         #make sure to interp on log and inv array
         p_log_grid = np.unique(self.pressures)
-        p_log_grid =np.log10(p_log_grid[p_log_grid>0])
+        p_log_grid =log10(p_log_grid[p_log_grid>0])
         t_inv_grid = 1/np.array(self.temps)
 
         #Now for the temp point on either side of our atmo grid
@@ -1308,7 +1363,7 @@ class RetrieveCKs():
         gases_fly : bool 
             Specifies what gasses to mix on the fly 
         """
-        gases_fly = copy.deepcopy(self.gases_fly)
+        gases_fly = copy.deepcopy(self.preload_gases)
         check_hdf5=glob.glob(os.path.join(path,'*.hdf5'))
         check_npy=glob.glob(os.path.join(path,'*.npy'))
         self.kappas = []
@@ -1316,12 +1371,14 @@ class RetrieveCKs():
             if os.path.join(path,f'{imol}_1460.hdf5') in check_hdf5:
                 with h5py.File(os.path.join(path,f'{imol}_1460.hdf5'), "r") as f:
                     #in a future code version we could get these things from the hdf5 file and not assume the 661 table
-                    #self.wno = f["wno"][:]
-                    #self.delta_wno = f["delta_wno"][:]   
-                    #self.pressures = f["pressures"][:]   
-                    #self.temps = f["temperatures"][:]   
-                    #self.gauss_pts = f["gauss_pts"][:]  
-                    #self.gauss_wts = f["gauss_wts"][:] 
+                    self.wno = f["wno"][:]
+                    self.nwno=len(self.wno)
+                    self.delta_wno = f["delta_wno"][:]   
+                    self.pressures = f["pressures"][:]   
+                    self.temps = f["temperatures"][:]   
+                    self.gauss_pts = f["gauss_pts"][:]  
+                    self.gauss_wts = f["gauss_wts"][:]
+                    self.ngauss = len(self.gauss_pts)
                     #want the axes to be [npressure, ntemperature, nwave, ngauss ]
                     array = f["kcoeffs"][:] 
                     self.kappas += [array]
@@ -1329,6 +1386,10 @@ class RetrieveCKs():
                 msg = 'Warning: npy files for DEQ will be deprecated in a future PICASO udpate. Please download the hdf5 files, explanation here https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html'
                 warnings.warn(msg, UserWarning)
                 array = np.load(os.path.join(path,f'{imol}_1460.npy'))
+                pts,wts = g_w_2gauss(order=4,gfrac=0.95)
+                self.gauss_wts=wts
+                self.gauss_pts=pts
+                self.ngauss = array.shape[-1]
                 self.kappas += [array]
             elif imol in ''.join(self.avail_continuum):
                 msg = f'Found a CIA molecule, which doesnt require a correlated-K table. The gaseous opacity of {imol} will not be included unless you first create a CK table for it.'
@@ -1340,10 +1401,14 @@ class RetrieveCKs():
                 gases_fly.pop(gases_fly.index(imol))
         if len(gases_fly)==0: raise Exception('Uh oh. No molecules are left to mix. Its likely you have not downloaded the correct files. Please see tutorial documentation https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html to make sure you have downloaded the needed files and placed them in this folder')
 
-        self.gases_fly = gases_fly
+        self.gases_fly=gases_fly
+        #this is redundant but not ready to fully get rid of gases_fly
+        #to be consistent with everything gases_fly should be replaced with 
+        #self.molecules
+        self.molecules=gases_fly
 
     def get_new_wvno_grid_661(self):
-        path = os.path.join(__refdata__, 'climate_INPUTS/')#'/Users/sagnickmukherjee/Documents/GitHub/Disequilibrium-Picaso/reference/climate_INPUTS/'
+        path = os.path.join(__refdata__, 'climate_INPUTS/')
         wvno_new,dwni_new = np.loadtxt(path+"wvno_661",usecols=[0,1],unpack=True)
         self.wno = wvno_new
         self.delta_wno = dwni_new
@@ -1443,7 +1508,7 @@ class RetrieveCKs():
                 self.continuum_opa[i][ind,:] = ln_kappa
         conn.close()
 
-    def get_opacities(self, atmosphere, exclude_mol=1):
+    def get_opacities_preweighted(self, atmosphere, exclude_mol=1):
         """
         Gets opacities from the premixed tables only 
 
@@ -1485,7 +1550,7 @@ class RetrieveCKs():
 
     def open_local(self):
         """Code needed to open up local database, interpret arrays from bytes and return cursor"""
-        conn = sqlite3.connect(self.db_filename, detect_types=sqlite3.PARSE_DECLTYPES)
+        conn = sqlite3.connect(self.continuum_db, detect_types=sqlite3.PARSE_DECLTYPES)
         #tell sqlite what to do with an array
         sqlite3.register_adapter(np.ndarray, self.adapt_array)
         sqlite3.register_converter("array", self.convert_array)
@@ -1966,7 +2031,7 @@ class RetrieveOpacities():
         df = pd.DataFrame(self.pt_pairs,columns=['ptid','pressure','temperature'])
         self.nc_p = df.groupby('temperature').size().values
         self.pressures = df['pressure'].unique()
-        self.p_log_grid = np.log10(self.pressures) #used for interpolation 
+        self.p_log_grid = log10(self.pressures) #used for interpolation 
         self.temps = df['temperature'].unique() #used for interpolation
         self.t_inv_grid = 1/self.temps
 
@@ -2000,7 +2065,7 @@ class RetrieveOpacities():
         #Now for the temp point on either side of our atmo grid
         #first the lower interp temp
         t_inv = 1/tlayer
-        p_log = np.log10(player)
+        p_log = log10(player)
         t_inv_grid = self.t_inv_grid
         p_log_grid = self.p_log_grid
         nc_p = self.nc_p
@@ -2190,13 +2255,13 @@ class RetrieveOpacities():
             #however they should ultimately be put into opacity factory so it doesnt slow 
             #this down
                 log_abunds1 = data[i+'_'+str(1+i_t_low_p_low[ind])]
-                log_abunds1 = np.log10(np.where(log_abunds1!=0,log_abunds1,1e-50))
+                log_abunds1 = log10(np.where(log_abunds1!=0,log_abunds1,1e-50))
                 log_abunds2 = data[i+'_'+str(1+i_t_hi_p_low[ind])]
-                log_abunds2 = np.log10(np.where(log_abunds2!=0,log_abunds2,1e-50))
+                log_abunds2 = log10(np.where(log_abunds2!=0,log_abunds2,1e-50))
                 log_abunds3 = data[i+'_'+str(1+i_t_hi_p_hi[ind])]
-                log_abunds3 = np.log10(np.where(log_abunds3!=0,log_abunds3,1e-50))
+                log_abunds3 = log10(np.where(log_abunds3!=0,log_abunds3,1e-50))
                 log_abunds4 = data[i+'_'+str(1+i_t_low_p_hi[ind])]
-                log_abunds4 = np.log10(np.where(log_abunds4!=0,log_abunds4,1e-50))
+                log_abunds4 = log10(np.where(log_abunds4!=0,log_abunds4,1e-50))
                 #nlayer x nwno
                 cx = 10**(((1-t_interp[ind])* (1-p_interp[ind]) * log_abunds1) +
                      ((t_interp[ind])  * (1-p_interp[ind]) * log_abunds2) + 
