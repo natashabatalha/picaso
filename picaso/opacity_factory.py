@@ -1689,7 +1689,7 @@ def compute_ck_molecular(molecule,og_directory,
     new_wno=None, 
     new_dwno=None, climate_filename=None,verbose=True):
     """
-    Function to generate correlated-K tables for each individual gas
+    Function to generate correlated-K tables for each individual gas or for a preweighted opacity file
     
     Parameters
     ----------
@@ -1735,6 +1735,7 @@ def compute_ck_molecular(molecule,og_directory,
     pres=s1460['pressure_bar'].values.astype(float)
     #all temperatures
     temp=s1460['temperature_K'].values.astype(float)
+    nc_p = s1460.groupby('temperature_K').size().values.astype(float)
 
     npres = len(np.unique(pres))
     ntemp = len(np.unique(temp))
@@ -1896,6 +1897,7 @@ def compute_ck_molecular(molecule,og_directory,
         # RETURN HDF5 FILE IN FORMAT FOR PICASO CLIMATE CODE
         attrs={}
         ck_data = {
+            'nc_p':(nc_p,'this defines the number of pressure points per temperature grid'),
             'pressures':(pres,'bars'),
             'temperatures':(temp,'Kelvin'),
             'wno':(new_wno,'cm**(-1)'),
