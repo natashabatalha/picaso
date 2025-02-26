@@ -4126,8 +4126,8 @@ class inputs():
         self.inputs['climate']['df_sonora_photochem'] = df_sonora_photochem
         if self.inputs['climate']['photochem']:
             # Import and initialize the photochemical code.
-            from .photochem import EvoAtmosphereGasGiant
-            pc = EvoAtmosphereGasGiant(**photochem_init_args)
+            from .photochem import EvoAtmosphereGasGiantPicaso
+            pc = EvoAtmosphereGasGiantPicaso(**photochem_init_args)
             pc.TOA_pressure_avg = photochem_TOA_pressure
             self.inputs['climate']['pc'] = pc
 
