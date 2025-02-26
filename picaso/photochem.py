@@ -8,6 +8,7 @@ is turned on.
 import numpy as np
 import warnings
 from photochem.extensions import EvoAtmosphereGasGiant
+from photochem.utils import zahnle_rx_and_thermo_files
 import pickle
 import os
 
@@ -174,3 +175,25 @@ class EvoAtmosphereGasGiantPicaso(EvoAtmosphereGasGiant):
 
         # Return a DataFrame with the Photochem chemistry
         return self.add_concentrations_to_picaso_df(df)
+    
+def generate_photochem_rx_and_thermo_files(atoms_names=['H','He','N','O','C','S'], 
+                                           rxns_filename='photochem_rxns.yaml', thermo_filename='photochem_thermo.yaml'):
+    """Generates input reactions and thermodynamic files for photochem.
+
+    Parameters
+    ----------
+    atoms_names : list, optional
+        Atoms to include in the thermodynamics, by default ['H','He','N','O','C','S']
+    rxns_filename : str, optional
+        Name of output reactions file, by default 'photochem_rxns.yaml'
+    thermo_filename : str, optional
+        Name of output thermodynamic file, by default 'photochem_thermo.yaml'
+    """
+    zahnle_rx_and_thermo_files(
+        atoms_names=atoms_names,
+        rxns_filename=rxns_filename,
+        thermo_filename=thermo_filename,
+        exclude_species=[],
+        remove_particles=False,
+        remove_reaction_particles=True
+    )
