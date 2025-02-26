@@ -621,8 +621,8 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
     df : dict 
         This is the output of your spectrum and must include "full_output=True"
         For example, df = case.spectrum(opa, full_output=True)
-        It can also be the output of your climate run. For example, out=case.climate(..., withSpec=True)
-        If running climate you must run withSpec=True OR add output of case.spectrum to your output dictionary
+        It can also be the output of your climate run. For example, out=case.climate(..., with_spec=True)
+        If running climate you must run with_spec=True OR add output of case.spectrum to your output dictionary
         by doing (for example): 
         >> out = case.climate(..., withSpec=False)
         >> #add any post processing steps you desire (e.g. case.atmosphere or case.clouds)
@@ -657,7 +657,7 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
         full_output = _finditem(df, 'full_output')
         molecules_included = full_output['weights']
     else: 
-        raise Exception("full_output is required. Either you need to run spectrum(opa, full_output=True), climate(..., with_Spec=True), or create and add info to spectrum_output")
+        raise Exception("full_output is required. Either you need to run spectrum(opa, full_output=True), climate(..., with_spec=True), or create and add info to spectrum_output")
 
     if not isinstance(_finditem(df, 'wavenumber'), type(None)):
         wavenumber = _finditem(df, 'wavenumber')
@@ -1180,7 +1180,7 @@ def opannection(wave_range = None, filename_db = None,
     """
     inputs = json.load(open(os.path.join(__refdata__,'config.json')))
 
-    if method == 'resampled':
+    if ((method == 'resampled') & isinstance(ck_db,type(None))):
         #set raman database 
         if isinstance(raman_db,type(None)): raman_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['raman'])
         
@@ -1202,7 +1202,8 @@ def opannection(wave_range = None, filename_db = None,
                     filename_db, 
                     raman_db,
                     wave_range = wave_range, resample = resample)   
-
+    elif ((method == 'resampled') & isinstance(ck_db,str)):
+        raise Exception("ck_db was supplied but method is set to resampled. Change kwarg method='preweighted' to use the preweighted ck tables")
     elif method == 'preweighted':
 
         #get default continuum if nothing was specified
@@ -4509,25 +4510,28 @@ class inputs():
             # shift everything to the 661 grid now.
             #mh = '+0.0'  #don't change these as the opacities you are using are based on these 
             #CtoO = '1.0' # don't change these as the opacities you are using are based on these #
-            filename_db=os.path.join(__refdata__, 'climate_INPUTS/ck_cx_cont_opacities_661.db')
+            #filename_db=os.path.join(__refdata__, 'climate_INPUTS/ck_cx_cont_opacities_661.db')
             
             if on_fly:
                 if verbose: print("From now I will mix "+str(gases_fly)+" only on--the--fly")
                 #mhdeq and ctodeq will be auto by opannection
                 #NO Background, just CIA + whatever in gases_fly
                 #ck_db=os.path.join(__refdata__, 'climate_INPUTS/sonora_2020_feh'+mhdeq+'_co_'+CtoOdeq+'.data.196')
-                opacityclass = opannection(ck=True, 
-                                           ck_db=opacityclass.ck_filename,
-                                           filename_db=filename_db,
-                                           deq = True,
-                                           on_fly=True,
-                                           gases_fly=gases_fly)
-            else:
-                #phillips comparison (discontinued) 
-                #background + gases 
-                #ck_db=os.path.join(__refdata__, 'climate_INPUTS/m+0.0_co1.0.data.196')
-                opacityclass = opannection(ck=True, ck_db=opacityclass.ck_filename,
-                    filename_db=filename_db,deq = True,on_fly=False)
+                opacityclass = opannection(#ck=True, 
+                                           #ck_db=opacityclass.ck_filename,
+                                           #filename_db=filename_db,#the opannection default is already set to the 661 file so doesnt make sense to reset twice
+                                           #deq = True,
+                                           #on_fly=True,
+                                           #gases_fly=gases_fly
+                                           preload_gases=gases_fly,
+                                           method='resortrebin'
+                                           )
+            #else:
+            #    #phillips comparison (discontinued) 
+            #    #background + gases 
+            #    #ck_db=os.path.join(__refdata__, 'climate_INPUTS/m+0.0_co1.0.data.196')
+            #    opacityclass = opannection(ck=True, ck_db=opacityclass.ck_filename,
+            #        filename_db=filename_db,deq = True,on_fly=False)
 
         
             
@@ -4767,7 +4771,7 @@ class inputs():
             #     bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
             #     bundle.premix_atmosphere_diseq(opacityclass,teff = Teff,df=df,quench_levels=quench_levels,t_mix=t_mix, vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3, cold_trap = cold_trap, cld_species=cld_species)
             # else:
-            opacityclass = opannection(ck=True, ck_db=opacityclass.ck_filename,deq=False)
+            opacityclass = opannection(method='preweighted', ck_db=opacityclass.ck_filename)
             bundle = inputs(calculation='brown')
             bundle.phase_angle(0)
             bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))

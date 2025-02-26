@@ -1969,7 +1969,7 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
                 np.copy(clima_out['pressure']), 
                 np.copy(clima_out['all_profiles']))
     
-    if 'all_opd' in clima_out:
+    if 'cld_output_final' in clima_out:
         # Code to be executed if clima_out['all_opd'] exists
         all_opd = np.copy(clima_out['all_opd'])
         cld_p = np.copy(clima_out['cld_output_picaso']['pressure'][0::196])
@@ -2005,7 +2005,7 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
     fig = plt.figure(figsize=(50,10))
 
     # plot optical depth profile as well
-    if 'all_opd' in clima_out:
+    if 'cld_output_picaso' in clima_out:
         x='''
         AA.BB.CC.DD
         '''
@@ -2037,7 +2037,7 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
     else: 
         lines['spec'], = ax['C'].plot(1e4/df_spec['wavenumber'], spec[0,:],linewidth=3,color="k")
     
-    if 'all_opd' in clima_out: #bad hack to make shapes match but won't affect the plot
+    if 'cld_output_picaso' in clima_out: #bad hack to make shapes match but won't affect the plot
         lines['opd'], = ax['D'].loglog(all_opd[:91], np.append(cld_p,0),linewidth=3,color='k')
 
     def init():
@@ -2066,7 +2066,7 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
         ax['C'].tick_params(axis='both',which='major',length =30, width=2,direction='in',labelsize=30)
         ax['C'].tick_params(axis='both',which='minor',length =10, width=2,direction='in',labelsize=30)
 
-        if 'all_opd' in clima_out:
+        if 'cld_output_picaso' in clima_out:
             ax['D'].set_xlabel('Optical Depth',fontsize=30)
             ax['D'].set_ylabel('Pressure [Bars]',fontsize=30)
             ax['D'].set_xlim(1e-7,1e3)
@@ -2080,7 +2080,7 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
         
         lines['spec'].set_xdata(wv)
 
-        if 'all_opd' in clima_out:
+        if 'cld_output_picaso' in clima_out:
             lines['opd'].set_ydata(np.append(cld_p,max(cld_p)+1))
         return lines
     
@@ -2092,7 +2092,7 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
         
         lines['spec'].set_ydata(spec[i,:][wh])
 
-        if 'all_opd' in clima_out:
+        if 'cld_output_picaso' in clima_out:
             lines['opd'].set_xdata(np.append(all_opd[i*90:(i+1)*90],1e-50))
         return lines
 
