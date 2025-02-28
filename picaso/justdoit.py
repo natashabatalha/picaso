@@ -2004,31 +2004,48 @@ class inputs():
             if cold_trap == True:
                 if cld_species is None and vol_rainout == True:
                     print("Clouds aren't turned on, we will now only cold trap H2O, CH4, and NH3 the same species being rained out")
-                    cld_species = ['H2O', 'CH4', 'NH3']
-                else:
+                    #H2O and CH4 have the same quench level
+                    for i in range(quench_levels[0]-2, 0, -1):
+                        for mol in ['H2O', 'CH4']:
+                            if self.inputs['atmosphere']['profile'][mol][i] < self.inputs['atmosphere']['profile'][mol][i-1]:
+                                self.inputs['atmosphere']['profile'][mol][i-1] = self.inputs['atmosphere']['profile'][mol][i]
+                    #NH3 has a different quench level
+                    for i in range(quench_levels[2]-2, -1, -1):
+                        if self.inputs['atmosphere']['profile']['NH3'][i] < self.inputs['atmosphere']['profile']['NH3'][i-1]:
+                            self.inputs['atmosphere']['profile']['NH3'][i-1] = self.inputs['atmosphere']['profile']['NH3'][i] 
+                elif cld_species is None:
                     raise Exception("Clouds aren't turned on, and no rainout requested. No cold trapping is occuring")
-                for mol in cld_species:
-                    # invert abundance to find first layer of condensation by looking for deviation from constant value
-                    inverted = self.inputs['atmosphere']['profile'][mol][::-1]
-                    # cutoff = int(0.1 * self.nlevel)  # Dynamically ignore bottom 10% of layers
-                    # cond_layer = self.nlevel - (np.where(inverted[cutoff:] != inverted[cutoff])[0][0] + cutoff)
+                else:
+                    for mol in cld_species:
+                        if mol == 'H2O' or mol == 'CH4':
+                            for i in range(quench_levels[1]-2, 0, -1):
+                                if self.inputs['atmosphere']['profile'][mol][i] < self.inputs['atmosphere']['profile'][mol][i-1]:
+                                    self.inputs['atmosphere']['profile'][mol][i-1] = self.inputs['atmosphere']['profile'][mol][i]
+                        elif mol == 'NH3':    
+                            #NH3 has a different quench level
+                            for i in range(quench_levels[2]-2, -1, -1):
+                                if self.inputs['atmosphere']['profile']['NH3'][i] < self.inputs['atmosphere']['profile']['NH3'][i-1]:
+                                    self.inputs['atmosphere']['profile']['NH3'][i-1] = self.inputs['atmosphere']['profile']['NH3'][i] 
+                        else: #NEEDS TO BE TESTED FOR WARMER CLOUDS 
+                            # invert abundance to find first layer of condensation by looking for deviation from constant value
+                            inverted = self.inputs['atmosphere']['profile'][mol][::-1]
 
-                    # need to ignore the bottom 10% of layers to avoid the changes in deep atmosphere to properly identify condensation layer
-                    cutoff = int(0.1 * self.nlevel)  # Dynamically ignore bottom 10% of layers
-                    relevant_layers = inverted[:self.nlevel - cutoff]
-                    grad = np.abs(np.gradient(relevant_layers))  # Compute abundance gradient
+                            # need to ignore the bottom 10% of layers to avoid the changes in deep atmosphere to properly identify condensation layer
+                            cutoff = int(0.1 * self.nlevel)  # Dynamically ignore bottom 10% of layers
+                            relevant_layers = inverted[:self.nlevel - cutoff]
+                            grad = np.abs(np.gradient(relevant_layers))  # Compute abundance gradient
 
-                    unique_vals, counts = np.unique(inverted, return_counts=True)
-                    mode_value = unique_vals[np.argmax(counts)]
-                    threshold = mode_value * 0.01 # Define a threshold for significant drop (adjustable)
+                            unique_vals, counts = np.unique(inverted, return_counts=True)
+                            mode_value = unique_vals[np.argmax(counts)]
+                            threshold = mode_value * 0.01 # Define a threshold for significant drop (adjustable)
 
-                    # Find the first layer where the abundance starts to fall off
-                    cond_idx = np.where(grad > threshold)[0]
-                    cond_layer = self.nlevel - cutoff - cond_idx[0]
+                            # Find the first layer where the abundance starts to fall off
+                            cond_idx = np.where(grad > threshold)[0]
+                            cond_layer = self.nlevel - cutoff - cond_idx[0]
 
-                    for i in range(cond_layer, -1, -1): 
-                        if self.inputs['atmosphere']['profile'][mol][i] > self.inputs['atmosphere']['profile'][mol][i+1]:
-                            self.inputs['atmosphere']['profile'][mol][i] = self.inputs['atmosphere']['profile'][mol][i+1]
+                            for i in range(cond_layer, -1, -1): 
+                                if self.inputs['atmosphere']['profile'][mol][i] > self.inputs['atmosphere']['profile'][mol][i+1]:
+                                    self.inputs['atmosphere']['profile'][mol][i] = self.inputs['atmosphere']['profile'][mol][i+1]
 
             self.inputs['atmosphere']['profile']['N2'][0:quench_levels[2]+1] = self.inputs['atmosphere']['profile']['N2'][0:quench_levels[2]+1]*0.0 + qvmrs2[1]
 
