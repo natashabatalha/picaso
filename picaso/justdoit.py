@@ -2002,9 +2002,11 @@ class inputs():
             
             # # cold trap the condensibles
             if cold_trap == True:
-                if cld_species is None:
-                    print("Clouds aren't turned on, we will now only cold trap H2O, CH4, and NH3")
+                if cld_species is None and vol_rainout == True:
+                    print("Clouds aren't turned on, we will now only cold trap H2O, CH4, and NH3 the same species being rained out")
                     cld_species = ['H2O', 'CH4', 'NH3']
+                else:
+                    raise Exception("Clouds aren't turned on, and no rainout requested. No cold trapping is occuring")
                 for mol in cld_species:
                     # invert abundance to find first layer of condensation by looking for deviation from constant value
                     inverted = self.inputs['atmosphere']['profile'][mol][::-1]
