@@ -1207,7 +1207,7 @@ class RetrieveCKs():
         self.molecular_opa = ln_kappa*6.02214086e+23  #avogadro constant!        
       
     
-    def mix_my_opacities_gasesfly(self, atmosphere):
+    def mix_my_opacities_gasesfly(self, atmosphere,exclude_mol=1):
         """
         Top Function to perform "on-the-fly" mixing and then interpolating of 5 opacity sources from Amundsen et al. (2017)
         """
@@ -1221,8 +1221,10 @@ class RetrieveCKs():
         mixes = []
         kappas = []
         for imol in atmosphere.molecules: 
-            mixes += [atmosphere.layer['mixingratios'][imol].values]
-            kappas += [self.kappas[imol]]
+            #only add to molecule set if it wasnt requested as a excluded molecule
+            if ((exclude_mol==1) or (exclude_mol[imol]==1)):
+                mixes += [atmosphere.layer['mixingratios'][imol].values]
+                kappas += [self.kappas[imol]]
 
         indices, t_interp,p_interp = self.get_mixing_indices(atmosphere) # gets nearest neighbor indices
 
@@ -1539,7 +1541,7 @@ class RetrieveCKs():
             CK molecules, this will ignore the optical contribution from one molecule. 
         """
         self.get_continuum(atmosphere)
-        self.mix_my_opacities_gasesfly(atmosphere)
+        self.mix_my_opacities_gasesfly(atmosphere,exclude_mol=exclude_mol)
 
     def adapt_array(arr):
         """needed to interpret bytes to array"""
