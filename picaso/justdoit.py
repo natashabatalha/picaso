@@ -884,7 +884,7 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
 
     return ds
 
-def input_xarray(xr_usr, opacity,p_reference=10, calculation='planet'):
+def input_xarray(xr_usr, opacity,calculation='planet',approx_kwargs={}):
     """
     This takes an input based on these standards and runs: 
     -gravity
@@ -900,8 +900,8 @@ def input_xarray(xr_usr, opacity,p_reference=10, calculation='planet'):
         xarray based on ERS formatting requirements 
     opacity : justdoit.opannection
         opacity connection
-    p_reference : float 
-        Default is to take from xarray reference pressure in bars 
+    approx_kwargs : dict 
+        any key words to pass to the approx class 
     calculation : str 
         'planet' or 'browndwarf'
 
@@ -910,11 +910,29 @@ def input_xarray(xr_usr, opacity,p_reference=10, calculation='planet'):
     case = jdi.input_xarray(xr_user)
     case.spectrum(opacity,calculation='transit_depth')
     """
+    planet_params = eval(xr_usr.attrs['planet_params'])
+    
     case = inputs(calculation = calculation)
     case.phase_angle(0) #radians
 
+    p_reference_xarray = _finditem(planet_params,'p_reference')
+    p_reference = approx_kwargs.get('p_reference',10)
+
+    if (not isinstance(p_reference_xarray, type(None))): 
+        p_bar = p_reference_xarray['value']*u.Unit(p_reference_xarray['unit'])
+        p_bar = p_bar.to('bar').value
+        approx_kwargs['p_reference']=p_bar
+    elif (not isinstance(p_reference, type(None))): 
+        #is it common to want to change the reference pressure
+        approx_kwargs['p_reference']=p_reference
+        
+    else: 
+        raise Exception("p_reference couldnt be found in the xarray, nor was it supplied to this function inputs. Please rerun function with p_reference=10 (or another number in bars).")
+
+    case.approx(**approx_kwargs)
+
     #define gravity
-    planet_params = eval(xr_usr.attrs['planet_params'])
+    
     if 'brown' not in calculation:
         stellar_params = eval(xr_usr.attrs['stellar_params'])
         orbit_params = eval(xr_usr.attrs['orbit_params'])
@@ -924,32 +942,26 @@ def input_xarray(xr_usr, opacity,p_reference=10, calculation='planet'):
         database = 'phoenix' if type(_finditem(stellar_params,'database')) == type(None) else _finditem(stellar_params,'database')
         ms = _finditem(stellar_params,'ms')
         rs = _finditem(stellar_params,'rs')
-        semi_major = _finditem(planet_params,'sma')
+        semi_major = _finditem(orbit_params,'sma')
         case.star(opacity, steff,feh,logg, radius=rs['value'], 
-                  radius_unit=u.Unit(rs['unit']), database=database)
+                  radius_unit=u.Unit(rs['unit']), database=database, 
+                  semi_major=semi_major['value'],semi_major_unit=u.Unit(semi_major['unit']))
 
     mp = _finditem(planet_params,'mp')
     rp = _finditem(planet_params,'rp')
+    gravity = _finditem(planet_params,'gravity')
     logg = _finditem(planet_params,'logg')
 
     if ((not isinstance(mp, type(None))) & (not isinstance(rp, type(None)))):
         case.gravity(mass = mp['value'], mass_unit=u.Unit(mp['unit']),
                     radius=rp['value'], radius_unit=u.Unit(rp['unit']))
+    elif (not isinstance(gravity, type(None))): 
+        case.gravity(gravity = gravity['value'], gravity_unit=u.Unit(gravity['unit']))    
     elif (not isinstance(logg, type(None))): 
         case.gravity(gravity = logg['value'], gravity_unit=u.Unit(logg['unit']))
     else: 
         print('Mass and Radius or gravity not provided in xarray, user needs to run gravity function')
 
-    p_reference_xarray = _finditem(planet_params,'p_reference')
-    if (not isinstance(p_reference_xarray, type(None))): 
-        p_bar = p_reference_xarray['value']*u.Unit(p_reference_xarray['unit'])
-        p_bar = p_bar.to('bar').value
-        case.approx(p_reference=p_bar)
-    elif (not isinstance(p_reference, type(None))): 
-        #is it common to want to change the reference pressure
-        case.approx(p_reference=p_reference)
-    else: 
-        raise Exception("p_reference couldnt be found in the xarray, nor was it supplied to this function inputs. Please rerun function with p_reference=10 (or another number in bars).")
 
     df = {'pressure':xr_usr.coords['pressure'].values}
     for i in [i for i in xr_usr.data_vars.keys() if 'transit' not in i]:
@@ -4752,6 +4764,12 @@ class inputs():
         all_out['flux']=flux_plus_final
         all_out['fnet/fnetir']=flux_net_final[0,0,:]/flux_net_ir_final
         all_out['converged']=final_conv_flag
+        all_out['level_flux_balance']=dict(flux_net_ir=flux_net_ir_final, 
+                                            flux_plus_ir=flux_plus_final , 
+                                            flux_net=flux_net_final,
+                                            tidal=tidal,
+                                            rfacv=rfacv,rfaci=rfaci)
+
 
         #put cld output in all_out
         if cloudy == 1:
