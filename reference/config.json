@@ -24,8 +24,6 @@
 		"rfacv":null,
 		"rfaci":null,
 		"cloudy":null,
-		"mh":null,
-		"Cto":null,
 		"cld_species":null
 	},
 	"star":{
@@ -37,7 +35,10 @@
 	"atmosphere":{
 		"profile":null,
 		"exclude_mol":1,
-		"pt_params":null
+		"pt_params":null,
+		"mh":null,
+		"cto":null,
+		"chem_method":null
 	},
 	"clouds":{
 		"profile":null,

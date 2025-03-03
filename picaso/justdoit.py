@@ -911,7 +911,7 @@ def input_xarray(xr_usr, opacity,calculation='planet',approx_kwargs={}):
     case.spectrum(opacity,calculation='transit_depth')
     """
     planet_params = eval(xr_usr.attrs['planet_params'])
-    
+
     case = inputs(calculation = calculation)
     case.phase_angle(0) #radians
 
@@ -1823,7 +1823,9 @@ class inputs():
             return FOPI
         """
 
-    def atmosphere(self, df=None, filename=None, exclude_mol=None, verbose=True, **pd_kwargs):
+    def atmosphere(self, df=None, filename=None, exclude_mol=None, 
+        mh=None, cto=None, chem_method=None,
+        verbose=True, **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
         Sets number of layers in model.  
@@ -1842,6 +1844,13 @@ class inputs():
             This should be used as exploratory ONLY. if you actually want to remove 
             the contribution of a molecule entirely from your profile you should remove 
             it from your input data frame. 
+        mh : float 
+            Metallicity relative to Solar 
+        cto : float 
+            Carbon-to-Oxygen Ratio relative to Solar (Solar value is determined by `chem_method`)
+        chem_method : str 
+            Current options: 
+            - 'visscher' : uses the chemical equilibrium tables computed by Channon Visscher via the function `chemeq_visscher`
         verbose : bool 
             (Optional) prints out warnings. Default set to True
         pd_kwargs : kwargs 
@@ -1861,10 +1870,11 @@ class inputs():
             self.nlevel=df.shape[0] 
 
         if 'pressure' not in df.keys(): 
-            raise Exception("Check column names. `pressure` must be included.")
+            raise Exception("Check column names. `pressure` must be included. For climate runs set your initial guess in `inputs_climate` before running atmosphere class to set the chemistry")
 
         if ('temperature' not in df.keys()):
-            raise Exception("`temperature` not specified as a column/key name")
+            if 'climate' not in self.inputs['calculation']:
+                raise Exception("`temperature` not specified as a column/key name")
 
         if not isinstance(exclude_mol, type(None)):
             #df = df.drop(exclude_mol, axis=1)
@@ -1886,8 +1896,50 @@ class inputs():
                 if df['H2'].min() < 0.7: 
                     if verbose: print("Turning off Raman for Non-H2 atmosphere")
                     self.inputs['approx']['rt_params']['common']['raman'] = 2
+    
+    if ((mh != None ) and (cto != None)):
+        self.inputs['atmosphere']['mh'] = mh 
+        self.inputs['atmosphere']['cto'] = cto 
+        self.inputs['atmosphere']['chem_method'] = chem_method
 
-    def premix_atmosphere(self, opa, df=None, filename=None, cold_trap = False, cld_species = None, **pd_kwargs):
+        # sets chemistry options and runs chemistry if the user has input a PT profile
+        # otherwise this just checks for valid inputs 
+        self.chemistry_handler_testing()
+
+    def chemistry_handler_testing(self, chemistry_table = None):
+        
+        chem_method = self.inputs['atmosphere']['chem_method']
+        atmosphere_profile = self.inputs['atmosphere']['profile']
+        
+        # Are we running chemistry or just setting inputs ?
+        # if the user has supplied a T and P we will just assume they want to run chemistry
+
+        if (('temperature' in atmosphere_profile.keys()) & ('pressure' in atmosphere_profile.keys())):
+            run = True 
+        else: 
+            run = False 
+
+        # Option : simplest method where we just grab visscher abundances 
+        if chem_method=='visscher': 
+            
+            mh = self.inputs['atmosphere']['mh'] 
+            cto = self.inputs['atmosphere']['cto']   
+            if run: self.chemeq_visscher(cto, np.log10(mh))   
+
+        # Option : Here the user has supplied a chemistry table and we just need to use the chem_interp function to interpolate on that table
+        # Notes : This method inherently assumes mh and cto since the loaded table is for a single mh/co
+        elif not isinstance(chemistry_table, type(None)): 
+            self.inputs['atmosphere']['chem_method'] = 'chemistry table loaded through opannection'
+            if run: self.chem_interp(chemistry_table)
+
+        #Option : No other options so far 
+        else: 
+            raise Exception(f'A chem option {chem_method} is not valid') 
+
+
+    def premix_atmosphere(self, opa=None, cold_trap = False, cld_species = None,
+        #WILL DEPRECATE THESE  
+        df=None, filename=None, **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
         Sets number of layers in model.  
@@ -1910,6 +1962,8 @@ class inputs():
         pd_kwargs : kwargs 
             Key word arguments for pd.read_csv to read in supplied atmosphere file 
         """
+        
+        """
         if not isinstance(df, type(None)):
             if ((not isinstance(df, dict )) & (not isinstance(df, pd.core.frame.DataFrame ))): 
                 raise Exception("df must be pandas DataFrame or dictionary")
@@ -1931,6 +1985,11 @@ class inputs():
         self.inputs['approx']['rt_params']['common']['raman'] = 2
 
         self.chem_interp(opa.full_abunds)
+        """
+        if not isinstance(opa,type(None))
+            #run chemistry interp if opa is supplied
+            self.chemistry_handler_testing(chemistry_table=opa.full_abunds)
+        
 
         # # cold trap the condensibles
         if cold_trap == True:
@@ -2202,8 +2261,8 @@ class inputs():
         if firsttime==True:
             print("DOING THIS FOR THE FIRST TIME SO MIGHT TAKE SOME TIME")
             
-            mh_target = mh_interp#float(self.inputs['climate']['mh'])
-            cto_target = cto_interp#float(self.inputs['climate']['CtoO'])
+            mh_target = mh_interp
+            cto_target = cto_interp
             path= os.path.join(__refdata__, 'climate_INPUTS','sonora_master_arr.npz')
             sonora_arr = np.load(path)
             mh_arr = sonora_arr['mh']
@@ -4070,11 +4129,14 @@ class inputs():
 
     def inputs_climate(self, temp_guess= None, pressure= None, rfaci = 1,nofczns = 1 ,
         nstr = None,  rfacv = None,
-        cloudy = False, mh = None, CtoO = None, species = None, fsed = None, mieff_dir = None,
+        cloudy = False, species = None, fsed = None, mieff_dir = None,
         photochem=False, photochem_init_args=None, sonora_abunds_photochem = False, df_sonora_photochem = None,
         photochem_TOA_pressure = 1e-7*1e6, fhole = None, do_holes = False, fthin_cld = None, 
         beta = 1, virga_param = 'const', moistgrad = False, deq_rainout= False, quench_ph3 = True, no_ph3 = False, 
-        kinetic_CO2 = True, cold_trap = False):
+        kinetic_CO2 = True, cold_trap = False,
+        #TO DEPRECATE
+        mh = None, CtoO = None
+        ):
         """
         Get Inputs for Climate run
 
@@ -4105,10 +4167,6 @@ class inputs():
             =1 for dayside
         cloudy : bool
             Include Clouds or not (True or False)
-        mh : string
-            Metallicity string for 1060 grid, '+0.5','0.0','-0.5'.
-        CtoO : string
-            C/O ratio string for 1060 grid
         species : string
             Cloud species to be included if cloudy
         fsed : float
@@ -4227,8 +4285,8 @@ class inputs():
         self.inputs['climate']['no_ph3'] = no_ph3
         self.inputs['climate']['cold_trap'] = cold_trap
 
-        self.inputs['climate']['mh'] = mh
-        self.inputs['climate']['CtoO'] = CtoO
+        #self.inputs['climate']['mh'] = mh
+        #self.inputs['climate']['CtoO'] = CtoO
 
         self.inputs['climate']['photochem'] = photochem
         self.inputs['climate']['photochem_init_args'] = photochem_init_args
@@ -4349,7 +4407,7 @@ class inputs():
 
         Teff = self.inputs['planet']['T_eff']
         grav = 0.01*self.inputs['planet']['gravity'] # cgs to si
-        mh = self.inputs['climate']['mh']
+        mh = self.inputs['atmosphere']['mh']
         mh = float(mh) if mh is not None else 0
         sigma_sb = 0.56687e-4 # stefan-boltzmann constant
         
@@ -4616,7 +4674,7 @@ class inputs():
                 photo_inputs_dict['yesorno'] = False
             else :
                 # Compute chemical equilibrium composition using pre-computed grid
-                bundle.premix_atmosphere_photochem(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],firsttime=True,mh_interp=float(self.inputs['climate']['mh']),cto_interp=float(self.inputs['climate']['CtoO']))
+                bundle.premix_atmosphere_photochem(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],firsttime=True,mh_interp=float(self.inputs['atmosphere']['mh']),cto_interp=float(self.inputs['atmosphere']['cto']))
                 
                 # Compute photochemical steady-state, and load it into `bundle.inputs['atmosphere']['profile']`. Here,
                 # we use chemical equilibrium + quenching as an initial guess.
@@ -4642,8 +4700,8 @@ class inputs():
                 else:
                     bundle.inputs['atmosphere']['profile'] = pc.run_for_picaso(
                         bundle.inputs['atmosphere']['profile'], 
-                        float(self.inputs['climate']['mh']), 
-                        float(self.inputs['climate']['CtoO']), 
+                        float(self.inputs['atmosphere']['mh']), 
+                        float(self.inputs['atmosphere']['CtoO']), 
                         kz, 
                         True
                     )
@@ -4661,10 +4719,10 @@ class inputs():
                     photo_inputs_dict['sonora_abunds_photochem'] = sonora_abund_photochem
                     photo_inputs_dict['df_sonora_photochem'] = df_sonora_photochem
                 else:
-                    photo_inputs_dict['mh'] = float(self.inputs['climate']['mh'])
-                    photo_inputs_dict['CtoO'] = float(self.inputs['climate']['CtoO'])
-                photo_inputs_dict['mh_interp'] = float(self.inputs['climate']['mh'])
-                photo_inputs_dict['CtoO_interp'] = float(self.inputs['climate']['CtoO'])
+                    photo_inputs_dict['mh'] = float(self.inputs['atmosphere']['mh'])
+                    photo_inputs_dict['CtoO'] = float(self.inputs['atmosphere']['CtoO'])
+                photo_inputs_dict['mh_interp'] = float(self.inputs['atmosphere']['mh'])
+                photo_inputs_dict['CtoO_interp'] = float(self.inputs['atmosphere']['CtoO'])
                 photo_inputs_dict['pc'] = pc
                 photo_inputs_dict['kz'] = kz
 
