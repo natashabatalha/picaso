@@ -504,18 +504,6 @@ def lu_backsubs(a, n, ntot, indx, b):
     
     return b
 
-# @logger.catch # Add this to track errors
-#@jit(nopython=True, cache=True)
-#def t_start(nofczns,nstr,it_max,conv,x_max_mult, 
-#            rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
-#            grad, cp, tidal, tmin,tmax, dwni , bb , y2, tp, 
-#            DTAU, TAU, W0, COSB, 
-#            ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,
-#            cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,
-#            constant_back,constant_forward, wno,nwno,ng,nt,gweight,tweight, ngauss, gauss_wts, save_profile, all_profiles,
-#            output_abunds, fhole = None, DTAU_clear = None, TAU_clear = None, W0_clear = None, COSB_clear = None, 
-#            DTAU_OG_clear = None, TAU_OG_clear = None, W0_OG_clear = None, COSB_OG_clear = None, W0_no_raman_clear = None, 
-#            verbose=1, do_holes=None, moist = False, egp_stepmax = False):
 @jit(nopython=True, cache=True)
 def t_start(nofczns,nstr,convergence_criteria,# 
             rfaci, rfacv, tidal,
@@ -541,44 +529,51 @@ def t_start(nofczns,nstr,convergence_criteria,#
         3   is top layer of lower radiative region
         4   is top layer of lower convective region
         5   is bottom layer of lower convective region
-    it_max : int 
-        # of maximum iterations allowed
-    conv: 
-        
-    x_max_mult: 
+    convergence_criteria : namedtuple
+        Defines convergence criteria for max number of loops and other numerical recipes values 
+        TODO: rename these quantities so that its more readable 
     rfaci : float 
         IR flux addition fraction 
     rfacv : float
         Visible flux addition fraction
-    nlevel : int
+    tidal : ndarray 
+        effectively sigmaTeff^4, gets added to the convergence critiera (e.g. F_IR*rfacI + F_SOL*rfacV + tidal)
+    Atmosphere : namedtuple
+        contains info such as PT profile, chemistry, condensable information nlevel : int
         # of levels
-    temp : array
-        Guess Temperature array, dimension is nlevel
-    pressure : array
-        Pressure array
-    p_table : array
-        Tabulated pressure array for convection calculations
-    t_table : array
-        Tabulated Temperature array for convection calculations
-    grad : array
-        Tabulated grad array for convection calculations
-    
-    cp : array
-        Tabulated cp array for convection calculations
-    tidal : array
-        Tidal Fluxes dimension = nlevel
-    tmin : float
-        Minimum allwed Temp in the profile
-    tmax : float
-        Maximum allowed Temp in the profile
-    dwni : array
-        Spectral interval corrections (dimension= nwvno)   
-    bb : array
-        Array of BB fluxes used in RT
-    y2 : array
-        Output of set_bb function in fluxes.py
-    tp : array
-        Output of set_bb function in fluxes.py
+    OpacityWEd : namedtuple
+        All opacity (e.g. dtau, tau, w0, g0) info with delta eddington corrected values 
+    OpacityNoEd : namedtuple
+        All opacity (e.g. dtau, tau, w0, g0) info without delta eddington corrected values 
+    ScatteringPhase : namedtuple
+        All scattering phase function inputs like ftau_cld and ftau_ray and fraction of forward to back scattering
+    Disco : namedtuple
+        All geometry inputs such as gauss/chebychev angles, incoming outgoing angles, etc 
+    Opagrid : namedtuple
+        Any opacity grid info such as wavelength grids, temperature pressure grids, tmax and tmin
+    AdiabatBundle : namedtuple
+        Any info for the adiabat calculations such as the precomputed tables from Didie 
+    FOPI : ndarray
+        Stellar spectrum if it exists otherwise this is just 1s array
+    save_profile : bool 
+        bool to specify if all intermediate profiles will be saved 
+    all_profiles : ndarray 
+        All saved profiles if it is requested 
+    fhole
+        Default=None ; fraction of the disk assumed to be clear 
+    hole_OpacityWEd : namedtuple
+        The clear opacities / scattering properties (opposed to the cloudy ones which are stored in the main opacity tuple)
+    hole_OpacityNoEd : namedtuple
+        The clear opacities / scattering properties w/o delta eddington correction (opposed to the cloudy ones which are stored in the main opacity tuple)
+    verbose
+        Default=1; prints things out (also slows down code)
+    do_holes
+        Default=None: will compute fractional cloud coverage 
+    moist 
+        Defalt= False; computes moist adiabat 
+    egp_stepmax 
+        Default = False; uses the "bug" turned feature where stepmax increases without bounds. Often leads to faster convergence but if you want small T steps this is not 
+        recommended 
     verbose : int
         If verbose=0, nothing will print out
         If verbose=1, everything will print out during the run, 
