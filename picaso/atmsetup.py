@@ -372,7 +372,19 @@ class ATMSETUP():
         """
         self.level['den'] = self.level['pressure'] / (self.c.k_b * self.level['temperature']) 
         return
-
+    def get_dtdp(self):
+        """
+        Calculates density of atmospheres used on TP profile: LEVEL
+        units of cm-3
+        """
+        pressure = self.level['pressure']
+        temp = self.level['temperature']
+        #dtdp=np.zeros(shape=(self.nlevel-1))
+        #for j in range(self.nlevel -1):
+        #    dtdp[j] = (np.log( temp[j]) - np.log( temp[j+1]))/(np.log(pressure[j]) - np.log(pressure[j+1]))
+        dtdp = np.diff(np.log(temp))/np.diff(np.log(pressure))
+        self.layer['dtdp'] = dtdp
+        return
     def get_altitude(self, p_reference=1,constant_gravity=False):
         """
         Calculates z and gravity  

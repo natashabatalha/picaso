@@ -1,6 +1,7 @@
 import numpy as np 
 import warnings
-from numba import jit, vectorize
+from numba import jit, vectorize,float32,float64
+from numba.experimental import jitclass
 from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh, min, dot, array,log,log10
 from .fluxes import get_reflected_1d,get_thermal_1d
 #from .fluxes import get_thermal_1d_newclima, get_thermal_1d_gfluxi,get_reflected_1d_gfluxv #deprecated
@@ -10,11 +11,178 @@ from .disco import compress_thermal
 import astropy.units as u
 import os
 
-#testing error tracker
-# from loguru import logger 
+from collections import namedtuple
+
+
+# still not developed fully. virga has a function already maybe just use that
+@jit(nopython=True, cache=True)
+def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,AdiabatBundle,nstr, Atmosphere = None, moist = None):
+
+    grav_cgs = grav*1e2
+    p_cgs = pressure *1e6
+    
+    nlevel = len(temp)
+    
+    
+    if len(mmw) == len(temp)-1:
+        r_atmos = 8.3143e7/mmw
+    else:
+        r_atmos = 8.3143e7/mmw[:-1]
+
+    
+    nz= nlevel -1
+    p = np.zeros_like(p_cgs)
+    t = np.zeros_like(p_cgs)
+
+    for iz in range(nz-1, -1,-1):
+        itop = iz
+        ibot = iz+1
+
+        dlnp = np.log(p_cgs[ibot]/p_cgs[itop])
+        p[iz] = 0.5*(p_cgs[itop]+p_cgs[ibot])
+
+        dtdlnp = (temp[itop]-temp[ibot])/dlnp
+
+        t[iz] = temp[ibot] +np.log(p_cgs[ibot]/p[iz])*dtdlnp
+        #scale_h =  r_atmos[iz]*t[iz]/grav_cgs
+    
+    
+    # flux_plux_ir is already summed up with dwni in climate routine
+    # so just add to get f_sum
+
+    f_sum = np.sum(flux_plus_ir_attop)
+
+    sigmab =  0.56687e-4 #cgs
+
+    teff_now = (f_sum/sigmab)**0.25
+    target_teff = (abs(tidal[0])/sigmab)**0.25
+    flx_min = sigmab*((target_teff*0.05)**4)
+    
+    #print("Teff now ", teff_now, "Target Teff ", target_teff)
+
+    #     we explictly assume that the bottom layer is 100%
+    #     convective energy transport.  This helps with
+    #     the correction logic below and should always be true
+    #     in a well formed model.
+
+    chf = np.zeros_like(tidal)
+
+    chf[nz-1] = f_sum
+    
+    for iz in range(nz-1-1,-1,-1):
+        chf[iz] = f_sum - flux_net_ir_layer[iz]
+        ratio_min = (1./3.)*p[iz]/p[iz+1]
+        
+#     set the minimum allowed heat flux in a layer by assuming some overshoot
+#     the 1/3 is arbitrary, allowing convective flux to fall faster than
+#     pressure scale height
+        
+        if chf[iz] < ratio_min*chf[iz+1]:
+            chf[iz]= ratio_min*chf[iz+1]
+        
+#     Now we adjust so that the convective flux is equal to the3
+#     target convective flux to see if this helps with the
+#     convergence.
+    f_target = abs(tidal[0])
+    f_actual = chf[nz-1]
+    
+    ratio = f_target/f_actual
+    
+    for iz in range(nz-1,-1,-1):
+        
+        chf[iz] = max(chf[iz]*ratio,flx_min) 
+        
+    
+    player, tlayer = np.zeros(len(pressure)-1), np.zeros(len(pressure)-1)
+    lapse_ratio = np.zeros_like(player)
+    for j in range(len(pressure)-1):
+        tlayer[j]=0.5*(temp[j]+temp[j+1])
+        player[j]=np.sqrt(p_cgs[j]*p_cgs[j+1]) # cgs
+
+        dtdp = (np.log(temp[j])-np.log(temp[j+1]))/(np.log(p_cgs[j+1]/p_cgs[j]))
+        tbar = 0.5*(temp[j]+temp[j+1])
+        pbar = 0.5*(p_cgs[j] +p_cgs[j+1])
+        # weirdly layer routine of eddysed uses did_grad with pressures in cgs
+        # supposed to be used with pressure in bars
+        if moist == True:
+            grad_x,cp_x = moist_grad(tbar, pbar, Adiabat, Atmosphere, j)
+        else:
+            grad_x,cp_x = did_grad_cp(tbar, pbar, Adiabat, Atmosphere)
+        lapse_ratio[j] = min(np.array([1.0, -dtdp/grad_x]))
+        
+    
+    
+    rho_atmos = player/ (r_atmos * tlayer)
+    
+    c_p = (7./2.)*r_atmos
+    scale_h = r_atmos * tlayer / (grav_cgs)
+    
+    #0.1 just to explore was not here 
+    #mixl = scale_h #lapse_ratio*scale_h*1e-1
+    mixl = np.zeros_like(lapse_ratio)
+    for jj in range(len(pressure)-1):
+        mixl[jj] = max(0.1,lapse_ratio[jj])*scale_h[jj]
+    
+    scalef_kz = 1./3.
+    
+    kz = scalef_kz * scale_h * (mixl/scale_h)**(4./3.) *( ( r_atmos*chf[:-1] ) / ( rho_atmos*c_p ) )**(1./3.)
+    
+    
+    kz = np.append(kz,kz[-1])
+    
+    
+    #### julien moses 2021
+    
+    # logp = np.log10(pressure)
+    # wh = np.where(np.absolute(logp-(-3)) == np.min(np.absolute(logp-(-3))))
+    
+    # kzrad1 = (5e8/np.sqrt(pressure[nstr[0]:nstr[1]]))*(scale_h[wh]/(620*1e5))*((target_teff/1450)**4)
+    # kzrad2 = (5e8/np.sqrt(pressure[nstr[3]:nstr[4]]))*(scale_h[wh]/(620*1e5))*((target_teff/1450)**4)
+    # #
+    # if nstr[3] != 0:
+    #     kz[nstr[0]:nstr[1]] = kzrad1#/100 #*10#kz[nstr[0]:nstr[1]]/1.0
+    #     kz[nstr[3]:nstr[4]] = kzrad2#/100 #*10 #kz[nstr[3]:nstr[4]]/1.0
+    # else:
+    #     kz[nstr[0]:nstr[1]] = kzrad1#/100
+    pm_range = 8 # aribitrary range to average over to get the mean kz *JM working on changing to be based on scale height
+    dz = scale_h[1:] * (np.log((player[:-1]/1e6) / (player[1:]/1e6)))
+    z = np.zeros(nlevel - 1)
+    z[0] = dz[0]
+    for i in range(1, nlevel - 1):
+        z[i] = z[i - 1] + dz[i] 
+
+    kz_upper = [] # average the upper radiative zone kz
+    for i in range(nstr[0], nstr[1]):
+        above_range = np.abs(i - (np.abs(z - (z[i] + 2*scale_h[i]))).argmin()) # find the index of the layer 1 scale height above the current layer
+        below_range = np.abs(i - (np.abs(z - (z[i] - 2*scale_h[i]))).argmin())
+        # start_index = np.maximum(nstr[0], i - pm_range)
+        # end_index = np.minimum(nstr[1], i + pm_range)
+        start_index = np.maximum(nstr[0], i - above_range)
+        end_index = np.minimum(nstr[1], i + below_range)
+        kz_upper.append(np.mean(kz[start_index:end_index]))
+    kz_upper = np.array(kz_upper)
+
+    if nstr[3] != 0:
+        kz[nstr[0]:nstr[1]] = kz_upper
+
+        kz_lower = [] # average the lower radiative zone kz
+        for i in range(nstr[3], nstr[4]):
+            above_range = np.abs(i - (np.abs(z - (z[i] + 2*scale_h[i]))).argmin()) # find the index of the layer 1 scale height above the current layer
+            below_range = np.abs(i - (np.abs(z - (z[i] - 2*scale_h[i]))).argmin())
+            start_index = np.maximum(nstr[3], i - above_range)
+            end_index = np.minimum(nstr[4], i + below_range)
+            # start_index = np.maximum(nstr[3], i - pm_range)
+            # end_index = np.minimum(nstr[4], i + pm_range)
+            kz_lower.append(np.mean(kz[start_index:end_index]))
+        kz_lower = np.array(kz_lower)
+        kz[nstr[3]:nstr[4]] = kz_lower
+    else:
+        kz[nstr[0]:nstr[1]] = kz_upper
+    
+    return kz
 
 @jit(nopython=True, cache=True)
-def did_grad_cp( t, p, t_table, p_table, grad, cp, calc_type):
+def did_grad_cp( t, p, AdiabatBundle):
     """
     Parameters
     ----------
@@ -29,9 +197,7 @@ def did_grad_cp( t, p, t_table, p_table, grad, cp, calc_type):
     grad : array 
         array of gradients of dimension 53*26
     cp : array 
-        array of cp of dimension 53*26
-    calc_type : int 
-        not used to make compatible with nopython. 
+        array of cp of dimension 53*26 
     
     Returns
     -------
@@ -41,7 +207,7 @@ def did_grad_cp( t, p, t_table, p_table, grad, cp, calc_type):
     """
     # Python version of DIDGRAD function in convec.f in EGP
     # This has been benchmarked with the fortran version
-    
+    t_table, p_table, grad, cp=AdiabatBundle.t_table, AdiabatBundle.p_table, AdiabatBundle.grad, AdiabatBundle.cp
        
     temp_log= log10(t)
     pres_log= log10(p)
@@ -95,7 +261,7 @@ def did_grad_cp( t, p, t_table, p_table, grad, cp, calc_type):
     return grad_x,cp_x
     
 @jit(nopython=True, cache=True)
-def convec(temp,pressure, t_table, p_table, grad, cp, output_abunds=None, moist = None):
+def convec(temp,pressure,AdiabatBundle, Atmosphere, moist = False):
     """
     Calculates Grad arrays from profiles
     
@@ -113,8 +279,8 @@ def convec(temp,pressure, t_table, p_table, grad, cp, output_abunds=None, moist 
         array of gradients of dimension 53*26
     cp : array 
         array of cp of dimension 53*26
-    output_abunds : str
-        abundances in the atmosphere
+    Atmosphere : str
+        abundances in the atmosphere, and other info regarding the condensable properties
     moist : bool
         if moist adiabat is to be used
     Return
@@ -131,15 +297,13 @@ def convec(temp,pressure, t_table, p_table, grad, cp, output_abunds=None, moist 
         for j in range(len(temp)-1):
             tbar[j] = 0.5*(temp[j]+temp[j+1])
             pbar[j] = sqrt(pressure[j]*pressure[j+1])
-            calc_type = 0
-            grad_x[j], cp_x[j] =  moist_grad( tbar[j], pbar[j], t_table, p_table, grad, cp, calc_type, output_abunds, j)
+            grad_x[j], cp_x[j] =  moist_grad( tbar[j], pbar[j], AdiabatBundle , Atmosphere, j)
 
     else:
         for j in range(len(temp)-1):
             tbar[j] = 0.5*(temp[j]+temp[j+1])
             pbar[j] = sqrt(pressure[j]*pressure[j+1])
-            calc_type = 0
-            grad_x[j], cp_x[j] =  did_grad_cp( tbar[j], pbar[j], t_table, p_table, grad, cp, calc_type)
+            grad_x[j], cp_x[j] =  did_grad_cp( tbar[j], pbar[j], AdiabatBundle)
 
     return grad_x, cp_x
 
@@ -341,16 +505,26 @@ def lu_backsubs(a, n, ntot, indx, b):
     return b
 
 # @logger.catch # Add this to track errors
+#@jit(nopython=True, cache=True)
+#def t_start(nofczns,nstr,it_max,conv,x_max_mult, 
+#            rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
+#            grad, cp, tidal, tmin,tmax, dwni , bb , y2, tp, 
+#            DTAU, TAU, W0, COSB, 
+#            ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,
+#            cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,
+#            constant_back,constant_forward, wno,nwno,ng,nt,gweight,tweight, ngauss, gauss_wts, save_profile, all_profiles,
+#            output_abunds, fhole = None, DTAU_clear = None, TAU_clear = None, W0_clear = None, COSB_clear = None, 
+#            DTAU_OG_clear = None, TAU_OG_clear = None, W0_OG_clear = None, COSB_OG_clear = None, W0_no_raman_clear = None, 
+#            verbose=1, do_holes=None, moist = False, egp_stepmax = False):
 @jit(nopython=True, cache=True)
-def t_start(nofczns,nstr,it_max,conv,x_max_mult, 
-            rfaci, rfacv, nlevel, temp, pressure, p_table, t_table, 
-            grad, cp, tidal, tmin,tmax, dwni , bb , y2, tp, DTAU, TAU, W0, COSB, 
-            ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, ubar0,ubar1,
-            cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,
-            constant_back,constant_forward, wno,nwno,ng,nt,gweight,tweight, ngauss, gauss_wts, save_profile, all_profiles,
-            output_abunds, fhole = None, DTAU_clear = None, TAU_clear = None, W0_clear = None, COSB_clear = None, 
-            DTAU_OG_clear = None, TAU_OG_clear = None, W0_OG_clear = None, COSB_OG_clear = None, W0_no_raman_clear = None, 
-            verbose=1, do_holes=None, moist = False, egp_stepmax = False):
+def t_start(nofczns,nstr,convergence_criteria,# 
+            rfaci, rfacv, tidal,
+            Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase, Disco,Opagrid, AdiabatBundle,
+            FOPI,
+            save_profile, all_profiles, 
+            fhole=None, hole_OpacityWEd=None,hole_OpacityNoEd=None, 
+            verbose=1, do_holes=None, 
+            moist = False, egp_stepmax = False):
     """
     Module to iterate on the level TP profile to make the Net Flux as close to 0.
     Opacities/chemistry are not updated while iterating in this module.
@@ -422,9 +596,16 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
 
     # -- SM -- needs a lot of documentation
 
+    #unpack 
+    temp = Atmosphere.t_level; pressure = Atmosphere.p_level;
+    nlevel = len(temp)
+    tmin =Opagrid.tmin 
+    tmax = Opagrid.tmax 
+    it_max,conv,x_max_mult = convergence_criteria.it_max,convergence_criteria.conv,convergence_criteria.x_max_mult
+
+
     cldsave_count = 0 # used to track how many cloud profiles to save outside of loop for animation *JM
 
-    #Climate default is to run both reflected and thermal. Though sometimes, in most cases we only want thermal.
     eps=1e-4
 
     n_top_r=nstr[0]-1
@@ -442,20 +623,31 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
     #neb this double true in the first call to reflected light needs to be changed
     if rfacv==0:compute_reflected=False
     else:compute_reflected=True
+    compute_thermal=True
 
+    
+
+    #if do_holes == True:
+    #    flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
+    #            COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
+    #            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
+    #            wno,nwno,ng,nt, gweight, tweight, nlevel, ngauss, gauss_wts, compute_reflected, True, 
+    #            fhole, DTAU_clear , TAU_clear , W0_clear , COSB_clear , DTAU_OG_clear , TAU_OG_clear, W0_OG_clear, 
+    #            COSB_OG_clear , W0_no_raman_clear, do_holes=True) #True for reflected, True for thermal
+    #else:
+    #    flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
+    #            COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
+    #            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
+    #            wno,nwno,ng,nt, gweight,tweight, nlevel, ngauss, gauss_wts,compute_reflected, True)#True for reflected, True for thermal
     if do_holes == True:
-        flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
-                COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-                ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
-                wno,nwno,ng,nt, gweight, tweight, nlevel, ngauss, gauss_wts, compute_reflected, True, 
-                fhole, DTAU_clear , TAU_clear , W0_clear , COSB_clear , DTAU_OG_clear , TAU_OG_clear, W0_OG_clear, 
-                COSB_OG_clear , W0_no_raman_clear, do_holes=True) #True for reflected, True for thermal
-    else:
-        flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
-                COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-                ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
-                wno,nwno,ng,nt, gweight,tweight, nlevel, ngauss, gauss_wts,compute_reflected, True)#True for reflected, True for thermal
+        flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
+                    Disco,Opagrid, FOPI, compute_reflected, compute_thermal, 
+                    do_holes=do_holes,fhole=fhole, hole_OpacityWEd=OpacityWEd_clear,hole_OpacityNoEd=OpacityNoEd_clear)
 
+    else:                
+        flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
+                    Disco,Opagrid, FOPI, compute_reflected, compute_thermal)
+ 
     # extract visible fluxes
     flux_net_v_layer = flux_net_v_layer_full[0,0,:]  #fmnetv
     flux_net_v = flux_net_v_full[0,0,:]#fnetv
@@ -656,12 +848,13 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                     for j1 in range(n_conv_top_b, n_bot_b+1): 
                         
                         press = sqrt(pressure[j1-1]*pressure[j1])
-                        calc_type =  0
 
+                        #update temp before throwing to moist_grad function
+                        Atmosphere=replace_temp(Atmosphere,temp)
                         if moist == True:
-                            grad_x, cp_x = moist_grad( beta[j1-1], press, t_table, p_table, grad, cp, calc_type, output_abunds, j1-1)
+                            grad_x, cp_x = moist_grad( beta[j1-1], press, AdiabatBundle, Atmosphere, j1-1)
                         else: 
-                            grad_x, cp_x = did_grad_cp( beta[j1-1], press, t_table, p_table, grad, cp, calc_type)
+                            grad_x, cp_x = did_grad_cp( beta[j1-1], press, AdiabatBundle)
                         
                         temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
                 
@@ -670,18 +863,28 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                 # temperature has been perturbed
                 # now recalculate the IR fluxes, so call picaso with only thermal
 
-                flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
-            COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
-            wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts, False, True) #false for reflected, True for thermal
+                #flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
+                        #COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
+                        #ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
+                        #wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts, False, True) #false for reflected, True for thermal
                 
+                #if do_holes == True:
+                #    flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
+                #        COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
+                #        ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
+                #        wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts, False, True, fhole, DTAU_clear , TAU_clear , W0_clear , COSB_clear , 
+                #        DTAU_OG_clear , TAU_OG_clear , W0_OG_clear, COSB_OG_clear , W0_no_raman_clear, do_holes=True) #false for reflected, True for thermal
+                
+                Atmosphere=replace_temp(Atmosphere,temp)
                 if do_holes == True:
-                    flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
-                COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-                ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
-                wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts, False, True, fhole, DTAU_clear , TAU_clear , W0_clear , COSB_clear , 
-                DTAU_OG_clear , TAU_OG_clear , W0_OG_clear, COSB_OG_clear , W0_no_raman_clear, do_holes=True) #false for reflected, True for thermal
+                    flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
+                                Disco,Opagrid, FOPI, compute_reflected, compute_thermal, 
+                                do_holes=do_holes,fhole=fhole, hole_OpacityWEd=OpacityWEd_clear,hole_OpacityNoEd=OpacityNoEd_clear)
 
+                else:                
+                    flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
+                                Disco,Opagrid, FOPI, compute_reflected, compute_thermal)
+             
 
                 # extract ir fluxes
 
@@ -872,11 +1075,12 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                 for j1 in range(n_strt_d+1, n_bot_d+1):
 
                     press = sqrt(pressure[j1-1]*pressure[j1])
-                    calc_type =  0 # only need grad_x in return
+
+                    Atmosphere=replace_temp(Atmosphere,temp)
                     if moist == True:
-                        grad_x, cp_x = moist_grad( temp[j1-1], press, t_table, p_table, grad, cp, calc_type, output_abunds, j1-1)
+                        grad_x, cp_x = moist_grad( temp[j1-1], press, AdiabatBundle, Atmosphere, j1-1)
                     else:
-                        grad_x, cp_x = did_grad_cp( temp[j1-1], press, t_table, p_table, grad, cp, calc_type)
+                        grad_x, cp_x = did_grad_cp( temp[j1-1], press, AdiabatBundle)
                             
                     temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
                 
@@ -895,17 +1099,27 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                     temp[j1] = tmax- 0.1
             
             # re calculate thermal flux
-            flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
-            COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
-            wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts, False, True) #false reflected, True thermal
+            #flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
+            #COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
+            #ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
+            #wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts, False, True) #false reflected, True thermal
 
+            #if do_holes == True:
+            #    flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
+            #    COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
+            #    ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
+            #    wno,nwno,ng,nt, gweight, tweight, nlevel, ngauss, gauss_wts, False, True, fhole, DTAU_clear , TAU_clear , W0_clear , COSB_clear , 
+            #    DTAU_OG_clear , TAU_OG_clear, W0_OG_clear, COSB_OG_clear , W0_no_raman_clear, do_holes=True) #false reflected, True thermal
+            Atmosphere=replace_temp(Atmosphere,temp)
             if do_holes == True:
-                flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
-                COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-                ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
-                wno,nwno,ng,nt, gweight, tweight, nlevel, ngauss, gauss_wts, False, True, fhole, DTAU_clear , TAU_clear , W0_clear , COSB_clear , 
-                DTAU_OG_clear , TAU_OG_clear, W0_OG_clear, COSB_OG_clear , W0_no_raman_clear, do_holes=True) #false reflected, True thermal
+                flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
+                            Disco,Opagrid, FOPI, reflected = False, thermal=compute_thermal, 
+                            do_holes=do_holes,fhole=fhole, hole_OpacityWEd=OpacityWEd_clear,hole_OpacityNoEd=OpacityNoEd_clear)
+
+            else:                
+                flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
+                            Disco,Opagrid, FOPI,reflected = False, thermal=compute_thermal)
+         
            
 
             # extract ir fluxes
@@ -1124,36 +1338,30 @@ def growdown(nlv,nstr, ngrow) :
 
     return nstr
 
-@jit(nopython=True, cache=True)
-def get_fluxes( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU, W0, 
-            COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-            ubar0,ubar1,cos_theta, F0PI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
-            wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts,reflected, thermal, fhole = None, DTAU_clear = None, TAU_clear = None, 
-            W0_clear = None, COSB_clear = None, DTAU_OG_clear = None, TAU_OG_clear = None, W0_OG_clear = None, COSB_OG_clear = None, W0_no_raman_clear = None, do_holes=None):
+#@jit(nopython=True, cache=True)
+#def get_fluxes( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU, W0, 
+#            COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
+#            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
+#            wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts,reflected, thermal, fhole = None, DTAU_clear = None, TAU_clear = None, 
+#            W0_clear = None, COSB_clear = None, DTAU_OG_clear = None, TAU_OG_clear = None, W0_OG_clear = None, COSB_OG_clear = None, W0_no_raman_clear = None, do_holes=None):
+OpacityWEd_Tuple_default = namedtuple("OpacityWEd_Tuple", ["DTAU", "TAU", "W0", "COSB",'ftau_cld','ftau_ray','GCOS2', 'W0_no_raman','f_deltaM'])
+OpacityWEd_Tuple_default = OpacityWEd_Tuple_default(np.zeros((8,8,8)), 
+                    np.zeros((8,8,8)), np.zeros((8,8,8)), np.zeros((8,8,8)),np.zeros((8,8,8)), np.zeros((8,8,8)),np.zeros((8,8,8)),  
+                    np.zeros((8,8,8)) , np.zeros((8,8,8)))
+
+OpacityNoEd_Tuple_default = namedtuple("OpacityNoEd_Tuple", ["DTAU", "TAU", "W0", "COSB"])
+OpacityNoEd_Tuple_default = OpacityNoEd_Tuple_default(np.zeros((8,8,8)), 
+                    np.zeros((8,8,8)), np.zeros((8,8,8)), np.zeros((8,8,8)))
+@jit(nopython=True, cache=False)
+def get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
+                Disco,Opagrid, FOPI, reflected, thermal, 
+                do_holes=False, fhole=0, hole_OpacityWEd=OpacityWEd_Tuple_default,hole_OpacityNoEd=OpacityNoEd_Tuple_default):
     """
     Program to run RT for climate calculations. Runs the thermal and reflected module.
     And combines the results with wavenumber widths.
 
     Parameters 
     ----------
-    pressure : array 
-        Level Pressure  Array
-    temperature : array
-        Opacity class from `justdoit.opannection`
-    dwni : array 
-        IR wavenumber intervals.
-    bb : array 
-        BB flux array. output from set_bb
-    y2 : array
-        output from set_bb
-    tp : array
-        output from set_bb
-    tmin : float
-        Minimum temp upto which interpolation has been done.
-    tmax : float
-        Maximum temp upto which interpolation has been done.
-    
-
     reflected : bool 
         Run reflected light
     thermal : bool 
@@ -1166,7 +1374,32 @@ def get_fluxes( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU
     ------
     array
         Visible and IR -- net (layer and level), upward (level) and downward (level)  fluxes
-    """
+    """  
+    #import dill as pickle
+    #with open('tuples.pkl', 'wb') as file:
+    #    pickle.dump([Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
+    #            Disco,Opagrid, FOPI, reflected, thermal, 
+    #            do_holes, fhole, hole_OpacityWEd,hole_OpacityNoEd], file)
+    #raise Exception('here')  
+    #return 
+    #def blah() :
+    #unpack atmosphere items 
+    pressure, temperature ,nlevel= Atmosphere.p_level, Atmosphere.t_level,Atmosphere.nlevel
+    #unpack opacity items w/ delta eddington correctioin
+    DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2,W0_no_raman = OpacityWEd.DTAU, OpacityWEd.TAU, OpacityWEd.W0, OpacityWEd.COSB,OpacityWEd.ftau_cld, OpacityWEd.ftau_ray,OpacityWEd.GCOS2,OpacityWEd.W0_no_raman
+    #unpack opacity items w/o delta eddington correctioin
+    DTAU_OG,TAU_OG, W0_OG, COSB_OG = OpacityNoEd.DTAU,OpacityNoEd.TAU, OpacityNoEd.W0, OpacityNoEd.COSB
+    #unpack scattering phase items 
+    surf_reflect, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward = ScatteringPhase.surf_reflect, ScatteringPhase.single_phase,ScatteringPhase.multi_phase,ScatteringPhase.frac_a,ScatteringPhase.frac_b,ScatteringPhase.frac_c,ScatteringPhase.constant_back,ScatteringPhase.constant_forward
+    #unpack disco items 
+    ng,nt,gweight,tweight,ubar0,ubar1,cos_theta = Disco.ng,Disco.nt,Disco.gweight,Disco.tweight,Disco.ubar0,Disco.ubar1,Disco.cos_theta
+    #unpack Opagrid info 
+    nwno,dwni,wno,ngauss, gauss_wts = Opagrid.nwno,Opagrid.delta_wno,Opagrid.wno,Opagrid.ngauss, Opagrid.gauss_wts
+   
+    #if we are doing holes, then unpack those taus as well 
+    if do_holes: 
+        DTAU_clear, TAU_clear, W0_clear, COSB_clear,W0_no_raman_clear=hole_OpacityWEd.DTAU, hole_OpacityWEd.TAU, hole_OpacityWEd.W0, hole_OpacityWEd.COSB,hole_OpacityWEd.W0_no_raman
+        DTAU_OG_clear,TAU_OG_clear, W0_OG_clear, COSB_OG_clear=hole_OpacityNoEd.DTAU, hole_OpacityNoEd.TAU, hole_OpacityNoEd.W0, hole_OpacityNoEd.COSB
     #print('enter climate')
 
     # for visible
@@ -1222,7 +1455,7 @@ def get_fluxes( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU
                                     DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
                                     GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
                                     DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
-                                    surf_reflect, ubar0_clima,ubar1_clima,cos_theta, F0PI,
+                                    surf_reflect, ubar0_clima,ubar1_clima,cos_theta, FOPI,
                                     single_phase,multi_phase,
                                     frac_a,frac_b,frac_c,constant_back,constant_forward, 
                                     get_toa_intensity=0, get_lvl_flux=1)
@@ -1238,7 +1471,7 @@ def get_fluxes( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU
                         DTAU_clear[:,:,ig], TAU_clear[:,:,ig], W0_clear[:,:,ig], COSB_clear[:,:,ig],
                         GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
                         DTAU_OG_clear[:,:,ig], TAU_OG_clear[:,:,ig], W0_OG_clear[:,:,ig], COSB_OG_clear[:,:,ig],
-                        surf_reflect, ubar0_clima,ubar1_clima,cos_theta, F0PI,
+                        surf_reflect, ubar0_clima,ubar1_clima,cos_theta, FOPI,
                         single_phase,multi_phase,
                         frac_a,frac_b,frac_c,constant_back,constant_forward, 
                         get_toa_intensity=0, get_lvl_flux=1)
@@ -1270,7 +1503,7 @@ def get_fluxes( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU
             delta_approx = 0 # assuming delta approx is already applied on opds 
                         
             flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v = get_reflected_1d_gfluxv(nlevel, wno,nwno, ng_clima,nt_clima, DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
-                                                                                       surf_reflect,b_top,b_surface,ubar0_clima, F0PI,tridiagonal, delta_approx)
+                                                                                       surf_reflect,b_top,b_surface,ubar0_clima, FOPI,tridiagonal, delta_approx)
             
             import pickle as pk
             pk.dump([flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v], open('gfluxv.pk','wb'))
@@ -1368,9 +1601,23 @@ def get_fluxes( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU
 
 #soon I will deprecate the function name "climate" as it is really confusing with what it 
 #actually does, which is just run the RT to get fluxes
-climate = get_fluxes
+climate_deprecate = get_fluxes
 
-def calculate_atm(bundle, opacityclass, fthin_cld = None, do_holes = None):
+@jit(nopython=True)
+def replace_temp(tuple_old, NEW_TEMP): 
+    return Atmosphere_Tuple(tuple_old.dtdp,tuple_old.mmw_layer,
+        tuple_old.nlevel,NEW_TEMP,tuple_old.p_level,tuple_old.condensables,
+        tuple_old.condensable_abundances,tuple_old.condensable_weights)
+
+
+Atmosphere_Tuple = namedtuple('Atmosphere_Tuple',['dtdp','mmw_layer','nlevel','t_level','p_level','condensables','condensable_abundances','condensable_weights'])
+OpacityWEd_Tuple = namedtuple("OpacityWEd_Tuple", ["DTAU", "TAU", "W0", "COSB",'ftau_cld','ftau_ray','GCOS2', 'W0_no_raman','f_deltaM'])
+ScatteringPhase_Tuple = namedtuple('ScatteringPhase_Tuple',['surf_reflect','single_phase','multi_phase','frac_a','frac_b','frac_c','constant_back','constant_forward'])
+Disco_Tuple = namedtuple('Disco_Tuple',['ng','nt', 'gweight','tweight', 'ubar0','ubar1','cos_theta'])
+OpacityNoEd_Tuple = namedtuple("OpacityNoEd_Tuple", ["DTAU", "TAU", "W0", "COSB"])
+
+
+def calculate_atm(bundle, opacityclass, fthin_cld = None, do_holes = None, only_atmosphere=False):
 
     inputs = bundle.inputs
 
@@ -1460,6 +1707,7 @@ def calculate_atm(bundle, opacityclass, fthin_cld = None, do_holes = None):
     atm.get_density()
     atm.get_altitude(p_reference = p_reference)#will calculate altitude if r and m are given (opposed to just g)
     atm.get_column_density()
+    atm.get_dtdp()
 
     #gets both continuum and needed rayleigh cross sections 
     #relies on continuum molecules are added into the opacity 
@@ -1478,27 +1726,49 @@ def calculate_atm(bundle, opacityclass, fthin_cld = None, do_holes = None):
 
     nlevel = atm.c.nlevel
     nlayer = atm.c.nlayer
+
     
+    allowed_condensibles = ['H2O', 'CH4', 'NH3', 'Fe']
+    our_condesables = [i for i in allowed_condensibles if i in  bundle.inputs['atmosphere']['profile'].keys()]
+    condensable_abundances = bundle.inputs['atmosphere']['profile'].loc[:,our_condesables].T.values
+    condensable_weights = [atm.weights[i].values[0] for i in our_condesables]
+
+    Atmosphere= Atmosphere_Tuple(atm.layer['dtdp'], atm.layer['mmw'],nlevel,atm.level['temperature'],atm.level['pressure'],
+                                    our_condesables,condensable_abundances,condensable_weights)
     
+    if only_atmosphere: 
+        return Atmosphere
+
     opacityclass.get_opacities(atm)
     
         #check if patchy clouds are requested
     if do_holes == True:
-        DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman, f_deltaM= compute_opacity(
+        DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman, f_deltaM = compute_opacity(
             atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
             full_output=False, plot_opacity=False, fthin_cld = fthin_cld, do_holes = True)
     else:
+        #this could refined and deleted by adjust fthin in clouds input, not compute opacity. 
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman, f_deltaM= compute_opacity(
                 atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
                 full_output=False, plot_opacity=False)
 
-    #mmw = np.mean(atm.layer['mmw'])
-    mmw = atm.layer['mmw']
-    
-    return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight
+    #Now let's organize all the data we need for the climate calculations
+    #these named tuples operate like classes but they are supported by numba no python 
+    OpacityWEd = OpacityWEd_Tuple(DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2,  W0_no_raman, f_deltaM)
+
+    OpacityNoEd = OpacityNoEd_Tuple(DTAU_OG, TAU_OG, W0_OG, COSB_OG)
+
+    ScatteringPhase= ScatteringPhase_Tuple(atm.surf_reflect,single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward)
+
+    Disco = Disco_Tuple(ng,nt, gweight,tweight, ubar0,ubar1,cos_theta)
 
 
-def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None, fthin_cld = None, do_holes=None):
+
+    return OpacityWEd, OpacityNoEd,ScatteringPhase,Disco,Atmosphere
+    #return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight
+
+
+def calculate_atm_deq_deprecate(bundle, opacityclass,on_fly=False,gases_fly=None, fthin_cld = None, do_holes=None):
 
     inputs = bundle.inputs
 
@@ -1564,7 +1834,7 @@ def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None, fthin_cl
 
     #set star parameters
     radius_star = inputs['star']['radius']
-    #F0PI = np.zeros(nwno) + 1.
+    #FOPI = np.zeros(nwno) + 1.
     #semi major axis
     sa = inputs['star']['semi_major']
 
@@ -1634,7 +1904,7 @@ def calculate_atm_deq(bundle, opacityclass,on_fly=False,gases_fly=None, fthin_cl
     return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight
 
 @jit(nopython=True, cache=True)
-def moist_grad( t, p, t_table, p_table, grad, cp, calc_type, output_abunds, ind):
+def moist_grad( t, p, AdiabatBundle, Atmosphere, ind):
     """
     Parameters
     ----------
@@ -1642,18 +1912,18 @@ def moist_grad( t, p, t_table, p_table, grad, cp, calc_type, output_abunds, ind)
         Temperature  value
     p : float 
         Pressure value
-    t_table : array 
-        array of Temperature values with 53 entries
-    p_table : array 
-        array of Pressure value with 26 entries
-    grad : array 
-        array of gradients of dimension 53*26
-    cp : array 
-        array of cp of dimension 53*26
-    calc_type : int 
-        not used to make compatible with nopython.
-    output_abunds : str
-        abundances in the atmosphere
+    AdiabatBundle : namedtuple 
+        includes:
+        - t_table : array 
+            array of Temperature values with 53 entries
+        - p_table : array 
+            array of Pressure value with 26 entries
+        - grad : array 
+            array of gradients of dimension 53*26
+        - cp : array 
+            array of cp of dimension 53*26
+    Atmosphere : namedtuple 
+        Atmosphere namedtuple which is created in picaso.climate.calculate_atm and includes info about the condensates, PT profile, and atmosphere properties
     ind: int
         index of current layer of the t and p to retrieve the right abundance at this layer
     
@@ -1664,27 +1934,38 @@ def moist_grad( t, p, t_table, p_table, grad, cp, calc_type, output_abunds, ind)
     
     """
     # Python version of moistgrad function in convec.f in EGP
-
+    #t_table, p_table, grad, cp = AdiabatBundle.t_table, AdiabatBundle.p_table, AdiabatBundle.grad, AdiabatBundle.cp
     #gas MMW organized into one vector (g/mol)
-    mmw = [0.00067, 2.01588, 1.008, 1.008-0.00067, 1.008+0.00067, 2.01588+0.00067, 2.01588-0.00067, 
-            2.01588+1.008-0.00067,4.002602, 18.01528, 16.04276, 28.0104, 17.03056, 28.0134, 33.997582, 
-            34.0809, 63.8794, 66.9409, 55.84, 56.85494, 53.00404, 22.989770, 39.0983, 85.4678, 132.90545, 44.0]
+    MoistGradInfo = MoistGradClass()
 
     Rgas = 8.314e7 #erg/K/mol
 
     #indexes of species that are allowed to condense
-    icond = [9,10,12,18] #h2o, ch4, nh3, fe
+    #icond = [9,10,12,18] #h2o, ch4, nh3, fe
 
-    ncond = 4 #Only 4 molecules are considered for now (H2O, CH4, NH3, Fe) 
-    Tcrit = [647.,   191.,   406.,  4000.]
-    Tfr   = [273.,    90.,   195.,  1150.]
-    hfus  = [6.00e10, 9.46e9, 5.65e10, 1.4e11] #(erg/mol)
+    condensables = Atmosphere.condensables
+    ncond = len(condensables) #Only 4 molecules are considered for now (H2O, CH4, NH3, Fe) 
+    output_abunds = Atmosphere.condensable_abundances
+    mmw = Atmosphere.condensable_weights
+
+    #Tcrit = [647.,   191.,   406.,  4000.]
+    #Tfr   = [273.,    90.,   195.,  1150.]
+    #hfus  = [6.00e10, 9.46e9, 5.65e10, 1.4e11] #(erg/mol)
+    Tcrit, Tfr, hfus  = np.zeros(ncond),np.zeros(ncond),np.zeros(ncond)
+    
+    for i,imol in enumerate(condensables): 
+        info = MoistGradInfo.returns(imol)
+        Tcrit[i] = info[0]
+        Tfr[i] = info[1]
+        hfus[i] = info[2]
 
     #set heat of vaporization + fusion (when applicable)
     dH = np.zeros(ncond)
-    for i in range(ncond):
+    
+    for i,imol in enumerate(condensables): 
+        hvap = HVapClass(t, mmw[i])
         if(t < Tcrit[i]):
-            dH[i] = dH[i] + hvapfunc(icond[i],t, mmw)
+            dH[i] = dH[i] + hvap.returns(imol)#hvapfunc(icond[i],t, mmw)
         if(t < Tfr[i]):
             dH[i] = dH[i] + hfus[i]
 
@@ -1697,22 +1978,23 @@ def moist_grad( t, p, t_table, p_table, grad, cp, calc_type, output_abunds, ind)
     for i in range(ncond):
         #icond[i]+1 since output_abunds has t, p as first two columns so index is shifted by 1
         #ind is the index of the current layer
-        pc[i] = output_abunds[icond[i]+1][ind]*p
+        pc[i] = output_abunds[i][ind]*p
         a[i]  = dH[i]/Rgas/t
         pb    -= pc[i]
 
     # summed heat capacity for ideal gas case. note that this cp is in erg/K/mol
     cpI = 0.0
     f = 0.0
-    for i, j in zip(range(9,len(mmw)), range(10,len(mmw)+1)): #add +1 for j since output_abunds is offset by 1 index
-        f  += output_abunds[j][ind]
-        cpI += output_abunds[j][ind]*cpfunc(i,t,mmw)*mmw[i]
+    for i,imol in enumerate(condensables):
+        cpfoo = CPClass(t,mmw[i])
+        f  += output_abunds[i][ind]
+        cpI += output_abunds[i][ind]*cpfoo.returns(imol)*mmw[i]
 
     # ideal gas adiaibatic gradient
     gradI = Rgas/cpI*f
 
     #non-ideal gas from Didier
-    gradNI, cp_x = did_grad_cp(t,p,t_table,p_table,grad,cp, calc_type)
+    gradNI, cp_x = did_grad_cp(t,p, AdiabatBundle)
     cp_NI = Rgas/gradNI
 
     #weighted combination of non-ideal and ideal components
@@ -1730,59 +2012,89 @@ def moist_grad( t, p, t_table, p_table, grad, cp, calc_type, output_abunds, ind)
 
     return grad_x, cp_x 
 
-@jit(nopython=True, cache=True)
-def hvapfunc(igas, temp, mmw):
-    """
-    Parameters
-    ----------
-    gas: int 
-        gas index
-    temp : float
-        Temperature  value
-    mmw: list
-        list of mmw of all gases (g/mol)
 
-    Returns
-    -------
-    float 
-        hvap
-    """
+MoistGradTypes = [(i, float64[:]) for i in ['H2O','CH4','NH3','Fe']]
+@jitclass(MoistGradTypes)
+class MoistGradClass(object):
+    def __init__(self):
+        #arrays are Tcrit, tfr, hfus in erg/mol
+        self.H2O = np.array([647.0, 273., 6.00e10])
+        self.CH4 = np.array([191.0, 90.,  9.46e9])
+        self.NH3 = np.array([406.0, 195., 5.65e10])
+        self.Fe = np.array([4000.0, 1150., 1.4e11])
+    def returns(self,mol):
+        """
+        This is the ONLY way to get around numba not being able to run getattr function 
+        """
+        if mol == 'H2O': 
+            a = self.H2O 
+        elif mol == 'CH4':
+            a = self.CH4 
+        elif mol == 'NH3':
+            a = self.NH3
+        elif mol == 'Fe':
+            a = self.Fe
+        else: 
+            raise Exception("Only H2O, CH4, NH3, and Fe have been added to the moist adiabat function")
+        return a
 
-    #this function condenses all the individual elemental hvap functions in EGP into one function
-
-    if (igas == 9): #h2o
-        t = temp/647.
-        if( temp < 647. ):
+HVapTypes = [(i, float64) for i in ['temperature','mmw']]
+@jitclass(HVapTypes)
+class HVapClass(object):
+    def __init__(self,temperature,mmw):
+        self.temperature = temperature 
+        self.mmw = mmw
+        return 
+        
+    def H2O(self):
+        t = self.temperature/647.
+        if( self.temperature < 647. ):
             hvap = 51.67*np.exp(0.199*t)*(1 - t)**0.410
         else:
-            hvap = 0.
-    elif (igas == 10): #ch4
-        t = temp/191
-        if( temp < 191 ):
+            hvap = 0. 
+        return  hvap*1.e10#convert from kJ/mol to erg/mol
+
+    def CH4(self): 
+        t = self.temperature/191
+        if( self.temperature < 191 ):
             hvap = 10.11*np.exp(0.22*t)*(1 - t)**0.388
         else:
-            hvap = 0.
-    elif (igas == 12): #nh3
-        m = mmw[igas]
-        t = temp - 273.
-        if( temp < 406. ):
-          hvap = (137.91*(133. - t)**0.5 - 2.466*(133. - t))/1.e3*m
+            hvap = 0. 
+        return hvap*1.e10#convert from kJ/mol to erg/mol
+
+    def  NH3(self):
+        t = self.temperature - 273.
+        if( self.temperature < 406. ):
+            hvap = (137.91*(133. - t)**0.5 - 2.466*(133. - t))/1.e3*self.mmw
         else:
-          hvap = 0.
-    elif (igas == 18):
-        hvap = 3.50e2 # temperature-independent (kJ/mol)
-    else:
-        print('Warning: calling hvap for missing species. Returning zero.')
-        hvap = 0.0
+            hvap = 0.
+        return hvap*1.e10 #convert from kJ/mol to erg/mol
+    
+    def Fe(self):
+        hvap = 3.50e2 
+        return hvap*1.e10 #convert from kJ/mol to erg/mol
+    
+    
+    def returns(self,mol):
+        """
+        This is the ONLY way to get around numba not being able to run getattr function 
+        """
+        if mol == 'H2O': 
+            a = self.H2O() 
+        elif mol == 'CH4':
+            a = self.CH4() 
+        elif mol == 'NH3':
+            a = self.NH3()
+        elif mol == 'Fe':
+            a = self.Fe()
+        else: 
+            raise Exception("Only H2O, CH4, NH3, and Fe have been added to the moist adiabat function")
+        return a 
 
-    #convert from kJ/mol to erg/mol
-    hvap = hvap*1.e10
 
-    return hvap
-
-
-@jit(nopython=True, cache=True)
-def cpfunc(igas, temp, mmw):
+CPTypes = [(i, float64) for i in ['temperature','mmw']]
+@jitclass(CPTypes)
+class CPClass(object):
     """
     Parameters
     ----------
@@ -1798,30 +2110,12 @@ def cpfunc(igas, temp, mmw):
     float 
         cp
     """
-    #this function condenses all the individual elemental cp functions in EGP into one function
-    #NIST constants could be placed into dictionary or other readin file to make code more readable -JM
-
-    # haven't included the cp function for the first 8 species since not needed in moist adiabat calculation but can be added later if needed from EGP+ code
-    # if (igas == 0): #e-
-    #     cp = cp_e(temp)
-    # elif (igas == 1): # h2
-    #     cp = cp_h2(temp)
-    # elif (igas == 2): # h
-    #     cp = cp_h(temp)
-    # elif (igas == 3): # h+
-    #     cp = cp_hp(temp)
-    # elif (igas == 4): # h-
-    #     cp = cp_hm(temp)
-    # elif (igas == 5): # h2-
-    #     cp = cp_h2p(temp)
-    # elif (igas == 6): # h2+
-    #     cp = cp_h2m(temp)
-    # elif (igas == 7): # h3+
-    #     cp = cp_h3p(temp)
-    # elif (igas == 8): # he
-    #     cp = cp_he(temp)
-
-    if (igas == 9): # h2o
+    def __init__(self,temperature,mmw):
+        self.temperature = temperature 
+        self.mmw = mmw
+        return 
+        
+    def H2O(self): 
         #coefficients NIST in polynomial fit
         A = [      33.7476,      22.1440,      43.2009]
         B = [     -6.85376,      24.6949,      7.91703]
@@ -1830,7 +2124,8 @@ def cpfunc(igas, temp, mmw):
         E = [  0.000170650,   -0.0143783,     -12.3810]
         G = [      230.708,      210.968,      219.916]
         default_cp = 33.299
-    elif (igas == 10): # ch4
+        return A, B, C, D, E, G, default_cp
+    def CH4(self):
         A = [      30.1333,      33.3642,      107.517]
         B = [     -10.7805,      62.9633,    -0.420051]
         C = [      116.987,     -20.9146,     0.158105]
@@ -1838,7 +2133,8 @@ def cpfunc(igas, temp, mmw):
         E = [    0.0315890,     -6.26634,     -53.2270]
         G = [      221.436,      191.066,      225.284]
         default_cp = 33.258
-    elif (igas == 11): # co
+        return A, B, C, D, E, G, default_cp
+    def CO(self):
         A = [      30.7036,      34.2259,      35.3293]
         B = [     -11.7368,      1.51655,      1.14525]
         C = [      25.8658,    0.0492481,    -0.170423]
@@ -1846,7 +2142,8 @@ def cpfunc(igas, temp, mmw):
         E = [  -0.00675277,     -2.61424,     -2.85798]
         G = [      237.225,      231.715,      231.882]
         default_cp = 29.104
-    elif (igas == 12): # nh3
+        return A, B, C, D, E, G, default_cp
+    def NH3(self):
         A = [      28.6905,      48.0925,      89.3168]
         B = [      14.9648,      16.6892,   -0.0283260]
         C = [      32.2849,    -0.765783,    -0.403009]
@@ -1854,7 +2151,8 @@ def cpfunc(igas, temp, mmw):
         E = [    0.0281968,     -7.37491,     -68.5295]
         G = [      221.899,      226.660,      222.041]
         default_cp = 33.284
-    elif (igas == 13): # n2
+        return A, B, C, D, E, G, default_cp
+    def N2(self):
         A = [      30.7036,      34.2259,      35.3293]
         B = [     -11.7368,      1.51655,      1.14525]
         C = [      25.8658,    0.0492481,    -0.170423]
@@ -1862,7 +2160,8 @@ def cpfunc(igas, temp, mmw):
         E = [  -0.00675277,     -2.61424,     -2.85798]
         G = [      237.225,      231.715,      231.882]
         default_cp = 29.104
-    elif (igas == 14): # ph3
+        return A, B, C, D, E, G, default_cp
+    def PH3(self):
         A = [      24.1623,      75.4246,      82.3854]
         B = [      35.7131,    -0.467915,     0.229399]
         C = [      28.4716,      2.70503,   -0.0280155]
@@ -1870,7 +2169,8 @@ def cpfunc(igas, temp, mmw):
         E = [    0.0530053,     -13.0455,     -24.2573]
         G = [      228.047,      262.751,      258.876]
         default_cp = 33.259
-    elif (igas == 15): # h2s
+        return A, B, C, D, E, G, default_cp
+    def H2S(self):
         A = [      32.3729,      45.0479,      59.8489]
         B = [     -1.43579,      7.28547,    -0.380368]
         C = [      29.0118,    -0.645552,     0.218138]
@@ -1878,7 +2178,8 @@ def cpfunc(igas, temp, mmw):
         E = [   0.00759539,     -6.02580,     -21.7958]
         G = [      244.187,      242.650,      243.798]
         default_cp = 33.259
-    elif (igas == 16): # tio
+        return A, B, C, D, E, G, default_cp
+    def TiO(self): #elif (igas == 16): # tio
         A = [      24.6205,      42.5795,      25.6986]
         B = [      30.8607,     -3.86291,      2.45240]
         C = [     -23.2493,      1.15148,     0.770717]
@@ -1886,7 +2187,8 @@ def cpfunc(igas, temp, mmw):
         E = [    0.0642488,     -2.14344,      26.1268]
         G = [      255.386,      278.646,      282.105]
         default_cp = 33.880
-    elif (igas == 17): # vo
+        return A, B, C, D, E, G, default_cp
+    def VO(self): #elif (igas == 17): # vo
         A = [      23.6324,      40.2277,      31.0958]
         B = [      28.8676,     -2.68241,    0.0444865]
         C = [     -21.5825,     0.855477,      1.06932]
@@ -1894,7 +2196,8 @@ def cpfunc(igas, temp, mmw):
         E = [    0.0281114,     -2.10348,      13.7865]
         G = [      251.949,      273.020,      275.689]
         default_cp = 29.106
-    elif (igas == 18): # fe
+        return A, B, C, D, E, G, default_cp
+    def Fe(self): #elif (igas == 18): # fe
         A = [      22.5120,      29.3785,      31.0353]
         B = [      23.6042,     -12.7912,     -3.09778]
         C = [     -49.5765,      6.80824,     0.766662]
@@ -1902,7 +2205,8 @@ def cpfunc(igas, temp, mmw):
         E = [   -0.0305055,    0.0621550,     -22.0154]
         G = [      202.527,      219.780,      206.035]
         default_cp = 21.387
-    elif (igas == 19): # feh
+        return A, B, C, D, E, G, default_cp
+    def FeH(self): # feh
         A = [      17.0970,      43.7692,      80.0135]
         B = [      52.0678,     0.968978,     -18.2832]
         C = [     -34.3367,     0.818403,     3.55466]
@@ -1910,7 +2214,8 @@ def cpfunc(igas, temp, mmw):
         E = [     0.455643,     -1.88073,     -41.0125]
         G = [      285.000,      285.000,      285.000]
         default_cp = 34.906
-    elif (igas == 20): # crh
+        return A, B, C, D, E, G, default_cp
+    def CrH(self): #elif (igas == 20): # crh
         A = [      24.6453,      40.9948,      100.083]
         B = [      12.9392,     -3.29251,     -36.2074]
         C = [    0.0477315,      1.40327,      7.79945]
@@ -1918,7 +2223,8 @@ def cpfunc(igas, temp, mmw):
         E = [    0.0859445,     -3.87926,     -68.1415]
         G = [      260.000,      280.000,      280.000]
         default_cp = 29.417
-    elif (igas == 21): # na
+        return A, B, C, D, E, G, default_cp
+    def Na(self): #elif (igas == 21): # na
         A = [      20.8154,      21.0812,      38.7681]
         B = [    -0.162936,   -0.0211313,     -9.69137]
         C = [     0.281035,    -0.188686,      1.61045]
@@ -1926,7 +2232,8 @@ def cpfunc(igas, temp, mmw):
         E = [ -0.000166252,    -0.169969,     -21.5246]
         G = [      178.894,      178.829,      179.923]
         default_cp = 20.786
-    elif (igas == 22): # k
+        return A, B, C, D, E, G, default_cp
+    def K(self): #elif (igas == 22): # k
         A = [      20.8154,      20.1077,      80.8587]
         B = [    -0.162936,      1.72326,     -38.6316]
         C = [     0.281035,     -1.42054,      8.80886]
@@ -1934,7 +2241,8 @@ def cpfunc(igas, temp, mmw):
         E = [ -0.000166252,   -0.0178336,     -57.1459]
         G = [      185.566,      184.342,      197.881]
         default_cp = 20.786
-    elif (igas == 23): # rb
+        return A, B, C, D, E, G, default_cp
+    def Rb(self): #elif (igas == 23): # rb
         A = [      20.8110,      21.8305,      67.6946]
         B = [    -0.139382,    -0.120618,     -36.4056]
         C = [     0.241553,    -0.759797,      9.45407]
@@ -1942,7 +2250,8 @@ def cpfunc(igas, temp, mmw):
         E = [ -0.000134562,    -0.519578,     -22.9711]
         G = [      195.310,      195.381,      215.367]
         default_cp = 20.786
-    elif (igas == 24): # cs
+        return A, B, C, D, E, G, default_cp
+    def Cs(self):#elif (igas == 24): # cs
         A = [      20.8111,      19.3844,     -99.0597]
         B = [    -0.139259,      3.51623,      42.3576]
         C = [     0.238592,     -3.00169,     -2.76224]
@@ -1950,7 +2259,8 @@ def cpfunc(igas, temp, mmw):
         E = [ -0.000147773,    0.0177750,      218.172]
         G = [      200.816,      198.458,      231.228]
         default_cp = 20.786
-    elif (igas == 25): # co2
+        return A, B, C, D, E, G, default_cp
+    def CO2(self):#elif (igas == 25): # co2
         A = [      17.1622,      59.7854,      65.7964]
         B = [      84.3617,    -0.472970,     -1.17414]
         C = [     -71.5668,      1.36583,     0.232788]
@@ -1958,28 +2268,41 @@ def cpfunc(igas, temp, mmw):
         E = [    0.0429191,     -6.20314,     -17.2749]
         G = [      212.619,      266.092,      263.469]
         default_cp = 20.786
+        return A, B, C, D, E, G, default_cp
+    
+    #polynomial function for cp
+    def polyAE(self,A, B, C, D, E,t,it):
+        cp = A[it] + B[it]*t + C[it]*t**2 + D[it]*t**3 + E[it]/t**2
+        return cp
         
-    m = mmw[igas]
-    t = temp/1000.
-
-    if ( temp > 2500. ):
-        it = 2
-        cp = polyAE(A,B,C,D,E,t,it)
-    elif ( temp > 1000. and temp <= 2500.):
-        it = 1
-        cp = polyAE(A,B,C,D,E,t,it)
-    elif ( temp >= 100. and temp < 1000.):
-        it = 0
-        cp = polyAE(A,B,C,D,E,t,it)
-    else:
-        cp = default_cp
-    
-    # convert from J/K/mol to erg/g/K
-    cp = cp/m*1.e7
-    return cp
-    
-#polynomial function for cp
-@jit(nopython=True, cache=True)
-def polyAE(A,B,C,D,E, t, it):
-    cp = A[it] + B[it]*t + C[it]*t**2 + D[it]*t**3 + E[it]/t**2
-    return cp
+    def returns(self,mol):
+        if mol == 'H2O': 
+            A, B, C, D, E, G, default_cp=self.H2O() 
+        elif mol == 'CH4':
+            A, B, C, D, E, G, default_cp=self.CH4()
+        elif mol == 'NH3':
+            A, B, C, D, E, G, default_cp=self.NH3()
+        elif mol == 'Fe':
+            A, B, C, D, E, G, default_cp=self.Fe()
+        else: 
+            raise Exception("Only H2O, CH4, NH3, and Fe have been added to the moist adiabat function")
+        
+        m = self.mmw
+        temp = self.temperature
+        t = temp/1000.
+        
+        if ( temp > 2500.):
+            it = 2
+            cp = self.polyAE(A, B, C, D, E,t,it)
+        elif ( temp > 1000. and temp <= 2500.):
+            it = 1
+            cp = self.polyAE(A, B, C, D, E,t,it)
+        elif ( temp > 100. and temp <= 1000.):
+            it = 0
+            cp = self.polyAE(A, B, C, D, E,t,it)
+        else:
+            cp = default_cp
+        
+        # convert from J/K/mol to erg/g/K
+        cp = cp/m*1.e7
+        return cp

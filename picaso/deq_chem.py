@@ -60,6 +60,8 @@ def quench_level(pressure, temp, kz,mmw, grav, Teff, return_mix_timescale = Fals
     if len(kz) < nlevel:
         while len(kz) < nlevel:
             kz = np.append(kz, kz[-1])
+
+            
     t_mix = scale_H**2/kz ## level mixing timescales
     # this is the CO- CH4 - H2O quench level 
     t_chem_co = (3.0e-6/pressure)*np.exp(42000/temp) ## level chemical timescale (Zahnle and Marley 2014)

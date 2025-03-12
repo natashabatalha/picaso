@@ -1983,7 +1983,7 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
         picaso_bundle.add_pt(all_profiles_eq[i*nlevel:(i+1)*nlevel], 
                              p_eq)
 
-        picaso_bundle.premix_atmosphere(opacity,picaso_bundle.inputs['atmosphere']['profile'])
+        picaso_bundle.premix_atmosphere(opacity)
 
         if 'cld_output_picaso' in clima_out:
             picaso_bundle.clouds(df=clima_out['cld_output_picaso'])
