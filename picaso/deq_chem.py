@@ -61,7 +61,7 @@ def quench_level(pressure, temp, kz,mmw, grav, Teff, return_mix_timescale = Fals
         while len(kz) < nlevel:
             kz = np.append(kz, kz[-1])
 
-            
+
     t_mix = scale_H**2/kz ## level mixing timescales
     # this is the CO- CH4 - H2O quench level 
     t_chem_co = (3.0e-6/pressure)*np.exp(42000/temp) ## level chemical timescale (Zahnle and Marley 2014)
@@ -450,6 +450,14 @@ def mix_2_gases(k1,k2,mix1,mix2,gauss_pts,gauss_wts):
     return kmix_bin, mix_t
 
 def initiate_cld_matrices(opd_cld_climate,g0_cld_climate,w0_cld_climate,wv196,wv661):
+    """
+    reshapes cld matricies. though these are called wv196 and wv661 you can treat these as 
+    wv196 is old wave grid and w661 is a new wavenumber grid 
+    """
+    if np.all(wv196==wv661): 
+        #if the opacity file has not changed then nothing needs to happen to these files 
+        return opd_cld_climate,g0_cld_climate,w0_cld_climate
+    
     opd_cld_climate_new =  np.zeros(shape=(len(opd_cld_climate[:,0,0]),len(wv661),4))
     g0_cld_climate_new,w0_cld_climate_new = np.zeros_like(opd_cld_climate_new),np.zeros_like(opd_cld_climate_new)
     for j in range(4):

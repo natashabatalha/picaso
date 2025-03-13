@@ -2,7 +2,7 @@ from .atmsetup import ATMSETUP
 from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d
 
 from .fluxes import tidal_flux
-from .climate import  did_grad_cp, convec, calculate_atm, t_start, growdown, growup, get_fluxes, moist_grad,namedtuple
+from .climate import  did_grad_cp, convec, calculate_atm, t_start, growdown, growup, get_fluxes, moist_grad,namedtuple,run_chemeq_climate_workflow
 
 
 from .wavelength import get_cld_input_grid
@@ -1859,6 +1859,8 @@ class inputs():
         pd_kwargs : kwargs 
             Key word arguments for pd.read_csv to read in supplied atmosphere file 
         """
+
+
         if not isinstance(exclude_mol, type(None)):
             if  isinstance(exclude_mol, str):
                 exclude_mol = [exclude_mol]
@@ -1871,6 +1873,10 @@ class inputs():
         elif not isinstance(filename, type(None)):
             df = pd.read_csv(filename, **pd_kwargs)
             self.nlevel=df.shape[0] 
+        elif isinstance(self.inputs['atmosphere']['profile'] ,pd.core.frame.DataFrame ): 
+            df = self.inputs['atmosphere']['profile']
+        else:
+            raise Exception("Could not find a starting dataframe in inputs['atmosphere']['profile'] and no df or filename were specified")
 
         if 'pressure' not in df.keys(): 
             raise Exception("Check column names. `pressure` must be included. For climate runs set your initial guess in `inputs_climate` before running atmosphere class to set the chemistry")
@@ -4294,6 +4300,9 @@ class inputs():
         self.inputs['climate']['photochem_init_args'] = photochem_init_args
         self.inputs['climate']['sonora_abunds_photochem'] = sonora_abunds_photochem
         self.inputs['climate']['df_sonora_photochem'] = df_sonora_photochem
+        
+        self.add_pt(temp_guess, pressure)
+
         if self.inputs['climate']['photochem']:
             # Import and initialize the photochemical code.
             from .photochem import EvoAtmosphereGasGiantPicaso
@@ -4365,15 +4374,9 @@ class inputs():
             rfacv=0.0 
             FOPI = np.zeros(nwno) + 1.0
             opacityclass.relative_flux=FOPI
-        #otherwise assume that there is stellar irradiation 
         else:
             rfacv = self.inputs['climate']['rfacv']
-            #r_star = self.inputs['star']['radius'] 
-            #r_star_unit = self.inputs['star']['radius_unit'] 
-            #semi_major = self.inputs['star']['semi_major']
-            #semi_major_unit = self.inputs['star']['semi_major_unit'] 
-            #fine_flux_star  = self.inputs['star']['flux']  # erg/s/cm^2
-            FOPI = opacityclass.relative_flux #self.inputs['star']['relative_flux']#fine_flux_star * ((r_star/semi_major)**2)
+            FOPI = opacityclass.relative_flux 
 
         #turn off reflected light permanently for all these runs if rfacv=0 
         if rfacv==0:compute_reflected=False
@@ -4458,6 +4461,20 @@ class inputs():
             if diseq_chem and chemeq_first and gridsize == 661:
                 raise Exception('Currently cannot do chemical equilibrium first for disequilibrium runs with clouds')
 
+        if not diseq_chem:#chemeq_first: 
+            pressure, temp, dtdp, nstr_new, flux_plus_final,  flux_net_final, flux_net_ir_final, \
+                df, all_profiles, cld_out, final_conv_flag, all_opd,opd_now,w0_now,g0_now =run_chemeq_climate_workflow(self,
+                    nofczns,nstr, #tracks convective zones 
+                    TEMP1,pressure, #Atmosphere
+                    AdiabatBundle, #t_table, p_table, grad, cp, 
+                    opacityclass, grav, 
+                    rfaci, rfacv,  tidal, #energy balance 
+                    Opagrid, #delta_wno, tmin, tmax, 
+                    CloudParameters,#cloudy,cld_species,mh,fsed,beta,param_flag,mieff_dir ,opd_cld_climate,g0_cld_climate,w0_cld_climate, #scattering/cloud properties 
+                    save_profile,all_profiles, all_opd,
+                    fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, first_call_ever=True, verbose=verbose, moist = moist, cold_trap = cold_trap)
+
+        """NEBSTART -- moving all this to climate.py since its too much code for justdoit.py, which is primarily meant for input handlingling and user Input options
         # first conv call
         convergence_criteriaT = namedtuple('Conv',['it_max','itmx','conv','convt','x_max_mult'])
         convergence_criteria = convergence_criteriaT(it_max=10, itmx=7, conv=10.0, convt=5.0, x_max_mult=7.0)
@@ -4470,7 +4487,7 @@ class inputs():
 
         final = False
         flag_hack = False
-        print('NEBprint','first profile')
+
         if chemeq_first: 
             pressure, temperature, dtdp, profile_flag, all_profiles,CloudParameters,cld_out,flux_net_ir_layer, flux_plus_ir_attop, all_opd = profile(
             nofczns,nstr, #tracks convective zones 
@@ -4484,7 +4501,7 @@ class inputs():
             convergence_criteria, final , 
             fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, first_call_ever=True, verbose=verbose, moist = moist, cold_trap = cold_trap)
 
-        print('NEBprint','second profile')
+
         # second convergence call
         it_max= 7
         itmx= 5
@@ -4508,7 +4525,7 @@ class inputs():
                     convergence_criteria,final ,      
                     flux_net_ir_layer=flux_net_ir_layer, flux_plus_ir_attop=flux_plus_ir_attop, 
                     verbose=verbose,fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, moist = moist, cold_trap = cold_trap)   
-        print('nebprint First FIND strat')
+
         if chemeq_first: 
             pressure, temp, dtdp, nstr_new, flux_plus_final,  flux_net_final, flux_net_ir_final, df, all_profiles, cld_out, final_conv_flag, all_opd =find_strat(
                             nofczns,nstr,
@@ -4526,13 +4543,14 @@ class inputs():
                 opd_now,w0_now,g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
             else:
                 opd_now,w0_now,g0_now = 0,0,0
-        
+        NEBEND"""
+
         if diseq_chem:
             #Starting with user's guess since there was no request to converge a chemeq profile first 
-            if not chemeq_first: 
-                temp = TEMP1
+            #if not chemeq_first: 
+            temp = TEMP1
 
-            wv196 = 1e4/wno
+            #wv196 = 1e4/wno
 
             # first change the nstr vector because need to check if they grow or not
             # delete upper convective zone if one develops
@@ -4565,19 +4583,11 @@ class inputs():
             bundle.phase_angle(0,num_gangle=10, num_tangle=1)
             bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
             bundle.add_pt( temp, pressure)
-            bundle.premix_atmosphere(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],cold_trap = cold_trap, cld_species=cld_species)
-            #DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
-            #    W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
-            #    frac_a,frac_b,frac_c,constant_back,constant_forward, \
-            #    wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight 
+            bundle.premix_atmosphere(opacityclass, cold_trap = cold_trap, cld_species=cld_species)
             OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Atmosphere =  calculate_atm(bundle, opacityclass)
             
             # Clearsky profile, define others with _clear to avoid overwriting cloudy profile
             if do_holes == True:
-                #DTAU_clear, TAU_clear, W0_clear, COSB_clear,ftau_cld_clear, ftau_ray_clear,GCOS2_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear, COSB_OG_clear, \
-                #    W0_no_raman_clear, surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
-                #    frac_a,frac_b,frac_c,constant_back,constant_forward, \
-                #    wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw, gweight,tweight 
                 OpacityWEd_clear, OpacityNoEd_clear, _, _, _ =  calculate_atm(bundle, opacityclass, fthin_cld, do_holes=True)
             
             all_kzz= []
@@ -4588,7 +4598,7 @@ class inputs():
             
             #here begins the self consistent Kzz calculation 
             # MLT plus some prescription in radiative zone
-            if self_consistent_kzz or (not chemeq_first): 
+            if self_consistent_kzz:# or (not chemeq_first): 
 
                 if do_holes == True:
                     flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
@@ -4613,52 +4623,46 @@ class inputs():
                 calc_type = 0
                 
                 # use mixing length theory to calculate Kzz profile
-                if self_consistent_kzz: 
-                    output_abunds = bundle.inputs['atmosphere']['profile'].T.values
-                    kz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
+                #if self_consistent_kzz: 
+                #output_abunds = bundle.inputs['atmosphere']['profile'].T.values
+                kz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,AdiabatBundle,nstr, Atmosphere, moist = moist)
             
             
-            
-            
-            # shift everything to the 661 grid now.
-            #mh = '+0.0'  #don't change these as the opacities you are using are based on these 
-            #CtoO = '1.0' # don't change these as the opacities you are using are based on these #
-            #filename_db=os.path.join(__refdata__, 'climate_INPUTS/ck_cx_cont_opacities_661.db')
-            
-            if on_fly:
+            if diseq_chem:#on_fly:
                 if verbose: print("From now I will mix "+str(gases_fly)+" only on--the--fly")
-                opacityclass = opannection(preload_gases=gases_fly,method='resortrebin')
+                #opacityclass = opannection(preload_gases=gases_fly,method='resortrebin')
 
             
-            if cloudy == 1:    
-                wv661 = 1e4/opacityclass.wno
-                opd_cld_climate,g0_cld_climate,w0_cld_climate = initiate_cld_matrices(opd_cld_climate,g0_cld_climate,w0_cld_climate,wv196,wv661)
+            #if cloudy == 1:    
+            #    wv661 = 1e4/opacityclass.wno
+            #    opd_cld_climate,g0_cld_climate,w0_cld_climate = initiate_cld_matrices(opd_cld_climate,g0_cld_climate,w0_cld_climate,wv196,wv661)
 
             #Rerun star so that F0PI can now be on the 
             #661 grid 
-            if 'nostar' in self.inputs['star']['database']:
-                FOPI = np.zeros(opacityclass.nwno) + 1.0
-            else:
-                T_star = self.inputs['star']['temp']
-                r_star = self.inputs['star']['radius']
-                r_star_unit = self.inputs['star']['radius_unit']
-                logg = self.inputs['star']['logg']
-                metal =  self.inputs['star']['metal']
-                semi_major = self.inputs['star']['semi_major']
-                sm_unit = self.inputs['star']['semi_major_unit']
-                database = self.inputs['star']['database']
-                filename = self.inputs['star']['filename']
-                f_unit = self.inputs['star']['f_unit']
-                w_unit = self.inputs['star']['w_unit']
-                self.star(opacityclass, database=database,temp =T_star,metal =metal, logg =logg, 
-                    radius = r_star, radius_unit=u.Unit(r_star_unit),semi_major= semi_major , 
-                    semi_major_unit = u.Unit(sm_unit), 
-                    filename = filename, 
-                    f_unit=f_unit, 
-                    w_unit=w_unit)
-                fine_flux_star  = self.inputs['star']['flux']  # erg/s/cm^2
-                FOPI = fine_flux_star * ((r_star/semi_major)**2)
+            #if 'nostar' in self.inputs['star']['database']:
+            #    FOPI = np.zeros(opacityclass.nwno) + 1.0
+            #else:
+            #    T_star = self.inputs['star']['temp']
+            #    r_star = self.inputs['star']['radius']
+            #    r_star_unit = self.inputs['star']['radius_unit']
+            #    logg = self.inputs['star']['logg']
+            #    metal =  self.inputs['star']['metal']
+            #    semi_major = self.inputs['star']['semi_major']
+            #    sm_unit = self.inputs['star']['semi_major_unit']
+            #    database = self.inputs['star']['database']
+            #    filename = self.inputs['star']['filename']
+            #    f_unit = self.inputs['star']['f_unit']
+            #    w_unit = self.inputs['star']['w_unit']
+            #    self.star(opacityclass, database=database,temp =T_star,metal =metal, logg =logg, 
+            #        radius = r_star, radius_unit=u.Unit(r_star_unit),semi_major= semi_major , 
+            #        semi_major_unit = u.Unit(sm_unit), 
+            #        filename = filename, 
+            #        f_unit=f_unit, 
+            #        w_unit=w_unit)
+            #    fine_flux_star  = self.inputs['star']['flux']  # erg/s/cm^2
+            #    FOPI = fine_flux_star * ((r_star/semi_major)**2)
             
+            raise Exception('This branch does not have disequilibrium functioning')
             if self.inputs['climate']['photochem']==False:
                 quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, Teff, return_mix_timescale= True) # determine quench levels
 
@@ -4799,18 +4803,20 @@ class inputs():
                 pressure, temperature, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,cld_out,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,_ ,all_opd  = profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                 temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
                 rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , 
-            cloudy, cld_species,mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile,
-            all_profiles, all_opd, self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,
-            g0_cld_climate,
-            w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop, beta, param_flag,
-            photo_inputs_dict,
-            on_fly=on_fly, gases_fly=gases_fly, verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist=moist, deq_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3, cold_trap=cold_trap)
+                cloudy, cld_species,mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile,
+                all_profiles, all_opd, self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,
+                g0_cld_climate,
+                w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop, beta, param_flag,
+                photo_inputs_dict,
+                on_fly=on_fly, gases_fly=gases_fly, verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist=moist, deq_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3, cold_trap=cold_trap)
                 # print('find_strat_deq, kz input:',kz) #JM printout for deq nan debugging
                 # print('find_strat_deq, all_kzz input:',all_kzz)
+                
                 pressure, temp, dtdp, nstr_new, flux_plus_final,flux_net_final, flux_net_ir_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,cld_out,photo_inputs_dict,final_conv_flag,all_opd, df_cld_final=find_strat_deq(mieff_dir, pressure, temperature, dtdp ,FOPI, nofczns,nstr,x_max_mult,
                                 t_table, p_table, grad, cp, opacityclass, grav, 
                                 rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, all_opd, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly,
                              verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist = moist,deq_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3, cold_trap=cold_trap)
+                
                 if cloudy == 1:
                     opd_now,w0_now,g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
                 else:
@@ -4871,15 +4877,15 @@ class inputs():
             #     bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
             #     bundle.premix_atmosphere_diseq(opacityclass,teff = Teff,df=df,quench_levels=quench_levels,t_mix=t_mix, vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3, cold_trap = cold_trap, cld_species=cld_species)
             # else:
-            opacityclass = opannection(method='preweighted', ck_db=opacityclass.ck_filename)
-            bundle = inputs(calculation='brown')
-            bundle.phase_angle(0)
-            bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
+            #opacityclass = opannection(method='preweighted', ck_db=opacityclass.ck_filename)
+            #bundle = inputs(calculation='brown')
+            #bundle.phase_angle(0)
+            #bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
             #bundle.premix_atmosphere(opa=opacityclass,df,cold_trap = cold_trap, cld_species=cld_species)
-            bundle.atmosphere(df=df)
+            self.atmosphere(df=df)
             if cloudy == 1:
-                bundle.clouds(df=df_cld)
-            df_spec = bundle.spectrum(opacityclass,full_output=True)    
+                self.clouds(df=df_cld)
+            df_spec = self.spectrum(opacityclass,full_output=True)    
             all_out['spectrum_output'] = df_spec 
 
         if as_dict: 
