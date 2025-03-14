@@ -1307,8 +1307,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
                 if verbose: print("Got stuck with temp NaN -- so escaping the while loop in tstart")
         
 
-        # if verbose: print("Iteration number ", its,", min , max temp ", min(temp),max(temp), ", flux balance ", flux_net[0]/abs(tidal[0]))
-        if verbose: print("Iteration number ", its,", min , max temp ", min(temp),max(temp), ", flux balance ", f/abs(tidal[0])**2)
+        if verbose: print("Iteration number ", its,", min , max temp ", min(temp),max(temp), ", flux balance ", flux_net[0]/abs(tidal[0])) #f/abs(tidal[0])**2) this other output here is slightly less straightforward with the square terms for exoplanets so making this just fnet/tidal for now
 
         if save_profile == 1:
             all_profiles = np.append(all_profiles,temp_old)
@@ -1806,7 +1805,7 @@ def calculate_atm(bundle, opacityclass, fthin_cld = None, do_holes = None, only_
     condensable_abundances = bundle.inputs['atmosphere']['profile'].loc[:,our_condesables].T.values
     condensable_weights = [atm.weights[i].values[0] for i in our_condesables]
 
-    Atmosphere= Atmosphere_Tuple(atm.layer['dtdp'], atm.layer['mmw'],nlevel,atm.level['temperature'],atm.level['pressure'],
+    Atmosphere= Atmosphere_Tuple(atm.layer['dtdp'], atm.layer['mmw'],nlevel,atm.level['temperature'],atm.level['pressure_bar'],
                                     our_condesables,condensable_abundances,condensable_weights)
     
     if only_atmosphere: 
@@ -2459,10 +2458,11 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     if save_profile == 1:
             all_profiles = np.append(all_profiles,temp_old)
     #calculate teff for t_start solver type for better convergence
-    sigmab =  0.56687e-4 #cgs
-    target_teff = (abs(tidal[0])/sigmab)**0.25
+    #sigmab =  0.56687e-4 #cgs
+    #target_teff = (abs(tidal[0])/sigmab)**0.25
+    mean_temp = np.mean(temp_old)
     # Don't use large step_max option for cold models, much better converged with smaller stepping unless it's cloudy
-    if target_teff <= 400:# and cloudy != 1:
+    if mean_temp <= 400:# and cloudy != 1:
         egp_stepmax = True
     # elif final == True:
     #     egp_stepmax = True
@@ -2536,6 +2536,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         #    frac_a,frac_b,frac_c,constant_back,constant_forward, \
         #    wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw, gweight, tweight 
         OpacityWEd_clear, OpacityNoEd_clear, _, _, _=  calculate_atm(bundle, opacityclass, fthin_cld, do_holes=True)
+
     
     ## begin bigger loop which gets opacities
     for iii in range(itmx):
@@ -2573,8 +2574,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
                     #wno,nwno,ng,nt,gweight,tweight, 
                     #ngauss, gauss_wts, save_profile, all_profiles,
                     #output_abunds, verbose=verbose, moist = moist, egp_stepmax=egp_stepmax)
-        
-        
+
         bundle.add_pt( temp, pressure)
         bundle.premix_atmosphere(opacityclass, cold_trap = cold_trap, cld_species=cld_species)#df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],
         #if save_profile == 1:
