@@ -184,6 +184,16 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "Nicholaswogan",
+      "name": "Nick Wogan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/18489667?v=4",
+      "profile": "https://nicholaswogan.github.io/",
+      "contributions": [
+        "tutorial",
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
