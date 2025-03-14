@@ -1910,8 +1910,8 @@ class inputs():
             self.chemistry_handler()
 
     def chemistry_handler(self, chemistry_table = None):
-        
-        chem_method = self.inputs['atmosphere']['chem_method']
+        #add default chem method
+        chem_method = self.inputs['atmosphere'].get('chem_method',None)
         atmosphere_profile = self.inputs['atmosphere']['profile']
         
         # Are we running chemistry or just setting inputs ?

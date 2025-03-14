@@ -2460,9 +2460,9 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     #calculate teff for t_start solver type for better convergence
     #sigmab =  0.56687e-4 #cgs
     #target_teff = (abs(tidal[0])/sigmab)**0.25
-    mean_temp = np.mean(temp_old)
+    min_temp = np.min(temp_old)
     # Don't use large step_max option for cold models, much better converged with smaller stepping unless it's cloudy
-    if mean_temp <= 400:# and cloudy != 1:
+    if min_temp <= 400:# and cloudy != 1:
         egp_stepmax = True
     # elif final == True:
     #     egp_stepmax = True
