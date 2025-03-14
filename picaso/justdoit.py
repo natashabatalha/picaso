@@ -4409,7 +4409,7 @@ class inputs():
 
 
         grav = 0.01*self.inputs['planet']['gravity'] # cgs to si
-        logmh = self.inputs['atmosphere']['mh']
+        logmh = self.inputs['atmosphere'].get('mh',None)
         logmh = float(logmh) if logmh is not None else 0
         mh = 10**logmh
         sigma_sb = 0.56687e-4 # stefan-boltzmann constant
