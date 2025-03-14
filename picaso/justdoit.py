@@ -1819,12 +1819,6 @@ class inputs():
         self.inputs['star']['w_unit'] = w_unit
         self.inputs['star']['f_unit'] = f_unit     
 
-        """
-        return not needed anymore
-        if deq == True :
-            FOPI = fine_flux_star * ((r/semi_major)**2)
-            return FOPI
-        """
 
     def atmosphere(self, df=None, filename=None, exclude_mol=None, 
         mh=None, cto=None, chem_method=None,
