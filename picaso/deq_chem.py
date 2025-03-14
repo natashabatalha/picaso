@@ -427,25 +427,25 @@ def mix_2_gases(k1,k2,mix1,mix2,gauss_pts,gauss_wts):
             wtsmix[i*Nk+j]=gauss_wts[i]*gauss_wts[j]    #equation 10 Amundsen 2017
 
     #resort-rebin procedure--see Amundsen et al. 2016 or section B.2.1 in Molliere et al. 2015
-    sort_indicies=np.argsort(kmix)  #sort new "mixed" k-coeff's from low to high--these are indicies
+    sort_indicies=np.argsort(kmix,kind='mergesort')  #sort new "mixed" k-coeff's from low to high--these are indicies
     kmix_sort=kmix[sort_indicies]  #sort k-coeffs from low to high
     wtsmix_sort=wtsmix[sort_indicies]  #sort mixed weights using same indicie mapping from sorted mixed k-coeffs
     #combining w/weights--see description on Molliere et al. 2015--not sure why this works..similar to Amundson 2016 weighted avg?
-    int=np.cumsum(wtsmix_sort)
-    x=int/np.max(int)#*2.-1  # Here had to remove *2-1 to match results with eq calculations. Same as Fortran.
-    #logkmix=np.log10(kmix_sort)
-    logkmix = kmix_sort
-    #kmix_bin=10**np.interp(gauss_pts,x,logkmix)  #interpolating via cumulative sum of sorted weights...
-    kmix_bin=np.zeros(Nk)
-    for i in range(Nk):
-        loc=np.where(x > gauss_pts[i])[0][0]
+    cumulative_sum=np.cumsum(wtsmix_sort)
+    x=cumulative_sum/np.max(cumulative_sum)#*2.-1  # Here had to remove *2-1 to match results with eq calculations. Same as Fortran.
+    logkmix=np.log10(kmix_sort)
+    # logkmix = kmix_sort
+    kmix_bin=10**np.interp(gauss_pts,x,logkmix)  #interpolating via cumulative sum of sorted weights...
+    # kmix_bin=np.zeros(Nk)
+    # for i in range(Nk):
+    #     loc=np.where(x > gauss_pts[i])[0][0]
         
-        if loc >= 0:
-            if logkmix[loc-1] == logkmix[loc]:
-                kmix_bin[i] = logkmix[loc]
-            else :
-                interp = np.log(logkmix[loc-1]) + np.log(logkmix[loc]/logkmix[loc-1])*((gauss_pts[i]-x[loc-1])/(x[loc]-x[loc-1]))
-                kmix_bin[i]=np.exp(interp)
+    #     if loc >= 0:
+    #         if logkmix[loc-1] == logkmix[loc]:
+    #             kmix_bin[i] = logkmix[loc]
+    #         else :
+    #             interp = np.log(logkmix[loc-1]) + np.log(logkmix[loc]/logkmix[loc-1])*((gauss_pts[i]-x[loc-1])/(x[loc]-x[loc-1]))
+    #             kmix_bin[i]=np.exp(interp)
     
     return kmix_bin, mix_t
 
