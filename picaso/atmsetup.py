@@ -205,6 +205,7 @@ class ATMSETUP():
                             self.level['mixingratios'][0:-1].reset_index(drop=True))
 
         self.level['temperature'] = read['temperature'].values
+        self.level['pressure_bar'] = read['pressure'].values
         self.level['pressure'] = read['pressure'].values*self.c.pconv #CONVERTING BARS TO DYN/CM2
         self.layer['temperature'] = 0.5*(self.level['temperature'][1:] + self.level['temperature'][:-1])
         self.layer['pressure'] = np.sqrt(self.level['pressure'][1:] * self.level['pressure'][:-1])
