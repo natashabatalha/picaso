@@ -349,7 +349,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
             cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,
             constant_back,constant_forward, wno,nwno,ng,nt,gweight,tweight, ngauss, gauss_wts, save_profile, all_profiles,
             output_abunds, fhole = None, DTAU_clear = None, TAU_clear = None, W0_clear = None, COSB_clear = None, 
-            DTAU_OG_clear = None, TAU_OG_clear = None, W0_OG_clear = None, COSB_OG_clear = None, W0_no_raman_clear = None, 
+            ftau_cld_clear = None, ftau_ray_clear = None, GCOS2_clear = None, DTAU_OG_clear = None, TAU_OG_clear = None, W0_OG_clear = None, COSB_OG_clear = None, W0_no_raman_clear = None, 
             verbose=1, do_holes=None, moist = False, egp_stepmax = False):
     """
     Module to iterate on the level TP profile to make the Net Flux as close to 0.
@@ -448,7 +448,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                 COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
                 ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
                 wno,nwno,ng,nt, gweight, tweight, nlevel, ngauss, gauss_wts, compute_reflected, True, 
-                fhole, DTAU_clear , TAU_clear , W0_clear , COSB_clear , DTAU_OG_clear , TAU_OG_clear, W0_OG_clear, 
+                fhole, DTAU_clear , TAU_clear , W0_clear , COSB_clear , ftau_cld_clear, ftau_ray_clear, GCOS2_clear, DTAU_OG_clear , TAU_OG_clear, W0_OG_clear, 
                 COSB_OG_clear , W0_no_raman_clear, do_holes=True) #True for reflected, True for thermal
     else:
         flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
@@ -680,7 +680,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                 COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
                 ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
                 wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts, False, True, fhole, DTAU_clear , TAU_clear , W0_clear , COSB_clear , 
-                DTAU_OG_clear , TAU_OG_clear , W0_OG_clear, COSB_OG_clear , W0_no_raman_clear, do_holes=True) #false for reflected, True for thermal
+                ftau_cld_clear, ftau_ray_clear, GCOS2_clear,DTAU_OG_clear , TAU_OG_clear , W0_OG_clear, COSB_OG_clear , W0_no_raman_clear, do_holes=True) #false for reflected, True for thermal
 
 
                 # extract ir fluxes
@@ -905,7 +905,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                 COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
                 ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
                 wno,nwno,ng,nt, gweight, tweight, nlevel, ngauss, gauss_wts, False, True, fhole, DTAU_clear , TAU_clear , W0_clear , COSB_clear , 
-                DTAU_OG_clear , TAU_OG_clear, W0_OG_clear, COSB_OG_clear , W0_no_raman_clear, do_holes=True) #false reflected, True thermal
+                ftau_cld_clear, ftau_ray_clear, GCOS2_clear,DTAU_OG_clear , TAU_OG_clear, W0_OG_clear, COSB_OG_clear , W0_no_raman_clear, do_holes=True) #false reflected, True thermal
            
 
             # extract ir fluxes
@@ -1129,7 +1129,7 @@ def get_fluxes( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU
             COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
             ubar0,ubar1,cos_theta, F0PI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
             wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts,reflected, thermal, fhole = None, DTAU_clear = None, TAU_clear = None, 
-            W0_clear = None, COSB_clear = None, DTAU_OG_clear = None, TAU_OG_clear = None, W0_OG_clear = None, COSB_OG_clear = None, W0_no_raman_clear = None, do_holes=None):
+            W0_clear = None, COSB_clear = None, ftau_cld_clear = None, ftau_ray_clear = None, GCOS2_clear = None, DTAU_OG_clear = None, TAU_OG_clear = None, W0_OG_clear = None, COSB_OG_clear = None, W0_no_raman_clear = None, do_holes=None):
     """
     Program to run RT for climate calculations. Runs the thermal and reflected module.
     And combines the results with wavenumber widths.
@@ -1236,7 +1236,7 @@ def get_fluxes( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU
             if do_holes == True:
                 _, out_ref_fluxes_clear = get_reflected_1d(nlevel, wno,nwno,ng_clima,nt_clima,
                         DTAU_clear[:,:,ig], TAU_clear[:,:,ig], W0_clear[:,:,ig], COSB_clear[:,:,ig],
-                        GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
+                        GCOS2_clear[:,:,ig],ftau_cld_clear[:,:,ig],ftau_ray_clear[:,:,ig],
                         DTAU_OG_clear[:,:,ig], TAU_OG_clear[:,:,ig], W0_OG_clear[:,:,ig], COSB_OG_clear[:,:,ig],
                         surf_reflect, ubar0_clima,ubar1_clima,cos_theta, F0PI,
                         single_phase,multi_phase,
