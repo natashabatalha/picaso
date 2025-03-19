@@ -131,6 +131,11 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     psingle_rayleigh = inputs['approx']['rt_params']['SH']['psingle_rayleigh']
     calculate_fluxes = inputs['approx']['rt_params']['SH']['calculate_fluxes']
 
+    #for patchy clouds
+    do_holes = inputs['clouds']['do_holes']
+    if do_holes == True:
+        fhole = inputs['clouds']['fhole']
+        fthin_cld = inputs['clouds']['fthin_cld']
 
     # save returns to output file
     output_dir = inputs['output_dir']
@@ -234,6 +239,12 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
         DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman, f_deltaM= compute_opacity(
             atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
             full_output=full_output, plot_opacity=plot_opacity)
+        
+        if do_holes == True:
+            DTAU_clear, TAU_clear, W0_clear, COSB_clear,ftau_cld_clear, ftau_ray_clear,GCOS2_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear, COSB_OG_clear, \
+                W0_no_raman_clear, f_deltaM= compute_opacity(
+                atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
+                full_output=full_output, plot_opacity=plot_opacity, fthin_cld = fthin_cld, do_holes = True)
 
         if  'reflected' in calculation:
             xint_at_top = 0 
@@ -274,15 +285,37 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                     single_phase,multi_phase,
                                     frac_a,frac_b,frac_c,constant_back,constant_forward,
                                     get_toa_intensity=1,get_lvl_flux=int(atm.get_lvl_flux),
-                                    toon_coefficients=toon_coefficients,b_top=b_top) 
+                                    toon_coefficients=toon_coefficients,b_top=b_top)
+                    
+                    flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v = lvl_fluxes
+
+                    if do_holes == True:
+                        xint_clear, out_ref_fluxes_clear = get_reflected_1d(nlevel, wno,nwno,ng,nt,
+                                DTAU_clear[:,:,ig], TAU_clear[:,:,ig], W0_clear[:,:,ig], COSB_clear[:,:,ig],
+                                GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
+                                DTAU_OG_clear[:,:,ig], TAU_OG_clear[:,:,ig], W0_OG_clear[:,:,ig], COSB_OG_clear[:,:,ig],
+                                atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
+                                single_phase,multi_phase,
+                                frac_a,frac_b,frac_c,constant_back,constant_forward, 
+                                get_toa_intensity=1, get_lvl_flux=int(atm.get_lvl_flux),
+                                toon_coefficients=toon_coefficients,b_top=b_top)
+                    
+                        flux_minus_all_v_clear, flux_plus_all_v_clear, flux_minus_midpt_all_v_clear, flux_plus_midpt_all_v_clear = out_ref_fluxes_clear
+                        
+                        #weighted average of cloudy and clearsky
+                        flux_plus_midpt_all_v = (1.0 - fhole)* flux_plus_midpt_all_v + fhole * flux_plus_midpt_all_v_clear
+                        flux_minus_midpt_all_v = (1.0 - fhole)* flux_minus_midpt_all_v + fhole * flux_minus_midpt_all_v_clear
+                        flux_plus_all_v = (1.0 - fhole)* flux_plus_all_v + fhole * flux_plus_all_v_clear
+                        flux_minus_all_v = (1.0 - fhole)* flux_minus_all_v + fhole * flux_minus_all_v_clear
+                        xint = (1.0 - fhole)* xint + fhole * xint_clear
 
                 xint_at_top += xint*gauss_wts[ig]
 
                 if get_lvl_flux: 
-                    atm.lvl_output_reflected['flux_minus']+=lvl_fluxes[0]*gauss_wts[ig]
-                    atm.lvl_output_reflected['flux_plus']+=lvl_fluxes[1]*gauss_wts[ig]
-                    atm.lvl_output_reflected['flux_minus_mdpt']+=lvl_fluxes[2]*gauss_wts[ig]
-                    atm.lvl_output_reflected['flux_plus_mdpt']+=lvl_fluxes[3]*gauss_wts[ig]
+                    atm.lvl_output_reflected['flux_minus']+=flux_minus_all_v*gauss_wts[ig]
+                    atm.lvl_output_reflected['flux_plus']+=flux_plus_all_v*gauss_wts[ig]
+                    atm.lvl_output_reflected['flux_minus_mdpt']+=flux_minus_midpt_all_v*gauss_wts[ig]
+                    atm.lvl_output_reflected['flux_plus_mdpt']+=flux_plus_midpt_all_v*gauss_wts[ig]
 
             #if full output is requested add in xint at top for 3d plots
             if full_output: 
@@ -314,7 +347,25 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                                         atm.surf_reflect, atm.hard_surface,
                                                         #setting wno to zero since only used for climate, calctype only gets TOA flx 
                                                         wno*0, calc_type=0)
-
+                    
+                    flux_minus_all_i, flux_plus_all_i, flux_minus_midpt_all_i, flux_plus_midpt_all_i = lvl_fluxes
+                    
+                    if do_holes == True:
+                        #clearsky case
+                        flux_clear,out_therm_fluxes_clear = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
+                                                    DTAU_OG_clear[:,:,ig], W0_no_raman_clear[:,:,ig], COSB_OG_clear[:,:,ig], 
+                                                    atm.level['pressure'],ubar1,
+                                                    atm.surf_reflect, atm.hard_surface,
+                                                    wno*0, calc_type=0)
+                        
+                        flux_minus_all_i_clear, flux_plus_all_i_clear, flux_minus_midpt_all_i_clear, flux_plus_midpt_all_i_clear= out_therm_fluxes_clear
+                        
+                        #weighted average of cloudy and clearsky
+                        flux_plus_midpt_all_i = (1.0 - fhole)* flux_plus_midpt_all_i + fhole * flux_plus_midpt_all_i_clear
+                        flux_minus_midpt_all_i = (1.0 - fhole)* flux_minus_midpt_all_i + fhole * flux_minus_midpt_all_i_clear
+                        flux_plus_all_i = (1.0 - fhole)* flux_plus_all_i + fhole * flux_plus_all_i_clear
+                        flux_minus_all_i = (1.0 - fhole)* flux_minus_all_i + fhole * flux_minus_all_i_clear
+                        flux = (1.0 - fhole)*flux + fhole * flux_clear
 
 
                 elif rt_method == 'SH':
@@ -326,10 +377,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                                 atm.surf_reflect, stream, atm.hard_surface)
 
                 if ((rt_method == 'toon') & get_lvl_flux): 
-                    atm.lvl_output_thermal['flux_minus']+=lvl_fluxes[0]*gauss_wts[ig]
-                    atm.lvl_output_thermal['flux_plus']+=lvl_fluxes[1]*gauss_wts[ig]
-                    atm.lvl_output_thermal['flux_minus_mdpt']+=lvl_fluxes[2]*gauss_wts[ig]
-                    atm.lvl_output_thermal['flux_plus_mdpt']+=lvl_fluxes[3]*gauss_wts[ig]
+                    atm.lvl_output_thermal['flux_minus']+=flux_minus_all_i*gauss_wts[ig]
+                    atm.lvl_output_thermal['flux_plus']+=flux_plus_all_i*gauss_wts[ig]
+                    atm.lvl_output_thermal['flux_minus_mdpt']+=flux_minus_midpt_all_i*gauss_wts[ig]
+                    atm.lvl_output_thermal['flux_plus_mdpt']+=flux_plus_midpt_all_i*gauss_wts[ig]
 
                 flux_at_top += flux*gauss_wts[ig]
                 
@@ -1839,9 +1890,10 @@ class inputs():
                 # cond_idx = np.where(grad > threshold)[0]
                 cond_layer = self.nlevel - cutoff #- cond_idx[0]
 
-                for i in range(cond_layer-1, 0, -1): 
-                    if self.inputs['atmosphere']['profile'][mol][i] < self.inputs['atmosphere']['profile'][mol][i-1]:
-                        self.inputs['atmosphere']['profile'][mol][i-1] = self.inputs['atmosphere']['profile'][mol][i]
+                if mol in self.inputs['atmosphere']['profile'].keys():
+                    for i in range(cond_layer-1, 0, -1): 
+                        if self.inputs['atmosphere']['profile'][mol][i] < self.inputs['atmosphere']['profile'][mol][i-1]:
+                            self.inputs['atmosphere']['profile'][mol][i-1] = self.inputs['atmosphere']['profile'][mol][i]
 
     def premix_atmosphere_diseq(self, opa, quench_levels, teff, t_mix=None, df=None, filename=None, vol_rainout = False, 
                                 quench_ph3 = True, kinetic_CO2 = True, no_ph3 = False, cold_trap=False, cld_species = None, **pd_kwargs):
@@ -2043,9 +2095,10 @@ class inputs():
                             # cond_idx = np.where(grad > threshold)[0]
                             cond_layer = self.nlevel - cutoff #- cond_idx[0]
 
-                            for i in range(cond_layer, 0, -1): 
-                                if self.inputs['atmosphere']['profile'][mol][i] < self.inputs['atmosphere']['profile'][mol][i-1]:
-                                    self.inputs['atmosphere']['profile'][mol][i-1] = self.inputs['atmosphere']['profile'][mol][i]
+                            if mol in self.inputs['atmosphere']['profile'].keys():
+                                for i in range(cond_layer, 0, -1): 
+                                    if self.inputs['atmosphere']['profile'][mol][i] < self.inputs['atmosphere']['profile'][mol][i-1]:
+                                        self.inputs['atmosphere']['profile'][mol][i-1] = self.inputs['atmosphere']['profile'][mol][i]
 
             self.inputs['atmosphere']['profile']['N2'][0:quench_levels[2]+1] = self.inputs['atmosphere']['profile']['N2'][0:quench_levels[2]+1]*0.0 + qvmrs2[1]
 
@@ -3313,7 +3366,8 @@ class inputs():
         df['opd'] = zeros
         self.inputs['clouds']['profile'] = df
     
-    def clouds(self, filename = None, g0=None, w0=None, opd=None,p=None, dp=None,df =None,**pd_kwargs):
+    def clouds(self, filename = None, g0=None, w0=None, opd=None,p=None, dp=None,df =None, 
+               do_holes=False, fhole = None, fthin_cld = None, **pd_kwargs):
         """
         Cloud specification for the model. Clouds are parameterized by a single scattering albedo (w0), 
         an assymetry parameter (g0), and a total extinction per layer (opd).
@@ -3436,7 +3490,13 @@ class inputs():
                 df.loc[((df['pressure'] >= minp) & (df['pressure'] <= maxp)),'w0']= iw
                 df.loc[((df['pressure'] >= minp) & (df['pressure'] <= maxp)),'opd']= io
 
-            self.inputs['clouds']['profile'] = df  
+            self.inputs['clouds']['profile'] = df
+
+        # add in input parameters for processing patchy cloud spectra
+        self.inputs['clouds']['do_holes'] = do_holes
+        if do_holes == True:
+            self.inputs['clouds']['fhole'] = fhole
+            self.inputs['clouds']['fthin_cld'] = fthin_cld
     
     def virga(self, condensates, directory,
         fsed=1, b=1, eps=1e-2, param='const', 
@@ -3948,6 +4008,11 @@ class inputs():
         except KeyError:
             self.inputs['surface_reflect'] = 0 
             self.inputs['hard_surface'] = 0 
+
+        try:
+            do_holes = self.inputs['clouds']['do_holes']
+        except KeyError:
+            self.inputs['clouds']['do_holes'] = False
 
             
         return picaso(self, opacityclass,dimension=dimension,calculation=calculation,
@@ -4694,7 +4759,7 @@ class inputs():
             bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
             bundle.premix_atmosphere(opacityclass,df,cold_trap = cold_trap, cld_species=cld_species)
             if cloudy == 1:
-                bundle.clouds(df=df_cld)
+                bundle.clouds(df=df_cld,do_holes=do_holes, fhole=fhole,fthin_cld=fthin_cld)
             df_spec = bundle.spectrum(opacityclass,full_output=True)    
             all_out['spectrum_output'] = df_spec 
 
@@ -5926,7 +5991,7 @@ def find_strat(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mult,t
         
     itmx_strat =6
     it_max_strat = 10
-    convt_strat = 2.0
+    conv_strat = 2.0
     convt_strat = 2.0
     x_max_mult = x_max_mult/2.0
     ip2 = -10
@@ -7090,7 +7155,7 @@ def find_strat_deq(mieff_dir, pressure, temp, dtdp , FOPI, nofczns,nstr,x_max_mu
         
     itmx_strat =6
     it_max_strat = 10
-    convt_strat = 2.0
+    conv_strat = 2.0
     convt_strat = 2.0
     x_max_mult = x_max_mult/2.0
     ip2 = -10
