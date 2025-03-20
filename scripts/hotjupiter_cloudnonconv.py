@@ -19,13 +19,15 @@ CtoO = '100'#'1.0' # CtoO ratio
 
 ck_db = f"../data/kcoeff_2020/sonora_2020_feh{mh}_co_{CtoO}.data.196"
 
-for nstr_upper in [77, 88]:
-    for teff in [2200]:
-        for fsed in [3]:
-            print(f"fsed = {fsed}, effective temperature = {teff} K, nstr_upper = {nstr_upper}")
-            cl_run = jdi.inputs(calculation="browndwarf", climate = True) # start a calculation - need to not have "brown" in `calculation`. BD almost always means free-floating.
+# %%
+teff = 300
+for nstr_upper in [88, 77]:
+    for semi_major in [0.03, 0.05, 0.07]:
+        for fsed in [1, 2, 3, 4]:
+            print(f"fsed = {fsed}, semi major = {semi_major} au, nstr_upper = {nstr_upper}")
+            cl_run = jdi.inputs(calculation="planet", climate = True) # start a calculation - need to not have "brown" in `calculation`. BD almost always means free-floating.
 
-            grav = 3160 # Gravity of your brown dwarf in m/s/s
+            grav = 25 # Gravity of your brown dwarf in m/s/s
             cl_run.gravity(gravity=grav, gravity_unit=u.Unit('m/(s**2)')) # input gravity
             cl_run.effective_temp(teff) # input effective temperature
 
@@ -38,11 +40,18 @@ for nstr_upper in [77, 88]:
             nstr_start = np.copy(nstr)
             rfacv = 0.5
             
-            sonora_df_cloudy = pd.read_csv(f"../data/sonora_diamondback/t{teff}g{grav}f{fsed}_m0.0_co1.0.pt", sep=r"\s+", skiprows=[1])
+            T_star = 5326.6 # K, star effective temperature
+            logg = 4.38933 #logg , cgs
+            metal = -0.03 # metallicity of star
+            r_star = 0.932 # solar radius
 
-            pressure_grid = np.logspace(-6,2,91)
+            cl_run.star(opacity_ck, temp =T_star,metal =metal, logg =logg, radius = r_star, 
+                        radius_unit=u.R_sun,semi_major= semi_major , semi_major_unit = u.AU)#opacity db, pysynphot database, temp, metallicity, logg
+                
+            cl_run.guillot_pt(1000, T_int=300, nlevel=91, p_bottom=2, p_top=-6)
+            pt_df = cl_run.inputs["atmosphere"]["profile"]
+            temp_guess, pressure_grid = np.array(pt_df["temperature"]), np.array(pt_df["pressure"])
 
-            temp_guess = np.array(sonora_df_cloudy["T"])
             cl_run.inputs_climate(temp_guess=temp_guess, pressure=pressure_grid,
                                 nstr = np.array([0,nstr_upper,nstr_deep,0,0,0]), nofczns = nofczns , rfacv = rfacv, cloudy = "selfconsistent", mh = '0.0', 
                                 CtoO = '1.0',species = cloud_species, fsed = fsed, beta = 0.1, virga_param = 'const',
@@ -52,23 +61,22 @@ for nstr_upper in [77, 88]:
             try:
                 out_selfconsistent = deepcopy(cl_run.climate(opacity_ck, save_all_profiles=True,with_spec=True))
                 
-                cloud_outputs = {x: [] for x in ["temperature", "condensate_mmr", "cond_plus_gas_mmr", "cloud_deck"]}
+                cloud_outputs = {x: [] for x in ["temperature", "condensate_mmr", "cond_plus_gas_mmr", "cloud_deck", "altitude", "opd_by_gas"]}
                 for k in cloud_outputs:
                     cloud_outputs[k] = np.array([x[k] for x in out_selfconsistent["cld"]])
 
                 tstamp = datetime.now().isoformat().replace(":", ".")
-                with h5py.File(f"../data/convh5_oktemp/convergence_fsed{fsed}_teff{teff}_nstrupper{nstr_upper}_dt{tstamp}.h5", "w") as f:
+                with h5py.File(f"../data/convh5_hotjupiter/convergence_fsed{fsed}_semimajor_{semi_major}_nstrupper{nstr_upper}_dt{tstamp}.h5", "w") as f:
                     p = f.create_dataset("pressure", data=out_selfconsistent["pressure"])
                     f.create_dataset("nstrs", data=np.array(out_selfconsistent["nstr"]))
                     for k in cloud_outputs:
                         f.create_dataset(k, data=cloud_outputs[k])
                     p.attrs["fsed"] = fsed
-                    p.attrs["teff"] = teff
+                    p.attrs["tint"] = teff
                     p.attrs["cloud_species"] = cloud_species
                     p.attrs["nstr_start"] = nstr_start
-                    t = f.create_dataset("temperature_picaso", data=out_selfconsistent["temperature"])
             except ValueError:
-                with open(f"../data/convh5_oktemp/fsed{fsed}_teff{teff}_nstrupper{nstr_upper}.txt") as f:
-                    f.write(f"inf or NaN error at fsed = {fsed}, teff = {teff}, nstr_upper start = {nstr_upper}")
+                with open(f"../data/convh5_hotjupiter/fsed{fsed}_semimajor_{semi_major}_nstrupper{nstr_upper}.txt") as f:
+                    f.write(f"inf or NaN error at fsed = {fsed}, semi_major = {semi_major}, nstr_upper start = {nstr_upper}")
 
     # %%
