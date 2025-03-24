@@ -2,14 +2,14 @@ from .atmsetup import ATMSETUP
 from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d
 
 from .fluxes import tidal_flux
-from .climate import  did_grad_cp, convec, calculate_atm, t_start, growdown, growup, get_fluxes, moist_grad,namedtuple,run_chemeq_climate_workflow
+from .climate import  did_grad_cp, convec, calculate_atm, t_start, growdown, growup, get_fluxes, moist_grad,namedtuple,run_chemeq_climate_workflow,run_diseq_climate_workflow
 
 
 from .wavelength import get_cld_input_grid
 from .optics import RetrieveOpacities,compute_opacity,RetrieveCKs
 from .disco import get_angles_1d, get_angles_3d, compute_disco, compress_disco, compress_thermal
 from .justplotit import numba_cumsum, find_nearest_2d, mean_regrid
-from .deq_chem import quench_level,initiate_cld_matrices
+#from .deq_chem import quench_level,initiate_cld_matrices
 from .build_3d_input import regrid_xarray
 
 
@@ -1822,6 +1822,8 @@ class inputs():
 
     def atmosphere(self, df=None, filename=None, exclude_mol=None, 
         mh=None, cto=None, chem_method=None,
+        #for now the next line is only climate params 
+        quench=False,no_ph3=False,cold_trap=False,vol_rainout=False,
         verbose=True, **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
@@ -1848,6 +1850,14 @@ class inputs():
         chem_method : str 
             Current options: 
             - 'visscher' : uses the chemical equilibrium tables computed by Channon Visscher via the function `chemeq_visscher`
+        quench : bool 
+            Climate only, default = False: no quencing
+        no_ph3 : bool 
+            Climate only, default=False: True removes any PH3 from the atmosphere 
+        cold_trap : bool 
+            Climate only, default=False: True cold traps gases as specified by cld_species 
+        vol_rainint : bool ;
+            Climate only, default=False: True rains out volatiles
         verbose : bool 
             (Optional) prints out warnings. Default set to True
         pd_kwargs : kwargs 
@@ -1893,25 +1903,35 @@ class inputs():
         #if it is, let's turn off Raman scattering for the user. 
         if df.shape[1]>2:
             if (("H2" not in df.keys()) and (self.inputs['approx']['rt_params']['common']['raman'] != 2)):
-                if verbose: print("Turning off Raman for Non-H2 atmosphere")
                 self.inputs['approx']['rt_params']['common']['raman'] = 2
             elif (("H2" in df.keys()) and (self.inputs['approx']['rt_params']['common']['raman'] != 2)): 
                 if df['H2'].min() < 0.7: 
-                    if verbose: print("Turning off Raman for Non-H2 atmosphere")
                     self.inputs['approx']['rt_params']['common']['raman'] = 2
     
         if ((mh != None ) and (cto != None)):
             self.inputs['atmosphere']['mh'] = mh 
             self.inputs['atmosphere']['cto'] = cto 
-            self.inputs['atmosphere']['chem_method'] = chem_method
+            self.inputs['approx']['chem_method'] = chem_method
 
             # sets chemistry options and runs chemistry if the user has input a PT profile
             # otherwise this just checks for valid inputs 
             self.chemistry_handler()
 
+        #SET ATMOSPHERE APPROXIMATIONS 
+        self.inputs['approx']['chem_params']=self.inputs['approx'].get('chem_params',{})
+        for ikey,ibool in zip(['quench','no_ph3','cold_trap','vol_rainout'],
+                              [ quench,  no_ph3,  cold_trap,  vol_rainout]):
+            #if i is true then change the chem params argument
+            if ibool: 
+                if self.inputs['calculation'] != 'climate':
+                    raise Exception (f"{ikey} is a climate kwarg and climate calculation is not specified so this will not do anything to the user input chemistry. Please set to false to not avoid confusion. In a later update we could create a portal to these kwargs for the forward modeling.")
+                self.inputs['approx']['chem_params'][ikey]=ibool
+
+
+
     def chemistry_handler(self, chemistry_table = None):
         #add default chem method
-        chem_method = self.inputs['atmosphere'].get('chem_method',None)
+        chem_method = self.inputs['approx'].get('chem_method',None)
         atmosphere_profile = self.inputs['atmosphere']['profile']
         
         # Are we running chemistry or just setting inputs ?
@@ -1932,12 +1952,12 @@ class inputs():
         # Option : Here the user has supplied a chemistry table and we just need to use the chem_interp function to interpolate on that table
         # Notes : This method inherently assumes mh and cto since the loaded table is for a single mh/co
         elif not isinstance(chemistry_table, type(None)): 
-            self.inputs['atmosphere']['chem_method'] = 'chemistry table loaded through opannection'
+            self.inputs['approx']['chem_method'] = 'chemistry table loaded through opannection'
             if run: self.chem_interp(chemistry_table)
 
         #Option : No other options so far 
         else: 
-            raise Exception(f'A chem option {chem_method} is not valid') 
+            raise Exception(f"A chem option {chem_method} is not valid. Likely you specified method='resrotrebin' in opannection but did not run `atmosphere()` function after inputs_climate.") 
 
     def cold_trap(self, cld_species): 
         """
@@ -1969,7 +1989,8 @@ class inputs():
                 if self.inputs['atmosphere']['profile'][mol][i] < self.inputs['atmosphere']['profile'][mol][i-1]:
                     self.inputs['atmosphere']['profile'][mol][i-1] = self.inputs['atmosphere']['profile'][mol][i]
 
-    def premix_atmosphere(self, opa=None, cold_trap = False, cld_species = ['H2O', 'CH4', 'NH3'],no_ph3 = False):
+    def premix_atmosphere(self, opa=None, quench_levels=None,
+        cld_species = ['H2O', 'CH4', 'NH3']):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
         Sets number of layers in model.  
@@ -1977,12 +1998,8 @@ class inputs():
         ----------
         opa : class 
             Opacity class from opannection : RetrieveCks() 
-        cold_trap : bool
-            Option to cold trap condensible species, default = False
         cld_species : list of str
             (Optional) List of condensing species
-        no_ph3 : bool 
-            (Optional) hack which removes PH3 entirely
         """
 
         #get a chemistry table from opa if the user supplied it and it exists
@@ -1992,15 +2009,76 @@ class inputs():
         self.chemistry_handler(chemistry_table=chemistry_table)
     
         # cold trap the condensibles 
-        if cold_trap: self.cold_trap(cld_species=cld_species)
+        if self.inputs['approx']['chem_params']['cold_trap']: 
+            self.cold_trap(cld_species=cld_species)
 
-        #WIP
-        #if quench: self.quench(quench, quench_ph3,do_virtual?)
+        #if a quench level dictionary is provided 
+        if self.inputs['approx']['chem_params']['quench'] and isinstance(quench_levels,dict):
+            self.adjust_quench_chemistry(quench_levels)
+
+        # volatile rainout 
+        if self.inputs['approx']['chem_params']['vol_rainout'] and isinstance(quench_levels,dict): 
+            self.vol_rainout(quench_levels)
 
         #zero out ph3 if hack requested
-        if no_ph3: self.inputs['atmosphere']['profile']['PH3'] = 0
+        if self.inputs['approx']['chem_params']['no_ph3']: 
+            #check to see if its there, and zero out if it is 
+            if 'PH3' in self.inputs['atmosphere']['profile'].keys(): 
+                self.inputs['atmosphere']['profile']['PH3'] = 0
+    
+    def adjust_quench_chemistry(self, quench_levels):
 
-    def premix_atmosphere_diseq(self, opa, quench_levels, teff, t_mix=None, df=None, filename=None, vol_rainout = False, 
+        kinetic_CO2=True #since our old way was an "error" it seems like we should include htis as an option to be false
+        
+        df_atmo_og  = self.inputs['atmosphere']['profile']
+        temperature = df_atmo_og['temperature'].values
+        pressure = df_atmo_og['pressure'].values
+
+        #what order will we quench things 
+        quench_sequence  = ['PH3','CO-CH4-H2O','CO2','NH3-N2','HCN']
+
+        # start with the molecules in the quench sequence 
+        # anything we quench let's take away/add to H2 
+        H2 = df_atmo_og['H2'].values
+        for iquench in quench_sequence:
+            
+            #this defines the exactl quench layer 
+            quench_level = quench_levels[iquench]
+            
+            #now individually loop through the sequence if there are multiple molecules included 
+            for imol in iquench.split('-'):
+                
+                #if the molecule is in the set
+                if imol in df_atmo_og.keys():
+                    #get the abundance at the quench point
+                    quench_abundance = df_atmo_og.loc[quench_level,imol]
+                    #Everything above the quench point gets set to the quench abundance 
+                    old = df_atmo_og.loc[:,imol].values 
+                    df_atmo_og.loc[0:quench_level+1,imol] = quench_abundance
+                    new = df_atmo_og.loc[:,imol].values 
+                    diff = old - new 
+                    #adjust H2 accordingly 
+                    H2 = H2 + diff 
+
+        # include new option for CO2 in equilibrium with CO, H2O, H2 from equation 43 in Zahnle and Marley (2014)
+        if kinetic_CO2 == True:
+            #ADD LINK TO NICK W. AAS NOTE HERE 
+            K = 18.3*np.exp(-2376/self.inputs['atmosphere']['profile']['temperature'] - (932/self.inputs['atmosphere']['profile']['temperature'])**2)
+            fCO2 = (self.inputs['atmosphere']['profile']['CO']*self.inputs['atmosphere']['profile']['H2O'])/(K*self.inputs['atmosphere']['profile']['H2'])            
+            # apply the new quench starting from original CO2 quench point
+            fCO2[:quench_levels['CO2']] = fCO2[quench_levels['CO2']]
+            #set new value and adjust H2 again 
+            old = df_atmo_og.loc[:,'CO2'].values
+            df_atmo_og.loc[:,'CO2'] = fCO2[:]
+            new = df_atmo_og.loc[:,'CO2'].values 
+            diff = old - new 
+            #adjust H2 accordingly 
+            H2 = H2 + diff 
+
+        #set new atmosphere 
+        self.inputs['atmosphere']['profile'] = df_atmo_og
+
+    def premix_atmosphere_diseq_deprecate(self, opa, quench_levels, teff, t_mix=None, df=None, filename=None, vol_rainout = False, 
                                 quench_ph3 = True, kinetic_CO2 = True, no_ph3 = False, cold_trap=False, cld_species = None, **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
@@ -4391,12 +4469,12 @@ class inputs():
         all_profiles=np.append(all_profiles,TEMP1)
         all_opd = np.append(all_opd,np.zeros(len(TEMP1)-1)) # just so the opd tracking matches the profile
         
-        #quenching parameters
-        deq_rainout = self.inputs['climate']['deq_rainout']
-        quench_ph3 = self.inputs['climate']['quench_ph3']
-        kinetic_CO2 = self.inputs['climate']['kinetic_CO2']
-        no_ph3 = self.inputs['climate']['no_ph3']
-        cold_trap = self.inputs['climate']['cold_trap']
+        #quenching parameters -- REMOVING THESE OFFLOADING TO ATMOSPHERE()
+        #deq_rainout = self.inputs['climate']['deq_rainout']
+        #quench_ph3 = self.inputs['climate']['quench_ph3']
+        #kinetic_CO2 = self.inputs['climate']['kinetic_CO2']
+        #no_ph3 = self.inputs['climate']['no_ph3']
+        #cold_trap = self.inputs['climate']['cold_trap']
 
         #adiabat info 
         t_table = self.inputs['climate']['t_table']
@@ -4466,79 +4544,23 @@ class inputs():
                     Opagrid, #delta_wno, tmin, tmax, 
                     CloudParameters,#cloudy,cld_species,mh,fsed,beta,param_flag,mieff_dir ,opd_cld_climate,g0_cld_climate,w0_cld_climate, #scattering/cloud properties 
                     save_profile,all_profiles, all_opd,
-                    fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, first_call_ever=True, verbose=verbose, moist = moist, cold_trap = cold_trap)
-
-        """NEBSTART -- moving all this to climate.py since its too much code for justdoit.py, which is primarily meant for input handlingling and user Input options
-        # first conv call
-        convergence_criteriaT = namedtuple('Conv',['it_max','itmx','conv','convt','x_max_mult'])
-        convergence_criteria = convergence_criteriaT(it_max=10, itmx=7, conv=10.0, convt=5.0, x_max_mult=7.0)
-        #it_max= 10   ### inner loop calls
-        #itmx= 7  ### outer loop calls (opacity re-calculation)
-        #conv = 10.0
-        #convt=5.0
-        #x_max_mult=7.0
-        
-
-        final = False
-        flag_hack = False
-
-        if chemeq_first: 
-            pressure, temperature, dtdp, profile_flag, all_profiles,CloudParameters,cld_out,flux_net_ir_layer, flux_plus_ir_attop, all_opd = profile(
-            nofczns,nstr, #tracks convective zones 
-            TEMP1,pressure, #Atmosphere
-            AdiabatBundle, #t_table, p_table, grad, cp, 
-            opacityclass, grav, 
-            rfaci, rfacv,  tidal, #energy balance 
-            Opagrid, #delta_wno, tmin, tmax, 
-            CloudParameters,#cloudy,cld_species,mh,fsed,beta,param_flag,mieff_dir ,opd_cld_climate,g0_cld_climate,w0_cld_climate, #scattering/cloud properties 
-            save_profile,all_profiles, all_opd,
-            convergence_criteria, final , 
-            fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, first_call_ever=True, verbose=verbose, moist = moist, cold_trap = cold_trap)
+                    fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes,verbose=verbose, moist = moist)
 
 
-        # second convergence call
-        it_max= 7
-        itmx= 5
-        conv = 5.0
-        convt=4.0
-        x_max_mult=7.0
-        convergence_criteria = convergence_criteriaT(it_max, itmx, conv, convt, x_max_mult)
-
-        final = False
-        if chemeq_first: 
-            pressure, temperature, dtdp, profile_flag, all_profiles,CloudParameters,cld_out,flux_net_ir_layer, flux_plus_ir_attop, all_opd = profile(
-                    
-                    nofczns,nstr, #tracks convective zones 
-                    temperature, pressure, 
-                    AdiabatBundle, #t_table, p_table, grad, cp, 
-                    opacityclass, grav, 
-                    rfaci, rfacv,  tidal, #energy balance 
-                    Opagrid, #delta_wno, tmin, tmax, 
-                    CloudParameters,#cloudy,cld_species,mh,fsed,beta,param_flag,mieff_dir ,opd_cld_climate,g0_cld_climate,w0_cld_climate, #scattering/cloud properties 
-                    save_profile,all_profiles, all_opd,               
-                    convergence_criteria,final ,      
-                    flux_net_ir_layer=flux_net_ir_layer, flux_plus_ir_attop=flux_plus_ir_attop, 
-                    verbose=verbose,fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, moist = moist, cold_trap = cold_trap)   
-
-        if chemeq_first: 
-            pressure, temp, dtdp, nstr_new, flux_plus_final,  flux_net_final, flux_net_ir_final, df, all_profiles, cld_out, final_conv_flag, all_opd =find_strat(
-                            nofczns,nstr,
-                            temperature,pressure,dtdp, #Atmosphere
-                            AdiabatBundle,
-                            opacityclass, grav, 
-                            rfaci, rfacv, tidal ,
-                            Opagrid,
-                            CloudParameters,
-                            save_profile, all_profiles, all_opd,
-                            flux_net_ir_layer, flux_plus_ir_attop,
-                            verbose=verbose, fhole = fhole, fthin_cld = fthin_cld, do_holes = do_holes, moist = moist, cold_trap = cold_trap)
-
-            if cloudy == 1:
-                opd_now,w0_now,g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
-            else:
-                opd_now,w0_now,g0_now = 0,0,0
-        NEBEND"""
-
+        if diseq_chem: 
+            raise Exception("STILL WIP")
+            all_kzz= []
+            save_kzz=int(save_all_kzz)
+            run_diseq_climate_workflow(self, nofczns, nstr, TEMP1, pressure,
+                        AdiabatBundle,opacityclass,
+                        grav,
+                        rfaci,rfacv,tidal,
+                        Opagrid,
+                        CloudParameters,
+                        save_profile,all_profiles,all_opd,
+                        verbose=verbose,do_holes = do_holes, fhole = fhole, 
+                        fthin_cld = fthin_cld, moist = moist, 
+                        save_kzz=save_kzz, self_consistent_kzz=self_consistent_kzz)
         if diseq_chem:
             #Starting with user's guess since there was no request to converge a chemeq profile first 
             #if not chemeq_first: 
@@ -4656,7 +4678,6 @@ class inputs():
             #    fine_flux_star  = self.inputs['star']['flux']  # erg/s/cm^2
             #    FOPI = fine_flux_star * ((r_star/semi_major)**2)
             
-            raise Exception('This branch does not have disequilibrium functioning')
             if self.inputs['climate']['photochem']==False:
                 quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, Teff, return_mix_timescale= True) # determine quench levels
 
@@ -6357,7 +6378,7 @@ def profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult, t
 
         bundle.premix_atmosphere(opacityclass,cold_trap = cold_trap, cld_species=cld_species)#, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],
         output_abunds = bundle.inputs['atmosphere']['profile'].T.values
-    # first calculate the convective zones
+        # first calculate the convective zones
         for nb in range(0,3*nofczns,3):
             
             n_strt_b= nstr[nb+1]

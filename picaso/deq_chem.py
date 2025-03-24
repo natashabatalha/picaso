@@ -2,8 +2,152 @@ from numba import jit
 import numpy as np
 from scipy.interpolate import interp1d
 
+def get_quench_levels(Atmosphere, kz, grav, PH3=True, H2O=None, H2=None):
+    """
+    Quench Level Calculation from T. Karilidi (Quench_Level routine)
+    
+    Parameters
+    ----------
+    Atmosphere Tuple: 
+        Contains temperature, pressure, dtdp, mmw, and scale height
+    kz : array 
+        array of Kz cm^2/s
+    grav : float
+        gravity cgs
+    PH3 : bool 
+        Quenches PH3 or not 
+    H2O : array
+        vmr of H2o used if PH3=True 
+    H2 : array
+        vmr of H2 used if PH3=True
+
+    Returns
+    -------
+    dict 
+        quench levels of gases
+    array 
+        mixing time scale in s
+    
+    """    
+    temp = Atmosphere.t_level
+    pressure = Atmosphere.p_level 
+    dtdp = Atmosphere.dtdp
+    mmw = Atmosphere.mmw_layer
+    scale_height = Atmosphere.scale_height
+
+    k_b = 1.38e-23 # boltzmann constant
+    m_p = 1.66e-27 # proton mass
+    nlevel = len(temp)
+
+    # for super cold cases, most quench points are deep in the atmosphere, we don't want to run all models too deep. Use this
+    #   extapolation to temporarily capture the proper chemical abundances calculated but return to original df pressure grid later
+    mintemp = np.min(temp)
+    if mintemp <= 250 and pressure[-1] < 1e6:
+        # extend pressure down to 1e6 bars
+        extended_pressure = np.logspace(np.log10(pressure[-1]+100),6,10)
+        pressure = np.append(pressure, extended_pressure)
+        for i in np.arange(nlevel, nlevel+10):
+            new_temp = np.exp(np.log(temp[i-1]) - dtdp[-1] * (np.log(pressure[i-1]) - np.log(pressure[i])))
+            temp = np.append(temp, new_temp)
+        nlevel = len(temp)
+
+    if len(mmw) < nlevel:
+        while len(mmw) < nlevel:
+            mmw = np.append(mmw, mmw[-1])
+            
+    quench_levels = {}
+
+    con  = k_b/(mmw*m_p)
+    scale_H = con * temp*1e2/(grav) #cgs
+    #this scale height above assumes constant gravity whereas the one computed via Atmosphere does not
+    #for consistency lets use the actual scale height (when it exists)
+    #and for the extended pressure use the constant gravity assumption 
+    scale_H[0:len(scale_height)] = scale_height
+
+    # temporary fix which works for constant kzz but needs to be changed for self-consistent kzz
+    if len(kz) < nlevel:
+        while len(kz) < nlevel:
+            kz = np.append(kz, kz[-1])
+
+
+    t_mix = scale_H**2/kz ## level mixing timescales
+
+    
+    # this is the CO- CH4 - H2O quench level 
+    t_chem_co = (3.0e-6/pressure)*np.exp(42000/temp) ## level chemical timescale (Zahnle and Marley 2014)
+    if np.max(t_mix) < np.min(t_chem_co):
+        raise Exception("CO/H2O/CH4 mixing across Pressure Ranges, Start with deeper Pressure Grid")
+    for j in range(nlevel-1,0,-1):
+        if ((t_mix[j-1]/1e15) <=  (t_chem_co[j-1]/1e15)) and ((t_mix[j]/1e15) >=  (t_chem_co[j]/1e15)):
+            quench_levels['CO-CH4-H2O'] = np.min([j,nlevel-2])
+            break
+    
+    # now calculate CO2 quench level
+    t_chem_co2 = (1e-10/(pressure**0.5))*np.exp(38000./temp) #(Zahnle and Marley 2014)  
+    if np.max(t_mix) < np.min(t_chem_co2):
+        raise Exception("CO2 mixing across Pressure Ranges, Start with deeper Pressure Grid")
+
+    for j in range(nlevel-1,0,-1):
+
+        if ((t_mix[j-1]/1e15) <=  (t_chem_co2[j-1]/1e15)) and ((t_mix[j]/1e15) >=  (t_chem_co2[j]/1e15)):
+            quench_levels['CO2'] = np.min([j,nlevel-2])
+            break
+    
+    # now calculate the NH3/N2 quench level
+
+    t_chem_nh3 = (1e-7/pressure)*np.exp(52000/temp) #(Zahnle and Marley 2014)  
+    if np.max(t_mix) < np.min(t_chem_nh3):
+        raise Exception("NH3 mixing across Pressure Ranges, Start with deeper Pressure Grid")
+
+    for j in range(nlevel-1,0,-1):
+
+        if ((t_mix[j-1]/1e15) <=  (t_chem_nh3[j-1]/1e15)) and ((t_mix[j]/1e15) >=  (t_chem_nh3[j]/1e15)):
+            quench_levels['NH3-N2'] = np.min([j,nlevel-2])
+            break
+
+    # now calculate the HCN quench level
+
+    t_chem_hcn = (1.5e-4/(pressure*(3.**0.7)))*np.exp(36000./temp) #(Zahnle and Marley 2014)    
+
+    if np.max(t_mix) < np.min(t_chem_hcn):
+        raise Exception("HCN mixing across Pressure Ranges, Start with deeper Pressure Grid")
+
+
+    for j in range(nlevel-1,0,-1):
+
+        if ((t_mix[j-1]/1e15) <=  (t_chem_hcn[j-1]/1e15)) and ((t_mix[j]/1e15) >=  (t_chem_hcn[j]/1e15)):
+            quench_levels['HCN'] = np.min([j,nlevel-2])
+            break
+    
+    if PH3:
+        if len(H2O) < nlevel:
+            while len(H2O) < nlevel:
+                H2O = np.append(H2O, H2O[-1])
+                H2 = np.append(H2, H2[-1])
+        
+        OH = OH_conc(temp,pressure,H2O,H2)
+        t_chem_ph3 = 0.19047619047*1e13*np.exp(6013.6/temp)/OH
+        
+        for j in range(nlevel-1,0,-1):
+            if ((t_mix[j-1]/1e15) <=  (t_chem_ph3[j-1]/1e15)) and ((t_mix[j]/1e15) >=  (t_chem_ph3[j]/1e15)):
+                quench_levels['PH3'] = np.min([j,nlevel-2])
+                break
+
+    return quench_levels, t_mix
+
+def OH_conc(temp,press,x_h2o,x_h2):
+    K = 10**(3.672 - (14791/temp))
+    kb= 1.3807e-16 #cgs
+    
+    x_oh = K * x_h2o * (x_h2**(-0.5)) * (press**(-0.5))
+    press_cgs = press*1e6
+    
+    n = press_cgs/(kb*temp)
+    
+    return x_oh*n
+
 #@jit(nopython=True, cache=True)
-def quench_level(pressure, temp, kz,mmw, grav, Teff, return_mix_timescale = False):
+def quench_level_deprecate(pressure, temp, kz,mmw, grav, Teff, return_mix_timescale = False):
     """
     Quench Level Calculation from T. Karilidi (Quench_Level routine)
     Parameters

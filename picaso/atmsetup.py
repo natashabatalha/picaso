@@ -421,13 +421,14 @@ class ATMSETUP():
         z = np.zeros(np.shape(tlevel)) + self.planet.radius
         dz = np.zeros(np.shape(tlevel)) 
         gravity = np.zeros(np.shape(tlevel))  
+        scale_h_all = np.zeros(np.shape(tlevel))
         #unique avoids duplicates for 3d grids where pressure is repeated for ngangle,ntangle
         #would break for nonuniform pressure grids 
         indx = np.unique(np.where(plevel>p_reference)[0]) 
         #if there are any pressures less than the reference pressure
+
         if len(indx)>0:
             for i in indx-1:
-                
                 if constant_gravity:
                     gravity[i] = self.planet.gravity
                 else:
@@ -437,8 +438,15 @@ class ATMSETUP():
                 dz[i] = scale_h * (np.log(plevel[i+1] / plevel[i])) #from eddysed
                 z[i+1] = z[i] - dz[i]
 
-        for i in np.unique(np.where(plevel<=p_reference)[0])[::-1][:-1]:#unique to avoid 3d bug
-            
+                scale_h_all[i]=scale_h
+
+            if constant_gravity:
+                gravity[-1] = self.planet.gravity
+            else:
+                gravity[-1] = self.c.G * self.planet.mass / ( z[-1] )**2
+            scale_h_all[-1] = self.c.k_b * tlevel[-1] / (mmw[-1] * gravity[-1])
+        
+        for i in np.unique(np.where(plevel<=p_reference)[0])[::-1]:#[:-1]:#unique to avoid 3d bug
             if constant_gravity:
                 gravity[i] = self.planet.gravity
             else:
@@ -447,9 +455,12 @@ class ATMSETUP():
             scale_h = self.c.k_b * tlevel[i] / (mmw[i] * gravity[i])
             dz[i] = scale_h*(np.log(plevel[i]/ plevel[i-1]))#plevel[i+1]/ plevel[i]))
             z[i-1] = z[i] + dz[i]
+            scale_h_all[i]=scale_h
 
+        scale_h_all[0] = self.c.k_b * tlevel[0] / (mmw[0] * gravity[0])
         self.level['z'] = z
         self.level['dz'] = dz
+        self.level['scale_height'] = scale_h_all
 
         #for get_column_density calculation below we want gravity at layers
         self.layer['gravity'] = 0.5*(gravity[0:-1] + gravity[1:])

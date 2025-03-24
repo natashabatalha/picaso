@@ -37,8 +37,7 @@
 		"exclude_mol":1,
 		"pt_params":null,
 		"mh":null,
-		"cto":null,
-		"chem_method":null
+		"cto":null
 	},
 	"clouds":{
 		"profile":null,
@@ -79,6 +78,13 @@
 				"delta_eddington":true,
 				"raman":1	
 			}
+		},
+		"chem_method":null,
+		"chem_params":{
+			"quench":false,
+			"cold_trap":false,
+			"vol_rainout":false,
+			"no_ph3":false
 		}
 		
 	},
