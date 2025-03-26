@@ -6,7 +6,7 @@ import dynesty
 import pandas as pd
 
 
-from .justdoit import mean_regrid,vj,u
+from .justdoit import mean_regrid,vj,u,get_cld_input_grid
 
 from .analyze import chi_squared
 from .justplotit import pals
@@ -742,15 +742,46 @@ class Parameterize():
         return 
         
     def add_class(self,picaso_inputs_class):
-        """Add a picaso class that loads in the pressure grid (at the very least) 
+        """Add a picaso class that loads in the pressure grid (at the very least)
+
+        Example
+        -------
+        start = jdi.inputs()
+        start.add_pt(P=np.logspace(-6,3,91))
+        param = Parameterize(load_cld_optical=['SiO2','Al2O3'],mieff_dir='/data/virga')
+        param.add_class(start)
         """
         self.picaso = picaso_inputs_class
         self.pressure_level = picaso_inputs_class.inputs['atmosphere']['profile']['pressure'].values
         self.pressure_layer = np.sqrt(self.pressure_level [0:-1]*self.pressure_level [1:])
         self.nlevel = len(self.pressure_level )
         self.nlayer = self.nlevel -1 
+
+    def get_particle_dist(self,species,distribution,
+                  lognorm_kwargs = {'sigma':np.nan, 'lograd[cm]':np.nan}, 
+                  hansen_kwargs={'b':np.nan,'lograd[cm]':np.nan}):
+        logradius = np.log10(self.radius[species])
         
-    def flex_cloud(self, species, base_pressure, ndz, fsed, distribution, lognorm_kwargs = {'sigma':np.nan, 'lograd[cm]':np.nan}, 
+        if 'lognorm' in distribution:
+            sigma=lognorm_kwargs['sigma']
+            lograd=lognorm_kwargs['lograd[cm]']
+            
+            if np.isnan(sigma):
+                raise Exception('lognorm_kwargs have not been defined')
+            
+            dist = (1/(sigma * np.sqrt(2 * np.pi)) *
+                       np.exp( - (logradius - lograd)**2 / (2 * sigma**2)))
+        elif 'hansen' in distribution: 
+            a = 10**hansen_kwargs['lograd[cm]']
+            b = hansen_kwargs['b']
+            dist = (10**self.radius[species])**((1-3*b)/b)*np.exp(-self.radius[species]/(a*b))
+        else: 
+            raise Exception("Only lognormal and hansen distributions available")        
+        
+        return dist 
+
+    def flex_fsed_cloud(self, species, base_pressure, ndz, fsed, distribution, 
+                  lognorm_kwargs = {'sigma':np.nan, 'lograd[cm]':np.nan}, 
                   hansen_kwargs={'b':np.nan,'lograd[cm]':np.nan}): 
         """
         Given a base_pressure and fsed to set the exponential drop of the cloud integrate a particle 
@@ -787,23 +818,7 @@ class Parameterize():
         scale_h = 10 #just arbitrary as this gets fit for via fsed and ndz 
         z = np.linspace(100,0,self.nlayer)
         
-        logradius = np.log10(self.radius[species])
-        
-        if 'lognorm' in distribution:
-            sigma=lognorm_kwargs['sigma']
-            lograd=lognorm_kwargs['lograd[cm]']
-            
-            if np.isnan(sigma):
-                raise Exception('lognorm_kwargs have not been defined')
-            
-            dist = (1/(sigma * np.sqrt(2 * np.pi)) *
-                       np.exp( - (logradius - lograd)**2 / (2 * sigma**2)))
-        elif 'hansen' in distribution: 
-            a = 10**hansen_kwargs['lograd[cm]']
-            b = hansen_kwargs['b']
-            dist = (10**self.radius[species])**((1-3*b)/b)*np.exp(-self.radius[species]/(a*b))
-        else: 
-            raise Exception("Only lognormal and hansen distributions available")
+        dist = self.get_particle_dist(species,distribution,lognorm_kwargs,hansen_kwargs)
             
         opd,w0,g0,wavenumber_grid=vj.calc_optics_user_r_dist(self.wave_in[species], ndz ,self.radius[species], u.cm,
                                                               dist, self.qext[species], self.qscat[species], self.cos_qscat[species])
@@ -814,8 +829,286 @@ class Parameterize():
                               -fsed*z[base_pressure>=self.pressure_layer]/scale_h)
         opd_h = opd_h/np.max(opd_h)
         
-        df_cld = vj.picaso_format_slab(base_pressure,opd, w0, g0, wavenumber_grid, self.pressure_layer, 
-                                          p_decay=opd_h)
+        df_cld = picaso_format(opd, w0, g0, wavenumber_grid, self.pressure_layer, 
+                                          p_bottom=base_pressure,p_decay=opd_h)
 
         return df_cld 
+    flex_cloud =  flex_fsed_cloud  
+    def brewster_mie_cloud(self, species, distribution, decay_type,
+                  lognorm_kwargs = {'sigma':np.nan, 'lograd[cm]':np.nan}, 
+                  hansen_kwargs={'b':np.nan,'lograd[cm]':np.nan},
+                  slab_kwargs={'ptop':np.nan,'dp':np.nan, 'reference_tau':np.nan},
+                  deck_kwargs={'ptop':np.nan,'dp':np.nan}): 
+        """
+        Given a base_pressure and fsed to set the exponential drop of the cloud integrate a particle 
+        radius distribution via gaussian or hansen distributions to get optical properties in picaso 
+        format. 
 
+        Parameters
+        ----------
+        species : str 
+            Name of species. Should already have been preloaded via Parameterize options in load_cld_optical
+        base_pressure : float 
+            base of the cloud deck in bars 
+        ndz : float 
+            number density of the cloud deck cgs 
+        fsed : float 
+            sedimentation efficiency 
+        distribution : str 
+            either lognormal or hansen 
+        lognorm_kwargs : dict 
+            diectionary with the format: {'sigma':np.nan, 'lograd[cm]':np.nan}
+            lograd[cm] median particle radius in cm 
+            sigma width of the distribtuion must be >1 
+        hansen_kwargs : dict 
+            dictionary with the format: {'b':np.nan,'lograd[cm]':np.nan}
+            lograd[cm] and b from Hansen+1971: https://web.gps.caltech.edu/~vijay/Papers/Polarisation/hansen-71b.pdf
+            lograd[cm] = a = effective particle radius 
+            b = varience of the particle radius 
+
+        Returns 
+        -------
+        pandas.DataFrame 
+            PICASO formatted cld input dataframe 
+        """
+        
+        dist = self.get_particle_dist(species,distribution,lognorm_kwargs,hansen_kwargs)
+            
+        opd,w0,g0,wavenumber_grid=vj.calc_optics_user_r_dist(self.wave_in[species], 1 ,self.radius[species], u.cm,
+                                                              dist, self.qext[species], self.qscat[species], self.cos_qscat[species])
+        
+        if decay_type == 'slab':
+            opd_profile = self.slab_decay(**slab_kwargs)
+        elif decay_type == 'deck':
+            opd_profile = self.deck_decay(**deck_kwargs)
+        
+        df = picaso_format(opd, w0, g0, wavenumber_grid, self.pressure_layer, opd_profile=opd_profile)
+
+        return df 
+    
+    def brewster_grey_cloud(self, decay_type, alpha,reference_wave=1,
+                  slab_kwargs={'ptop':np.nan,'dp':np.nan, 'reference_tau':np.nan},
+                  deck_kwargs={'ptop':np.nan,'dp':np.nan}): 
+        """
+        Creates grey cloud with either slab or deck decay and an alpha wavelength scaling 
+
+        Parameters
+        ----------
+ 
+        Returns 
+        -------
+        pandas.DataFrame 
+            PICASO formatted cld input dataframe 
+        """
+        
+        wavenumber_grid =get_cld_input_grid()
+        wavelength= 1e4/wavenumber_grid
+
+        if decay_type == 'slab':
+            opd_profile = self.slab_decay(**slab_kwargs)
+        elif decay_type == 'deck':
+            opd_profile = self.deck_decay(**deck_kwargs)
+
+        wave_dependent_opd =  np.concatenate([opd_profile[i]*(wavelength/reference_wave)**(-alpha) for i in range(self.nlayer)])
+        wvnos =  np.concatenate([wavenumber_grid for i in range(self.nlayer)])
+        pressures =  np.concatenate([[self.pressure_layer[i]]*len(wavelength) for i in range(self.nlayer)])
+        w0=wave_dependent_opd*0+0.99#arbitrary what is used? 
+        g0=wave_dependent_opd*0
+        df=pd.DataFrame({
+                'opd':wave_dependent_opd,
+                'g0':g0,
+                'w0':w0,
+                'wavenumber':wvnos,
+                'pressure':pressures
+            })
+
+        return df 
+
+    def deck_decay(self,ptop, dp=0.005): 
+        """
+        Emualtes brewster opacity decay for the deck model 
+        
+        Parameters 
+        ----------
+        ptop : float 
+            ptop is pressure at which tau of cloud ~1 
+        dp : float 
+            dtau / dP = const * exp((P-P0) / pressure_scale)
+        """
+        pressure_layer=self.pressure_layer
+        nlayer = len(self.pressure_layer)
+        opd_by_layer = np.zeros(nlayer)
+
+        pressure_top = 10**ptop
+
+        pressure_scale = ((pressure_top * 10.**dp) - pressure_top)  / 10.**dp
+        const = 1. / (1 - np.exp(-pressure_top / pressure_scale))
+
+        for i in range (0,nlayer):
+            p_grid_top, p_grid_bot = atlev(i,pressure_layer)
+            # now get dtau for each layer, where tau = 1 at pressure_top
+            term1 = (p_grid_bot - pressure_top) / pressure_scale
+            term2 = (p_grid_top - pressure_top) / pressure_scale
+            if (term1 > 10 or term2 > 10):
+                #sets large optical depths to 100 
+                opd_by_layer[i] = 100.00
+            else:
+                opd_by_layer[i] = const * (np.exp(term1) - np.exp(term2))
+        
+        return opd_by_layer
+
+    def slab_decay(self, ptop, dp=0.005, reference_tau=1): 
+        """
+        Modeled after brewster slabs see Eqn 13 and 14 Whiteford et al. 
+
+        Parameters 
+        ----------
+        ptop : float 
+            pressure top in dex bars 
+        dp : float 
+            pressure thickness in dex bars, default - 0.005
+        reference_tau : float 
+            reference tau for 1 micron 
+
+        Returns 
+        -------
+        optical depth per layer as a function of layer  
+        """
+        pressure = self.pressure_layer #levels 
+        nlayer = len(pressure)
+
+        opd_by_layer = np.zeros(nlayer)
+
+        pressure_top = 10**ptop #p1 brewster e.g., 1e-3
+        pressure_bottom = pressure_top * 10.**dp #p2 brewster e.g. 1e-3*10^2 = 1e-1
+
+        #find index of layer for pressure top and pressure bottom 
+        index_top = np.argmin(abs(np.log(pressure) - np.log(pressure_top)))
+        index_bottom = np.argmin(abs(np.log(pressure) - np.log(pressure_bottom)))
+        if index_top == index_bottom: 
+            raise Exception('dp entered was not large enough to create a cloud given the pressure grid spacing')
+
+        #compute tau scaling 
+        tau_scaling = reference_tau / (pressure_bottom**2 - pressure_top**2)
+
+        _ , p_grid_bot = atlev(index_top,pressure)
+        opd_by_layer[index_top] = tau_scaling * (p_grid_bot**2 - pressure_top**2)  
+
+        p_grid_top , _ = atlev(index_bottom,pressure)
+        opd_by_layer[index_bottom] = tau_scaling * (pressure_bottom**2 - p_grid_top**2)        
+
+        for i in range (index_top+1,index_bottom):
+            p_grid_top,p_grid_bot = atlev(i,pressure)
+            opd_by_layer[i] = tau_scaling * (p_grid_bot**2 - p_grid_top**2)
+
+        return opd_by_layer
+
+    def free_chemistry(self,background_gas='H2/He'):#ADD inputs 
+        """
+        WIP function to initialize an chemistry 
+
+        Parmaeters 
+        ----------
+        all molecules ? list of strings?
+
+        dict(H2O=[.001], CO2=[.001])
+        """
+        pressure = self.pressure_level
+        H2O = 0 #?? fill in 
+
+        #add the end fill to 1
+        fH2He = 00
+        H2 = 1 - H2O
+        #write in how to paramterize chemistry 
+        return pd.DataFrame(dict(pressure=pressure,H2O = H2O))
+
+def atlev(l0,pressure_layer):
+    nlayers = pressure_layer.size
+    if (l0 <= nlayers-2):
+        pressure_top = np.exp(((1.5)*np.log(pressure_layer[l0])) - ((0.5)*np.log(pressure_layer[l0+1])))
+        pressure_bottom = np.exp((0.5)*(np.log(pressure_layer[l0] * pressure_layer[l0+1])))
+    else:
+        pressure_top = np.exp((0.5 * np.log(pressure_layer[l0-1] * pressure_layer[l0])))
+        pressure_bottom = pressure_layer[l0]**2 / pressure_top
+
+    return pressure_top, pressure_bottom
+
+def picaso_format(opd, w0, g0, wavenumber_grid, pressure_grid ,
+                       p_bottom=None,p_top=None,p_decay=None,opd_profile=None):
+    """
+    Sets up a PICASO-readable dataframe that inserts a wavelength dependent aerosol layer at the user's 
+    given pressure bounds, i.e., a wavelength-dependent slab of clouds or haze.
+    
+    Parameters
+    ----------
+    p_bottom : float 
+        the cloud/haze base pressure
+        the upper bound of pressure (i.e., lower altitude bound) to set the aerosol layer. (Bars)
+    opd : ndarray
+        wavelength-dependent optical depth of the aerosol
+    w0 : ndarray
+        wavelength-dependent single scattering albedo of the aerosol
+    g0 : ndarray
+        asymmetry parameter = Q_scat wtd avg of <cos theta>
+    wavenumber_grid : ndarray
+        wavenumber grid in (cm^-1) 
+    pressure_grid : ndarray
+        bars, user-defined pressure grid for the model atmosphere
+    p_top : float
+         bars, the cloud/haze-top pressure
+         This cuts off the upper cloud region as a step function. 
+         You must specify either p_top or p_decay. 
+    p_decay : ndarray
+        noramlized to 1, unitless
+        array the same size as pressure_grid which specifies a 
+        height dependent optical depth. The usual format of p_decay is 
+        a fsed like exponential decay ~np.exp(-fsed*z/H)
+
+
+    Returns
+    -------
+    Dataframe of aerosol layer with pressure (in levels - non-physical units!), wavenumber, opd, w0, and g0 to be read by PICASO
+    """
+    if isinstance(p_bottom, type(None)): 
+        p_bottom = np.max(pressure_grid)+10#arbitrarily big to make sure float comparison includes clouds
+        
+    if (isinstance(p_top, type(None)) & isinstance(p_decay, type(None)) & isinstance(opd_profile, type(None))): 
+        raise Exception("Must specify cloud top pressure via p_top, or the vertical pressure decay via p_decay, or an opd profile via opd_profile")
+    
+    if (isinstance(p_top, type(None))): 
+        p_top = 1e-10#arbitarily small pressure to make sure float comparison doest break
+
+
+    df = pd.DataFrame(index=[ i for i in range(pressure_grid.shape[0]*opd.shape[0])], columns=['pressure','wavenumber','opd','w0','g0'])
+    i = 0 
+    LVL = []
+    WV,OPD,WW0,GG0 =[],[],[],[]
+    
+    # this loops the opd, w0, and g0 between p and dp bounds and put zeroes for them everywhere else
+    for j in range(pressure_grid.shape[0]):
+           for w in range(opd.shape[0]):
+                #stick in pressure bounds for the aerosol layer:
+                if p_top <= pressure_grid[j] <= p_bottom:
+                    LVL+=[pressure_grid[j]]
+                    WV+=[wavenumber_grid[w]]
+                    if (isinstance(p_decay,type(None)) & isinstance(opd_profile,type(None))):
+                        OPD+=[opd[w]]
+                    elif not (isinstance(p_decay,type(None))): 
+                        OPD+=[p_decay[j]/np.max(p_decay)*opd[w]]
+                    elif not (isinstance(opd_profile,type(None))): 
+                        OPD+=[opd_profile[j]*(opd[w]/np.max(opd))]
+                    WW0+=[w0[w]]
+                    GG0+=[g0[w]]
+                else:
+                    LVL+=[pressure_grid[j]]
+                    WV+=[wavenumber_grid[w]]
+                    OPD+=[opd[w]*0]
+                    WW0+=[w0[w]*0]
+                    GG0+=[g0[w]*0]       
+                    
+    df.iloc[:,0 ] = LVL
+    df.iloc[:,1 ] = WV
+    df.iloc[:,2 ] = OPD
+    df.iloc[:,3 ] = WW0
+    df.iloc[:,4 ] = GG0
+    return df
