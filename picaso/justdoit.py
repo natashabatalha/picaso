@@ -1872,23 +1872,9 @@ class inputs():
                 # print("Clouds aren't turned on, we will now only cold trap H2O, CH4, and NH3") #message got annoying
                 cld_species = ['H2O', 'CH4', 'NH3']
             for mol in cld_species:
-                # invert abundance to find first layer of condensation by looking for deviation from constant value
-                # inverted = self.inputs['atmosphere']['profile'][mol][::-1]
-                # cutoff = int(0.1 * self.nlevel)  # Dynamically ignore bottom 10% of layers
-                # cond_layer = self.nlevel - (np.where(inverted[cutoff:] != inverted[cutoff])[0][0] + cutoff)
-
-                # need to ignore the bottom 10% of layers to avoid the changes in deep atmosphere to properly identify condensation layer
-                cutoff = int(0.1 * self.nlevel)  # Dynamically ignore bottom 10% of layers
-                # relevant_layers = inverted[:self.nlevel - cutoff]
-                # grad = np.abs(np.gradient(relevant_layers))  # Compute abundance gradient
-
-                # unique_vals, counts = np.unique(inverted, return_counts=True)
-                # mode_value = unique_vals[np.argmax(counts)]
-                # threshold = mode_value * 0.01 # Define a threshold for significant drop (adjustable)
-
-                # Find the first layer where the abundance starts to fall off
-                # cond_idx = np.where(grad > threshold)[0]
-                cond_layer = self.nlevel - cutoff #- cond_idx[0]
+                #can generalize later for other mh and mmw but for now, good enough to gauge where to start coldtrapping
+                cond_p, cond_t = vj.condensation_t(mol, 1, 2.2, pressure = self.inputs['atmosphere']['pressure'])
+                cond_layer = np.where(cond_t > self.inputs['atmosphere']['temperature'])[0][-1]
 
                 if mol in self.inputs['atmosphere']['profile'].keys():
                     for i in range(cond_layer-1, 0, -1): 
