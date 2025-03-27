@@ -1873,8 +1873,11 @@ class inputs():
                 cld_species = ['H2O', 'CH4', 'NH3']
             for mol in cld_species:
                 #can generalize later for other mh and mmw but for now, good enough to gauge where to start coldtrapping
-                cond_p, cond_t = vj.condensation_t(mol, 1, 2.2, pressure = self.inputs['atmosphere']['pressure'])
-                cond_layer = np.where(cond_t > self.inputs['atmosphere']['temperature'])[0][-1]
+                cond_p, cond_t = vj.condensation_t(mol, 1, 2.2, pressure = self.inputs['atmosphere']['profile']['pressure'])
+                try:
+                    cond_layer = np.where(cond_t > self.inputs['atmosphere']['profile']['temperature'])[0][-1]
+                except IndexError:
+                    continue
 
                 if mol in self.inputs['atmosphere']['profile'].keys():
                     for i in range(cond_layer-1, 0, -1): 
