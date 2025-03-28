@@ -1,16 +1,16 @@
 import numpy as np
 import json 
 from astropy.utils.misc import JsonCustomEncoder
+from astropy.convolution import convolve
 import arviz as az
 import dynesty
 import pandas as pd
-
+from scipy import interpolate
 
 from .justdoit import mean_regrid,vj,u,get_cld_input_grid
 
 from .analyze import chi_squared
 from .justplotit import pals
-
 
 import matplotlib.pyplot as plt
 import xarray as xr
@@ -1003,24 +1003,171 @@ class Parameterize():
 
         return opd_by_layer
 
-    def free_chemistry(self,background_gas='H2/He'):#ADD inputs 
+    def free_chemistry(self, species): 
+
         """
-        WIP function to initialize an chemistry 
+        Free vertically constant abundances
 
-        Parmaeters 
+        Parameters 
         ----------
-        all molecules ? list of strings?
+        species: dict
+            Dictionary with abundances. Each key should be a molecule/atom.
 
-        dict(H2O=[.001], CO2=[.001])
+        Return
+        ------
+        Data frame with chemical abundances per level
         """
         pressure = self.pressure_level
-        H2O = 0 #?? fill in 
+        nlevels = len(pressure)
 
-        #add the end fill to 1
-        fH2He = 00
-        H2 = 1 - H2O
-        #write in how to paramterize chemistry 
-        return pd.DataFrame(dict(pressure=pressure,H2O = H2O))
+        mixing_ratios=dict(pressure=pressure)
+        
+        try:
+            for i in species.keys():
+                if species[i]['type']=='constant':
+                    mixing_ratios[i]=self.constant_abundance(self, species[i])
+                elif species[i]['type']=='npoint':
+                    raise Exception('npoint abundance profile not yet available.')
+        except Exception as e:
+            raise Exception(f'Unknow profile type {species[i]['type']}')
+            
+        return pd.DataFrame(mixing_ratios)
+    
+    def constant_abundance(self,  VMR):
+        ''''
+        Abundance profile
+
+        Parameters
+        ----------
+        VMR: int or list
+            If int, assumes constant abundances, if list, implements a non-constant abundance profile
+            with as many knots as the length of the list 
+
+        Return
+        ------
+        Abundances by pressure level
+        '''
+
+        pressure=self.pressure_level
+        nlevels=len(pressure)
+            
+        return VMR*np.ones(nlevels)
+
+    def madhu_seager_09_noinversion(self, alpha_1, alpha_2, P1, P3, T3, beta=0.5):
+        """"
+        Implements the temperature structure parameterization from Madhusudhan & Seager (2009)
+
+        Parameters
+        -----------
+
+        Returns
+        -------
+        Temperature per layer
+        """
+
+        pressure = self.pressure_level
+        nlevel = len(pressure)
+
+        temp_by_level = np.zeros(nlevel)
+
+        # Set T1 from T3
+        T1 = T3 - (np.log(P3/P1) / alpha_2)**(1/beta)
+        # Set T0 from T1
+        T0 = T1 - (np.log(P1/P0) / alpha_1)**(1/beta)
+
+        P0 = pressure[0]
+
+        # Set pressure ranges
+        layer_1=(pressure<P1)
+        layer_2=(pressure>=P1)*(pressure<P3)
+        layer_3=(pressure>=P3)
+
+        # Define temperature at each pressure range
+        temp_by_level[layer_1] = T0 + ((1/alpha_1)*np.log(pressure[layer_1]/P0))**(1/beta)
+        temp_by_level[layer_2] = T1 + ((1/alpha_2)*np.log(pressure[layer_2]/P1))**(1/beta)
+        temp_by_level[layer_3] = T3
+
+        temp_by_level = convolve(temp_by_level,Gaussian1DKernel(5),boundary='extend')
+
+        return temp_by_level
+    
+    def madhu_seager_09_inversion(self, alpha_1, alpha_2, P1, P2, P3, T3, beta=0.5):
+        """"
+        Implements the temperature structure parameterization from Madhusudhan & Seager (2009)
+          allowing for inversions
+
+        Parameters
+        -----------
+
+        Returns
+        -------
+        Temperature per layer
+        """
+
+        pressure = self.pressure_level
+        nlevel = len(pressure)
+
+        temp_by_level = np.zeros(nlevel)
+
+        P0 = pressure[0]
+
+        # Set pressure ranges
+        layer_1=(pressure<P1)
+        layer_2=(pressure<P3)*(pressure>=P1)
+        layer_3=(pressure>=P3)
+
+        # Define temperatures at boundaries to ensure continuity
+        T2 = T3 - (np.log(P3/P2) / alpha_2)**(1/beta)
+        T1 = T2 + (np.log(P1/P2) / alpha_2)**(1/beta)
+        T0 = T1 - (np.log(P1/P0) / alpha_1)**(1/beta)
+
+        # Define temperature at each pressure range
+        temp_by_level[layer_1] = T0 + (np.log(pressure[layer_1]/P0)/alpha_1)**(1/beta)
+        temp_by_level[layer_2] = T2 + (np.log(pressure[layer_2]/P2)/alpha_2)**(1/beta)
+        temp_by_level[layer_3] = T3
+
+        temp_by_level = convolve(temp_by_level,Gaussian1DKernel(5),boundary='extend')
+
+        return temp_by_level
+    
+    def knot_profile(self,  P_knot, T_knot, interpolation='brewster'):
+        """"
+        Knot-based temperature profile. Implements different types of interpolation.
+
+        Parameters
+        -----------
+
+        Returns
+        -------
+        Temperature per layer
+        """
+
+        pressure = self.pressure_level
+        nlevel = len(pressure)
+
+        temp_by_level = np.zeros(nlevel)
+
+        P0 = pressure[0]
+
+        if interpolation=='brewster':
+            interpolator = interpolate.splrep(np.log10(P_knot), T_knot, s=0)
+            temp_by_level=np.abs(interpolate.splev(np.log10(pressure),interpolator,der=0))
+        elif interpolation=='linear':
+            interpolator = interpolate.interp1d(np.log10(P_knot), T_knot, kind='linear', bounds_error=False, fill_value='extrapolate')
+            temp_by_level = interpolator(np.log10(pressure))
+        elif interpolation=='quadratic':
+            assert len(P_knot)>=3, 'Quadratic splines require at least 3 knots'
+            interpolator = interpolate.interp1d(np.log10(P_knot), T_knot, kind='quadratic', bounds_error=False, fill_value='extrapolate')
+            temp_by_level = interpolator(np.log10(pressure))
+        elif interpolation=='cubic':
+            assert len(P_knot)>=4, 'Cubic splines require at least 4 knots'
+            interpolator = interpolate.interp1d(np.log10(P_knot), T_knot, kind='cubic', bounds_error=False, fill_value='extrapolate')
+            temp_by_level = interpolator(np.log10(pressure))
+        else:
+            raise Exception(f'Unknown interpolation method \'{interpolation}\'')
+
+        return temp_by_level
+
 
 def atlev(l0,pressure_layer):
     nlayers = pressure_layer.size
