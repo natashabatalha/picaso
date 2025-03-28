@@ -24,3 +24,6 @@ dist/
 *.DS_Store
 
 *__pycache__/
+
+# Reference data
+reference/trds/grid

@@ -1,56 +1,58 @@
 import json
 import pandas as pd
-from bokeh.plotting import figure, show, output_file
-from bokeh.palettes import inferno
-from bokeh.palettes import RdGy
+#from bokeh.plotting import figure, show, output_file
+#from bokeh.palettes import inferno
+#from bokeh.palettes import RdGy
 import numpy as np
 from picaso import justdoit as jdi
-from picaso import justplotit as jpi
+#from picaso import justplotit as jpi
 # from .justdoit import opannection, inputs, brown_dwarf_pt,brown_dwarf_cld
 import os 
 import astropy.units as u
 
+
 __refdata__ = os.environ.get('picaso_refdata')
 
 
-def example_test(wave_range=[0.3,1], phase_angle=0, gravity=25, create_data=False):
-	"""
-	This tests the functionality of BLAH based on notebook BLAH 
+# def example_test(wave_range=[0.3,1], phase_angle=0, gravity=25, create_data=False):
+# 	"""
+# 	This tests the functionality of BLAH based on notebook BLAH 
 	
-	Parameters
-	----------
-	add parameters here 
-	"""
+# 	Parameters
+# 	----------
+# 	add parameters here 
+# 	"""
 
-	opacity = jdi.opannection(wave_range=wave_range) #lets just use all defaults
+# 	opacity = jdi.opannection(wave_range=wave_range) #lets just use all defaults
 
-	start_case = jdi.inputs()
+# 	start_case = jdi.inputs()
 
-	#phase angle
-	start_case.phase_angle(0) #radians
+# 	#phase angle
+# 	start_case.phase_angle(0) #radians
 
-	#define gravity
-	start_case.gravity(gravity=25, gravity_unit=jdi.u.Unit('m/(s**2)')) #any astropy units available
+# 	#define gravity
+# 	start_case.gravity(gravity=25, gravity_unit=jdi.u.Unit('m/(s**2)')) #any astropy units available
 
-	#define star
-	start_case.star(opacity, 5000,0,4.0) #opacity db, pysynphot database, temp, metallicity, logg	
+# 	#define star
+# 	start_case.star(opacity, 5000,0,4.0) #opacity db, pysynphot database, temp, metallicity, logg	
 
 	
-	start_case.atmosphere(filename=jdi.jupiter_pt(), delim_whitespace=True)
+# 	start_case.atmosphere(filename=jdi.jupiter_pt(), delim_whitespace=True)
 
-	df = start_case.spectrum(opacity, calculation='reflected') 
+# 	df = start_case.spectrum(opacity, calculation='reflected') 
 
-	#add informative name here for your file
-	#this file should be ascii, hdf5, or json
-	benchmark_spectrum = pd.read_csv(os.path.join(__refdata__,'base_cases','testing','example_test.csv'))
+# 	#add informative name here for your file
+# 	#this file should be ascii, hdf5, or json
+# 	benchmark_spectrum = pd.read_csv(os.path.join(__refdata__,'base_cases','testing','example_test.csv'))
 
-	#determine what you think is "good enough"
-	assert np.allclose(benchmark_spectrum , df['albedo'], .001),'Failed example_test unit test'
+# 	#determine what you think is "good enough"
+# 	assert np.allclose(benchmark_spectrum , df['albedo'], .001),'Failed example_test unit test'
 
-	if create_data: 
-		pd.DataFrame(dict(benchmark_spectrum=benchmark_spectrum)).to_csv('example_test.csv')
+# 	if create_data: 
+# 		pd.DataFrame(dict(benchmark_spectrum=benchmark_spectrum)).to_csv('example_test.csv')
 
-def reflected_1d_test(create_data=False):
+
+def test_reflected_1d(create_data=False):
 	"""
 	This tests the functionality of 1D reflected light spectra from notebook #1 'Getting Started'
 
@@ -85,7 +87,9 @@ def reflected_1d_test(create_data=False):
 		new_df['albedo'] = alb
 
 	# compare to benchmark
-	benchmark_spectrum = pd.read_csv(os.path.join(__refdata__,'base_cases','testing','reflected_1d_test.csv'))
+	benchmark_path = os.path.join(__refdata__,'base_cases','testing','reflected_1d_basecase.csv')
+	assert os.path.isfile(benchmark_path), 'Benchmark file not found'
+	benchmark_spectrum = pd.read_csv(benchmark_path)
 	assert np.allclose(benchmark_spectrum['albedo'], alb, atol=0.01), 'Failed albedo reflected_1d test'
 
 	#get relative flux as well
@@ -138,7 +142,8 @@ def reflected_1d_test(create_data=False):
 	# compare to benchmark, added equal_nan=True to account for NaN values present in the benchmark
 	assert np.allclose(benchmark_spectrum['albedo_nowater'], alb_nowater, atol=0.01, equal_nan=True), 'Failed no H2O albedo reflected_1d test'
 
-def model_storage_test():
+
+def test_model_storage():
 	"""
 	This tests the functionality of model storage and read-in from notebook 'Model Storage'
 
