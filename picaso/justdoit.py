@@ -42,7 +42,7 @@ from joblib import Parallel, delayed, cpu_count
 # #testing error tracker
 # from loguru import logger 
 __refdata__ = os.environ.get('picaso_refdata')
-__version__ = 3.2
+__version__ = '3.2.2'
 
 
 if not os.path.exists(__refdata__): 
@@ -50,7 +50,7 @@ if not os.path.exists(__refdata__):
 else: 
     ref_v = json.load(open(os.path.join(__refdata__,'config.json'))).get('version',2.3)
     
-    if __version__ > ref_v: 
+    if __version__ != str(ref_v): 
         warnings.warn(f"Your code version is {__version__} but your reference data version is {ref_v}. For some functionality you may experience Keyword errors. Please download the newest ref version or update your code: https://github.com/natashabatalha/picaso/tree/master/reference")
 
 
@@ -178,7 +178,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
     #set star parameters
     radius_star = inputs['star']['radius']
-    F0PI = np.zeros(nwno) + 1.
+    F0PI = np.zeros(nwno) + 1.#opacityclass.unshifted_stellar_spec
     b_top = 0.
     #semi major axis
     sa = inputs['star']['semi_major']
@@ -780,7 +780,7 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
         gravity = gravity * check_units(picaso_class.inputs['planet']['gravity_unit'])
     #otherwise find gravity from user input
     else: 
-        gravity = planet_params.get('logg', np.nan) 
+        gravity = planet_params.get('gravity', np.nan) 
     
     mp = picaso_class.inputs['planet'].get('mass',np.nan)
     if np.isfinite(mp):
@@ -950,12 +950,16 @@ def input_xarray(xr_usr, opacity,p_reference=10, calculation='planet'):
     mp = _finditem(planet_params,'mp')
     rp = _finditem(planet_params,'rp')
     logg = _finditem(planet_params,'logg')
+    gravity = _finditem(planet_params,'gravity')
 
     if ((not isinstance(mp, type(None))) & (not isinstance(rp, type(None)))):
         case.gravity(mass = mp['value'], mass_unit=u.Unit(mp['unit']),
                     radius=rp['value'], radius_unit=u.Unit(rp['unit']))
     elif (not isinstance(logg, type(None))): 
-        case.gravity(gravity = logg['value'], gravity_unit=u.Unit(logg['unit']))
+        case.gravity(gravity = 10**logg['value'], gravity_unit=u.Unit(logg['unit']))
+    elif (not isinstance(gravity, type(None))): 
+        case.gravity(gravity = gravity['value'], gravity_unit=u.Unit(gravity['unit']))
+
     else: 
         print('Mass and Radius or gravity not provided in xarray, user needs to run gravity function')
 
@@ -1666,7 +1670,6 @@ class inputs():
 
         #now convert to erg/cm2/s/wavenumber
         #flux_star = flux_star/wno_star**2
-
         wno_planet = opannection.wno
         #this adds stellar shifts 'self.raman_stellar_shifts' to the opacity class
         #the cross sections are computed later 
@@ -2270,29 +2273,38 @@ class inputs():
 
         self.inputs['atmosphere']['profile'][species] = pd.DataFrame(abunds)
 
-    def add_pt(self, T, P):
+    def add_pt(self, T=None, P=None):
         """
         Adds temperature pressure profile to atmosphere
         Parameters
         ----------
         T : array
-            Temperature Array
+            Temperature Array in Kelbin
         P : array 
-            Pressure Array 
-        nlevel : int
-            # of atmospheric levels
+            Pressure Array in bars 
         
             
         Returns
         -------
-        T : numpy.array 
-            Temperature grid 
-        P : numpy.array
-            Pressure grid
+        DataFrame 
+            in PICASO format
+            also sets the nlevels and nlayers
+            temperature : numpy.array 
+                Temperature grid in Kelvin
+            pressure : numpy.array
+                Pressure grid in bars 
                 
         """
-        self.inputs['atmosphere']['profile']  = pd.DataFrame({'temperature': T, 'pressure': P})
-        self.nlevel=len(T) 
+        empty_dict = {}
+        if not isinstance(T,type(None)):
+            empty_dict['temperature']=T
+            self.nlevel=len(T) 
+        if not isinstance(P,type(None)):
+            empty_dict['pressure']=P
+            self.nlevel=len(P) 
+
+        self.inputs['atmosphere']['profile']  = pd.DataFrame(empty_dict)
+        
         # Return TP profile
         return self.inputs['atmosphere']['profile'] 
 
@@ -4371,6 +4383,11 @@ def brown_dwarf_pt():
 def brown_dwarf_cld():
     """Function to get rough Brown Dwarf cloud model with Teff=1270 K M/H=1xSolar, C/O=1xSolar, fsed=1"""
     return os.path.join(__refdata__, 'base_cases','t1270g200f1_m0.0_co1.0.cld')    
+def w17_data():
+    """Function to get WASP-17 Grant et al data from here 
+        https://zenodo.org/records/8360121/files/ExoTiC-MIRI.zip?download=1
+    """
+    return os.path.join(__refdata__, 'base_cases','Grant_etal_transmission_spectrum_vfinal_bin0.25_utc20230606_125313.nc')
 
 
 def single_phase_options(printout=True):
