@@ -38,7 +38,7 @@ Anyone is free to use the [contributor bot to add their contribution](https://al
 ## Contributors
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-19-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-20-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
@@ -71,6 +71,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/astrocaroline"><img src="https://avatars.githubusercontent.com/u/10456842?v=4?s=100" width="100px;" alt="astrocaroline"/><br /><sub><b>astrocaroline</b></sub></a><br /><a href="#mentoring-astrocaroline" title="Mentoring">🧑‍🏫</a> <a href="#ideas-astrocaroline" title="Ideas, Planning, & Feedback">🤔</a> <a href="#fundingFinding-astrocaroline" title="Funding Finding">🔍</a> <a href="#research-astrocaroline" title="Research">🔬</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/rewaclarkbush"><img src="https://avatars.githubusercontent.com/u/85771931?v=4?s=100" width="100px;" alt="rewaclarkbush"/><br /><sub><b>rewaclarkbush</b></sub></a><br /><a href="https://github.com/natashabatalha/picaso/commits?author=rewaclarkbush" title="Code">💻</a> <a href="https://github.com/natashabatalha/picaso/commits?author=rewaclarkbush" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://nicholaswogan.github.io/"><img src="https://avatars.githubusercontent.com/u/18489667?v=4?s=100" width="100px;" alt="Nick Wogan"/><br /><sub><b>Nick Wogan</b></sub></a><br /><a href="#tutorial-Nicholaswogan" title="Tutorials">✅</a> <a href="https://github.com/natashabatalha/picaso/commits?author=Nicholaswogan" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/kelle"><img src="https://avatars.githubusercontent.com/u/1444249?v=4?s=100" width="100px;" alt="Kelle Cruz"/><br /><sub><b>Kelle Cruz</b></sub></a><br /><a href="https://github.com/natashabatalha/picaso/commits?author=kelle" title="Tests">⚠️</a> <a href="https://github.com/natashabatalha/picaso/commits?author=kelle" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
