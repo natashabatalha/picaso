@@ -19,8 +19,8 @@ CtoO = '100'#'1.0' # CtoO ratio
 
 ck_db = f"../data/kcoeff_2020/sonora_2020_feh{mh}_co_{CtoO}.data.196"
 
-for nstr_upper in [77, 88]:
-    for teff in [2200]:
+for nstr_upper in [55]:
+    for teff in [1100]:
         for fsed in [3]:
             print(f"fsed = {fsed}, effective temperature = {teff} K, nstr_upper = {nstr_upper}")
             cl_run = jdi.inputs(calculation="browndwarf", climate = True) # start a calculation - need to not have "brown" in `calculation`. BD almost always means free-floating.
@@ -57,7 +57,7 @@ for nstr_upper in [77, 88]:
                     cloud_outputs[k] = np.array([x[k] for x in out_selfconsistent["cld"]])
 
                 tstamp = datetime.now().isoformat().replace(":", ".")
-                with h5py.File(f"../data/convh5_oktemp/convergence_fsed{fsed}_teff{teff}_nstrupper{nstr_upper}_dt{tstamp}.h5", "w") as f:
+                with h5py.File(f"../data/convh5_oktemp/selfconsistent_fsed{fsed}_teff{teff}_nstrupper{nstr_upper}_dt{tstamp}.h5", "w") as f:
                     p = f.create_dataset("pressure", data=out_selfconsistent["pressure"])
                     f.create_dataset("nstrs", data=np.array(out_selfconsistent["nstr"]))
                     for k in cloud_outputs:
@@ -68,7 +68,7 @@ for nstr_upper in [77, 88]:
                     p.attrs["nstr_start"] = nstr_start
                     t = f.create_dataset("temperature_picaso", data=out_selfconsistent["temperature"])
             except ValueError:
-                with open(f"../data/convh5_oktemp/fsed{fsed}_teff{teff}_nstrupper{nstr_upper}.txt") as f:
+                with open(f"data/convh5_oktemp/selfconsistent_fsed{fsed}_teff{teff}_nstrupper{nstr_upper}.txt") as f:
                     f.write(f"inf or NaN error at fsed = {fsed}, teff = {teff}, nstr_upper start = {nstr_upper}")
 
     # %%

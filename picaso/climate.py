@@ -1026,7 +1026,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
         if save_profile == 1:
             all_profiles = np.append(all_profiles,temp_old)
             cldsave_count += 1
-        print(f"{cldsave_count = }")
+
         if flag_converge == 2 : # converged
             # calculate  lapse rate
             dtdp=np.zeros(shape=(nlevel-1))
