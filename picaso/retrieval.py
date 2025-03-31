@@ -931,7 +931,7 @@ class Parameterize():
         Parameters 
         ----------
         ptop : float 
-            ptop is pressure at which tau of cloud ~1 
+            ptop is log pressure (bar) at which tau of cloud ~1 
         dp : float 
             dtau / dP = const * exp((P-P0) / pressure_scale)
         """
@@ -964,7 +964,7 @@ class Parameterize():
         Parameters 
         ----------
         ptop : float 
-            pressure top in dex bars 
+            pressure top in log bars 
         dp : float 
             pressure thickness in dex bars, default - 0.005
         reference_tau : float 
