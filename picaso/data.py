@@ -6,11 +6,25 @@ import glob
 import uuid
 import json
 
+def download_with_progress(url, filename):
+    """Downloads a file from a URL and displays a progress bar."""
+
+    def progress_bar(count, block_size, total_size):
+        """Displays a simple progress bar."""
+        percent = int(count * block_size * 100 / total_size)
+        print(f"\rDownloading: {percent}% [{('#' * percent)}{(' ' * (100 - percent))}]", end="")
+
+    try:
+        urlretrieve(url, filename, reporthook=progress_bar)
+        print("\nDownload complete!")  # Add a newline after the progress bar finishes.
+    except Exception as e:
+        print(f"Error downloading {url}: {e}")
+
 data_config = {
     "resampled_opacity":{
         'default':{
            'url':'https://zenodo.org/records/14861730/files/opacities_0.3_15_R15000.db.tar.gz?download=1',
-            'filename':'opacities_0.3_15_R15000.db',
+            'filename':'opacities_0.3_15_R15000.db.tar.gz',
             'description':'7.34 GB file resampled at R=15,000 from 0.3-15um. This is sufficient for doing R=100 JWST calculations and serves as a good default opacity database for exploration.',
             'default_destination':'$picaso_refdata/opacities/opacities.db'    
         },
@@ -634,8 +648,8 @@ def get_data(category_download=None,target_download=None, final_destination_dir=
     temp_dir = os.path.join(os.getcwd(),f'temp_picaso_dir_{uuid.uuid4()}')
     os.mkdir(temp_dir)
     for iurl, iname in zip(url_download,download_name): 
-        print(f'Downloading target url {iurl} to a temp directory {temp_dir}. Then we will unpack and move it. If something goes wrong you can find your file in this temp directory.')
-        urlretrieve(iurl, os.path.join(temp_dir,iname))
+        print(f'Downloading target url: {iurl} to the temp directory called: {temp_dir}. Then we will unpack and move it. If something goes wrong you can find your file in this temp directory.')
+        download_with_progress(iurl, os.path.join(temp_dir,iname))
         if (('zip' in iname) or ('tar' in iname)):
             print('Unpacking',iname)
             shutil.unpack_archive(os.path.join(temp_dir,iname), temp_dir)
