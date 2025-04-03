@@ -1194,11 +1194,11 @@ def opannection(wave_range = None, filename_db = None,
 
     if ((method == 'resampled') & isinstance(ck_db,type(None))):
         #set raman database 
-        if isinstance(raman_db,type(None)): raman_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['raman'])
+        if isinstance(raman_db,type(None)): raman_db = os.path.join(__refdata__, inputs['opacities']['files']['raman'])
         
         #get default file if it was supplied
         if isinstance(filename_db,type(None)): 
-            filename_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['opacity'])
+            filename_db = os.path.join(__refdata__, inputs['opacities']['files']['opacity'])
             if not os.path.isfile(filename_db):
                 raise Exception(f'The default opacity file does not exist: {filename_db}. In order to have a default database please download one of the opacity files from Zenodo and place into this folder with the name opacities.db: https://zenodo.org/record/6928501#.Y2w4C-zMI8Y if you dont want a single default file then you just need to point to the opacity db using the keyword filename_db.')
         #if a name is supplied check that it exists 
@@ -1220,7 +1220,7 @@ def opannection(wave_range = None, filename_db = None,
 
         #get default continuum if nothing was specified
         if isinstance(filename_db,type(None)): 
-            filename_db = os.path.join(__refdata__, 'opacities', inputs['opacities']['files']['ktable_continuum'])
+            filename_db = os.path.join(__refdata__, inputs['opacities']['files']['ktable_continuum'])
         
         if not os.path.exists(ck_db):
             if ck_db[-1] == '/':ck_db = ck_db[0:-1]
@@ -1238,23 +1238,25 @@ def opannection(wave_range = None, filename_db = None,
         #get default continuum if nothing was specified
         if isinstance(filename_db,type(None)): 
             #NEB TODO: we really ony need one continuum file, the rest can be interpolated down to the 196 grid. 
-            filename_db = os.path.join(__refdata__,'climate_INPUTS','ck_cx_cont_opacities_661.db')
+            filename_db = os.path.join(__refdata__, inputs['opacities']['files']['ktable_resortrebin'])
 
         #now we can load the ktables for those gases defined
         if isinstance(ck_db ,type(None) ):
-            ck_db  = os.path.join(__refdata__, 'climate_INPUTS/661')
-            
-            if isinstance(preload_gases,str):
-                if preload_gases=='all':
-                    check_hdf5=glob.glob(os.path.join(ck_db ,'*.hdf5'))
-                    check_npy=glob.glob(os.path.join(ck_db,'*.npy'))
-                    if len(check_hdf5)>0:
-                        preload_gases = [i.split('/')[-1].split('_')[0] for i in check_hdf5]
-                    elif len(check_npy)>0:
-                        preload_gases = [i.split('/')[-1].split('_')[0] for i in check_npy]
-                    else:
-                        raise Exception(f'No .npy or .hdf5 molecule files were found in {ck_db}')
+            ck_db  = os.path.join(__refdata__,  inputs['opacities']['files']['ktable_by_molecule'])
 
+        #if preload gases is 'all' then get everything in the ck_db dir    
+        if isinstance(preload_gases,str):
+            if preload_gases=='all':
+                check_hdf5=glob.glob(os.path.join(ck_db ,'*.hdf5'))
+                check_npy=glob.glob(os.path.join(ck_db,'*.npy'))
+                if len(check_hdf5)>0:
+                    preload_gases = [i.split('/')[-1].split('_')[0] for i in check_hdf5]
+                elif len(check_npy)>0:
+                    preload_gases = [i.split('/')[-1].split('_')[0] for i in check_npy]
+                else:
+                    raise Exception(f'No .npy or .hdf5 molecule files were found in {ck_db}')
+            else: 
+                preload_gases = [preload_gases]
         opacityclass=RetrieveCKs(
                     ck_db, 
                     filename_db, 
@@ -2693,7 +2695,7 @@ class inputs():
 
     def add_pt(self, T, P):
         """
-        Adds temperature pressure profile to atmosphere
+        Adds temperature pressure profile to atmosphere, keeps kzz if it exists, wipes everything else out. 
         Parameters
         ----------
         T : array
@@ -2712,10 +2714,15 @@ class inputs():
             Pressure grid
                 
         """
-        self.inputs['atmosphere']['profile']  = pd.DataFrame({'temperature': T, 'pressure': P})
+        
+        df = pd.DataFrame({'temperature': T, 'pressure': P})
+        if isinstance(self.inputs['atmosphere']['profile'], pd.core.frame.DataFrame):
+            if 'kz' in  self.inputs['atmosphere']['profile'].keys(): 
+                df['kz'] = self.inputs['atmosphere']['profile']['kz'].values
+        self.inputs['atmosphere']['profile']  = df
         self.nlevel=len(T) 
         # Return TP profile
-        return self.inputs['atmosphere']['profile'] 
+        return #self.inputs['atmosphere']['profile'] 
 
     def guillot_pt(self, Teq, T_int=100, logg1=-1, logKir=-1.5, alpha=0.5,nlevel=61, p_bottom = 1.5, p_top = -6):
         """
@@ -4548,10 +4555,10 @@ class inputs():
 
 
         if diseq_chem: 
-            raise Exception("STILL WIP")
             all_kzz= []
             save_kzz=int(save_all_kzz)
-            run_diseq_climate_workflow(self, nofczns, nstr, TEMP1, pressure,
+            pressure, temp, dtdp, nstr_new, flux_plus_final,  flux_net_final, flux_net_ir_final, \
+                df, all_profiles, cld_out, final_conv_flag, all_opd,opd_now,w0_now,g0_now = run_diseq_climate_workflow(self, nofczns, nstr, TEMP1, pressure,
                         AdiabatBundle,opacityclass,
                         grav,
                         rfaci,rfacv,tidal,
@@ -4561,7 +4568,9 @@ class inputs():
                         verbose=verbose,do_holes = do_holes, fhole = fhole, 
                         fthin_cld = fthin_cld, moist = moist, 
                         save_kzz=save_kzz, self_consistent_kzz=self_consistent_kzz)
+        """OLD DISEQ CODE 
         if diseq_chem:
+            raise Exception("THIS SHOULD BE DEPRECATED")
             #Starting with user's guess since there was no request to converge a chemeq profile first 
             #if not chemeq_first: 
             temp = TEMP1
@@ -4813,7 +4822,7 @@ class inputs():
             #if nstr[2] < nstr[5]:
             #    nofczns = 2
             #    print("nofczns corrected") 
-
+            #first profile_diseq call
             if self.inputs['climate']['photochem']==False:
                 pressure, temperature, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,cld_out,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,_ ,all_opd  = profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
                 temp,pressure, FOPI, t_table, p_table, grad, cp, opacityclass, grav, 
@@ -4857,7 +4866,7 @@ class inputs():
 
 
             #return pressure , temp, dtdp, nstr_new, flux_plus_final, quench_levels, df, all_profiles, all_kzz, opd_now,w0_now,g0_now
-        
+        """
         #all output to user
         all_out['pressure'] = pressure
         all_out['temperature'] = temp
@@ -4865,13 +4874,15 @@ class inputs():
         all_out['dtdp'] = dtdp
         all_out['cvz_locs'] = nstr_new
         all_out['flux']=flux_plus_final
-        all_out['fnet/fnetir']=flux_net_final[0,0,:]/flux_net_ir_final
+        print('fix flux output1')
+        #all_out['fnet/fnetir']=flux_net_final[0,0,:]/flux_net_ir_final
         all_out['converged']=final_conv_flag
-        all_out['level_flux_balance']=dict(flux_net_ir=flux_net_ir_final, 
-                                            flux_plus_ir=flux_plus_final , 
-                                            flux_net=flux_net_final,
-                                            tidal=tidal,
-                                            rfacv=rfacv,rfaci=rfaci)
+        print('fix flux output2')
+        #all_out['level_flux_balance']=dict(flux_net_ir=flux_net_ir_final, 
+        #                                    flux_plus_ir=flux_plus_final , 
+        #                                    flux_net=flux_net_final,
+        #                                    tidal=tidal,
+        #                                    rfacv=rfacv,rfaci=rfaci)
 
 
         #put cld output in all_out
