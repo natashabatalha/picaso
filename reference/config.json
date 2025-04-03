@@ -95,10 +95,12 @@
 	"opacities":{
 		"wnogrid":null,
 		"files":{
-			"opacity":"opacities.db",
-			"ktable_continuum":"ck_cx_cont_opacities.db",
-			"h2minus":"h2minus.csv",
-			"raman":"raman.txt"
+			"opacity":"opacities/opacities.db",
+			"ktable_continuum":"opacities/ck_cx_cont_opacities.db",
+			"h2minus":"opacities/h2minus.csv",
+			"raman":"opacities/raman.txt",
+			"ktable_resortrebin":"climate_INPUTS/ck_cx_cont_opacities_661.db",
+			"ktable_by_molecule":"climate_INPUTS/ktable_by_molecule"
 		}
 
 	},

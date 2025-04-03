@@ -6,6 +6,19 @@ import glob
 import uuid
 import json
 
+def remove_directory(dir_path):
+    """Removes a directory and all its contents.
+
+    Args:
+        dir_path: The path to the directory to remove.
+    """
+    try:
+        shutil.rmtree(dir_path)
+        print(f"Directory '{dir_path}' and its contents have been removed.")
+    except FileNotFoundError:
+        print(f"Directory '{dir_path}' not found.")
+    except OSError as e:
+        print(f"Error removing directory '{dir_path}': {e}")
 def download_with_progress(url, filename):
     """Downloads a file from a URL and displays a progress bar."""
 
@@ -20,13 +33,21 @@ def download_with_progress(url, filename):
     except Exception as e:
         print(f"Error downloading {url}: {e}")
 
-data_config = {
+def get_data_config():
+    __refdata__ = os.environ.get('picaso_refdata','')
+    if __refdata__ =='':raise Exception('Cannot get data config until picaso_refdata environment is set')
+    inputs = json.load(open(os.path.join(__refdata__,'config.json')))   
+
+    __stellar_refdata__ = os.environ.get('PYSYN_CDBS','$PYSYN_CDBS')
+    if __stellar_refdata__ =='$PYSYN_CDBS':print("Stellar environment variable PYSYN_CDBS not yet set, which may impact exoplanet functionality")
+
+    return {
     "resampled_opacity":{
         'default':{
            'url':'https://zenodo.org/records/14861730/files/opacities_0.3_15_R15000.db.tar.gz?download=1',
             'filename':'opacities_0.3_15_R15000.db.tar.gz',
             'description':'7.34 GB file resampled at R=15,000 from 0.3-15um. This is sufficient for doing R=100 JWST calculations and serves as a good default opacity database for exploration.',
-            'default_destination':'$picaso_refdata/opacities/opacities.db'    
+            'default_destination':os.path.join(__refdata__, inputs['opacities']['files']['opacity']) 
         },
         'R60000,0.6-6um':{
             'url':'https://zenodo.org/records/6928501/files/all_opacities_0.6_6_R60000.db.tar.gz?download=1',
@@ -44,13 +65,13 @@ data_config = {
             'url':'http://ssb.stsci.edu/trds/tarfiles/synphot5.tar.gz',
             'filename':'synphot5.tar.gz',
             'description':'Phoenix stellar atlas',
-            'default_destination':'$PYSYN_CDBS/grid'
+            'default_destination':os.path.join(__stellar_refdata__, 'grid')
             },
         'ck04models':{
             'url':'http://ssb.stsci.edu/trds/tarfiles/synphot3.tar.gz',
             'filename':'synphot3.tar.gz',
             'description':'Castelli & Kurucz (2004) stellar atlas',
-            'default_destination':'$PYSYN_CDBS/grid'
+            'default_destination':os.path.join(__stellar_refdata__, 'grid')
             },
         },
     'virga_mieff':{
@@ -152,7 +173,7 @@ data_config = {
                 'https://zenodo.org/records/10895826/files/AlH_1460.npy'
             ],
             'description':'By molecule CK-Table on the 1460 grid with 661 wavenumber points.',
-            'default_destination':'$picaso_refdata/climate_INPUTS/661/',
+            'default_destination':os.path.join(__refdata__, inputs['opacities']['files']['ktable_by_molecule']) ,
             'filename':[
                 'H2S_1460.npy',
                 'MgH_1460.npy',
@@ -550,6 +571,7 @@ def check_environ():
 
 
 def get_data(category_download=None,target_download=None, final_destination_dir=None):
+    data_config=get_data_config()
     if ((category_download==None) and (target_download==None)):
         print('What data can I help you download? Options include:')
         options = [i for i in data_config.keys()]
@@ -617,7 +639,7 @@ def get_data(category_download=None,target_download=None, final_destination_dir=
                 picaso_refdata = os.environ.get('picaso_refdata','')
                 if os.path.isdir(picaso_refdata):
                     print('It looks like you have set picaso_refdata path as: ',picaso_refdata)
-                    final_destination_dir = os.path.join(picaso_refdata,'opacities','opacities.db')
+                    final_destination_dir = data_config['resampled_opacity']['default']['default_destination']#os.path.join(picaso_refdata,'opacities','opacities.db')
                 elif picaso_refdata=='':
                     print('It does not look like have created picaso_refdata environment variable yet. Please do so by following these instructions first: https://natashabatalha.github.io/picaso/installation.html#create-environment-variable')
                     print('After you have created the environment variable I can help download the file and put it in the right place')
@@ -635,7 +657,23 @@ def get_data(category_download=None,target_download=None, final_destination_dir=
                 while not os.path.isdir(final_destination_dir):
                     print('I dont recognize that directory. Please enter a valid directory or press enter to keep in current working directory')
                     final_destination_dir = input() 
-                     
+        elif 'default_destination' in data_config[category_download][target_download].keys():
+            default = data_config[category_download][target_download]['default_destination']
+            print(f'I found this suggested default destination: {default}. Would you like to make these your default files and add them to this destination? yes or no')
+            make_default= input() 
+            while make_default not in ['yes', 'no']:
+                print('I did not understand. Please enter, yes or no')
+                make_default= input() 
+            if ((make_default.lower()=='y') or (make_default.lower()=='yes')):
+                final_destination_dir = default   
+            else: 
+                print('No Problem. Please enter where you would like to store this file. Default=',os.getcwd())
+                final_destination_dir = input() 
+                if final_destination_dir=='':
+                    final_destination_dir=os.getcwd()
+                while not os.path.isdir(final_destination_dir):
+                    print('I dont recognize that directory. Please enter a valid directory or press enter to keep in current working directory')
+                    final_destination_dir = input()              
         else: 
             print(f'When running the code you will have to point to this directory. Therefore, keep it somewhere you will remember. My suggestion would be something like /Users/myaccount/Documents/data/picaso_data/{category_download}. Please enter a path:')
             final_destination_dir=input()
@@ -647,13 +685,16 @@ def get_data(category_download=None,target_download=None, final_destination_dir=
     
     temp_dir = os.path.join(os.getcwd(),f'temp_picaso_dir_{uuid.uuid4()}')
     os.mkdir(temp_dir)
+    allzips = []
     for iurl, iname in zip(url_download,download_name): 
         print(f'Downloading target url: {iurl} to the temp directory called: {temp_dir}. Then we will unpack and move it. If something goes wrong you can find your file in this temp directory.')
         download_with_progress(iurl, os.path.join(temp_dir,iname))
         if (('zip' in iname) or ('tar' in iname)):
             print('Unpacking',iname)
             shutil.unpack_archive(os.path.join(temp_dir,iname), temp_dir)
-            contents = glob.glob(os.path.join(temp_dir,'*'))
+            allzips += [os.path.join(temp_dir,iname)]
+    
+    contents = [i for i in glob.glob(os.path.join(temp_dir,'*')) if i not in allzips]
         
     if 'stellar' in category_download: 
         lets_move_this = [os.path.join(temp_dir,'grp','redcat','trds','grid',target_download)]
@@ -678,7 +719,7 @@ def get_data(category_download=None,target_download=None, final_destination_dir=
             else: 
                 raise Exception(f"I cannot move this file as it would overwrite an existing file. You should proceed manually, with intention to move these '{str(lets_move_this)[0:200]}' to this desntination '{final_destination_dir}'. ")
 
-    os.rmdir(temp_dir)
+    remove_directory(temp_dir)
     print('Successfuly moved file and deleted temp dir.')
     return 
 
