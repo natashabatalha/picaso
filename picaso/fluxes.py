@@ -3664,7 +3664,7 @@ def vec_dot(A,B):
     return C
 
 
-def tidal_flux(T_e, wave_in,nlevel, pressure, pm, hratio, col_den):
+def tidal_flux(T_e, wave_in,nlevel, pressure, pm, hratio, col_den, inject_beam=False, beam_profile=None):
     """
     Computes Tidal Fluxes in all levels. Py of TIDALWAVE subroutine. 
 	
@@ -3700,12 +3700,19 @@ def tidal_flux(T_e, wave_in,nlevel, pressure, pm, hratio, col_den):
 
     dedm=np.zeros(shape=(nlevel-1))
 
-    for j in range(nlevel):
-        if j > 1 :
-            tidal[j] = tidal[j-1] - chapman(pressure[j],pm,hratio)*col_den[j-1]
-            T_tot += tidal[j] -tidal[j-1]
-    
-    tidal = (tidal*wave_in/T_tot) + tide - (tidal[-1]*wave_in/T_tot)
+    if inject_beam == True:
+        for j in range(nlevel):
+            if j > 1 :
+                tidal[j] = tidal[j-1] - beam_profile[j]
+                T_tot += tidal[j] - tidal[j-1]
+        tidal = (tidal*np.sum(beam_profile)/T_tot) + tide - (tidal[-1]*np.sum(beam_profile)/T_tot)  
+    else:
+        for j in range(nlevel):
+            if j > 1 :
+                tidal[j] = tidal[j-1] - chapman(pressure[j],pm,hratio)*col_den[j-1]
+                T_tot += tidal[j] -tidal[j-1]
+            
+        tidal = (tidal*wave_in/T_tot) + tide - (tidal[-1]*wave_in/T_tot)
     
     #for j in range(nlevel-1):
         # dE/dM (ergs/g sec)

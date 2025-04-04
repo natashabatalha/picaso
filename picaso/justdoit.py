@@ -2068,21 +2068,12 @@ class inputs():
                                 if self.inputs['atmosphere']['profile']['NH3'][i] < self.inputs['atmosphere']['profile']['NH3'][i-1]:
                                     self.inputs['atmosphere']['profile']['NH3'][i-1] = self.inputs['atmosphere']['profile']['NH3'][i] 
                         else: #NEEDS TO BE TESTED FOR WARMER CLOUDS 
-                            # invert abundance to find first layer of condensation by looking for deviation from constant value
-                            # inverted = self.inputs['atmosphere']['profile'][mol][::-1]
-
-                            # need to ignore the bottom 10% of layers to avoid the changes in deep atmosphere to properly identify condensation layer
-                            cutoff = int(0.1 * self.nlevel)  # Dynamically ignore bottom 10% of layers
-                            # relevant_layers = inverted[:self.nlevel - cutoff]
-                            # grad = np.abs(np.gradient(relevant_layers))  # Compute abundance gradient
-
-                            # unique_vals, counts = np.unique(inverted, return_counts=True)
-                            # mode_value = unique_vals[np.argmax(counts)]
-                            # threshold = mode_value * 0.01 # Define a threshold for significant drop (adjustable)
-
-                            # Find the first layer where the abundance starts to fall off
-                            # cond_idx = np.where(grad > threshold)[0]
-                            cond_layer = self.nlevel - cutoff #- cond_idx[0]
+                            #can generalize later for other mh and mmw but for now, good enough to gauge where to start coldtrapping
+                            cond_p, cond_t = vj.condensation_t(mol, 1, 2.2, pressure = self.inputs['atmosphere']['profile']['pressure'])
+                            try:
+                                cond_layer = np.where(cond_t > self.inputs['atmosphere']['profile']['temperature'])[0][-1]
+                            except IndexError:
+                                continue
 
                             if mol in self.inputs['atmosphere']['profile'].keys():
                                 for i in range(cond_layer, 0, -1): 
@@ -4039,7 +4030,9 @@ class inputs():
         photochem=False, photochem_init_args=None, sonora_abunds_photochem = False, df_sonora_photochem = None,
         photochem_TOA_pressure = 1e-7*1e6, fhole = None, do_holes = False, fthin_cld = None, 
         beta = 1, virga_param = 'const', moistgrad = False, deq_rainout= False, quench_ph3 = True, no_ph3 = False, 
-        kinetic_CO2 = True, cold_trap = False):
+        kinetic_CO2 = True, cold_trap = False, 
+        inject_energy = False, total_energy_injection = None, press_max_energy = None,injection_scalehight= None,
+        inject_beam = False, beam_profile = None):
         """
         Get Inputs for Climate run
 
@@ -4124,6 +4117,18 @@ class inputs():
             Switch for turning on/off kinetic CO2 prescription for diseq runs from Zahnle and Marley 2014
         cold_trap : bool
             Force H2O and NH3 abundances to be cold trapped after condensation. Default = False
+        inject_energy : bool
+            If True, will inject energy into the atmosphere
+        total_energy_injection : float
+            Total energy injection in ergs/cm^2/s (energy injection for chapman function)
+        press_max_energy : float
+            Pressure for maximum energy injection in bars (for chapman function)
+        injection_scaleheight : float
+            Scale height ratio for energy injection (for chapman function)
+        inject_beam : bool
+            If True, will inject energy beam, this is meant for numerical profile input. Otherwise, will need inputs for chapman function
+        beam_profile : array
+            Beam profile (numerical) for energy injection (inject_beam must = True for this to be used)
         """
         
         if cloudy: 
@@ -4205,6 +4210,13 @@ class inputs():
             pc = EvoAtmosphereGasGiantPicaso(**photochem_init_args)
             pc.TOA_pressure_avg = photochem_TOA_pressure
             self.inputs['climate']['pc'] = pc
+
+        self.inputs['climate']['inject_energy'] = inject_energy
+        self.inputs['climate']['total_energy_injection'] = total_energy_injection
+        self.inputs['climate']['press_max_energy'] = press_max_energy
+        self.inputs['climate']['injection_scaleheight'] = injection_scalehight
+        self.inputs['climate']['inject_beam'] = inject_beam
+        self.inputs['climate']['beam_profile'] = beam_profile
 
     def climate(self, opacityclass, save_all_profiles = False, as_dict=True,with_spec=False,
         save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False, kz = None, 
@@ -4311,6 +4323,35 @@ class inputs():
         no_ph3 = self.inputs['climate']['no_ph3']
         cold_trap = self.inputs['climate']['cold_trap']
 
+        #inputs for energy injection
+        inject_energy = self.inputs['climate']['inject_energy']
+        inject_beam = self.inputs['climate']['inject_beam']
+
+        if inject_energy == True:
+        # for beam profile energy injection (numerical profiles)
+            if inject_beam == True:
+                beam_profile = self.inputs['climate']['beam_profile']
+                if len(beam_profile) != len(pressure):
+                    raise Exception('Beam profile must on the same pressure grid as the climate profile')
+                wave_in = 0
+                pm = 1
+                hratio = 1
+            # for chapman function energy injection.
+            else:
+                #total input energy in erg/cm^2/s
+                wave_in = self.inputs['climate']['total_energy_injection']
+                #pressure of maximum energy injection
+                pm = self.inputs['climate']['press_max_energy']
+                #scale height ratio of energy injection
+                hratio = self.inputs['climate']['injection_scaleheight']
+                beam_profile = 0
+        
+        else:
+            wave_in = 0
+            pm = 1
+            hratio = 1
+            beam_profile = 0
+
 
         Teff = self.inputs['planet']['T_eff']
         grav = 0.01*self.inputs['planet']['gravity'] # cgs to si
@@ -4319,9 +4360,10 @@ class inputs():
         sigma_sb = 0.56687e-4 # stefan-boltzmann constant
         
         col_den = 1e6*(pressure[1:] -pressure[:-1] ) / (grav/0.01) # cgs g/cm^2
-        wave_in, nlevel, pm, hratio = 0.9, len(pressure), 0.001, 0.1
-        #tidal = tidal_flux(Teff, wave_in,nlevel, pressure, pm, hratio, col_den)
-        tidal = np.zeros_like(pressure) - sigma_sb *(Teff**4)
+        nlevel = len(pressure)
+        # wave_in, nlevel, pm, hratio = 7.26e5, len(pressure), 1, 1
+        tidal = tidal_flux(Teff, wave_in,nlevel, pressure, pm, hratio, col_den, inject_beam, beam_profile)
+        # tidal = np.zeros_like(pressure) - sigma_sb *(Teff**4)
         
         # cloud inputs
         cloudy = self.inputs['climate']['cloudy']
