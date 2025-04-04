@@ -4221,10 +4221,11 @@ class inputs():
         cloudy = False, species = None, fsed = None, mieff_dir = None,
         photochem=False, photochem_init_args=None, sonora_abunds_photochem = False, df_sonora_photochem = None,
         photochem_TOA_pressure = 1e-7*1e6, fhole = None, do_holes = False, fthin_cld = None, 
-        beta = 1, virga_param = 'const', moistgrad = False, deq_rainout= False, quench_ph3 = True, no_ph3 = False, 
-        kinetic_CO2 = True, cold_trap = False,
-        #TO DEPRECATE
-        mh = None, CtoO = None
+        beta = 1, virga_param = 'const', moistgrad = False, 
+        #DEPRECATED and moved to atmosphere function
+        #deq_rainout= False, quench_ph3 = True, no_ph3 = False, 
+        #kinetic_CO2 = True, cold_trap = False,
+        #mh = None, CtoO = None
         ):
         """
         Get Inputs for Climate run
