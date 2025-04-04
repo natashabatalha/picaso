@@ -2076,7 +2076,9 @@ class inputs():
             diff = old - new 
             #adjust H2 accordingly 
             H2 = H2 + diff 
-
+        
+        #reset H2 accordingly
+        df_atmo_og.loc[:,'H2'] = H2
         #set new atmosphere 
         self.inputs['atmosphere']['profile'] = df_atmo_og
 

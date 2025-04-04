@@ -20,7 +20,7 @@ from collections import namedtuple
 
 convergence_criteriaT = namedtuple('Conv',['it_max','itmx','conv','convt','x_max_mult'])
 
-def update_quench_levels(bundle, Atmosphere, kz, grav): 
+def update_quench_levels(bundle, Atmosphere, kz, grav,verbose=False): 
     #PH3 requires h2o and h2 abundances so if all those three 
     #are present than go forth and compute the PH3 quenching 
     if np.all(np.isin(['H2','H2O','PH3'], bundle.inputs['atmosphere']['profile'].keys())):
@@ -32,7 +32,7 @@ def update_quench_levels(bundle, Atmosphere, kz, grav):
 
     #compute quench levels for everything
     quench_levels, timescale_mixing = get_quench_levels(Atmosphere, kz, grav, PH3=PH3, H2O=H2O, H2=H2)
-    
+    if verbose: print('Computed quenched levels at',quench_levels)
     return quench_levels
 
 def update_kzz(grav, tidal, AdiabatBundle, nstr, Atmosphere, 
@@ -42,10 +42,11 @@ def update_kzz(grav, tidal, AdiabatBundle, nstr, Atmosphere,
                flux_net_ir_layer=None,flux_plus_ir_attop=None,
                #kwargs for get_kzz function
                moist=False, 
-               do_holes=False, fhole=None):
-    
+               do_holes=False, fhole=None,verbose=True):
+    if verbose: print("I am updating kzz")
     #Do I have fluxes or no? 
     if (np.any(flux_plus_ir_attop==None) and np.any(flux_net_ir_layer==None)): 
+        if verbose: print('I dont have fluxes, let me compute them')
         if do_holes == True:
             flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
                         Disco,Opagrid, FOPI, reflected=False, thermal=True, 
@@ -148,7 +149,7 @@ def run_diseq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
     ### 5) RUN PROFILE to converge new profile 
     # define the initial convergence criteria for profile 
     convergence_criteria = convergence_criteriaT(it_max=10, itmx=7, conv=5.0, convt=4.0, x_max_mult=7.0) 
-    
+
     final=False
     pressure, temperature, dtdp, profile_flag, all_profiles,CloudParameters,cld_out,flux_net_ir_layer, flux_plus_ir_attop, all_opd =profile(bundle, nofczns, nstr, temp, pressure, 
             AdiabatBundle,opacityclass,
@@ -2910,7 +2911,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     """
     #under what circumstances to we compute quench levels 
     full_kinetis = bundle.inputs['approx']['chem_method']=='photochem'
-    do_quench_appox = diseq and not full_kinetis
+    do_quench_appox = diseq and (not full_kinetis)
 
     #unpack 
     FOPI = opacityclass.relative_flux 
@@ -2930,7 +2931,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     
     min_temp = np.min(temp)
     # Don't use large step_max option for cold models, much better converged with smaller stepping unless it's cloudy
-    if min_temp <= 400:# and cloudy != 1:
+    if min_temp <= 250:# and cloudy != 1:
         egp_stepmax = True
     else: 
         egp_stepmax = False
@@ -3003,7 +3004,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     ### 3) IF: COMPLEX CHEM
     ##  3-a) option 1: GET QUENCH LEVELS FOR DISEQ and UPDATE CHEM
     if do_quench_appox:
-        quench_levels=update_quench_levels(bundle, Atmosphere, kz, grav)
+        quench_levels=update_quench_levels(bundle, Atmosphere, kz, grav,verbose=verbose)
         bundle.premix_atmosphere(opa=opacityclass,quench_levels=quench_levels,
             cld_species=cld_species)
     ##  3-b) option 2: GET PHOTOCHEM
@@ -3076,6 +3077,15 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         else: 
             OpacityWEd_clear=None; OpacityNoEd_clear=None
     
+    #import dill 
+    #with open('from_prof_tstart_new.pk','wb') as file: 
+    #    dill.dump([bundle, nofczns,nstr,convergence_criteria, rfaci, rfacv, tidal,
+    #            Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase, Disco,Opagrid, AdiabatBundle,
+    #            FOPI,
+    #            save_profile, all_profiles, 
+    #            verbose, moist , egp_stepmax ],file)
+    #raise Exception('about to enter tstart debug')
+    
     ## begin bigger loop which gets opacities
     for iii in range(itmx):
 
@@ -3097,20 +3107,19 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         
         ### 1) ALWAYS UPDATE PT, CHEM, OPACITIES
         bundle.add_pt( temp, pressure)
-        #here bundle already has chemistry added so lets keep it as it was before 
-        #bundle.premix_atmosphere(opa = opacityclass,quench_levels=None,
-        #                        cld_species=cld_species)
+        #simple chem no quenching 
+        bundle.premix_atmosphere(opa = opacityclass,quench_levels=None,
+                                cld_species=cld_species) 
         
         ### 2) IF: UPDATE KZZ 
         if do_kzz_calc:
-            
+            #NEB: commenting out because we have fluxes from the above output. lets rely on those for now. 
             #get opacities for KZZ calculation
             #OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Atmosphere =  calculate_atm(bundle, opacityclass)
             #if do_holes == True:
             #    OpacityWEd_clear, OpacityNoEd_clear, _, _, _ =  calculate_atm(bundle, opacityclass, fthin_cld, do_holes=True)    
             #else: 
             #    OpacityWEd_clear=None; OpacityNoEd_clear=None
-            
             kz = update_kzz(grav, tidal, AdiabatBundle, nstr, Atmosphere, 
                 #these are only needed if you dont have fluxes and need to compute them
                 #OpacityWEd=OpacityWEd, OpacityNoEd=OpacityNoEd,ScatteringPhase=ScatteringPhase,Disco=Disco,Opagrid=Opagrid, FOPI=FOPI,
@@ -3124,7 +3133,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
 
         ### 3) IF: COMPLEX CHEM
         ##  3-a) option 1: GET QUENCH LEVELS FOR DISEQ and UPDATE CHEM
-        if do_quench_appox:
+        if do_quench_appox:   
             quench_levels=update_quench_levels(bundle, Atmosphere, kz, grav)
             bundle.premix_atmosphere(opa=opacityclass,quench_levels=quench_levels,
                 cld_species=cld_species)
