@@ -61,7 +61,7 @@ setup(
   packages=['picaso'],
   install_requires=[
           'bokeh>=2.3.0,<3.5.0',
-          'numpy<1.27',
+          'numpy<2.2',
           'numba',
           'pandas',
           'joblib',
