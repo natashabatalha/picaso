@@ -3725,31 +3725,47 @@ class inputs():
         verbose : bool 
             Turn off warnings 
         """
+
+        if ((('temperature' not in self.inputs['atmosphere']['profile'].keys()) 
+            or ('kz' not in self.inputs['atmosphere']['profile'].keys()))
+            and ('climate' in self.inputs['calculation'])):
+            #if there is no temprature and a user has specified clouds, then assume this is just a setup inputs function 
+            #and the user does not want an actual run
+            run=False
+            self.inputs['climate']['cloudy'] = True
+            self.inputs['climate']['virga_kwargs'] = dict(condensates=condensates, directory=directory,
+                                                        fsed=fsed, b=b, eps=eps, param=param, 
+                                                        mh=mh, mmw=mmw, kz_min=kz_min, sig=sig,
+                                                        Teff=Teff, alpha_pressure=alpha_pressure, supsat=supsat,
+                                                        gas_mmr=gas_mmr, do_virtual=do_virtual, verbose=verbose)
+        else: 
+            run =True 
         
-        cloud_p = vj.Atmosphere(condensates,fsed=fsed,mh=mh,
-                 mmw = mmw, sig =sig, b=b, eps=eps, param=param, supsat=supsat,
-                 gas_mmr=gas_mmr, verbose=verbose) 
-        if 'kz' not in self.inputs['atmosphere']['profile'].keys():
-            raise Exception ("Must supply kz to atmosphere/chemistry DataFrame, \
-                if running `virga` through `picaso`. This should go in the \
-                same place that you specified you pressure-temperature profile. \
-                Alternatively, you can manually add it by doing \
-                `case.inputs['atmosphere']['profile']['kz'] = KZ`")
-        df = self.inputs['atmosphere']['profile'].loc[:,['pressure','temperature','kz']]
-        
-        cloud_p.gravity(gravity=self.inputs['planet']['gravity'],
-                 gravity_unit=u.Unit(self.inputs['planet']['gravity_unit']))#
-        # print('virga temp:', df['temperatures'].values)
-        cloud_p.ptk(df =df, kz_min = kz_min, latent_heat = True, Teff = Teff, alpha_pressure = alpha_pressure)
-        out = vj.compute(cloud_p, as_dict=True,
-                          directory=directory, do_virtual=do_virtual)
-        opd, w0, g0 = out['opd_per_layer'],out['single_scattering'],out['asymmetry']
-        pres = out['pressure']
-        wno = 1e4/out['wave']
-        df = vj.picaso_format(opd, w0, g0, pressure = pres, wavenumber=wno)
-        #only pass through clouds 1d if clouds are one dimension 
-        self.clouds(df=df)
-        return out
+        if run:         
+            cloud_p = vj.Atmosphere(condensates,fsed=fsed,mh=mh,
+                    mmw = mmw, sig =sig, b=b, eps=eps, param=param, supsat=supsat,
+                    gas_mmr=gas_mmr, verbose=verbose) 
+            if 'kz' not in self.inputs['atmosphere']['profile'].keys():
+                raise Exception ("Must supply kz to atmosphere/chemistry DataFrame, \
+                    if running `virga` through `picaso`. This should go in the \
+                    same place that you specified you pressure-temperature profile. \
+                    Alternatively, you can manually add it by doing \
+                    `case.inputs['atmosphere']['profile']['kz'] = KZ`")
+            df = self.inputs['atmosphere']['profile'].loc[:,['pressure','temperature','kz']]
+            
+            cloud_p.gravity(gravity=self.inputs['planet']['gravity'],
+                    gravity_unit=u.Unit(self.inputs['planet']['gravity_unit']))#
+            # print('virga temp:', df['temperatures'].values)
+            cloud_p.ptk(df =df, kz_min = kz_min, latent_heat = True, Teff = Teff, alpha_pressure = alpha_pressure)
+            out = vj.compute(cloud_p, as_dict=True,
+                            directory=directory, do_virtual=do_virtual)
+            opd, w0, g0 = out['opd_per_layer'],out['single_scattering'],out['asymmetry']
+            pres = out['pressure']
+            wno = 1e4/out['wave']
+            df = vj.picaso_format(opd, w0, g0, pressure = pres, wavenumber=wno)
+            #only pass through clouds 1d if clouds are one dimension 
+            self.clouds(df=df)
+            return out
     
     def virga_3d(self, condensates, directory,
         fsed=1, mh=1, mmw=2.2,kz_min=1e5,sig=2,
@@ -4369,11 +4385,11 @@ class inputs():
                 self.inputs['climate']['do_holes'] = False
 
         self.inputs['climate']['moistgrad'] = moistgrad
-        self.inputs['climate']['deq_rainout'] = deq_rainout
-        self.inputs['climate']['quench_ph3'] = quench_ph3
-        self.inputs['climate']['kinetic_CO2'] = kinetic_CO2
-        self.inputs['climate']['no_ph3'] = no_ph3
-        self.inputs['climate']['cold_trap'] = cold_trap
+        #self.inputs['climate']['deq_rainout'] = deq_rainout
+        #self.inputs['climate']['quench_ph3'] = quench_ph3
+        #self.inputs['climate']['kinetic_CO2'] = kinetic_CO2
+        #self.inputs['climate']['no_ph3'] = no_ph3
+        #self.inputs['climate']['cold_trap'] = cold_trap
 
         #self.inputs['climate']['mh'] = mh
         #self.inputs['climate']['CtoO'] = CtoO
@@ -4384,6 +4400,7 @@ class inputs():
         self.inputs['climate']['df_sonora_photochem'] = df_sonora_photochem
         
         self.add_pt(temp_guess, pressure)
+
 
         if self.inputs['climate']['photochem']:
             # Import and initialize the photochemical code.
@@ -4497,13 +4514,13 @@ class inputs():
 
 
         grav = 0.01*self.inputs['planet']['gravity'] # cgs to si
-        logmh = self.inputs['atmosphere'].get('mh',None)
-        logmh = float(logmh) if logmh is not None else 0
-        mh = 10**logmh
+        #logmh = self.inputs['atmosphere'].get('mh',None)
+        #logmh = float(logmh) if logmh is not None else 0
+        #mh = 10**logmh
         sigma_sb = 0.56687e-4 # stefan-boltzmann constant
         
-        col_den = 1e6*(pressure[1:] -pressure[:-1] ) / (grav/0.01) # cgs g/cm^2
-        wave_in, nlevel, pm, hratio = 0.9, len(pressure), 0.001, 0.1
+        #col_den = 1e6*(pressure[1:] -pressure[:-1] ) / (grav/0.01) # cgs g/cm^2
+        #wave_in, nlevel, pm, hratio = 0.9, len(pressure), 0.001, 0.1
         #tidal = tidal_flux(Teff, wave_in,nlevel, pressure, pm, hratio, col_den)
         tidal = np.zeros_like(pressure) - sigma_sb *(Teff**4)
         
@@ -4512,26 +4529,27 @@ class inputs():
         cloudy = self.inputs['climate']['cloudy']
         do_holes = self.inputs['climate']['do_holes']
         #virga inputs 
-        cld_species = self.inputs['climate']['cld_species']
-        fsed = self.inputs['climate']['fsed']
-        mieff_dir = self.inputs['climate']['mieff_dir']
+        virga_kwargs = self.inputs['climate'].get('virga_kwargs',{})
+
         fhole = self.inputs['climate']['fhole']
         fthin_cld = self.inputs['climate']['fthin_cld']
-        beta = self.inputs['climate']['beta']
-        param_flag = self.inputs['climate']['virga_param']
         #scattering properties 
-        opd_cld_climate = np.zeros(shape=(nlevel-1,nwno,4))
-        g0_cld_climate = np.zeros(shape=(nlevel-1,nwno,4))
-        w0_cld_climate = np.zeros(shape=(nlevel-1,nwno,4))
+        opd_cld_climate = np.zeros(shape=(self.nlevel-1,nwno,4))
+        g0_cld_climate = np.zeros(shape=(self.nlevel-1,nwno,4))
+        w0_cld_climate = np.zeros(shape=(self.nlevel-1,nwno,4))
         #BUNDLING
-        CloudParametersT = namedtuple('CloudParameters',['cloudy', 'condensates','mh','fsed','directory', 'fhole','fthin_cld', 'b', 'param','OPD','G0','W0'])
-        CloudParameters=CloudParametersT(cloudy,cld_species,mh,fsed,mieff_dir, fhole, fthin_cld, beta,param_flag, opd_cld_climate,g0_cld_climate,w0_cld_climate)
+        CloudParametersT = namedtuple('CloudParameters',['cloudy', 'OPD','G0','W0',  'fhole','fthin_cld']+list(virga_kwargs.keys()))
+        #this adds the cloud params that are always needed plus the virga kwargs, if they are used 
+        CloudParameters=CloudParametersT(*([cloudy, opd_cld_climate,g0_cld_climate,w0_cld_climate,fhole, fthin_cld,
+                                         ]+list(virga_kwargs.values())))
 
 
         # check mieff grid for virga if doing cloudy 
-        if cloudy == 1:
+        if cloudy:
+            mieff_dir = virga_kwargs.get('directory',None)
             if mieff_dir is None:
-                raise Exception('Need to specify mieff_dir for cloudy runs')
+                raise Exception('Need to specify directory for cloudy runs via Virga function')
+            
             # check if the mieff file is on 661 grid
             miefftest = os.path.join(mieff_dir, [f for f in os.listdir(mieff_dir) if f.endswith('.mieff')][0])
             with open(miefftest, 'r') as file:
@@ -4544,8 +4562,8 @@ class inputs():
                 raise Exception('Currently cannot do chemical equilibrium first for disequilibrium runs with clouds')
 
         if not diseq_chem:#chemeq_first: 
-            pressure, temp, dtdp, nstr_new, flux_plus_final,  flux_net_final, flux_net_ir_final, \
-                df, all_profiles, cld_out, final_conv_flag, all_opd,opd_now,w0_now,g0_now =run_chemeq_climate_workflow(self,
+            final_conv_flag, pressure, temp, dtdp, nstr_new, flux_net_ir_final, flux_net_v_final, flux_plus_final,   \
+                chem_out,cld_out,  all_profiles,  all_opd,all_kzz=run_chemeq_climate_workflow(self,
                     nofczns,nstr, #tracks convective zones 
                     TEMP1,pressure, #Atmosphere
                     AdiabatBundle, #t_table, p_table, grad, cp, 
@@ -4558,10 +4576,9 @@ class inputs():
 
 
         if diseq_chem: 
-            all_kzz= []
             save_kzz=int(save_all_kzz)
-            pressure, temp, dtdp, nstr_new, flux_plus_final,  flux_net_final, flux_net_ir_final, \
-                df, all_profiles, cld_out, final_conv_flag, all_opd,opd_now,w0_now,g0_now = run_diseq_climate_workflow(self, nofczns, nstr, TEMP1, pressure,
+            final_conv_flag, pressure, temp, dtdp, nstr_new, flux_net_ir_final, flux_net_v_final, flux_plus_final,   \
+                chem_out,cld_out,  all_profiles,  all_opd, all_kzz = run_diseq_climate_workflow(self, nofczns, nstr, TEMP1, pressure,
                         AdiabatBundle,opacityclass,
                         grav,
                         rfaci,rfacv,tidal,
@@ -4870,57 +4887,51 @@ class inputs():
 
             #return pressure , temp, dtdp, nstr_new, flux_plus_final, quench_levels, df, all_profiles, all_kzz, opd_now,w0_now,g0_now
         """
+        final_conv_flag, pressure, temp, dtdp, nstr_new, flux_net_ir_final, flux_net_v_final, flux_plus_final,   \
+                chem_out,cld_out,  all_profiles,  all_opd, all_kzz
         #all output to user
         all_out['pressure'] = pressure
         all_out['temperature'] = temp
-        all_out['ptchem_df'] = df
+        all_out['ptchem_df'] = chem_out
         all_out['dtdp'] = dtdp
         all_out['cvz_locs'] = nstr_new
-        all_out['flux']=flux_plus_final
-        print('fix flux output1')
-        #all_out['fnet/fnetir']=flux_net_final[0,0,:]/flux_net_ir_final
+        all_out['flux_ir_attop']=flux_plus_final
+        flux_net_final = rfacv * flux_net_v_final + rfaci* flux_net_ir_final + tidal
+        all_out['fnet/fnetir']=flux_net_final/flux_net_ir_final
         all_out['converged']=final_conv_flag
-        print('fix flux output2')
-        #all_out['level_flux_balance']=dict(flux_net_ir=flux_net_ir_final, 
-        #                                    flux_plus_ir=flux_plus_final , 
-        #                                    flux_net=flux_net_final,
-        #                                    tidal=tidal,
-        #                                    rfacv=rfacv,rfaci=rfaci)
+        all_out['flux_balance']=dict(flux_net_ir=flux_net_ir_final, 
+                                    flux_net_v = flux_net_v_final,
+                                    tidal=tidal,
+                                    rfacv=rfacv,rfaci=rfaci,
+                                    flux_net = flux_net_final)
 
 
         #put cld output in all_out
-        if cloudy == 1:
-            df_cld = vj.picaso_format(opd_now, w0_now, g0_now, pressure = cld_out['pressure'], wavenumber=1e4/cld_out['wave'])
-            all_out['cld_output_picaso'] = df_cld
+        if cloudy:
+            df_cld = vj.picaso_format(cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry'], 
+                                      pressure = cld_out['pressure'], wavenumber=1e4/cld_out['wave'])
+            all_out['cld_df'] = df_cld
             all_out['virga_output'] = cld_out
-            all_out['cld_output_final'] = df_cld_final
+            #all_out['cld_output_final'] = df_cld_final
 
         if save_all_profiles: 
             all_out['all_profiles'] = all_profiles 
             all_out['all_opd'] = all_opd
+            all_out['all_kzz'] = all_kzz
+
         if with_spec:
-            # if diseq_chem: #still need to fix this for deq runs (196 grid but 661 grid opacity)
-            #     opacityclass = opannection(ck=True, ck_db=opacityclass.ck_filename,filename_db=filename_db, deq=True, on_fly=True, gases_fly = gases_fly)
-            #     bundle = inputs(calculation='brown')
-            #     bundle.phase_angle(0)
-            #     bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
-            #     bundle.premix_atmosphere_diseq(opacityclass,teff = Teff,df=df,quench_levels=quench_levels,t_mix=t_mix, vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3, cold_trap = cold_trap, cld_species=cld_species)
-            # else:
-            #opacityclass = opannection(method='preweighted', ck_db=opacityclass.ck_filename)
-            #bundle = inputs(calculation='brown')
-            #bundle.phase_angle(0)
-            #bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
-            #bundle.premix_atmosphere(opa=opacityclass,df,cold_trap = cold_trap, cld_species=cld_species)
-            self.atmosphere(df=df)
+            self.atmosphere(df=chem_out)
             if cloudy == 1:
                 self.clouds(df=df_cld)
-            df_spec = self.spectrum(opacityclass,full_output=True)    
+            df_spec = self.spectrum(opacityclass,full_output=True,calculation='thermal')    
             all_out['spectrum_output'] = df_spec 
 
-        if as_dict: 
-            return all_out
-        else: 
-            return pressure , temp, dtdp, nstr_new, flux_plus_final, df, all_profiles , opd_now,w0_now,g0_now
+        #suggest retiring this and always returning dict 
+        return all_out
+        #if as_dict: 
+        #    return all_out
+        #else: 
+        #    return pressure , temp, dtdp, nstr_new, flux_plus_final, df, all_profiles
 
 def get_targets():
     """Function to grab available targets using exoplanet archive data. 
