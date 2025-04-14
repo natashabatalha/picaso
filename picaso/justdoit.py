@@ -1969,13 +1969,11 @@ class inputs():
         species_to_adjust = [i for i in cld_species if i in self.inputs['atmosphere']['profile'].keys()]
 
         for mol in species_to_adjust:
-            # invert abundance to find first layer of condensation by looking for deviation from constant value
-            # inverted = self.inputs['atmosphere']['profile'][mol][::-1]
-            # cutoff = int(0.1 * self.nlevel)  # Dynamically ignore bottom 10% of layers
-            # cond_layer = self.nlevel - (np.where(inverted[cutoff:] != inverted[cutoff])[0][0] + cutoff)
-
+            #can generalize later for other mh and mmw but for now, good enough to gauge where to start coldtrapping
+            cond_p, cond_t = vj.condensation_t(mol, 1, 2.2, pressure = self.inputs['atmosphere']['profile']['pressure'])
+            cond_layer = np.where(cond_t > self.inputs['atmosphere']['profile']['temperature'])[0][-1]
             # need to ignore the bottom 10% of layers to avoid the changes in deep atmosphere to properly identify condensation layer
-            cutoff = int(0.1 * self.nlevel)  # Dynamically ignore bottom 10% of layers
+            #JM cutoff = int(0.1 * self.nlevel)  # Dynamically ignore bottom 10% of layers
             # relevant_layers = inverted[:self.nlevel - cutoff]
             # grad = np.abs(np.gradient(relevant_layers))  # Compute abundance gradient
 
@@ -1985,11 +1983,12 @@ class inputs():
 
             # Find the first layer where the abundance starts to fall off
             # cond_idx = np.where(grad > threshold)[0]
-            cond_layer = self.nlevel - cutoff #- cond_idx[0]
+            #JMcond_layer = self.nlevel - cutoff #- cond_idx[0]
 
             for i in range(cond_layer-1, 0, -1): 
                 if self.inputs['atmosphere']['profile'][mol][i] < self.inputs['atmosphere']['profile'][mol][i-1]:
                     self.inputs['atmosphere']['profile'][mol][i-1] = self.inputs['atmosphere']['profile'][mol][i]
+                
 
     def premix_atmosphere(self, opa=None, quench_levels=None,
         cld_species = ['H2O', 'CH4', 'NH3']):
@@ -2009,7 +2008,6 @@ class inputs():
 
         #now chemistry options can be enforced 
         self.chemistry_handler(chemistry_table=chemistry_table)
-    
         # cold trap the condensibles 
         if self.inputs['approx']['chem_params']['cold_trap']: 
             self.cold_trap(cld_species=cld_species)
