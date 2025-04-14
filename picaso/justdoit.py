@@ -1970,8 +1970,12 @@ class inputs():
 
         for mol in species_to_adjust:
             #can generalize later for other mh and mmw but for now, good enough to gauge where to start coldtrapping
-            cond_p, cond_t = vj.condensation_t(mol, 1, 2.2, pressure = self.inputs['atmosphere']['profile']['pressure'])
-            cond_layer = np.where(cond_t > self.inputs['atmosphere']['profile']['temperature'])[0][-1]
+            cond_p, cond_t = vj.condensation_t(mol, 1, 2.2, pressure = self.inputs['atmosphere']['profile']['pressure'])            
+            try:
+                cond_layer = np.where(cond_t > self.inputs['atmosphere']['profile']['temperature'])[0][-1]
+            except IndexError:
+                    continue
+            
             # need to ignore the bottom 10% of layers to avoid the changes in deep atmosphere to properly identify condensation layer
             #JM cutoff = int(0.1 * self.nlevel)  # Dynamically ignore bottom 10% of layers
             # relevant_layers = inverted[:self.nlevel - cutoff]
