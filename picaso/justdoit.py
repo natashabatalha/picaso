@@ -4234,10 +4234,13 @@ class inputs():
 
     def inputs_climate(self, temp_guess= None, pressure= None, rfaci = 1,nofczns = 1 ,
         nstr = None,  rfacv = None,
-        cloudy = False, species = None, fsed = None, mieff_dir = None,
+        fhole = None, do_holes = False, fthin_cld = None, 
         photochem=False, photochem_init_args=None, sonora_abunds_photochem = False, df_sonora_photochem = None,
-        photochem_TOA_pressure = 1e-7*1e6, fhole = None, do_holes = False, fthin_cld = None, 
-        beta = 1, virga_param = 'const', moistgrad = False, 
+        photochem_TOA_pressure = 1e-7*1e6, 
+        moistgrad = False, 
+        #deprecated and moved to virga
+        #cloudy = False, species = None, fsed = None, mieff_dir = None,
+        # beta = 1, virga_param = 'const',
         #DEPRECATED and moved to atmosphere function
         #deq_rainout= False, quench_ph3 = True, no_ph3 = False, 
         #kinetic_CO2 = True, cold_trap = False,
@@ -4325,11 +4328,11 @@ class inputs():
             Force H2O and NH3 abundances to be cold trapped after condensation. Default = False
         """
         
-        if cloudy: 
-            print("Cloudy functionality still in beta form and not ready for public use.")
-            # raise Exception('Cloudy functionality still in beta fosrm and not ready for public use.')
+        #if cloudy: 
+        #    print("Cloudy functionality still in beta form and not ready for public use.")
+        #    # raise Exception('Cloudy functionality still in beta fosrm and not ready for public use.')
 
-        elif photochem == False: 
+        if photochem == False: 
             # dummy values only used for cloud model
             mh = 0 
             CtoO = 0 
@@ -4349,40 +4352,40 @@ class inputs():
         self.inputs['climate']['nofczns'] = nofczns
         self.inputs['climate']['rfacv'] = rfacv
         self.inputs['climate']['rfaci'] = rfaci
-        if cloudy:
-            self.inputs['climate']['cloudy'] = 1
-            self.inputs['climate']['cld_species'] = species
-            self.inputs['climate']['fsed'] = fsed
-            self.inputs['climate']['mieff_dir'] = mieff_dir
-            self.inputs['climate']['virga_param'] = virga_param
-            if virga_param != 'exp': #just another catch in case user tries to change beta with const. fsed
-                self.inputs['climate']['beta'] = 1
-            else:
-                self.inputs['climate']['beta'] = beta 
-            if do_holes:
-                self.inputs['climate']['do_holes'] = True
-                self.inputs['climate']['fhole'] = fhole
-                if fthin_cld == None:
-                    self.inputs['climate']['fthin_cld'] = 0
-                else:
-                    self.inputs['climate']['fthin_cld'] = fthin_cld
-            else:
-                self.inputs['climate']['do_holes'] = False
-                self.inputs['climate']['fhole'] = 0
+        #if cloudy:
+        #    self.inputs['climate']['cloudy'] = 1
+        #    self.inputs['climate']['cld_species'] = species
+        #    self.inputs['climate']['fsed'] = fsed
+        #    self.inputs['climate']['mieff_dir'] = mieff_dir
+        #    self.inputs['climate']['virga_param'] = virga_param
+        #    if virga_param != 'exp': #just another catch in case user tries to change beta with const. fsed
+        #        self.inputs['climate']['beta'] = 1
+        #    else:
+        #        self.inputs['climate']['beta'] = beta 
+        if do_holes:
+            self.inputs['climate']['do_holes'] = True
+            self.inputs['climate']['fhole'] = fhole
+            if fthin_cld == None:
                 self.inputs['climate']['fthin_cld'] = 0
-        else :
-            self.inputs['climate']['cloudy'] = 0
-            self.inputs['climate']['cld_species'] = None
-            self.inputs['climate']['fsed'] = 0
-            self.inputs['climate']['mieff_dir'] = mieff_dir
+            else:
+                self.inputs['climate']['fthin_cld'] = fthin_cld
+        else:
             self.inputs['climate']['do_holes'] = False
             self.inputs['climate']['fhole'] = 0
             self.inputs['climate']['fthin_cld'] = 0
-            self.inputs['climate']['beta'] = 1
-            self.inputs['climate']['virga_param'] = 'const'
-            if do_holes:
-                print('Patchy cloud option only considered when clouds are enabled. Turning off patchy clouds')
-                self.inputs['climate']['do_holes'] = False
+        #else :
+        #    self.inputs['climate']['cloudy'] = 0
+        #    self.inputs['climate']['cld_species'] = None
+        #    self.inputs['climate']['fsed'] = 0
+        #    self.inputs['climate']['mieff_dir'] = mieff_dir
+        #    self.inputs['climate']['do_holes'] = False
+        #    self.inputs['climate']['fhole'] = 0
+        #    self.inputs['climate']['fthin_cld'] = 0
+        #    self.inputs['climate']['beta'] = 1
+        #    self.inputs['climate']['virga_param'] = 'const'
+        #    if do_holes:
+        #        print('Patchy cloud option only considered when clouds are enabled. Turning off patchy clouds')
+        #        self.inputs['climate']['do_holes'] = False
 
         self.inputs['climate']['moistgrad'] = moistgrad
         #self.inputs['climate']['deq_rainout'] = deq_rainout
@@ -4528,6 +4531,9 @@ class inputs():
         #bools
         cloudy = self.inputs['climate']['cloudy']
         do_holes = self.inputs['climate']['do_holes']
+        if do_holes: 
+            if not cloudy: 
+                raise Exception("Uh oh! You have turned on do_holes but have not yet specified a cloud setup by running virga() or clouds() subclass. See tutorials.")
         #virga inputs 
         virga_kwargs = self.inputs['climate'].get('virga_kwargs',{})
 

@@ -50,10 +50,11 @@ def update_kzz(grav, tidal, AdiabatBundle, nstr, Atmosphere,
         if do_holes == True:
             flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
                         Disco,Opagrid, FOPI, reflected=False, thermal=True, 
-                        fhole=fhole, hole_OpacityWEd=OpacityWEd_clear,hole_OpacityNoEd=OpacityNoEd_clear)
+                        do_holes=True, fhole=fhole, hole_OpacityWEd=OpacityWEd_clear,hole_OpacityNoEd=OpacityNoEd_clear)
         else:                
             flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
-                        Disco,Opagrid, FOPI, reflected=False, thermal=True)
+                        Disco,Opagrid, FOPI, reflected=False, thermal=True,
+                        do_holes=False)
 
         flux_net_ir_layer = flux_net_ir_layer_full[:]
         flux_plus_ir_attop = flux_plus_ir_full[0,:]   
@@ -1559,18 +1560,18 @@ def growdown(nlv,nstr, ngrow) :
 #            ubar0,ubar1,cos_theta, FOPI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
 #            wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts,reflected, thermal, fhole = None, DTAU_clear = None, TAU_clear = None, 
 #            W0_clear = None, COSB_clear = None, DTAU_OG_clear = None, TAU_OG_clear = None, W0_OG_clear = None, COSB_OG_clear = None, W0_no_raman_clear = None, do_holes=None):
-OpacityWEd_Tuple_default = namedtuple("OpacityWEd_Tuple", ["DTAU", "TAU", "W0", "COSB",'ftau_cld','ftau_ray','GCOS2', 'W0_no_raman','f_deltaM'])
-OpacityWEd_Tuple_default = OpacityWEd_Tuple_default(np.zeros((8,8,8)), 
+OpacityWEd_Tuple_defaultT = namedtuple("OpacityWEd_Tuple", ["DTAU", "TAU", "W0", "COSB",'ftau_cld','ftau_ray','GCOS2', 'W0_no_raman','f_deltaM'])
+OpacityWEd_Tuple_default = OpacityWEd_Tuple_defaultT(np.zeros((8,8,8)), 
                     np.zeros((8,8,8)), np.zeros((8,8,8)), np.zeros((8,8,8)),np.zeros((8,8,8)), np.zeros((8,8,8)),np.zeros((8,8,8)),  
                     np.zeros((8,8,8)) , np.zeros((8,8,8)))
 
-OpacityNoEd_Tuple_default = namedtuple("OpacityNoEd_Tuple", ["DTAU", "TAU", "W0", "COSB"])
-OpacityNoEd_Tuple_default = OpacityNoEd_Tuple_default(np.zeros((8,8,8)), 
+OpacityNoEd_Tuple_defaultT = namedtuple("OpacityNoEd_Tuple", ["DTAU", "TAU", "W0", "COSB"])
+OpacityNoEd_Tuple_default = OpacityNoEd_Tuple_defaultT(np.zeros((8,8,8)), 
                     np.zeros((8,8,8)), np.zeros((8,8,8)), np.zeros((8,8,8)))
 @jit(nopython=True, cache=False)
 def get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
                 Disco,Opagrid, FOPI, reflected, thermal, 
-                do_holes=False, fhole=0, hole_OpacityWEd=OpacityWEd_Tuple_default,hole_OpacityNoEd=OpacityNoEd_Tuple_default):
+                do_holes=False, fhole=0.0, hole_OpacityWEd=OpacityWEd_Tuple_default,hole_OpacityNoEd=OpacityNoEd_Tuple_default):
     """
     Program to run RT for climate calculations. Runs the thermal and reflected module.
     And combines the results with wavenumber widths.
@@ -1590,6 +1591,9 @@ def get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
     array
         Visible and IR -- net (layer and level), upward (level) and downward (level)  fluxes
     """  
+    if do_holes: 
+        if fhole==0: 
+            print('Warning. A cloud hole is requested but the hole is set to zero which is doing a fully cloudy run but unecessarily running opacities twice.')
     #import dill as pickle
     #with open('tuples.pkl', 'wb') as file:
     #    pickle.dump([Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
@@ -1611,8 +1615,9 @@ def get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
     #if we are doing holes, then unpack those taus as well 
     if do_holes: 
         DTAU_clear, TAU_clear, W0_clear, COSB_clear,W0_no_raman_clear=hole_OpacityWEd.DTAU, hole_OpacityWEd.TAU, hole_OpacityWEd.W0, hole_OpacityWEd.COSB,hole_OpacityWEd.W0_no_raman
+        ftau_cld_clear, ftau_ray_clear,GCOS2_clear = hole_OpacityWEd.ftau_cld, hole_OpacityWEd.ftau_ray,hole_OpacityWEd.GCOS2
         DTAU_OG_clear,TAU_OG_clear, W0_OG_clear, COSB_OG_clear=hole_OpacityNoEd.DTAU, hole_OpacityNoEd.TAU, hole_OpacityNoEd.W0, hole_OpacityNoEd.COSB
-    #print('enter climate')
+        
 
     # for visible
     flux_net_v = np.zeros(shape=(ng,nt,nlevel)) #net level visible fluxes
@@ -1681,7 +1686,7 @@ def get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
             if do_holes == True:
                 _, out_ref_fluxes_clear = get_reflected_1d(nlevel, wno,nwno,ng_clima,nt_clima,
                         DTAU_clear[:,:,ig], TAU_clear[:,:,ig], W0_clear[:,:,ig], COSB_clear[:,:,ig],
-                        GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
+                        GCOS2_clear[:,:,ig],ftau_cld_clear[:,:,ig],ftau_ray_clear[:,:,ig],
                         DTAU_OG_clear[:,:,ig], TAU_OG_clear[:,:,ig], W0_OG_clear[:,:,ig], COSB_OG_clear[:,:,ig],
                         surf_reflect, ubar0_clima,ubar1_clima,cos_theta, FOPI,
                         single_phase,multi_phase,
@@ -1978,142 +1983,6 @@ def calculate_atm(bundle, opacityclass, fthin_cld = None, do_holes = None, only_
 
     return OpacityWEd, OpacityNoEd,ScatteringPhase,Disco,Atmosphere
     #return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight
-
-
-def calculate_atm_deq_deprecate(bundle, opacityclass,on_fly=False,gases_fly=None, fthin_cld = None, do_holes=None):
-
-    inputs = bundle.inputs
-
-    wno = opacityclass.wno
-    nwno = opacityclass.nwno
-    ngauss = opacityclass.ngauss
-    gauss_wts = opacityclass.gauss_wts #for opacity
-
-    #check to see if we are running in test mode
-    test_mode = inputs['test_mode']
-
-    ############# DEFINE ALL APPROXIMATIONS USED IN CALCULATION #############
-    #see class `inputs` attribute `approx`
-
-    #set approx numbers options (to be used in numba compiled functions)
-    single_phase = inputs['approx']['rt_params']['toon']['single_phase']
-    multi_phase = inputs['approx']['rt_params']['toon']['multi_phase']
-    raman_approx =inputs['approx']['rt_params']['common']['raman']
-    method = inputs['approx']['rt_method']
-    stream = inputs['approx']['rt_params']['common']['stream']
-
-    #parameters needed for the two term hg phase function. 
-    #Defaults are set in config.json
-    f = inputs['approx']['rt_params']['common']['TTHG_params']['fraction']
-    frac_a = f[0]
-    frac_b = f[1]
-    frac_c = f[2]
-    constant_back = inputs['approx']['rt_params']['common']['TTHG_params']['constant_back']
-    constant_forward = inputs['approx']['rt_params']['common']['TTHG_params']['constant_forward']
-
-    #define delta eddington approximinations 
-    delta_eddington = inputs['approx']['rt_params']['common']['delta_eddington']
-
-    #pressure assumption
-    p_reference =  inputs['approx']['p_reference']
-
-    ############# DEFINE ALL GEOMETRY USED IN CALCULATION #############
-    #see class `inputs` attribute `phase_angle`
-    
-
-    #phase angle 
-    phase_angle = inputs['phase_angle']
-    #get geometry
-    geom = inputs['disco']
-
-    ng, nt = geom['num_gangle'], geom['num_tangle']#1,1 #
-    gangle,gweight,tangle,tweight = geom['gangle'], geom['gweight'],geom['tangle'], geom['tweight']
-    lat, lon = geom['latitude'], geom['longitude']
-    cos_theta = geom['cos_theta']
-    ubar0, ubar1 = geom['ubar0'], geom['ubar1']
-    """
-    ng, nt = 1,1 #geom['num_gangle'], geom['num_tangle']
-    gangle,gweight,tangle,tweight = geom['gangle'], geom['gweight'],geom['tangle'], geom['tweight']
-    lat, lon = geom['latitude'], geom['longitude']
-    cos_theta = geom['cos_theta']
-    #ubar0, ubar1 = geom['ubar0'], geom['ubar1']
-    #print(np.shape(ubar0),ubar0[0])
-    ubar0,ubar1 = np.zeros((5,1)),np.zeros((5,1))
-    ubar0 += 0.5
-    ubar1 += 0.5
-    #print(ubar0,ubar1)
-    """
-
-    #set star parameters
-    radius_star = inputs['star']['radius']
-    #FOPI = np.zeros(nwno) + 1.
-    #semi major axis
-    sa = inputs['star']['semi_major']
-
-    #begin atm setup
-    atm = ATMSETUP(inputs)
-
-    #Add inputs to class 
-    ##############################
-    atm.surf_reflect = 0#inputs['surface_reflect']
-    ##############################
-    atm.wavenumber = wno
-    atm.planet.gravity = inputs['planet']['gravity']
-    atm.planet.radius = inputs['planet']['radius']
-    atm.planet.mass = inputs['planet']['mass']
-
-    #if dimension == '1d':
-    atm.get_profile()
-    #elif dimension == '3d':
-    #    atm.get_profile_3d()
-
-    #now can get these 
-    atm.get_mmw()
-    atm.get_density()
-    atm.get_altitude(p_reference = p_reference)#will calculate altitude if r and m are given (opposed to just g)
-    atm.get_column_density()
-
-    #gets both continuum and needed rayleigh cross sections 
-    #relies on continuum molecules are added into the opacity 
-    #database. Rayleigh molecules are all in `rayleigh.py` 
-    
-    atm.get_needed_continuum(opacityclass.rayleigh_molecules,
-                             opacityclass.avail_continuum)
-
-    #get cloud properties, if there are any and put it on current grid 
-    atm.get_clouds(wno)
-
-    #Make sure that all molecules are in opacityclass. If not, remove them and add warning
-    no_opacities = [i for i in atm.molecules if i not in opacityclass.molecules]
-    atm.add_warnings('No computed opacities for: '+','.join(no_opacities))
-    atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
-
-    nlevel = atm.c.nlevel
-    nlayer = atm.c.nlayer
-    
-    opacityclass.get_opacities(atm)
-
-    #not needed anymore since we set this at the onset 
-    #if on_fly == False:
-    #    opacityclass.get_opacities_deq(bundle,atm)
-    #else:
-    #    opacityclass.get_opacities_deq_onfly(bundle,atm,gases_fly=gases_fly)
-
-    #check if patchy clouds are requested
-    if do_holes == True:
-        DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman, f_deltaM= compute_opacity(
-        atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
-        full_output=False, plot_opacity=False, fthin_cld = fthin_cld, do_holes = True)
-    else:    
-        DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman, f_deltaM= compute_opacity(
-            atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
-            full_output=False, plot_opacity=False)
-    
-
-    #mmw = np.mean(atm.layer['mmw'])
-    mmw = atm.level['mmw']
-    
-    return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight
 
 @jit(nopython=True, cache=True)
 def moist_grad( t, p, AdiabatBundle, Atmosphere, ind):
@@ -2929,8 +2798,9 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         kz = update_kzz(grav, tidal, AdiabatBundle, nstr, Atmosphere, 
                #these are only needed if you dont have fluxes and need to compute them
                OpacityWEd=OpacityWEd, OpacityNoEd=OpacityNoEd,ScatteringPhase=ScatteringPhase,Disco=Disco,Opagrid=Opagrid, FOPI=FOPI,
+               OpacityWEd_clear=OpacityWEd_clear,OpacityNoEd_clear=OpacityNoEd_clear,
                #kwargs for get_kzz function
-               moist=moist, do_holes=do_holes)
+               moist=moist, do_holes=do_holes, fhole=fhole)
         if save_kzz: all_kzz = np.append(all_kzz,kz)
     #Otherwise get the fixed profile in bundle
     elif constant_kzz: 
@@ -3009,6 +2879,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
             kz = update_kzz(grav, tidal, AdiabatBundle, nstr, Atmosphere, 
                 #these are only needed if you dont have fluxes and need to compute them
                 #OpacityWEd=OpacityWEd, OpacityNoEd=OpacityNoEd,ScatteringPhase=ScatteringPhase,Disco=Disco,Opagrid=Opagrid, FOPI=FOPI,
+                #OpacityWEd_clear=OpacityWEd_clear,OpacityNoEd_clear=OpacityNoEd_clear,
                 flux_net_ir_layer=flux_net_ir_layer,flux_plus_ir_attop=flux_plus_ir_attop,
                 #kwargs for get_kzz function
                 moist=moist, do_holes=do_holes)

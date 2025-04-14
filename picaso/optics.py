@@ -351,6 +351,7 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
 
     # Clearsky case
     if do_holes == True:
+        print('I am thinning the cloud with a fractional component:',fthin_cld)
         DTAU = TAUGAS + TAURAY + fthin_cld*TAUCLD #fraction of cloud opacity
         COSB = fthin_cld*np.copy(asym_factor_cld) #fraction of cloud asymmetry
         ftau_ray = TAURAY/(TAURAY + single_scattering_cld * TAUCLD *fthin_cld)
