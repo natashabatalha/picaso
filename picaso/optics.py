@@ -2181,20 +2181,39 @@ class RetrieveOpacities():
         Get queried continuum 
         """
         #if user only runs a single molecule or temperature
-        if len(tcia) ==1: 
-            query_temp = """AND temperature= '{}' """.format(str(tcia[0]))
-        else:
-            query_temp = 'AND temperature in '+str(tuple(tcia) )
+        #if len(tcia) ==1: 
+        #    query_temp = """AND temperature= '{}' """.format(str(tcia[0]))
+        #else:
+        #    query_temp = 'AND temperature in '+str(tuple(tcia) )
 
-        if len(cia_mol) ==1: 
-            query_mol = """WHERE molecule= '{}' """.format(str(cia_mol[0]))
-        else:
-            query_mol = 'WHERE molecule in '+str(tuple(cia_mol) )       
+        #if len(cia_mol) ==1: 
+        #    query_mol = """WHERE molecule= '{}' """.format(str(cia_mol[0]))
+        #else:
+        #    query_mol = 'WHERE molecule in '+str(tuple(cia_mol) )       
 
-        cur.execute("""SELECT molecule,temperature,opacity 
-                    FROM continuum 
-                    {} 
-                    {}""".format(query_mol, query_temp))
+        #cur.execute("""SELECT molecule,temperature,opacity 
+        #            FROM continuum 
+        #            {} 
+        #            {}""".format(query_mol, query_temp))
+        if len(tcia) == 1:
+            query_temp = "AND temperature = ?"
+        else:
+            query_temp = "AND temperature IN ({})".format(','.join(['?'] * len(tcia)))
+
+        if len(cia_mol) == 1:
+            query_mol = "WHERE molecule = ?"
+        else:
+            query_mol = "WHERE molecule IN ({})".format(','.join(['?'] * len(cia_mol)))
+
+
+        query_params = tuple(cia_mol) + tuple(tcia)
+
+        cur.execute("""
+            SELECT molecule, temperature, opacity 
+            FROM continuum 
+            {} 
+            {}
+        """.format(query_mol, query_temp), query_params)
 
         data = cur.fetchall()
         data = dict((x+'_'+str(y), dat) for x, y,dat in data)
@@ -2205,15 +2224,31 @@ class RetrieveOpacities():
         submits query
         """
         #query molecular opacities from sqlite3
+        #if len(molecules) ==1: 
+        #    query_mol = """WHERE molecule= '{}' """.format(str(molecules[0]))
+        #else:
+        #    query_mol = 'WHERE molecule in '+str(tuple(molecules) )
+
+        #cur.execute("""SELECT molecule,ptid,opacity 
+        #            FROM molecular 
+        #            {} 
+        #            AND ptid in {}""".format(query_mol, str(tuple(ind_pt))))
+        
         if len(molecules) ==1: 
-            query_mol = """WHERE molecule= '{}' """.format(str(molecules[0]))
-        else:
-            query_mol = 'WHERE molecule in '+str(tuple(molecules) )
+            query_mol = """WHERE molecule = ?"""
+        else: 
+            query_mol = "WHERE molecule IN ({})".format(','.join(['?'] * len(molecules)))
+
+        query_pt = "AND ptid IN ({})".format(','.join(['?'] * len(ind_pt)))
+
+        query_params = tuple(molecules) + tuple(ind_pt)
 
         cur.execute("""SELECT molecule,ptid,opacity 
                     FROM molecular 
                     {} 
-                    AND ptid in {}""".format(query_mol, str(tuple(ind_pt))))
+                    {}""".format(query_mol,query_pt), query_params)#str(tuple(ind_pt))))
+        
+        
         #fetch everything and stick into a dictionary where we can find the right
         #pt and molecules
         data= cur.fetchall()
