@@ -46,7 +46,8 @@
 			"g0":null,
 			"w0":null,
 			"opd":null
-		}
+		},
+		"do_holes":false
 	},
 	"approx":{
 		"get_layer_fluxes":0,
@@ -104,6 +105,5 @@
 		}
 
 	},
-	"test_mode":null,
-	"output_dir":null
+	"test_mode":null
 }

@@ -421,12 +421,92 @@ class ATMSETUP():
         z = np.zeros(np.shape(tlevel)) + self.planet.radius
         dz = np.zeros(np.shape(tlevel)) 
         gravity = np.zeros(np.shape(tlevel))  
+        #unique avoids duplicates for 3d grids where pressure is repeated for ngangle,ntangle
+        #would break for nonuniform pressure grids 
+        indx = np.unique(np.where(plevel>p_reference)[0]) 
+        #if there are any pressures less than the reference pressure
+        if len(indx)>0:
+            for i in indx-1:
+                
+                if constant_gravity:
+                    gravity[i] = self.planet.gravity
+                else:
+                    gravity[i] = self.c.G * self.planet.mass / ( z[i] )**2
+
+                scale_h = self.c.k_b * tlevel[i] / (mmw[i] * gravity[i])
+                dz[i] = scale_h * (np.log(plevel[i+1] / plevel[i])) #from eddysed
+                z[i+1] = z[i] - dz[i]
+
+        for i in np.unique(np.where(plevel<=p_reference)[0])[::-1][:-1]:#unique to avoid 3d bug
+            
+            if constant_gravity:
+                gravity[i] = self.planet.gravity
+            else:
+                gravity[i] = self.c.G * self.planet.mass / ( z[i] )**2  
+
+            scale_h = self.c.k_b * tlevel[i] / (mmw[i] * gravity[i])
+            dz[i] = scale_h*(np.log(plevel[i]/ plevel[i-1]))#plevel[i+1]/ plevel[i]))
+            z[i-1] = z[i] + dz[i]
+
+        dz[0]=dz[1]#NB
+        dz[-1]=dz[-2]#NB
+
+        self.level['z'] = z
+        self.level['dz'] = dz
+
+        #for get_column_density calculation below we want gravity at layers
+        self.layer['gravity'] = 0.5*(gravity[0:-1] + gravity[1:])
+        if constant_gravity:
+            gravity[-1] = self.planet.gravity
+            gravity[0] = self.planet.gravity
+        else:
+            gravity[-1] = self.c.G * self.planet.mass / ( z[-1] )**2
+            gravity[0] = self.c.G * self.planet.mass / ( z[0] )**2
+
+        self.level['scale_height'] = self.c.k_b * tlevel / (mmw * gravity)
+
+    def get_altitude_deprecate(self, p_reference=1,constant_gravity=False):
+        """
+        Calculates z and gravity  
+
+        Parameters
+        ----------
+        p_reference : float
+            Reference pressure for radius. (bars)
+        constant_gravity : bool 
+            creates zero altitude dependence in the height
+        """
+        #convert to dyn/cm2
+        p_reference = p_reference*self.c.pconv
+
+        if np.isnan(self.planet.radius):
+            constant_gravity = True
+        #set zero arays of things we want out 
+        nlevel = self.c.nlevel
+
+        mmw = self.level['mmw'] * self.c.amu #make sure mmw in grams
+        tlevel = self.level['temperature']
+        plevel = self.level['pressure']
+        
+        if p_reference >= np.max(plevel):
+            p_reference = np.max(plevel)
+        else: 
+            #choose a reference pressure that is on the 
+            #user specified pressure grid
+            #if you dont do this your model becomes 
+            #highly sensitive to # of layers used 
+            p_reference = plevel[plevel>=p_reference][0]
+
+        z = np.zeros(np.shape(tlevel)) + self.planet.radius
+        dz = np.zeros(np.shape(tlevel)) 
+        gravity = np.zeros(np.shape(tlevel))  
         scale_h_all = np.zeros(np.shape(tlevel))
         #unique avoids duplicates for 3d grids where pressure is repeated for ngangle,ntangle
         #would break for nonuniform pressure grids 
         indx = np.unique(np.where(plevel>p_reference)[0]) 
         #if there are any pressures less than the reference pressure
 
+        #first for pressures higher than the reference pressure (depth so the latter part of the array)
         if len(indx)>0:
             for i in indx-1:
                 if constant_gravity:
@@ -440,12 +520,8 @@ class ATMSETUP():
 
                 scale_h_all[i]=scale_h
 
-            if constant_gravity:
-                gravity[-1] = self.planet.gravity
-            else:
-                gravity[-1] = self.c.G * self.planet.mass / ( z[-1] )**2
-            scale_h_all[-1] = self.c.k_b * tlevel[-1] / (mmw[-1] * gravity[-1])
-        
+
+        #this would be everything  below the reference pressure, or at low pressures, or at high altitudes 
         for i in np.unique(np.where(plevel<=p_reference)[0])[::-1]:#[:-1]:#unique to avoid 3d bug
             if constant_gravity:
                 gravity[i] = self.planet.gravity
@@ -457,7 +533,17 @@ class ATMSETUP():
             z[i-1] = z[i] + dz[i]
             scale_h_all[i]=scale_h
 
+
+        """
+        scale_h_all[-1] = self.c.k_b * tlevel[-1] / (mmw[-1] * gravity[-1])
+        dz[-1] = scale_h_all[-1]*(np.log(plevel[-1]/ plevel[-2]))
         scale_h_all[0] = self.c.k_b * tlevel[0] / (mmw[0] * gravity[0])
+        dz[0] = scale_h_all[0]*(np.log(plevel[1]/ plevel[0]))
+        if constant_gravity:
+            gravity[-1] = self.planet.gravity
+        else:
+            gravity[-1] = self.c.G * self.planet.mass / ( z[-1] )**2
+        """
         self.level['z'] = z
         self.level['dz'] = dz
         self.level['scale_height'] = scale_h_all
@@ -724,8 +810,9 @@ def separate_molecule_name(molecule_name):
     """used for separating molecules
     For example, CO2 becomes "C" "O2"
     """
-    elements = re.findall('[A-Z][a-z]?\d*|\d+', molecule_name)
+    elements = re.findall(r'[A-Z][a-z]?\d*|\d+', molecule_name)
     return elements
+
 def separate_string_number(string):
     """used for separating numbers from molecules
     For example, CO2 becomes "C" "O2" in `separate_molecule_name` 

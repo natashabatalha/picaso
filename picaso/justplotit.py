@@ -1731,7 +1731,7 @@ def thermal_contribution(full_output, tau_max=1.0,R=100,  **kwargs):
     ax.set_ylim(np.max(full_output['layer']['pressure']), np.min(full_output['layer']['pressure']))
     ax.set_yscale('log')
     ax.set_ylabel('Pressure (bar)', fontsize=20)
-    ax.set_xlabel('Wavelength ($\mu$m)', fontdict={'fontsize':20})
+    ax.set_xlabel(r'Wavelength ($\mu$m)', fontdict={'fontsize':20})
     cm = plt.colorbar(smap)
     cm.ax.set_ylabel('Emission Contribution Function', fontdict={'fontsize':18} )
     for l in cm.ax.yaxis.get_ticklabels():
@@ -1873,7 +1873,7 @@ def transmission_contribution(full_output ,R=None,  **kwargs):
                 np.min(full_output['layer']['pressure']))
     ax.set_yscale('log')
     ax.set_ylabel('Pressure (bar)')
-    ax.set_xlabel('Wavelength ($\mu$m)')
+    ax.set_xlabel(r'Wavelength ($\mu$m)')
     plt.colorbar(smap, label='Transmission CF')
     
     return fig, ax, 1e4/wno, CF_bin
@@ -2052,7 +2052,7 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
         ax['B'].set_xlim(1e-6,1e-2)
         ax['B'].set_ylim(max(p_eq),min(p_eq))
         ax['B'].legend(fontsize=20)
-        ax['C'].set_xlabel('Wavelength [$\mu$m]',fontsize=30)
+        ax['C'].set_xlabel(r'Wavelength [$\mu$m]',fontsize=30)
         ax['C'].set_ylabel('Spectrum',fontsize=30)
         ax['C'].set_xlim(0,6)
         #ax['C'].set_ylim(1e7,1e14)

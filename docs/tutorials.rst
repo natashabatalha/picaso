@@ -31,13 +31,14 @@ Basics of Thermal Emission
 
 
 
-Cloud Modeling with `Virga`
+More Complexity with Clouds
 ---------------------------
 
 .. toctree::
    :maxdepth: 2
 
-   Moving Away From Box Models </notebooks/7_PairingPICASOToVIRGA.ipynb>
+   Virga (Ackerman & Marley Clouds) </notebooks/7_PairingPICASOToVIRGA.ipynb>
+   Patchy Clouds </notebooks/7_PatchyClouds.ipynb>
 
 Moving to 3 Dimensions
 ----------------------
