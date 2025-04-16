@@ -3827,7 +3827,11 @@ class inputs():
             Added so that users can add do_hole=True, with fhole and fthin_cld and it will make the virga cloud 
             patchy
         """
-        clouds_kwargs = dict(do_holes=do_holes,fhole=fhole,fthin_cld=fthin_cld)
+        #stages inputs for cloudy run and also get kwargs for clouds function which we run at the end of this 
+        clouds_kwargs=dict(do_holes=do_holes,fhole=fhole,fthin_cld=fthin_cld)
+        self.inputs['clouds']['do_holes']=do_holes
+        self.inputs['clouds']['fhole']=fhole
+        self.inputs['clouds']['fthin_cld']=fthin_cld
 
         if ((('temperature' not in self.inputs['atmosphere']['profile'].keys()) 
             or ('kz' not in self.inputs['atmosphere']['profile'].keys()))
@@ -3835,6 +3839,11 @@ class inputs():
             #if there is no temprature and a user has specified clouds, then assume this is just a setup inputs function 
             #and the user does not want an actual run
             run=False
+        else: 
+            run=True 
+        
+        #if this is a climate run lets make sure we have all the right inputs set 
+        if 'climate' in self.inputs['calculation']:
             self.inputs['climate']['cloudy'] = True
             virga_kwargs = dict(condensates=condensates, directory=directory,
                                                         fsed=fsed, b=b, eps=eps, param=param, 
@@ -3842,38 +3851,36 @@ class inputs():
                                                         Teff=Teff, alpha_pressure=alpha_pressure, supsat=supsat,
                                                         gas_mmr=gas_mmr, do_virtual=do_virtual, verbose=verbose,
                                                         do_holes=do_holes, fthin_cld=fthin_cld,fhole=fhole)
-            #stages inputs for cloudy run 
-            self.inputs['clouds']['do_holes']=do_holes
-            self.inputs['clouds']['fhole']=fhole
-            self.inputs['clouds']['fthin_cld']=fthin_cld
+
             #passes all the virga params 
             self.inputs['climate']['virga_kwargs'] = virga_kwargs
-            return 'Virga input set for climate code but not executed, yet'
-            
-        cloud_p = vj.Atmosphere(condensates,fsed=fsed,mh=mh,
-                mmw = mmw, sig =sig, b=b, eps=eps, param=param, supsat=supsat,
-                gas_mmr=gas_mmr, verbose=verbose) 
-        if 'kz' not in self.inputs['atmosphere']['profile'].keys():
-            raise Exception ("Must supply kz to atmosphere/chemistry DataFrame, \
-                if running `virga` through `picaso`. This should go in the \
-                same place that you specified you pressure-temperature profile. \
-                Alternatively, you can manually add it by doing \
-                `case.inputs['atmosphere']['profile']['kz'] = KZ`")
-        df = self.inputs['atmosphere']['profile'].loc[:,['pressure','temperature','kz']]
         
-        cloud_p.gravity(gravity=self.inputs['planet']['gravity'],
-                gravity_unit=u.Unit(self.inputs['planet']['gravity_unit']))#
-        # print('virga temp:', df['temperatures'].values)
-        cloud_p.ptk(df =df, kz_min = kz_min, latent_heat = True, Teff = Teff, alpha_pressure = alpha_pressure)
-        out = vj.compute(cloud_p, as_dict=True,
-                        directory=directory, do_virtual=do_virtual)
-        opd, w0, g0 = out['opd_per_layer'],out['single_scattering'],out['asymmetry']
-        pres = out['pressure']
-        wno = 1e4/out['wave']
-        df = vj.picaso_format(opd, w0, g0, pressure = pres, wavenumber=wno)
-        #only pass through clouds 1d if clouds are one dimension 
-        self.clouds(df=df,**clouds_kwargs)
-        return out
+        #if we are all good for a run, run virga and produce output
+        if run:     
+            cloud_p = vj.Atmosphere(condensates,fsed=fsed,mh=mh,
+                    mmw = mmw, sig =sig, b=b, eps=eps, param=param, supsat=supsat,
+                    gas_mmr=gas_mmr, verbose=verbose) 
+            if 'kz' not in self.inputs['atmosphere']['profile'].keys():
+                raise Exception ("Must supply kz to atmosphere/chemistry DataFrame, \
+                    if running `virga` through `picaso`. This should go in the \
+                    same place that you specified you pressure-temperature profile. \
+                    Alternatively, you can manually add it by doing \
+                    `case.inputs['atmosphere']['profile']['kz'] = KZ`")
+            df = self.inputs['atmosphere']['profile'].loc[:,['pressure','temperature','kz']]
+            
+            cloud_p.gravity(gravity=self.inputs['planet']['gravity'],
+                    gravity_unit=u.Unit(self.inputs['planet']['gravity_unit']))#
+            # print('virga temp:', df['temperatures'].values)
+            cloud_p.ptk(df =df, kz_min = kz_min, latent_heat = True, Teff = Teff, alpha_pressure = alpha_pressure)
+            out = vj.compute(cloud_p, as_dict=True,
+                            directory=directory, do_virtual=do_virtual)
+            opd, w0, g0 = out['opd_per_layer'],out['single_scattering'],out['asymmetry']
+            pres = out['pressure']
+            wno = 1e4/out['wave']
+            df = vj.picaso_format(opd, w0, g0, pressure = pres, wavenumber=wno)
+            #only pass through clouds 1d if clouds are one dimension 
+            self.clouds(df=df,**clouds_kwargs)
+            return out
     
     def virga_3d(self, condensates, directory,
         fsed=1, mh=1, mmw=2.2,kz_min=1e5,sig=2,
@@ -4663,17 +4670,17 @@ class inputs():
             mieff_dir = virga_kwargs.get('directory',None)
             if mieff_dir is None:
                 raise Exception('Need to specify directory for cloudy runs via Virga function')
-            
+            # get_clouds should reinterpolate so it is okay that this isnt on the same grid.. 
             # check if the mieff file is on 661 grid
-            miefftest = os.path.join(mieff_dir, [f for f in os.listdir(mieff_dir) if f.endswith('.mieff')][0])
-            with open(miefftest, 'r') as file:
-                gridsize = float(file.readline().split()[0])
+            #miefftest = os.path.join(mieff_dir, [f for f in os.listdir(mieff_dir) if f.endswith('.mieff')][0])
+            #with open(miefftest, 'r') as file:
+            #    gridsize = float(file.readline().split()[0])
             
-            if diseq_chem and not chemeq_first and gridsize != 661:
-                raise Exception('Mieff grid is not on 661 grid.')
+            #if diseq_chem and not chemeq_first and gridsize != 661:
+            #    raise Exception('Mieff grid is not on 661 grid.')
             #raise warning temporarily until I can think of the best way to handle this
-            if diseq_chem and chemeq_first and gridsize == 661:
-                raise Exception('Currently cannot do chemical equilibrium first for disequilibrium runs with clouds')
+            #if diseq_chem and chemeq_first and gridsize == 661:
+            #    raise Exception('Currently cannot do chemical equilibrium first for disequilibrium runs with clouds')
 
         if verbose: self.interpret_run()
 
