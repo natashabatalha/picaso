@@ -26,7 +26,7 @@ from scipy.stats import binned_statistic
 
 from .fluxes import blackbody, get_transit_1d
 from .opacity_factory import *
-from .climate import convec
+from .climate import convec, namedtuple, calculate_atm
 
 def mean_regrid(x, y, newx=None, R=None):
     """
@@ -2250,7 +2250,7 @@ def rt_heatmap(data,figure_kwargs={},cmap_kwargs={}):
     return p
 
     
-def pt_adiabat(clima_out, input_class, plot=True):
+def pt_adiabat(clima_out, input_class, opacityclass, plot=True):
     """
     Plot the PT profile with the adiabat 
 
@@ -2265,11 +2265,20 @@ def pt_adiabat(clima_out, input_class, plot=True):
     -------
     adiabat, dTdP, pressure 
     """
+    t_table = input_class.inputs['climate']['t_table']
+    p_table = input_class.inputs['climate']['p_table']
+    grad = input_class.inputs['climate']['grad']
+    cp = input_class.inputs['climate']['cp']
+    moist = input_class.inputs['climate']['moistgrad']
+    AdiabatBundle = namedtuple('AdiabatBundle', ['t_table', 'p_table', 'grad','cp'])
+    AdiabatBundle = AdiabatBundle(t_table,p_table,grad,cp)
+
+    Atmosphere = calculate_atm(input_class,opacityclass,only_atmosphere=True)
+
     layer_p = clima_out['spectrum_output']['full_output']['layer']['pressure']
     
     grad, cp = convec(clima_out['temperature'],clima_out['pressure'],
-                      input_class.inputs['climate']['t_table'], input_class.inputs['climate']['p_table'], 
-                      input_class.inputs['climate']['grad'], input_class.inputs['climate']['cp'])
+                      AdiabatBundle, Atmosphere,moist=moist)
                       
     plt.semilogy(clima_out['dtdp'], layer_p)
     plt.semilogy(grad,layer_p) 
