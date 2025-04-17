@@ -1458,32 +1458,41 @@ class RetrieveCKs():
     
         #if user only runs a single molecule or temperature
         if len(tcia_low) ==1: 
-            query_temp_low = """AND temperature= '{}' """.format(str(tcia_low[0]))
+            query_temp_low = "AND temperature = ?"
         else:
-            query_temp_low = 'AND temperature in '+str(tuple(tcia_low) )
+            query_temp_low = "AND temperature IN ({})".format(','.join(['?'] * len(tcia_low)))
+
         if len(tcia_high) ==1: 
-            query_temp_high= """AND temperature= '{}' """.format(str(tcia_high[0]))
+            query_temp_high=  "AND temperature = ?"
         else:
-            query_temp_high = 'AND temperature in '+str(tuple(tcia_high) )
+            query_temp_high = "AND temperature IN ({})".format(','.join(['?'] * len(tcia_high)))
 
         cia_mol = list(self.continuum_opa.keys())
         if len(cia_mol) ==1: 
-            query_mol = """WHERE molecule= '{}' """.format(str(cia_mol[0]))
+            query_mol = "WHERE molecule = ?"
         else:
-            query_mol = 'WHERE molecule in '+str(tuple(cia_mol) )       
+            query_mol = "WHERE molecule IN ({})".format(','.join(['?'] * len(cia_mol)))     
 
-        cur.execute("""SELECT molecule,temperature,opacity 
-                    FROM continuum 
-                    {} 
-                    {}""".format(query_mol, query_temp_low))
+
+        query_params_low = tuple(cia_mol) + tuple(tcia_low)
+        cur.execute("""
+            SELECT molecule, temperature, opacity 
+            FROM continuum 
+            {} 
+            {}
+        """.format(query_mol, query_temp_low), query_params_low)
     
         data_low = cur.fetchall()
         data_low = dict((x+'_'+str(y), dat) for x, y,dat in data_low)
-    
-        cur.execute("""SELECT molecule,temperature,opacity 
-                    FROM continuum 
-                    {} 
-                    {}""".format(query_mol, query_temp_high))
+
+        query_params_high = tuple(cia_mol) + tuple(tcia_high)
+
+        cur.execute("""
+            SELECT molecule, temperature, opacity 
+            FROM continuum 
+            {} 
+            {}
+        """.format(query_mol, query_temp_high), query_params_high)
 
         data_high = cur.fetchall()
         data_high = dict((x+'_'+str(y), dat) for x, y,dat in data_high)
