@@ -149,12 +149,12 @@ Notice here that I do **not** have a tilda (~) in front of ``./etc``. The full p
 	/Users/nbatalh1/.conda/envs/picaso/etc/conda/activate.d
 
 
-Pysynphot Stellar Data for Exoplanet Modeling
----------------------------------------------
+`stsynphot`` Stellar Data for Exoplanet Modeling
+------------------------------------------------
 
-In order to get stellar spectra you will have to download the stellar spectra here from PySynphot: 
+In order to get stellar spectra you will have to download the stellar spectra here from stsynphot: 
 
-1) PICASO uses the `Pysynphot package <https://pysynphot.readthedocs.io/en/latest/appendixa.html>`_ which has several download options for stellar spectra. The Defulat for ``PICASO`` is Castelli-Kurucz Atlas: `ck04models <https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/>`_. 
+1) PICASO uses the `stsynphot package <https://stsynphot.readthedocs.io/en/latest/>`_ which has several download options for stellar spectra. The Defulat for ``PICASO`` is Castelli-Kurucz Atlas: `ck04models <https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/>`_. 
 
 If you have `wget` you can download them by doing this or just downloading the link below. 
 
@@ -191,11 +191,11 @@ Now you should be able to check the path:
 	ls
 	grid
 
-Where the folder ``grid/`` contains whatever ``pysynphot`` data files you have downloaded (e.g. a folder called ``ck04models/``). 
+Where the folder ``grid/`` contains whatever ``stsynphot`` data files you have downloaded (e.g. a folder called ``ck04models/``). 
 
 .. note::
 
-	1. STScI serves these files in a few different places, with a few different file structures. **PySynphot only cares that the environment variable points to a path with a folder called `grid`. So do not worry if `grp/hst/cdbs` appears different.** 
+	1. STScI serves these files in a few different places, with a few different file structures. **stsynphot only cares that the environment variable points to a path with a folder called `grid`. So do not worry if `grp/hst/cdbs` appears different.** 
 
 
 Autodownloads

@@ -28,9 +28,11 @@ import pandas as pd
 import copy
 import json
 import warnings
-with warnings.catch_warnings():#
-    warnings.filterwarnings("ignore")
-    import pysynphot as psyn
+
+from synphot.models import Empirical1D
+from synphot import SourceSpectrum
+import stsynphot as sts
+
 import astropy.units as u
 import astropy.constants as c
 from astropy.utils.misc import JsonCustomEncoder
@@ -1673,11 +1675,11 @@ class inputs():
         self.inputs['star']['semi_major'] = 'nostar' 
         self.inputs['star']['semi_major_unit'] = 'nostar' 
 
-    def star(self, opannection,temp=None, metal=None, logg=None ,radius = None, radius_unit=None,
+    def star(self,opannection,temp=None, metal=None, logg=None ,radius = None, radius_unit=None,
         semi_major=None, semi_major_unit = None, #deq = False, 
         database='ck04models',filename=None, w_unit=None, f_unit=None):
         """
-        Get the stellar spectrum using pysynphot and interpolate onto a much finer grid than the 
+        Get the stellar spectrum using stsynphot and interpolate onto a much finer grid than the 
         planet grid. 
 
         Parameters
@@ -1708,11 +1710,9 @@ class inputs():
             (Optional) Upload your own stellar spectrum. File format = two column white space (wave, flux). 
             Must specify w_unit and f_unit 
         w_unit : str 
-            (Optional) Used for stellar file wave units. Needed for filename input.
-            Pick: 'um', 'nm', 'cm', 'hz', or 'Angs'
+            (Optional) Astropy Unit 
         f_unit : str 
-            (Optional) Used for stellar file flux units. Needed for filename input.
-            Pick: 'FLAM' or 'Jy' or 'erg/cm2/s/Hz'
+            (Optional) Astrpy Unit 
         """
         #most people will just upload their thing from a database
         if (not isinstance(radius, type(None))):
@@ -1736,54 +1736,15 @@ class inputs():
             star = np.genfromtxt(filename, dtype=(float, float), names='w, f')
             flux = star['f']
             wave = star['w']
-            #sort if not in ascending order 
-            sort = np.array([wave,flux]).T
-            sort= sort[sort[:,0].argsort()]
-            wave = sort[:,0]
-            flux = sort[:,1] 
-            if w_unit == 'um':
-                WAVEUNITS = 'um' 
-            elif w_unit == 'nm':
-                WAVEUNITS = 'nm'
-            elif w_unit == 'cm' :
-                WAVEUNITS = 'cm'
-            elif w_unit == 'Angs' :
-                WAVEUNITS = 'angstrom'
-            elif w_unit == 'Hz' :
-                WAVEUNITS = 'Hz'
-            else: 
-                raise Exception('Stellar units are not correct. Pick um, nm, cm, hz, or Angs')        
-
-            #http://www.gemini.edu/sciops/instruments/integration-time-calculators/itc-help/source-definition
-            if f_unit == 'Jy':
-                FLUXUNITS = 'jy' 
-            elif f_unit == 'FLAM' :
-                FLUXUNITS = 'FLAM'
-            elif f_unit == 'erg/cm2/s/Hz':
-                flux = flux*1e23
-                FLUXUNITS = 'jy' 
-            else: 
-                raise Exception('Stellar units are not correct. Pick FLAM or Jy or erg/cm2/s/Hz')
-
-            sp = psyn.ArraySpectrum(wave, flux, waveunits=WAVEUNITS, fluxunits=FLUXUNITS)        #Convert evrything to nanometer for converstion based on gemini.edu  
-            sp.convert("um")
-            sp.convert('flam') #ergs/cm2/s/ang
-            wno_star = 1e4/sp.wave[::-1] #convert to wave number and flip
-            flux_star = sp.flux[::-1]*1e8 #flip and convert to ergs/cm3/s here to get correct order         
-            
-
+            ST_SS = SourceSpectrum(Empirical1D, points=wave*u.Unit(w_unit), lookup_table=flux*u.Unit(f_unit))
         elif ((not isinstance(temp, type(None))) & (not isinstance(metal, type(None))) & (not isinstance(logg, type(None)))):
-            sp = psyn.Icat(database, temp, metal, logg)
-            sp.convert("um")
-            sp.convert('flam') 
-            wno_star = 1e4/sp.wave[::-1] # cm-1 #convert to wave number and flip
-            flux_star = sp.flux[::-1]*1e8    #flip here and convert to ergs/cm3/s to get correct order
+            ST_SS = sts.grid_to_spec(database, temp, metal, logg) 
         else: 
             raise Exception("Must enter 1) filename,w_unit & f_unit OR 2)temp, metal & logg ")
 
-        #now convert to erg/cm2/s/wavenumber
-        #flux_star = flux_star/wno_star**2
-
+        wno_star = 1e4/(ST_SS.waveset).to(u.um).value[::-1]
+        flux_star = ST_SS(ST_SS.waveset,flux_unit=u.Unit('erg*cm^(-3)*s^(-1)')).value[::-1]
+        
         # Get a bool for whether we want level fluxes
         get_lvl_flux = self.inputs['approx'].get('get_lvl_flux', False)
 
@@ -1802,39 +1763,7 @@ class inputs():
             bin_flux_star = opannection.unshifted_stellar_spec
 
         elif ('climate' in self.inputs['calculation'] or (get_lvl_flux)):
-            """
-            #stellar flux of star 
-            #print(len(wno_planet),len(flux_star[0:-1]),len(flux_star[1:]))
-            # np.diff(1/wno_star) is wavelength window in cm.
-            # when multiplied below with flux in ergs/cm3/s from above
-            # stellar flux becomes ergs/cm^2/s which is the unit in RT in EGP
-            # the fine_flux_star becomes same as "solarf" in EGP
-            # remember distance and radius still needs to be adjusted for your case to get the incident flux on your planet
-            nrg_flux = 0.5*np.flip(np.diff(1/np.flip(wno_star)))*(flux_star[0:-1]+flux_star[1:])
-            fine_wno_star = wno_planet
-            #_x,fine_flux_star = mean_regrid(wno_star[:-1], nrg_flux,newx=wno_planet)  
-            # getting some Nans at very long wavelengths
-            # they are not needed anyways so just moving them to 0
-            # look why is this happening
-            fine_flux_star = np.zeros(len(wno_planet))
-            
-            for j in range(len(wno_planet)-1):
-                fl = 0
-                
-                for k in range(1,len(wno_star)):
-        
-                    if  (wno_star[k] > wno_planet[j]) and (wno_star[k] < wno_planet[j+1]):
-                        fl+= 0.5*(flux_star[k-1] +flux_star[k])*abs((1.0/wno_star[k])-(1.0/wno_star[k-1]))
-                fine_flux_star[j] = fl
 
-            #fix issue if there are zeros in certain bins 
-            mask = np.logical_or(np.isnan(fine_flux_star), fine_flux_star == 0)
-            if len(fine_wno_star[mask])>20:
-                print(f"Having to replace {len(fine_wno_star[mask])} zeros or nans in stellar spectra with interpolated values.It is advised you check this is correct and something has not gone wrong by plotting classname.inputs['star']['wno'] vs classname.inputs'star'['flux']")
-                non_zero_indices = np.where(~mask)
-                zero_nans = np.interp(fine_wno_star[mask], fine_wno_star[non_zero_indices], fine_flux_star[non_zero_indices])
-                fine_flux_star[mask] = zero_nans  
-            """
             # Ensure valid values for interpolation
             mask_valid = flux_star > 1e-30  
             if not np.all(mask_valid):
@@ -1844,7 +1773,7 @@ class inputs():
             interpolator = interp1d(np.log10(wno_star), np.log10(flux_star), kind='linear',
                                     fill_value='extrapolate', bounds_error=False)
             fine_flux_star = 10**interpolator(np.log10(wno_planet))
-
+            
             # Compute binned flux using trapezoidal integration
             fine_flux_star[:] = [np.trapz(fine_flux_star[(wno_planet >= wno_planet[i]) & 
                                                         (wno_planet <= wno_planet[i+1])], 
@@ -1864,7 +1793,7 @@ class inputs():
                 non_zero_indices = np.where(~mask)[0]
                 fine_flux_star[mask] = np.interp(wno_planet[mask], wno_planet[non_zero_indices], fine_flux_star[non_zero_indices])
             
- 
+
             opannection.unshifted_stellar_spec = fine_flux_star  
             bin_flux_star = fine_flux_star          
             unit_flux =  'ergs cm^{-2} s^{-1}'
@@ -1898,7 +1827,7 @@ class inputs():
         self.inputs['star']['semi_major_unit'] = semi_major_unit    
         self.inputs['star']['filename'] = filename
         self.inputs['star']['w_unit'] = w_unit
-        self.inputs['star']['f_unit'] = f_unit     
+        self.inputs['star']['f_unit'] = f_unit 
 
 
     def atmosphere(self, df=None, filename=None, exclude_mol=None, 

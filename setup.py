@@ -68,7 +68,7 @@ setup(
           'photutils',
           'astropy>=3.2.3',
           'matplotlib',
-          'pysynphot',
+          'stsynphot',
           'sphinx',
           'scipy',
           'virga-exo==0.4',
