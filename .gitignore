@@ -29,3 +29,4 @@ dist/
 *__pycache__/
 data/*
 grp/*
+.CondaPkg/*

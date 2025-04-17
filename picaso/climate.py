@@ -665,7 +665,6 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                         
                         temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
                 
-                
 
                 # temperature has been perturbed
                 # now recalculate the IR fluxes, so call picaso with only thermal
@@ -715,7 +714,6 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                     
                         
                     
-                   
                     if n_top_c == n_top_r+1 :
                         
                         A[n_top_c-nco,jm-no] = (flux_net_ir[n_top_c]-flux_net_old[n_top_c])/del_t
@@ -723,7 +721,6 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                     else:
                         
                         A[n_top_c-nco,jm-no] = (flux_net_ir_layer[n_top_c-1]-flux_net_midpt_old[n_top_c-1])/del_t
-                        
                     
                     
                     # omitted -1 to include last element 
@@ -754,7 +751,6 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
             no += n_conv_bot-n_strt
         
         # a long print statement here in original. dont know if needed
-
         
         for i in range(n_total):
             sum=0.0
@@ -773,7 +769,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
         #raise Exception ("stop")
 
         A, p = mat_sol(A, nlevel, n_total, p)
-        
+
         #print(p)
         
         
@@ -864,11 +860,11 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                 
                    
                 #+1 for fort to py
-                
                 for j in range(n_top_d,n_strt_d+1):
                     temp[j]= beta[j]+ alam*p[j-ndo]
                     #print(p[j-ndo],beta[j])
                 #+1 for fort to py
+                
                 for j1 in range(n_strt_d+1, n_bot_d+1):
 
                     press = sqrt(pressure[j1-1]*pressure[j1])
@@ -1495,7 +1491,7 @@ def calculate_atm(bundle, opacityclass, fthin_cld = None, do_holes = None):
 
     #mmw = np.mean(atm.layer['mmw'])
     mmw = atm.layer['mmw']
-    
+
     return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight
 
 

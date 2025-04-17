@@ -5203,6 +5203,7 @@ def profile(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
 
 
     # print(f"DEBUG Cloud dataframe in profile:4858: {bundle.inputs['clouds']['profile']}")
+
     DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
         W0_no_raman , surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
         frac_a,frac_b,frac_c,constant_back,constant_forward, \
