@@ -1834,7 +1834,9 @@ class inputs():
         mh=None, cto=None, chem_method=None,
         #for now the next line is only climate params 
         quench=False,no_ph3=False,cold_trap=False,vol_rainout=False,
-        verbose=True, **pd_kwargs):
+        #these only used for photochem climate 
+        photochem_init_args=None,add_visscher_abunds = True,
+        **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
         Sets number of layers in model.  
@@ -1860,53 +1862,86 @@ class inputs():
         chem_method : str 
             Current options: 
             - 'visscher' : uses the chemical equilibrium tables computed by Channon Visscher via the function `chemeq_visscher`
+                if 'visscher' needs to input: mh and cto 
+            - 'photochem' : users photochem model by Nick Wogan
+                if 'photochem' user needs to input photochem_init_args and photochem_TOA_pressure
         quench : bool 
             Climate only, default = False: no quencing
         no_ph3 : bool 
-            Climate only, default=False: True removes any PH3 from the atmosphere 
+            Climate only chem hack, default=False: True removes any PH3 from the atmosphere 
         cold_trap : bool 
-            Climate only, default=False: True cold traps gases as specified by cld_species 
+            Climate only chem hack, default=False: Force H2O and NH3 abundances to be cold trapped after condensation.
         vol_rainint : bool ;
-            Climate only, default=False: True rains out volatiles
+            Climate only chem hack, default=False: will rainout volatiles like H2O, CH4 and NH3 in diseq runs as in equilibrium model when applicable
+        photochem_init_args : dict
+            Dictionary containing initialization arguments for photochem. Should contain the following keys
+            - "mechanism_file" : str
+                Path to the file describing the reaction mechanism
+            - "stellar_flux_file" : str
+                Path to the file describing the stellar UV flux.
+            - "planet_mass" : float
+                Planet mass in grams
+            - "planet_radius" : float
+                Planet radius in cm
+            - "nz" : int, optional
+                The number of layers in the photochemical model, by default 100
+            - "P_ref" : float, optional
+                Pressure level corresponding to the planet_radius, by default 1e6 dynes/cm^2
+            - "thermo_file" : str, optional
+                Optionally include a dedicated thermodynamic file.
+            - "TOA_pressure" : float
+            Pressure at the top of the atmosphere for photochem, by default 1e-7 bar. Unit must be in dynes/cm^2
+        add_visscher_abunds : bool 
+            Default = False; Only used for photochemical results. Adds visscher to fill gaps covered by the photochemical mdoel 
         verbose : bool 
             (Optional) prints out warnings. Default set to True
         pd_kwargs : kwargs 
             Key word arguments for pd.read_csv to read in supplied atmosphere file 
-        """
-
-
-        if not isinstance(exclude_mol, type(None)):
-            if  isinstance(exclude_mol, str):
-                exclude_mol = [exclude_mol]
-
+        """        
+        #if a dataframe was input lets check it out and set nlevels
         if not isinstance(df, type(None)):
             if ((not isinstance(df, dict )) & (not isinstance(df, pd.core.frame.DataFrame ))): 
                 raise Exception("df must be pandas DataFrame or dictionary")
             else:
                 self.nlevel=df.shape[0] 
+        #if a filename was input lets read it and set nlevels
         elif not isinstance(filename, type(None)):
             df = pd.read_csv(filename, **pd_kwargs)
             self.nlevel=df.shape[0] 
+        
+        #if we already have a dataframe in here let's just define df as is assume the user wants to modify chem with only a PT
         elif isinstance(self.inputs['atmosphere']['profile'] ,pd.core.frame.DataFrame ): 
             df = self.inputs['atmosphere']['profile']
         else:
-            raise Exception("Could not find a starting dataframe in inputs['atmosphere']['profile'] and no df or filename were specified")
+            if 'climate' in self.inputs['calculation']:
+                raise("Could not find a starting dataframe in inputs['atmosphere']['profile']. You are running a climate model so this dataframe is usually initialized in inputs_climate() function that needs a temp_guess and pressure_guess. You can also use the function add_PT() or set it yourself manually. ")
+            else:
+                raise Exception("Could not find a starting dataframe in inputs['atmosphere']['profile'] and no df or filename were specified")
 
+        #if we dont have pressure in the dataframe its a full stop. 
         if 'pressure' not in df.keys(): 
             raise Exception("Check column names. `pressure` must be included. For climate runs set your initial guess in `inputs_climate` before running atmosphere class to set the chemistry")
-
+        
+        #if we dont have temperature that might be okay.. this means its a climate model and we dont have a T
         if ('temperature' not in df.keys()):
+            #if its not a climate calculation, then full stop
             if 'climate' not in self.inputs['calculation']:
                 raise Exception("`temperature` not specified as a column/key name")
 
+        # if there ar molecules we want to exclude lets make sure they are in list format
         if not isinstance(exclude_mol, type(None)):
-            #df = df.drop(exclude_mol, axis=1)
+            if  isinstance(exclude_mol, str):
+                exclude_mol = [exclude_mol]
+            
+            #now lets transfer to a dictionary for each molecule the user has chosen
+            #this way we can flip them on and off individually
             self.inputs['atmosphere']['exclude_mol'] = {i:1 for i in df.keys()}
             for i in exclude_mol: 
                 self.inputs['atmosphere']['exclude_mol'][i]=0
         else: 
             self.inputs['atmosphere']['exclude_mol'] = 1
 
+        #sort by pressure to make sure 0 index is low pressure, last index is high pressure
         self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
 
         #lastly check to see if the atmosphere is non-H2 dominant. 
@@ -1917,27 +1952,36 @@ class inputs():
             elif (("H2" in df.keys()) and (self.inputs['approx']['rt_params']['common']['raman'] != 2)): 
                 if df['H2'].min() < 0.7: 
                     self.inputs['approx']['rt_params']['common']['raman'] = 2
-    
+
+        #now, if mh and cto were supplied lets add those to inputs and set the chem method requestd 
         if ((mh != None ) and (cto != None)):
             self.inputs['atmosphere']['mh'] = mh 
             self.inputs['atmosphere']['cto'] = cto 
             self.inputs['approx']['chem_method'] = chem_method
+        
+        #add photochem initialization if it exists 
+        if photochem_init_args!=None: 
+            self.inputs['atmosphere']['photochem_init_args'] = photochem_init_args 
+            if add_visscher_abunds: 
+                #if we also want visscher then we can make the chem method "photochem+visccher"
+                self.inputs['approx']['chem_method'] = self.inputs['approx']['chem_method']+'+visscher'
 
             # sets chemistry options and runs chemistry if the user has input a PT profile
             # otherwise this just checks for valid inputs 
             self.chemistry_handler()
 
         #SET ATMOSPHERE APPROXIMATIONS 
+        #if this is not a climate calculation and one of the parameters is True, then braek the code 
+        #TODO: allow users to run these approx for forward models.
+        if (self.inputs['calculation'] != 'climate'):
+            if np.any([ quench,  no_ph3,  cold_trap,  vol_rainout]):
+                raise Exception (f"'quench','no_ph3','cold_trap','vol_rainout' are a climate kwargs and climate calculation is not specified so this will not do anything to the user input chemistry. Please set to false to not avoid confusion. In a later update we could create a portal to these kwargs for the forward modeling.")
+        
+        #if we've made it this far lets just save the approximation params in chem_params
         self.inputs['approx']['chem_params']=self.inputs['approx'].get('chem_params',{})
         for ikey,ibool in zip(['quench','no_ph3','cold_trap','vol_rainout'],
                               [ quench,  no_ph3,  cold_trap,  vol_rainout]):
-            #if i is true then change the chem params argument
-            if ibool: 
-                if self.inputs['calculation'] != 'climate':
-                    raise Exception (f"{ikey} is a climate kwarg and climate calculation is not specified so this will not do anything to the user input chemistry. Please set to false to not avoid confusion. In a later update we could create a portal to these kwargs for the forward modeling.")
-                self.inputs['approx']['chem_params'][ikey]=ibool
-
-
+            self.inputs['approx']['chem_params'][ikey]=ibool
 
     def chemistry_handler(self, chemistry_table = None):
         #add default chem method
@@ -1952,21 +1996,29 @@ class inputs():
         else: 
             run = False 
 
+        #lets set a bool to see if we find a valid chem method
+        found_method = False
+
         # Option : simplest method where we just grab visscher abundances 
-        if chem_method=='visscher': 
-            
+        
+        if 'visscher' in str(chem_method):            
             mh = self.inputs['atmosphere']['mh'] 
             cto = self.inputs['atmosphere']['cto']   
             if run: self.chemeq_visscher(cto, np.log10(mh))   
-
+            found_method = True
+        if (('photochem' in str(chem_method)) and (self.inputs['climate'].get('pc',0)==0)): 
+            #initialize photochemistry inputs on first time 
+            self.photochem_init()
+            found_method = True
+        
         # Option : Here the user has supplied a chemistry table and we just need to use the chem_interp function to interpolate on that table
         # Notes : This method inherently assumes mh and cto since the loaded table is for a single mh/co
-        elif not isinstance(chemistry_table, type(None)): 
+        if not isinstance(chemistry_table, type(None)): 
             self.inputs['approx']['chem_method'] = 'chemistry table loaded through opannection'
             if run: self.chem_interp(chemistry_table)
-
+            found_method=True
         #Option : No other options so far 
-        else: 
+        elif not found_method: 
             raise Exception(f"A chem option {chem_method} is not valid. Likely you specified method='resrotrebin' in opannection but did not run `atmosphere()` function after inputs_climate.") 
 
     def cold_trap(self, cld_species): 
@@ -2000,7 +2052,9 @@ class inputs():
             for i in range(cond_layer-1, 0, -1): 
                 if self.inputs['atmosphere']['profile'][mol][i] < self.inputs['atmosphere']['profile'][mol][i-1]:
                     self.inputs['atmosphere']['profile'][mol][i-1] = self.inputs['atmosphere']['profile'][mol][i]
-                
+    
+
+
 
     def premix_atmosphere(self, opa=None, quench_levels=None,
         cld_species = ['H2O', 'CH4', 'NH3']):
@@ -2020,6 +2074,7 @@ class inputs():
 
         #now chemistry options can be enforced 
         self.chemistry_handler(chemistry_table=chemistry_table)
+        
         # cold trap the condensibles 
         if self.inputs['approx']['chem_params']['cold_trap']: 
             self.cold_trap(cld_species=cld_species)
@@ -2038,6 +2093,27 @@ class inputs():
             if 'PH3' in self.inputs['atmosphere']['profile'].keys(): 
                 self.inputs['atmosphere']['profile']['PH3'] = 0
     
+    def premix_atmosphere_photochem(self,quench_levels=None):
+
+        #start by getting chemeq if it has been requested 
+        self.chemistry_handler()
+        #adjust quenching if we have levels to give us a better inital guess 
+        if quench_levels!=None: self.adjust_quench_chemistry(quench_levels)
+        
+        #set photochem to run 
+        pc = self.inputs['climate']['pc']
+        kz = self.inputs['atmosphere']['profile']['kz'].values
+        df = pc.run_for_picaso(
+                        self.inputs['atmosphere']['profile'], 
+                        np.log10(float(self.inputs['atmosphere']['mh'])), 
+                        float(self.inputs['atmosphere']['cto']), 
+                        self.inputs['atmosphere']['profile']['kz'].values, 
+                        True
+                    )
+        #reset kz to picaso dataframe to keep track of it 
+        df['kz']=kz
+        self.inputs['atmosphere']['profile']  = df 
+
     def adjust_quench_chemistry(self, quench_levels):
 
         kinetic_CO2=True #since our old way was an "error" it seems like we should include htis as an option to be false
@@ -2330,7 +2406,8 @@ class inputs():
 
         return qvmrs, qvmrs2
     
-    def premix_atmosphere_photochem(self, opa, df=None, filename=None,firsttime=False,mh_interp=None,cto_interp=None, **pd_kwargs):
+    def premix_atmosphere_photochem_deprecate(self, opa, df=None, filename=None,firsttime=False,
+                                    mh_interp=None,cto_interp=None, **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
         Sets number of layers in model.  
@@ -4281,10 +4358,11 @@ class inputs():
         return 
     
     def inputs_climate(self, temp_guess= None, pressure= None, rfaci = 1,nofczns = 1 ,
-        nstr = None,  rfacv = None,
-        photochem=False, photochem_init_args=None, sonora_abunds_photochem = False, df_sonora_photochem = None,
-        photochem_TOA_pressure = 1e-7*1e6, 
-        moistgrad = False, 
+        nstr = None,  rfacv = None, moistgrad = False
+        #deprecated and moved to atmosphere
+        #photochem=False, photochem_init_args=None, sonora_abunds_photochem = False, df_sonora_photochem = None,
+        #photochem_TOA_pressure = 1e-7*1e6, 
+        #, 
         #deprecated and moved to virga and/or clouds 
         #fhole = None, do_holes = False, fthin_cld = None, 
         #cloudy = False, species = None, fsed = None, mieff_dir = None,
@@ -4322,147 +4400,52 @@ class inputs():
             =0 for no stellar irradition, 
             =0.5 for full day-night heat redistribution
             =1 for dayside
-        cloudy : bool
-            Include Clouds or not (True or False)
-        species : string
-            Cloud species to be included if cloudy
-        fsed : float
-            Sedimentation Efficiency (f_sed) if cloudy
-        mieff_dir: str
-            path to directory with mieff files for virga
         photochem : bool 
             Turns off (False) and on (True) Photochem 
-        photochem_init_args : dict
-            Dictionary containing initialization arguments for photochem. Should contain the following keys
-            - "mechanism_file" : str
-                Path to the file describing the reaction mechanism
-            - "stellar_flux_file" : str
-                Path to the file describing the stellar UV flux.
-            - "planet_mass" : float
-                Planet mass in grams
-            - "planet_radius" : float
-                Planet radius in cm
-            - "nz" : int, optional
-                The number of layers in the photochemical model, by default 100
-            - "P_ref" : float, optional
-                Pressure level corresponding to the planet_radius, by default 1e6 dynes/cm^2
-            - "thermo_file" : str, optional
-                Optionally include a dedicated thermodynamic file.
         sonora_abunds_photochem : bool
             Turns on/off using Sonora equilibrium abundances for photochem initially
-        photochem_TOA_pressure: float
-            Pressure at the top of the atmosphere for photochem, by default 1e-7 bar. Unit must be in dynes/cm^2
-        fhole : float
-            Fraction of clearsky holes (from 0 to 1.0)
-        do_holes : bool
-            Patchy cloud option with clearsky holes
-        fthin_cld : float
-            Fraction of thin clouds in patchy cloud column (from 0 to 1.0), default 0 for clear sky column
-        beta : float
-            Denominator of exponential in sedimentation efficiency
-        virga_param : str
-            Virga parameterization for cloud model, either 'const' or 'exp'
         moistgrad: bool
             Moist adiabatic gradient option
-        deq_rainout : bool
-            If True, will rainout volatiles like H2O, CH4 and NH3 in diseq runs as in equilibrium model when applicable
-        quench_ph3 : bool
-            Switch for turning on/off PH3 quenching
-        no_ph3 : bool
-            Switch for zeroing out PH3 in diseq runs
-        kinetic_CO2 : bool
-            Switch for turning on/off kinetic CO2 prescription for diseq runs from Zahnle and Marley 2014
-        cold_trap : bool
-            Force H2O and NH3 abundances to be cold trapped after condensation. Default = False
         """
-        
-        #if cloudy: 
-        #    print("Cloudy functionality still in beta form and not ready for public use.")
-        #    # raise Exception('Cloudy functionality still in beta fosrm and not ready for public use.')
-
-        if photochem == False: 
-            # dummy values only used for cloud model
-            mh = 0 
-            CtoO = 0 
-        # else:
-            # mh = 0
-            # CtoO = 0
-
         if self.inputs['planet']['T_eff'] == 0.0:
             raise Exception('Need to specify Teff with jdi.input for climate run')
         if self.inputs['planet']['gravity'] == 0.0:
             raise Exception('Need to specify gravity with jdi.input for climate run')
 
-        
         self.inputs['climate']['guess_temp'] = temp_guess
         self.inputs['climate']['pressure'] = pressure
         self.inputs['climate']['nstr'] = nstr
         self.inputs['climate']['nofczns'] = nofczns
         self.inputs['climate']['rfacv'] = rfacv
         self.inputs['climate']['rfaci'] = rfaci
-        #if cloudy:
-        #    self.inputs['climate']['cloudy'] = 1
-        #    self.inputs['climate']['cld_species'] = species
-        #    self.inputs['climate']['fsed'] = fsed
-        #    self.inputs['climate']['mieff_dir'] = mieff_dir
-        #    self.inputs['climate']['virga_param'] = virga_param
-        #    if virga_param != 'exp': #just another catch in case user tries to change beta with const. fsed
-        #        self.inputs['climate']['beta'] = 1
-        #    else:
-        #        self.inputs['climate']['beta'] = beta 
-        #if do_holes:
-        #    self.inputs['climate']['do_holes'] = True
-        #    self.inputs['climate']['fhole'] = fhole
-        #    if fthin_cld == None:
-        #        self.inputs['climate']['fthin_cld'] = 0
-        #    else:
-        #        self.inputs['climate']['fthin_cld'] = fthin_cld
-        #else:
-        #    self.inputs['climate']['do_holes'] = False
-        #    self.inputs['climate']['fhole'] = 0
-        #    self.inputs['climate']['fthin_cld'] = 0
-        #else :
-        #    self.inputs['climate']['cloudy'] = 0
-        #    self.inputs['climate']['cld_species'] = None
-        #    self.inputs['climate']['fsed'] = 0
-        #    self.inputs['climate']['mieff_dir'] = mieff_dir
-        #    self.inputs['climate']['do_holes'] = False
-        #    self.inputs['climate']['fhole'] = 0
-        #    self.inputs['climate']['fthin_cld'] = 0
-        #    self.inputs['climate']['beta'] = 1
-        #    self.inputs['climate']['virga_param'] = 'const'
-        #    if do_holes:
-        #        print('Patchy cloud option only considered when clouds are enabled. Turning off patchy clouds')
-        #        self.inputs['climate']['do_holes'] = False
-
         self.inputs['climate']['moistgrad'] = moistgrad
-        #self.inputs['climate']['deq_rainout'] = deq_rainout
-        #self.inputs['climate']['quench_ph3'] = quench_ph3
-        #self.inputs['climate']['kinetic_CO2'] = kinetic_CO2
-        #self.inputs['climate']['no_ph3'] = no_ph3
-        #self.inputs['climate']['cold_trap'] = cold_trap
 
-        #self.inputs['climate']['mh'] = mh
-        #self.inputs['climate']['CtoO'] = CtoO
-
-        self.inputs['climate']['photochem'] = photochem
-        self.inputs['climate']['photochem_init_args'] = photochem_init_args
-        self.inputs['climate']['sonora_abunds_photochem'] = sonora_abunds_photochem
-        self.inputs['climate']['df_sonora_photochem'] = df_sonora_photochem
-        
         self.add_pt(temp_guess, pressure)
 
-
-        if self.inputs['climate']['photochem']:
-            # Import and initialize the photochemical code.
-            from .photochem import EvoAtmosphereGasGiantPicaso
-            pc = EvoAtmosphereGasGiantPicaso(**photochem_init_args)
-            pc.TOA_pressure_avg = photochem_TOA_pressure
-            self.inputs['climate']['pc'] = pc
-
+    def photochem_init(self):
+        """called in chemistry handler 
+        """
+        photochem_TOA_pressure = self.inputs['atmosphere']['photochem_init_args']['TOA_pressure']
+        mass= self.inputs['planet']['mass']
+        if np.isnan(mass): raise Exception('Photochem run is being requested but mass and radius were not supplied through gravity function')
+        radius= self.inputs['planet']['radius']
+        if np.isnan(radius): raise Exception('Photochem run is being requested but mass and radius were not supplied through gravity function')
+        
+        self.inputs['atmosphere']['photochem_init_args']["planet_mass"] =mass
+        self.inputs['atmosphere']['photochem_init_args']["planet_radius"] = radius
+        #this was just for picaso
+        self.inputs['atmosphere']['photochem_init_args'].pop('TOA_pressure')
+        photochem_init_args = self.inputs['atmosphere']['photochem_init_args']
+        # Import and initialize the photochemical code.
+        from .photochem import EvoAtmosphereGasGiantPicaso
+        pc = EvoAtmosphereGasGiantPicaso(**photochem_init_args)
+        pc.gdat.TOA_pressure_avg = photochem_TOA_pressure
+        self.inputs['climate']['pc'] = pc
+    
     def climate(self, opacityclass, save_all_profiles = False, with_spec=False,
-        save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False, 
-        chemeq_first=True,verbose=True):#,
+        save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False
+        ,verbose=True):#,
+        #chemeq_first=True
        #deprecate: on_fly=False,gases_fly=None, as_dict=True, kz = None, 
         """
         Top Function to run the Climate Model
@@ -4570,8 +4553,7 @@ class inputs():
         tidal = np.zeros_like(pressure) - sigma_sb *(Teff**4)
         
         # cloud inputs
-        #bools
-        cloudy = self.inputs['climate']['cloudy']
+        cloudy = self.inputs['climate'].get('cloudy',False)
 
         #virga inputs 
         virga_kwargs = self.inputs['climate'].get('virga_kwargs',{})
@@ -4639,307 +4621,6 @@ class inputs():
                         save_profile,all_profiles,all_opd,
                         verbose=verbose, moist = moist, 
                         save_kzz=save_all_kzz, self_consistent_kzz=self_consistent_kzz)
-        """OLD DISEQ CODE 
-        if diseq_chem:
-            raise Exception("THIS SHOULD BE DEPRECATED")
-            #Starting with user's guess since there was no request to converge a chemeq profile first 
-            #if not chemeq_first: 
-            temp = TEMP1
-
-            #wv196 = 1e4/wno
-
-            # first change the nstr vector because need to check if they grow or not
-            # delete upper convective zone if one develops
-            
-            del_zone =0 # move 4 levels deeper
-            if (nstr[1] > 0) & (nstr[4] > 0) & (nstr[3] > 0) :
-                nstr[1] = nstr[4]+del_zone
-                nstr[2] = 89
-                nstr[3],nstr[4],nstr[5] = 0,0,0
-                
-                if verbose: print("2 conv Zones, so making small adjustments")
-            elif (nstr[1] > 0) & (nstr[3] == 0):
-                if nstr[4] == 0:
-                    nstr[1]+= del_zone #5#15
-                else:
-                    nstr[1] += del_zone #5#15  
-                    nstr[3], nstr[4] ,nstr[5] = 0,0,0#6#16
-                if verbose: print("1 conv Zone, so making small adjustment")
-            if nstr[1] >= nlevel -2 : # making sure we haven't pushed zones too deep
-                nstr[1] = nlevel -4
-            if nstr[4] >= nlevel -2:
-                nstr[4] = nlevel -3
-            
-            if verbose: print("New NSTR status is ", nstr)
-
-            
-
-            bundle = inputs(calculation='brown')
-
-            bundle.phase_angle(0,num_gangle=10, num_tangle=1)
-            bundle.gravity(gravity=grav , gravity_unit=u.Unit('m/s**2'))
-            bundle.add_pt( temp, pressure)
-            bundle.premix_atmosphere(opacityclass, cold_trap = cold_trap, cld_species=cld_species)
-            OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Atmosphere =  calculate_atm(bundle, opacityclass)
-            
-            # Clearsky profile, define others with _clear to avoid overwriting cloudy profile
-            if do_holes == True:
-                OpacityWEd_clear, OpacityNoEd_clear, _, _, _ =  calculate_atm(bundle, opacityclass, fthin_cld, do_holes=True)
-            
-            all_kzz= []
-            if save_all_kzz == True :
-                save_kzz = 1
-            else :
-                save_kzz = 0
-            
-            #here begins the self consistent Kzz calculation 
-            # MLT plus some prescription in radiative zone
-            if self_consistent_kzz:# or (not chemeq_first): 
-
-                if do_holes == True:
-                    flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
-                                Disco,Opagrid, F0PI, reflected=compute_reflected, thermal=compute_thermal, 
-                                fhole=fhole, hole_OpacityWEd=OpacityWEd_clear,hole_OpacityNoEd=OpacityNoEd_clear)
-                    #(pressure, temp, delta_wno, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
-                    #COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-                    #ubar0,ubar1,cos_theta, F0PI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
-                    #wno,nwno,ng,nt, nlevel, ngauss, gauss_wts,compute_reflected, True, fhole, DTAU_clear , TAU_clear , W0_clear , COSB_clear , 
-                    #DTAU_OG_clear , TAU_OG_clear, W0_OG_clear,COSB_OG_clear , W0_no_raman_clear, do_holes=True)#True for reflected, True for thermal
-
-                else:                
-                    flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
-                                Disco,Opagrid, F0PI, reflected=compute_reflected, thermal=compute_thermal)
-                    #(pressure, temp, delta_wno, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
-                    #COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-                    #ubar0,ubar1,cos_theta, F0PI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
-                    #wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts,compute_reflected, True)#True for reflected, True for thermal
-
-                flux_net_ir_layer = flux_net_ir_layer_full[:]
-                flux_plus_ir_attop = flux_plus_ir_full[0,:] 
-                calc_type = 0
-                
-                # use mixing length theory to calculate Kzz profile
-                #if self_consistent_kzz: 
-                #output_abunds = bundle.inputs['atmosphere']['profile'].T.values
-                kz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,AdiabatBundle,nstr, Atmosphere, moist = moist)
-            
-            
-            if diseq_chem:#on_fly:
-                if verbose: print("From now I will mix "+str(gases_fly)+" only on--the--fly")
-                #opacityclass = opannection(preload_gases=gases_fly,method='resortrebin')
-
-            
-            #if cloudy == 1:    
-            #    wv661 = 1e4/opacityclass.wno
-            #    opd_cld_climate,g0_cld_climate,w0_cld_climate = initiate_cld_matrices(opd_cld_climate,g0_cld_climate,w0_cld_climate,wv196,wv661)
-
-            #Rerun star so that F0PI can now be on the 
-            #661 grid 
-            #if 'nostar' in self.inputs['star']['database']:
-            #    F0PI = np.zeros(opacityclass.nwno) + 1.0
-            #else:
-            #    T_star = self.inputs['star']['temp']
-            #    r_star = self.inputs['star']['radius']
-            #    r_star_unit = self.inputs['star']['radius_unit']
-            #    logg = self.inputs['star']['logg']
-            #    metal =  self.inputs['star']['metal']
-            #    semi_major = self.inputs['star']['semi_major']
-            #    sm_unit = self.inputs['star']['semi_major_unit']
-            #    database = self.inputs['star']['database']
-            #    filename = self.inputs['star']['filename']
-            #    f_unit = self.inputs['star']['f_unit']
-            #    w_unit = self.inputs['star']['w_unit']
-            #    self.star(opacityclass, database=database,temp =T_star,metal =metal, logg =logg, 
-            #        radius = r_star, radius_unit=u.Unit(r_star_unit),semi_major= semi_major , 
-            #        semi_major_unit = u.Unit(sm_unit), 
-            #        filename = filename, 
-            #        f_unit=f_unit, 
-            #        w_unit=w_unit)
-            #    fine_flux_star  = self.inputs['star']['flux']  # erg/s/cm^2
-            #    F0PI = fine_flux_star * ((r_star/semi_major)**2)
-            
-            if self.inputs['climate']['photochem']==False:
-                quench_levels, t_mix = quench_level(pressure, temp, kz ,mmw, grav, Teff, return_mix_timescale= True) # determine quench levels
-
-                # all_kzz = np.append(all_kzz, t_mix) # save kzz
-                all_kzz = np.append(all_kzz, kz) # save kzz #JM changed to not convert from t_mix
-
-                if verbose: print("Quench Levels are CO, CO2, NH3, HCN, PH3 ", quench_levels) # print quench levels
-                
-                final = False
-                #finall = False #### what is this thing?
-                
-                ## this code block is mostly safeguarding
-                
-                if quench_levels[2] > nlevel -2 :
-                    quench_levels[2] = nlevel -2
-
-                    if quench_levels[0] > nlevel -2 :
-                        quench_levels[0] = nlevel -2
-                    
-                    if quench_levels[1] > nlevel -2 :
-                        quench_levels[1] = nlevel -2
-                    
-                    if quench_levels[3] > nlevel -2 :
-                        quench_levels[3] = nlevel -2 
-                
-                
-                
-                
-
-                # determine the chemistry now
-
-                qvmrs, qvmrs2= bundle.premix_atmosphere_diseq(opacityclass, teff = Teff, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']], quench_levels= quench_levels,t_mix=t_mix, vol_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3, cold_trap = cold_trap, cld_species=cld_species)
-                #was for check SM
-                #bundle.inputs['atmosphere']['profile'].to_csv('/data/users/samukher/Disequilibrium-picaso/first_iteration_testpls300min500',sep='\t')
-                #raise SystemExit(0) 
-                photo_inputs_dict = {}
-                photo_inputs_dict['yesorno'] = False
-            else :
-                # Compute chemical equilibrium composition using pre-computed grid
-                bundle.premix_atmosphere_photochem(opacityclass, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']],firsttime=True,mh_interp=float(self.inputs['atmosphere']['mh']),cto_interp=float(self.inputs['atmosphere']['cto']))
-                
-                # Compute photochemical steady-state, and load it into `bundle.inputs['atmosphere']['profile']`. Here,
-                # we use chemical equilibrium + quenching as an initial guess.
-                pc = self.inputs['climate']['pc']
-                sonora_abund_photochem = self.inputs['climate']['sonora_abunds_photochem']
-                df_sonora_photochem = self.inputs['climate']['df_sonora_photochem'] # temporary for testing, but in the future will need a better way to not require user input
-
-                if sonora_abund_photochem:
-                    from .photochem import set_equilibrium_composition_to_picaso_df
-                    # add option to start with premix_atmosphere_from sonora without photochem abundances
-                    # if Teff > 1000: # grabbing the right equilibrium composition around 1200 K for warmer objects
-                    set_equilibrium_composition_to_picaso_df(pc,self.inputs['climate']['photochem_init_args']['mechanism_file'],df_sonora_photochem,1200)
-                    # else: # grabbing the equilibrium composition above the CO2 quench for colder objects
-                    #     set_equilibrium_composition_to_picaso_df(pc,self.inputs['climate']['photochem_init_args']['mechanism_file'],bundle.inputs['atmosphere']['profile'],600)
-
-                    bundle.inputs['atmosphere']['profile'] = pc.run_for_picaso(
-                        bundle.inputs['atmosphere']['profile'], 
-                        float(0.0),
-                        float(1.0), 
-                        kz, 
-                        True
-                    )
-                else:
-                    bundle.inputs['atmosphere']['profile'] = pc.run_for_picaso(
-                        bundle.inputs['atmosphere']['profile'], 
-                        float(self.inputs['atmosphere']['mh']), 
-                        float(self.inputs['atmosphere']['CtoO']), 
-                        kz, 
-                        True
-                    )
-
-                all_kzz = np.append(all_kzz, kz)
-                quench_levels = np.array([0,0,0,0])
-                photo_inputs_dict = {}
-                # Save some information, to be used in later photochem calls.
-                photo_inputs_dict['yesorno'] = True
-
-                if sonora_abund_photochem:
-                    photo_inputs_dict['mh'] = 0.0 # needs to be solar for this to work
-                    photo_inputs_dict['CtoO'] = 1.0
-                    photo_inputs_dict['mechanism_file'] = self.inputs['climate']['photochem_init_args']['mechanism_file']
-                    photo_inputs_dict['sonora_abunds_photochem'] = sonora_abund_photochem
-                    photo_inputs_dict['df_sonora_photochem'] = df_sonora_photochem
-                else:
-                    photo_inputs_dict['mh'] = float(self.inputs['atmosphere']['mh'])
-                    photo_inputs_dict['CtoO'] = float(self.inputs['atmosphere']['CtoO'])
-                photo_inputs_dict['mh_interp'] = float(self.inputs['atmosphere']['mh'])
-                photo_inputs_dict['CtoO_interp'] = float(self.inputs['atmosphere']['CtoO'])
-                photo_inputs_dict['pc'] = pc
-                photo_inputs_dict['kz'] = kz
-
-            wno = opacityclass.wno
-            delta_wno = opacityclass.delta_wno
-            nwno = opacityclass.nwno
-            min_temp = min(opacityclass.temps)
-            max_temp = max(opacityclass.temps)
-
-            # first calculate the BB grid
-            ntmps = self.inputs['climate']['ntemp_bb_grid']
-            dt = self.inputs['climate']['dt_bb_grid']
-            extension = 0.3
-            #add threshold for tmin for convergence *JM
-            if Teff > 300:
-                tmin = min_temp*(1-extension)
-            else:
-                tmin = 10
-
-            if Teff > 1600:
-                tmax = 10000
-            else:
-                tmax = max_temp*(1+extension)
-
-            ntmps = int((tmax-tmin)/dt)
-            
-
-            #bb , y2 , tp = set_bb(wno,delta_wno,nwno,ntmps,dt,tmin,tmax)
-
-        
-
-            
-            final = False
-
-            
-            # diseq calculations start here actually
-            
-            if verbose: print("DOING DISEQ CALCULATIONS NOW")
-            it_max= 7
-            itmx= 5
-            conv = 5.0
-            convt=4.0
-            x_max_mult=7.0
-
-            #if nstr[2] < nstr[5]:
-            #    nofczns = 2
-            #    print("nofczns corrected") 
-            #first profile_diseq call
-            if self.inputs['climate']['photochem']==False:
-                pressure, temperature, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,cld_out,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,_ ,all_opd  = profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
-                temp,pressure, F0PI, t_table, p_table, grad, cp, opacityclass, grav, 
-                rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , 
-                cloudy, cld_species,mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile,
-                all_profiles, all_opd, self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,
-                g0_cld_climate,
-                w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop, beta, param_flag,
-                photo_inputs_dict,
-                on_fly=on_fly, gases_fly=gases_fly, verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist=moist, deq_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3, cold_trap=cold_trap)
-                # print('find_strat_deq, kz input:',kz) #JM printout for deq nan debugging
-                # print('find_strat_deq, all_kzz input:',all_kzz)
-                
-                pressure, temp, dtdp, nstr_new, flux_plus_final,flux_net_final, flux_net_ir_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,cld_out,photo_inputs_dict,final_conv_flag,all_opd, df_cld_final=find_strat_deq(mieff_dir, pressure, temperature, dtdp ,F0PI, nofczns,nstr,x_max_mult,
-                                t_table, p_table, grad, cp, opacityclass, grav, 
-                                rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, all_opd, self_consistent_kzz,save_kzz,all_kzz, opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly,
-                             verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist = moist,deq_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3, cold_trap=cold_trap)
-                
-                if cloudy == 1:
-                    opd_now,w0_now,g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
-                else:
-                    opd_now,w0_now,g0_now = 0,0,0
-                
-            else:
-                pressure, temperature, dtdp, profile_flag, qvmrs, qvmrs2, all_profiles, all_kzz,opd_cld_climate,g0_cld_climate,w0_cld_climate,cld_out,flux_net_ir_layer, flux_plus_ir_attop,photo_inputs_dict,df ,all_opd  = profile_deq(mieff_dir, it_max, itmx, conv, convt, nofczns,nstr,x_max_mult,
-                temp,pressure, F0PI, t_table, p_table, grad, cp, opacityclass, grav, rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp, final , 
-                cloudy, cld_species,mh,fsed,flag_hack, quench_levels, kz, mmw,save_profile,all_profiles, all_opd, self_consistent_kzz,save_kzz,all_kzz,opd_cld_climate,
-                g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop, beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly, verbose=verbose, 
-                do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist=moist, deq_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3, cold_trap=cold_trap)
-                
-                pressure, temp, dtdp, nstr_new, flux_plus_final,flux_net_final, flux_net_ir_final, qvmrs, qvmrs2, df, all_profiles, all_kzz,cld_out,photo_inputs_dict,final_conv_flag,all_opd,df_cld_final=find_strat_deq(mieff_dir, pressure, temperature, dtdp ,F0PI, nofczns,nstr,x_max_mult,
-                    t_table, p_table, grad, cp, opacityclass, grav, rfaci, rfacv, nlevel, tidal, tmin, tmax, delta_wno, bb , y2 , tp , cloudy, cld_species, mh,fsed, flag_hack, quench_levels,kz ,mmw, save_profile,all_profiles, all_opd, self_consistent_kzz,save_kzz,all_kzz, 
-                    opd_cld_climate,g0_cld_climate,w0_cld_climate,flux_net_ir_layer, flux_plus_ir_attop,beta, param_flag,photo_inputs_dict,on_fly=on_fly, gases_fly=gases_fly,
-                    verbose=verbose, do_holes=do_holes, fhole=fhole, fthin_cld=fthin_cld, moist = moist,deq_rainout=deq_rainout,quench_ph3=quench_ph3, kinetic_CO2=kinetic_CO2, no_ph3 = no_ph3, cold_trap=cold_trap)
-
-
-            #diseq stuff
-            all_out['diseq_out'] = {}
-            if save_all_kzz: all_out['diseq_out']['all_kzz'] = all_kzz
-            all_out['diseq_out']['quench_levels'] = quench_levels
-
-
-            #return pressure , temp, dtdp, nstr_new, flux_plus_final, quench_levels, df, all_profiles, all_kzz, opd_now,w0_now,g0_now
-        """
-        final_conv_flag, pressure, temp, dtdp, nstr_new, flux_net_ir_final, flux_net_v_final, flux_plus_final,   \
-                chem_out,cld_out,  all_profiles,  all_opd, all_kzz
         #all output to user
         all_out['pressure'] = pressure
         all_out['temperature'] = temp
@@ -4982,10 +4663,7 @@ class inputs():
 
         #suggest retiring this and always returning dict 
         return all_out
-        #if as_dict: 
-        #    return all_out
-        #else: 
-        #    return pressure , temp, dtdp, nstr_new, flux_plus_final, df, all_profiles
+
 
 def get_targets():
     """Function to grab available targets using exoplanet archive data. 

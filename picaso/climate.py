@@ -1843,9 +1843,9 @@ def calculate_atm(bundle, opacityclass, only_atmosphere=False):
     inputs = bundle.inputs
 
     wno = opacityclass.wno
-    nwno = opacityclass.nwno
+    #nwno = opacityclass.nwno
     ngauss = opacityclass.ngauss
-    gauss_wts = opacityclass.gauss_wts #for opacity
+    #gauss_wts = opacityclass.gauss_wts #for opacity
 
     #check to see if we are running in test mode
     test_mode = inputs['test_mode']
@@ -1857,7 +1857,7 @@ def calculate_atm(bundle, opacityclass, only_atmosphere=False):
     single_phase = inputs['approx']['rt_params']['toon']['single_phase']
     multi_phase = inputs['approx']['rt_params']['toon']['multi_phase']
     raman_approx =inputs['approx']['rt_params']['common']['raman']
-    method = inputs['approx']['rt_method']
+    #method = inputs['approx']['rt_method']
     stream = inputs['approx']['rt_params']['common']['stream']
 
     #parameters needed for the two term hg phase function. 
@@ -1880,31 +1880,23 @@ def calculate_atm(bundle, opacityclass, only_atmosphere=False):
     
 
     #phase angle 
-    phase_angle = inputs['phase_angle']
+    #phase_angle = inputs['phase_angle']
     #get geometry
     geom = inputs['disco']
 
     #""" NEWCLIMA
     ng, nt = geom['num_gangle'], geom['num_tangle']#1,1 #
     gangle,gweight,tangle,tweight = geom['gangle'], geom['gweight'],geom['tangle'], geom['tweight']
-    lat, lon = geom['latitude'], geom['longitude']
+    #lat, lon = geom['latitude'], geom['longitude']
     cos_theta = geom['cos_theta']
     ubar0, ubar1 = geom['ubar0'], geom['ubar1']
     #"""
-    """ OG Code
-    ng, nt = 1,1
-    gangle,gweight,tangle,tweight = geom['gangle'], geom['gweight'],geom['tangle'], geom['tweight']
-    lat, lon = geom['latitude'], geom['longitude']
-    cos_theta = geom['cos_theta']
-    ubar0,ubar1 = np.zeros((5,1)),np.zeros((5,1))
-    ubar0 += 0.5
-    ubar1 += 0.5
-    """
+
     #set star parameters
     radius_star = inputs['star']['radius']
 
     #semi major axis
-    sa = inputs['star']['semi_major']
+    #sa = inputs['star']['semi_major']
 
     #define cloud inputs 
     #for patchy clouds
@@ -2714,7 +2706,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     """
     """
     #under what circumstances to we compute quench levels 
-    full_kinetis = bundle.inputs['approx']['chem_method']=='photochem'
+    full_kinetis ='photochem' in bundle.inputs['approx']['chem_method']
     do_quench_appox = diseq and (not full_kinetis)
 
     #unpack 
@@ -2819,8 +2811,8 @@ def profile(bundle, nofczns, nstr, temp, pressure,
             cld_species=cld_species)
     ##  3-b) option 2: GET PHOTOCHEM
     if full_kinetis: 
-        quench_levels = None
-        raise Exception('photochem not yet working')
+        quench_levels=update_quench_levels(bundle, Atmosphere, kz, grav,verbose=verbose)
+        bundle.premix_atmosphere_photochem(quench_levels=quench_levels)
     
     ### 4) IF: COMPUTE CLOUDS 
     if cloudy :
@@ -2894,14 +2886,15 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         ### 3) IF: COMPLEX CHEM
         ##  3-a) option 1: GET QUENCH LEVELS FOR DISEQ and UPDATE CHEM
         if do_quench_appox:   
-            quench_levels=update_quench_levels(bundle, Atmosphere, kz, grav)
+            quench_levels=update_quench_levels(bundle, Atmosphere, kz, grav,verbose=verbose)
             bundle.premix_atmosphere(opa=opacityclass,quench_levels=quench_levels,
                 cld_species=cld_species)
+        
         ##  3-b) option 2: GET PHOTOCHEM
         if full_kinetis: 
-            quench_levels = None
-            raise Exception('photochem not yet working')
-        
+            quench_levels=update_quench_levels(bundle, Atmosphere, kz, grav,verbose=verbose)
+            bundle.premix_atmosphere_photochem(quench_levels=quench_levels)
+            
         ### 4) IF: COMPUTE CLOUDS 
         if cloudy:
             cld_out,df_cld, taudif, taudif_tol, all_opd, CloudParameters=update_clouds(bundle, CloudParameters,Atmosphere,
