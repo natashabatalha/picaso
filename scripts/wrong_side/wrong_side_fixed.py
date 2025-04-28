@@ -55,6 +55,16 @@ for teff in [1100, 1600, 2200]:
                 temp_guesses = [np.array(f["temperature_guess_"+str(x).zfill(2)]) for x in guess_levels]
 
             for (nc, temp_guess) in zip(guess_levels, temp_guesses):
+                found_file = False
+                for f in os.listdir(join(picaso_root, "data/wrong_side_results")):
+                    if f.startswith(f"wrongside_teff{teff}_gravms2{grav_ms2}_fsed{fsed}_nc{nc}"):
+                        found_file = True
+                        break
+                    
+                if found_file:
+                    print("Case already run, continuing")
+                    continue
+                temp_guess = np.maximum(temp_guess, 10.0)
                 cl_run.inputs_climate(temp_guess=temp_guess, pressure=pressure_grid,
                                     nstr = np.array([0,nstr_upper,nstr_deep,0,0,0]), nofczns = nofczns , rfacv = rfacv, cloudy = cloudmode, mh = '0.0', 
                                     CtoO = '1.0',species = cloud_species, fsed = fsed, beta = 0.1, virga_param = 'const',
@@ -118,7 +128,8 @@ for teff in [1100, 1600, 2200]:
                         cloud_outputs[k] = np.array([x[k] for x in [postproc_cld_out]])
 
                     tstamp = datetime.now().isoformat().replace(":", ".")
-                    with h5py.File(join(picaso_root, f"data/wrong_side_results/wrongside_teff{teff}_gravms2{grav_ms2}_fsed{fsed}_nc{nc}_cloudmode{cloudmode}_dt{tstamp}.h5"), "w") as f:
+                    wrong_side_results_path = join(picaso_root, f"data/wrong_side_results/wrongside_teff{teff}_gravms2{grav_ms2}_fsed{fsed}_nc{nc}_cloudmode{cloudmode}_dt{tstamp}.h5")
+                    with h5py.File(wrong_side_results_path, "w") as f:
                         p_picaso = f.create_dataset("pressure_picaso", data=out_fixed["pressure"])
                         p_virga = f.create_dataset("pressure_virga", data=postproc_cld_out["pressure"])
                         f.create_dataset("nstrs", data=np.array(out_fixed["nstr"]))
