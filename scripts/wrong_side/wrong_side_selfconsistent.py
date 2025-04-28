@@ -58,7 +58,7 @@ for teff in [1100, 1600, 2200]:
                         cloud_outputs[k] = np.array([x[k] for x in out_selfconsistent["cld"]])
 
                     tstamp = datetime.now().isoformat().replace(":", ".")
-                    with h5py.File(join(picaso_root, f"data/wrongside/wrongside_selfconsistent_teff{teff}_gravms2{grav_ms2}_fsed{fsed}_nc{nc}_dt{tstamp}.h5", "w")) as f:
+                    with h5py.File(join(picaso_root, f"data/wrong_side_results/wrongside_selfconsistent_teff{teff}_gravms2{grav_ms2}_fsed{fsed}_nc{nc}_dt{tstamp}.h5", "w")) as f:
                         p = f.create_dataset("pressure", data=out_selfconsistent["pressure"])
                         f.create_dataset("nstrs", data=np.array(out_selfconsistent["nstr"]))
                         for k in cloud_outputs:
@@ -69,6 +69,6 @@ for teff in [1100, 1600, 2200]:
                         p.attrs["nstr_start"] = nstr_start
                         t = f.create_dataset("temperature_picaso", data=out_selfconsistent["temperature"])
                 except ValueError:
-                    with open(join(picaso_root, f"data/wrongside/wrongside_selfconsistent_teff{teff}_gravms2{grav_ms2}_fsed{fsed}_nc{nc}_dt{tstamp}.txt")) as f:
+                    with open(join(picaso_root, f"data/wrong_side_results/wrongside_teff{teff}_gravms2{grav_ms2}_fsed{fsed}_nc{nc}_cloudmodeselfconsistent_dt{tstamp}.txt")) as f:
                         f.write("inf or NaN error")
 
