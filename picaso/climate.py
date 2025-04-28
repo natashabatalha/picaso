@@ -664,8 +664,6 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                             grad_x, cp_x = did_grad_cp( beta[j1-1], press, t_table, p_table, grad, cp, calc_type)
                         
                         temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
-                
-                
 
                 # temperature has been perturbed
                 # now recalculate the IR fluxes, so call picaso with only thermal
@@ -713,9 +711,6 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                     n_bot_c = nstr[nc+2] +1
                     
                     
-                        
-                    
-                   
                     if n_top_c == n_top_r+1 :
                         
                         A[n_top_c-nco,jm-no] = (flux_net_ir[n_top_c]-flux_net_old[n_top_c])/del_t
@@ -723,13 +718,11 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
                     else:
                         
                         A[n_top_c-nco,jm-no] = (flux_net_ir_layer[n_top_c-1]-flux_net_midpt_old[n_top_c-1])/del_t
-                        
                     
                     
                     # omitted -1 to include last element 
                     
                     for im in range(n_top_c,n_strt_c):
-                        #print(im+1-nco,jm-no, "3rd",jm,no)
                         A[im+1-nco,jm-no] = (flux_net_ir_layer[im]-flux_net_midpt_old[im])/del_t
                         
                     # changing them back to what they were
@@ -754,7 +747,6 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
             no += n_conv_bot-n_strt
         
         # a long print statement here in original. dont know if needed
-
         
         for i in range(n_total):
             sum=0.0
@@ -773,6 +765,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
         #raise Exception ("stop")
 
         A, p = mat_sol(A, nlevel, n_total, p)
+
         
         #print(p)
         
@@ -1026,7 +1019,7 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
         if save_profile == 1:
             all_profiles = np.append(all_profiles,temp_old)
             cldsave_count += 1
-        print(f"{cldsave_count = }")
+        
         if flag_converge == 2 : # converged
             # calculate  lapse rate
             dtdp=np.zeros(shape=(nlevel-1))
