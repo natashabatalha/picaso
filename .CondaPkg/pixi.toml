@@ -1,5 +1,6 @@
 [dependencies]
 openssl = ">=3, <3.1"
+scipy = "*"
 
     [dependencies.python]
     channel = "conda-forge"
