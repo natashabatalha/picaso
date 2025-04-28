@@ -49,7 +49,7 @@ for teff in [1100, 1600, 2200]:
             nstr_start = np.copy(nstr)
             rfacv = 0.5
             
-            with h5py.File(join(picaso_root, f"data/wrongside/wrongside_guesses_teff{teff}_grav{grav_ms2}_fsed{fsed}.h5")) as f:
+            with h5py.File(join(picaso_root, f"data/wrongside/wrongside_fixed_guesses_teff{teff}_grav{grav_ms2}_fsed{fsed}.h5")) as f:
                 guess_levels = np.array(f["guess_levels"])
                 pressure_grid = np.array(f["pressure"])
                 temp_guesses = [np.array(f["temperature_guess_"+str(x).zfill(2)]) for x in guess_levels]
@@ -118,7 +118,7 @@ for teff in [1100, 1600, 2200]:
                         cloud_outputs[k] = np.array([x[k] for x in [postproc_cld_out]])
 
                     tstamp = datetime.now().isoformat().replace(":", ".")
-                    with h5py.File(join(picaso_root, f"data/wrongside/wrongside_fixed_fsed{fsed}_teff{teff}_nstrupper{nstr_upper}_cloudmode{cloudmode}_dt{tstamp}.h5", "w")) as f:
+                    with h5py.File(join(picaso_root, f"data/wrong_side_results/wrongside_teff{teff}_gravms2{grav_ms2}_fsed{fsed}_nc{nc}_cloudmode{cloudmode}_dt{tstamp}.h5"), "w") as f:
                         p_picaso = f.create_dataset("pressure_picaso", data=out_fixed["pressure"])
                         p_virga = f.create_dataset("pressure_virga", data=postproc_cld_out["pressure"])
                         f.create_dataset("nstrs", data=np.array(out_fixed["nstr"]))
@@ -131,6 +131,6 @@ for teff in [1100, 1600, 2200]:
                         p_virga.attrs["nstr_start"] = nstr_start
                         t = f.create_dataset("temperature_picaso", data=out_fixed["all_profiles"])
                 except ValueError:
-                    with open(join(picaso_root, f"data/wrongside/wrongside_fixed_fsed{fsed}_teff{teff}_nstrupper{nstr_upper}.txt", "w")) as f:
+                    with open(join(picaso_root, f"data/wrong_side_results/wrongside_teff{teff}_gravms2{grav_ms2}_fsed{fsed}_nc{nc}_cloudmode{cloudmode}_dt{tstamp}.h5.txt", "w")) as f:
                         f.write(f"inf or NaN error")
 

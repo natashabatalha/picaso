@@ -57,6 +57,36 @@ for teff in [1100, 1600, 2200]:
                 h5file.attrs["nb"] = nb
                 
 # %%
-with h5py.File("../../data/wrongside/wrongside_guesses_teff1100_grav316_fsed1.h5") as f:
-    print(f.attrs["nb"])
+fixed_count = 0
+# repeat as above, but for fixed with every point 
+for teff in [1100, 1600, 2200]:
+    for grav_ms2 in [316, 3160]:
+        for fsed in [1, 8]:
+            df = pd.read_csv(f"../../data/sonora_diamondback/t{teff}g{grav_ms2}f{fsed}_m0.0_co1.0.pt", sep=r"\s+", skiprows=[1])
+            pressure = np.array(df["P"])
+            nc, nb = find_nc_nb(teff, grav_ms2, fsed)
+            guess_levels = range(max(0, min(nc, nb) - 5), min(88, max(nc, nb) + 5))
+            temperature_guesses = []
+            for ng in guess_levels:
+                temperature_guesses.append(temperature_guess_for_crossing(teff, grav_ms2, fsed, ng))
+            output_file = f"../../data/wrongside/wrongside_fixed_guesses_teff{teff}_grav{grav_ms2}_fsed{fsed}.h5"
+            guess_levels_str = [str(ng).zfill(2) for ng in guess_levels]
+            with h5py.File(output_file, "w") as h5file:
+                for (ng, tg) in zip(guess_levels_str, temperature_guesses):
+                    fixed_count += 1
+                    h5file.create_dataset(f"temperature_guess_{ng}", data=tg)
+                h5file.create_dataset("guess_levels", data=guess_levels)
+                h5file.create_dataset("pressure", data=pressure)
+                h5file.attrs["teff"] = teff
+                h5file.attrs["grav_ms2"] = grav_ms2
+                h5file.attrs["fsed"] = fsed
+                h5file.attrs["nc"] = nc
+                h5file.attrs["nb"] = nb
+                
+fixed_count
+# %%
+with h5py.File("../../data/wrongside/wrongside_fixed_guesses_teff1600_grav316_fsed1.h5") as f:
+    guess_levels = (np.array(f["guess_levels"]))
+    temp_guesses = [np.array(f["temperature_guess_"+str(x).zfill(2)]) for x in guess_levels]
+    
 # %%
