@@ -1,7 +1,7 @@
 import numpy as np
 import json 
 from astropy.utils.misc import JsonCustomEncoder
-from astropy.convolution import convolve
+from astropy.convolution import convolve, Gaussian1DKernel
 import arviz as az
 import dynesty
 import pandas as pd
@@ -1003,55 +1003,46 @@ class Parameterize():
 
         return opd_by_layer
 
-    def free_chemistry(self, species): 
-
-        """
-        Free vertically constant abundances
-
-        Parameters 
-        ----------
-        species: dict
-            Dictionary with abundances. Each key should be a molecule/atom.
-
-        Return
-        ------
-        Data frame with chemical abundances per level
-        """
-        pressure = self.pressure_level
-        nlevels = len(pressure)
-
-        mixing_ratios=dict(pressure=pressure)
-        
-        try:
-            for i in species.keys():
-                if species[i]['type']=='constant':
-                    mixing_ratios[i]=self.constant_abundance(self, species[i])
-                elif species[i]['type']=='npoint':
-                    raise Exception('npoint abundance profile not yet available.')
-        except Exception as e:
-            raise Exception(f'Unknow profile type {species[i]['type']}')
-            
-        return pd.DataFrame(mixing_ratios)
-    
-    def constant_abundance(self,  VMR):
+    def free_constant_abundance(self,  species):
         ''''
         Abundance profile
 
         Parameters
         ----------
-        VMR: int or list
-            If int, assumes constant abundances, if list, implements a non-constant abundance profile
-            with as many knots as the length of the list 
+        species: dict
+            Dictionary containing the species and their abundances. Should 
+            also contain background gases and their ratios. 
+            Example: species=dict(H2O=dict(value=1e-4, unit='v/v'), background=dict(gases=['H2', 'He'], ratios=[0.85, 0.15]))
 
         Return
         ------
-        Abundances by pressure level
+        Data frame with chemical abundances per level
         '''
 
         pressure=self.pressure_level
         nlevels=len(pressure)
-            
-        return VMR*np.ones(nlevels)
+
+        # Initialize dictionary to put in the datafram
+        mixing_ratios=dict(pressure=pressure)
+
+        # Keep track of the total abundances to make sure they add to 1
+        total_abundance=0
+        
+        for i in species.keys():
+            if i!='background':
+                mixing_ratios[i]=np.ones(nlevels)*species[i]['value']
+                total_abundance+=species[i]['value']
+
+        # Add background gases
+        n_background=len(species['background']['gases'])
+        for i in range(n_background):
+            mol=species['background']['gases'][i]
+            abun=species['background']['ratios'][i]
+            mixing_ratios[mol]=np.ones(nlevels)*(1-total_abundance)*abun
+        
+        self.picaso.inputs['atmosphere']['profile'] = pd.DataFrame(mixing_ratios)
+        
+        return pd.DataFrame(mixing_ratios)
 
     def madhu_seager_09_noinversion(self, alpha_1, alpha_2, P1, P3, T3, beta=0.5):
         """"
@@ -1089,7 +1080,7 @@ class Parameterize():
 
         temp_by_level = convolve(temp_by_level,Gaussian1DKernel(5),boundary='extend')
 
-        return temp_by_level
+        return pd.DataFrame(dict(pressure=pressure, temperature=temp_by_level))
     
     def madhu_seager_09_inversion(self, alpha_1, alpha_2, P1, P2, P3, T3, beta=0.5):
         """"
@@ -1128,9 +1119,9 @@ class Parameterize():
 
         temp_by_level = convolve(temp_by_level,Gaussian1DKernel(5),boundary='extend')
 
-        return temp_by_level
+        return pd.DataFrame(dict(pressure=pressure, temperature=temp_by_level))
     
-    def knot_profile(self,  P_knot, T_knot, interpolation='brewster'):
+    def knot_profile(self,  P_knots, T_knots, interpolation='brewster'):
         """"
         Knot-based temperature profile. Implements different types of interpolation.
 
@@ -1147,26 +1138,33 @@ class Parameterize():
 
         temp_by_level = np.zeros(nlevel)
 
-        P0 = pressure[0]
-
+        # Interpolation requires pressures to be sorted from lowest to highest
+        order = np.argsort(P_knots)
+        P_knots=np.array(P_knots)[order]
+        T_knots=np.array(T_knots)[order]
+        
+        # Perform the interpolation
         if interpolation=='brewster':
-            interpolator = interpolate.splrep(np.log10(P_knot), T_knot, s=0)
+            interpolator = interpolate.splrep(np.log10(P_knots), T_knots, s=0)
             temp_by_level=np.abs(interpolate.splev(np.log10(pressure),interpolator,der=0))
         elif interpolation=='linear':
-            interpolator = interpolate.interp1d(np.log10(P_knot), T_knot, kind='linear', bounds_error=False, fill_value='extrapolate')
+            interpolator = interpolate.interp1d(np.log10(P_knots), T_knots, kind='linear', bounds_error=False, fill_value='extrapolate')
             temp_by_level = interpolator(np.log10(pressure))
-        elif interpolation=='quadratic':
-            assert len(P_knot)>=3, 'Quadratic splines require at least 3 knots'
-            interpolator = interpolate.interp1d(np.log10(P_knot), T_knot, kind='quadratic', bounds_error=False, fill_value='extrapolate')
+        elif interpolation=='quadratic_spline':
+            assert len(P_knots)>=3, 'Quadratic splines require at least 3 knots'
+            interpolator = interpolate.interp1d(np.log10(P_knots), T_knots, kind='quadratic', bounds_error=False, fill_value='extrapolate')
             temp_by_level = interpolator(np.log10(pressure))
-        elif interpolation=='cubic':
-            assert len(P_knot)>=4, 'Cubic splines require at least 4 knots'
-            interpolator = interpolate.interp1d(np.log10(P_knot), T_knot, kind='cubic', bounds_error=False, fill_value='extrapolate')
+        elif interpolation=='cubic_spline':
+            assert len(P_knots)>=4, 'Cubic splines require at least 4 knots'
+            interpolator = interpolate.interp1d(np.log10(P_knots), T_knots, kind='cubic', bounds_error=False, fill_value='extrapolate')
             temp_by_level = interpolator(np.log10(pressure))
+        elif getattr(interpolate, interpolation, np.nan)!=np.nan:
+            interpolator = getattr(interpolate, interpolation)
+            interpolator(np.log10(P_knots), T_knots, *scipy_interpolate_kwargs)
         else:
             raise Exception(f'Unknown interpolation method \'{interpolation}\'')
 
-        return temp_by_level
+        return pd.DataFrame(dict(pressure=pressure, temperature=temp_by_level))
 
 
 def atlev(l0,pressure_layer):
