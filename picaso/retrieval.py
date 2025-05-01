@@ -886,7 +886,7 @@ class Parameterize():
 
         return df 
     
-    def brewster_grey_cloud(self, decay_type, alpha,reference_wave=1,
+    def brewster_grey_cloud(self, decay_type, alpha, ssa, reference_wave=1,
                   slab_kwargs={'ptop':np.nan,'dp':np.nan, 'reference_tau':np.nan},
                   deck_kwargs={'ptop':np.nan,'dp':np.nan}): 
         """
@@ -894,6 +894,8 @@ class Parameterize():
 
         Parameters
         ----------
+        ssa: float
+            Single Scattering Albedo: can have values from 0 to 1
  
         Returns 
         -------
@@ -912,7 +914,7 @@ class Parameterize():
         wave_dependent_opd =  np.concatenate([opd_profile[i]*(wavelength/reference_wave)**(-alpha) for i in range(self.nlayer)])
         wvnos =  np.concatenate([wavenumber_grid for i in range(self.nlayer)])
         pressures =  np.concatenate([[self.pressure_layer[i]]*len(wavelength) for i in range(self.nlayer)])
-        w0=wave_dependent_opd*0+0.99#arbitrary what is used? 
+        w0=wave_dependent_opd*0+ssa
         g0=wave_dependent_opd*0
         df=pd.DataFrame({
                 'opd':wave_dependent_opd,
