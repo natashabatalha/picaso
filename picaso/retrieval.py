@@ -896,6 +896,8 @@ class Parameterize():
         ----------
         ssa: float
             Single Scattering Albedo: can have values from 0 to 1
+        alpha: float
+            set to 0 for grey cloud
  
         Returns 
         -------
