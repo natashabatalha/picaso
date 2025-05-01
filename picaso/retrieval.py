@@ -928,7 +928,7 @@ class Parameterize():
 
     def deck_decay(self,ptop, dp=0.005): 
         """
-        Emualtes brewster opacity decay for the deck model 
+        Emualates brewster opacity decay for the deck model 
         
         Parameters 
         ----------
@@ -1167,7 +1167,6 @@ class Parameterize():
             raise Exception(f'Unknown interpolation method \'{interpolation}\'')
 
         return pd.DataFrame(dict(pressure=pressure, temperature=temp_by_level))
-
 
 def atlev(l0,pressure_layer):
     nlayers = pressure_layer.size
