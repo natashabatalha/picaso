@@ -2443,7 +2443,7 @@ def find_strat(bundle, nofczns,nstr,
 
     #call bundle for moist adiabat option (moved out of if statement for numba issue)
     bundle.add_pt( temp, pressure)
-    bundle.premix_atmosphere(opacityclass, cld_species=cld_species)
+    bundle.premix_atmosphere(opacityclass,verbose=verbose)
     Atmosphere = calculate_atm(bundle,opacityclass,only_atmosphere=True)
     dtdp = Atmosphere.dtdp
 
@@ -2638,7 +2638,6 @@ def find_strat(bundle, nofczns,nstr,
 
     chem = bundle.inputs['atmosphere']['profile']
     #right now this bundle does not have the up to date chemistry
-    print('TODO flag in climate.py 2794 chem bundle might be out of date but currently things look good')
     # TO DO : add chemistry and also condense last three "all" variables into one tuple
     return profile_flag, pressure, temp, dtdp, nstr ,flux_net_ir_layer, flux_net_v_layer, flux_plus_ir_attop, chem, cld_out,all_profiles,all_opd,all_kzz
 
@@ -2747,7 +2746,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     if moist == True:
         #moist adiabat with simple chemeq 
         bundle.add_pt( temp, pressure)
-        bundle.premix_atmosphere(opa=opacityclass,cld_species=cld_species)
+        bundle.premix_atmosphere(opa=opacityclass,verbose=verbose)
         Atmosphere = calculate_atm(bundle,opacityclass,only_atmosphere=True)
 
         # first calculate the convective zones
@@ -2780,8 +2779,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
 
     ### 1) ALWAYS UPDATE PT, CHEM, OPACITIES
     bundle.add_pt( temp, pressure)
-    bundle.premix_atmosphere(opa = opacityclass,quench_levels=None,
-                             cld_species=cld_species)
+    bundle.premix_atmosphere(opa = opacityclass,quench_levels=None,verbose=verbose)
     
     # get opacities for the first time with simple chem 
     # this first call will be refreshed before tstart if things like chemistry are changed from the quench approx
@@ -2807,12 +2805,11 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     ##  3-a) option 1: GET QUENCH LEVELS FOR DISEQ and UPDATE CHEM
     if do_quench_appox:
         quench_levels=update_quench_levels(bundle, Atmosphere, kz, grav,verbose=verbose)
-        bundle.premix_atmosphere(opa=opacityclass,quench_levels=quench_levels,
-            cld_species=cld_species)
+        bundle.premix_atmosphere(opa=opacityclass,quench_levels=quench_levels,verbose=verbose)
     ##  3-b) option 2: GET PHOTOCHEM
     if full_kinetis: 
         quench_levels=update_quench_levels(bundle, Atmosphere, kz, grav,verbose=verbose)
-        bundle.premix_atmosphere_photochem(quench_levels=quench_levels)
+        bundle.premix_atmosphere_photochem(quench_levels=quench_levels,verbose=verbose)
     
     ### 4) IF: COMPUTE CLOUDS 
     if cloudy :
@@ -2859,8 +2856,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         ### 1) ALWAYS UPDATE PT, CHEM, OPACITIES
         bundle.add_pt( temp, pressure)
         #simple chem no quenching 
-        bundle.premix_atmosphere(opa = opacityclass,quench_levels=None,
-                                cld_species=cld_species) 
+        bundle.premix_atmosphere(opa = opacityclass,quench_levels=None,verbose=verbose) 
         
         ### 2) IF: UPDATE KZZ 
         if do_kzz_calc:
@@ -2887,13 +2883,12 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         ##  3-a) option 1: GET QUENCH LEVELS FOR DISEQ and UPDATE CHEM
         if do_quench_appox:   
             quench_levels=update_quench_levels(bundle, Atmosphere, kz, grav,verbose=verbose)
-            bundle.premix_atmosphere(opa=opacityclass,quench_levels=quench_levels,
-                cld_species=cld_species)
+            bundle.premix_atmosphere(opa=opacityclass,quench_levels=quench_levels,verbose=verbose)
         
         ##  3-b) option 2: GET PHOTOCHEM
         if full_kinetis: 
             quench_levels=update_quench_levels(bundle, Atmosphere, kz, grav,verbose=verbose)
-            bundle.premix_atmosphere_photochem(quench_levels=quench_levels)
+            bundle.premix_atmosphere_photochem(quench_levels=quench_levels,verbose=verbose)
             
         ### 4) IF: COMPUTE CLOUDS 
         if cloudy:

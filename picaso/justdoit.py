@@ -1,15 +1,13 @@
 from .atmsetup import ATMSETUP
 from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d
 
-from .fluxes import tidal_flux
-from .climate import  did_grad_cp, convec, calculate_atm, t_start, growdown, growup, get_fluxes, moist_grad,namedtuple,run_chemeq_climate_workflow,run_diseq_climate_workflow
+from .climate import  namedtuple,run_chemeq_climate_workflow,run_diseq_climate_workflow
 
 
 from .wavelength import get_cld_input_grid
 from .optics import RetrieveOpacities,compute_opacity,RetrieveCKs
 from .disco import get_angles_1d, get_angles_3d, compute_disco, compress_disco, compress_thermal
-from .justplotit import numba_cumsum, find_nearest_2d, mean_regrid
-#from .deq_chem import quench_level,initiate_cld_matrices
+from .justplotit import numba_cumsum, mean_regrid
 from .build_3d_input import regrid_xarray
 
 
@@ -1831,7 +1829,7 @@ class inputs():
 
 
     def atmosphere(self, df=None, filename=None, exclude_mol=None, 
-        mh=None, cto=None, chem_method=None,
+        mh=None, cto_absolute=None, cto_relative=None, chem_method=None,
         #for now the next line is only climate params 
         quench=False,no_ph3=False,cold_trap=False,vol_rainout=False,
         #these only used for photochem climate 
@@ -1898,6 +1896,7 @@ class inputs():
         pd_kwargs : kwargs 
             Key word arguments for pd.read_csv to read in supplied atmosphere file 
         """        
+        
         #if a dataframe was input lets check it out and set nlevels
         if not isinstance(df, type(None)):
             if ((not isinstance(df, dict )) & (not isinstance(df, pd.core.frame.DataFrame ))): 
@@ -1954,9 +1953,18 @@ class inputs():
                     self.inputs['approx']['rt_params']['common']['raman'] = 2
 
         #now, if mh and cto were supplied lets add those to inputs and set the chem method requestd 
-        if ((mh != None ) and (cto != None)):
+        if (mh != None ):
             self.inputs['atmosphere']['mh'] = mh 
-            self.inputs['atmosphere']['cto'] = cto 
+            if ((cto_absolute == None) and isinstance(cto_relative, (float,int))): 
+                cto_absolute=cto_relative*0.549
+            elif (cto_relative ==None and isinstance(cto_absolute, (float,int))): 
+                cto_relative = cto_absolute/0.549 #such that if user did c/o=1, then cto=0.549
+            elif 'cto' in pd_kwargs: 
+                raise Exception('cto is not an acceptance argument. need to input either cto_relative or cto_absolute.')
+            else: 
+                raise Exception('mh was specified but cto_relative or cto_absolute was not. need to input one of these. ')
+            self.inputs['atmosphere']['cto_relative'] = cto_relative 
+            self.inputs['atmosphere']['cto_absolute'] = cto_absolute 
             self.inputs['approx']['chem_method'] = chem_method
         
         #add photochem initialization if it exists 
@@ -2001,11 +2009,17 @@ class inputs():
 
         # Option : simplest method where we just grab visscher abundances 
         
-        if 'visscher' in str(chem_method):            
+        if 'visscher_1060' in str(chem_method):            
             mh = self.inputs['atmosphere']['mh'] 
-            cto = self.inputs['atmosphere']['cto']   
-            if run: self.chemeq_visscher(cto, np.log10(mh))   
+            cto = self.inputs['atmosphere']['cto_relative']   
+            if run: self.chemeq_visscher_1060(cto, np.log10(mh))   
             found_method = True
+        elif 'visscher_2020' in str(chem_method):  
+            mh = self.inputs['atmosphere']['mh'] 
+            cto = self.inputs['atmosphere']['cto_absolute']   
+            if run: self.chemeq_visscher_2020(cto, np.log10(mh)) 
+            found_method = True
+
         if (('photochem' in str(chem_method)) and (self.inputs['climate'].get('pc',0)==0)): 
             #initialize photochemistry inputs on first time 
             self.photochem_init()
@@ -2020,14 +2034,61 @@ class inputs():
         #Option : No other options so far 
         elif not found_method: 
             raise Exception(f"A chem option {chem_method} is not valid. Likely you specified method='resrotrebin' in opannection but did not run `atmosphere()` function after inputs_climate.") 
+    
+    def volatile_rainout(self,quench_levels,species_to_consider = ['H2O', 'CH4','NH3']):
+        quench_molecules = np.concatenate([i.split('-') for i in quench_levels.keys()])
+        quench_by_molecule={}
+        
+        #Q TO JM: Do we only want to loop through the three below 
+        
+        species_to_adjust = [i for i in species_to_consider if i in self.inputs['atmosphere']['profile'].keys()]
 
-    def cold_trap(self, cld_species): 
+        #species_to_adjust = [i for i in cld_species if i in self.inputs['atmosphere']['profile'].keys()]
+        #species_to_adjust = [i for i in species_to_adjust if i in consider_only_these]
+        
+
+        #only consider the three above for now
+        
+        
+        for iq in quench_levels.keys():
+            for imol in species_to_adjust: 
+                if imol in iq: quench_by_molecule[imol]=quench_levels[iq]
+
+        H2 = self.inputs['atmosphere']['profile']['H2'].values
+        for imol in species_to_adjust: 
+            old = self.inputs['atmosphere']['profile'].loc[:,imol].values 
+            #skip anything we dont have a quench level for
+            if imol not in quench_molecules: continue 
+
+            get_pvap = getattr(vj.pvaps,imol,0)
+            
+            #only proceed if we actually have a saturation vapor pressure curve
+            if get_pvap !=0:
+                #get the quench abundance so we have a point of comparison
+                quench_abundance=self.inputs['atmosphere']['profile'].loc[quench_by_molecule[imol],imol]
+                #for above layers to the quench point at depth 
+                for i in range(0,quench_by_molecule[imol]+1): 
+                    #get the pvap abundance at this temperature 
+                    pvap_abundance = get_pvap(self.inputs['atmosphere']['profile'].loc[i,'temperature'])*1e-6
+                    #compare and reset the profile abundance 
+                    if pvap_abundance < quench_abundance:
+                        self.inputs['atmosphere']['profile'].loc[i,imol] = pvap_abundance
+            
+            new = self.inputs['atmosphere']['profile'].loc[:,imol].values 
+            diff = old - new 
+            H2 = H2 + diff 
+
+        #reset H2 accordingly
+        self.inputs['atmosphere']['profile'].loc[:,'H2'] = H2
+
+    def cold_trap(self,species_to_consider = ['H2O','CH4','NH3']): 
         """
         Enforces cold trapping along the chemeq grid fro any species included in the cld_species set 
         """
         #only adjust species that actually have chem computed 
-        species_to_adjust = [i for i in cld_species if i in self.inputs['atmosphere']['profile'].keys()]
-
+        
+        species_to_adjust = [i for i in species_to_consider if i in self.inputs['atmosphere']['profile'].keys()]
+        H2 = self.inputs['atmosphere']['profile']['H2'].values
         for mol in species_to_adjust:
             #can generalize later for other mh and mmw but for now, good enough to gauge where to start coldtrapping
             cond_p, cond_t = vj.condensation_t(mol, 1, 2.2, pressure = self.inputs['atmosphere']['profile']['pressure'])            
@@ -2048,16 +2109,18 @@ class inputs():
             # Find the first layer where the abundance starts to fall off
             # cond_idx = np.where(grad > threshold)[0]
             #JMcond_layer = self.nlevel - cutoff #- cond_idx[0]
-
+            old = self.inputs['atmosphere']['profile'].loc[:,mol].values 
             for i in range(cond_layer-1, 0, -1): 
-                if self.inputs['atmosphere']['profile'][mol][i] < self.inputs['atmosphere']['profile'][mol][i-1]:
-                    self.inputs['atmosphere']['profile'][mol][i-1] = self.inputs['atmosphere']['profile'][mol][i]
-    
+                if self.inputs['atmosphere']['profile'].loc[i,mol] < self.inputs['atmosphere']['profile'].loc[i-1,mol]:
+                    self.inputs['atmosphere']['profile'].loc[i-1,mol] = self.inputs['atmosphere']['profile'].loc[i,mol]
+            new = self.inputs['atmosphere']['profile'].loc[:,mol].values 
+            diff = old - new 
+            H2 = H2 + diff 
+        
+        #reset H2 accordingly
+        self.inputs['atmosphere']['profile'].loc[:,'H2'] = H2
 
-
-
-    def premix_atmosphere(self, opa=None, quench_levels=None,
-        cld_species = ['H2O', 'CH4', 'NH3']):
+    def premix_atmosphere(self, opa=None, quench_levels=None, verbose=True):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
         Sets number of layers in model.  
@@ -2074,27 +2137,31 @@ class inputs():
 
         #now chemistry options can be enforced 
         self.chemistry_handler(chemistry_table=chemistry_table)
-        
-        # cold trap the condensibles 
-        if self.inputs['approx']['chem_params']['cold_trap']: 
-            self.cold_trap(cld_species=cld_species)
 
         #if a quench level dictionary is provided 
         if self.inputs['approx']['chem_params']['quench'] and isinstance(quench_levels,dict):
+            if verbose: print('Quench=True; Adjusting quench chemistry')
             self.adjust_quench_chemistry(quench_levels)
-
+       
         # volatile rainout 
         if self.inputs['approx']['chem_params']['vol_rainout'] and isinstance(quench_levels,dict): 
-            self.vol_rainout(quench_levels)
+            if verbose: print(f'vol_rainout=True; Adjusting volatile rainout')
+            self.volatile_rainout(quench_levels)
+
+        # cold trap the condensibles 
+        if self.inputs['approx']['chem_params']['cold_trap']: 
+            if verbose: print(f'cold_trap=True; Adjusting cold trap')
+            self.cold_trap()
 
         #zero out ph3 if hack requested
         if self.inputs['approx']['chem_params']['no_ph3']: 
             #check to see if its there, and zero out if it is 
+            if verbose: print('no_ph3=True; Goodbye PH3!')
             if 'PH3' in self.inputs['atmosphere']['profile'].keys(): 
                 self.inputs['atmosphere']['profile']['PH3'] = 0
     
-    def premix_atmosphere_photochem(self,quench_levels=None):
-
+    def premix_atmosphere_photochem(self,quench_levels=None, verbose=True):
+        if verbose: print('Running photochem')
         #start by getting chemeq if it has been requested 
         self.chemistry_handler()
         #adjust quenching if we have levels to give us a better inital guess 
@@ -2479,6 +2546,7 @@ class inputs():
 
         self.chem_interp(opa.full_abunds)
 
+    #MAKE THIS THE DEFUALT FOR NOW FOR BACK COMAPTIBILITY
     
     def sonora(self, sonora_path, teff, chem='low'):
         """
@@ -2549,72 +2617,133 @@ class inputs():
         else: 
             raise Exception('Oops! Looks like the sonora path you specified does not contain any files that end in .cmp.gz or .dat. Please either: 1) untar the profile.tar file here https://zenodo.org/record/1309035#.Xo5GbZNKjGJ and point to this file path as your input. There should be around 390 files that end in cmp.gz. No need to unzip then individually. OR, 2) Alternatively you can download the structures files from the Bobcat grid located on zenodo https://zenodo.org/record/5063476#.YwPkduzMI-Q')
 
-        if chem == 'high':
-            self.channon_grid_high(filename=os.path.join(__refdata__, 'chemistry','grid75_feh+000_co_100_highP.txt'))
-        elif chem == 'low':
+        if chem == 'low':
             self.channon_grid_low(filename=os.path.join(__refdata__,'chemistry','visscher_abunds_m+0.0_co1.0' ))
         elif chem=='grid':
             #solar C/O and M/H 
             self.chemeq_visscher(c_o=1.0,log_mh=0.0)
         self.inputs['atmosphere']['sonora_filename'] = build_filename
 
-    def chemeq_deprecate(self, CtoO, Met):
+
+    def chemeq_visscher_2020(self, cto_absolute, log_mh):#, interp_window = 11, interp_poly=2):
         """
-        This interpolates from a precomputed grid of CEA runs (run by M.R. Line)
+        Author of Data: Channon Visscher
+
+        SONORAPY 2020 CHEMISTRY GRIDS README
+        ***BETA VERSION*** Spring 2024
+        Channon Visscher
+
+
+        PYTHON IMPLEMENTATION OF THE SONORA CHEMICAL EQUILIBRIUM ABUNDANCE GRIDS
+
+
+        Based upon easyCHEM Python package of NASA CEA code, written Elise Lei and Paul Mollière
+        See https://easychem.readthedocs.io/en/latest/index.html
+
+
+        This version prints the "2020" grid, which includes all grid points calculated in prior grids
+        2020 data points:
+        * 20 pressures, from 1e-06 to to 3e03 bar 
+        * 101 temperatures, from 75 K to 6000 K
+
+
+        ****************************************************************************************
+        GRID NOTES
+        * the full equilibrium calculation includes numerous additional species; the species
+        reported here are a selected output of abundances requested for opacity calculations
+        * unless calculated, gas abundances at low temperatures set to 1e-50
+        * graphite condensation is included in the calculations; 
+        the graphite stability field is also indicated in the contour plots
+        * consideration of ion chemistry over all temperatures included
+        * PH3 is adopted as the stable low-T P-bearing gas (i.e., JANAF P4O6 data); this can 
+        be switched by replacing 'P4O6(JANAF)' with 'P4O6(Gurvich)' in the species list
+        * This version may be considered a "minimum working example" to test for consistency
+        with previous NASA CEA calculations used in SONORA equilibrium chemistry grids
+        
+        ****************************************************************************************
+        METALLICITY VARIATIONS AND THE CARBON-TO-OXYGEN RATIO
+
+
+        The C/O ratio is calculated as follows:
+        1) all abundances are read-in from abundance database
+        2) all elements heavier than helium multiplied by metallicity factor (10^feh)
+        where feh is the metallicity in dex (i.e. feh = 1.0 is 10x solar
+        3) the C/O factor is defined relative to solar (i.e. co_factor = 1 is bulk solar ratio)
+        4) the new C/O ratio adjusted by keeping C + O = constant and adjusting the carbon-to-oxygen
+        ratio by the co_factor
+
+
+        This approach keeps the heavy-element-to-hydrogen ratio (Z/X) constant for a given [Fe/H]
+
+
+        FE/H: -1.0 -0.7 -0.5 -0.3  0.0  0.5  1.0  1.3  1.7  2.0
+        C/O x:
+        0.25    X    0    0    0    X    0    X    0    0    0     
+        0.5     X    0    0    0    X    0    X    0    0    0     
+        1.0     X    0    0    0    S    0    X    0    0    0     
+        1.5     X    0    0    0    X    0    X    0    0    0     
+        2.0     X    0    0    0    X    0    X    0    0    0     
+        2.5     X    0    0    0    X    0    X    0    0    0 
+
+
+
+
+        SOLAR METALLICITY DENOTED BY 'S' ABOVE
+
+
+        METALLICITY AND C/O RATIO INDICATED BY FILENAME
+
+
+        output_fehxxx_coyyy.txt
+
+
+        where
+        xxx = feh value in dex (e.g., 0.0 for solar)
+        yyy = if "x", co_factor value (e.g., 1.0 for 1x solar C/O)
+        yyy = bulk c/o ratio (e.g. 0.549 for solar) - python grids
+
         Parameters
         ----------
-        CtoO : float
-            C to O ratio (solar = 0.55)
-        Met : float 
-            Metallicity relative to solar (solar = 1)
+        co : int 
+            carbon to oxygen ratio relative to solar.
+            Solar = 1
+        log_mh : int 
+            metallicity (relative to solar)
+            Will find the nearest value to 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
+            Solar = 0
         """
-         
-        P, T = self.inputs['atmosphere']['profile']['pressure'].values,self.inputs['atmosphere']['profile']['temperature'].values
+        c_o=cto_absolute
+        #get fehs 
+        dir = os.path.join(__refdata__,'chemistry','visscher_grid_1460') 
+
+        fehs = np.array([float(i.split('/')[-1].split('feh')[-1]) for i in glob.glob(os.path.join(dir,'feh*'))])
+        #allowable cos 
+        #cos = np.array([0.25,0.5,1.0,1.5,2.0,2.5])
+
+        if log_mh > max(fehs): 
+            raise Exception('Choose a log metallicity less than 2.0')
         
-        T[T<400] = 400
-        T[T>2800] = 2800
+        grid_feh = fehs[np.argmin(np.abs(fehs-log_mh))]
 
-        logCtoO, logMet, Tarr, logParr, gases=self.chemeq_pic
-        assert Met <= 10**np.max(logMet), 'Metallicity entered is higher than the max of the grid: M/H = '+ str(np.max(10**logMet))+'. Make sure units are not in log. Solar M/H = 1.'
-        assert CtoO <= 10**np.max(logCtoO), 'C/O ratio entered is higher than the max of the grid: C/O = '+ str(np.max(10**logCtoO))+'. Make sure units are not in log. Solar C/O = 0.55'
-        assert Met >= 10**np.min(logMet), 'Metallicity entered is lower than the min of the grid: M/H = '+ str(np.min(10**logMet))+'. Make sure units are not in log. Solar M/H = 1.'
-        assert CtoO >= 10**np.min(logCtoO), 'C/O ratio entered is lower than the min of the grid: C/O = '+ str(np.min(10**logCtoO))+'. Make sure units are not in log. Solar C/O = 0.55'
+        #allowable cos 
+        cos = np.array([float(i.split('/')[-1].split('_co')[-1][:-4]) for i in glob.glob(os.path.join(dir,f'feh{grid_feh}','*txt'))])
 
-        loggas=np.log10(gases)
-        Ngas = loggas.shape[3]
-        gas=np.zeros((Ngas,len(P)))
-        for j in range(Ngas):
-            gas_to_interp=loggas[:,:,:,j,:]
-            IF=RegularGridInterpolator((logCtoO, logMet, np.log10(Tarr),logParr),gas_to_interp,bounds_error=False)
-            for i in range(len(P)):
-                gas[j,i]=10**IF(np.array([np.log10(CtoO), np.log10(Met), np.log10(T[i]), np.log10(P[i])]))
-        H2Oarr, CH4arr, COarr, CO2arr, NH3arr, N2arr, HCNarr, H2Sarr,PH3arr, C2H2arr, C2H6arr, Naarr, Karr, TiOarr, VOarr, FeHarr, Harr,H2arr, Hearr, mmw=gas
+        if c_o > max(cos): 
+            raise Exception('Choose a C/O less than 2.5xSolar')
 
-        df = pd.DataFrame({'H2O': H2Oarr, 'CH4': CH4arr, 'CO': COarr, 'CO2': CO2arr, 'NH3': NH3arr, 
-                           'N2' : N2arr, 'HCN': HCNarr, 'H2S': H2Sarr, 'PH3': PH3arr, 'C2H2': C2H2arr, 
-                           'C2H6' :C2H6arr, 'Na' : Naarr, 'K' : Karr, 'TiO': TiOarr, 'VO' : VOarr, 
-                           'Fe': FeHarr,  'H': Harr, 'H2' : H2arr, 'He' : Hearr, 'temperature':T, 
-                           'pressure': P})
-        self.inputs['atmosphere']['profile'] = df
-        return 
+        grid_co = cos[np.argmin(np.abs(cos-c_o))]
 
-    def channon_grid_high(self,filename=None):
-        if isinstance(filename, type(None)):filename=os.path.join(__refdata__,'chemistry','grid75_feh+000_co_100_highP.txt')
-        df = self.inputs['atmosphere']['profile'].sort_values('pressure').reset_index(drop=True)
+        filename = os.path.join(dir,f'feh{grid_feh}',f'output_feh{grid_feh}_co{grid_co}.txt')
 
-        #sort pressure
-        self.inputs['atmosphere']['profile'] = df
-        self.nlevel = df.shape[0]
-        
-        #player = df['pressure'].values
-        #tlayer  = df['temperature'].values
-        
-        grid = pd.read_csv(filename,sep=r'\s+')
-        grid['pressure'] = 10**grid['pressure']
+        header = pd.read_csv(filename).keys()[0]
+        cols = header.replace('T(K)','temperature').replace('P(bar)','pressure').split()
+        a = pd.read_csv(filename,sep=r'\s+',skiprows=1,header=None, names=cols)
+        a['pressure']=10**a['pressure']
 
-        self.chem_interp(grid)
 
-    def chemeq_visscher(self, c_o, log_mh):#, interp_window = 11, interp_poly=2):
+        self.chem_interp(a)
+
+    def chemeq_visscher_1060(self, c_o, log_mh):#, interp_window = 11, interp_poly=2):
         """
         Author of Data: Channon Visscher
 
@@ -2678,6 +2807,7 @@ class inputs():
 
         self.chem_interp(a)
 
+    chemeq_visscher = chemeq_visscher_1060
     def channon_grid_low(self, filename = None):
         """
         Interpolate from visscher grid
@@ -4354,7 +4484,11 @@ class inputs():
             self.inputs['planet']['T_eff'] = 0
     
     def interpret_run(self):
-        print('TODO: would love to have a full summary of what the run is here so users can double check they are happy with their inputss')
+        print('SUMMARY')
+        print('-------')
+        print('Clouds:', self.inputs['climate'].get('cloudy',False))
+        for i,j in self.inputs['approx']['chem_params'].items(): print(i,j)
+        print('Moist Adiabat:', self.inputs['climate']['moistgrad'])
         return 
     
     def inputs_climate(self, temp_guess= None, pressure= None, rfaci = 1,nofczns = 1 ,
@@ -4562,36 +4696,35 @@ class inputs():
         #do_holes = self.inputs['climate']['do_holes']
         #fhole = self.inputs['climate']['fhole']
         #fthin_cld = self.inputs['climate']['fthin_cld']
-        
-        #scattering properties 
-        opd_cld_climate = np.zeros(shape=(self.nlevel-1,nwno,4))
-        g0_cld_climate = np.zeros(shape=(self.nlevel-1,nwno,4))
-        w0_cld_climate = np.zeros(shape=(self.nlevel-1,nwno,4))
-        #BUNDLING
-        CloudParametersT = namedtuple('CloudParameters',['cloudy', 'OPD','G0','W0']+list(virga_kwargs.keys()))
-        #this adds the cloud params that are always needed plus the virga kwargs, if they are used 
-        CloudParameters=CloudParametersT(*([cloudy, opd_cld_climate,g0_cld_climate,w0_cld_climate,
-                                         ]+list(virga_kwargs.values())))
 
-
-        
-
-        # check mieff grid for virga if doing cloudy 
+        # check the dimensions of the mieff grid  
         if cloudy:
             mieff_dir = virga_kwargs.get('directory',None)
             if mieff_dir is None:
                 raise Exception('Need to specify directory for cloudy runs via Virga function')
-            # get_clouds should reinterpolate so it is okay that this isnt on the same grid.. 
+            # get_clouds should reinterpolate so it is okay that this isnt on the same grid but need to get the size 
             # check if the mieff file is on 661 grid
-            #miefftest = os.path.join(mieff_dir, [f for f in os.listdir(mieff_dir) if f.endswith('.mieff')][0])
-            #with open(miefftest, 'r') as file:
-            #    gridsize = float(file.readline().split()[0])
+            miefftest = os.path.join(mieff_dir, [f for f in os.listdir(mieff_dir) if f.endswith('.mieff')][0])
+            with open(miefftest, 'r') as file:
+                nwno_clouds = int(float(file.readline().split()[0]))
             
             #if diseq_chem and not chemeq_first and gridsize != 661:
             #    raise Exception('Mieff grid is not on 661 grid.')
             #raise warning temporarily until I can think of the best way to handle this
             #if diseq_chem and chemeq_first and gridsize == 661:
             #    raise Exception('Currently cannot do chemical equilibrium first for disequilibrium runs with clouds')
+
+
+        #scattering properties 
+        opd_cld_climate = np.zeros(shape=(self.nlevel-1,nwno_clouds,4))
+        g0_cld_climate = np.zeros(shape=(self.nlevel-1,nwno_clouds,4))
+        w0_cld_climate = np.zeros(shape=(self.nlevel-1,nwno_clouds,4))
+        #BUNDLING
+        CloudParametersT = namedtuple('CloudParameters',['cloudy', 'OPD','G0','W0']+list(virga_kwargs.keys()))
+        #this adds the cloud params that are always needed plus the virga kwargs, if they are used 
+        CloudParameters=CloudParametersT(*([cloudy, opd_cld_climate,g0_cld_climate,w0_cld_climate,
+                                         ]+list(virga_kwargs.values())))
+
 
         if verbose: self.interpret_run()
 
@@ -4652,7 +4785,11 @@ class inputs():
             all_out['all_kzz'] = all_kzz
 
         if with_spec:
-            self.atmosphere(df=chem_out)
+            #these inputs here are just to make sure that we know what we ran as we are directly inputting a dataframe
+            self.atmosphere(df=chem_out,quench = self.inputs['approx']['chem_params']['quench'], 
+                                        no_ph3 = self.inputs['approx']['chem_params']['no_ph3'],
+                                        cold_trap = self.inputs['approx']['chem_params']['cold_trap'], 
+                                        vol_rainout= self.inputs['approx']['chem_params']['vol_rainout'])
             if cloudy == 1:
                 cld_kwargs =dict( do_holes=virga_kwargs.get('do_holes',False), 
                                   fhole = virga_kwargs.get('fhole',0),
