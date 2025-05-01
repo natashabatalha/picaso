@@ -894,6 +894,8 @@ class Parameterize():
 
         Parameters
         ----------
+        decay_type: str
+            One of 'deck' or 'slab'
         ssa: float
             Single Scattering Albedo: can have values from 0 to 1
         alpha: float
