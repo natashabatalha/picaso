@@ -50,14 +50,14 @@ tint = 1800
 grav = 100
 
 cl_run.gravity(gravity=grav, gravity_unit=u.Unit('m/(s**2)')) # input gravity
-cl_run.effective_temp(teff) # input effective temperature
+cl_run.effective_temp(200) # input effective temperature
 
 opacity_ck = jdi.opannection(ck_db=ck_db) # grab your opacities
 
 nlevel = 91 # number of plane-parallel levels in your code
 # hd189_pressure = np.load("../data/silicate_test_cases/hd189_pressure.npy")
 hd189_pressure = np.logspace(-6, 2, 91)
-hd189_temperature = np.load("../data/silicate_test_cases/HD189_temperature.npy")
+hd189_temperature = np.load("../../data/silicate_test_cases/HD189_temperature.npy")
 nofczns = 1 # number of convective zones initially
 nstr_upper = 60 # top most level of guessed convective zone
 nstr_deep = nlevel - 2 # this is always the case. Dont change this

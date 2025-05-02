@@ -28,18 +28,22 @@ def read_diamondback_clouds(teff, grav_ms2, fsed):
     return df.rename(columns={"P(bar)": "pressure", "T(K)": "temperature", "kz(cm^2/s)": "kz"})
 
 # %%
-def run_virga_to_match_diamondback(teff, grav_ms2, fsed, gases, metallicity=1, mean_molecular_weight=2.2):
+from picaso.input_pickling import retrieve_function_call
+
+def run_virga_to_match_diamondback(teff, grav_ms2, fsed, gases, metallicity=1.0, mean_molecular_weight=2.356589064412746):
+    args, kwargs, _ = retrieve_function_call("../../data/pkl_inputs/compute_2025-05-01T16.34.43.486481.pkl")
     diamondback_ptk = read_diamondback_clouds(teff, grav_ms2, fsed)
     recommended_gases = vdi.recommend_gas(diamondback_ptk["pressure"], diamondback_ptk["temperature"], metallicity, mean_molecular_weight)
     recommended_gases = np.intersect1d(recommended_gases, gases)
-    sum_planet = vdi.Atmosphere(recommended_gases,fsed=fsed,mh=metallicity, mmw = mean_molecular_weight)
-    sum_planet.gravity(gravity=grav_ms2, gravity_unit=u.Unit('m/(s**2)'))
-    sum_planet.ptk(df = pd.DataFrame(diamondback_ptk))
-    return sum_planet.compute("~/projects/clouds/virga/refrind")
+    atm = args[0]
+    # sum_planet = atm
+    # sum_planet.gravity(gravity=grav_ms2, gravity_unit=u.Unit('m/(s**2)'))
+    atm.ptk(df = diamondback_ptk)
+    return vdi.compute(atm, **kwargs)
 
 # %%
 if __name__ == "__main__":
-    grav_ms2, fsed = 316, 3
+    grav_ms2, fsed = 316, 1
     virga_runs = {}
     for teff in [900, 1400, 1900, 2400]:
         virga_runs[teff] = [
@@ -50,7 +54,7 @@ if __name__ == "__main__":
     fig, axs = plt.subplots(2,2, figsize=(12,8))
     for (teff, ax) in zip([900, 1400, 1900, 2400], [axs[0,0], axs[0,1], axs[1,0], axs[1,1]]):
         vrun = virga_runs[teff][0]
-        dbclouds = read_diamondback_clouds(teff, fsed, grav_ms2)
+        dbclouds = read_diamondback_clouds(teff, grav_ms2, fsed)
         for (i, (c, color)) in enumerate(zip(vrun["condensibles"], ["black", "blue", "red", "green"])):
             ax.loglog(dbclouds[f"{c} qc(g/g)"], dbclouds["pressure"], label=f"Diamondback {c}", color=color)
             ax.loglog(vrun["condensate_mmr"][:,i], vrun["pressure"], label=f"virga {c}", color=color, ls="--")
@@ -60,7 +64,7 @@ if __name__ == "__main__":
             ax.legend()
         ax.invert_yaxis()
 
-    plt.savefig("../../figures/diamondback_virga_sync_bad.pdf")
+    plt.savefig("../../figures/diamondback_virga_sync_bad_20250501.pdf")
 
     # %%
     wl_idx = 146

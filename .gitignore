@@ -29,4 +29,6 @@ dist/
 *__pycache__/
 data/*
 grp/*
+.CondaPkg
 .CondaPkg/*
+*.mp4

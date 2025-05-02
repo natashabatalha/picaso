@@ -30,7 +30,6 @@ def run_clouds_for_climate(cld_species, cloudy, fsed, beta, param_flag, bundle, 
             
         kzz = get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr, output_abunds, moist = moist)
         bundle.inputs['atmosphere']['profile']['kz'] = kzz
-    
 
         cld_out = bundle.virga(cld_species,directory, fsed=fsed,mh=metallicity,
                     mmw = mean_molecular_weight, b = beta, param = param_flag, verbose=verbose) #,climate=True)

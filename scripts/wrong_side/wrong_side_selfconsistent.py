@@ -1,3 +1,4 @@
+# %%
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -22,9 +23,9 @@ CtoO = '100'#'1.0' # CtoO ratio
 
 ck_db = join(picaso_root, f"data/kcoeff_2020/sonora_2020_feh{mh}_co_{CtoO}.data.196")
 
-for teff in [1100, 1600, 2200]:
-    for grav_ms2 in [316, 3160]:
-        for fsed in [1, 8]:
+for teff in [1100]:
+    for grav_ms2 in [316]:
+        for fsed in [1]:
             print(f"effective temperature = {teff} K, gravity = {grav_ms2}, fsed = {fsed}")
             nstr_upper = 88
             cl_run = jdi.inputs(calculation="browndwarf", climate = True) # start a calculation - need to not have "brown" in `calculation`. BD almost always means free-floating.
@@ -44,6 +45,17 @@ for teff in [1100, 1600, 2200]:
                 nc_levels = [f.attrs[x] for x in ["nc", "nc_radiative", "nc_convective"]]
             
             for (nc, temp_guess) in zip(nc_levels, temp_guesses):
+                found_file = False
+                for f in os.listdir(join(picaso_root, "data/wrong_side_results")):
+                    if f.startswith(f"wrongside_selfconsistent_teff{teff}_gravms2{grav_ms2}_fsed{fsed}_nc{nc}"):
+                        found_file = True
+                        break
+                    
+                if found_file:
+                    pass
+                    #print("Case already run, continuing")
+                    #continue
+                temp_guess = np.maximum(temp_guess, 10.0)
                 cl_run.inputs_climate(temp_guess=temp_guess, pressure=pressure_grid,
                                     nstr = np.array([0,nstr_upper,nstr_deep,0,0,0]), nofczns = nofczns , rfacv = rfacv, cloudy = "selfconsistent", mh = '0.0', 
                                     CtoO = '1.0',species = cloud_species, fsed = fsed, beta = 0.1, virga_param = 'const',
@@ -58,7 +70,7 @@ for teff in [1100, 1600, 2200]:
                         cloud_outputs[k] = np.array([x[k] for x in out_selfconsistent["cld"]])
 
                     tstamp = datetime.now().isoformat().replace(":", ".")
-                    with h5py.File(join(picaso_root, f"data/wrong_side_results/wrongside_selfconsistent_teff{teff}_gravms2{grav_ms2}_fsed{fsed}_nc{nc}_dt{tstamp}.h5", "w")) as f:
+                    with h5py.File(join(picaso_root, f"data/wrong_side_results/wrongside_selfconsistent_teff{teff}_gravms2{grav_ms2}_fsed{fsed}_nc{nc}_dt{tstamp}.h5"), "w") as f:
                         p = f.create_dataset("pressure", data=out_selfconsistent["pressure"])
                         f.create_dataset("nstrs", data=np.array(out_selfconsistent["nstr"]))
                         for k in cloud_outputs:
@@ -69,6 +81,9 @@ for teff in [1100, 1600, 2200]:
                         p.attrs["nstr_start"] = nstr_start
                         t = f.create_dataset("temperature_picaso", data=out_selfconsistent["temperature"])
                 except ValueError:
-                    with open(join(picaso_root, f"data/wrong_side_results/wrongside_teff{teff}_gravms2{grav_ms2}_fsed{fsed}_nc{nc}_cloudmodeselfconsistent_dt{tstamp}.txt")) as f:
-                        f.write("inf or NaN error")
+                    print(out_selfconsistent["temperature"])
+                    np.save(join(picaso_root, f"data/wrong_side_results/wrongside_selfconsistent_teff{teff}_gravms2{grav_ms2}_fsed{fsed}_nc{nc}_dt{tstamp}.npy"), out_selfconsistent["temperature"])
+                    
 
+
+# %%
