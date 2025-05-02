@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.4
+# v0.20.6
 
 using Markdown
 using InteractiveUtils
@@ -7,7 +7,7 @@ using InteractiveUtils
 # This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
 macro bind(def, element)
     #! format: off
-    quote
+    return quote
         local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
         local el = $(esc(element))
         global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
@@ -19,7 +19,7 @@ end
 # ╔═╡ f96cf408-ff74-11ef-305a-576de76a1f13
 begin
 	using Pkg
-	Pkg.activate("..")
+	Pkg.activate("../..")
 	using HDF5
 	using PlutoUI
 	using Plots
@@ -36,14 +36,14 @@ end
 @bind fsed Select([1, 2, 3, 4])
 
 # ╔═╡ ad69062c-5cea-48bd-a6ce-1ae6cab8f9ad
-all_files = readdir("../data/convh5_hotjupiter");
+all_files = readdir("../../data/convh5_hotjupiter");
 
 # ╔═╡ 928e3931-4358-4131-b945-ca4b98218ff6
 fname = last(filter(x -> startswith(x, "convergence_fsed$(fsed)_semimajor_$(semimajor)_nstrupper$(nstr_upper)"), all_files));
 
 # ╔═╡ ef9f4c8f-0896-46d9-99b8-4cc84dc3183d
 begin
-	f = h5open("../data/convh5_hotjupiter/$fname", "r")
+	f = h5open("../../data/convh5_hotjupiter/$fname", "r")
 	pressure = Array(f["pressure"])
 	temperatures = Array(f["temperature"])
 	nstrs = Array(f["nstrs"])

@@ -30,8 +30,17 @@ def read_diamondback_clouds(teff, grav_ms2, fsed):
 # %%
 from picaso.input_pickling import retrieve_function_call
 
-def run_virga_to_match_diamondback(teff, grav_ms2, fsed, gases, metallicity=1.0, mean_molecular_weight=2.356589064412746):
+def run_virga_to_match_diamondback(teff, grav_ms2, fsed, gases, metallicity=1.0, mean_molecular_weight=2.35):
+    diamondback_ptk = read_diamondback_clouds(teff, grav_ms2, fsed)
     args, kwargs, _ = retrieve_function_call("../../data/pkl_inputs/compute_2025-05-01T16.34.43.486481.pkl")
+    recommended_gases = vdi.recommend_gas(diamondback_ptk["pressure"], diamondback_ptk["temperature"], metallicity, mean_molecular_weight)
+    recommended_gases = np.intersect1d(recommended_gases, gases)
+    sum_planet = vdi.Atmosphere(recommended_gases,fsed=fsed,mh=metallicity, mmw = mean_molecular_weight)
+    sum_planet.gravity(gravity=grav_ms2, gravity_unit=u.Unit('m/(s**2)'))
+    sum_planet.ptk(df = diamondback_ptk)
+    
+    return vdi.compute(sum_planet, "~/projects/clouds/virga/refrind")
+    
     diamondback_ptk = read_diamondback_clouds(teff, grav_ms2, fsed)
     recommended_gases = vdi.recommend_gas(diamondback_ptk["pressure"], diamondback_ptk["temperature"], metallicity, mean_molecular_weight)
     recommended_gases = np.intersect1d(recommended_gases, gases)
@@ -41,18 +50,16 @@ def run_virga_to_match_diamondback(teff, grav_ms2, fsed, gases, metallicity=1.0,
     atm.ptk(df = diamondback_ptk)
     return vdi.compute(atm, **kwargs)
 
-# %%
 if __name__ == "__main__":
     grav_ms2, fsed = 316, 1
     virga_runs = {}
-    for teff in [900, 1400, 1900, 2400]:
+    for teff in [900]:
         virga_runs[teff] = [
             run_virga_to_match_diamondback(teff, grav_ms2, fsed, gases) for gases in [["Fe", "MgSiO3", "Mg2SiO4", "Al2O3"]]
         ]
 
-    # %%
     fig, axs = plt.subplots(2,2, figsize=(12,8))
-    for (teff, ax) in zip([900, 1400, 1900, 2400], [axs[0,0], axs[0,1], axs[1,0], axs[1,1]]):
+    for (teff, ax) in zip([900], [axs[0,0], axs[0,1], axs[1,0], axs[1,1]]):
         vrun = virga_runs[teff][0]
         dbclouds = read_diamondback_clouds(teff, grav_ms2, fsed)
         for (i, (c, color)) in enumerate(zip(vrun["condensibles"], ["black", "blue", "red", "green"])):
