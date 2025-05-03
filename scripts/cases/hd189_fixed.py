@@ -46,7 +46,6 @@ opacity_ck = jdi.opannection(ck_db=ck_db) # grab your opacities
 cl_run.star(opacity_ck, temp =T_star,metal =metal, logg =logg, radius = r_star, 
             radius_unit=u.R_sun,semi_major= semi_major , semi_major_unit = u.AU)#opacity db, pysynphot database, temp, metallicity, logg
 
-tint = 1800
 grav = 100
 
 cl_run.gravity(gravity=grav, gravity_unit=u.Unit('m/(s**2)')) # input gravity
@@ -59,7 +58,7 @@ nlevel = 91 # number of plane-parallel levels in your code
 hd189_pressure = np.logspace(-6, 2, 91)
 hd189_temperature = np.load("../../data/silicate_test_cases/HD189_temperature.npy")
 nofczns = 1 # number of convective zones initially
-nstr_upper = 60 # top most level of guessed convective zone
+nstr_upper = 89 # top most level of guessed convective zone
 nstr_deep = nlevel - 2 # this is always the case. Dont change this
 nstr = np.array([0,nstr_upper,nstr_deep,0,0,0])
 rfacv = 0.5 #we are focused on a brown dwarf so let's keep this as is
@@ -82,7 +81,10 @@ bundle.phase_angle(0)
 bundle.gravity(gravity=grav, gravity_unit=u.Unit('m/s**2'))
 temp, pressure = hd189_temperature, hd189_pressure
 bundle.add_pt(temp, pressure)
+bundle.star(opacity_ck, temp =T_star,metal =metal, logg =logg, radius = r_star, 
+            radius_unit=u.R_sun,semi_major= semi_major , semi_major_unit = u.AU)#opacity db, pysynphot database, temp, metallicity, logg
 bundle.premix_atmosphere(opacity_ck, df = bundle.inputs['atmosphere']['profile'].loc[:,['pressure','temperature']])
+
 DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, \
                     W0_no_raman, surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase, \
                     frac_a,frac_b,frac_c,constant_back,constant_forward, \
@@ -114,6 +116,7 @@ kzz = jdi.get_kzz(
     cl_run.inputs["climate"]["t_table"], cl_run.inputs["climate"]["p_table"], cl_run.inputs["climate"]["grad"], cl_run.inputs["climate"]["cp"],
     0,list(nstr),bundle.inputs['atmosphere']['profile'].T.values
 )
+
 # this virga run will use the cloudless-converged temperature profile
 # and the associated Kzz
 bundle.inputs['atmosphere']['profile']['temperature'] = temp
@@ -121,10 +124,10 @@ bundle.inputs['atmosphere']['profile']['kz'] = kzz
 postproc_cld_out = bundle.virga(["SiO2"],"~/projects/clouds/virga/refrind", fsed=fsed,mh=1.0,mmw = mean_molecular_weight, b = 0.1, param = 'const')
 postproc_cld_df = vj.picaso_format(postproc_cld_out["opd_per_layer"], postproc_cld_out["single_scattering"], postproc_cld_out["asymmetry"], postproc_cld_out["pressure"], 1e4 / postproc_cld_out["wave"])
 
-"""cl_run.inputs["climate"]["cloudy"] = "fixed"
+cl_run.inputs["climate"]["cloudy"] = "fixed"
 cl_run.inputs["climate"]["opd_climate"] = twod_to_threed(postproc_cld_out["opd_per_layer"])
 cl_run.inputs["climate"]["w0_climate"] = twod_to_threed(postproc_cld_out["single_scattering"])
-cl_run.inputs["climate"]["g0_climate"] = twod_to_threed(postproc_cld_out["asymmetry"])"""
+cl_run.inputs["climate"]["g0_climate"] = twod_to_threed(postproc_cld_out["asymmetry"])
 
 # print("Fixed run")
 out_fixed = deepcopy(cl_run.climate(opacity_ck, save_all_profiles=True,with_spec=True))
@@ -132,10 +135,12 @@ out_fixed = deepcopy(cl_run.climate(opacity_ck, save_all_profiles=True,with_spec
 # %%
 plt.semilogy(hd189_temperature, hd189_pressure, label="HD189 starting profile")
 plt.semilogy(out_fixed["temperature"], out_fixed["pressure"], label="Fixed run")
+plt.xlabel("Temperature (K)")
+plt.ylabel("Pressure (bar)")
 plt.gca().invert_yaxis()
 plt.legend()
 # %%
-plt.semilogy(postproc_cld_out["opd_per_layer"][:,98], out_fixed["pressure"][:-1])
+plt.loglog(postproc_cld_out["opd_per_layer"][:,98], out_fixed["pressure"][:-1])
 plt.xlabel("OPD")
 plt.ylabel("Pressure")
 plt.gca().invert_yaxis()
