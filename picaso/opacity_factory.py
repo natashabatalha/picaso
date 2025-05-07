@@ -320,7 +320,7 @@ def restructure_opacity(new_db,ntemp,temperatures,molecules,og_opacity,old_wno,n
             bundle = get_h2minus(temperatures[i],new_wno)
         insert(cur,conn,'H2-', temperatures[i], bundle)
 
-        #NOW H-bf for temperatures greater than 600 
+        #NOW H-bf for temperatures greater than 800 
         if temperatures[i]<800.0:
             bundle = zero_bundle
             insert(cur,conn,'H-bf', temperatures[i], bundle)
