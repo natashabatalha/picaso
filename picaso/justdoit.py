@@ -17,6 +17,7 @@ from scipy import special
 from numpy import exp, sqrt,log
 from numba import jit,njit
 from scipy.io import FortranFile
+import re
 
 import os
 import glob
@@ -1859,7 +1860,9 @@ class inputs():
             Carbon-to-Oxygen Ratio relative to Solar (Solar value is determined by `chem_method`)
         chem_method : str 
             Current options: 
-            - 'visscher' : uses the chemical equilibrium tables computed by Channon Visscher via the function `chemeq_visscher`
+            - 'visscher' : uses the 2121 chemical equilibrium tables computed by Channon Visscher via the function `chemeq_visscher`
+                if 'visscher' needs to input: mh and cto 
+            - 'visscher_1060' : uses the chemical equilibrium tables computed by Channon Visscher on the 1060 grid via the function `chemeq_visscher`
                 if 'visscher' needs to input: mh and cto 
             - 'photochem' : users photochem model by Nick Wogan
                 if 'photochem' user needs to input photochem_init_args and photochem_TOA_pressure
@@ -2014,10 +2017,10 @@ class inputs():
             cto = self.inputs['atmosphere']['cto_relative']   
             if run: self.chemeq_visscher_1060(cto, np.log10(mh))   
             found_method = True
-        elif 'visscher_2020' in str(chem_method):  
+        elif 'visscher' in str(chem_method):  
             mh = self.inputs['atmosphere']['mh'] 
             cto = self.inputs['atmosphere']['cto_absolute']   
-            if run: self.chemeq_visscher_2020(cto, np.log10(mh)) 
+            if run: self.chemeq_visscher_2121(cto, np.log10(mh)) 
             found_method = True
 
         if (('photochem' in str(chem_method)) and (self.inputs['climate'].get('pc',0)==0)): 
@@ -2625,7 +2628,7 @@ class inputs():
         self.inputs['atmosphere']['sonora_filename'] = build_filename
 
 
-    def chemeq_visscher_2020(self, cto_absolute, log_mh):#, interp_window = 11, interp_poly=2):
+    def chemeq_visscher_2121(self, cto_absolute, log_mh):#, interp_window = 11, interp_poly=2):
         """
         Author of Data: Channon Visscher
 
@@ -2712,34 +2715,107 @@ class inputs():
             Will find the nearest value to 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
             Solar = 0
         """
-        c_o=cto_absolute
-        #get fehs 
-        dir = os.path.join(__refdata__,'chemistry','visscher_grid_1460') 
+        target_feh=log_mh
+        target_co=cto_absolute
+        directory = os.path.join(__refdata__,'chemistry','visscher_grid_2121') 
 
-        fehs = np.array([float(i.split('/')[-1].split('feh')[-1]) for i in glob.glob(os.path.join(dir,'feh*'))])
-        #allowable cos 
-        #cos = np.array([0.25,0.5,1.0,1.5,2.0,2.5])
+        if not os.path.isdir(directory):
+            raise FileNotFoundError(f"Directory not found: {directory}")
 
-        if log_mh > max(fehs): 
-            raise Exception('Choose a log metallicity less than 2.0')
-        
-        grid_feh = fehs[np.argmin(np.abs(fehs-log_mh))]
+        # Regex to capture feh and co values from the filename.
+        # This pattern robustly matches various float representations like:
+        # -0.3, 0.55, .5, -.5, 5, -5, 5., -5., +0.7
+        # Breakdown of float_pattern:
+        #   [-+]?       : Optional sign (+ or -).
+        #   (?:         : Start of a non-capturing group for OR logic.
+        #     \d+\.?\d* : Matches numbers like "5", "5.", "5.0" (one or more digits,
+        #                 optionally followed by a decimal point and zero or more digits).
+        #     |         : OR
+        #     \.\d+     : Matches numbers like ".5" (a decimal point followed by one or more digits).
+        #   )           : End of the non-capturing group.
+        float_pattern_segment = r"[-+]?(?:\d+\.?\d*|\.\d+)"
+        # Construct the full filename pattern
+        # Need to escape the '.' in '.txt' for regex
+        filename_pattern_str = f"sonora_2121grid_feh({float_pattern_segment})_co({float_pattern_segment})\\.txt"
+        file_pattern_regex = re.compile(filename_pattern_str)
 
-        #allowable cos 
-        cos = np.array([float(i.split('/')[-1].split('_co')[-1][:-4]) for i in glob.glob(os.path.join(dir,f'feh{grid_feh}','*txt'))])
+        candidate_files = []
 
-        if c_o > max(cos): 
-            raise Exception('Choose a C/O less than 2.5xSolar')
+        for filename in os.listdir(directory):
+            match = file_pattern_regex.match(filename)
+            if match:
+                try:
+                    feh_val_str, co_val_str = match.groups()
+                    file_feh = float(feh_val_str)
+                    file_co = float(co_val_str)
+                    candidate_files.append({
+                        "filename": filename,
+                        "feh": file_feh,
+                        "co": file_co
+                    })
+                except ValueError as e:
+                    # This might occur if the regex matches a string that float() cannot parse,
+                    # though the float_pattern_segment is designed to be compatible with float().
+                    raise Exception(f"Warning: Could not convert extracted feh/co from filename '{filename}' to float. "
+                        f"Extracted: feh='{feh_val_str}', co='{co_val_str}'. Error: {e}")
+                    continue # Skip this file
 
-        grid_co = cos[np.argmin(np.abs(cos-c_o))]
+        if not candidate_files:
+            raise Exception(f"No files matching the pattern '{filename_pattern_str}' found in directory '{directory}'.")
 
-        filename = os.path.join(dir,f'feh{grid_feh}',f'output_feh{grid_feh}_co{grid_co}.txt')
+        closest_file_info = None
+        min_distance = float('inf')
 
-        header = pd.read_csv(filename).keys()[0]
-        cols = header.replace('T(K)','temperature').replace('P(bar)','pressure').split()
-        a = pd.read_csv(filename,sep=r'\s+',skiprows=1,header=None, names=cols)
-        a['pressure']=10**a['pressure']
+        for file_info in candidate_files:
+            diff_feh = file_info["feh"] - target_feh
+            diff_co = file_info["co"] - target_co
 
+            distance = math.sqrt(diff_feh**2 + diff_co**2)
+
+            if distance < min_distance:
+                min_distance = distance
+                closest_file_info = file_info
+            elif distance == min_distance:
+                # Tie-breaking logic:
+                # If overall distances are equal, prefer the file whose 'feh' value
+                # is closer to the target 'feh'.
+                # If 'feh' differences are also equal, prefer the one whose 'co' value
+                # is closer to the target 'co'.
+                # If still a tie, the one encountered first (dependent on os.listdir order) is kept.
+                if closest_file_info: # Ensure closest_file_info is not None
+                    current_abs_diff_feh = abs(closest_file_info["feh"] - target_feh)
+                    new_abs_diff_feh = abs(diff_feh) # This is abs(file_info["feh"] - target_feh)
+
+                    if new_abs_diff_feh < current_abs_diff_feh:
+                        closest_file_info = file_info
+                    elif new_abs_diff_feh == current_abs_diff_feh:
+                        current_abs_diff_co = abs(closest_file_info["co"] - target_co)
+                        new_abs_diff_co = abs(diff_co) # This is abs(file_info["co"] - target_co)
+                        if new_abs_diff_co < current_abs_diff_co:
+                            closest_file_info = file_info
+
+        if closest_file_info is None:
+            # This case should ideally not be reached if candidate_files is populated.
+            # It implies an issue if all candidates somehow resulted in non-comparable distances.
+            raise Exception("Error: Could not determine the closest chemistry file despite having candidates. This is unexpected.")
+
+        # Prepare pandas read_csv arguments
+        full_file_path = os.path.join(directory, closest_file_info["filename"])
+
+        try:
+            header = pd.read_csv(full_file_path).keys()[0]
+            cols = header.replace('T(K)','temperature').replace('P(bar)','pressure').replace('atCs','Cs').split()
+            a = pd.read_csv(full_file_path,sep=r'\s+',skiprows=1,header=None, names=cols)
+            a['pressure']=10**a['pressure']
+
+        except FileNotFoundError:
+            # This specific error should be rare here given the file was just listed by os.listdir,
+            # but it's good practice to handle it.
+            raise Exception(f"Critical Error: The file '{full_file_path}' was listed but could not be found for reading.")
+        except pd.errors.EmptyDataError:
+            raise Exception(f"Warning: The file '{full_file_path}' is empty.")
+        except Exception as e:
+            raise Exception(f"Error reading file '{full_file_path}' using pandas")
 
         self.chem_interp(a)
 
@@ -2796,7 +2872,7 @@ class inputs():
         str_co = str(grid_co).replace('.','')
         str_fe = str(grid_feh).replace('.','').replace('-','m')
 
-        filename = os.path.join(__refdata__,'chemistry','visscher_grid',
+        filename = os.path.join(__refdata__,'chemistry','visscher_grid_1060',
             f'2015_06_1060grid_feh_{str_fe}_co_{str_co}.txt').replace('_m0','m0')
 
         header = pd.read_csv(filename).keys()[0]
