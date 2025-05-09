@@ -1,8 +1,8 @@
 Installation
 ============
 
-Python Version with Conda Environments
---------------------------------------
+Python  Version
+--------------
 
 Python >= 3.11 
 

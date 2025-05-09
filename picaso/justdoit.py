@@ -38,6 +38,7 @@ from astropy.utils.misc import JsonCustomEncoder
 import math
 import xarray as xr
 from joblib import Parallel, delayed, cpu_count
+import h5py
 
 # #testing error tracker
 # from loguru import logger 
@@ -4664,8 +4665,9 @@ class inputs():
         -----------
         opacityclass : class
             Opacity class from `justdoit.opannection`
-        save_all_profiles : bool
-            If you want to save and return all iterations in the T(P) profile,True/False
+        save_all_profiles : bool or str
+            If you want to save and return all iterations in the T(P) profile, True/False.
+            If str, specifies a path to which all iterations are written as an HDF5 file.
         with_spec : bool 
             Runs picaso spectrum at the end to get the full converged outputs, Default=False
         save_all_kzz : bool
