@@ -31,13 +31,14 @@ Basics of Thermal Emission
 
 
 
-Cloud Modeling with `Virga`
+More Complexity with Clouds
 ---------------------------
 
 .. toctree::
    :maxdepth: 2
 
-   Moving Away From Box Models </notebooks/7_PairingPICASOToVIRGA.ipynb>
+   Virga (Ackerman & Marley Clouds) </notebooks/7_PairingPICASOToVIRGA.ipynb>
+   Patchy Clouds </notebooks/7_PatchyClouds.ipynb>
 
 Moving to 3 Dimensions
 ----------------------
@@ -51,8 +52,9 @@ Relevant Citatons: `Adams et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022ApJ
    Post-Processing Chemistry for 3D runs </notebooks/9b_PostProcess3Dinput-Chemistry.ipynb>
    Post-Processing Clouds for 3D runs </notebooks/9c_PostProcess3Dinput-Clouds.ipynb>
    Modeling a 3D Spectrum (Adams et al. 2022)</notebooks/9d_3DSpectra.ipynb>
-   Modeling a Phase Curve pt 1 (Robbins-Blanch et al. 2022)</notebooks/9e_PhaseCurves.ipynb>
-   Modeling a Phase Curve pt 2 (Robbins-Blanch et al. 2022)</notebooks/9f_PhaseCurves-wChemEq.ipynb>
+   Modeling a Thermal Phase Curve pt 1 (Robbins-Blanch et al. 2022)</notebooks/9e_PhaseCurves.ipynb>
+   Modeling a Thermal Phase Curve pt 2 (Robbins-Blanch et al. 2022)</notebooks/9f_PhaseCurves-wChemEq.ipynb>
+   Modeling a Reflected Light Phase Curve (Hamill et al. 2024)</notebooks/9g_ReflectedPhaseCurve.ipynb>
 
 1D Climate Modeling
 -------------------
@@ -64,16 +66,19 @@ Relevant Citatons: `Mukherjee et al. 2022 <https://ui.adsabs.harvard.edu/abs/202
    Brown Dwarfs </notebooks/climate/12a_BrownDwarf.ipynb>
    Planet </notebooks/climate/12b_Exoplanet.ipynb>
    Brown Dwarfs w/ Disequilibrium Chemistry </notebooks/climate/12c_BrownDwarf_DEQ.ipynb>
+   Creating a grid of models </notebooks/climate/12d_CreateModelGrid.ipynb>
 
 Fitting models to data
 ----------------------
-Relevant Citatons: `JWST Transiting Exoplanet Community Early Release Science Team (2022) <https://www.nature.com/articles/s41586-022-05269-w>`_
 
 .. toctree::
    :maxdepth: 1
 
    Grid Search Analysis </notebooks/fitdata/GridSearch.ipynb>
-
+   Basics of Retrievals </notebooks/fitdata/RetrievalTutorial1.ipynb>
+   Basics of Grid fitting </notebooks/fitdata/RetrievalTutorial2_GridFitting.ipynb>
+   Basics of Grid-trievals </notebooks/fitdata/RetrievalTutorial3_GridFittingWithClouds.ipynb>
+   Creating retrieval templates </notebooks/fitdata/RetrievalTutorial4_CreatingTemplates.ipynb>
 
 Model Storage & Reuse
 ---------------------

@@ -1,0 +1,955 @@
+atoms:
+- {name: H, mass: 1.00797}
+- {name: N, mass: 14.0067}
+- {name: O, mass: 15.9994}
+- {name: C, mass: 12.011}
+- {name: S, mass: 32.06}
+- {name: He, mass: 4.002602}
+
+species:
+- name: He
+  composition: {He: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [20.78603, 4.850638e-10, -1.582916e-10, 1.525102e-11, 3.196347e-11,
+      -6.197341, 151.3064]
+  note: From the NIST database
+- name: H
+  composition: {H: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [20.78603, 4.85e-10, -1.58e-10, 1.53e-11, 3.2e-11, 211.8, 139.87]
+  note: From the NIST database
+- name: H2
+  composition: {H: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1000.0, 2500.0, 6000.0]
+    data:
+    - [33.066178, -11.36342, 11.432816, -2.772874, -0.158558, -9.980797,
+      172.708]
+    - [18.563083, 12.257357, -2.859786, 0.268238, 1.97799, -1.147438, 156.2881]
+    - [43.41356, -4.293079, 1.272428, -0.096876, -20.53386, -38.51515, 162.0814]
+  note: From the NIST database
+- name: H2O
+  composition: {H: 2, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1700.0, 6000.0]
+    data:
+    - [30.092, 6.832514, 6.793435, -2.53448, 0.082139, -250.881, 223.3967]
+    - [41.96426, 8.622053, -1.49978, 0.098119, -11.15764, -272.1797, 219.7809]
+  note: From the NIST database
+- name: OH
+  composition: {O: 1, H: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1300.0, 6000.0]
+    data:
+    - [32.27768, -11.36291, 13.60545, -3.846486, -0.001335, 29.75113, 225.5783]
+    - [28.74701, 4.714489, -0.814725, 0.054748, -2.747829, 26.41439, 214.1166]
+  note: From the NIST database
+- name: O
+  composition: {O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [21.1861, -0.502314, 0.168694, -0.008962, 0.075664, 243.1306, 187.2591]
+  note: From the NIST database
+- name: O2
+  composition: {O: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [29.659, 6.137261, -1.186521, 0.09578, -0.219663, -9.861391, 237.948]
+  note: From the NIST database
+- name: CO
+  composition: {C: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1300.0, 6000.0]
+    data:
+    - [25.56759, 6.09613, 4.054656, -2.671301, 0.131021, -118.0089, 227.3665]
+    - [35.1507, 1.300095, -0.205921, 0.01355, -3.28278, -127.8375, 231.712]
+  note: From the NIST database
+- name: CO2
+  composition: {C: 1, O: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [24.99735, 55.18696, -33.69137, 7.948387, -0.136638, -403.6075, 228.2431]
+    - [58.16639, 2.720074, -0.492289, 0.038844, -6.447293, -425.9186, 263.6125]
+  note: From the NIST database
+- name: HCO
+  composition: {H: 1, C: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [21.13803, 40.4361, -14.71337, 0.96901, 0.239639, 36.34712, 240.1695]
+    - [52.79371, 2.666155, -0.392339, 0.023808, -7.457018, 11.37797, 267.2798]
+  note: From the NIST database
+- name: H2CO
+  composition: {H: 2, C: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [5.193767, 93.23249, -44.85457, 7.882279, 0.551175, -112.3591, 202.4663]
+    - [71.35268, 6.174497, -1.19109, 0.079564, -15.58917, -163.6327, 262.318]
+  note: From the NIST database
+- name: C
+  composition: {C: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [21.1751, -0.81243, 0.448537, -0.043256, -0.013103, 710.347, 183.8734]
+  note: From the NIST database
+- name: CH
+  composition: {C: 1, H: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1100.0, 6000.0]
+    data:
+    - [32.9421, -16.7106, 24.18595, -7.784709, -0.065198, 584.6303, 226.5138]
+    - [30.15367, 8.455112, -1.969644, 0.15427, -4.98009, 576.6891, 209.3531]
+  note: From the NIST database
+- name: CH2
+  composition: {C: 1, H: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1400.0, 6000.0]
+    data:
+    - [31.96823, 6.783603, 12.5189, -5.696265, -0.031115, 380.8558, 229.915]
+    - [51.55901, 3.876975, -0.649608, 0.037901, -10.72589, 355.1715, 232.3212]
+  note: From the NIST database
+- name: CH3
+  composition: {C: 1, H: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1400.0, 6000.0]
+    data:
+    - [28.13786, 36.74736, -4.347218, -1.595673, 0.00186, 135.7118, 217.4814]
+    - [67.18081, 7.846423, -1.440899, 0.092685, -17.66133, 92.471, 235.9023]
+  note: From the NIST database
+- name: CH4
+  composition: {C: 1, H: 4}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1300.0, 6000.0]
+    data:
+    - [-0.703029, 108.4773, -42.52157, 5.862788, 0.678565, -76.84376, 158.7163]
+    - [85.81217, 11.26467, -2.114146, 0.13819, -26.42221, -153.5327, 224.4143]
+  note: From the NIST database
+- name: S
+  composition: {S: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1400.0, 6000.0]
+    data:
+    - [27.45968, -13.3278, 10.06574, -2.662381, -0.055851, 269.1149, 204.2955]
+    - [16.55345, 2.400266, -0.25576, 0.005821, 3.564793, 278.4356, 194.5447]
+  note: From the NIST database
+- name: S2
+  composition: {S: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [33.51313, 5.06536, -1.05967, 0.089905, -0.211911, 117.6855, 266.0919]
+  note: From the NIST database
+- name: S3
+  composition: {S: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [53.78072, 4.351569, -3.0e-06, -5.0e-06, -0.650185, 127.0, 329.6465]
+  note: From the NIST database
+- name: S4
+  composition: {S: 4}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [79.88051, 3.276394, -0.0001, 1.0e-05, -1.179851, 107.0, 399.7013]
+  note: From the NIST database
+- name: S8
+  composition: {S: 8}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [180.6697, 1.918988, -0.52013, 0.044394, -2.270155, 39.45, 635.5496]
+  note: From the NIST database
+- name: H2S
+  composition: {H: 2, S: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1400.0, 6000.0]
+    data:
+    - [26.88412, 18.67809, 3.434203, -3.378702, 0.135882, -28.91211, 233.3747]
+    - [51.22136, 4.147486, -0.643566, 0.041621, -10.46385, -55.87606, 243.69]
+  note: From the NIST database
+- name: HS
+  composition: {H: 1, S: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [38.04306, -27.4679, 34.06462, -11.79875, -0.009743, 132.4861, 248.3945]
+    - [32.99507, 2.841514, -0.507766, 0.038247, -2.909667, 128.077, 230.0066]
+  note: From the NIST database
+- name: SO
+  composition: {S: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1400.0, 6000.0]
+    data:
+    - [22.56414, 29.93305, -22.87987, 6.408968, 0.04756, -2.702237, 241.5511]
+    - [23.50387, 10.82133, -2.260566, 0.168555, 5.052557, 5.425853, 254.7734]
+  note: From the NIST database
+- name: SO2
+  composition: {S: 1, O: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [21.43049, 74.35094, -57.75217, 16.35534, 0.086731, -305.7688, 254.8872]
+    - [57.48188, 1.009328, -0.07629, 0.005174, -4.045401, -324.414, 302.7798]
+  note: From the NIST database
+- name: CS
+  composition: {C: 1, S: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 600.0, 6000.0]
+    data:
+    - [21.76387, 24.9989, -8.095581, -4.563949, 0.126372, 273.2328, 230.5497]
+    - [34.47721, 2.966255, -0.950722, 0.113718, -0.997482, 267.0275, 247.0731]
+  note: From the NIST database
+- name: CS2
+  composition: {C: 1, S: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1000.0, 6000.0]
+    data:
+    - [35.85391, 52.49121, -40.83743, 12.00155, -0.224831, 103.503, 266.1597]
+    - [61.25292, 1.378826, -0.14052, 0.009284, -3.244044, 90.07106, 299.4091]
+  note: From the NIST database
+- name: OCS
+  composition: {O: 1, C: 1, S: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [34.53892, 43.05378, -26.61773, 6.338844, -0.327515, -151.5001, 259.8118]
+    - [60.3224, 1.738332, -0.209982, 0.01411, -5.1289, -168.6307, 287.6454]
+  note: From the NIST database
+- name: CN
+  composition: {C: 1, N: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1100.0, 6000.0]
+    data:
+    - [26.32878, 3.322704, 8.590883, -4.87549, 0.1071, 427.4333, 233.7785]
+    - [21.01661, 9.770603, -1.022633, 0.013773, 4.5414, 435.9017, 232.6902]
+  note: From the NIST database
+- name: HCN
+  composition: {H: 1, C: 1, N: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [32.69373, 22.59205, -4.369142, -0.407697, -0.2824, 118.2811, 233.2597]
+    - [52.36527, 5.563298, -0.953224, 0.056711, -7.5641, 98.6523, 244.8448]
+  note: From the NIST database
+- name: N
+  composition: {N: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [21.14, -0.39, 0.04, 0.02, -0.03, 466.31, 178.83]
+  note: From the NIST database
+- name: N2
+  composition: {N: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [26.09, 8.22, -1.98, 0.16, 0.04, -7.99, 221.02]
+  note: From the NIST database
+- name: NH
+  composition: {N: 1, H: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 800.0, 6000.0]
+    data:
+    - [31.32, -8.931544, 11.58629, -2.5441, -0.0419, 367.382, 221.0867]
+    - [28.06, 5.10084, -0.767827, 0.056843, -1.0547, 366.0623, 211.8351]
+  note: From the NIST database
+- name: NH2
+  composition: {N: 1, H: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1300.0, 6000.0]
+    data:
+    - [29.86, 6.117803, 11.54976, -5.02444, 0.0887, 177.2053, 229.0535]
+    - [35.33, 11.01555, -1.172814, 0.022623, -2.136, 169.9565, 227.6519]
+  note: From the NIST database
+- name: NH3
+  composition: {N: 1, H: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1400.0, 6000.0]
+    data:
+    - [20.0, 49.77119, -15.37599, 1.921168, 0.1892, -53.3066, 203.8591]
+    - [52.02, 18.48801, -3.765128, 0.248541, -12.458, -85.5389, 223.8022]
+  note: From the NIST database
+- name: C2
+  composition: {C: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 700.0, 6000.0]
+    data:
+    - [123.9092, -348.007, 485.0971, -232.799, -1.2403, 797.2777, 426.6132]
+    - [30.50408, 5.445811, -0.853373, 0.065641, 0.8148, 820.5784, 240.4039]
+  note: From the NIST database
+- name: C2H
+  composition: {C: 2, H: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [33.40916, 24.11331, -6.600595, 0.278912, -0.2595, 556.1311, 239.5148]
+    - [39.2922, 13.32081, -1.952364, 0.08629, 0.9782, 555.3027, 248.5949]
+  note: From the NIST database
+- name: C2H2
+  composition: {C: 2, H: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1100.0, 6000.0]
+    data:
+    - [40.68697, 40.73279, -16.1784, 3.669741, -0.6584, 210.7067, 235.0052]
+    - [67.47244, 11.7511, -2.02147, 0.136195, -9.8064, 185.455, 253.5337]
+  note: From the NIST database
+- name: C2H4
+  composition: {C: 2, H: 4}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [-6.38788, 184.4019, -112.9718, 28.49593, 0.31554, 48.1733, 163.1568]
+    - [106.5104, 13.7326, -2.628481, 0.174595, -26.1447, -35.3623, 275.0424]
+  note: From the NIST database
+- name: 'NO'
+  composition: {N: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [23.83491, 12.58878, -1.139011, -1.49746, 0.2142, 83.3578, 237.1219]
+    - [35.99169, 0.95717, -0.148032, 0.009974, -3.0041, 73.1078, 246.1619]
+  note: From the NIST database
+- name: HNO
+  composition: {H: 1, N: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [19.85936, 48.00847, -25.41065, 5.234644, 0.230115, 99.5103, 232.8199]
+    - [52.25649, 3.105872, -0.598149, 0.039904, -7.452, 74.959, 263.2531]
+  note: From the NIST database
+- name: HO2
+  composition: {H: 1, O: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 2000.0, 6000.0]
+    data:
+    - [26.0096, 34.86, -16.3, 3.110441, -0.0186, 3.0, 250.766]
+    - [45.8751, 8.81, -1.64, 0.098053, -10.1738, -16.75, 266.53]
+  note: From the NIST database
+- name: HNCO
+  composition: {H: 1, N: 1, C: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [32.73428, 63.81479, -38.46142, 9.728052, -0.317587, -132.0136, 258.6482]
+    - [71.59786, 5.912034, -1.122839, 0.074171, -9.813573, -161.3811, 296.4201]
+  note: From the NIST database
+- name: N2O
+  composition: {N: 2, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1400.0, 6000.0]
+    data:
+    - [27.67988, 51.14898, -30.64454, 6.847911, -0.157906, 71.24934, 238.6164]
+    - [60.30274, 1.034566, -0.192997, 0.01254, -6.860254, 48.6139, 272.5002]
+  note: From the NIST database
+- name: H2O2
+  composition: {H: 2, O: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [34.25667, 55.18445, -35.15, 9.09, -0.42, -149.9098, 257.0604]
+  note: From the NIST database
+- name: O3
+  composition: {O: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [21.66157, 79.86001, -66.02603, 19.58363, -0.079251, 132.9407, 243.6406]
+    - [57.81409, 0.730941, -0.039253, 0.00261, -3.560367, 115.7717, 294.5607]
+  note: From the NIST database
+- name: NO2
+  composition: {N: 1, O: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [16.10857, 75.89525, -54.3874, 14.30777, 0.239423, 26.17464, 240.5386]
+    - [56.82541, 0.738053, -0.144721, 0.009777, -5.459911, 2.846456, 290.5056]
+  note: From the NIST database
+- name: NO3
+  composition: {N: 1, O: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1100.0, 6000.0]
+    data:
+    - [11.22316, 166.3889, -148.4458, 47.40598, -0.176791, 61.00858, 221.7679]
+    - [82.27418, 0.487106, -0.098769, 0.006853, -6.264954, 29.22311, 326.2528]
+  note: From the NIST database
+- name: SO3
+  composition: {S: 1, O: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [24.02503, 119.4607, -94.38686, 26.96237, -0.117517, -407.8526, 253.5186]
+    - [81.99008, 0.622236, -0.12244, 0.008294, -6.703688, -437.659, 330.9264]
+  note: From the NIST database
+- name: HNO2
+  composition: {H: 1, N: 1, O: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [24.89974, 91.37563, -64.84614, 17.92007, -0.134737, -88.13596, 254.2671]
+    - [73.65137, 4.854988, -0.921409, 0.060837, -9.11179, -119.3896, 310.344]
+  note: From the NIST database
+- name: HNO3
+  composition: {H: 1, N: 1, O: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [19.63229, 153.9599, -115.8378, 32.87955, -0.249114, -146.8818, 247.7049]
+    - [97.45959, 5.429577, -1.029688, 0.06795, -12.29314, -192.4912, 343.8051]
+  note: From the NIST database
+- name: H2SO4
+  composition: {H: 2, S: 1, O: 4}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [47.28924, 190.3314, -148.1299, 43.86631, -0.740016, -758.9525, 301.2961]
+    - [139.2289, 9.513663, -1.795577, 0.118069, -15.61486, -813.0976, 416.1854]
+  note: From the NIST database
+- name: N2H4
+  composition: {N: 2, H: 4}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 2000.0, 6000.0]
+    data:
+    - [35.1824, 96.0526, -40.5013, 6.66807, -0.874233, 77.9915, 249.425]
+    - [121.401, 4.81688, -0.763012, 0.043232, -40.7865, -11.3811, 305.344]
+  note: From the NIST database
+- name: C2H6
+  composition: {C: 2, H: 6}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 3000.0, 6000.0]
+    data:
+    - [6.0816, 173.58, -66.919, 9.0891, 0.12914, -92.6, 188.8]
+    - [161.0, 3.0, 0.0, 0.0, 0.0, -207.9, 311.0]
+  note: From the NIST database
+- name: CH3OH
+  composition: {C: 1, H: 4, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 3000.0, 6000.0]
+    data:
+    - [20.559, 95.615, -31.306, 3.5141, 0.025109, -215.0, 237.8]
+    - [111.5, 3.0, 0.0, 0.0, 0.0, -281.7, 306.5]
+  note: From the NIST database
+- name: CH2CO
+  composition: {C: 2, H: 2, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 1500.0, 6000.0]
+    data:
+    - [26.885, 92.826, -41.66, 7.0037, 0.002942, -79.0, 251.0]
+    - [87.0, 6.0, 0.0, 0.0, 0.0, -119.5, 317.9]
+  note: From the NIST database
+- name: CH3CHO
+  composition: {C: 2, O: 1, H: 4}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 3000.0, 6000.0]
+    data:
+    - [21.165, 135.84, -52.426, 7.0444, 0.021674, -178.5, 251.5]
+    - [129.0, 6.0, 0.0, 0.0, 0.0, -246.9, 350.0]
+  note: From the NIST database
+- name: C3H4
+  composition: {C: 3, H: 4}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 1400.0, 6000.0]
+    data:
+    - [16.91, 171.84, -92.473, 19.798, 0.035429, 173.62, 165.3]
+    - [161.13, -10.876, 2.874, -0.2238, -39.79, 54.345, 287.3]
+  note: From the NIST database
+- name: C3H6
+  composition: {C: 3, H: 6}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 1400.0, 6000.0]
+    data:
+    - [5.2871, 225.56, -103.76, 17.388, 0.129, 10.13, 211.0]
+    - [173.78, 13.606, -2.1834, 0.1228, -45.669, -27.1, 351.0]
+  note: From the NIST database
+- name: C4H2
+  composition: {C: 4, H: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 2500.0, 6000.0]
+    data:
+    - [40.366, 120.42, -57.514, 9.3241, -0.049062, 441.0, 279.0]
+    - [117.6, 4.0, 0.0, 0.0, 0.0, 403.25, 368.1]
+  note: From the NIST database
+- name: C4H4
+  composition: {C: 4, H: 4}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 3000.0, 6000.0]
+    data:
+    - [26.051, 185.07, -83.712, 12.691, 0.014196, 273.0, 255.0]
+    - [155.5, 5.0, 0.0, 0.0, 0.0, 198.5, 390.5]
+  note: From the NIST database
+- name: HCS
+  composition: {H: 1, C: 1, S: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [21.13803, 40.4361, -14.71337, 0.96901, 0.239639, 275.33712, 251.5195]
+    - [52.79371, 2.666155, -0.392339, 0.023808, -7.457018, 250.36797, 278.6298]
+  note: Estimated from thermodynamic data at 298 K and species HCO
+- name: C2H3
+  composition: {C: 2, H: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [-6.38788, 184.4019, -112.9718, 28.49593, 0.31554, 294.7033, 177.8368]
+    - [106.5104, 13.7326, -2.628481, 0.174595, -26.1447, 211.1677, 289.7224]
+  note: Estimated from thermodynamic data at 298 K and species C2H4
+- name: C2H5
+  composition: {C: 2, H: 5}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [-6.38788, 184.4019, -112.9718, 28.49593, 0.31554, 114.7033, 190.8368]
+    - [106.5104, 13.7326, -2.628481, 0.174595, -26.1447, 31.1677, 302.7224]
+  note: Estimated from thermodynamic data at 298 K and species C2H4
+- name: NCO
+  composition: {N: 1, C: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [24.99735, 55.18696, -33.69137, 7.948387, -0.136638, 117.9025, 246.4531]
+    - [58.16639, 2.720074, -0.492289, 0.038844, -6.447293, 95.5914, 281.8225]
+  note: Estimated from thermodynamic data at 298 K and species CO2
+- name: 1CH2
+  composition: {C: 1, H: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1400.0, 6000.0]
+    data:
+    - [31.96823, 6.783603, 12.5189, -5.696265, -0.031115, 418.0558, 224.985]
+    - [51.55901, 3.876975, -0.649608, 0.037901, -10.72589, 392.3715, 227.3912]
+  note: Estimated from thermodynamic data at 298 K and species CH2
+- name: HCCO
+  composition: {H: 1, C: 2, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [32.73428, 63.81479, -38.46142, 9.728052, -0.317587, 163.9864, 267.4282]
+    - [71.59786, 5.912034, -1.122839, 0.074171, -9.813573, 134.6189, 305.2001]
+  note: Estimated from thermodynamic data at 298 K and species HNCO
+- name: NNH
+  composition: {N: 2, H: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [21.13803, 40.4361, -14.71337, 0.96901, 0.239639, 246.83712, 235.5195]
+    - [52.79371, 2.666155, -0.392339, 0.023808, -7.457018, 221.86797, 262.6298]
+  note: Estimated from thermodynamic data at 298 K and species HCO
+- name: HSO
+  composition: {H: 1, S: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 2000.0, 6000.0]
+    data:
+    - [26.0096, 34.86, -16.3, 3.110441, -0.0186, -31.1, 271.676]
+    - [45.8751, 8.81, -1.64, 0.098053, -10.1738, -50.85, 287.44]
+  note: Estimated from thermodynamic data at 298 K and species HO2
+- name: CH3O
+  composition: {C: 1, H: 3, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [5.193767, 93.23249, -44.85457, 7.882279, 0.551175, 18.1409, 217.5163]
+    - [71.35268, 6.174497, -1.19109, 0.079564, -15.58917, -33.1327, 277.368]
+  note: Estimated from thermodynamic data at 298 K and species H2CO
+- name: H2COH
+  composition: {H: 3, C: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 3000.0, 6000.0]
+    data:
+    - [20.559, 95.615, -31.306, 3.5141, 0.025109, -25.3, 241.9]
+    - [111.5, 3.0, 0.0, 0.0, 0.0, -92.0, 310.6]
+  note: Estimated from thermodynamic data at 298 K and species CH3OH
+- name: H2CN
+  composition: {H: 2, C: 1, N: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [5.193767, 93.23249, -44.85457, 7.882279, 0.551175, 234.5409, 207.5163]
+    - [71.35268, 6.174497, -1.19109, 0.079564, -15.58917, 183.2673, 267.368]
+  note: Estimated from thermodynamic data at 298 K and species H2CO
+- name: N2H2
+  composition: {N: 2, H: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1100.0, 6000.0]
+    data:
+    - [40.68697, 40.73279, -16.1784, 3.669741, -0.6584, 185.9767, 235.0752]
+    - [67.47244, 11.7511, -2.02147, 0.136195, -9.8064, 160.725, 253.6037]
+  note: Estimated from thermodynamic data at 298 K and species C2H2
+- name: C4H
+  composition: {C: 4, H: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 2500.0, 6000.0]
+    data:
+    - [40.366, 120.42, -57.514, 9.3241, -0.049062, 763.0, 272.0]
+    - [117.6, 4.0, 0.0, 0.0, 0.0, 725.25, 361.1]
+  note: Estimated from thermodynamic data at 298 K and species C4H2
+- name: HCNOH
+  composition: {H: 2, C: 1, N: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 1500.0, 6000.0]
+    data:
+    - [26.885, 92.826, -41.66, 7.0037, 0.002942, 58.0, 257.0]
+    - [87.0, 6.0, 0.0, 0.0, 0.0, 17.5, 323.9]
+  note: Estimated from thermodynamic data at 298 K and species CH2CO
+- name: C2H2OH
+  composition: {C: 2, H: 3, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 1500.0, 6000.0]
+    data:
+    - [26.885, 92.826, -41.66, 7.0037, 0.002942, 124.0, 257.0]
+    - [87.0, 6.0, 0.0, 0.0, 0.0, 83.5, 323.9]
+  note: Estimated from thermodynamic data at 298 K and species CH2CO
+- name: CH3CO
+  composition: {C: 2, H: 3, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 1500.0, 6000.0]
+    data:
+    - [26.885, 92.826, -41.66, 7.0037, 0.002942, -22.0, 277.0]
+    - [87.0, 6.0, 0.0, 0.0, 0.0, -62.5, 343.9]
+  note: Estimated from thermodynamic data at 298 K and species CH2CO
+- name: CH2CHO
+  composition: {C: 2, O: 1, H: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 3000.0, 6000.0]
+    data:
+    - [21.165, 135.84, -52.426, 7.0444, 0.021674, 5.2, 255.5]
+    - [129.0, 6.0, 0.0, 0.0, 0.0, -63.2, 354.0]
+  note: Estimated from thermodynamic data at 298 K and species CH3CHO
+- name: C2H3OH
+  composition: {C: 2, H: 4, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 3000.0, 6000.0]
+    data:
+    - [21.165, 135.84, -52.426, 7.0444, 0.021674, -132.8, 261.5]
+    - [129.0, 6.0, 0.0, 0.0, 0.0, -201.2, 360.0]
+  note: Estimated from thermodynamic data at 298 K and species CH3CHO
+- name: C2H4OH
+  composition: {C: 2, H: 5, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 3000.0, 6000.0]
+    data:
+    - [21.165, 135.84, -52.426, 7.0444, 0.021674, -33.8, 285.5]
+    - [129.0, 6.0, 0.0, 0.0, 0.0, -102.2, 384.0]
+  note: Estimated from thermodynamic data at 298 K and species CH3CHO
+- name: CH3O2
+  composition: {C: 1, H: 3, O: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 1500.0, 6000.0]
+    data:
+    - [26.885, 92.826, -41.66, 7.0037, 0.002942, 4.0, 267.0]
+    - [87.0, 6.0, 0.0, 0.0, 0.0, -36.5, 333.9]
+  note: Estimated from thermodynamic data at 298 K and species CH2CO
+- name: HSO3
+  composition: {H: 1, S: 1, O: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [19.63229, 153.9599, -115.8378, 32.87955, -0.249114, -366.5718, 241.3149]
+    - [97.45959, 5.429577, -1.029688, 0.06795, -12.29314, -412.1812, 337.4151]
+  note: Estimated from thermodynamic data at 298 K and species HNO3
+- name: O1D
+  composition: {O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [21.1861, -0.502314, 0.168694, -0.008962, 0.075664, 432.9506, 188.2001]
+  note: Estimated from thermodynamic data at 298 K and species O
+- name: N2H3
+  composition: {N: 2, H: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 2000.0, 6000.0]
+    data:
+    - [35.1824, 96.0526, -40.5013, 6.66807, -0.874233, 206.6415, 230.765]
+    - [121.401, 4.81688, -0.763012, 0.043232, -40.7865, 117.2689, 286.684]
+  note: Estimated from thermodynamic data at 298 K and species N2H4
+- name: NH2CO
+  composition: {N: 1, H: 2, C: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 1500.0, 6000.0]
+    data:
+    - [26.885, 92.826, -41.66, 7.0037, 0.002942, -25.5, 267.0]
+    - [87.0, 6.0, 0.0, 0.0, 0.0, -66.0, 333.9]
+  note: Estimated from thermodynamic data at 298 K and species CH2CO
+- name: HS4
+  composition: {H: 1, S: 4}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [79.88051, 3.276394, -0.0001, 1.0e-05, -1.179851, 82.0, 419.0513]
+  note: Estimated from thermodynamic data at 298 K and species S4
+- name: C4H3
+  composition: {C: 4, H: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 3000.0, 6000.0]
+    data:
+    - [26.051, 185.07, -83.712, 12.691, 0.014196, 476.0, 249.0]
+    - [155.5, 5.0, 0.0, 0.0, 0.0, 401.5, 384.5]
+  note: Estimated from thermodynamic data at 298 K and species C4H4
+- name: CH2N2
+  composition: {C: 1, H: 2, N: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 1500.0, 6000.0]
+    data:
+    - [26.885, 92.826, -41.66, 7.0037, 0.002942, 228.0, 267.0]
+    - [87.0, 6.0, 0.0, 0.0, 0.0, 187.5, 333.9]
+  note: Estimated from thermodynamic data at 298 K and species CH2CO
+- name: N2D
+  composition: {N: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [21.14, -0.39, 0.04, 0.02, -0.03, 696.63, 178.55]
+  note: Estimated from thermodynamic data at 298 K and species N
+- name: CH2CN
+  composition: {C: 2, H: 2, N: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 1500.0, 6000.0]
+    data:
+    - [26.885, 92.826, -41.66, 7.0037, 0.002942, 246.0, 263.0]
+    - [87.0, 6.0, 0.0, 0.0, 0.0, 205.5, 329.9]
+  note: Estimated from thermodynamic data at 298 K and species CH2CO
+- name: CH3CN
+  composition: {C: 2, H: 3, N: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 1500.0, 6000.0]
+    data:
+    - [26.885, 92.826, -41.66, 7.0037, 0.002942, 62.0, 250.0]
+    - [87.0, 6.0, 0.0, 0.0, 0.0, 21.5, 316.9]
+  note: Estimated from thermodynamic data at 298 K and species CH2CO
+- name: HCCCN
+  composition: {H: 1, C: 3, N: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 2500.0, 6000.0]
+    data:
+    - [40.366, 120.42, -57.514, 9.3241, -0.049062, 337.0, 279.0]
+    - [117.6, 4.0, 0.0, 0.0, 0.0, 299.25, 368.1]
+  note: Estimated from thermodynamic data at 298 K and species C4H2
+- name: H2Oaer
+  composition: {H: 2, O: 1}
+  condensate: true
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 273.15, 647.0, 6000]
+    data:
+    - [27.03805, 0.0, 0.0, 0.0, 0.0, -301.5211, 74.81398]
+    - [59.82079, 0.0, 0.0, 0.0, 0.0, -303.3807, 143.3319]
+    - [38.86855, 0.0, 0.0, 0.0, 0.0, -3485.304, -4804.709]
+- name: CO2aer
+  composition: {C: 1, O: 2}
+  condensate: true
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 216.58, 304.13, 6000]
+    data:
+    - [46.83605, 0.0, 0.0, 0.0, 0.0, -431.7464, 144.3703]
+    - [49.96507, 0.0, 0.0, 0.0, 0.0, -424.4936, 185.7737]
+    - [46.44971, 0.0, 0.0, 0.0, 0.0, -1128.089, -2135.395]
+- name: S8aer
+  composition: {S: 8}
+  condensate: true
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 392.0, 675.0, 6000]
+    data:
+    - [81.63699, 0.0, 0.0, 0.0, 0.0, -17.87472, 370.0012]
+    - [196.0904, 0.0, 0.0, 0.0, 0.0, -25.85658, 571.2776]
+    - [178.5428, 0.0, 0.0, 0.0, 0.0, -3470.409, -4556.208]
+- name: H2SO4aer
+  composition: {H: 2, S: 1, O: 4}
+  condensate: true
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 360.0, 905.0, 6000]
+    data:
+    - [149.7428, 0.0, 0.0, 0.0, 0.0, -868.0208, 333.2047]
+    - [172.7818, 0.0, 0.0, 0.0, 0.0, -877.713, 352.8588]
+    - [136.8099, 0.0, 0.0, 0.0, 0.0, -3944.131, -3075.012]
+- name: NH3aer
+  composition: {N: 1, H: 3}
+  condensate: true
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 195.4, 405.4, 6000]
+    data:
+    - [34.40137, 0.0, 0.0, 0.0, 0.0, -87.02049, 99.60634]
+    - [50.04407, 0.0, 0.0, 0.0, 0.0, -84.07384, 155.8691]
+    - [46.92263, 0.0, 0.0, 0.0, 0.0, -1335.664, -2937.367]
+- name: N2Oaer
+  composition: {N: 2, O: 1}
+  condensate: true
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 182.33, 309.56, 6000]
+    data:
+    - [48.72825, 0.0, 0.0, 0.0, 0.0, 45.85476, 160.6788]
+    - [64.2163, 0.0, 0.0, 0.0, 0.0, 47.94644, 213.9985]
+    - [47.65507, 0.0, 0.0, 0.0, 0.0, -678.5994, -2169.01]
+- name: C2H2aer
+  composition: {C: 2, H: 2}
+  condensate: true
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 192.4, 308.3, 6000]
+    data:
+    - [71.13159, 0.0, 0.0, 0.0, 0.0, 188.2624, 191.8465]
+    - [45.96947, 0.0, 0.0, 0.0, 0.0, 196.9149, 170.1841]
+    - [57.30175, 0.0, 0.0, 0.0, 0.0, -531.0773, -2166.46]
+- name: C2H4aer
+  composition: {C: 2, H: 4}
+  condensate: true
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 104.0, 282.5, 6000]
+    data:
+    - [17.25723, 0.0, 0.0, 0.0, 0.0, 24.28999, 91.72174]
+    - [59.74949, 0.0, 0.0, 0.0, 0.0, 23.05189, 218.4846]
+    - [66.82494, 0.0, 0.0, 0.0, 0.0, -591.1155, -1939.54]
+- name: C2H6aer
+  composition: {C: 2, H: 6}
+  condensate: true
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 91.0, 305.3, 6000]
+    data:
+    - [49.44997, 0.0, 0.0, 0.0, 0.0, -118.2201, 163.0354]
+    - [58.00161, 0.0, 0.0, 0.0, 0.0, -115.5278, 221.6703]
+    - [85.83739, 0.0, 0.0, 0.0, 0.0, -837.8794, -2083.507]
+- name: CH3CNaer
+  composition: {C: 2, H: 3, N: 1}
+  condensate: true
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 229.32, 545.0, 6000]
+    data:
+    - [76.08523, 0.0, 0.0, 0.0, 0.0, 8.894767, 202.469]
+    - [63.47804, 0.0, 0.0, 0.0, 0.0, 21.20925, 224.996]
+    - [75.77488, 0.0, 0.0, 0.0, 0.0, -2248.982, -3920.731]
+- name: HCCCNaer
+  composition: {H: 1, C: 3, N: 1}
+  condensate: true
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 280.0, 527.0, 6000]
+    data:
+    - [18.34217, 0.0, 0.0, 0.0, 0.0, 302.106, 131.2735]
+    - [75.79755, 0.0, 0.0, 0.0, 0.0, 303.3396, 266.2734]
+    - [101.2273, 0.0, 0.0, 0.0, 0.0, -1828.688, -3737.602]
+- name: HCNaer
+  composition: {H: 1, C: 1, N: 1}
+  condensate: true
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 259.0, 456.85, 6000]
+    data:
+    - [29.30938, 0.0, 0.0, 0.0, 0.0, 83.63221, 106.8644]
+    - [34.76726, 0.0, 0.0, 0.0, 0.0, 91.13795, 148.6752]
+    - [45.40729, 0.0, 0.0, 0.0, 0.0, -1500.82, -3316.989]
+- name: CH4aer
+  composition: {C: 1, H: 4}
+  condensate: true
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 90.686, 190.564, 6000]
+    data:
+    - [173.0445, 0.0, 0.0, 0.0, 0.0, -108.3865, 465.8816]
+    - [60.14269, 0.0, 0.0, 0.0, 0.0, -97.81886, 198.5063]
+    - [45.60216, 0.0, 0.0, 0.0, 0.0, -373.8795, -1288.79]

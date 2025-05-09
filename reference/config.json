@@ -1,5 +1,5 @@
 {
-	"version":3.2,
+	"version":"4.0",
 	"calculation":"spectrum_only",
 	"phase":0,
 	"planet":{
@@ -15,18 +15,12 @@
 		"p_table":null,
 		"grad":null,
 		"cp":null,
-		"ntemp_bb_grid":2400,
-		"dt_bb_grid":2.5,
 		"guess_temp":null,
 		"pressure":null,
 		"nstr":null,
 		"nofczns":null,
 		"rfacv":null,
-		"rfaci":null,
-		"cloudy":null,
-		"mh":null,
-		"Cto":null,
-		"cld_species":null
+		"rfaci":null
 	},
 	"star":{
 		"database":"ck04models",
@@ -37,7 +31,9 @@
 	"atmosphere":{
 		"profile":null,
 		"exclude_mol":1,
-		"pt_params":null
+		"pt_params":null,
+		"mh":null,
+		"cto":null
 	},
 	"clouds":{
 		"profile":null,
@@ -46,7 +42,8 @@
 			"g0":null,
 			"w0":null,
 			"opd":null
-		}
+		},
+		"do_holes":false
 	},
 	"approx":{
 		"get_layer_fluxes":0,
@@ -78,6 +75,13 @@
 				"delta_eddington":true,
 				"raman":1	
 			}
+		},
+		"chem_method":null,
+		"chem_params":{
+			"quench":false,
+			"cold_trap":false,
+			"vol_rainout":false,
+			"no_ph3":false
 		}
 		
 	},
@@ -87,15 +91,15 @@
 	},
 	"opacities":{
 		"wnogrid":null,
-		"query":0,
 		"files":{
-			"opacity":"opacities.db",
-			"ktable_continuum":"ck_cx_cont_opacities.db",
-			"h2minus":"h2minus.csv",
-			"raman":"raman.txt"
+			"opacity":"opacities/opacities.db",
+			"ktable_continuum":"opacities/ck_cx_cont_opacities.db",
+			"h2minus":"opacities/h2minus.csv",
+			"raman":"opacities/raman.txt",
+			"ktable_resortrebin":"climate_INPUTS/ck_cx_cont_opacities_661.db",
+			"ktable_by_molecule":"climate_INPUTS/ktable_by_molecule"
 		}
 
 	},
-	"test_mode":null,
-	"output_dir":null
+	"test_mode":null
 }

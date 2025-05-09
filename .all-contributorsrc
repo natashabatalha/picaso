@@ -143,6 +143,76 @@
         "mentoring",
         "fundingFinding"
       ]
+    },
+    {
+      "login": "Ziva18t",
+      "name": "Ziva18t",
+      "avatar_url": "https://avatars.githubusercontent.com/u/107640508?v=4",
+      "profile": "https://github.com/Ziva18t",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "James-Mang",
+      "name": "James",
+      "avatar_url": "https://avatars.githubusercontent.com/u/33335954?v=4",
+      "profile": "https://jamesmang.wixsite.com/jamesmang",
+      "contributions": [
+        "code",
+        "research"
+      ]
+    },
+    {
+      "login": "astrocaroline",
+      "name": "astrocaroline",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10456842?v=4",
+      "profile": "https://github.com/astrocaroline",
+      "contributions": [
+        "mentoring",
+        "ideas",
+        "fundingFinding",
+        "research"
+      ]
+    },
+    {
+      "login": "rewaclarkbush",
+      "name": "rewaclarkbush",
+      "avatar_url": "https://avatars.githubusercontent.com/u/85771931?v=4",
+      "profile": "https://github.com/rewaclarkbush",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "Nicholaswogan",
+      "name": "Nick Wogan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/18489667?v=4",
+      "profile": "https://nicholaswogan.github.io/",
+      "contributions": [
+        "tutorial",
+        "code"
+      ]
+    },
+    {
+      "login": "kelle",
+      "name": "Kelle Cruz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1444249?v=4",
+      "profile": "https://github.com/kelle",
+      "contributions": [
+        "test",
+        "code"
+      ]
+    },
+    {
+      "login": "benjaminliberles",
+      "name": "Benjamin Liberles",
+      "avatar_url": "https://avatars.githubusercontent.com/u/89707153?v=4",
+      "profile": "https://github.com/benjaminliberles",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
@@ -150,5 +220,6 @@
   "repoType": "github",
   "repoHost": "https://github.com",
   "projectName": "picaso",
-  "projectOwner": "natashabatalha"
+  "projectOwner": "natashabatalha",
+  "commitType": "docs"
 }

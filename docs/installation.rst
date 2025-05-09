@@ -1,10 +1,12 @@
 Installation
 ============
 
-Python Version
+Python  Version
 --------------
 
-Python >= 3.8 
+Python >= 3.11 
+
+It is recommended you use Conda environments. Please check out `our conda environment tutorial <https://natashabatalha.github.io/picaso/contribution.html#using-conda-enviornments>`_.  
 
 Install with Git (recommended)
 ------------------------------
@@ -31,12 +33,22 @@ Download PICASO Reference Data
 ------------------------------
 
 .. note::
-	`PICASO` 3.0 will not work with PICASO 2.3 reference folder. Please download the new reference folder if you are using PICASO 3.0 
+	`PICASO` >3.0 will not work with PICASO 2.3 reference folder. Please download the new reference folder if you are using PICASO 3.0 
 
-1) Download the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_. You should already this if you did a Git clone. **Make sure that your reference folder matches the version number of ``PICASO``**. Check the version number in the file ``reference/version.md``. 
+Download the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_. You should already this if you did a Git clone. **Make sure that your reference folder matches the version number of ``PICASO``**. Check the version number in the file ``reference/version.md``. 
 
-2) Download a `Resampled Opacity File from Zenodo <https://doi.org/10.5281/zenodo.3759675>`_. Note that there are a few different versions. Any is acceptable depending on your resolution and wavelength needs. Put this db file in the `Opacities reference Folder you downloaded from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_. **You may need to rename it opacities.db and place into `reference/opacities` folder**. The file placed into reference/opacities will serve as your default file. You can point to other opacity files using justdoit.opannection. 
+Below you will create an environment variable that points to this directory ``reference``. We will call this ``$picaso_refdata``. 
 
+Download Opacities 
+------------------
+
+1) Download a the recommended default `Resampled Opacity File from Zenodo <https://zenodo.org/records/14861730>`_. 
+2) Once this is download rename and add it to `reference/opacities/opacities.db`. You will likely have to change the name of the file. 
+
+If you use the `picaso.data.get_data` function (see tutorial) it will do this for you automatically. 
+
+.. note::
+	Note you can use `picaso.data.get_data() to help you downloaded opacities since there are a few diffrent databases available (see tutorial below). Any is acceptable as the default depending on your resolution and wavelength needs. Only one opacities.db file needs to exist in your referece/opacities folder. The others you just specify a path to in `picaso.justdoit.opannection`. 
 
 Create Environment Variable 
 ---------------------------
@@ -74,7 +86,6 @@ Now you can check that your variable has been defined properly:
 	ls
 	base_cases chemistry config.json evolution opacities version.md
 
-Your opacities folder shown above should include the file ``opacities.db`` `file downloaded from zenodo <https://doi.org/10.5281/zenodo.3759675>`_. This is mostly a matter of preference, as PICASO allows you to point to an opacity directory. Personally, I like to store something with the reference data so that I don't have to constantly specify a folder path when running the code. 
 
 Method 2: Add directly to python code
 ````````````````````````````````````````
@@ -85,6 +96,7 @@ Sometimes it is too troublesome to go through bash settings and you may prefer t
 
 	import os
 	os.environ['picaso_refdata'] = 'your_path' #THIS MUST GO BEFORE YOUR IMPORT STATEMENT
+	#if you are using stellar grid models
 	os.environ['PYSYN_CDBS'] = 'your_path' #this is for the stellar data discussed below.
 	import picaso.justdoit as jdi
 
@@ -137,14 +149,14 @@ Notice here that I do **not** have a tilda (~) in front of ``./etc``. The full p
 	/Users/nbatalh1/.conda/envs/picaso/etc/conda/activate.d
 
 
-Download and Link Pysynphot Stellar Data
-----------------------------------------
+`stsynphot`` Stellar Data for Exoplanet Modeling
+------------------------------------------------
 
-In order to get stellar spectra you will have to download the stellar spectra here from PySynphot: 
+In order to get stellar spectra you will have to download the stellar spectra here from stsynphot: 
 
-1) PICASO uses the `Pysynphot package <https://pysynphot.readthedocs.io/en/latest/appendixa.html>`_ which has several download options for stellar spectra. The Defulat for ``PICASO`` is Castelli-Kurucz Atlas: `ck04models <https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/>`_. 
+1) PICASO uses the `stsynphot package <https://stsynphot.readthedocs.io/en/latest/>`_ which has several download options for stellar spectra. The Defulat for ``PICASO`` is Castelli-Kurucz Atlas: `ck04models <https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/>`_. 
 
-You can download them by doing this: 
+If you have `wget` you can download them by doing this or just downloading the link below. 
 
 .. code-block:: bash
 
@@ -153,7 +165,7 @@ You can download them by doing this:
 When you untar this you should get a directory structure that looks like this ``<path>/grp/redcat/trds/grid/ck04models``. Some other people have reported a directory structure that looks like this ``<path>/grp/hst/cdbs/grid/ck04models``. **The full directory structure does not matter**. Only the last portion ``grid/ck04models``. You will need to create an enviornment variable that points to where ``grid/`` is located. See below.
 
 
-2) Create environment variable via bash 
+Follow the same environment variable above instructions to create an environment variable. For example:
 
 .. code-block:: bash
 
@@ -179,9 +191,17 @@ Now you should be able to check the path:
 	ls
 	grid
 
-Where the folder ``grid/`` contains whatever ``pysynphot`` data files you have downloaded (e.g. a folder called ``ck04models/``). 
+Where the folder ``grid/`` contains whatever ``stsynphot`` data files you have downloaded (e.g. a folder called ``ck04models/``). 
 
 .. note::
 
-	1. STScI serves these files in a few different places, with a few different file structures. **PySynphot only cares that the environment variable points to a path with a folder called `grid`. So do not worry if `grp/hst/cdbs` appears different.** 
+	1. STScI serves these files in a few different places, with a few different file structures. **stsynphot only cares that the environment variable points to a path with a folder called `grid`. So do not worry if `grp/hst/cdbs` appears different.** 
 
+
+Autodownloads
+=============
+
+.. toctree::
+   :maxdepth: 2
+
+   Additional Data Help </notebooks/0_GetDataFunctions.ipynb>

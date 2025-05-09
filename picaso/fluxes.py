@@ -4,7 +4,6 @@ import numpy as np
 import time
 import pickle as pk
 from scipy.linalg import solve_banded
-#from numpy.linalg import solve
 
 @jit(nopython=True, cache=True)
 def slice_eq(array, lim, value):
@@ -416,7 +415,7 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
         matrix of cosine of the incident angle from geometric.json
     ubar1 : ndarray of float 
         matrix of cosine of the observer angles
-    cos_theta : float 
+    cos_theta: float 
         Cosine of the phase angle of the planet 
     F0PI : array 
         Downward incident solar radiation
@@ -439,7 +438,6 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
     constant_forward : float 
         (Optional), If using the TTHG phase function. Must specify the assymetry of forward scatterer. 
         Remember, the output of A & M code does not separate back and forward scattering.
-
     Returns
     -------
     intensity at the top of the atmosphere for all the different ubar1 and ubar2 
@@ -461,11 +459,13 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
 
     #terms not dependent on incident angle
     sq3 = sqrt(3.)
-
+    
     #================ START CRAZE LOOP OVER ANGLE #================
+
     for ng in range(numg):
         for nt in range(numt):
-
+            u1 = abs(ubar1[ng,nt])  #absolute value here becuase naegative u values causes overflow errors in x
+            u0 = abs(ubar0[ng,nt])  #absolute value here becuase naegative u values causes overflow errors in x
             #get needed chunk for 3d inputs
             #should consider thinking of a better method for when doing 1d only
             cosb = cosb_3d[:,:,ng,nt]
@@ -490,23 +490,23 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             g2  = (sq3*w0*0.5)*(1.-ftau_cld*cosb)           #table 1
             lamda = sqrt(g1**2 - g2**2)           #eqn 21
             gama  = (g1-lamda)/g2                   #eqn 22
-            g3  = 0.5*(1.-sq3*ftau_cld*cosb*ubar0[ng, nt])   #table 1 #ubar is now 100x 10 matrix.. 
+            g3  = 0.5*(1.-sq3*ftau_cld*cosb*u0)   #table 1 #ubar is now 100x 10 matrix.. 
     
             # now calculate c_plus and c_minus (equation 23 and 24)
             g4 = 1.0 - g3
-            denominator = lamda**2 - 1.0/ubar0[ng, nt]**2.0
+            denominator = lamda**2 - 1.0/u0**2.0
 
             #everything but the exponential 
-            a_minus = F0PI*w0* (g4*(g1 + 1.0/ubar0[ng, nt]) +g2*g3 ) / denominator
-            a_plus  = F0PI*w0*(g3*(g1-1.0/ubar0[ng, nt]) +g2*g4) / denominator
+            a_minus = F0PI*w0* (g4*(g1 + 1.0/u0) +g2*g3 ) / denominator
+            a_plus  = F0PI*w0*(g3*(g1-1.0/u0) +g2*g4) / denominator
 
             #add in exponential to get full eqn
             #_up is the terms evaluated at lower optical depths (higher altitudes)
             #_down is terms evaluated at higher optical depths (lower altitudes)
-            x = exp(-tau[:-1,:]/ubar0[ng, nt])
+            x = exp(-tau[:-1,:]/u0) 
             c_minus_up = a_minus*x #CMM1
             c_plus_up  = a_plus*x #CPM1
-            x = exp(-tau[1:,:]/ubar0[ng, nt])
+            x = exp(-tau[1:,:]/u0)
             c_minus_down = a_minus*x #CM
             c_plus_down  = a_plus*x #CP
 
@@ -518,10 +518,9 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             exptrm_positive = exp(exptrm) #EP
             exptrm_minus = 1.0/exptrm_positive#exp(-exptrm) #EM
 
-
             #boundary conditions 
             b_top = 0.0                                       
-            b_surface = 0. + surf_reflect*ubar0[ng, nt]*F0PI*exp(-tau[-1, :]/ubar0[ng, nt])
+            b_surface = 0. + surf_reflect*u0*F0PI*exp(-tau[-1, :]/u0)
 
             #Now we need the terms for the tridiagonal rotated layered method
             #if tridiagonal==0:
@@ -570,13 +569,13 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
                 #this is a decent assumption because our second order legendre polynomial 
                 #is forced to be equal to the rayleigh phase function
                 ubar2 = 0.767  # 
-                multi_plus = (1.0+1.5*ftau_cld*cosb*ubar1[ng,nt] #!was 3
-                                + gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
-                multi_minus = (1.-1.5*ftau_cld*cosb*ubar1[ng,nt] 
-                                + gcos2*(3.0*ubar2*ubar2*ubar1[ng,nt]*ubar1[ng,nt] - 1.0)/2.0)
+                multi_plus = (1.0+1.5*ftau_cld*cosb*u1 #!was 3
+                                + gcos2*(3.0*ubar2*ubar2*u1*u1 - 1.0)/2.0)
+                multi_minus = (1.-1.5*ftau_cld*cosb*u1 
+                                + gcos2*(3.0*ubar2*ubar2*u1*u1 - 1.0)/2.0)
             elif multi_phase ==1:#'N=1':
-                multi_plus = 1.0+1.5*ftau_cld*cosb*ubar1[ng,nt]  
-                multi_minus = 1.-1.5*ftau_cld*cosb*ubar1[ng,nt]
+                multi_plus = 1.0+1.5*ftau_cld*cosb*u1  
+                multi_minus = 1.-1.5*ftau_cld*cosb*u1
             ################################ END OPTIONS FOR MULTIPLE SCATTERING####################
 
             G=w0*positive*(multi_plus+gama*multi_minus)
@@ -591,6 +590,7 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             #define f (fraction of forward to back scattering), 
             #g_forward (forward asymmetry), g_back (backward asym)
             #needed for everything except the OTHG
+            
             if single_phase!=1: 
                 g_forward = constant_forward*cosb_og
                 g_back = constant_back*cosb_og#-
@@ -614,7 +614,8 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
                                 #rayleigh phase function
                                 (gcos2))
             elif single_phase==1:#'OTHG':
-                p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
+                p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3)
+
             elif single_phase==2:#'TTHG':
                 #Phase function for single scattering albedo frum Solar beam
                 #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
@@ -624,6 +625,7 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
                                 #second term of TTHG: backward scattering
                                 +(1-f)*(1-g_back**2)
                                 /sqrt((1+g_back**2+2*g_back*cos_theta)**3))
+
             elif single_phase==3:#'TTHG_ray':
                 #Phase function for single scattering albedo frum Solar beam
                 #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
@@ -639,22 +641,22 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             ################################ END OPTIONS FOR DIRECT SCATTERING####################
 
             for i in range(nlayer-1,-1,-1):
-                #direct beam
-                #note when delta-eddington=off, then tau_single=tau, cosb_single=cosb, w0_single=w0, etc
-                xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/ubar1[ng,nt])
+                xint[i,:] =( xint[i+1,:]*exp(-dtau[i,:]/u1)
                         #single scattering albedo from sun beam (from ubar0 to ubar1)
                         +(w0_og[i,:]*F0PI/(4.*pi))*
-                        (p_single[i,:])*exp(-tau_og[i,:]/ubar0[ng,nt])*
-                        (1. - exp(-dtau_og[i,:]*(ubar0[ng,nt]+ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
-                        (ubar0[ng,nt]/(ubar0[ng,nt]+ubar1[ng,nt]))
+                        (p_single[i,:])*exp(-tau_og[i,:]/u0)*
+                        (1. - exp(-dtau_og[i,:]*(u0+u1)/(u0*u1)))*
+                        (u0/(u0+u1))
                         #three multiple scattering terms 
-                        +A[i,:]* (1. - exp(-dtau[i,:] *(ubar0[ng,nt]+1*ubar1[ng,nt])/(ubar0[ng,nt]*ubar1[ng,nt])))*
-                        (ubar0[ng,nt]/(ubar0[ng,nt]+1*ubar1[ng,nt]))
-                        +G[i,:]*(exp(exptrm[i,:]*1-dtau[i,:]/ubar1[ng,nt]) - 1.0)/(lamda[i,:]*1*ubar1[ng,nt] - 1.0)
-                        +H[i,:]*(1. - exp(-exptrm[i,:]*1-dtau[i,:]/ubar1[ng,nt]))/(lamda[i,:]*1*ubar1[ng,nt] + 1.0))
+                        +A[i,:]* (1. - exp(-dtau[i,:] *(u0+1*u1)/(u0*u1)))*
+                        (u0/(u0+1*u1))
+                        +G[i,:]*(exp(exptrm[i,:]*1-dtau[i,:]/u1) - 1.0)/(lamda[i,:]*1*u1 - 1.0)
+                        +H[i,:]*(1. - exp(-exptrm[i,:]*1-dtau[i,:]/u1))/(lamda[i,:]*1*u1 + 1.0))
                         #thermal
 
-            xint_at_top[ng,nt,:] = xint[0,:]    
+            #xint = np.nan_to_num(xint, nan=0)
+            xint_at_top[ng,nt,:] = xint[0,:] 
+    
     return xint_at_top
 
 @jit(nopython=True, cache=True)
@@ -783,8 +785,8 @@ def get_reflected_1d_deprecate(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,
     #================ START CRAZE LOOP OVER ANGLE #================
     for ng in range(numg):
         for nt in range(numt):
-            u1 = ubar1[ng,nt]
-            u0 = ubar0[ng,nt]
+            u1 = abs(ubar1[ng,nt])   #absolute value here becuase naegative u values causes overflow errors in x
+            u0 = abs(ubar0[ng,nt])   #absolute value here becuase naegative u values causes overflow errors in x
             if toon_coefficients == 1 : #eddington
                 g3  = (2-3*ftau_cld*cosb*u0)/4#0.5*(1.-sq3*cosb*ubar0[ng, nt]) #  #table 1 #ubar has dimensions [gauss angles by tchebyshev angles ]
             elif toon_coefficients == 0 :#quadrature
@@ -802,9 +804,11 @@ def get_reflected_1d_deprecate(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,
             #_up is the terms evaluated at lower optical depths (higher altitudes)
             #_down is terms evaluated at higher optical depths (lower altitudes)
             x = exp(-tau[:-1,:]/u0)
+            #x = exp(-tau[:-1,:]/abs(u0))
             c_minus_up = a_minus*x #CMM1
             c_plus_up  = a_plus*x #CPM1
             x = exp(-tau[1:,:]/u0)
+            #x = exp(-tau[1:,:]/abs(u0))
             c_minus_down = a_minus*x #CM
             c_plus_down  = a_plus*x #CP
 
@@ -815,7 +819,6 @@ def get_reflected_1d_deprecate(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,
 
             exptrm_positive = exp(exptrm) #EP
             exptrm_minus = 1.0/exptrm_positive#EM
-
 
             #boundary conditions 
             #b_top = 0.0                                       
@@ -1348,6 +1351,9 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                                 0.75*(1+cos_theta**2.0) #rayleigh phase function
                                 )
                             )
+                #elif single_phase==4:#'LAB':
+                #    #Phase function as measured by ExCESS, extrapolated to full viewing angles
+                #    p_single=(ftau_cld*cos_theta)
                 #exploring.... 
                 #elif single_phase==4:#'P(HG) exact w/ approx costheta'
                 #    deltaphi=0
@@ -1366,7 +1372,6 @@ def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, fta
                 #                )
                 #            )
 
-                
                 ################################ end options for direct scattering ####################
 
                 #in codes like DISORT the single and multiple scattering beams are reported separately
@@ -1746,7 +1751,7 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     if calc_type == 0: 
         all_b = blackbody(tlevel, 1/wno) #returns nlevel by nwave   
     elif calc_type==1:
-        all_b = blackbody_integrated(tlevel, wno, dwno)
+        all_b = blackbody_integrated(tlevel, wno, dwno)    
 
     b0 = all_b[0:-1,:]
     b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
@@ -1795,7 +1800,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:] * pi #  Btop=(1.-np.exp(-tautop/ubari))*B[0]
     
     if hard_surface:
-        b_surface = all_b[-1,:]*pi #for terrestrial, hard surface  
+        emissivity = 1.0 - surf_reflect #Emissivity is 1 - surface reflectivity
+        b_surface =  emissivity*all_b[-1,:]*pi #for terrestrial, hard surface  
     else: 
         b_surface= (all_b[-1,:] + b1[-1,:]*mu1)*pi #(for non terrestrial)
 
@@ -1861,7 +1867,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
             iubar = ubar1[ng,nt]
 
             if hard_surface:
-                flux_plus[ng,nt,-1,:] = all_b[-1,:] *2*pi  # terrestrial flux /pi = intensity
+                emissivity = 1.0 - surf_reflect #Emissivity is 1 - surface reflectivity
+                flux_plus[ng,nt,-1,:] = emissivity*all_b[-1,:] *2*pi  # terrestrial flux /pi = intensity
             else:
                 flux_plus[ng,nt,-1,:] = ( all_b[-1,:] + b1[-1,:] * iubar)*2*pi #no hard surface   
                 
@@ -3844,7 +3851,7 @@ def planck_rad_deprecate(iw, T, dT ,  tmin, tmax, bb , y2, tp):
 
     if T < tmin :
        # itchx = 1
-        T= tmax
+        T= tmin #originally set = tmax JM
     elif T > tmax :
        # itchx = 1
         T=tmax
@@ -3874,252 +3881,3 @@ def blackbody_climate_deprecate(wave,temp, bb, y2, tp, tmin, tmax):
 
     return blackbody_array
 
-# still not developed fully. virga has a function already maybe just use that
-@jit(nopython=True, cache=True)
-def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr):
-
-    grav_cgs = grav*1e2
-    p_cgs = pressure *1e6
-    
-    nlevel = len(temp)
-    
-    
-    if len(mmw) == len(temp)-1:
-        r_atmos = 8.3143e7/mmw
-    else:
-        r_atmos = 8.3143e7/mmw[:-1]
-
-    
-    nz= nlevel -1
-    p = np.zeros_like(p_cgs)
-    t = np.zeros_like(p_cgs)
-
-    for iz in range(nz-1, -1,-1):
-        itop = iz
-        ibot = iz+1
-
-        dlnp = np.log(p_cgs[ibot]/p_cgs[itop])
-        p[iz] = 0.5*(p_cgs[itop]+p_cgs[ibot])
-
-        dtdlnp = (temp[itop]-temp[ibot])/dlnp
-
-        t[iz] = temp[ibot] +np.log(p_cgs[ibot]/p[iz])*dtdlnp
-        #scale_h =  r_atmos[iz]*t[iz]/grav_cgs
-    
-    
-    # flux_plux_ir is already summed up with dwni in climate routine
-    # so just add to get f_sum
-
-    f_sum = np.sum(flux_plus_ir_attop)
-
-    sigmab =  0.56687e-4 #cgs
-
-    teff_now = (f_sum/sigmab)**0.25
-    target_teff = (abs(tidal[0])/sigmab)**0.25
-    flx_min = sigmab*((target_teff*0.05)**4)
-    
-    #print("Teff now ", teff_now, "Target Teff ", target_teff)
-
-    #     we explictly assume that the bottom layer is 100%
-    #     convective energy transport.  This helps with
-    #     the correction logic below and should always be true
-    #     in a well formed model.
-
-    chf = np.zeros_like(tidal)
-
-    chf[nz-1] = f_sum
-    
-    for iz in range(nz-1-1,-1,-1):
-        chf[iz] = f_sum - flux_net_ir_layer[iz]
-        ratio_min = (1./3.)*p[iz]/p[iz+1]
-        
-#     set the minimum allowed heat flux in a layer by assuming some overshoot
-#     the 1/3 is arbitrary, allowing convective flux to fall faster than
-#     pressure scale height
-        
-        if chf[iz] < ratio_min*chf[iz+1]:
-            chf[iz]= ratio_min*chf[iz+1]
-        
-#     Now we adjust so that the convective flux is equal to the3
-#     target convective flux to see if this helps with the
-#     convergence.
-    f_target = abs(tidal[0])
-    f_actual = chf[nz-1]
-    
-    ratio = f_target/f_actual
-    
-    for iz in range(nz-1,-1,-1):
-        
-        chf[iz] = max(chf[iz]*ratio,flx_min) 
-        
-    
-    player, tlayer = np.zeros(len(pressure)-1), np.zeros(len(pressure)-1)
-    lapse_ratio = np.zeros_like(player)
-    for j in range(len(pressure)-1):
-        tlayer[j]=0.5*(temp[j]+temp[j+1])
-        player[j]=np.sqrt(p_cgs[j]*p_cgs[j+1]) # cgs
-
-        dtdp = (np.log(temp[j])-np.log(temp[j+1]))/(np.log(p_cgs[j+1]/p_cgs[j]))
-        tbar = 0.5*(temp[j]+temp[j+1])
-        pbar = 0.5*(p_cgs[j] +p_cgs[j+1])
-        # weirdly layer routine of eddysed uses did_grad with pressures in cgs
-        # supposed to be used with pressure in bars
-        grad_x,cp_x = did_grad_cp(tbar, pbar, t_table, p_table, grad, cp, calc_type)
-        lapse_ratio[j] = min(np.array([1.0, -dtdp/grad_x]))
-        
-    
-    
-    rho_atmos = player/ (r_atmos * tlayer)
-    
-    c_p = (7./2.)*r_atmos
-    scale_h = r_atmos * tlayer / (grav_cgs)
-    
-    #0.1 just to explore was not here 
-    #mixl = scale_h #lapse_ratio*scale_h*1e-1
-    mixl = np.zeros_like(lapse_ratio)
-    for jj in range(len(pressure)-1):
-        mixl[jj] = max(0.1,lapse_ratio[jj])*scale_h[jj]
-    
-    scalef_kz = 1./3.
-    
-    kz = scalef_kz * scale_h * (mixl/scale_h)**(4./3.) *( ( r_atmos*chf[:-1] ) / ( rho_atmos*c_p ) )**(1./3.)
-    
-    
-    kz = np.append(kz,kz[-1])
-    
-    
-    #### julien moses 2021
-    
-    logp = np.log10(pressure)
-    wh = np.where(np.absolute(logp-(-3)) == np.min(np.absolute(logp-(-3))))
-    
-    kzrad1 = (5e8/np.sqrt(pressure[nstr[0]:nstr[1]]))*(scale_h[wh]/(620*1e5))*((target_teff/1450)**4)
-    kzrad2 = (5e8/np.sqrt(pressure[nstr[3]:nstr[4]]))*(scale_h[wh]/(620*1e5))*((target_teff/1450)**4)
-    #
-    if nstr[3] != 0:
-        kz[nstr[0]:nstr[1]] = kzrad1#/100 #*10#kz[nstr[0]:nstr[1]]/1.0
-        kz[nstr[3]:nstr[4]] = kzrad2#/100 #*10 #kz[nstr[3]:nstr[4]]/1.0
-    else:
-        kz[nstr[0]:nstr[1]] = kzrad1#/100
-    
-    return kz
-
-
-@jit(nopython=True, cache=True)
-def did_grad_cp( t, p, t_table, p_table, grad, cp, calc_type):
-    """
-    Parameters
-    ----------
-    t : float
-        Temperature  value
-    p : float 
-        Pressure value
-    t_table : array 
-        array of Temperature values with 53 entries
-    p_table : array 
-        array of Pressure value with 26 entries
-    grad : array 
-        array of gradients of dimension 53*26
-    cp : array 
-        array of cp of dimension 53*26
-    calc_type : int 
-        not used to make compatible with nopython. 
-    
-    Returns
-    -------
-    float 
-        grad_x,cp_x
-    
-    """
-    # Python version of DIDGRAD function in convec.f in EGP
-    # This has been benchmarked with the fortran version
-    
-       
-    temp_log= log10(t)
-    pres_log= log10(p)
-    
-    pos_t = locate(t_table, temp_log)
-    pos_p = locate(p_table, pres_log)
-
-    ipflag=0
-    if pos_p ==0: ## lowest pressure point
-        factkp= 0.0
-        ipflag=1
-    elif pos_p ==25 : ## highest pressure point
-        factkp= 1.0
-        pos_p=24  ## use highest point
-        ipflag=1
-
-    itflag=0
-    if pos_t ==0: ## lowest pressure point
-        factkt= 0.0
-        itflag=1
-    elif pos_t == 52 : ## highest temp point
-        factkt= 1.0
-        pos_t=51 ## use highest point
-        itflag=1
-    
-    if (pos_p > 0) and (pos_p < 26) and (ipflag == 0):
-        factkp= (-p_table[pos_p]+pres_log)/(p_table[pos_p+1]-p_table[pos_p])
-    
-    if (pos_t > 0) and (pos_t < 53) and (itflag == 0):
-        factkt= (-t_table[pos_t]+temp_log)/(t_table[pos_t+1]-t_table[pos_t])
-
-    
-    gp1 = grad[pos_t,pos_p]
-    gp2 = grad[pos_t+1,pos_p]
-    gp3 = grad[pos_t+1,pos_p+1]
-    gp4 = grad[pos_t,pos_p+1]
-
-    cp1 = cp[pos_t,pos_p]
-    cp2 = cp[pos_t+1,pos_p]
-    cp3 = cp[pos_t+1,pos_p+1]
-    cp4 = cp[pos_t,pos_p+1]
-
-
-    
-
-    grad_x = (1.0-factkt)*(1.0-factkp)*gp1 + factkt*(1.0-factkp)*gp2 + factkt*factkp*gp3 + (1.0-factkt)*factkp*gp4
-    cp_x= (1.0-factkt)*(1.0-factkp)*cp1 + factkt*(1.0-factkp)*cp2 + factkt*factkp*cp3 + (1.0-factkt)*factkp*cp4
-    cp_x= 10**cp_x
-    
-    
-    return grad_x,cp_x
-
-@jit(nopython=True, cache=True)
-def locate(array,value):
-    """
-    Parameters
-    ----------
-    array : array
-        Array to be searched.
-    value : float 
-        Value to be searched for.
-    
-    
-    Returns
-    -------
-    int 
-        location of nearest point by bisection method 
-    
-    """
-    # this is from numerical recipes
-    
-    n = len(array)
-    
-    
-    jl = 0
-    ju = n
-    while (ju-jl > 1):
-        jm=int(0.5*(ju+jl)) 
-        if (value >= array[jm]):
-            jl=jm
-        else:
-            ju=jm
-    
-    if (value <= array[0]): # if value lower than first point
-        jl=0
-    elif (value >= array[-1]): # if value higher than first point
-        jl= n-1
-    
-    return jl

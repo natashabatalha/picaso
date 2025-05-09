@@ -11,7 +11,7 @@ import math
 from scipy.io import FortranFile
 import glob
 from scipy.stats import binned_statistic
-
+import h5py
 
 __refdata__ = os.environ.get('picaso_refdata')
 
@@ -320,7 +320,7 @@ def restructure_opacity(new_db,ntemp,temperatures,molecules,og_opacity,old_wno,n
             bundle = get_h2minus(temperatures[i],new_wno)
         insert(cur,conn,'H2-', temperatures[i], bundle)
 
-        #NOW H-bf for temperatures greater than 600 
+        #NOW H-bf for temperatures greater than 800 
         if temperatures[i]<800.0:
             bundle = zero_bundle
             insert(cur,conn,'H-bf', temperatures[i], bundle)
@@ -800,6 +800,7 @@ def insert_molecular_1060(molecule, min_wavelength, max_wavelength, new_R,
     conn.commit()
     conn.close()
     return new_wvno_grid
+
 #import spectres
 def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory, new_db,
                           new_R=None,new_dwno=None, 
@@ -1486,11 +1487,13 @@ def get_wvno_grid(filename, min_wavelength=None, max_wavelength=None, R=None):
         dwni_new = np.array([dwni_new[0]] + dwni_new)
         wvno_low = 0.5*(2*wvno_new - dwni_new)
         wvno_high = 0.5*(2*wvno_new + dwni_new)
-    return wvno_low,wvno_high
+    return wvno_low,wvno_high,wvno_new,dwni_new
 
-def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
-    order=4,gfrac=0.95,dir_kark_ch4=None,alkali_dir=None,
-    min_wavelength=None, max_wavelength=None, R=None, 
+def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
+    output_dir,output_filename,
+    wv_file_name=None,alkali_dir=None,
+    min_max_wavelength=None, R=None, 
+    new_wno=None, new_dwno=None,
     verbose=True):
     """
     Function to generate correlated-K tables for each individual gas
@@ -1506,21 +1509,225 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
     wv_file_name : str 
         (optional) file name with wavelength. First column wavenumber, second column delta wavenumber 
         Must supply this OR combo of min, max wavelength and R
-    order : int     
-        (Optional) Gauss Legendre order which by default is set to 4, with the double gauss method 
-    gfrac : int     
-        (Optional) Double-gauss method of splitting up the gauss points, by default we use 0.95 
-    dir_kark_ch4 : str 
-        (Optional) directory of additional karkochka methane 
-    alkali_dir : str 
-        (Optional) Directory of alkalis or "individual_file" which is the method to use for Roxana Lupus data. 
+    min_max_wavelength : list,float 
+        (optional) minimum and maximum wavelength if not inputting array or filename in micron e.g. [0.3,300]    
+    R : float 
+        (optional) resolution if inputing a min_max_wavelenth 
+    new_wno : array, float  
+        (optional) new wavenumber grid in cm-1 
+    new_dwno : array, float 
+        (optional) delta wavenumber grid in cm-1 
     verbose: bool 
         (Optional) prints out status of which p,t, point the code is at 
 
     """
+
+    chem_grid = pd.read_csv(chemistry_file, sep='\s+')
+
+
     grid_file = os.path.join(og_directory,'grid1460.csv')
-    npres = 20 
-    ntemp = 73 
+
+
+    s1460 = pd.read_csv(grid_file,dtype=str)
+    numw_uni = s1460['number_wave_pts'].values.astype(int)
+    delwn_uni = s1460['delta_wavenumber'].values.astype(float)
+    start_uni = s1460['start_wavenumber'].values.astype(float)
+
+    #all pressures
+    pres=s1460['pressure_bar'].values.astype(float)
+    #all temperatures
+    temp=s1460['temperature_K'].values.astype(float)
+    
+    npres = len(np.unique(pres))
+    ntemp = len(np.unique(temp))
+
+    #file_num
+    ifile=s1460['file_number'].values.astype(int)
+
+    with h5py.File(os.path.join(output_dir,output_filename), "w") as f:
+        f.attrs['chemistry_file'] = chemistry_file
+        f.create_dataset('ck_molecules', data=ck_molecules)
+        f.create_dataset('pressure_bar', data=pres)
+        f.create_dataset('temperature_K', data=temp)
+        f.create_dataset('file_number', data=ifile)
+        f.create_dataset('abunds', data=chem_grid)
+        f.create_dataset('abunds_map', data=list(chem_grid.keys()))
+
+    #alkalis are created using the sep.alkali from a fortran file 
+    alks = ['Na','K','Rb','Cs','Li']
+
+    for i,p,t in zip(ifile,pres,temp):
+
+        uniform_wno_grid_all = np.arange(numw_uni[i-1])*delwn_uni[i-1]+start_uni[i-1] 
+
+        total_sum = 0 
+        
+        for molecule in ck_molecules:
+            if molecule in alks: 
+                if alkali_dir == 'alkalis':
+                    mol_dir = os.path.join(og_directory,alkali_dir)
+                elif alkali_dir == 'individual_file':
+                    mol_dir = os.path.join(og_directory,molecule)
+                else: 
+                    mol_dir = alkali_dir
+            else:
+                mol_dir = os.path.join(og_directory,molecule)
+
+
+            #determine file type    
+            find_p_files = glob.glob(os.path.join(mol_dir,'*p_*'))
+            find_npy_files = glob.glob(os.path.join(mol_dir,'*npy*'))
+            find_txt_files =  glob.glob(os.path.join(mol_dir,'*txt*'))
+
+            if len(find_p_files)>1000:
+                ftype = 'fortran_binary'
+            elif len(find_npy_files)>1000:
+                ftype = 'python'
+            elif len(find_txt_files)>1000:
+                ftype='lupu_txt'
+            else:
+                raise Exception('Could not find npy or p_ files. npy are assumed to be read via np.load, where as p_ files are assumed to be unformatted binary or alkali files')
+
+
+            read_fits = os.path.join(mol_dir,'readomni.fits' )
+            lupu_wave= os.path.join(mol_dir,'wavelengths.txt' )
+            if os.path.exists(read_fits):
+                # Get Richard's READ ME information
+                hdulist = fits.open(read_fits)
+                sfits = hdulist[1].data
+                numw = sfits['Valid rows'] #defines number of wavelength points for each 1060 layer
+                delwn = sfits['Delta Wavenum'] #defines constant delta wavenumber for each 1060 layer
+                start = sfits['Start Wavenum'] #defines starting wave number for each 1060 layer
+            elif os.path.exists(lupu_wave):
+                og_wvno_grid = 1e4/pd.read_csv(lupu_wave).values[:,0]
+                numw,delwn,start=np.nan,np.nan,np.nan
+            else: 
+                #ehsan makes his opacities on uniform 
+                numw = numw_uni
+                delwn = delwn_uni
+                start = start_uni
+                
+            if not isinstance(wv_file_name,type(None)):
+                wvno_low,wvno_high,new_wno,new_dwno = get_wvno_grid(wv_file_name)
+            elif ((not isinstance(new_wno,type(None)))  &  
+                (not isinstance(new_dwno,type(None)))):
+                wvno_low = 0.5*(2*new_wno - new_dwno)
+                wvno_high = 0.5*(2*new_wno + new_dwno)
+            else: 
+                min_max_wavelength = sorted(min_max_wavelength)
+                wvno_low,wvno_high,new_wno,new_dwno = get_wvno_grid(None, min_max_wavelength[0], min_max_wavelength[1], R)
+        
+            #path to data
+            if 'fortran' in ftype:
+                fdata = os.path.join(mol_dir, 'p_'+str(int(i)))
+            elif 'python' in ftype: 
+                fdata = os.path.join(mol_dir, str(int(i))+'.npy')
+            elif 'lupu' in ftype: 
+                mbar = pres*1e3
+                fdata = os.path.join(mol_dir,f'{molecule}_{mbar:.2e}mbar_{temp:.0f}K.txt') 
+            
+            #Grab 1460 in various format data
+            if 'lupu' in ftype: 
+                dset =  pd.read_csv(fdata,skiprows=2).values[:,0]
+            elif molecule in alks:
+                dset = pd.read_csv(fdata)
+                og_wvno_grid = dset['wno'].values.astype(float)
+                dset = dset[molecule].values.astype(float)
+            elif 'fortran' in ftype: 
+                dset = np.fromfile(fdata, dtype=float) 
+                og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]
+            elif 'python' in ftype: 
+                dset = np.load(open(fdata,'rb'))
+                og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]      
+
+            
+            weight = chem_grid.loc[i-1,molecule]
+
+            #get everything on to unifrm grid 
+            if are_arrays_different(uniform_wno_grid_all,og_wvno_grid): 
+                dset = np.interp(uniform_wno_grid_all,og_wvno_grid, dset)
+
+            total_sum += weight*dset
+        
+        with h5py.File(os.path.join(output_dir,output_filename), "r+") as f:
+            dataset = f.create_dataset(f'sum_{i}', data=total_sum)
+        
+        if verbose: print('completed',i,p,t)
+
+def are_arrays_different(arr1, arr2):
+    """Checks if two arrays are different, even if they have different sizes.
+    
+    Parameters
+    ----------
+    arr1: array, float 
+        The first array.
+    arr2: array , float
+        The second array.
+    
+    Returns
+    -------
+    
+        bool
+        True if the arrays are different, False otherwise.
+    """
+    
+    # Convert to NumPy arrays for efficient operations
+    arr1 = np.array(arr1)
+    arr2 = np.array(arr2)
+    
+    # Check if lengths are different
+    if len(arr1) != len(arr2):
+        return True
+    
+    # Check if elements are different
+    return not np.array_equal(arr1, arr2)
+
+def compute_ck_molecular(molecule,og_directory,
+    order=4,gfrac=0.95,alkali_dir=None,
+    wv_file_name=None,
+    min_max_wavelength=None, R=None, 
+    new_wno=None, 
+    new_dwno=None, climate_filename=None,verbose=True):
+    """
+    Function to generate correlated-K tables for each individual gas or for a preweighted opacity file
+    
+    Parameters
+    ----------
+    molecule : str 
+        Name of molecule OR name of hdf5 climate file. 
+        E.g. could be "H2O" which is the directory where cross section 
+        files live. Or it could be "feh_000_co_+100.hdf5" which is located in 
+        og_directory 
+    og_directory : str 
+        Directory of all the cross sections that include folders e.g. "H2O", "CH4"
+        OR the directory where the sum weighted hdf5 file is
+    wv_file_name : str 
+        (optional) file name with wavelength. First column wavenumber, second column delta wavenumber 
+        Must supply this OR combo of min, max wavelength and R
+    min_max_wavelength : list,float 
+        (optional) minimum and maximum wavelength if not inputting array or filename in micron e.g. [0.3,300]    
+    R : float 
+        (optional) resolution if inputing a min and max wavelength
+    new_wno : array, float  
+        (optional) new wavenumber grid in cm-1 
+    new_dwno : array, float 
+        (optional) delta wavenumber grid in cm-1 
+    order : int     
+        (Default=4)  Gauss Legendre order which by default is set to 4, with the double gauss method 
+    gfrac : int     
+        (Default=0.95) Double-gauss method of splitting up the gauss points, by default we use 0.95 
+    alkali_dir : str 
+        (Optional) Directory of alkalis or "individual_file" which is the method to use for Roxana Lupus data. 
+    climate_filename : str  
+        (Optional) Name of climate file if saving output as hdf5
+    verbose: bool 
+        (Optional) prints out status of which p,t, point the code is at 
+
+    """
+    # ASSUMING 1460 P-T GRID FOR THIS
+
+    grid_file = os.path.join(og_directory,'grid1460.csv')
+
     ngauss = order*2 
 
     s1460 = pd.read_csv(grid_file,dtype=str)
@@ -1528,6 +1735,10 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
     pres=s1460['pressure_bar'].values.astype(float)
     #all temperatures
     temp=s1460['temperature_K'].values.astype(float)
+    nc_p = s1460.groupby('temperature_K').size().values.astype(float)
+
+    npres = len(np.unique(pres))
+    ntemp = len(np.unique(temp))
 
     #file_num
     ifile=s1460['file_number'].values.astype(int)
@@ -1544,11 +1755,14 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
     else:
         mol_dir = os.path.join(og_directory,molecule)
 
+    
+    # DETERMINE WHAT KIND OF FILES WE ARE DEALING WITH #
 
     #determine file type    
     find_p_files = glob.glob(os.path.join(mol_dir,'*p_*'))
     find_npy_files = glob.glob(os.path.join(mol_dir,'*npy*'))
     find_txt_files =  glob.glob(os.path.join(mol_dir,'*txt*'))
+    #find_h5_files =  glob.glob(os.path.join(mol_dir,'*hdf5*'))
 
     if len(find_p_files)>1000:
         ftype = 'fortran_binary'
@@ -1556,10 +1770,13 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
         ftype = 'python'
     elif len(find_txt_files)>1000:
         ftype='lupu_txt'
+    elif 'hdf5' in mol_dir:
+        ftype='hdf5'
     else:
         raise Exception('Could not find npy or p_ files. npy are assumed to be read via np.load, where as p_ files are assumed to be unformatted binary or alkali files')
 
 
+    # GET HIGH RES WAVELENGTH GRID #
     read_fits = os.path.join(mol_dir,'readomni.fits' )
     lupu_wave= os.path.join(mol_dir,'wavelengths.txt' )
     if os.path.exists(read_fits):
@@ -1578,16 +1795,29 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
         delwn = s1460['delta_wavenumber'].values.astype(float)
         start = s1460['start_wavenumber'].values.astype(float)
     
+    # COMPUTE GAUSS PTS AND WEIGHTS # 
     gi,wi = g_w_2gauss(order,gfrac)
     
+    # GET CK WAVENUMBER GRID BY COMPUTING LOWER AND UPPER WAVENUM EDGES # 
     if not isinstance(wv_file_name,type(None)):
-        wvno_low,wvno_high = get_wvno_grid(wv_file_name)
+        wvno_low,wvno_high,new_wno,new_dwno = get_wvno_grid(wv_file_name)
+    elif ((not isinstance(new_wno,type(None)))  &  
+        (not isinstance(new_dwno,type(None)))):
+        wvno_low = 0.5*(2*new_wno - new_dwno)
+        wvno_high = 0.5*(2*new_wno + new_dwno)
     else: 
-        wvno_low,wvno_high = get_wvno_grid(None, min_wavelength, max_wavelength, R)
+        min_max_wavelength = sorted(min_max_wavelength)
+        wvno_low,wvno_high,new_wno,new_dwno = get_wvno_grid(None, min_max_wavelength[0], min_max_wavelength[1], R)
+
+    # SETUP ZERO ARRAY OF KCOEFFS #  
     k_coeff_arr = np.zeros(shape=(npres,ntemp,len(wvno_low),ngauss))
+    
+
+    # START LOOP OVER 1460 P-T POINTS # 
     ctp,ctt = 0,0
     for i,p,t in zip(ifile,pres,temp):  
-        #path to data
+        
+        # SET PATH TO FILE READS DEPENDING ON FILE TYPE # 
         if 'fortran' in ftype:
             fdata = os.path.join(mol_dir, 'p_'+str(int(i)))
         elif 'python' in ftype: 
@@ -1595,7 +1825,11 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
         elif 'lupu' in ftype: 
             mbar = pres*1e3
             fdata = os.path.join(mol_dir,f'{molecule}_{mbar:.2e}mbar_{temp:.0f}K.txt') 
-        
+        elif 'hdf5' in ftype: 
+            #this is the key for the hdf5 dataset
+            fdata = mol_dir
+            fdata_key = f'sum_{int(i)}'
+
         #Grab 1460 in various format data
         if 'lupu' in ftype: 
             dset =  pd.read_csv(fdata,skiprows=2).values[:,0]
@@ -1609,8 +1843,11 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
         elif 'python' in ftype: 
             dset = np.load(open(fdata,'rb'))
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]      
+        elif 'hdf5' in ftype: 
+            with h5py.File(fdata,'r') as f:
+                dset = f[fdata_key][:]
+            og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]
 
-        
     
             
         for iwvbin in range(len(wvno_low)):
@@ -1619,29 +1856,21 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
             
             wh = np.where(np.logical_and((og_wvno_grid > wvlow_temp),(og_wvno_grid <=  wvhigh_temp)))
             
-            
-            
             linelist = dset[wh]
-            linelist += 1e-200
-            wh2 = np.where(linelist < 0.0)
+
+            #make sure nothing is negative or non zero
+            wh2 = np.where(linelist <= 0.0)
             if len(linelist[wh2]) > 0:
-                
-                for icorr in range(len(linelist)):
-                    if linelist[icorr] < 0:
-                        linelist[icorr] = 1e-200
+                linelist[wh2] = 1e-200
                 
             if len(linelist) == 0:
-                data = np.sort(np.zeros(10)-250.0)
-                
+                data = np.sort(np.zeros(10)-200.0)
             else:
                 data = np.sort(np.log(linelist))
                         
             wvno_now = 0.5*(wvlow_temp+wvhigh_temp)
 
-            if ((molecule == 'CH4') & (isinstance(dir_kark_ch4, str)) & (t<500)) & (1e4/wvno_now < 1.0): # short of 1 microns
-                opa_k,loc = get_kark_CH4(dir_kark_ch4,wvno_now, t)
-                
-                data = np.sort(np.log(opa_k*(1+np.zeros(100))))
+            
             if len(data) > 1:
                 x = np.arange(len(data))/(len(data)-1.)
 
@@ -1649,7 +1878,7 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
         
                 k_coeff_arr[ctp,ctt,iwvbin,:] = k_coeff[:]
             else :
-                k_coeff_arr[ctp,ctt,iwvbin,:] += -250.00
+                k_coeff_arr[ctp,ctt,iwvbin,:] += -200.00
 
         ctp+=1
         
@@ -1660,7 +1889,47 @@ def compute_ck_molecular(molecule,og_directory,wv_file_name=None,
         
 
         if verbose: print(i,p,t)
-    return k_coeff_arr
+    
+    if  isinstance(climate_filename, type(None)):
+        return k_coeff_arr
+    
+    else: 
+        # RETURN HDF5 FILE IN FORMAT FOR PICASO CLIMATE CODE
+        attrs={}
+        ck_data = {
+            'nc_p':(nc_p,'this defines the number of pressure points per temperature grid'),
+            'pressures':(pres,'bars'),
+            'temperatures':(temp,'Kelvin'),
+            'wno':(new_wno,'cm**(-1)'),
+            'delta_wno':(new_dwno,'cm**(-1)'),
+            'gauss_pts':(gi,'gauss points created with double gauss method'),
+            'gauss_wts':(wi,'gauss weights created with double gauss method'),
+            'kcoeffs':(k_coeff_arr,'k coefficients on a pressure x temperature x wavenumber x gauss pts array'),#p,t,w,g
+        }
+
+        # the exact keys will depend on if it's sum weighted or not
+        # we determine if it is sum weighted by whether or not 
+        # the ck_molecules key is in there         
+        if 'hdf5' in fdata:
+            with h5py.File(fdata,'r') as f:
+                if 'ck_molecules' in f.keys():
+                    ck_molecules = [x.decode('utf-8') for x in f['ck_molecules'][:]]
+                    ck_data['abunds']=(f['abunds'][:],
+                                    'matrix of abundances in v/v units. Order of first axes of array is defined with abunds_map key and second as a function of P and T indices also included in abunds_map')#dataframe [nmolecule, n_pt points]
+                    ck_data['abunds_map']=(
+                        [x.decode('utf-8') for x in f['abunds_map'][:]], 'array of strings that defines the order of abunds key')
+                    ck_data['ck_molecules']=(ck_molecules,'molecules included in the ck weighted table')
+                    
+                    attrs['chemistry_file'] = f.attrs['chemistry_file']
+        
+        with h5py.File(climate_filename, "w") as f:
+            # Create datasets for each key-value pair
+            for key, (value, attribute) in ck_data.items():
+                dataset = f.create_dataset(key, data=value)
+                # Add attribute to the dataset
+                dataset.attrs["description"] = attribute
+                for key, value in attrs.items():
+                    f.attrs[key] = value
 
 #keeping old name here for Sagnick
 func_read_gas = compute_ck_molecular
@@ -1709,3 +1978,131 @@ def regrid(x, y, newx=None, R=None,statistic='mean'):
     return newx, y
 
 
+
+def add_metadata_item(db_path, key, value):
+    """Adds or updates a metadata item in the metadata table.
+
+    Args:
+        db_path: Path to the SQLite database file.
+        key: The metadata key.
+        value: The metadata value (will be stored as TEXT).
+    """
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+
+        # Check if the key already exists
+        cursor.execute("SELECT value FROM metadata WHERE key=?", (key,))
+        result = cursor.fetchone()
+
+        if result is None:
+            # Insert the metadata item if the key doesn't exist
+            cursor.execute("INSERT INTO metadata (key, value) VALUES (?, ?)", (key, value))
+            conn.commit()
+            print(f"Metadata item '{key}' added.")
+        else:
+            # Update the metadata item if the key already exists
+            cursor.execute("UPDATE metadata SET value=? WHERE key=?", (value, key))
+            conn.commit()
+            print(f"Metadata item '{key}' updated.")
+
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+
+def get_metadata_item(db_path, key):
+  """Retrieves a metadata item by key.
+
+  Args:
+      db_path: Path to the SQLite database file.
+      key: The metadata key.
+
+  Returns:
+      The metadata value associated with the key, or None if the key is not found.
+  """
+  try:
+      conn = sqlite3.connect(db_path)
+      cursor = conn.cursor()
+
+      cursor.execute("SELECT value FROM metadata WHERE key=?", (key,))
+      result = cursor.fetchone()
+
+      if result:
+          return result[0]  # Return the value (first element of the tuple)
+      else:
+          return None
+
+  except sqlite3.Error as e:
+      print(f"An error occurred: {e}")
+      return None  # Return None in case of error
+  finally:
+      if conn:
+          conn.close()
+def add_metadata_table(db_path):
+    """Adds a metadata table to the SQLite database if it doesn't exist.
+
+    Args:
+        db_path: Path to the SQLite database file.
+    """
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+
+        # Check if the metadata table already exists
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='metadata'")
+        result = cursor.fetchone()
+
+        if result is None:
+            # Create the metadata table if it doesn't exist.  Using TEXT for value
+            # allows for storing various data types as strings, including JSON.
+            cursor.execute("""
+                CREATE TABLE metadata (
+                    key TEXT PRIMARY KEY,
+                    value TEXT
+                )
+            """)
+            conn.commit()
+            print(f"Metadata table created in {db_path}")
+        else:
+            print(f"Metadata table already exists in {db_path}")
+
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+def add_all_metadata(filename, version_number, default, resolution, wavemin, wavemax, zenodo_doi):
+    """
+    Adds metadata to an opacity file
+
+    Parameters
+    ----------
+    filename : str 
+        sqlite name
+    version : str 
+        Version number it goes with 
+    default : bool 
+        Is this a default for this verison 
+    resolution : str 
+        resolution resampled to 
+    wavemin : str 
+        minimum wavelength in um 
+    wavemax : str 
+        maximum wavelength in um 
+    zenodo_doi : str 
+        zenodo posting 
+    """
+    add_metadata_table(filename)
+    if default: 
+        add = 'default_'
+    else: 
+        add = ''
+    add_metadata_item(f, 'version',add+version_number)
+    add_metadata_item(f, 'resolution',resolution)
+    add_metadata_item(f, 'wavemin',wavemin)
+    add_metadata_item(f, 'wavemax',wavemax)
+    add_metadata_item(f, 'zenodo',zenodo_doi)
