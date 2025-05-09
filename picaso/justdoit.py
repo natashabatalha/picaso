@@ -91,6 +91,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
     wno = opacityclass.wno
     nwno = opacityclass.nwno
+    dwni = getattr(opacityclass,'delta_wno', np.concatenate((np.diff(opacityclass.wno),[np.diff(opacityclass.wno)[-1]])))    
     ngauss = opacityclass.ngauss
     gauss_wts = opacityclass.gauss_wts #for opacity
 
@@ -366,7 +367,14 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                     atm.lvl_output_thermal['flux_minus_mdpt']+=flux_minus_midpt_all_i*gauss_wts[ig]
                     atm.lvl_output_thermal['flux_plus_mdpt']+=flux_plus_midpt_all_i*gauss_wts[ig]
 
-                flux_at_top += flux*gauss_wts[ig]
+            if ((rt_method == 'toon') & get_lvl_flux):                 
+                for wvi in range(nwno):
+                    atm.lvl_output_thermal['flux_minus'][:,:,:,wvi] = atm.lvl_output_thermal['flux_minus'][:,:,:,wvi] * dwni[wvi]
+                    atm.lvl_output_thermal['flux_plus'][:,:,:,wvi] = atm.lvl_output_thermal['flux_plus'][:,:,:,wvi] * dwni[wvi]
+                    atm.lvl_output_thermal['flux_minus_mdpt'][:,:,:,wvi] = atm.lvl_output_thermal['flux_minus_mdpt'][:,:,:,wvi] * dwni[wvi]
+                    atm.lvl_output_thermal['flux_plus_mdpt'][:,:,:,wvi] = atm.lvl_output_thermal['flux_plus_mdpt'][:,:,:,wvi]* dwni[wvi]
+                    
+            flux_at_top = flux[:,:,:] * gauss_wts[:,np.newaxis,np.newaxis] * dwni[np.newaxis,np.newaxis,:]
                 
                 
             #if full output is requested add in flux at top for 3d plots
