@@ -571,9 +571,6 @@ def locate(array,value):
     return jl
 
 
-
-
-
 @jit(nopython=True, cache=True)
 def mat_sol(a, nlevel, nstrat, dflux):
     """
@@ -1558,12 +1555,7 @@ def growdown(nlv,nstr, ngrow) :
 
     return nstr
 
-#@jit(nopython=True, cache=True)
-#def get_fluxes( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU, W0, 
-#            COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
-#            ubar0,ubar1,cos_theta, F0PI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
-#            wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts,reflected, thermal, fhole = None, DTAU_clear = None, TAU_clear = None, 
-#            W0_clear = None, COSB_clear = None, DTAU_OG_clear = None, TAU_OG_clear = None, W0_OG_clear = None, COSB_OG_clear = None, W0_no_raman_clear = None, do_holes=None):
+
 OpacityWEd_Tuple_defaultT = namedtuple("OpacityWEd_Tuple", ["DTAU", "TAU", "W0", "COSB",'ftau_cld','ftau_ray','GCOS2', 'W0_no_raman','f_deltaM'])
 OpacityWEd_Tuple_default = OpacityWEd_Tuple_defaultT(np.zeros((8,8,8)), 
                     np.zeros((8,8,8)), np.zeros((8,8,8)), np.zeros((8,8,8)),np.zeros((8,8,8)), np.zeros((8,8,8)),np.zeros((8,8,8)),  
@@ -1820,9 +1812,6 @@ def get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
     
     return flux_net_v_layer, flux_net_v, flux_plus_v, flux_minus_v , flux_net_ir_layer, flux_net_ir, flux_plus_ir, flux_minus_ir
 
-#soon I will deprecate the function name "climate" as it is really confusing with what it 
-#actually does, which is just run the RT to get fluxes
-climate_deprecate = get_fluxes
 
 @jit(nopython=True)
 def replace_temp(tuple_old, NEW_TEMP): 
@@ -2397,8 +2386,6 @@ class CPClass(object):
         # convert from J/K/mol to erg/g/K
         cp = cp/m*1.e7
         return cp
-
-
 
 
 def find_strat(bundle, nofczns,nstr,
