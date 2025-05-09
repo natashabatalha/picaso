@@ -1264,6 +1264,8 @@ def opannection(wave_range = None, filename_db = None,
         - (required if method is preweighted) ASCII dir of ck file
         - (required if method is preweighted) HDF5 filename 
         - (optional) path to HDF5 directory, if none specified then assumed default in climate_INPUTS/661 folder
+    preload_gases : str
+        Gases that you want to have mixed on the fly, you can specify them here. Default is 'all'
     verbose : bool 
         Error message to warn users about resampling. Can be turned off by supplying 
         verbose=False
@@ -1861,8 +1863,10 @@ class inputs():
             it from your input data frame. 
         mh : float 
             Metallicity relative to Solar 
-        cto : float 
+        cto_relative : float 
             Carbon-to-Oxygen Ratio relative to Solar (Solar value is determined by `chem_method`)
+        cto_absolute : float
+            Carbon-to-Oxygen Ratio in absolute terms (e.g. 0.55)
         chem_method : str 
             Current options: 
             - 'visscher' : uses the 2121 chemical equilibrium tables computed by Channon Visscher via the function `chemeq_visscher`
@@ -2000,6 +2004,15 @@ class inputs():
             self.inputs['approx']['chem_params'][ikey]=ibool
 
     def chemistry_handler(self, chemistry_table = None):
+        """
+        This function sets the chemistry table that we want to use, whether it is the 1060, 2121 and if we want to 
+        do photohchemistry.
+
+        Parameters
+        ----------
+        chemistry_table : str
+            Chemistry table type
+        """
         #add default chem method
         chem_method = self.inputs['approx'].get('chem_method',None)
         atmosphere_profile = self.inputs['atmosphere']['profile']
@@ -2044,6 +2057,18 @@ class inputs():
             raise Exception(f"A chem option {chem_method} is not valid. Likely you specified method='resrotrebin' in opannection but did not run `atmosphere()` function after inputs_climate.") 
     
     def volatile_rainout(self,quench_levels,species_to_consider = ['H2O', 'CH4','NH3']):
+        """
+        Enforces rainout along pvap. So far these are only H2O, CH4 and NH3, since these are the only major species 
+        that are in the abundance tables and would be expected to rainout.
+
+        Parameters
+        ----------
+        quench_levels :
+            Layer in the atmosphere where each of the species is quenched.
+        species_to_consider : list of str
+            Default is ['H2O', 'CH4','NH3']
+        """
+
         quench_molecules = np.concatenate([i.split('-') for i in quench_levels.keys()])
         quench_by_molecule={}
         
@@ -2091,7 +2116,8 @@ class inputs():
 
     def cold_trap(self,species_to_consider = ['H2O','CH4','NH3']): 
         """
-        Enforces cold trapping along the chemeq grid fro any species included in the cld_species set 
+        Enforces cold trapping along the chemeq grid for any species included in the cld_species set. Currently only set
+        for H2O, CH4 and NH3. 
         """
         #only adjust species that actually have chem computed 
         
@@ -2136,8 +2162,8 @@ class inputs():
         ----------
         opa : class 
             Opacity class from opannection : RetrieveCks() 
-        cld_species : list of str
-            (Optional) List of condensing species
+        quench_levels : dict
+            Dictionary with the quench levels for each molecule.
         """
 
         #get a chemistry table from opa if the user supplied it and it exists
@@ -2169,6 +2195,16 @@ class inputs():
                 self.inputs['atmosphere']['profile']['PH3'] = 0
     
     def premix_atmosphere_photochem(self,quench_levels=None, verbose=True):
+        """
+        This function runs the photochemistry model, and updates the chemical abundance profiles.
+
+        Parameters
+        ----------
+        quench_levels : dict
+            Dictionary with the quench levels for each molecule.
+        verbose : bool
+            If True, prints out the progress of the photochemistry model.
+        """
         if verbose: print('Running photochem')
         #start by getting chemeq if it has been requested 
         self.chemistry_handler()
@@ -2190,6 +2226,15 @@ class inputs():
         self.inputs['atmosphere']['profile']  = df 
 
     def adjust_quench_chemistry(self, quench_levels):
+        """
+        Adjusts the abundances of quenched species in the chemistry profile based on the provided quench levels.
+        CO2 is defaulted to do the Zahnle and Marley (2014) kinetic fix outlined in Wogan et al. 2025 research note. 
+
+        Parameters
+        ----------
+        quench_levels : dict
+            Dictionary with the quench levels for each molecule.
+        """
 
         kinetic_CO2=True #since our old way was an "error" it seems like we should include htis as an option to be false
         
@@ -3843,6 +3888,10 @@ class inputs():
         ----------
         albedo : float
             Set constant albedo for surface reflectivity 
+        wavenumber : list
+            The desired wavenumber grid (inverse cm) for the albedo
+        old_wavenumber : list
+            Original wavenumber grid (inverse cm) for the albedo which is used to interpolate onto the new wavenumber grid
         """
         if isinstance(albedo, (float, int)):
             self.inputs['surface_reflect'] = np.array([albedo]*len(wavenumber))
@@ -4052,6 +4101,12 @@ class inputs():
         clouds_kwargs : dict 
             Added so that users can add do_hole=True, with fhole and fthin_cld and it will make the virga cloud 
             patchy
+        do_holes : bool
+            If True, the clouds will be patchy. This is done by using the fthin_cld and fhole parameters
+        fhole : float
+            Fraction of the clear hole such that spec = (1-fhole) * cloudy_spec + fhole * clear_spec
+        fthin_cld : float
+            Scales the hole (the clear part) such that fthin_cld=0 would simply be a fully clear patch
         """
         #stages inputs for cloudy run and also get kwargs for clouds function which we run at the end of this 
         clouds_kwargs=dict(do_holes=do_holes,fhole=fhole,fthin_cld=fthin_cld)
@@ -4624,10 +4679,6 @@ class inputs():
             =0 for no stellar irradition, 
             =0.5 for full day-night heat redistribution
             =1 for dayside
-        photochem : bool 
-            Turns off (False) and on (True) Photochem 
-        sonora_abunds_photochem : bool
-            Turns on/off using Sonora equilibrium abundances for photochem initially
         moistgrad: bool
             Moist adiabatic gradient option
         """
@@ -4718,8 +4769,6 @@ class inputs():
             If you want to run `on-the-fly' mixing (takes longer),True/False
         self_consistent_kzz : bool
             If you want to run MLT in convective zones and Moses in the radiative zones
-        kz : array
-            Kzz input array if user wants constant or whatever input profile (cgs)
         verbose : bool  
             If True, triggers prints throughout code 
         """
