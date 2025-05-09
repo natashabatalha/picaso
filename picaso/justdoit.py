@@ -1,5 +1,5 @@
 from .atmsetup import ATMSETUP
-from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d
+from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d, tidal_flux
 
 from .climate import  namedtuple,run_chemeq_climate_workflow,run_diseq_climate_workflow
 
@@ -4666,6 +4666,35 @@ class inputs():
         pc.gdat.TOA_pressure_avg = photochem_TOA_pressure
         self.inputs['climate']['pc'] = pc
     
+    def energy_injection(self, inject_energy = False, total_energy_injection = 0, press_max_energy = 1,
+                        injection_scalehight= 1, inject_beam = False, beam_profile = 0):
+        """
+        Get Inputs for Energy Injection
+
+        Parameters
+        ----------
+        inject_energy : bool
+            If True, will inject energy into the atmosphere
+        total_energy_injection : float
+            Total energy injection in ergs/cm^2/s (energy injection for chapman function)
+        press_max_energy : float
+            Pressure for maximum energy injection in bars (for chapman function)
+        injection_scaleheight : float
+            Scale height ratio for energy injection (for chapman function)
+        inject_beam : bool
+            If True, will inject energy beam, this is meant for numerical profile input. Otherwise, will need inputs for chapman function
+        beam_profile : array
+            Beam profile (numerical) for energy injection (inject_beam must = True for this to be used)
+        
+        """
+
+        self.inputs['climate']['inject_energy'] = inject_energy
+        self.inputs['climate']['total_energy_injection'] = total_energy_injection
+        self.inputs['climate']['press_max_energy'] = press_max_energy
+        self.inputs['climate']['injection_scaleheight'] = injection_scalehight
+        self.inputs['climate']['inject_beam'] = inject_beam
+        self.inputs['climate']['beam_profile'] = beam_profile
+    
     def climate(self, opacityclass, save_all_profiles = False, with_spec=False,
         save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False
         ,verbose=True):#,
@@ -4765,6 +4794,41 @@ class inputs():
         AdiabatBundle = namedtuple('AdiabatBundle', ['t_table', 'p_table', 'grad','cp'])
         AdiabatBundle = AdiabatBundle(t_table,p_table,grad,cp)
 
+        # energy injection info
+        inject_energy = self.inputs['climate']['inject_energy']
+        inject_beam = self.inputs['climate']['inject_beam']
+
+        if inject_energy == True:
+        # for beam profile energy injection (numerical profiles)
+            # if inject_beam == True:
+            #     beam_profile = self.inputs['climate']['beam_profile']
+            #     if len(beam_profile) != len(pressure):
+            #         raise Exception('Beam profile must on the same pressure grid as the climate profile')
+                # wave_in = 0
+                # pm = 1
+                # hratio = 1
+            # for chapman function energy injection.
+            # else:
+            #total input energy in erg/cm^2/s
+            wave_in = self.inputs['climate']['total_energy_injection']
+            #pressure of maximum energy injection
+            pm = self.inputs['climate']['press_max_energy']
+            #scale height ratio of energy injection
+            hratio = self.inputs['climate']['injection_scaleheight']
+            beam_profile = self.inputs['climate']['beam_profile']
+            if inject_beam == True:
+                if len(beam_profile) != len(pressure):
+                    raise Exception('Beam profile must on the same pressure grid as the climate profile')
+        
+        # else:
+        #     wave_in = 0
+        #     pm = 1
+        #     hratio = 1
+        #     beam_profile = 0
+        
+        InjectionBundle = namedtuple('InjectionBundle', ['inject_energy','inject_beam','wave_in', 'pm', 'hratio', 'beam_profile'])
+        InjectionBundle = InjectionBundle(inject_energy, inject_beam, wave_in, pm, hratio, beam_profile)
+
 
         grav = 0.01*self.inputs['planet']['gravity'] # cgs to si
         #logmh = self.inputs['atmosphere'].get('mh',None)
@@ -4772,10 +4836,11 @@ class inputs():
         #mh = 10**logmh
         sigma_sb = 0.56687e-4 # stefan-boltzmann constant
         
-        #col_den = 1e6*(pressure[1:] -pressure[:-1] ) / (grav/0.01) # cgs g/cm^2
-        #wave_in, nlevel, pm, hratio = 0.9, len(pressure), 0.001, 0.1
-        #tidal = tidal_flux(Teff, wave_in,nlevel, pressure, pm, hratio, col_den)
-        tidal = np.zeros_like(pressure) - sigma_sb *(Teff**4)
+        col_den = 1e6*(pressure[1:] -pressure[:-1] ) / (grav/0.01) # cgs g/cm^2
+        nlevel = len(pressure)
+        tidal = tidal_flux(Teff, nlevel, pressure, col_den, InjectionBundle)
+        # old tidal flux calculation without energy injection function
+        # tidal = np.zeros_like(pressure) - sigma_sb *(Teff**4)
         
         # cloud inputs
         cloudy = self.inputs['climate'].get('cloudy',False)
@@ -4804,7 +4869,8 @@ class inputs():
             #raise warning temporarily until I can think of the best way to handle this
             #if diseq_chem and chemeq_first and gridsize == 661:
             #    raise Exception('Currently cannot do chemical equilibrium first for disequilibrium runs with clouds')
-
+        else:
+            nwno_clouds = nwno #this is the default if no clouds are present to avoid bug in initiating scattering properties
 
         #scattering properties 
         opd_cld_climate = np.zeros(shape=(self.nlevel-1,nwno_clouds,4))
@@ -4814,7 +4880,7 @@ class inputs():
         CloudParametersT = namedtuple('CloudParameters',['cloudy', 'OPD','G0','W0']+list(virga_kwargs.keys()))
         #this adds the cloud params that are always needed plus the virga kwargs, if they are used 
         CloudParameters=CloudParametersT(*([cloudy, opd_cld_climate,g0_cld_climate,w0_cld_climate,
-                                         ]+list(virga_kwargs.values())))
+                                        ]+list(virga_kwargs.values())))
 
 
         if verbose: self.interpret_run()
