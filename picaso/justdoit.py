@@ -313,8 +313,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
             flux_at_top = 0 
 
             if get_lvl_flux: 
+                calc_type=1
                 atm.lvl_output_thermal = dict(flux_minus=0, flux_plus=0, flux_minus_mdpt=0, flux_plus_mdpt=0)
-
+            else: 
+                calc_type=0
 
             for ig in range(ngauss): # correlated-k - loop (which is different from gauss-tchevychev angle)
                 
@@ -330,7 +332,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                                         atm.level['pressure'],ubar1,
                                                         atm.surf_reflect, atm.hard_surface,
                                                         #setting wno to zero since only used for climate, calctype only gets TOA flx 
-                                                        wno*0, calc_type=0)
+                                                        wno*0, calc_type=calc_type)
                     
                     flux_minus_all_i, flux_plus_all_i, flux_minus_midpt_all_i, flux_plus_midpt_all_i = lvl_fluxes
                     
@@ -340,7 +342,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                                     DTAU_OG_clear[:,:,ig], W0_no_raman_clear[:,:,ig], COSB_OG_clear[:,:,ig], 
                                                     atm.level['pressure'],ubar1,
                                                     atm.surf_reflect, atm.hard_surface,
-                                                    wno*0, calc_type=0)
+                                                    wno*0, calc_type=calc_type)
                         
                         flux_minus_all_i_clear, flux_plus_all_i_clear, flux_minus_midpt_all_i_clear, flux_plus_midpt_all_i_clear= out_therm_fluxes_clear
                         
@@ -2143,7 +2145,7 @@ class inputs():
         #get a chemistry table from opa if the user supplied it and it exists
         chemistry_table = getattr(opa, 'full_abunds', None)
 
-        #now chemistry options can be enforced 
+        #now chemistry options can be enforced basically doing chemical equilibrium / photochem / only chemeq included
         self.chemistry_handler(chemistry_table=chemistry_table)
 
         #if a quench level dictionary is provided 
