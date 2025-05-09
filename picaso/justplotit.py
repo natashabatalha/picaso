@@ -26,7 +26,7 @@ from scipy.stats import binned_statistic
 
 from .fluxes import blackbody, get_transit_1d
 from .opacity_factory import *
-from .climate import convec
+from .climate import convec, namedtuple, calculate_atm
 
 def mean_regrid(x, y, newx=None, R=None):
     """
@@ -1559,7 +1559,10 @@ def phase_snaps(allout, x = 'longitude', y = 'pressure', z='temperature',palette
 
     fig.tight_layout()
     return fig
-def phase_curve(allout, to_plot, collapse=None, R=100, palette=pals.Spectral11,verbose=True, **kwargs):
+
+def phase_curve(allout, to_plot, collapse=None, R=100, 
+    palette=pals.Spectral11,verbose=True, 
+    reorder_output=False, **kwargs):
     """
     Plots phase curves
     
@@ -1581,7 +1584,11 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=pals.Spectral11,v
         Print out low level warnings 
     kwargs : dict 
         Bokeh plotting kwargs for bokeh.Figure
+    reorder_output : bool
+        Returns sorted outputs, for better phase curve plotting.
+        re-orders phases such that brightest value is at phase=0
     """
+
     kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',400))
     kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',600))
     if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
@@ -1632,10 +1639,46 @@ def phase_curve(allout, to_plot, collapse=None, R=100, palette=pals.Spectral11,v
     legend = Legend(items=legend_it, location=(0, -20))
     legend.click_policy="mute"
     fig.add_layout(legend, 'left') 
-        
+    
     fig.xgrid.grid_line_alpha=0
     fig.ygrid.grid_line_alpha=0
     plot_format(fig)
+
+    #if verbose: print("phases", phases)
+    #if verbose: print("all_curves",all_curves)
+
+    #re-order phases such that brightest value is at phase=0 (only way to do this for reflected case)
+    front_half_phases = phases[:len(phases)//2]
+    #print("front_half_phases", front_half_phases)
+    back_half_phases = phases[len(phases)//2:] - (2*np.pi)
+    #print("back_half_phases", back_half_phases)
+    reorder_phases = np.concatenate((back_half_phases, front_half_phases))
+
+    #re-order all_curves such that brightest value is at phase=0 (only way to do this for reflected case)
+    front_half_all_curves = all_curves[:len(all_curves)//2]
+    back_half_all_curves = all_curves[len(all_curves)//2:]
+    reorder_all_curves = np.concatenate((back_half_all_curves, front_half_all_curves))
+    #print("Reorder all curves",reorder_all_curves)
+
+    if to_plot == "fpfs_reflected" or to_plot == "albedo":
+        fig2 = figure(**kwargs)
+
+        for i in range(len(collapse)): 
+            f2 = fig2.line(reorder_phases,reorder_all_curves[:,i],line_width=3,color=palette[i],
+                    )
+    
+        legend2 = Legend(items=legend_it, location=(0, -20))
+        legend2.click_policy="mute"
+        fig2.add_layout(legend, 'left')
+
+        fig2.xgrid.grid_line_alpha=0
+        fig2.ygrid.grid_line_alpha=0
+        plot_format(fig2)
+        #show(fig2)
+    
+    if reorder_output:
+        return reorder_phases, reorder_all_curves, all_ws, fig
+    
     return phases, all_curves, all_ws, fig
 
 def thermal_contribution(full_output, tau_max=1.0,R=100,  **kwargs):
@@ -1688,7 +1731,7 @@ def thermal_contribution(full_output, tau_max=1.0,R=100,  **kwargs):
     ax.set_ylim(np.max(full_output['layer']['pressure']), np.min(full_output['layer']['pressure']))
     ax.set_yscale('log')
     ax.set_ylabel('Pressure (bar)', fontsize=20)
-    ax.set_xlabel('Wavelength ($\mu$m)', fontdict={'fontsize':20})
+    ax.set_xlabel(r'Wavelength ($\mu$m)', fontdict={'fontsize':20})
     cm = plt.colorbar(smap)
     cm.ax.set_ylabel('Emission Contribution Function', fontdict={'fontsize':18} )
     for l in cm.ax.yaxis.get_ticklabels():
@@ -1830,7 +1873,7 @@ def transmission_contribution(full_output ,R=None,  **kwargs):
                 np.min(full_output['layer']['pressure']))
     ax.set_yscale('log')
     ax.set_ylabel('Pressure (bar)')
-    ax.set_xlabel('Wavelength ($\mu$m)')
+    ax.set_xlabel(r'Wavelength ($\mu$m)')
     plt.colorbar(smap, label='Transmission CF')
     
     return fig, ax, 1e4/wno, CF_bin
@@ -1926,16 +1969,24 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
                 np.copy(clima_out['pressure']), 
                 np.copy(clima_out['all_profiles']))
     
-    nlevel = len(t_eq)
-    mols_to_plot = {i:np.zeros(len(all_profiles_eq)) for i in molecules}
-    spec = np.zeros(shape =(int(len(all_profiles_eq)/nlevel),opacity.nwno))
+    if 'cld_output_final' in clima_out:
+        # Code to be executed if clima_out['all_opd'] exists
+        all_opd = np.copy(clima_out['all_opd'])
+        cld_p = np.copy(clima_out['cld_output_picaso']['pressure'][0::196])
     
-    for i in range(int(len(all_profiles_eq)/nlevel)):
-        
-        picaso_bundle.add_pt(all_profiles_eq[i*nlevel:(i+1)*nlevel], 
+    nlevel = len(t_eq)
+    nstep = all_profiles_eq.shape[0]
+    mols_to_plot = {i:np.zeros(all_profiles_eq.size) for i in molecules}
+    spec = np.zeros(shape =(nstep,opacity.nwno))
+    
+    for i in range(nstep):
+        picaso_bundle.add_pt(all_profiles_eq[i], 
                              p_eq)
 
-        picaso_bundle.premix_atmosphere(opacity,picaso_bundle.inputs['atmosphere']['profile'])
+        picaso_bundle.premix_atmosphere(opacity)
+
+        if 'cld_output_picaso' in clima_out:
+            picaso_bundle.clouds(df=clima_out['cld_output_picaso'])
 
         df_spec = picaso_bundle.spectrum(opacity,calculation=calculation,full_output=True)
         spec[i,:] = df_spec[map_calc[calculation]]
@@ -1951,19 +2002,31 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
     plt.rcParams["font.weight"] = "bold"
     plt.rcParams["axes.labelweight"] = "bold"
 
+    fig = plt.figure(figsize=(50,10))
 
-    x='''
-    AA.BB.CC
-    '''
-    fig = plt.figure(figsize=(35,10))
+    # plot optical depth profile as well
+    if 'cld_output_picaso' in clima_out:
+        x='''
+        AA.BB.CC.DD
+        '''
 
-    ax = fig.subplot_mosaic(x,gridspec_kw={
+        ax = fig.subplot_mosaic(x,gridspec_kw={
+            # set the height ratios between the rows
+            "height_ratios": [1],
+            # set the width ratios between the columns
+            "width_ratios": [1,1,0.1,1,1,0.1,1,1,0.1,1,1]})
+
+    else:
+        x='''
+        AA.BB.CC
+        '''
+        ax = fig.subplot_mosaic(x,gridspec_kw={
             # set the height ratios between the rows
             "height_ratios": [1],
             # set the width ratios between the columns
             "width_ratios": [1,1,0.1,1,1,0.1,1,1]})
 
-    temp = all_profiles_eq[0*nlevel:(0+1)*nlevel]
+    temp = all_profiles_eq[0]
     lines = {}
     for imol,col in zip(molecules,Colorblind8):
         lines[imol], = ax['B'].loglog(mols_to_plot[imol][0:nlevel], p_eq,linewidth=3,color=col, label=imol)
@@ -1973,20 +2036,23 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
         lines['spec'], = ax['C'].semilogy(1e4/df_spec['wavenumber'], spec[0,:],linewidth=3,color="k")
     else: 
         lines['spec'], = ax['C'].plot(1e4/df_spec['wavenumber'], spec[0,:],linewidth=3,color="k")
+    
+    if 'cld_output_picaso' in clima_out: #bad hack to make shapes match but won't affect the plot
+        lines['opd'], = ax['D'].loglog(all_opd[:91], np.append(cld_p,0),linewidth=3,color='k')
 
     def init():
         #line.set_ydata(np.ma.array(x, mask=True))
 
         ax['A'].set_xlabel('Temperature [K]',fontsize=30)
         ax['A'].set_ylabel('Pressure [Bars]',fontsize=30)
-        ax['A'].set_xlim(200,2900)
-        ax['A'].set_ylim(205,1.8e-4)
+        ax['A'].set_xlim(0,max(t_eq))
+        ax['A'].set_ylim(max(p_eq),min(p_eq))
         ax['B'].set_xlabel('Abundance [V/V]',fontsize=30)
         ax['B'].set_ylabel('Pressure [Bars]',fontsize=30)
         ax['B'].set_xlim(1e-6,1e-2)
-        ax['B'].set_ylim(205,1.8e-4)
+        ax['B'].set_ylim(max(p_eq),min(p_eq))
         ax['B'].legend(fontsize=20)
-        ax['C'].set_xlabel('Wavelength [$\mu$m]',fontsize=30)
+        ax['C'].set_xlabel(r'Wavelength [$\mu$m]',fontsize=30)
         ax['C'].set_ylabel('Spectrum',fontsize=30)
         ax['C'].set_xlim(0,6)
         #ax['C'].set_ylim(1e7,1e14)
@@ -2000,22 +2066,37 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
         ax['C'].tick_params(axis='both',which='major',length =30, width=2,direction='in',labelsize=30)
         ax['C'].tick_params(axis='both',which='minor',length =10, width=2,direction='in',labelsize=30)
 
+        if 'cld_output_picaso' in clima_out:
+            ax['D'].set_xlabel('Optical Depth',fontsize=30)
+            ax['D'].set_ylabel('Pressure [Bars]',fontsize=30)
+            ax['D'].set_xlim(1e-7,1e3)
+            ax['D'].set_ylim(max(p_eq),min(p_eq))
+            ax['D'].minorticks_on()
+            ax['D'].tick_params(axis='both',which='major',length =30, width=2,direction='in',labelsize=30)
+            ax['D'].tick_params(axis='both',which='minor',length =10, width=2,direction='in',labelsize=30)
+
         for ikey in molecules+['temp']:
             lines[ikey].set_ydata(p_eq)
         
         lines['spec'].set_xdata(wv)
+
+        if 'cld_output_picaso' in clima_out:
+            lines['opd'].set_ydata(np.append(cld_p,max(cld_p)+1))
         return lines
     
     def animate(i):                       
-        lines['temp'].set_xdata(all_profiles_eq[i*nlevel:(i+1)*nlevel])
+        lines['temp'].set_xdata(all_profiles_eq[i])
         
         for imol in molecules:
             lines[imol].set_xdata(mols_to_plot[imol][i*nlevel:(i+1)*nlevel])
         
         lines['spec'].set_ydata(spec[i,:][wh])
+
+        if 'cld_output_picaso' in clima_out:
+            lines['opd'].set_xdata(np.append(all_opd[i*90:(i+1)*90],1e-50))
         return lines
 
-    ani = animation.FuncAnimation(fig, animate, frames=int(len(all_profiles_eq)/nlevel),init_func=init,interval=50, blit=False)
+    ani = animation.FuncAnimation(fig, animate, frames=nstep,init_func=init,interval=50, blit=False)
     plt.close()
     return ani
 
@@ -2169,7 +2250,7 @@ def rt_heatmap(data,figure_kwargs={},cmap_kwargs={}):
     return p
 
     
-def pt_adiabat(clima_out, input_class, plot=True):
+def pt_adiabat(clima_out, input_class, opacityclass, plot=True):
     """
     Plot the PT profile with the adiabat 
 
@@ -2184,15 +2265,24 @@ def pt_adiabat(clima_out, input_class, plot=True):
     -------
     adiabat, dTdP, pressure 
     """
+    t_table = input_class.inputs['climate']['t_table']
+    p_table = input_class.inputs['climate']['p_table']
+    grad = input_class.inputs['climate']['grad']
+    cp = input_class.inputs['climate']['cp']
+    moist = input_class.inputs['climate']['moistgrad']
+    AdiabatBundle = namedtuple('AdiabatBundle', ['t_table', 'p_table', 'grad','cp'])
+    AdiabatBundle = AdiabatBundle(t_table,p_table,grad,cp)
+
+    Atmosphere = calculate_atm(input_class,opacityclass,only_atmosphere=True)
+
     layer_p = clima_out['spectrum_output']['full_output']['layer']['pressure']
     
     grad, cp = convec(clima_out['temperature'],clima_out['pressure'],
-                      input_class.inputs['climate']['t_table'], input_class.inputs['climate']['p_table'], 
-                      input_class.inputs['climate']['grad'], input_class.inputs['climate']['cp'])
+                      AdiabatBundle, Atmosphere,moist=moist)
                       
     plt.semilogy(clima_out['dtdp'], layer_p)
     plt.semilogy(grad,layer_p) 
-    plt.ylim([1e2,1e-4]), 
+    plt.ylim([1e4,1e-4]), 
     plt.xlabel('dT/dP vs adiabat')
     plt.ylabel('Pressure(bars)')
-    return cp, clima_out['dtdp'], layer_p
+    return cp, grad, clima_out['dtdp'], layer_p

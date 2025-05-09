@@ -1,0 +1,2533 @@
+atoms:
+- {name: H, mass: 1.00797, redox: -0.5}
+- {name: N, mass: 14.0067, redox: 0}
+- {name: O, mass: 15.9994, redox: 1}
+- {name: C, mass: 12.011, redox: -2}
+- {name: S, mass: 32.06, redox: -2}
+- {name: He, mass: 4.002602, redox: 0}
+
+species:
+- name: He
+  composition: {He: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [20.78603, 4.850638e-10, -1.582916e-10, 1.525102e-11, 3.196347e-11,
+      -6.197341, 151.3064]
+  note: From the NIST database
+- name: H
+  composition: {H: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [20.78603, 4.85e-10, -1.58e-10, 1.53e-11, 3.2e-11, 211.8, 139.87]
+  note: From the NIST database
+- name: H2
+  composition: {H: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1000.0, 2500.0, 6000.0]
+    data:
+    - [33.066178, -11.36342, 11.432816, -2.772874, -0.158558, -9.980797,
+      172.708]
+    - [18.563083, 12.257357, -2.859786, 0.268238, 1.97799, -1.147438, 156.2881]
+    - [43.41356, -4.293079, 1.272428, -0.096876, -20.53386, -38.51515, 162.0814]
+  note: From the NIST database
+- name: H2O
+  composition: {H: 2, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1700.0, 6000.0]
+    data:
+    - [30.092, 6.832514, 6.793435, -2.53448, 0.082139, -250.881, 223.3967]
+    - [41.96426, 8.622053, -1.49978, 0.098119, -11.15764, -272.1797, 219.7809]
+  note: From the NIST database
+- name: OH
+  composition: {O: 1, H: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1300.0, 6000.0]
+    data:
+    - [32.27768, -11.36291, 13.60545, -3.846486, -0.001335, 29.75113, 225.5783]
+    - [28.74701, 4.714489, -0.814725, 0.054748, -2.747829, 26.41439, 214.1166]
+  note: From the NIST database
+- name: O
+  composition: {O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [21.1861, -0.502314, 0.168694, -0.008962, 0.075664, 243.1306, 187.2591]
+  note: From the NIST database
+- name: O2
+  composition: {O: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [29.659, 6.137261, -1.186521, 0.09578, -0.219663, -9.861391, 237.948]
+  note: From the NIST database
+- name: CO
+  composition: {C: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1300.0, 6000.0]
+    data:
+    - [25.56759, 6.09613, 4.054656, -2.671301, 0.131021, -118.0089, 227.3665]
+    - [35.1507, 1.300095, -0.205921, 0.01355, -3.28278, -127.8375, 231.712]
+  note: From the NIST database
+- name: CO2
+  composition: {C: 1, O: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [24.99735, 55.18696, -33.69137, 7.948387, -0.136638, -403.6075, 228.2431]
+    - [58.16639, 2.720074, -0.492289, 0.038844, -6.447293, -425.9186, 263.6125]
+  note: From the NIST database
+- name: HCO
+  composition: {H: 1, C: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [21.13803, 40.4361, -14.71337, 0.96901, 0.239639, 36.34712, 240.1695]
+    - [52.79371, 2.666155, -0.392339, 0.023808, -7.457018, 11.37797, 267.2798]
+  note: From the NIST database
+- name: H2CO
+  composition: {H: 2, C: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [5.193767, 93.23249, -44.85457, 7.882279, 0.551175, -112.3591, 202.4663]
+    - [71.35268, 6.174497, -1.19109, 0.079564, -15.58917, -163.6327, 262.318]
+  note: From the NIST database
+- name: C
+  composition: {C: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [21.1751, -0.81243, 0.448537, -0.043256, -0.013103, 710.347, 183.8734]
+  note: From the NIST database
+- name: CH
+  composition: {C: 1, H: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1100.0, 6000.0]
+    data:
+    - [32.9421, -16.7106, 24.18595, -7.784709, -0.065198, 584.6303, 226.5138]
+    - [30.15367, 8.455112, -1.969644, 0.15427, -4.98009, 576.6891, 209.3531]
+  note: From the NIST database
+- name: CH2
+  composition: {C: 1, H: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1400.0, 6000.0]
+    data:
+    - [31.96823, 6.783603, 12.5189, -5.696265, -0.031115, 380.8558, 229.915]
+    - [51.55901, 3.876975, -0.649608, 0.037901, -10.72589, 355.1715, 232.3212]
+  note: From the NIST database
+- name: CH3
+  composition: {C: 1, H: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1400.0, 6000.0]
+    data:
+    - [28.13786, 36.74736, -4.347218, -1.595673, 0.00186, 135.7118, 217.4814]
+    - [67.18081, 7.846423, -1.440899, 0.092685, -17.66133, 92.471, 235.9023]
+  note: From the NIST database
+- name: CH4
+  composition: {C: 1, H: 4}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1300.0, 6000.0]
+    data:
+    - [-0.703029, 108.4773, -42.52157, 5.862788, 0.678565, -76.84376, 158.7163]
+    - [85.81217, 11.26467, -2.114146, 0.13819, -26.42221, -153.5327, 224.4143]
+  note: From the NIST database
+- name: S
+  composition: {S: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1400.0, 6000.0]
+    data:
+    - [27.45968, -13.3278, 10.06574, -2.662381, -0.055851, 269.1149, 204.2955]
+    - [16.55345, 2.400266, -0.25576, 0.005821, 3.564793, 278.4356, 194.5447]
+  note: From the NIST database
+- name: S2
+  composition: {S: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [33.51313, 5.06536, -1.05967, 0.089905, -0.211911, 117.6855, 266.0919]
+  note: From the NIST database
+- name: S3
+  composition: {S: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [53.78072, 4.351569, -3.0e-06, -5.0e-06, -0.650185, 127.0, 329.6465]
+  note: From the NIST database
+- name: S4
+  composition: {S: 4}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [79.88051, 3.276394, -0.0001, 1.0e-05, -1.179851, 107.0, 399.7013]
+  note: From the NIST database
+- name: S8
+  composition: {S: 8}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [180.6697, 1.918988, -0.52013, 0.044394, -2.270155, 39.45, 635.5496]
+  note: From the NIST database
+- name: H2S
+  composition: {H: 2, S: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1400.0, 6000.0]
+    data:
+    - [26.88412, 18.67809, 3.434203, -3.378702, 0.135882, -28.91211, 233.3747]
+    - [51.22136, 4.147486, -0.643566, 0.041621, -10.46385, -55.87606, 243.69]
+  note: From the NIST database
+- name: HS
+  composition: {H: 1, S: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [38.04306, -27.4679, 34.06462, -11.79875, -0.009743, 132.4861, 248.3945]
+    - [32.99507, 2.841514, -0.507766, 0.038247, -2.909667, 128.077, 230.0066]
+  note: From the NIST database
+- name: SO
+  composition: {S: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1400.0, 6000.0]
+    data:
+    - [22.56414, 29.93305, -22.87987, 6.408968, 0.04756, -2.702237, 241.5511]
+    - [23.50387, 10.82133, -2.260566, 0.168555, 5.052557, 5.425853, 254.7734]
+  note: From the NIST database
+- name: SO2
+  composition: {S: 1, O: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [21.43049, 74.35094, -57.75217, 16.35534, 0.086731, -305.7688, 254.8872]
+    - [57.48188, 1.009328, -0.07629, 0.005174, -4.045401, -324.414, 302.7798]
+  note: From the NIST database
+- name: CS
+  composition: {C: 1, S: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 600.0, 6000.0]
+    data:
+    - [21.76387, 24.9989, -8.095581, -4.563949, 0.126372, 273.2328, 230.5497]
+    - [34.47721, 2.966255, -0.950722, 0.113718, -0.997482, 267.0275, 247.0731]
+  note: From the NIST database
+- name: CS2
+  composition: {C: 1, S: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1000.0, 6000.0]
+    data:
+    - [35.85391, 52.49121, -40.83743, 12.00155, -0.224831, 103.503, 266.1597]
+    - [61.25292, 1.378826, -0.14052, 0.009284, -3.244044, 90.07106, 299.4091]
+  note: From the NIST database
+- name: OCS
+  composition: {O: 1, C: 1, S: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [34.53892, 43.05378, -26.61773, 6.338844, -0.327515, -151.5001, 259.8118]
+    - [60.3224, 1.738332, -0.209982, 0.01411, -5.1289, -168.6307, 287.6454]
+  note: From the NIST database
+- name: CN
+  composition: {C: 1, N: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1100.0, 6000.0]
+    data:
+    - [26.32878, 3.322704, 8.590883, -4.87549, 0.1071, 427.4333, 233.7785]
+    - [21.01661, 9.770603, -1.022633, 0.013773, 4.5414, 435.9017, 232.6902]
+  note: From the NIST database
+- name: HCN
+  composition: {H: 1, C: 1, N: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [32.69373, 22.59205, -4.369142, -0.407697, -0.2824, 118.2811, 233.2597]
+    - [52.36527, 5.563298, -0.953224, 0.056711, -7.5641, 98.6523, 244.8448]
+  note: From the NIST database
+- name: N
+  composition: {N: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [21.14, -0.39, 0.04, 0.02, -0.03, 466.31, 178.83]
+  note: From the NIST database
+- name: N2
+  composition: {N: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [26.09, 8.22, -1.98, 0.16, 0.04, -7.99, 221.02]
+  note: From the NIST database
+- name: NH
+  composition: {N: 1, H: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 800.0, 6000.0]
+    data:
+    - [31.32, -8.931544, 11.58629, -2.5441, -0.0419, 367.382, 221.0867]
+    - [28.06, 5.10084, -0.767827, 0.056843, -1.0547, 366.0623, 211.8351]
+  note: From the NIST database
+- name: NH2
+  composition: {N: 1, H: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1300.0, 6000.0]
+    data:
+    - [29.86, 6.117803, 11.54976, -5.02444, 0.0887, 177.2053, 229.0535]
+    - [35.33, 11.01555, -1.172814, 0.022623, -2.136, 169.9565, 227.6519]
+  note: From the NIST database
+- name: NH3
+  composition: {N: 1, H: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1400.0, 6000.0]
+    data:
+    - [20.0, 49.77119, -15.37599, 1.921168, 0.1892, -53.3066, 203.8591]
+    - [52.02, 18.48801, -3.765128, 0.248541, -12.458, -85.5389, 223.8022]
+  note: From the NIST database
+- name: C2
+  composition: {C: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 700.0, 6000.0]
+    data:
+    - [123.9092, -348.007, 485.0971, -232.799, -1.2403, 797.2777, 426.6132]
+    - [30.50408, 5.445811, -0.853373, 0.065641, 0.8148, 820.5784, 240.4039]
+  note: From the NIST database
+- name: C2H
+  composition: {C: 2, H: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [33.40916, 24.11331, -6.600595, 0.278912, -0.2595, 556.1311, 239.5148]
+    - [39.2922, 13.32081, -1.952364, 0.08629, 0.9782, 555.3027, 248.5949]
+  note: From the NIST database
+- name: C2H2
+  composition: {C: 2, H: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1100.0, 6000.0]
+    data:
+    - [40.68697, 40.73279, -16.1784, 3.669741, -0.6584, 210.7067, 235.0052]
+    - [67.47244, 11.7511, -2.02147, 0.136195, -9.8064, 185.455, 253.5337]
+  note: From the NIST database
+- name: C2H4
+  composition: {C: 2, H: 4}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [-6.38788, 184.4019, -112.9718, 28.49593, 0.31554, 48.1733, 163.1568]
+    - [106.5104, 13.7326, -2.628481, 0.174595, -26.1447, -35.3623, 275.0424]
+  note: From the NIST database
+- name: 'NO'
+  composition: {N: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [23.83491, 12.58878, -1.139011, -1.49746, 0.2142, 83.3578, 237.1219]
+    - [35.99169, 0.95717, -0.148032, 0.009974, -3.0041, 73.1078, 246.1619]
+  note: From the NIST database
+- name: HNO
+  composition: {H: 1, N: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [19.85936, 48.00847, -25.41065, 5.234644, 0.230115, 99.5103, 232.8199]
+    - [52.25649, 3.105872, -0.598149, 0.039904, -7.452, 74.959, 263.2531]
+  note: From the NIST database
+- name: HO2
+  composition: {H: 1, O: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 2000.0, 6000.0]
+    data:
+    - [26.0096, 34.86, -16.3, 3.110441, -0.0186, 3.0, 250.766]
+    - [45.8751, 8.81, -1.64, 0.098053, -10.1738, -16.75, 266.53]
+  note: From the NIST database
+- name: HNCO
+  composition: {H: 1, N: 1, C: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [32.73428, 63.81479, -38.46142, 9.728052, -0.317587, -132.0136, 258.6482]
+    - [71.59786, 5.912034, -1.122839, 0.074171, -9.813573, -161.3811, 296.4201]
+  note: From the NIST database
+- name: N2O
+  composition: {N: 2, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1400.0, 6000.0]
+    data:
+    - [27.67988, 51.14898, -30.64454, 6.847911, -0.157906, 71.24934, 238.6164]
+    - [60.30274, 1.034566, -0.192997, 0.01254, -6.860254, 48.6139, 272.5002]
+  note: From the NIST database
+- name: H2O2
+  composition: {H: 2, O: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [34.25667, 55.18445, -35.15, 9.09, -0.42, -149.9098, 257.0604]
+  note: From the NIST database
+- name: O3
+  composition: {O: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [21.66157, 79.86001, -66.02603, 19.58363, -0.079251, 132.9407, 243.6406]
+    - [57.81409, 0.730941, -0.039253, 0.00261, -3.560367, 115.7717, 294.5607]
+  note: From the NIST database
+- name: NO2
+  composition: {N: 1, O: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [16.10857, 75.89525, -54.3874, 14.30777, 0.239423, 26.17464, 240.5386]
+    - [56.82541, 0.738053, -0.144721, 0.009777, -5.459911, 2.846456, 290.5056]
+  note: From the NIST database
+- name: NO3
+  composition: {N: 1, O: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1100.0, 6000.0]
+    data:
+    - [11.22316, 166.3889, -148.4458, 47.40598, -0.176791, 61.00858, 221.7679]
+    - [82.27418, 0.487106, -0.098769, 0.006853, -6.264954, 29.22311, 326.2528]
+  note: From the NIST database
+- name: SO3
+  composition: {S: 1, O: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [24.02503, 119.4607, -94.38686, 26.96237, -0.117517, -407.8526, 253.5186]
+    - [81.99008, 0.622236, -0.12244, 0.008294, -6.703688, -437.659, 330.9264]
+  note: From the NIST database
+- name: HNO2
+  composition: {H: 1, N: 1, O: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [24.89974, 91.37563, -64.84614, 17.92007, -0.134737, -88.13596, 254.2671]
+    - [73.65137, 4.854988, -0.921409, 0.060837, -9.11179, -119.3896, 310.344]
+  note: From the NIST database
+- name: HNO3
+  composition: {H: 1, N: 1, O: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [19.63229, 153.9599, -115.8378, 32.87955, -0.249114, -146.8818, 247.7049]
+    - [97.45959, 5.429577, -1.029688, 0.06795, -12.29314, -192.4912, 343.8051]
+  note: From the NIST database
+- name: H2SO4
+  composition: {H: 2, S: 1, O: 4}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [47.28924, 190.3314, -148.1299, 43.86631, -0.740016, -758.9525, 301.2961]
+    - [139.2289, 9.513663, -1.795577, 0.118069, -15.61486, -813.0976, 416.1854]
+  note: From the NIST database
+- name: N2H4
+  composition: {N: 2, H: 4}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 2000.0, 6000.0]
+    data:
+    - [35.1824, 96.0526, -40.5013, 6.66807, -0.874233, 77.9915, 249.425]
+    - [121.401, 4.81688, -0.763012, 0.043232, -40.7865, -11.3811, 305.344]
+  note: From the NIST database
+- name: C2H6
+  composition: {C: 2, H: 6}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 3000.0, 6000.0]
+    data:
+    - [6.0816, 173.58, -66.919, 9.0891, 0.12914, -92.6, 188.8]
+    - [161.0, 3.0, 0.0, 0.0, 0.0, -207.9, 311.0]
+  note: From the NIST database
+- name: CH3OH
+  composition: {C: 1, H: 4, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 3000.0, 6000.0]
+    data:
+    - [20.559, 95.615, -31.306, 3.5141, 0.025109, -215.0, 237.8]
+    - [111.5, 3.0, 0.0, 0.0, 0.0, -281.7, 306.5]
+  note: From the NIST database
+- name: CH2CO
+  composition: {C: 2, H: 2, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 1500.0, 6000.0]
+    data:
+    - [26.885, 92.826, -41.66, 7.0037, 0.002942, -79.0, 251.0]
+    - [87.0, 6.0, 0.0, 0.0, 0.0, -119.5, 317.9]
+  note: From the NIST database
+- name: CH3CHO
+  composition: {C: 2, O: 1, H: 4}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 3000.0, 6000.0]
+    data:
+    - [21.165, 135.84, -52.426, 7.0444, 0.021674, -178.5, 251.5]
+    - [129.0, 6.0, 0.0, 0.0, 0.0, -246.9, 350.0]
+  note: From the NIST database
+- name: C3H4
+  composition: {C: 3, H: 4}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 1400.0, 6000.0]
+    data:
+    - [16.91, 171.84, -92.473, 19.798, 0.035429, 173.62, 165.3]
+    - [161.13, -10.876, 2.874, -0.2238, -39.79, 54.345, 287.3]
+  note: From the NIST database
+- name: C3H6
+  composition: {C: 3, H: 6}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 1400.0, 6000.0]
+    data:
+    - [5.2871, 225.56, -103.76, 17.388, 0.129, 10.13, 211.0]
+    - [173.78, 13.606, -2.1834, 0.1228, -45.669, -27.1, 351.0]
+  note: From the NIST database
+- name: C4H2
+  composition: {C: 4, H: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 2500.0, 6000.0]
+    data:
+    - [40.366, 120.42, -57.514, 9.3241, -0.049062, 441.0, 279.0]
+    - [117.6, 4.0, 0.0, 0.0, 0.0, 403.25, 368.1]
+  note: From the NIST database
+- name: C4H4
+  composition: {C: 4, H: 4}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 3000.0, 6000.0]
+    data:
+    - [26.051, 185.07, -83.712, 12.691, 0.014196, 273.0, 255.0]
+    - [155.5, 5.0, 0.0, 0.0, 0.0, 198.5, 390.5]
+  note: From the NIST database
+- name: HCS
+  composition: {H: 1, C: 1, S: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [21.13803, 40.4361, -14.71337, 0.96901, 0.239639, 275.33712, 251.5195]
+    - [52.79371, 2.666155, -0.392339, 0.023808, -7.457018, 250.36797, 278.6298]
+  note: Estimated from thermodynamic data at 298 K and species HCO
+- name: C2H3
+  composition: {C: 2, H: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [-6.38788, 184.4019, -112.9718, 28.49593, 0.31554, 294.7033, 177.8368]
+    - [106.5104, 13.7326, -2.628481, 0.174595, -26.1447, 211.1677, 289.7224]
+  note: Estimated from thermodynamic data at 298 K and species C2H4
+- name: C2H5
+  composition: {C: 2, H: 5}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [-6.38788, 184.4019, -112.9718, 28.49593, 0.31554, 114.7033, 190.8368]
+    - [106.5104, 13.7326, -2.628481, 0.174595, -26.1447, 31.1677, 302.7224]
+  note: Estimated from thermodynamic data at 298 K and species C2H4
+- name: NCO
+  composition: {N: 1, C: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [24.99735, 55.18696, -33.69137, 7.948387, -0.136638, 117.9025, 246.4531]
+    - [58.16639, 2.720074, -0.492289, 0.038844, -6.447293, 95.5914, 281.8225]
+  note: Estimated from thermodynamic data at 298 K and species CO2
+- name: 1CH2
+  composition: {C: 1, H: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1400.0, 6000.0]
+    data:
+    - [31.96823, 6.783603, 12.5189, -5.696265, -0.031115, 418.0558, 224.985]
+    - [51.55901, 3.876975, -0.649608, 0.037901, -10.72589, 392.3715, 227.3912]
+  note: Estimated from thermodynamic data at 298 K and species CH2
+- name: HCCO
+  composition: {H: 1, C: 2, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [32.73428, 63.81479, -38.46142, 9.728052, -0.317587, 163.9864, 267.4282]
+    - [71.59786, 5.912034, -1.122839, 0.074171, -9.813573, 134.6189, 305.2001]
+  note: Estimated from thermodynamic data at 298 K and species HNCO
+- name: NNH
+  composition: {N: 2, H: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [21.13803, 40.4361, -14.71337, 0.96901, 0.239639, 246.83712, 235.5195]
+    - [52.79371, 2.666155, -0.392339, 0.023808, -7.457018, 221.86797, 262.6298]
+  note: Estimated from thermodynamic data at 298 K and species HCO
+- name: HSO
+  composition: {H: 1, S: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 2000.0, 6000.0]
+    data:
+    - [26.0096, 34.86, -16.3, 3.110441, -0.0186, -31.1, 271.676]
+    - [45.8751, 8.81, -1.64, 0.098053, -10.1738, -50.85, 287.44]
+  note: Estimated from thermodynamic data at 298 K and species HO2
+- name: CH3O
+  composition: {C: 1, H: 3, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [5.193767, 93.23249, -44.85457, 7.882279, 0.551175, 18.1409, 217.5163]
+    - [71.35268, 6.174497, -1.19109, 0.079564, -15.58917, -33.1327, 277.368]
+  note: Estimated from thermodynamic data at 298 K and species H2CO
+- name: H2COH
+  composition: {H: 3, C: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 3000.0, 6000.0]
+    data:
+    - [20.559, 95.615, -31.306, 3.5141, 0.025109, -25.3, 241.9]
+    - [111.5, 3.0, 0.0, 0.0, 0.0, -92.0, 310.6]
+  note: Estimated from thermodynamic data at 298 K and species CH3OH
+- name: H2CN
+  composition: {H: 2, C: 1, N: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [5.193767, 93.23249, -44.85457, 7.882279, 0.551175, 234.5409, 207.5163]
+    - [71.35268, 6.174497, -1.19109, 0.079564, -15.58917, 183.2673, 267.368]
+  note: Estimated from thermodynamic data at 298 K and species H2CO
+- name: N2H2
+  composition: {N: 2, H: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1100.0, 6000.0]
+    data:
+    - [40.68697, 40.73279, -16.1784, 3.669741, -0.6584, 185.9767, 235.0752]
+    - [67.47244, 11.7511, -2.02147, 0.136195, -9.8064, 160.725, 253.6037]
+  note: Estimated from thermodynamic data at 298 K and species C2H2
+- name: C4H
+  composition: {C: 4, H: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 2500.0, 6000.0]
+    data:
+    - [40.366, 120.42, -57.514, 9.3241, -0.049062, 763.0, 272.0]
+    - [117.6, 4.0, 0.0, 0.0, 0.0, 725.25, 361.1]
+  note: Estimated from thermodynamic data at 298 K and species C4H2
+- name: HCNOH
+  composition: {H: 2, C: 1, N: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 1500.0, 6000.0]
+    data:
+    - [26.885, 92.826, -41.66, 7.0037, 0.002942, 58.0, 257.0]
+    - [87.0, 6.0, 0.0, 0.0, 0.0, 17.5, 323.9]
+  note: Estimated from thermodynamic data at 298 K and species CH2CO
+- name: C2H2OH
+  composition: {C: 2, H: 3, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 1500.0, 6000.0]
+    data:
+    - [26.885, 92.826, -41.66, 7.0037, 0.002942, 124.0, 257.0]
+    - [87.0, 6.0, 0.0, 0.0, 0.0, 83.5, 323.9]
+  note: Estimated from thermodynamic data at 298 K and species CH2CO
+- name: CH3CO
+  composition: {C: 2, H: 3, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 1500.0, 6000.0]
+    data:
+    - [26.885, 92.826, -41.66, 7.0037, 0.002942, -22.0, 277.0]
+    - [87.0, 6.0, 0.0, 0.0, 0.0, -62.5, 343.9]
+  note: Estimated from thermodynamic data at 298 K and species CH2CO
+- name: CH2CHO
+  composition: {C: 2, O: 1, H: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 3000.0, 6000.0]
+    data:
+    - [21.165, 135.84, -52.426, 7.0444, 0.021674, 5.2, 255.5]
+    - [129.0, 6.0, 0.0, 0.0, 0.0, -63.2, 354.0]
+  note: Estimated from thermodynamic data at 298 K and species CH3CHO
+- name: C2H3OH
+  composition: {C: 2, H: 4, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 3000.0, 6000.0]
+    data:
+    - [21.165, 135.84, -52.426, 7.0444, 0.021674, -132.8, 261.5]
+    - [129.0, 6.0, 0.0, 0.0, 0.0, -201.2, 360.0]
+  note: Estimated from thermodynamic data at 298 K and species CH3CHO
+- name: C2H4OH
+  composition: {C: 2, H: 5, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 3000.0, 6000.0]
+    data:
+    - [21.165, 135.84, -52.426, 7.0444, 0.021674, -33.8, 285.5]
+    - [129.0, 6.0, 0.0, 0.0, 0.0, -102.2, 384.0]
+  note: Estimated from thermodynamic data at 298 K and species CH3CHO
+- name: CH3O2
+  composition: {C: 1, H: 3, O: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 1500.0, 6000.0]
+    data:
+    - [26.885, 92.826, -41.66, 7.0037, 0.002942, 4.0, 267.0]
+    - [87.0, 6.0, 0.0, 0.0, 0.0, -36.5, 333.9]
+  note: Estimated from thermodynamic data at 298 K and species CH2CO
+- name: HSO3
+  composition: {H: 1, S: 1, O: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 1200.0, 6000.0]
+    data:
+    - [19.63229, 153.9599, -115.8378, 32.87955, -0.249114, -366.5718, 241.3149]
+    - [97.45959, 5.429577, -1.029688, 0.06795, -12.29314, -412.1812, 337.4151]
+  note: Estimated from thermodynamic data at 298 K and species HNO3
+- name: O1D
+  composition: {O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [21.1861, -0.502314, 0.168694, -0.008962, 0.075664, 432.9506, 188.2001]
+  note: Estimated from thermodynamic data at 298 K and species O
+- name: N2H3
+  composition: {N: 2, H: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 2000.0, 6000.0]
+    data:
+    - [35.1824, 96.0526, -40.5013, 6.66807, -0.874233, 206.6415, 230.765]
+    - [121.401, 4.81688, -0.763012, 0.043232, -40.7865, 117.2689, 286.684]
+  note: Estimated from thermodynamic data at 298 K and species N2H4
+- name: NH2CO
+  composition: {N: 1, H: 2, C: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 1500.0, 6000.0]
+    data:
+    - [26.885, 92.826, -41.66, 7.0037, 0.002942, -25.5, 267.0]
+    - [87.0, 6.0, 0.0, 0.0, 0.0, -66.0, 333.9]
+  note: Estimated from thermodynamic data at 298 K and species CH2CO
+- name: HS4
+  composition: {H: 1, S: 4}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [79.88051, 3.276394, -0.0001, 1.0e-05, -1.179851, 82.0, 419.0513]
+  note: Estimated from thermodynamic data at 298 K and species S4
+- name: C4H3
+  composition: {C: 4, H: 3}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 3000.0, 6000.0]
+    data:
+    - [26.051, 185.07, -83.712, 12.691, 0.014196, 476.0, 249.0]
+    - [155.5, 5.0, 0.0, 0.0, 0.0, 401.5, 384.5]
+  note: Estimated from thermodynamic data at 298 K and species C4H4
+- name: CH2N2
+  composition: {C: 1, H: 2, N: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 1500.0, 6000.0]
+    data:
+    - [26.885, 92.826, -41.66, 7.0037, 0.002942, 228.0, 267.0]
+    - [87.0, 6.0, 0.0, 0.0, 0.0, 187.5, 333.9]
+  note: Estimated from thermodynamic data at 298 K and species CH2CO
+- name: N2D
+  composition: {N: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [0.0, 6000.0]
+    data:
+    - [21.14, -0.39, 0.04, 0.02, -0.03, 696.63, 178.55]
+  note: Estimated from thermodynamic data at 298 K and species N
+- name: CH2CN
+  composition: {C: 2, H: 2, N: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 1500.0, 6000.0]
+    data:
+    - [26.885, 92.826, -41.66, 7.0037, 0.002942, 246.0, 263.0]
+    - [87.0, 6.0, 0.0, 0.0, 0.0, 205.5, 329.9]
+  note: Estimated from thermodynamic data at 298 K and species CH2CO
+- name: CH3CN
+  composition: {C: 2, H: 3, N: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 1500.0, 6000.0]
+    data:
+    - [26.885, 92.826, -41.66, 7.0037, 0.002942, 62.0, 250.0]
+    - [87.0, 6.0, 0.0, 0.0, 0.0, 21.5, 316.9]
+  note: Estimated from thermodynamic data at 298 K and species CH2CO
+- name: HCCCN
+  composition: {H: 1, C: 3, N: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [50.0, 2500.0, 6000.0]
+    data:
+    - [40.366, 120.42, -57.514, 9.3241, -0.049062, 337.0, 279.0]
+    - [117.6, 4.0, 0.0, 0.0, 0.0, 299.25, 368.1]
+  note: Estimated from thermodynamic data at 298 K and species C4H2
+
+particles:
+- name: H2Oaer
+  composition: {H: 2, O: 1}
+  density: 1.0
+  optical-properties: none
+  formation: saturation
+  gas-phase: H2O
+  saturation:
+    model: LinearLatentHeat
+    parameters: {mu: 18.01534, T-ref: 373.15, P-ref: 1014200.0, T-triple: 273.15,
+      T-critical: 647.0}
+    vaporization: {a: 28414210000.0, b: -13997320.0}
+    sublimation: {a: 27468840000.0, b: 4181527.0}
+    super-critical: {a: 1793161000000.0, b: 0.0}
+- name: CO2aer
+  composition: {C: 1, O: 2}
+  density: 1.0
+  optical-properties: none
+  formation: saturation
+  gas-phase: CO2
+  saturation:
+    model: LinearLatentHeat
+    parameters: {mu: 44.01, T-ref: 250.0, P-ref: 17843680.0, T-triple: 216.58,
+      T-critical: 304.13}
+    vaporization: {a: 4656475000.0, b: -3393595.0}
+    sublimation: {a: 6564668000.0, b: -3892217.0}
+    super-critical: {a: 163590800000.0, b: 0.0}
+- name: S8aer
+  composition: {S: 8}
+  density: 1.0
+  optical-properties: none
+  formation: saturation
+  gas-phase: S8
+  saturation:
+    model: LinearLatentHeat
+    parameters: {mu: 256.52, T-ref: 400.0, P-ref: 104.922, T-triple: 392.0,
+      T-critical: 675.0}
+    vaporization: {a: 2886561000.0, b: -905383.2}
+    sublimation: {a: 2700081000.0, b: 3262241.0}
+    super-critical: {a: 137025500000.0, b: 0.0}
+- name: H2SO4aer
+  composition: {H: 2, S: 1, O: 4}
+  density: 1.0
+  optical-properties: none
+  formation: saturation
+  gas-phase: H2SO4
+  saturation:
+    model: LinearLatentHeat
+    parameters: {mu: 98.079, T-ref: 400.0, P-ref: 104.2249, T-triple: 360.0,
+      T-critical: 905.0}
+    vaporization: {a: 10770640000.0, b: -6002994.0}
+    sublimation: {a: 10770640000.0, b: -6002994.0}
+    super-critical: {a: 321509500000.0, b: 0.0}
+- name: NH3aer
+  composition: {N: 1, H: 3}
+  density: 1.0
+  optical-properties: none
+  formation: saturation
+  gas-phase: NH3
+  saturation:
+    model: LinearLatentHeat
+    parameters: {mu: 17.031, T-ref: 300.0, P-ref: 10990060.0, T-triple: 195.4,
+      T-critical: 405.4}
+    vaporization: {a: 16222880000.0, b: -8552054.0}
+    sublimation: {a: 18112180000.0, b: 0.0}
+    super-critical: {a: 748102000000.0, b: 0.0}
+- name: N2Oaer
+  composition: {N: 2, O: 1}
+  density: 1.0
+  optical-properties: none
+  formation: saturation
+  gas-phase: N2O
+  saturation:
+    model: LinearLatentHeat
+    parameters: {mu: 44.0128, T-ref: 185.0, P-ref: 896406.4, T-triple: 182.33,
+      T-critical: 309.56}
+    vaporization: {a: 5330803000.0, b: -6536161.0}
+    sublimation: {a: 6060093000.0, b: -4323191.0}
+    super-critical: {a: 169425700000.0, b: 0.0}
+- name: C2H2aer
+  composition: {C: 2, H: 2}
+  density: 1.0
+  optical-properties: none
+  formation: saturation
+  gas-phase: C2H2
+  saturation:
+    model: LinearLatentHeat
+    parameters: {mu: 26.0373, T-ref: 200.0, P-ref: 1895409.0, T-triple: 192.4,
+      T-critical: 308.3}
+    vaporization: {a: 6989511000.0, b: -2838657.0}
+    sublimation: {a: 11812830000.0, b: -20473510.0}
+    super-critical: {a: 284084700000.0, b: 0.0}
+- name: C2H4aer
+  composition: {C: 2, H: 4}
+  density: 1.0
+  optical-properties: none
+  formation: saturation
+  gas-phase: C2H4
+  saturation:
+    model: LinearLatentHeat
+    parameters: {mu: 28.0532, T-ref: 150.0, P-ref: 273492.4, T-triple: 104.0,
+      T-critical: 282.5}
+    vaporization: {a: 6736043000.0, b: -9175347.0}
+    sublimation: {a: 5902191000.0, b: 9592794.0}
+    super-critical: {a: 221709200000.0, b: 0.0}
+- name: C2H6aer
+  composition: {C: 2, H: 6}
+  density: 1.0
+  optical-properties: none
+  formation: saturation
+  gas-phase: C2H6
+  saturation:
+    model: LinearLatentHeat
+    parameters: {mu: 30.069, T-ref: 200.0, P-ref: 2181454.0, T-triple: 91.0,
+      T-critical: 305.3}
+    vaporization: {a: 6328747000.0, b: -6185817.0}
+    sublimation: {a: 7204982000.0, b: -2441216.0}
+    super-critical: {a: 241267900000.0, b: 0.0}
+- name: CH3CNaer
+  composition: {C: 2, H: 3, N: 1}
+  density: 1.0
+  optical-properties: none
+  formation: saturation
+  gas-phase: CH3CN
+  saturation:
+    model: LinearLatentHeat
+    parameters: {mu: 41.0519, T-ref: 250.0, P-ref: 8388.388, T-triple: 229.32,
+      T-critical: 545.0}
+    vaporization: {a: 8798116000.0, b: -1975835.0}
+    sublimation: {a: 12475940000.0, b: -7579455.0}
+    super-critical: {a: 559159600000.0, b: 0.0}
+- name: HCCCNaer
+  composition: {H: 1, C: 3, N: 1}
+  density: 1.0
+  optical-properties: none
+  formation: saturation
+  gas-phase: HCCCN
+  saturation:
+    model: LinearLatentHeat
+    parameters: {mu: 51.048, T-ref: 300.0, P-ref: 581969.2, T-triple: 280.0,
+      T-critical: 527.0}
+    vaporization: {a: 5300635000.0, b: 566737.6}
+    sublimation: {a: 6214864000.0, b: 9665333.0}
+    super-critical: {a: 420584600000.0, b: 0.0}
+- name: HCNaer
+  composition: {H: 1, C: 1, N: 1}
+  density: 1.0
+  optical-properties: none
+  formation: saturation
+  gas-phase: HCN
+  saturation:
+    model: LinearLatentHeat
+    parameters: {mu: 27.0253, T-ref: 290.0, P-ref: 706429.7, T-triple: 259.0,
+      T-critical: 456.85}
+    vaporization: {a: 10212820000.0, b: 1045517.0}
+    sublimation: {a: 13791170000.0, b: -114728.6}
+    super-critical: {a: 597879900000.0, b: 0.0}
+- name: CH4aer
+  composition: {C: 1, H: 4}
+  density: 1.0
+  optical-properties: none
+  formation: saturation
+  gas-phase: CH4
+  saturation:
+    model: LinearLatentHeat
+    parameters: {mu: 16.04, T-ref: 100.0, P-ref: 342624.5, T-triple: 90.686,
+      T-critical: 190.564}
+    vaporization: {a: 5914179000.0, b: -4388869.0}
+    sublimation: {a: 8001717000.0, b: -26126280.0}
+    super-critical: {a: 177924300000.0, b: 0.0}
+
+reactions:
+- equation: H + H (+ M) <=> H2 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 2.696221e-31, b: -0.6, Ea: 0.0}
+  high-P-rate-constant: {A: 1.0e-12, b: 0.0, Ea: 0.0}
+- equation: O + H (+ M) <=> OH (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.29e-29, b: -1.0, Ea: 0.0}
+  high-P-rate-constant: {A: 1.0e-12, b: 0.0, Ea: 0.0}
+- equation: H2 + O <=> OH + H
+  rate-constant: {A: 8.514405e-20, b: 2.67, Ea: 3160.0}
+- equation: H + OH (+ M) <=> H2O (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.050748e-26, b: -2.1, Ea: 0.0}
+  high-P-rate-constant: {A: 2.7e-10, b: 0.0, Ea: 75.0}
+- equation: H2 + OH <=> H2O + H
+  rate-constant: {A: 1.740708e-16, b: 1.6, Ea: 1660.0}
+- equation: OH + OH <=> H2O + O
+  rate-constant: {A: 2.549944e-15, b: 1.14, Ea: 50.0}
+- equation: OH + OH <=> O2 + H2
+  rate-constant: {A: 1.799625e-13, b: 0.51, Ea: 25400.0}
+- equation: O + O (+ M) <=> O2 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 5.2e-35, b: 0.0, Ea: -900.0}
+  high-P-rate-constant: {A: 1.0e-12, b: 0.0, Ea: 0.0}
+- equation: O + OH <=> O2 + H
+  rate-constant: {A: 2.4e-11, b: 0.0, Ea: 353.0}
+- equation: C + O (+ M) <=> CO (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.088963e-20, b: -3.34, Ea: 0.0}
+  high-P-rate-constant: {A: 1.0e-12, b: 0.0, Ea: 0.0}
+- equation: C + O2 <=> CO + O
+  rate-constant: {A: 1.6e-11, b: 0.0, Ea: 0.0}
+- equation: CO + O (+ M) <=> CO2 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.7e-33, b: 0.0, Ea: 1510.0}
+  high-P-rate-constant: {A: 1.0e-14, b: 0.0, Ea: 1630.0}
+- equation: CO + OH <=> CO2 + H
+  rate-constant: {A: 3.662296e-19, b: 1.89, Ea: -583.0}
+- equation: O + CO2 <=> CO + O2
+  rate-constant: {A: 2.8e-11, b: 0.0, Ea: 26500.0}
+- equation: C + OH <=> CO + H
+  rate-constant: {A: 6.350853e-12, b: 0.5, Ea: 0.0}
+- equation: H + CO (+ M) <=> HCO (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 2.221812e-31, b: -0.66, Ea: 825.0}
+  high-P-rate-constant: {A: 2.0e-13, b: 0.0, Ea: 1370.0}
+- equation: HCO + O <=> H + CO2
+  rate-constant: {A: 5.0e-11, b: 0.0, Ea: 0.0}
+- equation: HCO + O <=> OH + CO
+  rate-constant: {A: 5.0e-11, b: 0.0, Ea: 0.0}
+- equation: OH + HCO <=> CO + H2O
+  rate-constant: {A: 1.7e-10, b: 0.0, Ea: 0.0}
+- equation: HCO + H <=> CO + H2
+  rate-constant: {A: 1.8e-10, b: 0.0, Ea: 0.0}
+- equation: H + HCO (+ M) <=> H2CO (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 7.459447e-24, b: -2.57, Ea: 215.0}
+  high-P-rate-constant: {A: 3.0e-10, b: 0.0, Ea: 0.0}
+- equation: H2 + CO (+ M) <=> H2CO (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.4e-33, b: 0.0, Ea: 32900.0}
+  high-P-rate-constant: {A: 5.5e-12, b: 0.0, Ea: 36000.0}
+- equation: HCO + HCO <=> H2CO + CO
+  rate-constant: {A: 4.5e-11, b: 0.0, Ea: 0.0}
+- equation: H2CO + H <=> HCO + H2
+  rate-constant: {A: 2.28e-19, b: 2.65, Ea: 766.5}
+- equation: H2CO + OH <=> HCO + H2O
+  rate-constant: {A: 5.731102e-15, b: 1.18, Ea: -225.0}
+- equation: O + H2CO <=> OH + HCO
+  rate-constant: {A: 6.855106e-13, b: 0.57, Ea: 1390.0}
+- equation: C + H (+ M) <=> CH (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 5.0e-34, b: 0.0, Ea: -7100.0}
+  high-P-rate-constant: {A: 1.0e-11, b: 0.0, Ea: 0.0}
+- equation: O + CH <=> OH + C
+  rate-constant: {A: 9.98816e-13, b: 0.5, Ea: 4000.0}
+- equation: O + CH <=> CO + H
+  rate-constant: {A: 6.6e-11, b: 0.0, Ea: 0.0}
+- equation: CH + O2 <=> CO + OH
+  rate-constant: {A: 8.3e-11, b: 0.0, Ea: 0.0}
+- equation: CH + CO2 <=> CO + HCO
+  rate-constant: {A: 5.9e-12, b: 0.0, Ea: 350.0}
+- equation: CH + H <=> H2 + C
+  rate-constant: {A: 1.3e-10, b: 0.0, Ea: 806.0}
+- equation: H2 + C (+ M) <=> CH2 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 7.0e-32, b: 0.0, Ea: 0.0}
+  high-P-rate-constant: {A: 2.1e-11, b: 0.0, Ea: 0.0}
+- equation: CH + H (+ M) <=> CH2 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 4.105781e-34, b: 0.22, Ea: -6000.0}
+  high-P-rate-constant: {A: 1.0e-10, b: 0.0, Ea: 0.0}
+- equation: CH2 + H <=> CH + H2
+  rate-constant: {A: 4.0e-10, b: 0.0, Ea: 385.0}
+- equation: OH + CH2 <=> H2CO + H
+  rate-constant: {A: 4.811648e-11, b: 0.12, Ea: -81.4}
+- equation: OH + CH2 <=> H2O + CH
+  rate-constant: {A: 1.407678e-18, b: 2.02, Ea: 3420.0}
+- equation: CH2 + O <=> HCO + H
+  rate-constant: {A: 1.2e-10, b: 0.0, Ea: 0.0}
+- equation: O + CH2 <=> CO + H2
+  rate-constant: {A: 8.0e-11, b: 0.0, Ea: 0.0}
+- equation: O2 + CH2 <=> H2CO + O
+  rate-constant: {A: 4.1e-11, b: 0.0, Ea: 750.0}
+- equation: CH + H2 (+ M) <=> CH3 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 3.387566e-25, b: -2.3, Ea: 0.0}
+  high-P-rate-constant: {A: 8.500839e-11, b: 0.15, Ea: 0.0}
+- equation: CH2 + H (+ M) <=> CH3 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.8e-24, b: -2.0, Ea: 0.0}
+  high-P-rate-constant: {A: 1.8e-05, b: -2.0, Ea: 0.0}
+- equation: H2 + CH2 <=> CH3 + H
+  rate-constant: {A: 1.0e-11, b: 0.0, Ea: 5300.0}
+- equation: CH3 + O <=> H2CO + H
+  rate-constant: {A: 9.0e-11, b: 0.0, Ea: 0.0}
+- equation: CH3 + O <=> HCO + H2
+  rate-constant: {A: 6.0e-11, b: 0.0, Ea: 0.0}
+- equation: CH3 + OH <=> H2COH + H
+  rate-constant: {A: 1.066667e-14, b: 1.0, Ea: 1610.0}
+- equation: CH2 + HCO <=> CH3 + CO
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 0.0}
+- equation: CH2 + CH2 <=> CH + CH3
+  rate-constant: {A: 4.0e-10, b: 0.0, Ea: 5000.0}
+- equation: CH3 + H (+ M) <=> CH4 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.55214e-23, b: -2.17, Ea: 0.0}
+  high-P-rate-constant: {A: 3.5e-10, b: 0.0, Ea: 0.0}
+- equation: CH3 + H2 <=> CH4 + H
+  rate-constant: {A: 1.140683e-20, b: 2.74, Ea: 4700.0}
+- equation: CH3 + OH <=> CH4 + O
+  rate-constant: {A: 1.078983e-21, b: 2.75, Ea: 1600.0}
+- equation: CH4 + OH <=> CH3 + H2O
+  rate-constant: {A: 2.578403e-17, b: 1.83, Ea: 1396.0}
+- equation: CH3 + HCO <=> CH4 + CO
+  rate-constant: {A: 4.4e-11, b: 0.0, Ea: 0.0}
+- equation: CH3 + H2CO <=> CH4 + HCO
+  rate-constant: {A: 6.178208e-26, b: 4.4, Ea: 2450.0}
+- equation: CH2 + CH4 <=> CH3 + CH3
+  rate-constant: {A: 7.1e-12, b: 0.0, Ea: 5052.0}
+- equation: H + H2CO (+ M) <=> CH3O (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.22e-23, b: -3.0, Ea: 2900}
+  high-P-rate-constant: {A: 6560.0, b: -5, Ea: 4000}
+- equation: H + CH3O <=> CH3 + OH
+  rate-constant: {A: 7.7e-11, b: 0.0, Ea: 375.0}
+- equation: H + CH3O <=> H2CO + H2
+  rate-constant: {A: 3.3e-11, b: 0.0, Ea: 375.0}
+- equation: CO + CH3O <=> CH3 + CO2
+  rate-constant: {A: 1.33e-11, b: 0.0, Ea: 5940.0}
+- equation: H + H2CO (+ M) <=> H2COH (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 2.82e-29, b: -1.2, Ea: 2900}
+  high-P-rate-constant: {A: 3.0e-12, b: 0.0, Ea: 3500}
+- equation: H + H2COH <=> H2CO + H2
+  rate-constant: {A: 1.66e-11, b: 0.0, Ea: 0.0}
+- equation: HCO + H2COH <=> H2CO + H2CO
+  rate-constant: {A: 1.0e-10, b: 0.0, Ea: 0.0}
+- equation: H + CH3O (+ M) <=> CH3OH (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 4.070154e-30, b: 0.24, Ea: -26.5}
+  high-P-rate-constant: {A: 4.070154e-11, b: 0.24, Ea: -26.5}
+- equation: H + H2COH (+ M) <=> CH3OH (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 2.308411e-29, b: 0.04, Ea: 0.0}
+  high-P-rate-constant: {A: 2.308411e-10, b: 0.04, Ea: 0.0}
+- equation: O + H2COH <=> H2CO + OH
+  rate-constant: {A: 7.0e-11, b: 0.0, Ea: 0.0}
+- equation: OH + H2COH <=> H2CO + H2O
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 0.0}
+- equation: O + CH3O <=> H2CO + OH
+  rate-constant: {A: 2.5e-11, b: 0.0, Ea: 0.0}
+- equation: OH + CH3O <=> H2CO + H2O
+  rate-constant: {A: 5.773503e-22, b: 2.5, Ea: 950.0}
+- equation: H2CO + H2 (+ M) <=> CH3OH (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 2.3e-30, b: 0.0, Ea: 35100.0}
+  high-P-rate-constant: {A: 2.3e-11, b: 0.0, Ea: 35000.0}
+- equation: CH3 + OH (+ M) <=> CH3OH (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 0.0004619307, b: -8.2, Ea: 0.0}
+  high-P-rate-constant: {A: 1.0e-10, b: 0.0, Ea: 0.0}
+- equation: H + CH3OH <=> CH3O + H2
+  rate-constant: {A: 8.973108e-18, b: 2.15, Ea: 5650.0}
+- equation: H + CH3OH <=> H2COH + H2
+  rate-constant: {A: 8.4e-11, b: 0.0, Ea: 3600.0}
+- equation: CH3OH + OH <=> H2O + CH3O
+  rate-constant: {A: 5.144444e-18, b: 2.0, Ea: 757.0}
+- equation: CH3OH + OH <=> H2O + H2COH
+  rate-constant: {A: 2.366667e-18, b: 2.0, Ea: -423.0}
+- equation: CH3OH + CH3 <=> CH4 + CH3O
+  rate-constant: {A: 5.968035e-28, b: 4.7, Ea: 2910.0}
+- equation: CH3 + CH3OH <=> H2COH + CH4
+  rate-constant: {A: 9.827422e-28, b: 4.9, Ea: 3380.0}
+- equation: CH3O + HCO <=> CH3OH + CO
+  rate-constant: {A: 1.5e-10, b: 0.0, Ea: 0.0}
+- equation: HCO + H2COH <=> CH3OH + CO
+  rate-constant: {A: 6.67e-11, b: 0.0, Ea: 0.0}
+- equation: CH3O + CH3O <=> CH3OH + H2CO
+  rate-constant: {A: 1.0e-10, b: 0.0, Ea: 0.0}
+- equation: O + C2 <=> CO + C
+  rate-constant: {A: 2.886751e-12, b: 0.5, Ea: 0.0}
+- equation: CH + C <=> C2 + H
+  rate-constant: {A: 9.641749e-13, b: 0.5, Ea: 0.0}
+- equation: C2 + H2 <=> C2H + H
+  rate-constant: {A: 1.1e-10, b: 0.0, Ea: 4000.0}
+- equation: C2 + CH4 <=> C2H + CH3
+  rate-constant: {A: 5.05e-11, b: 0.0, Ea: 4000.0}
+- equation: O + C2H <=> CO + CH
+  rate-constant: {A: 1.67e-11, b: 0.0, Ea: 0.0}
+- equation: C2H + O2 <=> HCO + CO
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 0.0}
+- equation: C2H + H (+ M) <=> C2H2 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.725717e-24, b: -1.8, Ea: 0.0}
+  high-P-rate-constant: {A: 3.0e-10, b: 0.0, Ea: 0.0}
+- equation: CH2 + CH2 <=> C2H2 + H2
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 400.0}
+- equation: C2H + H2 <=> C2H2 + H
+  rate-constant: {A: 7.286495e-18, b: 2.22, Ea: 461.0}
+- equation: C2H + CH4 <=> C2H2 + CH3
+  rate-constant: {A: 1.278281e-18, b: 2.34, Ea: -380.0}
+- equation: C2H2 + O <=> CH2 + CO
+  rate-constant: {A: 2.0e-17, b: 2.0, Ea: 956.0}
+- equation: C2H + OH <=> CH2 + CO
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 0.0}
+- equation: C2H + H2O <=> OH + C2H2
+  rate-constant: {A: 2.050089e-19, b: 2.7, Ea: 1120.0}
+- equation: OH + C2H2 <=> CH3 + CO
+  rate-constant: {A: 7.777778e-28, b: 4.0, Ea: 10100.0}
+- equation: H + C2H2 (+ M) <=> C2H3 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 3.3e-30, b: 0.0, Ea: 740.0}
+  high-P-rate-constant: {A: 9.0e-12, b: 0.0, Ea: 1220.0}
+- equation: CH2 + CH2 <=> C2H3 + H
+  rate-constant: {A: 2.0e-10, b: 0.0, Ea: 400.0}
+- equation: H + C2H3 <=> H2 + C2H2
+  rate-constant: {A: 1.6e-10, b: 0.0, Ea: 0.0}
+- equation: C2H3 + OH <=> C2H2 + H2O
+  rate-constant: {A: 5.0e-11, b: 0.0, Ea: 0.0}
+- equation: O + C2H3 <=> OH + C2H2
+  rate-constant: {A: 1.597886e-12, b: 0.2, Ea: -215.0}
+- equation: O + C2H3 <=> CH3 + CO
+  rate-constant: {A: 5.0e-11, b: 0.0, Ea: 0.0}
+- equation: O2 + C2H3 <=> H2CO + HCO
+  rate-constant: {A: 9.0e-12, b: 0.0, Ea: 0.0}
+- equation: CH3 + C2H3 <=> C2H2 + CH4
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 0.0}
+- equation: CH2 + C2H3 <=> C2H2 + CH3
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 0.0}
+- equation: C2H + C2H3 <=> C2H2 + C2H2
+  rate-constant: {A: 1.6e-12, b: 0.0, Ea: 0.0}
+- equation: C2H3 + H (+ M) <=> C2H4 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 2.52533e-16, b: -4.5, Ea: 0.0}
+  high-P-rate-constant: {A: 1.0e-10, b: 0.0, Ea: 0.0}
+- equation: C2H2 + H2 (+ M) <=> C2H4 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 2.5e-33, b: 0.0, Ea: 14900.0}
+  high-P-rate-constant: {A: 5.0e-13, b: 0.0, Ea: 19600.0}
+- equation: CH2 + CH3 <=> C2H4 + H
+  rate-constant: {A: 7.0e-11, b: 0.0, Ea: 0.0}
+- equation: CH + CH4 <=> C2H4 + H
+  rate-constant: {A: 7.6e-11, b: 0.0, Ea: 0.0}
+- equation: C2H3 + H2 <=> C2H4 + H
+  rate-constant: {A: 5.79355e-14, b: 0.7, Ea: 3630.0}
+- equation: O + C2H4 <=> HCO + CH3
+  rate-constant: {A: 5.773001e-18, b: 2.08, Ea: 0.0}
+- equation: OH + C2H4 <=> C2H3 + H2O
+  rate-constant: {A: 2.138405e-25, b: 4.2, Ea: -433.0}
+- equation: OH + C2H4 <=> H2CO + CH3
+  rate-constant: {A: 2.593845e-25, b: 3.34, Ea: -1400.0}
+- equation: C2H3 + CH4 <=> CH3 + C2H4
+  rate-constant: {A: 2.086768e-17, b: 1.92, Ea: 2980.0}
+- equation: C2H3 + C2H3 <=> C2H2 + C2H4
+  rate-constant: {A: 2.4e-11, b: 0.0, Ea: 0.0}
+- equation: H + C2H4 (+ M) <=> C2H5 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 7.7e-30, b: 0.0, Ea: 381.0}
+  high-P-rate-constant: {A: 4.161791e-16, b: 1.75, Ea: 605.0}
+- equation: H + C2H5 <=> CH3 + CH3
+  rate-constant: {A: 6.0e-11, b: 0.0, Ea: 0.0}
+- equation: H + C2H5 <=> C2H4 + H2
+  rate-constant: {A: 3.0e-12, b: 0.0, Ea: 0.0}
+- equation: O + C2H5 <=> H2CO + CH3
+  rate-constant: {A: 1.1e-10, b: 0.0, Ea: 0.0}
+- equation: C2H5 + OH <=> C2H4 + H2O
+  rate-constant: {A: 4.0e-11, b: 0.0, Ea: 0.0}
+- equation: CH2 + C2H5 <=> C2H4 + CH3
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 0.0}
+- equation: CH3 + C2H5 <=> C2H4 + CH4
+  rate-constant: {A: 1.9e-12, b: 0.0, Ea: 0.0}
+- equation: CH3 + CH3 (+ M) <=> C2H6 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 3.4992e-07, b: -7.0, Ea: 1390.0}
+  high-P-rate-constant: {A: 6.0e-11, b: 0.0, Ea: 0.0}
+- equation: O + C2H6 <=> C2H5 + OH
+  rate-constant: {A: 1.655071e-15, b: 1.5, Ea: 2920.0}
+- equation: OH + C2H6 <=> C2H5 + H2O
+  rate-constant: {A: 1.222222e-17, b: 2.0, Ea: 435.0}
+- equation: H + C2H6 <=> H2 + C2H5
+  rate-constant: {A: 8.981004e-22, b: 3.5, Ea: 2600.0}
+- equation: CH3 + C2H6 <=> C2H5 + CH4
+  rate-constant: {A: 8.888889e-25, b: 4.0, Ea: 4170.0}
+- equation: C2H + C2H6 <=> C2H2 + C2H5
+  rate-constant: {A: 3.6e-11, b: 0.0, Ea: 0.0}
+- equation: C2H5 + C2H5 <=> C2H4 + C2H6
+  rate-constant: {A: 2.4e-12, b: 0.0, Ea: 0.0}
+- equation: C2H6 + C2H3 <=> C2H4 + C2H5
+  rate-constant: {A: 1.00367e-21, b: 3.3, Ea: 5280.0}
+- equation: H + C4H (+ M) <=> C4H2 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.506884e-24, b: -1.5, Ea: 0.0}
+  high-P-rate-constant: {A: 5.715768e-07, b: -1.5, Ea: 0.0}
+- equation: C2H + C2H2 <=> C4H2 + H
+  rate-constant: {A: 3.179808e-11, b: 0.24, Ea: -37.3}
+- equation: H2 + C4H <=> C4H2 + H
+  rate-constant: {A: 7.5e-11, b: 0.0, Ea: 1560.0}
+- equation: C4H2 + C2H <=> C4H + C2H2
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 5000.0}
+- equation: C2 + C2H2 <=> C4H + H
+  rate-constant: {A: 3.5e-10, b: 0.0, Ea: 0.0}
+- equation: C2H2 + OH (+ M) <=> C2H2OH (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 5.04e-25, b: -2.0, Ea: 0.0}
+  high-P-rate-constant: {A: 2.3e-12, b: 0.0, Ea: 230.0}
+- equation: C2H2OH + H <=> CH2CO + H2
+  rate-constant: {A: 2.0e-10, b: 0.0, Ea: 1500.0}
+- equation: C2H2OH + M <=> CH2CHO + M
+  type: three-body
+  rate-constant: {A: 1.0e-10, b: 0.0, Ea: 1500.0}
+- equation: CH2CHO + H <=> CH2CO + H2
+  rate-constant: {A: 2.0e-10, b: 0.0, Ea: 1500.0}
+- equation: CH2CHO + O <=> CH2CO + OH
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 0.0}
+- equation: CH2CHO + O <=> CH3 + CO2
+  rate-constant: {A: 8.0e-11, b: 0.0, Ea: 0.0}
+- equation: CH2CHO + OH <=> CH2CO + H2O
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 0.0}
+- equation: CH2CHO + H (+ M) <=> CH3CHO (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.0e-30, b: 0.0, Ea: 0.0}
+  high-P-rate-constant: {A: 1.0e-10, b: 0.0, Ea: 0.0}
+- equation: CH2CHO + M <=> CH3CO + M
+  type: three-body
+  rate-constant: {A: 1.0e-10, b: 0.0, Ea: 11500.0}
+- equation: C2H2 + OH <=> CH2CO + H
+  rate-constant: {A: 3.563891e-28, b: 4.5, Ea: -500.0}
+- equation: CH2CO + O <=> CH2 + CO2
+  rate-constant: {A: 3.8e-12, b: 0.0, Ea: 680.0}
+- equation: CH2CO + OH <=> H2COH + CO
+  rate-constant: {A: 7.2e-12, b: 0.0, Ea: 0.0}
+- equation: CH2CO + OH <=> CH3 + CO2
+  rate-constant: {A: 5.0e-12, b: 0.0, Ea: 0.0}
+- equation: CH2CO + H <=> CH3 + CO
+  rate-constant: {A: 1.279806e-15, b: 1.45, Ea: 1400.0}
+- equation: CH2CO + H (+ M) <=> CH2CHO (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 2.868908e-35, b: 1.43, Ea: 3050.0}
+  high-P-rate-constant: {A: 3.270555e-15, b: 1.43, Ea: 3050.0}
+- equation: CH2CO + H (+ M) <=> CH3CO (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.38e-30, b: 0.0, Ea: 1320.0}
+  high-P-rate-constant: {A: 2.7e-11, b: 0.0, Ea: 755.0}
+- equation: CH2CO + CH2 <=> CO + C2H4
+  rate-constant: {A: 2.549665e-20, b: 2.8, Ea: 3124.0}
+- equation: 1CH2 + CH2CO <=> CO + C2H4
+  rate-constant: {A: 2.0e-10, b: 0.0, Ea: 0.0}
+- equation: CH2CO + CH3 <=> CO + C2H5
+  rate-constant: {A: 4.0e-11, b: 0.0, Ea: 3000.0}
+- equation: C2H4 + OH (+ M) <=> C2H4OH (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 2.215179e-18, b: -4.45, Ea: 0.0}
+  high-P-rate-constant: {A: 5.0e-12, b: 0.0, Ea: -148.0}
+- equation: CH3 + H2CO (+ M) <=> C2H4OH (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.383749e-48, b: 4.98, Ea: 1890.0}
+  high-P-rate-constant: {A: 1.383749e-29, b: 4.98, Ea: 1890.0}
+- equation: C2H4OH + H <=> C2H3OH + H2
+  rate-constant: {A: 8.3e-11, b: 0.0, Ea: 0.0}
+- equation: C2H3OH + H <=> CH2CHO + H2
+  rate-constant: {A: 1.0e-10, b: 0.0, Ea: 2000.0}
+- equation: N + N (+ M) <=> N2 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.25e-32, b: 0.0, Ea: 0.0}
+  high-P-rate-constant: {A: 1.0e-11, b: 0.0, Ea: 0.0}
+- equation: N + O2 <=> NO + O
+  rate-constant: {A: 1.49e-14, b: 1.0, Ea: 3270.0}
+- equation: N + NO <=> N2 + O
+  rate-constant: {A: 3.1e-11, b: 0.0, Ea: 0.0}
+- equation: N + OH <=> NO + H
+  rate-constant: {A: 3.8e-11, b: 0.0, Ea: 85.0}
+- equation: N + CO2 (+ M) <=> NO + CO (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 0.0, b: 0.0, Ea: 0.0}
+  high-P-rate-constant: {A: 0.0, b: 0.0, Ea: 0.0}
+- equation: N + O (+ M) <=> NO (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 3.858312e-35, b: 0.26, Ea: 0.0}
+  high-P-rate-constant: {A: 3.858312e-13, b: 0.26, Ea: 0.0}
+- equation: C + NO <=> CO + N
+  rate-constant: {A: 4.7e-11, b: 0.0, Ea: 0.0}
+- equation: N + H (+ M) <=> NH (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 6.0e-33, b: 0.0, Ea: 0.0}
+  high-P-rate-constant: {A: 6.0e-13, b: 0.0, Ea: 0.0}
+- equation: O + NH <=> OH + N
+  rate-constant: {A: 1.2e-11, b: 0.0, Ea: 0.0}
+- equation: O + NH <=> NO + H
+  rate-constant: {A: 1.16e-10, b: 0.0, Ea: 0.0}
+- equation: H + NH <=> N + H2
+  rate-constant: {A: 3.16e-12, b: 0.0, Ea: 0.0}
+- equation: N + NH <=> N2 + H
+  rate-constant: {A: 1.063415e-12, b: 0.51, Ea: 9.63}
+- equation: NH + OH <=> H2O + N
+  rate-constant: {A: 3.302297e-15, b: 1.2, Ea: 0.0}
+- equation: NH + OH <=> NO + H2
+  rate-constant: {A: 3.32e-11, b: 0.0, Ea: 0.0}
+- equation: NH + NO <=> N2 + OH
+  rate-constant: {A: 1.0e-11, b: 0.0, Ea: 0.0}
+- equation: NH + O2 <=> NO + OH
+  rate-constant: {A: 7.442762e-16, b: 0.79, Ea: 600.0}
+- equation: CH + NO <=> NH + CO
+  rate-constant: {A: 2.5e-10, b: 0.0, Ea: 500.0}
+- equation: N + CH2 <=> NH + CH
+  rate-constant: {A: 1.0e-12, b: 0.0, Ea: 20400.0}
+- equation: NH + CH2 <=> N + CH3
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 0.0}
+- equation: NH + CH3 <=> N + CH4
+  rate-constant: {A: 1.0e-11, b: 0.0, Ea: 0.0}
+- equation: N + C2H5 <=> NH + C2H4
+  rate-constant: {A: 5.5e-11, b: 0.0, Ea: 0.0}
+- equation: NH + C2H3 <=> N + C2H4
+  rate-constant: {A: 1.0e-11, b: 0.0, Ea: 0.0}
+- equation: NH + C2H5 <=> N + C2H6
+  rate-constant: {A: 1.0e-11, b: 0.0, Ea: 0.0}
+- equation: NH + H (+ M) <=> NH2 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 6.0e-29, b: -1.0, Ea: 0.0}
+  high-P-rate-constant: {A: 6.0e-09, b: -1.0, Ea: 0.0}
+- equation: NH + NH <=> NH2 + N
+  rate-constant: {A: 9.710635e-22, b: 2.89, Ea: -1020.0}
+- equation: H + NH2 <=> NH + H2
+  rate-constant: {A: 1.05e-10, b: 0.0, Ea: 4450.0}
+- equation: O + NH2 <=> NH + OH
+  rate-constant: {A: 1.16e-11, b: 0.0, Ea: 0.0}
+- equation: O + NH2 <=> NO + H2
+  rate-constant: {A: 8.2e-11, b: 0.0, Ea: 0.0}
+- equation: OH + NH2 <=> NH + H2O
+  rate-constant: {A: 1.499186e-16, b: 1.5, Ea: -230.0}
+- equation: NH2 + NO <=> N2 + H2O
+  rate-constant: {A: 4.45583e-05, b: -2.37, Ea: 437.0}
+- equation: NH2 + C2H <=> NH + C2H2
+  rate-constant: {A: 4.0e-11, b: 0.0, Ea: 0.0}
+- equation: NH + C2H3 <=> NH2 + C2H2
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 0.0}
+- equation: NH + C2H5 <=> NH2 + C2H4
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 0.0}
+- equation: C2H6 + NH <=> C2H5 + NH2
+  rate-constant: {A: 1.16e-10, b: 0.0, Ea: 8420.0}
+- equation: NH2 + H (+ M) <=> NH3 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 3.0e-30, b: 0.0, Ea: 0.0}
+  high-P-rate-constant: {A: 2.7e-11, b: 0.0, Ea: 0.0}
+- equation: NH + H2 (+ M) <=> NH3 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.2e-34, b: 0.0, Ea: -720.0}
+  high-P-rate-constant: {A: 1.0e-12, b: 0.0, Ea: 0.0}
+- equation: H2 + NH2 <=> NH3 + H
+  rate-constant: {A: 2.67607e-21, b: 2.83, Ea: 3640.0}
+- equation: OH + NH2 <=> NH3 + O
+  rate-constant: {A: 3.202716e-14, b: 0.41, Ea: 250.0}
+- equation: OH + NH3 <=> NH2 + H2O
+  rate-constant: {A: 8.224846e-17, b: 1.6, Ea: 480.0}
+- equation: NH2 + HCO <=> NH3 + CO
+  rate-constant: {A: 5.0e-11, b: 0.0, Ea: 0.0}
+- equation: NH2 + CH4 <=> NH3 + CH3
+  rate-constant: {A: 2.392881e-21, b: 3.01, Ea: 5000.0}
+- equation: NH3 + C2H <=> NH2 + C2H2
+  rate-constant: {A: 3.834926e-09, b: -0.8, Ea: 0.0}
+- equation: NH2 + C2H3 <=> NH3 + C2H2
+  rate-constant: {A: 4.0e-11, b: 0.0, Ea: 0.0}
+- equation: NH2 + C2H4 <=> NH3 + C2H3
+  rate-constant: {A: 8.8e-12, b: 0.0, Ea: 5170.0}
+- equation: NH2 + C2H5 <=> NH3 + C2H4
+  rate-constant: {A: 4.15e-11, b: 0.0, Ea: 0.0}
+- equation: NH2 + C2H6 <=> NH3 + C2H5
+  rate-constant: {A: 1.61e-11, b: 0.0, Ea: 5560.0}
+- equation: N + CH <=> CN + H
+  rate-constant: {A: 2.1e-11, b: 0.0, Ea: 0.0}
+- equation: C + NH <=> CN + H
+  rate-constant: {A: 7.0e-11, b: 0.0, Ea: 0.0}
+- equation: CN + NO <=> N2 + CO
+  rate-constant: {A: 1.8e-10, b: 0.0, Ea: 4040.0}
+- equation: CN + O2 <=> CO + NO
+  rate-constant: {A: 3.6e-12, b: 0.0, Ea: -210.0}
+- equation: N + CN <=> N2 + C
+  rate-constant: {A: 1.0e-10, b: 0.0, Ea: 0.0}
+- equation: C + NO <=> CN + O
+  rate-constant: {A: 3.3e-11, b: 0.0, Ea: 0.0}
+- equation: O + CN <=> CO + N
+  rate-constant: {A: 1.7e-11, b: 0.0, Ea: 0.0}
+- equation: H + CN (+ M) <=> HCN (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 2.478275e-24, b: -2.2, Ea: 567.0}
+  high-P-rate-constant: {A: 2.944486e-09, b: -0.5, Ea: 0.0}
+- equation: H2 + CN <=> HCN + H
+  rate-constant: {A: 4.820603e-19, b: 2.45, Ea: 1130.0}
+- equation: N + HCN <=> N2 + CH
+  rate-constant: {A: 4.066671e-12, b: 0.23, Ea: 8765.0}
+- equation: N + CH2 <=> HCN + H
+  rate-constant: {A: 1.7e-11, b: 0.0, Ea: 0.0}
+- equation: N + CH3 <=> HCN + H2
+  rate-constant: {A: 4.3e-11, b: 0.0, Ea: 420.0}
+- equation: O + HCN <=> NH + CO
+  rate-constant: {A: 8.935035e-16, b: 1.21, Ea: 3820.0}
+- equation: OH + CN <=> HCN + O
+  rate-constant: {A: 1.807372e-19, b: 2.57, Ea: 2000.0}
+- equation: H2O + CN <=> HCN + OH
+  rate-constant: {A: 2.624673e-20, b: 2.54, Ea: 2660.0}
+- equation: HCN + OH <=> CO + NH2
+  rate-constant: {A: 1.07e-13, b: 0.0, Ea: 5890.0}
+- equation: CN + CH2 <=> CH + HCN
+  rate-constant: {A: 1.0e-11, b: 0.0, Ea: 1500.0}
+- equation: CN + CH3 <=> HCN + CH2
+  rate-constant: {A: 1.0e-11, b: 0.0, Ea: 1500.0}
+- equation: CN + CH4 <=> HCN + CH3
+  rate-constant: {A: 9.81474e-20, b: 2.64, Ea: -220.0}
+- equation: CH + NO <=> O + HCN
+  rate-constant: {A: 3.3e-12, b: 0.0, Ea: 0.0}
+- equation: N + C2H4 <=> HCN + CH3
+  rate-constant: {A: 3.32e-14, b: 0.0, Ea: 352.0}
+- equation: CN + C2H4 <=> HCN + C2H3
+  rate-constant: {A: 2.1e-10, b: 0.0, Ea: 0.0}
+- equation: CN + C2H6 <=> HCN + C2H5
+  rate-constant: {A: 1.966573e-19, b: 2.77, Ea: -900.0}
+- equation: NH3 + CN <=> NH2 + HCN
+  rate-constant: {A: 2.9e-11, b: 0.0, Ea: 0.0}
+- equation: HCN + OH (+ M) <=> HCNOH (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.35e-23, b: -3.0, Ea: 1700.0}
+  high-P-rate-constant: {A: 6.75e-05, b: -3.0, Ea: 1700.0}
+- equation: HCNOH + H <=> NH3 + CO
+  rate-constant: {A: 1.5e-10, b: 0.0, Ea: 14400.0}
+- equation: H + HCN (+ M) <=> H2CN (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 4.51477e-24, b: -2.73, Ea: 3860.0}
+  high-P-rate-constant: {A: 5.5e-11, b: 0.0, Ea: 2440.0}
+- equation: N + CH3 <=> H + H2CN
+  rate-constant: {A: 3.9e-10, b: 0.0, Ea: 420.0}
+- equation: N + C2H5 <=> H2CN + CH3
+  rate-constant: {A: 5.5e-11, b: 0.0, Ea: 0.0}
+- equation: H2CN + O <=> HCN + OH
+  rate-constant: {A: 8.3e-11, b: 0.0, Ea: 0.0}
+- equation: H2CN + H <=> HCN + H2
+  rate-constant: {A: 8.3e-11, b: 0.0, Ea: 0.0}
+- equation: H2CN + OH <=> HCN + H2O
+  rate-constant: {A: 7.7e-12, b: 0.0, Ea: 0.0}
+- equation: H2CN + CN <=> HCN + HCN
+  rate-constant: {A: 7.7e-12, b: 0.0, Ea: 0.0}
+- equation: H2CN + NH2 <=> HCN + NH3
+  rate-constant: {A: 7.7e-12, b: 0.0, Ea: 0.0}
+- equation: H2CN + CH3 <=> HCN + CH4
+  rate-constant: {A: 7.7e-12, b: 0.0, Ea: 0.0}
+- equation: H2CN + C2H <=> HCN + C2H2
+  rate-constant: {A: 7.7e-12, b: 0.0, Ea: 0.0}
+- equation: S + S (+ M) <=> S2 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 2.0e-33, b: 0.0, Ea: -206.0}
+  high-P-rate-constant: {A: 2.3e-14, b: 0.0, Ea: -415.0}
+- equation: S + S2 (+ M) <=> S3 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 9.9e-26, b: -2.0, Ea: 0.0}
+  high-P-rate-constant: {A: 5.0e-11, b: 0.0, Ea: 0.0}
+- equation: S + S3 <=> S2 + S2
+  rate-constant: {A: 4.0e-11, b: 0.0, Ea: 0.0}
+- equation: S + S3 (+ M) <=> S4 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 9.0e-26, b: -2.0, Ea: 0.0}
+  high-P-rate-constant: {A: 5.0e-11, b: 0.0, Ea: 0.0}
+- equation: S2 + S2 (+ M) <=> S4 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 9.0e-26, b: -2.0, Ea: 0.0}
+  high-P-rate-constant: {A: 3.0e-11, b: 0.0, Ea: 0.0}
+- equation: S + S4 <=> S2 + S3
+  rate-constant: {A: 4.0e-11, b: 0.0, Ea: 500.0}
+- equation: S4 + S4 (+ M) <=> S8 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 9.0e-26, b: -2.0, Ea: 0.0}
+  high-P-rate-constant: {A: 1.0e-11, b: 0.0, Ea: 0.0}
+- equation: S + H (+ M) <=> HS (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.0e-32, b: 0.0, Ea: 0.0}
+  high-P-rate-constant: {A: 1.0e-11, b: 0.0, Ea: 0.0}
+- equation: S + HS <=> S2 + H
+  rate-constant: {A: 1.0e-11, b: 0.0, Ea: 0.0}
+- equation: H + HS <=> S + H2
+  rate-constant: {A: 5.535239e-13, b: 0.7, Ea: 0.0}
+- equation: HS + HS <=> S2 + H2
+  rate-constant: {A: 1.3e-11, b: 0.0, Ea: 20000.0}
+- equation: H + S3 <=> HS + S2
+  rate-constant: {A: 5.0e-11, b: 0.0, Ea: 500.0}
+- equation: H + S4 <=> HS + S3
+  rate-constant: {A: 5.0e-11, b: 0.0, Ea: 500.0}
+- equation: O + HS <=> OH + S
+  rate-constant: {A: 3.787694e-13, b: 0.67, Ea: 956.0}
+- equation: HS + OH <=> H2O + S
+  rate-constant: {A: 4.0e-12, b: 0.0, Ea: 240.0}
+- equation: S + CH <=> HS + C
+  rate-constant: {A: 9.98816e-13, b: 0.5, Ea: 4000.0}
+- equation: S + NH <=> HS + N
+  rate-constant: {A: 9.98816e-13, b: 0.5, Ea: 4000.0}
+- equation: NH2 + HS <=> NH3 + S
+  rate-constant: {A: 5.0e-12, b: 0.0, Ea: 500.0}
+- equation: HS + CH2 <=> S + CH3
+  rate-constant: {A: 4.0e-12, b: 0.0, Ea: 500.0}
+- equation: HS + CH3 <=> S + CH4
+  rate-constant: {A: 4.0e-11, b: 0.0, Ea: 500.0}
+- equation: S + HCO <=> HS + CO
+  rate-constant: {A: 6.0e-11, b: 0.0, Ea: 0.0}
+- equation: H + HS (+ M) <=> H2S (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 2.446097e-25, b: -2.52, Ea: -488.0}
+  high-P-rate-constant: {A: 1.0e-10, b: 0.0, Ea: 0.0}
+- equation: S + H2 (+ M) <=> H2S (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 7.122926e-27, b: -1.9, Ea: 8140.0}
+  high-P-rate-constant: {A: 1.0e-11, b: 0.0, Ea: 0.0}
+- equation: H + H2S <=> HS + H2
+  rate-constant: {A: 5.726191e-17, b: 1.94, Ea: 455.0}
+- equation: HS + HS <=> H2S + S
+  rate-constant: {A: 2.716406e-12, b: 0.2, Ea: 0.0}
+- equation: O + H2S <=> HS + OH
+  rate-constant: {A: 9.2e-12, b: 0.0, Ea: 1800.0}
+- equation: OH + H2S <=> H2O + HS
+  rate-constant: {A: 6.1e-12, b: 0.0, Ea: 80.6}
+- equation: HS + HCO <=> H2S + CO
+  rate-constant: {A: 5.0e-11, b: 0.0, Ea: 0.0}
+- equation: CH2 + H2S <=> CH3 + HS
+  rate-constant: {A: 2.5e-11, b: 0.0, Ea: 746.0}
+- equation: HS + CH4 <=> CH3 + H2S
+  rate-constant: {A: 3.06e-12, b: 0.0, Ea: 8260.0}
+- equation: O + HS <=> SO + H
+  rate-constant: {A: 7.0e-11, b: 0.0, Ea: 0.0}
+- equation: S + OH <=> H + SO
+  rate-constant: {A: 6.6e-11, b: 0.0, Ea: 0.0}
+- equation: O + S2 <=> SO + S
+  rate-constant: {A: 1.1e-11, b: 0.0, Ea: 0.0}
+- equation: S + O2 <=> SO + O
+  rate-constant: {A: 3.21e-16, b: 1.35, Ea: -285.8}
+- equation: S3 + O <=> S2 + SO
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 500.0}
+- equation: S4 + O <=> S3 + SO
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 500.0}
+- equation: N + SO <=> NO + S
+  rate-constant: {A: 1.49e-14, b: 1.0, Ea: 3270.0}
+- equation: SO + O (+ M) <=> SO2 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.139185e-25, b: -2.17, Ea: 0.0}
+  high-P-rate-constant: {A: 5.3e-11, b: 0.0, Ea: 0.0}
+- equation: SO + SO <=> S + SO2
+  rate-constant: {A: 5.0e-13, b: 0.0, Ea: 1500.0}
+- equation: O2 + SO <=> SO2 + O
+  rate-constant: {A: 3.8e-12, b: 0.0, Ea: 3710.0}
+- equation: OH + SO <=> SO2 + H
+  rate-constant: {A: 1.899381e-07, b: -1.35, Ea: 0.0}
+- equation: H + SO (+ M) <=> HSO (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 7.431425e-34, b: 0.28, Ea: 0.0}
+  high-P-rate-constant: {A: 1.0e-11, b: 0.0, Ea: 0.0}
+- equation: H + HSO <=> HS + OH
+  rate-constant: {A: 7.0e-11, b: 0.0, Ea: 500.0}
+- equation: H + HSO <=> H2 + SO
+  rate-constant: {A: 6.0e-11, b: 0.0, Ea: 1000.0}
+- equation: H + HSO <=> H2O + S
+  rate-constant: {A: 6.0e-11, b: 0.0, Ea: 3870.0}
+- equation: H2S + O <=> H + HSO
+  rate-constant: {A: 5.0e-11, b: 0.0, Ea: 3850.0}
+- equation: OH + HSO <=> H2O + SO
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 300.0}
+- equation: HS + HSO <=> H2S + SO
+  rate-constant: {A: 1.0e-11, b: 0.0, Ea: 500.0}
+- equation: O + HSO <=> OH + SO
+  rate-constant: {A: 1.0e-11, b: 0.0, Ea: 500.0}
+- equation: O + HSO <=> HS + O2
+  rate-constant: {A: 1.2e-10, b: 0.0, Ea: 500.0}
+- equation: S + HSO <=> HS + SO
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 500.0}
+- equation: SO + HCO <=> HSO + CO
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 0.0}
+- equation: S + CO (+ M) <=> OCS (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 9.295262e-33, b: -0.57, Ea: 0.0}
+  high-P-rate-constant: {A: 3.0e-14, b: 0.0, Ea: 0.0}
+- equation: O + OCS <=> CO + SO
+  rate-constant: {A: 7.83e-11, b: 0.0, Ea: 2620.0}
+- equation: HS + CO <=> OCS + H
+  rate-constant: {A: 4.15e-14, b: 0.0, Ea: 7661.0}
+- equation: OCS + S <=> CO + S2
+  rate-constant: {A: 6.497934e-20, b: 2.57, Ea: 1180.0}
+- equation: O + OCS <=> S + CO2
+  rate-constant: {A: 8.33e-11, b: 0.0, Ea: 5530.0}
+- equation: OCS + OH <=> CO2 + HS
+  rate-constant: {A: 1.1e-13, b: 0.0, Ea: 1200.0}
+- equation: S + HCO <=> OCS + H
+  rate-constant: {A: 6.0e-11, b: 0.0, Ea: 0.0}
+- equation: CO + S3 <=> S2 + OCS
+  rate-constant: {A: 1.0e-11, b: 0.0, Ea: 10000.0}
+- equation: S + CH <=> H + CS
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 0.0}
+- equation: C + HS <=> CS + H
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 0.0}
+- equation: N + CS <=> CN + S
+  rate-constant: {A: 2.193931e-12, b: 0.5, Ea: 1160.0}
+- equation: O + CS <=> CO + S
+  rate-constant: {A: 2.7e-10, b: 0.0, Ea: 760.0}
+- equation: C + SO <=> CS + O
+  rate-constant: {A: 5.0e-11, b: 0.0, Ea: 0.0}
+- equation: OH + CS <=> OCS + H
+  rate-constant: {A: 2.0e-13, b: 0.0, Ea: 0.0}
+- equation: CH2 + S <=> CS + H2
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 0.0}
+- equation: CS + S (+ M) <=> CS2 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 7.295398e-18, b: -4.5, Ea: 0.0}
+  high-P-rate-constant: {A: 5.0e-11, b: 0.0, Ea: 0.0}
+- equation: CS2 + S <=> CS + S2
+  rate-constant: {A: 2.8e-10, b: 0.0, Ea: 5920.0}
+- equation: CS + HS <=> CS2 + H
+  rate-constant: {A: 1.924501e-17, b: 1.5, Ea: -250.0}
+- equation: CS2 + O <=> CS + SO
+  rate-constant: {A: 5.27e-11, b: 0.0, Ea: 822.0}
+- equation: CS2 + O <=> OCS + S
+  rate-constant: {A: 4.73e-12, b: 0.0, Ea: 822.0}
+- equation: CS2 + O <=> CO + S2
+  rate-constant: {A: 1.78e-12, b: 0.0, Ea: 822.0}
+- equation: H + CS (+ M) <=> HCS (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.5e-30, b: -1.0, Ea: 0.0}
+  high-P-rate-constant: {A: 1.5e-09, b: -1.0, Ea: 0.0}
+- equation: S + CH2 <=> HCS + H
+  rate-constant: {A: 5.0e-11, b: 0.0, Ea: 0.0}
+- equation: S + HCS <=> CS2 + H
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 0.0}
+- equation: S + HCS <=> CS + HS
+  rate-constant: {A: 1.0e-11, b: 0.0, Ea: 0.0}
+- equation: S2 + CH <=> HCS + S
+  rate-constant: {A: 4.0e-12, b: 0.0, Ea: 0.0}
+- equation: HCS + H <=> CS + H2
+  rate-constant: {A: 5.0e-11, b: 0.0, Ea: 0.0}
+- equation: HCS + CH3 <=> CS + CH4
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 0.0}
+- equation: HCS + C2H <=> CS + C2H2
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 0.0}
+- equation: HCS + OH <=> CS + H2O
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 0.0}
+- equation: 1CH2 + H2 <=> CH3 + H
+  rate-constant: {A: 1.05e-10, b: 0.0, Ea: 0.0}
+- equation: OH + CH3 <=> 1CH2 + H2O
+  rate-constant: {A: 1.2e-10, b: 0.0, Ea: 1400.0}
+- equation: 1CH2 + H2 <=> CH2 + H2
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 0.0}
+- equation: 1CH2 + CO <=> CH2 + CO
+  rate-constant: {A: 4.7e-11, b: 0.0, Ea: -60.0}
+- equation: 1CH2 + CO (+ M) <=> CH2CO (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.163381e-11, b: -7.2, Ea: 1550.0}
+  high-P-rate-constant: {A: 1163381000.0, b: -7.2, Ea: 1550.0}
+- equation: 1CH2 + CH4 <=> CH3 + CH3
+  rate-constant: {A: 3.6e-11, b: 0.0, Ea: 0.0}
+- equation: 1CH2 + NH3 <=> CH3 + NH2
+  rate-constant: {A: 3.6e-11, b: 0.0, Ea: 0.0}
+- equation: 1CH2 + H <=> CH + H2
+  rate-constant: {A: 5.0e-11, b: 0.0, Ea: 0.0}
+- equation: 1CH2 + H <=> CH2 + H
+  rate-constant: {A: 8.0e-12, b: 0.0, Ea: 0.0}
+- equation: 1CH2 + N2 <=> CH2 + N2
+  rate-constant: {A: 1.8e-11, b: 0.0, Ea: -110.0}
+- equation: 1CH2 + CO2 <=> CH2 + CO2
+  rate-constant: {A: 7.4e-11, b: 0.0, Ea: -120.0}
+- equation: 1CH2 + CO2 <=> H2CO + CO
+  rate-constant: {A: 3.9e-14, b: 0.0, Ea: 0.0}
+- equation: O1D + H2 <=> OH + H
+  rate-constant: {A: 1.5e-10, b: 0.0, Ea: 0.0}
+- equation: O1D + CH4 <=> CH3 + OH
+  rate-constant: {A: 1.2e-10, b: 0.0, Ea: 0.0}
+- equation: O1D + CH4 <=> H2COH + H
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 0.0}
+- equation: O1D + CO <=> O + CO
+  rate-constant: {A: 4.7e-11, b: 0.0, Ea: -60.0}
+- equation: O1D + H2O <=> OH + OH
+  rate-constant: {A: 2.2e-10, b: 0.0, Ea: 0.0}
+- equation: O1D + O2 <=> O + O2
+  rate-constant: {A: 3.2e-11, b: 0.0, Ea: -70.0}
+- equation: O1D + N2 <=> O + N2
+  rate-constant: {A: 1.8e-11, b: 0.0, Ea: -110.0}
+- equation: O1D + CO (+ M) <=> CO2 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 0.0, b: 0.0, Ea: 0.0}
+  high-P-rate-constant: {A: 0.0, b: 0.0, Ea: 0.0}
+- equation: O1D + CO2 <=> CO2 + O
+  rate-constant: {A: 7.4e-11, b: 0.0, Ea: -120.0}
+- equation: CO + CH (+ M) <=> HCCO (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 2.136878e-25, b: -1.9, Ea: 0.0}
+  high-P-rate-constant: {A: 1.664552e-09, b: -0.4, Ea: 0.0}
+- equation: C2H2 + O <=> H + HCCO
+  rate-constant: {A: 1.333333e-17, b: 2.0, Ea: 956.0}
+- equation: H + HCCO <=> CH2 + CO
+  rate-constant: {A: 1.7e-10, b: 0.0, Ea: 0.0}
+- equation: H2 + HCCO <=> CH2CO + H
+  rate-constant: {A: 2.2e-11, b: 0.0, Ea: 2000.0}
+- equation: O + HCCO <=> CH + CO2
+  rate-constant: {A: 4.9e-11, b: 0.0, Ea: 561.0}
+- equation: O + HCCO <=> HCO + CO
+  rate-constant: {A: 1.6e-10, b: 0.0, Ea: 0.0}
+- equation: CH3 + HCCO <=> C2H4 + CO
+  rate-constant: {A: 3.3e-12, b: 0.0, Ea: 0.0}
+- equation: C2H + O2 <=> O + HCCO
+  rate-constant: {A: 1.0e-12, b: 0.0, Ea: 0.0}
+- equation: NO + HCCO <=> HCN + CO2
+  rate-constant: {A: 6.199253e-10, b: -0.75, Ea: -90.2}
+- equation: O + HCN <=> H + NCO
+  rate-constant: {A: 3.265636e-16, b: 1.47, Ea: 3780.0}
+- equation: O + NCO <=> CO + NO
+  rate-constant: {A: 7.5e-11, b: 0.0, Ea: 0.0}
+- equation: CN + OH <=> H + NCO
+  rate-constant: {A: 7.0e-11, b: 0.0, Ea: 0.0}
+- equation: CN + O2 <=> O + NCO
+  rate-constant: {A: 1.2e-11, b: 0.0, Ea: -210.0}
+- equation: H + NCO <=> CO + NH
+  rate-constant: {A: 2.2e-11, b: 0.0, Ea: 0.0}
+- equation: N + NCO <=> N2 + CO
+  rate-constant: {A: 3.3e-11, b: 0.0, Ea: 0.0}
+- equation: OH + NCO <=> NO + HCO
+  rate-constant: {A: 1.8e-11, b: 0.0, Ea: 5700.0}
+- equation: CH + NO <=> H + NCO
+  rate-constant: {A: 4.4e-11, b: 0.0, Ea: 0.0}
+- equation: NH + CO (+ M) <=> HNCO (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 3.0e-33, b: 0.0, Ea: 3500.0}
+  high-P-rate-constant: {A: 3.0e-14, b: 0.0, Ea: 3500.0}
+- equation: OH + HCN <=> H + HNCO
+  rate-constant: {A: 8.993633e-30, b: 4.71, Ea: -248.0}
+- equation: H2 + NCO <=> H + HNCO
+  rate-constant: {A: 2.062295e-18, b: 2.12, Ea: 5110.0}
+- equation: OH + NCO <=> O + HNCO
+  rate-constant: {A: 3.768912e-20, b: 2.51, Ea: 2975.0}
+- equation: OH + HNCO <=> H2O + NCO
+  rate-constant: {A: 1.047778e-18, b: 2.0, Ea: 1290.0}
+- equation: H + HNCO <=> NH2 + CO
+  rate-constant: {A: 3.690159e-17, b: 1.7, Ea: 1950.0}
+- equation: H + HNCO (+ M) <=> HCNOH (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 9.0e-27, b: -2.0, Ea: 4810.0}
+  high-P-rate-constant: {A: 1.0e-12, b: 0.0, Ea: 4810.0}
+- equation: H + HCNOH <=> H2 + HNCO
+  rate-constant: {A: 1.5e-10, b: 0.0, Ea: 10800.0}
+- equation: H + HNCO (+ M) <=> NH2CO (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 7.122926e-24, b: -1.9, Ea: 1400.0}
+  high-P-rate-constant: {A: 0.0007122926, b: -1.9, Ea: 1400.0}
+- equation: NH2 + CO (+ M) <=> NH2CO (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.0e-31, b: 0.0, Ea: 5000.0}
+  high-P-rate-constant: {A: 1.0e-12, b: 0.0, Ea: 5000.0}
+- equation: HCNOH + M <=> NH2CO + M
+  type: three-body
+  rate-constant: {A: 1.0e-11, b: 0.0, Ea: 10800.0}
+- equation: NH2CO + H <=> H2 + HNCO
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 4000.0}
+- equation: NH2CO + H <=> NH3 + CO
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 4000.0}
+- equation: NH2CO + O <=> OH + HNCO
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 4000.0}
+- equation: NH2CO + O <=> NH2 + CO2
+  rate-constant: {A: 1.0e-11, b: 0.0, Ea: 4000.0}
+- equation: H + N2 (+ M) <=> NNH (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 9.191661e-32, b: -0.6, Ea: 7820.0}
+  high-P-rate-constant: {A: 9.191661e-09, b: -0.6, Ea: 7820.0}
+- equation: NNH + H <=> N2 + H2
+  rate-constant: {A: 1.67e-10, b: 0.0, Ea: 0.0}
+- equation: NH2 + N <=> NNH + H
+  rate-constant: {A: 1.2e-10, b: 0.0, Ea: 0.0}
+- equation: NNH + O <=> NH + NO
+  rate-constant: {A: 2.6e-11, b: 0.0, Ea: 0.0}
+- equation: NNH + O <=> N2 + OH
+  rate-constant: {A: 1.6e-11, b: 0.0, Ea: 0.0}
+- equation: NNH + H (+ M) <=> N2H2 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 2.7e-26, b: -2.0, Ea: 500.0}
+  high-P-rate-constant: {A: 2.7e-06, b: -2.0, Ea: 500.0}
+- equation: H + N2H2 <=> NNH + H2
+  rate-constant: {A: 1.384425e-19, b: 2.63, Ea: -115.0}
+- equation: OH + N2H2 <=> NNH + H2O
+  rate-constant: {A: 9.607745e-23, b: 3.4, Ea: -686.0}
+- equation: NH + NH2 <=> N2H2 + H
+  rate-constant: {A: 2.494153e-09, b: -0.5, Ea: 0.0}
+- equation: NH2 + NH2 <=> N2H2 + H2
+  rate-constant: {A: 1.3e-12, b: 0.0, Ea: 0.0}
+- equation: N + NH3 <=> N2H2 + H
+  rate-constant: {A: 7.42e-12, b: 0.0, Ea: 4830.0}
+- equation: H + O2 (+ M) <=> HO2 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.581907e-27, b: -1.8, Ea: 0.0}
+  high-P-rate-constant: {A: 7.5e-11, b: 0.0, Ea: 0.0}
+- equation: H + HO2 <=> H2 + O2
+  rate-constant: {A: 5.6e-12, b: 0.0, Ea: 0.0}
+- equation: H + HO2 <=> H2O + O
+  rate-constant: {A: 2.4e-12, b: 0.0, Ea: 0.0}
+- equation: H + HO2 <=> OH + OH
+  rate-constant: {A: 7.2e-11, b: 0.0, Ea: 0.0}
+- equation: OH + HO2 <=> H2O + O2
+  rate-constant: {A: 4.8e-11, b: 0.0, Ea: -250.0}
+- equation: HO2 + O <=> OH + O2
+  rate-constant: {A: 2.7e-11, b: 0.0, Ea: -240.0}
+- equation: HCO + O2 <=> HO2 + CO
+  rate-constant: {A: 5.2e-12, b: 0.0, Ea: 0.0}
+- equation: HS + HO2 <=> H2S + O2
+  rate-constant: {A: 1.0e-11, b: 0.0, Ea: 0.0}
+- equation: S + HO2 <=> HS + O2
+  rate-constant: {A: 5.0e-12, b: 0.0, Ea: 0.0}
+- equation: S + HO2 <=> SO + OH
+  rate-constant: {A: 5.0e-12, b: 0.0, Ea: 0.0}
+- equation: SO + HO2 <=> HSO + O2
+  rate-constant: {A: 1.0e-11, b: 0.0, Ea: 0.0}
+- equation: H2S + HO2 (+ M) <=> H2O + HSO (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 0.0, b: 0.0, Ea: 0.0}
+  high-P-rate-constant: {A: 0.0, b: 0.0, Ea: 0.0}
+- equation: HO2 + C2H <=> O2 + C2H2
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 0.0}
+- equation: HO2 + CO <=> OH + CO2
+  rate-constant: {A: 2.5e-10, b: 0.0, Ea: 11900.0}
+- equation: CH3O + O2 <=> H2CO + HO2
+  rate-constant: {A: 7.2e-14, b: 0.0, Ea: 1080.0}
+- equation: C2H3 + O2 <=> C2H2 + HO2
+  rate-constant: {A: 8.724021e-09, b: -1.26, Ea: 1660.0}
+- equation: OH + OH (+ M) <=> H2O2 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 6.615247e-29, b: -0.8, Ea: 0.0}
+  high-P-rate-constant: {A: 2.6e-11, b: 0.0, Ea: 0.0}
+- equation: HO2 + HO2 <=> H2O2 + O2
+  rate-constant: {A: 3.19e-19, b: 2.01, Ea: -1274.3}
+- equation: H2CO + HO2 <=> HCO + H2O2
+  rate-constant: {A: 6.735753e-20, b: 2.5, Ea: 5140.0}
+- equation: H2O2 + H <=> H2 + HO2
+  rate-constant: {A: 2.8e-12, b: 0.0, Ea: 1890.0}
+- equation: H2O2 + H <=> H2O + OH
+  rate-constant: {A: 1.7e-11, b: 0.0, Ea: 1800.0}
+- equation: H2O2 + OH <=> HO2 + H2O
+  rate-constant: {A: 2.9e-12, b: 0.0, Ea: 160.0}
+- equation: H2O2 + O <=> OH + HO2
+  rate-constant: {A: 1.4e-12, b: 0.0, Ea: 2000.0}
+- equation: H2O2 + CH3 <=> CH4 + HO2
+  rate-constant: {A: 2.0e-14, b: 0.0, Ea: -300.0}
+- equation: O + O2 (+ M) <=> O3 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 2.989029e-28, b: -2.3, Ea: 0.0}
+  high-P-rate-constant: {A: 2.8e-11, b: 0.0, Ea: 0.0}
+- equation: O + O3 <=> O2 + O2
+  rate-constant: {A: 8.0e-12, b: 0.0, Ea: 2060.0}
+- equation: H + O3 <=> OH + O2
+  rate-constant: {A: 1.4e-10, b: 0.0, Ea: 470.0}
+- equation: OH + O3 <=> HO2 + O2
+  rate-constant: {A: 1.6e-12, b: 0.0, Ea: 940.0}
+- equation: CH3 + O3 <=> H2CO + HO2
+  rate-constant: {A: 5.1e-12, b: 0.0, Ea: 210.0}
+- equation: O1D + O3 <=> O2 + O2
+  rate-constant: {A: 1.2e-10, b: 0.0, Ea: 0.0}
+- equation: S + O3 <=> SO + O2
+  rate-constant: {A: 1.2e-11, b: 0.0, Ea: 0.0}
+- equation: SO + O3 <=> SO2 + O2
+  rate-constant: {A: 4.5e-12, b: 0.0, Ea: 1170.0}
+- equation: HS + O3 <=> HSO + O2
+  rate-constant: {A: 9.5e-12, b: 0.0, Ea: 280.0}
+- equation: CS + O3 <=> OCS + O2
+  rate-constant: {A: 3.0e-16, b: 0.0, Ea: 0.0}
+- equation: H + NO (+ M) <=> HNO (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 9.493211e-29, b: -1.17, Ea: 210.0}
+  high-P-rate-constant: {A: 2.349956e-09, b: -0.4, Ea: 0.0}
+- equation: HCO + NO <=> HNO + CO
+  rate-constant: {A: 1.3e-11, b: 0.0, Ea: 0.0}
+- equation: NH + OH <=> HNO + H
+  rate-constant: {A: 3.3e-11, b: 0.0, Ea: 0.0}
+- equation: NH + O2 <=> HNO + O
+  rate-constant: {A: 7.555556e-19, b: 2.0, Ea: 3270.0}
+- equation: NH2 + O <=> HNO + H
+  rate-constant: {A: 7.5e-11, b: 0.0, Ea: 0.0}
+- equation: NH2 + O2 <=> HNO + OH
+  rate-constant: {A: 1.7e-11, b: 0.0, Ea: 13200.0}
+- equation: CH3O + NO <=> HNO + H2CO
+  rate-constant: {A: 2.167928e-10, b: -0.7, Ea: 0.0}
+- equation: H + HNO <=> H2 + NO
+  rate-constant: {A: 1.126464e-13, b: 0.94, Ea: 250.0}
+- equation: O + HNO <=> OH + NO
+  rate-constant: {A: 3.8e-11, b: 0.0, Ea: 0.0}
+- equation: OH + HNO <=> H2O + NO
+  rate-constant: {A: 1.917463e-15, b: 1.2, Ea: 168.0}
+- equation: H2 + HNO <=> H2O + NH
+  rate-constant: {A: 1.66e-10, b: 0.0, Ea: 8060.0}
+- equation: CH3 + HNO <=> CH4 + NO
+  rate-constant: {A: 2.42415e-13, b: 0.76, Ea: 176.0}
+- equation: CH3O + HNO (+ M) <=> CH3OH + NO (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 0.0, b: 0.0, Ea: 0.0}
+  high-P-rate-constant: {A: 0.0, b: 0.0, Ea: 0.0}
+- equation: CN + HNO <=> HCN + NO
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 0.0}
+- equation: CO + HNO <=> NH + CO2
+  rate-constant: {A: 3.3e-12, b: 0.0, Ea: 6190.0}
+- equation: NH2 + HNO <=> NH3 + NO
+  rate-constant: {A: 5.959444e-17, b: 1.63, Ea: -630.0}
+- equation: O1D + N2 (+ M) <=> N2O (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 2.8e-36, b: 0.0, Ea: 0.0}
+  high-P-rate-constant: {A: 3.4e-16, b: 0.0, Ea: 0.0}
+- equation: NO + HNO <=> N2O + OH
+  rate-constant: {A: 1.879598e-28, b: 4.33, Ea: 12600.0}
+- equation: HNO + HNO <=> N2O + H2O
+  rate-constant: {A: 5.185185e-27, b: 4.0, Ea: 600.0}
+- equation: NH + NO <=> N2O + H
+  rate-constant: {A: 4.0e-11, b: 0.0, Ea: 0.0}
+- equation: NNH + O <=> N2O + H
+  rate-constant: {A: 9.0e-11, b: 0.0, Ea: 0.0}
+- equation: NO + NCO <=> N2O + CO
+  rate-constant: {A: 1.851136e-08, b: -1.03, Ea: 420.0}
+- equation: CN + NO2 <=> N2O + CO
+  rate-constant: {A: 7.1e-12, b: 0.0, Ea: 0.0}
+- equation: H + N2O <=> N2 + OH
+  rate-constant: {A: 1.6e-10, b: 0.0, Ea: 7600.0}
+- equation: O + N2O <=> NO + NO
+  rate-constant: {A: 1.5e-10, b: 0.0, Ea: 14000.0}
+- equation: O + N2O <=> N2 + O2
+  rate-constant: {A: 6.0e-12, b: 0.0, Ea: 8000.0}
+- equation: OH + N2O <=> HO2 + N2
+  rate-constant: {A: 2.032299e-26, b: 4.72, Ea: 18400.0}
+- equation: O1D + N2O <=> N2 + O2
+  rate-constant: {A: 4.9e-11, b: 0.0, Ea: 0.0}
+- equation: O1D + N2O <=> NO + NO
+  rate-constant: {A: 6.7e-11, b: 0.0, Ea: 0.0}
+- equation: NO + O (+ M) <=> NO2 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 4.676537e-28, b: -1.5, Ea: 0.0}
+  high-P-rate-constant: {A: 3.0e-11, b: 0.0, Ea: 0.0}
+- equation: NO + O3 <=> NO2 + O2
+  rate-constant: {A: 1.4e-12, b: 0.0, Ea: 1310.0}
+- equation: NO + HO2 <=> NO2 + OH
+  rate-constant: {A: 3.6e-12, b: 0.0, Ea: -270.0}
+- equation: NO2 + O <=> NO + O2
+  rate-constant: {A: 5.5e-12, b: 0.0, Ea: -188.0}
+- equation: NO2 + H <=> NO + OH
+  rate-constant: {A: 1.5e-10, b: 0.0, Ea: 0.0}
+- equation: N2 + O (+ M) <=> N2O (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 0.0, b: 0.0, Ea: 3000.0}
+  high-P-rate-constant: {A: 0.0, b: 0.0, Ea: 3000.0}
+- equation: NO2 + HCO <=> CO2 + HNO
+  rate-constant: {A: 1.398436e-08, b: -0.75, Ea: 971.0}
+- equation: NO2 + N <=> N2O + O
+  rate-constant: {A: 5.8e-12, b: 0.0, Ea: -221.0}
+- equation: NO2 + N <=> NO + NO
+  rate-constant: {A: 4.5e-12, b: 0.0, Ea: -221.0}
+- equation: NO2 + N <=> N2 + O2
+  rate-constant: {A: 1.5e-12, b: 0.0, Ea: -221.0}
+- equation: NO2 + HS <=> HSO + NO
+  rate-constant: {A: 2.9e-11, b: 0.0, Ea: -240.0}
+- equation: NO2 + SO <=> SO2 + NO
+  rate-constant: {A: 1.4e-11, b: 0.0, Ea: 0.0}
+- equation: NO2 + CH3 <=> CH3O + NO
+  rate-constant: {A: 2.66e-11, b: 0.0, Ea: 0.0}
+- equation: NO2 + CN <=> NO + NCO
+  rate-constant: {A: 8.0e-11, b: 0.0, Ea: -186.0}
+- equation: NO2 + CN <=> CO2 + N2
+  rate-constant: {A: 5.0e-12, b: 0.0, Ea: 0.0}
+- equation: NO2 + NCO <=> N2O + CO2
+  rate-constant: {A: 1.6e-11, b: 0.0, Ea: 0.0}
+- equation: NO2 + NH2 <=> N2O + H2O
+  rate-constant: {A: 2.583168e-08, b: -1.44, Ea: 135.0}
+- equation: NO + OH (+ M) <=> HNO2 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.930249e-24, b: -2.6, Ea: 0.0}
+  high-P-rate-constant: {A: 6.36817e-11, b: -0.1, Ea: 0.0}
+- equation: NO2 + HNO <=> HNO2 + NO
+  rate-constant: {A: 1.0e-12, b: 0.0, Ea: 1000.0}
+- equation: NO2 + H2CO <=> HNO2 + HCO
+  rate-constant: {A: 1.27896e-21, b: 2.77, Ea: 6910.0}
+- equation: HNO2 + H <=> H2 + NO2
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 3700.0}
+- equation: HNO2 + O <=> OH + NO2
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 3000.0}
+- equation: HNO2 + OH <=> H2O + NO2
+  rate-constant: {A: 6.0e-12, b: 0.0, Ea: 0.0}
+- equation: NO2 + OH (+ M) <=> HNO3 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 3.968487e-23, b: -2.9, Ea: 0.0}
+  high-P-rate-constant: {A: 2.297915e-09, b: -0.6, Ea: 0.0}
+- equation: HNO3 + H <=> NO2 + H2O
+  rate-constant: {A: 9.917429e-23, b: 3.29, Ea: 3160.0}
+- equation: HNO3 + OH <=> H2O + NO3
+  rate-constant: {A: 1.5e-13, b: 0.0, Ea: 0.0}
+- equation: HNO3 + H <=> H2 + NO3
+  rate-constant: {A: 9.08223e-16, b: 1.53, Ea: 8250.0}
+- equation: NO2 + O (+ M) <=> NO3 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 6.754998e-28, b: -1.5, Ea: 0.0}
+  high-P-rate-constant: {A: 2.3e-11, b: 0.0, Ea: 0.0}
+- equation: NO2 + O3 <=> NO3 + O2
+  rate-constant: {A: 1.4e-13, b: 0.0, Ea: 2470.0}
+- equation: NO3 + H <=> NO2 + OH
+  rate-constant: {A: 9.4e-11, b: 0.0, Ea: 0.0}
+- equation: NO3 + O <=> NO2 + O2
+  rate-constant: {A: 1.0e-11, b: 0.0, Ea: 0.0}
+- equation: NO3 + OH <=> NO2 + HO2
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 0.0}
+- equation: NO3 + HO2 <=> HNO3 + O2
+  rate-constant: {A: 1.9e-12, b: 0.0, Ea: 0.0}
+- equation: NO3 + NO <=> NO2 + NO2
+  rate-constant: {A: 1.8e-11, b: 0.0, Ea: -110.0}
+- equation: SO2 + O (+ M) <=> SO3 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 4.0e-32, b: 0.0, Ea: 1000.0}
+  high-P-rate-constant: {A: 1.5e-11, b: 0.0, Ea: 0.0}
+- equation: SO2 + O3 <=> SO3 + O2
+  rate-constant: {A: 3.0e-12, b: 0.0, Ea: 7000.0}
+- equation: SO3 + H <=> SO2 + OH
+  rate-constant: {A: 1.387602e-14, b: 1.22, Ea: 1670.0}
+- equation: SO3 + O <=> SO2 + O2
+  rate-constant: {A: 4.561464e-20, b: 2.57, Ea: 14700.0}
+- equation: SO3 + SO <=> SO2 + SO2
+  rate-constant: {A: 2.0e-15, b: 0.0, Ea: 0.0}
+- equation: SO2 + OH (+ M) <=> HSO3 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 5.978058e-23, b: -3.3, Ea: 0.0}
+  high-P-rate-constant: {A: 7.045766e-11, b: -0.7, Ea: 0.0}
+- equation: HSO3 + O2 <=> HO2 + SO3
+  rate-constant: {A: 1.3e-12, b: 0.0, Ea: 330.0}
+- equation: HSO3 + OH (+ M) <=> H2SO4 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 5.978058e-23, b: -3.3, Ea: 0.0}
+  high-P-rate-constant: {A: 7.045766e-11, b: -0.7, Ea: 0.0}
+- equation: HSO3 + H <=> H2 + SO3
+  rate-constant: {A: 1.0e-11, b: 0.0, Ea: 0.0}
+- equation: HSO3 + O <=> OH + SO3
+  rate-constant: {A: 1.0e-11, b: 0.0, Ea: 0.0}
+- equation: SO3 + H2O + H2O <=> H2SO4 + H2O
+  rate-constant: {A: 2.3e-43, b: 1.0, Ea: -6540.0}
+- equation: CH3 + O2 (+ M) <=> CH3O2 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.494515e-25, b: -3.3, Ea: 0.0}
+  high-P-rate-constant: {A: 2.6e-11, b: 0.0, Ea: 0.0}
+- equation: CH3O2 + H <=> CH3O + OH
+  rate-constant: {A: 1.6e-10, b: 0.0, Ea: 0.0}
+- equation: CH3O2 + H <=> CH4 + O2
+  rate-constant: {A: 4.0e-14, b: 1.0, Ea: 8350.0}
+- equation: CH3O2 + O <=> CH3O + O2
+  rate-constant: {A: 6.0e-11, b: 0.0, Ea: 0.0}
+- equation: CH3O2 + OH (+ M) <=> CH3OH + O2 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 0.0, b: 0.0, Ea: 0.0}
+  high-P-rate-constant: {A: 0.0, b: 0.0, Ea: 0.0}
+- equation: CH3O2 + CH3 <=> CH3O + CH3O
+  rate-constant: {A: 4.0e-11, b: 0.0, Ea: 0.0}
+- equation: CH3O2 + NO <=> CH3O + NO2
+  rate-constant: {A: 2.8e-12, b: 0.0, Ea: -285.0}
+- equation: CH3 + CO (+ M) <=> CH3CO (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 5.226562e-10, b: -7.6, Ea: 5530.0}
+  high-P-rate-constant: {A: 8.4e-13, b: 0.0, Ea: 3460.0}
+- equation: CH3CO + H <=> CH2CO + H2
+  rate-constant: {A: 1.4e-11, b: 0.0, Ea: 0.0}
+- equation: CH3CO + H <=> CH3 + HCO
+  rate-constant: {A: 3.6e-11, b: 0.0, Ea: 0.0}
+- equation: CH3CO + O <=> CH3 + CO2
+  rate-constant: {A: 8.0e-11, b: 0.0, Ea: 0.0}
+- equation: CH3CO + O <=> CH2CO + OH
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 0.0}
+- equation: CH3CO + OH <=> CH2CO + H2O
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 0.0}
+- equation: CH3CO + CH3 <=> CH4 + CH2CO
+  rate-constant: {A: 1.0e-11, b: 0.0, Ea: 0.0}
+- equation: H2CO + CH3CO <=> CH3CHO + HCO
+  rate-constant: {A: 3.0e-13, b: 0.0, Ea: 6500.0}
+- equation: HCO + CH3CO <=> CH3CHO + CO
+  rate-constant: {A: 1.5e-11, b: 0.0, Ea: 0.0}
+- equation: CH3O + CH3CO <=> CH3CHO + H2CO
+  rate-constant: {A: 1.0e-11, b: 0.0, Ea: 0.0}
+- equation: CH3O + CH3CO <=> CH3OH + CH2CO
+  rate-constant: {A: 1.0e-11, b: 0.0, Ea: 0.0}
+- equation: C2H4OH + H <=> CH3CHO + H2
+  rate-constant: {A: 3.3e-11, b: 0.0, Ea: 0.0}
+- equation: C2H4OH + H <=> CH3 + H2COH
+  rate-constant: {A: 6.6e-12, b: 0.0, Ea: 0.0}
+- equation: C2H4OH + OH <=> CH3CHO + H2O
+  rate-constant: {A: 3.3e-11, b: 0.0, Ea: 0.0}
+- equation: C2H4OH + O <=> CH3CHO + OH
+  rate-constant: {A: 1.5e-10, b: 0.0, Ea: 0.0}
+- equation: CH3CHO + H <=> CH3CO + H2
+  rate-constant: {A: 2.14209e-19, b: 2.58, Ea: 615.0}
+- equation: CH3CHO + H <=> CH2CHO + H2
+  rate-constant: {A: 1.381873e-20, b: 3.1, Ea: 2620.0}
+- equation: CH3CHO + OH <=> CH3CO + H2O
+  rate-constant: {A: 5.6e-12, b: 0.0, Ea: -300.0}
+- equation: CH3CHO + O <=> CH3CO + OH
+  rate-constant: {A: 1.8e-11, b: 0.0, Ea: 1100.0}
+- equation: C2H3 + OH (+ M) <=> CH3CHO (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.0e-30, b: 0.0, Ea: 0.0}
+  high-P-rate-constant: {A: 5.0e-11, b: 0.0, Ea: 0.0}
+- equation: CH3 + HCO (+ M) <=> CH3CHO (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.0e-30, b: 0.0, Ea: 0.0}
+  high-P-rate-constant: {A: 3.0e-11, b: 0.0, Ea: 0.0}
+- equation: C2H5 + O <=> CH3CHO + H
+  rate-constant: {A: 1.3e-10, b: 0.0, Ea: 0.0}
+- equation: H + S4 (+ M) <=> HS4 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 7.0e-30, b: 0.0, Ea: 0.0}
+  high-P-rate-constant: {A: 7.0e-11, b: 0.0, Ea: 0.0}
+- equation: H + S8 <=> HS4 + S4
+  rate-constant: {A: 3.0e-12, b: 0.0, Ea: 5000.0}
+- equation: H + HS4 <=> H2 + S4
+  rate-constant: {A: 1.0e-10, b: 0.0, Ea: 1000.0}
+- equation: OH + HS4 <=> H2O + S4
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 500.0}
+- equation: H + HS4 <=> H2S + S3
+  rate-constant: {A: 1.0e-10, b: 0.0, Ea: 2500.0}
+- equation: HS + HS4 <=> H2S + S4
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 2500.0}
+- equation: NH2 + HS4 <=> NH3 + S4
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 500.0}
+- equation: HS4 + HS4 <=> H2 + S8
+  rate-constant: {A: 3.0e-12, b: 0.0, Ea: 2500.0}
+- equation: S + HS4 <=> HS + S4
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 1000.0}
+- equation: H + C4H2 (+ M) <=> C4H3 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 0.006564946, b: -8.9, Ea: 1260.0}
+  high-P-rate-constant: {A: 5.539338e-14, b: 1.2, Ea: 882.0}
+- equation: H + C4H3 <=> H2 + C4H2
+  rate-constant: {A: 5.0e-11, b: 0.0, Ea: 500.0}
+- equation: H + C4H3 <=> C2H2 + C2H2
+  rate-constant: {A: 5.0e-11, b: 0.0, Ea: 2000.0}
+- equation: H + C4H3 (+ M) <=> C4H4 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 0.006564946, b: -8.9, Ea: 1260.0}
+  high-P-rate-constant: {A: 2.0e-10, b: 0.0, Ea: 0.0}
+- equation: O + C4H3 <=> C4H2 + OH
+  rate-constant: {A: 5.0e-11, b: 0.0, Ea: 911.0}
+- equation: OH + C4H3 <=> C4H2 + H2O
+  rate-constant: {A: 5.0e-11, b: 0.0, Ea: 911.0}
+- equation: H + C4H4 <=> C4H3 + H2
+  rate-constant: {A: 3.0e-12, b: 0.0, Ea: 2000.0}
+- equation: O + C4H4 <=> C4H3 + OH
+  rate-constant: {A: 5.0e-11, b: 0.0, Ea: 911.0}
+- equation: OH + C4H4 <=> C4H3 + H2O
+  rate-constant: {A: 5.0e-11, b: 0.0, Ea: 0.0}
+- equation: N2H4 + H <=> N2H3 + H2
+  rate-constant: {A: 1.2e-11, b: 0.0, Ea: 1261.0}
+- equation: N2H4 + OH <=> N2H3 + H2O
+  rate-constant: {A: 4.335048e-08, b: -1.33, Ea: 0.0}
+- equation: NH2 + NH2 (+ M) <=> N2H4 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 9.158047e-20, b: -3.9, Ea: 0.0}
+  high-P-rate-constant: {A: 2.167928e-11, b: 0.3, Ea: 0.0}
+- equation: N2H4 + CH3 <=> N2H3 + CH4
+  rate-constant: {A: 1.234568e-24, b: 4.0, Ea: 2038.0}
+- equation: N2H3 + H <=> N2H2 + H2
+  rate-constant: {A: 1.6e-10, b: 0.0, Ea: 0.0}
+- equation: N2H3 + O <=> N2H2 + OH
+  rate-constant: {A: 5.0e-11, b: 0.0, Ea: 0.0}
+- equation: N2H3 + OH <=> N2H2 + H2O
+  rate-constant: {A: 5.0e-11, b: 0.0, Ea: 0.0}
+- equation: N2H3 + CH3 <=> N2H2 + CH4
+  rate-constant: {A: 3.0e-11, b: 0.0, Ea: 0.0}
+- equation: N2H3 + H (+ M) <=> N2H4 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 9.158047e-20, b: -3.9, Ea: 0.0}
+  high-P-rate-constant: {A: 2.167928e-11, b: 0.3, Ea: 0.0}
+- equation: N2D + H2 <=> NH + H
+  rate-constant: {A: 2.2e-12, b: 0.0, Ea: 0.0}
+- equation: N2D + CH4 <=> H2CN + H2
+  rate-constant: {A: 3.0e-12, b: 0.0, Ea: 0.0}
+- equation: N2D + CH4 <=> NH + CH3
+  rate-constant: {A: 1.0e-12, b: 0.0, Ea: 0.0}
+- equation: N2D + H2O <=> HNO + H
+  rate-constant: {A: 5.0e-11, b: 0.0, Ea: 0.0}
+- equation: N2D + CO2 <=> NO + CO
+  rate-constant: {A: 3.6e-13, b: 0.0, Ea: 0.0}
+- equation: N2D + CO <=> N + CO
+  rate-constant: {A: 1.9e-12, b: 0.0, Ea: 0.0}
+- equation: N2D + N2 <=> N + N2
+  rate-constant: {A: 1.7e-14, b: 0.0, Ea: 0.0}
+- equation: C2H + HCN <=> HCCCN + H
+  rate-constant: {A: 2.3e-10, b: 0.0, Ea: 0.0}
+- equation: C2H2 + CN <=> HCCCN + H
+  rate-constant: {A: 2.3e-10, b: 0.0, Ea: 0.0}
+- equation: 1CH2 + C2H2 (+ M) <=> C3H4 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 9.430054e-34, b: 1.5, Ea: -830.0}
+  high-P-rate-constant: {A: 9.430054e-17, b: 1.5, Ea: -830.0}
+- equation: C2H2 + CH2 (+ M) <=> C3H4 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 2.0e-28, b: 0.0, Ea: 3330.0}
+  high-P-rate-constant: {A: 2.0e-11, b: 0.0, Ea: 3330.0}
+- equation: C3H4 + O <=> HCO + C2H3
+  rate-constant: {A: 3.7e-12, b: 0.0, Ea: 1950.0}
+- equation: C3H4 + O <=> CH3 + HCCO
+  rate-constant: {A: 2.004794e-14, b: 0.9, Ea: 2170.0}
+- equation: C3H4 + O <=> C2H4 + CO
+  rate-constant: {A: 4.389429e-10, b: -0.57, Ea: 2220.0}
+- equation: C3H4 + H <=> C2H2 + CH3
+  rate-constant: {A: 1.537566e-15, b: 1.7, Ea: 4130.0}
+- equation: 1CH2 + N2 (+ M) <=> CH2N2 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.163381e-11, b: -7.2, Ea: 1550.0}
+  high-P-rate-constant: {A: 1163381000.0, b: -7.2, Ea: 1550.0}
+- equation: CH2N2 + CH2 <=> N2 + C2H4
+  rate-constant: {A: 2.549665e-20, b: 2.8, Ea: 1200.0}
+- equation: 1CH2 + CH2N2 <=> N2 + C2H4
+  rate-constant: {A: 2.0e-10, b: 0.0, Ea: 0.0}
+- equation: CH2N2 + CH3 <=> N2 + C2H5
+  rate-constant: {A: 4.0e-11, b: 0.0, Ea: 1200.0}
+- equation: CH2N2 + H <=> CH3 + N2
+  rate-constant: {A: 1.279806e-15, b: 1.45, Ea: 500.0}
+- equation: CH2N2 + C2H2 <=> C3H4 + N2
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 5000.0}
+- equation: CH2CO + C2H2 <=> C3H4 + CO
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 12000.0}
+- equation: CH3 + C2H3 (+ M) <=> C3H6 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.2e-29, b: 0.0, Ea: 0.0}
+  high-P-rate-constant: {A: 1.2e-10, b: 0.0, Ea: 0.0}
+- equation: 1CH2 + C2H4 (+ M) <=> C3H6 (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 9.2e-31, b: 0.0, Ea: -530.0}
+  high-P-rate-constant: {A: 9.2e-12, b: 0.0, Ea: -530.0}
+- equation: C2H4 + CH3 <=> C3H6 + H
+  rate-constant: {A: 6.9e-12, b: 0.0, Ea: 5600.0}
+- equation: C3H6 + O <=> HCO + C2H5
+  rate-constant: {A: 2.840686e-18, b: 2.2, Ea: -450.0}
+- equation: C3H6 + O <=> CH2CHO + CH3
+  rate-constant: {A: 1.065257e-17, b: 2.2, Ea: -450.0}
+- equation: C3H6 + O <=> CH3CO + CH3
+  rate-constant: {A: 6.036458e-18, b: 2.2, Ea: -450.0}
+- equation: C3H6 + O <=> H2CO + C2H4
+  rate-constant: {A: 1.420343e-17, b: 2.2, Ea: -450.0}
+- equation: CH2N2 + C2H4 <=> C3H6 + N2
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 5000.0}
+- equation: CH2CO + C2H4 <=> C3H6 + CO
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 12000.0}
+- equation: CH2N2 + HCN <=> CH3CN + N2
+  rate-constant: {A: 2.0e-11, b: 0.0, Ea: 5000.0}
+- equation: CH3CN + O <=> CH3 + NCO
+  rate-constant: {A: 2.28468e-12, b: 0.6, Ea: 4900.0}
+- equation: CH3CN + OH <=> CH4 + NCO
+  rate-constant: {A: 7.749335e-15, b: 0.7, Ea: 900.0}
+- equation: CH3CN + H <=> HCN + CH3
+  rate-constant: {A: 1.5e-10, b: 0.0, Ea: 6000.0}
+- equation: CH3CN + H <=> CH2CN + H2
+  rate-constant: {A: 8.4e-11, b: 0.0, Ea: 3600.0}
+- equation: 1CH2 + HCN (+ M) <=> CH3CN (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 9.430054e-34, b: 1.5, Ea: -830.0}
+  high-P-rate-constant: {A: 9.430054e-17, b: 1.5, Ea: -830.0}
+- equation: C2H3 + N <=> NH + C2H2
+  rate-constant: {A: 1.2e-11, b: 0.0, Ea: 0.0}
+- equation: C2H3 + N (+ M) <=> CH3CN (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 1.0e-30, b: 0.0, Ea: 0.0}
+  high-P-rate-constant: {A: 3.0e-12, b: 0.0, Ea: 0.0}
+- equation: C2H3 + N <=> CH2CN + H
+  rate-constant: {A: 6.0e-11, b: 0.0, Ea: 0.0}
+- equation: CH2CN + O <=> CH2 + NCO
+  rate-constant: {A: 8.0e-11, b: 0.0, Ea: 2000.0}
+- equation: CH2CN + O <=> HCN + HCO
+  rate-constant: {A: 8.0e-11, b: 0.0, Ea: 0.0}
+- equation: CH2CN + H (+ M) <=> CH3CN (+ M)
+  type: falloff
+  low-P-rate-constant: {A: 2.308411e-29, b: 0.04, Ea: 0.0}
+  high-P-rate-constant: {A: 2.308411e-10, b: 0.04, Ea: 0.0}
+- equation: C2H4 + N2D <=> CH3CN + H
+  rate-constant: {A: 2.3e-10, b: 0.0, Ea: 503}
+- equation: C2H2 + hv => C2H + H
+  type: photolysis
+- equation: C2H4 + hv => C2H2 + H + H
+  type: photolysis
+- equation: C2H4 + hv => C2H2 + H2
+  type: photolysis
+- equation: C2H4 + hv => C2H3 + H
+  type: photolysis
+- equation: C2H6 + hv => C2H2 + H2 + H2
+  type: photolysis
+- equation: C2H6 + hv => C2H4 + H + H
+  type: photolysis
+- equation: C2H6 + hv => C2H4 + H2
+  type: photolysis
+- equation: C2H6 + hv => CH3 + CH3
+  type: photolysis
+- equation: C2H6 + hv => CH4 + 1CH2
+  type: photolysis
+- equation: C3H6 + hv => C2H2 + CH4
+  type: photolysis
+- equation: C3H6 + hv => C2H3 + CH3
+  type: photolysis
+- equation: C3H6 + hv => C2H4 + 1CH2
+  type: photolysis
+- equation: C3H6 + hv => C3H4 + H2
+  type: photolysis
+- equation: C4H2 + hv => C2H + C2H
+  type: photolysis
+- equation: C4H2 + hv => C2H2 + C2
+  type: photolysis
+- equation: C4H2 + hv => C4H + H
+  type: photolysis
+- equation: C4H2 + hv => C4H2
+  type: photolysis
+- equation: C4H4 + hv => C2H2 + C2H2
+  type: photolysis
+- equation: C4H4 + hv => C4H2 + H2
+  type: photolysis
+- equation: CH2CO + hv => 1CH2 + CO
+  type: photolysis
+- equation: CH2N2 + hv => 1CH2 + N2
+  type: photolysis
+- equation: CH3CHO + hv => CH3 + HCO
+  type: photolysis
+- equation: CH3CHO + hv => CH4 + CO
+  type: photolysis
+- equation: CH3CN + hv => CH3 + CN
+  type: photolysis
+- equation: CH3OH + hv => CH3 + OH
+  type: photolysis
+- equation: CH3OH + hv => CH3O + H
+  type: photolysis
+- equation: CH3OH + hv => H2CO + H2
+  type: photolysis
+- equation: CH4 + hv => 1CH2 + H2
+  type: photolysis
+- equation: CH4 + hv => CH + H2 + H
+  type: photolysis
+- equation: CH4 + hv => CH2 + H + H
+  type: photolysis
+- equation: CH4 + hv => CH3 + H
+  type: photolysis
+- equation: CO + hv => C + O
+  type: photolysis
+- equation: CO2 + hv => CO + O
+  type: photolysis
+- equation: CO2 + hv => CO + O1D
+  type: photolysis
+- equation: CS + hv => C + S
+  type: photolysis
+- equation: CS2 + hv => CS + S
+  type: photolysis
+- equation: H2 + hv => H + H
+  type: photolysis
+- equation: H2CO + hv => CO + H + H
+  type: photolysis
+- equation: H2CO + hv => CO + H2
+  type: photolysis
+- equation: H2CO + hv => HCO + H
+  type: photolysis
+- equation: H2O + hv => H2 + O1D
+  type: photolysis
+- equation: H2O + hv => O + H + H
+  type: photolysis
+- equation: H2O + hv => OH + H
+  type: photolysis
+- equation: H2O2 + hv => OH + OH
+  type: photolysis
+- equation: H2S + hv => HS + H
+  type: photolysis
+- equation: H2SO4 + hv => SO3 + H2O
+  type: photolysis
+- equation: HCCCN + hv => C2H + CN
+  type: photolysis
+- equation: HCN + hv => H + CN
+  type: photolysis
+- equation: HNCO + hv => H + NCO
+  type: photolysis
+- equation: HNCO + hv => NH + CO
+  type: photolysis
+- equation: HNO3 + hv => OH + NO2
+  type: photolysis
+- equation: HO2 + hv => OH + O
+  type: photolysis
+- equation: HS + hv => H + S
+  type: photolysis
+- equation: HSO + hv => HS + O
+  type: photolysis
+- equation: N2 + hv => N + N2D
+  type: photolysis
+- equation: N2H4 + hv => N2H3 + H
+  type: photolysis
+- equation: N2O + hv => N2 + O1D
+  type: photolysis
+- equation: NH3 + hv => NH + H + H
+  type: photolysis
+- equation: NH3 + hv => NH + H2
+  type: photolysis
+- equation: NH3 + hv => NH2 + H
+  type: photolysis
+- equation: NO + hv => N + O
+  type: photolysis
+- equation: NO2 + hv => NO + O
+  type: photolysis
+- equation: O2 + hv => O + O
+  type: photolysis
+- equation: O2 + hv => O + O1D
+  type: photolysis
+- equation: O3 + hv => O + O2
+  type: photolysis
+- equation: O3 + hv => O1D + O2
+  type: photolysis
+- equation: OCS + hv => CO + S
+  type: photolysis
+- equation: S2 + hv => S + S
+  type: photolysis
+- equation: S3 + hv => S2 + S
+  type: photolysis
+- equation: S4 + hv => S2 + S2
+  type: photolysis
+- equation: S4 + hv => S3 + S
+  type: photolysis
+- equation: SO + hv => S + O
+  type: photolysis
+- equation: SO2 + hv => S + O2
+  type: photolysis
+- equation: SO2 + hv => SO + O
+  type: photolysis
+- equation: SO3 + hv => SO2 + O
+  type: photolysis
