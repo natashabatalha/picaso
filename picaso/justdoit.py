@@ -4805,7 +4805,8 @@ class inputs():
             miefftest = os.path.join(mieff_dir, [f for f in os.listdir(mieff_dir) if f.endswith('.mieff')][0])
             with open(miefftest, 'r') as file:
                 nwno_clouds = int(float(file.readline().split()[0]))
-            
+        else: 
+            nwno_clouds = nwno
             #if diseq_chem and not chemeq_first and gridsize != 661:
             #    raise Exception('Mieff grid is not on 661 grid.')
             #raise warning temporarily until I can think of the best way to handle this
