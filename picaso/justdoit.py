@@ -363,11 +363,13 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                                 atm.surf_reflect, stream, atm.hard_surface)
 
                 if ((rt_method == 'toon') & get_lvl_flux): 
+                    #ck-table gauss points 
                     atm.lvl_output_thermal['flux_minus']+=flux_minus_all_i*gauss_wts[ig]
                     atm.lvl_output_thermal['flux_plus']+=flux_plus_all_i*gauss_wts[ig]
                     atm.lvl_output_thermal['flux_minus_mdpt']+=flux_minus_midpt_all_i*gauss_wts[ig]
                     atm.lvl_output_thermal['flux_plus_mdpt']+=flux_plus_midpt_all_i*gauss_wts[ig]
-
+                
+                #ck-table gauss points 
                 flux_at_top += flux*gauss_wts[ig]
                 
                 
@@ -565,7 +567,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
         if ((rt_method == 'toon') & get_lvl_flux): 
             for i in atm.lvl_output_thermal.keys():
-                atm.lvl_output_thermal[i] = compress_thermal(nwno,atm.lvl_output_thermal[i], gweight, tweight)   
+                delta_wno = getattr(opacityclass,'delta_wno', np.concatenate((np.diff(opacityclass.wno),[np.diff(opacityclass.wno)[-1]])))
+                disk_integrated_lvl_flux = compress_thermal(nwno,atm.lvl_output_thermal[i], gweight, tweight)  
+                energy_per_wave_bin = disk_integrated_lvl_flux*delta_wno 
+                atm.lvl_output_thermal[i] = energy_per_wave_bin
 
         #only need to return relative flux if not a browndwarf calculation
         if radius_star == 'nostar': 
