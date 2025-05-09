@@ -204,6 +204,15 @@
         "test",
         "code"
       ]
+    },
+    {
+      "login": "benjaminliberles",
+      "name": "Benjamin Liberles",
+      "avatar_url": "https://avatars.githubusercontent.com/u/89707153?v=4",
+      "profile": "https://github.com/benjaminliberles",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
