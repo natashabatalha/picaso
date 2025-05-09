@@ -4743,10 +4743,6 @@ class inputs():
 
         all_profiles= []
         all_opd = []
-        if save_all_profiles:
-            save_profile = 1
-        else :
-            save_profile = 0
 
         #initial guess 
         pressure = self.inputs['climate']['pressure']
@@ -4829,7 +4825,7 @@ class inputs():
                     rfaci, rfacv,  tidal, #energy balance 
                     Opagrid, #delta_wno, tmin, tmax, 
                     CloudParameters,#cloudy,cld_species,mh,fsed,beta,param_flag,mieff_dir ,opd_cld_climate,g0_cld_climate,w0_cld_climate, #scattering/cloud properties 
-                    save_profile,all_profiles, all_opd,
+                    save_all_profiles, all_profiles, all_opd,
                     verbose=verbose, moist = moist,
                     save_kzz=save_all_kzz, self_consistent_kzz=self_consistent_kzz)
 
@@ -4842,7 +4838,7 @@ class inputs():
                         rfaci,rfacv,tidal,
                         Opagrid,
                         CloudParameters,
-                        save_profile,all_profiles,all_opd,
+                        save_all_profiles, all_profiles,all_opd,
                         verbose=verbose, moist = moist, 
                         save_kzz=save_all_kzz, self_consistent_kzz=self_consistent_kzz)
         #all output to user
