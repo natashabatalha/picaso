@@ -798,7 +798,7 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
         gravity = gravity * check_units(picaso_class.inputs['planet']['gravity_unit'])
     #otherwise find gravity from user input
     else: 
-        gravity = planet_params.get('logg', np.nan) 
+        gravity = planet_params.get('gravity', np.nan) 
     
     mp = picaso_class.inputs['planet'].get('mass',np.nan)
     if np.isfinite(mp):
@@ -988,6 +988,7 @@ def input_xarray(xr_usr, opacity,calculation='planet',approx_kwargs={}):
     rp = _finditem(planet_params,'rp')
     gravity = _finditem(planet_params,'gravity')
     logg = _finditem(planet_params,'logg')
+    gravity = _finditem(planet_params,'gravity')
 
     if ((not isinstance(mp, type(None))) & (not isinstance(rp, type(None)))):
         case.gravity(mass = mp['value'], mass_unit=u.Unit(mp['unit']),
@@ -995,7 +996,10 @@ def input_xarray(xr_usr, opacity,calculation='planet',approx_kwargs={}):
     elif (not isinstance(gravity, type(None))): 
         case.gravity(gravity = gravity['value'], gravity_unit=u.Unit(gravity['unit']))    
     elif (not isinstance(logg, type(None))): 
-        case.gravity(gravity = logg['value'], gravity_unit=u.Unit(logg['unit']))
+        case.gravity(gravity = 10**logg['value'], gravity_unit=u.Unit(logg['unit']))
+    elif (not isinstance(gravity, type(None))): 
+        case.gravity(gravity = gravity['value'], gravity_unit=u.Unit(gravity['unit']))
+
     else: 
         print('Mass and Radius or gravity not provided in xarray, user needs to run gravity function')
 
@@ -2989,34 +2993,43 @@ class inputs():
 
         self.inputs['atmosphere']['profile'][species] = pd.DataFrame(abunds)
 
-    def add_pt(self, T, P):
+    def add_pt(self, T=None, P=None):
         """
         Adds temperature pressure profile to atmosphere, keeps kzz if it exists, wipes everything else out. 
         Parameters
         ----------
         T : array
-            Temperature Array
+            Temperature Array in Kelbin
         P : array 
-            Pressure Array 
-        nlevel : int
-            # of atmospheric levels
+            Pressure Array in bars 
         
             
         Returns
         -------
-        T : numpy.array 
-            Temperature grid 
-        P : numpy.array
-            Pressure grid
+        DataFrame 
+            in PICASO format
+            also sets the nlevels and nlayers
+            temperature : numpy.array 
+                Temperature grid in Kelvin
+            pressure : numpy.array
+                Pressure grid in bars 
                 
         """
         
-        df = pd.DataFrame({'temperature': T, 'pressure': P})
+        empty_dict = {}
+        if not isinstance(T,type(None)):
+            empty_dict['temperature']=T
+            self.nlevel=len(T) 
+        if not isinstance(P,type(None)):
+            empty_dict['pressure']=P
+            self.nlevel=len(P) 
+        df = pd.DataFrame(empty_dict)
+        self.inputs['atmosphere']['profile']  = df
         if isinstance(self.inputs['atmosphere']['profile'], pd.core.frame.DataFrame):
             if 'kz' in  self.inputs['atmosphere']['profile'].keys(): 
                 df['kz'] = self.inputs['atmosphere']['profile']['kz'].values
         self.inputs['atmosphere']['profile']  = df
-        self.nlevel=len(T) 
+        
         # Return TP profile
         return #self.inputs['atmosphere']['profile'] 
 
@@ -5102,6 +5115,11 @@ def brown_dwarf_pt():
 def brown_dwarf_cld():
     """Function to get rough Brown Dwarf cloud model with Teff=1270 K M/H=1xSolar, C/O=1xSolar, fsed=1"""
     return os.path.join(__refdata__, 'base_cases','t1270g200f1_m0.0_co1.0.cld')    
+def w17_data():
+    """Function to get WASP-17 Grant et al data from here 
+        https://zenodo.org/records/8360121/files/ExoTiC-MIRI.zip?download=1
+    """
+    return os.path.join(__refdata__, 'base_cases','Grant_etal_transmission_spectrum_vfinal_bin0.25_utc20230606_125313.nc')
 
 
 def single_phase_options(printout=True):
