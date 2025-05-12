@@ -1,6 +1,5 @@
 import pandas as pd 
 import os 
-from .io_utils import read_hdf
 import numpy as np
 __refdata__ = os.environ.get('picaso_refdata')
 import pickle as pk
