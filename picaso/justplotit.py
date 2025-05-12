@@ -1417,10 +1417,12 @@ def heatmap_taus(out, R=0):
         pcm.set_clim(-3.0, 3.0)
         ax.set_title(itau)
         ax.set_yscale('log')
-        ax.set_ylim([1e2,1e-3])
+        ax.set_ylim([np.max(out['full_output']['layer']['pressure']),np.min(out['full_output']['layer']['pressure'])])
         ax.set_ylabel('Pressure(bars)')
-        ax.set_ylabel('Wavelength(um)')
+        ax.set_xlabel('Wavelength(um)')
         cbar.set_label('log Opacity')
+    
+    return ax
 
 def phase_snaps(allout, x = 'longitude', y = 'pressure', z='temperature',palette='RdBu_r',
     y_log=True, x_log=False,z_log=False,

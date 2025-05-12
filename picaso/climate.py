@@ -253,7 +253,8 @@ def run_diseq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
     convergence_criteria = convergence_criteriaT(it_max=10, itmx=7, conv=5.0, convt=4.0, x_max_mult=7.0) 
 
     final=False
-    profile_flag, pressure, temperature, dtdp,CloudParameters,cld_out,flux_net_ir_layer,flux_net_v_layer,flux_plus_ir_attop,all_profiles,all_opd,all_kzz =profile(bundle, nofczns, nstr, temp, pressure, 
+    profile_flag, pressure, temperature, dtdp,CloudParameters,cld_out,flux_net_ir_layer,flux_net_v_layer,flux_plus_ir_attop,all_profiles,all_opd,all_kzz =profile(
+            bundle, nofczns, nstr, temp, pressure, 
             AdiabatBundle,opacityclass,
             grav,
             rfaci,rfacv,tidal,
@@ -3065,7 +3066,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         Array of all kzz profiles. Default is an empty array.
     """
     #under what circumstances to we compute quench levels 
-    full_kinetis ='photochem' in bundle.inputs['approx']['chem_method']
+    full_kinetis ='photochem' in str(bundle.inputs['approx']['chem_method'])
     do_quench_appox = diseq and (not full_kinetis)
 
     #unpack 
