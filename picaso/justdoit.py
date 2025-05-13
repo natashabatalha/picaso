@@ -4065,7 +4065,7 @@ class inputs():
         self.inputs['clouds']['do_holes']=do_holes
         self.inputs['clouds']['fhole']=fhole
         self.inputs['clouds']['fthin_cld']=fthin_cld
-
+        
         if ((('temperature' not in self.inputs['atmosphere']['profile'].keys()) 
             or ('kz' not in self.inputs['atmosphere']['profile'].keys()))
             and ('climate' in self.inputs['calculation'])):
@@ -5277,3 +5277,34 @@ def toon_phase_coefficients(printout=True):
     """Retrieve options for coefficients used in Toon calculation
     """
     return ["quadrature","eddington"]
+
+def convert_flux_units(xgrid,flux, to_f_unit, xgrid_unit='cm^(-1)',f_unit='erg*cm^(-3)*s^(-1)'): 
+    """
+    Simple function to convert flux units using sts source spectrum technique from picaso defaults
+    Always returns flux in ordered 
+    
+    Parameters
+    ----------
+    xgrid : ndarray
+        Wavelength or wavenumber array 
+    flux : ndarray
+        Flux array 
+    to_xgrid_unit : str
+        astropy approved string unit 
+    to_f_unit : str 
+        astropy approved string unit 
+    xgrid_unit : str, default
+        current units, default is picaso original 'cm^(-1)'
+    f_unit : str, default 
+        current units, default is picaso original 'erg*cm^(-3)*s^(-1)'
+    
+    """
+    ST_SS = SourceSpectrum(Empirical1D, points=xgrid*u.Unit(xgrid_unit), 
+                           lookup_table=flux*u.Unit(f_unit))
+    y = ST_SS(ST_SS.waveset,flux_unit=u.Unit(to_f_unit))
+    
+    #if original units were inverse cm and it was an ordered increasing then flip axis 
+    if ((xgrid_unit == 'cm^(-1)') & (xgrid[1]>xgrid[0])):
+        y = y[::-1]
+        
+    return y
