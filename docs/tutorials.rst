@@ -63,9 +63,9 @@ Relevant Citatons: `Mukherjee et al. 2022 <https://ui.adsabs.harvard.edu/abs/202
 .. toctree::
    :maxdepth: 1
 
-   Brown Dwarfs </notebooks/climate/12a_BrownDwarf.ipynb>
-   Planet </notebooks/climate/12b_Exoplanet.ipynb>
-   Brown Dwarfs w/ Disequilibrium Chemistry </notebooks/climate/12c_BrownDwarf_DEQ.ipynb>
+   Brown Dwarfs </notebooks/climate/12a_BrownDwarf_PreW.ipynb>
+   Planet </notebooks/climate/12b_Exoplanet_PreW.ipynb>
+   Brown Dwarfs w/ Disequilibrium Chemistry </notebooks/climate/12c_BrownDwarf_DEQ_const_kzz.ipynb>
    Creating a grid of models </notebooks/climate/12d_CreateModelGrid.ipynb>
 
 Fitting models to data
