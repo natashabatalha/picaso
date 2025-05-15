@@ -313,8 +313,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
             flux_at_top = 0 
 
             if get_lvl_flux: 
+                calc_type=1
                 atm.lvl_output_thermal = dict(flux_minus=0, flux_plus=0, flux_minus_mdpt=0, flux_plus_mdpt=0)
-
+            else: 
+                calc_type=0
 
             for ig in range(ngauss): # correlated-k - loop (which is different from gauss-tchevychev angle)
                 
@@ -330,7 +332,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                                         atm.level['pressure'],ubar1,
                                                         atm.surf_reflect, atm.hard_surface,
                                                         #setting wno to zero since only used for climate, calctype only gets TOA flx 
-                                                        wno*0, calc_type=0)
+                                                        wno*0, calc_type=calc_type)
                     
                     flux_minus_all_i, flux_plus_all_i, flux_minus_midpt_all_i, flux_plus_midpt_all_i = lvl_fluxes
                     
@@ -340,7 +342,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                                     DTAU_OG_clear[:,:,ig], W0_no_raman_clear[:,:,ig], COSB_OG_clear[:,:,ig], 
                                                     atm.level['pressure'],ubar1,
                                                     atm.surf_reflect, atm.hard_surface,
-                                                    wno*0, calc_type=0)
+                                                    wno*0, calc_type=calc_type)
                         
                         flux_minus_all_i_clear, flux_plus_all_i_clear, flux_minus_midpt_all_i_clear, flux_plus_midpt_all_i_clear= out_therm_fluxes_clear
                         
@@ -361,11 +363,13 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                                 atm.surf_reflect, stream, atm.hard_surface)
 
                 if ((rt_method == 'toon') & get_lvl_flux): 
+                    #ck-table gauss points 
                     atm.lvl_output_thermal['flux_minus']+=flux_minus_all_i*gauss_wts[ig]
                     atm.lvl_output_thermal['flux_plus']+=flux_plus_all_i*gauss_wts[ig]
                     atm.lvl_output_thermal['flux_minus_mdpt']+=flux_minus_midpt_all_i*gauss_wts[ig]
                     atm.lvl_output_thermal['flux_plus_mdpt']+=flux_plus_midpt_all_i*gauss_wts[ig]
-
+                
+                #ck-table gauss points 
                 flux_at_top += flux*gauss_wts[ig]
                 
                 
@@ -563,7 +567,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
         if ((rt_method == 'toon') & get_lvl_flux): 
             for i in atm.lvl_output_thermal.keys():
-                atm.lvl_output_thermal[i] = compress_thermal(nwno,atm.lvl_output_thermal[i], gweight, tweight)   
+                delta_wno = getattr(opacityclass,'delta_wno', np.concatenate((np.diff(opacityclass.wno),[np.diff(opacityclass.wno)[-1]])))
+                disk_integrated_lvl_flux = compress_thermal(nwno,atm.lvl_output_thermal[i], gweight, tweight)  
+                energy_per_wave_bin = disk_integrated_lvl_flux*delta_wno 
+                atm.lvl_output_thermal[i] = energy_per_wave_bin
 
         #only need to return relative flux if not a browndwarf calculation
         if radius_star == 'nostar': 
@@ -2143,7 +2150,7 @@ class inputs():
         #get a chemistry table from opa if the user supplied it and it exists
         chemistry_table = getattr(opa, 'full_abunds', None)
 
-        #now chemistry options can be enforced 
+        #now chemistry options can be enforced basically doing chemical equilibrium / photochem / only chemeq included
         self.chemistry_handler(chemistry_table=chemistry_table)
 
         #if a quench level dictionary is provided 
@@ -4058,7 +4065,7 @@ class inputs():
         self.inputs['clouds']['do_holes']=do_holes
         self.inputs['clouds']['fhole']=fhole
         self.inputs['clouds']['fthin_cld']=fthin_cld
-
+        
         if ((('temperature' not in self.inputs['atmosphere']['profile'].keys()) 
             or ('kz' not in self.inputs['atmosphere']['profile'].keys()))
             and ('climate' in self.inputs['calculation'])):
@@ -4798,7 +4805,8 @@ class inputs():
             miefftest = os.path.join(mieff_dir, [f for f in os.listdir(mieff_dir) if f.endswith('.mieff')][0])
             with open(miefftest, 'r') as file:
                 nwno_clouds = int(float(file.readline().split()[0]))
-            
+        else: 
+            nwno_clouds = nwno
             #if diseq_chem and not chemeq_first and gridsize != 661:
             #    raise Exception('Mieff grid is not on 661 grid.')
             #raise warning temporarily until I can think of the best way to handle this
@@ -5269,3 +5277,34 @@ def toon_phase_coefficients(printout=True):
     """Retrieve options for coefficients used in Toon calculation
     """
     return ["quadrature","eddington"]
+
+def convert_flux_units(xgrid,flux, to_f_unit, xgrid_unit='cm^(-1)',f_unit='erg*cm^(-3)*s^(-1)'): 
+    """
+    Simple function to convert flux units using sts source spectrum technique from picaso defaults
+    Always returns flux in ordered 
+    
+    Parameters
+    ----------
+    xgrid : ndarray
+        Wavelength or wavenumber array 
+    flux : ndarray
+        Flux array 
+    to_xgrid_unit : str
+        astropy approved string unit 
+    to_f_unit : str 
+        astropy approved string unit 
+    xgrid_unit : str, default
+        current units, default is picaso original 'cm^(-1)'
+    f_unit : str, default 
+        current units, default is picaso original 'erg*cm^(-3)*s^(-1)'
+    
+    """
+    ST_SS = SourceSpectrum(Empirical1D, points=xgrid*u.Unit(xgrid_unit), 
+                           lookup_table=flux*u.Unit(f_unit))
+    y = ST_SS(ST_SS.waveset,flux_unit=u.Unit(to_f_unit))
+    
+    #if original units were inverse cm and it was an ordered increasing then flip axis 
+    if ((xgrid_unit == 'cm^(-1)') & (xgrid[1]>xgrid[0])):
+        y = y[::-1]
+        
+    return y
