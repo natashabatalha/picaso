@@ -23,7 +23,7 @@ from bokeh.palettes import Cividis
 from multiprocessing import Pool
 
 #these are all acceptable input meta data attributes that can GridFitter will look for 
-possible_params = {'planet_params': ['rp','mp','tint', 'heat_redis','p_reference','logkzz','kzz','mh','cto','p_quench','rainout','teff','logg','gravity','m_length'],
+possible_params = {'planet_params': ['rp','mp','tint', 'heat_redis','p_reference','logkzz','kzz','logmh','mh','cto','p_quench','rainout','teff','logg','gravity','m_length'],
                    'stellar_params' : ['rs','logg','steff','feh','ms'],
                    'cld_params': ['opd','ssa','asy','p_cloud','haze_eff','fsed']}
 
