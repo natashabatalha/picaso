@@ -1,6 +1,16 @@
 Tutorials
 =========
 
+
+Sagan School 2023: How to Analyze an Exoplanet Spectra
+---------------------------
+
+.. toctree::
+   :maxdepth: 2
+   
+   How To Analyze Exoplanet </notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.ipynb
+
+
 ESO ATMO 2021
 -------------
 
