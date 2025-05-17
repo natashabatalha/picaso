@@ -12,8 +12,7 @@ from .atmsetup import ATMSETUP
 from .optics import compute_opacity
 from .disco import compress_thermal
 from .deq_chem import get_quench_levels
-
-import os
+from .io_utils import write_all_profiles
 
 from collections import namedtuple
 
@@ -72,7 +71,7 @@ def run_diseq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
             rfaci,rfacv,tidal,
             Opagrid,
             CloudParameters,
-            save_profile,all_profiles,all_opd,
+            save_all_profiles,all_profiles,all_opd,
             verbose=True, moist = None,
             save_kzz=False, self_consistent_kzz=True):
     """ Can deprecate all of this since we moved to profile 
@@ -164,7 +163,7 @@ def run_diseq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
             rfaci,rfacv,tidal,
             Opagrid,
             CloudParameters,
-            save_profile,all_profiles,all_opd,
+            save_all_profiles,all_profiles,all_opd,
             convergence_criteria, final,
             flux_net_ir_layer=None, flux_plus_ir_attop=None,first_call_ever=False,
             verbose=verbose, moist = moist,
@@ -178,7 +177,7 @@ def run_diseq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
             rfaci, rfacv, tidal ,
             Opagrid,
             CloudParameters,
-            save_profile, all_profiles, all_opd,
+            save_all_profiles, all_profiles, all_opd,
             flux_net_ir_layer, flux_plus_ir_attop,
             verbose=verbose,  moist = moist,
             save_kzz=save_kzz,self_consistent_kzz=self_consistent_kzz,diseq=True, all_kzz=all_kzz)
@@ -197,7 +196,7 @@ def run_chemeq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
             rfaci,rfacv,tidal,
             Opagrid,
             CloudParameters,
-            save_profile,all_profiles,all_opd,
+            save_all_profiles,all_profiles,all_opd,
             verbose=True, moist = None, 
             save_kzz = True, self_consistent_kzz=True): 
     
@@ -216,7 +215,7 @@ def run_chemeq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
             rfaci, rfacv,  tidal, #energy balance 
             Opagrid, #delta_wno, tmin, tmax, 
             CloudParameters,#cloudy,cld_species,mh,fsed,beta,param_flag,mieff_dir ,opd_cld_climate,g0_cld_climate,w0_cld_climate, #scattering/cloud properties 
-            save_profile,all_profiles, all_opd,
+            save_all_profiles,all_profiles, all_opd,
             convergence_criteria, final , 
             first_call_ever=True, verbose=verbose, moist = moist,
             save_kzz=save_kzz,all_kzz=[],self_consistent_kzz=self_consistent_kzz)
@@ -239,11 +238,11 @@ def run_chemeq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
             rfaci, rfacv,  tidal, #energy balance 
             Opagrid, #delta_wno, tmin, tmax, 
             CloudParameters,#cloudy,cld_species,mh,fsed,beta,param_flag,mieff_dir ,opd_cld_climate,g0_cld_climate,w0_cld_climate, #scattering/cloud properties 
-            save_profile,all_profiles, all_opd,               
+            save_all_profiles,all_profiles, all_opd,               
             convergence_criteria,final ,      
             flux_net_ir_layer=flux_net_ir_layer, flux_plus_ir_attop=flux_plus_ir_attop, 
             verbose=verbose,moist = moist,
-            save_kzz=True,all_kzz=all_kzz,self_consistent_kzz=self_consistent_kzz)   
+            save_kzz=True,all_kzz=all_kzz,self_consistent_kzz=self_consistent_kzz)  
     
     #STEP 3) find strat that will now run profile several times, each time updating the opacities and chemistry 
     #and also refine the convective zone guess while it does this. 
@@ -255,7 +254,7 @@ def run_chemeq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
             rfaci, rfacv, tidal ,
             Opagrid,
             CloudParameters,
-            save_profile, all_profiles, all_opd,
+            save_all_profiles, all_profiles, all_opd,
             flux_net_ir_layer, flux_plus_ir_attop,
             verbose=verbose, moist = moist,self_consistent_kzz=self_consistent_kzz)
     
@@ -732,7 +731,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
             rfaci, rfacv, tidal,
             Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase, Disco,Opagrid, AdiabatBundle,
             F0PI,
-            save_profile, all_profiles, 
+            save_all_profiles, all_profiles, 
             fhole=None, hole_OpacityWEd=None,hole_OpacityNoEd=None, 
             verbose=1, do_holes=None, 
             moist = False, egp_stepmax = False):
@@ -778,7 +777,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
         Any info for the adiabat calculations such as the precomputed tables from Didie 
     F0PI : ndarray
         Stellar spectrum if it exists otherwise this is just 1s array
-    save_profile : bool 
+    save_all_profiles : bool 
         bool to specify if all intermediate profiles will be saved 
     all_profiles : ndarray 
         All saved profiles if it is requested 
@@ -1455,7 +1454,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
 
         if verbose: print("Iteration number ", its,", min , max temp ", min(temp),max(temp), ", flux balance ", flux_net[0]/abs(tidal[0])) #f/abs(tidal[0])**2) this other output here is slightly less straightforward with the square terms for exoplanets so making this just fnet/tidal for now
 
-        if save_profile == 1:
+        if save_all_profiles == 1:
             all_profiles = np.append(all_profiles,temp_old)
             cldsave_count += 1
         if flag_converge == 2 : # converged
@@ -2396,7 +2395,7 @@ def find_strat(bundle, nofczns,nstr,
         rfaci, rfacv, tidal ,
         Opagrid,
         CloudParameters,
-        save_profile, all_profiles, all_opd,
+        save_all_profiles, all_profiles, all_opd,
         flux_net_ir_layer, flux_plus_ir_attop,
         verbose=1, moist = None,
         save_kzz=False,self_consistent_kzz=True,diseq=False, all_kzz=[]):
@@ -2458,7 +2457,7 @@ def find_strat(bundle, nofczns,nstr,
             rfaci,rfacv,tidal,
             Opagrid,
             CloudParameters,
-            save_profile,all_profiles,all_opd,
+            save_all_profiles,all_profiles,all_opd,
             convergence_criteria, final,
             flux_net_ir_layer=flux_net_ir_layer, flux_plus_ir_attop=flux_plus_ir_attop,
             verbose=verbose,moist = moist,
@@ -2505,7 +2504,7 @@ def find_strat(bundle, nofczns,nstr,
             rfaci,rfacv,tidal,
             Opagrid,
             CloudParameters,
-            save_profile,all_profiles,all_opd,
+            save_all_profiles,all_profiles,all_opd,
             convergence_criteria, final,
             flux_net_ir_layer=flux_net_ir_layer, flux_plus_ir_attop=flux_plus_ir_attop,
             verbose=verbose,moist = moist,
@@ -2548,7 +2547,7 @@ def find_strat(bundle, nofczns,nstr,
                                 rfaci,rfacv,tidal,
                                 Opagrid,
                                 CloudParameters,
-                                save_profile,all_profiles,all_opd,
+                                save_all_profiles,all_profiles,all_opd,
                                 convergence_criteria, final,
                                 flux_net_ir_layer=flux_net_ir_layer, flux_plus_ir_attop=flux_plus_ir_attop,
                                 verbose=verbose, moist = moist,
@@ -2578,7 +2577,7 @@ def find_strat(bundle, nofczns,nstr,
                                 rfaci,rfacv,tidal,
                                 Opagrid,
                                 CloudParameters,
-                                save_profile,all_profiles,all_opd,
+                                save_all_profiles,all_profiles,all_opd,
                                 convergence_criteria, final,
                                 flux_net_ir_layer=flux_net_ir_layer, flux_plus_ir_attop=flux_plus_ir_attop,
                                 verbose=verbose, moist = moist,
@@ -2603,7 +2602,7 @@ def find_strat(bundle, nofczns,nstr,
                 rfaci,rfacv,tidal,
                 Opagrid,
                 CloudParameters,
-                save_profile,all_profiles,all_opd,
+                save_all_profiles,all_profiles,all_opd,
                 convergence_criteria, final,
                 flux_net_ir_layer=flux_net_ir_layer, flux_plus_ir_attop=flux_plus_ir_attop,
                 verbose=verbose,moist = moist,
@@ -2611,7 +2610,7 @@ def find_strat(bundle, nofczns,nstr,
                 #(mieff_dir, it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
                 #temp,pressure, F0PI, t_table, p_table, grad, cp,opacityclass, grav, 
                 #rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
-                #cloudy, cld_species,mh,fsed,flag_hack,save_profile, all_profiles, all_opd,
+                #cloudy, cld_species,mh,fsed,flag_hack,save_all_profiles, all_profiles, all_opd,
                 #opd_cld_climate,g0_cld_climate,w0_cld_climate,beta, param_flag,flux_net_ir_layer, 
                 #flux_plus_ir_attop, verbose=verbose,
             #fhole=fhole, fthin_cld=fthin_cld, do_holes = do_holes, moist = moist, cold_trap = cold_trap)
@@ -2631,7 +2630,7 @@ def find_strat(bundle, nofczns,nstr,
 
 
 def update_clouds(bundle, CloudParameters, Atmosphere, kzz,virga_kwargs,
-                   verbose=False,save_profile=True,all_opd=[]):
+                   verbose=False,save_all_profiles=True,all_opd=[]):
     """
     Updates cloud parameters and returns the cloud output.
     """
@@ -2670,7 +2669,7 @@ def update_clouds(bundle, CloudParameters, Atmosphere, kzz,virga_kwargs,
     taudif = np.max(np.abs(diff))
     taudif_tol = 0.4 * np.max(0.5 * (opd_clmt + opd_prev_cld_step))
 
-    if save_profile == 1:
+    if save_all_profiles == 1:
         all_opd = np.append(all_opd, df_cld['opd'].values[55::196])
 
     if verbose:
@@ -2685,7 +2684,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
             rfaci,rfacv,tidal,
             Opagrid,
             CloudParameters,
-            save_profile,all_profiles,all_opd,
+            save_all_profiles,all_profiles,all_opd,
             convergence_criteria, final,
             flux_net_ir_layer=None, flux_plus_ir_attop=None,first_call_ever=False,
             verbose=True, moist = None,
@@ -2763,7 +2762,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
                 temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
         
     temp_old= np.copy(temp)
-    if save_profile == 1: all_profiles = np.append(all_profiles,temp_old)
+    if save_all_profiles == 1: all_profiles = np.append(all_profiles,temp_old)
 
     ### 1) ALWAYS UPDATE PT, CHEM, OPACITIES
     bundle.add_pt( temp, pressure)
@@ -2802,7 +2801,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     ### 4) IF: COMPUTE CLOUDS 
     if cloudy :
         cld_out,df_cld, taudif, taudif_tol, all_opd, CloudParameters=update_clouds(bundle, CloudParameters,Atmosphere,
-                                                                          kz,virga_kwargs,save_profile=save_profile,
+                                                                          kz,virga_kwargs,save_all_profiles=save_all_profiles,
                                                                           all_opd=all_opd,verbose=verbose)
         bundle.clouds(df=df_cld,**hole_kwargs)
         
@@ -2819,7 +2818,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     #    dill.dump([bundle, nofczns,nstr,convergence_criteria, rfaci, rfacv, tidal,
     #            Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase, Disco,Opagrid, AdiabatBundle,
     #            F0PI,
-    #            save_profile, all_profiles, 
+    #            save_all_profiles, all_profiles, 
     #            verbose, moist , egp_stepmax ],file)
 
     ## begin bigger loop which gets opacities
@@ -2830,7 +2829,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
                 nofczns,nstr,convergence_criteria, rfaci, rfacv, tidal,
                 Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase, Disco,Opagrid, AdiabatBundle,
                 F0PI,
-                save_profile, all_profiles, 
+                save_all_profiles, all_profiles, 
                 verbose=verbose, moist = moist, egp_stepmax = egp_stepmax, 
                 do_holes=do_holes, fhole=fhole, hole_OpacityWEd=OpacityWEd_clear,hole_OpacityNoEd=OpacityNoEd_clear)
         else:
@@ -2838,7 +2837,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
                     nofczns,nstr,convergence_criteria, rfaci, rfacv, tidal,
                     Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase, Disco,Opagrid, AdiabatBundle,
                     F0PI,
-                    save_profile, all_profiles, 
+                    save_all_profiles, all_profiles, 
                     verbose=verbose, moist = moist, egp_stepmax = egp_stepmax)
         
         ### 1) ALWAYS UPDATE PT, CHEM, OPACITIES
@@ -2881,13 +2880,13 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         ### 4) IF: COMPUTE CLOUDS 
         if cloudy:
             cld_out,df_cld, taudif, taudif_tol, all_opd, CloudParameters=update_clouds(bundle, CloudParameters,Atmosphere,
-                                                                          kz,virga_kwargs,save_profile=save_profile,
+                                                                          kz,virga_kwargs,save_all_profiles=save_all_profiles,
                                                                           all_opd=all_opd,verbose=verbose)
             bundle.clouds(df=df_cld,**hole_kwargs)
         else: 
             cld_out=np.nan
         
-        if save_profile and cloudy:
+        if save_all_profiles and cloudy:
             all_opd = np.append(all_opd,df_cld['opd'].values[55::196]) #save opd at 4 micron
         
         ### 5) IF NEEDED: COMPUTE OPACITIES 
@@ -2929,6 +2928,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         
         if verbose: print("Big iteration is ",min(temp), iii)
     
+    write_all_profiles(save_all_profiles, all_profiles)
     if conv_flag == 0:
         if verbose: print("Not converged")
     else :
