@@ -4753,7 +4753,7 @@ class inputs():
         self.inputs['climate']['beam_profile'] = beam_profile
     
     def climate(self, opacityclass, save_all_profiles = False, with_spec=False,
-        save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False
+        save_all_kzz = False, diseq_chem = False, self_consistent_kzz =True
         ,verbose=True):#,
         #chemeq_first=True
        #deprecate: on_fly=False,gases_fly=None, as_dict=True, kz = None, 
