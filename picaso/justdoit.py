@@ -4850,11 +4850,16 @@ class inputs():
         AdiabatBundle = AdiabatBundle(t_table,p_table,grad,cp)
 
         # energy injection info
-        inject_energy = self.inputs['climate']['inject_energy']
-        inject_beam = self.inputs['climate']['inject_beam']
+        try:
+            inject_energy = self.inputs['climate']['inject_energy']
+            inject_beam = self.inputs['climate']['inject_beam']
+        except KeyError:
+            inject_energy = False
+            inject_beam = False
 
         if inject_energy == True:
-        # for beam profile energy injection (numerical profiles)
+        ## rest of these comments can be cleaned up later
+        # for beam profile energy injection (numerical profiles) 
             # if inject_beam == True:
             #     beam_profile = self.inputs['climate']['beam_profile']
             #     if len(beam_profile) != len(pressure):
@@ -4864,6 +4869,7 @@ class inputs():
                 # hratio = 1
             # for chapman function energy injection.
             # else:
+
             #total input energy in erg/cm^2/s
             wave_in = self.inputs['climate']['total_energy_injection']
             #pressure of maximum energy injection
@@ -4874,12 +4880,11 @@ class inputs():
             if inject_beam == True:
                 if len(beam_profile) != len(pressure):
                     raise Exception('Beam profile must on the same pressure grid as the climate profile')
-        
-        # else:
-        #     wave_in = 0
-        #     pm = 1
-        #     hratio = 1
-        #     beam_profile = 0
+        else:
+            wave_in = 0
+            pm = 1
+            hratio = 1
+            beam_profile = 0
         
         InjectionBundle = namedtuple('InjectionBundle', ['inject_energy','inject_beam','wave_in', 'pm', 'hratio', 'beam_profile'])
         InjectionBundle = InjectionBundle(inject_energy, inject_beam, wave_in, pm, hratio, beam_profile)
