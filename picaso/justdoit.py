@@ -1270,7 +1270,7 @@ def opannection(wave_range = None, filename_db = None,
         Can be: 
         - (required if method is preweighted) ASCII dir of ck file
         - (required if method is preweighted) HDF5 filename 
-        - (optional) path to HDF5 directory, if none specified then assumed default in climate_INPUTS/661 folder
+        - (optional) path to HDF5 directory, if none specified then assumed default in climate_INPUTS/ktable_by_molecule folder
     preload_gases : str
         Gases that you want to have mixed on the fly, you can specify them here. Default is 'all'
     verbose : bool 
@@ -3076,7 +3076,6 @@ class inputs():
             empty_dict['pressure']=P
             self.nlevel=len(P) 
         df = pd.DataFrame(empty_dict)
-        self.inputs['atmosphere']['profile']  = df
         if isinstance(self.inputs['atmosphere']['profile'], pd.core.frame.DataFrame):
             if 'kz' in  self.inputs['atmosphere']['profile'].keys(): 
                 df['kz'] = self.inputs['atmosphere']['profile']['kz'].values
@@ -4926,8 +4925,6 @@ class inputs():
             #raise warning temporarily until I can think of the best way to handle this
             #if diseq_chem and chemeq_first and gridsize == 661:
             #    raise Exception('Currently cannot do chemical equilibrium first for disequilibrium runs with clouds')
-        else:
-            nwno_clouds = nwno #this is the default if no clouds are present to avoid bug in initiating scattering properties
 
         #scattering properties 
         opd_cld_climate = np.zeros(shape=(self.nlevel-1,nwno_clouds,4))
