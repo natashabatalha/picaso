@@ -3663,7 +3663,7 @@ def vec_dot(A,B):
     return C
 
 
-def tidal_flux(T_e, wave_in,nlevel, pressure, pm, hratio, col_den):
+def tidal_flux(T_e, nlevel, pressure, col_den, InjectionBundle):
     """
     Computes Tidal Fluxes in all levels. Py of TIDALWAVE subroutine. 
 	
@@ -3683,6 +3683,10 @@ def tidal_flux(T_e, wave_in,nlevel, pressure, pm, hratio, col_den):
 		Ratio of Scale Height over Chapman Scale Height
     col_den : array
         Column density array
+    inject_beam : bool
+        If True, inject an energy beam into the model
+    beam_profile : array
+        Beam profile to inject into the model. If None, no beam is injected.
     Returns
 	-------
 	Tidal Fluxes and DE/DM in ergs/g sec
@@ -3699,12 +3703,19 @@ def tidal_flux(T_e, wave_in,nlevel, pressure, pm, hratio, col_den):
 
     dedm=np.zeros(shape=(nlevel-1))
 
-    for j in range(nlevel):
-        if j > 1 :
-            tidal[j] = tidal[j-1] - chapman(pressure[j],pm,hratio)*col_den[j-1]
-            T_tot += tidal[j] -tidal[j-1]
-    
-    tidal = (tidal*wave_in/T_tot) + tide - (tidal[-1]*wave_in/T_tot)
+    if InjectionBundle.inject_beam == True:
+        for j in range(nlevel):
+            if j > 1 :
+                tidal[j] = tidal[j-1] - InjectionBundle.beam_profile[j]
+                T_tot += tidal[j] - tidal[j-1]
+        tidal = (tidal*np.sum(InjectionBundle.beam_profile)/T_tot) + tide - (tidal[-1]*np.sum(InjectionBundle.beam_profile)/T_tot)  
+    else:
+        for j in range(nlevel):
+            if j > 1 :
+                tidal[j] = tidal[j-1] - chapman(pressure[j],InjectionBundle.pm,InjectionBundle.hratio)*col_den[j-1]
+                T_tot += tidal[j] -tidal[j-1]
+            
+        tidal = (tidal*InjectionBundle.wave_in/T_tot) + tide - (tidal[-1]*InjectionBundle.wave_in/T_tot)
     
     #for j in range(nlevel-1):
         # dE/dM (ergs/g sec)

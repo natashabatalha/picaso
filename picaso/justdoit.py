@@ -1,5 +1,5 @@
 from .atmsetup import ATMSETUP
-from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d
+from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d, tidal_flux
 
 from .climate import  namedtuple,run_chemeq_climate_workflow,run_diseq_climate_workflow
 
@@ -1270,7 +1270,9 @@ def opannection(wave_range = None, filename_db = None,
         Can be: 
         - (required if method is preweighted) ASCII dir of ck file
         - (required if method is preweighted) HDF5 filename 
-        - (optional) path to HDF5 directory, if none specified then assumed default in climate_INPUTS/661 folder
+        - (optional) path to HDF5 directory, if none specified then assumed default in climate_INPUTS/ktable_by_molecule folder
+    preload_gases : str
+        Gases that you want to have mixed on the fly, you can specify them here. Default is 'all'
     verbose : bool 
         Error message to warn users about resampling. Can be turned off by supplying 
         verbose=False
@@ -1868,8 +1870,10 @@ class inputs():
             it from your input data frame. 
         mh : float 
             Metallicity relative to Solar 
-        cto : float 
+        cto_relative : float 
             Carbon-to-Oxygen Ratio relative to Solar (Solar value is determined by `chem_method`)
+        cto_absolute : float
+            Carbon-to-Oxygen Ratio in absolute terms (e.g. 0.55)
         chem_method : str 
             Current options: 
             - 'visscher' : uses the 2121 chemical equilibrium tables computed by Channon Visscher via the function `chemeq_visscher`
@@ -2007,6 +2011,15 @@ class inputs():
             self.inputs['approx']['chem_params'][ikey]=ibool
 
     def chemistry_handler(self, chemistry_table = None):
+        """
+        This function sets the chemistry table that we want to use, whether it is the 1060, 2121 and if we want to 
+        do photohchemistry.
+
+        Parameters
+        ----------
+        chemistry_table : str
+            Chemistry table type
+        """
         #add default chem method
         chem_method = self.inputs['approx'].get('chem_method',None)
         atmosphere_profile = self.inputs['atmosphere']['profile']
@@ -2051,6 +2064,18 @@ class inputs():
             raise Exception(f"A chem option {chem_method} is not valid. Likely you specified method='resrotrebin' in opannection but did not run `atmosphere()` function after inputs_climate.") 
     
     def volatile_rainout(self,quench_levels,species_to_consider = ['H2O', 'CH4','NH3']):
+        """
+        Enforces rainout along pvap. So far these are only H2O, CH4 and NH3, since these are the only major species 
+        that are in the abundance tables and would be expected to rainout.
+
+        Parameters
+        ----------
+        quench_levels :
+            Layer in the atmosphere where each of the species is quenched.
+        species_to_consider : list of str
+            Default is ['H2O', 'CH4','NH3']
+        """
+
         quench_molecules = np.concatenate([i.split('-') for i in quench_levels.keys()])
         quench_by_molecule={}
         
@@ -2098,7 +2123,8 @@ class inputs():
 
     def cold_trap(self,species_to_consider = ['H2O','CH4','NH3']): 
         """
-        Enforces cold trapping along the chemeq grid fro any species included in the cld_species set 
+        Enforces cold trapping along the chemeq grid for any species included in the cld_species set. Currently only set
+        for H2O, CH4 and NH3. 
         """
         #only adjust species that actually have chem computed 
         
@@ -2143,8 +2169,8 @@ class inputs():
         ----------
         opa : class 
             Opacity class from opannection : RetrieveCks() 
-        cld_species : list of str
-            (Optional) List of condensing species
+        quench_levels : dict
+            Dictionary with the quench levels for each molecule.
         """
 
         #get a chemistry table from opa if the user supplied it and it exists
@@ -2176,6 +2202,16 @@ class inputs():
                 self.inputs['atmosphere']['profile']['PH3'] = 0
     
     def premix_atmosphere_photochem(self,quench_levels=None, verbose=True):
+        """
+        This function runs the photochemistry model, and updates the chemical abundance profiles.
+
+        Parameters
+        ----------
+        quench_levels : dict
+            Dictionary with the quench levels for each molecule.
+        verbose : bool
+            If True, prints out the progress of the photochemistry model.
+        """
         if verbose: print('Running photochem')
         #start by getting chemeq if it has been requested 
         self.chemistry_handler()
@@ -2197,6 +2233,15 @@ class inputs():
         self.inputs['atmosphere']['profile']  = df 
 
     def adjust_quench_chemistry(self, quench_levels):
+        """
+        Adjusts the abundances of quenched species in the chemistry profile based on the provided quench levels.
+        CO2 is defaulted to do the Zahnle and Marley (2014) kinetic fix outlined in Wogan et al. 2025 research note. 
+
+        Parameters
+        ----------
+        quench_levels : dict
+            Dictionary with the quench levels for each molecule.
+        """
 
         kinetic_CO2=True #since our old way was an "error" it seems like we should include htis as an option to be false
         
@@ -3031,7 +3076,6 @@ class inputs():
             empty_dict['pressure']=P
             self.nlevel=len(P) 
         df = pd.DataFrame(empty_dict)
-        self.inputs['atmosphere']['profile']  = df
         if isinstance(self.inputs['atmosphere']['profile'], pd.core.frame.DataFrame):
             if 'kz' in  self.inputs['atmosphere']['profile'].keys(): 
                 df['kz'] = self.inputs['atmosphere']['profile']['kz'].values
@@ -3850,6 +3894,10 @@ class inputs():
         ----------
         albedo : float
             Set constant albedo for surface reflectivity 
+        wavenumber : list
+            The desired wavenumber grid (inverse cm) for the albedo
+        old_wavenumber : list
+            Original wavenumber grid (inverse cm) for the albedo which is used to interpolate onto the new wavenumber grid
         """
         if isinstance(albedo, (float, int)):
             self.inputs['surface_reflect'] = np.array([albedo]*len(wavenumber))
@@ -4059,6 +4107,12 @@ class inputs():
         clouds_kwargs : dict 
             Added so that users can add do_hole=True, with fhole and fthin_cld and it will make the virga cloud 
             patchy
+        do_holes : bool
+            If True, the clouds will be patchy. This is done by using the fthin_cld and fhole parameters
+        fhole : float
+            Fraction of the clear hole such that spec = (1-fhole) * cloudy_spec + fhole * clear_spec
+        fthin_cld : float
+            Scales the hole (the clear part) such that fthin_cld=0 would simply be a fully clear patch
         """
         #stages inputs for cloudy run and also get kwargs for clouds function which we run at the end of this 
         clouds_kwargs=dict(do_holes=do_holes,fhole=fhole,fthin_cld=fthin_cld)
@@ -4631,10 +4685,6 @@ class inputs():
             =0 for no stellar irradition, 
             =0.5 for full day-night heat redistribution
             =1 for dayside
-        photochem : bool 
-            Turns off (False) and on (True) Photochem 
-        sonora_abunds_photochem : bool
-            Turns on/off using Sonora equilibrium abundances for photochem initially
         moistgrad: bool
             Moist adiabatic gradient option
         """
@@ -4673,8 +4723,37 @@ class inputs():
         pc.gdat.TOA_pressure_avg = photochem_TOA_pressure
         self.inputs['climate']['pc'] = pc
     
+    def energy_injection(self, inject_energy = False, total_energy_injection = 0, press_max_energy = 1,
+                        injection_scalehight= 1, inject_beam = False, beam_profile = 0):
+        """
+        Get Inputs for Energy Injection
+
+        Parameters
+        ----------
+        inject_energy : bool
+            If True, will inject energy into the atmosphere
+        total_energy_injection : float
+            Total energy injection in ergs/cm^2/s (energy injection for chapman function)
+        press_max_energy : float
+            Pressure for maximum energy injection in bars (for chapman function)
+        injection_scaleheight : float
+            Scale height ratio for energy injection (for chapman function)
+        inject_beam : bool
+            If True, will inject energy beam, this is meant for numerical profile input. Otherwise, will need inputs for chapman function
+        beam_profile : array
+            Beam profile (numerical) for energy injection (inject_beam must = True for this to be used)
+        
+        """
+
+        self.inputs['climate']['inject_energy'] = inject_energy
+        self.inputs['climate']['total_energy_injection'] = total_energy_injection
+        self.inputs['climate']['press_max_energy'] = press_max_energy
+        self.inputs['climate']['injection_scaleheight'] = injection_scalehight
+        self.inputs['climate']['inject_beam'] = inject_beam
+        self.inputs['climate']['beam_profile'] = beam_profile
+    
     def climate(self, opacityclass, save_all_profiles = False, with_spec=False,
-        save_all_kzz = False, diseq_chem = False, self_consistent_kzz =False
+        save_all_kzz = False, diseq_chem = False, self_consistent_kzz =True
         ,verbose=True):#,
         #chemeq_first=True
        #deprecate: on_fly=False,gases_fly=None, as_dict=True, kz = None, 
@@ -4696,8 +4775,6 @@ class inputs():
             If you want to run `on-the-fly' mixing (takes longer),True/False
         self_consistent_kzz : bool
             If you want to run MLT in convective zones and Moses in the radiative zones
-        kz : array
-            Kzz input array if user wants constant or whatever input profile (cgs)
         verbose : bool  
             If True, triggers prints throughout code 
         """
@@ -4772,6 +4849,46 @@ class inputs():
         AdiabatBundle = namedtuple('AdiabatBundle', ['t_table', 'p_table', 'grad','cp'])
         AdiabatBundle = AdiabatBundle(t_table,p_table,grad,cp)
 
+        # energy injection info
+        try:
+            inject_energy = self.inputs['climate']['inject_energy']
+            inject_beam = self.inputs['climate']['inject_beam']
+        except KeyError:
+            inject_energy = False
+            inject_beam = False
+
+        if inject_energy == True:
+        ## rest of these comments can be cleaned up later
+        # for beam profile energy injection (numerical profiles) 
+            # if inject_beam == True:
+            #     beam_profile = self.inputs['climate']['beam_profile']
+            #     if len(beam_profile) != len(pressure):
+            #         raise Exception('Beam profile must on the same pressure grid as the climate profile')
+                # wave_in = 0
+                # pm = 1
+                # hratio = 1
+            # for chapman function energy injection.
+            # else:
+
+            #total input energy in erg/cm^2/s
+            wave_in = self.inputs['climate']['total_energy_injection']
+            #pressure of maximum energy injection
+            pm = self.inputs['climate']['press_max_energy']
+            #scale height ratio of energy injection
+            hratio = self.inputs['climate']['injection_scaleheight']
+            beam_profile = self.inputs['climate']['beam_profile']
+            if inject_beam == True:
+                if len(beam_profile) != len(pressure):
+                    raise Exception('Beam profile must on the same pressure grid as the climate profile')
+        else:
+            wave_in = 0
+            pm = 1
+            hratio = 1
+            beam_profile = 0
+        
+        InjectionBundle = namedtuple('InjectionBundle', ['inject_energy','inject_beam','wave_in', 'pm', 'hratio', 'beam_profile'])
+        InjectionBundle = InjectionBundle(inject_energy, inject_beam, wave_in, pm, hratio, beam_profile)
+
 
         grav = 0.01*self.inputs['planet']['gravity'] # cgs to si
         #logmh = self.inputs['atmosphere'].get('mh',None)
@@ -4779,10 +4896,11 @@ class inputs():
         #mh = 10**logmh
         sigma_sb = 0.56687e-4 # stefan-boltzmann constant
         
-        #col_den = 1e6*(pressure[1:] -pressure[:-1] ) / (grav/0.01) # cgs g/cm^2
-        #wave_in, nlevel, pm, hratio = 0.9, len(pressure), 0.001, 0.1
-        #tidal = tidal_flux(Teff, wave_in,nlevel, pressure, pm, hratio, col_den)
-        tidal = np.zeros_like(pressure) - sigma_sb *(Teff**4)
+        col_den = 1e6*(pressure[1:] -pressure[:-1] ) / (grav/0.01) # cgs g/cm^2
+        nlevel = len(pressure)
+        tidal = tidal_flux(Teff, nlevel, pressure, col_den, InjectionBundle)
+        # old tidal flux calculation without energy injection function
+        # tidal = np.zeros_like(pressure) - sigma_sb *(Teff**4)
         
         # cloud inputs
         cloudy = self.inputs['climate'].get('cloudy',False)
@@ -4813,7 +4931,6 @@ class inputs():
             #if diseq_chem and chemeq_first and gridsize == 661:
             #    raise Exception('Currently cannot do chemical equilibrium first for disequilibrium runs with clouds')
 
-
         #scattering properties 
         opd_cld_climate = np.zeros(shape=(self.nlevel-1,nwno_clouds,4))
         g0_cld_climate = np.zeros(shape=(self.nlevel-1,nwno_clouds,4))
@@ -4822,7 +4939,7 @@ class inputs():
         CloudParametersT = namedtuple('CloudParameters',['cloudy', 'OPD','G0','W0']+list(virga_kwargs.keys()))
         #this adds the cloud params that are always needed plus the virga kwargs, if they are used 
         CloudParameters=CloudParametersT(*([cloudy, opd_cld_climate,g0_cld_climate,w0_cld_climate,
-                                         ]+list(virga_kwargs.values())))
+                                        ]+list(virga_kwargs.values())))
 
 
         if verbose: self.interpret_run()
