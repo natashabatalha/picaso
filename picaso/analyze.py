@@ -936,7 +936,7 @@ def custom_interp(final_goal,fitter,grid_name, to_interp='spectra',array_to_inte
         See tutorial, provided loaded grid fitter tool
     grid_name : str
         name of grid provided to analyze.GridFitter
-    interp : str 
+    to_interp : str 
         Default = 'spectra', this dictates the entity you want to interpolate 
         Other option is to specify "custom" in this case you will have to 
         add in a array of something else (e.g. temperature, chemistry). 
@@ -1007,7 +1007,18 @@ def get_last_dimension(arr, indices):
     for example, if arr = np.random.randn([4,4]) and indices = [1,-1], it would
     return arr[1,:]. this is slightly confusing because -1 usually indicates last element, 
     which is different from the use of ":". However, jit nopython cannot compare string 
-    elements. Therefore this code uses -1 in place of :. 
+    elements. Therefore this code uses -1 in place of :.
+
+    Parameters
+    ----------
+    arr : array
+        sorted array of values 
+    indices : list 
+        indices within the bounds of the array specified  
+
+    Returns
+    -------
+    last dimension of arr
     """
     if len(indices) == 1 and indices[0] == -1:
         return arr
@@ -1059,6 +1070,33 @@ def detection_test(fitter, molecule, min_wavelength, max_wavelength,
     """
     Computes the detection significance of a molecule given a grid name, data name, 
     filename
+
+    Parameters
+    ----------
+    fitter : analyze.GridFitter
+        class that has all the spectra information loaded
+    molecule : str
+        str of molecule to test for
+    min_wavelength : float
+        float of minimum wavelength to test for
+    max_wavelength : float
+        float of maximum wavelength to test for
+    grid_name : str
+        str of name of grid to test for
+    data_name : str
+        str of name of data to test for
+    filename : str
+        str of filename to test for
+    molecule_baseline : str, optional
+        str of molecule to test for baseline. The default is None.
+    baseline_wavelength : list, optional
+        list of two floats for the baseline wavelength. The default is [].
+    model_full : array, optional
+        array of model_full. The default is None.
+    opa_kwargs : dict, optional
+        dict of kwargs to pass to opannection. The default is {}.
+    plot : bool, optional
+        bool of whether to plot the results. The default is True.
     """
     try: 
         import dynesty 
@@ -1277,6 +1315,17 @@ def detection_test(fitter, molecule, min_wavelength, max_wavelength,
 def chi_squared(data,data_err,model,numparams):
     """
     Compute reduced chi squared assuming DOF = ndata_pts - num parameters  
+
+    Parameters
+    ---------
+    data : array
+        array of data to compare against model
+    data_err : array
+        array of data errors
+    model : array
+        array of modeled data to compare against data
+    numparams : int
+        int of number of parameters in the model
     """
     
     chi_squared = np.sum(((data-model)/(data_err))**2)/(len(data)-(numparams))
@@ -1288,6 +1337,28 @@ def chi_squared(data,data_err,model,numparams):
 
 
 def plot_atmosphere(location,bf_filename,gas_names=None,fig=None,ax=None,linestyle=None,color=None,label=None):
+    """
+    Plots the atmosphere from a Picaso output file.
+
+    Parameters
+    ----------
+    location : str
+        str of location of the Picaso output file
+    bf_filename : str
+        str of filename of the Picaso output file
+    gas_names : list, optional
+        list of gas names to plot. The default is None.
+    fig : matplotlib.figure.Figure, optional
+        matplotlib figure to plot on. The default is None.
+    ax : matplotlib.axes._axes.Axes, optional
+        matplotlib axes to plot on. The default is None.
+    linestyle : str, optional
+        str of linestyle to use. The default is None.
+    color : str, optional
+        str of color to use. The default is None.
+    label : str, optional
+        str of label to use. The default is None.
+    """
 
     f = os.path.join(location, bf_filename)
 
