@@ -71,7 +71,7 @@ setup(
           'pysynphot',
           'sphinx',
           'scipy',
-          'virga-exo==0.4',
+          'virga-exo==0.5',
           'xarray',
           'bibtexparser',
           'netcdf4', 
