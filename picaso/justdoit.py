@@ -3075,7 +3075,7 @@ class inputs():
         if not isinstance(P,type(None)):
             empty_dict['pressure']=P
             self.nlevel=len(P) 
-        df = pd.DataFrame(empty_dict)
+        df = pd.DataFrame(empty_dict).sort_values('pressure').reset_index(drop=True)
         if isinstance(self.inputs['atmosphere']['profile'], pd.core.frame.DataFrame):
             if 'kz' in  self.inputs['atmosphere']['profile'].keys(): 
                 df['kz'] = self.inputs['atmosphere']['profile']['kz'].values
