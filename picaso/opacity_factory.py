@@ -1877,10 +1877,12 @@ def compute_ck_molecular(molecule,og_directory,
         ftype = 'python'
     elif len(find_txt_files)>1000:
         ftype='lupu_txt'
-    elif 'hdf5' in mol_dir:
+    elif (('hdf5' in mol_dir) or ('h5' in mol_dir)):
         ftype='hdf5'
     else:
-        raise Exception('Could not find npy or p_ files. npy are assumed to be read via np.load, where as p_ files are assumed to be unformatted binary or alkali files')
+        raise Exception(f"""Could not find fortran, npy, p_ files, or hdf5 files.
+                            npy are assumed to be read via np.load, where as p_ files are assumed to 
+                        be unformatted binary or alkali files. I am looking here: {mol_dir}""")
 
 
     # GET HIGH RES WAVELENGTH GRID #
