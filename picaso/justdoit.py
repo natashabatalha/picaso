@@ -4899,6 +4899,11 @@ class inputs():
         col_den = 1e6*(pressure[1:] -pressure[:-1] ) / (grav/0.01) # cgs g/cm^2
         nlevel = len(pressure)
         tidal = tidal_flux(Teff, nlevel, pressure, col_den, InjectionBundle)
+        if inject_energy: 
+            if verbose: 
+                print("Tidal Injection is Turned on. This is your new energy profile. Pressure, tidal (erg/cm3)/s:")
+                for i in range(nlevel):
+                    print(pressure[i],tidal[i])
         # old tidal flux calculation without energy injection function
         # tidal = np.zeros_like(pressure) - sigma_sb *(Teff**4)
         
