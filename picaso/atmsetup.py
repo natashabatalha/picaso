@@ -813,7 +813,7 @@ def separate_string_number(string):
     For example, CO2 becomes "C" "O2" in `separate_molecule_name` 
     then this function turns it into [['C'],['O','2']]
     """
-    elements = re.findall('[A-Za-z]+|\d+', string)
+    elements = re.findall(r'[A-Za-z]+|\d+', string)
     return elements
 """
 ## not using this for now.
