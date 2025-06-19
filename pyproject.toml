@@ -6,8 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "picaso"
 version = "4.0"
 description = "planetary intesity code for atmospheric scattering observations"
-readme = "README.md"
-long_description_content_type = "text/markdown"
+readme = {file = "README.md", content-type = "text/markdown"}
 authors = [
     {name = "Natasha E. Batalha", email = "natasha.e.batalha@gmail.com"},
 ]
