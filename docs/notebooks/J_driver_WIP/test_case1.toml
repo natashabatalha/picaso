@@ -1,0 +1,57 @@
+observation_type = 'thermal+transmission+reflected' # options: 'transmission', 'thermal', 'reflected' or a combo e.g. transmission+thermal
+irradiated=true #options: true or false (if true, user needs to input star properties)
+calc_type='spectrum'#spectrum climate or retrieval
+
+[InputOutput]
+input_data = 'path/to/spectrum.nc' #see docs on required data formats
+sampler_output = 'path/to/output'
+
+[OpticalProperties]
+opacity_files = '/Users/nbatalh1/Documents/codes/PICASO/picaso/reference/opacities/opacities.db' # single db or list of opacity dbs 
+opacity_method = 'resampled' #list of options: resampled, preweighted, resortrebin
+opacity_kwargs = {} # any other inputs you want to give to justodit.opannection()
+virga_mieff = '/Users/nbatalh1/Documents/data/virga_0,3_15_R300/' # any other inputs you want to give to justodit.opannection()
+
+[object]
+radius    = {value=1.2, unit='Rjup'}
+mass      = {value=1.2, unit='Mjup'}
+gravity   = {value=1e4, unit='cm/s**2'}
+distance  = {value=10,  unit='parsec'}
+teff      = {value=500, unit='Kelvin'}
+teq       = {value=500, unit='Kelvin'}
+
+[geometry]
+phase = {value=0, unit='radian'} #planet phase angle
+
+[star]
+radius= {value=1, unit='Rsun'} 
+semi_major= {value=200, unit='AU'}
+
+[star.grid]
+logg  = 4
+teff  = 5400
+feh   = 0
+database  ='phoenix'# options: phoenix, ck04models, or other pysynphot databases
+
+[temperature]
+profile = 'isothermal' #options: 'userfile','isothermal', 'knots', 'madhu_seager_09', 'guillot', 'zj_24', 'molliere_20', 'Kitzman_20', 'sonora_bobcat'...
+
+[temperature.pressure]
+reference = {value=1e1,unit='bar'}
+min = {value=1e-7, unit='bar'}
+max = {value=1e3,unit='bar'}
+nlevel = 100
+spacing = 'log'
+
+[temperature.isothermal]
+T = 500
+
+[chemistry]
+method='free' #options: 'visscher', 'free', 'userfile' : future updates 'fast_chem' vs 'photo_chem'
+
+[chemistry.free]#note all molecules must be case sensitive: e.g., TiO. Isotopologues should be specified with dashes e.g.,: 12-CO
+H2O={value=1e-4,unit='v/v'}
+CH4={values=[1e-4,1e-3],unit='v/v', pressures=[1e-2],pressure_unit='bar'}
+NH3={value=1e-4,unit='v/v'}
+background={gases=['H2','He'],fraction=5.667}
+
