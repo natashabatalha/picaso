@@ -279,7 +279,8 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
 
     if plot_opacity: opt_figure.line(1e4/opacityclass.wno, TAURAY[plot_layer,:,0], alpha=0.7,legend_label='Rayleigh', line_width=3, color=colors[c],
             muted_color=colors[c], muted_alpha=0.2) 
-    if return_mode: taus_by_species['rayleigh'] = ADDTAU
+    #if return_mode: taus_by_species['rayleigh'] = ADDTAU
+    if return_mode: taus_by_species['rayleigh'] = TAURAY[:,:,0]
 
     #====================== ADD RAMAN OPACITY======================
     #OKLOPCIC OPACITY

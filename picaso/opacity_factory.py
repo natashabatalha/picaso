@@ -64,13 +64,12 @@ def insert_hitran_cia(original_file, molname, new_db, new_wno):
     ----------
     original_file : str
         Filepath that points to HITRAN file (e.g. H2-CH4_eq_2011.cia)
+    molname : str
+        Name of molecule (e.g. N2N2)
     new_db : str 
         New database name 
-    new_wno : numpy.ndarray, list 
+    new_wno : array, list 
         wavenumber grid to interpolate onto (units of inverse cm)
-    overwrite : bool 
-        Default is set to False as to not overwrite any existing files. This parameter controls overwriting 
-        cia database 
     """
     #get original H2- CIA that is already inserted
     cur, conn = open_local(new_db)
@@ -276,6 +275,24 @@ def insert(cur,conn,mol,T,opacity):
     cur.execute('INSERT INTO continuum (molecule, temperature, opacity) values (?,?,?)', (mol,float(T), opacity))
 
 def restructure_opacity(new_db,ntemp,temperatures,molecules,og_opacity,old_wno,new_wno):
+    """
+    Parameters
+    ----------
+    new_db : str 
+        str of new database name
+    ntemp : int
+        int of number of temperatures
+    temperatures : array
+        array of temperatures
+    molecules : list
+        list of molecules to put in database
+    og_opacity : pandas dataframe
+        pandas dataframe of original opacity
+    old_wno : array
+        array of original wavenumbers
+    new_wno : array
+        array of new wavenumbers to interpolate onto
+    """
     #start by opening connection 
     dw = new_wno[1] - new_wno[0] 
     kernel_size = (10050 - 9960)/dw
@@ -600,10 +617,16 @@ def open_local(db_f):
 
 
 def build_skeleton(db_f):
-    """This functionb builds a skeleton sqlite3 database with three tables:
+    """
+    This functionb builds a skeleton sqlite3 database with three tables:
         1) header
         2) molecular
         3) continuum
+
+    Parameters
+    ----------
+    db_f : str
+        str of database file name
     """
     cur, conn = open_local(db_f)
     #header
@@ -647,6 +670,15 @@ def build_skeleton(db_f):
 def insert_wno_grid(wno_grid, cur, con):
     """
     Inserts basics into the header file. This puts all the units to the database.
+
+    Parameters
+    ----------
+    wno_grid : array
+        Wavenumber grid in units of cm-1
+    cur : sqlite3.Cursor
+        Cursor object to the database
+    con : sqlite3.Connection
+        Connection object to the database
     """
     cur.execute('INSERT INTO header (pressure_unit, temperature_unit, wavenumber_grid, continuum_unit,molecular_unit) values (?,?,?,?,?)', 
                 ('bar','kelvin', np.array(wno_grid), 'cm-1 amagat-2', 'cm2/molecule'))
@@ -655,9 +687,19 @@ def insert_wno_grid(wno_grid, cur, con):
     con.close()
 
 def create_grid_minR(min_wavelength, max_wavelength, minimum_R):
-    """Simple function to create a wavelength grid defined with a minimum R. 
+    """
+    Simple function to create a wavelength grid defined with a minimum R. 
     This does not create a "constant" resolution grid. Rather, it defines the R
     at the minimum R so that the wavelength grid satisfies all_Rs>R
+
+    Parameters
+    ----------
+    min_wavelength : float 
+        Minimum wavelength in microns
+    max_wavelength : float
+        Maximum wavelength in microns
+    minimum_R : float
+        Minimum resolution to define the grid
     """
     #final new grid 
     dwvno = 1e4/(min_wavelength**2)*(min_wavelength/minimum_R)
@@ -1088,6 +1130,15 @@ def get_kark_CH4_noTdependence(kark_dir,new_wave, temperature):
     """
     Files from kark+2010 paper
 
+    Parameters
+    ----------
+    kark_dir : str
+        Directory where the Karkoschka CH4 data is stored
+    new_wave : array
+        Wavelength grid to interpolate the Karkoschka data onto
+    temperature : float
+        Temperature in Kelvin
+
     Returns 
     -------
     opacity in cm2/species
@@ -1125,6 +1176,16 @@ def get_kark_CH4_noTdependence(kark_dir,new_wave, temperature):
     return opacity
 
 def get_kark_CH4(kark_file, new_wno , T,dset):
+    """
+    Parameters
+    ----------
+    kark_file : str
+        Directory where the Karkoschka CH4 data is stored
+    new_wno : array
+        Wavelength grid to interpolate the Karkoschka data onto
+    T.dset : float
+        Temperature in Kelvin
+    """
     kappa = pd.read_csv(kark_file,delim_whitespace=True,skiprows=2,
                            header=None, names = ['nu','nm','100','198','296','del/al'])
 
@@ -1144,6 +1205,13 @@ def get_optical_o3(file_o3,new_wvno_grid):
     """
     This hacked ozone is from here: 
     http://satellite.mpic.de/spectral_atlas/cross_sections/Ozone/O3.spc
+
+    Parameters
+    ----------
+    file_o3 : str
+        Directory where the optical ozone data is stored
+    new_wvno_grid : array
+        Wavelength grid to interpolate the optical ozone data onto
     """
     df1 = pd.read_csv(file_o3,delim_whitespace=True,names=['nm','cx'])
     wno_old = 1e4/(df1['nm']*1e-3).values[::-1]
@@ -1176,11 +1244,27 @@ def vectorize_rebin_mean(bins, Fp):
 
 def vresample_and_insert_molecular(molecule, min_wavelength, max_wavelength, new_R, 
             og_directory, new_db):
-    """This function is identical to resample_and_insert_molecular but it was 
+    """
+    This function is identical to resample_and_insert_molecular but it was 
     written to determine if taking the median was better than taking every BIN'th 
     data point. It uses a special  vectorize function to speed up the median.
     Results are about the same but this is much slower to run. 
     So dont bother using this unless there is something specific to try. 
+
+    Parameters
+    ----------
+    molecule : str
+        Name of molecule
+    min_wavelength : float
+        Minimum wavelength in database in units of micron
+    max_wavelength : float
+        Maximum wavelength in database in units of micron
+    new_R : float
+        New R to regrid to
+    og_directory : str
+        Directory of all the cross sections that include folders e.g. "H2O", "CH4"
+    new_db : str
+        New database name
     """
     #open database connection 
     cur,conn = open_local(new_db)
@@ -1278,6 +1362,8 @@ def get_continuum(db_file, species, temperature):
     """
     Grab continuum opacity from sqlite database 
 
+    Parameters
+    ----------
     db_file : str 
         sqlite3 database filename 
     species : list of str 
@@ -1340,6 +1426,8 @@ def get_molecular(db_file, species, temperature,pressure):
     """
     Grab molecular opacity from sqlite database 
 
+    Parameters
+    ----------
     db_file : str 
         sqlite3 database filename 
     species : list of str 
@@ -1458,6 +1546,7 @@ def g_w_2gauss(order=4,gfrac=0.95):
     gfrac : float
         Adjustable parameter which sets the division in the values of G which will
         be sampled by the first and second set of Gauss points.
+
     Returns 
     -------
     gauss, weights
@@ -1477,6 +1566,18 @@ def g_w_2gauss(order=4,gfrac=0.95):
     return gfin,wfin
 
 def get_wvno_grid(filename, min_wavelength=None, max_wavelength=None, R=None):
+    """
+    Parameters
+    ----------
+    filename : str
+        File name with wavenumber and delta wavenumber in two columns
+    min_wavelength : float
+        (optional) minimum wavelength in database in units of micron
+    max_wavelength : float
+        (optional) maximum wavelength in database in units of micron
+    R : float
+        (optional) resolution if inputing a min_max_wavelength
+    """
     if not isinstance(filename, type(None)):
         wvno_new,dwni_new = np.loadtxt(filename,usecols=[0,1],unpack=True)
         wvno_low = 0.5*(2*wvno_new - dwni_new)
@@ -1500,15 +1601,21 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
     
     Parameters
     ----------
-    molecule : str 
+    ck_molecules : str 
         Name of molecule 
     og_directory : str 
         Directory of all the cross sections that include folders e.g. "H2O", "CH4"
-    alkali_dir : str 
-        Alakalis directory
+    chemistry_file : str
+        Chemistry file with abundances
+    output_dir : str
+        Directory to output the new database
+    filename : str
+        Name of the output file
     wv_file_name : str 
         (optional) file name with wavelength. First column wavenumber, second column delta wavenumber 
         Must supply this OR combo of min, max wavelength and R
+    alkali_dir : str 
+        (optional) alakalis directory
     min_max_wavelength : list,float 
         (optional) minimum and maximum wavelength if not inputting array or filename in micron e.g. [0.3,300]    
     R : float 
@@ -1661,7 +1768,7 @@ def are_arrays_different(arr1, arr2):
     ----------
     arr1: array, float 
         The first array.
-    arr2: array , float
+    arr2: array, float
         The second array.
     
     Returns
@@ -1701,6 +1808,12 @@ def compute_ck_molecular(molecule,og_directory,
     og_directory : str 
         Directory of all the cross sections that include folders e.g. "H2O", "CH4"
         OR the directory where the sum weighted hdf5 file is
+    order : int     
+        (Default=4)  Gauss Legendre order which by default is set to 4, with the double gauss method
+    gfrac : int     
+        (Default=0.95) Double-gauss method of splitting up the gauss points, by default we use 0.95
+    alkali_dir : str 
+        (Optional) Directory of alkalis or "individual_file" which is the method to use for Roxana Lupus data. 
     wv_file_name : str 
         (optional) file name with wavelength. First column wavenumber, second column delta wavenumber 
         Must supply this OR combo of min, max wavelength and R
@@ -1711,13 +1824,7 @@ def compute_ck_molecular(molecule,og_directory,
     new_wno : array, float  
         (optional) new wavenumber grid in cm-1 
     new_dwno : array, float 
-        (optional) delta wavenumber grid in cm-1 
-    order : int     
-        (Default=4)  Gauss Legendre order which by default is set to 4, with the double gauss method 
-    gfrac : int     
-        (Default=0.95) Double-gauss method of splitting up the gauss points, by default we use 0.95 
-    alkali_dir : str 
-        (Optional) Directory of alkalis or "individual_file" which is the method to use for Roxana Lupus data. 
+        (optional) delta wavenumber grid in cm-1   
     climate_filename : str  
         (Optional) Name of climate file if saving output as hdf5
     verbose: bool 
@@ -1770,10 +1877,12 @@ def compute_ck_molecular(molecule,og_directory,
         ftype = 'python'
     elif len(find_txt_files)>1000:
         ftype='lupu_txt'
-    elif 'hdf5' in mol_dir:
+    elif (('hdf5' in mol_dir) or ('h5' in mol_dir)):
         ftype='hdf5'
     else:
-        raise Exception('Could not find npy or p_ files. npy are assumed to be read via np.load, where as p_ files are assumed to be unformatted binary or alkali files')
+        raise Exception(f"""Could not find fortran, npy, p_ files, or hdf5 files.
+                            npy are assumed to be read via np.load, where as p_ files are assumed to 
+                        be unformatted binary or alkali files. I am looking here: {mol_dir}""")
 
 
     # GET HIGH RES WAVELENGTH GRID #
@@ -1956,9 +2065,12 @@ def regrid(x, y, newx=None, R=None,statistic='mean'):
     y : array 
         Anything (e.g. albedo, flux)
     newx : array 
-        new array to regrid on. 
+        (optional) new array to regrid on. 
     R : float 
-        create grid with constant R
+        (optional) create grid with constant R
+    statistic : str
+        (optional) statistic to use for binning. 
+        Default is mean, but can also be median or std
 
     Returns
     -------
@@ -1980,12 +2092,17 @@ def regrid(x, y, newx=None, R=None,statistic='mean'):
 
 
 def add_metadata_item(db_path, key, value):
-    """Adds or updates a metadata item in the metadata table.
+    """
+    Adds or updates a metadata item in the metadata table.
 
-    Args:
-        db_path: Path to the SQLite database file.
-        key: The metadata key.
-        value: The metadata value (will be stored as TEXT).
+    Parameters
+    ----------
+    db_path : str
+        Path to the SQLite database file.
+    key : str
+        The metadata key.
+    value : str
+        The metadata value (will be stored as TEXT).
     """
     try:
         conn = sqlite3.connect(db_path)
@@ -2014,13 +2131,18 @@ def add_metadata_item(db_path, key, value):
 
 
 def get_metadata_item(db_path, key):
-  """Retrieves a metadata item by key.
+  """
+  Retrieves a metadata item by key.
 
-  Args:
-      db_path: Path to the SQLite database file.
-      key: The metadata key.
+  Parameters
+  ----------   
+  db_path : str 
+    Path to the SQLite database file.
+  key : str
+    The metadata key.
 
-  Returns:
+  Returns
+  -------
       The metadata value associated with the key, or None if the key is not found.
   """
   try:
@@ -2041,11 +2163,15 @@ def get_metadata_item(db_path, key):
   finally:
       if conn:
           conn.close()
-def add_metadata_table(db_path):
-    """Adds a metadata table to the SQLite database if it doesn't exist.
 
-    Args:
-        db_path: Path to the SQLite database file.
+def add_metadata_table(db_path):
+    """
+    Adds a metadata table to the SQLite database if it doesn't exist.
+
+    Parameters
+    ----------
+    db_path : str
+        Path to the SQLite database file.
     """
     try:
         conn = sqlite3.connect(db_path)
@@ -2083,7 +2209,7 @@ def add_all_metadata(filename, version_number, default, resolution, wavemin, wav
     ----------
     filename : str 
         sqlite name
-    version : str 
+    version_number : str 
         Version number it goes with 
     default : bool 
         Is this a default for this verison 

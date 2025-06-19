@@ -1,0 +1,169 @@
+observation_type = 'thermal' # options: 'transmission', 'thermal', 'reflected' or a combo e.g. transmission+thermal
+irradiated=true #options: true or false (if true, user needs to input star properties)
+
+[InputOutput]
+input_data = 'path/to/spectrum.nc' #see docs on required data formats
+sampler_output = 'path/to/output'
+
+[OpticalProperties]
+opacity_files = 'path/to/opacities.db' # single db or list of opacity dbs 
+opacity_method = 'resampled' #list of options: resampled, preweighted, resortrebin
+opacity_kwargs = {} # any other inputs you want to give to justodit.opannection()
+virga_mieff = '/Users/nbatalh1/Documents/data/virga_0,3_15_R300/' # any other inputs you want to give to justodit.opannection()
+
+[object]
+radius    = {value=1.2, unit='Rjup'}
+mass      = {value=1.2, unit='Mjup'}
+gravity   = {value=1e4, unit='cm/s**2'}
+distance  = {value=10,  unit='parsec'}
+teff      = {value=500, unit='Kelvin'}
+teq       = {value=500, unit='Kelvin'}
+
+[star]
+radius= {value=1, unit='Rsun'} 
+logg  = {value=1, unit='log cm/s**2'}
+teff  = {value=5400, unit='Kelvin'}
+feh   = {value=1}
+database  ='phoenix'# options: phoenix, ck04models, or other pysynphot databases
+semi_major= {value=200, unit='AU'}
+
+[temperature]
+profile = 'isothermal' #options: 'isothermal', 'knots', 'madhu_seager_09', 'guillot', 'zj_24', 'molliere_20', 'Kitzman_20', 'sonora_bobcat'...
+
+[temperature.pressure]
+min = {value=1e-7, unit='bar'}
+max = {value=1e3,unit='bar'}
+reference = {value=1e1,unit='bar'}
+nlevel = 100
+spacing = 'log'
+
+[temperature.isothermal]
+T = 500
+
+[temperature.knots]
+P_knots=[1e2,1e1,1e0,1e-1,1e-3,1e-5]
+T_knots=[1000, 700, 400, 300, 250, 200]
+interpolation='brewster' #options are: brewster, linear, quadratic_spline, cubic_spline, OR any function from scipy.interpolate with associated kwargs passed to scipy_it
+scipy_interpolate_kwargs={}
+
+[temperature.madhu_seager_09]
+P_0=1e2
+P_1=1e1
+P_2=1e-3
+P_3=1e-5
+T_0=1000
+T_2=400
+T_3=200
+alpha_1=1
+alpha_2=1
+beta_1=1
+beta_2=1
+
+[chemistry]
+method='free' #options: 'visscher', 'free', 'userfile' : future updates 'fast_chem' vs 'photo_chem'
+
+[chemistry.free]#note all molecules must be case sensitive: e.g., TiO. Isotopologues should be specified with dashes e.g.,: 12-CO
+H2O={value=1e-4,unit='v/v'}
+CH4={values=[1e-4,1e-3],unit='v/v', pressures=[1e-2],pressure_unit='bar'}
+NH3={value=1e-4,unit='v/v'}
+background={gases=['H2','He'],fraction=5.667}
+
+[chemistry.visscher]
+logmh={value=0,unit='log relative to solar'}
+cto={value=1,unit='relative to solar'}
+
+[chemistry.userfile]
+filename='test.csv'
+pandas_kwargs={sep=','}
+
+[clouds]
+cloud1_type='slab-alpha' #options: slab-grey, deck-grey, slab-alpha, deck-alpha, slab-mie, deck-mie, virga, fsed
+
+[clouds.cloud1.slab-grey]
+ptop = {value=1,unit='logbar'}
+dp = {value=1,unit='logbar'}
+
+[clouds.cloud1.deck-grey]
+ptop = {value=1,unit='logbar'}
+dp = {value=1,unit='logbar'}
+
+[clouds.cloud1.slab-alpha]
+ptop = {value=1,unit='logbar'}
+dp = {value=1,unit='logbar'}
+reference_tau = 1
+alpha = -4 
+reference_wave = {value=1, unit='micron'} 
+
+[clouds.cloud1.deck-alpha]
+ptop = {value=1,unit='logbar'}
+dp = {value=1,unit='logbar'}
+alpha = -4 
+reference_wave = {value=1, unit='micron'} 
+
+[clouds.cloud1.slab-mie]
+ptop = {value=1,unit='logbar'}
+dp = {value=1,unit='logbar'}
+reference_tau = 1
+species = 'SiO2'
+reference_wave = {value=1, unit='micron'} 
+distribution = 'lognorm'#options: lognormal or hansen, make sure to set respective properties
+
+[clouds.cloud1.slab-mie.lognorm]
+sigma = 1
+radius={value=1e-4 , unit='cm'}
+
+[clouds.cloud1.deck-mie]
+ptop = {value=1,unit='logbar'}
+dp = {value=1,unit='logbar'}
+species = 'SiO2'
+reference_wave = {value=1, unit='micron'} 
+distribution='hansen'#options: lognormal or hansen
+
+[clouds.cloud1.deck-mie.hansen]
+b=2
+radius={value=1e-4 , unit='cm'}
+
+[clouds.cloud1.fsed]
+fsed=1
+ndz=2 #arbitrary scaling for setting max optical depth of the cloud
+radius={value=1e-4 , unit='cm'}
+sigma=1
+pressure={value=1 , unit='bar'}
+
+[clouds.cloud1.virga]
+mh = 1 
+species=['SiO2','Al2O3']
+fsed=1
+kzz={value=1e9,unit='cm**2/s'}
+virga_kwargs={} #see documentation for more options
+
+[clouds.patchy]
+npatch = 1
+patch1 = 'clear'
+patch2 = 'cloud1'
+frac_1 = 0.3 #this is the fraction assigned to patch 1
+
+[retrieval]
+fit=[
+    'object.radius',
+    'chemistry.free.H2O',
+    'clouds.slab-grey.ptop',
+    'clouds.slab-grey.dp',
+    'error_inflation'
+]
+convolution = 'tophat' #options: instrument, tophat, spectres
+
+[retrieval.prior]
+"object.radius" = {type='gaussian',mean=1,std=1}
+"chemistry.free.H2O" = {type='uniform',min=-12,max=0,log=true}
+"clouds.slab-grey.ptop" = {type='uniform',min=-3,max=2,log=true}
+"clouds.slab-grey.dp" = {type='uniform',min=0.005,max=2,log=true}
+"error_inflation" = {type='uniform',min=-2,max=4,log=true}
+
+[sampler]
+code='ultranest'#options: ultranest, emcee, pymultinest
+
+[sampler.ultranest]
+live_points = 100
+resume=true 
+ultranets_kwargs={}
