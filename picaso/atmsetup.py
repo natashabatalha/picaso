@@ -247,8 +247,7 @@ class ATMSETUP():
 
     def get_needed_continuum(self,available_ray_mol,available_continuum):
         """
-        This will define which molecules are needed for the continuum opacities. THis is based on 
-        temperature and molecules. This is terrible code I
+        This will define which molecules are needed for the continuum opacities.
 
         Parameters
         ----------
@@ -257,48 +256,31 @@ class ATMSETUP():
         available_continuum : list of str
             list of available continuum molecules 
         """
-        self.rayleigh_molecules = []
-        self.continuum_molecules = []
 
+        # Get simple names of each molecule
         simple_names = [convert_to_simple(i) for i in self.molecules]
-        if "H2" in simple_names:
-            self.continuum_molecules += [['H2','H2']]
-        if ("H2" in simple_names) and ("He" in simple_names):
-            self.continuum_molecules += [['H2','He']]
-        if ("H2" in simple_names) and ("N2" in simple_names):
-            self.continuum_molecules += [['H2','N2']]   
-        if  ("H2" in simple_names) and ("H" in simple_names):
-            self.continuum_molecules += [['H2','H']]
-        if  ("H2" in simple_names) and ("CH4" in simple_names):
-            self.continuum_molecules += [['H2','CH4']]
-        if  ("N2" in simple_names):
-            self.continuum_molecules += [['N2','N2']]
-        if  ("CO2" in simple_names):
-            self.continuum_molecules += [['CO2','CO2']]      
-        if  ("O2" in simple_names):
-            self.continuum_molecules += [['O2','O2']]    
 
-        if ("H-" in simple_names):
+        # First deal with CIA
+        self.continuum_molecules = []
+        # For standard CIA opacities
+        for m1 in simple_names:
+            for m2 in simple_names:
+                if m1+m2 in available_continuum:
+                    self.continuum_molecules += [[m1,m2]]
+
+        # For special continuum opacities
+        if "H-" in simple_names and 'H-bf' in available_continuum:
             self.continuum_molecules += [['H-','bf']]
-        if ("H" in simple_names) and ("electrons" in self.level.keys()):
+        if "H" in simple_names and "electrons" in self.level.keys() and 'H-ff' in available_continuum:
             self.continuum_molecules += [['H-','ff']]
-        if ("H2" in simple_names) and ("electrons" in self.level.keys()):
+        if "H2" in simple_names and "electrons" in self.level.keys() and 'H2-' in available_continuum:
             self.continuum_molecules += [['H2-','']]
-        #now we can remove continuum molecules from self.molecules to keep them separate 
-        if 'H+' in ['H','H2-','H2','H-','He','N2']: self.add_warnings('No H+ continuum opacity included')
 
-        #remove anything not in opacity file
-        cm =[]
-        for i in self.continuum_molecules: 
-            if ''.join(i) in available_continuum: cm += [i]
-        self.continuum_molecules = cm
-
-        #and rayleigh opacity
+        # Deal with rayleigh opacity
+        self.rayleigh_molecules = []
         for i in simple_names: 
-            if i in available_ray_mol : self.rayleigh_molecules += [i]
-
-        
-        #self.molecules = np.array([ x for x in self.molecules if x not in ['H','H2-','H2','H-','He','N2', 'H+'] ])
+            if i in available_ray_mol: 
+                self.rayleigh_molecules += [i]
 
     def get_weights(self, molecule):
         """

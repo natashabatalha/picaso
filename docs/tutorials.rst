@@ -1,47 +1,53 @@
 Tutorials
 =========
 
-Basics of Reflected Light
--------------------------
+Basics of Spectral Modeling 
+---------------------------
 
 .. toctree::
    :maxdepth: 1
 
-   Getting Started  </notebooks/1_GetStarted.ipynb>
-   Adding Clouds  </notebooks/2_AddingClouds.ipynb>
-   Adding Surface Reflectivity </notebooks/3_AddingSurfaceReflectivity.ipynb>
-   Plot Diagnostics </notebooks/4_PlotDiagnostics.ipynb>
+   Getting Started </notebooks/A_basics/1_GetStarted.ipynb>
+   Simple Clouds  </notebooks/A_basics/2_AddingClouds.ipynb>
+   Surface Reflectivity </notebooks/A_basics/3_AddingSurfaceReflectivity.ipynb>
+   Plot Diagnostics </notebooks/A_basics/4_PlotDiagnostics.ipynb>
+   Thermal Emission Spectroscopy </notebooks/A_basics/5_AddingThermalFlux.ipynb>
+   Transmission Spectroscopy </notebooks/A_basics/6_AddingTransitSpectrum.ipynb>
+   Brown Dwarf Spectroscopy </notebooks/A_basics/7_BrownDwarfs.ipynb>
 
-Basics of Transmisison
-----------------------
-
-.. toctree::
-   :maxdepth: 2
-   
-   Transmission Spectroscopy Exoplanets </notebooks/5_AddingTransitSpectrum.ipynb>
-
-Basics of Thermal Emission
---------------------------
+Chemistry
+---------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
-   Thermal Emission Exoplanets </notebooks/5_AddingThermalFlux.ipynb>
-   Brown Dwarfs </notebooks/6_BrownDwarfs.ipynb>
+   Chemical Equilibrium & Disequilibrium Hacks </notebooks/B_chemistry/1_ChemicalEquilibrium.ipynb>
+   Full Kinetics/Photochemistry  </notebooks/A_basics/2_Photochemistry.ipynb>
+ 
 
+Clouds
+------
 
+.. toctree::
+   :maxdepth: 1
 
-More Complexity with Clouds
+   Virga (Ackerman & Marley Clouds) </notebooks/C_clouds/1_PairingPICASOToVIRGA.ipynb>
+   Patchy Clouds </notebooks/C_clouds/2_PatchyClouds.ipynb>
+
+1D Climate Modeling
+-------------------
+Relevant Citatons: `Mukherjee et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022arXiv220807836M/abstract>`_
+
+.. toctree::
+   :maxdepth: 1
+
+   Brown Dwarfs </notebooks/climate/12a_BrownDwarf_PreW.ipynb>
+   Planet </notebooks/climate/12b_Exoplanet_PreW.ipynb>
+   Brown Dwarfs w/ Disequilibrium Chemistry </notebooks/climate/12c_BrownDwarf_DEQ_const_kzz.ipynb>
+   Creating a grid of models </notebooks/climate/12d_CreateModelGrid.ipynb>
+
+3D Spectra and Phase Curves
 ---------------------------
-
-.. toctree::
-   :maxdepth: 2
-
-   Virga (Ackerman & Marley Clouds) </notebooks/7_PairingPICASOToVIRGA.ipynb>
-   Patchy Clouds </notebooks/7_PatchyClouds.ipynb>
-
-Moving to 3 Dimensions
-----------------------
 Relevant Citatons: `Adams et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022ApJ...926..157A/abstract>`_ for 3D spectra and `Robbins-Blanch et al. 2022 <http://arxiv.org/abs/2204.03545>`_ for Phase Curves. 
 
 .. toctree::
@@ -56,17 +62,6 @@ Relevant Citatons: `Adams et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022ApJ
    Modeling a Thermal Phase Curve pt 2 (Robbins-Blanch et al. 2022)</notebooks/9f_PhaseCurves-wChemEq.ipynb>
    Modeling a Reflected Light Phase Curve (Hamill et al. 2024)</notebooks/9g_ReflectedPhaseCurve.ipynb>
 
-1D Climate Modeling
--------------------
-Relevant Citatons: `Mukherjee et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022arXiv220807836M/abstract>`_
-
-.. toctree::
-   :maxdepth: 1
-
-   Brown Dwarfs </notebooks/climate/12a_BrownDwarf.ipynb>
-   Planet </notebooks/climate/12b_Exoplanet.ipynb>
-   Brown Dwarfs w/ Disequilibrium Chemistry </notebooks/climate/12c_BrownDwarf_DEQ.ipynb>
-   Creating a grid of models </notebooks/climate/12d_CreateModelGrid.ipynb>
 
 Fitting models to data
 ----------------------

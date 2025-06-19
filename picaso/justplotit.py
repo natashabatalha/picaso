@@ -1417,10 +1417,12 @@ def heatmap_taus(out, R=0):
         pcm.set_clim(-3.0, 3.0)
         ax.set_title(itau)
         ax.set_yscale('log')
-        ax.set_ylim([1e2,1e-3])
+        ax.set_ylim([np.max(out['full_output']['layer']['pressure']),np.min(out['full_output']['layer']['pressure'])])
         ax.set_ylabel('Pressure(bars)')
-        ax.set_ylabel('Wavelength(um)')
+        ax.set_xlabel('Wavelength(um)')
         cbar.set_label('log Opacity')
+    
+    return ax
 
 def phase_snaps(allout, x = 'longitude', y = 'pressure', z='temperature',palette='RdBu_r',
     y_log=True, x_log=False,z_log=False,
@@ -1975,12 +1977,15 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
         cld_p = np.copy(clima_out['cld_output_picaso']['pressure'][0::196])
     
     nlevel = len(t_eq)
-    nstep = all_profiles_eq.shape[0]
+    # added this so that it can actually plot up the PT profile that's broken up into chunks of profiles
+    nstep = int(all_profiles_eq.shape[0]/nlevel)
+    split_profiles = np.array_split(all_profiles_eq, nstep)
+
     mols_to_plot = {i:np.zeros(all_profiles_eq.size) for i in molecules}
     spec = np.zeros(shape =(nstep,opacity.nwno))
     
     for i in range(nstep):
-        picaso_bundle.add_pt(all_profiles_eq[i], 
+        picaso_bundle.add_pt(split_profiles[i], 
                              p_eq)
 
         picaso_bundle.premix_atmosphere(opacity)
@@ -2027,6 +2032,7 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
             "width_ratios": [1,1,0.1,1,1,0.1,1,1]})
 
     temp = all_profiles_eq[0]
+    temp = split_profiles[0]
     lines = {}
     for imol,col in zip(molecules,Colorblind8):
         lines[imol], = ax['B'].loglog(mols_to_plot[imol][0:nlevel], p_eq,linewidth=3,color=col, label=imol)
@@ -2085,7 +2091,7 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
         return lines
     
     def animate(i):                       
-        lines['temp'].set_xdata(all_profiles_eq[i])
+        lines['temp'].set_xdata(split_profiles[i])
         
         for imol in molecules:
             lines[imol].set_xdata(mols_to_plot[imol][i*nlevel:(i+1)*nlevel])
