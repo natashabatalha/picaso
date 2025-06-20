@@ -101,8 +101,31 @@ def spectrum(config):
 
 
     #WIP TODO: A.surface_reflect()
-
+    
+    
     #WIP TODO:if clouds: 
+    cloud_config = config.get('clouds',None)
+    if isinstance(cloud_config , dict):
+        do_clouds=True
+    else: 
+        do_clouds=False
+    
+    if do_clouds == True: 
+        cld_type = cloud_config['cloud1_type']
+
+        if cld_type=='deck-grey':
+
+            cloud_config['cloud1'][cld_type]['p']=cloud_config['cloud1'][cld_type]['p']['value']
+            cloud_config['cloud1'][cld_type]['dp']=cloud_config['cloud1'][cld_type]['dp']['value']
+            for ikey in cloud_config['cloud1'][cld_type].keys(): 
+                val = cloud_config['cloud1'][cld_type][ikey]
+                if isinstance(val, (float,int)):
+                    val=[val]
+                    cloud_config['cloud1'][cld_type][ikey]=val
+
+            A.clouds( **cloud_config['cloud1'][cld_type])
+
+
     #WIP TODO:    A.clouds()
     #WIP TODO:    A.virga()
 
@@ -134,17 +157,22 @@ def PT_handler(pt_config):
         else: 
             pressure = np.linespace(minp_bar,maxp_bar,nlevel)
         
+        #get the temperature as a function of pressure 
         temperature_function = getattr(param_tools, type)
         temperature_inputs = pt_config[type]
         temperature = temperature_function(pressure,**temperature_inputs)
-        
-    return pd.DataFrame({'temperature':temperature,'pressure':pressure})
+        df = pd.DataFrame({'temperature':temperature,'pressure':pressure})
+    return df
 
 
 #WIP TODO REPLACE THIS WITH THE PARAMTOOLS BEING BUILT
 class param_tools: 
     def isothermal(pressure, T):
         return pressure*0+T 
+    def knots(pressure,foo1,foo2):
+        return temperature
+    def madhu_seager_09(pressure,foo1,foo2):
+        return temperature
     
 
 def chem_free(pt_df, chem_config):

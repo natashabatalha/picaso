@@ -3,8 +3,9 @@ irradiated=true #options: true or false (if true, user needs to input star prope
 calc_type='spectrum'#spectrum climate or retrieval
 
 [InputOutput]
-input_data = 'path/to/spectrum.nc' #see docs on required data formats
-sampler_output = 'path/to/output'
+observation_data = 'path/to/spectrum.nc' #see docs on required data formats
+retrieval_output = 'path/to/output'
+spectrum_output = 'path/to/output.nc'
 
 [OpticalProperties]
 opacity_files = 'path/to/opacities.db' # single db or list of opacity dbs 
@@ -94,11 +95,15 @@ pandas_kwargs={sep=','}
 [clouds]
 cloud1_type='slab-alpha' #options: slab-grey, deck-grey, slab-alpha, deck-alpha, slab-mie, deck-mie, virga, fsed
 
-[clouds.cloud1.slab-grey]
-ptop = {value=1,unit='logbar'}
-dp = {value=1,unit='logbar'}
 
 [clouds.cloud1.deck-grey]
+p = {value=1,unit='logbar'} 
+dp = {value=1,unit='logbar'}
+w0 = 0
+g0 = 0
+opd = 10
+
+[clouds.cloud1.slab-grey]
 ptop = {value=1,unit='logbar'}
 dp = {value=1,unit='logbar'}
 
