@@ -70,7 +70,7 @@ def spectrum(config):
                radius_unit= u.Unit(config['star'].get('radius', {}).get('unit',None)),
                semi_major=config['star'].get('semi_major', {}).get('value',None), 
                semi_major_unit = u.Unit(config['star'].get('semi_major', {}).get('unit',None)), 
-               filename=None, 
+               filename=filename, 
                w_unit=w_unit, 
                f_unit=f_unit
                )
