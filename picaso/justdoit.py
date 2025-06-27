@@ -2764,9 +2764,9 @@ class inputs():
 
         Parameters
         ----------
-        co : int 
-            carbon to oxygen ratio relative to solar.
-            Solar = 1
+        cto_absolute : int 
+            carbon to oxygen ratio absolute units.
+            Solar = 0.55
         log_mh : int 
             metallicity (relative to solar)
             Will find the nearest value to 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
