@@ -1819,8 +1819,8 @@ class inputs():
             bin_flux_star[idx_nobins] = flux_star_interp[idx_nobins]
             opannection.unshifted_stellar_spec =bin_flux_star
             unit_flux =  'ergs cm^{-2} s^{-1} cm^{-1}'
-
-        if not np.isnan(semi_major): 
+        #only compute relative flux if stellar radius and semi major axis are provided
+        if ((not np.isnan(semi_major)) & (not np.isnan(r))): 
             opannection.relative_flux = bin_flux_star * (r/semi_major)**2
         else: 
             opannection.relative_flux = bin_flux_star*0 + 1 #no semi major supplied and so no relative flux exists 
