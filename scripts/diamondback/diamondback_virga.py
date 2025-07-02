@@ -39,7 +39,7 @@ def run_virga_to_match_diamondback(teff, grav_ms2, fsed, gases, metallicity=1.0,
     sum_planet.gravity(gravity=grav_ms2, gravity_unit=u.Unit('m/(s**2)'))
     sum_planet.ptk(df = diamondback_ptk)
     
-    return vdi.compute(sum_planet, "~/projects/clouds/virga/refrind")
+    return vdi.compute(sum_planet, "~/projects/clouds/virga/refrind", og_solver=True)
     
     diamondback_ptk = read_diamondback_clouds(teff, grav_ms2, fsed)
     recommended_gases = vdi.recommend_gas(diamondback_ptk["pressure"], diamondback_ptk["temperature"], metallicity, mean_molecular_weight)
@@ -50,59 +50,58 @@ def run_virga_to_match_diamondback(teff, grav_ms2, fsed, gases, metallicity=1.0,
     atm.ptk(df = diamondback_ptk)
     return vdi.compute(atm, **kwargs)
 
-if __name__ == "__main__":
-    grav_ms2, fsed = 316, 1
-    virga_runs = {}
-    for teff in [900]:
-        virga_runs[teff] = [
-            run_virga_to_match_diamondback(teff, grav_ms2, fsed, gases) for gases in [["Fe", "MgSiO3", "Mg2SiO4", "Al2O3"]]
-        ]
+# %%
+grav_ms2 = 316
+virga_runs = {}
+for teff in [900, 1900]:
+    for fsed in [1, 8]:
+        virga_runs[f"{teff}, {fsed}"] = run_virga_to_match_diamondback(teff, grav_ms2, fsed, ["Fe", "MgSiO3", "Mg2SiO4", "Al2O3"])
 
-    fig, axs = plt.subplots(2,2, figsize=(12,8))
-    for (teff, ax) in zip([900], [axs[0,0], axs[0,1], axs[1,0], axs[1,1]]):
-        vrun = virga_runs[teff][0]
-        dbclouds = read_diamondback_clouds(teff, grav_ms2, fsed)
-        for (i, (c, color)) in enumerate(zip(vrun["condensibles"], ["black", "blue", "red", "green"])):
-            ax.loglog(dbclouds[f"{c} qc(g/g)"], dbclouds["pressure"], label=f"Diamondback {c}", color=color)
-            ax.loglog(vrun["condensate_mmr"][:,i], vrun["pressure"], label=f"virga {c}", color=color, ls="--")
-        ax.set_xlabel(f"Condensate mixing ratio, {teff = }, {grav_ms2 = }, {fsed = }")
-        ax.set_ylabel("Pressure (bar)")
-        if teff == 900:
-            ax.legend()
-        ax.invert_yaxis()
-
-    plt.savefig("../../figures/diamondback_virga_sync_bad_20250501.pdf")
-
-    # %%
-    wl_idx = 146
-    fig, axs = plt.subplots(2,2, figsize=(12,8))
-    for (teff, ax) in zip([900, 1400, 1900, 2400], [axs[0,0], axs[0,1], axs[1,0], axs[1,1]]):
-        diamondback_cloud = pd.read_csv(f"../../data/diamondback_optical_properties/t{teff}g{grav_ms2}f{fsed}_m0.0_co1.0.cld", sep=r"\s+")
-        sonora_df_cloudy = pd.read_csv(f"../../data/sonora_diamondback/t{teff}g{grav_ms2}f{fsed}_m0.0_co1.0.pt", sep=r"\s+", skiprows=[1])
-        layer_pressures = np.array(sonora_df_cloudy["P"])
-        level_pressures = np.sqrt(layer_pressures[1:] * layer_pressures[:-1])
-        for (virga_output, caption, alpha) in zip(virga_runs[teff], ["all gases", "only MgSiO3", "only Mg2SiO4", "only Fe and Al2O3"], [1, 0.5, 0.5, 0.5]):
-            if caption == "all gases":
-                ax.loglog(np.array(diamondback_cloud["tau"]).reshape((90, 196))[:,wl_idx], level_pressures, label="Diamondback", lw=2)
-            ax.loglog(virga_output["opd_per_layer"][:,-wl_idx],virga_output["pressure"], label=f"virga, {caption}", ls=("--" if alpha==0.5 else "-"), alpha=alpha)
-        ax.set_xlim(left=1e-10, right=1e2)
-        ax.set_xlabel(f"OPD at 1.1 micron, {teff = }, {grav_ms2 = }, {fsed = }")
-        ax.set_ylabel("Pressure (bar)")
-        if teff == 900:
-            ax.legend()
-        ax.invert_yaxis()
-    # %%
-    for t in virga_runs.keys():
-        for virga_output in virga_runs[t]:
-            a = virga_output["condensate_mmr"]
-            print(np.min(a[a > 0.0]))
-    # %%
-    vrun = virga_runs[teff][0]
-    dbclouds = read_diamondback_clouds(teff, 8, 316)
+# %%
+fig, axs = plt.subplots(2,2, figsize=(12,8), dpi=400)
+for (teff, fsed, ax) in zip([900, 900, 1900, 1900], [1, 8, 1, 8], [axs[0,0], axs[0,1], axs[1,0], axs[1,1]]):
+    vrun = virga_runs[f"{teff}, {fsed}"]
+    dbclouds = read_diamondback_clouds(teff, grav_ms2, fsed)
     for (i, (c, color)) in enumerate(zip(vrun["condensibles"], ["black", "blue", "red", "green"])):
-        plt.loglog(dbclouds[f"{c} qc(g/g)"], dbclouds["pressure"], label=f"Diamondback {c}", color=color)
-        plt.loglog(vrun["condensate_mmr"][:,i], vrun["pressure"], label=f"virga {c}", color=color, ls="--")
-    plt.xlabel(f"Condensate mixing ratio, {teff = }, {grav_ms2 = }, {fsed = }")
-    plt.ylabel("Pressure (bar)")
-    plt.gca().invert_yaxis()
+        ax.set_ylim(1e-4, 1e2)
+        ax.set_xlim(1e-10, 1e-2)
+        ax.loglog(dbclouds[f"{c} qc(g/g)"], dbclouds["pressure"], label=f"{c}", color=color)
+        ax.loglog(vrun["condensate_mmr"][:,i], vrun["pressure"], color=color, ls="--")
+    ax.set_xlabel(f"Condensate MMR, {teff = }, {fsed = }", fontsize=14)
+    ax.set_ylabel("Pressure (bar)", fontsize=14)
+    if teff == 900 and fsed == 8:
+        ax.legend(fontsize=14, loc="upper right")
+    ax.invert_yaxis()
+
+fig.tight_layout()
+# plt.savefig("../../figures/diamondback_virga_sync_newsolver.png")
+
+# %%
+fig, axs = plt.subplots(2,2, figsize=(12,8))
+wl_idx = 146
+
+for (teff, fsed, ax) in zip([900, 900, 1900, 1900], [1, 8, 1, 8], [axs[0,0], axs[0,1], axs[1,0], axs[1,1]]):
+    diamondback_cloud = pd.read_csv(f"../../data/diamondback_optical_properties/t{teff}g{grav_ms2}f{fsed}_m0.0_co1.0.cld", sep=r"\s+")
+    sonora_df_cloudy = pd.read_csv(f"../../data/sonora_diamondback/t{teff}g{grav_ms2}f{fsed}_m0.0_co1.0.pt", sep=r"\s+", skiprows=[1])
+    layer_pressures = np.array(sonora_df_cloudy["P"])
+    level_pressures = np.sqrt(layer_pressures[1:] * layer_pressures[:-1])
+    virga_output = virga_runs[f"{teff}, {fsed}"]
+    ax.loglog(np.array(diamondback_cloud["tau"]).reshape((90, 196))[:,wl_idx], level_pressures, label="Diamondback", lw=2)
+    ax.loglog(virga_output["opd_per_layer"][:,-wl_idx],virga_output["pressure"], label=f"virga")
+    ax.set_xlim(left=1e-10, right=1e2)
+    ax.set_xlabel(f"OPD at 1.1 micron, {teff = }, {grav_ms2 = }, {fsed = }")
+    ax.set_ylabel("Pressure (bar)")
+    if teff == 900 and fsed == 8:
+        ax.legend()
+    ax.invert_yaxis()
+fig
+# %%
+vrun = virga_runs[teff][0]
+dbclouds = read_diamondback_clouds(teff, 8, 316)
+for (i, (c, color)) in enumerate(zip(vrun["condensibles"], ["black", "blue", "red", "green"])):
+    plt.loglog(dbclouds[f"{c} qc(g/g)"], dbclouds["pressure"], label=f"Diamondback {c}", color=color)
+    plt.loglog(vrun["condensate_mmr"][:,i], vrun["pressure"], label=f"virga {c}", color=color, ls="--")
+plt.xlabel(f"Condensate mixing ratio, {teff = }, {grav_ms2 = }, {fsed = }")
+plt.ylabel("Pressure (bar)")
+plt.gca().invert_yaxis()
     # %%

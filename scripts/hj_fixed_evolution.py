@@ -1,3 +1,4 @@
+# %%
 from os.path import join, dirname
 import warnings
 from datetime import datetime
@@ -19,11 +20,11 @@ cloud_species = ["MgSiO3", "Mg2SiO4", "Fe", "Al2O3"]
 #1 ck tables from roxana
 mh = '+000'#'+0.0' #log metallicity
 CtoO = '100'#'1.0' # CtoO ratio
-ck_db = join(picaso_root, f"data/kcoeff_2020/sonora_2020_feh{mh}_co_{CtoO}.data.196")
+ck_db = join(picaso_root, f"data/kcoeff_2020/sonora_2020_feh{mh}_co_{CtoO}_noTiOVO.data.196")
 opacity_ck = jdi.opannection(ck_db=ck_db) # grab your opacities
 nlevel = 91 # number of plane-parallel levels in your code
 nofczns = 1 # number of convective zones initially
-nstr_upper = 89 # top most level of guessed convective zone
+nstr_upper = 88 # top most level of guessed convective zone
 nstr_deep = nlevel - 2 # this is always the case. Dont change this
 nstr = np.array([0,nstr_upper,nstr_deep,0,0,0])
 nstr_start = np.copy(nstr)
@@ -37,7 +38,9 @@ def twod_to_threed(arr, reps=4):
 
 def cloudless_and_fixed(tint, grav_ms2, fsed, semi_major):
     cl_run = jdi.inputs(calculation="planet", climate = True) # start a calculation
-    cl_run.star(opacity_ck, temp=5772.0,metal=0.0, logg=4.43767, radius=1.0, radius_unit=u.R_sun,semi_major=semi_major, semi_major_unit = u.AU)#opacity db, pysynphot database, temp, metallicity, logg
+    cl_run.star(opacity_ck, filename="../../runpicaso/data/solspec_picaso.dat", w_unit="um", f_unit="FLAM", semi_major=semi_major, semi_major_unit = u.AU)
+    # cl_run.inputs["star"]["flux"] *= 46239
+    # cl_run.star(opacity_ck, temp=5772.0,metal=0.0, logg=4.43767, radius=1.0, radius_unit=u.R_sun,semi_major=semi_major, semi_major_unit = u.AU)#opacity db, pysynphot database, temp, metallicity, logg
     cl_run.gravity(gravity=grav_ms2, gravity_unit=u.Unit('m/(s**2)')) # input gravity
     cl_run.effective_temp(tint) # input effective temperature
     temp_guess = np.load(join(picaso_root, "data/silicate_test_cases/HD189_temperature.npy"))
@@ -102,7 +105,9 @@ def cloudless_and_fixed(tint, grav_ms2, fsed, semi_major):
         with open(join(picaso_root, f"data/cloudless_and_fixed/hj_cloudlessfixed_tint_{tint}_gravms2_{grav_ms2}_fsed_{fsed}_semimajor_{semi_major}_dt{tstamp}.txt")) as f:
             f.write("inf or NaN error")
 
-separations = [0.02, 0.05]
+cloudless_and_fixed(500, 100, 1, 0.02)
+
+"""separations = [0.02, 0.05]
 tints = [100, 300, 500, 750, 1000]
 g = [1, 5, 10, 30, 50, 75, 100]
 fseds = [1, 3, 8]
@@ -111,3 +116,26 @@ for tint in tints:
         for fsed in fseds:
             for semi_major in separations:
                 cloudless_and_fixed(tint, grav_ms2, fsed, semi_major)
+"""
+# %%
+import h5py
+from matplotlib import pyplot as plt
+with h5py.File("../data/cloudless_and_fixed/hj_cloudlessfixed_tint_500_gravms2_100_fsed_1_semimajor_0.05_dt2025-05-15T14.28.52.655816.h5") as f:
+    plt.semilogy(np.array(f["temperature_cloudless"]), np.array(f["pressure"]), label="Cloudless")
+    plt.semilogy(np.array(f["temperature_fixed"]), np.array(f["pressure"]), label="Fixed")
+    plt.gca().invert_yaxis()
+    plt.title("tint_500_gravms2_100_fsed_1_semimajor_0.05")
+    plt.xlabel("Temperature (K)")
+    plt.ylabel("Pressure (bar)")
+    plt.legend()
+# %%
+with h5py.File("../data/cloudless_and_fixed/hj_cloudlessfixed_tint_500_gravms2_100_fsed_1_semimajor_0.05_dt2025-05-15T14.28.52.655816.h5") as f:
+    p_level = np.array(f["pressure"])
+    p_layer = [np.sqrt(p_level[i] * p_level[i+1]) for i in range(len(p_level)-1)]
+    plt.loglog(np.array(f["condensate_mmr"]), p_layer)
+    plt.gca().invert_yaxis()
+    plt.title("tint_500_gravms2_100_fsed_1_semimajor_0.05")
+    plt.xlabel("Temperature (K)")
+    plt.ylabel("Pressure (bar)")
+    plt.legend()
+# %%

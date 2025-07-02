@@ -482,7 +482,6 @@ def t_start(nofczns,nstr,it_max,conv,x_max_mult,
     A= np.zeros(shape=(nlevel,nlevel)) 
     
 
-    
     for its in range(it_max):
         
         # the total net flux = optical + ir + tidal component
@@ -1278,7 +1277,6 @@ def get_fluxes( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU
 
         #if full output is requested add in xint at top for 3d plots
 
-
     if thermal:
 
         #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
@@ -1357,6 +1355,7 @@ def get_fluxes( pressure, temperature, dwni,  bb , y2, tp, tmin, tmax ,DTAU, TAU
         """
 
         #if full output is requested add in flux at top for 3d plots
+    
     
     return flux_net_v_layer, flux_net_v, flux_plus_v, flux_minus_v , flux_net_ir_layer, flux_net_ir, flux_plus_ir, flux_minus_ir
 

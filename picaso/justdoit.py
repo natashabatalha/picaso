@@ -1613,8 +1613,7 @@ class inputs():
             sp.convert("um")
             sp.convert('flam') #ergs/cm2/s/ang
             wno_star = 1e4/sp.wave[::-1] #convert to wave number and flip
-            flux_star = sp.flux[::-1]*1e8 #flip and convert to ergs/cm3/s here to get correct order         
-            
+            flux_star = sp.flux[::-1]*1e8 #flip and convert to ergs/cm3/s here to get correct order
 
         elif ((not isinstance(temp, type(None))) & (not isinstance(metal, type(None))) & (not isinstance(logg, type(None)))):
             sp = psyn.Icat(database, temp, metal, logg)
