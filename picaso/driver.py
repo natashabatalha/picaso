@@ -83,7 +83,7 @@ def spectrum(config):
 
     # chemistry
     chem_config = config['chemistry']
-    if chem_config['method']=='free': #one value input all across the board
+    if chem_config['method']=='free': #user defined chemistry per molecule
         df=chem_free(df_pt,chem_config)
         A.atmosphere(df=df)
     elif chem_config['method']=='visscher': #chemistry inputs manually
@@ -189,10 +189,10 @@ def chem_free(pt_df, chem_config):
         if i !='background':
             value = free[i].get('value',None)
             #easy case where there is just one well-mixed value 
-            if value is not None:  #data file of chem
+            if value is not None: #abundance of the chemistry input per molecule
                 pt_df[i] = value
                 
-            else: #each molecule inpput manually
+            else: #each molecule input manually
                 values =  free[i].get('values') 
                 pressures = free[i].get('pressures') 
                 pressure_unit= free[i].get('pressure_unit') 
