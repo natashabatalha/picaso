@@ -230,4 +230,106 @@ def chem_free(pt_df, chem_config):
         if len(free['background']['gases'])==1: #1 background gases
             pt_df[free['background']['gases'][0]] = total_sum_of_background
     return pt_df
-            
+import picaso.justplotit as jpi
+from bokeh.layouts import column
+from bokeh.plotting import figure, show
+from bokeh.io import output_file
+from bokeh.models import HoverTool
+
+import picaso.justplotit as jpi
+from bokeh.layouts import column
+from bokeh.plotting import figure, show
+from bokeh.io import output_file
+from bokeh.models import HoverTool
+
+def viz(picaso_output): 
+    spectrum_plot_list = []
+    
+    def dashboard(x, y, title, x_label='Wavenumber (cm⁻¹)', y_label='y_value', color='blue'):
+        #format plot and add fancy tools
+        p = figure(
+            title=title,
+            x_axis_label=x_label,
+            y_axis_label=y_label,
+            tools="pan,wheel_zoom,box_zoom,reset,save",
+            sizing_mode='stretch_width',
+            height=300
+        )
+        line = p.line(x, y, line_width=2, color=color, legend_label=title)#graph it as a line and modify the line
+        
+        #hover tool to display x and y value
+        hover = HoverTool(tooltips=[('Wavenumber', '@x'), ('Value', '@y')], mode='vline', renderers=[line])
+        p.add_tools(hover)
+        
+        p.legend.location = 'top_right'
+        p.legend.click_policy = 'hide'#toggle lines on and off if there's multiple 
+        return p
+    #easier to tarck color list than searching for each one
+    colors = {
+        'transit_depth': 'navy',
+        'albedo': 'green',
+        'thermal': 'red',
+        'fpfs_reflected': 'orange',
+        'fpfs_thermal': 'purple',
+        'fpfs_total': 'black'
+    }
+    
+    #transit depth spectra
+    if isinstance(picaso_output.get('transit_depth', None), jpi.np.ndarray):
+        spectrum_plot_list.append(dashboard(
+            picaso_output['wavenumber'], 
+            picaso_output['transit_depth'], 
+            'Transit Depth Spectrum',
+            y_label='Transit Depth',
+            color=colors['transit_depth']
+        ))
+    #albedo spectra
+    if isinstance(picaso_output.get('albedo', None), jpi.np.ndarray):
+        spectrum_plot_list.append(dashboard(
+            picaso_output['wavenumber'], 
+            picaso_output['albedo'], 
+            'Albedo Spectrum',
+            y_label='Albedo',
+            color=colors['albedo']
+        ))
+    #thermal emission spectra
+    if isinstance(picaso_output.get('thermal', None), jpi.np.ndarray):
+        spectrum_plot_list.append(dashboard(
+            picaso_output['wavenumber'], 
+            picaso_output['thermal'], 
+            'Thermal Emission Spectrum',
+            y_label='Thermal Flux',
+            color=colors['thermal']
+        ))
+    #relative reflected spectra
+    if isinstance(picaso_output.get('fpfs_reflected', None), jpi.np.ndarray):
+        spectrum_plot_list.append(dashboard(
+            picaso_output['wavenumber'], 
+            picaso_output['fpfs_reflected'], 
+            'Reflected Light Spectrum',
+            y_label='Flux (Reflected)',
+            color=colors['fpfs_reflected']
+        ))
+    #relative thermal emission spectra
+    if isinstance(picaso_output.get('fpfs_thermal', None), jpi.np.ndarray):
+        spectrum_plot_list.append(dashboard(
+            picaso_output['wavenumber'], 
+            picaso_output['fpfs_thermal'], 
+            'Relative Thermal Emission Spectrum',
+            y_label='Flux (Thermal)',
+            color=colors['fpfs_thermal']
+        ))
+    #relative total spectra
+    if isinstance(picaso_output.get('fpfs_total', None), jpi.np.ndarray):
+        spectrum_plot_list.append(dashboard(
+            picaso_output['wavenumber'], 
+            picaso_output['fpfs_total'], 
+            'Relative Full Spectrum',
+            y_label='Flux (Total)',
+            color=colors['fpfs_total']
+        ))
+
+    
+    
+    output_file('dashboard.html')
+    show(column(children=spectrum_plot_list, sizing_mode="scale_width"))
