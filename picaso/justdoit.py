@@ -2224,7 +2224,7 @@ class inputs():
         df = pc.run_for_picaso(
                         self.inputs['atmosphere']['profile'], 
                         np.log10(float(self.inputs['atmosphere']['mh'])), 
-                        float(self.inputs['atmosphere']['cto']), 
+                        float(self.inputs['atmosphere']['cto_relative']), 
                         self.inputs['atmosphere']['profile']['kz'].values, 
                         True
                     )
