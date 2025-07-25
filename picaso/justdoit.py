@@ -2092,7 +2092,11 @@ class inputs():
         
         for iq in quench_levels.keys():
             for imol in species_to_adjust: 
-                if imol in iq: quench_by_molecule[imol]=quench_levels[iq]
+                if imol in iq: 
+                    if quench_levels[iq] < self.nlevel:
+                        quench_by_molecule[imol]=quench_levels[iq]
+                    else: #this case is if we extended the atmosphere for a deep quench level, the most bottom level abundance is the quench level
+                        quench_by_molecule[imol]=self.nlevel-1
 
         H2 = self.inputs['atmosphere']['profile']['H2'].values
         for imol in species_to_adjust: 
@@ -2182,7 +2186,7 @@ class inputs():
         #if a quench level dictionary is provided 
         if self.inputs['approx']['chem_params']['quench'] and isinstance(quench_levels,dict):
             if verbose: print('Quench=True; Adjusting quench chemistry')
-            self.adjust_quench_chemistry(quench_levels)
+            self.adjust_quench_chemistry(quench_levels,chemistry_table)
        
         # volatile rainout 
         if self.inputs['approx']['chem_params']['vol_rainout'] and isinstance(quench_levels,dict): 
@@ -2224,7 +2228,7 @@ class inputs():
         df = pc.run_for_picaso(
                         self.inputs['atmosphere']['profile'], 
                         np.log10(float(self.inputs['atmosphere']['mh'])), 
-                        float(self.inputs['atmosphere']['cto']), 
+                        float(self.inputs['atmosphere']['cto_relative']), 
                         self.inputs['atmosphere']['profile']['kz'].values, 
                         True
                     )
@@ -2232,7 +2236,7 @@ class inputs():
         df['kz']=kz
         self.inputs['atmosphere']['profile']  = df 
 
-    def adjust_quench_chemistry(self, quench_levels):
+    def adjust_quench_chemistry(self, quench_levels,chemistry_table=None):
         """
         Adjusts the abundances of quenched species in the chemistry profile based on the provided quench levels.
         CO2 is defaulted to do the Zahnle and Marley (2014) kinetic fix outlined in Wogan et al. 2025 research note. 
@@ -2246,8 +2250,42 @@ class inputs():
         kinetic_CO2=True #since our old way was an "error" it seems like we should include htis as an option to be false
         
         df_atmo_og  = self.inputs['atmosphere']['profile']
+        try:
+            kz = self.inputs['atmosphere']['profile'].get('kz', None)
+        except AttributeError:
+            kz = np.zeros(df_atmo_og.shape[0])
         temperature = df_atmo_og['temperature'].values
         pressure = df_atmo_og['pressure'].values
+
+        # Check if any quench level is deeper than the available pressure grid, if so, extend the pressure grid
+        nlevel = len(temperature)
+        if any(quench_levels[key] >= nlevel for key in quench_levels):
+            extend_deeper = True
+            print('Extending atmosphere profile deeper to accommodate deep quench levels.')
+            # calculate dtdp to accurately extend profile
+            for j in range(nlevel -1):
+                dtdp=np.zeros(shape=(nlevel-1))
+                dtdp[j] = (log( temperature[j]) - log( temperature[j+1]))/(log(pressure[j]) - log(pressure[j+1]))
+
+            extended_pressure = np.logspace(np.log10(pressure[-1]+100),6,10)
+            pressure = np.append(pressure, extended_pressure)
+            for i in np.arange(nlevel, nlevel+10):
+                new_temp = np.exp(np.log(temperature[i-1]) - dtdp[-1] * (np.log(pressure[i-1]) - np.log(pressure[i])))
+                temperature = np.append(temperature, new_temp)
+            nlevel = len(temperature)
+            # Extend kz if it exists
+            if kz is not None:
+                extended_kz = np.ones(10)*kz.values[-1]  # Extend kz with the last value
+                kz = np.append(kz, extended_kz)
+            self.inputs['atmosphere']['profile'] = pd.DataFrame({'pressure': pressure, 'temperature': temperature, 'kz': kz})
+            df_atmo_og = self.inputs['atmosphere']['profile']
+            # self.inputs['atmosphere']['profile']['pressure'] = pressure
+            # self.inputs['atmosphere']['profile']['temperature'] = temperature
+            # create a new DataFrame with the extended pressure and temperature
+            if chemistry_table is not None:
+                self.chemistry_handler(chemistry_table=chemistry_table)
+            else:
+                self.chemistry_handler()
 
         #what order will we quench things 
         quench_sequence  = ['PH3','CO-CH4-H2O','CO2','NH3-N2','HCN']
@@ -2293,7 +2331,10 @@ class inputs():
         #reset H2 accordingly
         df_atmo_og.loc[:,'H2'] = H2
         #set new atmosphere 
-        self.inputs['atmosphere']['profile'] = df_atmo_og
+        if extend_deeper == True: #drop last 10 layers if we extended deeper
+            self.inputs['atmosphere']['profile'] = df_atmo_og.iloc[:-10]
+        else:
+            self.inputs['atmosphere']['profile'] = df_atmo_og
 
     def premix_atmosphere_diseq_deprecate(self, opa, quench_levels, teff, t_mix=None, df=None, filename=None, vol_rainout = False, 
                                 quench_ph3 = True, kinetic_CO2 = True, no_ph3 = False, cold_trap=False, cld_species = None, **pd_kwargs):
