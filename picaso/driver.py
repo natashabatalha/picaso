@@ -1,5 +1,11 @@
 from .justdoit import *
+import picaso.justdoit as jdi
+import picaso.justplotit as jpi
 import tomllib 
+from bokeh.layouts import column, row
+from bokeh.plotting import figure, show, output_file
+from bokeh.models import HoverTool, Tabs, Panel, ColumnDataSource
+import pandas as pd #this is already in the jdi?
 
 def run(driver_file):
 
@@ -9,6 +15,7 @@ def run(driver_file):
     if config['calc_type'] =='spectrum':
         out = spectrum(config)
     
+    ### I made these # because they stopped the run fucntion from doing return out and wouldn't let me use my plot PT fucntion
     elif config['calc_type']=='climate':
         raise Exception('WIP not ready yet')
         out = climate(config)
@@ -79,7 +86,7 @@ def spectrum(config):
     
     # tempreature 
     pt = config['temperature']
-    df_pt = PT_handler(pt) #datafile for pressure temperature profile
+    df_pt = PT_handler(pt, A) #datafile for pressure temperature profile
 
     # chemistry
     chem_config = config['chemistry']
@@ -132,38 +139,56 @@ def spectrum(config):
     #WIP TODO:    A.virga()
 
     out = A.spectrum(OPA, full_output=True, calculation = config['observation_type']) 
+    out['pt_profile']=df_pt
+    return out
 
-    return out 
-
-def PT_handler(pt_config): 
+def PT_handler(pt_config, A): 
     type = pt_config['profile']
 
     #check if supplied file for pt profile
     if type == 'userfile': 
         filename = pt_config['userfile']
-        kwargs = pt_config['panda_kwargs']
+        kwargs = pt_config.get('panda_kwargs', {})
         df = pd.read_csv(filename, **kwargs)
-    else:
-        #first setup pressure grid 
+ 
+    elif type == 'guillot':
+        #guillot analytical pt profile
+        #extract guillot-specific parameters from toml
+        params = pt_config.get('guillot', {})
+        #call picaso method on atmosphere instance 'A'
+        df = A.guillot_pt(**params)
+
+    elif type == 'sonora_bobcat':
+        #sonora bobcat grid pt profile from picaso-data
+        params = pt_config.get('sonora_bobcat', {})
+        #call picaso's sonora function with parameters
+        A.sonora(**params)
+        #the resulting pt profile is stored inside a.inputs['atmosphere']['profile']
+        df = A.inputs['atmosphere']['profile']
+
+    else: #build pt profile using param tools built in to param_tools?
         P_config = pt_config['pressure']
-        minp = P_config.get('min',{}).get('value') #minimum pressure
-        minp_unit  = P_config.get('min',{}).get('unit')
-        minp_bar = ((minp*u.Unit(minp_unit)).to(u.bar)).value #minimum bar
-        maxp = P_config.get('max',{}).get('value') #max pressure
-        maxp_unit  = P_config.get('max',{}).get('unit') 
-        maxp_bar = ((maxp*u.Unit(maxp_unit)).to(u.bar)).value #max bar
-        spacing = pt_config['pressure']['spacing'] #amount between each bar
-        nlevel = pt_config['pressure']['nlevel'] #number of levels
+        minp = P_config.get('min', {}).get('value')  #minimum pressure
+        minp_unit = P_config.get('min', {}).get('unit')
+        maxp = P_config.get('max', {}).get('value')  #max pressure
+        maxp_unit = P_config.get('max', {}).get('unit')
+        spacing = P_config.get('spacing')
+        nlevel = P_config.get('nlevel')
+        minp_bar = ((minp * u.Unit(minp_unit)).to(u.bar)).value
+        maxp_bar = ((maxp * u.Unit(maxp_unit)).to(u.bar)).value
+
         if spacing == 'log':
-            pressure = np.logspace(np.log10(minp_bar),np.log10(maxp_bar),nlevel)
-        else: 
-            pressure = np.linespace(minp_bar,maxp_bar,nlevel)
-        
-        #get the temperature as a function of pressure 
+            pressure = np.logspace(np.log10(minp_bar), np.log10(maxp_bar), nlevel)
+        else:
+            pressure = np.linspace(minp_bar, maxp_bar, nlevel)
+
+        #use param_tools method matching the profile type to generate temperature array
         temperature_function = getattr(param_tools, type)
-        temperature_inputs = pt_config[type]
-        temperature = temperature_function(pressure,**temperature_inputs)
-        df = pd.DataFrame({'temperature':temperature,'pressure':pressure})
+        temperature = temperature_function(pressure, **pt_config[type])
+
+        #create dataframe with pressure and temperature
+        df = pd.DataFrame({'temperature': temperature, 'pressure': pressure})
+
     return df
 
 
@@ -175,6 +200,7 @@ class param_tools:
         return temperature
     def madhu_seager_09(pressure,foo1,foo2):
         return temperature
+     
     
 
 def chem_free(pt_df, chem_config):
@@ -227,109 +253,39 @@ def chem_free(pt_df, chem_config):
             gas1_absolute_value = fraction * gas2_absolute_value
             pt_df[gas1_name] = gas1_absolute_value
             pt_df[gas2_name] = gas2_absolute_value
-        if len(free['background']['gases'])==1: #1 background gases
+        if len(free['background']['gases'])==1: #1 background gas
             pt_df[free['background']['gases'][0]] = total_sum_of_background
     return pt_df
-import picaso.justplotit as jpi
-from bokeh.layouts import column
-from bokeh.plotting import figure, show
-from bokeh.io import output_file
-from bokeh.models import HoverTool
-
-import picaso.justplotit as jpi
-from bokeh.layouts import column
-from bokeh.plotting import figure, show
-from bokeh.io import output_file
-from bokeh.models import HoverTool
 
 def viz(picaso_output): 
     spectrum_plot_list = []
-    
-    def dashboard(x, y, title, x_label='Wavenumber (cm⁻¹)', y_label='y_value', color='blue'):
-        #format plot and add fancy tools
-        p = figure(
-            title=title,
-            x_axis_label=x_label,
-            y_axis_label=y_label,
-            tools="pan,wheel_zoom,box_zoom,reset,save",
-            sizing_mode='stretch_width',
-            height=300
-        )
-        line = p.line(x, y, line_width=2, color=color, legend_label=title)#graph it as a line and modify the line
-        
-        #hover tool to display x and y value
-        hover = HoverTool(tooltips=[('Wavenumber', '@x'), ('Value', '@y')], mode='vline', renderers=[line])
-        p.add_tools(hover)
-        
-        p.legend.location = 'top_right'
-        p.legend.click_policy = 'hide'#toggle lines on and off if there's multiple 
-        return p
-    #easier to tarck color list than searching for each one
-    colors = {
-        'transit_depth': 'navy',
-        'albedo': 'green',
-        'thermal': 'red',
-        'fpfs_reflected': 'orange',
-        'fpfs_thermal': 'purple',
-        'fpfs_total': 'black'
-    }
-    
-    #transit depth spectra
-    if isinstance(picaso_output.get('transit_depth', None), jpi.np.ndarray):
-        spectrum_plot_list.append(dashboard(
-            picaso_output['wavenumber'], 
-            picaso_output['transit_depth'], 
-            'Transit Depth Spectrum',
-            y_label='Transit Depth',
-            color=colors['transit_depth']
-        ))
-    #albedo spectra
-    if isinstance(picaso_output.get('albedo', None), jpi.np.ndarray):
-        spectrum_plot_list.append(dashboard(
-            picaso_output['wavenumber'], 
-            picaso_output['albedo'], 
-            'Albedo Spectrum',
-            y_label='Albedo',
-            color=colors['albedo']
-        ))
-    #thermal emission spectra
-    if isinstance(picaso_output.get('thermal', None), jpi.np.ndarray):
-        spectrum_plot_list.append(dashboard(
-            picaso_output['wavenumber'], 
-            picaso_output['thermal'], 
-            'Thermal Emission Spectrum',
-            y_label='Thermal Flux',
-            color=colors['thermal']
-        ))
-    #relative reflected spectra
-    if isinstance(picaso_output.get('fpfs_reflected', None), jpi.np.ndarray):
-        spectrum_plot_list.append(dashboard(
-            picaso_output['wavenumber'], 
-            picaso_output['fpfs_reflected'], 
-            'Reflected Light Spectrum',
-            y_label='Flux (Reflected)',
-            color=colors['fpfs_reflected']
-        ))
-    #relative thermal emission spectra
-    if isinstance(picaso_output.get('fpfs_thermal', None), jpi.np.ndarray):
-        spectrum_plot_list.append(dashboard(
-            picaso_output['wavenumber'], 
-            picaso_output['fpfs_thermal'], 
-            'Relative Thermal Emission Spectrum',
-            y_label='Flux (Thermal)',
-            color=colors['fpfs_thermal']
-        ))
-    #relative total spectra
-    if isinstance(picaso_output.get('fpfs_total', None), jpi.np.ndarray):
-        spectrum_plot_list.append(dashboard(
-            picaso_output['wavenumber'], 
-            picaso_output['fpfs_total'], 
-            'Relative Full Spectrum',
-            y_label='Flux (Total)',
-            color=colors['fpfs_total']
-        ))
 
-    
-    
-    output_file('dashboard.html')
+    if isinstance(picaso_output.get('transit_depth', jpi.np.nan), jpi.np.ndarray):
+        spectrum_plot_list += [jpi.spectrum(picaso_output['wavenumber'], picaso_output['transit_depth'], title='Transit Depth Spectrum')]
+
+    if isinstance(picaso_output.get('albedo', jpi.np.nan), jpi.np.ndarray):
+        spectrum_plot_list += [jpi.spectrum(picaso_output['wavenumber'], picaso_output['albedo'], title='Albedo Spectrum')]
+
+    if isinstance(picaso_output.get('thermal', jpi.np.nan), jpi.np.ndarray):
+        spectrum_plot_list += [jpi.spectrum(picaso_output['wavenumber'], picaso_output['thermal'], title='Thermal Emission Spectrum')]
+
+    if isinstance(picaso_output.get('fpfs_reflected', jpi.np.nan), jpi.np.ndarray):
+        spectrum_plot_list += [jpi.spectrum(picaso_output['wavenumber'], picaso_output['fpfs_reflected'], title='Reflected Light Spectrum')]
+
+    if isinstance(picaso_output.get('fpfs_thermal', jpi.np.nan), jpi.np.ndarray):
+        spectrum_plot_list += [jpi.spectrum(picaso_output['wavenumber'], picaso_output['fpfs_thermal'], title='Relative Thermal Emission Spectrum')]
+
+    if isinstance(picaso_output.get('fpfs_total', jpi.np.nan), jpi.np.ndarray):
+        spectrum_plot_list += [jpi.spectrum(picaso_output['wavenumber'], picaso_output['fpfs_total'], title='Relative Full Spectrum')]
+
+    output_file("spectrum_output.html")
     show(column(children=spectrum_plot_list, sizing_mode="scale_width"))
+    
+    return spectrum_plot_list
+
+
+
+def plot_pt_profile(full_output, **kwargs):
+    fig = jpi.pt(full_output, **kwargs)
+    show(fig)
+    return fig
