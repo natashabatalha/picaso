@@ -2246,7 +2246,7 @@ class inputs():
         quench_levels : dict
             Dictionary with the quench levels for each molecule.
         """
-
+        extend_deeper = False
         kinetic_CO2=True #since our old way was an "error" it seems like we should include htis as an option to be false
         
         df_atmo_og  = self.inputs['atmosphere']['profile']
