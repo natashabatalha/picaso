@@ -2250,10 +2250,7 @@ class inputs():
         kinetic_CO2=True #since our old way was an "error" it seems like we should include htis as an option to be false
         
         df_atmo_og  = self.inputs['atmosphere']['profile']
-        try:
-            kz = self.inputs['atmosphere']['profile'].get('kz', None)
-        except AttributeError:
-            kz = np.zeros(df_atmo_og.shape[0])
+        kz = self.inputs['atmosphere']['profile'].get('kz', None)
         temperature = df_atmo_og['temperature'].values
         pressure = df_atmo_og['pressure'].values
 
@@ -2262,26 +2259,25 @@ class inputs():
         if any(quench_levels[key] >= nlevel for key in quench_levels):
             extend_deeper = True
             print('Extending atmosphere profile deeper to accommodate deep quench levels.')
+
             # calculate dtdp to accurately extend profile
             for j in range(nlevel -1):
                 dtdp=np.zeros(shape=(nlevel-1))
                 dtdp[j] = (log( temperature[j]) - log( temperature[j+1]))/(log(pressure[j]) - log(pressure[j+1]))
 
+            # extend the pressure by 10 layers to 1e6 bars (deep enough for even the coldest cases)
             extended_pressure = np.logspace(np.log10(pressure[-1]+100),6,10)
             pressure = np.append(pressure, extended_pressure)
             for i in np.arange(nlevel, nlevel+10):
                 new_temp = np.exp(np.log(temperature[i-1]) - dtdp[-1] * (np.log(pressure[i-1]) - np.log(pressure[i])))
                 temperature = np.append(temperature, new_temp)
             nlevel = len(temperature)
-            # Extend kz if it exists
-            if kz is not None:
-                extended_kz = np.ones(10)*kz.values[-1]  # Extend kz with the last value
-                kz = np.append(kz, extended_kz)
-            self.inputs['atmosphere']['profile'] = pd.DataFrame({'pressure': pressure, 'temperature': temperature, 'kz': kz})
+
+            # create new df to have the right shape to be used
+            self.inputs['atmosphere']['profile'] = pd.DataFrame({'pressure': pressure, 'temperature': temperature})#, 'kz': kz})
             df_atmo_og = self.inputs['atmosphere']['profile']
-            # self.inputs['atmosphere']['profile']['pressure'] = pressure
-            # self.inputs['atmosphere']['profile']['temperature'] = temperature
-            # create a new DataFrame with the extended pressure and temperature
+
+            # redo the chemistry to make sure new extended layers have to correct abundances
             if chemistry_table is not None:
                 self.chemistry_handler(chemistry_table=chemistry_table)
             else:
@@ -2333,6 +2329,9 @@ class inputs():
         #set new atmosphere 
         if extend_deeper == True: #drop last 10 layers if we extended deeper
             self.inputs['atmosphere']['profile'] = df_atmo_og.iloc[:-10]
+            # add kzz back in only for constant kzz cases, issues in calculate_atm() (getting mmw) if added back in df for sc kzz
+            if kz is not None:
+                self.inputs['atmosphere']['profile']['kz'] = kz
         else:
             self.inputs['atmosphere']['profile'] = df_atmo_og
 
