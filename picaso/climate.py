@@ -34,7 +34,6 @@ def update_quench_levels(bundle, Atmosphere, kz, grav,verbose=False):
         gravity cgs
     
     """
-    print(kz)
     #PH3 requires h2o and h2 abundances so if all those three 
     #are present than go forth and compute the PH3 quenching 
     if np.all(np.isin(['H2','H2O','PH3'], bundle.inputs['atmosphere']['profile'].keys())):
@@ -3083,11 +3082,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     do_kzz_calc = sc_kzz_and_clouds or sc_kzz_and_diseq
     constant_kzz =  ((not self_consistent_kzz) and diseq) #((not self_consistent_kzz) and cloudy) or
     if constant_kzz: 
-        kz_chem = bundle.inputs['atmosphere'].get( 'constant_kz', 0) 
-        print('what is kzchem',kz_chem)
-        if isinstance(kz_chem,int):
-            print('adding constantkz')
-            bundle.inputs['atmosphere']['constant_kz'] = bundle.inputs['atmosphere']['profile']['kz'].values
+        kz_chem = bundle.inputs['atmosphere']['kzz'].get('constant_kzz')
         
 
     if cloudy: 
@@ -3165,6 +3160,8 @@ def profile(bundle, nofczns, nstr, temp, pressure,
                OpacityWEd_clear=OpacityWEd_clear,OpacityNoEd_clear=OpacityNoEd_clear,
                #kwargs for get_kzz function
                moist=moist, do_holes=do_holes, fhole=fhole)
+        bundle.inputs['atmosphere']['kzz']['sc_kzz']=kz #bookeeping current kz 
+
         if save_kzz: all_kzz = np.append(all_kzz,kz)
         #are clouds turned on such that we need the sc kzz for virga? 
         if sc_kzz_and_clouds: 
@@ -3172,9 +3169,6 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         #is self consistent kz needed for diseq chem too? 
         if sc_kzz_and_diseq: 
             kz_chem = kz 
-    #Otherwise get the fixed profile in bundle
-    if constant_kzz: 
-        kz_chem = bundle.inputs['atmosphere']['constant_kz'].values
 
     ### 3) IF: COMPLEX CHEM
     ##  3-a) option 1: GET QUENCH LEVELS FOR DISEQ and UPDATE CHEM
@@ -3256,9 +3250,6 @@ def profile(bundle, nofczns, nstr, temp, pressure,
             #is self consistent kz needed for diseq chem too? 
             if sc_kzz_and_diseq: 
                 kz_chem = kz 
-        #Otherwise get the fixed profile in bundle
-        if constant_kzz: 
-            kz_chem = bundle.inputs['atmosphere']['constant_kz'].values
 
         ### 3) IF: COMPLEX CHEM
         ##  3-a) option 1: GET QUENCH LEVELS FOR DISEQ and UPDATE CHEM

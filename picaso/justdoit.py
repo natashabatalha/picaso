@@ -2224,18 +2224,36 @@ class inputs():
         
         #set photochem to run 
         pc = self.inputs['climate']['pc']
-        kz = self.inputs['atmosphere']['profile']['kz'].values
+        #gets whatever kzz is specified either constant or self consistent
+        kz = self.find_kzz()
+        
         df = pc.run_for_picaso(
                         self.inputs['atmosphere']['profile'], 
                         np.log10(float(self.inputs['atmosphere']['mh'])), 
                         float(self.inputs['atmosphere']['cto_relative']), 
-                        self.inputs['atmosphere']['profile']['kz'].values, 
+                        kz, 
                         True
                     )
-        #reset kz to picaso dataframe to keep track of it 
-        df['kz']=kz
+        #reset kz to picaso dataframe to keep track of it
+        #neb trying to commect this out as i htink this is not needed anymore 
+        #df['kz']=kz
         self.inputs['atmosphere']['profile']  = df 
-
+    
+    def find_kzz(self):
+        """
+        Returns in this order: 
+        1) self.inputs['atmosphere']['kzz']['constant_kzz']
+        OR
+        2) self.inputs['atmosphere']['kzz']['sc_kzz'] 
+        OR 
+        3) self.inputs['atmosphere']['profile']['kz'] 
+        OR 
+        None
+        """
+        kzz_dict = self.inputs['atmosphere'].get('kzz',self.inputs['atmosphere']['profile'])
+        kz = kzz_dict.get('constant_kzz', kzz_dict.get('sc_kzz', kzz_dict.get('kz',None)))
+        return np.array(kz)
+    
     def adjust_quench_chemistry(self, quench_levels,chemistry_table=None):
         """
         Adjusts the abundances of quenched species in the chemistry profile based on the provided quench levels.
@@ -2250,7 +2268,13 @@ class inputs():
         kinetic_CO2=True #since our old way was an "error" it seems like we should include htis as an option to be false
         
         df_atmo_og  = self.inputs['atmosphere']['profile']
-        kz = self.inputs['atmosphere']['profile'].get('kz', None)
+        
+        #kzz could be in a variety of different places.
+        #creates a function to make sure correct kzz (sc or constant or from profile or None )
+        #this is just needed for the case where things get extended to deeper layers
+        kz = self.find_kzz()
+
+
         temperature = df_atmo_og['temperature'].values
         pressure = df_atmo_og['pressure'].values
 
@@ -2329,9 +2353,9 @@ class inputs():
         #set new atmosphere 
         if extend_deeper == True: #drop last 10 layers if we extended deeper
             self.inputs['atmosphere']['profile'] = df_atmo_og.iloc[:-10]
-            # add kzz back in only for constant kzz cases, issues in calculate_atm() (getting mmw) if added back in df for sc kzz
-            if kz is not None:
-                self.inputs['atmosphere']['profile']['kz'] = kz
+            ## this is just adding whatever kz used here back to atmosphere profile but I dont think this has to be done
+            #if kz is not None:
+            #    self.inputs['atmosphere']['profile']['kz'] = kz
         else:
             self.inputs['atmosphere']['profile'] = df_atmo_og
 
@@ -3116,9 +3140,10 @@ class inputs():
             empty_dict['pressure']=P
             self.nlevel=len(P) 
         df = pd.DataFrame(empty_dict).sort_values('pressure').reset_index(drop=True)
-        if isinstance(self.inputs['atmosphere']['profile'], pd.core.frame.DataFrame):
-            if 'kz' in  self.inputs['atmosphere']['profile'].keys(): 
-                df['kz'] = self.inputs['atmosphere']['profile']['kz'].values
+        #neb trying to comment thsi as kz is tracked elsewhere now 
+        #if isinstance(self.inputs['atmosphere']['profile'], pd.core.frame.DataFrame):
+        #    if 'kz' in  self.inputs['atmosphere']['profile'].keys(): 
+        #        df['kz'] = self.inputs['atmosphere']['profile']['kz'].values
         self.inputs['atmosphere']['profile']  = df
         
         # Return TP profile
@@ -4680,6 +4705,13 @@ class inputs():
         print('Clouds:', self.inputs['climate'].get('cloudy',False))
         for i,j in self.inputs['approx']['chem_params'].items(): print(i,j)
         print('Moist Adiabat:', self.inputs['climate']['moistgrad'])
+
+        if self.inputs['approx']['chem_params'].get('quench',True):
+            kzz = self.inputs['atmosphere']['kzz'].get('constant_kzz',False)
+            if isinstance(kzz,bool) :
+                kzz = 'Self Consistent Treatment' 
+            print('Kzz for chem:',kzz )
+    
         return 
     
     def inputs_climate(self, temp_guess= None, pressure= None, rfaci = 1,nofczns = 1 ,
@@ -4946,9 +4978,26 @@ class inputs():
                     print(pressure[i],tidal[i])
         # old tidal flux calculation without energy injection function
         # tidal = np.zeros_like(pressure) - sigma_sb *(Teff**4)
-        
+
         # cloud inputs
         cloudy = self.inputs['climate'].get('cloudy',False)
+
+        #kzz treatment ? lets store a constant kz profile if it exists 
+        #DO I NEED A KZZ? 
+        need_kzz = cloudy or diseq_chem 
+        if need_kzz: 
+            #lets initiative a separate place to store this 
+            self.inputs['atmosphere']['kzz']={}
+
+        if not self_consistent_kzz:
+            kzz = self.inputs['atmosphere']['profile'].get('kz',False)
+            if isinstance(kzz, bool):
+                raise Exception("""self_consistent_kzz=False but no kzz profile was supplised. Please add to self.inputs['atmosphere']['profile'] """)
+            else: 
+                self.inputs['atmosphere']['kzz']['constant_kzz'] = kzz.values
+        else: 
+                self.inputs['atmosphere']['kzz']['sc_kzz'] = 0 #placeholder
+
 
         #virga inputs 
         virga_kwargs = self.inputs['climate'].get('virga_kwargs',{})
