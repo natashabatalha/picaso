@@ -104,24 +104,16 @@ Radiative Transfer Techniques
    Spherical Harmonics Radiative Transfer in Reflected Light </notebooks/10b_AnalyzingApproximationsReflectedLightSH.ipynb>
    Spherical Harmonics Radiative Transfer in Thermal Emission </notebooks/10c_AnalyzingApproximationsThermal.ipynb>
 
-FAQs
-----
+Useful Tools
+------------
 
 .. toctree::
    :maxdepth: 1
-
-   Misc FAQs </notebooks/FAQs.ipynb>
-   Contribution Functions </notebooks/11_ContributionFunctions.ipynb>
-
-
-Code Help
----------
-
-.. toctree::
-   :maxdepth: 1
-   
+   Integrated Level Fluxes </notebooks/I_usefultools/H7_Level_Fluxes.ipynb>
+   Spectral and Molecular Contribution Functions </notebooks/I_usefultools/H2_ContributionFunctions.ipynb>
    Data Storage Uniformity </notebooks/codehelp/data_uniformity_tutorial.ipynb>
    SQLITE Tutorial </notebooks/codehelp/Sqlite3Tutorial.ipynb>
+   Misc FAQs </notebooks/FAQs.ipynb>
 
 References
 ----------
