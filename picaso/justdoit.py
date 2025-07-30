@@ -1776,6 +1776,8 @@ class inputs():
             bin_flux_star = opannection.unshifted_stellar_spec
 
         elif ('climate' in self.inputs['calculation'] or (get_lvl_flux)):
+            if not ((not np.isnan(semi_major)) & (not np.isnan(r))): 
+                raise Exception ('semi_major and r parameters are not provided but are needed to compute relative fluxes for climate calculation or when get_lvl_flux are being requested')
 
             # Ensure valid values for interpolation
             mask_valid = flux_star > 1e-30  
@@ -1819,6 +1821,8 @@ class inputs():
             bin_flux_star[idx_nobins] = flux_star_interp[idx_nobins]
             opannection.unshifted_stellar_spec =bin_flux_star
             unit_flux =  'ergs cm^{-2} s^{-1} cm^{-1}'
+        
+        
         #only compute relative flux if stellar radius and semi major axis are provided
         if ((not np.isnan(semi_major)) & (not np.isnan(r))): 
             opannection.relative_flux = bin_flux_star * (r/semi_major)**2
