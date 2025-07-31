@@ -4670,8 +4670,11 @@ class inputs():
         try:
             a = self.inputs['surface_reflect']
         except KeyError:
-            self.inputs['surface_reflect'] = 0 
-            self.inputs['hard_surface'] = 0 
+            if self.inputs.get('hard_surface',0)==1: 
+                raise Exception('The user is requesting a hard_surface boundary condition but the surface reflectivity has not been set by the function surface_reflect')
+            else: 
+                self.inputs['surface_reflect'] = 0 
+                self.inputs['hard_surface'] = 0 
 
             
         return picaso(self, opacityclass,dimension=dimension,calculation=calculation,
