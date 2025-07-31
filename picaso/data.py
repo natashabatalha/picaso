@@ -6,6 +6,16 @@ import glob
 import uuid
 import json
 
+try:
+    from IPython.display import display, HTML
+except ImportError:
+    def display(data):
+        """A dummy display function for non-IPython environments."""
+        print(data)
+    def HTML(data):
+        """A dummy HTML class for non-IPython environments."""
+        return data
+
 def remove_directory(dir_path):
     """Removes a directory and all its contents.
 
@@ -535,38 +545,121 @@ def get_data_config():
 }
 
 
-def check_environ(): 
-	picaso_refdata = os.environ.get('picaso_refdata',0)
-	PYSYN_CDBS = os.environ.get('PYSYN_CDBS',0)
-	if picaso_refdata!=0: 
-		print('I have found a picaso environment here', picaso_refdata)
-		if not os.path.isdir(picaso_refdata):
-			print('Uh no. However, I dont recognize this as a directory. You may need to download the reference data folder from Github: https://github.com/natashabatalha/picaso/tree/master/reference')
-		else: 
-			inside = [i.split('/')[-1] for i in glob.glob(os.path.join(picaso_refdata,'*'))]
-			if 'opacities' in inside: 
-				ref_v = json.load(open(os.path.join(picaso_refdata,'config.json'))).get('version',2.3)
+def _is_notebook():
+    """
+    Checks if the code is being run in a Jupyter notebook.
+    This is used to determine whether to display output as HTML.
+    """
+    try:
+        from IPython import get_ipython
+        shell = get_ipython().__class__.__name__
+        if shell == 'ZMQInteractiveShell':
+            return True   # Jupyter notebook or qtconsole
+        elif shell == 'TerminalInteractiveShell':
+            return False  # Terminal running IPython
+        else:
+            return False  # Other type (?)
+    except (NameError, ImportError):
+        return False      # Probably standard Python interpreter or IPython not installed
+    except Exception:
+        return False      # Another exception, assume not a notebook.
 
-				print('Fantastic. Looks like you have your basic reference data downloaded. Proceed with grabbing opacities.db with the help of get_data function')
-				print(f'Your reference version number {ref_v} has these files:')
-				print(inside)
-			else: 
-				print('I cannot find the standard data in this reference folder, maybe you still need to add the contents to the directory. You should have these folders: https://github.com/natashabatalha/picaso/tree/master/reference')
-	else: 
-		print('Error: no picaso_refdata is set. Please follow the instructions to create your environment variables: https://natashabatalha.github.io/picaso/installation.html#create-environment-variable')
-	if PYSYN_CDBS!=0: 
-		print('I have found a stellar environment here', PYSYN_CDBS)
-		inside = [i.split('/')[-1] for i in glob.glob(os.path.join(PYSYN_CDBS,'*'))]
-		if 'grid' in inside: 
-			print('You have the correct subfolder called grid')
-			inside_grid = [i.split('/')[-1] for i in glob.glob(os.path.join(PYSYN_CDBS,'grid','*'))]
-			print('You have downloaded these stellar grids:')
-			print(inside_grid)
-		else: 
-			print('PYSYN_CDBS does not contain a subfolder called grid which contains your stellar grids. More information on setting this up can be found here: https://natashabatalha.github.io/picaso/installation.html#download-and-link-pysynphot-stellar-data')
 
-	else: 
-		print('Error: no PYSYN_CDBS is set which means exoplanet modeling will be hindered. Please follow the instructions to create your environment variables: https://natashabatalha.github.io/picaso/installation.html#create-environment-variable')
+def check_environ():
+    """
+    Checks user environment variables and provides feedback.
+    This function will display its output as formatted HTML if run in a Jupyter notebook.
+    """
+    messages = []
+    picaso_refdata = os.environ.get('picaso_refdata')
+    PYSYN_CDBS = os.environ.get('PYSYN_CDBS')
+
+    # --- Check for picaso_refdata ---
+    if picaso_refdata:
+        messages.append(('info', f'Found <code>picaso_refdata</code> environment variable: <code>{picaso_refdata}</code>'))
+        if not os.path.isdir(picaso_refdata):
+            messages.append(('error', 'This path does not appear to be a valid directory. You may need to download the reference data folder from <a href="https://github.com/natashabatalha/picaso/tree/master/reference" target="_blank">GitHub</a>.'))
+        else:
+            inside = [os.path.basename(i) for i in glob.glob(os.path.join(picaso_refdata, '*'))]
+            if 'opacities' in inside:
+                messages.append(('success', 'Basic reference data seems to be in place.'))
+                try:
+                    config_path = os.path.join(picaso_refdata, 'config.json')
+                    with open(config_path) as f:
+                        ref_v = json.load(f).get('version', 'N/A')
+                    messages.append(('info', f'Reference data version: {ref_v}'))
+                    messages.append(('info', 'Files in reference directory:'))
+                    messages.append(('list', inside))
+                except FileNotFoundError:
+                    messages.append(('warning', 'Could not find <code>config.json</code> to check version number.'))
+                except json.JSONDecodeError:
+                    messages.append(('warning', 'Could not parse <code>config.json</code>.'))
+            else:
+                messages.append(('error', 'The "opacities" folder was not found in your reference directory. Please ensure you have all the folders from <a href="https://github.com/natashabatalha/picaso/tree/master/reference" target="_blank">GitHub</a>.'))
+    else:
+        messages.append(('error', 'The <code>picaso_refdata</code> environment variable is not set. Please see the <a href="https://natashabatalha.github.io/picaso/installation.html#create-environment-variable" target="_blank">Installation Guide</a>.'))
+
+    # --- Check for PYSYN_CDBS ---
+    if PYSYN_CDBS:
+        messages.append(('info', f'Found <code>PYSYN_CDBS</code> environment variable: <code>{PYSYN_CDBS}</code>'))
+        inside = [os.path.basename(i) for i in glob.glob(os.path.join(PYSYN_CDBS, '*'))]
+        if 'grid' in inside:
+            messages.append(('success', 'Found "grid" subfolder.'))
+            inside_grid = [os.path.basename(i) for i in glob.glob(os.path.join(PYSYN_CDBS, 'grid', '*'))]
+            if inside_grid:
+                messages.append(('info', 'Downloaded stellar grids:'))
+                messages.append(('list', inside_grid))
+            else:
+                messages.append(('warning', 'The "grid" subfolder is empty. You may need to download stellar grids.'))
+        else:
+            messages.append(('error', '<code>PYSYN_CDBS</code> does not contain the required "grid" subfolder. See the <a href="https://natashabatalha.github.io/picaso/installation.html#download-and-link-pysynphot-stellar-data" target="_blank">Installation Guide</a>.'))
+    else:
+        messages.append(('warning', 'The <code>PYSYN_CDBS</code> environment variable is not set. This may hinder exoplanet modeling. See the <a href="https://natashabatalha.github.io/picaso/installation.html#create-environment-variable" target="_blank">Installation Guide</a>.'))
+
+    # --- Display Messages ---
+    if _is_notebook():
+        # Generate and display HTML output for Jupyter notebooks
+        html_output = '<div style="border: 1px solid #e0e0e0; padding: 15px; border-radius: 5px; background-color: #f9f9f9; font-family: sans-serif; max-width: 800px; margin: auto;">'
+        html_output += '<h3 style="margin-top: 0; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; font-size: 1.2em;">PICASO Environment Check</h3>'
+
+        style_map = {
+            'info': 'color: #00529B; background-color: #BDE5F8;',
+            'success': 'color: #4F8A10; background-color: #DFF2BF;',
+            'warning': 'color: #9F6000; background-color: #FEEFB3;',
+            'error': 'color: #D8000C; background-color: #FFBABA;',
+        }
+
+        icon_map = {
+            'info': '&#8505;',      # Info
+            'success': '&#10004;',  # Check
+            'warning': '&#9888;',   # Warning
+            'error': '&#10006;',    # Cross
+        }
+
+        for msg_type, msg in messages:
+            if msg_type == 'list':
+                html_output += '<ul style="margin: 5px 0 10px 20px; padding-left: 20px; border: 1px solid #e0e0e0; background-color: #fff; border-radius: 4px;">'
+                for item in msg:
+                    html_output += f'<li style="margin: 4px 0;"><code>{item}</code></li>'
+                html_output += '</ul>'
+            else:
+                style = style_map.get(msg_type, 'color: #000; background-color: #fff;')
+                icon = icon_map.get(msg_type, '')
+                html_output += f'<div style="padding: 10px; margin: 5px 0; border-radius: 4px; {style}">{icon} {msg}</div>'
+
+        html_output += '</div>'
+        display(HTML(html_output))
+    else:
+        # Keep the original text-based output for other environments
+        print("--- PICASO Environment Check ---")
+        for msg_type, msg in messages:
+            if msg_type == 'list':
+                for item in msg:
+                    print(f"  - {item}")
+            else:
+                import re
+                clean_msg = re.sub('<[^<]+?>', '', msg) # Strip HTML tags for console
+                print(f"[{msg_type.upper()}] {clean_msg}")
 
 
 
