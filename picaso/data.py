@@ -582,7 +582,7 @@ def check_environ():
         else:
             inside = [os.path.basename(i) for i in glob.glob(os.path.join(picaso_refdata, '*'))]
             if 'opacities' in inside:
-                messages.append(('success', 'Basic reference data seems to be in place.'))
+                messages.append(('success', 'Basic picaso reference data seems to be in place.'))
                 try:
                     config_path = os.path.join(picaso_refdata, 'config.json')
                     with open(config_path) as f:
@@ -601,20 +601,20 @@ def check_environ():
 
     # --- Check for PYSYN_CDBS ---
     if PYSYN_CDBS:
-        messages.append(('info', f'Found <code>PYSYN_CDBS</code> environment variable: <code>{PYSYN_CDBS}</code>'))
+        messages.append(('info', f'Found <code>PYSYN_CDBS</code> environment variable for <code>stsynphot</code> was found: <code>{PYSYN_CDBS}</code>'))
         inside = [os.path.basename(i) for i in glob.glob(os.path.join(PYSYN_CDBS, '*'))]
         if 'grid' in inside:
-            messages.append(('success', 'Found "grid" subfolder.'))
+            messages.append(('success', 'Found stellar "grid" subfolder.'))
             inside_grid = [os.path.basename(i) for i in glob.glob(os.path.join(PYSYN_CDBS, 'grid', '*'))]
             if inside_grid:
                 messages.append(('info', 'Downloaded stellar grids:'))
                 messages.append(('list', inside_grid))
             else:
-                messages.append(('warning', 'The "grid" subfolder is empty. You may need to download stellar grids.'))
+                messages.append(('warning', 'The stellar "grid" subfolder is empty. You may need to download stellar grids which can you can do by running <code>data.get_data</code>'))
         else:
             messages.append(('error', '<code>PYSYN_CDBS</code> does not contain the required "grid" subfolder. See the <a href="https://natashabatalha.github.io/picaso/installation.html#download-and-link-pysynphot-stellar-data" target="_blank">Installation Guide</a>.'))
     else:
-        messages.append(('warning', 'The <code>PYSYN_CDBS</code> environment variable is not set. This may hinder exoplanet modeling. See the <a href="https://natashabatalha.github.io/picaso/installation.html#create-environment-variable" target="_blank">Installation Guide</a>.'))
+        messages.append(('warning', 'The <code>PYSYN_CDBS</code> environment variable is not set. This will hinder any modeling that sets stellar parameters with the star function. See the <a href="https://natashabatalha.github.io/picaso/installation.html#create-environment-variable" target="_blank">Installation Guide</a>.'))
 
     # --- Display Messages ---
     if _is_notebook():
