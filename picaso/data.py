@@ -3,7 +3,7 @@ import os
 import shutil
 import glob
 import json
-
+from .opacity_factory import get_all_metadata
 
 try:
     from IPython.display import display, HTML
@@ -15,32 +15,7 @@ except ImportError:
         """A dummy HTML class for non-IPython environments."""
         return data
 
-def remove_directory(dir_path):
-    """Removes a directory and all its contents.
 
-    Args:
-        dir_path: The path to the directory to remove.
-    """
-    try:
-        shutil.rmtree(dir_path)
-        print(f"Directory '{dir_path}' and its contents have been removed.")
-    except FileNotFoundError:
-        print(f"Directory '{dir_path}' not found.")
-    except OSError as e:
-        print(f"Error removing directory '{dir_path}': {e}")
-def download_with_progress(url, filename):
-    """Downloads a file from a URL and displays a progress bar."""
-
-    def progress_bar(count, block_size, total_size):
-        """Displays a simple progress bar."""
-        percent = int(count * block_size * 100 / total_size)
-        print(f"\rDownloading: {percent}% [{('#' * percent)}{(' ' * (100 - percent))}]", end="")
-
-    try:
-        urlretrieve(url, filename, reporthook=progress_bar)
-        print("\nDownload complete!")  # Add a newline after the progress bar finishes.
-    except Exception as e:
-        print(f"Error downloading {url}: {e}")
 
 
 def get_data_config():
@@ -263,6 +238,9 @@ def check_environ():
                     messages.append(('warning', 'Could not find <code>config.json</code> to check version number.'))
                 except json.JSONDecodeError:
                     messages.append(('warning', 'Could not parse <code>config.json</code>.'))
+                
+                #now check to see if opacities.db exists and is readable 
+                messages = check_default_opacity(picaso_refdata,messages)
             else:
                 messages.append(('error', 'The "opacities" folder was not found in your reference directory. Please ensure you have all the folders from <a href="https://github.com/natashabatalha/picaso/tree/master/reference" target="_blank">GitHub</a>.'))
     else:
@@ -329,6 +307,27 @@ def check_environ():
                 import re
                 clean_msg = re.sub('<[^<]+?>', '', msg) # Strip HTML tags for console
                 print(f"[{msg_type.upper()}] {clean_msg}")
+
+
+def check_default_opacity(picaso_refdata,messages): 
+    default_resampled = os.path.join(picaso_refdata,'opacities','opacities.db')
+    if os.path.exists(default_resampled):
+        try: 
+            allmeta = get_all_metadata(default_resampled)
+            reformat_meta = [f'{i}: {j}' for i,j in allmeta]
+        except: 
+            reformat_meta = 0
+        if isinstance(reformat_meta,list):
+            messages.append(('success','Resampled opacity default file has been set.'))
+            messages.append(('list',reformat_meta))
+        else:
+            messages.append(('error', f'Resampled opacity file has been set to <code>{default_resampled}</code> but I cannot read the metadata. Please redownload and/or check the file has not been corrupted.'))
+        
+    else: 
+        messages.append(('error', f'Resampled opacity file has not been set, which is usually required by the code. The file should live here: <code>{default_resampled}</code>. You can use get_data function to help you download or read the installation docs to do it manually.'))
+    return messages
+    
+
 
 def get_data(category_download=None,target_download=None, final_destination_dir=None):
     input_config, data_config=get_data_config()
