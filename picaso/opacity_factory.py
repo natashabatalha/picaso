@@ -1334,7 +1334,7 @@ def continuum_avail(db_file):
     cur, conn = open_local(db_file)
     #what molecules inside db exist?
     cur.execute('SELECT molecule FROM continuum')
-    molecules = list(np.unique(cur.fetchall()))
+    molecules = [str(i) for i in np.unique(cur.fetchall())]
     cur.execute('SELECT temperature FROM continuum')
     cia_temperatures = list(np.unique(cur.fetchall()))
     conn.close()
@@ -1347,7 +1347,7 @@ def molecular_avail(db_file):
     pt_pairs = sorted(list(set(data)),key=lambda x: (x[0]) )
 
     cur.execute('SELECT molecule FROM molecular')
-    molecules = np.unique(cur.fetchall())
+    molecules = [ str(i) for i in np.unique(cur.fetchall())]
     return list(molecules), pt_pairs
 def find_nearest_1d(array,value):
     #small program to find the nearest neighbor in a matrix
@@ -1629,7 +1629,7 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
 
     """
 
-    chem_grid = pd.read_csv(chemistry_file, sep='\s+')
+    chem_grid = pd.read_csv(chemistry_file, sep=rf'\s+')
 
 
     grid_file = os.path.join(og_directory,'grid1460.csv')
@@ -2128,6 +2128,22 @@ def add_metadata_item(db_path, key, value):
     finally:
         if conn:
             conn.close()
+
+def get_all_metadata(db_path): 
+    """
+    What metadata exists 
+    """
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM metadata")
+    result = cursor.fetchall()
+    conn.close()
+    mol,pt = molecular_avail(db_path)
+    result += [('molecules', mol)]
+    cmol,pt = continuum_avail(db_path)
+    result += [('continuum', cmol)]
+    return result
+
 
 
 def get_metadata_item(db_path, key):
