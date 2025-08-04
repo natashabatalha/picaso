@@ -898,7 +898,7 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
 
                
         if 'stellar_params' in attrs.keys(): attrs['stellar_params'] = json.dumps(attrs['stellar_params'],cls=JsonCustomEncoder)
-        if 'climate_params' in attrs.keys(): attrs['climate_params'] = json.dumps(attrs['climate_params'],cls=JsonCustomEncoder)
+    if 'climate_params' in attrs.keys(): attrs['climate_params'] = json.dumps(attrs['climate_params'],cls=JsonCustomEncoder)
         
         
     #add anything else requested by the user
@@ -4996,14 +4996,14 @@ class inputs():
             #lets initiative a separate place to store this 
             self.inputs['atmosphere']['kzz']={}
 
-        if not self_consistent_kzz:
-            kzz = self.inputs['atmosphere']['profile'].get('kz',False)
-            if isinstance(kzz, bool):
-                raise Exception("""self_consistent_kzz=False but no kzz profile was supplised. Please add to self.inputs['atmosphere']['profile'] """)
+            if not self_consistent_kzz:
+                kzz = self.inputs['atmosphere']['profile'].get('kz',False)
+                if isinstance(kzz, bool):
+                    raise Exception("""self_consistent_kzz=False but no kzz profile was supplised. Please add to self.inputs['atmosphere']['profile'] """)
+                else: 
+                    self.inputs['atmosphere']['kzz']['constant_kzz'] = kzz.values
             else: 
-                self.inputs['atmosphere']['kzz']['constant_kzz'] = kzz.values
-        else: 
-                self.inputs['atmosphere']['kzz']['sc_kzz'] = 0 #placeholder
+                    self.inputs['atmosphere']['kzz']['sc_kzz'] = 0 #placeholder
 
 
         #virga inputs 
