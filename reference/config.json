@@ -97,7 +97,10 @@
 			"h2minus":"opacities/h2minus.csv",
 			"raman":"opacities/raman.txt",
 			"ktable_resortrebin":"climate_INPUTS/ck_cx_cont_opacities_661.db",
-			"ktable_by_molecule":"climate_INPUTS/ktable_by_molecule"
+			"ktable_by_molecule":"climate_INPUTS/ktable_by_molecule",
+			"preweighted":"opacities/preweighted",
+			"resampled":"opacities/resampled",
+			"resampled-default":"opacities"
 		}
 
 	},
