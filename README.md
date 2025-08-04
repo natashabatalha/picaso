@@ -23,6 +23,28 @@
 - [1D Climate modeling of planets and brown dwarfs](https://natashabatalha.github.io/picaso/notebooks/climate/12a_BrownDwarf.html)
 - [Fitting models to data](https://natashabatalha.github.io/picaso/notebooks/fitdata/GridSearch.html)
 
+## Testing Notebooks
+
+This repository includes a script to test the execution of all notebooks. This is useful to ensure that the notebooks are up-to-date with the latest changes in the library.
+
+To run the tests, execute the following command from the root of the repository:
+
+```bash
+./run_all_notebook_tests.sh
+```
+
+This script will iterate through all the notebook directories (excluding `workshops`) and run each notebook. It will print a summary of which directories have failing notebooks.
+
+The detailed log of the test execution is saved in the `notebook_test.log` file.
+
+### Known Issues
+
+Currently, the following notebook is known to have issues and will time out:
+
+*   `docs/notebooks/A_basics/5_AddingThermalFlux.ipynb`
+
+The team is aware of this issue and is working on a fix.
+
 ## Contributing
 
 Contributions are always welcome no matter the code level you are at. We value anything from small typos in our documentations page to larger feature changes. We follow the [all-contributors](https://github.com/all-contributors/all-contributors) specification. This means that contributions of any kind welcome! If you are a new to GitHub and conda environments you can read our instructions here: https://natashabatalha.github.io/picaso/contribution.html
