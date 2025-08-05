@@ -52,7 +52,8 @@ else:
     ref_v = json.load(open(os.path.join(__refdata__,'config.json'))).get('version',2.3)
     
     if __version__ != str(ref_v): 
-        warnings.warn(f"Your code version is {__version__} but your reference data version is {ref_v}. For some functionality you may experience Keyword errors. Please download the newest ref version or update your code: https://github.com/natashabatalha/picaso/tree/master/reference")
+        msg = f"Your code version is {__version__} but your reference data version is {ref_v}. For some functionality you may experience Keyword errors. Please download the newest ref version or update your code: https://github.com/natashabatalha/picaso/tree/master/reference"
+        warnings.warn(msg)
 
 
 if not os.path.exists(os.environ.get('PYSYN_CDBS')): 
@@ -1242,7 +1243,7 @@ def opannection(wave_range = None, filename_db = None,
                 preload_gases='all',
                 #deq= False, on_fly=False,
                 #gases_fly =None,ck=False,
-                verbose=True):
+                verbose=False):
     """
     Sets up database connection to opacities. 
 
@@ -1300,7 +1301,8 @@ def opannection(wave_range = None, filename_db = None,
         opacityclass=RetrieveOpacities(
                     filename_db, 
                     raman_db,
-                    wave_range = wave_range, resample = resample)   
+                    wave_range = wave_range, resample = resample)  
+        if verbose: print("verbose=True; Molecule set=",opacityclass.molecules) 
     elif ((method == 'resampled') & isinstance(ck_db,str)):
         raise Exception("ck_db was supplied but method is set to resampled. Change kwarg method='preweighted' to use the preweighted ck tables")
     elif method == 'preweighted':
