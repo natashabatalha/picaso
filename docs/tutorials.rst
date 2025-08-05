@@ -118,12 +118,12 @@ Useful Tools
 .. toctree::
    :maxdepth: 1
    How to store and reuse models </notebooks/I_usefultools/ModelStorage.ipynb>
-   Spectral and Molecular Contribution Functions </notebooks/I_usefultools/2_ContributionFunctions.ipynb>
-   Data Storage Uniformity </notebooks/I_usefultools/3_data_uniformity_tutorial.ipynb>
-   SQLITE Tutorial </notebooks/I_usefultools/4_Sqlite3Tutorial.ipynb>
-   Misc FAQs </notebooks/I_usefultools/5_FAQs.ipynb>
-   Common Climate Issues </notebooks/I_usefultools/6_CommonClimateBDIssues.ipynb>
-   Integrated Level Fluxes </notebooks/I_usefultools/7_Level_Fluxes.ipynb>
+   Spectral and Molecular Contribution Functions </notebooks/I_usefultools/ContributionFunctions.ipynb>
+   Common Climate Issues </notebooks/I_usefultools/CommonClimateBDIssues.ipynb>
+   Integrated Level Fluxes </notebooks/I_usefultools/Level_Fluxes.ipynb>
+   Misc FAQs </notebooks/I_usefultools/FAQs.ipynb>
+   SQLITE Tutorial </notebooks/I_usefultools/Sqlite3Tutorial.ipynb>
+   Data Storage Uniformity </notebooks/I_usefultools/data_uniformity_tutorial.ipynb>
 
 References
 ----------
