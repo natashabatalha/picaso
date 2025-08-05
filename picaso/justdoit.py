@@ -214,11 +214,15 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
     #Make sure that all molecules are in opacityclass. If not, remove them and add warning
     no_opacities = [i for i in atm.molecules if i not in opacityclass.molecules]
-    atm.add_warnings('No computed opacities for: '+','.join(no_opacities))
+    atm.add_warnings('I found chemistry for these but I do not have computed individual line opacities (not including continuum) for: '+','.join(no_opacities))
     atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
     
     #opacity assumptions
     exclude_mol = inputs['atmosphere']['exclude_mol']
+    if isinstance(exclude_mol,dict):
+        for imol in exclude_mol.keys(): 
+            if imol not in opacityclass.molecules: 
+                atm.add_warnings(f'Youve requested that I exclude opacity from {imol} but the set of opacities I have is {opacityclass.molecules} so your spectra will look identical.')
 
     get_opacities = opacityclass.get_opacities
 

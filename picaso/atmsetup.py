@@ -143,7 +143,7 @@ class ATMSETUP():
                                 if 'lat' not in i:
                                     if 'lon' not in i:
                                         self.add_warnings("Ignoring %s in input file, not recognized molecule" % i)
-                                        warnings.warn("Ignoring %s in input file, not a recognized molecule" % i, UserWarning)
+                                        
                     
                     first = False
                     self.weights = weights 
@@ -208,7 +208,7 @@ class ATMSETUP():
                 else:                   
                     #don't raise exception, instead add user warning that a column has been automatically skipped
                     self.add_warnings("Ignoring %s in input file, not recognized molecule" % i)
-                    warnings.warn("Ignoring %s in input file, not a recognized molecule" % i, UserWarning)
+                    
         
         self.weights = weights 
 
@@ -782,6 +782,9 @@ class ATMSETUP():
             df['layer']['flux_plus_mdpt'] = self.flux_layers[3]
         except:
             pass
+
+        if len(self.warnings )>0: 
+            df['warnings'] = self.warnings
 
         return df
 
