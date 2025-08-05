@@ -56,7 +56,7 @@ Relevant Citatons: `Mukherjee et al. 2022 <https://ui.adsabs.harvard.edu/abs/202
    Brown Dwarfs w/ Disequilibrium Chemistry (Constant Kzz) </notebooks/D_climate/4b_BrownDwarf_DEQ_const_kzz.ipynb>
    Brown Dwarfs w/ Clouds </notebooks/D_climate/5_CloudyBrownDwarf_PreW.ipynb>
    Brown Dwarfs w/ Clouds and Disequilibrium Chemistry </notebooks/D_climate/6_CloudyBrownDwarf_DEQ.ipynb>
-   Creating a grid of models </notebooks/D_climate/7_CreateModelGrid.ipynb>
+   Creating a grid of models to use with PICASO's fitting tools </notebooks/D_climate/7_CreateModelGrid.ipynb>
    Brown Dwarfs w/ Energy Injection </notebooks/D_climate/8_EnergyInjection.ipynb>
 
 3D Spectra and Phase Curves
