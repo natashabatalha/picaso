@@ -216,6 +216,7 @@ def check_environ():
     """
     messages = []
     picaso_refdata = os.environ.get('picaso_refdata')
+
     PYSYN_CDBS = os.environ.get('PYSYN_CDBS')
 
     # --- Check for picaso_refdata ---
@@ -262,6 +263,24 @@ def check_environ():
             messages.append(('error', '<code>PYSYN_CDBS</code> does not contain the required "grid" subfolder. See the <a href="https://natashabatalha.github.io/picaso/installation.html#download-and-link-pysynphot-stellar-data" target="_blank">Installation Guide</a>.'))
     else:
         messages.append(('warning', 'The <code>PYSYN_CDBS</code> environment variable is not set. This will hinder any modeling that sets stellar parameters with the star function. See the <a href="https://natashabatalha.github.io/picaso/installation.html#create-environment-variable" target="_blank">Installation Guide</a>.'))
+
+    
+    #Other files 
+    # Check for sonora grids 
+    other_checks = {'sonora_grids':'fitting brown dwarf data or initial guesses to climate solutions', 
+                    'virga':'cloud modeling with the virga code or creating flex clouds with real optical constants',
+                    'opacities/preweighted':'climate modeling on chemical equilibrium grids',
+                    'opacities/resortrebin':'climate modeling with disequilibrium or flex chemistry',
+                    'opacities/resampled':'other wavelength solutions for resampled forward models'}
+    for icheck, info in other_checks.items():
+        fullname = os.path.join(picaso_refdata,icheck)
+        if os.path.exists(fullname):
+            grids_inside = [os.path.basename(i) for i in glob.glob(os.path.join(fullname, '*')) if os.path.basename(i) != 'readme']
+            if len(grids_inside)>0:
+                messages.append(('info', f'{icheck} folders found in reference directory:'))
+                messages.append(('list',grids_inside))
+            else: 
+                messages.append(('warning', f'{icheck} folder found but they are empty. This data product is used for {info}. You might have this data product outside the default path. That is okay.'))
 
     # --- Display Messages ---
     if _is_notebook():
