@@ -3,6 +3,9 @@ import os
 import shutil
 import glob
 import json
+import requests
+
+
 from .opacity_factory import get_all_metadata
 
 try:
@@ -15,7 +18,50 @@ except ImportError:
         """A dummy HTML class for non-IPython environments."""
         return data
 
+def download_github_folder_api(save_to_dir,user="natashabatalha", repo="picaso", folder_path="reference"):
+    """
+    Downloads a folder from a GitHub repository using the GitHub API.
 
+    Args:
+        user (str): The GitHub username or organization name.
+        repo (str): The repository name.
+        folder_path (str): The path to the folder within the repository.
+        save_to_dir (str): The local directory where files will be saved.
+    """
+    api_url = f"https://api.github.com/repos/{user}/{repo}/contents/{folder_path}"
+
+    try:
+        response = requests.get(api_url)
+        response.raise_for_status()
+        contents = response.json()
+
+        # Create the destination directory if it doesn't exist
+        destination_path = os.path.join(save_to_dir, os.path.basename(folder_path))
+        os.makedirs(destination_path, exist_ok=True)
+        print(f"Downloading files to: {os.path.abspath(destination_path)}")
+
+        for item in contents:
+            if item['type'] == 'file':
+                file_url = item['download_url']
+                file_name = item['name']
+                local_file_path = os.path.join(destination_path, file_name)
+
+                print(f"  Downloading {file_name}...")
+                file_response = requests.get(file_url)
+                file_response.raise_for_status()
+
+                with open(local_file_path, 'wb') as f:
+                    f.write(file_response.content)
+            elif item['type'] == 'dir':
+                # Recursively download subdirectories
+                new_folder_path = f"{folder_path}/{item['name']}"
+                new_save_to_dir = os.path.join(save_to_dir, os.path.basename(folder_path))
+                download_github_folder_api(new_save_to_dir, user=user, repo=repo, folder_path=new_folder_path)
+                
+    except requests.exceptions.RequestException as e:
+        print(f"Error: Could not access the GitHub API. {e}")
+    except KeyError:
+        print("Error: The provided URL might not be a valid folder path or the repository is private.")
 
 
 def get_data_config():
@@ -36,6 +82,16 @@ def get_data_config():
     if __stellar_refdata__ =='$PYSYN_CDBS':print("Stellar environment variable PYSYN_CDBS not yet set, which may impact exoplanet functionality")
 
     return inputs,{
+    "reference":{ 'default':{
+        'url':{'reference':'https://github.com/natashabatalha/picaso/reference'},
+        'description':'The required refernece data needed to run PICASO',
+        'default_destination':"cwd"}
+    },
+    "tutorials":{'default':{
+        'url':{'notebooks':'https://github.com/natashabatalha/picaso/docs/notebooks'},
+        'description':'Include the full set of jupyter-notebooks for all PICASO functionality',
+        'default_destination':"cwd"}
+    },
     "resampled_opacity":{
         'default':{
            'url':{'opacities_0.3_15_R15000.db.tar.gz':'https://zenodo.org/records/14861730/files/opacities_0.3_15_R15000.db.tar.gz'},
@@ -45,12 +101,12 @@ def get_data_config():
         'R60000,0.6-6um':{
             'url':{'all_opacities_0.6_6_R60000.db.tar.gz':'https://zenodo.org/records/6928501/files/all_opacities_0.6_6_R60000.db.tar.gz'},
             'description':'38.3 GB file resampled at R=60,000 from 0.6-6um. This is sufficient for doing moderate resolution JWST calculations.',
-            'default_destimation':inputs['opacities']['files']['resampled']
+            'default_destination':inputs['opacities']['files']['resampled']
             },
         'R20000,4.8-15um':{
             'url':{'all_opacities_4.8_15_R20000.db.tar.gz':'https://zenodo.org/records/6928501/files/all_opacities_4.8_15_R20000.db.tar.gz'},
             'description':'7.0 GB file resampled at R=20,000 from 4.8-15um. This is sufficient for doing low resolution JWST calculations.',
-            'default_destimation':inputs['opacities']['files']['resampled']
+            'default_destination':inputs['opacities']['files']['resampled']
             }
         },
     'stellar_grids':{
@@ -128,11 +184,11 @@ def get_data_config():
             'description':'Sonora bobcat pressure-temperature profiles',
             'default_destination':os.path.join(__refdata__, 'sonora_grids', 'bobcat')
 
-            },
-        'diamondback':{
-            'url':'',
-            'description':'',
-            },
+            }#,
+        #'diamondback':{
+        #    'url':'',
+        #    'description':'',
+        #    },
         },
     'ck_tables':{
         'by-molecule':{
@@ -346,6 +402,18 @@ def check_default_opacity(picaso_refdata,messages):
         messages.append(('error', f'Resampled opacity file has not been set, which is usually required by the code. The file should live here: <code>{default_resampled}</code>. You can use get_data function to help you download or read the installation docs to do it manually.'))
     return messages
     
+def get_reference(path_to_picaso_refdata):
+    """
+    Direct wrapper function on get data to just download the user reference data
+
+    Users must already have their environment variable set to use this. 
+
+    Inputs
+    ------
+    path_to_picaso_refdata : str 
+        path to picaso ref data 
+    """
+    get_data(category_download='reference',target_download='default', final_destination_dir=path_to_picaso_refdata)
 
 
 def get_data(category_download=None,target_download=None, final_destination_dir=None):
@@ -423,6 +491,7 @@ def get_data(category_download=None,target_download=None, final_destination_dir=
                     final_destination_dir = input() 
         elif 'default_destination' in data_config[category_download][target_download].keys():
             default = data_config[category_download][target_download]['default_destination']
+            if default=='cwd':default = os.getcwd()
             print(f'I found this suggested default destination: {default}. Would you like to add them to this destination? yes or no')
             make_default= input() 
             while make_default not in ['yes', 'no']:
@@ -454,38 +523,43 @@ def get_data(category_download=None,target_download=None, final_destination_dir=
     allzips = []
     totalfiles = len(url_download)
     for ii, iurl, iname in zip(range(totalfiles),url_download,download_name):
-        print(f'Downloading file {ii}/{totalfiles} which is saving to location: {final_destination_dir}')
-        
-        processor = None
-        
-        if iname.endswith('.zip'):
-            processor = pooch.Unzip(extract_dir='')
+
+        if 'github.com' in iurl: 
+            print("Downloading from github")
+            download_github_folder_api(final_destination_dir, folder_path= iurl.split('https://github.com/natashabatalha/picaso/')[-1])
+        else: 
+            print(f'Downloading file {ii}/{totalfiles} which is saving to location: {final_destination_dir}')
             
-        elif iname.endswith('.tar.gz') or iname.endswith('.tar'):
-            processor = pooch.Untar(extract_dir='')
+            processor = None
+            
+            if iname.endswith('.zip'):
+                processor = pooch.Unzip(extract_dir='')
+                
+            elif iname.endswith('.tar.gz') or iname.endswith('.tar'):
+                processor = pooch.Untar(extract_dir='')
 
-        # Using pooch to download and unpack
-        
-        try:
-            files = pooch.retrieve(
-                url=iurl,
-                known_hash=None,
-                fname=iname,
-                path=final_destination_dir,
-                processor=processor,
-                progressbar=True
-            )
-
-        except Exception as e:
-            print(f"Error downloading or processing {iurl}: {e}")
-            continue
-
-
-        if 'stellar_grid' in category_download: 
-            og = os.path.join(final_destination_dir, 'grp','redcat','trds','grid',target_download)
-            new = os.path.join(PYSYN_CDBS,'grid')
+            # Using pooch to download and unpack
+            
             try:
-                shutil.move(og ,new)
-            except: 
-                print(f'I tried to move stellar grids from here {og} to here {new} but it failed. Likely because the file already exists. Find your file here {og} and manually move it if you want to overwrite. ')
+                files = pooch.retrieve(
+                    url=iurl,
+                    known_hash=None,
+                    fname=iname,
+                    path=final_destination_dir,
+                    processor=processor,
+                    progressbar=True
+                )
+
+            except Exception as e:
+                print(f"Error downloading or processing {iurl}: {e}")
+                continue
+
+
+            if 'stellar_grid' in category_download: 
+                og = os.path.join(final_destination_dir, 'grp','redcat','trds','grid',target_download)
+                new = os.path.join(PYSYN_CDBS,'grid')
+                try:
+                    shutil.move(og ,new)
+                except: 
+                    print(f'I tried to move stellar grids from here {og} to here {new} but it failed. Likely because the file already exists. Find your file here {og} and manually move it if you want to overwrite. ')
 
