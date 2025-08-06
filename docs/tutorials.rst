@@ -83,10 +83,6 @@ Fitting models to data
    :maxdepth: 1
 
    Grid Search Analysis </notebooks/F_fitdata/1_GridSearch.ipynb>
-   Basics of Retrievals </notebooks/F_fitdata/2_GridRetrieval.ipynb>
-   Basics of Grid fitting </notebooks/F_fitdata/3_GridRetrieval_GridFitting.ipynb>
-   Basics of Grid-trievals </notebooks/F_fitdata/4_GridRetrieval_GridFittingWithClouds.ipynb>
-   Creating retrieval templates </notebooks/F_fitdata/5_GridRetrieval_CreatingTemplates.ipynb>
 
 
 Opacities
