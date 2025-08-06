@@ -240,7 +240,14 @@ def get_data_config():
             'default_destination':os.path.join(__refdata__, inputs['opacities']['files']['preweighted']) ,
 
             }
-        },
+    },
+    'picaso-lite':{
+        'tutorial_sagan23':{
+            'url':{"picaso-lite-reference.tar.gz": "https://zenodo.org/records/XXXX/files/picaso-lite-reference.tar.gz"},
+                'description':'picaso-lite reference folder that includes the bare minimum to run the sagan 2023 tutorial set.',
+            'default_destination':os.path.join(__refdata__)
+            }
+    }
         
 }
 

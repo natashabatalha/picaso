@@ -984,7 +984,7 @@ def input_xarray(xr_usr, opacity,calculation='planet',approx_kwargs={}):
     
     if 'brown' not in calculation:
         stellar_params = eval(xr_usr.attrs['stellar_params'])
-        orbit_params = eval(xr_usr.attrs['orbit_params'])
+        orbit_params = eval(xr_usr.attrs.get('orbit_params',"""{}"""))
         steff = _finditem(stellar_params,'steff')
         feh = _finditem(stellar_params,'feh')
         logg = _finditem(stellar_params,'logg')
@@ -992,9 +992,15 @@ def input_xarray(xr_usr, opacity,calculation='planet',approx_kwargs={}):
         ms = _finditem(stellar_params,'ms')
         rs = _finditem(stellar_params,'rs')
         semi_major = _finditem(orbit_params,'sma')
+        if isinstance(semi_major,type(None)):
+            semi_major = None
+            semi_major_unit = None
+        else: 
+            semi_major=semi_major['value']
+            semi_major_unit=u.Unit(semi_major['unit'])
         case.star(opacity, steff,feh,logg, radius=rs['value'], 
                   radius_unit=u.Unit(rs['unit']), database=database, 
-                  semi_major=semi_major['value'],semi_major_unit=u.Unit(semi_major['unit']))
+                  semi_major=semi_major,semi_major_unit=semi_major_unit)
 
     mp = _finditem(planet_params,'mp')
     rp = _finditem(planet_params,'rp')

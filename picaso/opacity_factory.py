@@ -1623,7 +1623,7 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
     new_wno : array, float  
         (optional) new wavenumber grid in cm-1 
     new_dwno : array, float 
-        (optional) delta wavenumber grid in cm-1 
+        (optional) deltget_all_metadata wavenumber grid in cm-1 
     verbose: bool 
         (Optional) prints out status of which p,t, point the code is at 
 
@@ -2133,11 +2133,14 @@ def get_all_metadata(db_path):
     """
     What metadata exists 
     """
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM metadata")
-    result = cursor.fetchall()
-    conn.close()
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM metadata")
+        result = cursor.fetchall()
+        conn.close()
+    except: 
+        result = [('version','metadata table does not exist must be older version (less than picaso v4) of opacity data')]
     mol,pt = molecular_avail(db_path)
     result += [('molecules', mol)]
     cmol,pt = continuum_avail(db_path)
