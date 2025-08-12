@@ -36,15 +36,17 @@ def download_github_folder_api(save_to_dir,user="natashabatalha", repo="picaso",
         contents = response.json()
 
         # Create the destination directory if it doesn't exist
-        destination_path = os.path.join(save_to_dir, os.path.basename(folder_path))
-        os.makedirs(destination_path, exist_ok=True)
-        print(f"Downloading files to: {os.path.abspath(destination_path)}")
-
+        # destination_path = os.path.join(save_to_dir, os.path.basename(folder_path))
+        #os.makedirs(destination_path, exist_ok=True)
+        #print(f"Downloading files to: {os.path.abspath(destination_path)}")
+        os.makedirs(save_to_dir, exist_ok=True)
+        print(f"Downloading files to: {os.path.abspath(save_to_dir)}")
         for item in contents:
             if item['type'] == 'file':
                 file_url = item['download_url']
                 file_name = item['name']
-                local_file_path = os.path.join(destination_path, file_name)
+                #local_file_path = os.path.join(destination_path, file_name)
+                local_file_path = os.path.join(save_to_dir, file_name)
 
                 print(f"  Downloading {file_name}...")
                 file_response = requests.get(file_url)
@@ -54,8 +56,10 @@ def download_github_folder_api(save_to_dir,user="natashabatalha", repo="picaso",
                     f.write(file_response.content)
             elif item['type'] == 'dir':
                 # Recursively download subdirectories
-                new_folder_path = f"{folder_path}/{item['name']}"
-                new_save_to_dir = os.path.join(save_to_dir, os.path.basename(folder_path))
+                #new_folder_path = f"{folder_path}/{item['name']}"
+                #new_save_to_dir = os.path.join(save_to_dir, os.path.basename(folder_path))
+                new_folder_path = item['path']
+                new_save_to_dir = os.path.join(save_to_dir, item['name'])                
                 download_github_folder_api(new_save_to_dir, user=user, repo=repo, folder_path=new_folder_path)
                 
     except requests.exceptions.RequestException as e:
