@@ -25,3 +25,12 @@ dist/
 *.DS_Store
 
 *__pycache__/
+
+# reference files 
+reference/sonora_grids/*
+reference/stellar_grids/*
+reference/virga/*
+reference/opacities/preweighted/*
+reference/opacities/resampled/*
+reference/opacities/resortrebin/*
+

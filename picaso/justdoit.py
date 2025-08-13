@@ -52,7 +52,8 @@ else:
     ref_v = json.load(open(os.path.join(__refdata__,'config.json'))).get('version',2.3)
     
     if __version__ != str(ref_v): 
-        warnings.warn(f"Your code version is {__version__} but your reference data version is {ref_v}. For some functionality you may experience Keyword errors. Please download the newest ref version or update your code: https://github.com/natashabatalha/picaso/tree/master/reference")
+        msg = f"Your code version is {__version__} but your reference data version is {ref_v}. For some functionality you may experience Keyword errors. Please download the newest ref version or update your code: https://github.com/natashabatalha/picaso/tree/master/reference"
+        warnings.warn(msg)
 
 
 if not os.path.exists(os.environ.get('PYSYN_CDBS')): 
@@ -213,11 +214,15 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
     #Make sure that all molecules are in opacityclass. If not, remove them and add warning
     no_opacities = [i for i in atm.molecules if i not in opacityclass.molecules]
-    atm.add_warnings('No computed opacities for: '+','.join(no_opacities))
+    atm.add_warnings('I found chemistry for these but I do not have computed individual line opacities (not including continuum) for: '+','.join(no_opacities))
     atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
     
     #opacity assumptions
     exclude_mol = inputs['atmosphere']['exclude_mol']
+    if isinstance(exclude_mol,dict):
+        for imol in exclude_mol.keys(): 
+            if imol not in opacityclass.molecules: 
+                atm.add_warnings(f'Youve requested that I exclude opacity from {imol} but the set of opacities I have is {opacityclass.molecules} so your spectra will look identical.')
 
     get_opacities = opacityclass.get_opacities
 
@@ -898,7 +903,7 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
 
                
         if 'stellar_params' in attrs.keys(): attrs['stellar_params'] = json.dumps(attrs['stellar_params'],cls=JsonCustomEncoder)
-        if 'climate_params' in attrs.keys(): attrs['climate_params'] = json.dumps(attrs['climate_params'],cls=JsonCustomEncoder)
+    if 'climate_params' in attrs.keys(): attrs['climate_params'] = json.dumps(attrs['climate_params'],cls=JsonCustomEncoder)
         
         
     #add anything else requested by the user
@@ -979,7 +984,7 @@ def input_xarray(xr_usr, opacity,calculation='planet',approx_kwargs={}):
     
     if 'brown' not in calculation:
         stellar_params = eval(xr_usr.attrs['stellar_params'])
-        orbit_params = eval(xr_usr.attrs['orbit_params'])
+        orbit_params = eval(xr_usr.attrs.get('orbit_params',"""{}"""))
         steff = _finditem(stellar_params,'steff')
         feh = _finditem(stellar_params,'feh')
         logg = _finditem(stellar_params,'logg')
@@ -987,9 +992,15 @@ def input_xarray(xr_usr, opacity,calculation='planet',approx_kwargs={}):
         ms = _finditem(stellar_params,'ms')
         rs = _finditem(stellar_params,'rs')
         semi_major = _finditem(orbit_params,'sma')
+        if isinstance(semi_major,type(None)):
+            semi_major = None
+            semi_major_unit = None
+        else: 
+            semi_major=semi_major['value']
+            semi_major_unit=u.Unit(semi_major['unit'])
         case.star(opacity, steff,feh,logg, radius=rs['value'], 
                   radius_unit=u.Unit(rs['unit']), database=database, 
-                  semi_major=semi_major['value'],semi_major_unit=u.Unit(semi_major['unit']))
+                  semi_major=semi_major,semi_major_unit=semi_major_unit)
 
     mp = _finditem(planet_params,'mp')
     rp = _finditem(planet_params,'rp')
@@ -1242,7 +1253,7 @@ def opannection(wave_range = None, filename_db = None,
                 preload_gases='all',
                 #deq= False, on_fly=False,
                 #gases_fly =None,ck=False,
-                verbose=True):
+                verbose=False):
     """
     Sets up database connection to opacities. 
 
@@ -1300,7 +1311,8 @@ def opannection(wave_range = None, filename_db = None,
         opacityclass=RetrieveOpacities(
                     filename_db, 
                     raman_db,
-                    wave_range = wave_range, resample = resample)   
+                    wave_range = wave_range, resample = resample)  
+        if verbose: print("verbose=True; Molecule set=",opacityclass.molecules) 
     elif ((method == 'resampled') & isinstance(ck_db,str)):
         raise Exception("ck_db was supplied but method is set to resampled. Change kwarg method='preweighted' to use the preweighted ck tables")
     elif method == 'preweighted':
@@ -1776,6 +1788,8 @@ class inputs():
             bin_flux_star = opannection.unshifted_stellar_spec
 
         elif ('climate' in self.inputs['calculation'] or (get_lvl_flux)):
+            if not ((not np.isnan(semi_major)) & (not np.isnan(r))): 
+                raise Exception ('semi_major and r parameters are not provided but are needed to compute relative fluxes for climate calculation or when get_lvl_flux are being requested')
 
             # Ensure valid values for interpolation
             mask_valid = flux_star > 1e-30  
@@ -1819,6 +1833,8 @@ class inputs():
             bin_flux_star[idx_nobins] = flux_star_interp[idx_nobins]
             opannection.unshifted_stellar_spec =bin_flux_star
             unit_flux =  'ergs cm^{-2} s^{-1} cm^{-1}'
+        
+        
         #only compute relative flux if stellar radius and semi major axis are provided
         if ((not np.isnan(semi_major)) & (not np.isnan(r))): 
             opannection.relative_flux = bin_flux_star * (r/semi_major)**2
@@ -2092,7 +2108,11 @@ class inputs():
         
         for iq in quench_levels.keys():
             for imol in species_to_adjust: 
-                if imol in iq: quench_by_molecule[imol]=quench_levels[iq]
+                if imol in iq: 
+                    if quench_levels[iq] < self.nlevel:
+                        quench_by_molecule[imol]=quench_levels[iq]
+                    else: #this case is if we extended the atmosphere for a deep quench level, the most bottom level abundance is the quench level
+                        quench_by_molecule[imol]=self.nlevel-1
 
         H2 = self.inputs['atmosphere']['profile']['H2'].values
         for imol in species_to_adjust: 
@@ -2182,7 +2202,7 @@ class inputs():
         #if a quench level dictionary is provided 
         if self.inputs['approx']['chem_params']['quench'] and isinstance(quench_levels,dict):
             if verbose: print('Quench=True; Adjusting quench chemistry')
-            self.adjust_quench_chemistry(quench_levels)
+            self.adjust_quench_chemistry(quench_levels,chemistry_table)
        
         # volatile rainout 
         if self.inputs['approx']['chem_params']['vol_rainout'] and isinstance(quench_levels,dict): 
@@ -2220,19 +2240,37 @@ class inputs():
         
         #set photochem to run 
         pc = self.inputs['climate']['pc']
-        kz = self.inputs['atmosphere']['profile']['kz'].values
+        #gets whatever kzz is specified either constant or self consistent
+        kz = self.find_kzz()
+        
         df = pc.run_for_picaso(
                         self.inputs['atmosphere']['profile'], 
                         np.log10(float(self.inputs['atmosphere']['mh'])), 
-                        float(self.inputs['atmosphere']['cto']), 
-                        self.inputs['atmosphere']['profile']['kz'].values, 
+                        float(self.inputs['atmosphere']['cto_relative']), 
+                        kz, 
                         True
                     )
-        #reset kz to picaso dataframe to keep track of it 
-        df['kz']=kz
+        #reset kz to picaso dataframe to keep track of it
+        #neb trying to commect this out as i htink this is not needed anymore 
+        #df['kz']=kz
         self.inputs['atmosphere']['profile']  = df 
-
-    def adjust_quench_chemistry(self, quench_levels):
+    
+    def find_kzz(self):
+        """
+        Returns in this order: 
+        1) self.inputs['atmosphere']['kzz']['constant_kzz']
+        OR
+        2) self.inputs['atmosphere']['kzz']['sc_kzz'] 
+        OR 
+        3) self.inputs['atmosphere']['profile']['kz'] 
+        OR 
+        None
+        """
+        kzz_dict = self.inputs['atmosphere'].get('kzz',self.inputs['atmosphere']['profile'])
+        kz = kzz_dict.get('constant_kzz', kzz_dict.get('sc_kzz', kzz_dict.get('kz',None)))
+        return np.array(kz)
+    
+    def adjust_quench_chemistry(self, quench_levels,chemistry_table=None):
         """
         Adjusts the abundances of quenched species in the chemistry profile based on the provided quench levels.
         CO2 is defaulted to do the Zahnle and Marley (2014) kinetic fix outlined in Wogan et al. 2025 research note. 
@@ -2242,12 +2280,48 @@ class inputs():
         quench_levels : dict
             Dictionary with the quench levels for each molecule.
         """
-
+        extend_deeper = False
         kinetic_CO2=True #since our old way was an "error" it seems like we should include htis as an option to be false
         
         df_atmo_og  = self.inputs['atmosphere']['profile']
+        
+        #kzz could be in a variety of different places.
+        #creates a function to make sure correct kzz (sc or constant or from profile or None )
+        #this is just needed for the case where things get extended to deeper layers
+        kz = self.find_kzz()
+
+
         temperature = df_atmo_og['temperature'].values
         pressure = df_atmo_og['pressure'].values
+
+        # Check if any quench level is deeper than the available pressure grid, if so, extend the pressure grid
+        nlevel = len(temperature)
+        if any(quench_levels[key] >= nlevel for key in quench_levels):
+            extend_deeper = True
+            print('Extending atmosphere profile deeper to accommodate deep quench levels.')
+
+            # calculate dtdp to accurately extend profile
+            for j in range(nlevel -1):
+                dtdp=np.zeros(shape=(nlevel-1))
+                dtdp[j] = (log( temperature[j]) - log( temperature[j+1]))/(log(pressure[j]) - log(pressure[j+1]))
+
+            # extend the pressure by 10 layers to 1e6 bars (deep enough for even the coldest cases)
+            extended_pressure = np.logspace(np.log10(pressure[-1]+100),6,10)
+            pressure = np.append(pressure, extended_pressure)
+            for i in np.arange(nlevel, nlevel+10):
+                new_temp = np.exp(np.log(temperature[i-1]) - dtdp[-1] * (np.log(pressure[i-1]) - np.log(pressure[i])))
+                temperature = np.append(temperature, new_temp)
+            nlevel = len(temperature)
+
+            # create new df to have the right shape to be used
+            self.inputs['atmosphere']['profile'] = pd.DataFrame({'pressure': pressure, 'temperature': temperature})#, 'kz': kz})
+            df_atmo_og = self.inputs['atmosphere']['profile']
+
+            # redo the chemistry to make sure new extended layers have to correct abundances
+            if chemistry_table is not None:
+                self.chemistry_handler(chemistry_table=chemistry_table)
+            else:
+                self.chemistry_handler()
 
         #what order will we quench things 
         quench_sequence  = ['PH3','CO-CH4-H2O','CO2','NH3-N2','HCN']
@@ -2293,7 +2367,13 @@ class inputs():
         #reset H2 accordingly
         df_atmo_og.loc[:,'H2'] = H2
         #set new atmosphere 
-        self.inputs['atmosphere']['profile'] = df_atmo_og
+        if extend_deeper == True: #drop last 10 layers if we extended deeper
+            self.inputs['atmosphere']['profile'] = df_atmo_og.iloc[:-10]
+            ## this is just adding whatever kz used here back to atmosphere profile but I dont think this has to be done
+            #if kz is not None:
+            #    self.inputs['atmosphere']['profile']['kz'] = kz
+        else:
+            self.inputs['atmosphere']['profile'] = df_atmo_og
 
     def premix_atmosphere_diseq_deprecate(self, opa, quench_levels, teff, t_mix=None, df=None, filename=None, vol_rainout = False, 
                                 quench_ph3 = True, kinetic_CO2 = True, no_ph3 = False, cold_trap=False, cld_species = None, **pd_kwargs):
@@ -3076,9 +3156,10 @@ class inputs():
             empty_dict['pressure']=P
             self.nlevel=len(P) 
         df = pd.DataFrame(empty_dict).sort_values('pressure').reset_index(drop=True)
-        if isinstance(self.inputs['atmosphere']['profile'], pd.core.frame.DataFrame):
-            if 'kz' in  self.inputs['atmosphere']['profile'].keys(): 
-                df['kz'] = self.inputs['atmosphere']['profile']['kz'].values
+        #neb trying to comment thsi as kz is tracked elsewhere now 
+        #if isinstance(self.inputs['atmosphere']['profile'], pd.core.frame.DataFrame):
+        #    if 'kz' in  self.inputs['atmosphere']['profile'].keys(): 
+        #        df['kz'] = self.inputs['atmosphere']['profile']['kz'].values
         self.inputs['atmosphere']['profile']  = df
         
         # Return TP profile
@@ -4601,8 +4682,11 @@ class inputs():
         try:
             a = self.inputs['surface_reflect']
         except KeyError:
-            self.inputs['surface_reflect'] = 0 
-            self.inputs['hard_surface'] = 0 
+            if self.inputs.get('hard_surface',0)==1: 
+                raise Exception('The user is requesting a hard_surface boundary condition but the surface reflectivity has not been set by the function surface_reflect')
+            else: 
+                self.inputs['surface_reflect'] = 0 
+                self.inputs['hard_surface'] = 0 
 
             
         return picaso(self, opacityclass,dimension=dimension,calculation=calculation,
@@ -4640,6 +4724,13 @@ class inputs():
         print('Clouds:', self.inputs['climate'].get('cloudy',False))
         for i,j in self.inputs['approx']['chem_params'].items(): print(i,j)
         print('Moist Adiabat:', self.inputs['climate']['moistgrad'])
+
+        if self.inputs['approx']['chem_params'].get('quench',True):
+            kzz = self.inputs['atmosphere']['kzz'].get('constant_kzz',False)
+            if isinstance(kzz,bool) :
+                kzz = 'Self Consistent Treatment' 
+            print('Kzz for chem:',kzz )
+    
         return 
     
     def inputs_climate(self, temp_guess= None, pressure= None, rfaci = 1,nofczns = 1 ,
@@ -4906,9 +4997,26 @@ class inputs():
                     print(pressure[i],tidal[i])
         # old tidal flux calculation without energy injection function
         # tidal = np.zeros_like(pressure) - sigma_sb *(Teff**4)
-        
+
         # cloud inputs
         cloudy = self.inputs['climate'].get('cloudy',False)
+
+        #kzz treatment ? lets store a constant kz profile if it exists 
+        #DO I NEED A KZZ? 
+        need_kzz = cloudy or diseq_chem 
+        if need_kzz: 
+            #lets initiative a separate place to store this 
+            self.inputs['atmosphere']['kzz']={}
+
+            if not self_consistent_kzz:
+                kzz = self.inputs['atmosphere']['profile'].get('kz',False)
+                if isinstance(kzz, bool):
+                    raise Exception("""self_consistent_kzz=False but no kzz profile was supplised. Please add to self.inputs['atmosphere']['profile'] """)
+                else: 
+                    self.inputs['atmosphere']['kzz']['constant_kzz'] = kzz.values
+            else: 
+                    self.inputs['atmosphere']['kzz']['sc_kzz'] = 0 #placeholder
+
 
         #virga inputs 
         virga_kwargs = self.inputs['climate'].get('virga_kwargs',{})

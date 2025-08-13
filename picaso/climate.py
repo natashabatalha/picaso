@@ -95,7 +95,7 @@ def update_kzz(grav, tidal, AdiabatBundle, nstr, Atmosphere,
         Defalt= False; computes moist adiabat
 
     """
-    if verbose: print("I am updating kzz")
+    if verbose: print("I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.")
     #Do I have fluxes or no? 
     if (np.any(flux_plus_ir_attop==None) and np.any(flux_net_ir_layer==None)): 
         if verbose: print('I dont have fluxes, let me compute them')
@@ -2122,7 +2122,7 @@ def calculate_atm(bundle, opacityclass, only_atmosphere=False):
 
     #Add inputs to class 
     ##############################
-    atm.surf_reflect = 0#inputs['surface_reflect']
+    atm.surf_reflect = 0#inputs['surface_reflect']#inputs.get('surface_reflect',0)
     ##############################
     atm.wavenumber = wno
     atm.planet.gravity = inputs['planet']['gravity']
@@ -3077,10 +3077,13 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     cloudy =  CloudParameters.cloudy
 
    #under what circumstances to do we compute a self consistent kzz calc 
-    sc_kzz_and_clouds = self_consistent_kzz and cloudy 
+    sc_kzz_and_clouds = cloudy #THIS IS ALWAYS BE TRUE.. 
     sc_kzz_and_diseq = self_consistent_kzz and diseq  
     do_kzz_calc = sc_kzz_and_clouds or sc_kzz_and_diseq
-    constant_kzz = ((not self_consistent_kzz) and cloudy) or ((not self_consistent_kzz) and diseq)
+    constant_kzz =  ((not self_consistent_kzz) and diseq) #((not self_consistent_kzz) and cloudy) or
+    if constant_kzz: 
+        kz_chem = bundle.inputs['atmosphere']['kzz'].get('constant_kzz')
+        
 
     if cloudy: 
         virga_kwargs = {key:getattr(CloudParameters,key) for key in ['fsed','mh','b','param','directory','condensates']}
@@ -3157,25 +3160,30 @@ def profile(bundle, nofczns, nstr, temp, pressure,
                OpacityWEd_clear=OpacityWEd_clear,OpacityNoEd_clear=OpacityNoEd_clear,
                #kwargs for get_kzz function
                moist=moist, do_holes=do_holes, fhole=fhole)
+        bundle.inputs['atmosphere']['kzz']['sc_kzz']=kz #bookeeping current kz 
+
         if save_kzz: all_kzz = np.append(all_kzz,kz)
-    #Otherwise get the fixed profile in bundle
-    elif constant_kzz: 
-        kz = bundle.inputs['atmosphere']['profile']['kz'].values
+        #are clouds turned on such that we need the sc kzz for virga? 
+        if sc_kzz_and_clouds: 
+            kz_cloud = kz 
+        #is self consistent kz needed for diseq chem too? 
+        if sc_kzz_and_diseq: 
+            kz_chem = kz 
 
     ### 3) IF: COMPLEX CHEM
     ##  3-a) option 1: GET QUENCH LEVELS FOR DISEQ and UPDATE CHEM
     if do_quench_appox:
-        quench_levels=update_quench_levels(bundle, Atmosphere, kz, grav,verbose=verbose)
+        quench_levels=update_quench_levels(bundle, Atmosphere, kz_chem, grav,verbose=verbose)
         bundle.premix_atmosphere(opa=opacityclass,quench_levels=quench_levels,verbose=verbose)
     ##  3-b) option 2: GET PHOTOCHEM
     if full_kinetis: 
-        quench_levels=update_quench_levels(bundle, Atmosphere, kz, grav,verbose=verbose)
+        quench_levels=update_quench_levels(bundle, Atmosphere, kz_chem, grav,verbose=verbose)
         bundle.premix_atmosphere_photochem(quench_levels=quench_levels,verbose=verbose)
     
     ### 4) IF: COMPUTE CLOUDS 
     if cloudy :
         cld_out,df_cld, taudif, taudif_tol, all_opd, CloudParameters=update_clouds(bundle, CloudParameters,Atmosphere,
-                                                                          kz,virga_kwargs,save_profile=save_profile,
+                                                                          kz_cloud,virga_kwargs,save_profile=save_profile,
                                                                           all_opd=all_opd,verbose=verbose)
         bundle.clouds(df=df_cld,**hole_kwargs)
         
@@ -3236,25 +3244,28 @@ def profile(bundle, nofczns, nstr, temp, pressure,
                 #kwargs for get_kzz function
                 moist=moist, do_holes=do_holes,fhole=fhole)
             if save_kzz: all_kzz = np.append(all_kzz,kz)
-        #Otherwise get the fixed profile in bundle
-        elif constant_kzz : 
-            kz = bundle.inputs['atmosphere']['profile']['kz'].values
+            #are clouds turned on such that we need the sc kzz for virga? 
+            if sc_kzz_and_clouds: 
+                kz_cloud = kz 
+            #is self consistent kz needed for diseq chem too? 
+            if sc_kzz_and_diseq: 
+                kz_chem = kz 
 
         ### 3) IF: COMPLEX CHEM
         ##  3-a) option 1: GET QUENCH LEVELS FOR DISEQ and UPDATE CHEM
         if do_quench_appox:   
-            quench_levels=update_quench_levels(bundle, Atmosphere, kz, grav,verbose=verbose)
+            quench_levels=update_quench_levels(bundle, Atmosphere, kz_chem, grav,verbose=verbose)
             bundle.premix_atmosphere(opa=opacityclass,quench_levels=quench_levels,verbose=verbose)
         
         ##  3-b) option 2: GET PHOTOCHEM
         if full_kinetis: 
-            quench_levels=update_quench_levels(bundle, Atmosphere, kz, grav,verbose=verbose)
+            quench_levels=update_quench_levels(bundle, Atmosphere, kz_chem, grav,verbose=verbose)
             bundle.premix_atmosphere_photochem(quench_levels=quench_levels,verbose=verbose)
             
         ### 4) IF: COMPUTE CLOUDS 
         if cloudy:
             cld_out,df_cld, taudif, taudif_tol, all_opd, CloudParameters=update_clouds(bundle, CloudParameters,Atmosphere,
-                                                                          kz,virga_kwargs,save_profile=save_profile,
+                                                                          kz_cloud,virga_kwargs,save_profile=save_profile,
                                                                           all_opd=all_opd,verbose=verbose)
             bundle.clouds(df=df_cld,**hole_kwargs)
         else: 
