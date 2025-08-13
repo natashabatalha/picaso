@@ -1,11 +1,11 @@
 from .justdoit import *
-import picaso.justdoit as jdi
-import picaso.justplotit as jpi
+from .justplotit import *
+#import picaso.justdoit as jdi
+#import picaso.justplotit as jpi
 import tomllib 
-from bokeh.layouts import column, row
-from bokeh.plotting import figure, show, output_file
-from bokeh.models import HoverTool, Tabs, Panel, ColumnDataSource
-import pandas as pd #this is already in the jdi?
+#from bokeh.layouts import column, row
+#from bokeh.plotting import figure, show, output_file
+#from bokeh.models import HoverTool, Tabs, Panel, ColumnDataSource
 
 def run(driver_file):
 
@@ -260,23 +260,23 @@ def chem_free(pt_df, chem_config):
 def viz(picaso_output): 
     spectrum_plot_list = []
 
-    if isinstance(picaso_output.get('transit_depth', jpi.np.nan), jpi.np.ndarray):
-        spectrum_plot_list += [jpi.spectrum(picaso_output['wavenumber'], picaso_output['transit_depth'], title='Transit Depth Spectrum')]
+    if isinstance(picaso_output.get('transit_depth', np.nan), np.ndarray):
+        spectrum_plot_list += [spectrum(picaso_output['wavenumber'], picaso_output['transit_depth'], title='Transit Depth Spectrum')]
 
-    if isinstance(picaso_output.get('albedo', jpi.np.nan), jpi.np.ndarray):
-        spectrum_plot_list += [jpi.spectrum(picaso_output['wavenumber'], picaso_output['albedo'], title='Albedo Spectrum')]
+    if isinstance(picaso_output.get('albedo', np.nan), np.ndarray):
+        spectrum_plot_list += [spectrum(picaso_output['wavenumber'], picaso_output['albedo'], title='Albedo Spectrum')]
 
-    if isinstance(picaso_output.get('thermal', jpi.np.nan), jpi.np.ndarray):
-        spectrum_plot_list += [jpi.spectrum(picaso_output['wavenumber'], picaso_output['thermal'], title='Thermal Emission Spectrum')]
+    if isinstance(picaso_output.get('thermal', np.nan), np.ndarray):
+        spectrum_plot_list += [spectrum(picaso_output['wavenumber'], picaso_output['thermal'], title='Thermal Emission Spectrum')]
 
-    if isinstance(picaso_output.get('fpfs_reflected', jpi.np.nan), jpi.np.ndarray):
-        spectrum_plot_list += [jpi.spectrum(picaso_output['wavenumber'], picaso_output['fpfs_reflected'], title='Reflected Light Spectrum')]
+    if isinstance(picaso_output.get('fpfs_reflected', np.nan), np.ndarray):
+        spectrum_plot_list += [spectrum(picaso_output['wavenumber'], picaso_output['fpfs_reflected'], title='Reflected Light Spectrum')]
 
-    if isinstance(picaso_output.get('fpfs_thermal', jpi.np.nan), jpi.np.ndarray):
-        spectrum_plot_list += [jpi.spectrum(picaso_output['wavenumber'], picaso_output['fpfs_thermal'], title='Relative Thermal Emission Spectrum')]
+    if isinstance(picaso_output.get('fpfs_thermal', np.nan), np.ndarray):
+        spectrum_plot_list += [spectrum(picaso_output['wavenumber'], picaso_output['fpfs_thermal'], title='Relative Thermal Emission Spectrum')]
 
-    if isinstance(picaso_output.get('fpfs_total', jpi.np.nan), jpi.np.ndarray):
-        spectrum_plot_list += [jpi.spectrum(picaso_output['wavenumber'], picaso_output['fpfs_total'], title='Relative Full Spectrum')]
+    if isinstance(picaso_output.get('fpfs_total', np.nan), np.ndarray):
+        spectrum_plot_list += [spectrum(picaso_output['wavenumber'], picaso_output['fpfs_total'], title='Relative Full Spectrum')]
 
     output_file("spectrum_output.html")
     show(column(children=spectrum_plot_list, sizing_mode="scale_width"))
@@ -286,6 +286,6 @@ def viz(picaso_output):
 
 
 def plot_pt_profile(full_output, **kwargs):
-    fig = jpi.pt(full_output, **kwargs)
+    fig = pt(full_output, **kwargs)
     show(fig)
     return fig
