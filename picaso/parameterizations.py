@@ -1,8 +1,12 @@
+import numpy as np
+import pandas as pd
+import os
+
+from .justdoit import vj,u,get_cld_input_grid,special
+
 
 ## Parameterizations 
 class Parameterize():
-    """
-    """
     def __init__(self, load_cld_optical = None, mieff_dir = None):
         """
         picaso_inputs_class : class picaso.justdoit.inputs 
@@ -14,7 +18,6 @@ class Parameterize():
             If a condensate species is supplied to load_cld_optical, then you must also supplie a mieff directory
             
         """
-
         if isinstance(load_cld_optical, (str,list)):
             if isinstance(load_cld_optical,str): load_cld_optical=[load_cld_optical]
             if isinstance(mieff_dir, str):
@@ -27,9 +30,9 @@ class Parameterize():
                     raise Exception("path supplied through mieff_dir does not exist")
             else: 
                 raise Exception("mieff_dir was not supplied as a str but needs to be if a condensate species was supplied through load_cld_optical")
-            
-        return 
-        
+
+        return
+    
     def add_class(self,picaso_inputs_class):
         """Add a picaso class that loads in the pressure grid (at the very least)
 
@@ -47,6 +50,7 @@ class Parameterize():
         self.nlayer = self.nlevel -1 
         self.gravity_cgs = picaso_inputs_class.inputs['planet'].get('gravity',np.nan)
 
+          
     def get_particle_dist(self,species,distribution,
                   lognorm_kwargs = {'sigma':np.nan, 'lograd[cm]':np.nan}, 
                   hansen_kwargs={'b':np.nan,'lograd[cm]':np.nan}):
@@ -70,7 +74,7 @@ class Parameterize():
         
         return dist 
 
-    def flex_fsed_cloud(self, species, base_pressure, ndz, fsed, distribution, 
+    def cloud_flex_fsed(self, species, base_pressure, ndz, fsed, distribution, 
                   lognorm_kwargs = {'sigma':np.nan, 'lograd[cm]':np.nan}, 
                   hansen_kwargs={'b':np.nan,'lograd[cm]':np.nan}): 
         """
@@ -123,8 +127,8 @@ class Parameterize():
                                           p_bottom=base_pressure,p_decay=opd_h)
 
         return df_cld 
-    flex_cloud =  flex_fsed_cloud  
-    def brewster_mie_cloud(self, species, distribution, decay_type,
+    flex_cloud =  cloud_flex_fsed  
+    def cloud_brewster_mie(self, species, distribution, decay_type,
                   lognorm_kwargs = {'sigma':np.nan, 'lograd[cm]':np.nan}, 
                   hansen_kwargs={'b':np.nan,'lograd[cm]':np.nan},
                   slab_kwargs={'ptop':np.nan,'dp':np.nan, 'reference_tau':np.nan},
@@ -176,7 +180,7 @@ class Parameterize():
 
         return df 
     
-    def brewster_grey_cloud(self, decay_type, alpha, ssa, reference_wave=1,
+    def cloud_brewster_grey(self, decay_type, alpha, ssa, reference_wave=1,
                   slab_kwargs={'ptop':np.nan,'dp':np.nan, 'reference_tau':np.nan},
                   deck_kwargs={'ptop':np.nan,'dp':np.nan}): 
         """
@@ -299,13 +303,13 @@ class Parameterize():
 
         return opd_by_layer
 
-    def free_constant_abundance(self,  species):
+    def chem_free(self, species_dict):
         ''''
-        Abundance profile
+        Abundance profile for free chemistry
 
         Parameters
         ----------
-        species: dict
+        species_dict: dict
             Dictionary containing the species and their abundances. Should 
             also contain background gases and their ratios. 
             Example: species=dict(H2O=dict(value=1e-4, unit='v/v'), background=dict(gases=['H2', 'He'], ratios=[0.85, 0.15]))
@@ -314,33 +318,62 @@ class Parameterize():
         ------
         Data frame with chemical abundances per level
         '''
+        #free = chem_config['free']
+        pressure_grid = self.pressure_level
+        total_sum_of_gases = 0*pressure_grid
+        mixingratio_df = pd.Dataframe(dict(pressure=pressure_grid))
+        for i in species_dict.keys(): 
+            #make sure its not the background
+            if i !='background':
+                value = species_dict[i].get('value',None)
+                #easy case where there is just one well-mixed value 
+                if value is not None: #abundance of the chemistry input per molecule
+                    mixingratio_df[i] = value
+                    
+                else: #each molecule input manually
+                    values =  species_dict[i].get('values') 
+                    pressures = species_dict[i].get('pressures') 
+                    pressure_unit= species_dict[i].get('pressure_unit') 
+                    pressure_bar = (np.array(pressures)*u.Unit(pressure_unit)).to(u.bar).value 
+                    
+                    #make sure its in ascending pressure order 
+                    first = pressure_bar[0] 
+                    last = pressure_bar[-1] 
 
-        pressure=self.pressure_level
-        nlevels=len(pressure)
+                    #flip if the ordering has been input incorrectly
+                    if first > last : 
+                        pressure_bar=pressure_bar[::-1]
+                        values=values[::-1]
 
-        # Initialize dictionary to put in the datafram
-        mixing_ratios=dict(pressure=pressure)
+                    vmr = values[0] + 0*pressure_grid
+                    # need to finish the ability to input free chem here 
+                    for ii,ivmr in enumerate(values[1:]):
+                        vmr[pressure_grid>=pressure_bar[ii]] = ivmr 
+                    
+                    #add to dataframe 
+                    mixingratio_df[i]=vmr
 
-        # Keep track of the total abundances to make sure they add to 1
-        total_abundance=0
-        
-        for i in species.keys():
-            if i!='background':
-                mixing_ratios[i]=np.ones(nlevels)*species[i]['value']
-                total_abundance+=species[i]['value']
+                total_sum_of_gases += mixingratio_df[i].values
+        #add background gas if it is requested
+        if 'background' in species_dict.keys():
+            total_sum_of_background = 1-total_sum_of_gases
+            if len(species_dict['background']['gases'])==2: #2 background gasses
+                gas1_name = species_dict['background']['gases'][0]
+                gas2_name = species_dict['background']['gases'][1]
+                fraction = species_dict['background']['fraction']
+                gas2_absolute_value = total_sum_of_background / (fraction + 1)
+                gas1_absolute_value = fraction * gas2_absolute_value
+                mixingratio_df[gas1_name] = gas1_absolute_value
+                mixingratio_df[gas2_name] = gas2_absolute_value
+            if len(species_dict['background']['gases'])==1: #1 background gas
+                mixingratio_df[species_dict['background']['gases'][0]] = total_sum_of_background
+        return mixingratio_df
 
-        # Add background gases
-        n_background=len(species['background']['gases'])
-        for i in range(n_background):
-            mol=species['background']['gases'][i]
-            abun=species['background']['ratios'][i]
-            mixing_ratios[mol]=np.ones(nlevels)*(1-total_abundance)*abun
-        
-        self.picaso.inputs['atmosphere']['profile'] = pd.DataFrame(mixing_ratios)
-        
-        return pd.DataFrame(mixing_ratios)
+    def chem_visscher(self,cto_absolute, log_mh): 
+        self.picaso.chemeq_visscher_2121(cto_absolute, log_mh)
+        return self.picaso.inputs['atmosphere']['profile']
 
-    def madhu_seager_09_noinversion(self, alpha_1, alpha_2, P1, P3, T3, beta=0.5):
+    def pt_madhu_seager_09_noinversion(self, alpha_1, alpha_2, P1, P3, T3, beta=0.5):
         """"
         Implements the temperature structure parameterization from Madhusudhan & Seager (2009)
 
@@ -378,7 +411,7 @@ class Parameterize():
 
         return pd.DataFrame(dict(pressure=pressure, temperature=temp_by_level))
     
-    def madhu_seager_09_inversion(self, alpha_1, alpha_2, P1, P2, P3, T3, beta=0.5):
+    def pt_madhu_seager_09_inversion(self, alpha_1, alpha_2, P1, P2, P3, T3, beta=0.5):
         """"
         Implements the temperature structure parameterization from Madhusudhan & Seager (2009)
           allowing for inversions
@@ -417,7 +450,7 @@ class Parameterize():
 
         return pd.DataFrame(dict(pressure=pressure, temperature=temp_by_level))
     
-    def knot_profile(self,  P_knots, T_knots, interpolation='brewster'):
+    def pt_knot_profile(self,  P_knots, T_knots, interpolation='brewster'):
         """"
         Knot-based temperature profile. Implements different types of interpolation.
 
@@ -462,7 +495,7 @@ class Parameterize():
 
         return pd.DataFrame(dict(pressure=pressure, temperature=temp_by_level))
 
-    def guillot(self, Teq, T_int=100, logg1=-1, logKir=-1.5, alpha=0.5):
+    def pt_guillot(self, Teq, T_int=100, logg1=-1, logKir=-1.5, alpha=0.5):
         """
         Creates temperature pressure profile given parameterization in Guillot 2010 TP profile
         called in fx()
