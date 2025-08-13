@@ -25,9 +25,91 @@ def run(driver_file):
 
     return out 
 
-def spectrum(config):
+def loglikelihood(cube):
+    """
+    Log_likelihood function that ultimately is given to the sampler
+    Note if you keep to our same formats you will not have to change this code move 
 
+    Tips
+    ----
+    - Remember how we put our data dict, error inflation, and offsets all in dictionary format? Now we can utilize that 
+    functionality if we properly named them all with the right keys! 
+
+    Checklist
+    --------- 
+    - ensure that error inflation and offsets are incorporated in the way that suits your problem 
+    - note there are many different ways to incorporate error inflation! this is just one example 
+    """
+    #compute model spectra
+    resultx,resulty,offset_all,err_inf_all = MODEL(cube) # we will define MODEL below 
+
+    #initiate the four terms we willn eed for the likelihood
+    ydat_all=[];ymod_all=[];sigma_all=[];extra_term_all=[];
+
+    #loop through data (if multiple instruments, add offsets if present, add err inflation if present)
+    for ikey in DATA_DICT.keys(): #we will also define DATA_DICT below
+        xdata,ydata,edata = DATA_DICT[ikey]
+        xbin_model , y_model = jdi.mean_regrid(resultx, resulty, newx=xdata)#remember we put everything already sorted on wavenumber
+
+        #add offsets if they exist
+        offset = offset_all.get(ikey,0) #if offset for that instrument doesnt exist, return 0
+        ydata = ydata+offset
+
+        #add error inflation if they exist
+        err_inf = err_inf_all.get(ikey,0) #if err inf term for that instrument doesnt exist, return 0
+        sigma = edata**2 + (err_inf)**2 #there are multiple ways to do this, here just adding in an extra noise term
+        if err_inf !=0: 
+            #see formalism here for example https://emcee.readthedocs.io/en/stable/tutorials/line/#maximum-likelihood-estimation
+            extra_term = np.log(2*np.pi*sigma)
+        else: 
+            extra_term=sigma*0
+
+        ydat_all.append(ydata);ymod_all.append(y_model);sigma_all.append(sigma);extra_term_all.append(extra_term); 
+
+    ymod_all = np.concatenate(ymod_all)    
+    ydat_all = np.concatenate(ydat_all)    
+    sigma_all = np.concatenate(sigma_all)  
+    extra_term_all = np.concatenate(extra_term_all)
+
+    #compute likelihood
+    loglike = -0.5*np.sum((ydat_all-ymod_all)**2/sigma_all + extra_term_all)
+    return loglike
+
+#def prior_handler(): 
+#    returnm 
+
+"""def retrieve(config):
     OPA = opannection(
+        filename_db=config['OpticalProperties']['opacity_files'], #database(s)
+        method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
+        **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
+        )
+    def read_data(): 
+
+    def prior(): 
+        prior_handler
+    
+    def loglikelihood(): 
+        chi2 = 
+
+    def model(): 
+        y = sepctrum(config, OPA=OPA)
+        spectra_interp = convolver(**convolverinputs)
+        offset = {}
+        error_inf = {} 
+        return wno, spectra_interp,offset,error_inf
+    
+    def convolver(newx,x,y)
+        return newy
+    
+    ultranest.run(logliklihood, prior, hyperparams)
+
+"""    
+
+def spectrum(config, OPA=None):
+
+    if isinstance(OPA,type(None)):
+        OPA = opannection(
         filename_db=config['OpticalProperties']['opacity_files'], #database(s)
         method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
         **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
@@ -144,6 +226,13 @@ def spectrum(config):
 
 def PT_handler(pt_config, A): 
     type = pt_config['profile']
+
+    # WIP ideally this looks like this
+
+    # all_inputs = pt_config.get(type, {})
+    # function_pt = getattr(Parameterize,type)
+    # df_pt = function_pt(**all_inputs)
+    # return df_pt
 
     #check if supplied file for pt profile
     if type == 'userfile': 

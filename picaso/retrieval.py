@@ -7,7 +7,7 @@ import dynesty
 import pandas as pd
 from scipy import interpolate
 
-from .justdoit import mean_regrid,vj,u,get_cld_input_grid
+from .justdoit import mean_regrid,vj,u,get_cld_input_grid,special
 
 from .analyze import chi_squared
 from .justplotit import pals
@@ -708,9 +708,6 @@ def plot_pair(samples, params, pretty_labels=None,ranges=None,figsize=(11, 11), 
 
 
 ## Parameterizations 
-
-
-
 class Parameterize():
     """
     """
@@ -756,6 +753,7 @@ class Parameterize():
         self.pressure_layer = np.sqrt(self.pressure_level [0:-1]*self.pressure_level [1:])
         self.nlevel = len(self.pressure_level )
         self.nlayer = self.nlevel -1 
+        self.gravity_cgs = picaso_inputs_class.inputs['planet'].get('gravity',np.nan)
 
     def get_particle_dist(self,species,distribution,
                   lognorm_kwargs = {'sigma':np.nan, 'lograd[cm]':np.nan}, 
@@ -1172,6 +1170,67 @@ class Parameterize():
 
         return pd.DataFrame(dict(pressure=pressure, temperature=temp_by_level))
 
+    def guillot(self, Teq, T_int=100, logg1=-1, logKir=-1.5, alpha=0.5,nlevel=61, p_bottom = 1.5, p_top = -6):
+        """
+        Creates temperature pressure profile given parameterization in Guillot 2010 TP profile
+        called in fx()
+        Parameters
+        ----------
+        Teq : float 
+            equilibrium temperature 
+        T_int : float 
+            Internal temperature, if low (100) currently set to 100 for everything  
+        kv1 : float 
+            see parameterization Guillot 2010 (10.**(logg1+logKir))
+        kv2 : float
+            see parameterization Guillot 2010 (10.**(logg1+logKir))
+        kth : float
+            see parameterization Guillot 2010 (10.**logKir)
+        alpha : float , optional
+            set to 0.5
+            
+        Returns
+        -------
+        T : numpy.array 
+            Temperature grid 
+        P : numpy.array
+            Pressure grid
+                
+        """
+        kv1, kv2 =10.**(logg1+logKir),10.**(logg1+logKir)
+        kth=10.**logKir
+
+        Teff = T_int
+        f = 1.0  # solar re-radiation factor
+        A = 0.0  # planetary albedo
+        g0 = self.gravity_cgs/100.0 #cm/s2 to m/s2
+        assert not np.isnan(g0),'Graivty was not supplied but is being requested for guillot p-t profile parameterization'
+
+        # Compute equilibrium temperature and set up gamma's
+        T0 = Teq
+        gamma1 = kv1/kth #Eqn. 25
+        gamma2 = kv2/kth
+
+        # Initialize arrays
+        logtau =np.arange(-10,20,.1)
+        tau =10**logtau
+
+        #computing temperature
+        T4ir = 0.75*(Teff**(4.))*(tau+(2.0/3.0))
+        f1 = 2.0/3.0 + 2.0/(3.0*gamma1)*(1.+(gamma1*tau/2.0-1.0)*np.exp(-gamma1*tau))+2.0*gamma1/3.0*(1.0-tau**2.0/2.0)*special.expn(2.0,gamma1*tau)
+        f2 = 2.0/3.0 + 2.0/(3.0*gamma2)*(1.+(gamma2*tau/2.0-1.0)*np.exp(-gamma2*tau))+2.0*gamma2/3.0*(1.0-tau**2.0/2.0)*special.expn(2.0,gamma2*tau)
+        T4v1=f*0.75*T0**4.0*(1.0-alpha)*f1
+        T4v2=f*0.75*T0**4.0*alpha*f2
+        T=(T4ir+T4v1+T4v2)**(0.25)
+        P=tau*g0/(kth*0.1)/1.E5
+
+        logP = np.log10(self.pressure_level)#np.linspace(p_top,p_bottom,nlevel)
+
+        T = np.interp(logP,np.log10(P),T)
+
+        # Return TP profile
+        return pd.DataFrame({'temperature': T, 'pressure':self.pressure_level})
+    
 def atlev(l0,pressure_layer):
     nlayers = pressure_layer.size
     if (l0 <= nlayers-2):
