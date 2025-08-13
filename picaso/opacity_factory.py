@@ -1632,6 +1632,7 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
     chem_grid = pd.read_csv(chemistry_file, sep=rf'\s+')
 
 
+
     grid_file = os.path.join(og_directory,'grid1460.csv')
 
 
