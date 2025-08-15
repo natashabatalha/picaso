@@ -21,13 +21,13 @@ def run_notebook(notebook_path, github=False):
 
         # Insert a code cell at the beginning to append the path if using a local github picaso installation
         if github == True:
-            path_cell = nbformat.v4.new_code_cell('import sys; sys.path.append("/Users/jjm6243/dev_picaso/")')
+            path_cell = nbformat.v4.new_code_cell('import sys; sys.path.append("/Users/jjm6243/Documents/dev_picaso/")')
             virga_cell = nbformat.v4.new_code_cell('import sys; sys.path.append("/Users/jjm6243/Documents/virga/")')
             nb.cells.insert(0, virga_cell)
             nb.cells.insert(0, path_cell)
 
-            path_cell = nbformat.v4.new_code_cell('import os; os.environ["picaso_refdata"] = "/Users/jjm6243/dev_picaso/reference"')
-            cdbs_cell = nbformat.v4.new_code_cell('import os; os.environ["PYSYN_CDBS"] = "/Users/jjm6243/dev_picaso/reference/stellar_grids"')
+            path_cell = nbformat.v4.new_code_cell('import os; os.environ["picaso_refdata"] = "/Users/jjm6243/Documents/dev_picaso/reference"')
+            cdbs_cell = nbformat.v4.new_code_cell('import os; os.environ["PYSYN_CDBS"] = "/Users/jjm6243/Documents/dev_picaso/reference/stellar_grids"')
             nb.cells.insert(0, cdbs_cell)
             nb.cells.insert(0, path_cell)
 
@@ -62,6 +62,10 @@ def main():
                 elif 'Reference' in notebook_path:
                     print(f"Skipping Reference notebook: {notebook_path}")
                     continue
+                # option to exclude workshop notebooks 
+                # elif 'workshop' in notebook_path:
+                #     print(f"Skipping workshop notebook: {notebook_path}")
+                #     continue
                 print(f"Running notebook: {notebook_path}")
                 if not run_notebook(notebook_path, github=local_github):
                     failed_notebooks.append(notebook_path)
