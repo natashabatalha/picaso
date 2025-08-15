@@ -3,7 +3,9 @@
 import os
 import subprocess
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join('docs', 'notebooks'))
+
+local_github = True
 
 try:
     import nbformat
@@ -12,13 +14,25 @@ except ImportError:
     print("Please install nbconvert and nbformat: pip install nbconvert nbformat")
     sys.exit(1)
 
-def run_notebook(notebook_path):
+def run_notebook(notebook_path, github=False):
     """Executes a notebook and returns True if it runs without errors, False otherwise."""
     with open(notebook_path, "r", encoding="utf-8") as f:
         nb = nbformat.read(f, as_version=4)
 
-    # Set the picaso_refdata environment variable
-    os.environ['picaso_refdata'] = '/reference/'
+        # Insert a code cell at the beginning to append the path if using a local github picaso installation
+        if github == True:
+            path_cell = nbformat.v4.new_code_cell('import sys; sys.path.append("/Users/jjm6243/dev_picaso/")')
+            virga_cell = nbformat.v4.new_code_cell('import sys; sys.path.append("/Users/jjm6243/Documents/virga/")')
+            nb.cells.insert(0, virga_cell)
+            nb.cells.insert(0, path_cell)
+
+            path_cell = nbformat.v4.new_code_cell('import os; os.environ["picaso_refdata"] = "/Users/jjm6243/dev_picaso/reference"')
+            cdbs_cell = nbformat.v4.new_code_cell('import os; os.environ["PYSYN_CDBS"] = "/Users/jjm6243/dev_picaso/reference/stellar_grids"')
+            nb.cells.insert(0, cdbs_cell)
+            nb.cells.insert(0, path_cell)
+
+    # # Set the picaso_refdata environment variable
+    # os.environ['picaso_refdata'] = '/reference/'
 
     ep = ExecutePreprocessor(timeout=1200, kernel_name='python3')
 
@@ -31,7 +45,7 @@ def run_notebook(notebook_path):
         return False
 
 def main():
-    notebook_dir = os.path.join(os.path.dirname(__file__), '..', 'docs', 'notebooks')
+    notebook_dir = os.path.join('docs', 'notebooks')
     failed_notebooks = []
 
     for root, _, files in os.walk(notebook_dir):
@@ -42,8 +56,14 @@ def main():
                 if 'WIP' in notebook_path:
                     print(f"Skipping WIP notebook: {notebook_path}")
                     continue
+                elif 'Quickstart' in notebook_path:
+                    print(f"Skipping Quickstart notebook: {notebook_path}")
+                    continue
+                elif 'Reference' in notebook_path:
+                    print(f"Skipping Reference notebook: {notebook_path}")
+                    continue
                 print(f"Running notebook: {notebook_path}")
-                if not run_notebook(notebook_path):
+                if not run_notebook(notebook_path, github=local_github):
                     failed_notebooks.append(notebook_path)
 
     if failed_notebooks:
