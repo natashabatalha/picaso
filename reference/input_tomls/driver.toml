@@ -163,16 +163,16 @@ frac_1 = 0.3 #this is the fraction assigned to patch 1
 fit=[
     'object.radius',
     'chemistry.free.H2O',
-    'clouds.slab-grey.ptop',
-    'clouds.slab-grey.dp',
-    'error_inflation'
+    'clouds.cloud1.brewster_grey.alpha',
+    'clouds.cloud1.brewster_grey.slab_kwargs.ptop',
 ]
+
 convolution = 'tophat' #options: instrument, tophat, spectres
 
 [retrieval.prior]
 "object.radius" = {type='gaussian',mean=1,std=1}
 "chemistry.free.H2O" = {type='uniform',min=-12,max=0,log=true}
-"clouds.slab-grey.ptop" = {type='uniform',min=-3,max=2,log=true}
+"clouds.cloud1.brewster_grey" = {type='uniform',min=-3,max=2,log=true}
 "clouds.slab-grey.dp" = {type='uniform',min=0.005,max=2,log=true}
 "error_inflation" = {type='uniform',min=-2,max=4,log=true}
 

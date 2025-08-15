@@ -302,6 +302,42 @@ def viz(picaso_output):
     return spectrum_plot_list
 
 
+def set_dict_value(data, path_string, new_value):
+    """
+    Sets the value of a key in a nested dictionary using a dot-separated path string.
+
+    For example, a path_string of "details.owner.id" will set the 'id' key
+    inside the 'owner' dictionary, which is inside the 'details' dictionary.
+
+    Args:
+        data (dict): The dictionary to modify.
+        path_string (str): The dot-separated key path to the target value.
+        new_value: The new value to set.
+
+    Returns:
+        bool: True if the value was successfully set, False otherwise.
+    """
+    keys = path_string.split('.')
+    current_level = data
+    
+    # Traverse the dictionary down to the final key
+    for i, key in enumerate(keys):
+        # Check if we are at the final key in the path
+        if i == len(keys) - 1:
+            # Set the value for the final key
+            if isinstance(current_level, dict) and key in current_level:
+                current_level[key] = new_value
+                return True
+            else:
+                print(f"Error: The path to key '{key}' is invalid or does not exist.")
+                return False
+        else:
+            # Check if the next key in the path exists and is a dictionary
+            if isinstance(current_level, dict) and key in current_level and isinstance(current_level[key], dict):
+                current_level = current_level[key]
+            else:
+                print(f"Error: The path is invalid. '{key}' is not a dictionary or does not exist.")
+                return False
 
 def plot_pt_profile(full_output, **kwargs):
     fig = pt(full_output, **kwargs)
