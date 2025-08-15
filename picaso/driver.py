@@ -1,29 +1,47 @@
 from .justdoit import *
 from .justplotit import *
+from .parameterizations import Parameterize,cloud_averaging
 #import picaso.justdoit as jdi
 #import picaso.justplotit as jpi
 import tomllib 
-#from bokeh.layouts import column, row
-#from bokeh.plotting import figure, show, output_file
-#from bokeh.models import HoverTool, Tabs, Panel, ColumnDataSource
 
-def run(driver_file):
+chem_options = ['visscher', 'free', 'userfile']
+cloud_options = ['brewster_grey', 'brewster_mie', 'virga', 'flex_fsed', 'hard_grey', 'userfile']
+pt_options = ['userfile','isothermal', 'knots', 'guillot', 'sonora_bobcat',  'madhu_seager_09_inversion','madhu_seager_09_noinversion' ] # 'zj_24', 'molliere_20', 'Kitzman_20', 
 
-    with open(driver_file, "rb") as f:
-        config = tomllib.load(f)
+def run(driver_file=None,driver_dict=None):
+    if isinstance(driver_file,str):
+        with open(driver_file, "rb") as f:
+            config = tomllib.load(f)
+    elif isinstance(driver_dict,dict):
+        config = driver_dict
+    else: 
+        raise Exception('Could not interpret either driver file or dictionary input')
     
+    #PRELOAD OPACITIES OR OPTICAL CONSTANTS
+    preload_cloud_miefs = find_values_for_key(config ,'condensate')
+    virga_mieff   = config['OpticalProperties'].get('virga_mieff',None)
+    #if the above are both blank then this is just returning a set of functions
+    param_tools = Parameterize(load_cld_optical=preload_cloud_miefs,
+                                    mieff_dir=virga_mieff)
+    
+    #setup opacity outside main run
+    opacity = opannection(
+        filename_db=config['OpticalProperties']['opacity_files'], #database(s)
+        method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
+        **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
+        )
+     
     if config['calc_type'] =='spectrum':
-        out = spectrum(config)
-    
+        picaso_class = setup_spectrum_class(config,opacity,param_tools)
+        output =  picaso_class.spectrum(opacity, full_output=True, calculation = config['observation_type']) 
+
     ### I made these # because they stopped the run fucntion from doing return out and wouldn't let me use my plot PT fucntion
     elif config['calc_type']=='climate':
         raise Exception('WIP not ready yet')
         out = climate(config)
-    
-    elif config['calc_type']=='retrieval':
-        raise Exception('WIP not ready yet')
 
-    return out 
+    return output 
 
 def loglikelihood(cube):
     """
@@ -106,14 +124,16 @@ def loglikelihood(cube):
 
 """    
 
-def spectrum(config, OPA=None):
+def setup_spectrum_class(config, opacity , param_tools ):
 
-    if isinstance(OPA,type(None)):
-        OPA = opannection(
+    if isinstance(opacity,type(None)):
+        opacity = opannection(
         filename_db=config['OpticalProperties']['opacity_files'], #database(s)
         method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
         **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
         ) #opanecction connects to the opacity database
+
+    
     irradiated = config['irradiated']
     if not irradiated: 
         A = inputs(calculation='browndwarf',climate=False) #if it isn't irradiated we are calculating a browndwarf
@@ -137,21 +157,26 @@ def spectrum(config, OPA=None):
 
     
     if irradiated: #calculating spectrum for a planet by defining star properties
-
+        typestar = config['star'].get('type')
+        
         #check if userfile is requested
-        filename = config['star'].get('userfile',{}).get('filename',None)
-        if os.path.exists(str(filename)): #file with wavelength and flux 
-            w_unit=config['star']['userfile'].get('w_unit')
-            f_unit=config['star']['userfile'].get('f_unit')
+        if typestar=='userfile':
+            filename = config['star'].get('userfile',{}).get('filename',None)
+            if os.path.exists(str(filename)): #file with wavelength and flux 
+                w_unit=config['star']['userfile'].get('w_unit')
+                f_unit=config['star']['userfile'].get('f_unit')
+            else: 
+                raise Exception('Stellar path provided does not exist ')
         else: #properties of star 
             w_unit=None
             f_unit=None
+            filename=None
             temp= config['star'].get('grid',{}).get('teff',None) #temperature of star
             metal= config['star'].get('grid',{}).get('feh',None) #metallicity of star
             logg= config['star'].get('grid',{}).get('logg',None) #log gravity of star
             database= config['star'].get('grid',{}).get('database',None) #specify database
 
-        A.star(OPA,
+        A.star(opacity,
                temp=temp, 
                metal=metal, 
                logg=logg ,
@@ -164,187 +189,91 @@ def spectrum(config, OPA=None):
                w_unit=w_unit, 
                f_unit=f_unit
                ) 
-        #star parameters for a planet/browndwarf
+    
+    #WIP TODO: A.surface_reflect()
+
     
     # tempreature 
-    pt = config['temperature']
-    df_pt = PT_handler(pt, A) #datafile for pressure temperature profile
+    pt_config = config['temperature']
+    df_pt = PT_handler(pt_config, A, param_tools) #datafile for pressure temperature profile
+    A.atmosphere(df=df_pt) #will include chemistry if it was added to userfile
+    param_tools.add_class(A)
 
     # chemistry
-    chem_config = config['chemistry']
-    if chem_config['method']=='free': #user defined chemistry per molecule
-        df=chem_free(df_pt,chem_config)
-        A.atmosphere(df=df)
-    elif chem_config['method']=='visscher': #chemistry inputs manually
-        log_mh = chem_config['method']['visscher'].get('logmh',None) 
-        cto = chem_config['method']['visscher'].get('cto',{}).get('value') 
-        cto_unit = chem_config['method']['visscher'].get('cto',{}).get('unit')
-        if cto_unit=='relative': #make cto value relative to asplunds
-            cto_relative=cto 
-            cto_absolute=cto_relative*0.55
-        else: #leave cto value as is
-            cto_relative=None
-            cto_absolute=cto
-        A.add_pt(T=df_pt['temperature'],P=['pressure'])
-        A.chemeq_visscher_2121(cto_absolute, log_mh)
-    else: 
-        raise Exception('Only options are free and visscher so far')
-
-
-    #WIP TODO: A.surface_reflect()
+    chem_config = config.get('chemistry',{})
+    chem_type = chem_config.get('method','')
+    if chem_type == 'userfile':
+        kwargs = config['chemistry'][chem_type].get('pd_kwargs',{})
+        df_mixingratio = pd.read_csv(config['chemistry'][chem_type]['filename'],**kwargs) 
+        #default remove prssure and temperature 
+        df_cleaned = df_mixingratio.drop(columns=['temperature', 'pressure'])
+        df_mixingratio = pd.merge(A.inputs['atmosphere']['profile'].loc[:,['temperature', 'pressure']], 
+                                  df_cleaned, left_index=True, right_index=True, how='inner')
+    elif chem_type!='': 
+        chemistry_function = getattr(param_tools, f'chem_{chem_type}')
+        df_mixingratio  = chemistry_function(**chem_config[chem_type])#note, this includes P and T already
     
-    
-    #WIP TODO:if clouds: 
+    #set final with chem
+    A.atmosphere(df = df_mixingratio)
+
+    # clouds 
     cloud_config = config.get('clouds',None)
     if isinstance(cloud_config , dict):
         do_clouds=True
+        cloud_names = [i.split('_type')[0] for i in cloud_config.keys() if 'type' in i]
     else: 
         do_clouds=False
+        cloud_names = []
     
-    if do_clouds == True: 
-        cld_type = cloud_config['cloud1_type']
+    all_dfs = []
+    for icld in cloud_names: 
+        cld_type = cloud_config[f'{icld}_type']
+        if cld_type == 'userfile':
+            kwargs = cloud_config[icld][cld_type].get('pd_kwargs',{})
+            df_cld = pd.read_csv(cloud_config[icld][cld_type]['filename'],**kwargs) 
+        else:
+            cloud_function = getattr(param_tools, f'cloud_{cld_type}')
+            df_cld = cloud_function(**cloud_config[icld][cld_type])
+        
+        all_dfs += [df_cld]
 
-        if cld_type=='deck-grey':
+    if do_clouds:    
+        df_cld = cloud_averaging(all_dfs) 
+        A.clouds(df=df_cld)
 
-            cloud_config['cloud1'][cld_type]['p']=cloud_config['cloud1'][cld_type]['p']['value']#pressure level log
-            cloud_config['cloud1'][cld_type]['dp']=cloud_config['cloud1'][cld_type]['dp']['value']#cloud thickness log
-            for ikey in cloud_config['cloud1'][cld_type].keys(): 
-                val = cloud_config['cloud1'][cld_type][ikey]
-                if isinstance(val, (float,int)):
-                    val=[val]
-                    cloud_config['cloud1'][cld_type][ikey]=val
-
-            A.clouds( **cloud_config['cloud1'][cld_type])
+    return A
 
 
-    #WIP TODO:    A.clouds()
-    #WIP TODO:    A.virga()
-
-    out = A.spectrum(OPA, full_output=True, calculation = config['observation_type']) 
-    out['pt_profile']=df_pt
-    return out
-
-def PT_handler(pt_config, A): 
+def PT_handler(pt_config, picaso_class, param_tools): #WIP
     type = pt_config['profile']
-
-    # WIP ideally this looks like this
-
-    # all_inputs = pt_config.get(type, {})
-    # function_pt = getattr(Parameterize,type)
-    # df_pt = function_pt(**all_inputs)
-    # return df_pt
 
     #check if supplied file for pt profile
     if type == 'userfile': 
-        filename = pt_config['userfile']
-        kwargs = pt_config.get('panda_kwargs', {})
-        df = pd.read_csv(filename, **kwargs)
- 
-    elif type == 'guillot':
-        #guillot analytical pt profile
-        #extract guillot-specific parameters from toml
-        params = pt_config.get('guillot', {})
-        #call picaso method on atmosphere instance 'A'
-        df = A.guillot_pt(**params)
+        filename = pt_config['userfile']['filename']
+        kwargs = pt_config['userfile'].get('pd_kwargs', {})
+        pt_df = pd.read_csv(filename, **kwargs)
 
     elif type == 'sonora_bobcat':
         #sonora bobcat grid pt profile from picaso-data
         params = pt_config.get('sonora_bobcat', {})
         #call picaso's sonora function with parameters
-        A.sonora(**params)
+        picaso_class.sonora(**params)
         #the resulting pt profile is stored inside a.inputs['atmosphere']['profile']
-        df = A.inputs['atmosphere']['profile']
+        pt_df = picaso_class.inputs['atmosphere']['profile']
 
     else: #build pt profile using param tools built in to param_tools?
-        P_config = pt_config['pressure']
-        minp = P_config.get('min', {}).get('value')  #minimum pressure
-        minp_unit = P_config.get('min', {}).get('unit')
-        maxp = P_config.get('max', {}).get('value')  #max pressure
-        maxp_unit = P_config.get('max', {}).get('unit')
-        spacing = P_config.get('spacing')
-        nlevel = P_config.get('nlevel')
-        minp_bar = ((minp * u.Unit(minp_unit)).to(u.bar)).value
-        maxp_bar = ((maxp * u.Unit(maxp_unit)).to(u.bar)).value
+        picaso_class.add_pt(P_config = pt_config['pressure'])
+        #update param tools with new pressure array
+        param_tools.add_class(picaso_class)
 
-        if spacing == 'log':
-            pressure = np.logspace(np.log10(minp_bar), np.log10(maxp_bar), nlevel)
-        else:
-            pressure = np.linspace(minp_bar, maxp_bar, nlevel)
-
-        #use param_tools method matching the profile type to generate temperature array
-        temperature_function = getattr(param_tools, type)
-        temperature = temperature_function(pressure, **pt_config[type])
-
-        #create dataframe with pressure and temperature
-        df = pd.DataFrame({'temperature': temperature, 'pressure': pressure})
-
-    return df
-
-
-#WIP TODO REPLACE THIS WITH THE PARAMTOOLS BEING BUILT
-class param_tools: 
-    def isothermal(pressure, T):
-        return pressure*0+T 
-    def knots(pressure,foo1,foo2):
-        return temperature
-    def madhu_seager_09(pressure,foo1,foo2):
-        return temperature
-     
+        #grab the correct temp function for parameterization
+        temperature_function = getattr(param_tools, f'pt_{type}')
+        #compute tmeperature with correct parameters
+        pt_df = temperature_function(**pt_config[type])
+    
+    return pt_df
     
 
-def chem_free(pt_df, chem_config):
-    """
-    Creates dataframe based on user input free chem 
-    """
-    free = chem_config['free']
-    pressure_grid = pt_df['pressure'].values 
-    total_sum_of_gases = 0*pressure_grid
-    for i in free.keys(): 
-        #make sure its not the background
-        if i !='background':
-            value = free[i].get('value',None)
-            #easy case where there is just one well-mixed value 
-            if value is not None: #abundance of the chemistry input per molecule
-                pt_df[i] = value
-                
-            else: #each molecule input manually
-                values =  free[i].get('values') 
-                pressures = free[i].get('pressures') 
-                pressure_unit= free[i].get('pressure_unit') 
-                pressure_bar = (np.array(pressures)*u.Unit(pressure_unit)).to(u.bar).value 
-                
-                #make sure its in ascending pressure order 
-                first = pressure_bar[0] 
-                last = pressure_bar[-1] 
-
-                #flip if the ordering has been input incorrectly
-                if first > last : 
-                    pressure_bar=pressure_bar[::-1]
-                    values=values[::-1]
-
-                vmr = values[0] + 0*pressure_grid
-                # need to finish the ability to input free chem here 
-                for ii,ivmr in enumerate(values[1:]):
-                    vmr[pressure_grid>=pressure_bar[ii]] = ivmr 
-                
-                #add to dataframe 
-                pt_df[i]=vmr
-
-            total_sum_of_gases += pt_df[i].values
-    #add background gas if it is requested
-    if 'background' in free.keys():
-        total_sum_of_background = 1-total_sum_of_gases
-        if len(free['background']['gases'])==2: #2 background gasses
-            gas1_name = free['background']['gases'][0]
-            gas2_name = free['background']['gases'][1]
-            fraction = free['background']['fraction']
-            gas2_absolute_value = total_sum_of_background / (fraction + 1)
-            gas1_absolute_value = fraction * gas2_absolute_value
-            pt_df[gas1_name] = gas1_absolute_value
-            pt_df[gas2_name] = gas2_absolute_value
-        if len(free['background']['gases'])==1: #1 background gas
-            pt_df[free['background']['gases'][0]] = total_sum_of_background
-    return pt_df
 
 def viz(picaso_output): 
     spectrum_plot_list = []
@@ -378,3 +307,39 @@ def plot_pt_profile(full_output, **kwargs):
     fig = pt(full_output, **kwargs)
     show(fig)
     return fig
+
+
+def find_values_for_key(data, target_key):
+    """
+    Recursively crawls a dictionary and its nested dictionaries to find all
+    values associated with a specified key, returning them in a list.
+
+    Args:
+        data (dict): The dictionary to search.
+        target_key (str): The key to search for.
+
+    Returns:
+        list: A list of all values found for the target key.
+    """
+    results = []
+
+    if isinstance(data, dict):
+        # Iterate through the dictionary's key-value pairs
+        for key, value in data.items():
+            # If the current key matches the target key, add the value to the results
+            if key == target_key:
+                if isinstance(value,str):value=[value]
+                results.append(value)
+                results = [str(i) for i in np.unique(results)]
+            # If the value is another dictionary, recursively call the function
+            # and extend the current results list with the results from the nested dictionary
+            elif isinstance(value, dict):
+                results.extend(find_values_for_key(value, target_key))
+            # If the value is a list, iterate through the list items
+            # and recursively call the function if an item is a dictionary
+            elif isinstance(value, list):
+                for item in value:
+                    if isinstance(item, dict):
+                        results.extend(find_values_for_key(item, target_key))
+    
+    return results

@@ -708,7 +708,7 @@ def plot_pair(samples, params, pretty_labels=None,ranges=None,figsize=(11, 11), 
 
 
 ## Parameterizations 
-class Parameterize():
+class Parameterize_DEPRECATE():
     """
     """
     def __init__(self, load_cld_optical = None, mieff_dir = None):

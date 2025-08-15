@@ -1,6 +1,9 @@
 import numpy as np
 import pandas as pd
 import os
+from scipy import interpolate
+from astropy.convolution import convolve, Gaussian1DKernel
+
 
 from .justdoit import vj,u,get_cld_input_grid,special
 
@@ -18,6 +21,7 @@ class Parameterize():
             If a condensate species is supplied to load_cld_optical, then you must also supplie a mieff directory
             
         """
+        self.mieff_dir=mieff_dir
         if isinstance(load_cld_optical, (str,list)):
             if isinstance(load_cld_optical,str): load_cld_optical=[load_cld_optical]
             if isinstance(mieff_dir, str):
@@ -32,7 +36,7 @@ class Parameterize():
                 raise Exception("mieff_dir was not supplied as a str but needs to be if a condensate species was supplied through load_cld_optical")
 
         return
-    
+
     def add_class(self,picaso_inputs_class):
         """Add a picaso class that loads in the pressure grid (at the very least)
 
@@ -45,6 +49,7 @@ class Parameterize():
         """
         self.picaso = picaso_inputs_class
         self.pressure_level = picaso_inputs_class.inputs['atmosphere']['profile']['pressure'].values
+        self.temperature_level  = picaso_inputs_class.inputs['atmosphere']['profile'].get('temperature',pd.DataFrame()).values
         self.pressure_layer = np.sqrt(self.pressure_level [0:-1]*self.pressure_level [1:])
         self.nlevel = len(self.pressure_level )
         self.nlayer = self.nlevel -1 
@@ -52,13 +57,13 @@ class Parameterize():
 
           
     def get_particle_dist(self,species,distribution,
-                  lognorm_kwargs = {'sigma':np.nan, 'lograd[cm]':np.nan}, 
-                  hansen_kwargs={'b':np.nan,'lograd[cm]':np.nan}):
+                  lognorm_kwargs = {'sigma':np.nan, 'lograd':np.nan}, 
+                  hansen_kwargs={'b':np.nan,'lograd':np.nan}):
         logradius = np.log10(self.radius[species])
         
         if 'lognorm' in distribution:
             sigma=lognorm_kwargs['sigma']
-            lograd=lognorm_kwargs['lograd[cm]']
+            lograd=lognorm_kwargs['lograd']
             
             if np.isnan(sigma):
                 raise Exception('lognorm_kwargs have not been defined')
@@ -66,7 +71,7 @@ class Parameterize():
             dist = (1/(sigma * np.sqrt(2 * np.pi)) *
                        np.exp( - (logradius - lograd)**2 / (2 * sigma**2)))
         elif 'hansen' in distribution: 
-            a = 10**hansen_kwargs['lograd[cm]']
+            a = 10**hansen_kwargs['lograd']
             b = hansen_kwargs['b']
             dist = (10**self.radius[species])**((1-3*b)/b)*np.exp(-self.radius[species]/(a*b))
         else: 
@@ -74,9 +79,21 @@ class Parameterize():
         
         return dist 
 
-    def cloud_flex_fsed(self, species, base_pressure, ndz, fsed, distribution, 
-                  lognorm_kwargs = {'sigma':np.nan, 'lograd[cm]':np.nan}, 
-                  hansen_kwargs={'b':np.nan,'lograd[cm]':np.nan}): 
+    def cloud_virga(self,**virga_kwargs):
+        """
+        A function that runs picaso virga from justdoit.inputs class. modifies the toml inputs to run 
+        virga direct 
+        """
+        virga_kwargs['directory']=self.mieff_dir
+        self.picaso.inputs['atmosphere']['profile']['kz']=virga_kwargs['kzz']
+        virga_kwargs.pop('kzz')
+        self.picaso.virga(**virga_kwargs)
+        df_cld = self.picaso.inputs['clouds']['profile']
+        return df_cld 
+
+    def cloud_flex_fsed(self, condensate, base_pressure, ndz, fsed, distribution, 
+                  lognorm_kwargs = {'sigma':np.nan, 'lograd':np.nan}, 
+                  hansen_kwargs={'b':np.nan,'lograd':np.nan}): 
         """
         Given a base_pressure and fsed to set the exponential drop of the cloud integrate a particle 
         radius distribution via gaussian or hansen distributions to get optical properties in picaso 
@@ -95,13 +112,13 @@ class Parameterize():
         distribution : str 
             either lognormal or hansen 
         lognorm_kwargs : dict 
-            diectionary with the format: {'sigma':np.nan, 'lograd[cm]':np.nan}
-            lograd[cm] median particle radius in cm 
+            diectionary with the format: {'sigma':np.nan, 'lograd':np.nan}
+            lograd median particle radius in cm 
             sigma width of the distribtuion must be >1 
         hansen_kwargs : dict 
-            dictionary with the format: {'b':np.nan,'lograd[cm]':np.nan}
-            lograd[cm] and b from Hansen+1971: https://web.gps.caltech.edu/~vijay/Papers/Polarisation/hansen-71b.pdf
-            lograd[cm] = a = effective particle radius 
+            dictionary with the format: {'b':np.nan,'lograd':np.nan}
+            lograd and b from Hansen+1971: https://web.gps.caltech.edu/~vijay/Papers/Polarisation/hansen-71b.pdf
+            lograd = a = effective particle radius 
             b = varience of the particle radius 
 
         Returns 
@@ -112,10 +129,10 @@ class Parameterize():
         scale_h = 10 #just arbitrary as this gets fit for via fsed and ndz 
         z = np.linspace(100,0,self.nlayer)
         
-        dist = self.get_particle_dist(species,distribution,lognorm_kwargs,hansen_kwargs)
+        dist = self.get_particle_dist(condensate,distribution,lognorm_kwargs,hansen_kwargs)
             
-        opd,w0,g0,wavenumber_grid=vj.calc_optics_user_r_dist(self.wave_in[species], ndz ,self.radius[species], u.cm,
-                                                              dist, self.qext[species], self.qscat[species], self.cos_qscat[species])
+        opd,w0,g0,wavenumber_grid=vj.calc_optics_user_r_dist(self.wave_in[condensate], ndz ,self.radius[condensate], u.cm,
+                                                              dist, self.qext[condensate], self.qscat[condensate], self.cos_qscat[condensate])
         
         opd_h = self.pressure_layer*0+10
         opd_h[base_pressure<self.pressure_layer]=0
@@ -128,9 +145,9 @@ class Parameterize():
 
         return df_cld 
     flex_cloud =  cloud_flex_fsed  
-    def cloud_brewster_mie(self, species, distribution, decay_type,
-                  lognorm_kwargs = {'sigma':np.nan, 'lograd[cm]':np.nan}, 
-                  hansen_kwargs={'b':np.nan,'lograd[cm]':np.nan},
+    def cloud_brewster_mie(self, condensate, distribution, decay_type,
+                  lognorm_kwargs = {'sigma':np.nan, 'lograd':np.nan}, 
+                  hansen_kwargs={'b':np.nan,'lograd':np.nan},
                   slab_kwargs={'ptop':np.nan,'dp':np.nan, 'reference_tau':np.nan},
                   deck_kwargs={'ptop':np.nan,'dp':np.nan}): 
         """
@@ -151,13 +168,13 @@ class Parameterize():
         distribution : str 
             either lognormal or hansen 
         lognorm_kwargs : dict 
-            diectionary with the format: {'sigma':np.nan, 'lograd[cm]':np.nan}
-            lograd[cm] median particle radius in cm 
+            diectionary with the format: {'sigma':np.nan, 'lograd':np.nan}
+            lograd median particle radius in cm 
             sigma width of the distribtuion must be >1 
         hansen_kwargs : dict 
-            dictionary with the format: {'b':np.nan,'lograd[cm]':np.nan}
-            lograd[cm] and b from Hansen+1971: https://web.gps.caltech.edu/~vijay/Papers/Polarisation/hansen-71b.pdf
-            lograd[cm] = a = effective particle radius 
+            dictionary with the format: {'b':np.nan,'lograd':np.nan}
+            lograd and b from Hansen+1971: https://web.gps.caltech.edu/~vijay/Papers/Polarisation/hansen-71b.pdf
+            lograd = a = effective particle radius 
             b = varience of the particle radius 
 
         Returns 
@@ -166,10 +183,10 @@ class Parameterize():
             PICASO formatted cld input dataframe 
         """
         
-        dist = self.get_particle_dist(species,distribution,lognorm_kwargs,hansen_kwargs)
+        dist = self.get_particle_dist(condensate,distribution,lognorm_kwargs,hansen_kwargs)
             
-        opd,w0,g0,wavenumber_grid=vj.calc_optics_user_r_dist(self.wave_in[species], 1 ,self.radius[species], u.cm,
-                                                              dist, self.qext[species], self.qscat[species], self.cos_qscat[species])
+        opd,w0,g0,wavenumber_grid=vj.calc_optics_user_r_dist(self.wave_in[condensate], 1 ,self.radius[condensate], u.cm,
+                                                              dist, self.qext[condensate], self.qscat[condensate], self.cos_qscat[condensate])
         
         if decay_type == 'slab':
             opd_profile = self.slab_decay(**slab_kwargs)
@@ -223,6 +240,17 @@ class Parameterize():
             })
 
         return df 
+
+    def cloud_hard_grey(self,g0, w0, opd,p, dp): 
+        if isinstance(g0,int):g0=[g0]
+        if isinstance(w0,int):w0=[w0]
+        if isinstance(opd,int):opd=[opd]
+        if isinstance(p,int):p=[p]
+        if isinstance(dp,int):dp=[dp]
+
+        self.picaso.clouds(g0=g0, w0=w0, opd=opd,p=p,dp=dp)
+        df_cld = self.picaso.inputs['clouds']['profile']
+        return df_cld
 
     def deck_decay(self,ptop, dp=0.005): 
         """
@@ -303,13 +331,15 @@ class Parameterize():
 
         return opd_by_layer
 
-    def chem_free(self, species_dict):
+    
+
+    def chem_free(self, **species):
         ''''
         Abundance profile for free chemistry
 
         Parameters
         ----------
-        species_dict: dict
+        species: dict
             Dictionary containing the species and their abundances. Should 
             also contain background gases and their ratios. 
             Example: species=dict(H2O=dict(value=1e-4, unit='v/v'), background=dict(gases=['H2', 'He'], ratios=[0.85, 0.15]))
@@ -320,20 +350,22 @@ class Parameterize():
         '''
         #free = chem_config['free']
         pressure_grid = self.pressure_level
+        temp_grid = self.temperature_level
         total_sum_of_gases = 0*pressure_grid
-        mixingratio_df = pd.Dataframe(dict(pressure=pressure_grid))
-        for i in species_dict.keys(): 
+        assert len(temp_grid)==len(pressure_grid), 'Len of t grid does not match len of p grid. likely t grid has not been set yet '
+        mixingratio_df = pd.DataFrame(dict(pressure=pressure_grid, temperature=temp_grid))
+        for i in species.keys(): 
             #make sure its not the background
             if i !='background':
-                value = species_dict[i].get('value',None)
+                value = species[i].get('value',None)
                 #easy case where there is just one well-mixed value 
                 if value is not None: #abundance of the chemistry input per molecule
                     mixingratio_df[i] = value
                     
                 else: #each molecule input manually
-                    values =  species_dict[i].get('values') 
-                    pressures = species_dict[i].get('pressures') 
-                    pressure_unit= species_dict[i].get('pressure_unit') 
+                    values =  species[i].get('values') 
+                    pressures = species[i].get('pressures') 
+                    pressure_unit= species[i].get('pressure_unit') 
                     pressure_bar = (np.array(pressures)*u.Unit(pressure_unit)).to(u.bar).value 
                     
                     #make sure its in ascending pressure order 
@@ -355,25 +387,25 @@ class Parameterize():
 
                 total_sum_of_gases += mixingratio_df[i].values
         #add background gas if it is requested
-        if 'background' in species_dict.keys():
+        if 'background' in species.keys():
             total_sum_of_background = 1-total_sum_of_gases
-            if len(species_dict['background']['gases'])==2: #2 background gasses
-                gas1_name = species_dict['background']['gases'][0]
-                gas2_name = species_dict['background']['gases'][1]
-                fraction = species_dict['background']['fraction']
+            if len(species['background']['gases'])==2: #2 background gasses
+                gas1_name = species['background']['gases'][0]
+                gas2_name = species['background']['gases'][1]
+                fraction = species['background']['fraction']
                 gas2_absolute_value = total_sum_of_background / (fraction + 1)
                 gas1_absolute_value = fraction * gas2_absolute_value
                 mixingratio_df[gas1_name] = gas1_absolute_value
                 mixingratio_df[gas2_name] = gas2_absolute_value
-            if len(species_dict['background']['gases'])==1: #1 background gas
-                mixingratio_df[species_dict['background']['gases'][0]] = total_sum_of_background
+            if len(species['background']['gases'])==1: #1 background gas
+                mixingratio_df[species['background']['gases'][0]] = total_sum_of_background
         return mixingratio_df
 
     def chem_visscher(self,cto_absolute, log_mh): 
         self.picaso.chemeq_visscher_2121(cto_absolute, log_mh)
         return self.picaso.inputs['atmosphere']['profile']
 
-    def pt_madhu_seager_09_noinversion(self, alpha_1, alpha_2, P1, P3, T3, beta=0.5):
+    def pt_madhu_seager_09_noinversion(self, alpha_1, alpha_2, P_1, P_3, T_3, beta=0.5):
         """"
         Implements the temperature structure parameterization from Madhusudhan & Seager (2009)
 
@@ -386,32 +418,33 @@ class Parameterize():
         """
 
         pressure = self.pressure_level
+        P0 = pressure[0]
         nlevel = len(pressure)
 
         temp_by_level = np.zeros(nlevel)
 
         # Set T1 from T3
-        T1 = T3 - (np.log(P3/P1) / alpha_2)**(1/beta)
+        T1 = T_3 - (np.log(P_3/P_1) / alpha_2)**(1/beta)
         # Set T0 from T1
-        T0 = T1 - (np.log(P1/P0) / alpha_1)**(1/beta)
+        T0 = T1 - (np.log(P_1/P0) / alpha_1)**(1/beta)
 
-        P0 = pressure[0]
+        
 
         # Set pressure ranges
-        layer_1=(pressure<P1)
-        layer_2=(pressure>=P1)*(pressure<P3)
-        layer_3=(pressure>=P3)
+        layer_1=(pressure<P_1)
+        layer_2=(pressure>=P_1)*(pressure<P_3)
+        layer_3=(pressure>=P_3)
 
         # Define temperature at each pressure range
         temp_by_level[layer_1] = T0 + ((1/alpha_1)*np.log(pressure[layer_1]/P0))**(1/beta)
-        temp_by_level[layer_2] = T1 + ((1/alpha_2)*np.log(pressure[layer_2]/P1))**(1/beta)
-        temp_by_level[layer_3] = T3
+        temp_by_level[layer_2] = T1 + ((1/alpha_2)*np.log(pressure[layer_2]/P_1))**(1/beta)
+        temp_by_level[layer_3] = T_3
 
         temp_by_level = convolve(temp_by_level,Gaussian1DKernel(5),boundary='extend')
 
         return pd.DataFrame(dict(pressure=pressure, temperature=temp_by_level))
     
-    def pt_madhu_seager_09_inversion(self, alpha_1, alpha_2, P1, P2, P3, T3, beta=0.5):
+    def pt_madhu_seager_09_inversion(self, alpha_1, alpha_2, P_1, P_2, P_3, T_3, beta=0.5):
         """"
         Implements the temperature structure parameterization from Madhusudhan & Seager (2009)
           allowing for inversions
@@ -432,25 +465,25 @@ class Parameterize():
         P0 = pressure[0]
 
         # Set pressure ranges
-        layer_1=(pressure<P1)
-        layer_2=(pressure<P3)*(pressure>=P1)
-        layer_3=(pressure>=P3)
+        layer_1=(pressure<P_1)
+        layer_2=(pressure<P_3)*(pressure>=P_1)
+        layer_3=(pressure>=P_3)
 
         # Define temperatures at boundaries to ensure continuity
-        T2 = T3 - (np.log(P3/P2) / alpha_2)**(1/beta)
-        T1 = T2 + (np.log(P1/P2) / alpha_2)**(1/beta)
-        T0 = T1 - (np.log(P1/P0) / alpha_1)**(1/beta)
+        T2 = T_3 - (np.log(P_3/P_2) / alpha_2)**(1/beta)
+        T1 = T2 + (np.log(P_1/P_2) / alpha_2)**(1/beta)
+        T0 = T1 - (np.log(P_1/P0) / alpha_1)**(1/beta)
 
         # Define temperature at each pressure range
         temp_by_level[layer_1] = T0 + (np.log(pressure[layer_1]/P0)/alpha_1)**(1/beta)
-        temp_by_level[layer_2] = T2 + (np.log(pressure[layer_2]/P2)/alpha_2)**(1/beta)
-        temp_by_level[layer_3] = T3
+        temp_by_level[layer_2] = T2 + (np.log(pressure[layer_2]/P_2)/alpha_2)**(1/beta)
+        temp_by_level[layer_3] = T_3
 
         temp_by_level = convolve(temp_by_level,Gaussian1DKernel(5),boundary='extend')
 
         return pd.DataFrame(dict(pressure=pressure, temperature=temp_by_level))
     
-    def pt_knot_profile(self,  P_knots, T_knots, interpolation='brewster'):
+    def pt_knots(self,  P_knots, T_knots, interpolation='brewster',scipy_interpolate_kwargs={}):
         """"
         Knot-based temperature profile. Implements different types of interpolation.
 
@@ -495,7 +528,7 @@ class Parameterize():
 
         return pd.DataFrame(dict(pressure=pressure, temperature=temp_by_level))
 
-    def pt_guillot(self, Teq, T_int=100, logg1=-1, logKir=-1.5, alpha=0.5):
+    def pt_guillot(self, Teq, T_int, logg1, logKir, alpha):
         """
         Creates temperature pressure profile given parameterization in Guillot 2010 TP profile
         called in fx()
@@ -556,6 +589,9 @@ class Parameterize():
         # Return TP profile
         return pd.DataFrame({'temperature': T, 'pressure':self.pressure_level})
     
+    def pt_isothermal(self, T):
+        return pd.DataFrame({'temperature': T, 'pressure':self.pressure_level})
+
 def atlev(l0,pressure_layer):
     nlayers = pressure_layer.size
     if (l0 <= nlayers-2):
@@ -646,3 +682,45 @@ def picaso_format(opd, w0, g0, wavenumber_grid, pressure_grid ,
     df.iloc[:,3 ] = WW0
     df.iloc[:,4 ] = GG0
     return df
+
+
+def cloud_averaging(dfs):
+    """
+    This is a function that takes a list of pre-formated picaso cloud dataframes and averages them. 
+    This is used for the case where a user might be computing several types of cloud decks and wants 
+    the final averaged cloud profile. 
+
+    Parameters
+    ----------
+    dfs : list, pd.DataFrame
+        This is a list of `picaso_format` dataframes for the cloud profiles 
+        Expected that these all have the same dimensionality
+    
+    Returns
+    -------
+    df 
+        single picaso format cloud dictionary
+    """
+    opd = 0 * dfs[0]['opd'].values
+    g0 = 0 * dfs[0]['opd'].values
+    w0 = 0 * dfs[0]['opd'].values
+    for idf in dfs:  
+        opdnext =  idf['opd'].values
+        assert len(opd)==len(opdnext), 'cloud dataframes were made on different grids'
+        opd += opdnext
+    
+    for idf in dfs: 
+        g0 += idf['opd'].values*idf['g0'].values
+        w0 += idf['opd'].values*idf['w0'].values
+    
+    opd[opd==0]=1e-33 #filler to avoid divide by zeros
+
+    g0 = g0/opd
+    w0 =w0/opd 
+
+    #return single df
+    df_cld = dfs[0]
+    df_cld['opd']=opd
+    df_cld['g0']=g0
+    df_cld['w0']=w0
+    return df_cld

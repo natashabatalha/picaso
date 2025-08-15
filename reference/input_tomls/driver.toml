@@ -8,7 +8,7 @@ retrieval_output = 'path/to/output'
 spectrum_output = 'path/to/output.nc'
 
 [OpticalProperties]
-opacity_files = 'path/to/opacities.db' # single db or list of opacity dbs 
+opacity_files = '/Users/nbatalh1/Documents/codes/PICASO/picaso/reference/opacities/opacities.db' # single db or list of opacity dbs 
 opacity_method = 'resampled' #list of options: resampled, preweighted, resortrebin
 opacity_kwargs = {} # any other inputs you want to give to justodit.opannection()
 virga_mieff = '/Users/nbatalh1/Documents/data/virga_0,3_15_R300/' # any other inputs you want to give to justodit.opannection()
@@ -27,6 +27,7 @@ phase = {value=0, unit='radian'} #planet phase angle
 [star]
 radius= {value=1, unit='Rsun'} 
 semi_major= {value=200, unit='AU'}
+type='grid' #'grid' or 'userfile'
 
 [star.grid]
 logg  = 4
@@ -40,11 +41,11 @@ w_unit = ''
 f_unit = '' 
 
 [temperature]
-profile = 'isothermal' #options: 'userfile','isothermal', 'knots', 'madhu_seager_09', 'guillot', 'zj_24', 'molliere_20', 'Kitzman_20', 'sonora_bobcat'...
+profile = 'userfile' #options: 'userfile','isothermal', 'knots', 'madhu_seager_09_inversion','madhu_seager_09_noinversion' ,'guillot', 'zj_24', 'molliere_20', 'Kitzman_20', 'sonora_bobcat'...
 
 [temperature.userfile]
-filename='file.csv' #columns names: temperature,pressure # units:Kelvin,bar
-panda_kwargs={sep=','} #kwargs for read_csv
+filename='/Users/nbatalh1/Documents/codes/PICASO/picaso/reference/base_cases/HJ.pt' #columns names: temperature,pressure # units:Kelvin,bar (can also include chemistry in the same file)
+pd_kwargs={sep=' '} #kwargs for pandas.read_csv
 
 [temperature.pressure]
 reference = {value=1e1,unit='bar'}
@@ -62,100 +63,95 @@ T_knots=[1000, 700, 400, 300, 250, 200]
 interpolation='brewster' #options are: brewster, linear, quadratic_spline, cubic_spline, OR any function from scipy.interpolate with associated kwargs passed to scipy_it
 scipy_interpolate_kwargs={}
 
-[temperature.madhu_seager_09]
-P_0=1e2
+[temperature.madhu_seager_09_inversion]
 P_1=1e1
 P_2=1e-3
 P_3=1e-5
-T_0=1000
-T_2=400
-T_3=200
+T_3=1000
 alpha_1=1
 alpha_2=1
-beta_1=1
-beta_2=1
+beta=0.5
+
+[temperature.madhu_seager_09_noinversion]
+P_1=1e1
+P_3=1e-5
+T_3=1000
+alpha_1=1
+alpha_2=1
+beta=0.5
+
+[temperature.guillot]
+Teq=1000
+T_int=100
+logg1=-1
+logKir=-1.5
+alpha=0.5
+
+[temperature.sonora_bobcat]
+sonora_path='/Users/nbatalh1/Documents/data/sonora_bobcat/structures_m+0.0'
+teff=1000
 
 [chemistry]
-method='free' #options: 'visscher', 'free', 'userfile' : future updates 'fast_chem' vs 'photo_chem'
+method='free' #options: 'visscher', 'free', 'userfile'; delete this block if already given chem in pt userfile : future updates 'fast_chem' vs 'photo_chem'
 
 [chemistry.free]#note all molecules must be case sensitive: e.g., TiO. Isotopologues should be specified with dashes e.g.,: 12-CO
 H2O={value=1e-4,unit='v/v'}
 CH4={values=[1e-4,1e-3],unit='v/v', pressures=[1e-2],pressure_unit='bar'}
 NH3={value=1e-4,unit='v/v'}
-background={gases=['H2','He'],fraction=5.667}
+background={gases=['H2','He'],fraction=5.667} # optional 
 
 [chemistry.visscher]
-logmh={value=0,unit='log relative to solar'}
-cto={value=0.55,unit='relative'} #unit can be relative (assuming solar=0.55) or aboslute
+cto_absolute=0.55
+log_mh=0
 
 [chemistry.userfile]
-filename='test.csv'
-pandas_kwargs={sep=','}
+filename='/Users/nbatalh1/Documents/codes/PICASO/picaso/reference/base_cases/HJ.pt'
+pd_kwargs={sep=' '}
 
 [clouds]
-cloud1_type='slab-alpha' #options: slab-grey, deck-grey, slab-alpha, deck-alpha, slab-mie, deck-mie, virga, fsed
+cloud1_type='hard_grey' #options: brewster_grey, brewster_mie, virga, flex_fsed, hard_grey, userfile
 
+[clouds.cloud1.hard_grey]
+p = 1 # {value=1,unit='logbar'} #bottom pressure
+dp = 1 # {value=1,unit='logbar'} #thickness in log 
+w0 = 0 #single scattering albedo
+g0 = 0 #asymmetry
+opd = 10 #cloud optical depth per layer
 
-[clouds.cloud1.deck-grey]
-p = {value=1,unit='logbar'} 
-dp = {value=1,unit='logbar'}
-w0 = 0
-g0 = 0
-opd = 10
-
-[clouds.cloud1.slab-grey]
-ptop = {value=1,unit='logbar'}
-dp = {value=1,unit='logbar'}
-
-[clouds.cloud1.slab-alpha]
-ptop = {value=1,unit='logbar'}
-dp = {value=1,unit='logbar'}
-reference_tau = 1
-alpha = -4 
-reference_wave = {value=1, unit='micron'} 
-
-[clouds.cloud1.deck-alpha]
-ptop = {value=1,unit='logbar'}
-dp = {value=1,unit='logbar'}
-alpha = -4 
-reference_wave = {value=1, unit='micron'} 
-
-[clouds.cloud1.slab-mie]
-ptop = {value=1,unit='logbar'}
-dp = {value=1,unit='logbar'}
-reference_tau = 1
-species = 'SiO2'
-reference_wave = {value=1, unit='micron'} 
-distribution = 'lognorm'#options: lognormal or hansen, make sure to set respective properties
-
-[clouds.cloud1.slab-mie.lognorm]
-sigma = 1
-radius={value=1e-4 , unit='cm'}
-
-[clouds.cloud1.deck-mie]
-ptop = {value=1,unit='logbar'}
-dp = {value=1,unit='logbar'}
-species = 'SiO2'
-reference_wave = {value=1, unit='micron'} 
-distribution='hansen'#options: lognormal or hansen
-
-[clouds.cloud1.deck-mie.hansen]
-b=2
-radius={value=1e-4 , unit='cm'}
-
-[clouds.cloud1.fsed]
-fsed=1
+[clouds.cloud1.flex_fsed]
+condensate='SiO2'
+base_pressure=1 # {value=1 , unit='bar'}
 ndz=2 #arbitrary scaling for setting max optical depth of the cloud
-radius={value=1e-4 , unit='cm'}
-sigma=1
-pressure={value=1 , unit='bar'}
+fsed=1
+distribution='lognorm' # "lognorm" or "hansen" .. make sure to add respective kwargs below
+lognorm_kwargs = {sigma=1, lograd = -4}  #log rad in log cm
+hansen_kwargs = {b=1 , lograd = -4}
 
 [clouds.cloud1.virga]
 mh = 1 
-species=['SiO2','Al2O3']
+condensates=['SiO2','Al2O3']
 fsed=1
-kzz={value=1e9,unit='cm**2/s'}
-virga_kwargs={} #see documentation for more options
+kzz=1e9 # {value=1e9,unit='cm**2/s'}
+mmw = 2.2
+sig =2 
+# can add any other virga param see justdoit.inputs.virga
+
+[clouds.cloud1.brewster_mie]
+condensate='SiO2'
+decay_type = 'slab' # can be 'slab' or 'decay' #make sure to add respective kwargs below
+slab_kwargs={ptop= -1, dp= 1, reference_tau= 1} # ptop: log bar, dp: log bar, ref tau: micron
+deck_kwargs={ptop= -1, dp= 1} # ptop: log bar, dp: log bar
+distribution = 'lognorm' # 'lognorm' or 'hansen', make sure to add respective kwargs below
+lognorm_kwargs = {sigma=1, lograd = -4}  #log rad in log cm
+hansen_kwargs = {b=1 , lograd = -4}
+
+[clouds.cloud1.brewster_grey]
+decay_type = 'slab' # can be 'slab' or 'decay' #make sure to add respective kwargs below
+alpha=-4 # used for wavelength dependent scattering cross section 
+ssa=1 # single scattering albedo set to 1 
+reference_wave=1 #reference wave in micron sets to alpha 
+slab_kwargs={ptop= -1, dp= 1, reference_tau= 1} # ptop: log bar, dp: log bar, ref tau: micron
+deck_kwargs={ptop= -1, dp= 1} # ptop: log bar, dp: log bar
 
 [clouds.patchy]
 npatch = 1
