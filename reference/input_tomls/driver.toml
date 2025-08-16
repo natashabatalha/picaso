@@ -1,9 +1,11 @@
 observation_type = 'thermal' # options: 'transmission', 'thermal', 'reflected' or a combo e.g. transmission+thermal
 irradiated=true #options: true or false (if true, user needs to input star properties)
+calc_type='spectrum'#spectrum climate or retrieval
 
 [InputOutput]
-input_data = 'path/to/spectrum.nc' #see docs on required data formats
-sampler_output = 'path/to/output'
+observation_data = 'path/to/spectrum.nc' #see docs on required data formats
+retrieval_output = 'path/to/output'
+spectrum_output = 'path/to/output.nc'
 
 [OpticalProperties]
 opacity_files = 'path/to/opacities.db' # single db or list of opacity dbs 
@@ -19,21 +21,35 @@ distance  = {value=10,  unit='parsec'}
 teff      = {value=500, unit='Kelvin'}
 teq       = {value=500, unit='Kelvin'}
 
+[geometry]
+phase = {value=0, unit='radian'} #planet phase angle
+
 [star]
 radius= {value=1, unit='Rsun'} 
-logg  = {value=1, unit='log cm/s**2'}
-teff  = {value=5400, unit='Kelvin'}
-feh   = {value=1}
-database  ='phoenix'# options: phoenix, ck04models, or other pysynphot databases
 semi_major= {value=200, unit='AU'}
 
+[star.grid]
+logg  = 4
+teff  = 5400
+feh   = 0
+database  ='phoenix'# options: phoenix, ck04models, or other pysynphot databases
+
+[star.userfile]
+filename = '' # simple two column format no header column1=wavelength, column2=flux
+w_unit = '' 
+f_unit = '' 
+
 [temperature]
-profile = 'isothermal' #options: 'isothermal', 'knots', 'madhu_seager_09', 'guillot', 'zj_24', 'molliere_20', 'Kitzman_20', 'sonora_bobcat'...
+profile = 'isothermal' #options: 'userfile','isothermal', 'knots', 'madhu_seager_09', 'guillot', 'zj_24', 'molliere_20', 'Kitzman_20', 'sonora_bobcat'...
+
+[temperature.userfile]
+filename='file.csv' #columns names: temperature,pressure # units:Kelvin,bar
+panda_kwargs={sep=','} #kwargs for read_csv
 
 [temperature.pressure]
+reference = {value=1e1,unit='bar'}
 min = {value=1e-7, unit='bar'}
 max = {value=1e3,unit='bar'}
-reference = {value=1e1,unit='bar'}
 nlevel = 100
 spacing = 'log'
 
@@ -70,7 +86,7 @@ background={gases=['H2','He'],fraction=5.667}
 
 [chemistry.visscher]
 logmh={value=0,unit='log relative to solar'}
-cto={value=1,unit='relative to solar'}
+cto={value=0.55,unit='relative'} #unit can be relative (assuming solar=0.55) or aboslute
 
 [chemistry.userfile]
 filename='test.csv'
@@ -79,11 +95,15 @@ pandas_kwargs={sep=','}
 [clouds]
 cloud1_type='slab-alpha' #options: slab-grey, deck-grey, slab-alpha, deck-alpha, slab-mie, deck-mie, virga, fsed
 
-[clouds.cloud1.slab-grey]
-ptop = {value=1,unit='logbar'}
-dp = {value=1,unit='logbar'}
 
 [clouds.cloud1.deck-grey]
+p = {value=1,unit='logbar'} 
+dp = {value=1,unit='logbar'}
+w0 = 0
+g0 = 0
+opd = 10
+
+[clouds.cloud1.slab-grey]
 ptop = {value=1,unit='logbar'}
 dp = {value=1,unit='logbar'}
 

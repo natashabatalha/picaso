@@ -21,6 +21,19 @@ from collections import namedtuple
 convergence_criteriaT = namedtuple('Conv',['it_max','itmx','conv','convt','x_max_mult'])
 
 def update_quench_levels(bundle, Atmosphere, kz, grav,verbose=False): 
+    """
+    Compute and update the quench levels for disequilibrium chemistry
+
+    Parameters
+    ----------
+    Atmosphere Tuple: 
+        Contains temperature, pressure, dtdp, mmw, and scale height
+    kz : array 
+        array of Kz cm^2/s
+    grav : float
+        gravity cgs
+    
+    """
     #PH3 requires h2o and h2 abundances so if all those three 
     #are present than go forth and compute the PH3 quenching 
     if np.all(np.isin(['H2','H2O','PH3'], bundle.inputs['atmosphere']['profile'].keys())):
@@ -43,7 +56,46 @@ def update_kzz(grav, tidal, AdiabatBundle, nstr, Atmosphere,
                #kwargs for get_kzz function
                moist=False, 
                do_holes=False, fhole=None,verbose=True):
-    if verbose: print("I am updating kzz")
+    
+    """
+    Update the kzz profile using the mixing length theory.
+    Parameters
+    ----------
+    grav : float
+        gravity in cgs
+    tidal : ndarray 
+        effectively sigmaTeff^4, gets added to the convergence critiera (e.g. F_IR*rfacI + F_SOL*rfacV + tidal)
+    AdiabatBundle : tuple
+        contains 't_table', 'p_table', 'grad','cp'
+    nstr : array
+        array of convective zones
+    Atmosphere : tuple
+        Contains temperature, pressure, dtdp, mmw, and scale height
+    OpacityWEd : namedtuple
+        All opacity (e.g. dtau, tau, w0, g0) info with delta eddington corrected values 
+    OpacityNoEd : namedtuple
+        All opacity (e.g. dtau, tau, w0, g0) info without delta eddington corrected values 
+    ScatteringPhase : namedtuple
+        All scattering phase function inputs like ftau_cld and ftau_ray and fraction of forward to back scattering
+    Disco : namedtuple
+        All geometry inputs such as gauss/chebychev angles, incoming outgoing angles, etc 
+    Opagrid : namedtuple
+        Any opacity grid info such as wavelength grids, temperature pressure grids, tmax and tmin
+    F0PI : ndarray
+        Stellar spectrum if it exists otherwise this is just 1s array
+    OpacityWEd_clear : namedtuple
+        The clear opacities / scattering properties (opposed to the cloudy ones which are stored in the main opacity tuple)
+    OpacityNoEd_clear: namedtuple
+        The clear opacities / scattering properties w/o delta eddington correction (opposed to the cloudy ones which are stored in the main opacity tuple)
+    do_holes : bool
+        Default=False; if True, computes the fluxes with holes
+    fhole : float
+        Default=None ; fraction of the disk assumed to be clear 
+    moist : bool 
+        Defalt= False; computes moist adiabat
+
+    """
+    if verbose: print("I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.")
     #Do I have fluxes or no? 
     if (np.any(flux_plus_ir_attop==None) and np.any(flux_net_ir_layer==None)): 
         if verbose: print('I dont have fluxes, let me compute them')
@@ -75,6 +127,50 @@ def run_diseq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
             save_profile,all_profiles,all_opd,
             verbose=True, moist = None,
             save_kzz=False, self_consistent_kzz=True):
+    """
+    Run the disequilibrium climate workflow. This function is called by the main function
+    and runs the disequilibrium climate workflow. It updates the profile, kzz, and chemistry
+    and returns the final profile, kzz, and chemistry.
+
+    Parameters
+    ----------
+    nofczns : int
+        number of convective zones
+    nstr : array
+        array of the layer of convective zone locations
+    temp : array
+        temperature profile
+    pressure : array
+        pressure profile
+    AdiabatBundle : tuple
+        tuple containing the adiabat table, pressure table, gradient, and cp
+    opacityclass : object
+    grav : float 
+        gravity in cgs
+    rfaci : float 
+        IR flux addition fraction 
+    rfacv : float
+        Visible flux addition fraction
+    tidal : ndarray 
+        effectively sigmaTeff^4, gets added to the convergence critiera (e.g. F_IR*rfacI + F_SOL*rfacV + tidal)
+    Opagrid : tuple
+        tuple containing the opacities and other information
+    CloudParameters : tuple
+        tuple containing the cloud parameters, including the cloudy flag, fsed, mh, b, param, directory, and condensates
+    save_profile : bool
+    all_profiles : array
+        array of all thermal structures
+    all_opd : array
+        array of all opacities
+    moist : bool
+        if True, use moist adiabat
+    save_kzz : bool
+        if True, save the kzz profile for every iteration
+    self_consistent_kzz : bool
+        if True, use the self-consistent kzz profile (not constant kzz)
+
+    """
+
     """ Can deprecate all of this since we moved to profile 
     first_call_ever=False
     cloudy = CloudParameters.cloudy
@@ -200,6 +296,47 @@ def run_chemeq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
             save_profile,all_profiles,all_opd,
             verbose=True, moist = None, 
             save_kzz = True, self_consistent_kzz=True): 
+    """
+    Run the equilibrium climate workflow. It updates the profile, kzz, and chemistry
+    and returns the final profile, kzz, and chemistry.
+
+    Parameters
+    ----------
+    nofczns : int
+        number of convective zones
+    nstr : array
+        array of the layer of convective zone locations
+    temp : array
+        temperature profile
+    pressure : array
+        pressure profile
+    AdiabatBundle : tuple
+        tuple containing the adiabat table, pressure table, gradient, and cp
+    opacityclass : object
+    grav : float 
+        gravity in cgs
+    rfaci : float 
+        IR flux addition fraction 
+    rfacv : float
+        Visible flux addition fraction
+    tidal : ndarray 
+        effectively sigmaTeff^4, gets added to the convergence critiera (e.g. F_IR*rfacI + F_SOL*rfacV + tidal)
+    Opagrid : tuple
+        tuple containing the opacities and other information
+    CloudParameters : tuple
+        tuple containing the cloud parameters, including the cloudy flag, fsed, mh, b, param, directory, and condensates
+    save_profile : bool
+    all_profiles : array
+        array of all thermal structures
+    all_opd : array
+        array of all opacities
+    moist : bool
+        if True, use moist adiabat
+    save_kzz : bool
+        if True, save the kzz profile for every iteration
+    self_consistent_kzz : bool
+        if True, use the self-consistent kzz profile (not constant kzz)
+    """
     
     first_call_ever=False#NEBQ: why is this false? 
     
@@ -265,6 +402,28 @@ def run_chemeq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
 #def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,AdiabatBundle,nstr, Atmosphere, moist = False):
 @jit(nopython=True, cache=True)
 def get_kzz(grav,tidal,flux_net_ir_layer, flux_plus_ir_attop,Adiabat,nstr, Atmosphere, moist = False):
+
+    """
+    Parameters
+    ----------
+    grav : float
+        gravity in cgs
+    tidal : ndarray 
+        effectively sigmaTeff^4, gets added to the convergence critiera (e.g. F_IR*rfacI + F_SOL*rfacV + tidal)
+    flux_net_ir_layer : array
+        array of net fluxes in the IR
+    flux_plus_ir_attop : array
+        array of IR fluxes at the top of the atmosphere
+    Adiabat : tuple
+        tuple containing the adiabat table, pressure table, gradient, and cp
+    nstr : array
+        array of the layer of convective zone locations
+    Atmosphere : tuple
+        Contains temperature, pressure, dtdp, mmw, and scale height
+    moist : bool
+        if True, use moist adiabat
+    """
+
     pressure = Atmosphere.p_level #in bars 
     temp = Atmosphere.t_level # in kelvin
     mmw = Atmosphere.mmw_layer
@@ -416,14 +575,8 @@ def did_grad_cp( t, p, AdiabatBundle):
         Temperature  value
     p : float 
         Pressure value
-    t_table : array 
-        array of Temperature values with 53 entries
-    p_table : array 
-        array of Pressure value with 26 entries
-    grad : array 
-        array of gradients of dimension 53*26
-    cp : array 
-        array of cp of dimension 53*26 
+    AdiabatBundle : tuple
+        tuple containing the adiabat table, pressure table, gradient, and cp
     
     Returns
     -------
@@ -497,16 +650,10 @@ def convec(temp,pressure,AdiabatBundle, Atmosphere, moist = False):
         level temperature array
     pressure : array
         level pressure array
-    t_table : array
-        array of Temperature values with 53 entries
-    p_table : array 
-        array of Pressure value with 26 entries
-    grad : array 
-        array of gradients of dimension 53*26
-    cp : array 
-        array of cp of dimension 53*26
-    Atmosphere : str
-        abundances in the atmosphere, and other info regarding the condensable properties
+    AdiabatBundle : tuple
+        tuple containing the adiabat table, pressure table, gradient, and cp
+    Atmosphere : tuple
+        Contains temperature, pressure, dtdp, mmw, and scale height
     moist : bool
         if moist adiabat is to be used
     Return
@@ -1483,6 +1630,32 @@ def check_convergence(f_vec, n_total, tolf, check, f, dflux, tolmin, temp, temp_
     
     Module for checking convergence. Used in t_start module.
 
+    Parameters
+    ----------
+    f_vec : array
+        flux vector
+    n_total : int
+        number of total levels
+    tolf : float
+        tolerance factor
+    check : bool
+        check for convergence
+    f : float
+        flux
+    dflux : array
+        flux difference
+    tolmin : float
+        minimum tolerance
+    temp : array
+        temperature
+    temp_old : array
+        old temperature
+    g : array
+        gradient
+    tolx : float
+        tolerance for temperature
+
+
     """
     test = 0.0
     for i in range(n_total):
@@ -1535,6 +1708,15 @@ def growup(nlv, nstr, ngrow) :
     """
     
     Module for growing conv zone. Used in find_strat module.
+
+    Parameters
+    ----------
+    nlv : int
+        number of levels
+    nstr : array
+        current levels of the conv zone
+    ngrow : int
+        number of levels to grow
     
     """
     n = 2+3*(nlv-1) -1 # -1 for the py referencing
@@ -1547,6 +1729,15 @@ def growdown(nlv,nstr, ngrow) :
     """
     
     Module for growing down conv zone. Used in find_strat module.
+
+    Parameters
+    ----------
+    nlv : int
+        number of levels
+    nstr : array
+        current levels of the conv zone
+    ngrow : int
+        number of levels to grow down
     
     """
 
@@ -1575,13 +1766,33 @@ def get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
 
     Parameters 
     ----------
+    Atmosphere : tuple
+        Contains temperature, pressure, dtdp, mmw, and scale height
+    OpacityWEd : namedtuple
+        All opacity (e.g. dtau, tau, w0, g0) info with delta eddington corrected values 
+    OpacityNoEd : namedtuple
+        All opacity (e.g. dtau, tau, w0, g0) info without delta eddington corrected values 
+    ScatteringPhase : namedtuple
+        All scattering phase function inputs like ftau_cld and ftau_ray and fraction of forward to back scattering
+    Disco : namedtuple
+        All geometry inputs such as gauss/chebychev angles, incoming outgoing angles, etc 
+    Opagrid : namedtuple
+        Any opacity grid info such as wavelength grids, temperature pressure grids, tmax and tmin
+    F0PI : ndarray
+        Stellar spectrum if it exists otherwise this is just 1s array
     reflected : bool 
         Run reflected light
     thermal : bool 
         Run thermal emission
-
     do_holes: bool
         run patchy/fractional cloudy and clear model
+    fhole: float
+        Fraction of cloudy area
+    hole_OpacityWEd : namedtuple
+        The clear opacities / scattering properties (opposed to the cloudy ones which are stored in the main opacity tuple)
+    hole_OpacityNoEd : namedtuple
+        The clear opacities / scattering properties w/o delta eddington correction (opposed to the cloudy ones which are stored in the main opacity tuple)
+    
         
     Return
     ------
@@ -1829,6 +2040,18 @@ OpacityNoEd_Tuple = namedtuple("OpacityNoEd_Tuple", ["DTAU", "TAU", "W0", "COSB"
 
 
 def calculate_atm(bundle, opacityclass, only_atmosphere=False):
+    """
+    Function to calculate the atmosphere and opacities for the given inputs.
+    Parameters
+    ----------
+    bundle : object
+        The bundle object containing the inputs and other parameters.
+    opacityclass : object
+        The opacity class containing the opacity data.
+    only_atmosphere : bool, optional
+        If True, no opacities are calculated, just updates the Atmosphere tuple. The default is False.
+
+    """
 
     inputs = bundle.inputs
 
@@ -1899,7 +2122,7 @@ def calculate_atm(bundle, opacityclass, only_atmosphere=False):
 
     #Add inputs to class 
     ##############################
-    atm.surf_reflect = 0#inputs['surface_reflect']
+    atm.surf_reflect = 0#inputs['surface_reflect']#inputs.get('surface_reflect',0)
     ##############################
     atm.wavenumber = wno
     atm.planet.gravity = inputs['planet']['gravity']
@@ -2401,6 +2624,65 @@ def find_strat(bundle, nofczns,nstr,
         verbose=1, moist = None,
         save_kzz=False,self_consistent_kzz=True,diseq=False, all_kzz=[]):
     
+    """
+    Parameters
+    ----------
+    bundle : object
+    
+    nofczns : int
+        number of convection zones
+    nstr : list
+        list of indices for the convective layers
+    temp : array
+        array of temperature profile
+    pressure : array
+        array of pressure profile
+    dtdp : array
+        array of lapse rate/adiabat profile
+    AdiabatBundle : namedtuple
+        includes:
+        - t_table : array 
+            array of Temperature values with 53 entries
+        - p_table : array 
+            array of Pressure value with 26 entries
+        - grad : array 
+            array of gradients of dimension 53*26
+        - cp : array 
+            array of cp of dimension 53*26
+    opacityclass : object
+        object that contains the opacity information
+    grav : float
+        gravity cgs
+    rfaci : float 
+        IR flux addition fraction 
+    rfacv : float
+        Visible flux addition fraction
+    tidal : ndarray 
+        effectively sigmaTeff^4, gets added to the convergence critiera (e.g. F_IR*rfacI + F_SOL*rfacV + tidal)
+    Opagrid : namedtuple
+        Any opacity grid info such as wavelength grids, temperature pressure grids, tmax and tmin
+    CloudParameters : namedtuple
+        tuple containing the cloud parameters, including the cloudy flag, fsed, mh, b, param, directory, and condensates
+    save_profile : bool
+        flag to save the profile
+    all_profiles : list
+        list of all thermal structures
+    all_opd : array
+        array of all opacities
+    flux_net_ir_layer : array
+        array of net fluxes in the IR
+    flux_plus_ir_attop : array
+        array of IR fluxes at the top of the atmosphere
+    moist : bool
+        Defalt= False; computes moist adiabat
+    save_kzz : bool
+        Default = False, if True save the kzz profile for all iterations
+    self_consistent_kzz : bool
+        Default = True, calculates kzz for each profile, does not use constant kzz
+    diseq : bool
+        Default = False, flags whether to do disequilibrium chemistry calculations or not
+    
+    """
     #unpack 
     F0PI = opacityclass.relative_flux
 
@@ -2634,6 +2916,41 @@ def update_clouds(bundle, CloudParameters, Atmosphere, kzz,virga_kwargs,
                    verbose=False,save_profile=True,all_opd=[]):
     """
     Updates cloud parameters and returns the cloud output.
+
+    Parameters
+    ----------
+    bundle : object
+        The bundle object containing the inputs and other parameters.
+    CloudParameters : namedtuple
+        Tuple containing the cloud parameters, including the cloudy flag, fsed, mh, b, param, directory, and condensates.
+    Atmosphere : namedtuple
+        Contains temperature, pressure, dtdp, mmw, and scale height.
+    kzz : array
+        Array of Kz cm^2/s.
+    virga_kwargs : dict
+        Dictionary of keyword arguments for the virga function.
+    verbose : bool, optional
+        If True, prints additional information. Default is False.
+    save_profile : bool, optional
+        If True, saves the profile. Default is True.
+    all_opd : list, optional
+        List to store all optical depth profiles. Default is an empty list.
+
+    Returns
+    -------
+    cld_out : dict
+        Dictionary containing cloud output parameters.
+    df_cld : DataFrame
+        DataFrame containing cloud properties in PICASO format.
+    taudif : float
+        Maximum difference in optical depth between iterations.
+    taudif_tol : float
+        Tolerance for the maximum optical depth difference.
+    all_opd : list
+        Updated list of all optical depth profiles.
+    CloudParameters : namedtuple
+        Updated CloudParameters namedtuple.
+    ```
     """
     opd_cld_climate, g0_cld_climate, w0_cld_climate = CloudParameters.OPD, CloudParameters.G0, CloudParameters.W0
     we0, we1, we2, we3 = 0.25, 0.25, 0.25, 0.25
@@ -2691,6 +3008,62 @@ def profile(bundle, nofczns, nstr, temp, pressure,
             verbose=True, moist = None,
             save_kzz=False,self_consistent_kzz=True,diseq=False,all_kzz=[]):
     """
+    Parameters
+    ----------
+    bundle : object
+        The bundle object containing the inputs and other parameters.
+    nofczns : int
+        Number of convective zones.
+    nstr : array
+        Array of the layer of convective zone locations.
+    temp : array
+        Temperature profile.
+    pressure : array
+        Pressure profile.
+    AdiabatBundle : tuple
+        Tuple containing the adiabat table, pressure table, gradient, and cp.
+    opacityclass : object
+        Object containing opacity data.
+    grav : float
+        Gravity in cgs.
+    rfaci : float
+        IR flux addition fraction.
+    rfacv : float
+        Visible flux addition fraction.
+    tidal : ndarray
+        Effectively sigmaTeff^4, gets added to the convergence criteria.
+    Opagrid : tuple
+        Tuple containing the opacities and other information.
+    CloudParameters : tuple
+        Tuple containing the cloud parameters, including the cloudy flag, fsed, mh, b, param, directory, and condensates.
+    save_profile : bool
+        If True, saves the profile for every iteration.
+    all_profiles : array
+        Array of all thermal structures.
+    all_opd : array
+        Array of all opacities.
+    convergence_criteria : namedtuple
+        Defines convergence criteria for max number of loops and other numerical recipes values.
+    final : bool
+        If True, indicates the final iteration.
+    flux_net_ir_layer : array, optional
+        Array of net fluxes in the IR. Default is None.
+    flux_plus_ir_attop : array, optional
+        Array of IR fluxes at the top of the atmosphere. Default is None.
+    first_call_ever : bool, optional
+        If True, indicates the first call to the function. Default is False.
+    verbose : bool, optional
+        If True, prints additional information. Default is True.
+    moist : bool, optional
+        If True, uses moist adiabat. Default is None.
+    save_kzz : bool, optional
+        If True, saves the kzz profile for every iteration. Default is False.
+    self_consistent_kzz : bool, optional
+        If True, uses the self-consistent kzz profile (not constant kzz). Default is True.
+    diseq : bool, optional
+        If True, runs disequilibrium chemistry workflow. Default is False.
+    all_kzz : array, optional
+        Array of all kzz profiles. Default is an empty array.
     """
     #under what circumstances to we compute quench levels 
     full_kinetis ='photochem' in str(bundle.inputs['approx']['chem_method'])
@@ -2704,10 +3077,13 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     cloudy =  CloudParameters.cloudy
 
    #under what circumstances to do we compute a self consistent kzz calc 
-    sc_kzz_and_clouds = self_consistent_kzz and cloudy 
+    sc_kzz_and_clouds = cloudy #THIS IS ALWAYS BE TRUE.. 
     sc_kzz_and_diseq = self_consistent_kzz and diseq  
     do_kzz_calc = sc_kzz_and_clouds or sc_kzz_and_diseq
-    constant_kzz = ((not self_consistent_kzz) and cloudy) or ((not self_consistent_kzz) and diseq)
+    constant_kzz =  ((not self_consistent_kzz) and diseq) #((not self_consistent_kzz) and cloudy) or
+    if constant_kzz: 
+        kz_chem = bundle.inputs['atmosphere']['kzz'].get('constant_kzz')
+        
 
     if cloudy: 
         virga_kwargs = {key:getattr(CloudParameters,key) for key in ['fsed','mh','b','param','directory','condensates']}
@@ -2784,25 +3160,30 @@ def profile(bundle, nofczns, nstr, temp, pressure,
                OpacityWEd_clear=OpacityWEd_clear,OpacityNoEd_clear=OpacityNoEd_clear,
                #kwargs for get_kzz function
                moist=moist, do_holes=do_holes, fhole=fhole)
+        bundle.inputs['atmosphere']['kzz']['sc_kzz']=kz #bookeeping current kz 
+
         if save_kzz: all_kzz = np.append(all_kzz,kz)
-    #Otherwise get the fixed profile in bundle
-    elif constant_kzz: 
-        kz = bundle.inputs['atmosphere']['profile']['kz'].values
+        #are clouds turned on such that we need the sc kzz for virga? 
+        if sc_kzz_and_clouds: 
+            kz_cloud = kz 
+        #is self consistent kz needed for diseq chem too? 
+        if sc_kzz_and_diseq: 
+            kz_chem = kz 
 
     ### 3) IF: COMPLEX CHEM
     ##  3-a) option 1: GET QUENCH LEVELS FOR DISEQ and UPDATE CHEM
     if do_quench_appox:
-        quench_levels=update_quench_levels(bundle, Atmosphere, kz, grav,verbose=verbose)
+        quench_levels=update_quench_levels(bundle, Atmosphere, kz_chem, grav,verbose=verbose)
         bundle.premix_atmosphere(opa=opacityclass,quench_levels=quench_levels,verbose=verbose)
     ##  3-b) option 2: GET PHOTOCHEM
     if full_kinetis: 
-        quench_levels=update_quench_levels(bundle, Atmosphere, kz, grav,verbose=verbose)
+        quench_levels=update_quench_levels(bundle, Atmosphere, kz_chem, grav,verbose=verbose)
         bundle.premix_atmosphere_photochem(quench_levels=quench_levels,verbose=verbose)
     
     ### 4) IF: COMPUTE CLOUDS 
     if cloudy :
         cld_out,df_cld, taudif, taudif_tol, all_opd, CloudParameters=update_clouds(bundle, CloudParameters,Atmosphere,
-                                                                          kz,virga_kwargs,save_profile=save_profile,
+                                                                          kz_cloud,virga_kwargs,save_profile=save_profile,
                                                                           all_opd=all_opd,verbose=verbose)
         bundle.clouds(df=df_cld,**hole_kwargs)
         
@@ -2863,25 +3244,28 @@ def profile(bundle, nofczns, nstr, temp, pressure,
                 #kwargs for get_kzz function
                 moist=moist, do_holes=do_holes,fhole=fhole)
             if save_kzz: all_kzz = np.append(all_kzz,kz)
-        #Otherwise get the fixed profile in bundle
-        elif constant_kzz : 
-            kz = bundle.inputs['atmosphere']['profile']['kz'].values
+            #are clouds turned on such that we need the sc kzz for virga? 
+            if sc_kzz_and_clouds: 
+                kz_cloud = kz 
+            #is self consistent kz needed for diseq chem too? 
+            if sc_kzz_and_diseq: 
+                kz_chem = kz 
 
         ### 3) IF: COMPLEX CHEM
         ##  3-a) option 1: GET QUENCH LEVELS FOR DISEQ and UPDATE CHEM
         if do_quench_appox:   
-            quench_levels=update_quench_levels(bundle, Atmosphere, kz, grav,verbose=verbose)
+            quench_levels=update_quench_levels(bundle, Atmosphere, kz_chem, grav,verbose=verbose)
             bundle.premix_atmosphere(opa=opacityclass,quench_levels=quench_levels,verbose=verbose)
         
         ##  3-b) option 2: GET PHOTOCHEM
         if full_kinetis: 
-            quench_levels=update_quench_levels(bundle, Atmosphere, kz, grav,verbose=verbose)
+            quench_levels=update_quench_levels(bundle, Atmosphere, kz_chem, grav,verbose=verbose)
             bundle.premix_atmosphere_photochem(quench_levels=quench_levels,verbose=verbose)
             
         ### 4) IF: COMPUTE CLOUDS 
         if cloudy:
             cld_out,df_cld, taudif, taudif_tol, all_opd, CloudParameters=update_clouds(bundle, CloudParameters,Atmosphere,
-                                                                          kz,virga_kwargs,save_profile=save_profile,
+                                                                          kz_cloud,virga_kwargs,save_profile=save_profile,
                                                                           all_opd=all_opd,verbose=verbose)
             bundle.clouds(df=df_cld,**hole_kwargs)
         else: 
