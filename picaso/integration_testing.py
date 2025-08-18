@@ -3,9 +3,12 @@
 import os
 import subprocess
 import sys
-sys.path.append(os.path.join('docs', 'notebooks'))
+#sys.path.append(os.path.join('docs', 'notebooks'))
 
-local_github = True
+
+"""
+Primarily used for internal integration testing of the notebooks
+"""
 
 try:
     import nbformat
@@ -14,20 +17,21 @@ except ImportError:
     print("Please install nbconvert and nbformat: pip install nbconvert nbformat")
     sys.exit(1)
 
-def run_notebook(notebook_path, github=False):
+def run_notebook(notebook_path,
+                 github=False,picaso_refdata=None,PYSYN_CDBS=None, picaso_code = None, virga_code=None):
     """Executes a notebook and returns True if it runs without errors, False otherwise."""
     with open(notebook_path, "r", encoding="utf-8") as f:
         nb = nbformat.read(f, as_version=4)
 
         # Insert a code cell at the beginning to append the path if using a local github picaso installation
         if github == True:
-            path_cell = nbformat.v4.new_code_cell('import sys; sys.path.append("/Users/jjm6243/Documents/dev_picaso/")')
-            virga_cell = nbformat.v4.new_code_cell('import sys; sys.path.append("/Users/jjm6243/Documents/virga/")')
+            path_cell = nbformat.v4.new_code_cell(f'import sys; sys.path.append("{picaso_code}")')
+            virga_cell = nbformat.v4.new_code_cell(f'import sys; sys.path.append("{virga_code}")')
             nb.cells.insert(0, virga_cell)
             nb.cells.insert(0, path_cell)
 
-            path_cell = nbformat.v4.new_code_cell('import os; os.environ["picaso_refdata"] = "/Users/jjm6243/Documents/dev_picaso/reference"')
-            cdbs_cell = nbformat.v4.new_code_cell('import os; os.environ["PYSYN_CDBS"] = "/Users/jjm6243/Documents/dev_picaso/reference/stellar_grids"')
+            path_cell = nbformat.v4.new_code_cell(f'import os; os.environ["picaso_refdata"] = "{picaso_refdata}"')
+            cdbs_cell = nbformat.v4.new_code_cell(f'import os; os.environ["PYSYN_CDBS"] = "{PYSYN_CDBS}"')
             nb.cells.insert(0, cdbs_cell)
             nb.cells.insert(0, path_cell)
 
@@ -43,9 +47,27 @@ def run_notebook(notebook_path, github=False):
         print(f"Error executing notebook {notebook_path}:")
         print(e)
         return False
-
+    
+import argparse
 def main():
-    notebook_dir = os.path.join('docs', 'notebooks')
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("notebook_dir", type=str, help="Directory path to the notebooks you want to test")
+    parser.add_argument("--local", type=bool, default=False, help="Fresh github isntall witout env variables")
+    parser.add_argument("--picaso_refdata", type=str, default=os.getenv('picaso_refdata'), help="PICASO refdata path")
+    parser.add_argument("--PYSYN_CDBS", type=str, default=os.getenv('PYSYN_CDBS'), help="PYSYN_CDBS refdata path") 
+    parser.add_argument("--picaso_code", type=str, default=None, help="PICASO Code path") 
+    parser.add_argument("--virga_code", type=str, default=None, help="Virga Code path") 
+
+    args = parser.parse_args()
+
+    notebook_dir = args.notebook_dir
+    gitlocal = args.local
+    picaso_refdata = args.picaso_refdata
+    PYSYN_CDBS = args.PYSYN_CDBS
+    picaso_code = args.picaso_code
+    virga_code = args.virga_code
+
     failed_notebooks = []
 
     for root, _, files in os.walk(notebook_dir):
@@ -64,7 +86,7 @@ def main():
                 #     print(f"Skipping workshop notebook: {notebook_path}")
                 #     continue
                 print(f"Running notebook: {notebook_path}")
-                if not run_notebook(notebook_path, github=local_github):
+                if not run_notebook(notebook_path, github=gitlocal,picaso_refdata=picaso_refdata,PYSYN_CDBS=PYSYN_CDBS,picaso_code=picaso_code,virga_code=virga_code):
                     failed_notebooks.append(notebook_path)
 
     if failed_notebooks:
