@@ -1,16 +1,16 @@
 import numpy as np
 import json 
 from astropy.utils.misc import JsonCustomEncoder
+from astropy.convolution import convolve, Gaussian1DKernel
 import arviz as az
 import dynesty
 import pandas as pd
-
+from scipy import interpolate
 
 from .justdoit import mean_regrid,vj,u,get_cld_input_grid
 
 from .analyze import chi_squared
 from .justplotit import pals
-
 
 import matplotlib.pyplot as plt
 import xarray as xr
@@ -886,7 +886,7 @@ class Parameterize():
 
         return df 
     
-    def brewster_grey_cloud(self, decay_type, alpha,reference_wave=1,
+    def brewster_grey_cloud(self, decay_type, alpha, ssa, reference_wave=1,
                   slab_kwargs={'ptop':np.nan,'dp':np.nan, 'reference_tau':np.nan},
                   deck_kwargs={'ptop':np.nan,'dp':np.nan}): 
         """
@@ -894,6 +894,12 @@ class Parameterize():
 
         Parameters
         ----------
+        decay_type: str
+            One of 'deck' or 'slab'
+        ssa: float
+            Single Scattering Albedo: can have values from 0 to 1
+        alpha: float
+            set to 0 for grey cloud
  
         Returns 
         -------
@@ -912,7 +918,7 @@ class Parameterize():
         wave_dependent_opd =  np.concatenate([opd_profile[i]*(wavelength/reference_wave)**(-alpha) for i in range(self.nlayer)])
         wvnos =  np.concatenate([wavenumber_grid for i in range(self.nlayer)])
         pressures =  np.concatenate([[self.pressure_layer[i]]*len(wavelength) for i in range(self.nlayer)])
-        w0=wave_dependent_opd*0+0.99#arbitrary what is used? 
+        w0=wave_dependent_opd*0+ssa
         g0=wave_dependent_opd*0
         df=pd.DataFrame({
                 'opd':wave_dependent_opd,
@@ -926,7 +932,7 @@ class Parameterize():
 
     def deck_decay(self,ptop, dp=0.005): 
         """
-        Emualtes brewster opacity decay for the deck model 
+        Emualates brewster opacity decay for the deck model 
         
         Parameters 
         ----------
@@ -1003,24 +1009,168 @@ class Parameterize():
 
         return opd_by_layer
 
-    def free_chemistry(self,background_gas='H2/He'):#ADD inputs 
-        """
-        WIP function to initialize an chemistry 
+    def free_constant_abundance(self,  species):
+        ''''
+        Abundance profile
 
-        Parmaeters 
+        Parameters
         ----------
-        all molecules ? list of strings?
+        species: dict
+            Dictionary containing the species and their abundances. Should 
+            also contain background gases and their ratios. 
+            Example: species=dict(H2O=dict(value=1e-4, unit='v/v'), background=dict(gases=['H2', 'He'], ratios=[0.85, 0.15]))
 
-        dict(H2O=[.001], CO2=[.001])
+        Return
+        ------
+        Data frame with chemical abundances per level
+        '''
+
+        pressure=self.pressure_level
+        nlevels=len(pressure)
+
+        # Initialize dictionary to put in the datafram
+        mixing_ratios=dict(pressure=pressure)
+
+        # Keep track of the total abundances to make sure they add to 1
+        total_abundance=0
+        
+        for i in species.keys():
+            if i!='background':
+                mixing_ratios[i]=np.ones(nlevels)*species[i]['value']
+                total_abundance+=species[i]['value']
+
+        # Add background gases
+        n_background=len(species['background']['gases'])
+        for i in range(n_background):
+            mol=species['background']['gases'][i]
+            abun=species['background']['ratios'][i]
+            mixing_ratios[mol]=np.ones(nlevels)*(1-total_abundance)*abun
+        
+        self.picaso.inputs['atmosphere']['profile'] = pd.DataFrame(mixing_ratios)
+        
+        return pd.DataFrame(mixing_ratios)
+
+    def madhu_seager_09_noinversion(self, alpha_1, alpha_2, P1, P3, T3, beta=0.5):
+        """"
+        Implements the temperature structure parameterization from Madhusudhan & Seager (2009)
+
+        Parameters
+        -----------
+
+        Returns
+        -------
+        Temperature per layer
         """
-        pressure = self.pressure_level
-        H2O = 0 #?? fill in 
 
-        #add the end fill to 1
-        fH2He = 00
-        H2 = 1 - H2O
-        #write in how to paramterize chemistry 
-        return pd.DataFrame(dict(pressure=pressure,H2O = H2O))
+        pressure = self.pressure_level
+        nlevel = len(pressure)
+
+        temp_by_level = np.zeros(nlevel)
+
+        # Set T1 from T3
+        T1 = T3 - (np.log(P3/P1) / alpha_2)**(1/beta)
+        # Set T0 from T1
+        T0 = T1 - (np.log(P1/P0) / alpha_1)**(1/beta)
+
+        P0 = pressure[0]
+
+        # Set pressure ranges
+        layer_1=(pressure<P1)
+        layer_2=(pressure>=P1)*(pressure<P3)
+        layer_3=(pressure>=P3)
+
+        # Define temperature at each pressure range
+        temp_by_level[layer_1] = T0 + ((1/alpha_1)*np.log(pressure[layer_1]/P0))**(1/beta)
+        temp_by_level[layer_2] = T1 + ((1/alpha_2)*np.log(pressure[layer_2]/P1))**(1/beta)
+        temp_by_level[layer_3] = T3
+
+        temp_by_level = convolve(temp_by_level,Gaussian1DKernel(5),boundary='extend')
+
+        return pd.DataFrame(dict(pressure=pressure, temperature=temp_by_level))
+    
+    def madhu_seager_09_inversion(self, alpha_1, alpha_2, P1, P2, P3, T3, beta=0.5):
+        """"
+        Implements the temperature structure parameterization from Madhusudhan & Seager (2009)
+          allowing for inversions
+
+        Parameters
+        -----------
+
+        Returns
+        -------
+        Temperature per layer
+        """
+
+        pressure = self.pressure_level
+        nlevel = len(pressure)
+
+        temp_by_level = np.zeros(nlevel)
+
+        P0 = pressure[0]
+
+        # Set pressure ranges
+        layer_1=(pressure<P1)
+        layer_2=(pressure<P3)*(pressure>=P1)
+        layer_3=(pressure>=P3)
+
+        # Define temperatures at boundaries to ensure continuity
+        T2 = T3 - (np.log(P3/P2) / alpha_2)**(1/beta)
+        T1 = T2 + (np.log(P1/P2) / alpha_2)**(1/beta)
+        T0 = T1 - (np.log(P1/P0) / alpha_1)**(1/beta)
+
+        # Define temperature at each pressure range
+        temp_by_level[layer_1] = T0 + (np.log(pressure[layer_1]/P0)/alpha_1)**(1/beta)
+        temp_by_level[layer_2] = T2 + (np.log(pressure[layer_2]/P2)/alpha_2)**(1/beta)
+        temp_by_level[layer_3] = T3
+
+        temp_by_level = convolve(temp_by_level,Gaussian1DKernel(5),boundary='extend')
+
+        return pd.DataFrame(dict(pressure=pressure, temperature=temp_by_level))
+    
+    def knot_profile(self,  P_knots, T_knots, interpolation='brewster'):
+        """"
+        Knot-based temperature profile. Implements different types of interpolation.
+
+        Parameters
+        -----------
+
+        Returns
+        -------
+        Temperature per layer
+        """
+
+        pressure = self.pressure_level
+        nlevel = len(pressure)
+
+        temp_by_level = np.zeros(nlevel)
+
+        # Interpolation requires pressures to be sorted from lowest to highest
+        order = np.argsort(P_knots)
+        P_knots=np.array(P_knots)[order]
+        T_knots=np.array(T_knots)[order]
+        
+        # Perform the interpolation
+        if interpolation=='brewster':
+            interpolator = interpolate.splrep(np.log10(P_knots), T_knots, s=0)
+            temp_by_level=np.abs(interpolate.splev(np.log10(pressure),interpolator,der=0))
+        elif interpolation=='linear':
+            interpolator = interpolate.interp1d(np.log10(P_knots), T_knots, kind='linear', bounds_error=False, fill_value='extrapolate')
+            temp_by_level = interpolator(np.log10(pressure))
+        elif interpolation=='quadratic_spline':
+            assert len(P_knots)>=3, 'Quadratic splines require at least 3 knots'
+            interpolator = interpolate.interp1d(np.log10(P_knots), T_knots, kind='quadratic', bounds_error=False, fill_value='extrapolate')
+            temp_by_level = interpolator(np.log10(pressure))
+        elif interpolation=='cubic_spline':
+            assert len(P_knots)>=4, 'Cubic splines require at least 4 knots'
+            interpolator = interpolate.interp1d(np.log10(P_knots), T_knots, kind='cubic', bounds_error=False, fill_value='extrapolate')
+            temp_by_level = interpolator(np.log10(pressure))
+        elif getattr(interpolate, interpolation, np.nan)!=np.nan:
+            interpolator = getattr(interpolate, interpolation)
+            interpolator(np.log10(P_knots), T_knots, *scipy_interpolate_kwargs)
+        else:
+            raise Exception(f'Unknown interpolation method \'{interpolation}\'')
+
+        return pd.DataFrame(dict(pressure=pressure, temperature=temp_by_level))
 
 def atlev(l0,pressure_layer):
     nlayers = pressure_layer.size

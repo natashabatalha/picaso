@@ -1,577 +1,435 @@
-from urllib.request import urlretrieve
-import tarfile
+import pooch
 import os
 import shutil
 import glob
-import uuid
 import json
+import requests
 
-def remove_directory(dir_path):
-    """Removes a directory and all its contents.
+
+from .opacity_factory import get_all_metadata
+
+try:
+    from IPython.display import display, HTML
+except ImportError:
+    def display(data):
+        """A dummy display function for non-IPython environments."""
+        print(data)
+    def HTML(data):
+        """A dummy HTML class for non-IPython environments."""
+        return data
+
+def download_github_folder_api(save_to_dir,user="natashabatalha", repo="picaso", folder_path="reference"):
+    """
+    Downloads a folder from a GitHub repository using the GitHub API.
 
     Args:
-        dir_path: The path to the directory to remove.
+        user (str): The GitHub username or organization name.
+        repo (str): The repository name.
+        folder_path (str): The path to the folder within the repository.
+        save_to_dir (str): The local directory where files will be saved.
     """
-    try:
-        shutil.rmtree(dir_path)
-        print(f"Directory '{dir_path}' and its contents have been removed.")
-    except FileNotFoundError:
-        print(f"Directory '{dir_path}' not found.")
-    except OSError as e:
-        print(f"Error removing directory '{dir_path}': {e}")
-def download_with_progress(url, filename):
-    """Downloads a file from a URL and displays a progress bar."""
-
-    def progress_bar(count, block_size, total_size):
-        """Displays a simple progress bar."""
-        percent = int(count * block_size * 100 / total_size)
-        print(f"\rDownloading: {percent}% [{('#' * percent)}{(' ' * (100 - percent))}]", end="")
+    api_url = f"https://api.github.com/repos/{user}/{repo}/contents/{folder_path}"
 
     try:
-        urlretrieve(url, filename, reporthook=progress_bar)
-        print("\nDownload complete!")  # Add a newline after the progress bar finishes.
-    except Exception as e:
-        print(f"Error downloading {url}: {e}")
+        response = requests.get(api_url)
+        response.raise_for_status()
+        contents = response.json()
+
+        # Create the destination directory if it doesn't exist
+        # destination_path = os.path.join(save_to_dir, os.path.basename(folder_path))
+        #os.makedirs(destination_path, exist_ok=True)
+        #print(f"Downloading files to: {os.path.abspath(destination_path)}")
+        os.makedirs(save_to_dir, exist_ok=True)
+        print(f"Downloading files to: {os.path.abspath(save_to_dir)}")
+        for item in contents:
+            if item['type'] == 'file':
+                file_url = item['download_url']
+                file_name = item['name']
+                #local_file_path = os.path.join(destination_path, file_name)
+                local_file_path = os.path.join(save_to_dir, file_name)
+
+                print(f"  Downloading {file_name}...")
+                file_response = requests.get(file_url)
+                file_response.raise_for_status()
+
+                with open(local_file_path, 'wb') as f:
+                    f.write(file_response.content)
+            elif item['type'] == 'dir':
+                # Recursively download subdirectories
+                #new_folder_path = f"{folder_path}/{item['name']}"
+                #new_save_to_dir = os.path.join(save_to_dir, os.path.basename(folder_path))
+                new_folder_path = item['path']
+                new_save_to_dir = os.path.join(save_to_dir, item['name'])                
+                download_github_folder_api(new_save_to_dir, user=user, repo=repo, folder_path=new_folder_path)
+                
+    except requests.exceptions.RequestException as e:
+        print(f"Error: Could not access the GitHub API. {e}")
+    except KeyError:
+        print("Error: The provided URL might not be a valid folder path or the repository is private.")
+
 
 def get_data_config():
     __refdata__ = os.environ.get('picaso_refdata','')
-    if __refdata__ =='':raise Exception('Cannot get data config until picaso_refdata environment is set')
+    if __refdata__=='':
+        print('It does not look like have created picaso_refdata environment variable yet. Please do so by following these instructions first: https://natashabatalha.github.io/picaso/installation.html#create-environment-variable')
+        print('After you have created the environment variable I can help download the file and put it in the right place')
+        raise Exception('Cannot get data config until picaso_refdata environment is set')
+    elif not os.path.isdir(__refdata__):
+        print('It looks like you have set picaso_refdata path as: ',__refdata__)
+        print('However, this is not a real directory. You might have a typo and should make sure it is the correct path.')  
+        print('After you have created the environment variable I can help download the file and put it in the right place')
+        raise Exception('Cannot get data config until picaso_refdata environment is created')
+    
     inputs = json.load(open(os.path.join(__refdata__,'config.json')))   
 
     __stellar_refdata__ = os.environ.get('PYSYN_CDBS','$PYSYN_CDBS')
     if __stellar_refdata__ =='$PYSYN_CDBS':print("Stellar environment variable PYSYN_CDBS not yet set, which may impact exoplanet functionality")
 
-    return {
+    return inputs,{
+    "reference":{ 'default':{
+        'url':{'reference':'https://github.com/natashabatalha/picaso/reference'},
+        'description':'The required refernece data needed to run PICASO',
+        'default_destination':"cwd"}
+    },
+    "tutorials":{'default':{
+        'url':{'notebooks':'https://github.com/natashabatalha/picaso/docs/notebooks'},
+        'description':'Include the full set of jupyter-notebooks for all PICASO functionality',
+        'default_destination':"cwd"}
+    },
     "resampled_opacity":{
         'default':{
-           'url':'https://zenodo.org/records/14861730/files/opacities_0.3_15_R15000.db.tar.gz?download=1',
-            'filename':'opacities_0.3_15_R15000.db.tar.gz',
+           'url':{'opacities_0.3_15_R15000.db.tar.gz':'https://zenodo.org/records/14861730/files/opacities_0.3_15_R15000.db.tar.gz'},
             'description':'7.34 GB file resampled at R=15,000 from 0.3-15um. This is sufficient for doing R=100 JWST calculations and serves as a good default opacity database for exploration.',
-            'default_destination':os.path.join(__refdata__, inputs['opacities']['files']['opacity']) 
+            'default_destination':os.path.join(__refdata__, inputs['opacities']['files']['resampled-default']) 
         },
         'R60000,0.6-6um':{
-            'url':'https://zenodo.org/records/6928501/files/all_opacities_0.6_6_R60000.db.tar.gz?download=1',
-            'filename':'all_opacities_0.6_6_R60000.db.tar.gz',
+            'url':{'all_opacities_0.6_6_R60000.db.tar.gz':'https://zenodo.org/records/6928501/files/all_opacities_0.6_6_R60000.db.tar.gz'},
             'description':'38.3 GB file resampled at R=60,000 from 0.6-6um. This is sufficient for doing moderate resolution JWST calculations.',
+            'default_destination':inputs['opacities']['files']['resampled']
             },
         'R20000,4.8-15um':{
-            'url':'https://zenodo.org/records/6928501/files/all_opacities_4.8_15_R20000.db.tar.gz?download=1',
-            'filename':'all_opacities_4.8_15_R20000.db.tar.gz',
+            'url':{'all_opacities_4.8_15_R20000.db.tar.gz':'https://zenodo.org/records/6928501/files/all_opacities_4.8_15_R20000.db.tar.gz'},
             'description':'7.0 GB file resampled at R=20,000 from 4.8-15um. This is sufficient for doing low resolution JWST calculations.',
+            'default_destination':inputs['opacities']['files']['resampled']
             }
         },
     'stellar_grids':{
         'phoenix':{
-            'url':'http://ssb.stsci.edu/trds/tarfiles/synphot5.tar.gz',
-            'filename':'synphot5.tar.gz',
+            'url':{'synphot5.tar.gz':'http://ssb.stsci.edu/trds/tarfiles/synphot5.tar.gz'},
             'description':'Phoenix stellar atlas',
             'default_destination':os.path.join(__stellar_refdata__, 'grid')
             },
         'ck04models':{
-            'url':'http://ssb.stsci.edu/trds/tarfiles/synphot3.tar.gz',
-            'filename':'synphot3.tar.gz',
+            'url':{'synphot3.tar.gz':'http://ssb.stsci.edu/trds/tarfiles/synphot3.tar.gz'},
             'description':'Castelli & Kurucz (2004) stellar atlas',
             'default_destination':os.path.join(__stellar_refdata__, 'grid')
             },
         },
     'virga_mieff':{
         'default':{
-            'url':'https://zenodo.org/records/5179187/files/virga.zip?download=1',
-            'filename':'virga.zip',
+            'url':{'virga.zip':'https://zenodo.org/records/5179187/files/virga.zip'},
             'description':'Virga refractive index and Mie files on standard 196 grid',
+            'default_destination':os.path.join(__refdata__, 'virga')
             }
         },
     'sonora_grids':{
-        'elfowl-Ytype':{
-            'url':['https://zenodo.org/records/10381250/files/output_275.0_325.0.tar.gz',
-                    'https://zenodo.org/records/10381250/files/output_350.0_400.0.tar.gz',
-                    'https://zenodo.org/records/10381250/files/output_500.0_550.0.tar.gz',
-                    'https://zenodo.org/records/10381250/files/output_425.0_475.0.tar.gz'],
-            'filename':['output_275.0_325.0.tar.gz',
-                        'output_350.0_400.0.tar.gz',
-                        'output_500.0_550.0.tar.gz',
-                        'output_425.0_475.0.tar.gz'],
+        'elfowl-Ytype-v2':{
+            'url':{'output_275.0_325.0.tar.gz': 'https://zenodo.org/records/15150865/files/output_275.0_325.0.tar.gz',
+                    'output_350.0_400.0.tar.gz':'https://zenodo.org/records/15150865/files/output_350.0_400.0.tar.gz',
+                    'output_500.0_550.0.tar.gz':'https://zenodo.org/records/15150865/files/output_500.0_550.0.tar.gz',
+                    'output_425.0_475.0.tar.gz':'https://zenodo.org/records/15150865/files/output_425.0_475.0.tar.gz'},
+            'description':'The models between Teff of 275 to 550 K (applicable to Y-type objects). V2 corrects quenched CO2. Total: ~40 Gb.',
+            'default_destination':os.path.join(__refdata__, 'sonora_grids', 'elfowl')
+            },
+        'elfowl-Ttype-v2':{
+            'url':{'output_700.0_800.tar.gz':'https://zenodo.org/records/15150874/files/output_700.0_800.tar.gz',
+                    'output_850.0_950.tar.gz':'https://zenodo.org/records/15150874/files/output_850.0_950.tar.gz',
+                    'output_1000.0_1200.tar.gz':'https://zenodo.org/records/15150874/files/output_1000.0_1200.tar.gz',
+                    'output_575.0_650.tar.gz':'https://zenodo.org/records/15150874/files/output_575.0_650.tar.gz'},
+            'description':'The models for Teff between 575 to 1200 K (applicable for T-type objects). V2 corrects quenched CO2. Total: ~40 Gb.',
+            'default_destination':os.path.join(__refdata__, 'sonora_grids', 'elfowl')
+            },
+        'elfowl-Ltype-v2':{
+            'url':{'output_1600.0_1800.tar.gz':'https://zenodo.org/records/15150881/files/output_1600.0_1800.tar.gz',
+                    'output_1900.0_2100.tar.gz':'https://zenodo.org/records/15150881/files/output_1900.0_2100.tar.gz',
+                    'output_2200.0_2400.tar.gz':'https://zenodo.org/records/15150881/files/output_2200.0_2400.tar.gz',
+                    'output_1300.0_1400.tar.gz':'https://zenodo.org/records/15150881/files/output_1300.0_1400.tar.gz'
+                },
+            'description':'Models for Teff between 1300 to 2400 K (applicable for L-type objects).  V2 corrects quenched CO2.Total: ~40 Gb.',
+            'default_destination':os.path.join(__refdata__, 'sonora_grids', 'elfowl')
+            },
+        'elfowl-Ytype-v1':{
+            'url':{'output_275.0_325.0.tar.gz': 'https://zenodo.org/records/10381250/files/output_275.0_325.0.tar.gz',
+                    'output_350.0_400.0.tar.gz':'https://zenodo.org/records/10381250/files/output_350.0_400.0.tar.gz',
+                    'output_500.0_550.0.tar.gz':'https://zenodo.org/records/10381250/files/output_500.0_550.0.tar.gz',
+                    'output_425.0_475.0.tar.gz':'https://zenodo.org/records/10381250/files/output_425.0_475.0.tar.gz'},
             'description':'The models between Teff of 275 to 550 K (applicable to Y-type objects). Total: ~40 Gb.',
+            'default_destination':os.path.join(__refdata__, 'sonora_grids', 'elfowl')
             },
-        'elfowl-Ttype':{
-            'url':['https://zenodo.org/records/10385821/files/output_700.0_800.tar.gz',
-                    'https://zenodo.org/records/10385821/files/output_850.0_950.tar.gz',
-                    'https://zenodo.org/records/10385821/files/output_1000.0_1200.tar.gz',
-                    'https://zenodo.org/records/10385821/files/output_575.0_650.tar.gz'],
-            'filename':['output_700.0_800.tar.gz',
-                        'output_850.0_950.tar.gz',
-                        'output_1000.0_1200.tar.gz',
-                        'output_575.0_650.tar.gz'],
+        'elfowl-Ttype-v1':{
+            'url':{'output_700.0_800.tar.gz':'https://zenodo.org/records/10385821/files/output_700.0_800.tar.gz',
+                    'output_850.0_950.tar.gz':'https://zenodo.org/records/10385821/files/output_850.0_950.tar.gz',
+                    'output_1000.0_1200.tar.gz':'https://zenodo.org/records/10385821/files/output_1000.0_1200.tar.gz',
+                    'output_575.0_650.tar.gz':'https://zenodo.org/records/10385821/files/output_575.0_650.tar.gz'},
             'description':'The models for Teff between 575 to 1200 K (applicable for T-type objects). Total: ~40 Gb.',
+            'default_destination':os.path.join(__refdata__, 'sonora_grids', 'elfowl')
             },
-        'elfowl-Ltype':{
-            'url':['https://zenodo.org/records/10385987/files/output_1600.0_1800.tar.gz',
-                    'https://zenodo.org/records/10385987/files/output_1900.0_2100.tar.gz',
-                    'https://zenodo.org/records/10385987/files/output_2200.0_2400.tar.gz',
-                    'https://zenodo.org/records/10385987/files/output_1300.0_1400.tar.gz'
-                    ],
-            'filename':[
-                    'output_1600.0_1800.tar.gz',
-                    'output_1900.0_2100.tar.gz',
-                    'output_2200.0_2400.tar.gz',
-                    'output_1300.0_1400.tar.gz'
-            ],
+        'elfowl-Ltype-v1':{
+            'url':{'output_1600.0_1800.tar.gz':'https://zenodo.org/records/10385987/files/output_1600.0_1800.tar.gz',
+                    'output_1900.0_2100.tar.gz':'https://zenodo.org/records/10385987/files/output_1900.0_2100.tar.gz',
+                    'output_2200.0_2400.tar.gz':'https://zenodo.org/records/10385987/files/output_2200.0_2400.tar.gz',
+                    'output_1300.0_1400.tar.gz':'https://zenodo.org/records/10385987/files/output_1300.0_1400.tar.gz'
+                },
             'description':'Models for Teff between 1300 to 2400 K (applicable for L-type objects). Total: ~40 Gb.',
+            'default_destination':os.path.join(__refdata__, 'sonora_grids', 'elfowl')
             },
         'bobcat':{
-            'url':'https://zenodo.org/records/1309035/files/profile.tar?download=1',
-            'filename':'profile.tar',
+            'url':{'profile.tar':'https://zenodo.org/records/1309035/files/profile.tar'},
             'description':'Sonora bobcat pressure-temperature profiles',
-            },
-        'diamondback':{
-            'url':'',
-            'description':'',
-            },
-        },
-    'ck_tables':{
-        #'default-pre-mixed':{
+            'default_destination':os.path.join(__refdata__, 'sonora_grids', 'bobcat')
+
+            }#,
+        #'diamondback':{
         #    'url':'',
         #    'description':'',
         #    },
+        },
+    'ck_tables':{
         'by-molecule':{
-            'url':[
-                'https://zenodo.org/records/10895826/files/H2S_1460.npy',
-                'https://zenodo.org/records/10895826/files/MgH_1460.npy',
-                'https://zenodo.org/records/10895826/files/O2_1460.npy',
-                'https://zenodo.org/records/10895826/files/FeH_1460.npy',
-                'https://zenodo.org/records/10895826/files/TiO_1460.npy',
-                'https://zenodo.org/records/10895826/files/SO2_1460.npy',
-                'https://zenodo.org/records/10895826/files/Fe_1460.npy',
-                'https://zenodo.org/records/10895826/files/C2H4_1460.npy',
-                'https://zenodo.org/records/10895826/files/OCS_1460.npy',
-                'https://zenodo.org/records/10895826/files/C2H6_1460.npy',
-                'https://zenodo.org/records/10895826/files/SiO_1460.npy',
-                'https://zenodo.org/records/10895826/files/C2H2_1460.npy',
-                'https://zenodo.org/records/10895826/files/LiCl_1460.npy',
-                'https://zenodo.org/records/10895826/files/CO2_1460.npy',
-                'https://zenodo.org/records/10895826/files/CrH_1460.npy',
-                'https://zenodo.org/records/10895826/files/Na_1460.npy',
-                'https://zenodo.org/records/10895826/files/Rb_1460.npy',
-                'https://zenodo.org/records/10895826/files/H3+_1460.npy',
-                'https://zenodo.org/records/10895826/files/O3_1460.npy',
-                'https://zenodo.org/records/10895826/files/H2O_1460.npy',
-                'https://zenodo.org/records/10895826/files/H2_1460.npy',
-                'https://zenodo.org/records/10895826/files/VO_1460.npy',
-                'https://zenodo.org/records/10895826/files/CO_1460.npy',
-                'https://zenodo.org/records/10895826/files/LiF_1460.npy',
-                'https://zenodo.org/records/10895826/files/N2_1460.npy',
-                'https://zenodo.org/records/10895826/files/CaH_1460.npy',
-                'https://zenodo.org/records/10895826/files/LiH_1460.npy',
-                'https://zenodo.org/records/10895826/files/K_1460.npy',
-                'https://zenodo.org/records/10895826/files/CH4_1460.npy',
-                'https://zenodo.org/records/10895826/files/Li_1460.npy',
-                'https://zenodo.org/records/10895826/files/HCN_1460.npy',
-                'https://zenodo.org/records/10895826/files/TiH_1460.npy',
-                'https://zenodo.org/records/10895826/files/Cs_1460.npy',
-                'https://zenodo.org/records/10895826/files/NH3_1460.npy',
-                'https://zenodo.org/records/10895826/files/PH3_1460.npy',
-                'https://zenodo.org/records/10895826/files/AlH_1460.npy'
-            ],
+            'url':{
+                'H2S_1460.npy':'https://zenodo.org/records/10895826/files/H2S_1460.npy',
+                'MgH_1460.npy':'https://zenodo.org/records/10895826/files/MgH_1460.npy',
+                'O2_1460.npy':'https://zenodo.org/records/10895826/files/O2_1460.npy',
+                'FeH_1460.npy':'https://zenodo.org/records/10895826/files/FeH_1460.npy',
+                'TiO_1460.npy':'https://zenodo.org/records/10895826/files/TiO_1460.npy',
+                'SO2_1460.npy':'https://zenodo.org/records/10895826/files/SO2_1460.npy',
+                'Fe_1460.npy':'https://zenodo.org/records/10895826/files/Fe_1460.npy',
+                'C2H4_1460.np':'https://zenodo.org/records/10895826/files/C2H4_1460.npy',
+                'OCS_1460.npy':'https://zenodo.org/records/10895826/files/OCS_1460.npy',
+                'C2H6_1460.npy':'https://zenodo.org/records/10895826/files/C2H6_1460.npy',
+                'SiO_1460.np':'https://zenodo.org/records/10895826/files/SiO_1460.npy',
+                'C2H2_1460.npy':'https://zenodo.org/records/10895826/files/C2H2_1460.npy',
+                'LiCl_1460.npy':'https://zenodo.org/records/10895826/files/LiCl_1460.npy',
+                'CO2_1460.npy':'https://zenodo.org/records/10895826/files/CO2_1460.npy',
+                'CrH_1460.npy':'https://zenodo.org/records/10895826/files/CrH_1460.npy',
+                'Na_1460.npy':'https://zenodo.org/records/10895826/files/Na_1460.npy',
+                'Rb_1460.npy':'https://zenodo.org/records/10895826/files/Rb_1460.npy',
+                'H3+_1460.npy':'https://zenodo.org/records/10895826/files/H3+_1460.npy',
+                'O3_1460.npy':'https://zenodo.org/records/10895826/files/O3_1460.npy',
+                'H2O_1460.npy':'https://zenodo.org/records/10895826/files/H2O_1460.npy',
+                'H2_1460.npy':'https://zenodo.org/records/10895826/files/H2_1460.npy',
+                'VO_1460.npy':'https://zenodo.org/records/10895826/files/VO_1460.npy',
+                'CO_1460.npy':'https://zenodo.org/records/10895826/files/CO_1460.npy',
+                'LiF_1460.npy':'https://zenodo.org/records/10895826/files/LiF_1460.npy',
+                'N2_1460.npy':'https://zenodo.org/records/10895826/files/N2_1460.npy',
+                'CaH_1460.npy':'https://zenodo.org/records/10895826/files/CaH_1460.npy',
+                'LiH_1460.npy':'https://zenodo.org/records/10895826/files/LiH_1460.npy',
+                'K_1460.npy':'https://zenodo.org/records/10895826/files/K_1460.npy',
+                'CH4_1460.npy':'https://zenodo.org/records/10895826/files/CH4_1460.npy',
+                'Li_1460.npy':'https://zenodo.org/records/10895826/files/Li_1460.npy',
+                'HCN_1460.npy':'https://zenodo.org/records/10895826/files/HCN_1460.npy',
+                'TiH_1460.np':'https://zenodo.org/records/10895826/files/TiH_1460.npy',
+                'Cs_1460.npy':'https://zenodo.org/records/10895826/files/Cs_1460.npy',
+                'NH3_1460.npy':'https://zenodo.org/records/10895826/files/NH3_1460.npy',
+                'PH3_1460.npy':'https://zenodo.org/records/10895826/files/PH3_1460.npy',
+                'AlH_1460.npy':'https://zenodo.org/records/10895826/files/AlH_1460.npy'
+        },
             'description':'By molecule CK-Table on the 1460 grid with 661 wavenumber points.',
             'default_destination':os.path.join(__refdata__, inputs['opacities']['files']['ktable_by_molecule']) ,
-            'filename':[
-                'H2S_1460.npy',
-                'MgH_1460.npy',
-                'O2_1460.npy',
-                'FeH_1460.npy',
-                'TiO_1460.npy',
-                'SO2_1460.npy',
-                'Fe_1460.npy',
-                'C2H4_1460.npy',
-                'OCS_1460.npy',
-                'C2H6_1460.npy',
-                'SiO_1460.npy',
-                'C2H2_1460.npy',
-                'LiCl_1460.npy',
-                'CO2_1460.npy',
-                'CrH_1460.npy',
-                'Na_1460.npy',
-                'Rb_1460.npy',
-                'H3+_1460.npy',
-                'O3_1460.npy',
-                'H2O_1460.npy',
-                'H2_1460.npy',
-                'VO_1460.npy',
-                'CO_1460.npy',
-                'LiF_1460.npy',
-                'N2_1460.npy',
-                'CaH_1460.npy',
-                'LiH_1460.npy',
-                'K_1460.npy',
-                'CH4_1460.npy',
-                'Li_1460.npy',
-                'HCN_1460.npy',
-                'TiH_1460.npy',
-                'Cs_1460.npy',
-                'NH3_1460.npy',
-                'PH3_1460.npy',
-                'AlH_1460.npy'
-            ]
-            },
+        },
+            
         'pre-weighted':{
-            'url':['https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_050.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_250_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_100.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_050_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_050.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_100.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_025_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_100_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_100.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_025.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_150.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_050_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_250_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_050_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_100_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_150.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_050.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_025_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_150.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_025_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_025.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_150_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_025.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_200.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_250_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_250_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_250.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_200_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_050_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_050.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_250.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_150_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_200_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_200_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_250.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_025.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_100_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_200.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_200.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_200_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_150_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_250.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_250_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_050_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_200.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_150_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_150_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_150.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_200_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_150.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_200.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_100_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_050.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_025_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_100_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_150_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_250.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_150.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_050.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_100_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_050.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_025_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_200_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_100.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_025_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_200.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_150_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_150.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_200.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_100.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_025_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_100_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_025.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_200.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_200.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_100.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_050_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_050.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_025.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_025_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_250_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_100.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_250_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_200_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_250.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_025.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_250_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_250.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_025.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_150_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_025_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_025_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_250.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_150_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_200_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_200_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_200_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_050_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_200.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_200.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_050_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_100.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_050_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_100.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_050.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_025_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_025.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_150_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_200.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_050.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_050_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_100_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_150_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_200_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_150.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_150.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_150_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_250.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_150.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_050.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_250.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_100_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_150.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_100_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_250_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_100.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_100.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_100_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_150.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_150.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_050.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_100.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_025_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_150_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_200.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_025.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_250_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_250_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_100_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_100_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_250.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_250.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_200_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_200_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_250.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_250_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_025.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_050_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_250_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_050_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_100.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_025.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_050.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_025_noTiOVO.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_025.data.196.tar.gz',
-                    'https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_050_noTiOVO.data.196.tar.gz'
-                    ],
+            'url':{"sonora_2020_feh+130_co_100_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_100_noTiOVO.data.196.tar.gz", "sonora_2020_feh-030_co_025_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_025_noTiOVO.data.196.tar.gz", "sonora_2020_feh+030_co_150.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_150.data.196.tar.gz", "sonora_2020_feh-030_co_050.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_050.data.196.tar.gz", "sonora_2020_feh+130_co_200.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_200.data.196.tar.gz", "sonora_2020_feh+070_co_200.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_200.data.196.tar.gz", "sonora_2020_feh+130_co_200_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_200_noTiOVO.data.196.tar.gz", "sonora_2020_feh-030_co_025.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_025.data.196.tar.gz", "sonora_2020_feh+150_co_025.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_025.data.196.tar.gz", "sonora_2020_feh+150_co_050_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_050_noTiOVO.data.196.tar.gz", "sonora_2020_feh-030_co_200_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_200_noTiOVO.data.196.tar.gz", "sonora_2020_feh+070_co_025_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_025_noTiOVO.data.196.tar.gz", "sonora_2020_feh-070_co_100_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_100_noTiOVO.data.196.tar.gz", "sonora_2020_feh-030_co_150_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_150_noTiOVO.data.196.tar.gz", "sonora_2020_feh-070_co_250.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_250.data.196.tar.gz", "sonora_2020_feh+050_co_100_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_100_noTiOVO.data.196.tar.gz", "sonora_2020_feh+100_co_250_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_250_noTiOVO.data.196.tar.gz", "sonora_2020_feh+000_co_025.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_025.data.196.tar.gz", "sonora_2020_feh+050_co_200_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_200_noTiOVO.data.196.tar.gz", "sonora_2020_feh-100_co_050.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_050.data.196.tar.gz", "sonora_2020_feh+130_co_250_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_250_noTiOVO.data.196.tar.gz", "sonora_2020_feh+000_co_200_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_200_noTiOVO.data.196.tar.gz", "sonora_2020_feh+050_co_050.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_050.data.196.tar.gz", "sonora_2020_feh-050_co_025_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_025_noTiOVO.data.196.tar.gz", "sonora_2020_feh-030_co_250_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_250_noTiOVO.data.196.tar.gz", "sonora_2020_feh-050_co_150.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_150.data.196.tar.gz", "sonora_2020_feh+100_co_100_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_100_noTiOVO.data.196.tar.gz", "sonora_2020_feh+050_co_200.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_200.data.196.tar.gz", "sonora_2020_feh+100_co_025.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_025.data.196.tar.gz", "sonora_2020_feh-050_co_200_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_200_noTiOVO.data.196.tar.gz", "sonora_2020_feh-070_co_050_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_050_noTiOVO.data.196.tar.gz", "sonora_2020_feh-100_co_250.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_250.data.196.tar.gz", "sonora_2020_feh+200_co_200.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_200.data.196.tar.gz", "sonora_2020_feh-030_co_100.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_100.data.196.tar.gz", "sonora_2020_feh+100_co_050_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_050_noTiOVO.data.196.tar.gz", "sonora_2020_feh+000_co_050_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_050_noTiOVO.data.196.tar.gz", "sonora_2020_feh+030_co_025.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_025.data.196.tar.gz", "sonora_2020_feh+170_co_025_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_025_noTiOVO.data.196.tar.gz", "sonora_2020_feh-070_co_250_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_250_noTiOVO.data.196.tar.gz", "sonora_2020_feh-070_co_025.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_025.data.196.tar.gz", "sonora_2020_feh-100_co_150.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_150.data.196.tar.gz", "sonora_2020_feh+030_co_200_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_200_noTiOVO.data.196.tar.gz", "sonora_2020_feh+070_co_050.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_050.data.196.tar.gz", "sonora_2020_feh+200_co_100_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_100_noTiOVO.data.196.tar.gz", "sonora_2020_feh+030_co_100_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_100_noTiOVO.data.196.tar.gz", "sonora_2020_feh+200_co_200_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_200_noTiOVO.data.196.tar.gz", "sonora_2020_feh-100_co_025.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_025.data.196.tar.gz", "sonora_2020_feh+200_co_025.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_025.data.196.tar.gz", "sonora_2020_feh+130_co_050_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_050_noTiOVO.data.196.tar.gz", "sonora_2020_feh+100_co_025_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_025_noTiOVO.data.196.tar.gz", "sonora_2020_feh-100_co_200.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_200.data.196.tar.gz", "sonora_2020_feh+070_co_250.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_250.data.196.tar.gz", "sonora_2020_feh+150_co_025_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_025_noTiOVO.data.196.tar.gz", "sonora_2020_feh+050_co_050_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_050_noTiOVO.data.196.tar.gz", "sonora_2020_feh+050_co_150.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_150.data.196.tar.gz", "sonora_2020_feh+130_co_025_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_025_noTiOVO.data.196.tar.gz", "sonora_2020_feh+070_co_250_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_250_noTiOVO.data.196.tar.gz", "sonora_2020_feh-100_co_250_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_250_noTiOVO.data.196.tar.gz", "sonora_2020_feh-100_co_100.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_100.data.196.tar.gz", "sonora_2020_feh+070_co_100.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_100.data.196.tar.gz", "sonora_2020_feh+150_co_150.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_150.data.196.tar.gz", "sonora_2020_feh+150_co_200.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_200.data.196.tar.gz", "sonora_2020_feh-050_co_250_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_250_noTiOVO.data.196.tar.gz", "sonora_2020_feh-070_co_200_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_200_noTiOVO.data.196.tar.gz", "sonora_2020_feh+100_co_050.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_050.data.196.tar.gz", "sonora_2020_feh+100_co_200.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_200.data.196.tar.gz", "sonora_2020_feh+130_co_150_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_150_noTiOVO.data.196.tar.gz", "sonora_2020_feh-070_co_100.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_100.data.196.tar.gz", "sonora_2020_feh+170_co_250.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_250.data.196.tar.gz", "sonora_2020_feh+070_co_150.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_150.data.196.tar.gz", "sonora_2020_feh+030_co_250_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_250_noTiOVO.data.196.tar.gz", "sonora_2020_feh+070_co_100_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_100_noTiOVO.data.196.tar.gz", "sonora_2020_feh+130_co_025.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_025.data.196.tar.gz", "sonora_2020_feh-030_co_200.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_200.data.196.tar.gz", "sonora_2020_feh+200_co_150_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_150_noTiOVO.data.196.tar.gz", "sonora_2020_feh+170_co_200.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_200.data.196.tar.gz", "sonora_2020_feh-050_co_050.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_050.data.196.tar.gz", "sonora_2020_feh-070_co_150.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_150.data.196.tar.gz", "sonora_2020_feh+170_co_100.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_100.data.196.tar.gz", "sonora_2020_feh+130_co_050.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_050.data.196.tar.gz", "sonora_2020_feh+150_co_100_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_100_noTiOVO.data.196.tar.gz", "sonora_2020_feh+000_co_100.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_100.data.196.tar.gz", "sonora_2020_feh+100_co_150_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_150_noTiOVO.data.196.tar.gz", "sonora_2020_feh-070_co_200.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_200.data.196.tar.gz", "sonora_2020_feh+030_co_025_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_025_noTiOVO.data.196.tar.gz", "sonora_2020_feh+000_co_250_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_250_noTiOVO.data.196.tar.gz", "sonora_2020_feh+150_co_150_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_150_noTiOVO.data.196.tar.gz", "sonora_2020_feh+200_co_150.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_150.data.196.tar.gz", "sonora_2020_feh-100_co_150_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_150_noTiOVO.data.196.tar.gz", "sonora_2020_feh+170_co_200_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_200_noTiOVO.data.196.tar.gz", "sonora_2020_feh-050_co_200.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_200.data.196.tar.gz", "sonora_2020_feh+200_co_250_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_250_noTiOVO.data.196.tar.gz", "sonora_2020_feh+000_co_150_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_150_noTiOVO.data.196.tar.gz", "sonora_2020_feh-030_co_050_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_050_noTiOVO.data.196.tar.gz", "sonora_2020_feh+050_co_150_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_150_noTiOVO.data.196.tar.gz", "sonora_2020_feh-030_co_100_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_100_noTiOVO.data.196.tar.gz", "sonora_2020_feh+100_co_100.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_100.data.196.tar.gz", "sonora_2020_feh-050_co_050_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_050_noTiOVO.data.196.tar.gz", "sonora_2020_feh+200_co_100.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_100.data.196.tar.gz", "sonora_2020_feh-030_co_150.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_150.data.196.tar.gz", "sonora_2020_feh+030_co_150_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_150_noTiOVO.data.196.tar.gz", "sonora_2020_feh-100_co_025_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_025_noTiOVO.data.196.tar.gz", "sonora_2020_feh-050_co_100.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_100.data.196.tar.gz", "sonora_2020_feh+150_co_050.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_050.data.196.tar.gz", "sonora_2020_feh+200_co_050_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_050_noTiOVO.data.196.tar.gz", "sonora_2020_feh+070_co_200_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_200_noTiOVO.data.196.tar.gz", "sonora_2020_feh+170_co_150.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_150.data.196.tar.gz", "sonora_2020_feh-100_co_200_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_200_noTiOVO.data.196.tar.gz", "sonora_2020_feh-070_co_150_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_150_noTiOVO.data.196.tar.gz", "sonora_2020_feh-070_co_050.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_050.data.196.tar.gz", "sonora_2020_feh+030_co_200.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_200.data.196.tar.gz", "sonora_2020_feh+030_co_250.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_250.data.196.tar.gz", "sonora_2020_feh+050_co_025.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_025.data.196.tar.gz", "sonora_2020_feh+050_co_250.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_250.data.196.tar.gz", "sonora_2020_feh-050_co_100_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_100_noTiOVO.data.196.tar.gz", "sonora_2020_feh+170_co_150_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_150_noTiOVO.data.196.tar.gz", "sonora_2020_feh+170_co_250_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_250_noTiOVO.data.196.tar.gz", "sonora_2020_feh+050_co_025_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_025_noTiOVO.data.196.tar.gz", "sonora_2020_feh+050_co_250_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_250_noTiOVO.data.196.tar.gz", "sonora_2020_feh-050_co_150_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_150_noTiOVO.data.196.tar.gz", "sonora_2020_feh+100_co_250.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_250.data.196.tar.gz", "sonora_2020_feh+000_co_100_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_100_noTiOVO.data.196.tar.gz", "sonora_2020_feh+170_co_025.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_025.data.196.tar.gz", "sonora_2020_feh+150_co_200_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_200_noTiOVO.data.196.tar.gz", "sonora_2020_feh+170_co_050.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_050.data.196.tar.gz", "sonora_2020_feh+070_co_050_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_050_noTiOVO.data.196.tar.gz", "sonora_2020_feh+170_co_100_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_100_noTiOVO.data.196.tar.gz", "sonora_2020_feh+150_co_250.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_250.data.196.tar.gz", "sonora_2020_feh+000_co_250.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_250.data.196.tar.gz", "sonora_2020_feh+200_co_050.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_050.data.196.tar.gz", "sonora_2020_feh+200_co_025_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_025_noTiOVO.data.196.tar.gz", "sonora_2020_feh+070_co_025.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_025.data.196.tar.gz", "sonora_2020_feh-070_co_025_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-070_co_025_noTiOVO.data.196.tar.gz", "sonora_2020_feh-100_co_050_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_050_noTiOVO.data.196.tar.gz", "sonora_2020_feh-100_co_100_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-100_co_100_noTiOVO.data.196.tar.gz", "sonora_2020_feh+150_co_250_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_250_noTiOVO.data.196.tar.gz", "sonora_2020_feh+170_co_050_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+170_co_050_noTiOVO.data.196.tar.gz", "sonora_2020_feh-050_co_025.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_025.data.196.tar.gz", "sonora_2020_feh+130_co_100.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_100.data.196.tar.gz", "sonora_2020_feh+000_co_200.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_200.data.196.tar.gz", "sonora_2020_feh-050_co_250.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-050_co_250.data.196.tar.gz", "sonora_2020_feh+050_co_100.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+050_co_100.data.196.tar.gz", "sonora_2020_feh+150_co_100.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+150_co_100.data.196.tar.gz", "sonora_2020_feh+000_co_150.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_150.data.196.tar.gz", "sonora_2020_feh+030_co_100.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_100.data.196.tar.gz", "sonora_2020_feh+100_co_200_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_200_noTiOVO.data.196.tar.gz", "sonora_2020_feh+030_co_050.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_050.data.196.tar.gz", "sonora_2020_feh+130_co_150.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_150.data.196.tar.gz", "sonora_2020_feh+000_co_050.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_050.data.196.tar.gz", "sonora_2020_feh-030_co_250.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh-030_co_250.data.196.tar.gz", "sonora_2020_feh+000_co_025_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+000_co_025_noTiOVO.data.196.tar.gz", "sonora_2020_feh+130_co_250.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+130_co_250.data.196.tar.gz", "sonora_2020_feh+200_co_250.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+200_co_250.data.196.tar.gz", "sonora_2020_feh+070_co_150_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+070_co_150_noTiOVO.data.196.tar.gz", "sonora_2020_feh+100_co_150.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+100_co_150.data.196.tar.gz", "sonora_2020_feh+030_co_050_noTiOVO.data.196.tar.gz": "https://zenodo.org/records/7542068/files/sonora_2020_feh+030_co_050_noTiOVO.data.196.tar.gz"},
             'description':'196 CK Tables computed by Roxana Lupu in legacy file formats.',
-            'filename':[
-                    'sonora_2020_feh+050_co_050.data.196.tar.gz',
-                    'sonora_2020_feh+150_co_250_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+050_co_100.data.196.tar.gz',
-                    'sonora_2020_feh+150_co_050_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+150_co_050.data.196.tar.gz',
-                    'sonora_2020_feh+150_co_100.data.196.tar.gz',
-                    'sonora_2020_feh+150_co_025_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+150_co_100_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-050_co_100.data.196.tar.gz',
-                    'sonora_2020_feh+150_co_025.data.196.tar.gz',
-                    'sonora_2020_feh+150_co_150.data.196.tar.gz',
-                    'sonora_2020_feh+050_co_050_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+130_co_250_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-050_co_050_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+050_co_100_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-050_co_150.data.196.tar.gz',
-                    'sonora_2020_feh-050_co_050.data.196.tar.gz',
-                    'sonora_2020_feh+050_co_025_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+050_co_150.data.196.tar.gz',
-                    'sonora_2020_feh-050_co_025_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+050_co_025.data.196.tar.gz',
-                    'sonora_2020_feh+150_co_150_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-050_co_025.data.196.tar.gz',
-                    'sonora_2020_feh+150_co_200.data.196.tar.gz',
-                    'sonora_2020_feh+030_co_250_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-030_co_250_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+030_co_250.data.196.tar.gz',
-                    'sonora_2020_feh+150_co_200_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+100_co_050_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+100_co_050.data.196.tar.gz',
-                    'sonora_2020_feh-030_co_250.data.196.tar.gz',
-                    'sonora_2020_feh-050_co_150_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+030_co_200_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-030_co_200_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+150_co_250.data.196.tar.gz',
-                    'sonora_2020_feh+030_co_025.data.196.tar.gz',
-                    'sonora_2020_feh-050_co_100_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+030_co_200.data.196.tar.gz',
-                    'sonora_2020_feh-030_co_200.data.196.tar.gz',
-                    'sonora_2020_feh-100_co_200_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+050_co_150_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+130_co_250.data.196.tar.gz',
-                    'sonora_2020_feh+200_co_250_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-100_co_050_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-050_co_200.data.196.tar.gz',
-                    'sonora_2020_feh+030_co_150_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-030_co_150_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+030_co_150.data.196.tar.gz',
-                    'sonora_2020_feh+130_co_200_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-030_co_150.data.196.tar.gz',
-                    'sonora_2020_feh+130_co_200.data.196.tar.gz',
-                    'sonora_2020_feh+030_co_100_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-070_co_050.data.196.tar.gz',
-                    'sonora_2020_feh+070_co_025_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-030_co_100_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+130_co_150_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+200_co_250.data.196.tar.gz',
-                    'sonora_2020_feh+130_co_150.data.196.tar.gz',
-                    'sonora_2020_feh-030_co_050.data.196.tar.gz',
-                    'sonora_2020_feh+130_co_100_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-100_co_050.data.196.tar.gz',
-                    'sonora_2020_feh-070_co_025_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+200_co_200_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-100_co_100.data.196.tar.gz',
-                    'sonora_2020_feh+100_co_025_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+200_co_200.data.196.tar.gz',
-                    'sonora_2020_feh+200_co_150_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+200_co_150.data.196.tar.gz',
-                    'sonora_2020_feh+100_co_200.data.196.tar.gz',
-                    'sonora_2020_feh+030_co_100.data.196.tar.gz',
-                    'sonora_2020_feh-100_co_025_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+200_co_100_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+100_co_025.data.196.tar.gz',
-                    'sonora_2020_feh-100_co_200.data.196.tar.gz',
-                    'sonora_2020_feh+050_co_200.data.196.tar.gz',
-                    'sonora_2020_feh+200_co_100.data.196.tar.gz',
-                    'sonora_2020_feh+200_co_050_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+200_co_050.data.196.tar.gz',
-                    'sonora_2020_feh-100_co_025.data.196.tar.gz',
-                    'sonora_2020_feh+200_co_025_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+070_co_250_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-030_co_100.data.196.tar.gz',
-                    'sonora_2020_feh-070_co_250_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-050_co_200_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+070_co_250.data.196.tar.gz',
-                    'sonora_2020_feh+200_co_025.data.196.tar.gz',
-                    'sonora_2020_feh+170_co_250_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-070_co_250.data.196.tar.gz',
-                    'sonora_2020_feh+170_co_025.data.196.tar.gz',
-                    'sonora_2020_feh+100_co_150_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-030_co_025_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+030_co_025_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+170_co_250.data.196.tar.gz',
-                    'sonora_2020_feh-100_co_150_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+070_co_200_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+170_co_200_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-070_co_200_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+030_co_050_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+070_co_200.data.196.tar.gz',
-                    'sonora_2020_feh-070_co_200.data.196.tar.gz',
-                    'sonora_2020_feh-030_co_050_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+000_co_100.data.196.tar.gz',
-                    'sonora_2020_feh+000_co_050_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+130_co_100.data.196.tar.gz',
-                    'sonora_2020_feh+000_co_050.data.196.tar.gz',
-                    'sonora_2020_feh+000_co_025_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+000_co_025.data.196.tar.gz',
-                    'sonora_2020_feh+070_co_150_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+170_co_200.data.196.tar.gz',
-                    'sonora_2020_feh+030_co_050.data.196.tar.gz',
-                    'sonora_2020_feh+130_co_050_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+170_co_100_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-070_co_150_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+050_co_200_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+100_co_150.data.196.tar.gz',
-                    'sonora_2020_feh+070_co_150.data.196.tar.gz',
-                    'sonora_2020_feh+170_co_150_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-050_co_250.data.196.tar.gz',
-                    'sonora_2020_feh-070_co_150.data.196.tar.gz',
-                    'sonora_2020_feh+070_co_050.data.196.tar.gz',
-                    'sonora_2020_feh+050_co_250.data.196.tar.gz',
-                    'sonora_2020_feh+070_co_100_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+170_co_150.data.196.tar.gz',
-                    'sonora_2020_feh-070_co_100_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-050_co_250_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+070_co_100.data.196.tar.gz',
-                    'sonora_2020_feh-070_co_100.data.196.tar.gz',
-                    'sonora_2020_feh+000_co_100_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-100_co_150.data.196.tar.gz',
-                    'sonora_2020_feh+000_co_150.data.196.tar.gz',
-                    'sonora_2020_feh+130_co_050.data.196.tar.gz',
-                    'sonora_2020_feh+100_co_100.data.196.tar.gz',
-                    'sonora_2020_feh+130_co_025_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+000_co_150_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+000_co_200.data.196.tar.gz',
-                    'sonora_2020_feh+130_co_025.data.196.tar.gz',
-                    'sonora_2020_feh+100_co_250_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-100_co_250_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+100_co_100_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-100_co_100_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+100_co_250.data.196.tar.gz',
-                    'sonora_2020_feh-100_co_250.data.196.tar.gz',
-                    'sonora_2020_feh+100_co_200_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+000_co_200_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+000_co_250.data.196.tar.gz',
-                    'sonora_2020_feh+000_co_250_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh-030_co_025.data.196.tar.gz',
-                    'sonora_2020_feh-070_co_050_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+050_co_250_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+170_co_050_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+170_co_100.data.196.tar.gz',
-                    'sonora_2020_feh-070_co_025.data.196.tar.gz',
-                    'sonora_2020_feh+170_co_050.data.196.tar.gz',
-                    'sonora_2020_feh+170_co_025_noTiOVO.data.196.tar.gz',
-                    'sonora_2020_feh+070_co_025.data.196.tar.gz',
-                    'sonora_2020_feh+070_co_050_noTiOVO.data.196.tar.gz'
-            ]
+            'default_destination':os.path.join(__refdata__, inputs['opacities']['files']['preweighted']) ,
+
             }
-        }
+    },
+    'picaso-lite':{
+        'tutorial_sagan23':{
+            'url':{"picaso-lite-reference.tar.gz": "https://zenodo.org/records/16756162/files/picaso-lite-reference.tar.gz"},
+                'description':'picaso-lite reference folder that includes the bare minimum to run the sagan 2023 tutorial set.',
+            'default_destination':os.path.join(__refdata__)
+            }
+    }
+        
 }
 
 
-def check_environ(): 
-	picaso_refdata = os.environ.get('picaso_refdata',0)
-	PYSYN_CDBS = os.environ.get('PYSYN_CDBS',0)
-	if picaso_refdata!=0: 
-		print('I have found a picaso environment here', picaso_refdata)
-		if not os.path.isdir(picaso_refdata):
-			print('Uh no. However, I dont recognize this as a directory. You may need to download the reference data folder from Github: https://github.com/natashabatalha/picaso/tree/master/reference')
-		else: 
-			inside = [i.split('/')[-1] for i in glob.glob(os.path.join(picaso_refdata,'*'))]
-			if 'opacities' in inside: 
-				ref_v = json.load(open(os.path.join(picaso_refdata,'config.json'))).get('version',2.3)
+def _is_notebook():
+    """
+    Checks if the code is being run in a Jupyter notebook.
+    This is used to determine whether to display output as HTML.
+    """
+    try:
+        from IPython import get_ipython
+        shell = get_ipython().__class__.__name__
+        if shell == 'ZMQInteractiveShell':
+            return True   # Jupyter notebook or qtconsole
+        elif shell == 'TerminalInteractiveShell':
+            return False  # Terminal running IPython
+        else:
+            return False  # Other type (?)
+    except (NameError, ImportError):
+        return False      # Probably standard Python interpreter or IPython not installed
+    except Exception:
+        return False      # Another exception, assume not a notebook.
 
-				print('Fantastic. Looks like you have your basic reference data downloaded. Proceed with grabbing opacities.db with the help of get_data function')
-				print(f'Your reference version number {ref_v} has these files:')
-				print(inside)
-			else: 
-				print('I cannot find the standard data in this reference folder, maybe you still need to add the contents to the directory. You should have these folders: https://github.com/natashabatalha/picaso/tree/master/reference')
-	else: 
-		print('Error: no picaso_refdata is set. Please follow the instructions to create your environment variables: https://natashabatalha.github.io/picaso/installation.html#create-environment-variable')
-	if PYSYN_CDBS!=0: 
-		print('I have found a stellar environment here', PYSYN_CDBS)
-		inside = [i.split('/')[-1] for i in glob.glob(os.path.join(PYSYN_CDBS,'*'))]
-		if 'grid' in inside: 
-			print('You have the correct subfolder called grid')
-			inside_grid = [i.split('/')[-1] for i in glob.glob(os.path.join(PYSYN_CDBS,'grid','*'))]
-			print('You have downloaded these stellar grids:')
-			print(inside_grid)
-		else: 
-			print('PYSYN_CDBS does not contain a subfolder called grid which contains your stellar grids. More information on setting this up can be found here: https://natashabatalha.github.io/picaso/installation.html#download-and-link-pysynphot-stellar-data')
 
-	else: 
-		print('Error: no PYSYN_CDBS is set which means exoplanet modeling will be hindered. Please follow the instructions to create your environment variables: https://natashabatalha.github.io/picaso/installation.html#create-environment-variable')
+def check_environ():
+    """
+    Checks user environment variables and provides feedback.
+    This function will display its output as formatted HTML if run in a Jupyter notebook.
+    """
+    messages = []
+    picaso_refdata = os.environ.get('picaso_refdata')
 
+    PYSYN_CDBS = os.environ.get('PYSYN_CDBS')
+
+    # --- Check for picaso_refdata ---
+    if picaso_refdata:
+        messages.append(('info', f'Found <code>picaso_refdata</code> environment variable: <code>{picaso_refdata}</code>'))
+        if not os.path.isdir(picaso_refdata):
+            messages.append(('error', 'This path does not appear to be a valid directory. You may need to download the reference data folder from <a href="https://github.com/natashabatalha/picaso/tree/master/reference" target="_blank">GitHub</a>.'))
+        else:
+            inside = [os.path.basename(i) for i in glob.glob(os.path.join(picaso_refdata, '*'))]
+            if 'opacities' in inside:
+                messages.append(('success', 'Basic picaso reference data seems to be in place.'))
+                try:
+                    config_path = os.path.join(picaso_refdata, 'config.json')
+                    with open(config_path) as f:
+                        ref_v = json.load(f).get('version', 'N/A')
+                    messages.append(('info', f'Reference data version: {ref_v}'))
+                    messages.append(('info', 'Files in reference directory:'))
+                    messages.append(('list', inside))
+                except FileNotFoundError:
+                    messages.append(('warning', 'Could not find <code>config.json</code> to check version number.'))
+                except json.JSONDecodeError:
+                    messages.append(('warning', 'Could not parse <code>config.json</code>.'))
+                
+                #now check to see if opacities.db exists and is readable 
+                messages = check_default_opacity(picaso_refdata,messages)
+            else:
+                messages.append(('error', 'The "opacities" folder was not found in your reference directory. Please ensure you have all the folders from <a href="https://github.com/natashabatalha/picaso/tree/master/reference" target="_blank">GitHub</a>.'))
+    else:
+        messages.append(('error', 'The <code>picaso_refdata</code> environment variable is not set. Please see the <a href="https://natashabatalha.github.io/picaso/installation.html#create-environment-variable" target="_blank">Installation Guide</a>.'))
+
+    # --- Check for PYSYN_CDBS ---
+    if PYSYN_CDBS:
+        messages.append(('info', f'Found <code>PYSYN_CDBS</code> environment variable for <code>stsynphot</code> was found: <code>{PYSYN_CDBS}</code>'))
+        inside = [os.path.basename(i) for i in glob.glob(os.path.join(PYSYN_CDBS, '*'))]
+        if 'grid' in inside:
+            messages.append(('success', 'Found stellar "grid" subfolder.'))
+            inside_grid = [os.path.basename(i) for i in glob.glob(os.path.join(PYSYN_CDBS, 'grid', '*'))]
+            if inside_grid:
+                messages.append(('info', 'Downloaded stellar grids:'))
+                messages.append(('list', inside_grid))
+            else:
+                messages.append(('warning', 'The stellar "grid" subfolder is empty. You may need to download stellar grids which can you can do by running <code>data.get_data</code>'))
+        else:
+            messages.append(('error', '<code>PYSYN_CDBS</code> does not contain the required "grid" subfolder. See the <a href="https://natashabatalha.github.io/picaso/installation.html#download-and-link-pysynphot-stellar-data" target="_blank">Installation Guide</a>.'))
+    else:
+        messages.append(('warning', 'The <code>PYSYN_CDBS</code> environment variable is not set. This will hinder any modeling that sets stellar parameters with the star function. See the <a href="https://natashabatalha.github.io/picaso/installation.html#create-environment-variable" target="_blank">Installation Guide</a>.'))
+
+    
+    #Other files 
+    # Check for sonora grids 
+    other_checks = {'sonora_grids':'fitting brown dwarf data or initial guesses to climate solutions', 
+                    'virga':'cloud modeling with the virga code or creating flex clouds with real optical constants',
+                    'opacities/preweighted':'climate modeling on chemical equilibrium grids',
+                    'opacities/resortrebin':'climate modeling with disequilibrium or flex chemistry',
+                    'opacities/resampled':'other wavelength solutions for resampled forward models'}
+    for icheck, info in other_checks.items():
+        fullname = os.path.join(picaso_refdata,icheck)
+        if os.path.exists(fullname):
+            grids_inside = [os.path.basename(i) for i in glob.glob(os.path.join(fullname, '*')) if os.path.basename(i) != 'readme']
+            if len(grids_inside)>0:
+                messages.append(('info', f'{icheck} folders found in reference directory:'))
+                messages.append(('list',grids_inside))
+            else: 
+                messages.append(('warning', f'{icheck} folder found but they are empty. This data product is used for {info}. You might have this data product outside the default path. That is okay.'))
+
+    # --- Display Messages ---
+    if _is_notebook():
+        # Generate and display HTML output for Jupyter notebooks
+        html_output = '<div style="border: 1px solid #e0e0e0; padding: 15px; border-radius: 5px; background-color: #f9f9f9; font-family: sans-serif; max-width: 800px; margin: auto;">'
+        html_output += '<h3 style="margin-top: 0; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; font-size: 1.2em;">PICASO Environment Check</h3>'
+
+        style_map = {
+            'info': 'color: #00529B; background-color: #BDE5F8;',
+            'success': 'color: #4F8A10; background-color: #DFF2BF;',
+            'warning': 'color: #9F6000; background-color: #FEEFB3;',
+            'error': 'color: #D8000C; background-color: #FFBABA;',
+        }
+
+        icon_map = {
+            'info': '&#8505;',      # Info
+            'success': '&#10004;',  # Check
+            'warning': '&#9888;',   # Warning
+            'error': '&#10006;',    # Cross
+        }
+
+        for msg_type, msg in messages:
+            if msg_type == 'list':
+                html_output += '<ul style="margin: 5px 0 10px 20px; padding-left: 20px; border: 1px solid #e0e0e0; background-color: #fff; border-radius: 4px;">'
+                for item in msg:
+                    html_output += f'<li style="margin: 4px 0;"><code>{item}</code></li>'
+                html_output += '</ul>'
+            else:
+                style = style_map.get(msg_type, 'color: #000; background-color: #fff;')
+                icon = icon_map.get(msg_type, '')
+                html_output += f'<div style="padding: 10px; margin: 5px 0; border-radius: 4px; {style}">{icon} {msg}</div>'
+
+        html_output += '</div>'
+        display(HTML(html_output))
+    else:
+        # Keep the original text-based output for other environments
+        print("--- PICASO Environment Check ---")
+        for msg_type, msg in messages:
+            if msg_type == 'list':
+                for item in msg:
+                    print(f"  - {item}")
+            else:
+                import re
+                clean_msg = re.sub('<[^<]+?>', '', msg) # Strip HTML tags for console
+                print(f"[{msg_type.upper()}] {clean_msg}")
+
+
+def check_default_opacity(picaso_refdata,messages): 
+    default_resampled = os.path.join(picaso_refdata,'opacities','opacities.db')
+    if os.path.exists(default_resampled):
+        try: 
+            allmeta = get_all_metadata(default_resampled)
+            reformat_meta = [f'{i}: {j}' for i,j in allmeta]
+        except: 
+            reformat_meta = 0
+        if isinstance(reformat_meta,list):
+            messages.append(('success','Resampled opacity default file has been set.'))
+            messages.append(('list',reformat_meta))
+        else:
+            messages.append(('error', f'Resampled opacity file has been set to <code>{default_resampled}</code> but I cannot read the metadata. Please redownload and/or check the file has not been corrupted.'))
+        
+    else: 
+        messages.append(('error', f'Resampled opacity file has not been set, which is usually required by the code. The file should live here: <code>{default_resampled}</code>. You can use get_data function to help you download or read the installation docs to do it manually.'))
+    return messages
+    
+def get_reference(path_to_picaso_refdata):
+    """
+    Direct wrapper function on get data to just download the user reference data
+
+    Users must already have their environment variable set to use this. 
+
+    Inputs
+    ------
+    path_to_picaso_refdata : str 
+        path to picaso ref data 
+    """
+    get_data(category_download='reference',target_download='default', final_destination_dir=path_to_picaso_refdata)
 
 
 def get_data(category_download=None,target_download=None, final_destination_dir=None):
-    data_config=get_data_config()
+    input_config, data_config=get_data_config()
+    __refdata__=os.environ.get('picaso_refdata')
     if ((category_download==None) and (target_download==None)):
         print('What data can I help you download? Options include:')
         options = [i for i in data_config.keys()]
@@ -592,17 +450,12 @@ def get_data(category_download=None,target_download=None, final_destination_dir=
             print('I dont recognize that target. Try again:',options)
             target_download = input()    
     
-    url_download = data_config[category_download][target_download]['url']
-    download_name = data_config[category_download][target_download]['filename']
-    if isinstance(url_download,str) :
-        url_download = [url_download]
-        download_name = [download_name]
+    url_download = list( data_config[category_download][target_download]['url'].values())
+    download_name = list(data_config[category_download][target_download]['url'].keys())
     
-        
     if final_destination_dir==None: 
         print('No destination has been specified. Let me help put this in the right place.')
 
-        #STELLAR GRID HELP
         if 'stellar' in category_download: 
             print("""Stellar gird models should go to the environment variable directory called PYSYN_CDBS. 
             """)
@@ -623,34 +476,24 @@ def get_data(category_download=None,target_download=None, final_destination_dir=
             if not os.path.isdir(final_destination_dir): 
                 os.mkdir(final_destination_dir)
             
-        #OPACITY HELP            
         elif 'opacity' in category_download: 
-            print("""PICASO uses one default opacity database that is placed here: $picaso_refdata/opacities/opacities.db .
-            Any other files are recommended you store in a separate directory. 
-            Since no destination was specified, can you tell me, would you like to make this your default PICASO file? yes or no. 
+            print("""PICASO uses one default opacity database that is placed here: $picaso_refdata/opacities which is auto called when opannection() is run.
+            Any other reampled opacity files are recommended you store in a the "extra" directory:  $picaso_refdata/opacities/resampled. 
+            Since no destination was specified, can you tell me, would you like to make this your one "default" or add to "extra" or speciy your "ownpath"? "default" or "extra" or "ownpath". 
             """)
             make_default= input() 
 
-            while make_default not in ['yes', 'no']:
-                print('I did not understand. Please enter, yes or no')
+            while make_default not in ['default', 'extra','ownpath']:
+                print('I did not understand. Please enter: default or extra or ownpath')
                 make_default= input() 
-        
-            if ((make_default.lower()=='y') or (make_default.lower()=='yes')):
-                picaso_refdata = os.environ.get('picaso_refdata','')
-                if os.path.isdir(picaso_refdata):
-                    print('It looks like you have set picaso_refdata path as: ',picaso_refdata)
-                    final_destination_dir = data_config['resampled_opacity']['default']['default_destination']#os.path.join(picaso_refdata,'opacities','opacities.db')
-                elif picaso_refdata=='':
-                    print('It does not look like have created picaso_refdata environment variable yet. Please do so by following these instructions first: https://natashabatalha.github.io/picaso/installation.html#create-environment-variable')
-                    print('After you have created the environment variable I can help download the file and put it in the right place')
-                    return 
-                elif not os.path.isdir(picaso_refdata):
-                    print('It looks like you have set picaso_refdata path as: ',picaso_refdata)
-                    print('However, this is not a real directory. You might have a typo and should make sure it is the correct path.')  
-                    print('After you have created the environment variable I can help download the file and put it in the right place')
-                    return 
+                        
+            if make_default.lower()=='default':
+                final_destination_dir = os.path.join(__refdata__, input_config['opacities']['files']['resampled-default']) 
+            elif make_default.lower()=='extra': 
+                final_destination_dir = os.path.join(__refdata__, input_config['opacities']['files']['resampled']) 
+
             else: 
-                print('No Problem. Please enter where you would like to store this file. Default=',os.getcwd())
+                print('Please enter where you would like to store this file. Default (cwd)=',os.getcwd())
                 final_destination_dir = input() 
                 if final_destination_dir=='':
                     final_destination_dir=os.getcwd()
@@ -659,67 +502,75 @@ def get_data(category_download=None,target_download=None, final_destination_dir=
                     final_destination_dir = input() 
         elif 'default_destination' in data_config[category_download][target_download].keys():
             default = data_config[category_download][target_download]['default_destination']
-            print(f'I found this suggested default destination: {default}. Would you like to make these your default files and add them to this destination? yes or no')
+            if default=='cwd':default = os.getcwd()
+            print(f'I found this suggested default destination: {default}. Would you like to add them to this destination? yes or no')
             make_default= input() 
             while make_default not in ['yes', 'no']:
                 print('I did not understand. Please enter, yes or no')
                 make_default= input() 
             if ((make_default.lower()=='y') or (make_default.lower()=='yes')):
-                final_destination_dir = default   
+                final_destination_dir = default 
+                #in some cases like if "bobcat" is being added to "sonora" directory we want to create an additional 
+                #embedded directory
+                #so if the final destimation does not exist lets try to make it. 
+                #if it does not exist and this fails then we have a problem 
+                if not os.path.isdir(final_destination_dir):
+                    try: 
+                        os.mkdir(final_destination_dir) 
+                    except: 
+                        raise Exception(f'Failed to make directory for specified data. Make sure python has permission to create new directories or create this directory yourself and try again: {final_destination_dir}') 
             else: 
                 print('No Problem. Please enter where you would like to store this file. Default=',os.getcwd())
                 final_destination_dir = input() 
                 if final_destination_dir=='':
                     final_destination_dir=os.getcwd()
                 while not os.path.isdir(final_destination_dir):
-                    print('I dont recognize that directory. Please enter a valid directory or press enter to keep in current working directory')
+                    print('I dont recognize that directory. Please enter a existing  directory or press enter to keep in current working directory')
                     final_destination_dir = input()              
         else: 
-            print(f'When running the code you will have to point to this directory. Therefore, keep it somewhere you will remember. My suggestion would be something like /Users/myaccount/Documents/data/picaso_data/{category_download}. Please enter a path:')
-            final_destination_dir=input()
-            while not os.path.isdir(final_destination_dir):
-                print("Whoops. I dont recognize this directory. Please type in an existing directory")
-                final_destination_dir=input()
+            raise Exception('Internal PICASO issue: default destimation not supplied in data config. Contact develoepers.')
 
-            
-    
-    temp_dir = os.path.join(os.getcwd(),f'temp_picaso_dir_{uuid.uuid4()}')
-    os.mkdir(temp_dir)
+    #with tempfile.TemporaryDirectory() as temp_dir:
     allzips = []
-    for iurl, iname in zip(url_download,download_name): 
-        print(f'Downloading target url: {iurl} to the temp directory called: {temp_dir}. Then we will unpack and move it. If something goes wrong you can find your file in this temp directory.')
-        download_with_progress(iurl, os.path.join(temp_dir,iname))
-        if (('zip' in iname) or ('tar' in iname)):
-            print('Unpacking',iname)
-            shutil.unpack_archive(os.path.join(temp_dir,iname), temp_dir)
-            allzips += [os.path.join(temp_dir,iname)]
-    
-    contents = [i for i in glob.glob(os.path.join(temp_dir,'*')) if i not in allzips]
-        
-    if 'stellar' in category_download: 
-        lets_move_this = [os.path.join(temp_dir,'grp','redcat','trds','grid',target_download)]
-    elif len(contents)==1:
-        lets_move_this = [contents[0]]
-    elif len(contents)>1: 
-        if not os.path.isdir(final_destination_dir):
-            raise Exception(f'Cannot move many files {contents} to one destination file: {final_destination_dir}')
-        lets_move_this = contents
-            
-        
-    print(f"Moving '{str(lets_move_this)[0:200]}' to this desntination '{final_destination_dir}'. Press enter to proceed or anything else to quit.")
-    proceed = input()
-    
-    if proceed!='':
-        return 
-    else: 
-        checkexists =[i.split('/')[-1] for i in glob.glob(final_destination_dir+'*')+glob.glob(os.path.join(final_destination_dir,'*'))]
-        for iLMT in lets_move_this:
-            if iLMT.split('/')[-1] not in checkexists: 
-                shutil.move(iLMT, final_destination_dir)  
-            else: 
-                raise Exception(f"I cannot move this file as it would overwrite an existing file. You should proceed manually, with intention to move these '{str(lets_move_this)[0:200]}' to this desntination '{final_destination_dir}'. ")
+    totalfiles = len(url_download)
+    for ii, iurl, iname in zip(range(totalfiles),url_download,download_name):
 
-    remove_directory(temp_dir)
-    print('Successfuly moved file and deleted temp dir.')
-    return 
+        if 'github.com' in iurl: 
+            print("Downloading from github")
+            download_github_folder_api(final_destination_dir, folder_path= iurl.split('https://github.com/natashabatalha/picaso/')[-1])
+        else: 
+            print(f'Downloading file {ii}/{totalfiles} which is saving to location: {final_destination_dir}')
+            
+            processor = None
+            
+            if iname.endswith('.zip'):
+                processor = pooch.Unzip(extract_dir='')
+                
+            elif iname.endswith('.tar.gz') or iname.endswith('.tar'):
+                processor = pooch.Untar(extract_dir='')
+
+            # Using pooch to download and unpack
+            
+            try:
+                files = pooch.retrieve(
+                    url=iurl,
+                    known_hash=None,
+                    fname=iname,
+                    path=final_destination_dir,
+                    processor=processor,
+                    progressbar=True
+                )
+
+            except Exception as e:
+                print(f"Error downloading or processing {iurl}: {e}")
+                continue
+
+
+            if 'stellar_grid' in category_download: 
+                og = os.path.join(final_destination_dir, 'grp','redcat','trds','grid',target_download)
+                new = os.path.join(PYSYN_CDBS,'grid')
+                try:
+                    shutil.move(og ,new)
+                except: 
+                    print(f'I tried to move stellar grids from here {og} to here {new} but it failed. Likely because the file already exists. Find your file here {og} and manually move it if you want to overwrite. ')
 
