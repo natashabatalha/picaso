@@ -59,9 +59,6 @@ def main():
                 elif 'Quickstart' in notebook_path:
                     print(f"Skipping Quickstart notebook: {notebook_path}")
                     continue
-                elif 'Reference' in notebook_path:
-                    print(f"Skipping Reference notebook: {notebook_path}")
-                    continue
                 # option to exclude workshop notebooks 
                 # elif 'workshop' in notebook_path:
                 #     print(f"Skipping workshop notebook: {notebook_path}")
