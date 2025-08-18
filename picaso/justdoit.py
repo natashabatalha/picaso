@@ -1296,9 +1296,16 @@ def opannection(wave_range = None, filename_db = None,
         
         #get default file if it was supplied
         if isinstance(filename_db,type(None)): 
-            filename_db = os.path.join(__refdata__, inputs['opacities']['files']['opacity'])
-            if not os.path.isfile(filename_db):
-                raise Exception(f'The default opacity file does not exist: {filename_db}. In order to have a default database please download one of the opacity files from Zenodo and place into this folder with the name opacities.db: https://zenodo.org/record/6928501#.Y2w4C-zMI8Y if you dont want a single default file then you just need to point to the opacity db using the keyword filename_db.')
+            filename_db = glob.glob(os.path.join(__refdata__, inputs['opacities']['files']['opacity']))
+            if len(filename_db)>0:
+                #if there are mroe than one give user warning message
+                if len(filename_db)>1:
+                    if verbose: print('Found more than one opacity database. Choosing the first one.')
+                filename_db = filename_db[0]
+                if not os.path.isfile(filename_db):
+                    raise Exception(f'The default opacity file does not exist: {filename_db}. In order to have a default database please download one of the opacity files from Zenodo and place into this folder with the name opacities.db: https://zenodo.org/record/6928501#.Y2w4C-zMI8Y if you dont want a single default file then you just need to point to the opacity db using the keyword filename_db.')
+            else: 
+                raise Exception("Could not find anything with the naming scheme opacities*.db in the opacities folder. Please use the get_data function to download an opacity file.")
         #if a name is supplied check that it exists 
         elif not isinstance(filename_db,type(None) ): 
             if not os.path.isfile(filename_db):
