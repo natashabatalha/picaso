@@ -92,7 +92,7 @@
 	"opacities":{
 		"wnogrid":null,
 		"files":{
-			"opacity":"opacities/opacities.db",
+			"opacity":"opacities/opacities*.db",
 			"ktable_continuum":"opacities/ck_cx_cont_opacities.db",
 			"h2minus":"opacities/h2minus.csv",
 			"raman":"opacities/raman.txt",

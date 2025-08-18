@@ -36,3 +36,6 @@ dependencies = [
 [project.urls]
 Homepage = "https://natashabatalha.github.io/picaso"
 Download = "https://github.com/natashabatalha/picaso"
+
+[project.scripts]
+picaso-notebooks = "picaso.integration_testing:main"
