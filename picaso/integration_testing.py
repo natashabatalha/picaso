@@ -85,6 +85,8 @@ def main():
                 # elif 'workshop' in notebook_path:
                 #     print(f"Skipping workshop notebook: {notebook_path}")
                 #     continue
+                elif '.ipynb_checkpoint' in notebook_path: 
+                    continue
                 print(f"Running notebook: {notebook_path}")
                 if not run_notebook(notebook_path, github=gitlocal,picaso_refdata=picaso_refdata,PYSYN_CDBS=PYSYN_CDBS,picaso_code=picaso_code,virga_code=virga_code):
                     failed_notebooks.append(notebook_path)
