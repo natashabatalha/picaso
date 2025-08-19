@@ -184,8 +184,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
 
     #Add inputs to class 
-    atm.surf_reflect = inputs['surface_reflect']
-    atm.hard_surface = inputs['hard_surface']#0=no hard surface, 1=hard surface
+    atm.surf_reflect = inputs.get('surface_reflect',0) #default no hard surface if it has not been defined
+    atm.hard_surface = inputs.get('hard_surface',0)#0=no hard surface, 1=hard surface
     atm.wavenumber = wno
     atm.planet.gravity = inputs['planet']['gravity']
     atm.planet.radius = inputs['planet']['radius']
@@ -310,7 +310,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                     atm.lvl_output_reflected['flux_plus']+=flux_plus_all_v*gauss_wts[ig]
                     atm.lvl_output_reflected['flux_minus_mdpt']+=flux_minus_midpt_all_v*gauss_wts[ig]
                     atm.lvl_output_reflected['flux_plus_mdpt']+=flux_plus_midpt_all_v*gauss_wts[ig]
-
+            if full_output: 
+                atm.xint_at_top = xint_at_top
 
         
         if 'thermal' in calculation:
@@ -991,13 +992,13 @@ def input_xarray(xr_usr, opacity,calculation='planet',approx_kwargs={}):
         database = 'phoenix' if type(_finditem(stellar_params,'database')) == type(None) else _finditem(stellar_params,'database')
         ms = _finditem(stellar_params,'ms')
         rs = _finditem(stellar_params,'rs')
-        semi_major = _finditem(orbit_params,'sma')
-        if isinstance(semi_major,type(None)):
+        semi_major_dict = _finditem(orbit_params,'sma')
+        if isinstance(semi_major_dict,type(None)):
             semi_major = None
             semi_major_unit = None
         else: 
-            semi_major=semi_major['value']
-            semi_major_unit=u.Unit(semi_major['unit'])
+            semi_major=semi_major_dict['value']
+            semi_major_unit=u.Unit(semi_major_dict['unit'])
         case.star(opacity, steff,feh,logg, radius=rs['value'], 
                   radius_unit=u.Unit(rs['unit']), database=database, 
                   semi_major=semi_major,semi_major_unit=semi_major_unit)
@@ -1173,8 +1174,8 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
 
 
     #Add inputs to class 
-    atm.surf_reflect = inputs['surface_reflect']
-    atm.hard_surface = inputs['hard_surface']#0=no hard surface, 1=hard surface
+    atm.surf_reflect = inputs.get('surface_reflect',0) #default no hard surface if it has not been defined
+    atm.hard_surface = inputs.get('hard_surface',0)#0=no hard surface, 1=hard surface
     atm.wavenumber = wno
     atm.planet.gravity = inputs['planet']['gravity']
     atm.planet.radius = inputs['planet']['radius']
@@ -1793,7 +1794,7 @@ class inputs():
             
             opannection.compute_stellar_shits(fine_wno_star, fine_flux_star)
             bin_flux_star = opannection.unshifted_stellar_spec
-
+            unit_flux =  'ergs cm^{-2} s^{-1} cm^{-1}'
         elif ('climate' in self.inputs['calculation'] or (get_lvl_flux)):
             if not ((not np.isnan(semi_major)) & (not np.isnan(r))): 
                 raise Exception ('semi_major and r parameters are not provided but are needed to compute relative fluxes for climate calculation or when get_lvl_flux are being requested')
@@ -5040,7 +5041,10 @@ class inputs():
                 raise Exception('Need to specify directory for cloudy runs via Virga function')
             # get_clouds should reinterpolate so it is okay that this isnt on the same grid but need to get the size 
             # check if the mieff file is on 661 grid
-            miefftest = os.path.join(mieff_dir, [f for f in os.listdir(mieff_dir) if f.endswith('.mieff')][0])
+            list_mieff_files=[f for f in os.listdir(mieff_dir) if f.endswith('.mieff')]
+            assert len(list_mieff_files)>0, 'Did not find any mieff files in the supplied virga directory'
+            testfile = list_mieff_files[0]
+            miefftest = os.path.join(mieff_dir, testfile)
             with open(miefftest, 'r') as file:
                 nwno_clouds = int(float(file.readline().split()[0]))
         else: 
