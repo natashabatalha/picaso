@@ -5041,7 +5041,10 @@ class inputs():
                 raise Exception('Need to specify directory for cloudy runs via Virga function')
             # get_clouds should reinterpolate so it is okay that this isnt on the same grid but need to get the size 
             # check if the mieff file is on 661 grid
-            miefftest = os.path.join(mieff_dir, [f for f in os.listdir(mieff_dir) if f.endswith('.mieff')][0])
+            list_mieff_files=[f for f in os.listdir(mieff_dir) if f.endswith('.mieff')]
+            assert len(list_mieff_files)>0, 'Did not find any mieff files in the supplied virga directory'
+            testfile = list_mieff_files[0]
+            miefftest = os.path.join(mieff_dir, testfile)
             with open(miefftest, 'r') as file:
                 nwno_clouds = int(float(file.readline().split()[0]))
         else: 
