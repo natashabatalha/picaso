@@ -184,8 +184,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
 
     #Add inputs to class 
-    atm.surf_reflect = inputs['surface_reflect']
-    atm.hard_surface = inputs['hard_surface']#0=no hard surface, 1=hard surface
+    atm.surf_reflect = inputs.get('surface_reflect',0) #default no hard surface if it has not been defined
+    atm.hard_surface = inputs.get('hard_surface',0)#0=no hard surface, 1=hard surface
     atm.wavenumber = wno
     atm.planet.gravity = inputs['planet']['gravity']
     atm.planet.radius = inputs['planet']['radius']
@@ -1174,8 +1174,8 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
 
 
     #Add inputs to class 
-    atm.surf_reflect = inputs['surface_reflect']
-    atm.hard_surface = inputs['hard_surface']#0=no hard surface, 1=hard surface
+    atm.surf_reflect = inputs.get('surface_reflect',0) #default no hard surface if it has not been defined
+    atm.hard_surface = inputs.get('hard_surface',0)#0=no hard surface, 1=hard surface
     atm.wavenumber = wno
     atm.planet.gravity = inputs['planet']['gravity']
     atm.planet.radius = inputs['planet']['radius']
