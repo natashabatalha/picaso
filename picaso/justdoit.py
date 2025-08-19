@@ -310,7 +310,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                     atm.lvl_output_reflected['flux_plus']+=flux_plus_all_v*gauss_wts[ig]
                     atm.lvl_output_reflected['flux_minus_mdpt']+=flux_minus_midpt_all_v*gauss_wts[ig]
                     atm.lvl_output_reflected['flux_plus_mdpt']+=flux_plus_midpt_all_v*gauss_wts[ig]
-
+            if full_output: 
+                atm.xint_at_top = xint_at_top
 
         
         if 'thermal' in calculation:
