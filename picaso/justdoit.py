@@ -43,7 +43,7 @@ import h5py
 # #testing error tracker
 # from loguru import logger 
 __refdata__ = os.environ.get('picaso_refdata')
-__version__ = '3.3'
+__version__ = '4.0'
 
 
 if not os.path.exists(__refdata__): 
