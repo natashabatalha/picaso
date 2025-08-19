@@ -992,13 +992,13 @@ def input_xarray(xr_usr, opacity,calculation='planet',approx_kwargs={}):
         database = 'phoenix' if type(_finditem(stellar_params,'database')) == type(None) else _finditem(stellar_params,'database')
         ms = _finditem(stellar_params,'ms')
         rs = _finditem(stellar_params,'rs')
-        semi_major = _finditem(orbit_params,'sma')
-        if isinstance(semi_major,type(None)):
+        semi_major_dict = _finditem(orbit_params,'sma')
+        if isinstance(semi_major_dict,type(None)):
             semi_major = None
             semi_major_unit = None
         else: 
-            semi_major=semi_major['value']
-            semi_major_unit=u.Unit(semi_major['unit'])
+            semi_major=semi_major_dict['value']
+            semi_major_unit=u.Unit(semi_major_dict['unit'])
         case.star(opacity, steff,feh,logg, radius=rs['value'], 
                   radius_unit=u.Unit(rs['unit']), database=database, 
                   semi_major=semi_major,semi_major_unit=semi_major_unit)
