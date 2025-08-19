@@ -1794,7 +1794,7 @@ class inputs():
             
             opannection.compute_stellar_shits(fine_wno_star, fine_flux_star)
             bin_flux_star = opannection.unshifted_stellar_spec
-
+            unit_flux =  'ergs cm^{-2} s^{-1} cm^{-1}'
         elif ('climate' in self.inputs['calculation'] or (get_lvl_flux)):
             if not ((not np.isnan(semi_major)) & (not np.isnan(r))): 
                 raise Exception ('semi_major and r parameters are not provided but are needed to compute relative fluxes for climate calculation or when get_lvl_flux are being requested')
