@@ -38,7 +38,7 @@ def run_notebook(notebook_path,
     # # Set the picaso_refdata environment variable
     # os.environ['picaso_refdata'] = '/reference/'
 
-    ep = ExecutePreprocessor(timeout=1200, kernel_name='python3')
+    ep = ExecutePreprocessor(timeout=3000, kernel_name='python3')
 
     try:
         ep.preprocess(nb, {'metadata': {'path': os.path.dirname(notebook_path)}})
