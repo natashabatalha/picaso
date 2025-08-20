@@ -996,6 +996,9 @@ def input_xarray(xr_usr, opacity,calculation='planet',approx_kwargs={}):
         if isinstance(semi_major_dict,type(None)):
             semi_major = None
             semi_major_unit = None
+        elif isinstance(semi_major_dict,float):
+            semi_major=semi_major_dict
+            semi_major_unit=u.AU           
         else: 
             semi_major=semi_major_dict['value']
             semi_major_unit=u.Unit(semi_major_dict['unit'])
