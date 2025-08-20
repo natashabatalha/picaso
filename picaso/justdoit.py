@@ -2102,7 +2102,7 @@ class inputs():
         species_to_consider : list of str
             Default is ['H2O', 'CH4','NH3']
         """
-
+        
         quench_molecules = np.concatenate([i.split('-') for i in quench_levels.keys()])
         quench_by_molecule={}
         
@@ -2213,12 +2213,18 @@ class inputs():
         #if a quench level dictionary is provided 
         if self.inputs['approx']['chem_params']['quench'] and isinstance(quench_levels,dict):
             if verbose: print('Quench=True; Adjusting quench chemistry')
-            self.adjust_quench_chemistry(quench_levels,chemistry_table)
+            if len(quench_levels.keys())==0: 
+                if verbose: print('Quench=True; But nothing has quenched. Might suggest increasing kzz if it is too low or switching to chemical equilibrium if deq chemistry is not needed.')
+            else:
+                self.adjust_quench_chemistry(quench_levels,chemistry_table)
        
         # volatile rainout 
         if self.inputs['approx']['chem_params']['vol_rainout'] and isinstance(quench_levels,dict): 
             if verbose: print(f'vol_rainout=True; Adjusting volatile rainout')
-            self.volatile_rainout(quench_levels)
+            if len(quench_levels.keys())==0: 
+                if verbose: print('Quench=True; But nothing has quenched. Might suggest increasing kzz if it is too low or switching to chemical equilibrium if deq chemistry is not needed.')
+            else: 
+                self.volatile_rainout(quench_levels)
 
         # cold trap the condensibles 
         if self.inputs['approx']['chem_params']['cold_trap']: 
@@ -2341,27 +2347,28 @@ class inputs():
         # anything we quench let's take away/add to H2 
         H2 = df_atmo_og['H2'].values
         for iquench in quench_sequence:
-            
-            #this defines the exactl quench layer 
-            quench_level = quench_levels[iquench]
-            
-            #now individually loop through the sequence if there are multiple molecules included 
-            for imol in iquench.split('-'):
+            #only proceed a quench level was actually defined
+            if iquench in quench_levels.keys():
+                #this defines the exactl quench layer 
+                quench_level = quench_levels[iquench]
                 
-                #if the molecule is in the set
-                if imol in df_atmo_og.keys():
-                    #get the abundance at the quench point
-                    quench_abundance = df_atmo_og.loc[quench_level,imol]
-                    #Everything above the quench point gets set to the quench abundance 
-                    old = df_atmo_og.loc[:,imol].values 
-                    df_atmo_og.loc[0:quench_level+1,imol] = quench_abundance
-                    new = df_atmo_og.loc[:,imol].values 
-                    diff = old - new 
-                    #adjust H2 accordingly 
-                    H2 = H2 + diff 
+                #now individually loop through the sequence if there are multiple molecules included 
+                for imol in iquench.split('-'):
+                    
+                    #if the molecule is in the set
+                    if imol in df_atmo_og.keys():
+                        #get the abundance at the quench point
+                        quench_abundance = df_atmo_og.loc[quench_level,imol]
+                        #Everything above the quench point gets set to the quench abundance 
+                        old = df_atmo_og.loc[:,imol].values 
+                        df_atmo_og.loc[0:quench_level+1,imol] = quench_abundance
+                        new = df_atmo_og.loc[:,imol].values 
+                        diff = old - new 
+                        #adjust H2 accordingly 
+                        H2 = H2 + diff 
 
         # include new option for CO2 in equilibrium with CO, H2O, H2 from equation 43 in Zahnle and Marley (2014)
-        if kinetic_CO2 == True:
+        if ((kinetic_CO2 == True) and ('CO2' in quench_levels.keys())):
             #ADD LINK TO NICK W. AAS NOTE HERE 
             K = 18.3*np.exp(-2376/self.inputs['atmosphere']['profile']['temperature'] - (932/self.inputs['atmosphere']['profile']['temperature'])**2)
             fCO2 = (self.inputs['atmosphere']['profile']['CO']*self.inputs['atmosphere']['profile']['H2O'])/(K*self.inputs['atmosphere']['profile']['H2'])            
