@@ -8,6 +8,9 @@ import tomllib
 import dynesty
 from collections.abc import Mapping
 from scipy import stats
+import dill
+import dynesty.utils
+dynesty.utils.pickle_module = dill
 
 
 chem_options = ['visscher', 'free', 'userfile']
@@ -108,7 +111,7 @@ def get_data(config):
         #     raise Exception("Not a valid unit for coords")
 
         final = pd.DataFrame(dict(x=dat.coords['wavelength'].values,
-	                y=dat.data_vars[to_fit].values, #change back to data_vars
+	                y=dat.data_vars[to_fit].values,
 	                e=dat.data_vars[to_fit+'_error'].values))
         
         final['micron'] = (dat.coords['wavelength'].values)
@@ -171,14 +174,12 @@ def retrieve(config, param_tools):
     def MODEL(cube):
         # update parameters
         for i,key in enumerate(fitpars.keys()):
-            # wrapped in try/except because offsets/scalings/errinfs will only be retrieval params
-            try:
+            # offsets/scalings/errinfs will only be retrieval params
+            if key[:6]!='offset' and key[:7]!='scaling' and key[:7]!='err_inf':
                 if fitpars[key]['log']:
                     set_dict_value(config, key+'.value', 10**cube[i])
                 else:
                     set_dict_value(config, key+'.value', cube[i])
-            except:
-                pass
         picaso_class=setup_spectrum_class(config, opacity=OPA, param_tools=param_tools)
         out = picaso_class.spectrum(OPA, full_output=True, calculation = config['observation_type'])
 
@@ -247,8 +248,8 @@ def retrieve(config, param_tools):
         print('Resuming retrieval...')
         sampler = dynesty.NestedSampler.restore(config['InputOutput']['retrieval_output']+'/dynesty.save')
     else:
-        sampler = dynesty.NestedSampler(log_likelihood, hypercube, ndims, nlive=config['retrieval']['sampler']['nlive'])
-    sampler.run_nested(dlogz=config['retrieval']['sampler']['dlogz'])
+        sampler = dynesty.NestedSampler(log_likelihood, hypercube, ndims, nlive=config['retrieval']['sampler']['nlive'], bootstrap=0)
+    sampler.run_nested(checkpoint_file=config['InputOutput']['retrieval_output']+'/dynesty.save', **sampler_args)
     return sampler
 
 
