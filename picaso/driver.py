@@ -1,9 +1,14 @@
 from .justdoit import *
 from .justplotit import *
 from .parameterizations import Parameterize,cloud_averaging
+from .retrieval import Parameterize_DEPRECATE
 #import picaso.justdoit as jdi
 #import picaso.justplotit as jpi
 import tomllib 
+import dynesty
+from collections.abc import Mapping
+from scipy import stats
+
 
 chem_options = ['visscher', 'free', 'userfile']
 cloud_options = ['brewster_grey', 'brewster_mie', 'virga', 'flex_fsed', 'hard_grey', 'userfile']
@@ -22,7 +27,10 @@ def run(driver_file=None,driver_dict=None):
     preload_cloud_miefs = find_values_for_key(config ,'condensate')
     virga_mieff   = config['OpticalProperties'].get('virga_mieff',None)
     #if the above are both blank then this is just returning a set of functions
-    param_tools = Parameterize(load_cld_optical=preload_cloud_miefs,
+    # param_tools = Parameterize(load_cld_optical=preload_cloud_miefs,
+                                    # mieff_dir=virga_mieff)
+    #for now
+    param_tools = Parameterize_DEPRECATE(load_cld_optical=preload_cloud_miefs,
                                     mieff_dir=virga_mieff)
     
     #setup opacity outside main run
@@ -35,6 +43,9 @@ def run(driver_file=None,driver_dict=None):
     if config['calc_type'] =='spectrum':
         picaso_class = setup_spectrum_class(config,opacity,param_tools)
         output =  picaso_class.spectrum(opacity, full_output=True, calculation = config['observation_type']) 
+    
+    elif config['calc_type']=='retrieval':
+        output = retrieve(config, param_tools)
 
     ### I made these # because they stopped the run fucntion from doing return out and wouldn't let me use my plot PT fucntion
     elif config['calc_type']=='climate':
@@ -43,86 +54,203 @@ def run(driver_file=None,driver_dict=None):
 
     return output 
 
-def loglikelihood(cube):
-    """
-    Log_likelihood function that ultimately is given to the sampler
-    Note if you keep to our same formats you will not have to change this code move 
+def is_valid_astropy_unit(unit_str):
+    try:
+        u.Unit(unit_str)  # will raise ValueError if invalid
+        return True
+    except (ValueError, TypeError):
+        return False
 
-    Tips
-    ----
-    - Remember how we put our data dict, error inflation, and offsets all in dictionary format? Now we can utilize that 
-    functionality if we properly named them all with the right keys! 
+def get_data(config): 
+    """
+    Create a function to process your data in any way you see fit.
+    Here we are using the ExoTiC-MIRI data 
+    https://zenodo.org/records/8360121/files/ExoTiC-MIRI.zip?download=1
+    But no need to download it.
 
     Checklist
-    --------- 
-    - ensure that error inflation and offsets are incorporated in the way that suits your problem 
-    - note there are many different ways to incorporate error inflation! this is just one example 
+    ---------
+    - your function returns a spectrum that will be in the same units as your picaso model (e.g. rp/rs^2, erg/s/cm/cm or other) 
+    - your function retuns a spectrum that is in ascending order of wavenumber 
+    - your function returns a dictionary where the key specifies the instrument name (in the event there are multiple)
+
+    Returns
+    -------
+    dict: 
+    dictionary key: wavenumber (ascneding), flux or transit depth, and error.
+    e.g. {'MIRI LRS':[wavenumber, transit depth, transit depth error], 'NIRSpec G395H':[wavenumber, transit depth, transit depth error]}
     """
-    #compute model spectra
-    resultx,resulty,offset_all,err_inf_all = MODEL(cube) # we will define MODEL below 
+    # datadict = {}
+    obs_type = config['observation_type']
+    observations = config['InputOutput']['observation_data']
+    
+    ## this could be another entry in the toml file to give extra flexibility
+    if obs_type=='thermal':
+        to_fit = 'flux'
+    elif obs_type=='reflected':
+        to_fit = 'flux'
+    elif obs_type=='transmission':
+        to_fit = 'transit_depth'
 
-    #initiate the four terms we willn eed for the likelihood
-    ydat_all=[];ymod_all=[];sigma_all=[];extra_term_all=[];
+    for i,key in enumerate(observations):
+        #load observation file
+        dat = xr.load_dataset(observations[key])
 
-    #loop through data (if multiple instruments, add offsets if present, add err inflation if present)
-    for ikey in DATA_DICT.keys(): #we will also define DATA_DICT below
-        xdata,ydata,edata = DATA_DICT[ikey]
-        xbin_model , y_model = jdi.mean_regrid(resultx, resulty, newx=xdata)#remember we put everything already sorted on wavenumber
+        #check for valid astropy unit 
+        # if is_valid_astropy_unit(dat.data_vars[to_fit].unit):
+        #     unity = u.Unit(dat.data_vars[to_fit].unit)
+        # else:
+        #     raise Exception('Not a valid astropy unit for data_vars')
 
-        #add offsets if they exist
-        offset = offset_all.get(ikey,0) #if offset for that instrument doesnt exist, return 0
-        ydata = ydata+offset
+        # if is_valid_astropy_unit(dat.data_vars[to_fit].unit):
+        #     unitx = u.Unit(dat.data_vars[to_fit].unit)
+        # else:
+        #     raise Exception("Not a valid unit for coords")
 
-        #add error inflation if they exist
-        err_inf = err_inf_all.get(ikey,0) #if err inf term for that instrument doesnt exist, return 0
-        sigma = edata**2 + (err_inf)**2 #there are multiple ways to do this, here just adding in an extra noise term
-        if err_inf !=0: 
-            #see formalism here for example https://emcee.readthedocs.io/en/stable/tutorials/line/#maximum-likelihood-estimation
-            extra_term = np.log(2*np.pi*sigma)
-        else: 
-            extra_term=sigma*0
+        final = pd.DataFrame(dict(x=dat.coords['wavelength'].values,
+	                y=dat.data_vars[to_fit].values, #change back to data_vars
+	                e=dat.data_vars[to_fit+'_error'].values))
+        
+        final['micron'] = (dat.coords['wavelength'].values)
+        final['wavenumber'] = 1e4/final['micron']
 
-        ydat_all.append(ydata);ymod_all.append(y_model);sigma_all.append(sigma);extra_term_all.append(extra_term); 
+	    #always ensure we are ordered correctly
+        final = final.sort_values(by='wavenumber').reset_index(drop=True)
 
-    ymod_all = np.concatenate(ymod_all)    
-    ydat_all = np.concatenate(ydat_all)    
-    sigma_all = np.concatenate(sigma_all)  
-    extra_term_all = np.concatenate(extra_term_all)
+	    #return a nice dictionary with the info we need 
+        returns = {key: [final['wavenumber'].values, 
+	             final['y'].values, final['e'].values]   }
+        
+    return returns
 
-    #compute likelihood
-    loglike = -0.5*np.sum((ydat_all-ymod_all)**2/sigma_all + extra_term_all)
-    return loglike
+def prior_finder(d):
+    sections = {}
+    stack = [((), d)]  # tuple of path, dict
 
-#def prior_handler(): 
-#    returnm 
+    while stack:
+        path, current = stack.pop(0)  # pop from front to preserve order (BFS style)
+        if not isinstance(current, Mapping):
+            continue
+        if "prior" in current:
+            sections[".".join(path)] = current
+        for k, v in current.items():  # preserves original key order
+            if isinstance(v, Mapping):
+                stack.append((path + (k,), v))
 
-"""def retrieve(config):
+    return sections
+
+def retrieve(config, param_tools):
+    print('Running retrieval...')
     OPA = opannection(
         filename_db=config['OpticalProperties']['opacity_files'], #database(s)
         method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
         **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
         )
-    def read_data(): 
-
-    def prior(): 
-        prior_handler
     
-    def loglikelihood(): 
-        chi2 = 
-
-    def model(): 
-        y = sepctrum(config, OPA=OPA)
-        spectra_interp = convolver(**convolverinputs)
-        offset = {}
-        error_inf = {} 
-        return wno, spectra_interp,offset,error_inf
+    os.makedirs(config['InputOutput']['retrieval_output'], exist_ok=True)
     
-    def convolver(newx,x,y)
-        return newy
-    
-    ultranest.run(logliklihood, prior, hyperparams)
+    fitpars=prior_finder(config['retrieval'])
+    ndims=len(fitpars)
 
-"""    
+    def hypercube(u):
+        x=np.empty(len(u))
+
+        for i,key in enumerate(fitpars.keys()):
+            if fitpars[key]['prior'] == 'uniform':
+                minn=fitpars[key]['min']
+                maxx=fitpars[key]['max']
+                x[i] = minn+(maxx-minn)*u[i]
+            elif fitpars[key]['prior'] == 'gaussian':
+                mean=fitpars[key]['mean']
+                std=fitpars[key]['std']
+                x[i]=stats.norm.ppf(u[i], loc=mean, scale=std)
+            else:
+                raise Exception('Prior type not available')  
+        return x
+
+    def MODEL(cube):
+        # update parameters
+        for i,key in enumerate(fitpars.keys()):
+            # wrapped in try/except because offsets/scalings/errinfs will only be retrieval params
+            try:
+                if fitpars[key]['log']:
+                    set_dict_value(config, key+'.value', 10**cube[i])
+                else:
+                    set_dict_value(config, key+'.value', cube[i])
+            except:
+                pass
+        picaso_class=setup_spectrum_class(config, opacity=OPA, param_tools=param_tools)
+        out = picaso_class.spectrum(OPA, full_output=True, calculation = config['observation_type'])
+
+        return out['wavenumber'], out['thermal']
+
+    def log_likelihood(cube): 
+        resultx,resulty = MODEL(cube)
+
+        # Scale for radius and distance
+        R_dict=config['object']['radius']
+        R=R_dict['value']*u.Unit(R_dict['unit']).to(u.m)
+        d_dict=config['object']['distance']
+        d=d_dict['value']*u.Unit(d_dict['unit']).to(u.m)
+        resulty = (R/d)**2*resulty
+
+        ydat_all=[];ymod_all=[];sigma_all=[];extra_term_all=[]
+
+        for i,key in enumerate(config['InputOutput']['observation_data']):
+            xdata,ydata,edata = DATA_DICT[key]
+            xbin_model , y_model = mean_regrid(resultx, resulty, newx=xdata)#remember we put everything already sorted on wavenumber
+            y_model*=1e-8
+
+            #add offsets if they exist to the data
+            if key in config.get("retrieval", {}).get("offset", {}):
+                icube = list(fitpars.keys()).index(f'offset.{key}')
+                offset = cube[icube]
+            else:
+                offset = 0
+            ydata += offset
+
+            #add scalings
+            if key in config.get("retrieval", {}).get("scaling", {}):
+                icube = list(fitpars.keys()).index(f'scaling.{key}')
+                scaling = cube[icube]
+            else:
+                scaling = 1
+            ydata*=scaling
+
+            #add error inflation if they exist
+            if key in config.get("retrieval", {}).get("err_inf", {}):
+                icube = list(fitpars.keys()).index(f'err_inf.{key}')
+                err_inf = cube[icube]
+            else:
+                err_inf=0
+            # err_inf = err_inf_all.get(key,0) #if err inf term for that instrument doesnt exist, return 0
+            sigma = edata**2 + (10**err_inf)**2 #there are multiple ways to do this, here just adding in an extra noise term
+            extra_term = np.log(2*np.pi*sigma)
+  
+            ydat_all.append(ydata);ymod_all.append(y_model);sigma_all.append(sigma);extra_term_all.append(extra_term); 
+
+        ymod_all = np.concatenate(ymod_all)    
+        ydat_all = np.concatenate(ydat_all)    
+        sigma_all = np.concatenate(sigma_all)  
+        extra_term_all = np.concatenate(extra_term_all)
+
+        return -0.5*np.sum((ydat_all-ymod_all)**2/sigma_all + extra_term_all)
+    
+    # def convolver(newx,x,y):
+    #     return newy
+      
+    DATA_DICT = get_data(config)
+
+    #doing dynesty but this should be generic
+    sampler_args = config['retrieval']['sampler']['sampler_kwargs']
+    if config['retrieval']['sampler']['resume']:
+        print('Resuming retrieval...')
+        sampler = dynesty.NestedSampler.restore(config['InputOutput']['retrieval_output']+'/dynesty.save')
+    else:
+        sampler = dynesty.NestedSampler(log_likelihood, hypercube, ndims, nlive=config['retrieval']['sampler']['nlive'])
+    sampler.run_nested(dlogz=config['retrieval']['sampler']['dlogz'])
+    return sampler
+
 
 def setup_spectrum_class(config, opacity , param_tools ):
 
@@ -147,12 +275,18 @@ def setup_spectrum_class(config, opacity , param_tools ):
     rad = (phase * u.Unit(phase_unit)).to(u.rad).value
     A.phase_angle(rad) #input the radian angle of the event/geometry of browndwarf/planet
 
-    A.gravity(gravity     = config['object'].get('gravity', {}).get('value',None), 
-              gravity_unit= u.Unit(config['object'].get('gravity', {}).get('unit',None)), 
-              radius      = config['object'].get('radius', {}).get('value',None), 
-              radius_unit = u.Unit(config['object'].get('radius', {}).get('unit',None)), 
-              mass        = config['object'].get('mass', {}).get('value',None), 
-              mass_unit   = u.Unit(config['object'].get('mass', {}).get('unit',None)))
+    try:
+        A.gravity(gravity     = config['object'].get('gravity', {}).get('value',None), 
+                gravity_unit= u.Unit(config['object'].get('gravity', {}).get('unit',None)), 
+                radius      = config['object'].get('radius', {}).get('value',None), 
+                radius_unit = u.Unit(config['object'].get('radius', {}).get('unit',None)), 
+                )
+    except:
+        A.gravity(radius      = config['object'].get('radius', {}).get('value',None), 
+                radius_unit = u.Unit(config['object'].get('radius', {}).get('unit',None)), 
+                mass        = config['object'].get('mass', {}).get('value',None), 
+                mass_unit   = u.Unit(config['object'].get('mass', {}).get('unit',None))
+                )
     #gravity parameters for a planet/browndwarf
 
     
@@ -274,7 +408,6 @@ def PT_handler(pt_config, picaso_class, param_tools): #WIP
     return pt_df
     
 
-
 def viz(picaso_output): 
     spectrum_plot_list = []
 
@@ -329,21 +462,20 @@ def set_dict_value(data, path_string, new_value):
                 current_level[key] = new_value
                 return True
             else:
-                print(f"Error: The path to key '{key}' is invalid or does not exist.")
+                print(f"Error: The path to key '{path_string}' is invalid or does not exist.")
                 return False
         else:
             # Check if the next key in the path exists and is a dictionary
             if isinstance(current_level, dict) and key in current_level and isinstance(current_level[key], dict):
                 current_level = current_level[key]
             else:
-                print(f"Error: The path is invalid. '{key}' is not a dictionary or does not exist.")
+                print(f"Error: The path is invalid. '{path_string}' is not a dictionary or does not exist.")
                 return False
 
 def plot_pt_profile(full_output, **kwargs):
     fig = pt(full_output, **kwargs)
     show(fig)
     return fig
-
 
 def find_values_for_key(data, target_key):
     """
