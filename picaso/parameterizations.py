@@ -494,6 +494,11 @@ class Parameterize():
         -------
         Temperature per layer
         """
+        if isinstance(P_knots, dict):
+            P_knots = list(P_knots.values())
+        
+        if isinstance(T_knots, dict):
+            T_knots = [T_knots[k]["value"] for k in sorted(T_knots.keys())]
 
         pressure = self.pressure_level
         nlevel = len(pressure)

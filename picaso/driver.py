@@ -30,10 +30,7 @@ def run(driver_file=None,driver_dict=None):
     preload_cloud_miefs = find_values_for_key(config ,'condensate')
     virga_mieff   = config['OpticalProperties'].get('virga_mieff',None)
     #if the above are both blank then this is just returning a set of functions
-    # param_tools = Parameterize(load_cld_optical=preload_cloud_miefs,
-                                    # mieff_dir=virga_mieff)
-    #for now
-    param_tools = Parameterize_DEPRECATE(load_cld_optical=preload_cloud_miefs,
+    param_tools = Parameterize(load_cld_optical=preload_cloud_miefs,
                                     mieff_dir=virga_mieff)
     
     #setup opacity outside main run
