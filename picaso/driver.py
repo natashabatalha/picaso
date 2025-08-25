@@ -10,6 +10,7 @@ from collections.abc import Mapping
 from scipy import stats
 import dill
 import dynesty.utils
+from functools import partial
 dynesty.utils.pickle_module = dill
 
 
@@ -61,6 +62,7 @@ def is_valid_astropy_unit(unit_str):
     except (ValueError, TypeError):
         return False
 
+#retrieval funs
 def get_data(config): 
     """
     Create a function to process your data in any way you see fit.
@@ -138,6 +140,91 @@ def prior_finder(d):
     recurse((), d)
     return sections
 
+def hypercube(u, fitpars):
+    x=np.empty(len(u))
+
+    for i,key in enumerate(fitpars.keys()):
+        if fitpars[key]['prior'] == 'uniform':
+            minn=fitpars[key]['min']
+            maxx=fitpars[key]['max']
+            x[i] = minn+(maxx-minn)*u[i]
+        elif fitpars[key]['prior'] == 'gaussian':
+            mean=fitpars[key]['mean']
+            std=fitpars[key]['std']
+            x[i]=stats.norm.ppf(u[i], loc=mean, scale=std)
+        else:
+            raise Exception('Prior type not available')
+        if fitpars[key]['log']:
+            x[i]=10**x[i]  
+    return x
+
+def MODEL(cube, fitpars, config, OPA, param_tools):
+    # update parameters
+    for i,key in enumerate(fitpars.keys()):
+        # offsets/scalings/errinfs will only be retrieval params
+        if key[:6]!='offset' and key[:7]!='scaling' and key[:7]!='err_inf':
+            set_dict_value(config, key+'.value', cube[i])
+    picaso_class=setup_spectrum_class(config, opacity=OPA, param_tools=param_tools)
+    out = picaso_class.spectrum(OPA, full_output=True, calculation = config['observation_type'])
+
+    R_dict=config['object']['radius']
+    R=R_dict['value']*u.Unit(R_dict['unit']).to(u.m)
+    d_dict=config['object']['distance']
+    d=d_dict['value']*u.Unit(d_dict['unit']).to(u.m)
+    resulty = (R/d)**2*out['thermal']
+
+    return out['wavenumber'], resulty*1e-8
+
+def log_likelihood(cube, fitpars, config, OPA, DATA_DICT, param_tools): 
+    resultx,resulty = MODEL(cube, fitpars, config, OPA, param_tools)
+
+    ydat_all=[];ymod_all=[];sigma_all=[];extra_term_all=[]
+
+    for i,key in enumerate(config['InputOutput']['observation_data']):
+        xdata,ydata,edata = DATA_DICT[key]
+        xbin_model , y_model = mean_regrid(resultx, resulty, newx=xdata)#remember we put everything already sorted on wavenumber
+
+        #add offsets if they exist to the data
+        if key in config.get("retrieval", {}).get("offset", {}):
+            icube = list(fitpars.keys()).index(f'offset.{key}')
+            offset = cube[icube]
+        else:
+            offset = 0
+        ydata += offset
+
+        #add scalings
+        if key in config.get("retrieval", {}).get("scaling", {}):
+            icube = list(fitpars.keys()).index(f'scaling.{key}')
+            scaling = cube[icube]
+        else:
+            scaling = 1
+        ydata*=scaling
+
+        #here we should also add vsini and  RV (wvl_shift?)
+
+        #add error inflation if they exist
+        if key in config.get("retrieval", {}).get("err_inf", {}):
+            icube = list(fitpars.keys()).index(f'err_inf.{key}')
+            err_inf = cube[icube]
+        else:
+            err_inf=0
+        # err_inf = err_inf_all.get(key,0) #if err inf term for that instrument doesnt exist, return 0
+        sigma = edata**2 + err_inf #there are multiple ways to do this, here just adding in an extra noise term
+        extra_term = np.log(2*np.pi*sigma)
+
+        ydat_all.append(ydata);ymod_all.append(y_model);sigma_all.append(sigma);extra_term_all.append(extra_term); 
+
+    ymod_all = np.concatenate(ymod_all)    
+    ydat_all = np.concatenate(ydat_all)    
+    sigma_all = np.concatenate(sigma_all)  
+    extra_term_all = np.concatenate(extra_term_all)
+
+    return -0.5*np.sum((ydat_all-ymod_all)**2/sigma_all + extra_term_all)
+
+def convolver(newx, x, y):
+    #
+    return y
+
 def retrieve(config, param_tools):
     print('Running retrieval...')
     OPA = opannection(
@@ -147,114 +234,58 @@ def retrieve(config, param_tools):
         )
     
     os.makedirs(config['InputOutput']['retrieval_output'], exist_ok=True)
+
+    prior_config=config['retrieval']
     
-    fitpars=prior_finder(config['retrieval'])
+    fitpars=prior_finder(prior_config)
     ndims=len(fitpars)
-
-    def hypercube(u):
-        x=np.empty(len(u))
-
-        for i,key in enumerate(fitpars.keys()):
-            if fitpars[key]['prior'] == 'uniform':
-                minn=fitpars[key]['min']
-                maxx=fitpars[key]['max']
-                x[i] = minn+(maxx-minn)*u[i]
-            elif fitpars[key]['prior'] == 'gaussian':
-                mean=fitpars[key]['mean']
-                std=fitpars[key]['std']
-                x[i]=stats.norm.ppf(u[i], loc=mean, scale=std)
-            else:
-                raise Exception('Prior type not available')
-            if fitpars[key]['log']:
-                x[i]=10**x[i]  
-        return x
-
-    def MODEL(cube):
-        # update parameters
-        for i,key in enumerate(fitpars.keys()):
-            # offsets/scalings/errinfs will only be retrieval params
-            if key[:6]!='offset' and key[:7]!='scaling' and key[:7]!='err_inf':
-                # if fitpars[key]['log']:
-                #     set_dict_value(config, key+'.value', 10**cube[i])
-                # else:
-                set_dict_value(config, key+'.value', cube[i])
-        picaso_class=setup_spectrum_class(config, opacity=OPA, param_tools=param_tools)
-        out = picaso_class.spectrum(OPA, full_output=True, calculation = config['observation_type'])
-
-        return out['wavenumber'], out['thermal']
-
-    def log_likelihood(cube): 
-        resultx,resulty = MODEL(cube)
-
-        # Scale for radius and distance
-        R_dict=config['object']['radius']
-        R=R_dict['value']*u.Unit(R_dict['unit']).to(u.m)
-        d_dict=config['object']['distance']
-        d=d_dict['value']*u.Unit(d_dict['unit']).to(u.m)
-        resulty = (R/d)**2*resulty
-
-        ydat_all=[];ymod_all=[];sigma_all=[];extra_term_all=[]
-
-        for i,key in enumerate(config['InputOutput']['observation_data']):
-            xdata,ydata,edata = DATA_DICT[key]
-            xbin_model , y_model = mean_regrid(resultx, resulty, newx=xdata)#remember we put everything already sorted on wavenumber
-            y_model*=1e-8
-
-            #add offsets if they exist to the data
-            if key in config.get("retrieval", {}).get("offset", {}):
-                icube = list(fitpars.keys()).index(f'offset.{key}')
-                offset = cube[icube]
-            else:
-                offset = 0
-            ydata += offset
-
-            #add scalings
-            if key in config.get("retrieval", {}).get("scaling", {}):
-                icube = list(fitpars.keys()).index(f'scaling.{key}')
-                scaling = cube[icube]
-            else:
-                scaling = 1
-            ydata*=scaling
-
-            #here we should also add vsini and  RV (wvl_shift?)
-
-            #add error inflation if they exist
-            if key in config.get("retrieval", {}).get("err_inf", {}):
-                icube = list(fitpars.keys()).index(f'err_inf.{key}')
-                minn=fitpars[f'retrieval.err_inf.{key}']['min']
-                maxx=fitpars[f'retrieval.err_inf.{key}']['max']
-                x[i] = minn+(maxx-minn)*u[i]
-                err_inf = cube[icube]
-            else:
-                err_inf=0
-            # err_inf = err_inf_all.get(key,0) #if err inf term for that instrument doesnt exist, return 0
-            sigma = edata**2 + err_inf #there are multiple ways to do this, here just adding in an extra noise term
-            extra_term = np.log(2*np.pi*sigma)
-  
-            ydat_all.append(ydata);ymod_all.append(y_model);sigma_all.append(sigma);extra_term_all.append(extra_term); 
-
-        ymod_all = np.concatenate(ymod_all)    
-        ydat_all = np.concatenate(ydat_all)    
-        sigma_all = np.concatenate(sigma_all)  
-        extra_term_all = np.concatenate(extra_term_all)
-
-        return -0.5*np.sum((ydat_all-ymod_all)**2/sigma_all + extra_term_all)
     
     # def convolver(newx,x,y):
     #     return newy
       
     DATA_DICT = get_data(config)
+    hypercube_fn = partial(hypercube, fitpars=fitpars)
+    loglike_fn = partial(log_likelihood, fitpars=fitpars, config=config,
+                  OPA=OPA, param_tools=param_tools, DATA_DICT=DATA_DICT)
+    
+    #pool (MPI for clusters)
 
     #doing dynesty but this should be generic
-    sampler_args = config['retrieval']['sampler']['sampler_kwargs']
-    if config['retrieval']['sampler']['resume']:
+    sampler_args = prior_config['sampler']['sampler_kwargs']
+    if prior_config['sampler']['resume']:
         print('Resuming retrieval...')
         sampler = dynesty.NestedSampler.restore(config['InputOutput']['retrieval_output']+'/dynesty.save')
     else:
-        sampler = dynesty.NestedSampler(log_likelihood, hypercube, ndims, nlive=config['retrieval']['sampler']['nlive'], bootstrap=0) 
+        sampler = dynesty.NestedSampler(loglike_fn, hypercube_fn, ndims, nlive=prior_config['sampler']['nlive'], bootstrap=0) 
     sampler.run_nested(checkpoint_file=config['InputOutput']['retrieval_output']+'/dynesty.save', **sampler_args)
     dill.dump(sampler, open(config['InputOutput']['retrieval_output']+'/sampler.pkl', 'wb'))
     return sampler
+
+def prior_tester(config, N=100):
+    print('Testing prior...')
+    OPA = opannection(
+        filename_db=config['OpticalProperties']['opacity_files'], #database(s)
+        method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
+        **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
+        )
+    preload_cloud_miefs = find_values_for_key(config ,'condensate')
+    virga_mieff   = config['OpticalProperties'].get('virga_mieff',None)
+    param_tools = Parameterize(load_cld_optical=preload_cloud_miefs,
+                                        mieff_dir=virga_mieff)
+    fitpars=prior_finder(config['retrieval'])
+    ndims=len(fitpars)
+    cube = np.random.random([100, ndims])
+    models=[]
+    thetas=[]
+    for i in range(100):
+        theta = hypercube(cube[i], fitpars)
+        thetas.append(theta)
+        models.append(MODEL(theta, fitpars, config, OPA, param_tools))
+
+    thetas = np.array(thetas)   # shape (N, ndims)
+    models = np.array(models)
+
+    return thetas, models
 
 
 def setup_spectrum_class(config, opacity , param_tools ):
