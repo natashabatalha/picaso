@@ -128,18 +128,17 @@ def get_data(config):
 
 def prior_finder(d):
     sections = {}
-    stack = [((), d)]  # tuple of path, dict
 
-    while stack:
-        path, current = stack.pop(0)  # pop from front to preserve order (BFS style)
+    def recurse(path, current):
         if not isinstance(current, Mapping):
-            continue
+            return
         if "prior" in current:
             sections[".".join(path)] = current
-        for k, v in current.items():  # preserves original key order
+        for k, v in current.items():  # preserves order
             if isinstance(v, Mapping):
-                stack.append((path + (k,), v))
+                recurse(path + (k,), v)
 
+    recurse((), d)
     return sections
 
 def retrieve(config, param_tools):
@@ -168,7 +167,9 @@ def retrieve(config, param_tools):
                 std=fitpars[key]['std']
                 x[i]=stats.norm.ppf(u[i], loc=mean, scale=std)
             else:
-                raise Exception('Prior type not available')  
+                raise Exception('Prior type not available')
+            if fitpars[key]['log']:
+                x[i]=10**x[i]  
         return x
 
     def MODEL(cube):
@@ -176,10 +177,10 @@ def retrieve(config, param_tools):
         for i,key in enumerate(fitpars.keys()):
             # offsets/scalings/errinfs will only be retrieval params
             if key[:6]!='offset' and key[:7]!='scaling' and key[:7]!='err_inf':
-                if fitpars[key]['log']:
-                    set_dict_value(config, key+'.value', 10**cube[i])
-                else:
-                    set_dict_value(config, key+'.value', cube[i])
+                # if fitpars[key]['log']:
+                #     set_dict_value(config, key+'.value', 10**cube[i])
+                # else:
+                set_dict_value(config, key+'.value', cube[i])
         picaso_class=setup_spectrum_class(config, opacity=OPA, param_tools=param_tools)
         out = picaso_class.spectrum(OPA, full_output=True, calculation = config['observation_type'])
 
@@ -218,14 +219,19 @@ def retrieve(config, param_tools):
                 scaling = 1
             ydata*=scaling
 
+            #here we should also add vsini and  RV (wvl_shift?)
+
             #add error inflation if they exist
             if key in config.get("retrieval", {}).get("err_inf", {}):
                 icube = list(fitpars.keys()).index(f'err_inf.{key}')
+                minn=fitpars[f'retrieval.err_inf.{key}']['min']
+                maxx=fitpars[f'retrieval.err_inf.{key}']['max']
+                x[i] = minn+(maxx-minn)*u[i]
                 err_inf = cube[icube]
             else:
                 err_inf=0
             # err_inf = err_inf_all.get(key,0) #if err inf term for that instrument doesnt exist, return 0
-            sigma = edata**2 + (10**err_inf)**2 #there are multiple ways to do this, here just adding in an extra noise term
+            sigma = edata**2 + err_inf #there are multiple ways to do this, here just adding in an extra noise term
             extra_term = np.log(2*np.pi*sigma)
   
             ydat_all.append(ydata);ymod_all.append(y_model);sigma_all.append(sigma);extra_term_all.append(extra_term); 
@@ -248,8 +254,9 @@ def retrieve(config, param_tools):
         print('Resuming retrieval...')
         sampler = dynesty.NestedSampler.restore(config['InputOutput']['retrieval_output']+'/dynesty.save')
     else:
-        sampler = dynesty.NestedSampler(log_likelihood, hypercube, ndims, nlive=config['retrieval']['sampler']['nlive'], bootstrap=0)
+        sampler = dynesty.NestedSampler(log_likelihood, hypercube, ndims, nlive=config['retrieval']['sampler']['nlive'], bootstrap=0) 
     sampler.run_nested(checkpoint_file=config['InputOutput']['retrieval_output']+'/dynesty.save', **sampler_args)
+    dill.dump(sampler, open(config['InputOutput']['retrieval_output']+'/sampler.pkl', 'wb'))
     return sampler
 
 
