@@ -7,15 +7,15 @@ import dynesty
 import pandas as pd
 from scipy import interpolate
 
-from .justdoit import mean_regrid,vj,u,get_cld_input_grid
+from .justdoit import mean_regrid,vj,u,get_cld_input_grid,special
 
 from .analyze import chi_squared
 from .justplotit import pals
 
 import matplotlib.pyplot as plt
 import xarray as xr
-from ultranest.plot import PredictionBand
-import ultranest.integrator as uint
+# from ultranest.plot import PredictionBand
+# import ultranest.integrator as uint
 import os 
 import pickle as pk
 import re
@@ -708,10 +708,7 @@ def plot_pair(samples, params, pretty_labels=None,ranges=None,figsize=(11, 11), 
 
 
 ## Parameterizations 
-
-
-
-class Parameterize():
+class Parameterize_DEPRECATE():
     """
     """
     def __init__(self, load_cld_optical = None, mieff_dir = None):
@@ -741,6 +738,23 @@ class Parameterize():
             
         return 
         
+    # def add_class(self,picaso_inputs_class):
+    #     """Add a picaso class that loads in the pressure grid (at the very least)
+
+    #     Example
+    #     -------
+    #     start = jdi.inputs()
+    #     start.add_pt(P=np.logspace(-6,3,91))
+    #     param = Parameterize(load_cld_optical=['SiO2','Al2O3'],mieff_dir='/data/virga')
+    #     param.add_class(start)
+    #     """
+    #     self.picaso = picaso_inputs_class
+    #     self.pressure_level = picaso_inputs_class.inputs['atmosphere']['profile']['pressure'].values
+    #     self.pressure_layer = np.sqrt(self.pressure_level [0:-1]*self.pressure_level [1:])
+    #     self.nlevel = len(self.pressure_level )
+    #     self.nlayer = self.nlevel -1 
+    #     self.gravity_cgs = picaso_inputs_class.inputs['planet'].get('gravity',np.nan)
+
     def add_class(self,picaso_inputs_class):
         """Add a picaso class that loads in the pressure grid (at the very least)
 
@@ -753,9 +767,11 @@ class Parameterize():
         """
         self.picaso = picaso_inputs_class
         self.pressure_level = picaso_inputs_class.inputs['atmosphere']['profile']['pressure'].values
+        self.temperature_level  = picaso_inputs_class.inputs['atmosphere']['profile'].get('temperature',pd.DataFrame()).values
         self.pressure_layer = np.sqrt(self.pressure_level [0:-1]*self.pressure_level [1:])
         self.nlevel = len(self.pressure_level )
         self.nlayer = self.nlevel -1 
+        self.gravity_cgs = picaso_inputs_class.inputs['planet'].get('gravity',np.nan)
 
     def get_particle_dist(self,species,distribution,
                   lognorm_kwargs = {'sigma':np.nan, 'lograd[cm]':np.nan}, 
@@ -1009,7 +1025,7 @@ class Parameterize():
 
         return opd_by_layer
 
-    def free_constant_abundance(self,  species):
+    def chem_free_old(self,  **species):
         ''''
         Abundance profile
 
@@ -1036,8 +1052,14 @@ class Parameterize():
         
         for i in species.keys():
             if i!='background':
-                mixing_ratios[i]=np.ones(nlevels)*species[i]['value']
-                total_abundance+=species[i]['value']
+                if isinstance(species[i]['value'], float):
+                    mixing_ratios[i]=np.ones(nlevels)*species[i]['value']
+                    total_abundance+=species[i]['value']
+                elif isinstance(species[i]['value'], list):
+                    mixing_ratios[i]=np.empty(nlevels)
+                    sel = pressure>species[i]['Pswitch']
+                    mixing_ratios[i][sel] = np.ones(sum(sel))*species[i]['value'][0]
+                    mixing_ratios[i][~sel] = np.ones(nlevels-sum(sel))*species[i]['value'][1]
 
         # Add background gases
         n_background=len(species['background']['gases'])
@@ -1045,10 +1067,91 @@ class Parameterize():
             mol=species['background']['gases'][i]
             abun=species['background']['ratios'][i]
             mixing_ratios[mol]=np.ones(nlevels)*(1-total_abundance)*abun
+
+        if 'background' in species.keys():
+            total_sum_of_background = 1-total_abundance
+            if len(species['background']['gases'])==2: #2 background gasses
+                gas1_name = species['background']['gases'][0]
+                gas2_name = species['background']['gases'][1]
+                fraction = species['background']['fraction']
+                gas2_absolute_value = total_sum_of_background / (fraction + 1)
+                gas1_absolute_value = fraction * gas2_absolute_value
+                mixingratio_df[gas1_name] = gas1_absolute_value
+                mixingratio_df[gas2_name] = gas2_absolute_value
+            if len(species['background']['gases'])==1: #1 background gas
+                mixingratio_df[species['background']['gases'][0]] = total_sum_of_background
         
         self.picaso.inputs['atmosphere']['profile'] = pd.DataFrame(mixing_ratios)
         
         return pd.DataFrame(mixing_ratios)
+    
+    def chem_free(self, **species):
+        ''''
+        Abundance profile for free chemistry
+
+        Parameters
+        ----------
+        species: dict
+            Dictionary containing the species and their abundances. Should 
+            also contain background gases and their ratios. 
+            Example: species=dict(H2O=dict(value=1e-4, unit='v/v'), background=dict(gases=['H2', 'He'], ratios=[0.85, 0.15]))
+
+        Return
+        ------
+        Data frame with chemical abundances per level
+        '''
+        #free = chem_config['free']
+        pressure_grid = self.pressure_level
+        temp_grid = self.temperature_level
+        total_sum_of_gases = 0*pressure_grid
+        assert len(temp_grid)==len(pressure_grid), 'Len of t grid does not match len of p grid. likely t grid has not been set yet '
+        mixingratio_df = pd.DataFrame(dict(pressure=pressure_grid, temperature=temp_grid))
+        for i in species.keys(): 
+            #make sure its not the background
+            if i !='background':
+                value = species[i].get('value',None)
+                #easy case where there is just one well-mixed value 
+                if value is not None: #abundance of the chemistry input per molecule
+                    mixingratio_df[i] = value
+                    
+                else: #each molecule input manually
+                    values =  species[i].get('values') 
+                    pressures = species[i].get('pressures') 
+                    pressure_unit= species[i].get('pressure_unit') 
+                    pressure_bar = (np.array(pressures)*u.Unit(pressure_unit)).to(u.bar).value 
+                    
+                    #make sure its in ascending pressure order 
+                    first = pressure_bar[0] 
+                    last = pressure_bar[-1] 
+
+                    #flip if the ordering has been input incorrectly
+                    if first > last : 
+                        pressure_bar=pressure_bar[::-1]
+                        values=values[::-1]
+
+                    vmr = values[0] + 0*pressure_grid
+                    # need to finish the ability to input free chem here 
+                    for ii,ivmr in enumerate(values[1:]):
+                        vmr[pressure_grid>=pressure_bar[ii]] = ivmr 
+                    
+                    #add to dataframe 
+                    mixingratio_df[i]=vmr
+
+                total_sum_of_gases += mixingratio_df[i].values
+        #add background gas if it is requested
+        if 'background' in species.keys():
+            total_sum_of_background = 1-total_sum_of_gases
+            if len(species['background']['gases'])==2: #2 background gasses
+                gas1_name = species['background']['gases'][0]
+                gas2_name = species['background']['gases'][1]
+                fraction = species['background']['fraction']
+                gas2_absolute_value = total_sum_of_background / (fraction + 1)
+                gas1_absolute_value = fraction * gas2_absolute_value
+                mixingratio_df[gas1_name] = gas1_absolute_value
+                mixingratio_df[gas2_name] = gas2_absolute_value
+            if len(species['background']['gases'])==1: #1 background gas
+                mixingratio_df[species['background']['gases'][0]] = total_sum_of_background
+        return mixingratio_df
 
     def madhu_seager_09_noinversion(self, alpha_1, alpha_2, P1, P3, T3, beta=0.5):
         """"
@@ -1127,7 +1230,7 @@ class Parameterize():
 
         return pd.DataFrame(dict(pressure=pressure, temperature=temp_by_level))
     
-    def knot_profile(self,  P_knots, T_knots, interpolation='brewster'):
+    def pt_knots(self,  P_knots, T_knots, interpolation='brewster', scipy_interpolate_kwargs={}):
         """"
         Knot-based temperature profile. Implements different types of interpolation.
 
@@ -1138,7 +1241,11 @@ class Parameterize():
         -------
         Temperature per layer
         """
-
+        if isinstance(P_knots, dict):
+            P_knots = list(P_knots.values())
+        
+        if isinstance(T_knots, dict):
+            T_knots = [T_knots[k]["value"] for k in sorted(T_knots.keys())]
         pressure = self.pressure_level
         nlevel = len(pressure)
 
@@ -1172,6 +1279,67 @@ class Parameterize():
 
         return pd.DataFrame(dict(pressure=pressure, temperature=temp_by_level))
 
+    def guillot(self, Teq, T_int=100, logg1=-1, logKir=-1.5, alpha=0.5,nlevel=61, p_bottom = 1.5, p_top = -6):
+        """
+        Creates temperature pressure profile given parameterization in Guillot 2010 TP profile
+        called in fx()
+        Parameters
+        ----------
+        Teq : float 
+            equilibrium temperature 
+        T_int : float 
+            Internal temperature, if low (100) currently set to 100 for everything  
+        kv1 : float 
+            see parameterization Guillot 2010 (10.**(logg1+logKir))
+        kv2 : float
+            see parameterization Guillot 2010 (10.**(logg1+logKir))
+        kth : float
+            see parameterization Guillot 2010 (10.**logKir)
+        alpha : float , optional
+            set to 0.5
+            
+        Returns
+        -------
+        T : numpy.array 
+            Temperature grid 
+        P : numpy.array
+            Pressure grid
+                
+        """
+        kv1, kv2 =10.**(logg1+logKir),10.**(logg1+logKir)
+        kth=10.**logKir
+
+        Teff = T_int
+        f = 1.0  # solar re-radiation factor
+        A = 0.0  # planetary albedo
+        g0 = self.gravity_cgs/100.0 #cm/s2 to m/s2
+        assert not np.isnan(g0),'Graivty was not supplied but is being requested for guillot p-t profile parameterization'
+
+        # Compute equilibrium temperature and set up gamma's
+        T0 = Teq
+        gamma1 = kv1/kth #Eqn. 25
+        gamma2 = kv2/kth
+
+        # Initialize arrays
+        logtau =np.arange(-10,20,.1)
+        tau =10**logtau
+
+        #computing temperature
+        T4ir = 0.75*(Teff**(4.))*(tau+(2.0/3.0))
+        f1 = 2.0/3.0 + 2.0/(3.0*gamma1)*(1.+(gamma1*tau/2.0-1.0)*np.exp(-gamma1*tau))+2.0*gamma1/3.0*(1.0-tau**2.0/2.0)*special.expn(2.0,gamma1*tau)
+        f2 = 2.0/3.0 + 2.0/(3.0*gamma2)*(1.+(gamma2*tau/2.0-1.0)*np.exp(-gamma2*tau))+2.0*gamma2/3.0*(1.0-tau**2.0/2.0)*special.expn(2.0,gamma2*tau)
+        T4v1=f*0.75*T0**4.0*(1.0-alpha)*f1
+        T4v2=f*0.75*T0**4.0*alpha*f2
+        T=(T4ir+T4v1+T4v2)**(0.25)
+        P=tau*g0/(kth*0.1)/1.E5
+
+        logP = np.log10(self.pressure_level)#np.linspace(p_top,p_bottom,nlevel)
+
+        T = np.interp(logP,np.log10(P),T)
+
+        # Return TP profile
+        return pd.DataFrame({'temperature': T, 'pressure':self.pressure_level})
+    
 def atlev(l0,pressure_layer):
     nlayers = pressure_layer.size
     if (l0 <= nlayers-2):

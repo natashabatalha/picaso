@@ -3143,7 +3143,7 @@ class inputs():
 
         self.inputs['atmosphere']['profile'][species] = pd.DataFrame(abunds)
 
-    def add_pt(self, T=None, P=None):
+    def add_pt(self, T=None, P=None,P_config=None):
         """
         Adds temperature pressure profile to atmosphere, keeps kzz if it exists, wipes everything else out. 
         Parameters
@@ -3167,12 +3167,20 @@ class inputs():
         """
         
         empty_dict = {}
+        #if a temperature is supllied, add it 
         if not isinstance(T,type(None)):
             empty_dict['temperature']=T
             self.nlevel=len(T) 
+        #if a pressure is supplied, add it 
         if not isinstance(P,type(None)):
             empty_dict['pressure']=P
             self.nlevel=len(P) 
+        #if a pressure config dictionary is supplied, create the grid then addd it
+        if not isinstance(P_config,type(None)):
+            P = self.pressure_grid(P_config)
+            empty_dict['pressure']=P
+            self.nlevel=len(P) 
+
         df = pd.DataFrame(empty_dict).sort_values('pressure').reset_index(drop=True)
         #neb trying to comment thsi as kz is tracked elsewhere now 
         #if isinstance(self.inputs['atmosphere']['profile'], pd.core.frame.DataFrame):
@@ -3182,7 +3190,41 @@ class inputs():
         
         # Return TP profile
         return #self.inputs['atmosphere']['profile'] 
+    
+    def pressure_grid(self,P_config): 
+        """Computes pressure grid based on user input dictionary 
 
+        Parameters 
+        -----------
+
+        P_config : dict 
+        P_config = dict(
+            reference = {value=1e1,unit='bar'}
+            min = {value=1e-7, unit='bar'}
+            max = {value=1e3,unit='bar'}
+            nlevel = 100
+            spacing = 'log' )#spacing can be log or linear
+        
+        Returns 
+        -------
+        pressure in bars 
+        """
+        minp = P_config.get('min', {}).get('value')  #minimum pressure
+        minp_unit = P_config.get('min', {}).get('unit')
+        maxp = P_config.get('max', {}).get('value')  #max pressure
+        maxp_unit = P_config.get('max', {}).get('unit')
+        spacing = P_config.get('spacing')
+        nlevel = P_config.get('nlevel')
+        minp_bar = ((minp * u.Unit(minp_unit)).to(u.bar)).value
+        maxp_bar = ((maxp * u.Unit(maxp_unit)).to(u.bar)).value
+
+        if spacing == 'log':
+            pressure = np.logspace(np.log10(minp_bar), np.log10(maxp_bar), nlevel)
+        else:
+            pressure = np.linspace(minp_bar, maxp_bar, nlevel)
+        
+        return pressure
+    
     def guillot_pt(self, Teq, T_int=100, logg1=-1, logKir=-1.5, alpha=0.5,nlevel=61, p_bottom = 1.5, p_top = -6):
         """
         Creates temperature pressure profile given parameterization in Guillot 2010 TP profile
