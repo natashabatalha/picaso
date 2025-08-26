@@ -43,7 +43,7 @@ import h5py
 # #testing error tracker
 # from loguru import logger 
 __refdata__ = os.environ.get('picaso_refdata')
-__version__ = '3.3'
+__version__ = '4.0'
 
 
 if not os.path.exists(__refdata__): 
@@ -184,8 +184,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
 
     #Add inputs to class 
-    atm.surf_reflect = inputs['surface_reflect']
-    atm.hard_surface = inputs['hard_surface']#0=no hard surface, 1=hard surface
+    atm.surf_reflect = inputs.get('surface_reflect',0) #default no hard surface if it has not been defined
+    atm.hard_surface = inputs.get('hard_surface',0)#0=no hard surface, 1=hard surface
     atm.wavenumber = wno
     atm.planet.gravity = inputs['planet']['gravity']
     atm.planet.radius = inputs['planet']['radius']
@@ -310,7 +310,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                     atm.lvl_output_reflected['flux_plus']+=flux_plus_all_v*gauss_wts[ig]
                     atm.lvl_output_reflected['flux_minus_mdpt']+=flux_minus_midpt_all_v*gauss_wts[ig]
                     atm.lvl_output_reflected['flux_plus_mdpt']+=flux_plus_midpt_all_v*gauss_wts[ig]
-
+            if full_output: 
+                atm.xint_at_top = xint_at_top
 
         
         if 'thermal' in calculation:
@@ -991,13 +992,16 @@ def input_xarray(xr_usr, opacity,calculation='planet',approx_kwargs={}):
         database = 'phoenix' if type(_finditem(stellar_params,'database')) == type(None) else _finditem(stellar_params,'database')
         ms = _finditem(stellar_params,'ms')
         rs = _finditem(stellar_params,'rs')
-        semi_major = _finditem(orbit_params,'sma')
-        if isinstance(semi_major,type(None)):
+        semi_major_dict = _finditem(orbit_params,'sma')
+        if isinstance(semi_major_dict,type(None)):
             semi_major = None
             semi_major_unit = None
+        elif isinstance(semi_major_dict,float):
+            semi_major=semi_major_dict
+            semi_major_unit=u.AU           
         else: 
-            semi_major=semi_major['value']
-            semi_major_unit=u.Unit(semi_major['unit'])
+            semi_major=semi_major_dict['value']
+            semi_major_unit=u.Unit(semi_major_dict['unit'])
         case.star(opacity, steff,feh,logg, radius=rs['value'], 
                   radius_unit=u.Unit(rs['unit']), database=database, 
                   semi_major=semi_major,semi_major_unit=semi_major_unit)
@@ -1173,8 +1177,8 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
 
 
     #Add inputs to class 
-    atm.surf_reflect = inputs['surface_reflect']
-    atm.hard_surface = inputs['hard_surface']#0=no hard surface, 1=hard surface
+    atm.surf_reflect = inputs.get('surface_reflect',0) #default no hard surface if it has not been defined
+    atm.hard_surface = inputs.get('hard_surface',0)#0=no hard surface, 1=hard surface
     atm.wavenumber = wno
     atm.planet.gravity = inputs['planet']['gravity']
     atm.planet.radius = inputs['planet']['radius']
@@ -1296,9 +1300,16 @@ def opannection(wave_range = None, filename_db = None,
         
         #get default file if it was supplied
         if isinstance(filename_db,type(None)): 
-            filename_db = os.path.join(__refdata__, inputs['opacities']['files']['opacity'])
-            if not os.path.isfile(filename_db):
-                raise Exception(f'The default opacity file does not exist: {filename_db}. In order to have a default database please download one of the opacity files from Zenodo and place into this folder with the name opacities.db: https://zenodo.org/record/6928501#.Y2w4C-zMI8Y if you dont want a single default file then you just need to point to the opacity db using the keyword filename_db.')
+            filename_db = glob.glob(os.path.join(__refdata__, inputs['opacities']['files']['opacity']))
+            if len(filename_db)>0:
+                #if there are mroe than one give user warning message
+                if len(filename_db)>1:
+                    if verbose: print('Found more than one opacity database. Choosing the first one.')
+                filename_db = filename_db[0]
+                if not os.path.isfile(filename_db):
+                    raise Exception(f'The default opacity file does not exist: {filename_db}. In order to have a default database please download one of the opacity files from Zenodo and place into this folder with the name opacities.db: https://zenodo.org/record/6928501#.Y2w4C-zMI8Y if you dont want a single default file then you just need to point to the opacity db using the keyword filename_db.')
+            else: 
+                raise Exception("Could not find anything with the naming scheme opacities*.db in the opacities folder. Please use the get_data function to download an opacity file.")
         #if a name is supplied check that it exists 
         elif not isinstance(filename_db,type(None) ): 
             if not os.path.isfile(filename_db):
@@ -1786,7 +1797,7 @@ class inputs():
             
             opannection.compute_stellar_shits(fine_wno_star, fine_flux_star)
             bin_flux_star = opannection.unshifted_stellar_spec
-
+            unit_flux =  'ergs cm^{-2} s^{-1} cm^{-1}'
         elif ('climate' in self.inputs['calculation'] or (get_lvl_flux)):
             if not ((not np.isnan(semi_major)) & (not np.isnan(r))): 
                 raise Exception ('semi_major and r parameters are not provided but are needed to compute relative fluxes for climate calculation or when get_lvl_flux are being requested')
@@ -2091,7 +2102,7 @@ class inputs():
         species_to_consider : list of str
             Default is ['H2O', 'CH4','NH3']
         """
-
+        
         quench_molecules = np.concatenate([i.split('-') for i in quench_levels.keys()])
         quench_by_molecule={}
         
@@ -2202,12 +2213,18 @@ class inputs():
         #if a quench level dictionary is provided 
         if self.inputs['approx']['chem_params']['quench'] and isinstance(quench_levels,dict):
             if verbose: print('Quench=True; Adjusting quench chemistry')
-            self.adjust_quench_chemistry(quench_levels,chemistry_table)
+            if len(quench_levels.keys())==0: 
+                if verbose: print('Quench=True; But nothing has quenched. Might suggest increasing kzz if it is too low or switching to chemical equilibrium if deq chemistry is not needed.')
+            else:
+                self.adjust_quench_chemistry(quench_levels,chemistry_table)
        
         # volatile rainout 
         if self.inputs['approx']['chem_params']['vol_rainout'] and isinstance(quench_levels,dict): 
             if verbose: print(f'vol_rainout=True; Adjusting volatile rainout')
-            self.volatile_rainout(quench_levels)
+            if len(quench_levels.keys())==0: 
+                if verbose: print('Quench=True; But nothing has quenched. Might suggest increasing kzz if it is too low or switching to chemical equilibrium if deq chemistry is not needed.')
+            else: 
+                self.volatile_rainout(quench_levels)
 
         # cold trap the condensibles 
         if self.inputs['approx']['chem_params']['cold_trap']: 
@@ -2330,27 +2347,28 @@ class inputs():
         # anything we quench let's take away/add to H2 
         H2 = df_atmo_og['H2'].values
         for iquench in quench_sequence:
-            
-            #this defines the exactl quench layer 
-            quench_level = quench_levels[iquench]
-            
-            #now individually loop through the sequence if there are multiple molecules included 
-            for imol in iquench.split('-'):
+            #only proceed a quench level was actually defined
+            if iquench in quench_levels.keys():
+                #this defines the exactl quench layer 
+                quench_level = quench_levels[iquench]
                 
-                #if the molecule is in the set
-                if imol in df_atmo_og.keys():
-                    #get the abundance at the quench point
-                    quench_abundance = df_atmo_og.loc[quench_level,imol]
-                    #Everything above the quench point gets set to the quench abundance 
-                    old = df_atmo_og.loc[:,imol].values 
-                    df_atmo_og.loc[0:quench_level+1,imol] = quench_abundance
-                    new = df_atmo_og.loc[:,imol].values 
-                    diff = old - new 
-                    #adjust H2 accordingly 
-                    H2 = H2 + diff 
+                #now individually loop through the sequence if there are multiple molecules included 
+                for imol in iquench.split('-'):
+                    
+                    #if the molecule is in the set
+                    if imol in df_atmo_og.keys():
+                        #get the abundance at the quench point
+                        quench_abundance = df_atmo_og.loc[quench_level,imol]
+                        #Everything above the quench point gets set to the quench abundance 
+                        old = df_atmo_og.loc[:,imol].values 
+                        df_atmo_og.loc[0:quench_level+1,imol] = quench_abundance
+                        new = df_atmo_og.loc[:,imol].values 
+                        diff = old - new 
+                        #adjust H2 accordingly 
+                        H2 = H2 + diff 
 
         # include new option for CO2 in equilibrium with CO, H2O, H2 from equation 43 in Zahnle and Marley (2014)
-        if kinetic_CO2 == True:
+        if ((kinetic_CO2 == True) and ('CO2' in quench_levels.keys())):
             #ADD LINK TO NICK W. AAS NOTE HERE 
             K = 18.3*np.exp(-2376/self.inputs['atmosphere']['profile']['temperature'] - (932/self.inputs['atmosphere']['profile']['temperature'])**2)
             fCO2 = (self.inputs['atmosphere']['profile']['CO']*self.inputs['atmosphere']['profile']['H2O'])/(K*self.inputs['atmosphere']['profile']['H2'])            
@@ -5075,7 +5093,10 @@ class inputs():
                 raise Exception('Need to specify directory for cloudy runs via Virga function')
             # get_clouds should reinterpolate so it is okay that this isnt on the same grid but need to get the size 
             # check if the mieff file is on 661 grid
-            miefftest = os.path.join(mieff_dir, [f for f in os.listdir(mieff_dir) if f.endswith('.mieff')][0])
+            list_mieff_files=[f for f in os.listdir(mieff_dir) if f.endswith('.mieff')]
+            assert len(list_mieff_files)>0, 'Did not find any mieff files in the supplied virga directory'
+            testfile = list_mieff_files[0]
+            miefftest = os.path.join(mieff_dir, testfile)
             with open(miefftest, 'r') as file:
                 nwno_clouds = int(float(file.readline().split()[0]))
         else: 

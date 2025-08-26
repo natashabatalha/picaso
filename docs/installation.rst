@@ -55,7 +55,7 @@ PICASO has the ability to injest lots of different kinds of data. But not all ar
 | Data Type                        | Req? | What it is primarily used for | Where it should go                                          |
 +==================================+======+===============================+=============================================================+
 | Reference                        | Yes  | everything                    | $picaso_refdata                                             |
-| Resampled Opacities              | Yes  | Spectroscopic modeling        | $picaso_refdata/opacities/opacities.db                      |
+| Resampled Opacities              | Yes  | Spectroscopic modeling        | $picaso_refdata/opacities/opacities*.db                     |
 | Stellar Database                 | No   | Exoplanet modeling            | $PYSYN_CDBS/grid                                            |
 | Preweighted correlatedK Tables   | No   | Chemical equilibrium climate  | Your choice (default=$picaso_refdata/opacities/preweighted) |
 | By molecule correlatedK Tables   | No   | Disequilibrium climate        | Your choice (default=$picaso_refdata/opacities/resortrebin) |
@@ -124,7 +124,7 @@ Sometimes it is too troublesome to go through bash settings and you may prefer t
 	import picaso.justdoit as jdi
 
 Method 3: Add it to your conda enviornment
-````````````````````````````````````````````
+```````````````````````````````````````````
 
 This is my method of choice! It involves creating conda environment specific variables. If you are interested in learning more about environment variables, you can `read more about them here <https://natashabatalha.github.io/picaso/contribution.html#using-conda-enviornments>`_
 
@@ -220,7 +220,7 @@ where the printout in a terminal will look something like this:
 Download Resampled Opacities 
 ----------------------------
 
-Let's use ``picaso.data.get_data()`` to help you downloaded opacities since there are a few different databases available (see tutorial below). Any is acceptable as the default depending on your resolution and wavelength needs. Only one opacities.db file needs to exist in your referece/opacities folder. The others you just specify a path to in ``picaso.justdoit.opannection``. 
+Let's use ``picaso.data.get_data()`` to help you downloaded opacities since there are a few different databases available (see tutorial below). Any of the dbs are acceptable as the default depending on your resolution and wavelength needs. Only one opacities*.db file needs to exist in your referece/opacities folder (note the only naming specification is that it start with "opacities" and end with "db" e.g., opacities*.db). The others you just specify using the keyword in ``picaso.justdoit.opannection``. 
 
 
 .. code-block:: python
@@ -232,7 +232,7 @@ Let's use ``picaso.data.get_data()`` to help you downloaded opacities since ther
 If that doesn't suit your needs feel free to do this manually: 
 
 1) Download a the recommended default `Resampled Opacity File from Zenodo <https://zenodo.org/records/14861730>`_. 
-2) Once this is download rename and add it to ``reference/opacities/opacities.db``. You will likely have to change the name of the file. ultimately, PICASO is looking for the default file ``reference/opacities/opacities.db``. 
+2) Once this is download add it to ``reference/opacities/``. Note PICASO will look for something called "opacities*db". If youve added multiple files here it will choose the first one.
 
 Create ``stsynphot`` Environment Variable for Stellar Data if needed
 --------------------------------------------------------------------
@@ -257,7 +257,7 @@ If you do not like that you can always use `wget` or just downloading the link b
 
 	wget http://ssb.stsci.edu/trds/tarfiles/synphot3.tar.gz
 
-When you untar this you should get a directory structure that looks like this ``<path>/grp/redcat/trds/grid/ck04models``.  **The full directory structure does not matter**. Only the last portion ``grid/ck04models``. You will need to create an enviornment variable that points to where ``grid/`` is located. We have a nice placeholder location in the picaso reference data file for these grids ``$picaso_refdata/stellar_grids``. So you can imagine something like: ``$picaso_refdata/stellar_grids/grid/ck04models``. Though it is not required for you to put them here as long as you make your environment variable point to the desired location where ``grid`` is. 
+When you untar this you should get a directory structure that looks like this ``<path>/grp/redcat/trds/grid/ck04models``.  **The full directory structure does not matter**. Only the last file ``grid`` is needed. You will need to create an enviornment variable that points to where ``grid/`` is located. We have a nice placeholder location in the picaso reference data file for these grids ``$picaso_refdata/stellar_grids``. So you can imagine something like: ``$picaso_refdata/stellar_grids/grid/ck04models``. Though it is not required for you to put them here as long as you make your environment variable point to the desired location where ``grid`` is. 
 
 
 Additional Help with Stellar Data Environment Variable

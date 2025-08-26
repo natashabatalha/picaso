@@ -28,14 +28,24 @@ Phase curves
 
 `Robbins-Blanch, Nina., et al. "Cloudy and Cloud-free Thermal Phase Curves with PICASO: Applications to WASP-43b." The Astrophysical Journal (2022): 157. <http://arxiv.org/abs/2204.03545>`_
 
-- Phase curves 
+- Thermal phase curves 
+
+`Robbins-Blanch, Nina., et al. "Cloudy and Cloud-free Thermal Phase Curves with PICASO: Applications to WASP-43b." The Astrophysical Journal (2022): 157. <http://arxiv.org/abs/2204.03545>`_
+
+- Reflected phase curves 
+
+`Hamill C.~D., Johnson A.~V., Batalha N., Nag R., Gao P., Adams D., Kataria T., 2024, ApJ, 976, 181. doi:10.3847/1538-4357/ad7de6 <https://ui.adsabs.harvard.edu/abs/2024ApJ...976..181H/abstract>`_
 
 1D Climate Models
 -----------------
 `Mukherjee, et al. "PICASO 3.0: A One-Dimensional Climate Model for Giant Planets and Brown Dwarfs." The Astrophysical Journal (2022): 157. <https://ui.adsabs.harvard.edu/abs/2022arXiv220807836M/abstract>`_
 
-- 1d climate models of brown dwarfs 
-- 1d climate models of exoplanets 
+- 1d climate models of substellar atmospheres
+
+`Mang, et al. "PICASO 4.0: Coming Soon`_
+
+- 1d disequilibrium models of substellar atmospheres
+- 1d cloudy models of substellar atmospheres 
 
 Grid fits
 ---------

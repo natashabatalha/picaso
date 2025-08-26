@@ -396,7 +396,17 @@ def check_environ():
 
 
 def check_default_opacity(picaso_refdata,messages): 
-    default_resampled = os.path.join(picaso_refdata,'opacities','opacities.db')
+    default_resampled = glob.glob(os.path.join(picaso_refdata,'opacities','opacities*.db'))
+    if len(default_resampled)==1: 
+        default_resampled = default_resampled[0]
+        extra_text = ''
+    elif len(default_resampled)>1:
+        default_resampled = default_resampled[0]
+        extra_text = ' Note, found multiple opacities*.db filenames. PICASO has just picked the alphabetically first one. '    
+    else: 
+        messages.append(('error', f'Resampled opacity file has not been set, which is usually required by the code. The file should live here: <code>{default_resampled}</code>. You can use get_data function to help you download or read the installation docs to do it manually.'))
+        return messages
+    
     if os.path.exists(default_resampled):
         try: 
             allmeta = get_all_metadata(default_resampled)
@@ -404,10 +414,10 @@ def check_default_opacity(picaso_refdata,messages):
         except: 
             reformat_meta = 0
         if isinstance(reformat_meta,list):
-            messages.append(('success','Resampled opacity default file has been set.'))
+            messages.append(('success','Resampled opacity default file has been set.'+extra_text))
             messages.append(('list',reformat_meta))
         else:
-            messages.append(('error', f'Resampled opacity file has been set to <code>{default_resampled}</code> but I cannot read the metadata. Please redownload and/or check the file has not been corrupted.'))
+            messages.append(('error', f'Resampled opacity file has been set to <code>{default_resampled}</code> but I cannot read the metadata. Please redownload and/or check the file has not been corrupted.'+extra_text))
         
     else: 
         messages.append(('error', f'Resampled opacity file has not been set, which is usually required by the code. The file should live here: <code>{default_resampled}</code>. You can use get_data function to help you download or read the installation docs to do it manually.'))
