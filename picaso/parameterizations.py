@@ -531,6 +531,8 @@ class Parameterize():
         else:
             raise Exception(f'Unknown interpolation method \'{interpolation}\'')
 
+        #check that T is strictly positive everywhere
+
         return pd.DataFrame(dict(pressure=pressure, temperature=temp_by_level))
 
     def pt_guillot(self, Teq, T_int, logg1, logKir, alpha):

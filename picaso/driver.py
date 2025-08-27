@@ -158,33 +158,84 @@ def hypercube(u, fitpars):
             x[i]=10**x[i]  
     return x
 
-def MODEL(cube, fitpars, config, OPA, param_tools):
-    # update parameters
-    for i,key in enumerate(fitpars.keys()):
-        # offsets/scalings/errinfs will only be retrieval params
-        if key[:6]!='offset' and key[:7]!='scaling' and key[:7]!='err_inf':
-            set_dict_value(config, key+'.value', cube[i])
-    picaso_class=setup_spectrum_class(config, opacity=OPA, param_tools=param_tools)
-    out = picaso_class.spectrum(OPA, full_output=True, calculation = config['observation_type'])
+def MODEL(cube, fitpars, config, OPA, param_tools, DATA_DICT):
+    """
+    Generate model spectra for parameter sets.
 
-    R_dict=config['object']['radius']
-    R=R_dict['value']*u.Unit(R_dict['unit']).to(u.m)
-    d_dict=config['object']['distance']
-    d=d_dict['value']*u.Unit(d_dict['unit']).to(u.m)
-    resulty = (R/d)**2*out['thermal']
+    Parameters
+    ----------
+    cube : array-like
+        Parameter values. Shape can be:
+          - (N_params,)  -> single parameter set
+          - (N_samples, N_params) -> multiple sets
+    fitpars : dict
+        Dictionary of fit parameters.
+    config : dict
+        Configuration dictionary.
+    OPA : object
+        Opacity connection.
+    param_tools : object
+        Parameterization helper.
+    DATA_DICT : dict
+        Observational data dictionary.
 
-    return out['wavenumber'], resulty*1e-8
+    Returns
+    -------
+    dict
+        Dictionary with the same keys as observation data. 
+        Each value is an array with shape:
+          - (len(xdata),) if input was 1D
+          - (N_samples, len(xdata)) if input was 2D
+    """
+    cube = np.atleast_2d(cube)  # ensure shape (N_samples, N_params)
+    n_samples = cube.shape[0]
+
+    # initialize storage
+    y_model = {key: [] for key in config['InputOutput']['observation_data']}
+
+    for row in cube:
+        # update parameters
+        for i, key in enumerate(fitpars.keys()):
+            if not (key.startswith("offset") or key.startswith("scaling") or key.startswith("err_inf")):
+                set_dict_value(config, key + ".value", row[i])
+
+        # compute spectrum
+        picaso_class = setup_spectrum_class(config, opacity=OPA, param_tools=param_tools)
+        out = picaso_class.spectrum(OPA, full_output=True, calculation=config['observation_type'])
+
+        R_dict = config['object']['radius']
+        R = R_dict['value'] * u.Unit(R_dict['unit']).to(u.m)
+        d_dict = config['object']['distance']
+        d = d_dict['value'] * u.Unit(d_dict['unit']).to(u.m)
+
+        resultx = out['wavenumber']
+        resulty = 1e-8 * (R / d) ** 2 * out['thermal']
+
+        # rebin to observed wavelengths
+        for obs_key in config['InputOutput']['observation_data']:
+            xdata, _, _ = DATA_DICT[obs_key]
+            _, rebinned = mean_regrid(resultx, resulty, newx=xdata)
+            y_model[obs_key].append(rebinned)
+
+    # stack results into arrays
+    for obs_key in y_model:
+        y_model[obs_key] = np.vstack(y_model[obs_key])
+        # if single sample, flatten to 1D
+        if n_samples == 1:
+            y_model[obs_key] = y_model[obs_key][0]
+
+    return y_model
 
 def log_likelihood(cube, fitpars, config, OPA, DATA_DICT, param_tools): 
-    resultx,resulty = MODEL(cube, fitpars, config, OPA, param_tools)
+    y_model_dict = MODEL(cube, fitpars, config, OPA, param_tools, DATA_DICT)
 
     ydat_all=[];ymod_all=[];sigma_all=[];extra_term_all=[]
 
     for i,key in enumerate(config['InputOutput']['observation_data']):
         xdata,ydata,edata = DATA_DICT[key]
-        xbin_model , y_model = mean_regrid(resultx, resulty, newx=xdata)#remember we put everything already sorted on wavenumber
+        y_model=y_model_dict[key]
 
-        #add offsets if they exist to the data
+        #add offsets
         if key in config.get("retrieval", {}).get("offset", {}):
             icube = list(fitpars.keys()).index(f'offset.{key}')
             offset = cube[icube]
@@ -200,16 +251,14 @@ def log_likelihood(cube, fitpars, config, OPA, DATA_DICT, param_tools):
             scaling = 1
         ydata*=scaling
 
-        #here we should also add vsini and  RV (wvl_shift?)
-
         #add error inflation if they exist
         if key in config.get("retrieval", {}).get("err_inf", {}):
             icube = list(fitpars.keys()).index(f'err_inf.{key}')
             err_inf = cube[icube]
         else:
             err_inf=0
-        # err_inf = err_inf_all.get(key,0) #if err inf term for that instrument doesnt exist, return 0
         sigma = edata**2 + err_inf #there are multiple ways to do this, here just adding in an extra noise term
+
         extra_term = np.log(2*np.pi*sigma)
 
         ydat_all.append(ydata);ymod_all.append(y_model);sigma_all.append(sigma);extra_term_all.append(extra_term); 
@@ -261,8 +310,34 @@ def retrieve(config, param_tools):
     dill.dump(sampler, open(config['InputOutput']['retrieval_output']+'/sampler.pkl', 'wb'))
     return sampler
 
-def prior_tester(config, N=100):
-    print('Testing prior...')
+def check_model_samples(config, N=100, sampler=None):
+    """
+    Tests the prior distribution by generating models based on the provided configuration.
+
+    Args:
+        config (dict): Configuration dictionary containing the necessary parameters for 
+            optical properties, retrieval, and other settings.
+            - 'OpticalProperties': A dictionary with keys:
+                - 'opacity_files' (str): Path to the opacity database(s).
+                - 'opacity_method' (str): Method for handling opacity ('resampled', 'preweighted', etc.).
+                - 'opacity_kwargs' (dict): Additional arguments for opacity handling.
+                - 'virga_mieff' (str, optional): Directory for virga Mie efficiency files.
+            - 'retrieval': A dictionary containing retrieval parameters.
+        N (int, optional): Number of samples to generate if no sampler is provided. Defaults to 100.
+        sampler (object, optional): A sampler object with a `results.samples_equal()` method 
+            to provide sample points. If None, random samples are generated. Defaults to None.
+
+    Returns:
+        numpy.ndarray: An array of generated models based on the prior distribution.
+
+    Notes:
+        - The function initializes optical properties and parameterization tools using the 
+          provided configuration.
+        - If a sampler is provided, it uses the sampler's results to generate thetas; otherwise, 
+          it generates random samples.
+        - The function constructs models for each set of parameters (thetas) and returns them 
+          as a numpy array.
+    """
     OPA = opannection(
         filename_db=config['OpticalProperties']['opacity_files'], #database(s)
         method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
@@ -274,19 +349,19 @@ def prior_tester(config, N=100):
                                         mieff_dir=virga_mieff)
     fitpars=prior_finder(config['retrieval'])
     ndims=len(fitpars)
-    cube = np.random.random([100, ndims])
-    models=[]
-    thetas=[]
-    for i in range(100):
-        theta = hypercube(cube[i], fitpars)
-        thetas.append(theta)
-        models.append(MODEL(theta, fitpars, config, OPA, param_tools))
+    if sampler is not None:
+        thetas = sampler.results.samples_equal()
+    else:
+        cube = np.random.random([N, ndims])
+        thetas = [hypercube(cube[i], fitpars) for i in range(N)]
+    
+    thetas = np.array(thetas)
 
-    thetas = np.array(thetas)   # shape (N, ndims)
-    models = np.array(models)
+    DATA_DICT = get_data(config)
 
-    return thetas, models
+    models = MODEL(thetas[:N], fitpars, config, OPA, param_tools, DATA_DICT)
 
+    return models
 
 def setup_spectrum_class(config, opacity , param_tools ):
 
