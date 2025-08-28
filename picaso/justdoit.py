@@ -3,7 +3,6 @@ from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_the
 
 from .climate import  namedtuple,run_chemeq_climate_workflow,run_diseq_climate_workflow
 
-
 from .wavelength import get_cld_input_grid
 from .optics import RetrieveOpacities,compute_opacity,RetrieveCKs
 from .disco import get_angles_1d, get_angles_3d, compute_disco, compress_disco, compress_thermal
@@ -243,7 +242,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
             atm, opacityclass, ngauss=ngauss, stream=stream, delta_eddington=delta_eddington,test_mode=test_mode,raman=raman_approx,
             full_output=full_output, plot_opacity=plot_opacity)
 
-        #do we want soem clear patches ? If so, specify the thining through fthin where=0 is a fully clear patch
+        #do we want some clear patches ? If so, specify the thining through fthin where=0 is a fully clear patch
         if do_holes:
             DTAU_clear, TAU_clear, W0_clear, COSB_clear,ftau_cld_clear, ftau_ray_clear,GCOS2_clear, DTAU_OG_clear, TAU_OG_clear, W0_OG_clear, COSB_OG_clear, \
                 W0_no_raman_clear, f_deltaM= compute_opacity(
@@ -835,7 +834,7 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
         assert isinstance(attrs['planet_params']['mp'],u.quantity.Quantity ), "User supplied mp in planet_params must be an astropy unit: e.g. 1*u.Unit('M_jup')"
         assert isinstance(attrs['planet_params']['rp'],u.quantity.Quantity ), "User supplied rp in planet_params must be an astropy unit: e.g. 1*u.Unit('R_jup')"
     else: 
-        print('Mass and Radius, or gravity not provided in add_output, and wasn not found in picaso class')
+        print('Mass and Radius, or gravity not provided in add_output, and was not found in picaso class')
     
     #add anything else the user had in planet params
     for ikey in planet_params.keys(): 
@@ -1461,7 +1460,7 @@ class inputs():
 
             if phase!=0: raise Exception("""The default PICASO disk integration 
                 is to use num_tangle=1 and num_gangle>1. This method is faster because 
-                it makes use of symmetry and only computs one fourth of the sphere. 
+                it makes use of symmetry and only computes one fourth of the sphere. 
                 However, it looks like you would like to compute non-zero phase functions. 
                 In this case, we can no longer utilize symmetry in our disk integration. Therefore, 
                 please resubmit phase_angle with num_tange>10 and num_gangle>10.""")
@@ -1973,7 +1972,7 @@ class inputs():
             if 'climate' not in self.inputs['calculation']:
                 raise Exception("`temperature` not specified as a column/key name")
 
-        # if there ar molecules we want to exclude lets make sure they are in list format
+        # if there are molecules we want to exclude lets make sure they are in list format
         if not isinstance(exclude_mol, type(None)):
             if  isinstance(exclude_mol, str):
                 exclude_mol = [exclude_mol]
@@ -2082,13 +2081,14 @@ class inputs():
         
         # Option : Here the user has supplied a chemistry table and we just need to use the chem_interp function to interpolate on that table
         # Notes : This method inherently assumes mh and cto since the loaded table is for a single mh/co
-        if not isinstance(chemistry_table, type(None)): 
+        if not isinstance(chemistry_table, type(None)):
             self.inputs['approx']['chem_method'] = 'chemistry table loaded through opannection'
             if run: self.chem_interp(chemistry_table)
             found_method=True
+
         #Option : No other options so far 
         elif not found_method: 
-            raise Exception(f"A chem option {chem_method} is not valid. Likely you specified method='resrotrebin' in opannection but did not run `atmosphere()` function after inputs_climate.") 
+            raise Exception(f"A chem option {chem_method} is not valid. Likely you specified method='resortrebin' in opannection but did not run `atmosphere()` function after inputs_climate.") 
     
     def volatile_rainout(self,quench_levels,species_to_consider = ['H2O', 'CH4','NH3']):
         """
@@ -3149,7 +3149,7 @@ class inputs():
         Parameters
         ----------
         T : array
-            Temperature Array in Kelbin
+            Temperature Array in Kelvin
         P : array 
             Pressure Array in bars 
         
@@ -3645,7 +3645,7 @@ class inputs():
                 if verbose: print('Switching to zero point secondary_eclipse which is required for reflected light')
                 shift=shift
             else:
-                if verbose: print('The zero_point input will be deprecated in the next PICASO version as it does not work for the reflectd light case. Instead things can be reordered in the phase_curve function in justplotit.phase_curve using reorder_output keyword')                
+                if verbose: print('The zero_point input will be deprecated in the next PICASO version as it does not work for the reflected light case. Instead things can be reordered in the phase_curve function in justplotit.phase_curve using reorder_output keyword')                
                 shift = shift + 180
         elif zero_point == 'secondary_eclipse':
             shift=shift
@@ -4836,6 +4836,7 @@ class inputs():
             =0 for no stellar irradition, 
             =0.5 for full day-night heat redistribution
             =1 for dayside
+            ='analytic' for analytic heat redistribution outlined in Koll (2022) for tidally locked rocky exoplanets
         moistgrad: bool
             Moist adiabatic gradient option
         """
@@ -4904,8 +4905,8 @@ class inputs():
         self.inputs['climate']['beam_profile'] = beam_profile
     
     def climate(self, opacityclass, save_all_profiles = False, with_spec=False,
-        save_all_kzz = False, diseq_chem = False, self_consistent_kzz =True
-        ,verbose=True):#,
+        save_all_kzz = False, diseq_chem = False, self_consistent_kzz =True, 
+        verbose=True):#,
         #chemeq_first=True
        #deprecate: on_fly=False,gases_fly=None, as_dict=True, kz = None, 
         """
@@ -4975,6 +4976,11 @@ class inputs():
         if rfacv==0:compute_reflected=False
         else:compute_reflected=True
         compute_thermal = True #always true 
+
+        # analytic rfacv info for tidally locked rocky exoplanets
+        analytic_rfacv = True if self.inputs['climate']['rfacv'] == 'analytic' else False
+        if rfacv==0 and analytic_rfacv==True: 
+            raise Exception('Analytic heat redistribution is not available if there is no star. Please set up star with jdi.inputs.star() or change rfacv.')
 
         all_profiles= []
         all_opd = []
@@ -5122,7 +5128,7 @@ class inputs():
 
         if not diseq_chem:#chemeq_first: 
             final_conv_flag, pressure, temp, dtdp, nstr_new, flux_net_ir_final, flux_net_v_final, flux_plus_final,   \
-                chem_out,cld_out,  all_profiles,  all_opd,all_kzz=run_chemeq_climate_workflow(self,
+                chem_out,cld_out,  all_profiles,  all_opd,all_kzz, rfacv, all_rfacv = run_chemeq_climate_workflow(self,
                     nofczns,nstr, #tracks convective zones 
                     TEMP1,pressure, #Atmosphere
                     AdiabatBundle, #t_table, p_table, grad, cp, 
@@ -5132,12 +5138,13 @@ class inputs():
                     CloudParameters,#cloudy,cld_species,mh,fsed,beta,param_flag,mieff_dir ,opd_cld_climate,g0_cld_climate,w0_cld_climate, #scattering/cloud properties 
                     save_profile,all_profiles, all_opd,
                     verbose=verbose, moist = moist,
-                    save_kzz=save_all_kzz, self_consistent_kzz=self_consistent_kzz)
+                    save_kzz=save_all_kzz, self_consistent_kzz=self_consistent_kzz,
+                    analytic_rfacv=analytic_rfacv)
 
 
         if diseq_chem: 
             final_conv_flag, pressure, temp, dtdp, nstr_new, flux_net_ir_final, flux_net_v_final, flux_plus_final,   \
-                chem_out,cld_out,  all_profiles,  all_opd, all_kzz = run_diseq_climate_workflow(self, nofczns, nstr, TEMP1, pressure,
+                chem_out,cld_out,  all_profiles,  all_opd, all_kzz, rfacv, all_rfacv = run_diseq_climate_workflow(self, nofczns, nstr, TEMP1, pressure,
                         AdiabatBundle,opacityclass,
                         grav,
                         rfaci,rfacv,tidal,
@@ -5145,7 +5152,8 @@ class inputs():
                         CloudParameters,
                         save_profile,all_profiles,all_opd,
                         verbose=verbose, moist = moist, 
-                        save_kzz=save_all_kzz, self_consistent_kzz=self_consistent_kzz)
+                        save_kzz=save_all_kzz, self_consistent_kzz=self_consistent_kzz,
+                        analytic_rfacv=analytic_rfacv)
         #all output to user
         all_out['pressure'] = pressure
         all_out['temperature'] = temp
@@ -5175,6 +5183,7 @@ class inputs():
             all_out['all_profiles'] = all_profiles 
             all_out['all_opd'] = all_opd
             all_out['all_kzz'] = all_kzz
+            all_out['all_rfacv'] = all_rfacv
 
         if with_spec:
             #these inputs here are just to make sure that we know what we ran as we are directly inputting a dataframe
