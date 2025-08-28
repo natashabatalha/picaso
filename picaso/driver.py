@@ -533,33 +533,6 @@ def PT_handler(pt_config, picaso_class, param_tools): #WIP
         pt_df = temperature_function(**pt_config[type])
     
     return pt_df
-    
-
-def viz(picaso_output): 
-    spectrum_plot_list = []
-
-    if isinstance(picaso_output.get('transit_depth', np.nan), np.ndarray):
-        spectrum_plot_list += [spectrum(picaso_output['wavenumber'], picaso_output['transit_depth'], title='Transit Depth Spectrum')]
-
-    if isinstance(picaso_output.get('albedo', np.nan), np.ndarray):
-        spectrum_plot_list += [spectrum(picaso_output['wavenumber'], picaso_output['albedo'], title='Albedo Spectrum')]
-
-    if isinstance(picaso_output.get('thermal', np.nan), np.ndarray):
-        spectrum_plot_list += [spectrum(picaso_output['wavenumber'], picaso_output['thermal'], title='Thermal Emission Spectrum')]
-
-    if isinstance(picaso_output.get('fpfs_reflected', np.nan), np.ndarray):
-        spectrum_plot_list += [spectrum(picaso_output['wavenumber'], picaso_output['fpfs_reflected'], title='Reflected Light Spectrum')]
-
-    if isinstance(picaso_output.get('fpfs_thermal', np.nan), np.ndarray):
-        spectrum_plot_list += [spectrum(picaso_output['wavenumber'], picaso_output['fpfs_thermal'], title='Relative Thermal Emission Spectrum')]
-
-    if isinstance(picaso_output.get('fpfs_total', np.nan), np.ndarray):
-        spectrum_plot_list += [spectrum(picaso_output['wavenumber'], picaso_output['fpfs_total'], title='Relative Full Spectrum')]
-
-    output_file("spectrum_output.html")
-    show(column(children=spectrum_plot_list, sizing_mode="scale_width"))
-    
-    return spectrum_plot_list
 
 
 def set_dict_value(data, path_string, new_value):
@@ -599,10 +572,6 @@ def set_dict_value(data, path_string, new_value):
                 print(f"Error: The path is invalid. '{path_string}' is not a dictionary or does not exist.")
                 return False
 
-def plot_pt_profile(full_output, **kwargs):
-    fig = pt(full_output, **kwargs)
-    show(fig)
-    return fig
 
 def find_values_for_key(data, target_key):
     """
@@ -638,3 +607,85 @@ def find_values_for_key(data, target_key):
                         results.extend(find_values_for_key(item, target_key))
     
     return results
+
+def viz(picaso_output):
+    figs = []
+
+    #spectra 
+    spectra_figs = plot_spectra(picaso_output)
+    if spectra_figs is not None:
+        figs.extend(spectra_figs)
+
+    #pt + mr in same row on dashboard 
+    pt_fig = plot_pt(picaso_output)
+    mr_fig = plot_mr(picaso_output)
+    if pt_fig is not None and mr_fig is not None:
+        figs.append(row(pt_fig, mr_fig))
+    elif pt_fig is not None:
+        figs.append(pt_fig)
+    elif mr_fig is not None:
+        figs.append(mr_fig)
+
+    #cloud plot 
+    cloud_fig = plot_cloud(picaso_output)
+    if cloud_fig is not None:
+        figs.append(cloud_fig)
+
+    title_div = Div(text="<h1 style='text-align:center;'>Dashboard</h1>")
+    output_file("dashboard.html")
+    show(column(title_div, *figs, sizing_mode='scale_width'))
+
+    return figs
+
+def plot_spectra(picaso_output):
+    figs = []
+
+    if isinstance(picaso_output.get('transit_depth', jpi.np.nan), jpi.np.ndarray):
+        figs.append(jpi.spectrum(picaso_output['wavenumber'],
+                                 picaso_output['transit_depth'],
+                                 title='Transit Depth Spectrum'))
+
+    if isinstance(picaso_output.get('albedo', jpi.np.nan), jpi.np.ndarray):
+        figs.append(jpi.spectrum(picaso_output['wavenumber'],
+                                 picaso_output['albedo'],
+                                 title='Albedo Spectrum'))
+
+    if isinstance(picaso_output.get('thermal', jpi.np.nan), jpi.np.ndarray):
+        figs.append(jpi.spectrum(picaso_output['wavenumber'],
+                                 picaso_output['thermal'],
+                                 title='Thermal Emission Spectrum'))
+
+    if isinstance(picaso_output.get('fpfs_reflected', jpi.np.nan), jpi.np.ndarray):
+        figs.append(jpi.spectrum(picaso_output['wavenumber'],
+                                 picaso_output['fpfs_reflected'],
+                                 title='Reflected Light Spectrum'))
+
+    if isinstance(picaso_output.get('fpfs_thermal', jpi.np.nan), jpi.np.ndarray):
+        figs.append(jpi.spectrum(picaso_output['wavenumber'],
+                                 picaso_output['fpfs_thermal'],
+                                 title='Relative Thermal Emission Spectrum'))
+
+    if isinstance(picaso_output.get('fpfs_total', jpi.np.nan), jpi.np.ndarray):
+        figs.append(jpi.spectrum(picaso_output['wavenumber'],
+                                 picaso_output['fpfs_total'],
+                                 title='Relative Full Spectrum'))
+
+
+    return figs if figs else None
+
+
+
+def plot_pt(picaso_output):
+    full_output = picaso_output['full_output']
+    fig = jpi.pt(full_output)
+    return fig
+
+def plot_cloud(picaso_output):
+    full_output = picaso_output['full_output']
+    fig = jpi.cloud(full_output)
+    return fig
+
+def plot_mr(picaso_output):
+    full_output = picaso_output['full_output']
+    fig = jpi.mixing_ratio(full_output, plot_type='bokeh', limit= 10) #limit controls the amount of outputs for the plot
+    return fig
