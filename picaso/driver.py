@@ -5,6 +5,7 @@ from .retrieval import Parameterize_DEPRECATE
 #import picaso.justdoit as jdi
 #import picaso.justplotit as jpi
 import tomllib 
+import toml
 import dynesty
 from collections.abc import Mapping
 from scipy import stats
@@ -285,6 +286,12 @@ def convolver(newx, x, y):
 
 def retrieve(config, param_tools):
     print('Running retrieval...')
+
+    # copy input toml into output folder for reproducibility
+    output_file_name = config['InputOutput']['retrieval_output']+"/inputs.toml"
+    with open(output_file_name, "w") as toml_file:
+        toml.dump(config, toml_file)
+
     OPA = opannection(
         filename_db=config['OpticalProperties']['opacity_files'], #database(s)
         method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
