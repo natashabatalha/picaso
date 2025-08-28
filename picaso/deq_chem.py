@@ -387,26 +387,10 @@ def do_mixing_mono_gasesfly(kappas_mono,mixes,gauss_pts,gauss_wts):
     Function which mixes all the gases together at a single wavenumber bin
     Parameters
     ----------
-    kappa1_mono : array
-        K-coefficients of gas mixture 1
-    kappa2_mono : array 
-        K-coefficients of gas mixture 2
-    kappa3_mono : array 
-        K-coefficients of gas mixture 3
-    kappa4_mono : array
-        K-coefficients of gas mixture 4
-    kappa5_mono : array
-        K-coefficients of gas mixture 5
-    mix1 : array
-        mixing ratios of gas mixture 1
-    mix2 : array 
-        mixing ratios of gas mixture 2
-    mix3 : array 
-        mixing ratios of gas mixture 3
-    mix4 : array
-        mixing ratios of gas mixture 4
-    mix5 : array
-        mixing ratios of gas mixture 5
+    kappas_mono : list of arrays
+        K-coefficients of gas mixtures
+    mixes : list of arrays
+        mixing ratios of gas mixtures
     gauss_pts : array
         Gauss points of the K-coefficients
     gauss_wts : array
