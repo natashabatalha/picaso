@@ -158,7 +158,7 @@ def hypercube(u, fitpars):
             x[i]=10**x[i]  
     return x
 
-def MODEL(cube, fitpars, config, OPA, param_tools, DATA_DICT):
+def MODEL(cube, fitpars, config, OPA, param_tools, DATA_DICT, retrieval=True):
     """
     Generate model spectra for parameter sets.
 
@@ -193,7 +193,10 @@ def MODEL(cube, fitpars, config, OPA, param_tools, DATA_DICT):
     # initialize storage
     y_model = {key: [] for key in config['InputOutput']['observation_data']}
 
-    for row in cube:
+    if not retrieval:
+        profiles={}                                   
+
+    for j,row in enumerate(cube):
         # update parameters
         for i, key in enumerate(fitpars.keys()):
             if not (key.startswith("offset") or key.startswith("scaling") or key.startswith("err_inf")):
@@ -217,6 +220,9 @@ def MODEL(cube, fitpars, config, OPA, param_tools, DATA_DICT):
             _, rebinned = mean_regrid(resultx, resulty, newx=xdata)
             y_model[obs_key].append(rebinned)
 
+        if not retrieval:
+            profiles[j]=picaso_class.inputs['atmosphere']['profile']
+
     # stack results into arrays
     for obs_key in y_model:
         y_model[obs_key] = np.vstack(y_model[obs_key])
@@ -224,7 +230,10 @@ def MODEL(cube, fitpars, config, OPA, param_tools, DATA_DICT):
         if n_samples == 1:
             y_model[obs_key] = y_model[obs_key][0]
 
-    return y_model
+    if retrieval:
+        return y_model
+    else:
+        return y_model, profiles
 
 def log_likelihood(cube, fitpars, config, OPA, DATA_DICT, param_tools): 
     y_model_dict = MODEL(cube, fitpars, config, OPA, param_tools, DATA_DICT)
@@ -359,9 +368,9 @@ def check_model_samples(config, N=100, sampler=None):
 
     DATA_DICT = get_data(config)
 
-    models = MODEL(thetas[:N], fitpars, config, OPA, param_tools, DATA_DICT)
+    models, profiles = MODEL(thetas[:N], fitpars, config, OPA, param_tools, DATA_DICT, retrieval=False)
 
-    return models
+    return models, profiles
 
 def setup_spectrum_class(config, opacity , param_tools ):
 
