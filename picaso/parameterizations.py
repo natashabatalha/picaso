@@ -361,6 +361,7 @@ class Parameterize():
                     mixingratio_df[i] = value
                     
                 else: #each molecule input manually
+                    # vmr = self.vmr_var(species[i])
                     values=[]
                     for j,key in enumerate(species[i].keys()):
                         if key.startswith('value'):
@@ -401,6 +402,10 @@ class Parameterize():
             if len(species['background']['gases'])==1: #1 background gas
                 mixingratio_df[species['background']['gases'][0]] = total_sum_of_background
         return mixingratio_df
+
+    def vmr_var(self, specie):
+
+        return vmr
 
     def chem_visscher(self,cto_absolute, log_mh): 
         self.picaso.chemeq_visscher_2121(cto_absolute, log_mh)
@@ -496,7 +501,7 @@ class Parameterize():
         Temperature per layer
         """
         if isinstance(P_knots, dict):
-            P_knots = list(P_knots.values())
+            P_knots = [P_knots[k]["value"] for k in sorted(P_knots.keys())]
         
         if isinstance(T_knots, dict):
             T_knots = [T_knots[k]["value"] for k in sorted(T_knots.keys())]
@@ -528,13 +533,38 @@ class Parameterize():
             temp_by_level = interpolator(np.log10(pressure))
         elif getattr(interpolate, interpolation, np.nan)!=np.nan:
             interpolator = getattr(interpolate, interpolation)
-            interpolator(np.log10(P_knots), T_knots, *scipy_interpolate_kwargs)
+            temp_by_level = interpolator(np.log10(P_knots), T_knots, *scipy_interpolate_kwargs)
         else:
             raise Exception(f'Unknown interpolation method \'{interpolation}\'')
 
         #check that T is strictly positive everywhere
 
         return pd.DataFrame(dict(pressure=pressure, temperature=temp_by_level))
+
+    def pt_zj24(self, pressures, dTs, Tbottom):
+        """"
+        Zhang+24 profile (fits dlogT/dlogP instead of T)
+        """
+        if isinstance(pressures, dict):
+            pressures = [pressures[k]["value"] for k in sorted(pressures.keys())]
+
+        if isinstance(dTs, dict):
+            dTs = [dTs[k]["value"] for k in sorted(dTs.keys())]
+
+        pressure = self.pressure_level
+        nlevel = len(pressure)
+
+        T = np.zeros(nlevel)
+
+        interpolator = interpolate.interp1d(np.log(pressures), dTs, kind='quadratic', bounds_error=False, fill_value='extrapolate')
+        dT_by_level = interpolator(np.log(pressure))
+
+        T = np.zeros(nlevel)
+        T[0] = Tbottom['value']
+        for i in range(1,nlevel):
+            T[i]=np.exp( np.log(T[i-1]) + (np.log(pressure[i])-np.log(pressure[i-1])) * dT_by_level[i-1] )
+
+        return pd.DataFrame(dict(pressure=pressure, temperature=T))
 
     def pt_guillot(self, Teq, T_int, logg1, logKir, alpha):
         """
