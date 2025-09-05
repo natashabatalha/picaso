@@ -4208,7 +4208,7 @@ class inputs():
         mh=1, mmw=2.2, kz_min=1e5, sig=2,
         Teff=None, alpha_pressure=None, supsat=0,
         gas_mmr=None, do_virtual=False, verbose=True,do_holes=False,fhole=None,fthin_cld=None,
-        aggregates=False, Df=None, N_mon=None, r_mon=None, k0=0): 
+        aggregates=False, Df=None, N_mon=None, r_mon=None, k0=0,latent_heat=False): 
         """
         Runs virga cloud code based on the PT and Kzz profiles 
         that have been added to inptus class.
@@ -4301,7 +4301,7 @@ class inputs():
                             Teff=Teff, alpha_pressure=alpha_pressure, supsat=supsat,
                             gas_mmr=gas_mmr, do_virtual=do_virtual, verbose=verbose,
                             do_holes=do_holes, fthin_cld=fthin_cld,fhole=fhole,
-                            aggregates=aggregates, Df=Df, N_mon=N_mon, r_mon=r_mon, k0=k0)
+                            aggregates=aggregates, Df=Df, N_mon=N_mon, r_mon=r_mon, k0=k0,latent_heat=latent_heat)
             #turn on clouds for this calculation
             self.inputs['climate']['cloudy'] = True
             #passes all the virga params 
@@ -4323,7 +4323,7 @@ class inputs():
             cloud_p.gravity(gravity=self.inputs['planet']['gravity'],
                     gravity_unit=u.Unit(self.inputs['planet']['gravity_unit']))#
             # print('virga temp:', df['temperatures'].values)
-            cloud_p.ptk(df =df, kz_min = kz_min, latent_heat = True, Teff = Teff, alpha_pressure = alpha_pressure)
+            cloud_p.ptk(df =df, kz_min = kz_min,  Teff = Teff, alpha_pressure = alpha_pressure,latent_heat = latent_heat)#
             out = vj.compute(cloud_p, as_dict=True,
                             directory=directory, do_virtual=do_virtual)
             opd, w0, g0 = out['opd_per_layer'],out['single_scattering'],out['asymmetry']
