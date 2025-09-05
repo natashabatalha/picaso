@@ -4207,7 +4207,8 @@ class inputs():
         fsed=1, b=1, eps=1e-2, param='const', 
         mh=1, mmw=2.2, kz_min=1e5, sig=2,
         Teff=None, alpha_pressure=None, supsat=0,
-        gas_mmr=None, do_virtual=False, verbose=True,do_holes=False,fhole=None,fthin_cld=None): 
+        gas_mmr=None, do_virtual=False, verbose=True,do_holes=False,fhole=None,fthin_cld=None,
+        aggregates=False, Df=None, N_mon=None, r_mon=None, k0=0): 
         """
         Runs virga cloud code based on the PT and Kzz profiles 
         that have been added to inptus class.
@@ -4254,6 +4255,27 @@ class inputs():
             Fraction of the clear hole such that spec = (1-fhole) * cloudy_spec + fhole * clear_spec
         fthin_cld : float
             Scales the hole (the clear part) such that fthin_cld=0 would simply be a fully clear patch
+        aggregates : bool 
+            Default=False, Turns on virga v2 capability to do aggregates. This requires 
+            the v2 aggregates mieff files. users should read virga documention on aggregates before 
+            turning this on. 
+        Df : float, optional
+            only used if aggregate = True.
+            The fractal dimension of an aggregate particle. 
+            Low Df are highly fractal long, lacy chains; large Df are more compact. Df = 3 is a perfect compact sphere.
+        N_mon : float, optional
+            only used if aggregate = True. 
+            The number of monomers that make up the aggregate. Either this OR r_mon should be provided (but not both).
+        r_mon : float, optional (units: cm)
+            only used if aggregate = True. 
+            The size of the monomer radii (sub-particles) that make up the aggregate. Either this OR N_mon should be 
+            provided (but not both).
+        k0 : float, optional (units: None)
+            only used if aggregate = True. 
+            Default = 0, where it will then be calculated in the vfall equation using Tazaki (2021) Eq 2. k0 can also be prescribed by user, 
+            but with a warning that when r_mon is fixed, unless d_f = 1 at r= r_mon, the dynamics may not be consistent between the boundary 
+            when spheres grow large enough to become aggregates (this applies only when r_mon is fixed. If N_mon is fixed instead, any value of k0 is fine). 
+
         """
         #stages inputs for cloudy run and also get kwargs for clouds function which we run at the end of this 
         clouds_kwargs=dict(do_holes=do_holes,fhole=fhole,fthin_cld=fthin_cld)
@@ -4272,22 +4294,24 @@ class inputs():
         
         #if this is a climate run lets make sure we have all the right inputs set 
         if 'climate' in self.inputs['calculation']:
-            self.inputs['climate']['cloudy'] = True
+            #here are all the virga kwargs 
             virga_kwargs = dict(condensates=condensates, directory=directory,
-                                                        fsed=fsed, b=b, eps=eps, param=param, 
-                                                        mh=mh, mmw=mmw, kz_min=kz_min, sig=sig,
-                                                        Teff=Teff, alpha_pressure=alpha_pressure, supsat=supsat,
-                                                        gas_mmr=gas_mmr, do_virtual=do_virtual, verbose=verbose,
-                                                        do_holes=do_holes, fthin_cld=fthin_cld,fhole=fhole)
-
+                            fsed=fsed, b=b, eps=eps, param=param, 
+                            mh=mh, mmw=mmw, kz_min=kz_min, sig=sig,
+                            Teff=Teff, alpha_pressure=alpha_pressure, supsat=supsat,
+                            gas_mmr=gas_mmr, do_virtual=do_virtual, verbose=verbose,
+                            do_holes=do_holes, fthin_cld=fthin_cld,fhole=fhole,
+                            aggregates=aggregates, Df=Df, N_mon=N_mon, r_mon=r_mon, k0=k0)
+            #turn on clouds for this calculation
+            self.inputs['climate']['cloudy'] = True
             #passes all the virga params 
             self.inputs['climate']['virga_kwargs'] = virga_kwargs
         
         #if we are all good for a run, run virga and produce output
         if run:     
-            cloud_p = vj.Atmosphere(condensates,fsed=fsed,mh=mh,
-                    mmw = mmw, sig =sig, b=b, eps=eps, param=param, supsat=supsat,
-                    gas_mmr=gas_mmr, verbose=verbose) 
+            cloud_p = vj.Atmosphere(condensates, fsed=fsed, b=b, eps=eps, mh=mh, mmw=mmw, sig=sig,
+                    param=param, verbose=verbose, supsat=supsat, gas_mmr=gas_mmr,
+                    aggregates=aggregates, Df=Df, N_mon=N_mon, r_mon=r_mon,k0=k0) 
             if 'kz' not in self.inputs['atmosphere']['profile'].keys():
                 raise Exception ("Must supply kz to atmosphere/chemistry DataFrame, \
                     if running `virga` through `picaso`. This should go in the \
