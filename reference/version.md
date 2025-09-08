@@ -1,3 +1,8 @@
+Version 3.4
+-----------
+- updates requirement to virga v2 to include ability to do fractals from virga 
+- minor hot fix for sql queries
+
 Version 3.3
 -----------
 - Reflected light phase curves (Hamill et al. 2024) 
