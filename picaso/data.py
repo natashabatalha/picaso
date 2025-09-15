@@ -128,8 +128,13 @@ def get_data_config():
     'virga_mieff':{
         'default':{
             'url':{'virga.zip':'https://zenodo.org/records/5179187/files/virga.zip'},
-            'description':'Virga refractive index and Mie files on standard 196 grid',
+            'description':'Virga refractive index and Mie files on standard 196 grid. Spherical particles only.',
             'default_destination':os.path.join(__refdata__, 'virga')
+            }, 
+            'aggregates':{
+                'url':{'VIRGA_2_mieff_files.zip':'https://zenodo.org/records/16581692/files/VIRGA_2_mieff_files.zip'},
+                'description':'Virga refractive index and Mie files on a modified 189 grid for the v2 aggregates capabilities. Spheres + aggregates.',
+                'default_destination':os.path.join(__refdata__, 'virga_aggregates')                
             }
         },
     'sonora_grids':{
