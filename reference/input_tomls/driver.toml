@@ -4,6 +4,9 @@ calc_type='retrieval'#spectrum climate or retrieval
 
 [InputOutput]
 observation_data = 'path/to/spectrum.nc' #see docs on required data formats
+coord_key = 'central_wavelength' 
+y_key = 'transit_depth'
+error_key = 'transit_depth_error'
 retrieval_output = 'path/to/output'
 spectrum_output = 'path/to/output.nc'
 
@@ -96,7 +99,7 @@ method='free' #options: 'visscher', 'free', 'userfile'; delete this block if alr
 
 [chemistry.free]#note all molecules must be case sensitive: e.g., TiO. Isotopologues should be specified with dashes e.g.,: 12-CO
 H2O={value=1e-3,unit='v/v'}
-CH4={value=4e-4,unit='v/v', pressures=[1e-2],pressure_unit='bar'}
+CH4={value=[1e-4,1e-3],unit='v/v', pressures=[1e-2],pressure_unit='bar'}
 NH3={value=1e-5,unit='v/v'}
 background={gases=['H2','He'],fraction=5.667} # optional 
 
