@@ -1,5 +1,17 @@
-# --- TODO SECTION ----------------- #
+##################################################
+# BEFORE YOU GO ON ------------------------------#
+# you must set these paths with your own paths !!!
+##################################################
+# run UI locally with: streamlit run driver_ui.py
 
+path_to_opacity_DB = '/Users/sjanson/Desktop/code/picaso/reference/opacities/opacities.db'
+path_to_virga_mieff = '/Users/sjanson/Desktop/code/picaso/reference/virga/'
+
+# if you have to manually specify paths for env vars, change below; else comment out the os.environ commands below
+picaso_refdata_env_var = "/Users/sjanson/Desktop/code/picaso/reference"
+pysyn_cdbs_env_var = '/Users/sjanson/Desktop/code/picaso/reference/grp/redcat/trds'
+
+# --- TODO SECTION ----------------- #
 # TODO change all paths to os dynamic finds instead of hardcoded paths
 # add validation & options for users to find necessary data /specify datapaths
 # TODO options should be what files users have in their directories and or rendered off of driver.toml
@@ -11,9 +23,8 @@ import pandas as pd
 import os
 import toml
 
-# PATHS AND ENV VARIABLES --> need to change for users
-os.environ['picaso_refdata'] = "/Users/sjanson/Desktop/code/picaso/reference"
-os.environ['PYSYN_CDBS'] = '/Users/sjanson/Desktop/code/picaso/reference/grp/redcat/trds'
+os.environ['picaso_refdata'] = picaso_refdata_env_var
+os.environ['PYSYN_CDBS'] = pysyn_cdbs_env_var
 
 import picaso.driver as go
 from picaso import justdoit as jdi 
@@ -32,16 +43,16 @@ config = {'observation_type': observation_type or 'reflected',
     'irradiated': False, 
     'calc_type': None, 
     'InputOutput': {
-        'observation_data': [
+        'observation_data': [ # not used yet
             '/Users/sjanson/Desktop/code/picaso/docs/notebooks/D_climate/spectra_logzz_9.0_teff_400.0_grav_1000.0_mh_0.0_co_1.0.nc'], 
             'retrieval_output': '/Users/sjanson/Desktop/code/picaso/docs/notebooks/J_driver_WIP/output', 
             'spectrum_output': '/Users/sjanson/Desktop/code/picaso/docs/notebooks/J_driver_WIP/output'
         }, 
     'OpticalProperties': {
-        'opacity_files': '/Users/sjanson/Desktop/code/picaso/reference/opacities/opacities.db', 
+        'opacity_files': path_to_opacity_DB, 
         'opacity_method': 'resampled', 
         'opacity_kwargs': {}, 
-        'virga_mieff': '/Users/sjanson/Desktop/code/picaso/reference/virga/'
+        'virga_mieff': path_to_virga_mieff
     },
     'object': {
         'radius': {'value': 1.2, 'unit': 'Rjup'}, 
@@ -65,7 +76,7 @@ config = {'observation_type': observation_type or 'reflected',
     }, 
     'temperature': {
         'profile': 'knots',
-        'userfile': {'filename': '/Users/sjanson/Desktop/code/picaso/reference/base_cases/HJ.pt', 'pd_kwargs': {'sep': ' '}}, 
+        'userfile': {'filename': '/Users/sjanson/Desktop/code/picaso/reference/base_cases/HJ.pt', 'pd_kwargs': {'sep': ' '}}, # not used yet
         'pressure': {'reference': {'value': 10.0, 'unit': 'bar'}, 'min': {'value': 1e-05, 'unit': 'bar'}, 'max': {'value': 1000.0, 'unit': 'bar'}, 'nlevel': 100, 'spacing': 'log'}, 
         'isothermal': {'T': 500}, 
         'knots': {'P_knots': [100.0, 10.0, 1.0, 0.1, 0.001, 0.0001], 'T_knots': [1000, 550, 300, 200, 100, 50], 'interpolation': 'brewster', 'scipy_interpolate_kwargs': {}}, 
@@ -83,7 +94,7 @@ config = {'observation_type': observation_type or 'reflected',
             'background': {'gases': ['H2', 'He'], 'fraction': 5.667}
         }, 
         'visscher': {'cto_absolute': 0.55, 'log_mh': 0}, 
-        'userfile': {'filename': '/Users/sjanson/Desktop/code/picaso/reference/base_cases/HJ.pt', 'pd_kwargs': {'sep': ' '}}
+        'userfile': {'filename': '/Users/sjanson/Desktop/code/picaso/reference/base_cases/HJ.pt', 'pd_kwargs': {'sep': ' '}} # not used yet
     }, 
     'clouds': {
         'cloud1_type': 'brewster_mie', 
