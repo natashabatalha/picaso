@@ -246,6 +246,8 @@ if observation_type:
         "How to model chemistry",
         ('free', 'visscher'), index=None # userfile, fast_chem, photo_chem
     )
+
+    # note: if added, empty rows can show up if navigate away
     if config['chemistry']['method'] == 'free':
         gridcol, buttoncol = st.columns([6,1])
         with gridcol:
@@ -314,6 +316,8 @@ if config['calc_type'] =='spectrum' and st.button(f'Run {config['calc_type']}'):
     # TODO: could add w/o molecule functionality & photon attenuation depth, heatmap 
 
 
+# TODO: figure out better place to put this
+# TODO: test downloaded toml file more
 st.download_button(
     label="Download current config",
     data=toml.dumps(config),
