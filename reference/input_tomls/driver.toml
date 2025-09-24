@@ -1,18 +1,17 @@
 observation_type = 'thermal' # options: 'transmission', 'thermal', 'reflected' or a combo e.g. transmission+thermal
 irradiated=false #options: true or false (if true, user needs to input star properties)
-calc_type='spectrum' #'retrieval'#spectrum climate or retrieval
+calc_type='retrieval'#spectrum climate or retrieval
 
 [InputOutput]
-observation_data = ['/Users/sjanson/Desktop/code/picaso/docs/notebooks/D_climate/spectra_logzz_9.0_teff_400.0_grav_1000.0_mh_0.0_co_1.0.nc']
-#see docs on required data formats
-retrieval_output = '/Users/sjanson/Desktop/code/picaso/docs/notebooks/J_driver_WIP/output'
-spectrum_output = '/Users/sjanson/Desktop/code/picaso/docs/notebooks/J_driver_WIP/output'
+observation_data = 'path/to/spectrum.nc' #see docs on required data formats
+retrieval_output = 'path/to/output'
+spectrum_output = 'path/to/output.nc'
 
 [OpticalProperties]
-opacity_files = '/Users/sjanson/Desktop/code/picaso/reference/opacities/opacities.db' # single db or list of opacity dbs 
+opacity_files = '/Users/floppityflappity/Work/prewster/picaso/reference/opacities/opacities.db' # single db or list of opacity dbs 
 opacity_method = 'resampled' #list of options: resampled, preweighted, resortrebin
 opacity_kwargs = {} # any other inputs you want to give to justodit.opannection()
-virga_mieff = '/Users/sjanson/Desktop/code/picaso/reference/virga/' # any other inputs you want to give to justodit.opannection()
+virga_mieff = '/Users/floppityflappity/Work/prewster/picaso/reference/virga/' # any other inputs you want to give to justodit.opannection()
 
 [object]
 radius    = {value=1.2, unit='Rjup'}
@@ -34,7 +33,7 @@ type='grid' #'grid' or 'userfile'
 logg  = 4
 teff  = 5400
 feh   = 0
-database = 'phoenix'# options: phoenix, ck04models, or other pysynphot databases
+database  ='phoenix'# options: phoenix, ck04models, or other pysynphot databases
 
 [star.userfile]
 filename = '' # simple two column format no header column1=wavelength, column2=flux
@@ -45,7 +44,7 @@ f_unit = ''
 profile = 'knots' #options: 'userfile','isothermal', 'knots', 'madhu_seager_09_inversion','madhu_seager_09_noinversion' ,'guillot', 'zj_24', 'molliere_20', 'Kitzman_20', 'sonora_bobcat'...
 
 [temperature.userfile]
-filename='/Users/sjanson/Desktop/code/picaso/reference/base_cases/HJ.pt' #columns names: temperature,pressure # units:Kelvin,bar (can also include chemistry in the same file)
+filename='/Users/nbatalh1/Documents/codes/PICASO/picaso/reference/base_cases/HJ.pt' #columns names: temperature,pressure # units:Kelvin,bar (can also include chemistry in the same file)
 pd_kwargs={sep=' '} #kwargs for pandas.read_csv
 
 [temperature.pressure]
@@ -106,7 +105,7 @@ cto_absolute=0.55
 log_mh=0
 
 [chemistry.userfile]
-filename='/Users/sjanson/Desktop/code/picaso/reference/base_cases/HJ.pt'
+filename='/Users/nbatalh1/Documents/codes/PICASO/picaso/reference/base_cases/HJ.pt'
 pd_kwargs={sep=' '}
 
 [clouds]
@@ -120,7 +119,7 @@ g0 = 0 #asymmetry
 opd = 10 #cloud optical depth per layer
 
 [clouds.cloud1.flex_fsed]
-condensate='Al2O3'#'SiO2'
+#condensate='SiO2'
 base_pressure=1 # {value=1 , unit='bar'}
 ndz=2 #arbitrary scaling for setting max optical depth of the cloud
 fsed=1
@@ -130,7 +129,7 @@ hansen_kwargs = {b=1 , lograd = -4}
 
 [clouds.cloud1.virga]
 mh = 1 
-condensates=['Al2O3']#['SiO2','Al2O3']
+#condensates=['SiO2','Al2O3']
 fsed=1
 kzz=1e9 # {value=1e9,unit='cm**2/s'}
 mmw = 2.2
@@ -192,13 +191,6 @@ log=true
 #min=-2
 #max=4
 #log=true
-
-[retrieval.sampler]
-code='dynesty'#options: ultranest, emcee, pymultinest, dynesty
-sampler_kwargs={live_points = 100}
-nlive=100
-resume=false
-
 
 [sampler]
 code='dynesty'#options: ultranest, emcee, pymultinest, dynesty
