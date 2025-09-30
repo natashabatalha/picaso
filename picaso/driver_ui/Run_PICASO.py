@@ -18,7 +18,8 @@ pysyn_cdbs_env_var = '/Users/sjanson/Desktop/code/picaso/reference/grp/redcat/tr
 # add other unit options & validation
 # TODO add docstrings to all functions
 # TODO handle duplicates if dup pressure/chem from a userfile
-
+# TODO remove index from editable df or minimize amap
+# TODO --> assumes options for calc and observation
 #---IMPORTS--------------------------------#
 import pandas as pd
 import os
@@ -87,6 +88,18 @@ def format_config_section_for_df(obj):
                     key = f'{attr} ({obj[attr]['unit']})'
             pass_to_df[key] = values
     return pass_to_df
+
+def write_results_to_config(grid, base):
+    for item in grid:
+        if ' (' in item:
+            key, unit = item.split()
+            if key.lower() in base and grid[item][0]:
+                base[key.lower()]['value'] = grid[item][0]
+        elif isinstance(base[item], list):
+            base[item] = [float(ele) for ele in grid[item][0]]
+        elif not isinstance(base[item], dict):
+            # ignore dictionaries that we didn't alter
+            base[item] = grid[item][0]
 
 # ---------------------------------------------- #
 # -- BEGINNING OF APP -------------------------- #
@@ -161,11 +174,7 @@ if observation_type:
     object_df = pd.DataFrame([formatted_obj])
     object_grid = st.data_editor(object_df)
     # TODO: users should be able to leave gravity or M/R blank
-    # updating config file
-    for item in object_grid:
-        key, unit = item.split()
-        if key.lower() in config['object'] and object_grid[item][0]:
-            config['object'][key.lower()]['value'] = object_grid[item][0]
+    write_results_to_config(object_grid, config['object'])
 
 
     # TODO switch to degrees/ give flexibility between radians and degrees
@@ -173,13 +182,20 @@ if observation_type:
 
     # ATMOSPHERIC VARIABLES ---------------------- #
     st.subheader("Atmospheric Variables")
-    # TODO add section for pressure
-    temperature_options = ['isothermal'] if not 'options' in config['temperature'] else [option for option in config['temperature']['options'] if option in config['temperature']]
 
+    # PRESSURE
+    st.text('Configure pressure (can ignore if using a userfile for temperature)')
+    formatted_obj = format_config_section_for_df(config['temperature']['pressure'])
+    pressure_df = pd.DataFrame([formatted_obj])
+    pressure_grid = st.data_editor(pressure_df)
+
+    write_results_to_config(pressure_grid, config['temperature']['pressure'])
+
+    # TEMPERATURE
+    # TODO: hide until pressure is configured...unless userfile...
+    temperature_options = ['isothermal'] if not 'options' in config['temperature'] else [option for option in config['temperature']['options'] if option in config['temperature']]
     config['temperature']['profile'] = st.selectbox(
-        "Select a temperature profile",
-        temperature_options,
-        index=None 
+        "Select a temperature profile", temperature_options, index=None 
     )
     temp_profile = config['temperature']['profile']
     if temp_profile:
@@ -194,17 +210,7 @@ if observation_type:
                 pure_attr = attr.split('_')[0]
                 config['temperature'][temp_profile][pure_attr] = st.selectbox(f"{temp_profile.capitalize()} {pure_attr.capitalize()} Options", config['temperature'][temp_profile][attr], index=None)
         
-        # write results to config
-        for item in temp_grid:
-            if ' (' in item:
-                key, unit = item.split()
-                if key.lower() in config['temperature'][temp_profile] and temp_grid[item][0]:
-                    config['temperature'][temp_profile][key.lower()]['value'] = temp_grid[item][0]
-            elif isinstance(config['temperature'][temp_profile][item], list):
-                config['temperature'][temp_profile][item] = [float(ele) for ele in temp_grid[item][0]]
-            elif not isinstance(config['temperature'][temp_profile][item], dict):
-                # ignore dictionaries that we didn't alter
-                config['temperature'][temp_profile][item] = temp_grid[item][0]
+        write_results_to_config(temp_grid, config['temperature'][temp_profile])
 
     # see PT graph
     if st.button('See Pressure-Temperature graph'):
@@ -219,13 +225,26 @@ if observation_type:
     )
 
     # TODO num_rows="dynamic" for free & those can be empty w/o problem
-    # TODO how to handle free
-    if config['chemistry']['method']:
-        formatted_obj = format_config_section_for_df(config['chemistry'][f'{config['chemistry']['method']}'])
-        chem_df = pd.DataFrame([formatted_obj])
-        chem_grid = st.data_editor(chem_df)
+    chem_method = config['chemistry']['method']
+    if chem_method:
+        if 'free' in chem_method:
+            molecules = [mole for mole in config['chemistry'][chem_method] if mole != 'background']
+            mole_unit = config['chemistry'][chem_method][molecules[0]]['unit']
+            
+            # pressure_unit = config['']
+            # for now must specify free.. or need some sort of pattern since the moleculues need special rendering
+            # assuming all moleculues have the same unit
+            df = pd.DataFrame({
+                f'Molecule ({mole_unit})': molecules,
+                'Values': [config['chemistry'][chem_method][mole]['value'] for mole in molecules],
+                'Pressures': [['0.1'], ['1e-2'], ['0.1']],
+            })
+        else:
+            formatted_obj = format_config_section_for_df(config['chemistry'][f'{config['chemistry']['method']}'])
+            chem_df = pd.DataFrame([formatted_obj])
+            chem_grid = st.data_editor(chem_df)
 
-    
+
     # if config['chemistry']['method'] == 'free':
     #     gridcol, buttoncol = st.columns([6,1])
     #     with gridcol:
