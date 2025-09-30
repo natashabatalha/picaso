@@ -39,7 +39,6 @@ class Parameterize():
 
     def add_class(self,picaso_inputs_class):
         """Add a picaso class that loads in the pressure grid (at the very least)
-
         Example
         -------
         start = jdi.inputs()
@@ -360,25 +359,29 @@ class Parameterize():
                 if value is not None: #abundance of the chemistry input per molecule
                     mixingratio_df[i] = value
                     
-                else: #each molecule input manually
-                    # vmr = self.vmr_var(species[i])
-                    values=[]
-                    for j,key in enumerate(species[i].keys()):
-                        if key.startswith('value'):
-                            values.append(species[i][key].get('value')) 
-                    pressures = species[i]['p_switch'].get('value') 
-                    pressure_unit= species[i]['p_switch'].get('unit') 
+                else: #each molecule input manually                    
+                    values =  species[i].get('values') 
+                    pressures = species[i].get('pressures') 
+                    pressure_unit= species[i].get('pressure_unit') 
                     pressure_bar = (np.array(pressures)*u.Unit(pressure_unit)).to(u.bar).value 
                     
                     #make sure its in ascending pressure order 
-                    # first = pressure_bar[0] 
-                    # last = pressure_bar[-1] 
+                    first = pressure_bar[0] 
+                    last = pressure_bar[-1] 
 
-                    # #flip if the ordering has been input incorrectly
-                    # if first > last : 
-                    #     pressure_bar=pressure_bar[::-1]
-                    #     values=values[::-1]
-
+                    #flip if the ordering has been input incorrectly
+                    if first > last : 
+                        pressure_bar=pressure_bar[::-1]
+                        values=values[::-1]
+                    # vmr = self.vmr_var(species[i])
+                    # values=[]
+                    # for j,key in enumerate(species[i].keys()):
+                    #     if key.startswith('value'):
+                    #         values.append(species[i][key].get('value')) 
+                    # pressures = species[i]['p_switch'].get('value') 
+                    # pressure_unit= species[i]['p_switch'].get('unit') 
+                    # pressure_bar = (np.array(pressures)*u.Unit(pressure_unit)).to(u.bar).value 
+                    
                     vmr = values[0] + 0*pressure_grid
                     # need to finish the ability to input free chem here 
                     for ii,ivmr in enumerate(values[1:]):
@@ -489,7 +492,7 @@ class Parameterize():
 
         return pd.DataFrame(dict(pressure=pressure, temperature=temp_by_level))
     
-    def pt_knots(self,  P_knots, T_knots, interpolation='brewster',scipy_interpolate_kwargs={}):
+    def pt_knots(self,  P_knots, T_knots, interpolation='brewster',scipy_interpolate_kwargs={}, **kwargs):
         """"
         Knot-based temperature profile. Implements different types of interpolation.
 
