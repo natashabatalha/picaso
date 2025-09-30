@@ -138,10 +138,9 @@ elif config['calc_type'] != None:
 # configure heading
 if observation_type:
     st.divider()
-if observation_type == 'reflected':
-    st.header('Reflected Exoplanet Spectrum Config')
-elif observation_type == 'thermal':
-    st.header('Brown Dwarf Thermal Emission Spectrum Config')
+    st.header(f'{observation_type.capitalize()} Spectrum Config')
+
+if observation_type == 'thermal':
     choice = st.selectbox("Do your want your object to be irradiated?", ('Yes', 'No'), index=None)
     config['irradiated'] = choice == 'Yes'
 
@@ -214,7 +213,6 @@ if observation_type:
 
     # see PT graph
     if st.button('See Pressure-Temperature graph'):
-        st.write(config['temperature'][temp_profile])
         data_class = run_spectrum_class('temperature')
         streamlit_bokeh(jpi.pt({'layer': data_class.inputs['atmosphere']['profile']}))
 
@@ -224,61 +222,48 @@ if observation_type:
         "How to model chemistry", chemistry_options, index=None
     )
 
-    # TODO num_rows="dynamic" for free & those can be empty w/o problem
+    # TODO bar unit is hardcoded
     chem_method = config['chemistry']['method']
     if chem_method:
         if 'free' in chem_method:
             molecules = [mole for mole in config['chemistry'][chem_method] if mole != 'background']
             mole_unit = config['chemistry'][chem_method][molecules[0]]['unit']
-            
-            # pressure_unit = config['']
             # for now must specify free.. or need some sort of pattern since the moleculues need special rendering
             # assuming all moleculues have the same unit
-            df = pd.DataFrame({
+
+            molecule_values = []
+            for mole in molecules:
+                if 'values' in config['chemistry'][chem_method][mole]:
+                    molecule_values.append([str(ele) for ele in config['chemistry'][chem_method][mole]['values']])
+                elif 'value' in config['chemistry'][chem_method][mole]:
+                    molecule_values.append([str(config['chemistry'][chem_method][mole]['value'])])
+            print('molecule values', molecule_values)
+            chem_free_df = pd.DataFrame({
                 f'Molecule ({mole_unit})': molecules,
-                'Values': [config['chemistry'][chem_method][mole]['value'] for mole in molecules],
-                'Pressures': [['0.1'], ['1e-2'], ['0.1']],
+                'Values': molecule_values,
+                'Pressures (bar)': [[str(ele) for ele in config['chemistry'][chem_method][mole].get('pressures', '')] for mole in molecules],
             })
+            st.info('Molecule names are case sensitive (ex: TiO, H2O). You only need to specify a pressure if you provide multiple values for a molecule (to indicate what altitude the amount of the molecule changes). Only correctly filled out rows will be included in the graph.')
+            chem_free_grid = st.data_editor(chem_free_df, num_rows="dynamic")
+
+            # writing to grid
+            for i,mole in enumerate(chem_free_grid[f'Molecule ({mole_unit})']):
+                if mole != None and chem_free_grid['Values'][i] != None and (len(chem_free_grid['Values'][i]) == 1 or chem_free_grid['Pressures (bar)'][i] != None):
+                    if mole not in config['chemistry'][chem_method]:
+                        config['chemistry'][chem_method][mole] = {'values': [], 'unit': 'v/v', 'pressures': [], 'pressure_unit': 'bar'}
+                    values = [float(value) for value in chem_free_grid['Values'][i]]
+                    if len(values) == 1:
+                        # don't need a pressure point if there's only one value
+                        config['chemistry'][chem_method][mole]['value'] = values[0]
+                    else:
+                        # TODO: add warning to make sure there's the right # of pressures per values specified
+                        config['chemistry'][chem_method][mole]['values'] = values
+                        config['chemistry'][chem_method][mole]['pressures'] = [float(pressure) for pressure in chem_free_grid['Pressures (bar)'][i]]
+
         else:
             formatted_obj = format_config_section_for_df(config['chemistry'][f'{config['chemistry']['method']}'])
             chem_df = pd.DataFrame([formatted_obj])
             chem_grid = st.data_editor(chem_df)
-
-
-    # if config['chemistry']['method'] == 'free':
-    #     gridcol, buttoncol = st.columns([6,1])
-    #     with gridcol:
-    #         df = pd.DataFrame({
-    #             'Molecule': ['H2O', 'CH4', 'NH3'],
-    #             'Values': [['1e-3'],['4e-4', '1e-3'],['1e-5']],
-    #             'Unit': ['v/v','v/v','v/v'],
-    #             'Pressures': [['0.1'], ['1e-2'], ['0.1']],
-    #             'Pressure Unit': ['bar', 'bar', 'bar']
-    #         })
-
-    #         st.info('Molecules are case sensitive (ex: TiO, H2O)')
-    #         if 'chem_free_df' not in st.session_state:
-    #             st.session_state.chem_free_df = pd.DataFrame(df)
-    #         grid = st.data_editor(st.session_state.chem_free_df)
-
-    #         # updating config file
-    #         for i,mole in enumerate(grid['Molecule']):
-    #             if mole not in config['chemistry']['free']:
-    #                 config['chemistry']['free'][mole] = {'values': [], 'unit': 'v/v', 'pressures': [], 'pressure_unit': 'bar'}
-    #             values = [float(value) for value in grid['Values'][i]]
-    #             if len(values) == 1:
-    #                 # don't need a pressure point if there's only one value
-    #                 config['chemistry']['free'][mole]['value'] = values[0]
-    #             else:
-    #                 config['chemistry']['free'][mole]['values'] = values
-    #                 config['chemistry']['free'][mole]['pressures'] = [float(pressure) for pressure in grid['Pressures'][i]]
-
-    #     with buttoncol:
-    #         # code for figuring out how to add new rows heavily inspired by @ferdy here: https://discuss.streamlit.io/t/how-to-add-delete-a-new-row-in-data-editor-in-streamlit/70608
-    #         if st.button("Add Row"):
-    #             new_row_df = pd.DataFrame([{'Molecule': '', 'Values': [], 'Unit': 'v/v', 'Pressures': [], 'Pressure Unit': 'bar'}])
-    #             st.session_state.chem_free_df = pd.concat([st.session_state.chem_free_df, new_row_df], ignore_index=True)
-    #             st.rerun()
 
     if st.button('See Mixing Ratios'):
         # TODO: some sort of warning that temp/object should be configured before this
