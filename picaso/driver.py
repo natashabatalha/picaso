@@ -6,6 +6,7 @@ from .retrieval import Parameterize_DEPRECATE
 #import picaso.justplotit as jpi
 import tomllib 
 import toml
+import shutil
 # import dynesty
 from collections.abc import Mapping
 from scipy import stats
@@ -52,6 +53,14 @@ def run(driver_file=None,driver_dict=None):
         output =  picaso_class.spectrum(opacity, full_output=True, calculation = config['observation_type']) 
     
     elif config['calc_type']=='retrieval':
+        #Create output directory
+        os.makedirs(config['InputOutput']['retrieval_output'], exist_ok=True)
+
+        # copy input toml into output folder for reproducibility
+        output_file_name = config['InputOutput']['retrieval_output']+"/inputs.toml"
+        shutil.copy(driver_file, output_file_name)
+
+        #run retrieval
         output = retrieve(config, param_tools)
 
     ### I made these # because they stopped the run fucntion from doing return out and wouldn't let me use my plot PT fucntion
@@ -372,13 +381,6 @@ def conv_non_uniform_R(model_flux, model_wl, R, obs_wl):
     return convolved_flux
 
 def retrieve(config, param_tools):
-    
-    os.makedirs(config['InputOutput']['retrieval_output'], exist_ok=True)
-
-    # copy input toml into output folder for reproducibility
-    output_file_name = config['InputOutput']['retrieval_output']+"/inputs.toml"
-    with open(output_file_name, "w") as toml_file:
-        toml.dump(config, toml_file)
 
     OPA = opannection(
         filename_db=config['OpticalProperties']['opacity_files'], #database(s)
@@ -412,10 +414,10 @@ def retrieve(config, param_tools):
     run_args = prior_config['sampler']['run_kwargs']
     if prior_config['sampler']['resume']:
         print('Resuming retrieval...')
-        sampler = dynesty.NestedSampler.restore(config['InputOutput']['retrieval_output']+'/dynesty.save')
+        sampler = dynesty.DynamicNestedSampler.restore(config['InputOutput']['retrieval_output']+'/dynesty.save')
         resume=True
     else:
-        sampler = dynesty.NestedSampler(loglike_fn, hypercube_fn, ndims, pool=pool, **sampler_args) 
+        sampler = dynesty.DynamicNestedSampler(loglike_fn, hypercube_fn, ndims, pool=pool, **sampler_args) 
         resume=False
 
     sampler.run_nested(checkpoint_file=config['InputOutput']['retrieval_output']+'/dynesty.save', resume=resume, **run_args)
@@ -423,7 +425,7 @@ def retrieve(config, param_tools):
     pool.close()
     return sampler
 
-def check_model_samples(config, N=100, sampler=None):
+def check_model_samples(config, N=100, samples=None):
     """
     Tests the prior distribution by generating models based on the provided configuration.
 
@@ -460,11 +462,12 @@ def check_model_samples(config, N=100, sampler=None):
     virga_mieff   = config['OpticalProperties'].get('virga_mieff',None)
     param_tools = Parameterize(load_cld_optical=preload_cloud_miefs,
                                         mieff_dir=virga_mieff)
+    
     fitpars=prior_finder(config['retrieval'])
     ndims=len(fitpars)
-    if sampler is not None:
+    if samples is not None:
         #this is specific to dynesty
-        thetas = sampler.results.samples_equal()
+        thetas = samples
     else:
         cube = np.random.random([N, ndims])
         thetas = [hypercube(cube[i], fitpars) for i in range(N)]
@@ -475,7 +478,7 @@ def check_model_samples(config, N=100, sampler=None):
 
     models, profiles = MODEL(thetas[:N], fitpars, config, OPA, param_tools, DATA_DICT, retrieval=False)
 
-    return models, profiles
+    return models, thetas, profiles
 
 def setup_spectrum_class(config, opacity , param_tools ):
 
