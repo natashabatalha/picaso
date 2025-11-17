@@ -1212,6 +1212,15 @@ class RetrieveCKs():
     def mix_my_opacities_gasesfly(self, atmosphere,exclude_mol=1):
         """
         Top Function to perform "on-the-fly" mixing and then interpolating of 5 opacity sources from Amundsen et al. (2017)
+
+        Parameters
+        ----------
+        atmosphere : Atmosphere
+            Atmosphere object containing the pressure and temperature profile of the atmosphere.
+        exclude_mol : int or dict, optional
+            If set to 1, all molecules are included in the mixing. 
+            If a dictionary, it should contain keys as molecule names and values as 1 or 0 to indicate whether to exclude that molecule from the mixing. 
+            Default is 1 (include all).
         """
         nlayer=atmosphere.c.nlayer
 
