@@ -331,8 +331,6 @@ class Parameterize():
 
         return opd_by_layer
 
-    
-
     def chem_free(self, **species):
         ''''
         Abundance profile for free chemistry
@@ -360,30 +358,11 @@ class Parameterize():
                 value = species[i].get('value',None)
                 #easy case where there is just one well-mixed value 
                 if value is not None: #abundance of the chemistry input per molecule
-                    mixingratio_df[i] = value
-                    
+                    mixingratio_df[i] = value    
                 else: #each molecule input manually
-                    values =  species[i].get('values') 
-                    pressures = species[i].get('pressures') 
-                    pressure_unit= species[i].get('pressure_unit') 
-                    pressure_bar = (np.array(pressures)*u.Unit(pressure_unit)).to(u.bar).value 
-                    
-                    #make sure its in ascending pressure order 
-                    first = pressure_bar[0] 
-                    last = pressure_bar[-1] 
-
-                    #flip if the ordering has been input incorrectly
-                    if first > last : 
-                        pressure_bar=pressure_bar[::-1]
-                        values=values[::-1]
-
-                    vmr = values[0] + 0*pressure_grid
-                    # need to finish the ability to input free chem here 
-                    for ii,ivmr in enumerate(values[1:]):
-                        vmr[pressure_grid>=pressure_bar[ii]] = ivmr 
-                    
-                    #add to dataframe 
-                    mixingratio_df[i]=vmr
+                    profile = species[i]['profile']
+                    profile_fun = getattr(self, f'vmr_{profile}')
+                    mixingratio_df[i] = profile_fun(species[i])
 
                 total_sum_of_gases += mixingratio_df[i].values
         #add background gas if it is requested
@@ -400,6 +379,61 @@ class Parameterize():
             if len(species['background']['gases'])==1: #1 background gas
                 mixingratio_df[species['background']['gases'][0]] = total_sum_of_background
         return mixingratio_df
+
+    def vmr_knots(self, species):
+        VMR_knots = species['vmr_knots']
+        abun_knots = [VMR_knots[k]["value"] for k in sorted(VMR_knots.keys())]
+        nlevel=len(self.pressure_level)
+        abun_by_level=np.zeros(nlevel)
+        P_knots = species['P_knots']
+        if isinstance(P_knots, dict):
+            P_knots = [P_knots[k]["value"] for k in sorted(P_knots.keys())]
+        interpolator = interpolate.interp1d(np.log10(P_knots), np.log10(abun_knots), kind='linear', bounds_error=False, fill_value='extrapolate')
+        vmr_by_level = 10**interpolator(np.log10(self.pressure_level))
+        return vmr_by_level
+    
+    def vmr_gradient(self, species):
+        """
+        Calculate the variable mixing ratio (VMR) gradient for a given pressure grid and H2O parameters.
+
+        Parameters:
+        pressure (numpy.ndarray): Array of pressure values.
+        h2o (dict): Dictionary containing H2O parameters such as 'deep', 'top', 'p_switch', and 'gradient'.
+
+        Returns:
+        numpy.ndarray: Array of VMR values corresponding to the input pressure grid.
+        """
+        # Extract the 'bottom' value if it exists, otherwise use 'top' value
+        deep = species.get('bottom', None)
+        if deep is not None:
+            deep = species['bottom']['value']
+        else:
+            top = species['top']['value']
+        
+        # Extract the pressure switch and gradient values
+        p_switch = species['p_switch']['value']
+        gradient = species['gradient']['value']
+
+        # Determine the starting VMR value and the direction of the gradient
+        if deep is not None:
+            ct = deep  # Start with the 'deep' value
+            n = 0      # Gradient direction for 'deep'
+        else:
+            ct = top   # Start with the 'top' value
+            n = 1      # Gradient direction for 'top'
+
+        # Initialize the VMR array with the starting value
+        vmr = ct + 0 * self.pressure_level
+
+        # Calculate the VMR for each pressure level
+        for i, p in enumerate(self.pressure_level):
+            if (-1)**n * p <= (-1)**n * p_switch:
+                vmr[i] = 10**(np.log10(ct) + (gradient * (abs(np.log10(p) - np.log10(p_switch)))))
+
+        # Cap the VMR values at a maximum of 1
+        vmr[vmr > 1] = 1
+
+        return vmr
 
     def chem_visscher(self,cto_absolute, log_mh): 
         self.picaso.chemeq_visscher_2121(cto_absolute, log_mh)
@@ -495,7 +529,7 @@ class Parameterize():
         Temperature per layer
         """
         if isinstance(P_knots, dict):
-            P_knots = list(P_knots.values())
+            P_knots = [P_knots[k]["value"] for k in sorted(P_knots.keys())]
         
         if isinstance(T_knots, dict):
             T_knots = [T_knots[k]["value"] for k in sorted(T_knots.keys())]
@@ -527,11 +561,38 @@ class Parameterize():
             temp_by_level = interpolator(np.log10(pressure))
         elif getattr(interpolate, interpolation, np.nan)!=np.nan:
             interpolator = getattr(interpolate, interpolation)
-            interpolator(np.log10(P_knots), T_knots, *scipy_interpolate_kwargs)
+            temp_by_level = interpolator(np.log10(P_knots), T_knots, *scipy_interpolate_kwargs)
         else:
             raise Exception(f'Unknown interpolation method \'{interpolation}\'')
 
+        #check that T is strictly positive everywhere
+
         return pd.DataFrame(dict(pressure=pressure, temperature=temp_by_level))
+
+    def pt_zj24(self, pressures, dTs, Tbottom):
+        """"
+        Zhang+24 profile (fits dlogT/dlogP instead of T)
+        """
+        if isinstance(pressures, dict):
+            pressures = [pressures[k]["value"] for k in sorted(pressures.keys())]
+
+        if isinstance(dTs, dict):
+            dTs = [dTs[k]["value"] for k in sorted(dTs.keys())]
+
+        pressure = self.pressure_level
+        nlevel = len(pressure)
+
+        T = np.zeros(nlevel)
+        reverseP = pressure[::-1]
+
+        interpolator = interpolate.interp1d(np.log(pressures), dTs, kind='quadratic', bounds_error=False, fill_value='extrapolate')
+        dT_by_level = interpolator(np.log(reverseP))    
+
+        T[0] = Tbottom['value']
+        for i in range(1,nlevel):
+            T[i]=np.exp( np.log(T[i-1]) + (np.log(reverseP[i])-np.log(reverseP[i-1])) * dT_by_level[i-1] )
+
+        return pd.DataFrame(dict(pressure=pressure, temperature=T[::-1]))
 
     def pt_guillot(self, Teq, T_int, logg1, logKir, alpha):
         """
