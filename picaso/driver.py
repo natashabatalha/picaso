@@ -160,12 +160,12 @@ def hypercube(u, fitpars):
 
     for i,key in enumerate(fitpars.keys()):
         if fitpars[key]['prior'] == 'uniform':
-            minn=fitpars[key]['min']
-            maxx=fitpars[key]['max']
+            minn=fitpars[key]['uniform_kwargs']['min']
+            maxx=fitpars[key]['uniform_kwargs']['max']
             x[i] = minn+(maxx-minn)*u[i]
         elif fitpars[key]['prior'] == 'gaussian':
-            mean=fitpars[key]['mean']
-            std=fitpars[key]['std']
+            mean=fitpars[key]['gaussian_kwargs']['mean']
+            std=fitpars[key]['gaussian_kwargs']['std']
             x[i]=stats.norm.ppf(u[i], loc=mean, scale=std)
         else:
             raise Exception('Prior type not available')
@@ -385,6 +385,7 @@ def retrieve(config, param_tools):
     OPA = opannection(
         filename_db=config['OpticalProperties']['opacity_files'], #database(s)
         method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
+        wave_range=['OpticalProperties']['wave_range'],#state wavelength range desired of spectrum
         **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
         )
     
