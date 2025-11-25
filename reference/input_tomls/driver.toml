@@ -15,6 +15,7 @@ opacity_files = '/Users/floppityflappity/Work/prewster/picaso/reference/opacitie
 opacity_method = 'resampled' #list of options: resampled, preweighted, resortrebin
 opacity_kwargs = {} # any other inputs you want to give to justodit.opannection()
 virga_mieff = '/Users/floppityflappity/Work/prewster/picaso/reference/virga/' # any other inputs you want to give to justodit.opannection()
+wave_range = [0.3,15]#wavelength range subset of the opannection file you want. None for the whole range. 
 
 [object]
 radius    = {value=1.2, unit='Rjup'}
