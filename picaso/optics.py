@@ -1224,7 +1224,7 @@ class RetrieveCKs():
         kappas = []
         for imol in atmosphere.molecules: 
             #only add to molecule set if it wasnt requested as a excluded molecule
-            if ((exclude_mol==1) or (exclude_mol[imol]==1)):
+            if ((exclude_mol==1) or (exclude_mol.get(imol,1)==1)):
                 mixes += [atmosphere.layer['mixingratios'][imol].values]
                 kappas += [self.kappas[imol]]
 
@@ -2303,7 +2303,7 @@ class RetrieveOpacities():
             if exclude_mol==1:
                 fac =1
             else: 
-                fac = exclude_mol[i]
+                fac = exclude_mol.get(i,1)
             for ind in range(nlayer): # multiply by avogadro constant
             #these where statements are used for non zero arrays 
             #however they should ultimately be put into opacity factory so it doesnt slow 
@@ -2372,11 +2372,11 @@ class RetrieveOpacities():
         for i in self.molecular_opa.keys():
            #fac is a multiplier for users to test the optical contribution of 
             #each of their molecules
-            #for example, does ignoring CH4 opacity affect my spectrum??
+           #for example, does ignoring CH4 opacity affect my spectrum??
             if exclude_mol==1:
                 fac =1
             else: 
-                fac = exclude_mol[i]
+                fac = exclude_mol.get(i,1)
             for j,ind in zip(ind_pt,range(nlayer)): # multiply by avogadro constant 
                 self.molecular_opa[i][ind, :] = fac*data[i+'_'+str(j)]*6.02214086e+23 #add to opacity
 

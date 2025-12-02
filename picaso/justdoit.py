@@ -197,6 +197,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     elif dimension == '3d':
         atm.get_profile_3d()
 
+    exclude_mol = inputs['atmosphere']['exclude_mol']
+
     #now can get these 
     atm.get_mmw()
     atm.get_density()
@@ -207,7 +209,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     #relies on continuum molecules are added into the opacity 
     #database. Rayleigh molecules are all in `rayleigh.py` 
     atm.get_needed_continuum(opacityclass.rayleigh_molecules,
-                             opacityclass.avail_continuum)
+                             opacityclass.avail_continuum,
+                             exclude_mol=exclude_mol,
+                             exclude_opacity=inputs['atmosphere'].get('exclude_opacity','line'))
 
     #get cloud properties, if there are any and put it on current grid 
     atm.get_clouds(wno)
@@ -218,11 +222,15 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
     
     #opacity assumptions
-    exclude_mol = inputs['atmosphere']['exclude_mol']
     if isinstance(exclude_mol,dict):
-        for imol in exclude_mol.keys(): 
-            if imol not in opacityclass.molecules: 
-                atm.add_warnings(f'Youve requested that I exclude opacity from {imol} but the set of opacities I have is {opacityclass.molecules} so your spectra will look identical.')
+        continuum_names = set([i if isinstance(i,str) else i[0] for i in opacityclass.avail_continuum])
+        recognized = set(opacityclass.molecules) | set(opacityclass.rayleigh_molecules) | continuum_names
+        recognized |= {'rayleigh'}
+        recognized |= {f'{i[0]}-{i[1]}' for i in atm.continuum_molecules}
+        recognized |= {f'{i[0]}{i[1]}' for i in atm.continuum_molecules}
+        unrecognized = [imol for imol in exclude_mol.keys() if imol not in recognized and imol.replace('-','') not in recognized]
+        for imol in unrecognized: 
+            atm.add_warnings(f'Youve requested that I exclude opacity from {imol} but the set of opacities I have is {sorted(list(recognized))} so your spectra will look identical.')
 
     get_opacities = opacityclass.get_opacities
 
@@ -232,7 +240,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
     if dimension == '1d':
         #lastly grab needed opacities for the problem
-        get_opacities(atm,exclude_mol=exclude_mol)
+        apply_line_exclusion = inputs['atmosphere'].get('exclude_opacity','line') in ['all','line']
+        exclude_for_lines = exclude_mol if apply_line_exclusion else 1
+        get_opacities(atm,exclude_mol=exclude_for_lines)
         #only need to get opacities for one pt profile
 
         #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
@@ -1190,6 +1200,8 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     elif dimension == '3d':
         atm.get_profile_3d()
 
+    exclude_mol = inputs['atmosphere']['exclude_mol']
+
     #now can get these 
     atm.get_mmw()
     atm.get_density()
@@ -1200,7 +1212,9 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     #relies on continuum molecules are added into the opacity 
     #database. Rayleigh molecules are all in `rayleigh.py` 
     atm.get_needed_continuum(opacityclass.rayleigh_molecules,
-                             opacityclass.avail_continuum)
+                             opacityclass.avail_continuum,
+                             exclude_mol=exclude_mol,
+                             exclude_opacity=inputs['atmosphere'].get('exclude_opacity','line'))
 
     #get cloud properties, if there are any and put it on current grid 
     atm.get_clouds(wno)
@@ -1210,16 +1224,15 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     atm.add_warnings('No computed opacities for: '+','.join(no_opacities))
     atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
     
-    #opacity assumptions
-    exclude_mol = inputs['atmosphere']['exclude_mol']
-
     get_opacities = opacityclass.get_opacities
 
     nlevel = atm.c.nlevel
     nlayer = atm.c.nlayer
     
     #lastly grab needed opacities for the problem
-    get_opacities(atm)
+    apply_line_exclusion = inputs['atmosphere'].get('exclude_opacity','line') in ['all','line']
+    exclude_for_lines = exclude_mol if apply_line_exclusion else 1
+    get_opacities(atm, exclude_mol=exclude_for_lines)
     #only need to get opacities for one pt profile
 
     #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
@@ -1876,6 +1889,7 @@ class inputs():
         quench=False,no_ph3=False,cold_trap=False,vol_rainout=False,
         #these only used for photochem climate 
         photochem_init_args=None,add_visscher_abunds = True,
+        exclude_opacity='line',
         **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
@@ -1890,11 +1904,27 @@ class inputs():
             (Optional) Filename with pressure, temperature and volume mixing ratios.
             Must contain pressure at least one molecule
         exclude_mol : list of str 
-            (Optional) List of molecules to ignore from opacity. It will NOT 
-            change other aspects of the calculation like mean molecular weight. 
-            This should be used as exploratory ONLY. if you actually want to remove 
-            the contribution of a molecule entirely from your profile you should remove 
-            it from your input data frame. 
+            (Optional) Opacities to ignore. By default, only line opacity is removed
+            for the listed species. Use `exclude_opacity` to target CIA and/or Rayleigh.
+            Examples:
+            - exclude_mol=['H2'] with exclude_opacity='line' removes only H2 line opacity;
+              CIA pairs with H2 and H2 Rayleigh remain.
+            - exclude_mol=['H2'] with exclude_opacity='all' removes H2 line opacity, all
+              CIA pairs with H2 (H2-H2, H2-He, etc.), and H2 Rayleigh scattering.
+            - exclude_mol=['H2'] with exclude_opacity='continuum' removes CIA pairs with H2
+              but keeps H2 lines and Rayleigh.
+            - exclude_mol=['H2'] with exclude_opacity='rayleigh' removes only H2 Rayleigh.
+            - exclude_mol=['H2-H2'] (or 'H2H2') removes only that CIA pair; H2 lines and
+              Rayleigh stay on unless exclude_opacity also targets them.
+            - exclude_mol=['rayleigh'] drops all Rayleigh scatterers (requires
+              exclude_opacity to include 'rayleigh', e.g., 'all' or 'rayleigh').
+            It does NOT change mean molecular weight—edit the input dataframe to fully
+            remove a species physically. 
+        exclude_opacity : {'all','line','continuum','rayleigh'}, optional
+            Controls which opacity components are disabled for the species listed in
+            `exclude_mol`. Default 'line' (line opacity only). Use 'all' to disable
+            line + CIA + Rayleigh; use 'continuum' to disable only CIA pairs; use
+            'rayleigh' to disable only Rayleigh scattering.
         mh : float 
             Metallicity relative to Solar 
         cto_relative : float 
@@ -1985,6 +2015,11 @@ class inputs():
                 self.inputs['atmosphere']['exclude_mol'][i]=0
         else: 
             self.inputs['atmosphere']['exclude_mol'] = 1
+
+        # Which opacity components to apply exclusion to
+        if exclude_opacity not in ['all','line','continuum','rayleigh']:
+            raise Exception("exclude_opacity must be one of: 'all', 'line', 'continuum', 'rayleigh'")
+        self.inputs['atmosphere']['exclude_opacity'] = exclude_opacity
 
         #sort by pressure to make sure 0 index is low pressure, last index is high pressure
         self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)

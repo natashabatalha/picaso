@@ -245,7 +245,7 @@ class ATMSETUP():
         """
         return np.zeros(len(logPc)) + T #return isothermal for now
 
-    def get_needed_continuum(self,available_ray_mol,available_continuum):
+    def get_needed_continuum(self,available_ray_mol,available_continuum, exclude_mol=1, exclude_opacity='line'):
         """
         This will define which molecules are needed for the continuum opacities.
 
@@ -255,7 +255,46 @@ class ATMSETUP():
             list of available rayleigh molecules 
         available_continuum : list of str
             list of available continuum molecules 
+        exclude_mol : int or dict
+            Dictionary of opacities to exclude (0 = exclude, 1 = include). If set
+            to 1, everything is included.
+        exclude_opacity : {'all','line','continuum','rayleigh'}
+            Whether exclusions should affect all opacity components, or only line/CIA/Rayleigh.
         """
+
+        if isinstance(exclude_opacity,str):
+            allowed_opts = {
+                'all': {'line','continuum','rayleigh'},
+                'line': {'line'},
+                'continuum': {'continuum'},
+                'rayleigh': {'rayleigh'}
+            }
+            if exclude_opacity not in allowed_opts:
+                raise Exception("exclude_opacity must be one of: 'all', 'line', 'continuum', 'rayleigh'")
+            exclude_components = allowed_opts[exclude_opacity]
+        else:
+            exclude_components = {'line','continuum','rayleigh'}
+
+        def _is_excluded(name, component):
+            """Check exclude_mol map with a few common aliases."""
+            if component not in exclude_components:
+                return False
+            if exclude_mol in [None, 1]:
+                return False
+            if not isinstance(exclude_mol, dict):
+                return False
+            # direct lookup
+            flag = exclude_mol.get(name, 1)
+            if flag == 0:
+                return True
+            # allow hyphen-less alias (e.g., H2-H2 -> H2H2)
+            alias = name.replace('-', '')
+            if alias != name and exclude_mol.get(alias, 1) == 0:
+                return True
+            return False
+
+        def _species_excluded(species, component):
+            return _is_excluded(species, component) or _is_excluded(convert_to_simple(species), component)
 
         # Get simple names of each molecule
         simple_names = [convert_to_simple(i) for i in self.molecules]
@@ -266,19 +305,28 @@ class ATMSETUP():
         for m1 in simple_names:
             for m2 in simple_names:
                 if m1+m2 in available_continuum:
+                    if _species_excluded(m1,'continuum') or _species_excluded(m2,'continuum'):
+                        continue
+                    if _is_excluded(m1 + '-' + m2,'continuum') or _is_excluded(m1 + m2,'continuum'):
+                        continue
                     self.continuum_molecules += [[m1,m2]]
 
         # For special continuum opacities
         if "H-" in simple_names and 'H-bf' in available_continuum:
-            self.continuum_molecules += [['H-','bf']]
+            if not _species_excluded("H-",'continuum') and not _is_excluded('H-bf','continuum'):
+                self.continuum_molecules += [['H-','bf']]
         if "H" in simple_names and "electrons" in self.level.keys() and 'H-ff' in available_continuum:
-            self.continuum_molecules += [['H-','ff']]
+            if not _species_excluded("H",'continuum') and not _is_excluded('H-ff','continuum'):
+                self.continuum_molecules += [['H-','ff']]
         if "H2" in simple_names and "electrons" in self.level.keys() and 'H2-' in available_continuum:
-            self.continuum_molecules += [['H2-','']]
+            if not _species_excluded("H2",'continuum') and not _is_excluded('H2-','continuum'):
+                self.continuum_molecules += [['H2-','']]
 
         # Deal with rayleigh opacity
         self.rayleigh_molecules = []
         for i in simple_names: 
+            if _is_excluded('rayleigh','rayleigh') or _species_excluded(i,'rayleigh'):
+                continue
             if i in available_ray_mol: 
                 self.rayleigh_molecules += [i]
 
