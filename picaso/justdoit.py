@@ -237,11 +237,12 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     nlevel = atm.c.nlevel
     nlayer = atm.c.nlayer
     
+    apply_line_exclusion = inputs['atmosphere'].get('exclude_opacity','line') in ['all','line']
+    exclude_for_lines = exclude_mol if apply_line_exclusion else 1
 
     if dimension == '1d':
         #lastly grab needed opacities for the problem
-        apply_line_exclusion = inputs['atmosphere'].get('exclude_opacity','line') in ['all','line']
-        exclude_for_lines = exclude_mol if apply_line_exclusion else 1
+        
         get_opacities(atm,exclude_mol=exclude_for_lines)
         #only need to get opacities for one pt profile
 
@@ -459,7 +460,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                 #diesct just a subsection to get the opacity 
                 atm_1d.disect(g,t)
 
-                get_opacities(atm_1d)
+                get_opacities(atm_1d,exclude_mol=exclude_for_lines)
 
                 dtau, tau, w0, cosb,ftau_cld, ftau_ray, gcos2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, WO_no_raman, f_deltaM = compute_opacity(
                     atm_1d, opacityclass, ngauss=ngauss, stream=stream,delta_eddington=delta_eddington,
