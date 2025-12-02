@@ -592,8 +592,6 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
     else: 
         wavelength_label = 'Wavenumber Index Grid'
         wave = np.array(range(nwno))
-    cols = pals.magma(200)
-    color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
 
     if not isinstance(filename,type(None)):
         dat01 = pd.read_csv(filename, **pd_kwargs)
@@ -631,22 +629,7 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
 
     return fig
 
-def cloud(full_output):
-    """
-    Plotting the cloud input from ``picaso``. 
 
-    The plot itselfs creates maps of the wavelength dependent single scattering albedo 
-    and cloud opacity as a function of altitude. 
-
-
-    Parameters
-    ----------
-    full_output
-
-    Returns
-    -------
-    A row of two bokeh plots with the single scattering and optical depth map
-    """
 def cloud(full_output):
     """
     Plotting the cloud input from ``picaso``.
@@ -692,7 +675,7 @@ def cloud(full_output):
         ax.set_xlabel('Wavelength (micron)')
         ax.set_ylabel('Pressure (bar)')
         ax.set_yscale('log')
-        ax.set_ylim(pressure.max(), pressure.min())
+        ax.invert_yaxis()
 
     return fig
 
