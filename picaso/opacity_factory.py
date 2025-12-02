@@ -989,7 +989,7 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
             mbar = p*1e3
             fdata = os.path.join(mol_dir,f'{molecule}_{mbar:.2e}mbar_{t:.0f}K.txt') 
         elif 'h5' in ftype: 
-            fdata = mol_dir
+            fdata = mol_dir+'.h5'
         
         #Grab 1460 in various format data
         if 'lupu' in ftype: 
@@ -1109,7 +1109,7 @@ def get_kark_CH4(kark_file, new_wno , T,dset):
     T.dset : float
         Temperature in Kelvin
     """
-    kappa = pd.read_csv(kark_file,delim_whitespace=True,skiprows=2,
+    kappa = pd.read_csv(kark_file,sep=rf'\s+',skiprows=2,
                            header=None, names = ['nu','nm','100','198','296','del/al'])
 
     kappa = kappa.loc[kappa['nm']<1000]
