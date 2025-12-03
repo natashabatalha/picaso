@@ -660,6 +660,47 @@ def check_units(unit):
         #check if real unit
         return None
     
+def merge_xarrays(ds1, ds2): 
+    """
+    This function merges two identical xarrays whose only difference is the wavelength axis. This is supposed to 
+    help merge xarrays whose only difference was that they were computed with two different opacity files. 
+    It will take all the extra variables and attributes from ds1 (input1). So please ensure ds1 and ds2 have identical 
+    inputs.
+
+    Parameters
+    ----------
+    ds1 : xarray 
+        picaso jdi.output_xarray 1 
+    ds2 : xarray  
+        picaso jdi.output_xarray 2 
+
+    Returns
+    -------
+    xarray
+        concatenated along wavelength dimension, sorted by wavelength, merged all ds1 extra variables and attributes 
+    """
+    pressure_only_vars = [
+        var_name
+        for var_name, variable in ds1.data_vars.items()
+        if 'wavelength' not in variable.dims
+    ]
+    
+    # Drop all pressure-only variables to isolate wavelength-dependent data (like 'emission')
+    ds1_wavel_only = ds1.drop_vars(pressure_only_vars)
+    ds2_wavel_only = ds2.drop_vars(pressure_only_vars)
+    
+    # Concatenate the 'wavelength' data.
+    ds_combined_wavel = xr.concat([ds1_wavel_only, ds2_wavel_only], dim='wavelength')
+    
+    # Optional: Sort the wavelengths
+    ds_combined_wavel_sorted = ds_combined_wavel.sortby('wavelength')
+    
+    ds_pressure_only = ds1[pressure_only_vars]
+    
+    ds_final = xr.merge([ds_combined_wavel_sorted, ds_pressure_only])
+
+    return ds_final
+    
 def output_xarray(df, picaso_class, add_output={}, savefile=None): 
     """
     This function converts all picaso output to xarray which is easy to save 
