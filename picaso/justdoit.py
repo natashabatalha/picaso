@@ -43,7 +43,10 @@ import h5py
 # #testing error tracker
 # from loguru import logger 
 __refdata__ = os.environ.get('picaso_refdata')
-__version__ = '4.0'
+__version__ = '5.0'#GPU VERSION
+
+#sets the hardware (Default is CPU)
+__hardware__ = os.environ.get('picaso_hardware','cpu')
 
 
 if not os.path.exists(__refdata__): 
