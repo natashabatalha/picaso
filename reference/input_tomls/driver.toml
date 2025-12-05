@@ -15,6 +15,7 @@ opacity_files = '/Users/floppityflappity/Work/prewster/picaso/reference/opacitie
 opacity_method = 'resampled' #list of options: resampled, preweighted, resortrebin
 opacity_kwargs = {} # any other inputs you want to give to justodit.opannection()
 virga_mieff = '/Users/floppityflappity/Work/prewster/picaso/reference/virga/' # any other inputs you want to give to justodit.opannection()
+wave_range = [0.3,15]#wavelength range subset of the opannection file you want. None for the whole range. 
 
 [object]
 radius    = {value=1.2, unit='Rjup'}
@@ -61,8 +62,8 @@ spacing = 'log'
 T = 500
 
 [temperature.knots]
-P_knots=[1e2,1e1,1e0,1e-1,1e-3, 1e-4]
-T_knots=[1000, 550, 300, 200, 100, 50]
+P_knots=[1e2,1e-1,1e-4]
+T_knots=[1000,200, 50]
 interpolation='brewster' #options are: brewster, linear, quadratic_spline, cubic_spline, OR any function from scipy.interpolate with associated kwargs passed to scipy_it
 scipy_interpolate_kwargs={}
 
@@ -164,35 +165,45 @@ frac_1 = 0.3 #this is the fraction assigned to patch 1
 
 
 [retrieval]
+[temperature.knots.T_knots.0]
+prior="uniform"
+uniform_kwargs={min=500, max=1000}
+log=false
+
+[temperature.knots.T_knots.1]
+prior="uniform"
+uniform_kwargs={min=100, max=500}
+log=false
+
+[temperature.knots.T_knots.2]
+prior="uniform"
+uniform_kwargs={min=50, max=100}
+log=false
 
 [retrieval.object.radius]
 prior="uniform"
-min=0.5
-max=2
+uniform_kwargs={min=0.5, max=2}
+gaussian_kwargs={mean=1, std=0.5} #kwargs of specified prior
 log=false
 
 [retrieval.chemistry.free.H2O]
 prior='uniform'
-min=-12
-max=0
+uniform_kwargs={min=-12, max=0}
 log=false
 
 [retrieval.clouds.cloud1.slab-grey.ptop]
 prior="uniform"
-min=-3
-max=2
+uniform_kwargs={min=-3, max=2}
 log=true
 
 [retrieval.clouds.cloud1.slab-grey.dp]
 prior="uniform"
-min=0.005
-max=2
+uniform_kwargs={min=0.005, max=2}
 log=true
 
 #[retrieval.errinf]
 #prior="uniform"
-#min=-2
-#max=4
+#uniform_kwargs={min=-2, max=4}
 #log=true
 
 [sampler]

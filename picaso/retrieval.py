@@ -14,8 +14,8 @@ from .justplotit import pals
 
 import matplotlib.pyplot as plt
 import xarray as xr
-# from ultranest.plot import PredictionBand
-# import ultranest.integrator as uint
+from ultranest.plot import PredictionBand
+import ultranest.integrator as uint
 import os 
 import pickle as pk
 import re
