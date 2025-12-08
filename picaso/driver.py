@@ -5,18 +5,25 @@ from .retrieval import Parameterize_DEPRECATE
 #import picaso.justdoit as jdi
 #import picaso.justplotit as jpi
 import tomllib 
-import dynesty
+import toml
+import shutil
+# import dynesty
 from collections.abc import Mapping
 from scipy import stats
 import dill
 import dynesty.utils
 from functools import partial
+from mpi4py import MPI
+import sys
+from schwimmbad import MPIPool
 dynesty.utils.pickle_module = dill
+
+# import ultranest
 
 
 chem_options = ['visscher', 'free', 'userfile']
 cloud_options = ['brewster_grey', 'brewster_mie', 'virga', 'flex_fsed', 'hard_grey', 'userfile']
-pt_options = ['userfile','isothermal', 'knots', 'guillot', 'sonora_bobcat',  'madhu_seager_09_inversion','madhu_seager_09_noinversion' ] # 'zj_24', 'molliere_20', 'Kitzman_20', 
+pt_options = ['userfile','isothermal', 'knots', 'guillot', 'sonora_bobcat',  'madhu_seager_09_inversion','madhu_seager_09_noinversion', 'zj_24'] #, 'molliere_20', 'Kitzman_20', 
 
 def run(driver_file=None,driver_dict=None):
     if isinstance(driver_file,str):
@@ -46,6 +53,14 @@ def run(driver_file=None,driver_dict=None):
         output =  picaso_class.spectrum(opacity, full_output=True, calculation = config['observation_type']) 
     
     elif config['calc_type']=='retrieval':
+        #Create output directory
+        os.makedirs(config['InputOutput']['retrieval_output'], exist_ok=True)
+
+        # copy input toml into output folder for reproducibility
+        output_file_name = config['InputOutput']['retrieval_output']+"/inputs.toml"
+        shutil.copy(driver_file, output_file_name)
+
+        #run retrieval
         output = retrieve(config, param_tools)
 
     ### I made these # because they stopped the run fucntion from doing return out and wouldn't let me use my plot PT fucntion
@@ -145,12 +160,12 @@ def hypercube(u, fitpars):
 
     for i,key in enumerate(fitpars.keys()):
         if fitpars[key]['prior'] == 'uniform':
-            minn=fitpars[key]['min']
-            maxx=fitpars[key]['max']
+            minn=fitpars[key]['uniform_kwargs']['min']
+            maxx=fitpars[key]['uniform_kwargs']['max']
             x[i] = minn+(maxx-minn)*u[i]
         elif fitpars[key]['prior'] == 'gaussian':
-            mean=fitpars[key]['mean']
-            std=fitpars[key]['std']
+            mean=fitpars[key]['gaussian_kwargs']['mean']
+            std=fitpars[key]['gaussian_kwargs']['std']
             x[i]=stats.norm.ppf(u[i], loc=mean, scale=std)
         else:
             raise Exception('Prior type not available')
@@ -158,83 +173,222 @@ def hypercube(u, fitpars):
             x[i]=10**x[i]  
     return x
 
-def MODEL(cube, fitpars, config, OPA, param_tools):
-    # update parameters
-    for i,key in enumerate(fitpars.keys()):
-        # offsets/scalings/errinfs will only be retrieval params
-        if key[:6]!='offset' and key[:7]!='scaling' and key[:7]!='err_inf':
-            set_dict_value(config, key+'.value', cube[i])
-    picaso_class=setup_spectrum_class(config, opacity=OPA, param_tools=param_tools)
-    out = picaso_class.spectrum(OPA, full_output=True, calculation = config['observation_type'])
+def MODEL(cube, fitpars, config, OPA, param_tools, DATA_DICT, retrieval=True):
+    """
+    Generate model spectra for parameter sets.
 
-    R_dict=config['object']['radius']
-    R=R_dict['value']*u.Unit(R_dict['unit']).to(u.m)
-    d_dict=config['object']['distance']
-    d=d_dict['value']*u.Unit(d_dict['unit']).to(u.m)
-    resulty = (R/d)**2*out['thermal']
+    Parameters
+    ----------
+    cube : array-like
+        Parameter values. Shape can be:
+          - (N_params,)  -> single parameter set
+          - (N_samples, N_params) -> multiple sets
+    fitpars : dict
+        Dictionary of fit parameters.
+    config : dict
+        Configuration dictionary.
+    OPA : object
+        Opacity connection.
+    param_tools : object
+        Parameterization helper.
+    DATA_DICT : dict
+        Observational data dictionary.
 
-    return out['wavenumber'], resulty*1e-8
+    Returns
+    -------
+    dict
+        Dictionary with the same keys as observation data. 
+        Each value is an array with shape:
+          - (len(xdata),) if input was 1D
+          - (N_samples, len(xdata)) if input was 2D
+    """
+    cube = np.atleast_2d(cube)  # ensure shape (N_samples, N_params)
+    n_samples = cube.shape[0]
 
-def log_likelihood(cube, fitpars, config, OPA, DATA_DICT, param_tools): 
-    resultx,resulty = MODEL(cube, fitpars, config, OPA, param_tools)
+    # initialize storage
+    y_model = {key: [] for key in config['InputOutput']['observation_data']}
 
-    ydat_all=[];ymod_all=[];sigma_all=[];extra_term_all=[]
+    if not retrieval:
+        profiles={}                                   
 
-    for i,key in enumerate(config['InputOutput']['observation_data']):
-        xdata,ydata,edata = DATA_DICT[key]
-        xbin_model , y_model = mean_regrid(resultx, resulty, newx=xdata)#remember we put everything already sorted on wavenumber
+    for j,row in enumerate(cube):
+        # update parameters
+        for i, key in enumerate(fitpars.keys()):
+            if not (key.startswith("offset") or key.startswith("scaling") or key.startswith("err_inf")):
+                set_dict_value(config, key + ".value", row[i])
 
-        #add offsets if they exist to the data
-        if key in config.get("retrieval", {}).get("offset", {}):
-            icube = list(fitpars.keys()).index(f'offset.{key}')
-            offset = cube[icube]
-        else:
-            offset = 0
-        ydata += offset
+        # compute spectrum
+        picaso_class = setup_spectrum_class(config, opacity=OPA, param_tools=param_tools)
+        out = picaso_class.spectrum(OPA, full_output=True, calculation=config['observation_type'])
 
-        #add scalings
-        if key in config.get("retrieval", {}).get("scaling", {}):
-            icube = list(fitpars.keys()).index(f'scaling.{key}')
-            scaling = cube[icube]
-        else:
-            scaling = 1
-        ydata*=scaling
+        R_dict = config['object']['radius']
+        R = R_dict['value'] * u.Unit(R_dict['unit']).to(u.m)
+        d_dict = config['object']['distance']
+        d = d_dict['value'] * u.Unit(d_dict['unit']).to(u.m)
 
-        #here we should also add vsini and  RV (wvl_shift?)
+        resultx = out['wavenumber']
+        resulty = 1e-8 * (R / d) ** 2 * out['thermal']
 
-        #add error inflation if they exist
-        if key in config.get("retrieval", {}).get("err_inf", {}):
-            icube = list(fitpars.keys()).index(f'err_inf.{key}')
-            err_inf = cube[icube]
-        else:
-            err_inf=0
-        # err_inf = err_inf_all.get(key,0) #if err inf term for that instrument doesnt exist, return 0
-        sigma = edata**2 + err_inf #there are multiple ways to do this, here just adding in an extra noise term
-        extra_term = np.log(2*np.pi*sigma)
+        # rebin to observed wavelengths
+        for obs_key in config['InputOutput']['observation_data']:
+            xdata, _, _ = DATA_DICT[obs_key]
+            _, rebinned = mean_regrid(resultx, resulty, newx=xdata)
+            y_model[obs_key].append(rebinned)
 
-        ydat_all.append(ydata);ymod_all.append(y_model);sigma_all.append(sigma);extra_term_all.append(extra_term); 
+        if not retrieval:
+            profiles[j]=picaso_class.inputs['atmosphere']['profile']
 
-    ymod_all = np.concatenate(ymod_all)    
-    ydat_all = np.concatenate(ydat_all)    
-    sigma_all = np.concatenate(sigma_all)  
-    extra_term_all = np.concatenate(extra_term_all)
+    # stack results into arrays
+    for obs_key in y_model:
+        y_model[obs_key] = np.vstack(y_model[obs_key])
+        # if single sample, flatten to 1D
+        # if n_samples == 1:
+        #     y_model[obs_key] = y_model[obs_key][0]
 
-    return -0.5*np.sum((ydat_all-ymod_all)**2/sigma_all + extra_term_all)
+    if retrieval:
+        return y_model
+    else:
+        return y_model, profiles
+
+def log_likelihood(cube, fitpars, config, OPA, DATA_DICT, param_tools):
+    """
+    Vectorized log-likelihood.
+
+    Parameters
+    ----------
+    cube : array-like
+        Parameter values.
+        Shape can be:
+          - (N_params,)  -> single parameter set
+          - (N_samples, N_params) -> multiple parameter sets
+    fitpars, config, OPA, DATA_DICT, param_tools : as before
+
+    Returns
+    -------
+    logl : float or ndarray
+        Log-likelihood(s).
+        Shape (N_samples,) if multiple sets, or scalar if single.
+    """
+    cube = np.atleast_2d(cube)  # (N_samples, N_params)
+    n_samples = cube.shape[0]
+
+    # Compute model spectra for all samples
+    y_model_dict = MODEL(cube, fitpars, config, OPA, param_tools, DATA_DICT)
+
+    logls = []
+
+    for j in range(n_samples):
+        ydat_all = []
+        ymod_all = []
+        sigma_all = []
+        extra_term_all = []
+
+        for key in config['InputOutput']['observation_data']:
+            xdata, ydata, edata = DATA_DICT[key]
+            y_model = y_model_dict[key][j]   # pick j-th sample
+
+            # add offsets
+            if key in config.get("retrieval", {}).get("offset", {}):
+                icube = list(fitpars.keys()).index(f'offset.{key}')
+                offset = cube[j, icube]
+            else:
+                offset = 0
+            ydata_ = ydata + offset
+
+            # add scalings
+            if key in config.get("retrieval", {}).get("scaling", {}):
+                icube = list(fitpars.keys()).index(f'scaling.{key}')
+                scaling = cube[j, icube]
+            else:
+                scaling = 1
+            ydata_ *= scaling
+
+            # add error inflation if exists
+            if key in config.get("retrieval", {}).get("err_inf", {}):
+                icube = list(fitpars.keys()).index(f'err_inf.{key}')
+                err_inf = cube[j, icube]
+            else:
+                err_inf = 0
+            sigma = edata**2 + err_inf
+
+            extra_term = np.log(2 * np.pi * sigma)
+
+            ydat_all.append(ydata_)
+            ymod_all.append(y_model)
+            sigma_all.append(sigma)
+            extra_term_all.append(extra_term)
+
+        ydat_all = np.concatenate(ydat_all)
+        ymod_all = np.concatenate(ymod_all)
+        sigma_all = np.concatenate(sigma_all)
+        extra_term_all = np.concatenate(extra_term_all)
+
+        logl = -0.5 * np.sum((ydat_all - ymod_all) ** 2 / sigma_all + extra_term_all)
+        logls.append(logl)
+
+    logls = np.array(logls)
+
+    # return scalar if only one input sample
+    return logls[0] if n_samples == 1 else logls
 
 def convolver(newx, x, y):
     #
     return y
 
+def conv_non_uniform_R(model_flux, model_wl, R, obs_wl):
+    """
+    From brewster
+    Convolve a model spectrum with a wavelength-dependent resolving power 
+    onto the observed wavelength grid ???
+
+    Parameters:
+    - model_flux: 1D array of model flux values.
+    - model_wl: 1D array of model wl values.
+    - obs_wl: 1D array of observed wl values.
+    - R: 1D array of resolving power values (for the obs_wl grid.)
+
+    Returns:
+    - convolved_flux: 1D array of convolved flux values on the obs_wl grid.
+    """
+    # create the array for the convolved flux
+    convolved_flux = np.zeros_like(obs_wl)
+
+    for i, wl_center in enumerate(obs_wl): 
+        
+        # compute FWHM and sigma for each wl
+        # print('wl_center', wl_center)
+        # print('R[i]', R[i])
+        
+        fwhm = wl_center / R[i]
+        # print('fwhm', fwhm)
+        sigma = fwhm / 2.355
+
+
+        # compute the Gaussian kernel for the current wl
+       
+        gaussian_kernel = np.exp(-((model_wl-wl_center) ** 2) / (2 * sigma **2))
+        #print('gaussian_kernel before normalisation', gaussian_kernel)
+
+        # normalisation
+        gaussian_kernel /= np.sum(gaussian_kernel)
+        # print('gaussian_kernel after normalisation', gaussian_kernel)
+
+
+
+        # apply the kernel to the flux
+        convolved_flux[i] = np.sum(model_flux * gaussian_kernel)
+    
+    return convolved_flux
+
 def retrieve(config, param_tools):
-    print('Running retrieval...')
+
     OPA = opannection(
         filename_db=config['OpticalProperties']['opacity_files'], #database(s)
         method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
+        wave_range=['OpticalProperties']['wave_range'],#state wavelength range desired of spectrum
         **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
         )
     
-    os.makedirs(config['InputOutput']['retrieval_output'], exist_ok=True)
-
     prior_config=config['retrieval']
     
     fitpars=prior_finder(prior_config)
@@ -249,20 +403,57 @@ def retrieve(config, param_tools):
                   OPA=OPA, param_tools=param_tools, DATA_DICT=DATA_DICT)
     
     #pool (MPI for clusters)
+    pool = MPIPool()
+    if not pool.is_master():
+        pool.wait()
+        sys.exit(0)
+        
+    print('Running retrieval...')
 
     #doing dynesty but this should be generic
     sampler_args = prior_config['sampler']['sampler_kwargs']
+    run_args = prior_config['sampler']['run_kwargs']
     if prior_config['sampler']['resume']:
         print('Resuming retrieval...')
-        sampler = dynesty.NestedSampler.restore(config['InputOutput']['retrieval_output']+'/dynesty.save')
+        sampler = dynesty.DynamicNestedSampler.restore(config['InputOutput']['retrieval_output']+'/dynesty.save')
+        resume=True
     else:
-        sampler = dynesty.NestedSampler(loglike_fn, hypercube_fn, ndims, nlive=prior_config['sampler']['nlive'], bootstrap=0) 
-    sampler.run_nested(checkpoint_file=config['InputOutput']['retrieval_output']+'/dynesty.save', **sampler_args)
+        sampler = dynesty.DynamicNestedSampler(loglike_fn, hypercube_fn, ndims, pool=pool, **sampler_args) 
+        resume=False
+
+    sampler.run_nested(checkpoint_file=config['InputOutput']['retrieval_output']+'/dynesty.save', resume=resume, **run_args)
     dill.dump(sampler, open(config['InputOutput']['retrieval_output']+'/sampler.pkl', 'wb'))
+    pool.close()
     return sampler
 
-def prior_tester(config, N=100):
-    print('Testing prior...')
+def check_model_samples(config, N=100, samples=None):
+    """
+    Tests the prior distribution by generating models based on the provided configuration.
+
+    Args:
+        config (dict): Configuration dictionary containing the necessary parameters for 
+            optical properties, retrieval, and other settings.
+            - 'OpticalProperties': A dictionary with keys:
+                - 'opacity_files' (str): Path to the opacity database(s).
+                - 'opacity_method' (str): Method for handling opacity ('resampled', 'preweighted', etc.).
+                - 'opacity_kwargs' (dict): Additional arguments for opacity handling.
+                - 'virga_mieff' (str, optional): Directory for virga Mie efficiency files.
+            - 'retrieval': A dictionary containing retrieval parameters.
+        N (int, optional): Number of samples to generate if no sampler is provided. Defaults to 100.
+        sampler (object, optional): A sampler object with a `results.samples_equal()` method 
+            to provide sample points. If None, random samples are generated. Defaults to None.
+
+    Returns:
+        numpy.ndarray: An array of generated models based on the prior distribution.
+
+    Notes:
+        - The function initializes optical properties and parameterization tools using the 
+          provided configuration.
+        - If a sampler is provided, it uses the sampler's results to generate thetas; otherwise, 
+          it generates random samples.
+        - The function constructs models for each set of parameters (thetas) and returns them 
+          as a numpy array.
+    """
     OPA = opannection(
         filename_db=config['OpticalProperties']['opacity_files'], #database(s)
         method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
@@ -272,21 +463,23 @@ def prior_tester(config, N=100):
     virga_mieff   = config['OpticalProperties'].get('virga_mieff',None)
     param_tools = Parameterize(load_cld_optical=preload_cloud_miefs,
                                         mieff_dir=virga_mieff)
+    
     fitpars=prior_finder(config['retrieval'])
     ndims=len(fitpars)
-    cube = np.random.random([100, ndims])
-    models=[]
-    thetas=[]
-    for i in range(100):
-        theta = hypercube(cube[i], fitpars)
-        thetas.append(theta)
-        models.append(MODEL(theta, fitpars, config, OPA, param_tools))
+    if samples is not None:
+        #this is specific to dynesty
+        thetas = samples
+    else:
+        cube = np.random.random([N, ndims])
+        thetas = [hypercube(cube[i], fitpars) for i in range(N)]
+    
+    thetas = np.array(thetas)
 
-    thetas = np.array(thetas)   # shape (N, ndims)
-    models = np.array(models)
+    DATA_DICT = get_data(config)
 
-    return thetas, models
+    models, profiles = MODEL(thetas[:N], fitpars, config, OPA, param_tools, DATA_DICT, retrieval=False)
 
+    return models, thetas, profiles
 
 def setup_spectrum_class(config, opacity , param_tools ):
 
@@ -442,33 +635,6 @@ def PT_handler(pt_config, picaso_class, param_tools): #WIP
         pt_df = temperature_function(**pt_config[type])
     
     return pt_df
-    
-
-def viz(picaso_output): 
-    spectrum_plot_list = []
-
-    if isinstance(picaso_output.get('transit_depth', np.nan), np.ndarray):
-        spectrum_plot_list += [spectrum(picaso_output['wavenumber'], picaso_output['transit_depth'], title='Transit Depth Spectrum')]
-
-    if isinstance(picaso_output.get('albedo', np.nan), np.ndarray):
-        spectrum_plot_list += [spectrum(picaso_output['wavenumber'], picaso_output['albedo'], title='Albedo Spectrum')]
-
-    if isinstance(picaso_output.get('thermal', np.nan), np.ndarray):
-        spectrum_plot_list += [spectrum(picaso_output['wavenumber'], picaso_output['thermal'], title='Thermal Emission Spectrum')]
-
-    if isinstance(picaso_output.get('fpfs_reflected', np.nan), np.ndarray):
-        spectrum_plot_list += [spectrum(picaso_output['wavenumber'], picaso_output['fpfs_reflected'], title='Reflected Light Spectrum')]
-
-    if isinstance(picaso_output.get('fpfs_thermal', np.nan), np.ndarray):
-        spectrum_plot_list += [spectrum(picaso_output['wavenumber'], picaso_output['fpfs_thermal'], title='Relative Thermal Emission Spectrum')]
-
-    if isinstance(picaso_output.get('fpfs_total', np.nan), np.ndarray):
-        spectrum_plot_list += [spectrum(picaso_output['wavenumber'], picaso_output['fpfs_total'], title='Relative Full Spectrum')]
-
-    output_file("spectrum_output.html")
-    show(column(children=spectrum_plot_list, sizing_mode="scale_width"))
-    
-    return spectrum_plot_list
 
 
 def set_dict_value(data, path_string, new_value):
@@ -508,10 +674,6 @@ def set_dict_value(data, path_string, new_value):
                 print(f"Error: The path is invalid. '{path_string}' is not a dictionary or does not exist.")
                 return False
 
-def plot_pt_profile(full_output, **kwargs):
-    fig = pt(full_output, **kwargs)
-    show(fig)
-    return fig
 
 def find_values_for_key(data, target_key):
     """
@@ -547,3 +709,85 @@ def find_values_for_key(data, target_key):
                         results.extend(find_values_for_key(item, target_key))
     
     return results
+
+def viz(picaso_output):
+    figs = []
+
+    #spectra 
+    spectra_figs = plot_spectra(picaso_output)
+    if spectra_figs is not None:
+        figs.extend(spectra_figs)
+
+    #pt + mr in same row on dashboard 
+    pt_fig = plot_pt(picaso_output)
+    mr_fig = plot_mr(picaso_output)
+    if pt_fig is not None and mr_fig is not None:
+        figs.append(row(pt_fig, mr_fig))
+    elif pt_fig is not None:
+        figs.append(pt_fig)
+    elif mr_fig is not None:
+        figs.append(mr_fig)
+
+    #cloud plot 
+    cloud_fig = plot_cloud(picaso_output)
+    if cloud_fig is not None:
+        figs.append(cloud_fig)
+
+    title_div = Div(text="<h1 style='text-align:center;'>Dashboard</h1>")
+    output_file("dashboard.html")
+    show(column(title_div, *figs, sizing_mode='scale_width'))
+
+    return figs
+
+def plot_spectra(picaso_output):
+    figs = []
+
+    if isinstance(picaso_output.get('transit_depth', jpi.np.nan), jpi.np.ndarray):
+        figs.append(jpi.spectrum(picaso_output['wavenumber'],
+                                 picaso_output['transit_depth'],
+                                 title='Transit Depth Spectrum'))
+
+    if isinstance(picaso_output.get('albedo', jpi.np.nan), jpi.np.ndarray):
+        figs.append(jpi.spectrum(picaso_output['wavenumber'],
+                                 picaso_output['albedo'],
+                                 title='Albedo Spectrum'))
+
+    if isinstance(picaso_output.get('thermal', jpi.np.nan), jpi.np.ndarray):
+        figs.append(jpi.spectrum(picaso_output['wavenumber'],
+                                 picaso_output['thermal'],
+                                 title='Thermal Emission Spectrum'))
+
+    if isinstance(picaso_output.get('fpfs_reflected', jpi.np.nan), jpi.np.ndarray):
+        figs.append(jpi.spectrum(picaso_output['wavenumber'],
+                                 picaso_output['fpfs_reflected'],
+                                 title='Reflected Light Spectrum'))
+
+    if isinstance(picaso_output.get('fpfs_thermal', jpi.np.nan), jpi.np.ndarray):
+        figs.append(jpi.spectrum(picaso_output['wavenumber'],
+                                 picaso_output['fpfs_thermal'],
+                                 title='Relative Thermal Emission Spectrum'))
+
+    if isinstance(picaso_output.get('fpfs_total', jpi.np.nan), jpi.np.ndarray):
+        figs.append(jpi.spectrum(picaso_output['wavenumber'],
+                                 picaso_output['fpfs_total'],
+                                 title='Relative Full Spectrum'))
+
+
+    return figs if figs else None
+
+
+
+def plot_pt(picaso_output):
+    full_output = picaso_output['full_output']
+    fig = jpi.pt(full_output)
+    return fig
+
+def plot_cloud(picaso_output):
+    full_output = picaso_output['full_output']
+    fig = jpi.cloud(full_output)
+    return fig
+
+def plot_mr(picaso_output):
+    full_output = picaso_output['full_output']
+    fig = jpi.mixing_ratio(full_output, plot_type='bokeh', limit= 10) #limit controls the amount of outputs for the plot
+    return fig
