@@ -23,7 +23,7 @@ from bokeh.palettes import Cividis
 from multiprocessing import Pool
 
 #these are all acceptable input meta data attributes that can GridFitter will look for 
-possible_params = {'planet_params': ['rp','mp','tint', 'heat_redis','p_reference','logkzz','kzz','mh','cto','p_quench','rainout','teff','logg','gravity','m_length'],
+possible_params = {'planet_params': ['logmh','rp','mp','tint', 'heat_redis','p_reference','logkzz','kzz','mh','cto','p_quench','rainout','teff','logg','gravity','m_length'],
                    'stellar_params' : ['rs','logg','steff','feh','ms'],
                    'cld_params': ['opd','ssa','asy','p_cloud','haze_eff','fsed']}
 
@@ -985,7 +985,7 @@ def custom_interp(final_goal,fitter,grid_name, to_interp='spectra',array_to_inte
             weight_multip = [all_weights[i][j] for i, j in enumerate(irow)]
             inds = [hilos_inds[i][j] for i, j in enumerate(irow)]+[-1]
             spec_interp = get_last_dimension(spectra, inds)
-            interp+= np.product(weight_multip)*spec_interp
+            interp+= np.prod(weight_multip)*spec_interp
         return interp
     interp = weight_interp(grid_pars, final_goal, spectra,hypercube, hilos,hilos_inds)
     
