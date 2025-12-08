@@ -2300,14 +2300,22 @@ class inputs():
         pc = self.inputs['climate']['pc']
         #gets whatever kzz is specified either constant or self consistent
         kz = self.find_kzz()
-        
+
+        # Create a photochemistry dict if needed
+        if 'photochemistry' not in self.inputs:
+            self.inputs['photochemistry'] = {'initial_guess': None}
+        # Grab the initial guess
+        df_comp_guess = self.inputs['photochemistry']['initial_guess']      
+        # Run photochemistry  
         df = pc.run_for_picaso(
                         self.inputs['atmosphere']['profile'], 
                         np.log10(float(self.inputs['atmosphere']['mh'])), 
                         float(self.inputs['atmosphere']['cto_relative']), 
                         kz, 
-                        True
+                        df_comp_guess=df_comp_guess
                     )
+        # Save new DataFrame as an initial guess
+        self.inputs['photochemistry']['initial_guess'] = df.copy()
         #reset kz to picaso dataframe to keep track of it
         #neb trying to commect this out as i htink this is not needed anymore 
         #df['kz']=kz
