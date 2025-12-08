@@ -1426,6 +1426,9 @@ class inputs():
     climate : bool 
         (Optional) If true, this do a thorough iterative calculation to compute 
         a temperature pressure profile.
+    adiabat: str
+        (Optional) Determines which adiabatic profile to use. Default is a 'H-H2-He' mix that was previously hard coded in. 
+        Additional options include 'CO2', 'N2', and 'O2' adiabatic profiles
 
 
     Attributes
@@ -1438,15 +1441,15 @@ class inputs():
     approx()  : set approximation
     spectrum() : create spectrum
     """
-    def __init__(self, calculation='planet', climate=False):
+    def __init__(self, calculation='planet', climate=False, adiabat='didier'):
 
         self.inputs = json.load(open(os.path.join(__refdata__,'config.json')))
         
         if 'brown' in calculation:
             self.setup_nostar()
         
-        if climate: 
-            self.setup_climate()
+        if climate:
+            self.setup_climate(adiabat=adiabat)
 
     def phase_angle(self, phase=0,num_gangle=10, num_tangle=1,symmetry=False, 
         phase_grid=None, calculation=None):
@@ -1700,9 +1703,17 @@ class inputs():
         else: 
             raise Exception('Need to specify gravity or radius and mass + additional units')
     
-    def setup_climate(self):
+    def setup_climate(self, adiabat='didier'):
         """
         Turns off planet specific things, so program can run as usual
+        and load in adiabat for climate run
+
+        Parameters
+        ----------
+        adiabat: 'str' (optional)
+            Specifies which compositional adiabat to use
+            Options include: 'H-H2-He' (legacy Didier file), 'CO2', 'N2', 'O2'
+            Default is 'H-H2-He'
         """
         self.inputs['calculation'] ='climate'
 
@@ -1721,7 +1732,17 @@ class inputs():
         #for i in range(len(grad_inp)):
         #    grad[int(i_inp[i]-1),int(j_inp[i]-1)]=grad_inp[i]
         
-        cp_grad = json.load(open(os.path.join(__refdata__,'climate_INPUTS','specific_heat_p_adiabat_grad.json')))
+        # load in adiabat file
+        if adiabat=='didier' or adiabat=='H-H2-He':
+            cp_grad = json.load(open(os.path.join(__refdata__,'climate_INPUTS','specific_heat_p_adiabat_grad.json')))
+        elif adiabat=='co2' or adiabat=='CO2':
+            cp_grad = json.load(open(os.path.join(__refdata__,'climate_INPUTS','adiabat_grad_co2.json')))
+        elif adiabat=='n2' or adiabat=='N2':
+            cp_grad = json.load(open(os.path.join(__refdata__,'climate_INPUTS','adiabat_grad_n2.json')))
+        elif adiabat=='o2' or adiabat=='O2':
+            cp_grad = json.load(open(os.path.join(__refdata__,'climate_INPUTS','adiabat_grad_o2.json')))
+        else:
+            raise Exception('You have selected an adiabatic gradient composition that PICASO does not recognize. Please change or remove your specified adiabat in jdi.inputs(). Acceptable adiabat choices are: \'H-H2-He\', \'CO2\', \'N2\', \'O2\'. Not specifying the adiabat will default to the legacy H-H2-He adiabat.')
 
         #log10 base temperature Kelvin 
         self.inputs['climate']['t_table'] = np.array(cp_grad['temperature'])

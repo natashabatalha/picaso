@@ -598,34 +598,34 @@ def did_grad_cp( t, p, AdiabatBundle):
     # This has been benchmarked with the fortran version
     t_table, p_table, grad, cp=AdiabatBundle.t_table, AdiabatBundle.p_table, AdiabatBundle.grad, AdiabatBundle.cp
        
-    temp_log= log10(t)
-    pres_log= log10(p)
+    temp_log = log10(t)
+    pres_log = log10(p)
     
     pos_t = locate(t_table, temp_log)
     pos_p = locate(p_table, pres_log)
 
-    ipflag=0
-    if pos_p ==0: ## lowest pressure point
-        factkp= 0.0
-        ipflag=1
-    elif pos_p ==25 : ## highest pressure point
-        factkp= 1.0
-        pos_p=24  ## use highest point
-        ipflag=1
+    ipflag = 0
+    if pos_p == 0: ## lowest pressure point
+        factkp = 0.0
+        ipflag = 1
+    elif pos_p == len(p_table)-1:#25 : ## highest pressure point
+        factkp = 1.0
+        pos_p = len(p_table)-2#24  ## use highest point
+        ipflag = 1
 
-    itflag=0
-    if pos_t ==0: ## lowest pressure point
-        factkt= 0.0
-        itflag=1
-    elif pos_t == 52 : ## highest temp point
-        factkt= 1.0
-        pos_t=51 ## use highest point
-        itflag=1
+    itflag = 0
+    if pos_t == 0: ## lowest pressure point
+        factkt = 0.0
+        itflag = 1
+    elif pos_t == len(t_table)-1:#52 : ## highest temp point
+        factkt = 1.0
+        pos_t = len(t_table)-2#51 ## use highest point
+        itflag = 1
     
-    if (pos_p > 0) and (pos_p < 26) and (ipflag == 0):
+    if (pos_p > 0) and (pos_p < len(p_table)) and (ipflag == 0): #pos_p < 26
         factkp= (-p_table[pos_p]+pres_log)/(p_table[pos_p+1]-p_table[pos_p])
     
-    if (pos_t > 0) and (pos_t < 53) and (itflag == 0):
+    if (pos_t > 0) and (pos_t < len(t_table)) and (itflag == 0): #pos_t < 53
         factkt= (-t_table[pos_t]+temp_log)/(t_table[pos_t+1]-t_table[pos_t])
 
     
