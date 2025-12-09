@@ -2305,7 +2305,7 @@ class inputs():
         if 'photochemistry' not in self.inputs:
             self.inputs['photochemistry'] = {'initial_guess': None}
         # Grab the initial guess
-        df_comp_guess = self.inputs['photochemistry']['initial_guess']      
+        df_comp_guess = self.inputs['photochemistry'].get('initial_guess', None)     
         # Run photochemistry  
         df = pc.run_for_picaso(
                         self.inputs['atmosphere']['profile'], 
