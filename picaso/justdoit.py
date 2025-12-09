@@ -1950,6 +1950,7 @@ class inputs():
                 if 'visscher' needs to input: mh and cto 
             - 'photochem' : users photochem model by Nick Wogan
                 if 'photochem' user needs to input photochem_init_args and photochem_TOA_pressure
+            - 'on-the-fly' : Computes equilibrium chemistry on-the-fly with the equilibrium solver in `Photochem`.
         quench : bool 
             Climate only, default = False: no quencing
         no_ph3 : bool 
@@ -2114,6 +2115,18 @@ class inputs():
             mh = self.inputs['atmosphere']['mh'] 
             cto = self.inputs['atmosphere']['cto_absolute']   
             if run: self.chemeq_visscher_2121(cto, np.log10(mh)) 
+            found_method = True
+        elif 'on-the-fly' in str(chem_method):
+
+            # Initialize if needed
+            if 'chemeq_solver' not in self.inputs['climate']:
+                from .photochem import EquilibriumChemistry
+                self.inputs['climate']['chemeq_solver'] = EquilibriumChemistry()
+
+            # Compute chemical equilibrium
+            mh = self.inputs['atmosphere']['mh']
+            cto = self.inputs['atmosphere']['cto_absolute']
+            if run: self.chemeq_on_the_fly(cto, np.log10(mh))
             found_method = True
 
         if (('photochem' in str(chem_method)) and (self.inputs['climate'].get('pc',0)==0)): 
@@ -2831,6 +2844,20 @@ class inputs():
             self.chemeq_visscher(c_o=1.0,log_mh=0.0)
         self.inputs['atmosphere']['sonora_filename'] = build_filename
 
+    def chemeq_on_the_fly(self, cto_absolute, log_mh):
+        "Compute equilibrium abundances with the configured solver and load them into the current profile."
+
+        # Unpack P, T and solver
+        P = self.inputs['atmosphere']['profile']['pressure'].to_numpy()
+        T = self.inputs['atmosphere']['profile']['temperature'].to_numpy()
+        solver = self.inputs['climate']['chemeq_solver']
+
+        # Solve for equilibrium
+        gases, condensates = solver.equilibrate_atmosphere(P, T, log_mh, cto_absolute)
+        
+        # Update the abundances
+        for key in gases:
+            self.inputs['atmosphere']['profile'][key] = gases[key]
 
     def chemeq_visscher_2121(self, cto_absolute, log_mh):#, interp_window = 11, interp_poly=2):
         """
