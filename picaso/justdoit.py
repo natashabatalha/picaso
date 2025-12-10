@@ -2837,7 +2837,7 @@ class inputs():
             self.chemeq_visscher(c_o=1.0,log_mh=0.0)
         self.inputs['atmosphere']['sonora_filename'] = build_filename
 
-    def chemeq_on_the_fly(self, cto_absolute, log_mh, method='sonora2020', chemeq_solver_init_args={}):
+    def chemeq_on_the_fly(self, cto_absolute, log_mh, method='sonora-approx', chemeq_solver_init_args={}):
         """
         Compute chemical equilibrium abundances for the current pressure–temperature
         profile using the `photochem.EquilibriumChemistry` solver and attach the
@@ -2853,8 +2853,8 @@ class inputs():
             together with ``cto_absolute``, defines the elemental composition used
             in the equilibrium calculation.
         method : str or None, optional
-            Equilibrium chemistry approach to use. Default ``'sonora2020'`` loads the
-            Sonora 2020 thermo data shipped with the reference data and caches the
+            Equilibrium chemistry approach to use. Default ``'sonora-approx'`` loads the
+            Sonora thermo data shipped with the reference data and caches the
             solver in ``inputs['climate']['chemeq_solver']`` for reuse. Set to
             ``None`` to build an ``EquilibriumChemistry`` instance with custom
             arguments supplied via ``chemeq_solver_init_args``. Any other value
@@ -2885,7 +2885,7 @@ class inputs():
                 initialize = True
         if initialize:
             from .photochem import EquilibriumChemistry
-            if method == 'sonora2020':
+            if method == 'sonora-approx':
                 thermofile = os.path.join(__refdata__,'chemistry','thermo_data','thermo-sonora-component.yaml') 
                 self.inputs['climate']['chemeq_solver'] = EquilibriumChemistry(thermofile=thermofile, method=method)
             elif method == None:
