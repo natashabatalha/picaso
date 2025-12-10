@@ -2891,7 +2891,7 @@ class inputs():
             elif method == None:
                 self.inputs['climate']['chemeq_solver'] = EquilibriumChemistry(**chemeq_solver_init_args)
             else:
-                raise Exception('`method` can be one of the following: "sonora2020" or None')
+                raise Exception('`method` can be one of the following: "sonora-approx" or None')
 
         # Unpack P, T and solver
         P = self.inputs['atmosphere']['profile']['pressure'].to_numpy()
