@@ -1442,12 +1442,38 @@ class inputs():
     def __init__(self, calculation='planet', climate=False):
 
         self.inputs = json.load(open(os.path.join(__refdata__,'config.json')))
+        self._profile_dirty = False  # track when atmosphere profile needs renormalization
         
         if 'brown' in calculation:
             self.setup_nostar()
         
         if climate: 
             self.setup_climate()
+
+    def _mark_profile_dirty(self):
+        """Flag the atmosphere profile as needing normalization after edits."""
+        self._profile_dirty = True
+
+    def normalize_profile(self, extra_skip=None, force=False):
+        """
+        Normalize the atmosphere profile if it is a pandas DataFrame and marked dirty.
+
+        Parameters
+        ----------
+        extra_skip : iterable, optional
+            Additional column names to exclude from normalization.
+        force : bool, optional
+            If True, normalize even if the dirty flag is False.
+        """
+        profile = self.inputs.get('atmosphere', {}).get('profile')
+        if isinstance(profile, pd.DataFrame):
+            if force or self._profile_dirty:
+                self.inputs['atmosphere']['profile'] = normalize_df(profile, extra_skip=extra_skip)
+        self._profile_dirty = False
+
+    def _normalize_profile_if_dirty(self, extra_skip=None):
+        """Normalize the profile only when flagged dirty."""
+        self.normalize_profile(extra_skip=extra_skip, force=False)
 
     def phase_angle(self, phase=0,num_gangle=10, num_tangle=1,symmetry=False, 
         phase_grid=None, calculation=None):
@@ -2029,6 +2055,7 @@ class inputs():
 
         #sort by pressure to make sure 0 index is low pressure, last index is high pressure
         self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
+        self._mark_profile_dirty()
 
         #lastly check to see if the atmosphere is non-H2 dominant. 
         #if it is, let's turn off Raman scattering for the user. 
@@ -2078,6 +2105,9 @@ class inputs():
                               [ quench,  no_ph3,  cold_trap,  vol_rainout]):
             self.inputs['approx']['chem_params'][ikey]=ibool
 
+        # ensure mixing ratios stay normalized after any updates in this routine
+        self._normalize_profile_if_dirty()
+
     def chemistry_handler(self, chemistry_table = None):
         """
         This function sets the chemistry table that we want to use, whether it is the 1060, 2121 and if we want to 
@@ -2099,6 +2129,9 @@ class inputs():
             run = True 
         else: 
             run = False 
+
+        if run:
+            self._mark_profile_dirty()
 
         #lets set a bool to see if we find a valid chem method
         found_method = False
@@ -2130,6 +2163,10 @@ class inputs():
         #Option : No other options so far 
         elif not found_method: 
             raise Exception(f"A chem option {chem_method} is not valid. Likely you specified method='resrotrebin' in opannection but did not run `atmosphere()` function after inputs_climate.") 
+        
+        # Normalize after chemistry routines update the profile
+        if run:
+            self._normalize_profile_if_dirty()
     
     def volatile_rainout(self,quench_levels,species_to_consider = ['H2O', 'CH4','NH3']):
         """
@@ -2143,6 +2180,7 @@ class inputs():
         species_to_consider : list of str
             Default is ['H2O', 'CH4','NH3']
         """
+        self._mark_profile_dirty()
         
         quench_molecules = np.concatenate([i.split('-') for i in quench_levels.keys()])
         quench_by_molecule={}
@@ -2192,6 +2230,7 @@ class inputs():
 
         #reset H2 accordingly
         self.inputs['atmosphere']['profile'].loc[:,'H2'] = H2
+        self._normalize_profile_if_dirty()
 
     def cold_trap(self,species_to_consider = ['H2O','CH4','NH3']): 
         """
@@ -2199,6 +2238,7 @@ class inputs():
         for H2O, CH4 and NH3. 
         """
         #only adjust species that actually have chem computed 
+        self._mark_profile_dirty()
         
         species_to_adjust = [i for i in species_to_consider if i in self.inputs['atmosphere']['profile'].keys()]
         H2 = self.inputs['atmosphere']['profile']['H2'].values
@@ -2232,6 +2272,7 @@ class inputs():
         
         #reset H2 accordingly
         self.inputs['atmosphere']['profile'].loc[:,'H2'] = H2
+        self._normalize_profile_if_dirty()
 
     def premix_atmosphere(self, opa=None, quench_levels=None, verbose=True):
         """
@@ -2320,6 +2361,8 @@ class inputs():
         #neb trying to commect this out as i htink this is not needed anymore 
         #df['kz']=kz
         self.inputs['atmosphere']['profile']  = df 
+        self._mark_profile_dirty()
+        self._normalize_profile_if_dirty()
     
     def find_kzz(self):
         """
@@ -2346,6 +2389,7 @@ class inputs():
         quench_levels : dict
             Dictionary with the quench levels for each molecule.
         """
+        self._mark_profile_dirty()
         extend_deeper = False
         kinetic_CO2=True #since our old way was an "error" it seems like we should include htis as an option to be false
         
@@ -2381,6 +2425,7 @@ class inputs():
 
             # create new df to have the right shape to be used
             self.inputs['atmosphere']['profile'] = pd.DataFrame({'pressure': pressure, 'temperature': temperature})#, 'kz': kz})
+            self._mark_profile_dirty()
             df_atmo_og = self.inputs['atmosphere']['profile']
 
             # redo the chemistry to make sure new extended layers have to correct abundances
@@ -2441,6 +2486,8 @@ class inputs():
             #    self.inputs['atmosphere']['profile']['kz'] = kz
         else:
             self.inputs['atmosphere']['profile'] = df_atmo_og
+
+        self._normalize_profile_if_dirty()
 
     def premix_atmosphere_diseq_deprecate(self, opa, quench_levels, teff, t_mix=None, df=None, filename=None, vol_rainout = False, 
                                 quench_ph3 = True, kinetic_CO2 = True, no_ph3 = False, cold_trap=False, cld_species = None, **pd_kwargs):
@@ -2505,6 +2552,7 @@ class inputs():
             self.inputs['atmosphere']['profile'] = pd.DataFrame({'pressure': pressure, 'temperature': temp})
         else:
             self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
+        self._mark_profile_dirty()
 
         #Turn off raman for 196 premix calculations 
         self.inputs['approx']['rt_params']['common']['raman'] = 2
@@ -2747,6 +2795,7 @@ class inputs():
         if ('temperature' not in df.keys()):
             raise Exception("`temperature` not specified as a column/key name")
         self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
+        self._mark_profile_dirty()
 
         #Turn off raman for 196 premix calculations 
         self.inputs['approx']['rt_params']['common']['raman'] = 2
@@ -2808,6 +2857,7 @@ class inputs():
             self.nlevel = ptchem.shape[0]
 
             self.inputs['atmosphere']['profile'] = ptchem.loc[:,['pressure','temperature']]
+            self._mark_profile_dirty()
         elif ('.dat' in str(flist)):
             flist = [i.split('/')[-1] for i in flist if 'dat' in i]
             ts = [i.split('g')[0][1:] for i in flist if 'dat' in i]
@@ -3103,6 +3153,7 @@ class inputs():
         This particular function needs to have all molecules as columns as well as 
         pressure and temperature
         """
+        self._mark_profile_dirty()
         #from user input
         plevel = self.inputs['atmosphere']['profile']['pressure'].values
         tlevel =self.inputs['atmosphere']['profile']['temperature'].values
@@ -3191,6 +3242,7 @@ class inputs():
                      ((1-t_interp)* (p_interp)   * log_abunds[i_t_low_p_hi,:]) ) 
 
         self.inputs['atmosphere']['profile'][species] = pd.DataFrame(abunds)
+        self._normalize_profile_if_dirty()
 
     def add_pt(self, T=None, P=None,P_config=None):
         """
@@ -3236,6 +3288,7 @@ class inputs():
         #    if 'kz' in  self.inputs['atmosphere']['profile'].keys(): 
         #        df['kz'] = self.inputs['atmosphere']['profile']['kz'].values
         self.inputs['atmosphere']['profile']  = df
+        self._mark_profile_dirty()
         
         # Return TP profile
         return #self.inputs['atmosphere']['profile'] 
@@ -4821,6 +4874,8 @@ class inputs():
                 self.inputs['surface_reflect'] = 0 
                 self.inputs['hard_surface'] = 0 
 
+        # Normalize atmospheric mixing ratios before running radiative transfer
+        self._normalize_profile_if_dirty()
             
         return picaso(self, opacityclass,dimension=dimension,calculation=calculation,
             full_output=full_output, plot_opacity=plot_opacity, as_dict=as_dict)
@@ -5266,6 +5321,31 @@ class inputs():
         #suggest retiring this and always returning dict 
         return all_out
 
+def normalize_df(df: pd.DataFrame, extra_skip=None) -> pd.DataFrame:
+    """
+    Return a copy of ``df`` where all species columns are normalized so each row
+    sums to 1. Non-species columns such as ``pressure``, ``temperature``, or
+    metadata/transport terms (e.g., ``kz``) are left untouched. ``pressure`` and
+    ``temperature`` are not required to be present; they are simply skipped when
+    found.
+    """
+
+    skip = {'pressure', 'temperature', 'kz', 'Kzz'}
+    if extra_skip:
+        skip.update(extra_skip)
+
+    numeric_cols = set(df.select_dtypes(include='number').columns)
+    species_cols = [c for c in numeric_cols if c not in skip]
+    if not species_cols:
+        return df.copy()
+
+    out = df.copy()
+    row_totals = out[species_cols].sum(axis=1)
+    if (row_totals == 0).any():
+        raise ValueError("Encountered rows with zero total abundance; cannot normalize")
+
+    out[species_cols] = out[species_cols].div(row_totals, axis=0)
+    return out
 
 def get_targets():
     """Function to grab available targets using exoplanet archive data. 
