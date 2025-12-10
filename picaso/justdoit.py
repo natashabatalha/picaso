@@ -5020,19 +5020,6 @@ class inputs():
         pc.gdat.TOA_pressure_avg = photochem_TOA_pressure
         self.inputs['climate']['pc'] = pc
 
-    def equilibrium_chemistry_init(self):
-        "Initializes the equilibrium chemistry solver."
-
-        from .photochem import EquilibriumChemistry
-
-        self.inputs['climate']['chemeq_solver'] = EquilibriumChemistry(
-            thermofile='',
-            
-        )
-
-
-
-    
     def energy_injection(self, inject_energy = False, total_energy_injection = 0, press_max_energy = 1,
                         injection_scalehight= 1, inject_beam = False, beam_profile = 0):
         """
