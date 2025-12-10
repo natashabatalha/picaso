@@ -236,14 +236,14 @@ class EquilibriumChemistry(ChemEquiAnalysis):
             Species names to load; defaults to the bundled list when
             `thermofile` is None.
         method : str, optional
-            Optional preset for configuring the solver. ``"sonora2020"`` loads
+            Optional preset for configuring the solver. ``"sonora-approx"`` loads
             the Sonora-specific nominal species list and mass-tolerance tweaks;
             any other value leaves ``atoms``/``species`` untouched so you can
             supply custom thermo data. Use ``None`` when providing your own
             configuration.
         """
 
-        if method == 'sonora2020':
+        if method == 'sonora-approx':
             atoms = None
             species = SONORA_NOMINAL_SPECIES
 
@@ -253,7 +253,7 @@ class EquilibriumChemistry(ChemEquiAnalysis):
             species 
         )
 
-        if method == 'sonora2020':
+        if method == 'sonora-approx':
             # matches the easyCHEM internals
             self.mass_tol = 1.0e-2 
 
@@ -264,6 +264,7 @@ class EquilibriumChemistry(ChemEquiAnalysis):
             self.molfracs_atoms_sun = molfracs_atoms_sun
 
         self._molfracs_atoms_sun_save = self.molfracs_atoms_sun.copy()
+        self.method = method
 
     def set_atom_to_H_ratios(self, atom_to_H_ratios, reset=False):
         """Override or reset the elemental X/H ratios used by the solver.
