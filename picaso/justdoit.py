@@ -2117,13 +2117,6 @@ class inputs():
             if run: self.chemeq_visscher_2121(cto, np.log10(mh)) 
             found_method = True
         elif 'on-the-fly' in str(chem_method):
-
-            # Initialize if needed
-            if 'chemeq_solver' not in self.inputs['climate']:
-                from .photochem import EquilibriumChemistry
-                self.inputs['climate']['chemeq_solver'] = EquilibriumChemistry()
-
-            # Compute chemical equilibrium
             mh = self.inputs['atmosphere']['mh']
             cto = self.inputs['atmosphere']['cto_absolute']
             if run: self.chemeq_on_the_fly(cto, np.log10(mh))
@@ -2845,8 +2838,61 @@ class inputs():
             self.chemeq_visscher_2121(cto_absolute=0.458,log_mh=0.0)
         self.inputs['atmosphere']['sonora_filename'] = build_filename
 
-    def chemeq_on_the_fly(self, cto_absolute, log_mh):
-        "Compute equilibrium abundances with the configured solver and load them into the current profile."
+    def chemeq_on_the_fly(self, cto_absolute, log_mh, method='sonora2020', chemeq_solver_init_args={}):
+        """
+        Compute chemical equilibrium abundances for the current pressure–temperature
+        profile using the `photochem.EquilibriumChemistry` solver and attach the
+        resulting gas-phase mixing ratios to ``inputs['atmosphere']['profile']``.
+
+        Parameters
+        ----------
+        cto_absolute : float
+            Absolute carbon-to-oxygen ratio (e.g., 0.55 for solar). Passed directly
+            to the equilibrium solver to set elemental abundances.
+        log_mh : float
+            Base-10 logarithm of the metallicity relative to solar. This value,
+            together with ``cto_absolute``, defines the elemental composition used
+            in the equilibrium calculation.
+        method : str or None, optional
+            Equilibrium chemistry approach to use. Default ``'sonora2020'`` loads the
+            Sonora 2020 thermo data shipped with the reference data and caches the
+            solver in ``inputs['climate']['chemeq_solver']`` for reuse. Set to
+            ``None`` to build an ``EquilibriumChemistry`` instance with custom
+            arguments supplied via ``chemeq_solver_init_args``. Any other value
+            raises an exception.
+        chemeq_solver_init_args : dict, optional
+            Keyword arguments forwarded to ``EquilibriumChemistry`` when
+            ``method`` is ``None`` (e.g., custom thermodynamic files or solver
+            options). Ignored when using the built-in Sonora grid.
+
+        Notes
+        -----
+        - Requires ``inputs['atmosphere']['profile']`` to already contain
+          ``pressure`` (bar) and ``temperature`` (K) columns.
+        - The solver instance is cached on ``inputs['climate']['chemeq_solver']``
+          and reinitialized only when ``method`` changes.
+        - Only gas abundances returned by the solver are currently written back to
+          the profile; condensate information is discarded.
+        """
+
+        # Initialize if needed
+        if 'climate' not in self.inputs:
+            self.inputs['climate'] = {}
+        initialize = False
+        if 'chemeq_solver' not in self.inputs['climate']:
+            initialize = True
+        else:
+            if method != self.inputs['climate']['chemeq_solver'].method:
+                initialize = True
+        if initialize:
+            from .photochem import EquilibriumChemistry
+            if method == 'sonora2020':
+                thermofile = os.path.join(__refdata__,'chemistry','thermo_data','thermo-sonora-component.yaml') 
+                self.inputs['climate']['chemeq_solver'] = EquilibriumChemistry(thermofile=thermofile, method=method)
+            elif method == None:
+                self.inputs['climate']['chemeq_solver'] = EquilibriumChemistry(**chemeq_solver_init_args)
+            else:
+                raise Exception('`method` can be one of the following: "sonora2020" or None')
 
         # Unpack P, T and solver
         P = self.inputs['atmosphere']['profile']['pressure'].to_numpy()
@@ -4975,6 +5021,19 @@ class inputs():
         pc = EvoAtmosphereGasGiantPicaso(**photochem_init_args)
         pc.gdat.TOA_pressure_avg = photochem_TOA_pressure
         self.inputs['climate']['pc'] = pc
+
+    def equilibrium_chemistry_init(self):
+        "Initializes the equilibrium chemistry solver."
+
+        from .photochem import EquilibriumChemistry
+
+        self.inputs['climate']['chemeq_solver'] = EquilibriumChemistry(
+            thermofile='',
+            
+        )
+
+
+
     
     def energy_injection(self, inject_energy = False, total_energy_injection = 0, press_max_energy = 1,
                         injection_scalehight= 1, inject_beam = False, beam_profile = 0):
