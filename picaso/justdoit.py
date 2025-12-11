@@ -3008,7 +3008,7 @@ class inputs():
 
         try:
             header = pd.read_csv(full_file_path).keys()[0]
-            cols = header.replace('T(K)','temperature').replace('P(bar)','pressure').replace('atCs','Cs').split()
+            cols = header.replace('T(K)','temperature').replace('P(bar)','pressure').split()
             a = pd.read_csv(full_file_path,sep=r'\s+',skiprows=1,header=None, names=cols)
             a['pressure']=10**a['pressure']
 
