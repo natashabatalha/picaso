@@ -4344,12 +4344,12 @@ class inputs():
         #if this is a climate run lets make sure we have all the right inputs set 
         if 'climate' in self.inputs['calculation']:
             #here are all the virga kwargs 
-            virga_kwargs = dict(condensates=condensates, directory=directory,
+            virga_kwargs = dict(patchy_do_holes=do_holes, patchy_fthin_cld=fthin_cld,patchy_fhole=fhole,
+                            condensates=condensates, directory=directory,
                             fsed=fsed, b=b, eps=eps, param=param, 
                             mh=mh, mmw=mmw, kz_min=kz_min, sig=sig,
                             Teff=Teff, alpha_pressure=alpha_pressure, supsat=supsat,
                             gas_mmr=gas_mmr, do_virtual=do_virtual, verbose=verbose,
-                            do_holes=do_holes, fthin_cld=fthin_cld,fhole=fhole,
                             aggregates=aggregates, Df=Df, N_mon=N_mon, r_mon=r_mon, k0=k0,latent_heat=latent_heat)
             #turn on clouds for this calculation
             self.inputs['climate']['cloudy'] = True
@@ -5185,10 +5185,15 @@ class inputs():
         g0_cld_climate = np.zeros(shape=(self.nlevel-1,nwno_clouds,4))
         w0_cld_climate = np.zeros(shape=(self.nlevel-1,nwno_clouds,4))
         #BUNDLING
-        CloudParametersT = namedtuple('CloudParameters',['cloudy', 'OPD','G0','W0']+list(virga_kwargs.keys()))
+        virga_specific =[['virga_'+i,val] for i ,val in virga_kwargs.items() if 'patchy' not in i]
+        hole_specific =  [[i,val] for i ,val in virga_kwargs.items() if 'patchy' in i]
+        CloudParametersT = namedtuple('CloudParameters',['cloudy', 'OPD','G0','W0']
+                                      +[i[0] for i in virga_specific]
+                                      +[i[0] for i in hole_specific])
         #this adds the cloud params that are always needed plus the virga kwargs, if they are used 
-        CloudParameters=CloudParametersT(*([cloudy, opd_cld_climate,g0_cld_climate,w0_cld_climate,
-                                        ]+list(virga_kwargs.values())))
+        CloudParameters=CloudParametersT(*([cloudy, opd_cld_climate,g0_cld_climate,w0_cld_climate]
+                                        +[i[1] for i in virga_specific]
+                                        +[i[1] for i in hole_specific]))
 
 
         if verbose: self.interpret_run()
@@ -5256,9 +5261,9 @@ class inputs():
                                         cold_trap = self.inputs['approx']['chem_params']['cold_trap'], 
                                         vol_rainout= self.inputs['approx']['chem_params']['vol_rainout'])
             if cloudy == 1:
-                cld_kwargs =dict( do_holes=virga_kwargs.get('do_holes',False), 
-                                  fhole = virga_kwargs.get('fhole',0),
-                                  fthin_cld = virga_kwargs.get('fthin_cld',0))
+                cld_kwargs =dict( do_holes=virga_kwargs.get('patchy_do_holes',False), 
+                                  fhole = virga_kwargs.get('patchy_fhole',0),
+                                  fthin_cld = virga_kwargs.get('patchy_fthin_cld',0))
                 self.clouds(df=df_cld,**cld_kwargs)
             df_spec = self.spectrum(opacityclass,full_output=True,calculation='thermal')    
             all_out['spectrum_output'] = df_spec 
