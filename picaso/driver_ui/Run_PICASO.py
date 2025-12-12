@@ -19,6 +19,7 @@ pysyn_cdbs_env_var = '/Users/sjanson/Desktop/code/picaso/reference/grp/redcat/tr
 # TODO --> chemistry userfile doesn't work
 # TODO --> don't hardcode star information
 # TODO --> keep graphs in place
+# TODO --> render retrieval keywords provided in driver.toml
 # condenstaes & pressure grid
 # np.flip(np.reshape[dat01['w0]]) in plot_cld_inputs()
 # clouds jdi.available() from virga autopopulate
@@ -114,9 +115,16 @@ def write_results_to_config(grid, base):
             if key.lower() in base and grid[item][0]:
                 base[key.lower()]['value'] = grid[item][0]
         elif isinstance(base[item], list):
-            base[item] = [float(ele) for ele in grid[item][0]]
+            try:
+                base[item] = [float(ele) for ele in grid[item][0]]
+            except:
+                base[item] = [str(ele) for ele in grid[item][0]]
         elif not isinstance(base[item], dict):
-            base[item] = grid[item][0]
+            if isinstance(grid[item][0], np.int64):
+                base[item] = int(grid[item][0])
+            else:
+                base[item] = grid[item][0]
+
 
 def clean_dictionary(data, key_to_remove):
     if isinstance(data, dict):
@@ -171,9 +179,12 @@ st.header('Run PICASO',divider='rainbow')
 
 # st.info('This page assumes you have your data and environment variables set up. If this is not the case, please navigate to the Setup Data page.')
 st.subheader('Administrative')
-
-# ADMINISTRATIVE OPTIONS --------------#
-# TODO: handle this section (database options?)
+################################
+#
+# CONFIGURE ADMINISTRATIVE STUFF
+#
+################################
+# ## TODO: handle this section (database options?)
 database_method = None # = st.selectbox("Database method",("phoenix", "ck04models"),)
 config['OpticalProperties']['opacity_method'] = st.selectbox("Opacity method", ("resampled")) #, "preweighted", "resortrebin"))
 # if opacity_method == 'resampled': st.warning('Warning, you are selecting resampling! This could degrade the precision of your spectral calculations so should be used with caution. If you are unsure check out this tutorial: https://natashabatalha.github.io/picaso/notebooks/10_ResamplingOpacities.html',
@@ -184,9 +195,6 @@ opacity = jdi.opannection(
     **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
 )
 param_tools = Parameterize(load_cld_optical=go.find_values_for_key(config ,'condensate'), mieff_dir=config['OpticalProperties'].get('virga_mieff', None))
-
-
-
 st.subheader('Select calculation to perform')
 config['calc_type'] = st.selectbox("Calculation type", ['spectrum','climate'], index=None)
 if config['calc_type'] == "spectrum":
@@ -203,7 +211,11 @@ if config['observation_type'] == 'thermal':
     choice = st.selectbox("Do your want your object to be irradiated?", ('Yes', 'No'), index=None)
     config['irradiated'] = choice == 'Yes'
 
-# --- CONFIGURE STAR ------------------- #
+###############################
+#
+# CONFIGURE STAR
+#
+################################
 # TODO: pull dynamically from config
 if config['observation_type'] == 'reflected' or config['observation_type'] == 'transmission' or config['irradiated']:
     st.subheader("Star Variables")
@@ -225,7 +237,11 @@ if config['observation_type'] == 'reflected' or config['observation_type'] == 't
             config['star'][key.lower()]['value'] = star_grid[key][0]
 
 if config['observation_type']:
-    # CONFIGURE PLANET/BD ---------------------- #
+    ###############################
+    #
+    # CONFIGURE OBJECT
+    #
+    ################################
     st.subheader("Object Variables")
 
     formatted_obj = format_config_section_for_df(config['object'])
@@ -234,7 +250,7 @@ if config['observation_type']:
     # TODO: users should be able to leave gravity or M/R blank
     write_results_to_config(object_grid, config['object'])
 
-
+    # TODO ---> REMOVE?
     # TODO switch to degrees/ give flexibility between radians and degrees
     config['geometry']['phase']['value'] = st.number_input('Enter phase angle in radians 0-2π', min_value=0, max_value=6, value=0)
 
@@ -248,11 +264,15 @@ if config['observation_type']:
     pressure_grid = st.data_editor(pressure_df)
 
     write_results_to_config(pressure_grid, config['temperature']['pressure'])
-
-    # TEMPERATURE
     # TODO: hide until pressure is configured...unless userfile or sonora_bobcat
     # TODO: remove most options
     # move pressure to after
+
+    ###############################
+    #
+    # INPUT TEMPERATURE INFORMATION
+    #
+    ################################
     temperature_options = [option for option in config['temperature'].keys() if option != 'profile' and option != 'pressure']
     if len(temperature_options) == 0:
         st.warning('No temperature options found in driver.toml file.')
@@ -273,12 +293,18 @@ if config['observation_type']:
                 config['temperature'][temp_profile][pure_attr] = st.selectbox(f"{temp_profile.capitalize()} {pure_attr.capitalize()} Options", config['temperature'][temp_profile][attr], index=None)
         write_results_to_config(temp_grid, config['temperature'][temp_profile])
 
-    # see PT graph
+    ########################
+    # GRAPH PT
+    ########################
     if st.button('See Pressure-Temperature graph'):
         data_class = run_spectrum_class('temperature')
         streamlit_bokeh(jpi.pt({'layer': data_class.inputs['atmosphere']['profile']}))
 
-    #------modelling chemistry ----------------------#
+    #############################
+    #
+    # INPUT CHEMISTRY INFORMATION
+    #
+    #############################
     chemistry_options = [option for option in config['chemistry'] if option != 'method']
     if len(chemistry_options) == 0:
         st.warning('No chemistry option found in driver.toml.')
@@ -300,7 +326,6 @@ if config['observation_type']:
                     molecule_values.append([str(ele) for ele in config['chemistry'][chem_method][mole]['values']])
                 elif 'value' in config['chemistry'][chem_method][mole]:
                     molecule_values.append([str(config['chemistry'][chem_method][mole]['value'])])
-            print('molecule values', molecule_values)
             chem_free_df = pd.DataFrame({
                 f'Molecule ({mole_unit})': molecules,
                 'Values': molecule_values,
@@ -329,6 +354,10 @@ if config['observation_type']:
             chem_grid = st.data_editor(chem_df)
             # TODO --> do we not write to grid here...
 
+    ##########################
+    # GRAPH MIXING RATIOS
+    ##########################
+
     if st.button('See Mixing Ratios'):
         # TODO: some sort of warning that temp/object should be configured before this
         data_class = run_spectrum_class('chemistry')
@@ -342,9 +371,12 @@ if config['observation_type']:
         full_output = dict({'layer':{'pressure': chem_df['pressure'], 'mixingratios': chem_df}})
         streamlit_bokeh(jpi.mixing_ratio(full_output))
 
-#------modelling clouds ----------------------#
+##########################
+#
+# INPUT CLOUD INFORMATION
+#
+##########################
 include_clouds = st.selectbox("Do you want clouds?", ('Yes', 'No'), index=None)
-
 if include_clouds == 'Yes':
     cloud_id = 'cloud1'
     cloud_obj = config['clouds'][cloud_id]
@@ -356,13 +388,7 @@ if include_clouds == 'Yes':
     # create editable df for cloud so users can set parameters
     cloud_type_df = pd.DataFrame([format_config_section_for_df(cloud_obj[cloud_type])])
     cloud_type_editable_df = st.data_editor(cloud_type_df)
-
-    cloud_type_editable_df = {key: float(cloud_type_editable_df[key]) for key in cloud_type_editable_df.keys() if isinstance(cloud_type_editable_df[key], np.int64)}
-    # config['clouds'][cloud_id][cloud_type] = cloud_type_editable_df
     # render any options sections dynamically
-    """
-    clouds don't seem to be working...
-    """
     import copy
     cloud_list_iterate = copy.deepcopy(config['clouds'][cloud_id][cloud_type])
     for attr in cloud_list_iterate:
@@ -377,32 +403,24 @@ if include_clouds == 'Yes':
                 if kwargs_for_attribute_option_exist:
                     options_editable_df = st.data_editor(cloud_obj[cloud_type][ cloud_obj[cloud_type][pure_attr]+'_kwargs' ])
                     cloud_obj[cloud_type][ cloud_obj[cloud_type][pure_attr]+'_kwargs' ] = options_editable_df
+    write_results_to_config(cloud_type_editable_df, config['clouds']['cloud1'][cloud_type])
+    # config['clouds']['cloud1'][cloud_type] = dict(p=1,dp=1,w0=1,g0=1,opd=1)
+    # st.write(config['clouds']['cloud1'][cloud_type])
+    ##########################
+    # GRAPH CLOUDS
+    ##########################
     if st.button('See Clouds'):
         config = clean_dictionary(config, '_options')
         data_class = run_spectrum_class()
-        df = data_class.inputs['clouds']['profile']
-        # st.write(df)
-        # unique wavenumber
-        # use cloud/other function reshaping
-        # validate clouds
-        # # np.flip(np.reshape[dat01['w0]]) in plot_cld_inputs()
-
+        df = data_class.inputs['clouds']['profile'].astype('float')
         wavenumber = df['wavenumber'].unique()
         nwno = len(wavenumber)
         wavelength = 1e4/wavenumber
         pressure = df['pressure'].unique()
         nlayer = len(pressure)
         bokeh_plot = jpi.plot_cld_input(nwno, nlayer, df=df,pressure=pressure, wavelength=wavelength)
-        # fig = jpi.all_optics_1d({'layer':{
-        #     'cloud':data_class.inputs['clouds']['profile'],
-        #     'pressure':data_class.inputs['clouds']['profile']['pressure'],
-        #     }, 'wavenumber':data_class.inputs['clouds']['profile']['wavenumber']}, wave_range=[1,2])
-        
         st.write(bokeh_plot)
-        # st.write(data_class.inputs['clouds'])
-        # streamlit_bokeh(bokeh_plot)
 
-        # my data is 1D but looks like they were expecting 2D?
 # ---------------------------------#
 # RUN A SPECTRUM ----------------- #
 # ---------------------------------#
@@ -411,10 +429,12 @@ spectral_resolution = 150
 if config['calc_type'] =='spectrum' and st.button(f'Run {config['calc_type']}'):
     config['irradiated'] = config['irradiated'] or config['observation_type'] == 'reflected' or config['observation_type'] == 'transmission'
     cleaned = clean_dictionary(config, '_options')
+    # st.write(config['clouds']['cloud1'])
     df = go.run(driver_dict=cleaned)
 
     # check numpy 3.11 elijah commit to fix below
-    # use mapping dictionary to make this cleaner 
+    # use mapping dictionary to make this cleaner
+    # investigate other graph visuals
     if config['observation_type'] == 'transmission':
         # TODO --> why is transit_depth none...
         wnos, transit_depth = jdi.mean_regrid(df['wavenumber'],
@@ -429,8 +449,6 @@ if config['calc_type'] =='spectrum' and st.button(f'Run {config['calc_type']}'):
         wno, alb = jdi.mean_regrid(wno, alb, R=spectral_resolution)
         spec_fig = jpi.spectrum(wno, alb, plot_width=500,x_range=x_range)
         streamlit_bokeh(spec_fig, theme="streamlit", key="spectrum")
-        # streamlit_bokeh(jpi.cloud(full), theme="streamlit", key="cloud")
-        # TODO: could add w/o molecule functionality & photon attenuation depth, heatmap
 
 # ---------------------------------#
 # RETRIEVALS     ----------------- #
@@ -453,6 +471,22 @@ if do_retrieval:
                 parameter_handler[new_path] = [st.checkbox(f"{new_path} {value}"), value]
             elif isinstance(value, np.int64):
                 parameter_handler[new_path] = [st.checkbox(f"{new_path} {value}"), value]
+
+    config['temperature'] = {
+        config['temperature']['profile']: config['temperature'][config['temperature']['profile']],
+        'pressure': config['temperature']['pressure'],
+        'profile': config['temperature']['profile']
+    }
+    config['chemistry'] = {
+        config['chemistry']['method']: config['chemistry'][config['chemistry']['method']],
+        'method': config['chemistry']['method']
+    }
+    config['clouds'] = {
+        'cloud1':{config['clouds']['cloud1_type']: config['clouds']['cloud1'][config['clouds']['cloud1_type']]},
+        'cloud1_type': config['clouds']['cloud1_type']
+    }
+    del config['retrieval']
+    del config['sampler']
     list_available_free_parameters(config)
 
 selected_items = {}
@@ -463,7 +497,7 @@ done_selecting_parameters = None
 new_config = {}
 new_config['done_selecting_parameters'] =  st.selectbox("Done Selecting Methods", ("Yes", "No"), index=None)
 
-if new_config['done_selecting_parameters']:
+if new_config['done_selecting_parameters'] == 'Yes':
 
     # filter for what items have been selected
     # this can be turned into a one line comprehension
@@ -489,8 +523,9 @@ if new_config['done_selecting_parameters']:
 st.divider()
         
 new_config['done_configuring_priors'] =  st.selectbox("Done Configuring Priors", ("Yes", "No"), index=None)
+ALL_TOMLS = []
 
-if new_config['done_configuring_priors']:
+if new_config['done_configuring_priors'] == 'Yes':
     nsamples = st.number_input('Number of samples?', 5)
 
     prior_set_items_pure_dict = {}
@@ -504,16 +539,13 @@ if new_config['done_configuring_priors']:
                 max=st.session_state[f'max{i}'],
             )
         )
-    ALL_TOMLS = []
     save_all_class_pt = []
     for i in range(nsamples):
-        #1- get randomly generated values for everything in your chemistry set (here that is CH4 and H2O )
         check_all_values = hypercube(np.random.rand(len(prior_set_items_pure_dict.keys())), dict(prior_set_items_pure_dict))
         GUESS_TOML = copy.deepcopy(config)
 
         for index, free_parameter in enumerate(prior_set_items_pure_dict.keys()):
             sampled_value = check_all_values[index]
-            # split free_parameters into path to put back into GUESS_TOML
             keys = free_parameter.split('.')
             write_to_guess_toml(GUESS_TOML, keys, sampled_value)
 
@@ -611,45 +643,33 @@ if new_config['done_configuring_priors']:
     axes.invert_yaxis()
     axes.set_yscale('log')
     st.pyplot(fig)
-    # plt.show()
 
+st.divider()
 
+################################
+# SPECTRUM GRAPHS!!!
+################################
+new_config['see_prior_spectrums'] =  st.selectbox("See Spectrums for Priors?", ("Yes", "No"), index=None)
 
+if new_config['see_prior_spectrums'] == 'Yes':
+    WNO_LIST = []
+    ALB_LIST = []
+    for prior_toml in ALL_TOMLS:
+        cleaned = clean_dictionary(prior_toml, '_options')
+        x_range = [0,15]
+        spectral_resolution = 150
 
+        df = go.run(driver_dict=cleaned)
+        obs_key = 'thermal' if prior_toml['observation_type'] == 'thermal' else 'albedo'
+        wno, alb, fpfs, full = df['wavenumber'] , df[obs_key] , df[f'fpfs_{prior_toml['observation_type']}'], df['full_output']
+        wno, alb = jdi.mean_regrid(wno, alb, R=spectral_resolution)
+        WNO_LIST.append(wno)
+        ALB_LIST.append(alb)
 
-
+    streamlit_bokeh(jpi.spectrum(WNO_LIST, ALB_LIST, palette=[(255,0,0,0.3)], plot_width=500,x_range=x_range))
 
 
 # TODO --> unstringify all the np.int(64)s stored
-# """
-# when done with spectrum:
-
-# do_retrieval = st.selectbox("Do you want to do a retrieval?", ('Yes', 'No'), index=None)
-
-# if do_retrieval:
-#     iterate through driver.toml file
-#     for any leaf value that is not a string (that's a float) --> list as a free parameter (allow user to select)
-
-#     for each free parameter:
-#         if not isinstance(free parameter value, list):
-#             value = list(value)
-#         for each item in value: # to account for knots
-#             have a box for the min, max, and whether it should be log or not
-    
-#         # need to have sample rate somewhere
-#         for i in num_samples:
-#             run pt or chem or cloud function with a sample (from min max) and add it to plot
-
-# # uncertainities --> uncertain how to combine graphs 
-# # uncertain about whether it will rerun everything multiple times and the static unchanging thing
-# # will probably need to be implemented so users don't lose their progress everytime..
-# # eventually want to compare with actual data
-
-# need to see what free parameters there are and provide them to user
-# in a checklist form
-
-# """
-
 # TODO --> hide until wanted
 # TODO --> remove _options for temp profile & restore for changes
 st.download_button(
