@@ -1564,7 +1564,7 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
 
     if chem_grid.shape[0]>1460: 
         print('chem_grid is not 1460')
-        chem_grid = chem_grid.loc[chem_grid['T(K)'].isin( s1460['temperature_K'].astype(float).unique())].loc[chem_grid['P(bar)']<3.5]
+        chem_grid = chem_grid.loc[chem_grid['T(K)'].isin( s1460['temperature_K'].astype(float).unique())].loc[chem_grid['P(bar)']<3.5].reset_index()
 
 
     numw_uni = s1460['number_wave_pts'].values.astype(int)
