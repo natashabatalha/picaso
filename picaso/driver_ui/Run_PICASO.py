@@ -255,9 +255,9 @@ if config['observation_type']:
     # TODO: users should be able to leave gravity or M/R blank
     write_results_to_config(object_grid, config['object'])
 
-    # TODO ---> REMOVE?
     # TODO switch to degrees/ give flexibility between radians and degrees
-    config['geometry']['phase']['value'] = st.number_input('Enter phase angle in radians 0-2π', min_value=0, max_value=6, value=0)
+    if config['observation_type'] != 'thermal':
+        config['geometry']['phase']['value'] = st.number_input('Enter phase angle in radians 0-2π', min_value=0, max_value=6, value=0)
 
     # ATMOSPHERIC VARIABLES ---------------------- #
     st.subheader("Atmospheric Variables")
@@ -410,7 +410,6 @@ if include_clouds == 'Yes':
                     cloud_obj[cloud_type][ cloud_obj[cloud_type][pure_attr]+'_kwargs' ] = options_editable_df
     write_results_to_config(cloud_type_editable_df, config['clouds']['cloud1'][cloud_type])
     # config['clouds']['cloud1'][cloud_type] = dict(p=1,dp=1,w0=1,g0=1,opd=1)
-    # st.write(config['clouds']['cloud1'][cloud_type])
     ##########################
     # GRAPH CLOUDS
     ##########################
@@ -434,9 +433,6 @@ spectral_resolution = 150
 if config['calc_type'] =='spectrum' and st.button(f'Run {config['calc_type']}'):
     config['irradiated'] = config['irradiated'] or config['observation_type'] == 'reflected' or config['observation_type'] == 'transmission'
     cleaned = clean_dictionary(config, '_options')
-    st.write(cleaned['clouds'])
-    st.write(cleaned['temperature'])
-    # st.write(config['clouds']['cloud1'])
     df = go.run(driver_dict=cleaned)
 
     # check numpy 3.11 elijah commit to fix below
@@ -559,7 +555,6 @@ if new_config['done_configuring_priors'] == 'Yes':
                 std=st.session_state[f'std{i}'],
             )  
     save_all_class_pt = []
-    st.write(prior_set_items_pure_dict)
     for i in range(nsamples):
         check_all_values = hypercube(np.random.rand(len(prior_set_items_pure_dict.keys())), dict(prior_set_items_pure_dict))
         GUESS_TOML = copy.deepcopy(config)
@@ -609,9 +604,7 @@ if new_config['done_configuring_priors'] == 'Yes':
 
     for i in range(nsamples):
         pressure = save_all_class_pt[i]['pressure']
-        # st.write(pressure)
         temperature = save_all_class_pt[i]['temperature']
-        # st.write(temperature)
         mixingratios = save_all_class_pt[i]['mixingratios']
         axes.semilogy(temperature,pressure, color='red', alpha=0.1)
         cloud_df = save_all_class_pt[i]['cloudprofile']
@@ -642,9 +635,7 @@ if new_config['done_configuring_priors'] == 'Yes':
         # ax3.set_xlim([1e-5,50])
         ax3.set_title("Optical Depth vs Pressure")
         ax3.invert_yaxis()
-        st.write(molecules)
         for mol, c in zip(molecules, cols):
-            st.write(mol, mixingratios[mol])
             # this needs to not be inside this for loop
             f = bokeh_fig.line(mixingratios[mol],pressure, color=c, line_width=2,
                 muted_color=c, muted_alpha=0.05, line_alpha=1)
