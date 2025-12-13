@@ -194,7 +194,12 @@ opacity = jdi.opannection(
     method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
     **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
 )
-param_tools = Parameterize(load_cld_optical=go.find_values_for_key(config ,'condensate'), mieff_dir=config['OpticalProperties'].get('virga_mieff', None))
+# TODO turn below into input: go.find_values_for_key(config ,'condensate')
+a =jdi.vj.available()
+a.pop(a.index('CaAl12O19'))
+a.pop(a.index('CaTiO3'))
+a.pop(a.index('SiO2'))
+param_tools = Parameterize(load_cld_optical=a, mieff_dir=config['OpticalProperties'].get('virga_mieff', None))
 st.subheader('Select calculation to perform')
 config['calc_type'] = st.selectbox("Calculation type", ['spectrum','climate'], index=None)
 if config['calc_type'] == "spectrum":
@@ -429,6 +434,8 @@ spectral_resolution = 150
 if config['calc_type'] =='spectrum' and st.button(f'Run {config['calc_type']}'):
     config['irradiated'] = config['irradiated'] or config['observation_type'] == 'reflected' or config['observation_type'] == 'transmission'
     cleaned = clean_dictionary(config, '_options')
+    st.write(cleaned['clouds'])
+    st.write(cleaned['temperature'])
     # st.write(config['clouds']['cloud1'])
     df = go.run(driver_dict=cleaned)
 
@@ -511,17 +518,23 @@ if new_config['done_selecting_parameters'] == 'Yes':
     # Right Now not swapping out Gaussian Kwargs for Uniform Kwargs...
     for i, (key, value) in enumerate(selected_items.items()):
         st.subheader(key)
+        prior_type = st.selectbox('prior', ['uniform', 'gaussian'], key=f'prior{i}')
         prior_set_items[key] = dict(
             log=st.text_input('log', False, key=f'log{i}'),
-            prior=st.selectbox('prior', ['uniform', 'gaussian'], key=f'prior{i}'),
-            uniform_kwargs=dict(
+            prior=prior_type
+        )
+        if prior_type == 'uniform':
+            prior_set_items[key][f'{prior_type}_kwargs'] =dict(
                 min=st.number_input('min', value*0.75, key=f'min{i}'),
                 max=st.number_input('max', value*1.25, key=f'max{i}'),
-            )    
-        )
+            )
+        else:
+            prior_set_items[key][f'{prior_type}_kwargs'] =dict(
+                mean=st.number_input('mean', value, key=f'mean{i}'),
+                std=st.number_input('std', 1, key=f'std{i}'),
+            )  
 
 st.divider()
-        
 new_config['done_configuring_priors'] =  st.selectbox("Done Configuring Priors", ("Yes", "No"), index=None)
 ALL_TOMLS = []
 
@@ -534,12 +547,19 @@ if new_config['done_configuring_priors'] == 'Yes':
         prior_set_items_pure_dict[key] = dict(
             log=st.session_state[f'log{i}'],
             prior=st.session_state[f'prior{i}'],
-            uniform_kwargs=dict(
+        )
+        if st.session_state[f'prior{i}'] == 'uniform':
+            prior_set_items_pure_dict[key][f'{prior_type}_kwargs'] =dict(
                 min=st.session_state[f'min{i}'],
                 max=st.session_state[f'max{i}'],
             )
-        )
+        else:
+            prior_set_items_pure_dict[key][f'{prior_type}_kwargs'] =dict(
+                mean=st.session_state[f'mean{i}'],
+                std=st.session_state[f'std{i}'],
+            )  
     save_all_class_pt = []
+    st.write(prior_set_items_pure_dict)
     for i in range(nsamples):
         check_all_values = hypercube(np.random.rand(len(prior_set_items_pure_dict.keys())), dict(prior_set_items_pure_dict))
         GUESS_TOML = copy.deepcopy(config)
@@ -622,11 +642,12 @@ if new_config['done_configuring_priors'] == 'Yes':
         # ax3.set_xlim([1e-5,50])
         ax3.set_title("Optical Depth vs Pressure")
         ax3.invert_yaxis()
-
+        st.write(molecules)
         for mol, c in zip(molecules, cols):
+            st.write(mol, mixingratios[mol])
             # this needs to not be inside this for loop
             f = bokeh_fig.line(mixingratios[mol],pressure, color=c, line_width=2,
-                muted_color=c, muted_alpha=0.05, line_alpha=0.5)
+                muted_color=c, muted_alpha=0.05, line_alpha=1)
             moles[mol].append(f)
     for mol in moles.keys():
         legend_it.append((mol, moles[mol]))
