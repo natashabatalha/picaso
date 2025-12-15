@@ -2,6 +2,7 @@
 
 path_to_opacity_DB = '/Users/sjanson/Desktop/code/picaso/reference/opacities/opacities.db'
 path_to_virga_mieff = '/Users/sjanson/Desktop/code/picaso/reference/virga/'
+driver_config = '/Users/sjanson/Desktop/code/picaso/reference/input_tomls/driver.toml'
 
 # if you have to manually specify paths for env vars, change below; else comment out the os.environ commands below
 picaso_refdata_env_var = "/Users/sjanson/Desktop/code/picaso/reference"
@@ -18,15 +19,13 @@ pysyn_cdbs_env_var = '/Users/sjanson/Desktop/code/picaso/reference/grp/redcat/tr
 # TODO --> assumes options for calc and observation
 # TODO --> chemistry userfile doesn't work
 # TODO --> don't hardcode star information
-# TODO --> keep graphs in place
 # TODO --> render retrieval keywords provided in driver.toml
+# TODO --> add checks to make sure proper sections are configured if there are dependencies
 # condenstaes & pressure grid
+# TODO knots interpolation options bugged --> exceptions in code
 # np.flip(np.reshape[dat01['w0]]) in plot_cld_inputs()
 # clouds jdi.available() from virga autopopulate
-# check for decay type & distribution when rendering kwargs
-# ^ use x_options instead
-# add option for retrieval after spectrum
-# visualization of priors
+# sonora bobcat bugged for pt, don't have file..
 # for rendering the retrievals do floats for lists 
 # have multiple min and maxes for each item of the list
 
@@ -54,12 +53,10 @@ from bokeh.models import Legend
 
 import streamlit as st
 from streamlit_bokeh import streamlit_bokeh
-# st.set_page_config(layout="wide")
 
 #---INITIALIZE VARIABLES--------------------------#
 
 config = None
-driver_config = '/Users/sjanson/Desktop/code/picaso/reference/input_tomls/driver.toml'
 if isinstance(driver_config, str):
     with open(driver_config, "rb") as f:
         config = tomllib.load(f)
@@ -108,7 +105,6 @@ def format_config_section_for_df(obj):
     return pass_to_df
 
 def write_results_to_config(grid, base):
-
     for item in grid:
         if ' (' in item:
             key, unit = item.split()
@@ -173,7 +169,6 @@ def hypercube(u, fitpars):
 # -- BEGINNING OF APP -------------------------- #
 # ---------------------------------------------- #
 
-# HEADERS -----------------------#
 st.logo('https://natashabatalha.github.io/picaso/_images/logo.png', size="large", link="https://github.com/natashabatalha/picaso")
 st.header('Run PICASO',divider='rainbow')
 
@@ -187,18 +182,18 @@ st.subheader('Administrative')
 # ## TODO: handle this section (database options?)
 database_method = None # = st.selectbox("Database method",("phoenix", "ck04models"),)
 config['OpticalProperties']['opacity_method'] = st.selectbox("Opacity method", ("resampled")) #, "preweighted", "resortrebin"))
-# if opacity_method == 'resampled': st.warning('Warning, you are selecting resampling! This could degrade the precision of your spectral calculations so should be used with caution. If you are unsure check out this tutorial: https://natashabatalha.github.io/picaso/notebooks/10_ResamplingOpacities.html',
-#     icon='⚠️')
 opacity = jdi.opannection(
     filename_db=config['OpticalProperties']['opacity_files'], #database(s)
     method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
     **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
 )
 # TODO turn below into input: go.find_values_for_key(config ,'condensate')
+# TODO once the jdi.vj.available() is updated, below pops can be removed
 a =jdi.vj.available()
 a.pop(a.index('CaAl12O19'))
 a.pop(a.index('CaTiO3'))
 a.pop(a.index('SiO2'))
+
 param_tools = Parameterize(load_cld_optical=a, mieff_dir=config['OpticalProperties'].get('virga_mieff', None))
 st.subheader('Select calculation to perform')
 config['calc_type'] = st.selectbox("Calculation type", ['spectrum','climate'], index=None)
@@ -211,7 +206,6 @@ elif config['calc_type'] != None:
 if config['observation_type']:
     st.divider()
     st.header(f'{config['observation_type'].capitalize()} Spectrum Config')
-
 if config['observation_type'] == 'thermal':
     choice = st.selectbox("Do your want your object to be irradiated?", ('Yes', 'No'), index=None)
     config['irradiated'] = choice == 'Yes'
@@ -221,17 +215,16 @@ if config['observation_type'] == 'thermal':
 # CONFIGURE STAR
 #
 ################################
-# TODO: pull dynamically from config
 if config['observation_type'] == 'reflected' or config['observation_type'] == 'transmission' or config['irradiated']:
     st.subheader("Star Variables")
     star_df = pd.DataFrame({
-        'Radius': [1],
-        'R Unit': 'Rsun',
-        'Semi_Major': '200',
-        'Unit': 'AU',
-        'Temperature': [5400],
-        'Metallicity': [0.01],
-        'Logg': [4.45],
+        'radius': [1],
+        'r unit': 'Rsun',
+        'semi_major': '200',
+        'unit': 'AU',
+        'temperature': [5400],
+        'metallicity': [0.01],
+        'logg': [4.45],
         # type
     })
     star_grid = st.data_editor(star_df)
@@ -322,9 +315,6 @@ if config['observation_type']:
         if 'free' in chem_method:
             molecules = [mole for mole in config['chemistry'][chem_method] if mole != 'background']
             mole_unit = config['chemistry'][chem_method][molecules[0]]['unit']
-            # for now must specify free.. or need some sort of pattern since the moleculues need special rendering
-            # assuming all moleculues have the same unit
-
             molecule_values = []
             for mole in molecules:
                 if 'values' in config['chemistry'][chem_method][mole]:
@@ -352,19 +342,28 @@ if config['observation_type']:
                         # TODO: add warning to make sure there's the right # of pressures per values specified
                         config['chemistry'][chem_method][mole]['values'] = values
                         config['chemistry'][chem_method][mole]['pressures'] = [float(pressure) for pressure in chem_free_grid['Pressures (bar)'][i]]
-
+            num_background_gases = st.selectbox("0, 1, or 2 Background Gases?", ('0', '1', '2'), index=None)
+            if num_background_gases == '1':
+                config['chemistry']['free']['background']['gases']= [st.text_input('Background gas')]
+                del config['chemistry']['free']['background']['fraction']
+            elif num_background_gases == '2':
+                background_gas1 = st.text_input('Background gas 1')
+                background_gas2 = st.text_input('Background gas 2')
+                config['chemistry']['free']['background']['gases'] = [background_gas1, background_gas2]
+                fraction = st.number_input('Fraction between them')
+                config['chemistry']['free']['background']['fraction'] = fraction
+            elif num_background_gases == '0':
+                del config['chemistry']['free']['background']
         else:
             formatted_obj = format_config_section_for_df(config['chemistry'][f'{config['chemistry']['method']}'])
             chem_df = pd.DataFrame([formatted_obj])
             chem_grid = st.data_editor(chem_df)
-            # TODO --> do we not write to grid here...
+            write_results_to_config(chem_grid, config['chemistry'][f'{config['chemistry']['method']}'])
 
     ##########################
     # GRAPH MIXING RATIOS
     ##########################
-
     if st.button('See Mixing Ratios'):
-        # TODO: some sort of warning that temp/object should be configured before this
         data_class = run_spectrum_class('chemistry')
         chem_df = data_class.inputs['atmosphere']['profile']
 
@@ -408,8 +407,13 @@ if include_clouds == 'Yes':
                 if kwargs_for_attribute_option_exist:
                     options_editable_df = st.data_editor(cloud_obj[cloud_type][ cloud_obj[cloud_type][pure_attr]+'_kwargs' ])
                     cloud_obj[cloud_type][ cloud_obj[cloud_type][pure_attr]+'_kwargs' ] = options_editable_df
-    write_results_to_config(cloud_type_editable_df, config['clouds']['cloud1'][cloud_type])
-    # config['clouds']['cloud1'][cloud_type] = dict(p=1,dp=1,w0=1,g0=1,opd=1)
+
+    a = []
+    for key, item in cloud_type_editable_df.items():
+        a.append(item.value)
+    st.write(a)
+    config['clouds']['cloud1'][cloud_type] = cloud_type_editable_df_list
+    # write_results_to_config(cloud_type_editable_ df, config['clouds']['cloud1'][cloud_type])
     ##########################
     # GRAPH CLOUDS
     ##########################
@@ -435,13 +439,12 @@ if config['calc_type'] =='spectrum' and st.button(f'Run {config['calc_type']}'):
     cleaned = clean_dictionary(config, '_options')
     df = go.run(driver_dict=cleaned)
 
-    # check numpy 3.11 elijah commit to fix below
     # use mapping dictionary to make this cleaner
-    # investigate other graph visuals
     if config['observation_type'] == 'transmission':
         # TODO --> why is transit_depth none...
         wnos, transit_depth = jdi.mean_regrid(df['wavenumber'],
                                         df['transit_depth'], R=spectral_resolution)
+        st.write(transit_depth)
         fig = jpi.spectrum(wnos, transit_depth,
                             plot_width=800, y_axis_label='Relative (Rp/Rs)^2',
                             x_range=x_range)
@@ -521,14 +524,14 @@ if new_config['done_selecting_parameters'] == 'Yes':
         )
         if prior_type == 'uniform':
             prior_set_items[key][f'{prior_type}_kwargs'] =dict(
-                min=st.number_input('min', value*0.75, key=f'min{i}'),
-                max=st.number_input('max', value*1.25, key=f'max{i}'),
+                min=st.number_input('min', value=value*0.75, min_value=None, max_value=None, key=f'min{i}', format="%.6f"),
+                max=st.number_input('max', value=value*1.25, min_value=None, max_value=None, key=f'max{i}', format="%.6f"),
             )
         else:
             prior_set_items[key][f'{prior_type}_kwargs'] =dict(
                 mean=st.number_input('mean', value, key=f'mean{i}'),
                 std=st.number_input('std', 1, key=f'std{i}'),
-            )  
+            )
 
 st.divider()
 new_config['done_configuring_priors'] =  st.selectbox("Done Configuring Priors", ("Yes", "No"), index=None)
@@ -545,12 +548,12 @@ if new_config['done_configuring_priors'] == 'Yes':
             prior=st.session_state[f'prior{i}'],
         )
         if st.session_state[f'prior{i}'] == 'uniform':
-            prior_set_items_pure_dict[key][f'{prior_type}_kwargs'] =dict(
+            prior_set_items_pure_dict[key][f'{prior_type}_kwargs'] = dict(
                 min=st.session_state[f'min{i}'],
                 max=st.session_state[f'max{i}'],
             )
         else:
-            prior_set_items_pure_dict[key][f'{prior_type}_kwargs'] =dict(
+            prior_set_items_pure_dict[key][f'{prior_type}_kwargs'] = dict(
                 mean=st.session_state[f'mean{i}'],
                 std=st.session_state[f'std{i}'],
             )  
@@ -670,7 +673,6 @@ if new_config['see_prior_spectrums'] == 'Yes':
         cleaned = clean_dictionary(prior_toml, '_options')
         x_range = [0,15]
         spectral_resolution = 150
-
         df = go.run(driver_dict=cleaned)
         obs_key = 'thermal' if prior_toml['observation_type'] == 'thermal' else 'albedo'
         wno, alb, fpfs, full = df['wavenumber'] , df[obs_key] , df[f'fpfs_{prior_toml['observation_type']}'], df['full_output']

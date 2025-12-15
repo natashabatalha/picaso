@@ -128,8 +128,13 @@ def get_data_config():
     'virga_mieff':{
         'default':{
             'url':{'virga.zip':'https://zenodo.org/records/5179187/files/virga.zip'},
-            'description':'Virga refractive index and Mie files on standard 196 grid',
+            'description':'Virga refractive index and Mie files on standard 196 grid. Spherical particles only.',
             'default_destination':os.path.join(__refdata__, 'virga')
+            }, 
+            'aggregates':{
+                'url':{'VIRGA_2_mieff_files.zip':'https://zenodo.org/records/16581692/files/VIRGA_2_mieff_files.zip'},
+                'description':'Virga refractive index and Mie files on a modified 189 grid for the v2 aggregates capabilities. Spheres + aggregates.',
+                'default_destination':os.path.join(__refdata__, 'virga_aggregates')                
             }
         },
     'sonora_grids':{
@@ -350,7 +355,7 @@ def check_environ():
                 messages.append(('warning', f'{icheck} folder found but they are empty. This data product is used for {info}. You might have this data product outside the default path. That is okay.'))
 
     # --- Display Messages ---
-    if True: #_is_notebook():
+    if _is_notebook():
         # Generate and display HTML output for Jupyter notebooks
         html_output = '<div style="border: 1px solid #e0e0e0; padding: 15px; border-radius: 5px; background-color: #f9f9f9; font-family: sans-serif; max-width: 800px; margin: auto;">'
         html_output += '<h3 style="margin-top: 0; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; font-size: 1.2em;">PICASO Environment Check</h3>'
@@ -373,7 +378,7 @@ def check_environ():
             if msg_type == 'list':
                 html_output += '<ul style="margin: 5px 0 10px 20px; padding-left: 20px; border: 1px solid #e0e0e0; background-color: #fff; border-radius: 4px;">'
                 for item in msg:
-                    html_output += f'<li style="margin: 4px 0;"><code style="color: black;">{item}</code></li>'
+                    html_output += f'<li style="margin: 4px 0;"><code>{item}</code></li>'
                 html_output += '</ul>'
             else:
                 style = style_map.get(msg_type, 'color: #000; background-color: #fff;')
@@ -382,7 +387,6 @@ def check_environ():
 
         html_output += '</div>'
         display(HTML(html_output))
-        return html_output
     else:
         # Keep the original text-based output for other environments
         print("--- PICASO Environment Check ---")
@@ -438,9 +442,7 @@ def get_reference(path_to_picaso_refdata):
     get_data(category_download='reference',target_download='default', final_destination_dir=path_to_picaso_refdata)
 
 
-# define a input/printing function that either writes to streamlit or does the python cli version.
-
-def get_data(category_download=None,target_download=None, final_destination_dir=None, is_ui=False):
+def get_data(category_download=None,target_download=None, final_destination_dir=None):
     input_config, data_config=get_data_config()
     __refdata__=os.environ.get('picaso_refdata')
     if ((category_download==None) and (target_download==None)):
@@ -538,7 +540,7 @@ def get_data(category_download=None,target_download=None, final_destination_dir=
                 if final_destination_dir=='':
                     final_destination_dir=os.getcwd()
                 while not os.path.isdir(final_destination_dir):
-                    print('I dont recognize that directory. Please enter a existing directory or press enter to keep in current working directory')
+                    print('I dont recognize that directory. Please enter a existing  directory or press enter to keep in current working directory')
                     final_destination_dir = input()              
         else: 
             raise Exception('Internal PICASO issue: default destimation not supplied in data config. Contact develoepers.')
@@ -586,4 +588,3 @@ def get_data(category_download=None,target_download=None, final_destination_dir=
                     shutil.move(og ,new)
                 except: 
                     print(f'I tried to move stellar grids from here {og} to here {new} but it failed. Likely because the file already exists. Find your file here {og} and manually move it if you want to overwrite. ')
-

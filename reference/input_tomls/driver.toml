@@ -1,8 +1,7 @@
 observation_type = 'thermal' # options: 'transmission', 'thermal', 'reflected' or a combo e.g. transmission+thermal
 observation_type_options = ['thermal', 'transmission', 'reflected']
 irradiated=false #options: true or false (if true, user needs to input star properties)
-calc_type='retrieval'#spectrum climate or retrieval
-calc_type_options = ['spectrum', 'climate', 'retrieval']
+calc_type='spectrum'#spectrum climate or retrieval
 
 [InputOutput]
 observation_data = ['/Users/sjanson/Desktop/code/picaso/docs/notebooks/D_climate/spectra_logzz_9.0_teff_400.0_grav_1000.0_mh_0.0_co_1.0.nc']
@@ -44,8 +43,7 @@ w_unit = ''
 f_unit = '' 
 
 [temperature]
-profile = 'knots' 
-options = ['pressure', 'userfile','isothermal', 'knots', 'madhu_seager_09_inversion','madhu_seager_09_noinversion' ,'guillot', 'zj_24', 'molliere_20', 'Kitzman_20', 'sonora_bobcat']
+profile = 'guillot' # 'isothermal' #'guillot' 
 
 [temperature.userfile]
 filename='/Users/sjanson/Desktop/code/picaso/reference/base_cases/HJ.pt' #columns names: temperature,pressure # units:Kelvin,bar (can also include chemistry in the same file)
@@ -88,9 +86,9 @@ alpha_2=1
 beta=0.5
 
 [temperature.guillot]
-Teq=1000
+Teq=576.17
 T_int=100
-logg1=-1
+logg1=-2
 logKir=-1.5
 alpha=0.5
 
@@ -102,12 +100,12 @@ teff=1000
 #options: 'visscher', 'free', 'userfile'; delete this block if already given chem in pt userfile : future updates 'fast_chem' vs 'photo_chem'
 [chemistry]
 method='free' 
-options=['visscher', 'free', 'userfile']
 
 [chemistry.free]#note all molecules must be case sensitive: e.g., TiO. Isotopologues should be specified with dashes e.g.,: 12-CO
-H2O={value=1e-3,unit='v/v'}
-CH4={value=4e-4,unit='v/v', pressures=[1e-2],pressure_unit='bar'}
+H2O={value=0.3,unit='v/v'}
+CH4={values=[4e-4,1e-2],unit='v/v', pressures=[1e-2],pressure_unit='bar'}
 NH3={value=1e-5,unit='v/v'}
+TiO={value=1e-3,unit='v/v'}
 background={gases=['H2','He'],fraction=5.667} # optional 
 
 [chemistry.visscher]
@@ -124,8 +122,8 @@ cloud1_type='brewster_mie' #options: brewster_grey, brewster_mie, virga, flex_fs
 [clouds.cloud1.hard_grey]
 p = 1 # {value=1,unit='logbar'} #bottom pressure
 dp = 1 # {value=1,unit='logbar'} #thickness in log 
-w0 = 0 #single scattering albedo
-g0 = 0 #asymmetry
+w0 = 1 #single scattering albedo
+g0 = 1 #asymmetry
 opd = 10 #cloud optical depth per layer
 
 [clouds.cloud1.flex_fsed]
@@ -134,6 +132,7 @@ base_pressure=1 # {value=1 , unit='bar'}
 ndz=2 #arbitrary scaling for setting max optical depth of the cloud
 fsed=1
 distribution='lognorm' # "lognorm" or "hansen" .. make sure to add respective kwargs below
+distribution_options = ['lognorm', 'hansen']
 lognorm_kwargs = {sigma=1, lograd = -4}  #log rad in log cm
 hansen_kwargs = {b=1 , lograd = -4}
 
@@ -148,15 +147,18 @@ sig =2
 
 [clouds.cloud1.brewster_mie]
 condensate='Na2S'
-decay_type = 'slab' # can be 'slab' or 'decay' #make sure to add respective kwargs below
+decay_type = 'slab' # can be 'slab' or 'deck' #make sure to add respective kwargs below
+decay_type_options = ['slab','deck']
 slab_kwargs={ptop= 1, dp= 1, reference_tau= 1} # ptop: log bar, dp: log bar, ref tau: micron
 deck_kwargs={ptop= -1, dp= 1} # ptop: log bar, dp: log bar
 distribution = 'lognorm' # 'lognorm' or 'hansen', make sure to add respective kwargs below
+distribution_options = ['lognorm', 'hansen']
 lognorm_kwargs = {sigma=1, lograd = -4}  #log rad in log cm
 hansen_kwargs = {b=1 , lograd = -4}
 
 [clouds.cloud1.brewster_grey]
-decay_type = 'slab' # can be 'slab' or 'decay' #make sure to add respective kwargs below
+decay_type = 'deck' # can be 'slab' or 'deck' #make sure to add respective kwargs below
+decay_type_options = ['slab','deck']
 alpha=-4 # used for wavelength dependent scattering cross section 
 ssa=1 # single scattering albedo set to 1 
 reference_wave=1 #reference wave in micron sets to alpha 
@@ -164,10 +166,11 @@ slab_kwargs={ptop= -1, dp= 1, reference_tau= 1} # ptop: log bar, dp: log bar, re
 deck_kwargs={ptop= -1, dp= 1} # ptop: log bar, dp: log bar
 
 [clouds.patchy]
-npatch = 1
-patch1 = 'clear'
-patch2 = 'cloud1'
-frac_1 = 0.3 #this is the fraction assigned to patch 1
+npatch = 2
+# 1 = homog; 2 patches --> patch1 option clear + any combo of clouds that user already specified
+patch1 = 'clear' # 30 
+patch2 = 'cloud1'# 0.7
+frac_1 = 0.3 #this is the fraction assigned to patch 1 dont have to specify
 
 
 [retrieval]
