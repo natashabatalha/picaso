@@ -1,34 +1,11 @@
 # run UI locally with: streamlit run driver_ui.py
 
-path_to_opacity_DB = '/Users/sjanson/Desktop/code/picaso/reference/opacities/opacities.db'
-path_to_virga_mieff = '/Users/sjanson/Desktop/code/picaso/reference/virga/'
+# CONSTANTS YOU NEED TO SPECIFY -------- #
 driver_config = '/Users/sjanson/Desktop/code/picaso/reference/input_tomls/driver.toml'
 
-# if you have to manually specify paths for env vars, change below; else comment out the os.environ commands below
+# if you have to manually specify paths for env vars, change below; else comment out the os.environ commands below !!
 picaso_refdata_env_var = "/Users/sjanson/Desktop/code/picaso/reference"
 pysyn_cdbs_env_var = '/Users/sjanson/Desktop/code/picaso/reference/grp/redcat/trds'
-
-# --- TODO SECTION ----------------- #
-# TODO change all paths to os dynamic finds instead of hardcoded paths
-# add validation & options for users to find necessary data /specify datapaths
-# TODO options should be what files users have in their directories and or rendered off of driver.toml
-# add other unit options & validation
-# TODO add docstrings to all functions
-# TODO handle duplicates if dup pressure/chem from a userfile
-# TODO remove index from editable df or minimize amap
-# TODO --> assumes options for calc and observation
-# TODO --> chemistry userfile doesn't work
-# TODO --> don't hardcode star information
-# TODO --> render retrieval keywords provided in driver.toml
-# TODO --> add checks to make sure proper sections are configured if there are dependencies
-# condenstaes & pressure grid
-# TODO knots interpolation options bugged --> exceptions in code
-# np.flip(np.reshape[dat01['w0]]) in plot_cld_inputs()
-# clouds jdi.available() from virga autopopulate
-# sonora bobcat bugged for pt, don't have file..
-# for rendering the retrievals do floats for lists 
-# have multiple min and maxes for each item of the list
-
 
 #---IMPORTS--------------------------------#
 import pandas as pd
@@ -76,7 +53,7 @@ def run_spectrum_class(stage=None):
     stage : string
         Options are planet, star, temperature, chemistry; if left blank, the whole class will run (including clouds)
     
-    Returns
+    Return
     -------
     picaso.justdoit.inputs
         Configured class
@@ -84,6 +61,18 @@ def run_spectrum_class(stage=None):
     return go.setup_spectrum_class(config, opacity, param_tools, stage)
 
 def format_config_section_for_df(obj):
+    """
+    Formats a driver.toml section to be rendered as an input 
+
+    Parameters
+    ----------
+    obj : dict
+        Object that is a section of the driver.toml configuration file
+    
+    Return
+    -------
+    Dictionary with formatted keys and values
+    """
     pass_to_df = {}
     for attr in obj.keys():
         if not f'{attr}_options' in obj and not attr.endswith('_options') and not attr.endswith('_kwargs'):
@@ -105,6 +94,19 @@ def format_config_section_for_df(obj):
     return pass_to_df
 
 def write_results_to_config(grid, base):
+    """
+    Writes the results of a Streamlit input component to our configuration dictionary
+
+    Parameters
+    ----------
+    grid : dict
+        Streamlit object
+    base : str
+        A pointer to where the data should be written to config
+    Return
+    ------
+    Cleaned configuration object
+    """
     for item in grid:
         if ' (' in item:
             key, unit = item.split()
@@ -121,8 +123,20 @@ def write_results_to_config(grid, base):
             else:
                 base[item] = grid[item][0]
 
-
 def clean_dictionary(data, key_to_remove):
+    """
+    Recursively removes a certain keyword from any part of a dictionary (used to clean the driver.toml configuration of _options keywords before getting passed to a PICASO function)
+    
+    Parameters
+    ----------
+    data : dict
+        The dictionary with all parameters inputted by the user so far
+    key_to_remove : str
+        The keyword/pattern/string that will be deleted from the configuration so PICASO doesn't throw errors for unexpected keywords
+    Return
+    ------
+    The cleaned and parsed dictionary
+    """
     if isinstance(data, dict):
         keys_to_check = list(data.keys())
         for key in keys_to_check:
@@ -135,7 +149,19 @@ def clean_dictionary(data, key_to_remove):
             data[i] = clean_dictionary(item, key_to_remove)
     return data
 
-def write_to_guess_toml(dictionary, keys, value):
+def update_toml_with_a_value_for_a_free_parameter(dictionary, keys, value):
+    """
+    Write a sampled value to a new copy of the main configuration file, used for retrievals
+        
+    Parameters
+    ----------
+    dictionary : dict
+        The hard copy of the configuration that will get overriden with the sampled value for the specified free parameter
+    keys : str
+        The path of the free parameter in dictionary
+    value : float
+        The sampled value, to get written to the dictionary
+    """
     stopIndex = -1
     if keys[-1].isdigit():
         stopIndex = -2
@@ -147,24 +173,6 @@ def write_to_guess_toml(dictionary, keys, value):
     else:
         dictionary[keys[-1]] = value
 
-# which of Natasha's files did I pull this from just import from there
-def hypercube(u, fitpars):
-    x=np.empty(len(u))
-    for i,key in enumerate(fitpars.keys()):
-        if fitpars[key]['prior'] == 'uniform':
-            minn=fitpars[key]['uniform_kwargs']['min']
-            maxx=fitpars[key]['uniform_kwargs']['max']
-            x[i] = minn+(maxx-minn)*u[i]
-        elif fitpars[key]['prior'] == 'gaussian':
-            mean=fitpars[key]['gaussian_kwargs']['mean']
-            std=fitpars[key]['gaussian_kwargs']['std']
-            x[i]=stats.norm.ppf(u[i], loc=mean, scale=std)
-        else:
-            raise Exception('Prior type not available')
-        if fitpars[key]['log'] == True or fitpars[key]['log'] == 'True':
-            x[i]=10**x[i]  
-    return x
-
 # ---------------------------------------------- #
 # -- BEGINNING OF APP -------------------------- #
 # ---------------------------------------------- #
@@ -172,51 +180,49 @@ def hypercube(u, fitpars):
 st.logo('https://natashabatalha.github.io/picaso/_images/logo.png', size="large", link="https://github.com/natashabatalha/picaso")
 st.header('Run PICASO',divider='rainbow')
 
-# st.info('This page assumes you have your data and environment variables set up. If this is not the case, please navigate to the Setup Data page.')
 st.subheader('Administrative')
 ################################
 #
 # CONFIGURE ADMINISTRATIVE STUFF
 #
 ################################
-# ## TODO: handle this section (database options?)
-database_method = None # = st.selectbox("Database method",("phoenix", "ck04models"),)
+database_method = None 
 config['OpticalProperties']['opacity_method'] = st.selectbox("Opacity method", ("resampled")) #, "preweighted", "resortrebin"))
 opacity = jdi.opannection(
     filename_db=config['OpticalProperties']['opacity_files'], #database(s)
     method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
     **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
 )
+
 # TODO turn below into input: go.find_values_for_key(config ,'condensate')
 # TODO once the jdi.vj.available() is updated, below pops can be removed
 a =jdi.vj.available()
 a.pop(a.index('CaAl12O19'))
 a.pop(a.index('CaTiO3'))
 a.pop(a.index('SiO2'))
-
 param_tools = Parameterize(load_cld_optical=a, mieff_dir=config['OpticalProperties'].get('virga_mieff', None))
+
 st.subheader('Select calculation to perform')
 config['calc_type'] = st.selectbox("Calculation type", ['spectrum','climate'], index=None)
 if config['calc_type'] == "spectrum":
     config['observation_type'] = st.selectbox("Observation type", config['observation_type_options'], index=None)
 elif config['calc_type'] != None:
     st.warning(f'The {config['calc_type']} option has not been implemented yet.')
-
-# configure heading
 if config['observation_type']:
     st.divider()
     st.header(f'{config['observation_type'].capitalize()} Spectrum Config')
-if config['observation_type'] == 'thermal':
-    choice = st.selectbox("Do your want your object to be irradiated?", ('Yes', 'No'), index=None)
-    config['irradiated'] = choice == 'Yes'
 
 ###############################
 #
 # CONFIGURE STAR
 #
 ################################
+if config['observation_type'] == 'thermal':
+    choice = st.selectbox("Do your want your object to be irradiated?", ('Yes', 'No'), index=None)
+    config['irradiated'] = choice == 'Yes'
 if config['observation_type'] == 'reflected' or config['observation_type'] == 'transmission' or config['irradiated']:
     st.subheader("Star Variables")
+    # TODO: pull these values from driver.toml
     star_df = pd.DataFrame({
         'radius': [1],
         'r unit': 'Rsun',
@@ -248,7 +254,6 @@ if config['observation_type']:
     # TODO: users should be able to leave gravity or M/R blank
     write_results_to_config(object_grid, config['object'])
 
-    # TODO switch to degrees/ give flexibility between radians and degrees
     if config['observation_type'] != 'thermal':
         config['geometry']['phase']['value'] = st.number_input('Enter phase angle in radians 0-2π', min_value=0, max_value=6, value=0)
 
@@ -256,15 +261,12 @@ if config['observation_type']:
     st.subheader("Atmospheric Variables")
 
     # PRESSURE
-    st.text('Configure pressure (can ignore if using a userfile for temperature)')
+    st.text('Configure pressure (can ignore if using a userfile or sonora bobcat for temperature)')
     formatted_obj = format_config_section_for_df(config['temperature']['pressure'])
     pressure_df = pd.DataFrame([formatted_obj])
     pressure_grid = st.data_editor(pressure_df)
 
     write_results_to_config(pressure_grid, config['temperature']['pressure'])
-    # TODO: hide until pressure is configured...unless userfile or sonora_bobcat
-    # TODO: remove most options
-    # move pressure to after
 
     ###############################
     #
@@ -408,12 +410,7 @@ if include_clouds == 'Yes':
                     options_editable_df = st.data_editor(cloud_obj[cloud_type][ cloud_obj[cloud_type][pure_attr]+'_kwargs' ])
                     cloud_obj[cloud_type][ cloud_obj[cloud_type][pure_attr]+'_kwargs' ] = options_editable_df
 
-    a = []
-    for key, item in cloud_type_editable_df.items():
-        a.append(item.value)
-    st.write(a)
-    config['clouds']['cloud1'][cloud_type] = cloud_type_editable_df_list
-    # write_results_to_config(cloud_type_editable_ df, config['clouds']['cloud1'][cloud_type])
+    write_results_to_config(cloud_type_editable_df, config['clouds']['cloud1'][cloud_type])
     ##########################
     # GRAPH CLOUDS
     ##########################
@@ -432,6 +429,7 @@ if include_clouds == 'Yes':
 # ---------------------------------#
 # RUN A SPECTRUM ----------------- #
 # ---------------------------------#
+# TODO make these both user inputted parameters
 x_range = [0,15]
 spectral_resolution = 150
 if config['calc_type'] =='spectrum' and st.button(f'Run {config['calc_type']}'):
@@ -441,7 +439,7 @@ if config['calc_type'] =='spectrum' and st.button(f'Run {config['calc_type']}'):
 
     # use mapping dictionary to make this cleaner
     if config['observation_type'] == 'transmission':
-        # TODO --> why is transit_depth none...
+        # TODO --> FIX TRANSMISSION OPTION
         wnos, transit_depth = jdi.mean_regrid(df['wavenumber'],
                                         df['transit_depth'], R=spectral_resolution)
         st.write(transit_depth)
@@ -559,13 +557,13 @@ if new_config['done_configuring_priors'] == 'Yes':
             )  
     save_all_class_pt = []
     for i in range(nsamples):
-        check_all_values = hypercube(np.random.rand(len(prior_set_items_pure_dict.keys())), dict(prior_set_items_pure_dict))
+        check_all_values = go.hypercube(np.random.rand(len(prior_set_items_pure_dict.keys())), dict(prior_set_items_pure_dict))
         GUESS_TOML = copy.deepcopy(config)
 
         for index, free_parameter in enumerate(prior_set_items_pure_dict.keys()):
             sampled_value = check_all_values[index]
             keys = free_parameter.split('.')
-            write_to_guess_toml(GUESS_TOML, keys, sampled_value)
+            update_toml_with_a_value_for_a_free_parameter(GUESS_TOML, keys, sampled_value)
 
         ALL_TOMLS.append(GUESS_TOML)
         # RUNNING THROUGH SPECTRUM CLASS
@@ -682,10 +680,6 @@ if new_config['see_prior_spectrums'] == 'Yes':
 
     streamlit_bokeh(jpi.spectrum(WNO_LIST, ALB_LIST, palette=[(255,0,0,0.3)], plot_width=500,x_range=x_range))
 
-
-# TODO --> unstringify all the np.int(64)s stored
-# TODO --> hide until wanted
-# TODO --> remove _options for temp profile & restore for changes
 st.download_button(
     label="Download current config",
     data=toml.dumps(config),
