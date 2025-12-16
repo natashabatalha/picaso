@@ -660,6 +660,47 @@ def check_units(unit):
         #check if real unit
         return None
     
+def merge_xarrays(ds1, ds2): 
+    """
+    This function merges two identical xarrays whose only difference is the wavelength axis. This is supposed to 
+    help merge xarrays whose only difference was that they were computed with two different opacity files. 
+    It will take all the extra variables and attributes from ds1 (input1). So please ensure ds1 and ds2 have identical 
+    inputs.
+
+    Parameters
+    ----------
+    ds1 : xarray 
+        picaso jdi.output_xarray 1 
+    ds2 : xarray  
+        picaso jdi.output_xarray 2 
+
+    Returns
+    -------
+    xarray
+        concatenated along wavelength dimension, sorted by wavelength, merged all ds1 extra variables and attributes 
+    """
+    pressure_only_vars = [
+        var_name
+        for var_name, variable in ds1.data_vars.items()
+        if 'wavelength' not in variable.dims
+    ]
+    
+    # Drop all pressure-only variables to isolate wavelength-dependent data (like 'emission')
+    ds1_wavel_only = ds1.drop_vars(pressure_only_vars)
+    ds2_wavel_only = ds2.drop_vars(pressure_only_vars)
+    
+    # Concatenate the 'wavelength' data.
+    ds_combined_wavel = xr.concat([ds1_wavel_only, ds2_wavel_only], dim='wavelength')
+    
+    # Optional: Sort the wavelengths
+    ds_combined_wavel_sorted = ds_combined_wavel.sortby('wavelength')
+    
+    ds_pressure_only = ds1[pressure_only_vars]
+    
+    ds_final = xr.merge([ds_combined_wavel_sorted, ds_pressure_only])
+
+    return ds_final
+    
 def output_xarray(df, picaso_class, add_output={}, savefile=None): 
     """
     This function converts all picaso output to xarray which is easy to save 
@@ -2259,14 +2300,22 @@ class inputs():
         pc = self.inputs['climate']['pc']
         #gets whatever kzz is specified either constant or self consistent
         kz = self.find_kzz()
-        
+
+        # Create a photochemistry dict if needed
+        if 'photochemistry' not in self.inputs:
+            self.inputs['photochemistry'] = {'initial_guess': None}
+        # Grab the initial guess
+        df_comp_guess = self.inputs['photochemistry'].get('initial_guess', None)     
+        # Run photochemistry  
         df = pc.run_for_picaso(
                         self.inputs['atmosphere']['profile'], 
                         np.log10(float(self.inputs['atmosphere']['mh'])), 
                         float(self.inputs['atmosphere']['cto_relative']), 
                         kz, 
-                        True
+                        df_comp_guess=df_comp_guess
                     )
+        # Save new DataFrame as an initial guess
+        self.inputs['photochemistry']['initial_guess'] = df.copy()
         #reset kz to picaso dataframe to keep track of it
         #neb trying to commect this out as i htink this is not needed anymore 
         #df['kz']=kz
@@ -2959,7 +3008,7 @@ class inputs():
 
         try:
             header = pd.read_csv(full_file_path).keys()[0]
-            cols = header.replace('T(K)','temperature').replace('P(bar)','pressure').replace('atCs','Cs').split()
+            cols = header.replace('T(K)','temperature').replace('P(bar)','pressure').split()
             a = pd.read_csv(full_file_path,sep=r'\s+',skiprows=1,header=None, names=cols)
             a['pressure']=10**a['pressure']
 
@@ -4295,12 +4344,12 @@ class inputs():
         #if this is a climate run lets make sure we have all the right inputs set 
         if 'climate' in self.inputs['calculation']:
             #here are all the virga kwargs 
-            virga_kwargs = dict(condensates=condensates, directory=directory,
+            virga_kwargs = dict(patchy_do_holes=do_holes, patchy_fthin_cld=fthin_cld,patchy_fhole=fhole,
+                            condensates=condensates, directory=directory,
                             fsed=fsed, b=b, eps=eps, param=param, 
                             mh=mh, mmw=mmw, kz_min=kz_min, sig=sig,
                             Teff=Teff, alpha_pressure=alpha_pressure, supsat=supsat,
                             gas_mmr=gas_mmr, do_virtual=do_virtual, verbose=verbose,
-                            do_holes=do_holes, fthin_cld=fthin_cld,fhole=fhole,
                             aggregates=aggregates, Df=Df, N_mon=N_mon, r_mon=r_mon, k0=k0,latent_heat=latent_heat)
             #turn on clouds for this calculation
             self.inputs['climate']['cloudy'] = True
@@ -5136,10 +5185,15 @@ class inputs():
         g0_cld_climate = np.zeros(shape=(self.nlevel-1,nwno_clouds,4))
         w0_cld_climate = np.zeros(shape=(self.nlevel-1,nwno_clouds,4))
         #BUNDLING
-        CloudParametersT = namedtuple('CloudParameters',['cloudy', 'OPD','G0','W0']+list(virga_kwargs.keys()))
+        virga_specific =[['virga_'+i,val] for i ,val in virga_kwargs.items() if 'patchy' not in i]
+        hole_specific =  [[i,val] for i ,val in virga_kwargs.items() if 'patchy' in i]
+        CloudParametersT = namedtuple('CloudParameters',['cloudy', 'OPD','G0','W0']
+                                      +[i[0] for i in virga_specific]
+                                      +[i[0] for i in hole_specific])
         #this adds the cloud params that are always needed plus the virga kwargs, if they are used 
-        CloudParameters=CloudParametersT(*([cloudy, opd_cld_climate,g0_cld_climate,w0_cld_climate,
-                                        ]+list(virga_kwargs.values())))
+        CloudParameters=CloudParametersT(*([cloudy, opd_cld_climate,g0_cld_climate,w0_cld_climate]
+                                        +[i[1] for i in virga_specific]
+                                        +[i[1] for i in hole_specific]))
 
 
         if verbose: self.interpret_run()
@@ -5207,9 +5261,9 @@ class inputs():
                                         cold_trap = self.inputs['approx']['chem_params']['cold_trap'], 
                                         vol_rainout= self.inputs['approx']['chem_params']['vol_rainout'])
             if cloudy == 1:
-                cld_kwargs =dict( do_holes=virga_kwargs.get('do_holes',False), 
-                                  fhole = virga_kwargs.get('fhole',0),
-                                  fthin_cld = virga_kwargs.get('fthin_cld',0))
+                cld_kwargs =dict( do_holes=virga_kwargs.get('patchy_do_holes',False), 
+                                  fhole = virga_kwargs.get('patchy_fhole',0),
+                                  fthin_cld = virga_kwargs.get('patchy_fthin_cld',0))
                 self.clouds(df=df_cld,**cld_kwargs)
             df_spec = self.spectrum(opacityclass,full_output=True,calculation='thermal')    
             all_out['spectrum_output'] = df_spec 

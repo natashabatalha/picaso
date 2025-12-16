@@ -92,27 +92,33 @@ class EvoAtmosphereGasGiantPicaso(EvoAtmosphereGasGiant):
         self.initialize_to_climate_equilibrium_PT(P_in[::-1].copy()*1e6, T_in[::-1].copy(), Kzz_in[::-1].copy(), 
                                                   metallicity, CtoO, rainout_condensed_atoms)
         
-    def reinitialize_to_new_climate_PT_picaso(self, df, Kzz_in):
+    def reinitialize_to_new_climate_PT_picaso(self, df_temp, df_comp_guess, Kzz_in):
         """Wrapper to `reinitialize_to_new_climate_PT`, which accepts a Pandas DataFrame which contains
         `pressure` in bar, `temperature` in K, and mixing ratios. The order of input arrays are flipped 
         (i.e., first element is TOA) following the PICASO convention. 
 
         Parameters
         ----------
-        df : DataFrame
-            A PICASO "inputs['atmosphere']['profile']" DataFrame containing pressure (bar), 
-            temperature (K), and gas concentrations in volume mixing ratios. 
+        df_temp : DataFrame
+            A PICASO "inputs['atmosphere']['profile']" DataFrame containing the current 
+            pressure (bar) and temperature (K) to intialize to.
+        df_comp_guess : DataFrame
+            A PICASO "inputs['atmosphere']['profile']" DataFrame containing pressure (bar) and 
+            gas concentrations in volume mixing ratios to initalize to.
         Kzz_in : ndarray[dim=1,float64]
             Eddy diffusion (cm^2/s) array corresponding to each pressure level in df['pressure']
         """
 
-        P_in = df['pressure'].to_numpy()[::-1].copy()*1e6
-        T_in = df['temperature'].to_numpy()[::-1].copy()
+        if not np.allclose(df_temp['pressure'].to_numpy(), df_comp_guess['pressure'].to_numpy()):
+            raise Exception('`df` and `df_comp_guess` should have the same pressure levels.')
+
+        P_in = df_temp['pressure'].to_numpy()[::-1].copy()*1e6
+        T_in = df_temp['temperature'].to_numpy()[::-1].copy()
         species_names = self.dat.species_names[:(-2-self.dat.nsl)]
         mix = {}
-        for key in df:
+        for key in df_comp_guess:
             if key in species_names:
-                mix[key] = df[key].to_numpy()[::-1].copy()
+                mix[key] = df_comp_guess[key].to_numpy()[::-1].copy()
 
         # normalize
         mix_tot = np.zeros(P_in.shape[0])
@@ -123,7 +129,7 @@ class EvoAtmosphereGasGiantPicaso(EvoAtmosphereGasGiant):
 
         self.reinitialize_to_new_climate_PT(P_in, T_in, Kzz_in[::-1].copy(), mix)
 
-    def run_for_picaso(self, df, log10metallicity, CtoO, Kzz, first_run, rainout_condensed_atoms=True):
+    def run_for_picaso(self, df, log10metallicity, CtoO, Kzz, df_comp_guess=None, rainout_condensed_atoms=True):
         """Runs the Photochemical model to steady-state using inputs from the PICASO climate model.
 
         Parameters
@@ -138,10 +144,10 @@ class EvoAtmosphereGasGiantPicaso(EvoAtmosphereGasGiant):
             The C/O ratio relative to solar.
         Kzz : ndarray[dim=1,float64]
             Eddy diffusion (cm^2/s) corresponding to each pressure in df['pressure'].
-        first_run : bool
-            If this is the first photochem call, then this should be True
+        df_comp_guess : DataFrame
+            DataFrame containing the photochem composition to initialize from.
         rainout_condensed_atoms : bool, optional
-            If True and `first_run` is True, then the code rains out condensed
+            If True and `df_comp_guess` is not None, then the code rains out condensed
             atoms when guesing the initial solution, by default True.
 
         Returns
@@ -152,10 +158,10 @@ class EvoAtmosphereGasGiantPicaso(EvoAtmosphereGasGiant):
         """        
 
         # Initialize Photochem to `df`
-        if first_run:
+        if df_comp_guess is None:
             self.initialize_to_climate_equilibrium_PT_picaso(df, Kzz, 10.0**log10metallicity, CtoO, rainout_condensed_atoms)
         else:
-            self.reinitialize_to_new_climate_PT_picaso(df, Kzz)
+            self.reinitialize_to_new_climate_PT_picaso(df, df_comp_guess, Kzz)
             if not np.isclose(self.gdat.metallicity, 10.0**log10metallicity) or not np.isclose(self.gdat.CtoO, CtoO):
                 raise Exception('`metallicity` or `CtoO` does not match.')
 
