@@ -142,19 +142,18 @@ def prior_finder(d):
 
 def hypercube(u, fitpars):
     x=np.empty(len(u))
-
     for i,key in enumerate(fitpars.keys()):
         if fitpars[key]['prior'] == 'uniform':
-            minn=fitpars[key]['min']
-            maxx=fitpars[key]['max']
+            minn=fitpars[key]['uniform_kwargs']['min']
+            maxx=fitpars[key]['uniform_kwargs']['max']
             x[i] = minn+(maxx-minn)*u[i]
         elif fitpars[key]['prior'] == 'gaussian':
-            mean=fitpars[key]['mean']
-            std=fitpars[key]['std']
+            mean=fitpars[key]['gaussian_kwargs']['mean']
+            std=fitpars[key]['gaussian_kwargs']['std']
             x[i]=stats.norm.ppf(u[i], loc=mean, scale=std)
         else:
             raise Exception('Prior type not available')
-        if fitpars[key]['log']:
+        if fitpars[key]['log'] == True or fitpars[key]['log'] == 'True':
             x[i]=10**x[i]  
     return x
 

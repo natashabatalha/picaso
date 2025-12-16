@@ -186,8 +186,9 @@ st.subheader('Administrative')
 # CONFIGURE ADMINISTRATIVE STUFF
 #
 ################################
-database_method = None 
+config['InputOutput']['observation_data'] = st.text_input("Enter in the datapath(s) to your observation data", value = config.get('InputOutput').get('observation_data', ['']))
 config['OpticalProperties']['opacity_method'] = st.selectbox("Opacity method", ("resampled")) #, "preweighted", "resortrebin"))
+config['OpticalProperties']['opacity_files'] = st.text_input("Enter in the datapath to your opacities.db", value = config.get('OpticalProperties').get('opacity_files'))
 opacity = jdi.opannection(
     filename_db=config['OpticalProperties']['opacity_files'], #database(s)
     method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
