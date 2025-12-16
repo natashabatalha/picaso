@@ -501,18 +501,14 @@ def setup_spectrum_class(config, opacity, param_tools, stage=None):
     rad = (phase * u.Unit(phase_unit)).to(u.rad).value
     A.phase_angle(rad) #input the radian angle of the event/geometry of browndwarf/planet
 
-    try:
-        A.gravity(gravity     = config['object'].get('gravity', {}).get('value',None), 
-                gravity_unit= u.Unit(config['object'].get('gravity', {}).get('unit',None)), 
-                radius      = config['object'].get('radius', {}).get('value',None), 
-                radius_unit = u.Unit(config['object'].get('radius', {}).get('unit',None)), 
-                )
-    except:
-        A.gravity(radius      = config['object'].get('radius', {}).get('value',None), 
-                radius_unit = u.Unit(config['object'].get('radius', {}).get('unit',None)), 
-                mass        = config['object'].get('mass', {}).get('value',None), 
-                mass_unit   = u.Unit(config['object'].get('mass', {}).get('unit',None))
-                )
+    A.gravity(gravity     = config['object'].get('gravity', {}).get('value',None), 
+            gravity_unit= u.Unit(config['object'].get('gravity', {}).get('unit',None)), 
+            radius      = config['object'].get('radius', {}).get('value',None), 
+            radius_unit = u.Unit(config['object'].get('radius', {}).get('unit',None)),
+            mass        = config['object'].get('mass', {}).get('value',None), 
+            mass_unit   = u.Unit(config['object'].get('mass', {}).get('unit',None)) 
+            )
+
     if stage == 'object':
         return A
     #gravity parameters for a planet/browndwarf
