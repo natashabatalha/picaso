@@ -2630,8 +2630,13 @@ def get_transit_1d(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
             #this is the path length between two layers 
             #essentially tangent from the inner_shell and toward 
             #line of sight to the outer shell
-            integrate_segment=((outer_shell**2-reference_shell**2)**0.5-
-                    (inner_shell**2-reference_shell**2)**0.5)
+
+            # In python 3.11, if inner_shell equals reference shell, a float comprehension error can occur
+            # This if and elif is to try and fix that (so you don't get a spectrum full of nans)
+            if (inner_shell != reference_shell) and (outer_shell != reference_shell):
+                integrate_segment= (outer_shell**2-reference_shell**2)**0.5-(inner_shell**2-reference_shell**2)**0.5
+            elif (inner_shell == reference_shell):
+                integrate_segment= (outer_shell**2-reference_shell**2)**0.5
             #make sure to use the pressure and temperature  
             #between inner and outer shell
             #this is the same index as outer shell because ind = 0 is the outer-

@@ -6,18 +6,24 @@ from .retrieval import Parameterize_DEPRECATE
 #import picaso.justplotit as jpi
 import tomllib 
 import toml
-import dynesty
+import shutil
+# import dynesty
 from collections.abc import Mapping
 from scipy import stats
 import dill
 import dynesty.utils
 from functools import partial
+from mpi4py import MPI
+import sys
+from schwimmbad import MPIPool
 dynesty.utils.pickle_module = dill
+
+# import ultranest
 
 
 chem_options = ['visscher', 'free', 'userfile']
 cloud_options = ['brewster_grey', 'brewster_mie', 'virga', 'flex_fsed', 'hard_grey', 'userfile']
-pt_options = ['userfile','isothermal', 'knots', 'guillot', 'sonora_bobcat',  'madhu_seager_09_inversion','madhu_seager_09_noinversion' ] # 'zj_24', 'molliere_20', 'Kitzman_20', 
+pt_options = ['userfile','isothermal', 'knots', 'guillot', 'sonora_bobcat',  'madhu_seager_09_inversion','madhu_seager_09_noinversion', 'zj_24'] #, 'molliere_20', 'Kitzman_20', 
 
 def run(driver_file=None,driver_dict=None):
     if isinstance(driver_file,str):
@@ -46,6 +52,14 @@ def run(driver_file=None,driver_dict=None):
         picaso_class = setup_spectrum_class(config,opacity,param_tools)
         output =  picaso_class.spectrum(opacity, full_output=True, calculation = config['observation_type']) 
     elif config['calc_type']=='retrieval':
+        #Create output directory
+        os.makedirs(config['InputOutput']['retrieval_output'], exist_ok=True)
+
+        # copy input toml into output folder for reproducibility
+        output_file_name = config['InputOutput']['retrieval_output']+"/inputs.toml"
+        shutil.copy(driver_file, output_file_name)
+
+        #run retrieval
         output = retrieve(config, param_tools)
 
     ### I made these # because they stopped the run fucntion from doing return out and wouldn't let me use my plot PT fucntion
@@ -226,78 +240,153 @@ def MODEL(cube, fitpars, config, OPA, param_tools, DATA_DICT, retrieval=True):
     for obs_key in y_model:
         y_model[obs_key] = np.vstack(y_model[obs_key])
         # if single sample, flatten to 1D
-        if n_samples == 1:
-            y_model[obs_key] = y_model[obs_key][0]
+        # if n_samples == 1:
+        #     y_model[obs_key] = y_model[obs_key][0]
 
     if retrieval:
         return y_model
     else:
         return y_model, profiles
 
-def log_likelihood(cube, fitpars, config, OPA, DATA_DICT, param_tools): 
+def log_likelihood(cube, fitpars, config, OPA, DATA_DICT, param_tools):
+    """
+    Vectorized log-likelihood.
+
+    Parameters
+    ----------
+    cube : array-like
+        Parameter values.
+        Shape can be:
+          - (N_params,)  -> single parameter set
+          - (N_samples, N_params) -> multiple parameter sets
+    fitpars, config, OPA, DATA_DICT, param_tools : as before
+
+    Returns
+    -------
+    logl : float or ndarray
+        Log-likelihood(s).
+        Shape (N_samples,) if multiple sets, or scalar if single.
+    """
+    cube = np.atleast_2d(cube)  # (N_samples, N_params)
+    n_samples = cube.shape[0]
+
+    # Compute model spectra for all samples
     y_model_dict = MODEL(cube, fitpars, config, OPA, param_tools, DATA_DICT)
 
-    ydat_all=[];ymod_all=[];sigma_all=[];extra_term_all=[]
+    logls = []
 
-    for i,key in enumerate(config['InputOutput']['observation_data']):
-        xdata,ydata,edata = DATA_DICT[key]
-        y_model=y_model_dict[key]
+    for j in range(n_samples):
+        ydat_all = []
+        ymod_all = []
+        sigma_all = []
+        extra_term_all = []
 
-        #add offsets
-        if key in config.get("retrieval", {}).get("offset", {}):
-            icube = list(fitpars.keys()).index(f'offset.{key}')
-            offset = cube[icube]
-        else:
-            offset = 0
-        ydata += offset
+        for key in config['InputOutput']['observation_data']:
+            xdata, ydata, edata = DATA_DICT[key]
+            y_model = y_model_dict[key][j]   # pick j-th sample
 
-        #add scalings
-        if key in config.get("retrieval", {}).get("scaling", {}):
-            icube = list(fitpars.keys()).index(f'scaling.{key}')
-            scaling = cube[icube]
-        else:
-            scaling = 1
-        ydata*=scaling
+            # add offsets
+            if key in config.get("retrieval", {}).get("offset", {}):
+                icube = list(fitpars.keys()).index(f'offset.{key}')
+                offset = cube[j, icube]
+            else:
+                offset = 0
+            ydata_ = ydata + offset
 
-        #add error inflation if they exist
-        if key in config.get("retrieval", {}).get("err_inf", {}):
-            icube = list(fitpars.keys()).index(f'err_inf.{key}')
-            err_inf = cube[icube]
-        else:
-            err_inf=0
-        sigma = edata**2 + err_inf #there are multiple ways to do this, here just adding in an extra noise term
+            # add scalings
+            if key in config.get("retrieval", {}).get("scaling", {}):
+                icube = list(fitpars.keys()).index(f'scaling.{key}')
+                scaling = cube[j, icube]
+            else:
+                scaling = 1
+            ydata_ *= scaling
 
-        extra_term = np.log(2*np.pi*sigma)
+            # add error inflation if exists
+            if key in config.get("retrieval", {}).get("err_inf", {}):
+                icube = list(fitpars.keys()).index(f'err_inf.{key}')
+                err_inf = cube[j, icube]
+            else:
+                err_inf = 0
+            sigma = edata**2 + err_inf
 
-        ydat_all.append(ydata);ymod_all.append(y_model);sigma_all.append(sigma);extra_term_all.append(extra_term); 
+            extra_term = np.log(2 * np.pi * sigma)
 
-    ymod_all = np.concatenate(ymod_all)    
-    ydat_all = np.concatenate(ydat_all)    
-    sigma_all = np.concatenate(sigma_all)  
-    extra_term_all = np.concatenate(extra_term_all)
+            ydat_all.append(ydata_)
+            ymod_all.append(y_model)
+            sigma_all.append(sigma)
+            extra_term_all.append(extra_term)
 
-    return -0.5*np.sum((ydat_all-ymod_all)**2/sigma_all + extra_term_all)
+        ydat_all = np.concatenate(ydat_all)
+        ymod_all = np.concatenate(ymod_all)
+        sigma_all = np.concatenate(sigma_all)
+        extra_term_all = np.concatenate(extra_term_all)
+
+        logl = -0.5 * np.sum((ydat_all - ymod_all) ** 2 / sigma_all + extra_term_all)
+        logls.append(logl)
+
+    logls = np.array(logls)
+
+    # return scalar if only one input sample
+    return logls[0] if n_samples == 1 else logls
 
 def convolver(newx, x, y):
     #
     return y
 
-def retrieve(config, param_tools):
-    print('Running retrieval...')
+def conv_non_uniform_R(model_flux, model_wl, R, obs_wl):
+    """
+    From brewster
+    Convolve a model spectrum with a wavelength-dependent resolving power 
+    onto the observed wavelength grid ???
 
-    # copy input toml into output folder for reproducibility
-    output_file_name = config['InputOutput']['retrieval_output']+"/inputs.toml"
-    with open(output_file_name, "w") as toml_file:
-        toml.dump(config, toml_file)
+    Parameters:
+    - model_flux: 1D array of model flux values.
+    - model_wl: 1D array of model wl values.
+    - obs_wl: 1D array of observed wl values.
+    - R: 1D array of resolving power values (for the obs_wl grid.)
+
+    Returns:
+    - convolved_flux: 1D array of convolved flux values on the obs_wl grid.
+    """
+    # create the array for the convolved flux
+    convolved_flux = np.zeros_like(obs_wl)
+
+    for i, wl_center in enumerate(obs_wl): 
+        
+        # compute FWHM and sigma for each wl
+        # print('wl_center', wl_center)
+        # print('R[i]', R[i])
+        
+        fwhm = wl_center / R[i]
+        # print('fwhm', fwhm)
+        sigma = fwhm / 2.355
+
+
+        # compute the Gaussian kernel for the current wl
+       
+        gaussian_kernel = np.exp(-((model_wl-wl_center) ** 2) / (2 * sigma **2))
+        #print('gaussian_kernel before normalisation', gaussian_kernel)
+
+        # normalisation
+        gaussian_kernel /= np.sum(gaussian_kernel)
+        # print('gaussian_kernel after normalisation', gaussian_kernel)
+
+
+
+        # apply the kernel to the flux
+        convolved_flux[i] = np.sum(model_flux * gaussian_kernel)
+    
+    return convolved_flux
+
+def retrieve(config, param_tools):
 
     OPA = opannection(
         filename_db=config['OpticalProperties']['opacity_files'], #database(s)
         method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
+        wave_range=['OpticalProperties']['wave_range'],#state wavelength range desired of spectrum
         **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
         )
     
-    os.makedirs(config['InputOutput']['retrieval_output'], exist_ok=True)
-
     prior_config=config['retrieval']
     
     fitpars=prior_finder(prior_config)
@@ -312,19 +401,30 @@ def retrieve(config, param_tools):
                   OPA=OPA, param_tools=param_tools, DATA_DICT=DATA_DICT)
     
     #pool (MPI for clusters)
+    pool = MPIPool()
+    if not pool.is_master():
+        pool.wait()
+        sys.exit(0)
+        
+    print('Running retrieval...')
 
     #doing dynesty but this should be generic
     sampler_args = prior_config['sampler']['sampler_kwargs']
+    run_args = prior_config['sampler']['run_kwargs']
     if prior_config['sampler']['resume']:
         print('Resuming retrieval...')
-        sampler = dynesty.NestedSampler.restore(config['InputOutput']['retrieval_output']+'/dynesty.save')
+        sampler = dynesty.DynamicNestedSampler.restore(config['InputOutput']['retrieval_output']+'/dynesty.save')
+        resume=True
     else:
-        sampler = dynesty.NestedSampler(loglike_fn, hypercube_fn, ndims, nlive=prior_config['sampler']['nlive'], bootstrap=0) 
-    sampler.run_nested(checkpoint_file=config['InputOutput']['retrieval_output']+'/dynesty.save', **sampler_args)
+        sampler = dynesty.DynamicNestedSampler(loglike_fn, hypercube_fn, ndims, pool=pool, **sampler_args) 
+        resume=False
+
+    sampler.run_nested(checkpoint_file=config['InputOutput']['retrieval_output']+'/dynesty.save', resume=resume, **run_args)
     dill.dump(sampler, open(config['InputOutput']['retrieval_output']+'/sampler.pkl', 'wb'))
+    pool.close()
     return sampler
 
-def check_model_samples(config, N=100, sampler=None):
+def check_model_samples(config, N=100, samples=None):
     """
     Tests the prior distribution by generating models based on the provided configuration.
 
@@ -361,10 +461,12 @@ def check_model_samples(config, N=100, sampler=None):
     virga_mieff   = config['OpticalProperties'].get('virga_mieff',None)
     param_tools = Parameterize(load_cld_optical=preload_cloud_miefs,
                                         mieff_dir=virga_mieff)
+    
     fitpars=prior_finder(config['retrieval'])
     ndims=len(fitpars)
-    if sampler is not None:
-        thetas = sampler.results.samples_equal()
+    if samples is not None:
+        #this is specific to dynesty
+        thetas = samples
     else:
         cube = np.random.random([N, ndims])
         thetas = [hypercube(cube[i], fitpars) for i in range(N)]
@@ -375,7 +477,7 @@ def check_model_samples(config, N=100, sampler=None):
 
     models, profiles = MODEL(thetas[:N], fitpars, config, OPA, param_tools, DATA_DICT, retrieval=False)
 
-    return models, profiles
+    return models, thetas, profiles
 
 def setup_spectrum_class(config, opacity, param_tools, stage=None):
 
