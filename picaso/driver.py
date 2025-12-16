@@ -51,7 +51,6 @@ def run(driver_file=None,driver_dict=None):
     if config['calc_type'] =='spectrum':
         picaso_class = setup_spectrum_class(config,opacity,param_tools)
         output =  picaso_class.spectrum(opacity, full_output=True, calculation = config['observation_type']) 
-    
     elif config['calc_type']=='retrieval':
         #Create output directory
         os.makedirs(config['InputOutput']['retrieval_output'], exist_ok=True)
@@ -157,7 +156,6 @@ def prior_finder(d):
 
 def hypercube(u, fitpars):
     x=np.empty(len(u))
-
     for i,key in enumerate(fitpars.keys()):
         if fitpars[key]['prior'] == 'uniform':
             minn=fitpars[key]['uniform_kwargs']['min']
@@ -169,7 +167,7 @@ def hypercube(u, fitpars):
             x[i]=stats.norm.ppf(u[i], loc=mean, scale=std)
         else:
             raise Exception('Prior type not available')
-        if fitpars[key]['log']:
+        if fitpars[key]['log'] == True or fitpars[key]['log'] == 'True':
             x[i]=10**x[i]  
     return x
 
@@ -481,7 +479,7 @@ def check_model_samples(config, N=100, samples=None):
 
     return models, thetas, profiles
 
-def setup_spectrum_class(config, opacity , param_tools ):
+def setup_spectrum_class(config, opacity, param_tools, stage=None):
 
     if isinstance(opacity,type(None)):
         opacity = opannection(
@@ -489,7 +487,6 @@ def setup_spectrum_class(config, opacity , param_tools ):
         method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
         **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
         ) #opanecction connects to the opacity database
-
     
     irradiated = config['irradiated']
     if not irradiated: 
@@ -516,6 +513,8 @@ def setup_spectrum_class(config, opacity , param_tools ):
                 mass        = config['object'].get('mass', {}).get('value',None), 
                 mass_unit   = u.Unit(config['object'].get('mass', {}).get('unit',None))
                 )
+    if stage == 'object':
+        return A
     #gravity parameters for a planet/browndwarf
 
     
@@ -552,7 +551,8 @@ def setup_spectrum_class(config, opacity , param_tools ):
                w_unit=w_unit, 
                f_unit=f_unit
                ) 
-    
+        if stage == 'star':
+            return A
     #WIP TODO: A.surface_reflect()
 
     
@@ -561,7 +561,8 @@ def setup_spectrum_class(config, opacity , param_tools ):
     df_pt = PT_handler(pt_config, A, param_tools) #datafile for pressure temperature profile
     A.atmosphere(df=df_pt) #will include chemistry if it was added to userfile
     param_tools.add_class(A)
-
+    if stage == 'temperature':
+        return A
     # chemistry
     chem_config = config.get('chemistry',{})
     chem_type = chem_config.get('method','')
@@ -575,10 +576,10 @@ def setup_spectrum_class(config, opacity , param_tools ):
     elif chem_type!='': 
         chemistry_function = getattr(param_tools, f'chem_{chem_type}')
         df_mixingratio  = chemistry_function(**chem_config[chem_type])#note, this includes P and T already
-    
     #set final with chem
     A.atmosphere(df = df_mixingratio)
-
+    if stage == 'chemistry':
+        return A
     # clouds 
     cloud_config = config.get('clouds',None)
     if isinstance(cloud_config , dict):

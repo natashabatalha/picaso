@@ -588,4 +588,3 @@ def get_data(category_download=None,target_download=None, final_destination_dir=
                     shutil.move(og ,new)
                 except: 
                     print(f'I tried to move stellar grids from here {og} to here {new} but it failed. Likely because the file already exists. Find your file here {og} and manually move it if you want to overwrite. ')
-
