@@ -58,7 +58,7 @@ def run_spectrum_class(stage=None):
     picaso.justdoit.inputs
         Configured class
     """
-    return go.setup_spectrum_class(config, opacity, param_tools, stage)
+    return go.setup_spectrum_class(clean_dictionary(config, "_options"), opacity, param_tools, stage)
 
 def format_config_section_for_df(obj):
     """
@@ -476,6 +476,9 @@ if do_retrieval:
                 parameter_handler[new_path] = [st.checkbox(f"{new_path} {value}"), value]
             elif isinstance(value, np.int64):
                 parameter_handler[new_path] = [st.checkbox(f"{new_path} {value}"), value]
+            elif isinstance(value, list) and all(isinstance(item, (int, float)) for item in value):
+                for index, item in enumerate(value):
+                    parameter_handler[new_path + f'.{index}'] = [st.checkbox(f"{new_path + f'.{index}'} {item}"), item]
 
     config['temperature'] = {
         config['temperature']['profile']: config['temperature'][config['temperature']['profile']],
