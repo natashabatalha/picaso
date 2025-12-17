@@ -13,7 +13,6 @@ import os
 import toml
 import tomllib 
 import numpy as np 
-from scipy import stats
 import copy 
 
 os.environ['picaso_refdata'] = picaso_refdata_env_var
@@ -213,11 +212,12 @@ if config['observation_type']:
     st.divider()
     st.header(f'{config['observation_type'].capitalize()} Spectrum Config')
 
-###############################
+################################
 #
 # CONFIGURE STAR
 #
 ################################
+config['irradiated'] = True
 if config['observation_type'] == 'thermal':
     choice = st.selectbox("Do your want your object to be irradiated?", ('Yes', 'No'), index=None)
     config['irradiated'] = choice == 'Yes'
@@ -396,7 +396,6 @@ if include_clouds == 'Yes':
     cloud_type_df = pd.DataFrame([format_config_section_for_df(cloud_obj[cloud_type])])
     cloud_type_editable_df = st.data_editor(cloud_type_df)
     # render any options sections dynamically
-    import copy
     cloud_list_iterate = copy.deepcopy(config['clouds'][cloud_id][cloud_type])
     for attr in cloud_list_iterate:
         if attr.endswith('_options'):
@@ -430,30 +429,26 @@ if include_clouds == 'Yes':
 # ---------------------------------#
 # RUN A SPECTRUM ----------------- #
 # ---------------------------------#
-# TODO make these both user inputted parameters
-x_range = [0,15]
+wavelength_range = st.slider(
+    "Select wavelength range (μm)",
+    min_value=0,
+    max_value=15,
+    value=(0, 15)
+)
 spectral_resolution = 150
 if config['calc_type'] =='spectrum' and st.button(f'Run {config['calc_type']}'):
-    config['irradiated'] = config['irradiated'] or config['observation_type'] == 'reflected' or config['observation_type'] == 'transmission'
-    cleaned = clean_dictionary(config, '_options')
-    df = go.run(driver_dict=cleaned)
-
-    # use mapping dictionary to make this cleaner
-    if config['observation_type'] == 'transmission':
-        # TODO --> FIX TRANSMISSION OPTION
-        wnos, transit_depth = jdi.mean_regrid(df['wavenumber'],
-                                        df['transit_depth'], R=spectral_resolution)
-        st.write(transit_depth)
-        fig = jpi.spectrum(wnos, transit_depth,
-                            plot_width=800, y_axis_label='Relative (Rp/Rs)^2',
-                            x_range=x_range)
-        streamlit_bokeh(fig, theme="streamlit", key="transmission_spectrum")
-    else:
-        obs_key = 'thermal' if config['observation_type'] == 'thermal' else 'albedo'
-        wno, alb, fpfs, full = df['wavenumber'] , df[obs_key] , df[f'fpfs_{config['observation_type']}'], df['full_output']
-        wno, alb = jdi.mean_regrid(wno, alb, R=spectral_resolution)
-        spec_fig = jpi.spectrum(wno, alb, plot_width=500,x_range=x_range)
-        streamlit_bokeh(spec_fig, theme="streamlit", key="spectrum")
+    df = go.run(driver_dict=clean_dictionary(config, '_options'))
+    observation_key_mapping = {
+        'thermal': 'thermal',
+        'reflected': 'albedo',
+        'transmission': 'transit_depth'
+    }
+    observation_key = observation_key_mapping[config['observation_type']]
+    wavenumber, albedo_or_fluxes = df['wavenumber'] , df[observation_key]
+    wavenumber, albedo_or_fluxes = jdi.mean_regrid(wavenumber, albedo_or_fluxes, R=spectral_resolution)
+    spec_fig = jpi.spectrum(wavenumber, albedo_or_fluxes, plot_width=500, x_range=wavelength_range)
+    # graph spectrum
+    streamlit_bokeh(spec_fig, theme="streamlit", key="spectrum")
 
 # ---------------------------------#
 # RETRIEVALS     ----------------- #
@@ -461,25 +456,9 @@ if config['calc_type'] =='spectrum' and st.button(f'Run {config['calc_type']}'):
 st.divider()
 st.header("Retrievals")
 do_retrieval = st.selectbox("Do you want to do a retrieval?", ('Yes', 'No'), index=None)
-parameter_handler={}
-if do_retrieval:
+parameter_handler = {}
+if do_retrieval == 'Yes':
     st.subheader("Select which available free parameters you'd like to do a retrieval on:")
-    def list_available_free_parameters(data, current_path=""):
-        for key, value in data.items():
-            new_path = f"{current_path}.{key}" if current_path else key
-
-            if isinstance(value, dict):
-                list_available_free_parameters(value, new_path)
-            elif isinstance(value, float):
-                parameter_handler[new_path] = [st.checkbox(f"{new_path} {value}"), value]
-            elif isinstance(value, int) and not isinstance(value, bool):
-                parameter_handler[new_path] = [st.checkbox(f"{new_path} {value}"), value]
-            elif isinstance(value, np.int64):
-                parameter_handler[new_path] = [st.checkbox(f"{new_path} {value}"), value]
-            elif isinstance(value, list) and all(isinstance(item, (int, float)) for item in value):
-                for index, item in enumerate(value):
-                    parameter_handler[new_path + f'.{index}'] = [st.checkbox(f"{new_path + f'.{index}'} {item}"), item]
-
     config['temperature'] = {
         config['temperature']['profile']: config['temperature'][config['temperature']['profile']],
         'pressure': config['temperature']['pressure'],
@@ -495,25 +474,33 @@ if do_retrieval:
     }
     del config['retrieval']
     del config['sampler']
+    def list_available_free_parameters(data, current_path=""):
+        for key, value in data.items():
+            new_path = f"{current_path}.{key}" if current_path else key
+
+            if isinstance(value, dict):
+                list_available_free_parameters(value, new_path)
+            elif isinstance(value, float):
+                parameter_handler[new_path] = [st.checkbox(f"{new_path} {value}"), value]
+            elif isinstance(value, int) and not isinstance(value, bool):
+                parameter_handler[new_path] = [st.checkbox(f"{new_path} {value}"), value]
+            elif isinstance(value, np.int64):
+                parameter_handler[new_path] = [st.checkbox(f"{new_path} {value}"), value]
+            elif isinstance(value, list) and all(isinstance(item, (int, float)) for item in value):
+                for index, item in enumerate(value):
+                    parameter_handler[new_path + f'.{index}'] = [st.checkbox(f"{new_path + f'.{index}'} {item}"), item]
     list_available_free_parameters(config)
 
 selected_items = {}
-
 prior_set_items = {}
-
 done_selecting_parameters = None
-new_config = {}
-new_config['done_selecting_parameters'] =  st.selectbox("Done Selecting Methods", ("Yes", "No"), index=None)
+retrieval_stage_state_manager = {} # for streamlit rendering organization
 
-if new_config['done_selecting_parameters'] == 'Yes':
+retrieval_stage_state_manager['done_selecting_parameters'] =  st.selectbox("Done Selecting Methods", ("Yes", "No"), index=None)
+if retrieval_stage_state_manager['done_selecting_parameters'] == 'Yes':
 
     # filter for what items have been selected
-    # this can be turned into a one line comprehension
-    for key,value in parameter_handler.items():
-        # if checkbox is true
-        if value[0] == True:
-            # save the value in selected items
-            selected_items[key] = value[1] 
+    selected_items = {path_to_parameter: state_value_list[1] for path_to_parameter, state_value_list in parameter_handler.items() if state_value_list[0]}
 
     # Min, Max, Log, Prior Type Listing
     # Right Now not swapping out Gaussian Kwargs for Uniform Kwargs...
@@ -536,10 +523,10 @@ if new_config['done_selecting_parameters'] == 'Yes':
             )
 
 st.divider()
-new_config['done_configuring_priors'] =  st.selectbox("Done Configuring Priors", ("Yes", "No"), index=None)
+retrieval_stage_state_manager['done_configuring_priors'] =  st.selectbox("Done Configuring Priors", ("Yes", "No"), index=None)
 ALL_TOMLS = []
 
-if new_config['done_configuring_priors'] == 'Yes':
+if retrieval_stage_state_manager['done_configuring_priors'] == 'Yes':
     nsamples = st.number_input('Number of samples?', 5)
 
     prior_set_items_pure_dict = {}
@@ -666,27 +653,36 @@ st.divider()
 ################################
 # SPECTRUM GRAPHS!!!
 ################################
-new_config['see_prior_spectrums'] =  st.selectbox("See Spectrums for Priors?", ("Yes", "No"), index=None)
+retrieval_stage_state_manager['see_prior_spectrums'] =  st.selectbox("See Spectrums for Priors?", ("Yes", "No"), index=None)
 
-if new_config['see_prior_spectrums'] == 'Yes':
+if retrieval_stage_state_manager['see_prior_spectrums'] == 'Yes':
     WNO_LIST = []
     ALB_LIST = []
     for prior_toml in ALL_TOMLS:
+        
         cleaned = clean_dictionary(prior_toml, '_options')
-        x_range = [0,15]
-        spectral_resolution = 150
         df = go.run(driver_dict=cleaned)
-        obs_key = 'thermal' if prior_toml['observation_type'] == 'thermal' else 'albedo'
-        wno, alb, fpfs, full = df['wavenumber'] , df[obs_key] , df[f'fpfs_{prior_toml['observation_type']}'], df['full_output']
-        wno, alb = jdi.mean_regrid(wno, alb, R=spectral_resolution)
-        WNO_LIST.append(wno)
-        ALB_LIST.append(alb)
+        if prior_toml['observation_type'] == 'transmission':
+            wnos, transit_depth = jdi.mean_regrid(df['wavenumber'],
+                                            df['transit_depth'], R=spectral_resolution)
+            WNO_LIST.append(wnos)
+            ALB_LIST.append(transit_depth)
+        else:
+            obs_key = 'thermal' if prior_toml['observation_type'] == 'thermal' else 'albedo'
+            wno, alb, fpfs, full = df['wavenumber'] , df[obs_key] , df[f'fpfs_{prior_toml['observation_type']}'], df['full_output']
+            wno, alb = jdi.mean_regrid(wno, alb, R=spectral_resolution)
+            WNO_LIST.append(wno)
+            ALB_LIST.append(alb)
 
-    streamlit_bokeh(jpi.spectrum(WNO_LIST, ALB_LIST, palette=[(255,0,0,0.3)], plot_width=500,x_range=x_range))
+    streamlit_bokeh(jpi.spectrum(WNO_LIST, ALB_LIST, palette=[(255,0,0,0.3)], plot_width=500,x_range=wavelength_range))
+
+cleaned_config = clean_dictionary(config, '_options')
+if do_retrieval == 'No':
+    del cleaned_config['retrieval']
 
 st.download_button(
     label="Download current config",
-    data=toml.dumps(config),
+    data=toml.dumps(cleaned_config),
     file_name="configured_toml.toml",
     mime="application/toml"
 )
