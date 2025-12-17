@@ -7,7 +7,6 @@
 # CONSTANTS 
 # =======================================
 DRIVER_CONFIG = '/Users/sjanson/Desktop/code/picaso/reference/input_tomls/driver.toml'
-SPECTRAL_RESOLUTION = 150
 
 # if you have to manually specify paths for env vars, change below; else comment out the os.environ commands below !!
 PICASO_REFDATA_ENV_VAR = "/Users/sjanson/Desktop/code/picaso/reference"
@@ -20,7 +19,6 @@ MOLECULES_LIMIT = 50
 import os
 os.environ['picaso_refdata'] = PICASO_REFDATA_ENV_VAR
 os.environ['PYSYN_CDBS'] = PYSYN_CBDS_ENV_VAR
-
 
 # =======================================
 # IMPORTS
@@ -173,16 +171,35 @@ def update_toml_with_a_value_for_a_free_parameter(dictionary, keys, value):
     else:
         dictionary[keys[-1]] = value
 
+def uploaded_config_is_valid(uploaded_config):
+    """
+    Template validator function for user-uploaded config TOML
+        
+    Parameters
+    ----------
+    dict : dict
+        uploaded user config TOML
+    Return
+    -------
+    bool
+        True if valid
+    """
+    return uploaded_config is not None
+
 # ===============================
 # STREAMLIT HELPER FUNCTIONS 
 # ===============================
-def editable_section(section):
+def editable_section(section, key):
     df = pd.DataFrame([format_config_section_for_df(section)])
-    edited = st.data_editor(df)
+    edited = st.data_editor(df, key=key)
     write_results_to_config(edited, section)
 
-#---INITIALIZE VARIABLES--------#
+# ===============================
+# GLOBALS
+# ===============================
 
+wavelength_range = (0,15)
+spectral_resolution = 150
 config = None
 if isinstance(DRIVER_CONFIG, str):
     with open(DRIVER_CONFIG, "rb") as f:
@@ -199,20 +216,34 @@ opacity = None
 # ============================================
 # ADMINISTRATIVE CONFIGURATION
 # ============================================
+def render_config_upload():
+    uploaded_file = st.file_uploader("Choose a TOML config file (optional, otherwise loaded from driver.toml)", type="toml")
+    if uploaded_file is not None:
+        uploaded_config = tomllib.load(uploaded_file)
+        # TODO update validator to check that TOML is in correct format (has _options, has necessary sections, etc.)
+        if uploaded_config_is_valid(uploaded_config):
+            config = uploaded_config
+
 def render_admin():
+    # HEADER
     st.logo('https://natashabatalha.github.io/picaso/_images/logo.png', size="large", link="https://github.com/natashabatalha/picaso")
     st.header('Run PICASO',divider='rainbow')
-
     st.subheader('Administrative')
-    config['InputOutput']['observation_data'] = st.text_input("Enter in the datapath(s) to your observation data", value = config.get('InputOutput').get('observation_data', ['']))
-    config['OpticalProperties']['opacity_method'] = st.selectbox("Opacity method", ("resampled")) #, "preweighted", "resortrebin"))
+
+    # CONFIG UPLOAD
+    render_config_upload()
+
+    # DATAPATH ENTERING
     config['OpticalProperties']['opacity_files'] = st.text_input("Enter in the datapath to your opacities.db", value = config.get('OpticalProperties').get('opacity_files'))
+    config['OpticalProperties']['opacity_method'] = st.selectbox("Opacity method", ("resampled")) #, "preweighted", "resortrebin"))
+    config['OpticalProperties']['virga_mieff'] = st.text_input("Enter in the datapath to your virga files", value = config.get('OpticalProperties').get('virga_mieff'))
+
+    # OPACITY AND PARAM_TOOLS CONFIG
     opacity = jdi.opannection(
         filename_db=config['OpticalProperties']['opacity_files'], #database(s)
         method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
         **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
     )
-
     # TODO turn below into input: go.find_values_for_key(config ,'condensate')
     # TODO once the jdi.vj.available() is updated, below pops can be removed
     a =jdi.vj.available()
@@ -221,6 +252,7 @@ def render_admin():
     a.pop(a.index('SiO2'))
     param_tools = Parameterize(load_cld_optical=a, mieff_dir=config['OpticalProperties'].get('virga_mieff', None))
 
+    # CALCULATION TYPE AND OBSERVATION TYPE SETTING
     st.subheader('Select calculation to perform')
     config['calc_type'] = st.selectbox("Calculation type", ['spectrum','climate'], index=None)
     if config['calc_type'] == "spectrum":
@@ -234,11 +266,14 @@ def render_admin():
 
 
 def render_star():
+    # SET IS IRRIDATED
     config['irradiated'] = True
     if config['observation_type'] == 'thermal':
         choice = st.selectbox("Do your want your object to be irradiated?", ('Yes', 'No'), index=None)
         config['irradiated'] = choice == 'Yes'
-    if config['observation_type'] == 'reflected' or config['observation_type'] == 'transmission' or config['irradiated']:
+    
+    # EDITABLE STAR VARIABLES SECTION
+    if config['irradiated']:
         st.subheader("Star Variables")
         # TODO: pull these values from driver.toml
         star_df = pd.DataFrame({
@@ -260,7 +295,7 @@ def render_star():
 
 def render_object():
     st.subheader("Object Variables")
-    editable_section(config['object'])
+    editable_section(config['object'], 'object')
 
 def render_phase_angle():
     if config['observation_type'] != 'thermal':
@@ -270,11 +305,11 @@ def render_phase_angle():
 # PRESSURE AND TEMPERATURE
 # ============================================
 def render_pressure_and_temperature():
-    # PRESSURE
+    # EDIABLE PRESSURE SECTION
     st.text('Configure pressure (can ignore if using a userfile or sonora bobcat for temperature)')
-    editable_section(config['temperature']['pressure'])
+    editable_section(config['temperature']['pressure'], 'pt')
 
-    # TEMPERATURE
+    # EDITABLE TEMPERATURE SECTION
     temperature_options = [option for option in config['temperature'].keys() if option != 'profile' and option != 'pressure']
     if len(temperature_options) == 0:
         st.warning('No temperature options found in driver.toml file.')
@@ -295,9 +330,7 @@ def render_pressure_and_temperature():
                 config['temperature'][temp_profile][pure_attr] = st.selectbox(f"{temp_profile.capitalize()} {pure_attr.capitalize()} Options", config['temperature'][temp_profile][attr], index=None)
         write_results_to_config(temp_grid, config['temperature'][temp_profile])
 
-    ########################
-    # GRAPH PT
-    ########################
+    # GRAPH PRESSURE-TEMPERATURE
     if st.button('See Pressure-Temperature graph'):
         data_class = run_spectrum_class('temperature')
         streamlit_bokeh(jpi.pt({'layer': data_class.inputs['atmosphere']['profile']}))
@@ -306,16 +339,16 @@ def render_pressure_and_temperature():
 # INPUT CHEMISTRY INFORMATION
 # ============================================
 def render_chemistry():
+    # SET CHEMISTRY METHOD
     chemistry_options = [option for option in config['chemistry'] if option != 'method']
-    if len(chemistry_options) == 0:
-        st.warning('No chemistry option found in driver.toml.')
-    config['chemistry']['method'] = st.selectbox(
-        "How to model chemistry", chemistry_options, index=None
-    )
-    
+    if len(chemistry_options) == 0: st.warning('No chemistry option found in driver.toml.')
+    config['chemistry']['method'] = st.selectbox("How to model chemistry", chemistry_options, index=None)
     chem_method = config['chemistry']['method']
+
     if chem_method:
+        # RENDER FREE CHEMISTRY 
         if 'free' in chem_method:
+            # FREE CHEM: FORMAT EDITOR BOX
             molecules = [mole for mole in config['chemistry'][chem_method] if mole != 'background']
             mole_unit = config['chemistry'][chem_method][molecules[0]]['unit']
             molecule_values = []
@@ -332,7 +365,7 @@ def render_chemistry():
             st.info('Molecule names are case sensitive (ex: TiO, H2O). You only need to specify a pressure if you provide multiple values for a molecule (to indicate what altitude the amount of the molecule changes). Only correctly filled out rows will be included in the graph.')
             chem_free_grid = st.data_editor(chem_free_df, num_rows="dynamic")
 
-            # writing to grid
+            # FREE CHEM: WRITE RESULTS TO A DATAFRAME
             for i,mole in enumerate(chem_free_grid[f'Molecule ({mole_unit})']):
                 if mole != None and chem_free_grid['Values'][i] != None and (len(chem_free_grid['Values'][i]) == 1 or chem_free_grid['Pressures (bar)'][i] != None):
                     if mole not in config['chemistry'][chem_method]:
@@ -345,6 +378,7 @@ def render_chemistry():
                         # TODO: add warning to make sure there's the right # of pressures per values specified
                         config['chemistry'][chem_method][mole]['values'] = values
                         config['chemistry'][chem_method][mole]['pressures'] = [float(pressure) for pressure in chem_free_grid['Pressures (bar)'][i]]
+            # FREE CHEM: CONFIGURE BACKGROUND GAS
             num_background_gases = st.selectbox("0, 1, or 2 Background Gases?", ('0', '1', '2'), index=None)
             if num_background_gases == '1':
                 config['chemistry']['free']['background']['gases']= [st.text_input('Background gas')]
@@ -358,25 +392,24 @@ def render_chemistry():
             elif num_background_gases == '0':
                 del config['chemistry']['free']['background']
         else:
-            formatted_obj = format_config_section_for_df(config['chemistry'][f'{config['chemistry']['method']}'])
-            chem_df = pd.DataFrame([formatted_obj])
-            chem_grid = st.data_editor(chem_df)
-            write_results_to_config(chem_grid, config['chemistry'][f'{config['chemistry']['method']}'])
+            # EDITABLE SECTION FOR OTHER CHEMISTRY METHODS
+            editable_section(config['chemistry'][f'{config['chemistry']['method']}'], 'chemistry')
 
-    ##########################
     # GRAPH MIXING RATIOS
-    ##########################
     if st.button('See Mixing Ratios'):
-        data_class = run_spectrum_class('chemistry')
-        chem_df = data_class.inputs['atmosphere']['profile']
-
-        # form {mixingratios: {'H20': [...], ...}} to pass to jpi.mixing_ratio
-        # chem_df.keys() would have [temperature, pressure, H20, CO2, <other example molecules> ]
-        for key in chem_df.keys():
-            if key != 'pressure' or key != 'temperature':
-                chem_df[key] = chem_df[key]
-        full_output = dict({'layer':{'pressure': chem_df['pressure'], 'mixingratios': chem_df}})
-        streamlit_bokeh(jpi.mixing_ratio(full_output))
+        try:
+            data_class = run_spectrum_class('chemistry')
+            chem_df = data_class.inputs['atmosphere']['profile']
+            # form {mixingratios: {'H20': [...], ...}} to pass to jpi.mixing_ratio
+            # chem_df.keys() would have [temperature, pressure, H20, CO2, <other example molecules> ]
+            for key in chem_df.keys():
+                if key != 'pressure' or key != 'temperature':
+                    chem_df[key] = chem_df[key]
+            full_output = dict({'layer':{'pressure': chem_df['pressure'], 'mixingratios': chem_df}})
+            streamlit_bokeh(jpi.mixing_ratio(full_output))
+        except Exception as e:
+            st.warning('Make sure you have configured chemistry and temperature.')
+            st.write(e)
 
 # ============================================
 # CLOUDS
@@ -414,15 +447,19 @@ def render_clouds():
         # GRAPH CLOUDS
         ##########################
         if st.button('See Clouds'):
-            data_class = run_spectrum_class()
-            df = data_class.inputs['clouds']['profile'].astype('float')
-            wavenumber = df['wavenumber'].unique()
-            nwno = len(wavenumber)
-            wavelength = 1e4/wavenumber
-            pressure = df['pressure'].unique()
-            nlayer = len(pressure)
-            bokeh_plot = jpi.plot_cld_input(nwno, nlayer, df=df,pressure=pressure, wavelength=wavelength)
-            st.write(bokeh_plot)
+            try:
+                data_class = run_spectrum_class()
+                df = data_class.inputs['clouds']['profile'].astype('float')
+                wavenumber = df['wavenumber'].unique()
+                nwno = len(wavenumber)
+                wavelength = 1e4/wavenumber
+                pressure = df['pressure'].unique()
+                nlayer = len(pressure)
+                bokeh_plot = jpi.plot_cld_input(nwno, nlayer, df=df,pressure=pressure, wavelength=wavelength)
+                st.write(bokeh_plot)
+            except Exception as e:
+                st.warning('Make sure you have configured chemistry and temperature.')
+                st.write(e)
 
 def render_wavelength_range():
     return st.slider(
@@ -432,23 +469,30 @@ def render_wavelength_range():
         value=(0, 15)
     )
 
+def render_spectral_resolution():
+    return st.number_input('Spectral Resolution', min_value=1, max_value=300, value=150)
 # ---------------------------------#
 # RUN A SPECTRUM ----------------- #
 # ---------------------------------#
-def run_spectrum(wavelength_range):
+def run_spectrum():
     if config['calc_type'] =='spectrum' and st.button(f'Run {config['calc_type']}'):
-        df = go.run(driver_dict=clean_dictionary(config))
-        observation_key_mapping = {
-            'thermal': 'thermal',
-            'reflected': 'albedo',
-            'transmission': 'transit_depth'
-        }
-        observation_key = observation_key_mapping[config['observation_type']]
-        wavenumber, albedo_or_fluxes = df['wavenumber'] , df[observation_key]
-        wavenumber, albedo_or_fluxes = jdi.mean_regrid(wavenumber, albedo_or_fluxes, R=SPECTRAL_RESOLUTION)
-        spec_fig = jpi.spectrum(wavenumber, albedo_or_fluxes, plot_width=500, x_range=wavelength_range)
-        # graph spectrum
-        streamlit_bokeh(spec_fig, theme="streamlit", key="spectrum")
+        try:
+            df = go.run(driver_dict=clean_dictionary(config))
+            observation_key_mapping = {
+                'thermal': 'thermal',
+                'reflected': 'albedo',
+                'transmission': 'transit_depth'
+            }
+            observation_key = observation_key_mapping[config['observation_type']]
+            wavenumber, albedo_or_fluxes = df['wavenumber'] , df[observation_key]
+            wavenumber, albedo_or_fluxes = jdi.mean_regrid(wavenumber, albedo_or_fluxes, R=spectral_resolution)
+            spec_fig = jpi.spectrum(wavenumber, albedo_or_fluxes, plot_width=500, x_range=wavelength_range)
+            # graph spectrum
+            streamlit_bokeh(spec_fig, theme="streamlit", key="spectrum")
+        except Exception as e:
+            st.warning('Make sure you have configured temperature, pressure, and chemistry before running a spectrum.')
+            st.write(e)
+        st.divider()
 
 def render_free_parameter_selection():
     parameter_handler = {}
@@ -621,13 +665,13 @@ def sample_plots(ALL_TOMLS, save_all_class_pt, nsamples, run_spectrum=True):
             df = go.run(driver_dict=clean_dictionary(prior_toml))
             if prior_toml['observation_type'] == 'transmission':
                 wnos, transit_depth = jdi.mean_regrid(df['wavenumber'],
-                                                df['transit_depth'], R=SPECTRAL_RESOLUTION)
+                                                df['transit_depth'], R=spectral_resolution)
                 WNO_LIST.append(wnos)
                 ALB_LIST.append(transit_depth)
             else:
                 obs_key = 'thermal' if prior_toml['observation_type'] == 'thermal' else 'albedo'
                 wno, alb = df['wavenumber'] , df[obs_key]
-                wno, alb = jdi.mean_regrid(wno, alb, R=SPECTRAL_RESOLUTION)
+                wno, alb = jdi.mean_regrid(wno, alb, R=spectral_resolution)
                 WNO_LIST.append(wno)
                 ALB_LIST.append(alb)
 
@@ -645,21 +689,26 @@ def render_download_config():
         file_name="configured_toml.toml",
         mime="application/toml"
     )
+
 def render_retrievals():
+    # LIST OUT ALL FREE PARAMETERS
     parameter_handler = render_free_parameter_selection()
 
     prior_set_items = {}
     retrieval_stage_state_manager = {} # for streamlit rendering organization
 
+    # WHEN USER IS DONE SELECTING, RENDER ALL RANGES FOR SELECTED PARAMETERS
     retrieval_stage_state_manager['done_selecting_parameters'] =  st.selectbox("Done Selecting Methods", ("Yes", "No"), index=None)
     if retrieval_stage_state_manager['done_selecting_parameters'] == 'Yes':
         prior_set_items = render_ranges_for_selected_parameters(parameter_handler)
     st.divider()
 
+
     ALL_TOMLS = []
     save_all_class_pt = []
     nsamples = st.number_input('Number of samples?', 5)
-
+    
+    # WHEN USER IS GOOD WITH RANGES/PRIORS, SAMPLE VALUES AND CREATE PLOTS
     retrieval_stage_state_manager['done_configuring_priors'] =  st.selectbox("Done Configuring Priors", ("Yes", "No"), index=None)
     if retrieval_stage_state_manager['done_configuring_priors'] == 'Yes':
         ALL_TOMLS, save_all_class_pt = sampler(prior_set_items, nsamples)        
@@ -677,6 +726,8 @@ def render_retrievals():
         if retrieval_stage_state_manager['see_prior_spectrums'] == 'Yes':
             _, _, _, spectrum_fig = sample_plots(ALL_TOMLS, save_all_class_pt, nsamples)
             streamlit_bokeh(spectrum_fig)
+    config['InputOutput']['observation_data'] = st.text_input("Enter in the datapath(s) to your observation data for retrievals", value = config.get('InputOutput').get('observation_data', ['']))
+
 
 # ===========================
 # MAIN
@@ -692,14 +743,16 @@ if config['observation_type']:
     render_pressure_and_temperature()
     render_chemistry()
     render_clouds()
-    wavelength_range = render_wavelength_range()
+
 
     # SPECTRUM
-    run_spectrum(wavelength_range)
-    st.divider()
+    wavelength_range = render_wavelength_range()
+    spectral_resolution = render_spectral_resolution()
+    run_spectrum()
         
     # RETRIEVALS
     st.header("Retrievals")
     if st.selectbox("Do you want to do a retrieval?", ('Yes', 'No'), index=None) == 'Yes':
         render_retrievals()
+
     render_download_config()
