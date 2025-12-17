@@ -12,6 +12,7 @@ SPECTRAL_RESOLUTION = 150
 # if you have to manually specify paths for env vars, change below; else comment out the os.environ commands below !!
 PICASO_REFDATA_ENV_VAR = "/Users/sjanson/Desktop/code/picaso/reference"
 PYSYN_CBDS_ENV_VAR = '/Users/sjanson/Desktop/code/picaso/reference/grp/redcat/trds'
+MOLECULES_LIMIT = 50
 
 # =======================================
 # ENVIRONMENT SETUP 
@@ -487,7 +488,178 @@ def render_free_parameter_selection():
                     parameter_handler[new_path + f'.{index}'] = [st.checkbox(f"{new_path + f'.{index}'} {item}"), item]
     list_available_free_parameters(config)
     return parameter_handler
+def render_ranges_for_selected_parameters(parameter_handler):
+    # filter for what items have been selected
+    selected_items = {path_to_parameter: state_value_list[1] for path_to_parameter, state_value_list in parameter_handler.items() if state_value_list[0]}
 
+    # Min, Max, Log, Prior Type Listing
+    # Right Now not swapping out Gaussian Kwargs for Uniform Kwargs...
+    for i, (key, value) in enumerate(selected_items.items()):
+        st.subheader(key)
+        prior_type = st.selectbox('prior', ['uniform', 'gaussian'], key=f'prior{i}')
+        prior_set_items[key] = dict(
+            log=st.text_input('log', False, key=f'log{i}'),
+            prior=prior_type
+        )
+        if prior_type == 'uniform':
+            prior_set_items[key][f'{prior_type}_kwargs'] =dict(
+                min=st.number_input('min', value=value*0.75, min_value=None, max_value=None, key=f'min{i}', format="%.6f"),
+                max=st.number_input('max', value=value*1.25, min_value=None, max_value=None, key=f'max{i}', format="%.6f"),
+            )
+        else:
+            prior_set_items[key][f'{prior_type}_kwargs'] =dict(
+                mean=st.number_input('mean', value, key=f'mean{i}'),
+                std=st.number_input('std', 1, key=f'std{i}'),
+            )
+    return selected_items, prior_set_items
+
+def get_prior_information(selected_items):
+    prior_set_items_pure_dict = {}
+    for i, (key, value) in enumerate(selected_items.items()):
+        # Access the current value stored in session state by its unique key
+        prior_set_items_pure_dict[key] = dict(
+            log=st.session_state[f'log{i}'],
+            prior=st.session_state[f'prior{i}'],
+        )
+        prior_type = st.session_state[f'prior{i}']
+        if prior_type == 'uniform':
+            prior_set_items_pure_dict[key][f'{prior_type}_kwargs'] = dict(
+                min=st.session_state[f'min{i}'],
+                max=st.session_state[f'max{i}'],
+            )
+        else:
+            prior_set_items_pure_dict[key][f'{prior_type}_kwargs'] = dict(
+                mean=st.session_state[f'mean{i}'],
+                std=st.session_state[f'std{i}'],
+            )  
+    return prior_set_items_pure_dict
+
+def sampler(prior_set_items_pure_dict, nsamples):
+    ALL_TOMLS = []
+    save_all_class_pt = []
+    for i in range(nsamples):
+        # get samples for values
+        check_all_values = go.hypercube(np.random.rand(len(prior_set_items_pure_dict.keys())), dict(prior_set_items_pure_dict))
+        # create a new copy of the config to write to
+        GUESS_TOML = copy.deepcopy(config)
+        # write sampled values to config
+        for index, free_parameter in enumerate(prior_set_items_pure_dict.keys()):
+            sampled_value = check_all_values[index]
+            keys = free_parameter.split('.')
+            update_toml_with_a_value_for_a_free_parameter(GUESS_TOML, keys, sampled_value)
+        # save that config
+        ALL_TOMLS.append(GUESS_TOML)
+        # run config through spectrum class
+        data_class = go.setup_spectrum_class(clean_dictionary(GUESS_TOML), opacity, param_tools)
+        # extract results needed for graphs
+        t = data_class.inputs['atmosphere']['profile']['temperature']
+        p = data_class.inputs['atmosphere']['profile']['pressure']
+        cloud_profile = data_class.inputs['clouds']['profile']
+        mixingratios = data_class.inputs['atmosphere']['profile']
+        # parse
+        for key in mixingratios.keys():
+            if key != 'pressure' or key != 'temperature':
+                mixingratios[key] = mixingratios[key]
+        molecules = [mol for mol in mixingratios.keys() if mol not in ['pressure', 'temperature', 'kz']][:MOLECULES_LIMIT]
+        # save information
+        save_all_class_pt.append({
+            'temperature':t,
+            'pressure':p,
+            'mixingratios':mixingratios,
+            'molecules': molecules,
+            'cloudprofile': cloud_profile
+        })
+    return ALL_TOMLS, save_all_class_pt
+
+def sample_plots(ALL_TOMLS, save_all_class_pt, nsamples, run_spectrum=True):
+    ################################
+    # MIXING RATIO GRAPH 
+    ################################
+    mixing_ratio_kwargs = {}
+    mixing_ratio_kwargs['y_axis_label'] = mixing_ratio_kwargs.get('y_axis_label','Pressure(Bars)')
+    mixing_ratio_kwargs['x_axis_label'] = mixing_ratio_kwargs.get('x_axis_label','Mixing Ratio(v/v)')
+    mixing_ratio_kwargs['y_axis_type'] = mixing_ratio_kwargs.get('y_axis_type','log')
+    mixing_ratio_kwargs['x_axis_type'] = mixing_ratio_kwargs.get('x_axis_type','log') 
+    mixing_ratio_bokeh_fig = figure(**mixing_ratio_kwargs)
+    molecules = save_all_class_pt[0]['molecules']
+    cols = pals.magma(min([len(molecules),MOLECULES_LIMIT]))
+    legend_it=[]
+
+    moles = {mol:[] for mol in molecules}
+    pressure_temperature_fig, axes = plt.subplots(figsize=(15, 5))
+    clouds_fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
+
+    for i in range(nsamples):
+        pressure = save_all_class_pt[i]['pressure']
+        temperature = save_all_class_pt[i]['temperature']
+        mixingratios = save_all_class_pt[i]['mixingratios']
+        axes.semilogy(temperature,pressure, color='red', alpha=0.1)
+        cloud_df = save_all_class_pt[i]['cloudprofile']
+        cloud_pressure = cloud_df['pressure']
+        wavenumber = cloud_df['wavenumber'].unique()
+
+        nwno = len(wavenumber)
+        cloud_pressure = cloud_df['pressure'].unique()
+        nlayer = len(cloud_df['pressure'].unique())
+
+        w0 = np.reshape(cloud_df['w0'].values,(nlayer,nwno))
+        opd = np.reshape(cloud_df['opd'].values,(nlayer,nwno)) + 1e-60
+        g0 = np.reshape(cloud_df['g0'].values,(nlayer,nwno))
+
+        ssa1d = np.mean(w0,axis=1) # ssa [nlayer, nwavelength]
+        g01d = np.mean(g0,axis=1)
+        opd1d = np.mean(opd,axis=1)
+
+        ax1.semilogy(ssa1d, cloud_pressure)
+        # ax1.set_xlim([0,1])
+        ax1.invert_yaxis()
+        ax1.set_title("Single scattering albedo vs Pressure")
+        ax2.semilogy(g01d, cloud_pressure)
+        # ax2.set_xlim([0,1])
+        ax2.invert_yaxis()
+        ax2.set_title("Asymmetry vs Pressure")
+        ax3.loglog(opd1d, cloud_pressure)
+        # ax3.set_xlim([1e-5,50])
+        ax3.set_title("Optical Depth vs Pressure")
+        ax3.invert_yaxis()
+        for mol, c in zip(molecules, cols):
+            # this needs to not be inside this for loop
+            f = mixing_ratio_bokeh_fig.line(mixingratios[mol],pressure, color=c, line_width=2,
+                muted_color=c, muted_alpha=0.05, line_alpha=1)
+            moles[mol].append(f)
+    for mol in moles.keys():
+        legend_it.append((mol, moles[mol]))
+    legend = Legend(items=legend_it, location=(0, -20))
+    legend.click_policy="mute"
+    mixing_ratio_bokeh_fig.add_layout(legend, 'left')
+    mixing_ratio_bokeh_fig.y_range.flipped = True
+    # # make units accurate to what in driver.toml
+    axes.set_xlabel("Temperature (K)") 
+    axes.set_ylabel("Log Pressure(Bars)")
+    axes.set_title(f"Pressure-Temperature Profiles ({nsamples} Samples)")
+    axes.invert_yaxis()
+    axes.set_yscale('log')
+
+    spectrum_fig = None
+    if run_spectrum:
+        WNO_LIST = []
+        ALB_LIST = []
+        for prior_toml in ALL_TOMLS:
+            df = go.run(driver_dict=clean_dictionary(prior_toml))
+            if prior_toml['observation_type'] == 'transmission':
+                wnos, transit_depth = jdi.mean_regrid(df['wavenumber'],
+                                                df['transit_depth'], R=SPECTRAL_RESOLUTION)
+                WNO_LIST.append(wnos)
+                ALB_LIST.append(transit_depth)
+            else:
+                obs_key = 'thermal' if prior_toml['observation_type'] == 'thermal' else 'albedo'
+                wno, alb = df['wavenumber'] , df[obs_key]
+                wno, alb = jdi.mean_regrid(wno, alb, R=SPECTRAL_RESOLUTION)
+                WNO_LIST.append(wno)
+                ALB_LIST.append(alb)
+
+        spectrum_fig = jpi.spectrum(WNO_LIST, ALB_LIST, palette=[(255,0,0,0.3)], plot_width=500,x_range=wavelength_range)
+    return pressure_temperature_fig, mixing_ratio_bokeh_fig, clouds_fig, spectrum_fig
 
 opacity, param_tools = render_admin()
 if config['observation_type']:
@@ -502,15 +674,14 @@ if config['observation_type']:
     wavelength_range = render_wavelength_range()
     run_spectrum(wavelength_range)
         
-    # ---------------------------------#
     # RETRIEVALS     ----------------- #
-    # ---------------------------------#
     st.divider()
     st.header("Retrievals")
     do_retrieval = st.selectbox("Do you want to do a retrieval?", ('Yes', 'No'), index=None)
     parameter_handler = {}
     if do_retrieval == 'Yes':
         parameter_handler = render_free_parameter_selection()
+
         selected_items = {}
         prior_set_items = {}
         done_selecting_parameters = None
@@ -518,181 +689,33 @@ if config['observation_type']:
 
         retrieval_stage_state_manager['done_selecting_parameters'] =  st.selectbox("Done Selecting Methods", ("Yes", "No"), index=None)
         if retrieval_stage_state_manager['done_selecting_parameters'] == 'Yes':
-
-            # filter for what items have been selected
-            selected_items = {path_to_parameter: state_value_list[1] for path_to_parameter, state_value_list in parameter_handler.items() if state_value_list[0]}
-
-            # Min, Max, Log, Prior Type Listing
-            # Right Now not swapping out Gaussian Kwargs for Uniform Kwargs...
-            for i, (key, value) in enumerate(selected_items.items()):
-                st.subheader(key)
-                prior_type = st.selectbox('prior', ['uniform', 'gaussian'], key=f'prior{i}')
-                prior_set_items[key] = dict(
-                    log=st.text_input('log', False, key=f'log{i}'),
-                    prior=prior_type
-                )
-                if prior_type == 'uniform':
-                    prior_set_items[key][f'{prior_type}_kwargs'] =dict(
-                        min=st.number_input('min', value=value*0.75, min_value=None, max_value=None, key=f'min{i}', format="%.6f"),
-                        max=st.number_input('max', value=value*1.25, min_value=None, max_value=None, key=f'max{i}', format="%.6f"),
-                    )
-                else:
-                    prior_set_items[key][f'{prior_type}_kwargs'] =dict(
-                        mean=st.number_input('mean', value, key=f'mean{i}'),
-                        std=st.number_input('std', 1, key=f'std{i}'),
-                    )
+            selected_items, prior_set_items = render_ranges_for_selected_parameters(parameter_handler)
 
         st.divider()
         retrieval_stage_state_manager['done_configuring_priors'] =  st.selectbox("Done Configuring Priors", ("Yes", "No"), index=None)
+
         ALL_TOMLS = []
+        save_all_class_pt = []
+        nsamples = st.number_input('Number of samples?', 5)
 
         if retrieval_stage_state_manager['done_configuring_priors'] == 'Yes':
-            nsamples = st.number_input('Number of samples?', 5)
 
-            prior_set_items_pure_dict = {}
-            for i, (key, value) in enumerate(selected_items.items()):
-                # Access the current value stored in session state by its unique key
-                prior_set_items_pure_dict[key] = dict(
-                    log=st.session_state[f'log{i}'],
-                    prior=st.session_state[f'prior{i}'],
-                )
-                if st.session_state[f'prior{i}'] == 'uniform':
-                    prior_set_items_pure_dict[key][f'{prior_type}_kwargs'] = dict(
-                        min=st.session_state[f'min{i}'],
-                        max=st.session_state[f'max{i}'],
-                    )
-                else:
-                    prior_set_items_pure_dict[key][f'{prior_type}_kwargs'] = dict(
-                        mean=st.session_state[f'mean{i}'],
-                        std=st.session_state[f'std{i}'],
-                    )  
-            save_all_class_pt = []
-            for i in range(nsamples):
-                check_all_values = go.hypercube(np.random.rand(len(prior_set_items_pure_dict.keys())), dict(prior_set_items_pure_dict))
-                GUESS_TOML = copy.deepcopy(config)
+            prior_set_items_pure_dict = get_prior_information(selected_items)
+            ALL_TOMLS, save_all_class_pt = sampler(prior_set_items_pure_dict, nsamples)        
+            pressure_temperature_fig, mixing_ratio_bokeh_fig, clouds_fig, _ = sample_plots(ALL_TOMLS, save_all_class_pt, nsamples, run_spectrum=False)
 
-                for index, free_parameter in enumerate(prior_set_items_pure_dict.keys()):
-                    sampled_value = check_all_values[index]
-                    keys = free_parameter.split('.')
-                    update_toml_with_a_value_for_a_free_parameter(GUESS_TOML, keys, sampled_value)
+            # PLOT PT, MR, CLOUDS
+            st.pyplot(pressure_temperature_fig)
+            streamlit_bokeh(mixing_ratio_bokeh_fig)
+            st.pyplot(clouds_fig)
 
-                ALL_TOMLS.append(GUESS_TOML)
-                # RUNNING THROUGH SPECTRUM CLASS
-                data_class = go.setup_spectrum_class(clean_dictionary(GUESS_TOML), opacity, param_tools)
-                # GETTING INFO
-                t = data_class.inputs['atmosphere']['profile']['temperature']
-                p = data_class.inputs['atmosphere']['profile']['pressure']
-                cloud_profile = data_class.inputs['clouds']['profile']
-                mixingratios = data_class.inputs['atmosphere']['profile']
-                for key in mixingratios.keys():
-                    if key != 'pressure' or key != 'temperature':
-                        mixingratios[key] = mixingratios[key]
-                limit = 50
-                molecules = [mol for mol in mixingratios.keys() if mol not in ['pressure', 'temperature', 'kz']][:limit]
-                save_all_class_pt.append({
-                    'temperature':t,
-                    'pressure':p,
-                    'mixingratios':mixingratios,
-                    'molecules': molecules,
-                    'cloudprofile': cloud_profile
-                })
+            st.divider()
 
-            ################################
-            # MIXING RATIO GRAPH 
-            ################################
-            kwargs = {}
-            kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
-            kwargs['x_axis_label'] = kwargs.get('x_axis_label','Mixing Ratio(v/v)')
-            kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
-            kwargs['x_axis_type'] = kwargs.get('x_axis_type','log') 
-            bokeh_fig = figure(**kwargs)
-
-            cols = pals.magma(min([len(molecules),limit]))
-            legend_it=[]
-
-            moles = {mol:[] for mol in molecules}
-            fig, axes = plt.subplots(figsize=(15, 5))
-            fig2, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
-
-            for i in range(nsamples):
-                pressure = save_all_class_pt[i]['pressure']
-                temperature = save_all_class_pt[i]['temperature']
-                mixingratios = save_all_class_pt[i]['mixingratios']
-                axes.semilogy(temperature,pressure, color='red', alpha=0.1)
-                cloud_df = save_all_class_pt[i]['cloudprofile']
-                cloud_pressure = cloud_df['pressure']
-                wavenumber = cloud_df['wavenumber'].unique()
-
-                nwno = len(wavenumber)
-                cloud_pressure = cloud_df['pressure'].unique()
-                nlayer = len(cloud_df['pressure'].unique())
-
-                w0 = np.reshape(cloud_df['w0'].values,(nlayer,nwno))
-                opd = np.reshape(cloud_df['opd'].values,(nlayer,nwno)) + 1e-60
-                g0 = np.reshape(cloud_df['g0'].values,(nlayer,nwno))
-
-                ssa1d = np.mean(w0,axis=1) # ssa [nlayer, nwavelength]
-                g01d = np.mean(g0,axis=1)
-                opd1d = np.mean(opd,axis=1)
-
-                ax1.semilogy(ssa1d, cloud_pressure)
-                # ax1.set_xlim([0,1])
-                ax1.invert_yaxis()
-                ax1.set_title("Single scattering albedo vs Pressure")
-                ax2.semilogy(g01d, cloud_pressure)
-                # ax2.set_xlim([0,1])
-                ax2.invert_yaxis()
-                ax2.set_title("Asymmetry vs Pressure")
-                ax3.loglog(opd1d, cloud_pressure)
-                # ax3.set_xlim([1e-5,50])
-                ax3.set_title("Optical Depth vs Pressure")
-                ax3.invert_yaxis()
-                for mol, c in zip(molecules, cols):
-                    # this needs to not be inside this for loop
-                    f = bokeh_fig.line(mixingratios[mol],pressure, color=c, line_width=2,
-                        muted_color=c, muted_alpha=0.05, line_alpha=1)
-                    moles[mol].append(f)
-            for mol in moles.keys():
-                legend_it.append((mol, moles[mol]))
-            legend = Legend(items=legend_it, location=(0, -20))
-            legend.click_policy="mute"
-            bokeh_fig.add_layout(legend, 'left')
-            bokeh_fig.y_range.flipped = True
-            streamlit_bokeh(bokeh_fig)
-            st.pyplot(fig2)
-            # # make units accurate to what in driver.toml
-            axes.set_xlabel("Temperature (K)") 
-            axes.set_ylabel("Log Pressure(Bars)")
-            axes.set_title(f"Pressure-Temperature Profiles ({nsamples} Samples)")
-            axes.invert_yaxis()
-            axes.set_yscale('log')
-            st.pyplot(fig)
-
-        st.divider()
-
-        ################################
-        # SPECTRUM GRAPHS!!!
-        ################################
-        retrieval_stage_state_manager['see_prior_spectrums'] =  st.selectbox("See Spectrums for Priors?", ("Yes", "No"), index=None)
-
-        if retrieval_stage_state_manager['see_prior_spectrums'] == 'Yes':
-            WNO_LIST = []
-            ALB_LIST = []
-            for prior_toml in ALL_TOMLS:
-                df = go.run(driver_dict=clean_dictionary(prior_toml))
-                if prior_toml['observation_type'] == 'transmission':
-                    wnos, transit_depth = jdi.mean_regrid(df['wavenumber'],
-                                                    df['transit_depth'], R=SPECTRAL_RESOLUTION)
-                    WNO_LIST.append(wnos)
-                    ALB_LIST.append(transit_depth)
-                else:
-                    obs_key = 'thermal' if prior_toml['observation_type'] == 'thermal' else 'albedo'
-                    wno, alb, fpfs, full = df['wavenumber'] , df[obs_key] , df[f'fpfs_{prior_toml['observation_type']}'], df['full_output']
-                    wno, alb = jdi.mean_regrid(wno, alb, R=SPECTRAL_RESOLUTION)
-                    WNO_LIST.append(wno)
-                    ALB_LIST.append(alb)
-
-            streamlit_bokeh(jpi.spectrum(WNO_LIST, ALB_LIST, palette=[(255,0,0,0.3)], plot_width=500,x_range=wavelength_range))
+            # PLOT SPECTRUM
+            retrieval_stage_state_manager['see_prior_spectrums'] =  st.selectbox("See Spectrums for Priors?", ("Yes", "No"), index=None)
+            if retrieval_stage_state_manager['see_prior_spectrums'] == 'Yes':
+                _, _, _, spectrum_fig = sample_plots(ALL_TOMLS, save_all_class_pt, nsamples)
+                streamlit_bokeh(spectrum_fig)
 
     cleaned_config = clean_dictionary(config)
     if do_retrieval == 'No':
