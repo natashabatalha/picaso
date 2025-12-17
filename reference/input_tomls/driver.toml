@@ -61,7 +61,7 @@ spacing = 'log'
 T = 500
 
 [temperature.knots]
-P_knots=[1e2,1e1,1e0,1e-1,1e-3, 1e-4]
+P_knots=[1e2,1e1,1e0,1e-1,1e-2, 1e-3]
 T_knots=[1000, 550, 300, 200, 100, 50]
 interpolation='brewster' 
 interpolation_options = ['brewster', 'linear', 'quadratic_spline', 'cubic_spline']
