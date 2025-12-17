@@ -6,19 +6,26 @@
 # =======================================
 # CONSTANTS 
 # =======================================
-DRIVER_CONFIG = '/Users/sjanson/Desktop/code/picaso/reference/input_tomls/driver.toml'
-
-# if you have to manually specify paths for env vars, change below; else comment out the os.environ commands below !!
-PICASO_REFDATA_ENV_VAR = "/Users/sjanson/Desktop/code/picaso/reference"
-PYSYN_CBDS_ENV_VAR = '/Users/sjanson/Desktop/code/picaso/reference/grp/redcat/trds'
 MOLECULES_LIMIT = 50
 
 # =======================================
 # ENVIRONMENT SETUP 
 # =======================================
+import streamlit as st
 import os
-os.environ['picaso_refdata'] = PICASO_REFDATA_ENV_VAR
-os.environ['PYSYN_CDBS'] = PYSYN_CBDS_ENV_VAR
+from pathlib import Path
+
+# HEADER
+st.logo('https://natashabatalha.github.io/picaso/_images/logo.png', size="large", link="https://github.com/natashabatalha/picaso")
+st.header('Run PICASO',divider='rainbow')
+st.subheader('Administrative')
+
+# optional to set the below, but convenient so you don't have to set it in the UI every time
+PICASO_REFDATA_ENV_VAR = "/Users/sjanson/Desktop/code/picaso/reference"
+PYSYN_CBDS_ENV_VAR = '/Users/sjanson/Desktop/code/picaso/reference/grp/redcat/trds'
+if st.selectbox('Do you need to specify paths for your environment variables?', ['Yes', 'No']) == 'Yes':
+    os.environ['picaso_refdata'] = st.text_input("Enter in the datapath to your reference data", value=PICASO_REFDATA_ENV_VAR)
+    os.environ['PYSYN_CDBS'] = st.text_input("Enter in the datapath to your PYSYN_CBDS data", value=PYSYN_CBDS_ENV_VAR)
 
 # =======================================
 # IMPORTS
@@ -28,7 +35,6 @@ import toml
 import tomllib 
 import numpy as np 
 import copy 
-import streamlit as st
 
 from bokeh.plotting import figure
 import matplotlib.pyplot as plt
@@ -201,12 +207,6 @@ def editable_section(section, key):
 wavelength_range = (0,15)
 spectral_resolution = 150
 config = None
-if isinstance(DRIVER_CONFIG, str):
-    with open(DRIVER_CONFIG, "rb") as f:
-        config = tomllib.load(f)
-else:
-    st.error('Cannot find driver.toml file')
-
 param_tools = None 
 opacity = None
 # ---------------------------------------------- #
@@ -216,23 +216,24 @@ opacity = None
 # ============================================
 # ADMINISTRATIVE CONFIGURATION
 # ============================================
-def render_config_upload():
-    uploaded_file = st.file_uploader("Choose a TOML config file (optional, otherwise loaded from driver.toml)", type="toml")
-    if uploaded_file is not None:
-        uploaded_config = tomllib.load(uploaded_file)
-        # TODO update validator to check that TOML is in correct format (has _options, has necessary sections, etc.)
-        if uploaded_config_is_valid(uploaded_config):
-            config = uploaded_config
+def setup_config():
+    if st.selectbox('Do you want to upload or provide the datapath to driver.toml?', ['Datapath', 'Upload']) == 'Upload':
+        uploaded_file = st.file_uploader("Choose a TOML config file", type="toml")
+        if uploaded_file is not None:
+            uploaded_config = tomllib.load(uploaded_file)
+            # TODO update validator to check that TOML is in correct format (has _options, has necessary sections, etc.)
+            if uploaded_config_is_valid(uploaded_config):
+                return uploaded_config
+    else:
+        # dynamically finds a driver.toml in the below datapath platform independently
+        # DRIVER_CONFIG = "/Users/sjanson/Desktop/code/picaso/reference/input_tomls/driver.toml"
+        DRIVER_CONFIG = str(Path(__file__).resolve().parents[2] / "reference" / "input_tomls" / "driver.toml")
+        st.text_input('Enter path to driver.toml', value=DRIVER_CONFIG)
+        if isinstance(DRIVER_CONFIG, str):
+            with open(DRIVER_CONFIG, "rb") as f:
+                return tomllib.load(f) 
 
 def render_admin():
-    # HEADER
-    st.logo('https://natashabatalha.github.io/picaso/_images/logo.png', size="large", link="https://github.com/natashabatalha/picaso")
-    st.header('Run PICASO',divider='rainbow')
-    st.subheader('Administrative')
-
-    # CONFIG UPLOAD
-    render_config_upload()
-
     # DATAPATH ENTERING
     config['OpticalProperties']['opacity_files'] = st.text_input("Enter in the datapath to your opacities.db", value = config.get('OpticalProperties').get('opacity_files'))
     config['OpticalProperties']['opacity_method'] = st.selectbox("Opacity method", ("resampled")) #, "preweighted", "resortrebin"))
@@ -732,6 +733,8 @@ def render_retrievals():
 # ===========================
 # MAIN
 # ===========================
+config = setup_config()
+if config is None: st.error('Cannot find driver.toml file')
 opacity, param_tools = render_admin()
 if config['observation_type']:
     render_star()
