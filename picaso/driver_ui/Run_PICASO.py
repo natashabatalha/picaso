@@ -1,64 +1,50 @@
-# run UI locally with: streamlit run driver_ui.py
+# Run PICASO via a Streamlit UI
+# 
+# run UI locally with: 
+# > streamlit run driver_ui.py
 
-# CONSTANTS YOU NEED TO SPECIFY -------- #
-driver_config = '/Users/sjanson/Desktop/code/picaso/reference/input_tomls/driver.toml'
+# =======================================
+# CONSTANTS 
+# =======================================
+DRIVER_CONFIG = '/Users/sjanson/Desktop/code/picaso/reference/input_tomls/driver.toml'
+SPECTRAL_RESOLUTION = 150
 
 # if you have to manually specify paths for env vars, change below; else comment out the os.environ commands below !!
-picaso_refdata_env_var = "/Users/sjanson/Desktop/code/picaso/reference"
-pysyn_cdbs_env_var = '/Users/sjanson/Desktop/code/picaso/reference/grp/redcat/trds'
+PICASO_REFDATA_ENV_VAR = "/Users/sjanson/Desktop/code/picaso/reference"
+PYSYN_CBDS_ENV_VAR = '/Users/sjanson/Desktop/code/picaso/reference/grp/redcat/trds'
 
-#---IMPORTS--------------------------------#
-import pandas as pd
+# =======================================
+# ENVIRONMENT SETUP 
+# =======================================
 import os
+os.environ['picaso_refdata'] = PICASO_REFDATA_ENV_VAR
+os.environ['PYSYN_CDBS'] = PYSYN_CBDS_ENV_VAR
+
+
+# =======================================
+# IMPORTS
+# =======================================
+import pandas as pd
 import toml
 import tomllib 
 import numpy as np 
 import copy 
+import streamlit as st
 
-os.environ['picaso_refdata'] = picaso_refdata_env_var
-os.environ['PYSYN_CDBS'] = pysyn_cdbs_env_var
+from bokeh.plotting import figure
+import matplotlib.pyplot as plt
+import bokeh.palettes as pals
+from bokeh.models import Legend
+from streamlit_bokeh import streamlit_bokeh
 
 import picaso.driver as go
 from picaso import justdoit as jdi 
 from picaso import justplotit as jpi
 from picaso.parameterizations import Parameterize
-from bokeh.plotting import figure, show
-import matplotlib.pyplot as plt
-import bokeh.palettes as pals
-from bokeh.models import Legend
 
-import streamlit as st
-from streamlit_bokeh import streamlit_bokeh
-
-#---INITIALIZE VARIABLES--------------------------#
-
-config = None
-if isinstance(driver_config, str):
-    with open(driver_config, "rb") as f:
-        config = tomllib.load(f)
-else:
-    st.error('Cannot find driver.toml file')
-
-param_tools = None 
-opacity = None 
-
-# -- HELPER FUNCTIONS -------------------------- #
-def run_spectrum_class(stage=None):
-    """
-    Runs driver.py's spectrum class as far as the level specified in stage with current configuration
-
-    Parameters
-    ----------
-    stage : string
-        Options are planet, star, temperature, chemistry; if left blank, the whole class will run (including clouds)
-    
-    Return
-    -------
-    picaso.justdoit.inputs
-        Configured class
-    """
-    return go.setup_spectrum_class(clean_dictionary(config, "_options"), opacity, param_tools, stage)
-
+# =======================================
+# HELPER FUNCTIONS 
+# =======================================
 def format_config_section_for_df(obj):
     """
     Formats a driver.toml section to be rendered as an input 
@@ -122,7 +108,7 @@ def write_results_to_config(grid, base):
             else:
                 base[item] = grid[item][0]
 
-def clean_dictionary(data, key_to_remove):
+def clean_dictionary(data, suffix="_options"):
     """
     Recursively removes a certain keyword from any part of a dictionary (used to clean the driver.toml configuration of _options keywords before getting passed to a PICASO function)
     
@@ -130,23 +116,37 @@ def clean_dictionary(data, key_to_remove):
     ----------
     data : dict
         The dictionary with all parameters inputted by the user so far
-    key_to_remove : str
+    suffix : str
         The keyword/pattern/string that will be deleted from the configuration so PICASO doesn't throw errors for unexpected keywords
     Return
     ------
     The cleaned and parsed dictionary
     """
     if isinstance(data, dict):
-        keys_to_check = list(data.keys())
-        for key in keys_to_check:
-                if key.endswith(key_to_remove):
-                    del data[key]
-                else:
-                    data[key] = clean_dictionary(data[key], key_to_remove)
-    elif isinstance(data, list):
-        for i, item in enumerate(data):
-            data[i] = clean_dictionary(item, key_to_remove)
+        return {
+            k: clean_dictionary(v, suffix)
+            for k,v in data.items()
+            if not k.endswith(suffix)
+        }
+    if isinstance(data, list):
+        return [clean_dictionary(v, suffix) for v in data]
     return data
+
+def run_spectrum_class(stage=None):
+    """
+    Runs driver.py's spectrum class as far as the level specified in stage with current configuration
+
+    Parameters
+    ----------
+    stage : string
+        Options are planet, star, temperature, chemistry; if left blank, the whole class will run (including clouds)
+    
+    Return
+    -------
+    picaso.justdoit.inputs
+        Configured class
+    """
+    return go.setup_spectrum_class(clean_dictionary(config), opacity, param_tools, stage)
 
 def update_toml_with_a_value_for_a_free_parameter(dictionary, keys, value):
     """
@@ -172,88 +172,101 @@ def update_toml_with_a_value_for_a_free_parameter(dictionary, keys, value):
     else:
         dictionary[keys[-1]] = value
 
+# ===============================
+# STREAMLIT HELPER FUNCTIONS 
+# ===============================
+def editable_section(section):
+    df = pd.DataFrame([format_config_section_for_df(section)])
+    edited = st.data_editor(df)
+    write_results_to_config(edited, section)
+
+#---INITIALIZE VARIABLES--------------------------#
+
+config = None
+if isinstance(DRIVER_CONFIG, str):
+    with open(DRIVER_CONFIG, "rb") as f:
+        config = tomllib.load(f)
+else:
+    st.error('Cannot find driver.toml file')
+
+param_tools = None 
+opacity = None
 # ---------------------------------------------- #
 # -- BEGINNING OF APP -------------------------- #
 # ---------------------------------------------- #
 
-st.logo('https://natashabatalha.github.io/picaso/_images/logo.png', size="large", link="https://github.com/natashabatalha/picaso")
-st.header('Run PICASO',divider='rainbow')
-
-st.subheader('Administrative')
 ################################
 #
 # CONFIGURE ADMINISTRATIVE STUFF
 #
 ################################
-config['InputOutput']['observation_data'] = st.text_input("Enter in the datapath(s) to your observation data", value = config.get('InputOutput').get('observation_data', ['']))
-config['OpticalProperties']['opacity_method'] = st.selectbox("Opacity method", ("resampled")) #, "preweighted", "resortrebin"))
-config['OpticalProperties']['opacity_files'] = st.text_input("Enter in the datapath to your opacities.db", value = config.get('OpticalProperties').get('opacity_files'))
-opacity = jdi.opannection(
-    filename_db=config['OpticalProperties']['opacity_files'], #database(s)
-    method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
-    **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
-)
+def render_admin():
+    st.logo('https://natashabatalha.github.io/picaso/_images/logo.png', size="large", link="https://github.com/natashabatalha/picaso")
+    st.header('Run PICASO',divider='rainbow')
 
-# TODO turn below into input: go.find_values_for_key(config ,'condensate')
-# TODO once the jdi.vj.available() is updated, below pops can be removed
-a =jdi.vj.available()
-a.pop(a.index('CaAl12O19'))
-a.pop(a.index('CaTiO3'))
-a.pop(a.index('SiO2'))
-param_tools = Parameterize(load_cld_optical=a, mieff_dir=config['OpticalProperties'].get('virga_mieff', None))
+    st.subheader('Administrative')
+    config['InputOutput']['observation_data'] = st.text_input("Enter in the datapath(s) to your observation data", value = config.get('InputOutput').get('observation_data', ['']))
+    config['OpticalProperties']['opacity_method'] = st.selectbox("Opacity method", ("resampled")) #, "preweighted", "resortrebin"))
+    config['OpticalProperties']['opacity_files'] = st.text_input("Enter in the datapath to your opacities.db", value = config.get('OpticalProperties').get('opacity_files'))
+    opacity = jdi.opannection(
+        filename_db=config['OpticalProperties']['opacity_files'], #database(s)
+        method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
+        **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
+    )
 
-st.subheader('Select calculation to perform')
-config['calc_type'] = st.selectbox("Calculation type", ['spectrum','climate'], index=None)
-if config['calc_type'] == "spectrum":
-    config['observation_type'] = st.selectbox("Observation type", config['observation_type_options'], index=None)
-elif config['calc_type'] != None:
-    st.warning(f'The {config['calc_type']} option has not been implemented yet.')
-if config['observation_type']:
-    st.divider()
-    st.header(f'{config['observation_type'].capitalize()} Spectrum Config')
+    # TODO turn below into input: go.find_values_for_key(config ,'condensate')
+    # TODO once the jdi.vj.available() is updated, below pops can be removed
+    a =jdi.vj.available()
+    a.pop(a.index('CaAl12O19'))
+    a.pop(a.index('CaTiO3'))
+    a.pop(a.index('SiO2'))
+    param_tools = Parameterize(load_cld_optical=a, mieff_dir=config['OpticalProperties'].get('virga_mieff', None))
 
-################################
-#
-# CONFIGURE STAR
-#
-################################
-config['irradiated'] = True
-if config['observation_type'] == 'thermal':
-    choice = st.selectbox("Do your want your object to be irradiated?", ('Yes', 'No'), index=None)
-    config['irradiated'] = choice == 'Yes'
-if config['observation_type'] == 'reflected' or config['observation_type'] == 'transmission' or config['irradiated']:
-    st.subheader("Star Variables")
-    # TODO: pull these values from driver.toml
-    star_df = pd.DataFrame({
-        'radius': [1],
-        'r unit': 'Rsun',
-        'semi_major': '200',
-        'unit': 'AU',
-        'temperature': [5400],
-        'metallicity': [0.01],
-        'logg': [4.45],
-        # type
-    })
-    star_grid = st.data_editor(star_df)
+    st.subheader('Select calculation to perform')
+    config['calc_type'] = st.selectbox("Calculation type", ['spectrum','climate'], index=None)
+    if config['calc_type'] == "spectrum":
+        config['observation_type'] = st.selectbox("Observation type", config['observation_type_options'], index=None)
+    elif config['calc_type'] != None:
+        st.warning(f'The {config['calc_type']} option has not been implemented yet.')
+    if config['observation_type']:
+        st.divider()
+        st.header(f'{config['observation_type'].capitalize()} Spectrum Config')
+    return opacity, param_tools
 
-    # updating config file
-    for key in star_grid:
-        if key.lower() in config['object'] and star_grid[key][0]:
-            config['star'][key.lower()]['value'] = star_grid[key][0]
 
-if config['observation_type']:
-    ###############################
-    #
-    # CONFIGURE OBJECT
-    #
-    ################################
+def render_star():
+    config['irradiated'] = True
+    if config['observation_type'] == 'thermal':
+        choice = st.selectbox("Do your want your object to be irradiated?", ('Yes', 'No'), index=None)
+        config['irradiated'] = choice == 'Yes'
+    if config['observation_type'] == 'reflected' or config['observation_type'] == 'transmission' or config['irradiated']:
+        st.subheader("Star Variables")
+        # TODO: pull these values from driver.toml
+        star_df = pd.DataFrame({
+            'radius': [1],
+            'r unit': 'Rsun',
+            'semi_major': '200',
+            'unit': 'AU',
+            'temperature': [5400],
+            'metallicity': [0.01],
+            'logg': [4.45],
+            # type
+        })
+        star_grid = st.data_editor(star_df)
+
+        # updating config file
+        for key in star_grid:
+            if key.lower() in config['object'] and star_grid[key][0]:
+                config['star'][key.lower()]['value'] = star_grid[key][0]
+
+def render_object():
     st.subheader("Object Variables")
+    editable_section(config['object'])
 
-    formatted_obj = format_config_section_for_df(config['object'])
-    object_df = pd.DataFrame([formatted_obj])
-    object_grid = st.data_editor(object_df)
-    # TODO: users should be able to leave gravity or M/R blank
-    write_results_to_config(object_grid, config['object'])
+opacity, param_tools = render_admin()
+if config['observation_type']:
+    render_star()
+    render_object()
 
     if config['observation_type'] != 'thermal':
         config['geometry']['phase']['value'] = st.number_input('Enter phase angle in radians 0-2π', min_value=0, max_value=6, value=0)
@@ -263,12 +276,7 @@ if config['observation_type']:
 
     # PRESSURE
     st.text('Configure pressure (can ignore if using a userfile or sonora bobcat for temperature)')
-    formatted_obj = format_config_section_for_df(config['temperature']['pressure'])
-    pressure_df = pd.DataFrame([formatted_obj])
-    pressure_grid = st.data_editor(pressure_df)
-
-    write_results_to_config(pressure_grid, config['temperature']['pressure'])
-
+    editable_section(config['temperature']['pressure'])
     ###############################
     #
     # INPUT TEMPERATURE INFORMATION
@@ -378,53 +386,52 @@ if config['observation_type']:
         full_output = dict({'layer':{'pressure': chem_df['pressure'], 'mixingratios': chem_df}})
         streamlit_bokeh(jpi.mixing_ratio(full_output))
 
-##########################
-#
-# INPUT CLOUD INFORMATION
-#
-##########################
-include_clouds = st.selectbox("Do you want clouds?", ('Yes', 'No'), index=None)
-if include_clouds == 'Yes':
-    cloud_id = 'cloud1'
-    cloud_obj = config['clouds'][cloud_id]
-
-    # set cloud type
-    cloud_type = st.selectbox("Cloud type", cloud_obj.keys())
-    config['clouds'][f'{cloud_id}_type'] = cloud_type
-
-    # create editable df for cloud so users can set parameters
-    cloud_type_df = pd.DataFrame([format_config_section_for_df(cloud_obj[cloud_type])])
-    cloud_type_editable_df = st.data_editor(cloud_type_df)
-    # render any options sections dynamically
-    cloud_list_iterate = copy.deepcopy(config['clouds'][cloud_id][cloud_type])
-    for attr in cloud_list_iterate:
-        if attr.endswith('_options'):
-            pure_attr = '_'.join(attr.split('_')[:-1])
-            cloud_obj[cloud_type][pure_attr] = st.selectbox(f"{cloud_id} {pure_attr.capitalize()} Options", cloud_obj[cloud_type][attr], index=None)
-            
-            # render any kwargs for the options dynamically
-            if cloud_obj[cloud_type][pure_attr]:
-                var_with_options = cloud_obj[cloud_type][pure_attr]
-                kwargs_for_attribute_option_exist = cloud_obj[cloud_type][pure_attr]+'_kwargs' in cloud_obj[cloud_type]
-                if kwargs_for_attribute_option_exist:
-                    options_editable_df = st.data_editor(cloud_obj[cloud_type][ cloud_obj[cloud_type][pure_attr]+'_kwargs' ])
-                    cloud_obj[cloud_type][ cloud_obj[cloud_type][pure_attr]+'_kwargs' ] = options_editable_df
-
-    write_results_to_config(cloud_type_editable_df, config['clouds']['cloud1'][cloud_type])
     ##########################
-    # GRAPH CLOUDS
+    #
+    # INPUT CLOUD INFORMATION
+    #
     ##########################
-    if st.button('See Clouds'):
-        config = clean_dictionary(config, '_options')
-        data_class = run_spectrum_class()
-        df = data_class.inputs['clouds']['profile'].astype('float')
-        wavenumber = df['wavenumber'].unique()
-        nwno = len(wavenumber)
-        wavelength = 1e4/wavenumber
-        pressure = df['pressure'].unique()
-        nlayer = len(pressure)
-        bokeh_plot = jpi.plot_cld_input(nwno, nlayer, df=df,pressure=pressure, wavelength=wavelength)
-        st.write(bokeh_plot)
+    include_clouds = st.selectbox("Do you want clouds?", ('Yes', 'No'), index=None)
+    if include_clouds == 'Yes':
+        cloud_id = 'cloud1'
+        cloud_obj = config['clouds'][cloud_id]
+
+        # set cloud type
+        cloud_type = st.selectbox("Cloud type", cloud_obj.keys())
+        config['clouds'][f'{cloud_id}_type'] = cloud_type
+
+        # create editable df for cloud so users can set parameters
+        cloud_type_df = pd.DataFrame([format_config_section_for_df(cloud_obj[cloud_type])])
+        cloud_type_editable_df = st.data_editor(cloud_type_df)
+        # render any options sections dynamically
+        cloud_list_iterate = copy.deepcopy(config['clouds'][cloud_id][cloud_type])
+        for attr in cloud_list_iterate:
+            if attr.endswith('_options'):
+                pure_attr = '_'.join(attr.split('_')[:-1])
+                cloud_obj[cloud_type][pure_attr] = st.selectbox(f"{cloud_id} {pure_attr.capitalize()} Options", cloud_obj[cloud_type][attr], index=None)
+                
+                # render any kwargs for the options dynamically
+                if cloud_obj[cloud_type][pure_attr]:
+                    var_with_options = cloud_obj[cloud_type][pure_attr]
+                    kwargs_for_attribute_option_exist = cloud_obj[cloud_type][pure_attr]+'_kwargs' in cloud_obj[cloud_type]
+                    if kwargs_for_attribute_option_exist:
+                        options_editable_df = st.data_editor(cloud_obj[cloud_type][ cloud_obj[cloud_type][pure_attr]+'_kwargs' ])
+                        cloud_obj[cloud_type][ cloud_obj[cloud_type][pure_attr]+'_kwargs' ] = options_editable_df
+
+        write_results_to_config(cloud_type_editable_df, config['clouds']['cloud1'][cloud_type])
+        ##########################
+        # GRAPH CLOUDS
+        ##########################
+        if st.button('See Clouds'):
+            data_class = run_spectrum_class()
+            df = data_class.inputs['clouds']['profile'].astype('float')
+            wavenumber = df['wavenumber'].unique()
+            nwno = len(wavenumber)
+            wavelength = 1e4/wavenumber
+            pressure = df['pressure'].unique()
+            nlayer = len(pressure)
+            bokeh_plot = jpi.plot_cld_input(nwno, nlayer, df=df,pressure=pressure, wavelength=wavelength)
+            st.write(bokeh_plot)
 
 # ---------------------------------#
 # RUN A SPECTRUM ----------------- #
@@ -435,9 +442,9 @@ wavelength_range = st.slider(
     max_value=15,
     value=(0, 15)
 )
-spectral_resolution = 150
+
 if config['calc_type'] =='spectrum' and st.button(f'Run {config['calc_type']}'):
-    df = go.run(driver_dict=clean_dictionary(config, '_options'))
+    df = go.run(driver_dict=clean_dictionary(config))
     observation_key_mapping = {
         'thermal': 'thermal',
         'reflected': 'albedo',
@@ -445,7 +452,7 @@ if config['calc_type'] =='spectrum' and st.button(f'Run {config['calc_type']}'):
     }
     observation_key = observation_key_mapping[config['observation_type']]
     wavenumber, albedo_or_fluxes = df['wavenumber'] , df[observation_key]
-    wavenumber, albedo_or_fluxes = jdi.mean_regrid(wavenumber, albedo_or_fluxes, R=spectral_resolution)
+    wavenumber, albedo_or_fluxes = jdi.mean_regrid(wavenumber, albedo_or_fluxes, R=SPECTRAL_RESOLUTION)
     spec_fig = jpi.spectrum(wavenumber, albedo_or_fluxes, plot_width=500, x_range=wavelength_range)
     # graph spectrum
     streamlit_bokeh(spec_fig, theme="streamlit", key="spectrum")
@@ -558,7 +565,7 @@ if retrieval_stage_state_manager['done_configuring_priors'] == 'Yes':
 
         ALL_TOMLS.append(GUESS_TOML)
         # RUNNING THROUGH SPECTRUM CLASS
-        data_class = go.setup_spectrum_class(clean_dictionary(GUESS_TOML, '_options'), opacity, param_tools)
+        data_class = go.setup_spectrum_class(clean_dictionary(GUESS_TOML), opacity, param_tools)
         # GETTING INFO
         t = data_class.inputs['atmosphere']['profile']['temperature']
         p = data_class.inputs['atmosphere']['profile']['pressure']
@@ -659,24 +666,22 @@ if retrieval_stage_state_manager['see_prior_spectrums'] == 'Yes':
     WNO_LIST = []
     ALB_LIST = []
     for prior_toml in ALL_TOMLS:
-        
-        cleaned = clean_dictionary(prior_toml, '_options')
-        df = go.run(driver_dict=cleaned)
+        df = go.run(driver_dict=clean_dictionary(prior_toml))
         if prior_toml['observation_type'] == 'transmission':
             wnos, transit_depth = jdi.mean_regrid(df['wavenumber'],
-                                            df['transit_depth'], R=spectral_resolution)
+                                            df['transit_depth'], R=SPECTRAL_RESOLUTION)
             WNO_LIST.append(wnos)
             ALB_LIST.append(transit_depth)
         else:
             obs_key = 'thermal' if prior_toml['observation_type'] == 'thermal' else 'albedo'
             wno, alb, fpfs, full = df['wavenumber'] , df[obs_key] , df[f'fpfs_{prior_toml['observation_type']}'], df['full_output']
-            wno, alb = jdi.mean_regrid(wno, alb, R=spectral_resolution)
+            wno, alb = jdi.mean_regrid(wno, alb, R=SPECTRAL_RESOLUTION)
             WNO_LIST.append(wno)
             ALB_LIST.append(alb)
 
     streamlit_bokeh(jpi.spectrum(WNO_LIST, ALB_LIST, palette=[(255,0,0,0.3)], plot_width=500,x_range=wavelength_range))
 
-cleaned_config = clean_dictionary(config, '_options')
+cleaned_config = clean_dictionary(config)
 if do_retrieval == 'No':
     del cleaned_config['retrieval']
 
