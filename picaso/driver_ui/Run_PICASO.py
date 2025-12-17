@@ -262,8 +262,6 @@ def render_object():
     st.subheader("Object Variables")
     editable_section(config['object'])
 
-
-
 def render_phase_angle():
     if config['observation_type'] != 'thermal':
         config['geometry']['phase']['value'] = st.number_input('Enter phase angle in radians 0-2π', min_value=0, max_value=6, value=0)
@@ -434,7 +432,6 @@ def render_wavelength_range():
         value=(0, 15)
     )
 
-
 # ---------------------------------#
 # RUN A SPECTRUM ----------------- #
 # ---------------------------------#
@@ -490,6 +487,7 @@ def render_free_parameter_selection():
     return parameter_handler
 def render_ranges_for_selected_parameters(parameter_handler):
     # filter for what items have been selected
+    prior_set_items = {}
     selected_items = {path_to_parameter: state_value_list[1] for path_to_parameter, state_value_list in parameter_handler.items() if state_value_list[0]}
 
     # Min, Max, Log, Prior Type Listing
@@ -661,64 +659,9 @@ def sample_plots(ALL_TOMLS, save_all_class_pt, nsamples, run_spectrum=True):
         spectrum_fig = jpi.spectrum(WNO_LIST, ALB_LIST, palette=[(255,0,0,0.3)], plot_width=500,x_range=wavelength_range)
     return pressure_temperature_fig, mixing_ratio_bokeh_fig, clouds_fig, spectrum_fig
 
-opacity, param_tools = render_admin()
-if config['observation_type']:
-    render_star()
-    render_object()
-    render_phase_angle()
-    # ATMOSPHERIC VARIABLES
-    st.subheader("Atmospheric Variables")
-    render_pressure_and_temperature()
-    render_chemistry()
-    render_clouds()
-    wavelength_range = render_wavelength_range()
-    run_spectrum(wavelength_range)
-        
-    # RETRIEVALS     ----------------- #
-    st.divider()
-    st.header("Retrievals")
-    do_retrieval = st.selectbox("Do you want to do a retrieval?", ('Yes', 'No'), index=None)
-    parameter_handler = {}
-    if do_retrieval == 'Yes':
-        parameter_handler = render_free_parameter_selection()
-
-        selected_items = {}
-        prior_set_items = {}
-        done_selecting_parameters = None
-        retrieval_stage_state_manager = {} # for streamlit rendering organization
-
-        retrieval_stage_state_manager['done_selecting_parameters'] =  st.selectbox("Done Selecting Methods", ("Yes", "No"), index=None)
-        if retrieval_stage_state_manager['done_selecting_parameters'] == 'Yes':
-            selected_items, prior_set_items = render_ranges_for_selected_parameters(parameter_handler)
-
-        st.divider()
-        retrieval_stage_state_manager['done_configuring_priors'] =  st.selectbox("Done Configuring Priors", ("Yes", "No"), index=None)
-
-        ALL_TOMLS = []
-        save_all_class_pt = []
-        nsamples = st.number_input('Number of samples?', 5)
-
-        if retrieval_stage_state_manager['done_configuring_priors'] == 'Yes':
-
-            prior_set_items_pure_dict = get_prior_information(selected_items)
-            ALL_TOMLS, save_all_class_pt = sampler(prior_set_items_pure_dict, nsamples)        
-            pressure_temperature_fig, mixing_ratio_bokeh_fig, clouds_fig, _ = sample_plots(ALL_TOMLS, save_all_class_pt, nsamples, run_spectrum=False)
-
-            # PLOT PT, MR, CLOUDS
-            st.pyplot(pressure_temperature_fig)
-            streamlit_bokeh(mixing_ratio_bokeh_fig)
-            st.pyplot(clouds_fig)
-
-            st.divider()
-
-            # PLOT SPECTRUM
-            retrieval_stage_state_manager['see_prior_spectrums'] =  st.selectbox("See Spectrums for Priors?", ("Yes", "No"), index=None)
-            if retrieval_stage_state_manager['see_prior_spectrums'] == 'Yes':
-                _, _, _, spectrum_fig = sample_plots(ALL_TOMLS, save_all_class_pt, nsamples)
-                streamlit_bokeh(spectrum_fig)
-
+def render_download_config():
     cleaned_config = clean_dictionary(config)
-    if do_retrieval == 'No':
+    if 'retrieval' in cleaned_config:
         del cleaned_config['retrieval']
 
     st.download_button(
@@ -727,3 +670,61 @@ if config['observation_type']:
         file_name="configured_toml.toml",
         mime="application/toml"
     )
+def render_retrievals():
+    parameter_handler = render_free_parameter_selection()
+
+    selected_items = {}
+    prior_set_items = {}
+    retrieval_stage_state_manager = {} # for streamlit rendering organization
+
+    retrieval_stage_state_manager['done_selecting_parameters'] =  st.selectbox("Done Selecting Methods", ("Yes", "No"), index=None)
+    if retrieval_stage_state_manager['done_selecting_parameters'] == 'Yes':
+        selected_items, prior_set_items = render_ranges_for_selected_parameters(parameter_handler)
+    st.divider()
+
+    ALL_TOMLS = []
+    save_all_class_pt = []
+    nsamples = st.number_input('Number of samples?', 5)
+
+    retrieval_stage_state_manager['done_configuring_priors'] =  st.selectbox("Done Configuring Priors", ("Yes", "No"), index=None)
+    if retrieval_stage_state_manager['done_configuring_priors'] == 'Yes':
+        prior_set_items_pure_dict = prior_set_items # get_prior_information(selected_items)
+        ALL_TOMLS, save_all_class_pt = sampler(prior_set_items_pure_dict, nsamples)        
+        pressure_temperature_fig, mixing_ratio_bokeh_fig, clouds_fig, _ = sample_plots(ALL_TOMLS, save_all_class_pt, nsamples, run_spectrum=False)
+
+        # PLOT PT, MR, CLOUDS
+        st.pyplot(pressure_temperature_fig)
+        streamlit_bokeh(mixing_ratio_bokeh_fig)
+        st.pyplot(clouds_fig)
+
+        st.divider()
+
+        # PLOT SPECTRUM
+        retrieval_stage_state_manager['see_prior_spectrums'] =  st.selectbox("See Spectrums for Priors?", ("Yes", "No"), index=None)
+        if retrieval_stage_state_manager['see_prior_spectrums'] == 'Yes':
+            _, _, _, spectrum_fig = sample_plots(ALL_TOMLS, save_all_class_pt, nsamples)
+            streamlit_bokeh(spectrum_fig)
+
+opacity, param_tools = render_admin()
+if config['observation_type']:
+    render_star()
+    render_object()
+    render_phase_angle()
+
+    # ATMOSPHERIC VARIABLES
+    st.subheader("Atmospheric Variables")
+    render_pressure_and_temperature()
+    render_chemistry()
+    render_clouds()
+    wavelength_range = render_wavelength_range()
+
+    # SPECTRUM
+    run_spectrum(wavelength_range)
+        
+    # RETRIEVALS
+    st.divider()
+    st.header("Retrievals")
+    do_retrieval = st.selectbox("Do you want to do a retrieval?", ('Yes', 'No'), index=None)
+    if do_retrieval == 'Yes':
+        render_retrievals()
+    render_download_config()
