@@ -476,7 +476,7 @@ def render_free_parameter_selection():
                 list_available_free_parameters(value, new_path)
             elif isinstance(value, float):
                 parameter_handler[new_path] = [st.checkbox(f"{new_path} {value}"), value]
-            elif isinstance(value, int) and not isinstance(value, bool):
+            elif isinstance(value, int) and not isinstance(value, bool) and key != 'nlevel':
                 parameter_handler[new_path] = [st.checkbox(f"{new_path} {value}"), value]
             elif isinstance(value, np.int64):
                 parameter_handler[new_path] = [st.checkbox(f"{new_path} {value}"), value]
@@ -509,39 +509,18 @@ def render_ranges_for_selected_parameters(parameter_handler):
                 mean=st.number_input('mean', value, key=f'mean{i}'),
                 std=st.number_input('std', 1, key=f'std{i}'),
             )
-    return selected_items, prior_set_items
+    return prior_set_items
 
-def get_prior_information(selected_items):
-    prior_set_items_pure_dict = {}
-    for i, (key, value) in enumerate(selected_items.items()):
-        # Access the current value stored in session state by its unique key
-        prior_set_items_pure_dict[key] = dict(
-            log=st.session_state[f'log{i}'],
-            prior=st.session_state[f'prior{i}'],
-        )
-        prior_type = st.session_state[f'prior{i}']
-        if prior_type == 'uniform':
-            prior_set_items_pure_dict[key][f'{prior_type}_kwargs'] = dict(
-                min=st.session_state[f'min{i}'],
-                max=st.session_state[f'max{i}'],
-            )
-        else:
-            prior_set_items_pure_dict[key][f'{prior_type}_kwargs'] = dict(
-                mean=st.session_state[f'mean{i}'],
-                std=st.session_state[f'std{i}'],
-            )  
-    return prior_set_items_pure_dict
-
-def sampler(prior_set_items_pure_dict, nsamples):
+def sampler(prior_set_items, nsamples):
     ALL_TOMLS = []
     save_all_class_pt = []
-    for i in range(nsamples):
+    for _ in range(nsamples):
         # get samples for values
-        check_all_values = go.hypercube(np.random.rand(len(prior_set_items_pure_dict.keys())), dict(prior_set_items_pure_dict))
+        check_all_values = go.hypercube(np.random.rand(len(prior_set_items.keys())), dict(prior_set_items))
         # create a new copy of the config to write to
         GUESS_TOML = copy.deepcopy(config)
         # write sampled values to config
-        for index, free_parameter in enumerate(prior_set_items_pure_dict.keys()):
+        for index, free_parameter in enumerate(prior_set_items.keys()):
             sampled_value = check_all_values[index]
             keys = free_parameter.split('.')
             update_toml_with_a_value_for_a_free_parameter(GUESS_TOML, keys, sampled_value)
@@ -609,19 +588,15 @@ def sample_plots(ALL_TOMLS, save_all_class_pt, nsamples, run_spectrum=True):
         opd1d = np.mean(opd,axis=1)
 
         ax1.semilogy(ssa1d, cloud_pressure)
-        # ax1.set_xlim([0,1])
         ax1.invert_yaxis()
         ax1.set_title("Single scattering albedo vs Pressure")
         ax2.semilogy(g01d, cloud_pressure)
-        # ax2.set_xlim([0,1])
         ax2.invert_yaxis()
         ax2.set_title("Asymmetry vs Pressure")
         ax3.loglog(opd1d, cloud_pressure)
-        # ax3.set_xlim([1e-5,50])
         ax3.set_title("Optical Depth vs Pressure")
         ax3.invert_yaxis()
         for mol, c in zip(molecules, cols):
-            # this needs to not be inside this for loop
             f = mixing_ratio_bokeh_fig.line(mixingratios[mol],pressure, color=c, line_width=2,
                 muted_color=c, muted_alpha=0.05, line_alpha=1)
             moles[mol].append(f)
@@ -631,7 +606,7 @@ def sample_plots(ALL_TOMLS, save_all_class_pt, nsamples, run_spectrum=True):
     legend.click_policy="mute"
     mixing_ratio_bokeh_fig.add_layout(legend, 'left')
     mixing_ratio_bokeh_fig.y_range.flipped = True
-    # # make units accurate to what in driver.toml
+    # TODO: nice to make units accurate to what in driver.toml
     axes.set_xlabel("Temperature (K)") 
     axes.set_ylabel("Log Pressure(Bars)")
     axes.set_title(f"Pressure-Temperature Profiles ({nsamples} Samples)")
@@ -673,13 +648,12 @@ def render_download_config():
 def render_retrievals():
     parameter_handler = render_free_parameter_selection()
 
-    selected_items = {}
     prior_set_items = {}
     retrieval_stage_state_manager = {} # for streamlit rendering organization
 
     retrieval_stage_state_manager['done_selecting_parameters'] =  st.selectbox("Done Selecting Methods", ("Yes", "No"), index=None)
     if retrieval_stage_state_manager['done_selecting_parameters'] == 'Yes':
-        selected_items, prior_set_items = render_ranges_for_selected_parameters(parameter_handler)
+        prior_set_items = render_ranges_for_selected_parameters(parameter_handler)
     st.divider()
 
     ALL_TOMLS = []
@@ -688,8 +662,7 @@ def render_retrievals():
 
     retrieval_stage_state_manager['done_configuring_priors'] =  st.selectbox("Done Configuring Priors", ("Yes", "No"), index=None)
     if retrieval_stage_state_manager['done_configuring_priors'] == 'Yes':
-        prior_set_items_pure_dict = prior_set_items # get_prior_information(selected_items)
-        ALL_TOMLS, save_all_class_pt = sampler(prior_set_items_pure_dict, nsamples)        
+        ALL_TOMLS, save_all_class_pt = sampler(prior_set_items, nsamples)        
         pressure_temperature_fig, mixing_ratio_bokeh_fig, clouds_fig, _ = sample_plots(ALL_TOMLS, save_all_class_pt, nsamples, run_spectrum=False)
 
         # PLOT PT, MR, CLOUDS
@@ -705,6 +678,9 @@ def render_retrievals():
             _, _, _, spectrum_fig = sample_plots(ALL_TOMLS, save_all_class_pt, nsamples)
             streamlit_bokeh(spectrum_fig)
 
+# ===========================
+# MAIN
+# ===========================
 opacity, param_tools = render_admin()
 if config['observation_type']:
     render_star()
@@ -720,11 +696,10 @@ if config['observation_type']:
 
     # SPECTRUM
     run_spectrum(wavelength_range)
+    st.divider()
         
     # RETRIEVALS
-    st.divider()
     st.header("Retrievals")
-    do_retrieval = st.selectbox("Do you want to do a retrieval?", ('Yes', 'No'), index=None)
-    if do_retrieval == 'Yes':
+    if st.selectbox("Do you want to do a retrieval?", ('Yes', 'No'), index=None) == 'Yes':
         render_retrievals()
     render_download_config()
