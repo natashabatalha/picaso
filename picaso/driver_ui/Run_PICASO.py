@@ -19,7 +19,6 @@ from pathlib import Path
 st.logo('https://natashabatalha.github.io/picaso/_images/logo.png', size="large", link="https://github.com/natashabatalha/picaso")
 st.header('Run PICASO',divider='rainbow')
 st.subheader('Administrative')
-
 # optional to set the below, but convenient so you don't have to set it in the UI every time
 PICASO_REFDATA_ENV_VAR = "/Users/sjanson/Desktop/code/picaso/reference"
 PYSYN_CBDS_ENV_VAR = '/Users/sjanson/Desktop/code/picaso/reference/grp/redcat/trds'
@@ -151,6 +150,7 @@ def run_spectrum_class(stage=None):
     picaso.justdoit.inputs
         Configured class
     """
+    st.write(config['clouds']['cloud1']['virga'])
     return go.setup_spectrum_class(clean_dictionary(config), opacity, param_tools, stage)
 
 def update_toml_with_a_value_for_a_free_parameter(dictionary, keys, value):
@@ -461,6 +461,9 @@ def render_clouds():
             except Exception as e:
                 st.warning('Make sure you have configured chemistry and temperature.')
                 st.write(e)
+    else:
+        if 'clouds' in config:
+            del config['clouds']
 
 def render_wavelength_range():
     return st.slider(
@@ -507,10 +510,11 @@ def render_free_parameter_selection():
         config['chemistry']['method']: config['chemistry'][config['chemistry']['method']],
         'method': config['chemistry']['method']
     }
-    config['clouds'] = {
-        'cloud1':{config['clouds']['cloud1_type']: config['clouds']['cloud1'][config['clouds']['cloud1_type']]},
-        'cloud1_type': config['clouds']['cloud1_type']
-    }
+    if 'clouds' in config:
+        config['clouds'] = {
+            'cloud1':{config['clouds']['cloud1_type']: config['clouds']['cloud1'][config['clouds']['cloud1_type']]},
+            'cloud1_type': config['clouds']['cloud1_type']
+        }
     del config['retrieval']
     del config['sampler']
     def list_available_free_parameters(data, current_path=""):
@@ -593,7 +597,7 @@ def sampler(prior_set_items, nsamples):
         })
     return ALL_TOMLS, save_all_class_pt
 
-def sample_plots(ALL_TOMLS, save_all_class_pt, nsamples, run_spectrum=True):
+def sample_plots(ALL_TOMLS, save_all_class_pt, nsamples,run_clouds=True, run_spectrum=True):
     ################################
     # MIXING RATIO GRAPH 
     ################################
@@ -616,31 +620,32 @@ def sample_plots(ALL_TOMLS, save_all_class_pt, nsamples, run_spectrum=True):
         temperature = save_all_class_pt[i]['temperature']
         mixingratios = save_all_class_pt[i]['mixingratios']
         axes.semilogy(temperature,pressure, color='red', alpha=0.1)
-        cloud_df = save_all_class_pt[i]['cloudprofile']
-        cloud_pressure = cloud_df['pressure']
-        wavenumber = cloud_df['wavenumber'].unique()
+        if run_clouds:
+            cloud_df = save_all_class_pt[i]['cloudprofile']
+            cloud_pressure = cloud_df['pressure']
+            wavenumber = cloud_df['wavenumber'].unique()
 
-        nwno = len(wavenumber)
-        cloud_pressure = cloud_df['pressure'].unique()
-        nlayer = len(cloud_df['pressure'].unique())
+            nwno = len(wavenumber)
+            cloud_pressure = cloud_df['pressure'].unique()
+            nlayer = len(cloud_df['pressure'].unique())
 
-        w0 = np.reshape(cloud_df['w0'].values,(nlayer,nwno))
-        opd = np.reshape(cloud_df['opd'].values,(nlayer,nwno)) + 1e-60
-        g0 = np.reshape(cloud_df['g0'].values,(nlayer,nwno))
+            w0 = np.reshape(cloud_df['w0'].values,(nlayer,nwno))
+            opd = np.reshape(cloud_df['opd'].values,(nlayer,nwno)) + 1e-60
+            g0 = np.reshape(cloud_df['g0'].values,(nlayer,nwno))
 
-        ssa1d = np.mean(w0,axis=1) # ssa [nlayer, nwavelength]
-        g01d = np.mean(g0,axis=1)
-        opd1d = np.mean(opd,axis=1)
+            ssa1d = np.mean(w0,axis=1) # ssa [nlayer, nwavelength]
+            g01d = np.mean(g0,axis=1)
+            opd1d = np.mean(opd,axis=1)
 
-        ax1.semilogy(ssa1d, cloud_pressure)
-        ax1.invert_yaxis()
-        ax1.set_title("Single scattering albedo vs Pressure")
-        ax2.semilogy(g01d, cloud_pressure)
-        ax2.invert_yaxis()
-        ax2.set_title("Asymmetry vs Pressure")
-        ax3.loglog(opd1d, cloud_pressure)
-        ax3.set_title("Optical Depth vs Pressure")
-        ax3.invert_yaxis()
+            ax1.semilogy(ssa1d, cloud_pressure)
+            ax1.invert_yaxis()
+            ax1.set_title("Single scattering albedo vs Pressure")
+            ax2.semilogy(g01d, cloud_pressure)
+            ax2.invert_yaxis()
+            ax2.set_title("Asymmetry vs Pressure")
+            ax3.loglog(opd1d, cloud_pressure)
+            ax3.set_title("Optical Depth vs Pressure")
+            ax3.invert_yaxis()
         for mol, c in zip(molecules, cols):
             f = mixing_ratio_bokeh_fig.line(mixingratios[mol],pressure, color=c, line_width=2,
                 muted_color=c, muted_alpha=0.05, line_alpha=1)
@@ -679,18 +684,6 @@ def sample_plots(ALL_TOMLS, save_all_class_pt, nsamples, run_spectrum=True):
         spectrum_fig = jpi.spectrum(WNO_LIST, ALB_LIST, palette=[(255,0,0,0.3)], plot_width=500,x_range=wavelength_range)
     return pressure_temperature_fig, mixing_ratio_bokeh_fig, clouds_fig, spectrum_fig
 
-def render_download_config():
-    cleaned_config = clean_dictionary(config)
-    if 'retrieval' in cleaned_config:
-        del cleaned_config['retrieval']
-
-    st.download_button(
-        label="Download current config",
-        data=toml.dumps(cleaned_config),
-        file_name="configured_toml.toml",
-        mime="application/toml"
-    )
-
 def render_retrievals():
     # LIST OUT ALL FREE PARAMETERS
     parameter_handler = render_free_parameter_selection()
@@ -708,31 +701,67 @@ def render_retrievals():
     ALL_TOMLS = []
     save_all_class_pt = []
     nsamples = st.number_input('Number of samples?', 5)
-    
+    retrieval_object = {}
+
+    # extract data to be able to write to toml to recreate
+    for parameter in prior_set_items.keys():
+        base = prior_set_items[parameter]
+        prior_type = base['prior']
+        retrieval_variables = {
+            'prior' : prior_type,
+            'log' : base['log'],
+        }
+        for kwarg in base[f'{prior_type}_kwargs'].keys():
+            retrieval_variables[kwarg] = base[f'{prior_type}_kwargs'][kwarg]
+
+        prev = retrieval_object
+        for i, key in enumerate(parameter.split('.')):
+            if i == len(parameter.split('.')) -1:
+                prev[key] = retrieval_variables
+            else:
+                if key not in prev:
+                    prev[key] = {}
+            prev = prev[key]
+
     # WHEN USER IS GOOD WITH RANGES/PRIORS, SAMPLE VALUES AND CREATE PLOTS
     retrieval_stage_state_manager['done_configuring_priors'] =  st.selectbox("Done Configuring Priors", ("Yes", "No"), index=None)
     if retrieval_stage_state_manager['done_configuring_priors'] == 'Yes':
         ALL_TOMLS, save_all_class_pt = sampler(prior_set_items, nsamples)        
-        pressure_temperature_fig, mixing_ratio_bokeh_fig, clouds_fig, _ = sample_plots(ALL_TOMLS, save_all_class_pt, nsamples, run_spectrum=False)
+        pressure_temperature_fig, mixing_ratio_bokeh_fig, clouds_fig, _ = sample_plots(ALL_TOMLS, save_all_class_pt, nsamples, run_spectrum=False, run_clouds=('clouds' in config))
 
         # PLOT PT, MR, CLOUDS
         st.pyplot(pressure_temperature_fig)
         streamlit_bokeh(mixing_ratio_bokeh_fig)
-        st.pyplot(clouds_fig)
+        if 'clouds' in config:
+            st.pyplot(clouds_fig)
 
         st.divider()
 
         # PLOT SPECTRUM
         retrieval_stage_state_manager['see_prior_spectrums'] =  st.selectbox("See Spectrums for Priors?", ("Yes", "No"), index=None)
         if retrieval_stage_state_manager['see_prior_spectrums'] == 'Yes':
-            _, _, _, spectrum_fig = sample_plots(ALL_TOMLS, save_all_class_pt, nsamples)
+            _, _, _, spectrum_fig = sample_plots(ALL_TOMLS, save_all_class_pt, nsamples, run_clouds=('clouds' in config))
             streamlit_bokeh(spectrum_fig)
     config['InputOutput']['observation_data'] = st.text_input("Enter in the datapath(s) to your observation data for retrievals", value = config.get('InputOutput').get('observation_data', ['']))
+    return retrieval_object
 
+def render_download_config(retrieval_object):
+    cleaned_config = clean_dictionary(config)
+    if 'retrieval' in cleaned_config:
+        del cleaned_config['retrieval']
 
+    if retrieval_object != {}:
+        cleaned_config['retrieval'] = retrieval_object
+
+    st.download_button(
+        label="Download current config",
+        data=toml.dumps(cleaned_config),
+        file_name="configured_toml.toml",
+        mime="application/toml"
+    )
 # ===========================
 # MAIN
-# ===========================
+# =========================== 
 config = setup_config()
 if config is None: st.error('Cannot find driver.toml file')
 opacity, param_tools = render_admin()
@@ -754,8 +783,9 @@ if config['observation_type']:
     run_spectrum()
         
     # RETRIEVALS
+    retrieval_object = {}
     st.header("Retrievals")
     if st.selectbox("Do you want to do a retrieval?", ('Yes', 'No'), index=None) == 'Yes':
-        render_retrievals()
+        retrieval_object = render_retrievals()
 
-    render_download_config()
+    render_download_config(retrieval_object)
