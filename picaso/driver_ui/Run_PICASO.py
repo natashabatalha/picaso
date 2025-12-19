@@ -19,22 +19,11 @@ from pathlib import Path
 st.logo('https://natashabatalha.github.io/picaso/_images/logo.png', size="large", link="https://github.com/natashabatalha/picaso")
 st.header('Run PICASO',divider='rainbow')
 st.subheader('Administrative')
-# optional to set the below, but convenient so you don't have to set it in the UI every time
-PICASO_REFDATA_ENV_VAR = "/Users/sjanson/Desktop/code/picaso/reference"
-PYSYN_CBDS_ENV_VAR = '/Users/sjanson/Desktop/code/picaso/reference/grp/redcat/trds'
-if st.selectbox('Do you need to specify paths for your environment variables?', ['Yes', 'No']) == 'Yes':
-    os.environ['picaso_refdata'] = st.text_input("Enter in the datapath to your reference data", value=PICASO_REFDATA_ENV_VAR)
-    os.environ['PYSYN_CDBS'] = st.text_input("Enter in the datapath to your PYSYN_CBDS data", value=PYSYN_CBDS_ENV_VAR)
 
-"""TODO
-PICASO_REFDATA_ENV_VAR = os.environ.get('picaso_refdata',"None")
-PYSYN_CBDS_ENV_VAR = os.environ.get('picaso_refdata',"PYSYN_CDBS")
-msg1 = f'We have autodetected these paths: {PICASO_REFDATA_ENV_VAR}, Do you need to change paths for your environment variables? ', ['Yes', 'No'])'
-mgs2 = 'We dont have env vars set please set them nw'
-if st.selectbox(f'We have autodetected these paths: {PICASO_REFDATA_ENV_VAR}, Do you need to change paths for your environment variables?', ['Yes', 'No']) == 'Yes':
-    os.environ['picaso_refdata'] = st.text_input("Enter in the datapath to your reference data", value=PICASO_REFDATA_ENV_VAR)
-    os.environ['PYSYN_CDBS'] = st.text_input("Enter in the datapath to your PYSYN_CBDS data", value=PYSYN_CBDS_ENV_VAR)
-"""
+PICASO_REFDATA_ENV_VAR = os.environ.get('picaso_refdata', None)
+PYSYN_CBDS_ENV_VAR = os.environ.get('PYSYN_CDBS', None)
+os.environ['picaso_refdata'] = st.text_input("Enter in the datapath to your reference data", value=PICASO_REFDATA_ENV_VAR)
+os.environ['PYSYN_CDBS'] = st.text_input("Enter in the datapath to your PYSYN_CBDS data", value=PYSYN_CBDS_ENV_VAR)
 # =======================================
 # IMPORTS
 # =======================================
@@ -58,7 +47,7 @@ from picaso.parameterizations import Parameterize
 # =======================================
 # HELPER FUNCTIONS 
 # =======================================
-def format_config_section_for_df(obj):
+def format_config_section_for_df(obj, ignore_keys=None):
     """
     Formats a driver.toml section to be rendered as an input 
 
@@ -72,7 +61,10 @@ def format_config_section_for_df(obj):
     Dictionary with formatted keys and values
     """
     pass_to_df = {}
-    for attr in obj.keys():
+    keys = obj.keys()
+    if ignore_keys:
+        keys = {key: val for key, val in obj.items() if key not in ignore_keys}
+    for attr in keys:
         if not f'{attr}_options' in obj and not attr.endswith('_options') and not attr.endswith('_kwargs'):
             # if there are options, we will display it as a dropdown
             values = obj[attr]
@@ -203,8 +195,8 @@ def uploaded_config_is_valid(uploaded_config):
 # ===============================
 # STREAMLIT HELPER FUNCTIONS 
 # ===============================
-def editable_section(section, key):
-    df = pd.DataFrame([format_config_section_for_df(section)])
+def editable_section(section, key, ignore_keys=None):
+    df = pd.DataFrame([format_config_section_for_df(section, ignore_keys)])
     edited = st.data_editor(df, key=key)
     write_results_to_config(edited, section)
 
@@ -284,27 +276,15 @@ def render_star():
         config['irradiated'] = choice == 'Yes'
     
     # EDITABLE STAR VARIABLES SECTION
-    # TODO : User should input star.keys() values [type, star_radius, semi_major]. Then be prompted for star[option].
-    # This follows the structure of temperature ? 
     if config['irradiated']:
         st.subheader("Star Variables")
-        # TODO: pull these values from driver.toml
-        star_df = pd.DataFrame({
-            'radius': [1],
-            'r unit': 'Rsun',
-            'semi_major': '200',
-            'unit': 'AU',
-            'temperature': [5400],
-            'metallicity': [0.01],
-            'logg': [4.45],
-            # type
-        })
-        star_grid = st.data_editor(star_df)
-
-        # updating config file
-        for key in star_grid:
-            if key.lower() in config['object'] and star_grid[key][0]:
-                config['star'][key.lower()]['value'] = star_grid[key][0]
+        editable_section(config['star'], 'star', config['star']['type_options'])
+        for attr in config['star'].keys():
+            if attr.endswith('_options'):
+                pure_attr = attr.split('_')[0]
+                config['star'][pure_attr] = st.selectbox(f"{pure_attr.capitalize()} Options", config['star'][attr], index=None)
+        if (config['star']['type']):
+            editable_section(config['star'][config['star']['type']], config['star']['type'])
 
 def render_object():
     st.subheader("Object Variables")
@@ -333,15 +313,14 @@ def render_pressure_and_temperature():
     if temp_profile:
         temp_profile_obj = config['temperature'][f'{config['temperature']['profile']}']
         formatted_obj = format_config_section_for_df(temp_profile_obj)
-
         temp_df = pd.DataFrame([formatted_obj])
         temp_grid = st.data_editor(temp_df)
+        write_results_to_config(temp_grid, config['temperature'][temp_profile])
 
         for attr in config['temperature'][temp_profile].keys():
             if attr.endswith('_options'):
                 pure_attr = attr.split('_')[0]
                 config['temperature'][temp_profile][pure_attr] = st.selectbox(f"{temp_profile.capitalize()} {pure_attr.capitalize()} Options", config['temperature'][temp_profile][attr], index=None)
-        write_results_to_config(temp_grid, config['temperature'][temp_profile])
 
     # GRAPH PRESSURE-TEMPERATURE
     if st.button('See Pressure-Temperature graph'):
@@ -772,7 +751,7 @@ def render_download_config(retrieval_object):
     cleaned_config = clean_dictionary(config)
     if 'retrieval' in cleaned_config:
         del cleaned_config['retrieval']
-    # TODO: change writing reitreval stuff
+    # TODO: change writing reitreval stuff to use kwargs
     if retrieval_object != {}:
         cleaned_config['retrieval'] = retrieval_object
 
