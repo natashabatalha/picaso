@@ -36,6 +36,7 @@ logg  = 4
 teff  = 5400
 feh   = 0
 database  ='ck04models'# options: phoenix, ck04models, or other pysynphot databases
+database_options=['ck04models', 'phoenix']
 
 [star.userfile]
 filename = '' # simple two column format no header column1=wavelength, column2=flux
@@ -49,6 +50,11 @@ profile = 'knots'
 filename='/Users/sjanson/Desktop/code/picaso/reference/base_cases/HJ.pt' #columns names: temperature,pressure # units:Kelvin,bar (can also include chemistry in the same file)
 
 pd_kwargs={sep=' '} #kwargs for pandas.read_csv
+
+#[temperature.zj24]
+#pressures=[1e3, 1e1, 1e0, 1e-1, 1e-2, 1e-4]
+#Tbottom={value=2000,unit='K'}
+#dT=[0.2857,0.25,0.0,0.25,0.2,0.12]
 
 [temperature.pressure]
 reference = {value=1e1,unit='bar'}
@@ -99,11 +105,9 @@ teff=1000
 #TODO turn below into a notice
 #options: 'visscher', 'free', 'userfile'; delete this block if already given chem in pt userfile : future updates 'fast_chem' vs 'photo_chem'
 [chemistry]
-method='free' 
+method='visscher' 
 
 [chemistry.free]#note all molecules must be case sensitive: e.g., TiO. Isotopologues should be specified with dashes e.g.,: 12-CO
-#CH4 = {values=[1e-2,1e-3],pressure=[1e-2], gradient=1,profile='gradient'}
-#H2O = {value=1e-2, profile='constant'}
 H2O={value=1e-3,unit='v/v'}
 CH4={value=[1e-4,1e-3],unit='v/v', pressures=[1e-2],pressure_unit='bar'}
 NH3={value=1e-5,unit='v/v'}
@@ -121,7 +125,7 @@ filename='/Users/sjanson/Desktop/code/picaso/reference/base_cases/HJ.pt'
 pd_kwargs={sep=' '}
 
 [clouds]
-cloud1_type='brewster_mie' #options: brewster_grey, brewster_mie, virga, flex_fsed, hard_grey, userfile
+cloud1_type='virga' #options: brewster_grey, brewster_mie, virga, flex_fsed, hard_grey, userfile
 
 [clouds.cloud1.hard_grey]
 p = [1] # {value=1,unit='logbar'} #bottom pressure
@@ -180,8 +184,7 @@ frac_1 = 0.3 #this is the fraction assigned to patch 1
 
 [retrieval.object.radius]
 prior="uniform"
-min=0.5
-max=2
+uniform_kwargs={min=0.5, max=2}
 log=false
 
 [retrieval.chemistry.free.H2O]
