@@ -26,6 +26,15 @@ if st.selectbox('Do you need to specify paths for your environment variables?', 
     os.environ['picaso_refdata'] = st.text_input("Enter in the datapath to your reference data", value=PICASO_REFDATA_ENV_VAR)
     os.environ['PYSYN_CDBS'] = st.text_input("Enter in the datapath to your PYSYN_CBDS data", value=PYSYN_CBDS_ENV_VAR)
 
+"""TODO
+PICASO_REFDATA_ENV_VAR = os.environ.get('picaso_refdata',"None")
+PYSYN_CBDS_ENV_VAR = os.environ.get('picaso_refdata',"PYSYN_CDBS")
+msg1 = f'We have autodetected these paths: {PICASO_REFDATA_ENV_VAR}, Do you need to change paths for your environment variables? ', ['Yes', 'No'])'
+mgs2 = 'We dont have env vars set please set them nw'
+if st.selectbox(f'We have autodetected these paths: {PICASO_REFDATA_ENV_VAR}, Do you need to change paths for your environment variables?', ['Yes', 'No']) == 'Yes':
+    os.environ['picaso_refdata'] = st.text_input("Enter in the datapath to your reference data", value=PICASO_REFDATA_ENV_VAR)
+    os.environ['PYSYN_CDBS'] = st.text_input("Enter in the datapath to your PYSYN_CBDS data", value=PYSYN_CBDS_ENV_VAR)
+"""
 # =======================================
 # IMPORTS
 # =======================================
@@ -150,7 +159,6 @@ def run_spectrum_class(stage=None):
     picaso.justdoit.inputs
         Configured class
     """
-    st.write(config['clouds']['cloud1']['virga'])
     return go.setup_spectrum_class(clean_dictionary(config), opacity, param_tools, stage)
 
 def update_toml_with_a_value_for_a_free_parameter(dictionary, keys, value):
@@ -260,6 +268,8 @@ def render_admin():
         config['observation_type'] = st.selectbox("Observation type", config['observation_type_options'], index=None)
     elif config['calc_type'] != None:
         st.warning(f'The {config['calc_type']} option has not been implemented yet.')
+    # TODO : This can be a select multi option 
+    # E.g., "reflected+thermal" or "reflected+transmission"
     if config['observation_type']:
         st.divider()
         st.header(f'{config['observation_type'].capitalize()} Spectrum Config')
@@ -274,6 +284,8 @@ def render_star():
         config['irradiated'] = choice == 'Yes'
     
     # EDITABLE STAR VARIABLES SECTION
+    # TODO : User should input star.keys() values [type, star_radius, semi_major]. Then be prompted for star[option].
+    # This follows the structure of temperature ? 
     if config['irradiated']:
         st.subheader("Star Variables")
         # TODO: pull these values from driver.toml
@@ -299,7 +311,7 @@ def render_object():
     editable_section(config['object'], 'object')
 
 def render_phase_angle():
-    if config['observation_type'] != 'thermal':
+    if 'reflected' in (config['observation_type']):
         config['geometry']['phase']['value'] = st.number_input('Enter phase angle in radians 0-2π', min_value=0, max_value=6, value=0)
 
 # ============================================
@@ -349,6 +361,8 @@ def render_chemistry():
     if chem_method:
         # RENDER FREE CHEMISTRY 
         if 'free' in chem_method:
+            # TODO : This could be cleaned up if driver.py / drover.toml was simplified somehow (long term)
+
             # FREE CHEM: FORMAT EDITOR BOX
             molecules = [mole for mole in config['chemistry'][chem_method] if mole != 'background']
             mole_unit = config['chemistry'][chem_method][molecules[0]]['unit']
@@ -356,6 +370,8 @@ def render_chemistry():
             for mole in molecules:
                 if 'values' in config['chemistry'][chem_method][mole]:
                     molecule_values.append([str(ele) for ele in config['chemistry'][chem_method][mole]['values']])
+                elif 'value' in config['chemistry'][chem_method][mole] and '[' in str(config['chemistry'][chem_method][mole]['value']):
+                    molecule_values.append([str(ele) for ele in config['chemistry'][chem_method][mole]['value']])
                 elif 'value' in config['chemistry'][chem_method][mole]:
                     molecule_values.append([str(config['chemistry'][chem_method][mole]['value'])])
             chem_free_df = pd.DataFrame({
@@ -365,7 +381,7 @@ def render_chemistry():
             })
             st.info('Molecule names are case sensitive (ex: TiO, H2O). You only need to specify a pressure if you provide multiple values for a molecule (to indicate what altitude the amount of the molecule changes). Only correctly filled out rows will be included in the graph.')
             chem_free_grid = st.data_editor(chem_free_df, num_rows="dynamic")
-
+            
             # FREE CHEM: WRITE RESULTS TO A DATAFRAME
             for i,mole in enumerate(chem_free_grid[f'Molecule ({mole_unit})']):
                 if mole != None and chem_free_grid['Values'][i] != None and (len(chem_free_grid['Values'][i]) == 1 or chem_free_grid['Pressures (bar)'][i] != None):
@@ -414,6 +430,7 @@ def render_chemistry():
 
 # ============================================
 # CLOUDS
+# TODO: add option to do multiple cloud types (cloud1, 2 3 etc ..)
 # ============================================
 def render_clouds():
     include_clouds = st.selectbox("Do you want clouds?", ('Yes', 'No'), index=None)
@@ -465,23 +482,26 @@ def render_clouds():
         if 'clouds' in config:
             del config['clouds']
 
-def render_wavelength_range():
+def render_wavelength_range(opacity):
     return st.slider(
         "Select wavelength range (μm)",
-        min_value=0,
-        max_value=15,
-        value=(0, 15)
+        min_value=np.min(1e4/opacity.wno),
+        max_value=np.max(1e4/opacity.wno),
+        value=(np.min(1e4/opacity.wno), np.max(1e4/opacity.wno))
     )
 
 def render_spectral_resolution():
-    return st.number_input('Spectral Resolution', min_value=1, max_value=300, value=150)
+    return st.number_input('Spectral Resolution', min_value=10, value=150)
 # ---------------------------------#
 # RUN A SPECTRUM ----------------- #
 # ---------------------------------#
 def run_spectrum():
     if config['calc_type'] =='spectrum' and st.button(f'Run {config['calc_type']}'):
         try:
+
             df = go.run(driver_dict=clean_dictionary(config))
+            #TODO : thermal could either map to thermal or fpfs_thermal. reflected could either map to albedo or fpfs_reflected
+            #spectral key options: fpfs_thermal, fpfs_reflected, transit_depth, albedo, temp_brightness, thermal
             observation_key_mapping = {
                 'thermal': 'thermal',
                 'reflected': 'albedo',
@@ -548,6 +568,8 @@ def render_ranges_for_selected_parameters(parameter_handler):
             log=st.text_input('log', False, key=f'log{i}'),
             prior=prior_type
         )
+        # if value == 0:
+        #     value = 0.00001
         if prior_type == 'uniform':
             prior_set_items[key][f'{prior_type}_kwargs'] =dict(
                 min=st.number_input('min', value=value*0.75, min_value=None, max_value=None, key=f'min{i}', format="%.6f"),
@@ -561,6 +583,7 @@ def render_ranges_for_selected_parameters(parameter_handler):
     return prior_set_items
 
 def sampler(prior_set_items, nsamples):
+    st.write(prior_set_items)
     ALL_TOMLS = []
     save_all_class_pt = []
     for _ in range(nsamples):
@@ -749,7 +772,7 @@ def render_download_config(retrieval_object):
     cleaned_config = clean_dictionary(config)
     if 'retrieval' in cleaned_config:
         del cleaned_config['retrieval']
-
+    # TODO: change writing reitreval stuff
     if retrieval_object != {}:
         cleaned_config['retrieval'] = retrieval_object
 
@@ -778,7 +801,7 @@ if config['observation_type']:
 
 
     # SPECTRUM
-    wavelength_range = render_wavelength_range()
+    wavelength_range = render_wavelength_range(opacity)
     spectral_resolution = render_spectral_resolution()
     run_spectrum()
         
