@@ -30,6 +30,7 @@ phase = {value=0, unit='radian'} #planet phase angle
 radius= {value=1, unit='Rsun'} 
 semi_major= {value=200, unit='AU'}
 type='grid' #'grid' or 'userfile'
+type_options=['grid', 'userfile']
 
 [star.grid]
 logg  = 4

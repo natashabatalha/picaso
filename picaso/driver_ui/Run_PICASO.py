@@ -19,9 +19,8 @@ from pathlib import Path
 st.logo('https://natashabatalha.github.io/picaso/_images/logo.png', size="large", link="https://github.com/natashabatalha/picaso")
 st.header('Run PICASO',divider='rainbow')
 st.subheader('Administrative')
-
-PICASO_REFDATA_ENV_VAR = os.environ.get('picaso_refdata', None)
-PYSYN_CBDS_ENV_VAR = os.environ.get('PYSYN_CDBS', None)
+PICASO_REFDATA_ENV_VAR = os.environ.get('picaso_refdata', 'None')
+PYSYN_CBDS_ENV_VAR = os.environ.get('PYSYN_CDBS', 'None')
 os.environ['picaso_refdata'] = st.text_input("Enter in the datapath to your reference data", value=PICASO_REFDATA_ENV_VAR)
 os.environ['PYSYN_CDBS'] = st.text_input("Enter in the datapath to your PYSYN_CBDS data", value=PYSYN_CBDS_ENV_VAR)
 # =======================================
@@ -267,6 +266,19 @@ def render_admin():
         st.header(f'{config['observation_type'].capitalize()} Spectrum Config')
     return opacity, param_tools
 
+def dynamic_editable_section_render(section, key):
+    # want to pass in config['star']
+    # create editable df with all keys that aren't options
+    # if they are options:
+    # create dropdowns for those options
+    # if those options have their own editable dfs, repeat for that
+    editable_section(section, key)
+    for attr in section.keys():
+        if attr.endswith('_options'):
+            pure_attr = attr.split('_')[0]
+            section[pure_attr] = st.selectbox(f"{pure_attr.capitalize()} Options", section[attr], index=None)
+            if pure_attr in section:
+                editable_section(section[section[pure_attr]], section[pure_attr])
 
 def render_star():
     # SET IS IRRIDATED
@@ -274,10 +286,11 @@ def render_star():
     if config['observation_type'] == 'thermal':
         choice = st.selectbox("Do your want your object to be irradiated?", ('Yes', 'No'), index=None)
         config['irradiated'] = choice == 'Yes'
-    
+    # TODO: switch to dynamic_editable_section_render
     # EDITABLE STAR VARIABLES SECTION
     if config['irradiated']:
         st.subheader("Star Variables")
+        # dynamic_editable_section_render(config['star'], 'star')
         editable_section(config['star'], 'star', config['star']['type_options'])
         for attr in config['star'].keys():
             if attr.endswith('_options'):
@@ -562,7 +575,6 @@ def render_ranges_for_selected_parameters(parameter_handler):
     return prior_set_items
 
 def sampler(prior_set_items, nsamples):
-    st.write(prior_set_items)
     ALL_TOMLS = []
     save_all_class_pt = []
     for _ in range(nsamples):
@@ -755,6 +767,14 @@ def render_download_config(retrieval_object):
     if retrieval_object != {}:
         cleaned_config['retrieval'] = retrieval_object
 
+    st.code("""
+# runs retrieval
+import picaso.driver as d
+d.retrieve(current_config_filename)
+
+# recreates the spectrum
+import picaso.driver as d
+d.go(current_config_filename)""")
     st.download_button(
         label="Download current config",
         data=toml.dumps(cleaned_config),
