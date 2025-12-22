@@ -4247,7 +4247,7 @@ class inputs():
         self.inputs['clouds']['do_holes'] = do_holes
         if do_holes == True:
             if fhole == None: raise Exception ('fhole must be float 0-1 if do_holes = True')
-            if fthin_cld == None: raise Exception ('fhole must be float 0-1 if do_holes = True')
+            # if fthin_cld == None: raise Exception ('fhole must be float 0-1 if do_holes = True') #commenting out because fthin can be None if user doesn't need it
             self.inputs['clouds']['fhole'] = fhole
             self.inputs['clouds']['fthin_cld'] = fthin_cld
 
