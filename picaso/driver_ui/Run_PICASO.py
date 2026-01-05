@@ -19,6 +19,7 @@ from pathlib import Path
 st.logo('https://natashabatalha.github.io/picaso/_images/logo.png', size="large", link="https://github.com/natashabatalha/picaso")
 st.header('Run PICASO',divider='rainbow')
 st.subheader('Administrative')
+
 PICASO_REFDATA_ENV_VAR = os.environ.get('picaso_refdata', 'None')
 PYSYN_CBDS_ENV_VAR = os.environ.get('PYSYN_CDBS', 'None')
 os.environ['picaso_refdata'] = st.text_input("Enter in the datapath to your reference data", value=PICASO_REFDATA_ENV_VAR)
@@ -266,31 +267,15 @@ def render_admin():
         st.header(f'{config['observation_type'].capitalize()} Spectrum Config')
     return opacity, param_tools
 
-def dynamic_editable_section_render(section, key):
-    # want to pass in config['star']
-    # create editable df with all keys that aren't options
-    # if they are options:
-    # create dropdowns for those options
-    # if those options have their own editable dfs, repeat for that
-    editable_section(section, key)
-    for attr in section.keys():
-        if attr.endswith('_options'):
-            pure_attr = attr.split('_')[0]
-            section[pure_attr] = st.selectbox(f"{pure_attr.capitalize()} Options", section[attr], index=None)
-            if pure_attr in section:
-                editable_section(section[section[pure_attr]], section[pure_attr])
-
 def render_star():
     # SET IS IRRIDATED
     config['irradiated'] = True
     if config['observation_type'] == 'thermal':
         choice = st.selectbox("Do your want your object to be irradiated?", ('Yes', 'No'), index=None)
         config['irradiated'] = choice == 'Yes'
-    # TODO: switch to dynamic_editable_section_render
     # EDITABLE STAR VARIABLES SECTION
     if config['irradiated']:
         st.subheader("Star Variables")
-        # dynamic_editable_section_render(config['star'], 'star')
         editable_section(config['star'], 'star', config['star']['type_options'])
         for attr in config['star'].keys():
             if attr.endswith('_options'):
@@ -513,6 +498,7 @@ def run_spectrum():
 def render_free_parameter_selection():
     parameter_handler = {}
     st.subheader("Select which available free parameters you'd like to do a retrieval on:")
+    # clean up config so only selected options are shown
     config['temperature'] = {
         config['temperature']['profile']: config['temperature'][config['temperature']['profile']],
         'pressure': config['temperature']['pressure'],
@@ -529,6 +515,7 @@ def render_free_parameter_selection():
         }
     del config['retrieval']
     del config['sampler']
+
     def list_available_free_parameters(data, current_path=""):
         for key, value in data.items():
             new_path = f"{current_path}.{key}" if current_path else key
@@ -546,6 +533,7 @@ def render_free_parameter_selection():
                     parameter_handler[new_path + f'.{index}'] = [st.checkbox(f"{new_path + f'.{index}'} {item}"), item]
     list_available_free_parameters(config)
     return parameter_handler
+
 def render_ranges_for_selected_parameters(parameter_handler):
     # filter for what items have been selected
     prior_set_items = {}
