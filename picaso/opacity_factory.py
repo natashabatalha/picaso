@@ -13,6 +13,8 @@ import glob
 from scipy.stats import binned_statistic
 import h5py
 
+from .io_utils import read_visscher_2121
+
 __refdata__ = os.environ.get('picaso_refdata')
 
 
@@ -1552,8 +1554,8 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
 
     """
 
-    chem_grid = pd.read_csv(chemistry_file, sep=rf'\s+')
-    
+    #chem_grid = pd.read_csv(chemistry_file, sep=rf'\s+')
+    chem_grid = read_visscher_2121(chemistry_file)
 
 
 
@@ -1564,8 +1566,10 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
 
     if chem_grid.shape[0]>1460: 
         print('chem_grid is not 1460')
-        chem_grid = chem_grid.loc[chem_grid['T(K)'].isin( s1460['temperature_K'].astype(float).unique())].loc[chem_grid['P(bar)']<3.5].reset_index()
-
+        chem_grid = chem_grid.loc[chem_grid['temperature'].isin( s1460['temperature_K'].astype(float).unique())].loc[chem_grid['pressure']<10**3.5].reset_index()
+        assert chem_grid.shape[0]==1460, 'chem grid is still not 1460 shape'
+        chem_grid = chem_grid.drop('pressure',axis=1)
+        chem_grid = chem_grid.drop('temperature',axis=1)
 
     numw_uni = s1460['number_wave_pts'].values.astype(int)
     delwn_uni = s1460['delta_wavenumber'].values.astype(float)
