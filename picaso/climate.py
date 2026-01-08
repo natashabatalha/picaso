@@ -2769,7 +2769,7 @@ def find_strat(bundle, nofczns,nstr,
         if verbose: print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
         if verbose: print(nofczns)
 
-        nofczns = 2
+        nofczns = 2 #keeping this hardcoded here to easily transition to future 3 zone calculation
         nstr[4]= nstr[1]
         nstr[5]= nstr[2]
         nstr[1]= i_max

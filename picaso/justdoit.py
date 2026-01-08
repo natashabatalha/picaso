@@ -4247,7 +4247,7 @@ class inputs():
         self.inputs['clouds']['do_holes'] = do_holes
         if do_holes == True:
             if fhole == None: raise Exception ('fhole must be float 0-1 if do_holes = True')
-            if fthin_cld == None: raise Exception ('fhole must be float 0-1 if do_holes = True')
+            # if fthin_cld == None: raise Exception ('fhole must be float 0-1 if do_holes = True') #commenting out because fthin can be None if user doesn't need it
             self.inputs['clouds']['fhole'] = fhole
             self.inputs['clouds']['fthin_cld'] = fthin_cld
 
@@ -4866,8 +4866,8 @@ class inputs():
     
         return 
     
-    def inputs_climate(self, temp_guess= None, pressure= None, rfaci = 1,nofczns = 1 ,
-        nstr = None,  rfacv = None, moistgrad = False
+    def inputs_climate(self, temp_guess= None, pressure= None, rfaci = 1,
+        rcb_guess = None,  rfacv = None, moistgrad = False
         #deprecated and moved to atmosphere
         #photochem=False, photochem_init_args=None, sonora_abunds_photochem = False, df_sonora_photochem = None,
         #photochem_TOA_pressure = 1e-7*1e6, 
@@ -4880,6 +4880,8 @@ class inputs():
         #deq_rainout= False, quench_ph3 = True, no_ph3 = False, 
         #kinetic_CO2 = True, cold_trap = False,
         #mh = None, CtoO = None
+        # removed nofczns and nstr as user input and simplified to rcb_guess. JM (01/08/26) 
+        # This will need to be modified in future when we allow for more than 2 convective zones.
         ):
         """
         Get Inputs for Climate run
@@ -4894,16 +4896,8 @@ class inputs():
             Default=1, Fractional contribution of thermal light in net flux
             Usually this is kept at one and then the redistribution is controlled 
             via rfacv
-        nofczns : integer
-            Number of guessed Convective Zones. 1 or 2
-        nstr : array
-            NSTR vector describes state of the atmosphere:
-            0   is top layer [0]
-            1   is top layer of top convective region
-            2   is bottom layer of top convective region
-            3   is top layer of lower radiative region
-            4   is top layer of lower convective region
-            5   is bottom layer of lower convective region [nlayer-1]
+        rcb_guess : int
+            Layer index of the initial Radiative-Convective Boundary (RCB) guess (replaces nstr input list)
         rfacv : float
             Fractional contribution of reflected light in net flux.
             =0 for no stellar irradition, 
@@ -4919,8 +4913,17 @@ class inputs():
 
         self.inputs['climate']['guess_temp'] = temp_guess
         self.inputs['climate']['pressure'] = pressure
+        # Define nstr here based on rcb_guess instead of user input
+        #     NSTR vector describes state of the atmosphere:
+        #     0   is top layer [0]
+        #     1   is top layer of top convective region
+        #     2   is bottom layer of top convective region
+        #     3   is top layer of lower radiative region
+        #     4   is top layer of lower convective region
+        #     5   is bottom layer of lower convective region [nlayer-1]
+        nstr = [0, rcb_guess, len(pressure)-2, 0, 0, 0]
         self.inputs['climate']['nstr'] = nstr
-        self.inputs['climate']['nofczns'] = nofczns
+        self.inputs['climate']['nofczns'] = 1 #hard coded to start with 1 but allows to solve for 2 (keeping it this way to more easily implement additional convective zones in future)
         self.inputs['climate']['rfacv'] = rfacv
         self.inputs['climate']['rfaci'] = rfaci
         self.inputs['climate']['moistgrad'] = moistgrad
