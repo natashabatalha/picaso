@@ -580,15 +580,18 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
     Three bokeh plots with the single scattering, optical depth, and assymetry maps
     """
     if (pressure is not None):
-        pressure_label = 'Pressure (units by user)'
+        pressure_label = 'Pressure (bars)'
+        yaxis = 'log'
     else: 
-        pressure_label = 'Pressure Grid, TOA ->'
+        pressure_label = 'Pressure Index Grid, TOA ->'
+        pressure = np.array(range(nlayer))
+        yaxis = 'linear'
     if (wavelength is not None):
-        wavelength_label = 'Wavelength (units by user)'
+        wavelength_label = 'Wavelength (um)'
+        wave=wavelength
     else: 
-        wavelength_label = 'Wavenumber Grid'
-    cols = pals.magma(200)
-    color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
+        wavelength_label = 'Wavenumber Index Grid'
+        wave = np.array(range(nwno))
 
     if not isinstance(filename,type(None)):
         dat01 = pd.read_csv(filename, **pd_kwargs)
@@ -596,94 +599,43 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
         dat01=df
 
     #PLOT W0
-    scat01 = np.flip(np.reshape(dat01['w0'].values,(nlayer,nwno)),0)
-    xr, yr = scat01.shape
-    f01a = figure(x_range=[0, yr], y_range=[0,xr],
-                           x_axis_label=wavelength_label, y_axis_label=pressure_label,
-                           title="Single Scattering Albedo",
-                          width=300, height=300)
+        
+    w0 = np.reshape(dat01['w0'].astype(float).values,(nlayer,nwno))
+    opd = np.reshape(dat01['opd'].astype(float).values,(nlayer,nwno)) + 1e-60
+    g0 = np.reshape(dat01['g0'].astype(float).values,(nlayer,nwno))
+    
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
+    
+    # Plot W0
+    im1 = ax1.pcolormesh(wave, pressure, w0,  cmap='magma', vmin=0, vmax=1)
+    ax1.set_title("Single Scattering Albedo")
+    fig.colorbar(im1, ax=ax1)
 
+    # Plot OPD
+    im2 = ax2.pcolormesh(wave, pressure, opd,  cmap='viridis_r', norm=colors.LogNorm(vmin=1e-3, vmax=10))
+    ax2.set_title("Cloud Optical Depth Per Layer")
+    fig.colorbar(im2, ax=ax2)
 
-    f01a.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw =yr )
+    # Plot G0
+    im3 = ax3.pcolormesh(wave, pressure, g0,  cmap='gray_r', vmin=0, vmax=1)
+    ax3.set_title("Asymmetry Parameter")
+    fig.colorbar(im3, ax=ax3)
 
-    color_bar = ColorBar(color_mapper=color_mapper, #ticker=LogTicker(),
-                       label_standoff=12, border_line_color=None, location=(0,0))
+    for ax in [ax1, ax2, ax3]:
+        ax.set_xlabel(wavelength_label)
+        ax.set_ylabel(pressure_label)
+        if yaxis=='log': ax.set_yscale('log')
+        ax.set_ylim(pressure.max(), pressure.min())
 
-    f01a.add_layout(color_bar, 'left')
+    return fig
 
-
-    #PLOT OPD
-    scat01 = np.flip(np.reshape(dat01['opd'].values,(nlayer,nwno)),0)
-
-    xr, yr = scat01.shape
-    cols = pals.viridis(200)[::-1]
-    color_mapper = LogColorMapper(palette=cols, low=1e-3, high=10)
-
-
-    f01 = figure(x_range=[0, yr], y_range=[0,xr],
-                           x_axis_label=wavelength_label, y_axis_label=pressure_label,
-                           title="Cloud Optical Depth Per Layer",
-                          width=300, height=300)
-
-    f01.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw =yr )
-
-    color_bar = ColorBar(color_mapper=color_mapper, ticker=LogTicker(),
-                       label_standoff=12, border_line_color=None, location=(0,0))
-    f01.add_layout(color_bar, 'left')
-
-    #PLOT G0
-    scat01 = np.flip(np.reshape(dat01['g0'].values,(nlayer,nwno)),0)
-
-    xr, yr = scat01.shape
-    cols = pals.gray(200)[::-1]
-    color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
-
-
-    f01b = figure(x_range=[0, yr], y_range=[0,xr],
-                           x_axis_label=wavelength_label, y_axis_label=pressure_label,
-                           title="Assymetry Parameter",
-                          width=300, height=300)
-
-    f01b.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw =yr )
-
-    color_bar = ColorBar(color_mapper=color_mapper, ticker=BasicTicker(),
-                       label_standoff=12, border_line_color=None, location=(0,0))
-    f01b.add_layout(color_bar, 'left')
-
-    #CHANGE X AND Y AXIS TO BE PHYSICAL UNITS 
-    #indexes for pressure plot 
-    if (pressure is not None):
-        pressure = ["{:.1E}".format(i) for i in pressure[::-1]] #flip since we are also flipping matrices
-        npres = len(pressure)
-        ipres = np.array(range(npres))
-        #set how many we actually want to put on the figure 
-        #hard code ten on each.. 
-        ipres = ipres[::int(npres/10)]
-        pressure = pressure[::int(npres/10)]
-        #create dictionary for tick marks 
-        ptick = {int(i):j for i,j in zip(ipres,pressure)}
-        for i in [f01a, f01, f01b]:
-            i.yaxis.ticker = ipres
-            i.yaxis.major_label_overrides = ptick
-    if (wavelength is not None):
-        wave = ["{:.2F}".format(i) for i in wavelength]
-        nwave = len(wave)
-        iwave = np.array(range(nwave))
-        iwave = iwave[::int(nwave/10)]
-        wave = wave[::int(nwave/10)]
-        wtick = {int(i):j for i,j in zip(iwave,wave)}
-        for i in [f01a, f01, f01b]:
-            i.xaxis.ticker = iwave
-            i.xaxis.major_label_overrides = wtick       
-
-    return row(f01a, f01,f01b)
 
 def cloud(full_output):
     """
-    Plotting the cloud input from ``picaso``. 
+    Plotting the cloud input from ``picaso``.
 
-    The plot itselfs creates maps of the wavelength dependent single scattering albedo 
-    and cloud opacity as a function of altitude. 
+    The plot itselfs creates maps of the wavelength dependent single scattering albedo
+    and cloud opacity as a function of altitude.
 
 
     Parameters
@@ -692,94 +644,40 @@ def cloud(full_output):
 
     Returns
     -------
-    A row of two bokeh plots with the single scattering and optical depth map
+    A matplotlib figure with three subplots showing heatmaps of single scattering, optical depth, and asymmetry.
     """
-    cols = pals.magma(200)
-    color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
-
     dat01 = full_output['layer']['cloud']
+    pressure = full_output['layer']['pressure']
+    wave = 1e4 / full_output['wavenumber']
+    
+    w0 = dat01['w0'] 
+    opd = dat01['opd'] + 1e-60
+    g0 = dat01['g0'] 
 
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
+    
+    # Plot W0
+    im1 = ax1.pcolormesh(wave, pressure, w0,  cmap='magma', vmin=0, vmax=1)
+    ax1.set_title("Single Scattering Albedo")
+    fig.colorbar(im1, ax=ax1)
 
-    #PLOT W0
-    scat01 = np.flip(dat01['w0'],0)#[0:10,:]
-    xr, yr = scat01.shape
-    f01a = figure(x_range=[0, yr], y_range=[0,xr],
-                           x_axis_label='Wavelength (micron)', y_axis_label='Pressure (bar)',
-                           title="Single Scattering Albedo",
-                          width=300, height=300)
+    # Plot OPD
+    im2 = ax2.pcolormesh(wave, pressure, opd,  cmap='viridis_r', norm=colors.LogNorm(vmin=1e-3, vmax=10))
+    ax2.set_title("Cloud Optical Depth Per Layer")
+    fig.colorbar(im2, ax=ax2)
 
+    # Plot G0
+    im3 = ax3.pcolormesh(wave, pressure, g0,  cmap='gray_r', vmin=0, vmax=1)
+    ax3.set_title("Asymmetry Parameter")
+    fig.colorbar(im3, ax=ax3)
 
-    f01a.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw = yr)
+    for ax in [ax1, ax2, ax3]:
+        ax.set_xlabel('Wavelength (micron)')
+        ax.set_ylabel('Pressure (bar)')
+        ax.set_yscale('log')
+        ax.invert_yaxis()
 
-    color_bar = ColorBar(color_mapper=color_mapper, #ticker=LogTicker(),
-                       label_standoff=12, border_line_color=None, location=(0,0))
-
-    f01a.add_layout(color_bar, 'left')
-
-
-    #PLOT OPD
-    scat01 = np.flip(dat01['opd']+1e-60,0)
-
-    xr, yr = scat01.shape
-    cols = pals.viridis(200)[::-1]
-    color_mapper = LogColorMapper(palette=cols, low=1e-3, high=10)
-
-
-    f01 = figure(x_range=[0, yr], y_range=[0,xr],
-                           x_axis_label='Wavelength (micron)', y_axis_label='Pressure (bar)',
-                           title="Cloud Optical Depth Per Layer",
-                          width=300, height=300)
-
-    f01.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw = yr)
-
-    color_bar = ColorBar(color_mapper=color_mapper, ticker=LogTicker(),
-                       label_standoff=12, border_line_color=None, location=(0,0))
-    f01.add_layout(color_bar, 'left')
-
-    #PLOT G0
-    scat01 = np.flip(dat01['g0']+1e-60,0)
-
-    xr, yr = scat01.shape
-    cols = pals.gray(200)[::-1]
-    color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
-
-
-    f01b = figure(x_range=[0, yr], y_range=[0,xr],
-                           x_axis_label='Wavelength (micron)', y_axis_label='Pressure (bar)',
-                           title="Assymetry Parameter",
-                          width=300, height=300)
-
-    f01b.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw = yr)
-
-    color_bar = ColorBar(color_mapper=color_mapper, ticker=BasicTicker(),
-                       label_standoff=12, border_line_color=None, location=(0,0))
-    f01b.add_layout(color_bar, 'left')
-
-    #CHANGE X AND Y AXIS TO BE PHYSICAL UNITS 
-    #indexes for pressure plot 
-    pressure = ["{:.1E}".format(i) for i in full_output['layer']['pressure'][::-1]] #flip since we are also flipping matrices
-    wave = ["{:.2F}".format(i) for i in 1e4/full_output['wavenumber']]
-    nwave = len(wave)
-    npres = len(pressure)
-    iwave = np.array(range(nwave))
-    ipres = np.array(range(npres))
-    #set how many we actually want to put on the figure 
-    #hard code ten on each.. 
-    iwave = iwave[::int(nwave/10)]
-    ipres = ipres[::int(npres/10)]
-    pressure = pressure[::int(npres/10)]
-    wave = wave[::int(nwave/10)]
-    #create dictionary for tick marks 
-    ptick = {int(i):j for i,j in zip(ipres,pressure)}
-    wtick = {int(i):j for i,j in zip(iwave,wave)}
-    for i in [f01a, f01, f01b]:
-        i.xaxis.ticker = iwave
-        i.yaxis.ticker = ipres
-        i.xaxis.major_label_overrides = wtick
-        i.yaxis.major_label_overrides = ptick
-
-
-    return row(f01a, f01, f01b)
+    return fig
 
 def lon_lat_to_cartesian(lon_r, lat_r, R = 1):
     """
@@ -1881,7 +1779,7 @@ def transmission_contribution(full_output ,R=None,  **kwargs):
     return fig, ax, 1e4/wno, CF_bin
 
 def brightness_temperature(out_dict,plot=True, R = None, with_guide=True): 
-    """
+    r"""
     Plots and returns brightness temperature
 
     $T_{\rm bright}=\dfrac{a}{{\lambda}log\left(\dfrac{{b}}{F(\lambda){\lambda}^5}+1\right)}$

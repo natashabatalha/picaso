@@ -13,6 +13,8 @@ import glob
 from scipy.stats import binned_statistic
 import h5py
 
+from .io_utils import read_visscher_2121
+
 __refdata__ = os.environ.get('picaso_refdata')
 
 
@@ -944,6 +946,7 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
     find_npy_files = glob.glob(os.path.join(mol_dir,'*npy*'))
     find_txt_files =  glob.glob(os.path.join(mol_dir,'*txt*'))
     find_fort_files =  glob.glob(os.path.join(mol_dir,'fort.*'))
+    find_h5_file =  os.path.exists(mol_dir+'.h5')
 
     if len(find_p_files)>1000:
         ftype = 'fortran_binary'
@@ -953,6 +956,8 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         ftype='lupu_txt'
     elif len(find_fort_files)>1000:
         ftype='rfree_fort'
+    elif find_h5_file: 
+        ftype='h5'
     else: 
         raise Exception('Could not find npy or p_ files. npy are assumed to be read via np.load, where as p_ files are assumed to be unformatted binary or alkali files')
     read_fits = os.path.join(mol_dir,'readomni.fits' )
@@ -985,6 +990,8 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         elif 'lupu' in ftype: 
             mbar = p*1e3
             fdata = os.path.join(mol_dir,f'{molecule}_{mbar:.2e}mbar_{t:.0f}K.txt') 
+        elif 'h5' in ftype: 
+            fdata = mol_dir+'.h5'
         
         #Grab 1460 in various format data
         if 'lupu' in ftype: 
@@ -1003,23 +1010,27 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         elif 'rfree_fort' in ftype: 
             df = pd.read_csv(fdata,delim_whitespace=True, skiprows=27, header=None, names=['wno','cx'])
             dset=df.loc[:,'cx'].values
-            og_wvno_grid=df.loc[:,'wno'].values           
+            og_wvno_grid=df.loc[:,'wno'].values  
+        elif 'h5' in ftype: 
+            with h5py.File(fdata, 'r') as h5f:    
+                dset = h5f['cxs'][i-1]     
+            og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]  
 
         if not insert_direct:
             #interp on high res grid
             #basic interpolation here onto a new wavegrid that 
-            dset = np.interp(interp_wvno_grid,og_wvno_grid, dset,right=1e-50, left=1e-50)
-            dset[dset<1e-200] = 1e-200 
+            dset = np.interp(interp_wvno_grid,og_wvno_grid, dset,right=1e-100, left=1e-100)
+            dset[dset<1e-100] = 1e-100 
             #resample evenly
             y = dset[::BINS]
             #y = 10**spectres.spectres(interp_wvno_grid[::BINS],interp_wvno_grid,np.log10(dset), verbose=False,fill=np.nan)
             #x,y=regrid(interp_wvno_grid, dset, newx=interp_wvno_grid[::BINS], statistic='median')
         else: 
             new_wvno_grid = og_wvno_grid[np.where(((1e4/og_wvno_grid>min_wavelength) & (1e4/og_wvno_grid<max_wavelength)))]
-            dset[dset<1e-200] = 1e-200
+            dset[dset<1e-100] = 1e-100
             y = dset[np.where(((1e4/og_wvno_grid>min_wavelength) & (1e4/og_wvno_grid<max_wavelength)))]
 
-        if ((molecule == 'CH4') & (isinstance(dir_kark_ch4, str)) & (t<500)):
+        if (((molecule == 'CH4') or (molecule == '12C-H4')) & (isinstance(dir_kark_ch4, str)) & (t<500)):
             opa_k,loc = get_kark_CH4(dir_kark_ch4,new_wvno_grid, t,y)#dset)
             y[loc] = opa_k
         if ((molecule == 'O3') & (isinstance(dir_optical_o3, str)) & (t<500)):
@@ -1037,92 +1048,6 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
         conn.commit()
     conn.close()
 
-    return new_wvno_grid
-
-def insert_molecular_1460_old(molecule, min_wavelength, max_wavelength, new_R, 
-            og_directory, new_db,dir_kark_ch4=None, dir_optical_o3=None):
-    """
-    Function to resample Ehsan's 1460 grid data onto lower resolution grid, 1060 grid. The general procedure 
-    in this function is to interpolate original 1060 data onto very high resolution 
-    grid (R=1e6). Then, determine number of bins to take given input 'new_R'. The final 
-    opacity grid will be : original_opacity[::BINS]
-
-    NOTE: From several tests "new_R" should be at least 100x higher than the ultimate 
-    planet spectrum you want to bin down to. 
-
-    Parameters 
-    ----------
-    molecule : str 
-        Name of molecule (should match a directory with 1060 files)
-    min_wavelength : float 
-        Minimum wavelength in database in units of micron 
-    max_wavelength : float 
-        Maximum wavelength in database in units of micron 
-    new_R : float 
-        New R to regrid to. If new_R=None, it will retain the original 1e6 million resolution 
-        of the lbl grid. 
-    """
-    #open database connection 
-    ngrid = 1060
-    old_R = 1e6 #hard coding this initial resolution to roughly match's wvno gird
-    #min_1060_grid = 0.3 #hard coding this also to match 1060 grid
-    #dwvno_old = 1e4/(min_1060_grid**2)*(min_1060_grid/old_R)
-    interp_wvno_grid = create_grid(min_wavelength, max_wavelength, old_R)
-
-    cur,conn = open_local(new_db)
-
-    #min_wno = 1e4/max_wavelength
-    #max_wno = 1e4/min_wavelength
-
-    if isinstance(new_R,type(None)):
-        new_R = 1e6
-
-    #BINS = int(dwvno_new/dwvno_old)
-    BINS = int(old_R/new_R)
-
-    #new wave grid 
-    new_wvno_grid = interp_wvno_grid[::BINS]
-
-
-    s1060 = pd.read_csv(os.path.join(og_directory,'grid1060.csv'))
-    s1460 = pd.read_csv(os.path.join(og_directory,'grid1460.csv'))
-
-    #all pressures 
-    pres=s1060['pressure_bar'].values.astype(float)
-    #all temperatures 
-    temp=s1060['temperature_K'].values.astype(float)
-    #file_num
-    ifile=s1060['file_number'].values.astype(int)
-    for i1060,p,t in zip(ifile, pres,temp):
-        idf = s1460.loc[(s1460['pressure_bar']==p)].reset_index()
-
-        i = int(idf.loc[(idf['temperature_K']-t).abs().argsort()[0],'file_number'])
-        numw = idf.loc[(idf['temperature_K']-t).abs().argsort()[0],'number_wave_pts']
-        delwn = idf.loc[(idf['temperature_K']-t).abs().argsort()[0],'delta_wavenumber']
-        start = idf.loc[(idf['temperature_K']-t).abs().argsort()[0],'start_wavenumber']
-
-        fdata = os.path.join(og_directory,molecule,'p_'+str(int(i)))
-        dset = np.fromfile(fdata, dtype=float) 
-        #get original grid 
-        og_wvno_grid=np.arange(int(numw))*float(delwn)+float(start)   
-
-        #interp on high res grid
-        dset = np.interp(interp_wvno_grid,og_wvno_grid, dset,right=1e-50, left=1e-50)
-
-        #resample evenly
-        y = dset[::BINS]
-
-
-        if ((molecule == 'CH4') & (isinstance(dir_kark_ch4, str)) & (t<500)):
-            opa_k,loc = get_kark_CH4(dir_kark_ch4,new_wvno_grid, t)
-            y[loc] = opa_k
-        if ((molecule == 'O3') & (isinstance(dir_optical_o3, str)) & (t<500)):
-            opa_o3 = get_optical_o3(dir_optical_o3,new_wvno_grid)
-            y = y + opa_o3     
-
-        cur.execute('INSERT INTO molecular (ptid, molecule, temperature, pressure,opacity) values (?,?,?,?,?)', (int(i1060),molecule,float(t),float(p), y))
-    conn.commit()
-    conn.close()
     return new_wvno_grid
 
 
@@ -1186,7 +1111,7 @@ def get_kark_CH4(kark_file, new_wno , T,dset):
     T.dset : float
         Temperature in Kelvin
     """
-    kappa = pd.read_csv(kark_file,delim_whitespace=True,skiprows=2,
+    kappa = pd.read_csv(kark_file,sep=rf'\s+',skiprows=2,
                            header=None, names = ['nu','nm','100','198','296','del/al'])
 
     kappa = kappa.loc[kappa['nm']<1000]
@@ -1197,7 +1122,7 @@ def get_kark_CH4(kark_file, new_wno , T,dset):
     #km-am to cm2/g to cm2/molecule 
     logKT = logKT/71.80*1.6726219e-24*16 
     #only less than 1 micron!
-    loc = np.where(((1e4/new_wno < 1.0) & (dset==1e-200)))
+    loc = np.where(((1e4/new_wno < 1.0) & (dset<1e-60)))
     logKT = np.interp(new_wno[loc],kappa['nu'].values,logKT)
     return logKT, loc    
 
@@ -1216,7 +1141,7 @@ def get_optical_o3(file_o3,new_wvno_grid):
     df1 = pd.read_csv(file_o3,delim_whitespace=True,names=['nm','cx'])
     wno_old = 1e4/(df1['nm']*1e-3).values[::-1]
     opa = df1['cx'].values[::-1]
-    o3 = np.interp(new_wvno_grid, wno_old ,opa, left=1e-33, right=1e-33)
+    o3 = np.interp(new_wvno_grid, wno_old ,opa, left=1e-100, right=1e-100)
     return o3
 
 def vectorize_rebin_median(bins,Fp):
@@ -1629,7 +1554,8 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
 
     """
 
-    chem_grid = pd.read_csv(chemistry_file, sep=rf'\s+')
+    #chem_grid = pd.read_csv(chemistry_file, sep=rf'\s+')
+    chem_grid = read_visscher_2121(chemistry_file)
 
 
 
@@ -1637,6 +1563,14 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
 
 
     s1460 = pd.read_csv(grid_file,dtype=str)
+
+    if chem_grid.shape[0]>1460: 
+        print('chem_grid is not 1460')
+        chem_grid = chem_grid.loc[chem_grid['temperature'].isin( s1460['temperature_K'].astype(float).unique())].loc[chem_grid['pressure']<10**3.5].reset_index()
+        assert chem_grid.shape[0]==1460, 'chem grid is still not 1460 shape'
+        chem_grid = chem_grid.drop('pressure',axis=1)
+        chem_grid = chem_grid.drop('temperature',axis=1)
+
     numw_uni = s1460['number_wave_pts'].values.astype(int)
     delwn_uni = s1460['delta_wavenumber'].values.astype(float)
     start_uni = s1460['start_wavenumber'].values.astype(float)
@@ -1686,6 +1620,7 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
             find_p_files = glob.glob(os.path.join(mol_dir,'*p_*'))
             find_npy_files = glob.glob(os.path.join(mol_dir,'*npy*'))
             find_txt_files =  glob.glob(os.path.join(mol_dir,'*txt*'))
+            find_h5_file =  os.path.exists(mol_dir+'.h5')
 
             if len(find_p_files)>1000:
                 ftype = 'fortran_binary'
@@ -1693,6 +1628,8 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
                 ftype = 'python'
             elif len(find_txt_files)>1000:
                 ftype='lupu_txt'
+            elif find_h5_file: 
+                ftype='h5'
             else:
                 raise Exception('Could not find npy or p_ files. npy are assumed to be read via np.load, where as p_ files are assumed to be unformatted binary or alkali files')
 
@@ -1733,7 +1670,9 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
             elif 'lupu' in ftype: 
                 mbar = pres*1e3
                 fdata = os.path.join(mol_dir,f'{molecule}_{mbar:.2e}mbar_{temp:.0f}K.txt') 
-            
+            elif 'h5' in ftype: 
+                fdata = mol_dir+'.h5'   
+
             #Grab 1460 in various format data
             if 'lupu' in ftype: 
                 dset =  pd.read_csv(fdata,skiprows=2).values[:,0]
@@ -1747,6 +1686,10 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
             elif 'python' in ftype: 
                 dset = np.load(open(fdata,'rb'))
                 og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]      
+            elif 'h5' in ftype: 
+                with h5py.File(fdata, 'r') as h5f:    
+                    dset = h5f['cxs'][i-1]     
+                og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]  
 
             
             weight = chem_grid.loc[i-1,molecule]
@@ -1870,7 +1813,7 @@ def compute_ck_molecular(molecule,og_directory,
     find_p_files = glob.glob(os.path.join(mol_dir,'*p_*'))
     find_npy_files = glob.glob(os.path.join(mol_dir,'*npy*'))
     find_txt_files =  glob.glob(os.path.join(mol_dir,'*txt*'))
-    #find_h5_files =  glob.glob(os.path.join(mol_dir,'*hdf5*'))
+    find_h5_file =  os.path.exists(mol_dir+'.h5')
 
     if len(find_p_files)>1000:
         ftype = 'fortran_binary'
@@ -1880,6 +1823,8 @@ def compute_ck_molecular(molecule,og_directory,
         ftype='lupu_txt'
     elif (('hdf5' in mol_dir) or ('h5' in mol_dir)):
         ftype='hdf5'
+    elif find_h5_file: 
+        ftype='h5'
     else:
         raise Exception(f"""Could not find fortran, npy, p_ files, or hdf5 files.
                             npy are assumed to be read via np.load, where as p_ files are assumed to 
@@ -1939,6 +1884,9 @@ def compute_ck_molecular(molecule,og_directory,
             #this is the key for the hdf5 dataset
             fdata = mol_dir
             fdata_key = f'sum_{int(i)}'
+        elif 'h5' in ftype: 
+            #this is for our new h5 file format (which may quickly become a zarr format)
+            fdata = mol_dir+'.h5'
 
         #Grab 1460 in various format data
         if 'lupu' in ftype: 
@@ -1957,6 +1905,10 @@ def compute_ck_molecular(molecule,og_directory,
             with h5py.File(fdata,'r') as f:
                 dset = f[fdata_key][:]
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]
+        elif 'h5' in ftype: 
+            with h5py.File(fdata, 'r') as h5f:    
+                dset = h5f['cxs'][i-1]     
+            og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]  
 
     
             
