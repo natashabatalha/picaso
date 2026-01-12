@@ -13,6 +13,8 @@ import glob
 from scipy.stats import binned_statistic
 import h5py
 
+from .io_utils import read_visscher_2121
+
 __refdata__ = os.environ.get('picaso_refdata')
 
 
@@ -1552,7 +1554,8 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
 
     """
 
-    chem_grid = pd.read_csv(chemistry_file, sep=rf'\s+')
+    #chem_grid = pd.read_csv(chemistry_file, sep=rf'\s+')
+    chem_grid = read_visscher_2121(chemistry_file)
 
 
 
@@ -1560,6 +1563,14 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
 
 
     s1460 = pd.read_csv(grid_file,dtype=str)
+
+    if chem_grid.shape[0]>1460: 
+        print('chem_grid is not 1460')
+        chem_grid = chem_grid.loc[chem_grid['temperature'].isin( s1460['temperature_K'].astype(float).unique())].loc[chem_grid['pressure']<10**3.5].reset_index()
+        assert chem_grid.shape[0]==1460, 'chem grid is still not 1460 shape'
+        chem_grid = chem_grid.drop('pressure',axis=1)
+        chem_grid = chem_grid.drop('temperature',axis=1)
+
     numw_uni = s1460['number_wave_pts'].values.astype(int)
     delwn_uni = s1460['delta_wavenumber'].values.astype(float)
     start_uni = s1460['start_wavenumber'].values.astype(float)
@@ -1609,6 +1620,7 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
             find_p_files = glob.glob(os.path.join(mol_dir,'*p_*'))
             find_npy_files = glob.glob(os.path.join(mol_dir,'*npy*'))
             find_txt_files =  glob.glob(os.path.join(mol_dir,'*txt*'))
+            find_h5_file =  os.path.exists(mol_dir+'.h5')
 
             if len(find_p_files)>1000:
                 ftype = 'fortran_binary'
@@ -1616,6 +1628,8 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
                 ftype = 'python'
             elif len(find_txt_files)>1000:
                 ftype='lupu_txt'
+            elif find_h5_file: 
+                ftype='h5'
             else:
                 raise Exception('Could not find npy or p_ files. npy are assumed to be read via np.load, where as p_ files are assumed to be unformatted binary or alkali files')
 
@@ -1656,7 +1670,9 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
             elif 'lupu' in ftype: 
                 mbar = pres*1e3
                 fdata = os.path.join(mol_dir,f'{molecule}_{mbar:.2e}mbar_{temp:.0f}K.txt') 
-            
+            elif 'h5' in ftype: 
+                fdata = mol_dir+'.h5'   
+
             #Grab 1460 in various format data
             if 'lupu' in ftype: 
                 dset =  pd.read_csv(fdata,skiprows=2).values[:,0]
@@ -1670,6 +1686,10 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
             elif 'python' in ftype: 
                 dset = np.load(open(fdata,'rb'))
                 og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]      
+            elif 'h5' in ftype: 
+                with h5py.File(fdata, 'r') as h5f:    
+                    dset = h5f['cxs'][i-1]     
+                og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]  
 
             
             weight = chem_grid.loc[i-1,molecule]
@@ -1793,7 +1813,7 @@ def compute_ck_molecular(molecule,og_directory,
     find_p_files = glob.glob(os.path.join(mol_dir,'*p_*'))
     find_npy_files = glob.glob(os.path.join(mol_dir,'*npy*'))
     find_txt_files =  glob.glob(os.path.join(mol_dir,'*txt*'))
-    #find_h5_files =  glob.glob(os.path.join(mol_dir,'*hdf5*'))
+    find_h5_file =  os.path.exists(mol_dir+'.h5')
 
     if len(find_p_files)>1000:
         ftype = 'fortran_binary'
@@ -1803,6 +1823,8 @@ def compute_ck_molecular(molecule,og_directory,
         ftype='lupu_txt'
     elif (('hdf5' in mol_dir) or ('h5' in mol_dir)):
         ftype='hdf5'
+    elif find_h5_file: 
+        ftype='h5'
     else:
         raise Exception(f"""Could not find fortran, npy, p_ files, or hdf5 files.
                             npy are assumed to be read via np.load, where as p_ files are assumed to 
@@ -1862,6 +1884,9 @@ def compute_ck_molecular(molecule,og_directory,
             #this is the key for the hdf5 dataset
             fdata = mol_dir
             fdata_key = f'sum_{int(i)}'
+        elif 'h5' in ftype: 
+            #this is for our new h5 file format (which may quickly become a zarr format)
+            fdata = mol_dir+'.h5'
 
         #Grab 1460 in various format data
         if 'lupu' in ftype: 
@@ -1880,6 +1905,10 @@ def compute_ck_molecular(molecule,og_directory,
             with h5py.File(fdata,'r') as f:
                 dset = f[fdata_key][:]
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]
+        elif 'h5' in ftype: 
+            with h5py.File(fdata, 'r') as h5f:    
+                dset = h5f['cxs'][i-1]     
+            og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]  
 
     
             

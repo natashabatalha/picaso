@@ -600,9 +600,9 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
 
     #PLOT W0
         
-    w0 = np.reshape(dat01['w0'].values,(nlayer,nwno))
-    opd = np.reshape(dat01['opd'].values,(nlayer,nwno)) + 1e-60
-    g0 = np.reshape(dat01['g0'].values,(nlayer,nwno))
+    w0 = np.reshape(dat01['w0'].astype(float).values,(nlayer,nwno))
+    opd = np.reshape(dat01['opd'].astype(float).values,(nlayer,nwno)) + 1e-60
+    g0 = np.reshape(dat01['g0'].astype(float).values,(nlayer,nwno))
     
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
     
