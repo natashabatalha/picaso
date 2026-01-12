@@ -24,7 +24,7 @@ dependencies = [
     "stsynphot",
     "sphinx",
     "scipy",
-    "virga-exo==1.0",
+    "virga-exo==2.0",
     "xarray",
     "pooch",
     "tqdm",
