@@ -15,7 +15,6 @@ import sqlite3
 import math
 from scipy.io import FortranFile
 from .deq_chem import mix_all_gases
-from icecream import ic
 
 __refdata__ = os.environ.get('picaso_refdata')
 #@jit(nopython=True)

@@ -1,8 +1,6 @@
-# %%
 import warnings
 warnings.filterwarnings('ignore')
-import sys
-fsed = 3
+fsed = 1
 cloudmode = "fixed"
 
 import picaso.justdoit as jdi
@@ -21,7 +19,7 @@ cloud_species = ["MgSiO3", "Mg2SiO4", "Fe", "Al2O3"]
 mh = '+000'#'+0.0' #log metallicity
 CtoO = '100'#'1.0' # CtoO ratio
 
-ck_db = f"data/kcoeff_2020/sonora_2020_feh{mh}_co_{CtoO}.data.196"
+ck_db = f"reference/kcoeff_2020/sonora_2020_feh{mh}_co_{CtoO}.data.196"
 
 def twod_to_threed(arr, reps=4):
     """
@@ -29,8 +27,8 @@ def twod_to_threed(arr, reps=4):
     """
     return np.repeat(arr[:, :, np.newaxis], reps, axis=2)
 
-for nstr_upper in [55, 68, 77, 88]:
-    for teff in [1100, 1600, 2200]:
+for nstr_upper in [66]:
+    for teff in [900, 1200, 1500, 1800, 2100]:
         print(f"fsed = {fsed}, effective temperature = {teff} K, nstr_upper = {nstr_upper}")
         cl_run = jdi.inputs(calculation="browndwarf", climate = True) # start a calculation - need to not have "brown" in `calculation`. BD almost always means free-floating.
 
@@ -55,7 +53,7 @@ for nstr_upper in [55, 68, 77, 88]:
         cl_run.inputs_climate(temp_guess=temp_guess, pressure=pressure_grid,
                             nstr = np.array([0,nstr_upper,nstr_deep,0,0,0]), nofczns = nofczns , rfacv = rfacv, cloudy = cloudmode, mh = '0.0', 
                             CtoO = '1.0',species = cloud_species, fsed = fsed, beta = 0.1, virga_param = 'const',
-                            mieff_dir = "/home/adityars/virga/refrind", do_holes = False, fhole = 0.5, fthin_cld = 0.9, moistgrad = False,
+                            mieff_dir = "~/virga/refrind", do_holes = False, fhole = 0.5, fthin_cld = 0.9, moistgrad = False,
                             )
 
         # Restart in order to make a postprocessed/fixed cloud profile
@@ -100,7 +98,7 @@ for nstr_upper in [55, 68, 77, 88]:
         bundle.inputs['atmosphere']['profile']['kz'] = kzz
 
         print("Making clouds off cloudless run for post-processed/fixed")
-        postproc_cld_out = bundle.virga(cloud_species,"/home/adityars/virga/refrind", fsed=fsed,mh=1.0,mmw = mean_molecular_weight, b = 0.1, param = 'const')
+        postproc_cld_out = bundle.virga(cloud_species,"~/virga/refrind", fsed=fsed,mh=1.0,mmw = mean_molecular_weight, b = 0.1, param = 'const')
         postproc_cld_df = vj.picaso_format(postproc_cld_out["opd_per_layer"], postproc_cld_out["single_scattering"], postproc_cld_out["asymmetry"], postproc_cld_out["pressure"], 1e4 / postproc_cld_out["wave"])
         cl_run.inputs["climate"]["cloudy"] = "fixed"
         cl_run.inputs["climate"]["opd_climate"] = twod_to_threed(postproc_cld_out["opd_per_layer"])
@@ -128,6 +126,6 @@ for nstr_upper in [55, 68, 77, 88]:
                 p_virga.attrs["nstr_start"] = nstr_start
                 t = f.create_dataset("temperature_picaso", data=out_fixed["all_profiles"])
         except ValueError:
-            with open(f"data/convh5_fixed/fsed{fsed}_teff{teff}_nstrupper{nstr_upper}.txt", "w") as f:
+            with open(f"./data/convh5_fixed/fsed{fsed}_teff{teff}_nstrupper{nstr_upper}.txt", "w") as f:
                 f.write(f"inf or NaN error at fsed = {fsed}, teff = {teff}, nstr_upper start = {nstr_upper}")
 

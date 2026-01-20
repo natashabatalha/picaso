@@ -32,3 +32,4 @@ grp/*
 .CondaPkg
 .CondaPkg/*
 *.mp4
+reference/*

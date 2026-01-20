@@ -1,6 +1,7 @@
 # %%
 import sys
 import os
+# os.environ["PYSYN_CDBS"] = "/Users/adityasengupta/picaso/reference/grp/redcat/trds/"
 import warnings
 warnings.filterwarnings('ignore')
 import picaso.justdoit as jdi
@@ -41,7 +42,7 @@ semi_major = 0.03106 # star planet distance, AU
 mh = '+000'#'+1.0' #log metallicity, 10xSolar
 CtoO = '100'#'1.0' # CtoO ratio, Solar C/O
 
-ck_db = f'/Users/adityasengupta/projects/clouds/picaso/data/kcoeff_2020/sonora_2020_feh{mh}_co_{CtoO}.data.196'
+ck_db = f'/Users/adityasengupta/picaso/reference/kcoeff_2020/sonora_2020_feh{mh}_co_{CtoO}.data.196'
 opacity_ck = jdi.opannection(ck_db=ck_db) # grab your opacities
 cl_run.star(opacity_ck, temp =T_star,metal =metal, logg =logg, radius = r_star, 
             radius_unit=u.R_sun,semi_major= semi_major , semi_major_unit = u.AU)#opacity db, pysynphot database, temp, metallicity, logg
@@ -56,7 +57,7 @@ opacity_ck = jdi.opannection(ck_db=ck_db) # grab your opacities
 nlevel = 91 # number of plane-parallel levels in your code
 # hd189_pressure = np.load("../data/silicate_test_cases/hd189_pressure.npy")
 hd189_pressure = np.logspace(-6, 2, 91)
-hd189_temperature = np.load("../../data/silicate_test_cases/HD189_temperature.npy")
+hd189_temperature = np.load("data/silicate_test_cases/HD189_temperature.npy")
 nofczns = 1 # number of convective zones initially
 nstr_upper = 89 # top most level of guessed convective zone
 nstr_deep = nlevel - 2 # this is always the case. Dont change this
@@ -72,7 +73,7 @@ def twod_to_threed(arr, reps=4):
 cl_run.inputs_climate(temp_guess= np.copy(hd189_temperature), pressure= hd189_pressure,
                       nstr = nstr, nofczns = nofczns , rfacv = rfacv, cloudy = "cloudless", mh = '0.0', 
                       CtoO = '1.0',species = ['SiO2'], fsed = fsed, beta = 0.1, virga_param = 'const',
-                      mieff_dir = "~/projects/clouds/virga/refrind", do_holes = False, fhole = 0.5, fthin_cld = 0.9, moistgrad = False,
+                      mieff_dir = "~/virga/refrind", do_holes = False, fhole = 0.5, fthin_cld = 0.9, moistgrad = False,
                       )
 
 # Restart in order to make a fixed cloud profile
@@ -121,7 +122,7 @@ kzz = jdi.get_kzz(
 # and the associated Kzz
 bundle.inputs['atmosphere']['profile']['temperature'] = temp
 bundle.inputs['atmosphere']['profile']['kz'] = kzz
-postproc_cld_out = bundle.virga(["SiO2"],"~/projects/clouds/virga/refrind", fsed=fsed,mh=1.0,mmw = mean_molecular_weight, b = 0.1, param = 'const')
+postproc_cld_out = bundle.virga(["SiO2"],"~/virga/refrind", fsed=fsed,mh=1.0,mmw = mean_molecular_weight, b = 0.1, param = 'const')
 postproc_cld_df = vj.picaso_format(postproc_cld_out["opd_per_layer"], postproc_cld_out["single_scattering"], postproc_cld_out["asymmetry"], postproc_cld_out["pressure"], 1e4 / postproc_cld_out["wave"])
 
 cl_run.inputs["climate"]["cloudy"] = "fixed"

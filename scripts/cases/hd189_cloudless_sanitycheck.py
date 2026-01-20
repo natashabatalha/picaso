@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 mh = '+000'#'+1.0' #log metallicity, 10xSolar
 CtoO = '100'#'1.0' # CtoO ratio, Solar C/O
 
-ck_db = f'/Users/adityasengupta/projects/clouds/picaso/data/kcoeff_2020/sonora_2020_feh{mh}_co_{CtoO}.data.196'
+ck_db = f'/Users/adityasengupta/picaso/reference/kcoeff_2020/sonora_2020_feh{mh}_co_{CtoO}.data.196'
 
 # Notice The keyword ck is set to True because you want to use the correlated-k opacities for your calculation
 # and not the line by line opacities
