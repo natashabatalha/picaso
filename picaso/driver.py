@@ -13,7 +13,7 @@ from scipy import stats
 import dill
 import dynesty.utils
 from functools import partial
-from mpi4py import MPI
+# from mpi4py import MPI
 import sys
 from schwimmbad import MPIPool
 dynesty.utils.pickle_module = dill

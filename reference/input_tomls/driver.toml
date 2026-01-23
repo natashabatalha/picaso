@@ -4,19 +4,16 @@ irradiated=false #options: true or false (if true, user needs to input star prop
 calc_type='spectrum'#spectrum climate or retrieval
 
 [InputOutput]
+observation_data = ['/Users/sjanson/Desktop/code/picaso/docs/notebooks/D_climate/spectra_logzz_9.0_teff_400.0_grav_1000.0_mh_0.0_co_1.0.nc']
+retrieval_output = '/Users/sjanson/Desktop/code/picaso/docs/notebooks/J_driver_WIP/output'
+spectrum_output = '/Users/sjanson/Desktop/code/picaso/docs/notebooks/J_driver_WIP/output'
 
-observation_data = 'path/to/spectrum.nc' #see docs on required data formats
-coord_key = 'central_wavelength' 
-y_key = 'transit_depth'
-error_key = 'transit_depth_error'
-retrieval_output = 'path/to/output'
-spectrum_output = 'path/to/output.nc'
 
 [OpticalProperties]
 opacity_files = '/Users/sjanson/Desktop/code/picaso/reference/opacities/opacities.db' # single db or list of opacity dbs 
 opacity_method = 'resampled' #list of options: resampled, preweighted, resortrebin
-opacity_kwargs = {} # any other inputs you want to give to justodit.opannection() such as wave_range = [0.3,15]
-virga_mieff = '/Users/floppityflappity/Work/prewster/picaso/reference/virga/' # any other inputs you want to give to justodit.opannection()
+opacity_kwargs = {} # any other inputs you want to give to justodit.opannection()
+virga_mieff = '/Users/sjanson/Desktop/code/picaso/reference/virga/' # any other inputs you want to give to justodit.opannection()
 
 [object]
 radius    = {value=1.2, unit='Rjup'}
@@ -33,12 +30,14 @@ phase = {value=0, unit='radian'} #planet phase angle
 radius= {value=1, unit='Rsun'} 
 semi_major= {value=200, unit='AU'}
 type='grid' #'grid' or 'userfile'
+type_options=['grid', 'userfile']
 
 [star.grid]
 logg  = 4
 teff  = 5400
 feh   = 0
 database  ='ck04models'# options: phoenix, ck04models, or other pysynphot databases
+database_options=['ck04models', 'phoenix']
 
 [star.userfile]
 filename = '' # simple two column format no header column1=wavelength, column2=flux
@@ -46,12 +45,17 @@ w_unit = ''
 f_unit = '' 
 
 [temperature]
-profile = 'guillot' # 'isothermal' #'guillot' 
+profile = 'knots' 
 
 [temperature.userfile]
 filename='/Users/sjanson/Desktop/code/picaso/reference/base_cases/HJ.pt' #columns names: temperature,pressure # units:Kelvin,bar (can also include chemistry in the same file)
 
 pd_kwargs={sep=' '} #kwargs for pandas.read_csv
+
+#[temperature.zj24]
+#pressures=[1e3, 1e1, 1e0, 1e-1, 1e-2, 1e-4]
+#Tbottom={value=2000,unit='K'}
+#dT=[0.2857,0.25,0.0,0.25,0.2,0.12]
 
 [temperature.pressure]
 reference = {value=1e1,unit='bar'}
@@ -64,7 +68,7 @@ spacing = 'log'
 T = 500
 
 [temperature.knots]
-P_knots=[1e2,1e1,1e0,1e-1,1e-3, 1e-4]
+P_knots=[1e2,1e1,1e0,1e-1,1e-2, 1e-3]
 T_knots=[1000, 550, 300, 200, 100, 50]
 interpolation='brewster' 
 interpolation_options = ['brewster', 'linear', 'quadratic_spline', 'cubic_spline']
@@ -89,9 +93,9 @@ alpha_2=1
 beta=0.5
 
 [temperature.guillot]
-Teq=576.17
+Teq=1000
 T_int=100
-logg1=-2
+logg1=-1
 logKir=-1.5
 alpha=0.5
 
@@ -102,13 +106,15 @@ teff=1000
 #TODO turn below into a notice
 #options: 'visscher', 'free', 'userfile'; delete this block if already given chem in pt userfile : future updates 'fast_chem' vs 'photo_chem'
 [chemistry]
-method='free' 
+method='visscher' 
 
 [chemistry.free]#note all molecules must be case sensitive: e.g., TiO. Isotopologues should be specified with dashes e.g.,: 12-CO
 H2O={value=1e-3,unit='v/v'}
 CH4={value=[1e-4,1e-3],unit='v/v', pressures=[1e-2],pressure_unit='bar'}
 NH3={value=1e-5,unit='v/v'}
 TiO={value=1e-3,unit='v/v'}
+
+#CO2 = {values=[1e-2,1e-3],pressure=[1e-2, 1e-4], profile='knots'}
 background={gases=['H2','He'],fraction=5.667} # optional 
 
 [chemistry.visscher]
@@ -120,14 +126,14 @@ filename='/Users/sjanson/Desktop/code/picaso/reference/base_cases/HJ.pt'
 pd_kwargs={sep=' '}
 
 [clouds]
-cloud1_type='brewster_mie' #options: brewster_grey, brewster_mie, virga, flex_fsed, hard_grey, userfile
+cloud1_type='virga' #options: brewster_grey, brewster_mie, virga, flex_fsed, hard_grey, userfile
 
 [clouds.cloud1.hard_grey]
-p = 1 # {value=1,unit='logbar'} #bottom pressure
-dp = 1 # {value=1,unit='logbar'} #thickness in log 
-w0 = 1 #single scattering albedo
-g0 = 1 #asymmetry
-opd = 10 #cloud optical depth per layer
+p = [1] # {value=1,unit='logbar'} #bottom pressure
+dp = [1] # {value=1,unit='logbar'} #thickness in log 
+w0 = [0.0] #single scattering albedo
+g0 = [0.0] #asymmetry
+opd = [10] #cloud optical depth per layer
 
 [clouds.cloud1.flex_fsed]
 condensate='Al2O3'#'SiO2'
@@ -150,8 +156,8 @@ sig =2
 
 [clouds.cloud1.brewster_mie]
 condensate='Na2S'
-decay_type = 'slab' # can be 'slab' or 'deck' #make sure to add respective kwargs below
-decay_type_options = ['slab','deck']
+decay_type = 'slab' # can be 'slab' or 'decay' #make sure to add respective kwargs below
+decay_type_options = ['slab', 'deck']
 slab_kwargs={ptop= 1, dp= 1, reference_tau= 1} # ptop: log bar, dp: log bar, ref tau: micron
 deck_kwargs={ptop= -1, dp= 1} # ptop: log bar, dp: log bar
 distribution = 'lognorm' # 'lognorm' or 'hansen', make sure to add respective kwargs below
@@ -160,8 +166,8 @@ lognorm_kwargs = {sigma=1, lograd = -4}  #log rad in log cm
 hansen_kwargs = {b=1 , lograd = -4}
 
 [clouds.cloud1.brewster_grey]
-decay_type = 'deck' # can be 'slab' or 'deck' #make sure to add respective kwargs below
-decay_type_options = ['slab','deck']
+decay_type = 'slab' # can be 'slab' or 'decay' #make sure to add respective kwargs below
+decay_type_options = ['slab', 'deck']
 alpha=-4 # used for wavelength dependent scattering cross section 
 ssa=1 # single scattering albedo set to 1 
 reference_wave=1 #reference wave in micron sets to alpha 
@@ -169,53 +175,41 @@ slab_kwargs={ptop= -1, dp= 1, reference_tau= 1} # ptop: log bar, dp: log bar, re
 deck_kwargs={ptop= -1, dp= 1} # ptop: log bar, dp: log bar
 
 [clouds.patchy]
-npatch = 2
-# 1 = homog; 2 patches --> patch1 option clear + any combo of clouds that user already specified
-patch1 = 'clear' # 30 
-patch2 = 'cloud1'# 0.7
-frac_1 = 0.3 #this is the fraction assigned to patch 1 dont have to specify
+npatch = 1
+patch1 = 'clear'
+patch2 = 'cloud1'
+frac_1 = 0.3 #this is the fraction assigned to patch 1
 
 
 [retrieval]
-[temperature.knots.T_knots.0]
-prior="uniform"
-uniform_kwargs={min=500, max=1000}
-log=false
-
-[temperature.knots.T_knots.1]
-prior="uniform"
-uniform_kwargs={min=100, max=500}
-log=false
-
-[temperature.knots.T_knots.2]
-prior="uniform"
-uniform_kwargs={min=50, max=100}
-log=false
 
 [retrieval.object.radius]
 prior="uniform"
 uniform_kwargs={min=0.5, max=2}
-gaussian_kwargs={mean=1, std=0.5} #kwargs of specified prior
 log=false
 
 [retrieval.chemistry.free.H2O]
 prior='uniform'
-uniform_kwargs={min=-12, max=0}
+min=-12
+max=0
 log=false
 
 [retrieval.clouds.cloud1.slab-grey.ptop]
 prior="uniform"
-uniform_kwargs={min=-3, max=2}
+min=-3
+max=2
 log=true
 
 [retrieval.clouds.cloud1.slab-grey.dp]
 prior="uniform"
-uniform_kwargs={min=0.005, max=2}
+min=0.005
+max=2
 log=true
 
 #[retrieval.errinf]
 #prior="uniform"
-#uniform_kwargs={min=-2, max=4}
+#min=-2
+#max=4
 #log=true
 
 [sampler]
