@@ -2059,6 +2059,8 @@ class inputs():
                 if df['H2'].min() < 0.7: 
                     self.inputs['approx']['rt_params']['common']['raman'] = 2
 
+        #START CLIMATE CHEM_METHOD OPTIONS LIST 
+
         #now, if mh and cto were supplied lets add those to inputs and set the chem method requestd 
         if (mh != None ):
             self.inputs['atmosphere']['mh'] = mh 
@@ -2084,6 +2086,19 @@ class inputs():
             # sets chemistry options and runs chemistry if the user has input a PT profile
             # otherwise this just checks for valid inputs 
             self.chemistry_handler()
+        
+        #lastly add fixed profile option 
+        elif chem_method=='fixed':
+            #set chem method to approx args 
+            self.inputs['approx']['chem_method'] = chem_method
+            # let's store this here for safe keeping making sure there are no temperature or pressure 
+            fixed_vmr_profile = self.inputs['atmosphere']['profile']
+            if 'temperature' in fixed_vmr_profile.keys(): 
+                #try to remove temperature because this will change throughout the run and we want this 
+                #to not overright anything extra 
+                fixed_vmr_profile = fixed_vmr_profile.drop('temperature',axis=1)
+            self.inputs['atmosphere']['fixed_vmr_profile'] = fixed_vmr_profile
+
 
         #SET ATMOSPHERE APPROXIMATIONS 
         #if this is not a climate calculation and one of the parameters is True, then braek the code 
@@ -2124,7 +2139,6 @@ class inputs():
         found_method = False
 
         # Option : simplest method where we just grab visscher abundances 
-        
         if 'visscher_1060' in str(chem_method):            
             mh = self.inputs['atmosphere']['mh'] 
             cto = self.inputs['atmosphere']['cto_relative']   
@@ -2134,6 +2148,11 @@ class inputs():
             mh = self.inputs['atmosphere']['mh'] 
             cto = self.inputs['atmosphere']['cto_absolute']   
             if run: self.chemeq_visscher_2121(cto, np.log10(mh)) 
+            found_method = True
+        elif 'fixed' in str(chem_method): 
+            #just set profile as is from stored fixed vmr profile
+            fixed_vmr_profile = self.inputs['atmosphere']['fixed_vmr_profile']
+            for i in fixed_vmr_profile.keys(): self.inputs['atmosphere']['profile'].loc[:,i] = fixed_vmr_profile[i].values
             found_method = True
 
         if (('photochem' in str(chem_method)) and (self.inputs['climate'].get('pc',0)==0)): 
@@ -5246,9 +5265,11 @@ class inputs():
 
         if diseq_chem: 
             final_conv_flag, pressure, temp, dtdp, nstr_new, flux_net_ir_final, flux_net_v_final, flux_plus_final,   \
-                chem_out,cld_out,  all_profiles,  all_opd, all_kzz, rfacv, all_rfacv = run_diseq_climate_workflow(self, nofczns, nstr, TEMP1, pressure,
-                        AdiabatBundle,opacityclass,
-                        grav,
+                chem_out,cld_out,  all_profiles,  all_opd, all_kzz, rfacv, all_rfacv = run_diseq_climate_workflow(self, 
+                        nofczns, nstr, 
+                        TEMP1, pressure,
+                        AdiabatBundle,
+                        opacityclass,grav,
                         rfaci,rfacv,tidal,
                         Opagrid,
                         CloudParameters,
