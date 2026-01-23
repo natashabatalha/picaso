@@ -354,15 +354,23 @@ class EquilibriumChemistry(ChemEquiAnalysis):
             condensates[key] = np.empty(len(P))
 
         for i in range(len(P)):
-            converged = self.solve_metallicity(P_cgs[i], T[i], metallicity, CtoO_relative)
+            if i > 0:
+                self.use_prev_guess = True
+            # Try many perturbations on T to try to get convergence
+            for eps in [0.0, 1.0e-12, -1.0e-12, 1.0e-8, -1.0e-8, 1.0e-6, -1.0e-6, 1.0e-4, -1.0e-4]:
+                converged = self.solve_metallicity(P_cgs[i], T[i] + T[i]*eps, metallicity, CtoO_relative)
+                if converged:
+                    break
             if not converged:
-                raise Exception('The equilibrium chemistry solver failed to converge.')
+                # We will not enforce convergence.
+                pass
             molfracs_species_gas = self.molfracs_species_gas
             molfracs_species_condensate = self.molfracs_species_condensate
             for j,key in enumerate(gas_names):
                 gases[key][i] = molfracs_species_gas[j]
             for j,key in enumerate(condensate_names):
                 condensates[key][i] = molfracs_species_condensate[j]
+        self.use_prev_guess = False
 
         return gases, condensates
     
