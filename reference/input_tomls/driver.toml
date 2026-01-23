@@ -5,6 +5,9 @@ calc_type='spectrum'#spectrum climate or retrieval
 
 [InputOutput]
 observation_data = ['/Users/sjanson/Desktop/code/picaso/docs/notebooks/D_climate/spectra_logzz_9.0_teff_400.0_grav_1000.0_mh_0.0_co_1.0.nc']
+coord_key = 'central_wavelength' 
+y_key = 'transit_depth'
+error_key = 'transit_depth_error'
 retrieval_output = '/Users/sjanson/Desktop/code/picaso/docs/notebooks/J_driver_WIP/output'
 spectrum_output = '/Users/sjanson/Desktop/code/picaso/docs/notebooks/J_driver_WIP/output'
 
@@ -186,18 +189,17 @@ frac_1 = 0.3 #this is the fraction assigned to patch 1
 [retrieval.object.radius]
 prior="uniform"
 uniform_kwargs={min=0.5, max=2}
+gaussian_kwargs={mean=1, std=0.5}
 log=false
 
 [retrieval.chemistry.free.H2O]
 prior='uniform'
-min=-12
-max=0
+uniform_kwargs={min=-12, max=0}
 log=false
 
 [retrieval.clouds.cloud1.slab-grey.ptop]
 prior="uniform"
-min=-3
-max=2
+uniform_kwargs={min=-3, max=2}
 log=true
 
 [retrieval.clouds.cloud1.slab-grey.dp]
@@ -208,8 +210,7 @@ log=true
 
 #[retrieval.errinf]
 #prior="uniform"
-#min=-2
-#max=4
+#uniform_kwargs={min=0.005, max=2}
 #log=true
 
 [sampler]
