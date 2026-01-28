@@ -1,12 +1,14 @@
 # Run PICASO via a Streamlit UI
 # 
 # run UI locally with: 
-# > streamlit run driver_ui.py
+# > conda isntall -c conda-forge streamlit
+# > pip install streamlit-bokeh
+# > streamlit run Run_PICASO.py
 
 # =======================================
 # CONSTANTS 
 # =======================================
-MOLECULES_LIMIT = 50
+MOLECULES_LIMIT = 10
 
 # =======================================
 # ENVIRONMENT SETUP 
