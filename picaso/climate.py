@@ -962,7 +962,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
     # -- SM -- needs a lot of documentation
 
     #unpack 
-    temp = Atmosphere.t_level; pressure = Atmosphere.p_level
+    temp = np.array(Atmosphere.t_level, copy=True); pressure = np.array(Atmosphere.p_level, copy=True)
     nlevel = len(temp)
     tmin =Opagrid.tmin 
     tmax = Opagrid.tmax 
@@ -3065,6 +3065,8 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     all_kzz : array, optional
         Array of all kzz profiles. Default is an empty array.
     """
+    temp = np.array(temp, copy=True); pressure = np.array(pressure, copy=True)
+
     #under what circumstances to we compute quench levels 
     full_kinetis ='photochem' in str(bundle.inputs['approx']['chem_method'])
     do_quench_appox = diseq and (not full_kinetis)
