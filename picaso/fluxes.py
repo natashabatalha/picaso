@@ -3896,4 +3896,3 @@ def blackbody_climate_deprecate(wave,temp, bb, y2, tp, tmin, tmax):
             blackbody_array[itemp, iwave] = planck_rad_deprecate(iwave, temp[itemp], dT ,  tmin, tmax, bb , y2, tp)
 
     return blackbody_array
-

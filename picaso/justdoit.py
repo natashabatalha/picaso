@@ -4352,7 +4352,7 @@ class inputs():
                             gas_mmr=gas_mmr, do_virtual=do_virtual, verbose=verbose,
                             aggregates=aggregates, Df=Df, N_mon=N_mon, r_mon=r_mon, k0=k0,latent_heat=latent_heat)
             #turn on clouds for this calculation
-            self.inputs['climate']['cloudy'] = True
+            #self.inputs['climate']['cloudy'] = True 
             #passes all the virga params 
             self.inputs['climate']['virga_kwargs'] = virga_kwargs
         
@@ -4854,7 +4854,7 @@ class inputs():
     def interpret_run(self):
         print('SUMMARY')
         print('-------')
-        print('Clouds:', self.inputs['climate'].get('cloudy',False))
+        print('Clouds:', self.inputs['climate'].get('cloudy','cloudless'))
         for i,j in self.inputs['approx']['chem_params'].items(): print(i,j)
         print('Moist Adiabat:', self.inputs['climate']['moistgrad'])
 
@@ -5135,11 +5135,11 @@ class inputs():
         # tidal = np.zeros_like(pressure) - sigma_sb *(Teff**4)
 
         # cloud inputs
-        cloudy = self.inputs['climate'].get('cloudy',False)
+        cloudy = self.inputs['climate'].get('cloudy',"cloudless")
 
         #kzz treatment ? lets store a constant kz profile if it exists 
         #DO I NEED A KZZ? 
-        need_kzz = cloudy or diseq_chem 
+        need_kzz = cloudy != "cloudless" or diseq_chem 
         if need_kzz: 
             #lets initiative a separate place to store this 
             self.inputs['atmosphere']['kzz']={}
@@ -5163,7 +5163,7 @@ class inputs():
         #fthin_cld = self.inputs['climate']['fthin_cld']
 
         # check the dimensions of the mieff grid  
-        if cloudy:
+        if cloudy != "cloudless":
             mieff_dir = virga_kwargs.get('directory',None)
             if mieff_dir is None:
                 raise Exception('Need to specify directory for cloudy runs via Virga function')
@@ -5245,7 +5245,7 @@ class inputs():
 
 
         #put cld output in all_out
-        if cloudy:
+        if cloudy != "cloudless":
             df_cld = vj.picaso_format(cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry'], 
                                       pressure = cld_out['pressure'], wavenumber=1e4/cld_out['wave'])
             all_out['cld_df'] = df_cld
@@ -5263,7 +5263,7 @@ class inputs():
                                         no_ph3 = self.inputs['approx']['chem_params']['no_ph3'],
                                         cold_trap = self.inputs['approx']['chem_params']['cold_trap'], 
                                         vol_rainout= self.inputs['approx']['chem_params']['vol_rainout'])
-            if cloudy == 1:
+            if cloudy != "cloudless":
                 cld_kwargs =dict( do_holes=virga_kwargs.get('patchy_do_holes',False), 
                                   fhole = virga_kwargs.get('patchy_fhole',0),
                                   fthin_cld = virga_kwargs.get('patchy_fthin_cld',0))
