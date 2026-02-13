@@ -1117,7 +1117,8 @@ def compute_jacobian(temp_old, nstr, nofczns, n_total, rfaci, rfacv, tidal,
 @jit(nopython=True, cache=True)
 def get_residuals_at_temp(temp, nstr, nofczns, rfaci, rfacv, tidal,
                            Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Opagrid, F0PI,
-                           compute_reflected, compute_thermal, do_holes, fhole, hole_OpacityWEd, hole_OpacityNoEd):
+                           compute_reflected, compute_thermal, do_holes, fhole, hole_OpacityWEd, hole_OpacityNoEd,
+                           flux_net_v_fixed, flux_net_v_layer_fixed):
     """
     Computes flux residuals for a given temperature profile.
     """
@@ -1130,8 +1131,13 @@ def get_residuals_at_temp(temp, nstr, nofczns, rfaci, rfacv, tidal,
         flux_results = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase,
                     Disco, Opagrid, F0PI, compute_reflected, compute_thermal)
 
-    flux_net_v_layer = flux_results[0][0,0,:]
-    flux_net_v = flux_results[1][0,0,:]
+    if compute_reflected:
+        flux_net_v_layer = flux_results[0][0,0,:]
+        flux_net_v = flux_results[1][0,0,:]
+    else:
+        flux_net_v_layer = flux_net_v_layer_fixed
+        flux_net_v = flux_net_v_fixed
+
     flux_net_ir_layer = flux_results[4]
     flux_net_ir = flux_results[5]
 
@@ -1147,7 +1153,8 @@ def newton_raphson_solver(temp, nstr, nofczns, convergence_criteria,
                           Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Opagrid, AdiabatBundle,
                           F0PI, save_profile, all_profiles,
                           fhole, hole_OpacityWEd, hole_OpacityNoEd,
-                          verbose, do_holes, moist, egp_stepmax):
+                          verbose, do_holes, moist, egp_stepmax,
+                          flux_net_v_fixed, flux_net_v_layer_fixed):
     """
     Newton-Raphson solver with line search for radiative-convective equilibrium.
     """
@@ -1164,15 +1171,18 @@ def newton_raphson_solver(temp, nstr, nofczns, convergence_criteria,
     cldsave_count = 0
 
     # Flags for radiative transfer components
-    compute_reflected = rfacv != 0
+    # Reflected is already pre-calculated in t_start and passed in as flux_net_v_fixed
+    compute_reflected = False
     compute_thermal = True
 
     # Initial flux residuals
     f_vec, n_total, sum_f2, sum_temp2, test, flux_results = get_residuals_at_temp(temp, nstr, nofczns, rfaci, rfacv, tidal,
                                                                                 Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase,
                                                                                 Disco, Opagrid, F0PI, compute_reflected, compute_thermal,
-                                                                                do_holes, fhole, hole_OpacityWEd, hole_OpacityNoEd)
+                                                                                do_holes, fhole, hole_OpacityWEd, hole_OpacityNoEd,
+                                                                                flux_net_v_fixed, flux_net_v_layer_fixed)
 
+    step_max = 0.01
     for its in range(it_max):
         f = 0.5 * sum_f2
         
@@ -1193,7 +1203,7 @@ def newton_raphson_solver(temp, nstr, nofczns, convergence_criteria,
             step_max = step_max_tolerance * max(sqrt(sum_temp2), n_total * 1.0)
         else:
             iteration_factor = max(0.01, (it_max - its) / it_max)
-            step_max = 0.01 * max(sqrt(sum_temp2), n_total * 1.0) * iteration_factor
+            step_max *= max(sqrt(sum_temp2), n_total * 1.0) * iteration_factor
 
         # Store old state
         temp_old = temp.copy()
@@ -1239,7 +1249,10 @@ def newton_raphson_solver(temp, nstr, nofczns, convergence_criteria,
             if tmp > test_x:
                 test_x = tmp
         
-        alamin = tolx / test_x
+        if test_x > 0:
+            alamin = tolx / test_x
+        else:
+            alamin = 1e10 # very large alamin if no step is proposed
         alam = 1.0
         f2 = f
         alam2 = 0.0
@@ -1279,10 +1292,11 @@ def newton_raphson_solver(temp, nstr, nofczns, convergence_criteria,
                 elif temp[j1] > tmax: temp[j1] = tmax - 0.1
             
             # Recalculate residuals
-            f_vec, n_total, sum_f2, sum_temp2_new, test, flux_results = get_residuals_at_temp(temp, nstr, nofczns, rfaci, rfacv, tidal,
+            f_vec, n_total, sum_f2, sum_temp2, test, flux_results = get_residuals_at_temp(temp, nstr, nofczns, rfaci, rfacv, tidal,
                                                                                             Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase,
                                                                                             Disco, Opagrid, F0PI, False, compute_thermal,
-                                                                                            do_holes, fhole, hole_OpacityWEd, hole_OpacityNoEd)
+                                                                                            do_holes, fhole, hole_OpacityWEd, hole_OpacityNoEd,
+                                                                                            flux_net_v_fixed, flux_net_v_layer_fixed)
             f = 0.5 * sum_f2
 
             if alam < alamin:
@@ -1329,7 +1343,7 @@ def newton_raphson_solver(temp, nstr, nofczns, convergence_criteria,
                 dtdp[j] = (log(temp[j]) - log(temp[j + 1])) / (log(Atmosphere.p_level[j]) - log(Atmosphere.p_level[j + 1]))
             if verbose: print("In t_start: Converged Solution in iterations ", its)
             flux_net_ir = flux_results[5]
-            flux_net_v = flux_results[1][0,0,:]
+            flux_net_v = flux_net_v_fixed
             flux_plus_ir = flux_results[6]
             return temp, dtdp, all_profiles, flux_net_ir, flux_net_v, flux_plus_ir[0, :]
 
@@ -1338,7 +1352,7 @@ def newton_raphson_solver(temp, nstr, nofczns, convergence_criteria,
     for j in range(nlevel - 1):
         dtdp[j] = (log(temp[j]) - log(temp[j + 1])) / (log(Atmosphere.p_level[j]) - log(Atmosphere.p_level[j + 1]))
     flux_net_ir_layer = flux_results[4]
-    flux_net_v = flux_results[1][0,0,:]
+    flux_net_v = flux_net_v_fixed
     flux_plus_ir = flux_results[6]
     return temp, dtdp, all_profiles, flux_net_ir_layer, flux_net_v, flux_plus_ir[0, :]
 
@@ -1396,13 +1410,33 @@ def t_start(nofczns, nstr, convergence_criteria,
     -------
     temp, dtdp, all_profiles, flux_net_ir, flux_net_v, flux_plus_ir_attop
     """
+    # Pre-calculate visible fluxes (reuse throughout the solver)
+    if rfacv == 0:
+        compute_reflected = False
+    else:
+        compute_reflected = True
+    compute_thermal = True
+
+    if do_holes == True:
+        flux_results_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase,
+                                      Disco, Opagrid, F0PI, compute_reflected, compute_thermal,
+                                      do_holes=do_holes, fhole=fhole, hole_OpacityWEd=hole_OpacityWEd, hole_OpacityNoEd=hole_OpacityNoEd)
+    else:
+        flux_results_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase,
+                                      Disco, Opagrid, F0PI, compute_reflected, compute_thermal)
+
+    # extract visible fluxes
+    flux_net_v_layer_fixed = flux_results_full[0][0,0,:]
+    flux_net_v_fixed = flux_results_full[1][0,0,:]
+
     if solver == 'newton_raphson':
         return newton_raphson_solver(Atmosphere.t_level, nstr, nofczns, convergence_criteria,
                                      rfaci, rfacv, tidal,
                                      Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Opagrid, AdiabatBundle,
                                      F0PI, save_profile, all_profiles,
                                      fhole, hole_OpacityWEd, hole_OpacityNoEd,
-                                     verbose, do_holes, moist, egp_stepmax)
+                                     verbose, do_holes, moist, egp_stepmax,
+                                     flux_net_v_fixed, flux_net_v_layer_fixed)
     else:
         raise ValueError("Unknown solver specified in t_start")
 
