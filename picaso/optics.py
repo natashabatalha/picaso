@@ -1145,15 +1145,11 @@ class RetrieveCKs():
 
         #Now for the temp point on either side of our atmo grid
         #first the lower interp temp
-        t_low_ind = []
-        for i in t_inv:
-            find = np.where(t_inv_grid>i)[0]
-            if len(find)==0:
-                #IF T GOES BELOW THE GRID
-                t_low_ind +=[0]
-            else:    
-                t_low_ind += [find[-1]]
-        t_low_ind = np.array(t_low_ind)
+        # Vectorized search for t_low_ind
+        # t_inv_grid is decreasing, we want the last index where t_inv_grid > i
+        greater_than = t_inv_grid[:, np.newaxis] > t_inv[np.newaxis, :]
+        t_low_ind = np.sum(greater_than, axis=0) - 1
+        t_low_ind[t_low_ind < 0] = 0
         #IF T goes above the grid
         t_low_ind[t_low_ind==(len(t_inv_grid)-1)]=len(t_inv_grid)-2
         #get upper interp temp
@@ -1166,27 +1162,14 @@ class RetrieveCKs():
 
         #We want the pressure points on either side of our atmo grid point
         #first the lower interp pressure
-        p_low_ind = [] 
-        for i in p_log:
-            find = np.where(p_log_grid<=i)[0]
-            if len(find)==0:
-                #If P GOES BELOW THE GRID
-                p_low_ind += [0]
-            else: 
-                p_low_ind += [find[-1]]
-        p_low_ind = np.array(p_low_ind)
+        less_equal = p_log_grid[:, np.newaxis] <= p_log[np.newaxis, :]
+        p_low_ind = np.sum(less_equal, axis=0) - 1
+        p_low_ind[p_low_ind < 0] = 0
 
         #IF pressure GOES ABOVE THE GRID
-
-        p_log_low = []
-        for i in range(len(p_low_ind)): 
-            ilo = p_low_ind[i]
-            it = t_hi_ind[i]
-            max_avail_p = np.min([ilo, self.nc_p[it]-3])#3 b/c using len instead of where as was done with t above
-            p_low_ind[i] = max_avail_p
-            p_log_low += [p_log_grid[max_avail_p]]
-            
-        p_log_low = np.array(p_log_low)
+        nc_p_limit = self.nc_p[t_hi_ind] - 3
+        p_low_ind = np.minimum(p_low_ind, nc_p_limit)
+        p_log_low = p_log_grid[p_low_ind]
 
         #get higher pressure vals
         p_hi_ind = p_low_ind + 1 
@@ -1266,15 +1249,11 @@ class RetrieveCKs():
 
         #Now for the temp point on either side of our atmo grid
         #first the lower interp temp
-        t_low_ind = []
-        for i in t_inv:
-            find = np.where(t_inv_grid>i)[0]
-            if len(find)==0:
-                #IF T GOES BELOW THE GRID
-                t_low_ind +=[0]
-            else:    
-                t_low_ind += [find[-1]]
-        t_low_ind = np.array(t_low_ind)
+        # Vectorized search for t_low_ind
+        # t_inv_grid is decreasing, we want the last index where t_inv_grid > i
+        greater_than = t_inv_grid[:, np.newaxis] > t_inv[np.newaxis, :]
+        t_low_ind = np.sum(greater_than, axis=0) - 1
+        t_low_ind[t_low_ind < 0] = 0
         #IF T goes above the grid
         t_low_ind[t_low_ind==(len(t_inv_grid)-1)]=len(t_inv_grid)-2
         #get upper interp temp
@@ -1287,26 +1266,14 @@ class RetrieveCKs():
 
         #We want the pressure points on either side of our atmo grid point
         #first the lower interp pressure
-        p_low_ind = [] 
-        for i in p_log:
-            find = np.where(p_log_grid<=i)[0]
-            if len(find)==0:
-                #If P GOES BELOW THE GRID
-                p_low_ind += [0]
-            else: 
-                p_low_ind += [find[-1]]
-        p_low_ind = np.array(p_low_ind)
+        less_equal = p_log_grid[:, np.newaxis] <= p_log[np.newaxis, :]
+        p_low_ind = np.sum(less_equal, axis=0) - 1
+        p_low_ind[p_low_ind < 0] = 0
 
         #IF pressure GOES ABOVE THE GRID
-        p_log_low = []
-        for i in range(len(p_low_ind)): 
-            ilo = p_low_ind[i]
-            it = t_hi_ind[i]
-            max_avail_p = np.min([ilo, self.nc_p[it]-3])#3 b/c using len instead of where as was done with t above
-            p_low_ind[i] = max_avail_p
-            p_log_low += [p_log_grid[max_avail_p]]
-            
-        p_log_low = np.array(p_log_low)
+        nc_p_limit = self.nc_p[t_hi_ind] - 3
+        p_low_ind = np.minimum(p_low_ind, nc_p_limit)
+        p_log_low = p_log_grid[p_low_ind]
 
         #get higher pressure vals
         p_hi_ind = p_low_ind + 1 
@@ -1979,7 +1946,10 @@ class RetrieveOpacities():
         if location == 'local':
             #self.conn = sqlite3.connect(db_filename, detect_types=sqlite3.PARSE_DECLTYPES)
             self.db_filename = db_filename
-            self.db_connect = self.open_local
+            if self.db_filename.endswith(('.h5', '.hdf5')):
+                self.db_connect = self.open_h5
+            else:
+                self.db_connect = self.open_local
 
         self.get_available_data(wave_range, resample)
         
@@ -2012,6 +1982,11 @@ class RetrieveOpacities():
         sqlite3.register_converter("array", self.convert_array)
         cur = conn.cursor()
         return cur,conn
+
+    def open_h5(self):
+        """Opens h5py connection"""
+        f = h5py.File(self.db_filename, 'r')
+        return f, f
     def adapt_array(arr):
         """needed to interpret bytes to array"""
         out = io.BytesIO()
@@ -2028,35 +2003,52 @@ class RetrieveOpacities():
     def get_available_data(self, wave_range, resample):
         """Get the pressures and temperatures that are available for the continuum and molecules"""
         self.resample = resample
-        #open connection 
-        cur, conn = self.db_connect()
 
-        #get temps
-        cur.execute('SELECT temperature FROM continuum')
-        self.cia_temps = np.unique(cur.fetchall())
+        if self.db_filename.endswith(('.h5', '.hdf5')):
+            with h5py.File(self.db_filename, 'r') as f:
+                self.cia_temps = f['header/cia_temps'][:]
+                self.avail_continuum = [x.decode('utf-8') if isinstance(x, bytes) else x for x in f['header/avail_continuum'][:]]
+                self.molecules = [x.decode('utf-8') if isinstance(x, bytes) else x for x in f['header/molecules'][:]]
+                self.pt_pairs = [tuple(x) for x in f['header/pt_pairs'][:]]
+                df = pd.DataFrame(self.pt_pairs,columns=['ptid','pressure','temperature'])
+                self.nc_p = df.groupby('temperature').size().values
+                self.pressures = df['pressure'].unique()
+                self.p_log_grid = log10(self.pressures) #used for interpolation
+                self.temps = df['temperature'].unique() #used for interpolation
+                self.t_inv_grid = 1/self.temps
+                self.wno = f['header/wavenumber_grid'][::self.resample]
+        else:
+            #open connection
+            cur, conn = self.db_connect()
 
-        cur.execute('SELECT molecule FROM continuum')
-        molecules = list(np.unique(cur.fetchall()))
-        self.avail_continuum = molecules
+            #get temps
+            cur.execute('SELECT temperature FROM continuum')
+            self.cia_temps = np.unique(cur.fetchall())
 
-        #get available molecules
-        cur.execute('SELECT molecule FROM molecular')
-        self.molecules = np.unique(cur.fetchall())
+            cur.execute('SELECT molecule FROM continuum')
+            molecules = list(np.unique(cur.fetchall()))
+            self.avail_continuum = molecules
 
-        #get PT indexes for getting opacities 
-        cur.execute('SELECT ptid, pressure, temperature FROM molecular')
-        data= cur.fetchall()
-        self.pt_pairs = sorted(list(set(data)),key=lambda x: (x[0]) )
-        df = pd.DataFrame(self.pt_pairs,columns=['ptid','pressure','temperature'])
-        self.nc_p = df.groupby('temperature').size().values
-        self.pressures = df['pressure'].unique()
-        self.p_log_grid = log10(self.pressures) #used for interpolation 
-        self.temps = df['temperature'].unique() #used for interpolation
-        self.t_inv_grid = 1/self.temps
+            #get available molecules
+            cur.execute('SELECT molecule FROM molecular')
+            self.molecules = np.unique(cur.fetchall())
 
-        #Get the wave grid info
-        cur.execute('SELECT wavenumber_grid FROM header')
-        self.wno =  cur.fetchone()[0][::self.resample]
+            #get PT indexes for getting opacities
+            cur.execute('SELECT ptid, pressure, temperature FROM molecular')
+            data= cur.fetchall()
+            self.pt_pairs = sorted(list(set(data)),key=lambda x: (x[0]) )
+            df = pd.DataFrame(self.pt_pairs,columns=['ptid','pressure','temperature'])
+            self.nc_p = df.groupby('temperature').size().values
+            self.pressures = df['pressure'].unique()
+            self.p_log_grid = log10(self.pressures) #used for interpolation
+            self.temps = df['temperature'].unique() #used for interpolation
+            self.t_inv_grid = 1/self.temps
+
+            #Get the wave grid info
+            cur.execute('SELECT wavenumber_grid FROM header')
+            self.wno =  cur.fetchone()[0][::self.resample]
+            conn.close()
+
         self.wave = 1e4/self.wno 
         if wave_range == None: 
             self.loc = [True]*len(self.wno )
@@ -2065,8 +2057,6 @@ class RetrieveOpacities():
         self.wave = self.wave[self.loc]
         self.wno = self.wno[self.loc]
         self.nwno = np.size(self.wno)
-
-        conn.close()
 
     def get_available_rayleigh(self):
         data = Rayleigh(self.wno)
@@ -2089,15 +2079,11 @@ class RetrieveOpacities():
         p_log_grid = self.p_log_grid
         nc_p = self.nc_p
 
-        t_low_ind = []
-        for i in t_inv:
-            find = np.where(t_inv_grid>i)[0]
-            if len(find)==0:
-                #IF T GOES BELOW THE GRID
-                t_low_ind +=[0]
-            else:    
-                t_low_ind += [find[-1]]
-        t_low_ind = np.array(t_low_ind)
+        # Vectorized search for t_low_ind
+        # t_inv_grid is decreasing, we want the last index where t_inv_grid > i
+        greater_than = t_inv_grid[:, np.newaxis] > t_inv[np.newaxis, :]
+        t_low_ind = np.sum(greater_than, axis=0) - 1
+        t_low_ind[t_low_ind < 0] = 0
         #IF T goes above the grid
         t_low_ind[t_low_ind==(len(t_inv_grid)-1)]=len(t_inv_grid)-2
         #get upper interp temp
@@ -2110,26 +2096,14 @@ class RetrieveOpacities():
 
         #We want the pressure points on either side of our atmo grid point
         #first the lower interp pressure
-        p_low_ind = [] 
-        for i in p_log:
-            find = np.where(p_log_grid<=i)[0]
-            if len(find)==0:
-                #If P GOES BELOW THE GRID
-                p_low_ind += [0]
-            else: 
-                p_low_ind += [find[-1]]
-        p_low_ind = np.array(p_low_ind)
+        less_equal = p_log_grid[:, np.newaxis] <= p_log[np.newaxis, :]
+        p_low_ind = np.sum(less_equal, axis=0) - 1
+        p_low_ind[p_low_ind < 0] = 0
 
         #IF pressure GOES ABOVE THE GRID
-        p_log_low = []
-        for i in range(len(p_low_ind)): 
-            ilo = p_low_ind[i]
-            it = t_hi_ind[i]
-            max_avail_p = np.min([ilo, nc_p[it]-3])#3 b/c using len instead of where as was done with t above
-            p_low_ind[i] = max_avail_p
-            p_log_low += [p_log_grid[max_avail_p]]
-            
-        p_log_low = np.array(p_log_low)
+        nc_p_limit = nc_p[t_hi_ind] - 3
+        p_low_ind = np.minimum(p_low_ind, nc_p_limit)
+        p_log_low = p_log_grid[p_low_ind]
 
         #get higher pressure vals
         p_hi_ind = p_low_ind + 1 
@@ -2182,7 +2156,7 @@ class RetrieveOpacities():
         cia_mol = self.avail_continuum
         self.loaded_continuum = self._get_query_continuum(tcia,cia_mol,cur)
 
-        conn.close()
+        if conn is not None: conn.close()
 
         #self.avail_continuum
 
@@ -2190,6 +2164,22 @@ class RetrieveOpacities():
         """
         Get queried continuum 
         """
+        if self.db_filename.endswith(('.h5', '.hdf5')):
+            data = {}
+            f = cur
+            # Mapping from temperature to index
+            t_to_idx = {float(t): i for i, t in enumerate(self.cia_temps)}
+            indices = np.array([t_to_idx[float(t)] for t in tcia])
+            unique_indices, inverse_indices = np.unique(indices, return_inverse=True)
+
+            for mol in cia_mol:
+                ds = f[f'continuum/{mol}']
+                opa_unique = ds[unique_indices, :]
+                opa_subset = opa_unique[inverse_indices]
+                for i, t in enumerate(tcia):
+                    data[f"{mol}_{t}"] = opa_subset[i]
+            return data
+
         #if user only runs a single molecule or temperature
         #if len(tcia) ==1: 
         #    query_temp = """AND temperature= '{}' """.format(str(tcia[0]))
@@ -2233,6 +2223,29 @@ class RetrieveOpacities():
         """
         submits query
         """
+        if self.db_filename.endswith(('.h5', '.hdf5')):
+            data = {}
+            f = cur
+            # Precompute indices for all PTIDs in one go
+            pt_pairs_arr = np.array(self.pt_pairs)
+            ptid_to_idx = {int(ptid): i for i, ptid in enumerate(pt_pairs_arr[:, 0])}
+            indices = np.array([ptid_to_idx[int(p)] for p in ind_pt])
+            unique_indices, inverse_indices = np.unique(indices, return_inverse=True)
+
+            # Pre-apply slicing to avoid it in the loop
+            if isinstance(self.loc, tuple):
+                loc_idx = self.loc[0]
+            else:
+                loc_idx = self.loc
+
+            for mol in molecules:
+                ds = f[f'molecular/{mol}']
+                opa_unique = ds[unique_indices, :]
+                opa_subset = opa_unique[inverse_indices][:, ::self.resample][:, loc_idx]
+                for i, ptid in enumerate(ind_pt):
+                    data[f"{mol}_{ptid}"] = opa_subset[i]
+            return data
+
         #query molecular opacities from sqlite3
         #if len(molecules) ==1: 
         #    query_mol = """WHERE molecule= '{}' """.format(str(molecules[0]))
@@ -2334,8 +2347,8 @@ class RetrieveOpacities():
         for i in self.continuum_opa.keys():
             for j,ind in zip(tcia,range(nlayer)):
                 self.continuum_opa[i][ind,:] = data[i+'_'+str(j)][::self.resample][self.loc]
-  
-        conn.close() 
+
+        if conn is not None: conn.close()
 
     def get_opacities_nearest(self, atmosphere, exclude_mol=1):
         """
@@ -2357,9 +2370,19 @@ class RetrieveOpacities():
 
         #this will make getting opacities faster 
         #this is getting the ptid corresponding to the pairs
-        ind_pt=[min(self.pt_pairs, 
-            key=lambda c: math.hypot(np.log(c[1])- np.log(coordinate[0]), c[2]-coordinate[1]))[0] 
-                for coordinate in  zip(player,tlayer)]
+        pt_pairs = np.array(self.pt_pairs)
+        log_p_grid = np.log(pt_pairs[:, 1])
+        t_grid = pt_pairs[:, 2]
+
+        log_p_layer = np.log(player)
+
+        # Vectorized nearest neighbor search
+        # distance = (log_p_grid - log_p_layer)^2 + (t_grid - t_layer)^2
+        # we use broadcasting to compute all distances at once
+        dists = (log_p_grid[np.newaxis, :] - log_p_layer[:, np.newaxis])**2 + \
+                (t_grid[np.newaxis, :] - tlayer[:, np.newaxis])**2
+        ind_pt_idx = np.argmin(dists, axis=1)
+        ind_pt = pt_pairs[ind_pt_idx, 0].astype(int).tolist()
         atmosphere.layer['pt_opa_index'] = ind_pt
 
         if self.preload:
@@ -2395,7 +2418,7 @@ class RetrieveOpacities():
             for j,ind in zip(tcia,range(nlayer)):
                 self.continuum_opa[i][ind,:] = data[i+'_'+str(j)][::self.resample][self.loc]
 
-        conn.close() 
+        if conn is not None: conn.close()
 
     def compute_stellar_shits(self, wno_star, flux_star):
         """

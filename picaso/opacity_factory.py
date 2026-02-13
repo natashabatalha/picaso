@@ -658,10 +658,12 @@ def build_skeleton(db_f):
         id INTEGER PRIMARY KEY,
         molecule VARCHAR ,
         temperature FLOAT,
-        opacity array);"""
+        opacity array);
+    CREATE INDEX IF NOT EXISTS mol_idx ON molecular (molecule, ptid);
+    CREATE INDEX IF NOT EXISTS cont_idx ON continuum (molecule, temperature);"""
 
     cur.executescript(command)
-    
+
     conn.commit() #this commits the changes to the database
     conn.close()
 
@@ -2200,3 +2202,65 @@ def add_all_metadata(filename, version_number, default, resolution, wavemin, wav
     add_metadata_item(f, 'wavemin',wavemin)
     add_metadata_item(f, 'wavemax',wavemax)
     add_metadata_item(f, 'zenodo',zenodo_doi)
+
+def convert_sqlite_to_h5(sqlite_db, h5_db):
+    """
+    Converts a PICASO SQLite opacity database to HDF5 format.
+
+    Parameters
+    ----------
+    sqlite_db : str
+        Path to the SQLite database
+    h5_db : str
+        Path to the new HDF5 file
+    """
+    import h5py
+
+    cur, conn = open_local(sqlite_db)
+
+    with h5py.File(h5_db, 'w') as f:
+        # Header
+        cur.execute('SELECT wavenumber_grid FROM header')
+        wno = cur.fetchone()[0]
+        f.create_dataset('header/wavenumber_grid', data=wno)
+
+        cur.execute('SELECT ptid, pressure, temperature FROM molecular')
+        data = cur.fetchall()
+        pt_pairs = sorted(list(set(data)), key=lambda x: x[0])
+        f.create_dataset('header/pt_pairs', data=np.array(pt_pairs))
+
+        cur.execute('SELECT temperature FROM continuum')
+        cia_temps = np.unique(cur.fetchall())
+        f.create_dataset('header/cia_temps', data=cia_temps)
+
+        cur.execute('SELECT DISTINCT molecule FROM molecular')
+        molecules = [x[0] for x in cur.fetchall()]
+        f.create_dataset('header/molecules', data=np.array(molecules, dtype=h5py.special_dtype(vlen=str)))
+
+        cur.execute('SELECT DISTINCT molecule FROM continuum')
+        avail_continuum = [x[0] for x in cur.fetchall()]
+        f.create_dataset('header/avail_continuum', data=np.array(avail_continuum, dtype=h5py.special_dtype(vlen=str)))
+
+        # Molecular data
+        print("Converting molecular data...")
+        mol_grp = f.create_group('molecular')
+        for mol in molecules:
+            print(f"  {mol}")
+            cur.execute('SELECT ptid, opacity FROM molecular WHERE molecule = ? ORDER BY ptid', (mol,))
+            rows = cur.fetchall()
+            # We assume pt_pairs matches these rows exactly.
+            opa_matrix = np.array([r[1] for r in rows])
+            mol_grp.create_dataset(mol, data=opa_matrix)
+
+        # Continuum data
+        print("Converting continuum data...")
+        cont_grp = f.create_group('continuum')
+        for mol in avail_continuum:
+            print(f"  {mol}")
+            cur.execute('SELECT temperature, opacity FROM continuum WHERE molecule = ? ORDER BY temperature', (mol,))
+            rows = cur.fetchall()
+            opa_matrix = np.array([r[1] for r in rows])
+            cont_grp.create_dataset(mol, data=opa_matrix)
+
+    conn.close()
+    print(f"Successfully converted {sqlite_db} to {h5_db}")
