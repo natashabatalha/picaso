@@ -2499,14 +2499,14 @@ def find_strat(bundle, nofczns,nstr,
         Default = False, flags whether to do disequilibrium chemistry calculations or not
     
     """
-    #unpack 
-    F0PI = opacityclass.relative_flux
+    #unpack  #neb does not lok used 
+    #F0PI = opacityclass.relative_flux
 
-    cloudy = CloudParameters.cloudy 
-    if cloudy: 
-        cld_species = CloudParameters.condensates
-    else: 
-        cld_species= []
+    #loudy = CloudParameters.cloudy #neb does not lok used 
+    #if cloudy: #neb does not lok used 
+    #    cld_species = virga_condensates
+    #else: 
+    #    cld_species= []
 
     # new conditions for this routine
     convergence_criteriaT = namedtuple('Conv',['it_max','itmx','conv','convt','x_max_mult'])
@@ -2585,7 +2585,7 @@ def find_strat(bundle, nofczns,nstr,
         if verbose: print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
         if verbose: print(nofczns)
 
-        nofczns = 2
+        nofczns = 2 #keeping this hardcoded here to easily transition to future 3 zone calculation
         nstr[4]= nstr[1]
         nstr[5]= nstr[2]
         nstr[1]= i_max
@@ -2902,12 +2902,13 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         
 
     if cloudy: 
-        virga_kwargs = {key:getattr(CloudParameters,key) for key in ['fsed','mh','b','param','directory','condensates']}
-        hole_kwargs = {key:getattr(CloudParameters,key) for key in ['do_holes','fthin_cld','fhole']}
+        virga_kwargs = {key.replace('virga_',''):getattr(CloudParameters,key) for key in CloudParameters._fields if 'virga' in key}
+        hole_kwargs = {key.replace('patchy_',''):getattr(CloudParameters,key) for key in CloudParameters._fields if 'patchy' in key}
         do_holes = hole_kwargs['do_holes'];fhole=hole_kwargs['fhole']
-        cld_species = CloudParameters.condensates
+        #cld_species = CloudParameters.virga_condensates #neb commenting out not used 
     else: 
-        cld_species=[] ; do_holes = False; fhole=None
+        #cld_species=[] ; #neb commenting out not used 
+        do_holes = False; fhole=None
         
 
     min_temp = np.min(temp)
