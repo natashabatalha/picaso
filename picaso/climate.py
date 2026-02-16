@@ -962,7 +962,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
     # -- SM -- needs a lot of documentation
 
     #unpack 
-    temp = Atmosphere.t_level.copy(); pressure = Atmosphere.p_level
+    temp = Atmosphere.t_level; pressure = Atmosphere.p_level
     nlevel = len(temp)
     tmin =Opagrid.tmin 
     tmax = Opagrid.tmax 
@@ -2165,7 +2165,7 @@ def calculate_atm(bundle, opacityclass, only_atmosphere=False):
     condensable_abundances = bundle.inputs['atmosphere']['profile'].loc[:,our_condesables].T.values
     condensable_weights = [atm.weights[i].values[0] for i in our_condesables]
 
-    Atmosphere= Atmosphere_Tuple(atm.layer['dtdp'], atm.layer['mmw'],nlevel,atm.level['temperature'],atm.level['pressure_bar'],
+    Atmosphere= Atmosphere_Tuple(atm.layer['dtdp'], atm.layer['mmw'],nlevel,np.ascontiguousarray(atm.level['temperature']).copy(),np.ascontiguousarray(atm.level['pressure_bar']).copy(),
                                     our_condesables,condensable_abundances,condensable_weights,atm.level['scale_height'])
     
     if only_atmosphere: 
