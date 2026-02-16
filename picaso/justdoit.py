@@ -3575,8 +3575,11 @@ class inputs():
             attrs=dict(description="coords with vectors"),
         )
 
+        #update since .update now returns None in xarray
+        pt_3d_ds.update(ds_chem)
+
         #append input
-        self.inputs['atmosphere']['profile'] = pt_3d_ds.update(ds_chem)
+        self.inputs['atmosphere']['profile'] = pt_3d_ds
 
     def chemeq_3d(self,c_o=1.0,log_mh=0.0, n_cpu=1): 
         """
@@ -3617,7 +3620,7 @@ class inputs():
             #convert to 1d format
             self.inputs['atmosphere']['profile']=df
             #run chemistry, which adds chem to inputs['atmosphere']['profile']
-            self.chemeq_visscher(c_o=1.0,log_mh=0.0)
+            self.chemeq_visscher(c_o=c_o,log_mh=log_mh)
             df_w_chem = self.inputs['atmosphere']['profile']            
             return df_w_chem
 
@@ -3635,6 +3638,7 @@ class inputs():
 
 
         data_vars = {imol:(["lon", "lat","pressure"], all_out[imol],{'units': 'v/v'}) for imol in results[0].keys() if imol not in not_molecules}
+        
         # put data into a dataset
         ds_chem = xr.Dataset(
             data_vars=data_vars,
@@ -3646,8 +3650,12 @@ class inputs():
             attrs=dict(description="coords with vectors"),
         )
 
+        #update with ds_chem values
+        #note new xarray now updates in place 
+        pt_3d_ds.update(ds_chem)
+
         #append input
-        self.inputs['atmosphere']['profile'] = pt_3d_ds.update(ds_chem)
+        self.inputs['atmosphere']['profile'] = pt_3d_ds
 
     def atmosphere_4d(self, ds=None, shift=None, plot=True, iz_plot=0,verbose=True, 
         zero_point='night_transit'): 
