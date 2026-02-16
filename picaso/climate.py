@@ -461,7 +461,7 @@ def get_kzz(grav,tidal,flux_net_ir_layer, flux_plus_ir_attop,Adiabat,nstr, Atmos
     #     the correction logic below and should always be true
     #     in a well formed model.
 
-    chf = np.zeros_like(tidal)
+    chf = np.zeros(tidal.shape)
 
     chf[nz-1] = f_sum
     
@@ -962,7 +962,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
     # -- SM -- needs a lot of documentation
 
     #unpack 
-    temp = Atmosphere.t_level; pressure = Atmosphere.p_level
+    temp = Atmosphere.t_level.copy(); pressure = Atmosphere.p_level
     nlevel = len(temp)
     tmin =Opagrid.tmin 
     tmax = Opagrid.tmax 
@@ -2952,7 +2952,7 @@ def update_clouds(bundle, CloudParameters, Atmosphere, kzz,virga_kwargs,
         Updated CloudParameters namedtuple.
     ```
     """
-    opd_cld_climate, g0_cld_climate, w0_cld_climate = CloudParameters.OPD, CloudParameters.G0, CloudParameters.W0
+    opd_cld_climate, g0_cld_climate, w0_cld_climate = CloudParameters.OPD.copy(), CloudParameters.G0.copy(), CloudParameters.W0.copy()
     we0, we1, we2, we3 = 0.25, 0.25, 0.25, 0.25
 
     opd_prev_cld_step = (we0 * opd_cld_climate[:, :, 0] + we1 * opd_cld_climate[:, :, 1] + we2 * opd_cld_climate[:, :, 2] + we3 * opd_cld_climate[:, :, 3])

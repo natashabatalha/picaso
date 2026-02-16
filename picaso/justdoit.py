@@ -1854,11 +1854,11 @@ class inputs():
             fine_flux_star = 10**interpolator(np.log10(wno_planet))
             
             # Compute binned flux using trapezoidal integration
-            fine_flux_star[:] = [np.trapz(fine_flux_star[(wno_planet >= wno_planet[i]) & 
-                                                        (wno_planet <= wno_planet[i+1])], 
-                                        x=-1/wno_planet[(wno_planet >= wno_planet[i]) & 
-                                                        (wno_planet <= wno_planet[i+1])]) 
-                                if i < len(wno_planet) - 1 else 0 for i in range(len(wno_planet))]
+            fine_flux_star = np.array([np.trapz(fine_flux_star[(wno_planet >= wno_planet[i]) &
+                                                        (wno_planet <= wno_planet[i+1])],
+                                        x=-1/wno_planet[(wno_planet >= wno_planet[i]) &
+                                                        (wno_planet <= wno_planet[i+1])])
+                                if i < len(wno_planet) - 1 else 0 for i in range(len(wno_planet))])
 
             # Linear extrapolation for the last point
             if len(wno_planet) > 2:
@@ -4375,7 +4375,7 @@ class inputs():
                     same place that you specified you pressure-temperature profile. \
                     Alternatively, you can manually add it by doing \
                     `case.inputs['atmosphere']['profile']['kz'] = KZ`")
-            df = self.inputs['atmosphere']['profile'].loc[:,['pressure','temperature','kz']]
+            df = self.inputs['atmosphere']['profile'].loc[:,['pressure','temperature','kz']].copy()
             
             cloud_p.gravity(gravity=self.inputs['planet']['gravity'],
                     gravity_unit=u.Unit(self.inputs['planet']['gravity_unit']))#
