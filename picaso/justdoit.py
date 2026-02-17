@@ -4328,6 +4328,7 @@ class inputs():
         """
         #stages inputs for cloudy run and also get kwargs for clouds function which we run at the end of this 
         clouds_kwargs=dict(do_holes=do_holes,fhole=fhole,fthin_cld=fthin_cld)
+        self.inputs['clouds']['cloudy'] = "selfconsistent"
         self.inputs['clouds']['do_holes']=do_holes
         self.inputs['clouds']['fhole']=fhole
         self.inputs['clouds']['fthin_cld']=fthin_cld

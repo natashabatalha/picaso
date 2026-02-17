@@ -173,8 +173,7 @@ def get_kzz(grav,tidal,flux_net_ir_layer, flux_plus_ir_attop,Adiabat,nstr, Atmos
     
     return kz
 
-def update_clouds(bundle, CloudParameters, Atmosphere, kzz,virga_kwargs,
-                   verbose=False,save_profile=True,all_opd=[]):
+def update_clouds(bundle, opacityclass, CloudParameters, Atmosphere, kzz,virga_kwargs,hole_kwargs,verbose=False):
     """
     Updates cloud parameters and returns the cloud output.
 
@@ -207,8 +206,6 @@ def update_clouds(bundle, CloudParameters, Atmosphere, kzz,virga_kwargs,
         Maximum difference in optical depth between iterations.
     taudif_tol : float
         Tolerance for the maximum optical depth difference.
-    all_opd : list
-        Updated list of all optical depth profiles.
     CloudParameters : namedtuple
         Updated CloudParameters namedtuple.
     ```
@@ -249,10 +246,6 @@ def update_clouds(bundle, CloudParameters, Atmosphere, kzz,virga_kwargs,
         diff = (opd_clmt - opd_prev_cld_step)
         taudif = np.max(np.abs(diff))
         taudif_tol = 0.4 * np.max(0.5 * (opd_clmt + opd_prev_cld_step))
-
-        if save_profile == 1:
-            all_opd = np.append(all_opd, df_cld['opd'].values[55::196])
-
         if verbose:
             print("Doing clouds: Max TAUCLD diff is", taudif, " Tau tolerance is ", taudif_tol)
         CloudParameters = CloudParameters._replace(OPD=opd_cld_climate,G0=g0_cld_climate,W0=w0_cld_climate)
@@ -267,8 +260,8 @@ def update_clouds(bundle, CloudParameters, Atmosphere, kzz,virga_kwargs,
         bundle.clouds(df=df_cld)
         cld_out = "fixed"
     elif cloudy == "cloudless":
-        cld_out, df_cld, diff, taudif, taudif_tol = 0, 0, 0, 1, 0.1
+        cld_out, df_cld, taudif, taudif_tol = 0, 0, 1, 0.1
     else:
         raise NotImplementedError(f"The only supported cloud modes are 'cloudless', 'fixed', 'selfconsistent'; got {cloudy}")
         
-    return cld_out, df_cld, diff, taudif, taudif_tol, CloudParameters
+    return cld_out, df_cld, taudif, taudif_tol, CloudParameters

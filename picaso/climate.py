@@ -339,9 +339,7 @@ def run_chemeq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
     self_consistent_kzz : bool
         if True, use the self-consistent kzz profile (not constant kzz)
     """
-    
-    first_call_ever=False#NEBQ: why is this false? 
-    
+        
     #STEP 1) first profile call with lose convergence criteria 
     final = False
     
@@ -2081,9 +2079,8 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         bundle.premix_atmosphere_photochem(quench_levels=quench_levels,verbose=verbose)
     
     ### 4) COMPUTE CLOUDS - always pass to update_clouds, which will not update the cloud profile unless cloudy == "selfconsistent"
-    cld_out,df_cld, taudif, taudif_tol, all_opd, CloudParameters=update_clouds(bundle, CloudParameters,Atmosphere,
-                                                                        kz_cloud,virga_kwargs,save_profile=save_profile,
-                                                                        all_opd=all_opd,verbose=verbose)
+    cld_out,df_cld, taudif, taudif_tol, CloudParameters=update_clouds(bundle, opacityclass, CloudParameters,Atmosphere,
+                                                                        kz_cloud,virga_kwargs,hole_kwargs,verbose=verbose)
     
     ### 5) IF NEEDED: COMPUTE OPACITIES 
     refresh_needed = full_kinetis or do_quench_appox or cloudy != "cloudless"
@@ -2160,9 +2157,8 @@ def profile(bundle, nofczns, nstr, temp, pressure,
             bundle.premix_atmosphere_photochem(quench_levels=quench_levels,verbose=verbose)
             
         ### 4) IF: COMPUTE CLOUDS 
-        cld_out,df_cld, taudif, taudif_tol, all_opd, CloudParameters=update_clouds(bundle, CloudParameters,Atmosphere,
-                                                                        kz_cloud,virga_kwargs,save_profile=save_profile,
-                                                                        all_opd=all_opd,verbose=verbose)
+        cld_out,df_cld, taudif, taudif_tol, CloudParameters = update_clouds(bundle, opacityclass, CloudParameters,Atmosphere,
+                                                                        kz_cloud,virga_kwargs,hole_kwargs,verbose=verbose)
         
         if save_profile and cloudy == "selfconsistent":
             all_opd = np.append(all_opd,df_cld['opd'].values[55::196]) #save opd at 4 micron
