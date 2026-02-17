@@ -12,6 +12,7 @@ from scipy.io import FortranFile
 import glob
 from scipy.stats import binned_statistic
 import h5py
+import warnings
 
 from .io_utils import read_visscher_2121
 
@@ -2205,3 +2206,111 @@ def add_all_metadata(filename, version_number, default, resolution, wavemin, wav
     add_metadata_item(f, 'wavemin',wavemin)
     add_metadata_item(f, 'wavemax',wavemax)
     add_metadata_item(f, 'zenodo',zenodo_doi)
+
+def load_ck(path, preload_gases=None, avail_continuum=None):
+    """
+    Unified loader for correlated-k files (both preweighted HDF5 and resortrebin directory).
+
+    Parameters
+    ----------
+    path : str
+        Path to either a single HDF5 file (preweighted) or a directory containing
+        individual molecule files (resortrebin).
+    preload_gases : list of str, optional
+        List of gases to load if in resortrebin mode.
+    avail_continuum : list of str, optional
+        List of available continuum molecules to check against.
+
+    Returns
+    -------
+    dict
+        Dictionary containing all loaded data.
+    """
+    output = {}
+    if os.path.isfile(path) and (('.hdf5' in path) or ('.h5' in path)):
+        # PORTED FROM get_h5_data
+        with h5py.File(path, "r") as f:
+            output['molecules'] = [x.decode('utf-8') for x in f["ck_molecules"][:]]
+            output['wno'] = f["wno"][:]
+            output['delta_wno'] = f["delta_wno"][:]
+            output['pressures'] = f["pressures"][:]
+            output['temps'] = f["temperatures"][:]
+            output['gauss_pts'] = f["gauss_pts"][:]
+            output['gauss_wts'] = f["gauss_wts"][:]
+
+            #want the axes to be [npressure, ntemperature, nwave, ngauss ]
+            output['kappa'] = f["kcoeffs"][:]
+
+            output['full_abunds'] = pd.DataFrame(data=f["abunds"][:],
+                                               columns=[x.decode('utf-8') for x in f["abunds_map"][:]])
+
+        output['kcoeff_layers'] = output['full_abunds'].shape[0]
+        output['nwno'] = len(output['wno'])
+        output['ngauss'] = len(output['gauss_pts'])
+        #number of pressure points that exist for each temperature
+        output['full_abunds']['temperature'] = output['temps']
+        output['full_abunds']['pressure'] = output['pressures']
+        output['nc_p'] = output['full_abunds'].groupby('temperature').size().values
+        #finally we want the unique values of temperature
+        output['temps'] = np.unique(output['full_abunds']['temperature'])
+
+    else:
+        # PORTED FROM load_kcoeff_arrays_first
+        if preload_gases is None:
+            raise ValueError("preload_gases must be provided for resortrebin mode (directory path).")
+
+        check_hdf5 = glob.glob(os.path.join(path, '*.hdf5'))
+        check_npy = glob.glob(os.path.join(path, '*.npy'))
+        output['kappas'] = {}
+        msg = []
+        for imol in preload_gases:
+            if os.path.join(path, f'{imol}_1460.hdf5') in check_hdf5:
+                with h5py.File(os.path.join(path, f'{imol}_1460.hdf5'), "r") as f:
+                    #in a future code version we could get these things from the hdf5 file and not assume the 661 table
+                    output['wno'] = f["wno"][:]
+                    output['nwno'] = len(output['wno'])
+                    output['delta_wno'] = f["delta_wno"][:]
+                    output['pressures'] = f["pressures"][:]
+                    output['temps'] = f["temperatures"][:]
+                    output['gauss_pts'] = f["gauss_pts"][:]
+                    output['gauss_wts'] = f["gauss_wts"][:]
+                    output['ngauss'] = len(output['gauss_pts'])
+                    #want the axes to be [npressure, ntemperature, nwave, ngauss ]
+                    output['kappas'][imol] = f["kcoeffs"][:]
+            elif os.path.join(path, f'{imol}_1460.npy') in check_npy:
+                msg += ['Warning: npy files for DEQ will be deprecated in a future PICASO udpate. Please download the hdf5 files, explanation here https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html']
+                array = np.load(os.path.join(path, f'{imol}_1460.npy'))
+                pts, wts = g_w_2gauss(order=4, gfrac=0.95)
+
+                # Logic from get_new_wvno_grid_661
+                wvno_path = os.path.join(__refdata__, 'climate_INPUTS/')
+                wvno_new, dwni_new = np.loadtxt(os.path.join(wvno_path, "wvno_661"), usecols=[0, 1], unpack=True)
+                output['wno'] = wvno_new
+                output['delta_wno'] = dwni_new
+                output['nwno'] = len(wvno_new)
+
+                s1460 = pd.read_csv(os.path.join(__refdata__, 'opacities', 'grid1460.csv'))
+                pres = s1460['pressure_bar'].unique().astype(float)
+                #all temperatures
+                temp = s1460['temperature_K'].unique().astype(float)
+                output['nc_p'] = s1460.groupby('temperature_K').size().values
+                output['pressures'] = pres
+                output['temps'] = temp
+                output['gauss_wts'] = wts
+                output['gauss_pts'] = pts
+                output['ngauss'] = array.shape[-1]
+                output['kappas'][imol] = array
+            elif avail_continuum and imol in ''.join(avail_continuum):
+                msg += [f'Found a CIA molecule, which doesnt require a correlated-K table. The gaseous opacity of {imol} will not be included unless you first create a CK table for it.']
+            else:
+                msg += [f'hdf5 or npy ck tables for {imol} not found in {path}. Please see tutorial documentation https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html to make sure you have downloaded the needed files and placed them in this folder']
+
+        if msg:
+            warnings.warn(' '.join(np.unique(msg)), UserWarning)
+
+        if len(output['kappas'].keys()) == 0:
+            raise Exception('Uh oh. No molecules are left to mix. Its likely you have not downloaded the correct files. Please see tutorial documentation https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html to make sure you have downloaded the needed files and placed them in this folder')
+
+        output['molecules'] = list(output['kappas'].keys())
+
+    return output

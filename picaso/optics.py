@@ -1,6 +1,6 @@
 from .deq_chem import mix_all_gases_gasesfly
 from .rayleigh import Rayleigh
-from .opacity_factory import g_w_2gauss
+from .opacity_factory import g_w_2gauss, load_ck
 from .deq_chem import mix_all_gases
 
 import warnings
@@ -690,7 +690,9 @@ class RetrieveCKs():
 
             #check to see if new hdf5 files are being used 
             if 'hdf5' in self.ck_filename: 
-                self.get_h5_data()
+                ck_data = load_ck(self.ck_filename)
+                for key, value in ck_data.items():
+                    setattr(self, key, value)
             
             #DEPRECATE warning -- this method will eventually be deprecated
             else: 
@@ -709,7 +711,10 @@ class RetrieveCKs():
 
             self.get_opacities = self.get_opacities_deq_onfly
 
-            self.load_kcoeff_arrays_first(self.ck_filename)
+            ck_data = load_ck(self.ck_filename, preload_gases=self.preload_gases,
+                              avail_continuum=self.avail_continuum)
+            for key, value in ck_data.items():
+                setattr(self, key, value)
             
         else: 
             raise Exception('Only resortrebin and preweighted are options for Correlated-Ks')
@@ -725,7 +730,9 @@ class RetrieveCKs():
 
         #check to see if new hdf5 files are being used 
         if 'hdf5' in self.ck_filename: 
-            self.get_h5_data()
+            ck_data = load_ck(self.ck_filename)
+            for key, value in ck_data.items():
+                setattr(self, key, value)
         else: 
             #read in the full abundance file sot hat we can check the number of kcoefficient layers 
             #this should either be 1460 or 1060
@@ -755,7 +762,11 @@ class RetrieveCKs():
                 #if this is not an h5 file i still need to read in the legacy data
                 self.get_legacy_data_1460(wave_range)
             
-            self.get_new_wvno_grid_661()
+            path_661 = os.path.join(__refdata__, 'climate_INPUTS/')
+            wvno_new,dwni_new = np.loadtxt(path_661+"wvno_661",usecols=[0,1],unpack=True)
+            self.wno = wvno_new
+            self.delta_wno = dwni_new
+            self.nwno = len(wvno_new)
             
             #get avail continuum needs to be run before loader 
             #so that we can check if some molecules the user specified 
@@ -767,7 +778,10 @@ class RetrieveCKs():
 
             #now we can load the ktables for those gases defined in gases_fly
             opa_filepath  = os.path.join(__refdata__, 'climate_INPUTS/661')
-            self.load_kcoeff_arrays_first(opa_filepath)
+            ck_data = load_ck(opa_filepath, preload_gases=self.gases_fly,
+                              avail_continuum=self.avail_continuum)
+            for key, value in ck_data.items():
+                setattr(self, key, value)
             
             self.get_available_rayleigh()
 
@@ -782,34 +796,6 @@ class RetrieveCKs():
 
         return
 
-    def get_h5_data(self):
-        """
-        Reads in new h5py formatted data
-        """
-        with h5py.File(self.ck_filename, "r") as f:
-            self.molecules = [x.decode('utf-8') for x in f["ck_molecules"][:]]
-            self.wno = f["wno"][:]
-            self.delta_wno = f["delta_wno"][:]   
-            self.pressures = f["pressures"][:]   
-            self.temps = f["temperatures"][:]   
-            self.gauss_pts = f["gauss_pts"][:]  
-            self.gauss_wts = f["gauss_wts"][:] 
-
-            #want the axes to be [npressure, ntemperature, nwave, ngauss ]
-            self.kappa =f["kcoeffs"][:] 
-
-            self.full_abunds =  pd.DataFrame(data=f["abunds"][:] ,
-                                             columns=[x.decode('utf-8') for x in f["abunds_map"][:]])
-            
-        self.kcoeff_layers = self.full_abunds.shape[0]
-        self.nwno = len(self.wno)
-        self.ngauss = len(self.gauss_pts)     
-        #number of pressure points that exist for each temperature 
-        self.full_abunds['temperature'] = self.temps
-        self.full_abunds['pressure'] = self.pressures
-        self.nc_p = self.full_abunds.groupby('temperature').size().values
-        #finally we want the unique values of temperature
-        self.temps = np.unique(self.full_abunds['temperature'])
 
 
 
@@ -1349,80 +1335,6 @@ class RetrieveCKs():
         self.molecular_opa = np.exp(self.kappa[ind_p, ind_t, :, :])*6.02214086e+23  #avogadro constant!        
 
 
-    def load_kcoeff_arrays_first(self,path):
-        """
-        This loads and returns the kappa tables from
-        opacity_factory.compute_ck_molecular()
-        Currently we have a single file for each molecule 
-
-        Parameters 
-        ----------
-        path : str 
-            Path to the individual ck files 
-        gases_fly : bool 
-            Specifies what gasses to mix on the fly 
-        """
-        #gases_fly = copy.deepcopy(self.preload_gases)
-        check_hdf5=glob.glob(os.path.join(path,'*.hdf5'))
-        check_npy=glob.glob(os.path.join(path,'*.npy'))
-        self.kappas = {}
-        msg=[]
-        for imol in self.preload_gases: 
-            if os.path.join(path,f'{imol}_1460.hdf5') in check_hdf5:
-                with h5py.File(os.path.join(path,f'{imol}_1460.hdf5'), "r") as f:
-                    #in a future code version we could get these things from the hdf5 file and not assume the 661 table
-                    self.wno = f["wno"][:]
-                    self.nwno=len(self.wno)
-                    self.delta_wno = f["delta_wno"][:]   
-                    self.pressures = f["pressures"][:]   
-                    self.temps = f["temperatures"][:]   
-                    self.gauss_pts = f["gauss_pts"][:]  
-                    self.gauss_wts = f["gauss_wts"][:]
-                    self.ngauss = len(self.gauss_pts)
-                    #want the axes to be [npressure, ntemperature, nwave, ngauss ]
-                    array = f["kcoeffs"][:] 
-                    self.kappas[imol] = array
-            elif os.path.join(path,f'{imol}_1460.npy') in check_npy:
-                msg = ['Warning: npy files for DEQ will be deprecated in a future PICASO udpate. Please download the hdf5 files, explanation here https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html']
-                array = np.load(os.path.join(path,f'{imol}_1460.npy'))
-                pts,wts = g_w_2gauss(order=4,gfrac=0.95)
-                self.get_new_wvno_grid_661() #this sets self.delta_wno, wno and nwno
-                s1460 = pd.read_csv(os.path.join(__refdata__,'opacities','grid1460.csv'))
-                pres=s1460['pressure_bar'].unique().astype(float)
-                #all temperatures
-                temp=s1460['temperature_K'].unique().astype(float)
-                self.nc_p = s1460.groupby('temperature_K').size().values
-                self.pressures = pres
-                self.temps = temp
-                self.gauss_wts=wts
-                self.gauss_pts=pts
-                self.ngauss = array.shape[-1]
-                self.kappas[imol] = array
-            elif imol in ''.join(self.avail_continuum):
-                msg += [f'Found a CIA molecule, which doesnt require a correlated-K table. The gaseous opacity of {imol} will not be included unless you first create a CK table for it.']
-                #warnings.warn(msg, UserWarning)    
-                #gases_fly.pop(gases_fly.index(imol))        
-            else: 
-                msg+=[f'hdf5 or npy ck tables for {imol} not found in {path}. Please see tutorial documentation https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html to make sure you have downloaded the needed files and placed them in this folder']
-                #warnings.warn(msg, UserWarning)
-                #gases_fly.pop(gases_fly.index(imol))
-        
-        warnings.warn(' '.join(np.unique(msg)), UserWarning)
-
-        if len(self.kappas.keys())==0: raise Exception('Uh oh. No molecules are left to mix. Its likely you have not downloaded the correct files. Please see tutorial documentation https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html to make sure you have downloaded the needed files and placed them in this folder')
-
-        #self.gases_fly=list(self.kappas.keys())
-        #this is redundant but not ready to fully get rid of gases_fly
-        #to be consistent with everything gases_fly should be replaced with 
-        #self.molecules
-        self.molecules=list(self.kappas.keys())
-
-    def get_new_wvno_grid_661(self):
-        path = os.path.join(__refdata__, 'climate_INPUTS/')
-        wvno_new,dwni_new = np.loadtxt(path+"wvno_661",usecols=[0,1],unpack=True)
-        self.wno = wvno_new
-        self.delta_wno = dwni_new
-        self.nwno = len(wvno_new)
 
 
     def get_continuum(self, atmosphere):
