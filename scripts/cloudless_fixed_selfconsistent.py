@@ -26,7 +26,7 @@ pressure_bobcat,temp_bobcat = np.loadtxt(jdi.os.path.join(
                             sonora_profile_db,f"t{teff}g{grav}nc_m0.0.dat"),
                             usecols=[1,2],unpack=True, skiprows = 1)
 
-rcb_guess = 52 # top most level of guessed convective zone 
+rcb_guess = 55 # top most level of guessed convective zone 
 virga_dir = os.path.join("/Users", "adityasengupta",'virga', "refrind") # path to virga directory with the Mie scattering files
 
 runs = {}
