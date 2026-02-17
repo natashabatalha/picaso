@@ -99,7 +99,7 @@ def insert_hitran_cia(original_file, molname, new_db, new_wno):
                          }} 
 
     cia = pd.read_csv(original_file,names=['wno','cm5/molecule2'], header=None,usecols=[0,1],
-                delim_whitespace=True)
+                sep=r'\s+')
     header = pd.read_csv(original_file,header=None,names=['header'])
 
 
@@ -253,7 +253,7 @@ def get_original_data(original_file,colnames,new_db, overwrite=False):
         Default is set to False as to not overwrite any existing files. This parameter controls overwriting 
         cia database 
    """
-    og_opacity = pd.read_csv(original_file,delim_whitespace=True,names=colnames)
+    og_opacity = pd.read_csv(original_file,sep=r'\s+',names=colnames)
     
     temperatures = og_opacity['wno'].loc[np.isnan(og_opacity[colnames[1]])].values
 
@@ -377,7 +377,7 @@ def h2h2_overtone(t, wno):
     H2-H2 absorption in cm-1 amagat-2       
     """
     fname = os.path.join(__refdata__, 'opacities','H2H2_ov2_eq.tbl')
-    df = pd.read_csv(fname, delim_whitespace=True).set_index('wavenumber').apply(np.log10)      
+    df = pd.read_csv(fname, sep=r'\s+').set_index('wavenumber').apply(np.log10)      
     temps = [ float(i) for i in df.keys()]
 
     if t > max(temps):
@@ -819,7 +819,7 @@ def insert_molecular_1060(molecule, min_wavelength, max_wavelength, new_R,
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1] 
         elif molecule =='CH3D':
             df = pd.read_csv(os.path.join(og_directory,molecule,'fort.{0}.bz2'.format(int(i)))
-                             ,delim_whitespace=True, skiprows=23,header=None)
+                             ,sep=r'\s+', skiprows=23,header=None)
             dset=df[1].values
             og_wvno_grid=df[0].values
         else: 
@@ -1008,7 +1008,7 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
             dset = np.load(open(fdata,'rb'))
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]  
         elif 'rfree_fort' in ftype: 
-            df = pd.read_csv(fdata,delim_whitespace=True, skiprows=27, header=None, names=['wno','cx'])
+            df = pd.read_csv(fdata,sep=r'\s+', skiprows=27, header=None, names=['wno','cx'])
             dset=df.loc[:,'cx'].values
             og_wvno_grid=df.loc[:,'wno'].values  
         elif 'h5' in ftype: 
@@ -1069,10 +1069,10 @@ def get_kark_CH4_noTdependence(kark_dir,new_wave, temperature):
     opacity in cm2/species
     """
 
-    new_beers = pd.read_csv(os.path.join(kark_dir, 'kark_beers.csv'),delim_whitespace=True)
-    two_term = pd.read_csv(os.path.join(kark_dir, 'kark_two_term.csv'),delim_whitespace=True)
-    four_term = pd.read_csv(os.path.join(kark_dir, 'kark_four_term.csv'),delim_whitespace=True)
-    wts = pd.read_csv(os.path.join(kark_dir, 'kark_gauss_weights.csv'),delim_whitespace=True)
+    new_beers = pd.read_csv(os.path.join(kark_dir, 'kark_beers.csv'),sep=r'\s+')
+    two_term = pd.read_csv(os.path.join(kark_dir, 'kark_two_term.csv'),sep=r'\s+')
+    four_term = pd.read_csv(os.path.join(kark_dir, 'kark_four_term.csv'),sep=r'\s+')
+    wts = pd.read_csv(os.path.join(kark_dir, 'kark_gauss_weights.csv'),sep=r'\s+')
     wts4 = wts.loc[wts['number']==4,[str(i) for i in range(1,5)]].values
     wts2 = wts.loc[wts['number']==2,[str(i) for i in range(1,3)]].values
     wave = []
@@ -1138,7 +1138,7 @@ def get_optical_o3(file_o3,new_wvno_grid):
     new_wvno_grid : array
         Wavelength grid to interpolate the optical ozone data onto
     """
-    df1 = pd.read_csv(file_o3,delim_whitespace=True,names=['nm','cx'])
+    df1 = pd.read_csv(file_o3,sep=r'\s+',names=['nm','cx'])
     wno_old = 1e4/(df1['nm']*1e-3).values[::-1]
     opa = df1['cx'].values[::-1]
     o3 = np.interp(new_wvno_grid, wno_old ,opa, left=1e-100, right=1e-100)
@@ -1227,7 +1227,7 @@ def vresample_and_insert_molecular(molecule, min_wavelength, max_wavelength, new
     delwn = sfits['Delta Wavenum']
     start = sfits['Start Wavenum']
 
-    s = pd.read_csv(os.path.join(og_directory,'PTgrid1060.txt'),delim_whitespace=True,skiprows=1,
+    s = pd.read_csv(os.path.join(og_directory,'PTgrid1060.txt'),sep=r'\s+',skiprows=1,
                         header=None, names=['i','pressure','temperature'],dtype=str)
     #all pressures 
     pres=s['pressure'].values.astype(float)
@@ -1952,6 +1952,7 @@ def compute_ck_molecular(molecule,og_directory,
 
         if verbose: print(i,p,t)
     
+
     if  isinstance(climate_filename, type(None)):
         return k_coeff_arr
     

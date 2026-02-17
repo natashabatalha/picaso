@@ -29,7 +29,7 @@ dependencies = [
     "xarray",
     "pooch",
     "tqdm",
-    "bibtexparser==1.4.3",
+    "bibtexparser==1.4.4",
     "netcdf4",
     "h5netcdf",
 ]
