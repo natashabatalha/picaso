@@ -5005,7 +5005,12 @@ class inputs():
         with_spec : bool 
             Runs picaso spectrum at the end to get the full converged outputs, Default=False
         save_all_kzz : bool
-            If you want to save and return all iterations in the kzz profile,True/False
+            If you want to save and return all iterations in the kzz profile,True/False. 
+            Note that if your calculation does not need a kzz profile at all, 
+            this will still compute it and return to you. Those this seems silly it 
+            is designed for folks coupling PICASO runs to other codes that need kzz 
+            as input (e.g., other cloud codes etc.) and this way they can get the kzz profile
+            without having to run a separate PICASO run.
         diseq_chem : bool
             If you want to run `on-the-fly' mixing (takes longer),True/False
         self_consistent_kzz : bool
