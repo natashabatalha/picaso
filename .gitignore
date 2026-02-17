@@ -11,6 +11,11 @@
 *.csv
 *.npy
 *.h5
+*.nc
+*.pt
+*.dat
+*.fits
+*.ascii
 
 # Jupyter Notebooks
 .ipynb_checkpoints
@@ -27,6 +32,7 @@ dist/
 *__pycache__/
 
 # reference files 
+reference/*
 reference/sonora_grids/*
 reference/stellar_grids/*
 reference/virga/*
