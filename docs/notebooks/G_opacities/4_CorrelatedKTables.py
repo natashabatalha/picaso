@@ -1,11 +1,12 @@
 # ---
 # jupyter:
 #   jupytext:
+#     custom_cell_magics: kql
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.19.1
+#       jupytext_version: 1.11.2
 #   kernelspec:
 #     display_name: pic312
 #     language: python
@@ -219,3 +220,28 @@ for clr, sp in zip(colors, species):
 
 ax.legend([Line2D([], [], color='k', lw=1, ls=ls) for ls in styles.values()], styles.keys())
 plt.tight_layout()
+
+# %% [markdown]
+# ## Reading Correlated-K Tables directly from the file 
+#
+# If you want to subvert opannection you can also use opacity_factory to get out the info from our correlated-k tables. 
+
+# %%
+import picaso.opacity_factory as opaf
+
+# %%
+ck_db_path = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted','sonora_2121grid_feh1.0_co0.46.hdf5')
+
+output_preweighted = opaf.get_ck_tables(ck_db_path)
+
+directory_to_resortrebin = os.path.join(os.getenv('picaso_refdata'),'opacities', 'resortrebin')
+
+#read data for just H2O and CH4  (you could also just say "all" to load in all molecules)
+output_by_molecule = opaf.get_ck_tables(directory_to_resortrebin, preload_gases=['H2O','CH4'])
+
+
+
+# %%
+output_by_molecule.keys()
+
+# %%

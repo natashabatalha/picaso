@@ -733,6 +733,7 @@ class RetrieveCKs():
         self.gauss_wts = output['gauss_wts']
         self.kappa = output['kappa']
         self.full_abunds = output['full_abunds']
+        self.nc_p = output['nc_p']
         self.kcoeff_layers = self.full_abunds.shape[0]
         self.nwno = len(self.wno)
         self.ngauss = len(self.gauss_pts)
