@@ -10,7 +10,6 @@ ScatteringPhase_Tuple = namedtuple('ScatteringPhase_Tuple',['surf_reflect','sing
 Disco_Tuple = namedtuple('Disco_Tuple',['ng','nt', 'gweight','tweight', 'ubar0','ubar1','cos_theta'])
 OpacityNoEd_Tuple = namedtuple("OpacityNoEd_Tuple", ["DTAU", "TAU", "W0", "COSB"])
 
-
 def calculate_atm(bundle, opacityclass, only_atmosphere=False):
     """
     Function to calculate the atmosphere and opacities for the given inputs.

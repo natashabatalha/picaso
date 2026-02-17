@@ -251,7 +251,7 @@ def run_diseq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
     convergence_criteria = convergence_criteriaT(it_max=10, itmx=7, conv=5.0, convt=4.0, x_max_mult=7.0) 
 
     final=False
-    profile_flag, pressure, temperature, dtdp,CloudParameters,cld_out,flux_net_ir_layer,flux_net_v_layer,flux_plus_ir_attop,all_profiles,all_opd,all_kzz =profile(
+    profile_flag, pressure, temperature, dtdp,CloudParameters,flux_net_ir_layer,flux_net_v_layer,flux_plus_ir_attop,all_profiles,all_opd,all_kzz =profile(
             bundle, nofczns, nstr, temp, pressure, 
             AdiabatBundle,opacityclass,
             grav,
@@ -341,7 +341,7 @@ def run_chemeq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
     
     convergence_criteria = convergence_criteriaT(it_max=10, itmx=7, conv=10.0, convt=5.0, x_max_mult=7.0)       
     
-    profile_flag,pressure, temperature, dtdp,  CloudParameters,cld_out,flux_net_ir_layer, flux_net_v_layer, flux_plus_ir_attop,all_profiles, all_opd,all_kzz = profile(bundle,
+    profile_flag,pressure, temperature, dtdp,  CloudParameters,flux_net_ir_layer, flux_net_v_layer, flux_plus_ir_attop,all_profiles, all_opd,all_kzz = profile(bundle,
             nofczns,nstr, #tracks convective zones 
             temp,pressure, #Atmosphere
             AdiabatBundle, #t_table, p_table, grad, cp, 
@@ -364,7 +364,7 @@ def run_chemeq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
 
     final = False
     
-    profile_flag,pressure, temperature, dtdp,CloudParameters,cld_out,flux_net_ir_layer, flux_net_v_layer, flux_plus_ir_attop,  all_profiles, all_opd,all_kzz = profile(bundle,
+    profile_flag,pressure, temperature, dtdp,CloudParameters,flux_net_ir_layer, flux_net_v_layer, flux_plus_ir_attop,  all_profiles, all_opd,all_kzz = profile(bundle,
             nofczns,nstr, #tracks convective zones 
             temperature, pressure, 
             AdiabatBundle, #t_table, p_table, grad, cp, 
@@ -380,7 +380,7 @@ def run_chemeq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
     
     #STEP 3) find strat that will now run profile several times, each time updating the opacities and chemistry 
     #and also refine the convective zone guess while it does this. 
-    final_conv_flag, pressure, temp, dtdp, nstr_new, flux_net_ir_final,flux_net_v_final, flux_plus_final, chem_out, cld_out, all_profiles, all_opd,all_kzz =find_strat(bundle,
+    final_conv_flag, pressure, temp, dtdp, nstr_new, flux_net_ir_final,flux_net_v_final, flux_plus_final, chem_out, CloudParameters, all_profiles, all_opd,all_kzz =find_strat(bundle,
             nofczns,nstr,
             temperature,pressure,dtdp, #Atmosphere
             AdiabatBundle,
@@ -392,6 +392,7 @@ def run_chemeq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
             flux_net_ir_layer, flux_plus_ir_attop,
             verbose=verbose, moist = moist,self_consistent_kzz=self_consistent_kzz)
     
+    cld_out = CloudParameters.cld_out
     return final_conv_flag, pressure, temp, dtdp, nstr_new, flux_net_ir_final,flux_net_v_final, flux_plus_final, chem_out, cld_out, all_profiles, all_opd,all_kzz  
 
     
@@ -1478,7 +1479,7 @@ def find_strat(bundle, nofczns,nstr,
             #print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
             #print(nofczns)
             raise ValueError("Overlap happened !")
-        profile_flag,pressure, temp, dtdp, CloudParameters,cld_out,flux_net_ir_layer,flux_net_v_layer, flux_plus_ir_attop, all_profiles,  all_opd,all_kzz = profile(bundle,
+        profile_flag,pressure, temp, dtdp, CloudParameters,flux_net_ir_layer,flux_net_v_layer, flux_plus_ir_attop, all_profiles,  all_opd,all_kzz = profile(bundle,
             nofczns, nstr, temp, pressure, 
             AdiabatBundle,opacityclass,
             grav,
@@ -1523,7 +1524,7 @@ def find_strat(bundle, nofczns,nstr,
                 if verbose: 
                     print(nstr)
 
-                profile_flag, pressure, temp, dtdp,CloudParameters,cld_out,flux_net_ir_layer,flux_net_v_layer, flux_plus_ir_attop,  all_profiles,all_opd ,all_kzz= profile(bundle,
+                profile_flag, pressure, temp, dtdp,CloudParameters,flux_net_ir_layer,flux_net_v_layer, flux_plus_ir_attop,  all_profiles,all_opd ,all_kzz= profile(bundle,
                                 nofczns, nstr, temp, pressure, 
                                 AdiabatBundle,opacityclass,
                                 grav,
@@ -1553,7 +1554,7 @@ def find_strat(bundle, nofczns,nstr,
                     i_change =1
                 if verbose: print(nstr)
                   
-                profile_flag,pressure, temp, dtdp, CloudParameters,cld_out,flux_net_ir_layer, flux_net_v_layer, flux_plus_ir_attop,all_profiles, all_opd,all_kzz = profile(bundle,
+                profile_flag,pressure, temp, dtdp, CloudParameters,flux_net_ir_layer, flux_net_v_layer, flux_plus_ir_attop,all_profiles, all_opd,all_kzz = profile(bundle,
                                 nofczns, nstr, temp, pressure, 
                                 AdiabatBundle,opacityclass,
                                 grav,
@@ -1578,7 +1579,7 @@ def find_strat(bundle, nofczns,nstr,
     if verbose: 
         print("final",nstr)
 
-    profile_flag,pressure, temp, dtdp, CloudParameters,cld_out,flux_net_ir_layer,flux_net_v_layer, flux_plus_ir_attop,  all_profiles,all_opd,all_kzz = profile(bundle,
+    profile_flag,pressure, temp, dtdp, CloudParameters,flux_net_ir_layer,flux_net_v_layer, flux_plus_ir_attop,  all_profiles,all_opd,all_kzz = profile(bundle,
                 nofczns, nstr, temp, pressure, 
                 AdiabatBundle,opacityclass,
                 grav,
@@ -1610,7 +1611,7 @@ def find_strat(bundle, nofczns,nstr,
     chem = bundle.inputs['atmosphere']['profile']
     #right now this bundle does not have the up to date chemistry
     # TO DO : add chemistry and also condense last three "all" variables into one tuple
-    return profile_flag, pressure, temp, dtdp, nstr ,flux_net_ir_layer, flux_net_v_layer, flux_plus_ir_attop, chem, cld_out,all_profiles,all_opd,all_kzz
+    return profile_flag, pressure, temp, dtdp, nstr ,flux_net_ir_layer, flux_net_v_layer, flux_plus_ir_attop, chem, CloudParameters,all_profiles,all_opd,all_kzz
 
 def profile(bundle, nofczns, nstr, temp, pressure, 
             AdiabatBundle,opacityclass,
@@ -1705,7 +1706,6 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     do_holes = hole_kwargs.get('do_holes', None); fhole=hole_kwargs.get('fhole', None)
     #cld_species = CloudParameters.virga_condensates #neb commenting out not used 
         
-
     min_temp = np.min(temp)
     # Don't use large step_max option for cold models, much better converged with smaller stepping unless it's cloudy
     if min_temp <= 250:# and cloudy != 1:
@@ -1798,7 +1798,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         bundle.premix_atmosphere_photochem(quench_levels=quench_levels,verbose=verbose)
     
     ### 4) COMPUTE CLOUDS - always pass to update_clouds, which will not update the cloud profile unless cloudy == "selfconsistent"
-    cld_out, df_cld, taudif, taudif_tol, CloudParameters = update_clouds(bundle, opacityclass, CloudParameters, Atmosphere,
+    df_cld, taudif, taudif_tol, CloudParameters = update_clouds(bundle, opacityclass, CloudParameters, Atmosphere,
                                                                         kz_cloud,virga_kwargs,hole_kwargs,verbose=verbose)
     
     ### 5) IF NEEDED: COMPUTE OPACITIES 
@@ -1869,7 +1869,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
             bundle.premix_atmosphere_photochem(quench_levels=quench_levels,verbose=verbose)
             
         ### 4) IF: COMPUTE CLOUDS 
-        cld_out,df_cld, taudif, taudif_tol, CloudParameters = update_clouds(bundle, opacityclass, CloudParameters,Atmosphere,
+        df_cld, taudif, taudif_tol, CloudParameters = update_clouds(bundle, opacityclass, CloudParameters,Atmosphere,
                                                                         kz_cloud,virga_kwargs,hole_kwargs,verbose=verbose)
         
         if save_profile and cloudy == "selfconsistent":
@@ -1885,7 +1885,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         # 6) PREP RETURNS! 
         # TO DO : add chemistry and also condense last three "all" variables into one tuple
         RETURNS = [conv_flag, pressure, temp , dtdp, 
-                        CloudParameters, cld_out,
+                        CloudParameters,
                         flux_net_ir_layer, flux_net_v_layer, flux_plus_ir_attop, 
                         all_profiles, all_opd, all_kzz]
         
@@ -1924,4 +1924,3 @@ def profile(bundle, nofczns, nstr, temp, pressure,
             print("Profile converged after itmx hit")
     
     return RETURNS
-    

@@ -1,9 +1,7 @@
 from .atmsetup import ATMSETUP
 from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d, tidal_flux
 
-from .climate import  namedtuple,run_chemeq_climate_workflow,run_diseq_climate_workflow
-
-
+from .climate import namedtuple,run_chemeq_climate_workflow,run_diseq_climate_workflow
 from .wavelength import get_cld_input_grid
 from .optics import RetrieveOpacities,compute_opacity,RetrieveCKs
 from .disco import get_angles_1d, get_angles_3d, compute_disco, compress_disco, compress_thermal
@@ -14,14 +12,12 @@ from .build_3d_input import regrid_xarray
 from virga import justdoit as vj
 from scipy.interpolate import UnivariateSpline, interp1d,RegularGridInterpolator
 from scipy import special
-from numpy import exp, sqrt,log
-from numba import jit,njit
-from scipy.io import FortranFile
+from numpy import log
+from numba import njit
 import re
 
 import os
 import glob
-import pickle as pk
 import numpy as np
 import pandas as pd
 import copy
@@ -4940,7 +4936,8 @@ class inputs():
         mass= self.inputs['planet']['mass']
         if np.isnan(mass): raise Exception('Photochem run is being requested but mass and radius were not supplied through gravity function')
         radius= self.inputs['planet']['radius']
-        if np.isnan(radius): raise Exception('Photochem run is being requested but mass and radius were not supplied through gravity function')
+        if np.isnan(radius): 
+            raise Exception('Photochem run is being requested but mass and radius were not supplied through gravity function')
         
         self.inputs['atmosphere']['photochem_init_args']["planet_mass"] =mass
         self.inputs['atmosphere']['photochem_init_args']["planet_radius"] = radius
@@ -5187,18 +5184,13 @@ class inputs():
         #BUNDLING
         virga_specific =[['virga_'+i,val] for i ,val in virga_kwargs.items() if 'patchy' not in i]
         hole_specific =  [[i,val] for i ,val in virga_kwargs.items() if 'patchy' in i]
-        CloudParametersT = namedtuple('CloudParameters',['cloudy', 'OPD','G0','W0']
+        CloudParametersT = namedtuple('CloudParameters',['cloudy', 'OPD','G0','W0','cld_out']
                                       +[i[0] for i in virga_specific]
                                       +[i[0] for i in hole_specific])
         #this adds the cloud params that are always needed plus the virga kwargs, if they are used 
-        CloudParameters=CloudParametersT(*([cloudy, opd_cld_climate,g0_cld_climate,w0_cld_climate]
+        CloudParameters=CloudParametersT(*([cloudy, opd_cld_climate,g0_cld_climate,w0_cld_climate,None]
                                         +[i[1] for i in virga_specific]
                                         +[i[1] for i in hole_specific]))
-
-        # AS: Ideally I'd like to have this logic within clouds.py
-        # Or in the initial call to virga
-        # But I need to wait till Kz has been calculated for the first time
-        if cloudy == "fixed":
 
         if verbose:
             self.interpret_run()

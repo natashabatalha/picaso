@@ -57,7 +57,6 @@ def get_kzz(grav,tidal,flux_net_ir_layer, flux_plus_ir_attop,Adiabat,nstr, Atmos
 
     sigmab =  0.56687e-4 #cgs
 
-    teff_now = (f_sum/sigmab)**0.25
     target_teff = (abs(tidal[0])/sigmab)**0.25
     flx_min = sigmab*((target_teff*0.05)**4)
     
@@ -134,7 +133,6 @@ def get_kzz(grav,tidal,flux_net_ir_layer, flux_plus_ir_attop,Adiabat,nstr, Atmos
     #     kz[nstr[3]:nstr[4]] = kzrad2#/100 #*10 #kz[nstr[3]:nstr[4]]/1.0
     # else:
     #     kz[nstr[0]:nstr[1]] = kzrad1#/100
-    pm_range = 8 # aribitrary range to average over to get the mean kz *JM working on changing to be based on scale height
     dz = scale_h[1:] * (np.log((p_layer[:-1]/1e6) / (p_layer[1:]/1e6)))
     z = np.zeros(nlevel - 1)
     z[0] = dz[0]
@@ -173,42 +171,43 @@ def get_kzz(grav,tidal,flux_net_ir_layer, flux_plus_ir_attop,Adiabat,nstr, Atmos
     return kz
 
 def update_clouds_selfconsistent(bundle, opacityclass, CloudParameters, Atmosphere, kzz, virga_kwargs, hole_kwargs, verbose=False):
-        opd_cld_climate, g0_cld_climate, w0_cld_climate = CloudParameters.OPD, CloudParameters.G0, CloudParameters.W0
-        we0, we1, we2, we3 = 0.25, 0.25, 0.25, 0.25
+    opd_cld_climate, g0_cld_climate, w0_cld_climate = CloudParameters.OPD, CloudParameters.G0, CloudParameters.W0
+    we0, we1, we2, we3 = 0.25, 0.25, 0.25, 0.25
 
-        opd_prev_cld_step = (we0 * opd_cld_climate[:, :, 0] + we1 * opd_cld_climate[:, :, 1] + we2 * opd_cld_climate[:, :, 2] + we3 * opd_cld_climate[:, :, 3])
+    opd_prev_cld_step = (we0 * opd_cld_climate[:, :, 0] + we1 * opd_cld_climate[:, :, 1] + we2 * opd_cld_climate[:, :, 2] + we3 * opd_cld_climate[:, :, 3])
 
-        virga_kwargs['mmw'] = np.mean(Atmosphere.mmw_layer)
+    virga_kwargs['mmw'] = np.mean(Atmosphere.mmw_layer)
 
-        bundle.inputs['atmosphere']['profile']['kz'] = kzz
+    bundle.inputs['atmosphere']['profile']['kz'] = kzz
 
-        #if not average_only: 
-        cld_out = bundle.virga(**virga_kwargs)
+    #if not average_only: 
+    cld_out = bundle.virga(**virga_kwargs)
 
-        opd_now, w0_now, g0_now = cld_out['opd_per_layer'], cld_out['single_scattering'], cld_out['asymmetry']
+    opd_now, w0_now, g0_now = cld_out['opd_per_layer'], cld_out['single_scattering'], cld_out['asymmetry']
 
-        opd_cld_climate[:, :, 3], g0_cld_climate[:, :, 3], w0_cld_climate[:, :, 3] = opd_cld_climate[:, :, 2], g0_cld_climate[:, :, 2], w0_cld_climate[:, :, 2]
-        opd_cld_climate[:, :, 2], g0_cld_climate[:, :, 2], w0_cld_climate[:, :, 2] = opd_cld_climate[:, :, 1], g0_cld_climate[:, :, 1], w0_cld_climate[:, :, 1]
-        opd_cld_climate[:, :, 1], g0_cld_climate[:, :, 1], w0_cld_climate[:, :, 1] = opd_cld_climate[:, :, 0], g0_cld_climate[:, :, 0], w0_cld_climate[:, :, 0]
+    opd_cld_climate[:, :, 3], g0_cld_climate[:, :, 3], w0_cld_climate[:, :, 3] = opd_cld_climate[:, :, 2], g0_cld_climate[:, :, 2], w0_cld_climate[:, :, 2]
+    opd_cld_climate[:, :, 2], g0_cld_climate[:, :, 2], w0_cld_climate[:, :, 2] = opd_cld_climate[:, :, 1], g0_cld_climate[:, :, 1], w0_cld_climate[:, :, 1]
+    opd_cld_climate[:, :, 1], g0_cld_climate[:, :, 1], w0_cld_climate[:, :, 1] = opd_cld_climate[:, :, 0], g0_cld_climate[:, :, 0], w0_cld_climate[:, :, 0]
 
-        opd_cld_climate[:, :, 0], g0_cld_climate[:, :, 0], w0_cld_climate[:, :, 0] = opd_now, g0_now, w0_now
+    opd_cld_climate[:, :, 0], g0_cld_climate[:, :, 0], w0_cld_climate[:, :, 0] = opd_now, g0_now, w0_now
 
-        sum_opd_clmt = (we0 * opd_cld_climate[:, :, 0] + we1 * opd_cld_climate[:, :, 1] + we2 * opd_cld_climate[:, :, 2] + we3 * opd_cld_climate[:, :, 3])
-        opd_clmt = (we0 * opd_cld_climate[:, :, 0] + we1 * opd_cld_climate[:, :, 1] + we2 * opd_cld_climate[:, :, 2] + we3 * opd_cld_climate[:, :, 3])
-        g0_clmt = (we0 * opd_cld_climate[:, :, 0] * g0_cld_climate[:, :, 0] + we1 * opd_cld_climate[:, :, 1] * g0_cld_climate[:, :, 1] + we2 * opd_cld_climate[:, :, 2] * g0_cld_climate[:, :, 2] + we3 * opd_cld_climate[:, :, 3] * g0_cld_climate[:, :, 3]) / (sum_opd_clmt)
-        w0_clmt = (we0 * opd_cld_climate[:, :, 0] * w0_cld_climate[:, :, 0] + we1 * opd_cld_climate[:, :, 1] * w0_cld_climate[:, :, 1] + we2 * opd_cld_climate[:, :, 2] * w0_cld_climate[:, :, 2] + we3 * opd_cld_climate[:, :, 3] * w0_cld_climate[:, :, 3]) / (sum_opd_clmt)
-        g0_clmt = np.nan_to_num(g0_clmt, nan=0.0)
-        w0_clmt = np.nan_to_num(w0_clmt, nan=0.0)
-        opd_clmt[np.where(opd_clmt <= 1e-5)] = 0.0
+    sum_opd_clmt = (we0 * opd_cld_climate[:, :, 0] + we1 * opd_cld_climate[:, :, 1] + we2 * opd_cld_climate[:, :, 2] + we3 * opd_cld_climate[:, :, 3])
+    opd_clmt = (we0 * opd_cld_climate[:, :, 0] + we1 * opd_cld_climate[:, :, 1] + we2 * opd_cld_climate[:, :, 2] + we3 * opd_cld_climate[:, :, 3])
+    g0_clmt = (we0 * opd_cld_climate[:, :, 0] * g0_cld_climate[:, :, 0] + we1 * opd_cld_climate[:, :, 1] * g0_cld_climate[:, :, 1] + we2 * opd_cld_climate[:, :, 2] * g0_cld_climate[:, :, 2] + we3 * opd_cld_climate[:, :, 3] * g0_cld_climate[:, :, 3]) / (sum_opd_clmt)
+    w0_clmt = (we0 * opd_cld_climate[:, :, 0] * w0_cld_climate[:, :, 0] + we1 * opd_cld_climate[:, :, 1] * w0_cld_climate[:, :, 1] + we2 * opd_cld_climate[:, :, 2] * w0_cld_climate[:, :, 2] + we3 * opd_cld_climate[:, :, 3] * w0_cld_climate[:, :, 3]) / (sum_opd_clmt)
+    g0_clmt = np.nan_to_num(g0_clmt, nan=0.0)
+    w0_clmt = np.nan_to_num(w0_clmt, nan=0.0)
+    opd_clmt[np.where(opd_clmt <= 1e-5)] = 0.0
 
-        df_cld = vj.picaso_format(opd_clmt, w0_clmt, g0_clmt, pressure=cld_out['pressure'], wavenumber=1e4 / cld_out['wave'])
-        diff = (opd_clmt - opd_prev_cld_step)
-        taudif = np.max(np.abs(diff))
-        taudif_tol = 0.4 * np.max(0.5 * (opd_clmt + opd_prev_cld_step))
-        if verbose:
-            print("Doing clouds: Max TAUCLD diff is", taudif, " Tau tolerance is ", taudif_tol)
-        CloudParameters = CloudParameters._replace(OPD=opd_cld_climate,G0=g0_cld_climate,W0=w0_cld_climate)
-        bundle.clouds(df=df_cld,**hole_kwargs)
+    df_cld = vj.picaso_format(opd_clmt, w0_clmt, g0_clmt, pressure=cld_out['pressure'], wavenumber=1e4 / cld_out['wave'])
+    diff = (opd_clmt - opd_prev_cld_step)
+    taudif = np.max(np.abs(diff))
+    taudif_tol = 0.4 * np.max(0.5 * (opd_clmt + opd_prev_cld_step))
+    if verbose:
+        print("Doing clouds: Max TAUCLD diff is", taudif, " Tau tolerance is ", taudif_tol)
+    CloudParameters = CloudParameters._replace(OPD=opd_cld_climate,G0=g0_cld_climate,W0=w0_cld_climate,cld_out=cld_out)
+    bundle.clouds(df=df_cld,**hole_kwargs)
+    return df_cld, taudif, taudif_tol, CloudParameters
 
 def update_clouds(bundle, opacityclass, CloudParameters, Atmosphere, kzz, virga_kwargs, hole_kwargs, verbose=False):
     """
@@ -249,45 +248,13 @@ def update_clouds(bundle, opacityclass, CloudParameters, Atmosphere, kzz, virga_
     """
     cloudy = CloudParameters.cloudy
     if cloudy == "cloudless":
-        return 0, 0, 0, 0.1, CloudParameters
-    elif cloudy == "selfconsistent":
-        opd_cld_climate, g0_cld_climate, w0_cld_climate = CloudParameters.OPD, CloudParameters.G0, CloudParameters.W0
-        we0, we1, we2, we3 = 0.25, 0.25, 0.25, 0.25
-
-        opd_prev_cld_step = (we0 * opd_cld_climate[:, :, 0] + we1 * opd_cld_climate[:, :, 1] + we2 * opd_cld_climate[:, :, 2] + we3 * opd_cld_climate[:, :, 3])
-
-        virga_kwargs['mmw'] = np.mean(Atmosphere.mmw_layer)
-
-        bundle.inputs['atmosphere']['profile']['kz'] = kzz
-
-        #if not average_only: 
-        cld_out = bundle.virga(**virga_kwargs)
-
-        opd_now, w0_now, g0_now = cld_out['opd_per_layer'], cld_out['single_scattering'], cld_out['asymmetry']
-
-        opd_cld_climate[:, :, 3], g0_cld_climate[:, :, 3], w0_cld_climate[:, :, 3] = opd_cld_climate[:, :, 2], g0_cld_climate[:, :, 2], w0_cld_climate[:, :, 2]
-        opd_cld_climate[:, :, 2], g0_cld_climate[:, :, 2], w0_cld_climate[:, :, 2] = opd_cld_climate[:, :, 1], g0_cld_climate[:, :, 1], w0_cld_climate[:, :, 1]
-        opd_cld_climate[:, :, 1], g0_cld_climate[:, :, 1], w0_cld_climate[:, :, 1] = opd_cld_climate[:, :, 0], g0_cld_climate[:, :, 0], w0_cld_climate[:, :, 0]
-
-        opd_cld_climate[:, :, 0], g0_cld_climate[:, :, 0], w0_cld_climate[:, :, 0] = opd_now, g0_now, w0_now
-
-        sum_opd_clmt = (we0 * opd_cld_climate[:, :, 0] + we1 * opd_cld_climate[:, :, 1] + we2 * opd_cld_climate[:, :, 2] + we3 * opd_cld_climate[:, :, 3])
-        opd_clmt = (we0 * opd_cld_climate[:, :, 0] + we1 * opd_cld_climate[:, :, 1] + we2 * opd_cld_climate[:, :, 2] + we3 * opd_cld_climate[:, :, 3])
-        g0_clmt = (we0 * opd_cld_climate[:, :, 0] * g0_cld_climate[:, :, 0] + we1 * opd_cld_climate[:, :, 1] * g0_cld_climate[:, :, 1] + we2 * opd_cld_climate[:, :, 2] * g0_cld_climate[:, :, 2] + we3 * opd_cld_climate[:, :, 3] * g0_cld_climate[:, :, 3]) / (sum_opd_clmt)
-        w0_clmt = (we0 * opd_cld_climate[:, :, 0] * w0_cld_climate[:, :, 0] + we1 * opd_cld_climate[:, :, 1] * w0_cld_climate[:, :, 1] + we2 * opd_cld_climate[:, :, 2] * w0_cld_climate[:, :, 2] + we3 * opd_cld_climate[:, :, 3] * w0_cld_climate[:, :, 3]) / (sum_opd_clmt)
-        g0_clmt = np.nan_to_num(g0_clmt, nan=0.0)
-        w0_clmt = np.nan_to_num(w0_clmt, nan=0.0)
-        opd_clmt[np.where(opd_clmt <= 1e-5)] = 0.0
-
-        df_cld = vj.picaso_format(opd_clmt, w0_clmt, g0_clmt, pressure=cld_out['pressure'], wavenumber=1e4 / cld_out['wave'])
-        diff = (opd_clmt - opd_prev_cld_step)
-        taudif = np.max(np.abs(diff))
-        taudif_tol = 0.4 * np.max(0.5 * (opd_clmt + opd_prev_cld_step))
-        if verbose:
-            print("Doing clouds: Max TAUCLD diff is", taudif, " Tau tolerance is ", taudif_tol)
-        CloudParameters = CloudParameters._replace(OPD=opd_cld_climate,G0=g0_cld_climate,W0=w0_cld_climate)
-        bundle.clouds(df=df_cld,**hole_kwargs)
-    elif cloudy == "fixed":
+        return 0, 0, 0.1, CloudParameters
+    elif cloudy == "selfconsistent" or cloudy == "fixed":
+        CloudParameters = CloudParameters._replace(cloudy="fixed_after_first")
+        # On the first iteration, fixed clouds are self-consistent
+        # On later iterations, we keep returning the opacity/SSA/asymmetry calculated in this iteration
+        return update_clouds_selfconsistent(bundle, opacityclass, CloudParameters, Atmosphere, kzz, virga_kwargs, hole_kwargs, verbose=verbose)
+    elif cloudy == "fixed_after_first":
         level_pressure, wno = bundle.inputs['atmosphere']['profile']['pressure'], opacityclass.wno
         opd_cld_climate, g0_cld_climate, w0_cld_climate = CloudParameters.OPD, CloudParameters.G0, CloudParameters.W0
         opd_clmt = opd_cld_climate[:,:,0]
@@ -296,10 +263,7 @@ def update_clouds(bundle, opacityclass, CloudParameters, Atmosphere, kzz, virga_
         layer_pressure = np.sqrt(level_pressure.values[:-1] * level_pressure.values[1:])
         df_cld = vj.picaso_format(opd_clmt, w0_clmt, g0_clmt, pressure=layer_pressure, wavenumber=wno)
         bundle.clouds(df=df_cld,**hole_kwargs)
-        cld_out = "fixed"
-        taudif = 0
-        taudif_tol = 0.1
+        return df_cld, 0.0, 0.1, CloudParameters
     else:
         raise NotImplementedError(f"The only supported cloud modes are 'cloudless', 'fixed', 'selfconsistent'; got {cloudy}")
         
-    return cld_out, df_cld, taudif, taudif_tol, CloudParameters
