@@ -333,7 +333,11 @@ class Parameterize():
 
     def chem_free(self, **species):
         ''''
-        Abundance profile for free chemistry
+        Abundance profile for free chemistry.
+
+        For non background species, it checks whether a constant or pressure-
+        dependent abundance profile will be used. For pressure dependent profiles,
+        it calls the relevant function.
 
         Parameters
         ----------
@@ -381,6 +385,28 @@ class Parameterize():
         return mixingratio_df
 
     def vmr_knots(self, species):
+        """
+        Interpolates volume mixing ratio (VMR) values across pressure levels.
+        This method calculates the VMR values for a given species by 
+        interpolating its VMR knots over the pressure levels of the 
+        atmosphere. The interpolation is performed in log-log space, 
+        and the resulting VMR values are clipped to the range [0, 1].
+
+        Parameters:
+            species (dict): A dictionary containing the following keys:
+                - 'vmr_knots': A dictionary where keys are indices and values 
+                  are dictionaries with a "value" key representing the VMR 
+                  values at specific pressure knots.
+                - 'P_knots': A dictionary or list of pressure knot values. If 
+                  a dictionary, keys are indices and values are dictionaries 
+                  with a "value" key representing the pressure values.
+
+            (I think now it should be possible to remove the 'value' key in the dictionaries)
+        Returns:
+            np.ndarray: An array of VMR values interpolated across the 
+            pressure levels, clipped to the range [0, 1].
+        """
+
         VMR_knots = species['vmr_knots']
         abun_knots = [VMR_knots[k]["value"] for k in sorted(VMR_knots.keys())]
         nlevel=len(self.pressure_level)
@@ -391,48 +417,54 @@ class Parameterize():
         interpolator = interpolate.interp1d(np.log10(P_knots), np.log10(abun_knots), kind='linear', bounds_error=False, fill_value='extrapolate')
         vmr_by_level = 10**interpolator(np.log10(self.pressure_level))
         clippedvmr = np.clip(vmr_by_level, 0, 1)
+
         return clippedvmr
-    
-    def vmr_gradient(self, species):
+
+    def vmr_2gradients(self, species):
         """
-        Calculate the variable mixing ratio (VMR) gradient for a given pressure grid and H2O parameters.
+        Compute the volume mixing ratio (VMR) profile using two gradients.
+
+        This method calculates the VMR profile for a given species based on 
+        specified gradients above ('gradient_top') and below ('gradient_bottom') 
+        a switch pressure ('p_switch') and the VMR at that pressure ('vmr_switch').
+
+        A quenched profile can be emulated by setting 'gradient_top' to 0. 
+        a rained out profile can be emulated by setting 'gradient_bottom' to 0.
 
         Parameters:
-        pressure (numpy.ndarray): Array of pressure values.
-        h2o (dict): Dictionary containing H2O parameters such as 'deep', 'top', 'p_switch', and 'gradient'.
+            species (dict): A dictionary containing the following keys:
+                - 'vmr_switch': A dictionary with the key 'value' specifying 
+                  the VMR at the switch pressure level.
+                - 'p_switch': A dictionary with the key 'value' specifying 
+                  the switch pressure level.
+                - 'gradient_top': A dictionary with the key 'value' specifying 
+                  the gradient above the switch pressure level.
+                - 'gradient_bottom': A dictionary with the key 'value' 
+                  specifying the gradient below the switch pressure level.
 
         Returns:
-        numpy.ndarray: Array of VMR values corresponding to the input pressure grid.
+            np.ndarray: An array representing the VMR profile, with values 
+            capped at a maximum of 1.
         """
-        # Extract the 'bottom' value if it exists, otherwise use 'top' value
-        deep = species.get('bottom', None)
-        if deep is not None:
-            deep = species['bottom']['value']
-        else:
-            top = species['top']['value']
-        
-        # Extract the pressure switch and gradient values
+
+        vmr_at_switch = species['vmr_switch']['value']
         p_switch = species['p_switch']['value']
-        gradient = species['gradient']['value']
+        top = species['gradient_top']['value']
+        bottom = species['gradient_bottom']['value']
 
-        # Determine the starting VMR value and the direction of the gradient
-        if deep is not None:
-            ct = deep  # Start with the 'deep' value
-            n = 0      # Gradient direction for 'deep'
-        else:
-            ct = top   # Start with the 'top' value
-            n = 1      # Gradient direction for 'top'
+        log_p = np.log10(self.pressure_level)
+        log_p_switch = np.log10(p_switch)
+        log_ct = np.log10(vmr_at_switch)
 
-        # Initialize the VMR array with the starting value
-        vmr = ct + 0 * self.pressure_level
+        delta = log_p - log_p_switch
 
-        # Calculate the VMR for each pressure level
-        for i, p in enumerate(self.pressure_level):
-            if (-1)**n * p <= (-1)**n * p_switch:
-                vmr[i] = 10**(np.log10(ct) + (gradient * (abs(np.log10(p) - np.log10(p_switch)))))
+        vmr = np.where(
+            self.pressure_level <= p_switch,
+            10 ** (log_ct + top * np.abs(delta)),
+            10 ** (log_ct + bottom * np.abs(delta))
+        )
 
-        # Cap the VMR values at a maximum of 1
-        vmr[vmr > 1] = 1
+        vmr = np.minimum(vmr, 1)
 
         return vmr
 
