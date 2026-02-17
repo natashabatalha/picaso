@@ -1350,7 +1350,7 @@ class RetrieveCKs():
                     self.kappas[imol] = array
             elif os.path.join(path,f'{imol}_1460.npy') in check_npy:
                 msg = ['Warning: npy files for DEQ will be deprecated in a future PICASO udpate. Please download the hdf5 files, explanation here https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html']
-                array = np.load(os.path.join(path,f'{imol}_1460.npy'))
+                array = np.load(os.path.join(path,f'{imol}_1460.npy')).copy()
                 pts,wts = g_w_2gauss(order=4,gfrac=0.95)
                 self.get_new_wvno_grid_661() #this sets self.delta_wno, wno and nwno
                 s1460 = pd.read_csv(os.path.join(__refdata__,'opacities','grid1460.csv'))
@@ -1531,7 +1531,7 @@ class RetrieveCKs():
         """needed to interpret bytes to array"""
         out = io.BytesIO(text)
         out.seek(0)
-        return np.load(out)
+        return np.load(out).copy()
 
     def open_local(self):
         """Code needed to open up local database, interpret arrays from bytes and return cursor"""
@@ -2408,7 +2408,7 @@ def convert_array(clas, text):
     """needed to interpret bytes to array"""
     out = io.BytesIO(text)
     out.seek(0)
-    return np.load(out)
+    return np.load(out).copy()
 
 @jit(nopython=True, cache=True)
 def find_nearest(array,value):

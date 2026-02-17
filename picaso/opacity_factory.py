@@ -584,7 +584,7 @@ def adapt_array(arr):
 def convert_array(text):
     out = io.BytesIO(text)
     out.seek(0)
-    return np.load(out)
+    return np.load(out).copy()
 
 def open_local(db_f):
     """Code needed to open up local database, interpret arrays from bytes and return cursor"""
@@ -607,7 +607,7 @@ def adapt_array(arr):
 def convert_array(text):
     out = io.BytesIO(text)
     out.seek(0)
-    return np.load(out)
+    return np.load(out).copy()
 
 def open_local(db_f):
     """Code needed to open up local database, interpret arrays from bytes and return cursor"""
@@ -1006,7 +1006,7 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
             dset = np.fromfile(fdata, dtype=float) 
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]
         elif 'python' in ftype: 
-            dset = np.load(open(fdata,'rb'))
+            dset = np.load(open(fdata,'rb')).copy()
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]  
         elif 'rfree_fort' in ftype: 
             df = pd.read_csv(fdata,sep=r'\s+', skiprows=27, header=None, names=['wno','cx'])
@@ -1900,7 +1900,7 @@ def compute_ck_molecular(molecule,og_directory,
             dset = np.fromfile(fdata, dtype=float) 
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]
         elif 'python' in ftype: 
-            dset = np.load(open(fdata,'rb'))
+            dset = np.load(open(fdata,'rb')).copy()
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]      
         elif 'hdf5' in ftype: 
             with h5py.File(fdata,'r') as f:
