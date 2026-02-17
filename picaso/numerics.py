@@ -1,6 +1,8 @@
 import numpy as np
 from numba import jit
 
+from numpy import where, zeros, cumsum
+
 @jit(nopython=True, cache=True)
 def locate(array,value):
     """
@@ -194,3 +196,82 @@ def lu_backsubs(a, n, ntot, indx, b):
         
     
     return b
+
+@jit(nopython=True, cache=True)
+def slice_eq(array, lim, value):
+    """Funciton to replace values with upper or lower limit
+    """
+    for i in range(array.shape[0]):
+        new = array[i,:] 
+        new[where(new==lim)] = value
+        array[i,:] = new     
+    return array
+
+@jit(nopython=True, cache=True)
+def slice_lt(array, lim):
+    """Funciton to replace values with upper or lower limit
+    """
+    for i in range(array.shape[0]):
+        new = array[i,:] 
+        new[where(new<lim)] = lim
+        array[i,:] = new     
+    return array
+
+@jit(nopython=True, cache=True)
+def slice_gt(array, lim):
+    """Funciton to replace values with upper or lower limit
+    """
+    for i in range(array.shape[0]):
+        new = array[i,:] 
+        new[where(new>lim)] = lim
+        array[i,:] = new     
+    return array
+
+@jit(nopython=True, cache=True)
+def slice_lt_cond(array, cond_array, cond, newval):
+    """Funciton to replace values with upper or lower limit
+    """
+    for i in range(array.shape[0]):
+        new = array[i,:] 
+        new_cond = cond_array[i,:]
+        new[where(new_cond<cond)] = newval
+        array[i,:] = new     
+    return array
+
+@jit(nopython=True, cache=True)
+def slice_lt_cond_arr(array, cond_array, cond, newarray):
+    """Funciton to replace values with upper or lower limit
+    """
+    shape = cond_array.shape#e.g. dtau
+
+    cond_array=cond_array.ravel()
+    new = array.ravel() #e.g. b0 
+    newarray1 = newarray[0:-1,:].ravel()
+    newarray2 = newarray[1:,:].ravel()
+
+    #for i in range(array.shape[0]):
+    replace1 = newarray1[where(cond_array<cond)]
+    replace2 = newarray2[where(cond_array<cond)]
+    new[where(cond_array<cond)] = 0.5*(replace1+replace2)
+    array = new.reshape(shape)    
+    return array
+
+@jit(nopython=True, cache=True)
+def slice_rav(array, lim):
+    """Funciton to replace values with upper or lower limit
+    """
+    shape = array.shape
+    new = array.ravel()
+    new[where(new>lim)] = lim
+    new[where(new<-lim)] = -lim
+    return new.reshape(shape)
+
+@jit(nopython=True, cache=True)
+def numba_cumsum(mat):
+    """Function to compute cumsum along axis=0 to bypass numba not allowing kwargs in 
+    cumsum 
+    """
+    new_mat = zeros(mat.shape)
+    for i in range(mat.shape[1]):
+        new_mat[:,i] = cumsum(mat[:,i])
+    return new_mat

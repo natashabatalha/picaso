@@ -4245,14 +4245,15 @@ class inputs():
     
         # add in input parameters for processing patchy cloud spectra
         self.inputs['clouds']['do_holes'] = do_holes
-        if do_holes == True:
-            if fhole == None: raise Exception ('fhole must be float 0-1 if do_holes = True')
+        if do_holes:
+            if fhole is None: 
+                raise Exception ('fhole must be float 0-1 if do_holes = True')
             # if fthin_cld == None: raise Exception ('fhole must be float 0-1 if do_holes = True') #commenting out because fthin can be None if user doesn't need it
             self.inputs['clouds']['fhole'] = fhole
             self.inputs['clouds']['fthin_cld'] = fthin_cld
 
 
-    def virga(self, condensates, directory,
+    def virga(self, condensates, directory, runmode="selfconsistent",
         fsed=1, b=1, eps=1e-2, param='const', 
         mh=1, mmw=2.2, kz_min=1e5, sig=2,
         Teff=None, alpha_pressure=None, supsat=0,
@@ -4328,7 +4329,7 @@ class inputs():
         """
         #stages inputs for cloudy run and also get kwargs for clouds function which we run at the end of this 
         clouds_kwargs=dict(do_holes=do_holes,fhole=fhole,fthin_cld=fthin_cld)
-        self.inputs['clouds']['cloudy'] = "selfconsistent"
+        self.inputs['climate']['cloudy'] = runmode
         self.inputs['clouds']['do_holes']=do_holes
         self.inputs['clouds']['fhole']=fhole
         self.inputs['clouds']['fthin_cld']=fthin_cld
@@ -4338,6 +4339,7 @@ class inputs():
             and ('climate' in self.inputs['calculation'])):
             #if there is no temprature and a user has specified clouds, then assume this is just a setup inputs function 
             #and the user does not want an actual run
+            # dinosaur
             run=False
         else: 
             run=True 
@@ -5049,9 +5051,10 @@ class inputs():
             F0PI = opacityclass.relative_flux 
 
         #turn off reflected light permanently for all these runs if rfacv=0 
-        if rfacv==0:compute_reflected=False
-        else:compute_reflected=True
-        compute_thermal = True #always true 
+        if rfacv == 0:
+            compute_reflected = False
+        else:
+            compute_reflected = True
 
         all_profiles= []
         all_opd = []
@@ -5067,7 +5070,6 @@ class inputs():
         all_profiles=np.append(all_profiles,TEMP1)
         all_opd = np.append(all_opd,np.zeros(len(TEMP1)-1)) # just so the opd tracking matches the profile
         
-
         #adiabat info 
         t_table = self.inputs['climate']['t_table']
         p_table = self.inputs['climate']['p_table']
@@ -5085,7 +5087,7 @@ class inputs():
             inject_energy = False
             inject_beam = False
 
-        if inject_energy == True:
+        if inject_energy:
         ## rest of these comments can be cleaned up later
         # for beam profile energy injection (numerical profiles) 
             # if inject_beam == True:
@@ -5105,7 +5107,7 @@ class inputs():
             #scale height ratio of energy injection
             hratio = self.inputs['climate']['injection_scaleheight']
             beam_profile = self.inputs['climate']['beam_profile']
-            if inject_beam == True:
+            if inject_beam:
                 if len(beam_profile) != len(pressure):
                     raise Exception('Beam profile must on the same pressure grid as the climate profile')
         else:
@@ -5117,13 +5119,7 @@ class inputs():
         InjectionBundle = namedtuple('InjectionBundle', ['inject_energy','inject_beam','wave_in', 'pm', 'hratio', 'beam_profile'])
         InjectionBundle = InjectionBundle(inject_energy, inject_beam, wave_in, pm, hratio, beam_profile)
 
-
         grav = 0.01*self.inputs['planet']['gravity'] # cgs to si
-        #logmh = self.inputs['atmosphere'].get('mh',None)
-        #logmh = float(logmh) if logmh is not None else 0
-        #mh = 10**logmh
-        sigma_sb = 0.56687e-4 # stefan-boltzmann constant
-        
         col_den = 1e6*(pressure[1:] -pressure[:-1] ) / (grav/0.01) # cgs g/cm^2
         nlevel = len(pressure)
         tidal = tidal_flux(Teff, nlevel, pressure, col_den, InjectionBundle)
@@ -5199,35 +5195,33 @@ class inputs():
                                         +[i[1] for i in virga_specific]
                                         +[i[1] for i in hole_specific]))
 
+        # AS: Ideally I'd like to have this logic within clouds.py
+        # Or in the initial call to virga
+        # But I need to wait till Kz has been calculated for the first time
+        if cloudy == "fixed":
 
-        if verbose: self.interpret_run()
+        if verbose:
+            self.interpret_run()
 
-        if not diseq_chem:#chemeq_first: 
-            final_conv_flag, pressure, temp, dtdp, nstr_new, flux_net_ir_final, flux_net_v_final, flux_plus_final,   \
-                chem_out,cld_out,  all_profiles,  all_opd,all_kzz=run_chemeq_climate_workflow(self,
-                    nofczns,nstr, #tracks convective zones 
-                    TEMP1,pressure, #Atmosphere
-                    AdiabatBundle, #t_table, p_table, grad, cp, 
-                    opacityclass, grav, 
-                    rfaci, rfacv,  tidal, #energy balance 
-                    Opagrid, #delta_wno, tmin, tmax, 
-                    CloudParameters,#cloudy,cld_species,mh,fsed,beta,param_flag,mieff_dir ,opd_cld_climate,g0_cld_climate,w0_cld_climate, #scattering/cloud properties 
-                    save_profile,all_profiles, all_opd,
-                    verbose=verbose, moist = moist,
-                    save_kzz=save_all_kzz, self_consistent_kzz=self_consistent_kzz)
+        chem_workflow = None
+        if not diseq_chem:
+            chem_workflow = run_chemeq_climate_workflow
+        if diseq_chem:
+            chem_workflow = run_diseq_climate_workflow
 
+        final_conv_flag, pressure, temp, dtdp, nstr_new, flux_net_ir_final, flux_net_v_final, flux_plus_final,   \
+            chem_out,cld_out, all_profiles, all_opd,all_kzz = chem_workflow(self,
+                nofczns,nstr, #tracks convective zones 
+                TEMP1,pressure, #Atmosphere
+                AdiabatBundle, #t_table, p_table, grad, cp, 
+                opacityclass, grav, 
+                rfaci, rfacv,  tidal, #energy balance 
+                Opagrid, #delta_wno, tmin, tmax, 
+                CloudParameters,#cloudy,cld_species,mh,fsed,beta,param_flag,mieff_dir ,opd_cld_climate,g0_cld_climate,w0_cld_climate, #scattering/cloud properties 
+                save_profile,all_profiles, all_opd,
+                verbose=verbose, moist = moist,
+                save_kzz=save_all_kzz, self_consistent_kzz=self_consistent_kzz)
 
-        if diseq_chem: 
-            final_conv_flag, pressure, temp, dtdp, nstr_new, flux_net_ir_final, flux_net_v_final, flux_plus_final,   \
-                chem_out,cld_out,  all_profiles,  all_opd, all_kzz = run_diseq_climate_workflow(self, nofczns, nstr, TEMP1, pressure,
-                        AdiabatBundle,opacityclass,
-                        grav,
-                        rfaci,rfacv,tidal,
-                        Opagrid,
-                        CloudParameters,
-                        save_profile,all_profiles,all_opd,
-                        verbose=verbose, moist = moist, 
-                        save_kzz=save_all_kzz, self_consistent_kzz=self_consistent_kzz)
         #all output to user
         all_out['pressure'] = pressure
         all_out['temperature'] = temp

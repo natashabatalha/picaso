@@ -1,24 +1,15 @@
 import numpy as np 
-import warnings
-from numba import jit, vectorize,float32,float64
-from numba.experimental import jitclass
-from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh, min, dot, array,log,log10
-import astropy.units as u
-import virga.justdoit as vj
+from numba import jit
+from numpy import exp, sqrt, min, log
 
-from .fluxes import get_reflected_1d,get_thermal_1d
-#from .fluxes import get_thermal_1d_newclima, get_thermal_1d_gfluxi,get_reflected_1d_gfluxv #deprecated
+from .fluxes import get_fluxes
 from .calculate_atm import calculate_atm, Atmosphere_Tuple
 from .clouds import get_kzz, update_clouds
-from .disco import compress_thermal
 from .deq_chem import get_quench_levels
 from .grad import moist_grad, did_grad_cp
-from .numerics import locate, mat_sol
-
-import os
+from .numerics import mat_sol
 
 from collections import namedtuple
-
 
 convergence_criteriaT = namedtuple('Conv',['it_max','itmx','conv','convt','x_max_mult'])
 
@@ -43,11 +34,14 @@ def update_quench_levels(bundle, Atmosphere, kz, grav,verbose=False):
         H2 = bundle.inputs['atmosphere']['profile']['H2'].values
         PH3=True 
     else: 
-        H2O=None;H2=None;PH3=False
+        H2O=None
+        H2=None
+        PH3=False
 
     #compute quench levels for everything
     quench_levels, timescale_mixing = get_quench_levels(Atmosphere, kz, grav, PH3=PH3, H2O=H2O, H2=H2)
-    if verbose: print('Computed quenched levels at',quench_levels)
+    if verbose: 
+        print('Computed quenched levels at',quench_levels)
     return quench_levels
 
 def update_kzz(grav, tidal, AdiabatBundle, nstr, Atmosphere, 
@@ -97,11 +91,13 @@ def update_kzz(grav, tidal, AdiabatBundle, nstr, Atmosphere,
         Defalt= False; computes moist adiabat
 
     """
-    if verbose: print("I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.")
+    if verbose: 
+        print("I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.")
     #Do I have fluxes or no? 
-    if (np.any(flux_plus_ir_attop==None) and np.any(flux_net_ir_layer==None)): 
-        if verbose: print('I dont have fluxes, let me compute them')
-        if do_holes == True:
+    if (np.any(flux_plus_ir_attop is None) and np.any(flux_net_ir_layer is None)): 
+        if verbose: 
+            print('I dont have fluxes, let me compute them')
+        if do_holes:
             flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
                         Disco,Opagrid, F0PI, reflected=False, thermal=True, 
                         do_holes=True, fhole=fhole, hole_OpacityWEd=OpacityWEd_clear,hole_OpacityNoEd=OpacityNoEd_clear)
@@ -426,7 +422,7 @@ def convec(temp,pressure,AdiabatBundle, Atmosphere, moist = False):
     
     grad_x, cp_x = np.zeros(shape=(len(temp)-1)), np.zeros(shape=(len(temp)-1))
 
-    if moist == True:
+    if moist:
         for j in range(len(temp)-1):
             tbar[j] = 0.5*(temp[j]+temp[j+1])
             pbar[j] = sqrt(pressure[j]*pressure[j+1])
@@ -532,7 +528,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
     nlevel = len(temp)
     tmin =Opagrid.tmin 
     tmax = Opagrid.tmax 
-    it_max,conv,x_max_mult = convergence_criteria.it_max,convergence_criteria.conv,convergence_criteria.x_max_mult
+    it_max, conv, x_max_mult = convergence_criteria.it_max, convergence_criteria.conv, convergence_criteria.x_max_mult
 
 
     cldsave_count = 0 # used to track how many cloud profiles to save outside of loop for animation *JM
@@ -552,8 +548,10 @@ def t_start(nofczns,nstr,convergence_criteria,#
 
     #both reflected and thermal
     #neb this double true in the first call to reflected light needs to be changed
-    if rfacv==0:compute_reflected=False
-    else:compute_reflected=True
+    if rfacv==0:
+        compute_reflected=False
+    else:
+        compute_reflected=True
     compute_thermal=True
 
     
@@ -570,7 +568,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
     #            COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
     #            ubar0,ubar1,cos_theta, F0PI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, 
     #            wno,nwno,ng,nt, gweight,tweight, nlevel, ngauss, gauss_wts,compute_reflected, True)#True for reflected, True for thermal
-    if do_holes == True:
+    if do_holes:
         flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
                     Disco,Opagrid, F0PI, compute_reflected, compute_thermal, 
                     do_holes=do_holes,fhole=fhole, hole_OpacityWEd=hole_OpacityWEd,hole_OpacityNoEd=hole_OpacityNoEd)
@@ -707,7 +705,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
         
         # NEB NOTE about step max 
         # In the original fortran code this was originally 
-        if egp_stepmax == True:
+        if egp_stepmax:
             step_max_tolerance = 0.005
             step_max = step_max_tolerance*max(sqrt(sum_1),n_total*1.0) #where step_max_tolerance=0.03
         # however when this was fixed, the code was progressing very slowly 
@@ -783,7 +781,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
 
                         #update temp before throwing to moist_grad function
                         Atmosphere=replace_temp(Atmosphere,temp)
-                        if moist == True:
+                        if moist:
                             grad_x, cp_x = moist_grad( beta[j1-1], press, AdiabatBundle, Atmosphere, j1-1)
                         else: 
                             grad_x, cp_x = did_grad_cp( beta[j1-1], press, AdiabatBundle)
@@ -808,7 +806,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
                 #        DTAU_OG_clear , TAU_OG_clear , W0_OG_clear, COSB_OG_clear , W0_no_raman_clear, do_holes=True) #false for reflected, True for thermal
                 
                 Atmosphere=replace_temp(Atmosphere,temp)
-                if do_holes == True:
+                if do_holes:
                     flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
                                 Disco,Opagrid, F0PI, compute_reflected, compute_thermal, 
                                 do_holes=do_holes,fhole=fhole, hole_OpacityWEd=hole_OpacityWEd,hole_OpacityNoEd=hole_OpacityNoEd)
@@ -965,7 +963,6 @@ def t_start(nofczns,nstr,convergence_criteria,#
             err = 0.0
             dmx = 0.0
             scalt = 1.0
-            slow =8.0/scalt
 
             for j in range(n_total):
                 dzx= abs(p[j])
@@ -1009,7 +1006,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
                     press = sqrt(pressure[j1-1]*pressure[j1])
 
                     Atmosphere=replace_temp(Atmosphere,temp)
-                    if moist == True:
+                    if moist:
                         grad_x, cp_x = moist_grad( temp[j1-1], press, AdiabatBundle, Atmosphere, j1-1)
                     else:
                         grad_x, cp_x = did_grad_cp( temp[j1-1], press, AdiabatBundle)
@@ -1043,7 +1040,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
             #    wno,nwno,ng,nt, gweight, tweight, nlevel, ngauss, gauss_wts, False, True, fhole, DTAU_clear , TAU_clear , W0_clear , COSB_clear , 
             #    DTAU_OG_clear , TAU_OG_clear, W0_OG_clear, COSB_OG_clear , W0_no_raman_clear, do_holes=True) #false reflected, True thermal
             Atmosphere=replace_temp(Atmosphere,temp)
-            if do_holes == True:
+            if do_holes:
                 flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
                             Disco,Opagrid, F0PI, reflected = False, thermal=compute_thermal, 
                             do_holes=do_holes,fhole=fhole, hole_OpacityWEd=hole_OpacityWEd,hole_OpacityNoEd=hole_OpacityNoEd)
@@ -1080,12 +1077,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
                 
                 n_strt_a=nstr[nca+1]
                 n_bot_a = nstr[nca+2] + 1
-                
-                
-                   
-
                 if n_top_a == n_top_r +1 :
-                    
                     f_vec[0]= flux_net[n_top_r +1]
                     sum += f_vec[0]**2
                 else:
@@ -1159,14 +1151,15 @@ def t_start(nofczns,nstr,convergence_criteria,#
                 
                 alam = max(tmplam,0.1*alam)
 
-            if np.isnan(np.sum(temp)) == True:
-                
+            if np.isnan(np.sum(temp)):
                 flag_converge = 1 # to avoid getting stuck here unnecesarily.
                 temp = temp_old.copy() +0.5
-                if verbose: print("Got stuck with temp NaN -- so escaping the while loop in tstart")
+                if verbose: 
+                    print("Got stuck with temp NaN -- so escaping the while loop in tstart")
         
 
-        if verbose: print("Iteration number ", its,", min , max temp ", min(temp),max(temp), ", flux balance ", flux_net[0]/abs(tidal[0])) #f/abs(tidal[0])**2) this other output here is slightly less straightforward with the square terms for exoplanets so making this just fnet/tidal for now
+        if verbose: 
+            print("Iteration number ", its,", min , max temp ", min(temp),max(temp), ", flux balance ", flux_net[0]/abs(tidal[0])) #f/abs(tidal[0])**2) this other output here is slightly less straightforward with the square terms for exoplanets so making this just fnet/tidal for now
 
         if save_profile == 1:
             all_profiles = np.append(all_profiles,temp_old)
@@ -1177,13 +1170,13 @@ def t_start(nofczns,nstr,convergence_criteria,#
             for j in range(nlevel -1):
                 dtdp[j] = (log( temp[j]) - log( temp[j+1]))/(log(pressure[j]) - log(pressure[j+1]))
             
-            if verbose: print("In t_start: Converged Solution in iterations ",its)
+            if verbose: 
+                print("In t_start: Converged Solution in iterations ",its)
             
-           
-           
-            return   temp,  dtdp, all_profiles , flux_net_ir,flux_net_v, flux_plus_ir[0,:] 
+            return temp, dtdp, all_profiles, flux_net_ir,flux_net_v, flux_plus_ir[0,:] 
         
-    if verbose: print("Iterations exceeded it_max ! sorry ")
+    if verbose: 
+        print("Iterations exceeded it_max ! sorry ")
     dtdp=np.zeros(shape=(nlevel-1))
     for j in range(nlevel -1):
         dtdp[j] = (log( temp[j]) - log( temp[j+1]))/(log(pressure[j]) - log(pressure[j+1]))
@@ -1234,7 +1227,7 @@ def check_convergence(f_vec, n_total, tolf, check, f, dflux, tolmin, temp, temp_
         flag_converge = 2
         return flag_converge , check
 
-    if check == True :
+    if check:
         test = 0.0
         den1 = max(f,0.5*(n_total))
         
@@ -1312,284 +1305,6 @@ def growdown(nlv,nstr, ngrow) :
     nstr[n+1] = nstr[n+1] + 1*ngrow
 
     return nstr
-
-
-OpacityWEd_Tuple_defaultT = namedtuple("OpacityWEd_Tuple", ["DTAU", "TAU", "W0", "COSB",'ftau_cld','ftau_ray','GCOS2', 'W0_no_raman','f_deltaM'])
-OpacityWEd_Tuple_default = OpacityWEd_Tuple_defaultT(np.zeros((8,8,8)), 
-                    np.zeros((8,8,8)), np.zeros((8,8,8)), np.zeros((8,8,8)),np.zeros((8,8,8)), np.zeros((8,8,8)),np.zeros((8,8,8)),  
-                    np.zeros((8,8,8)) , np.zeros((8,8,8)))
-
-OpacityNoEd_Tuple_defaultT = namedtuple("OpacityNoEd_Tuple", ["DTAU", "TAU", "W0", "COSB"])
-OpacityNoEd_Tuple_default = OpacityNoEd_Tuple_defaultT(np.zeros((8,8,8)), 
-                    np.zeros((8,8,8)), np.zeros((8,8,8)), np.zeros((8,8,8)))
-@jit(nopython=True, cache=False)
-def get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
-                Disco,Opagrid, F0PI, reflected, thermal, 
-                do_holes=False, fhole=0.0, hole_OpacityWEd=OpacityWEd_Tuple_default,hole_OpacityNoEd=OpacityNoEd_Tuple_default):
-    """
-    Program to run RT for climate calculations. Runs the thermal and reflected module.
-    And combines the results with wavenumber widths.
-
-    Parameters 
-    ----------
-    Atmosphere : tuple
-        Contains temperature, pressure, dtdp, mmw, and scale height
-    OpacityWEd : namedtuple
-        All opacity (e.g. dtau, tau, w0, g0) info with delta eddington corrected values 
-    OpacityNoEd : namedtuple
-        All opacity (e.g. dtau, tau, w0, g0) info without delta eddington corrected values 
-    ScatteringPhase : namedtuple
-        All scattering phase function inputs like ftau_cld and ftau_ray and fraction of forward to back scattering
-    Disco : namedtuple
-        All geometry inputs such as gauss/chebychev angles, incoming outgoing angles, etc 
-    Opagrid : namedtuple
-        Any opacity grid info such as wavelength grids, temperature pressure grids, tmax and tmin
-    F0PI : ndarray
-        Stellar spectrum if it exists otherwise this is just 1s array
-    reflected : bool 
-        Run reflected light
-    thermal : bool 
-        Run thermal emission
-    do_holes: bool
-        run patchy/fractional cloudy and clear model
-    fhole: float
-        Fraction of cloudy area
-    hole_OpacityWEd : namedtuple
-        The clear opacities / scattering properties (opposed to the cloudy ones which are stored in the main opacity tuple)
-    hole_OpacityNoEd : namedtuple
-        The clear opacities / scattering properties w/o delta eddington correction (opposed to the cloudy ones which are stored in the main opacity tuple)
-    
-        
-    Return
-    ------
-    array
-        Visible and IR -- net (layer and level), upward (level) and downward (level)  fluxes
-    """  
-    if do_holes: 
-        if fhole==0: 
-            print('Warning. A cloud hole is requested but the hole is set to zero which is doing a fully cloudy run but unecessarily running opacities twice.')
-    #import dill as pickle
-    #with open('tuples.pkl', 'wb') as file:
-    #    pickle.dump([Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
-    #            Disco,Opagrid, F0PI, reflected, thermal, 
-    #            do_holes, fhole, hole_OpacityWEd,hole_OpacityNoEd], file)
-    #unpack atmosphere items 
-    pressure, temperature ,nlevel= Atmosphere.p_level, Atmosphere.t_level,Atmosphere.nlevel
-    #unpack opacity items w/ delta eddington correctioin
-    DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2,W0_no_raman = OpacityWEd.DTAU, OpacityWEd.TAU, OpacityWEd.W0, OpacityWEd.COSB,OpacityWEd.ftau_cld, OpacityWEd.ftau_ray,OpacityWEd.GCOS2,OpacityWEd.W0_no_raman
-    #unpack opacity items w/o delta eddington correctioin
-    DTAU_OG,TAU_OG, W0_OG, COSB_OG = OpacityNoEd.DTAU,OpacityNoEd.TAU, OpacityNoEd.W0, OpacityNoEd.COSB
-    #unpack scattering phase items 
-    surf_reflect, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward = ScatteringPhase.surf_reflect, ScatteringPhase.single_phase,ScatteringPhase.multi_phase,ScatteringPhase.frac_a,ScatteringPhase.frac_b,ScatteringPhase.frac_c,ScatteringPhase.constant_back,ScatteringPhase.constant_forward
-    #unpack disco items 
-    ng,nt,gweight,tweight,ubar0,ubar1,cos_theta = Disco.ng,Disco.nt,Disco.gweight,Disco.tweight,Disco.ubar0,Disco.ubar1,Disco.cos_theta
-    #unpack Opagrid info 
-    nwno,dwni,wno,ngauss, gauss_wts = Opagrid.nwno,Opagrid.delta_wno,Opagrid.wno,Opagrid.ngauss, Opagrid.gauss_wts
-   
-    #if we are doing holes, then unpack those taus as well 
-    if do_holes: 
-        DTAU_clear, TAU_clear, W0_clear, COSB_clear,W0_no_raman_clear=hole_OpacityWEd.DTAU, hole_OpacityWEd.TAU, hole_OpacityWEd.W0, hole_OpacityWEd.COSB,hole_OpacityWEd.W0_no_raman
-        ftau_cld_clear, ftau_ray_clear,GCOS2_clear = hole_OpacityWEd.ftau_cld, hole_OpacityWEd.ftau_ray,hole_OpacityWEd.GCOS2
-        DTAU_OG_clear,TAU_OG_clear, W0_OG_clear, COSB_OG_clear=hole_OpacityNoEd.DTAU, hole_OpacityNoEd.TAU, hole_OpacityNoEd.W0, hole_OpacityNoEd.COSB
-        
-
-    # for visible
-    flux_net_v = np.zeros(shape=(ng,nt,nlevel)) #net level visible fluxes
-    flux_net_v_layer=np.zeros(shape=(ng,nt,nlevel)) #net layer visible fluxes
-
-    flux_plus_v= np.zeros(shape=(ng,nt,nlevel,nwno)) # level plus visible fluxes
-    flux_minus_v= np.zeros(shape=(ng,nt,nlevel,nwno)) # level minus visible fluxes
-    
-    #"""<<<<<<< NEWCLIMA
-    # for thermal
-    flux_plus_midpt = np.zeros(shape=(ng,nt,nlevel,nwno))
-    flux_minus_midpt = np.zeros(shape=(ng,nt,nlevel,nwno))
-
-    flux_plus = np.zeros(shape=(ng,nt,nlevel,nwno))
-    flux_minus = np.zeros(shape=(ng,nt,nlevel,nwno))
-    #"""
-
-    """<<<<<<< OG
-    # for thermal
-    flux_plus_midpt = np.zeros(shape=(nlevel,nwno))
-    flux_minus_midpt = np.zeros(shape=(nlevel,nwno))
-
-    flux_plus = np.zeros(shape=(nlevel,nwno))
-    flux_minus = np.zeros(shape=(nlevel,nwno))
-    """
-
-    # outputs needed for climate
-    flux_net_ir = np.zeros(shape=(nlevel)) #net level visible fluxes
-    flux_net_ir_layer=np.zeros(shape=(nlevel)) #net layer visible fluxes
-
-    flux_plus_ir= np.zeros(shape=(nlevel,nwno)) # level plus visible fluxes
-    flux_minus_ir= np.zeros(shape=(nlevel,nwno)) # level minus visible fluxes
-
-    
-    #ugauss_angles= np.array([0.0985350858,0.3045357266,0.5620251898,0.8019865821,0.9601901429])    
-    #ugauss_weights = np.array([0.0157479145,0.0739088701,0.1463869871,0.1671746381,0.0967815902])
-    #ugauss_angles = np.array([0.66666])
-    #ugauss_weights = np.array([0.5])
-
-    if reflected:
-        #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-        b_top = 0.0
-        for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
-            #"""
-            #<<<<<<< NEWCLIMA
-            #here only the fluxes are returned since we dont care about the outgoing intensity at the 
-            #top, which is only used for albedo/ref light spectra
-            ng_clima,nt_clima=1,1
-            ubar0_clima = ubar0*0+0.5
-            ubar1_clima = ubar1*0+0.5
-            _, out_ref_fluxes = get_reflected_1d(nlevel, wno,nwno,ng_clima,nt_clima,
-                                    DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
-                                    GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
-                                    DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
-                                    surf_reflect, ubar0_clima,ubar1_clima,cos_theta, F0PI,
-                                    single_phase,multi_phase,
-                                    frac_a,frac_b,frac_c,constant_back,constant_forward, 
-                                    get_toa_intensity=0, get_lvl_flux=1)
-
-            flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v = out_ref_fluxes
-            
-            #import pickle as pk
-            #pk.dump([flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v], open('newclima.pk','wb'))
-
-            # call radiation for clearsky case
-            if do_holes == True:
-                _, out_ref_fluxes_clear = get_reflected_1d(nlevel, wno,nwno,ng_clima,nt_clima,
-                        DTAU_clear[:,:,ig], TAU_clear[:,:,ig], W0_clear[:,:,ig], COSB_clear[:,:,ig],
-                        GCOS2_clear[:,:,ig],ftau_cld_clear[:,:,ig],ftau_ray_clear[:,:,ig],
-                        DTAU_OG_clear[:,:,ig], TAU_OG_clear[:,:,ig], W0_OG_clear[:,:,ig], COSB_OG_clear[:,:,ig],
-                        surf_reflect, ubar0_clima,ubar1_clima,cos_theta, F0PI,
-                        single_phase,multi_phase,
-                        frac_a,frac_b,frac_c,constant_back,constant_forward, 
-                        get_toa_intensity=0, get_lvl_flux=1)
-            
-                flux_minus_all_v_clear, flux_plus_all_v_clear, flux_minus_midpt_all_v_clear, flux_plus_midpt_all_v_clear = out_ref_fluxes_clear
-                
-                #weighted average of cloudy and clearsky
-                flux_plus_midpt_all_v = (1.0 - fhole)* flux_plus_midpt_all_v + fhole * flux_plus_midpt_all_v_clear
-                flux_minus_midpt_all_v = (1.0 - fhole)* flux_minus_midpt_all_v + fhole * flux_minus_midpt_all_v_clear
-                flux_plus_all_v = (1.0 - fhole)* flux_plus_all_v + fhole * flux_plus_all_v_clear
-                flux_minus_all_v = (1.0 - fhole)* flux_minus_all_v + fhole * flux_minus_all_v_clear
-
-            flux_net_v_layer += (np.sum(flux_plus_midpt_all_v,axis=3)-np.sum(flux_minus_midpt_all_v,axis=3))*gauss_wts[ig]
-            flux_net_v += (np.sum(flux_plus_all_v,axis=3)-np.sum(flux_minus_all_v,axis=3))*gauss_wts[ig]
-
-            #======="""
-            #nlevel = atm.c.nlevel
-
-            """
-            <<<<<<< GFLUXV
-            ng_clima,nt_clima=1,1
-            ubar0_clima = ubar0*0+0.5
-            ubar1_clima = ubar1*0+0.5
-
-            RSFV = 0.01 # from tgmdat.f of EGP
-            
-            b_surface = 0.0 +RSFV*ubar0[0]*F0PI*np.exp(-TAU[-1,:,ig]/ubar0[0])
-            
-            delta_approx = 0 # assuming delta approx is already applied on opds 
-                        
-            flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v = get_reflected_1d_gfluxv(nlevel, wno,nwno, ng_clima,nt_clima, DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
-                                                                                       surf_reflect,b_top,b_surface,ubar0_clima, F0PI,tridiagonal, delta_approx)
-            
-            import pickle as pk
-            pk.dump([flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v], open('gfluxv.pk','wb'))
-
-            flux_net_v_layer += (np.sum(flux_plus_midpt_all_v,axis=3)-np.sum(flux_minus_midpt_all_v,axis=3))*gauss_wts[ig]
-            flux_net_v += (np.sum(flux_plus_all_v,axis=3)-np.sum(flux_minus_all_v,axis=3))*gauss_wts[ig]
-            """
-
-            flux_plus_v += flux_plus_all_v*gauss_wts[ig]
-            flux_minus_v += flux_minus_all_v*gauss_wts[ig]
-
-        #if full output is requested add in xint at top for 3d plots
-
-
-    if thermal:
-
-        #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-        
-        for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
-            
-            #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
-            #the uncorrected raman single scattering 
-            
-            #"""<<<<<<< NEWCLIMA
-            hard_surface = 0 
-            _,out_therm_fluxes = get_thermal_1d(nlevel, wno,nwno,ng,nt,temperature,
-                                            DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
-                                            pressure,ubar1,
-                                            surf_reflect, hard_surface, dwni, calc_type=1)
-
-            flux_minus_all_i, flux_plus_all_i, flux_minus_midpt_all_i, flux_plus_midpt_all_i = out_therm_fluxes
-
-            if do_holes == True:
-            #clearsky case
-                _,out_therm_fluxes_clear = get_thermal_1d(nlevel, wno,nwno,ng,nt,temperature,
-                                            DTAU_OG_clear[:,:,ig], W0_no_raman_clear[:,:,ig], COSB_OG_clear[:,:,ig], 
-                                            pressure,ubar1,
-                                            surf_reflect, hard_surface, dwni, calc_type=1)
-                
-                flux_minus_all_i_clear, flux_plus_all_i_clear, flux_minus_midpt_all_i_clear, flux_plus_midpt_all_i_clear= out_therm_fluxes_clear
-                
-                #weighted average of cloudy and clearsky
-                flux_plus_midpt_all_i = (1.0 - fhole)* flux_plus_midpt_all_i + fhole * flux_plus_midpt_all_i_clear
-                flux_minus_midpt_all_i = (1.0 - fhole)* flux_minus_midpt_all_i + fhole * flux_minus_midpt_all_i_clear
-                flux_plus_all_i = (1.0 - fhole)* flux_plus_all_i + fhole * flux_plus_all_i_clear
-                flux_minus_all_i = (1.0 - fhole)* flux_minus_all_i + fhole * flux_minus_all_i_clear
-
-            flux_plus += flux_plus_all_i*gauss_wts[ig]
-            flux_minus += flux_minus_all_i*gauss_wts[ig]
-            flux_plus_midpt += flux_plus_midpt_all_i*gauss_wts[ig]#*weights
-            flux_minus_midpt += flux_minus_midpt_all_i*gauss_wts[ig]#*weights
-            #"""
-            
-            """<<<<<<< OG CODE
-            calc_type=1 # this line might change depending on Natasha's new function
-            
-            #for iubar,weights in zip(ugauss_angles,ugauss_weights):
-            flux_minus_all_i, flux_plus_all_i, flux_minus_midpt_all_i, flux_plus_midpt_all_i=get_thermal_1d_gfluxi(nlevel,wno,nwno,ng,nt,temperature,DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], pressure,ubar1,surf_reflect, ugauss_angles,ugauss_weights, tridiagonal,calc_type, dwni)#,bb , y2, tp, tmin, tmax)
-            
-            flux_plus += flux_plus_all_i*gauss_wts[ig]#*weights
-            flux_minus += flux_minus_all_i*gauss_wts[ig]#*weights
-
-            flux_plus_midpt += flux_plus_midpt_all_i*gauss_wts[ig]#*weights
-            flux_minus_midpt += flux_minus_midpt_all_i*gauss_wts[ig]#*weights
-            """
-
-        #"""<<<<<<< NEWCLIMA
-        #compresses in gauss-chebyshev angle space 
-        #the integration over the "disk" of the planet opposed to the 
-        #other gauss angles which are for the correlatedk tables
-        #gweight = np.array([0.01574791, 0.07390887, 0.14638699, 0.16717464, 0.09678159])
-        #tweight = np.array([1])#[6.28318531])
-        flux_plus = compress_thermal(nwno, flux_plus, gweight, tweight)
-        flux_minus= compress_thermal(nwno, flux_minus, gweight, tweight)
-        flux_plus_midpt= compress_thermal(nwno, flux_plus_midpt, gweight, tweight)
-        flux_minus_midpt= compress_thermal(nwno, flux_minus_midpt, gweight, tweight)
-        #"""
-
-        for wvi in range(nwno):
-            flux_net_ir_layer += (flux_plus_midpt[:,wvi]-flux_minus_midpt[:,wvi]) * dwni[wvi]
-            flux_net_ir += (flux_plus[:,wvi]-flux_minus[:,wvi]) * dwni[wvi]
-
-            flux_plus_ir[:,wvi] += flux_plus[:,wvi] * dwni[wvi]
-            flux_minus_ir[:,wvi] += flux_minus[:,wvi] * dwni[wvi]
-        """
-        print('debug fluxes in get_fluxes', temperature)
-        for wvi in range(nwno):
-            for il in range(len(flux_plus_midpt[:,0])):
-                print(wvi, dwni[wvi],flux_plus_midpt[il,wvi],flux_minus_midpt[il,wvi] )
-        """
-
-        #if full output is requested add in flux at top for 3d plots
-    
-    return flux_net_v_layer, flux_net_v, flux_plus_v, flux_minus_v , flux_net_ir_layer, flux_net_ir, flux_plus_ir, flux_minus_ir
-
 
 @jit(nopython=True)
 def replace_temp(tuple_old, NEW_TEMP): 
@@ -1687,13 +1402,10 @@ def find_strat(bundle, nofczns,nstr,
     x_max_mult = 7.0
     
     convergence_criteria = convergence_criteriaT(it_max=8, itmx=5, conv=5.0, convt=3.0, x_max_mult=x_max_mult)
-
-    ip2 = -10 #?
     subad = 0.98 # degree to which layer can be subadiabatic and
                     # we still make it adiabatic
     ifirst = 10-1  # start looking after this many layers from top for a conv zone
                    # -1 is for python referencing
-    iend = 0 #?
     final = False
 
     #call bundle for moist adiabat option (moved out of if statement for numba issue)
@@ -1737,7 +1449,6 @@ def find_strat(bundle, nofczns,nstr,
     dt_max = 0.0 #DTMAX
     i_max = 0 #IMAX
     # -1 in ifirst to include ifirst index
-    flag_super = 0
     for i in range(nstr[1]-1, ifirst-1, -1):
         add = dtdp[i] - grad_x[i]
         if add > dt_max and add/grad_x[i] >= 0.02 : # non-neglegible super-adiabaticity
@@ -1750,9 +1461,10 @@ def find_strat(bundle, nofczns,nstr,
         flag_final_convergence = 1
 
     if flag_final_convergence  == 0:
-        if verbose: print(" convection zone status")
-        if verbose: print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
-        if verbose: print(nofczns)
+        if verbose: 
+            print(" convection zone status")
+            print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
+            print(nofczns)
 
         nofczns = 2 #keeping this hardcoded here to easily transition to future 3 zone calculation
         nstr[4]= nstr[1]
@@ -1760,7 +1472,8 @@ def find_strat(bundle, nofczns,nstr,
         nstr[1]= i_max
         nstr[2] = i_max
         nstr[3] = i_max #+ 1 #JM: Should be i_max + 1 according to EGP, but runs into ValueError when used
-        if verbose: print(nstr)
+        if verbose: 
+            print(nstr)
         if nstr[3] >= nstr[4] :
             #print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
             #print(nofczns)
@@ -1781,7 +1494,8 @@ def find_strat(bundle, nofczns,nstr,
 
         i_change = 1
         while i_change == 1 :
-            if verbose: print("Grow Phase : Upper Zone")
+            if verbose: 
+                print("Grow Phase : Upper Zone")
             i_change = 0
 
             d1 = dtdp[nstr[1]-1]
@@ -1806,7 +1520,8 @@ def find_strat(bundle, nofczns,nstr,
                         nstr[2] = nstr[5]
                         nstr[3] = 0
                         i_change = 1
-                if verbose: print(nstr)
+                if verbose: 
+                    print(nstr)
 
                 profile_flag, pressure, temp, dtdp,CloudParameters,cld_out,flux_net_ir_layer,flux_net_v_layer, flux_plus_ir_attop,  all_profiles,all_opd ,all_kzz= profile(bundle,
                                 nofczns, nstr, temp, pressure, 
@@ -1858,10 +1573,10 @@ def find_strat(bundle, nofczns,nstr,
     conv_strat = 2.0 
     convt_strat = 2.0
     x_max_mult = x_max_mult/2.0
-    ip2 = -10
     convergence_criteria=convergence_criteriaT(it_max_strat,itmx_strat,conv_strat,convt_strat,x_max_mult)
     final = True
-    if verbose: print("final",nstr)
+    if verbose: 
+        print("final",nstr)
 
     profile_flag,pressure, temp, dtdp, CloudParameters,cld_out,flux_net_ir_layer,flux_net_v_layer, flux_plus_ir_attop,  all_profiles,all_opd,all_kzz = profile(bundle,
                 nofczns, nstr, temp, pressure, 
@@ -1886,10 +1601,11 @@ def find_strat(bundle, nofczns,nstr,
     #    else :
     #        raise ValueError("Some problem here with goto 125")
         
-    if profile_flag == 0:
-        if verbose: print("ENDING WITHOUT CONVERGING")
-    elif profile_flag == 1:
-        if verbose: print("YAY ! ENDING WITH CONVERGENCE")
+    if verbose:
+        if profile_flag == 0:
+            print("ENDING WITHOUT CONVERGING")
+        elif profile_flag == 1:
+            print("YAY ! ENDING WITH CONVERGENCE")
 
     chem = bundle.inputs['atmosphere']['profile']
     #right now this bundle does not have the up to date chemistry
@@ -2003,7 +1719,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     taudif_tol = 0.1
 
     ### 0) Recompte INPUT PT with new Adiabat 
-    if moist == True:
+    if moist:
         #moist adiabat with simple chemeq 
         bundle.add_pt( temp, pressure)
         bundle.premix_atmosphere(opa=opacityclass,verbose=verbose)
@@ -2034,19 +1750,21 @@ def profile(bundle, nofczns, nstr, temp, pressure,
                 grad_x, cp_x = did_grad_cp( temp[j1-1], press, AdiabatBundle)
                 temp[j1]= exp(log(temp[j1-1]) + grad_x*(log(pressure[j1]) - log(pressure[j1-1])))
         
-    temp_old= np.copy(temp)
-    if save_profile == 1: all_profiles = np.append(all_profiles,temp_old)
+    temp_old = np.copy(temp)
+    if save_profile == 1: 
+        all_profiles = np.append(all_profiles,temp_old)
 
     ### 1) ALWAYS UPDATE PT, CHEM, OPACITIES
-    bundle.add_pt( temp, pressure)
+    bundle.add_pt(temp, pressure)
     bundle.premix_atmosphere(opa = opacityclass,quench_levels=None,verbose=verbose)
     
     # get opacities for the first time with simple chem 
     # this first call will be refreshed before tstart if things like chemistry are changed from the quench approx
-    OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Atmosphere , holes =  calculate_atm(bundle, opacityclass)
+    OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Atmosphere, holes = calculate_atm(bundle, opacityclass)
     #was there hole information returned? 
     #i am conpressing this for readability as these things are usually None, unless the user sets it 
-    OpacityWEd_clear=holes[0]; OpacityNoEd_clear=holes[0]
+    OpacityWEd_clear = holes[0]
+    OpacityNoEd_clear = holes[0]
 
     ### 2) IF: UPDATE KZZ 
     kz_cloud = 0 # dummy value so that the variable exists in cloudless cases
@@ -2061,7 +1779,8 @@ def profile(bundle, nofczns, nstr, temp, pressure,
             # this is a slightly bad hack just so i can move on; 
             bundle.inputs['atmosphere']['kzz']['sc_kzz']=kz #bookeeping current kz 
 
-        if save_kzz: all_kzz = np.append(all_kzz,kz)
+        if save_kzz: 
+            all_kzz = np.append(all_kzz,kz)
         #are clouds turned on such that we need the sc kzz for virga? we'll say always yes
         kz_cloud = kz 
         #is self consistent kz needed for diseq chem too? 
@@ -2079,28 +1798,20 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         bundle.premix_atmosphere_photochem(quench_levels=quench_levels,verbose=verbose)
     
     ### 4) COMPUTE CLOUDS - always pass to update_clouds, which will not update the cloud profile unless cloudy == "selfconsistent"
-    cld_out,df_cld, taudif, taudif_tol, CloudParameters=update_clouds(bundle, opacityclass, CloudParameters,Atmosphere,
+    cld_out, df_cld, taudif, taudif_tol, CloudParameters = update_clouds(bundle, opacityclass, CloudParameters, Atmosphere,
                                                                         kz_cloud,virga_kwargs,hole_kwargs,verbose=verbose)
     
     ### 5) IF NEEDED: COMPUTE OPACITIES 
     refresh_needed = full_kinetis or do_quench_appox or cloudy != "cloudless"
     if refresh_needed:
-        OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Atmosphere,hole=calculate_atm(bundle, opacityclass )
+        OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Atmosphere,hole = calculate_atm(bundle, opacityclass)
         #these are most of the time returned as None, if no clouds and no patchy clouds are requested
-        OpacityWEd_clear=hole[0]; OpacityNoEd_clear=hole[1]
+        OpacityWEd_clear = hole[0]
+        OpacityNoEd_clear = hole[1]
     
-    #import dill 
-    #with open('from_prof_tstart_new.pk','wb') as file: 
-    #    dill.dump([bundle, nofczns,nstr,convergence_criteria, rfaci, rfacv, tidal,
-    #            Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase, Disco,Opagrid, AdiabatBundle,
-    #            F0PI,
-    #            save_profile, all_profiles, 
-    #            verbose, moist , egp_stepmax ],file)
-
     ## begin bigger loop which gets opacities
     for iii in range(itmx):
-
-        if do_holes == True:
+        if do_holes:
             temp, dtdp, all_profiles,  flux_net_ir_layer,flux_net_v_layer, flux_plus_ir_attop = t_start(
                 nofczns,nstr,convergence_criteria, rfaci, rfacv, tidal,
                 Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase, Disco,Opagrid, AdiabatBundle,
@@ -2117,9 +1828,9 @@ def profile(bundle, nofczns, nstr, temp, pressure,
                     verbose=verbose, moist = moist, egp_stepmax = egp_stepmax)
         
         ### 1) ALWAYS UPDATE PT, CHEM, OPACITIES
-        bundle.add_pt( temp, pressure)
+        bundle.add_pt(temp, pressure)
         #simple chem no quenching 
-        bundle.premix_atmosphere(opa = opacityclass,quench_levels=None,verbose=verbose) 
+        bundle.premix_atmosphere(opa=opacityclass, quench_levels=None, verbose=verbose) 
         
         ### 2) IF: UPDATE KZZ 
         if do_kzz_calc:
@@ -2137,7 +1848,8 @@ def profile(bundle, nofczns, nstr, temp, pressure,
                 flux_net_ir_layer=flux_net_ir_layer,flux_plus_ir_attop=flux_plus_ir_attop,
                 #kwargs for get_kzz function
                 moist=moist, do_holes=do_holes,fhole=fhole)
-            if save_kzz: all_kzz = np.append(all_kzz,kz)
+            if save_kzz: 
+                all_kzz = np.append(all_kzz,kz)
             #are clouds turned on such that we need the sc kzz for virga? 
             if sc_kzz_and_clouds: 
                 kz_cloud = kz 
@@ -2167,7 +1879,8 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         refresh_needed = full_kinetis or do_quench_appox or cloudy == "selfconsistent"
         if refresh_needed:
             OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Atmosphere,hole=calculate_atm(bundle, opacityclass )
-            OpacityWEd_clear=hole[0]; OpacityNoEd_clear=hole[0]
+            OpacityWEd_clear = hole[0]
+            OpacityNoEd_clear = hole[0]
         
         # 6) PREP RETURNS! 
         # TO DO : add chemistry and also condense last three "all" variables into one tuple
@@ -2187,11 +1900,12 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         ert = ert/(float(len(temp))*scalt)
         
         if ((iii > 0) & (ert < convt) & (taudif < taudif_tol)) :
-            if verbose: print("Profile converged before itmx")
+            if verbose: 
+                print("Profile converged before itmx")
             conv_flag = 1
             #update convergence flag!! 
             RETURNS[0] = conv_flag
-            if final == True :
+            if final:
                 #itmx = 6
                 convergence_criteria=convergence_criteria._replace(itmx=6)
             else :
@@ -2200,12 +1914,14 @@ def profile(bundle, nofczns, nstr, temp, pressure,
             
             return RETURNS
         
-        if verbose: print("Big iteration is ",min(temp), iii)
+        if verbose: 
+            print("Big iteration is ",min(temp), iii)
     
-    if conv_flag == 0:
-        if verbose: print("Not converged")
-    else :
-        if verbose: print("Profile converged after itmx hit")
+    if verbose:
+        if conv_flag == 0:
+            print("Not converged")
+        else:
+            print("Profile converged after itmx hit")
     
     return RETURNS
-
+    
