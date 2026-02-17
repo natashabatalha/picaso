@@ -211,7 +211,9 @@ def update_clouds(bundle, opacityclass, CloudParameters, Atmosphere, kzz,virga_k
     ```
     """
     cloudy = CloudParameters.cloudy
-    if cloudy == "selfconsistent":
+    if cloudy == "cloudless":
+        return 0, 0, 0, 0.1, CloudParameters
+    elif cloudy == "selfconsistent":
         opd_cld_climate, g0_cld_climate, w0_cld_climate = CloudParameters.OPD, CloudParameters.G0, CloudParameters.W0
         we0, we1, we2, we3 = 0.25, 0.25, 0.25, 0.25
 
@@ -259,8 +261,6 @@ def update_clouds(bundle, opacityclass, CloudParameters, Atmosphere, kzz,virga_k
         df_cld = vj.picaso_format(opd_clmt, w0_clmt, g0_clmt, pressure=layer_pressure, wavenumber=wno)
         bundle.clouds(df=df_cld)
         cld_out = "fixed"
-    elif cloudy == "cloudless":
-        cld_out, df_cld, taudif, taudif_tol = 0, 0, 1, 0.1
     else:
         raise NotImplementedError(f"The only supported cloud modes are 'cloudless', 'fixed', 'selfconsistent'; got {cloudy}")
         
