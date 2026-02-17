@@ -31,6 +31,7 @@ dependencies = [
     "bibtexparser==1.4.4",
     "netcdf4",
     "h5netcdf",
+    "jupytext",
 ]
 
 [project.urls]
