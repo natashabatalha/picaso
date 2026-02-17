@@ -386,20 +386,13 @@ class Parameterize():
 
     def vmr_knots(self, species):
         """
-        Interpolates volume mixing ratio (VMR) values across pressure levels.
-        This method calculates the VMR values for a given species by 
-        interpolating its VMR knots over the pressure levels of the 
-        atmosphere. The interpolation is performed in log-log space, 
-        and the resulting VMR values are clipped to the range [0, 1].
+        Computes a pressure dependent abundance profile by interpolating
+        from a given set of pressures and the VMRs at those pressures.
 
         Parameters:
             species (dict): A dictionary containing the following keys:
-                - 'vmr_knots': A dictionary where keys are indices and values 
-                  are dictionaries with a "value" key representing the VMR 
-                  values at specific pressure knots.
-                - 'P_knots': A dictionary or list of pressure knot values. If 
-                  a dictionary, keys are indices and values are dictionaries 
-                  with a "value" key representing the pressure values.
+                - 'vmr_knots': A dictionary with keys 'vmr1', 'vmr2', and so on.
+                - 'P_knots': A dictionary or list of pressure knot values. 
 
             (I think now it should be possible to remove the 'value' key in the dictionaries)
         Returns:
