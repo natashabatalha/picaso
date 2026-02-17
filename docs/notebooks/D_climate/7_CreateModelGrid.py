@@ -147,8 +147,8 @@ def hi_res_spec_xarr(savefile, climate_xarray, array_save_dir, opacity_highres,a
 # %%
 correlated_k_dir = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted')
 array_save_dir ='/data/test/tutorial'
-mh_list = ['+000', '+100']
-CtoO_list = ['100', '250']
+mh_list = ['0.0', '1.0']
+CtoO_list = ['0.46', '0.27']
 heat_redis_list=[0.5]
 t_int_list=[200, 300]
 
@@ -189,7 +189,7 @@ for mh in mh_list:
                 #grab k table opacities
                 print(mh, CtoO,rfacv,t_int)
                 ph_db = os.path.join(
-                    correlated_k_dir,f'sonora_2020_feh{mh}_co_{CtoO}.data.196')
+                    correlated_k_dir,f'sonora_2121grid_feh{mh}_co{CtoO}.hdf5')
                 print(ph_db)
                 opacity_ph = jdi.opannection(ck_db=ph_db,method='preweighted')
                 #get climate xarray

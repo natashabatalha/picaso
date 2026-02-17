@@ -56,11 +56,10 @@ jpi.show(jpi.mixing_ratio(full_out['full_output'],limit=15))#plot top 15 chemica
 # For climate calculations especially, we often are using chemical equilibrium from pre-computed correlated k tables. This next section relies on you have downloaded the `preweighted` correlated k tables and `resortrebin` files.
 
 # %%
-#1 ck tables from roxana
-mh = '+000'#'+0.0' #log metallicity
-CtoO = '100'#'1.0' # CtoO ratio
-
-ck_db = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted', f'sonora_2020_feh{mh}_co_{CtoO}.data.196')
+#1 ck tables 
+mh = '0.0'#'+0.0' #log metallicity
+CtoO = '0.46'# # CtoO absolute ratio
+ck_db = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted', f'sonora_2121grid_feh{mh}_co{CtoO}.hdf5')
 
 # %% [markdown]
 # Let's create two differnet opacity connections so that we can look at the chemical equilibrium that is encoded within the preweighted CK tables as well as the chemistry that is loaded from the chemistry tables.

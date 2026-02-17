@@ -52,7 +52,7 @@
 # %%
 import os
 
-ck_db_path = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted','sonora_2020_feh+000_co_100.data.196')
+ck_db_path = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted','sonora_2121grid_feh1.0_co0.46.hdf5')
 sonora_profile_db = os.path.join(os.getenv('picaso_refdata'),'sonora_grids','bobcat')
 
 # %%

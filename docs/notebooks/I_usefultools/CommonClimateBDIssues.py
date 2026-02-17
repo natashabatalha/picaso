@@ -41,12 +41,9 @@ from bokeh.plotting import show, figure
 
 # %%
 #1 ck tables from roxana
-mh = '+000'#'+0.0' #log metallicity
-CtoO = '100'#'1.0' # CtoO ratio
-
-ck_db = f"/Users/jjm6243/Documents/freedman/sonora_2020_feh{mh}_co_{CtoO}.data.196"
-
-# ck_db = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted',f'sonora_2020_feh{mh}_co_{CtoO}.data.196')
+mh = '0.0'#'+0.0' #log metallicity
+CtoO = '0.46'# # CtoO absolute ratio
+ck_db = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted', f'sonora_2121grid_feh{mh}_co{CtoO}.hdf5')
 
 # %%
 cl_run = jdi.inputs(calculation="browndwarf", climate = True) # start a calculation
@@ -123,11 +120,9 @@ cp, grad, dtdp, layer_p= jpi.pt_adiabat(out,cl_run,opacity_ck)
 
 # %%
 #1 ck tables from roxana
-mh = '+000'#'+0.0' #log metallicity
-CtoO = '100'#'1.0' # CtoO ratio
-
-# ck_db = f'/Users/nbatalh1/Documents/data/kcoeff_asci/sonora_2020_feh{mh}_co_{CtoO}.data.196'
-ck_db = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted',f'sonora_2020_feh{mh}_co_{CtoO}.data.196')
+mh = '0.0'#'+0.0' #log metallicity
+CtoO = '0.46'# # CtoO absolute ratio
+ck_db = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted', f'sonora_2121grid_feh{mh}_co{CtoO}.hdf5')
 
 # %%
 cl_run = jdi.inputs(calculation="browndwarf", climate = True) # start a calculation

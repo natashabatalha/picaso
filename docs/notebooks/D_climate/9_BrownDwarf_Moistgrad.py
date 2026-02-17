@@ -51,9 +51,10 @@ cl_run.effective_temp(teff) # input effective temperature
 # %%
 # Here we're going to run a higher metallicity model since the effect of the latent heat is more pronounced at higher metallicities
 
-mh = '+100' #log metallicity
-CtoO = '100'# CtoO ratio relative to solar
-ck_db = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted', f'sonora_2020_feh{mh}_co_{CtoO}.data.196') # recommended download #1 above
+mh = '1.0'#'+1.0' #log metallicity
+CtoO = '0.46'# # CtoO absolute ratio
+ck_db = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted', f'sonora_2121grid_feh{mh}_co{CtoO}.hdf5')
+
 sonora_profile_db = os.path.join(os.getenv('picaso_refdata'),'sonora_grids','bobcat')
 
 # and not the line by line opacities

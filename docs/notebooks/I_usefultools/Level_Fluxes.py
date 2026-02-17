@@ -24,7 +24,9 @@ import picaso.justplotit as jpi
 
 # %%
 import os
-ck_db_path = os.path.join(os.getenv('picaso_refdata'), 'opacities', 'preweighted', 'sonora_2020_feh+000_co_100.data.196')
+mh = '0.0'#'+0.0' #log metallicity
+CtoO = '0.46'# # CtoO absolute ratio
+ck_db_path = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted', f'sonora_2121grid_feh{mh}_co{CtoO}.hdf5')
 sonora_profile_db = os.path.join(os.getenv('picaso_refdata'),'sonora_grids','bobcat')
 
 # %% [markdown]

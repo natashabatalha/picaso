@@ -100,10 +100,10 @@ cl_run.effective_temp(teff) # input effective temperature
 # Let's now grab our gaseous opacities, whose path we have already defined above. Again, this code uses a correlated-k approach for accurately capturing opacities (see [section 2.1.4; Mukerjee et al 2022](https://ui.adsabs.harvard.edu/abs/2022arXiv220807836M/abstract)).
 
 # %%
-mh = '+000' #log metallicity
-CtoO = '100'# CtoO ratio relative to solar
+mh = '0.0'#'+0.0' #log metallicity
+CtoO = '0.46'# # CtoO absolute ratio
+ck_db = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted', f'sonora_2121grid_feh{mh}_co{CtoO}.hdf5')
 
-ck_db = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted', f'sonora_2020_feh{mh}_co_{CtoO}.data.196')
 sonora_profile_db = os.path.join(os.getenv('picaso_refdata'),'sonora_grids','bobcat')
 
 # and not the line by line opacities

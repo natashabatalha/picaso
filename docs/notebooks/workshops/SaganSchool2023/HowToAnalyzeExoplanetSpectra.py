@@ -817,10 +817,9 @@ plt.show()
 #
 
 # %%
-mh = '+100'#'+1.0' # 10x solar log metallicity
-CtoO = '100'#'1.0' # 1x solar CtoO ratio
-ck_db = os.path.join(ck_dir,
-                     f'sonora_2020_feh{mh}_co_{CtoO}_noTiOVO.data.196') # I had to change this line to match my data files
+mh = '1.0'#'+0.0' #log metallicity
+CtoO = '0.46'# # CtoO absolute ratio
+ck_db = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted', f'sonora_2121grid_feh{mh}_co{CtoO}_noTiOVO.hdf5')
 
 opacity_ck = jdi.opannection(ck_db=ck_db,method='preweighted') # grab your opacities
 

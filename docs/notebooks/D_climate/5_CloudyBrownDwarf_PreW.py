@@ -44,10 +44,9 @@ from bokeh.plotting import show, figure
 
 # %%
 #1 ck tables from roxana
-mh = '+000'#'+0.0' #log metallicity
-CtoO = '100'#'1.0' # CtoO ratio
-
-ck_db = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted', f'sonora_2020_feh{mh}_co_{CtoO}.data.196')
+mh = '0.0'#'+0.0' #log metallicity
+CtoO = '0.46'# # CtoO absolute ratio
+ck_db = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted', f'sonora_2121grid_feh{mh}_co{CtoO}.hdf5')
 
 # #sonora bobcat cloud free structures file
 sonora_profile_db = os.path.join(os.getenv('picaso_refdata'),'sonora_grids','bobcat')

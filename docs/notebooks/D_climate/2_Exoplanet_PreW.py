@@ -54,10 +54,10 @@ import matplotlib.pyplot as plt
 
 # %%
 #1 ck tables from roxana
-mh = '+100'#'+1.0' #log metallicity, 10xSolar
-CtoO = '100'#'1.0' # CtoO ratio, Solar C/O
+mh = '1.0'#'+1.0' #log metallicity, 10xSolar
+CtoO = '0.46'#'1.0' # CtoO ratio, Solar C/O
 
-ck_db = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted', f'sonora_2020_feh{mh}_co_{CtoO}.data.196')
+ck_db = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted', f'sonora_2121grid_feh{mh}_co{CtoO}.hdf5')
 
 
 # %%
