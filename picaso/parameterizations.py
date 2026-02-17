@@ -390,7 +390,8 @@ class Parameterize():
             P_knots = [P_knots[k]["value"] for k in sorted(P_knots.keys())]
         interpolator = interpolate.interp1d(np.log10(P_knots), np.log10(abun_knots), kind='linear', bounds_error=False, fill_value='extrapolate')
         vmr_by_level = 10**interpolator(np.log10(self.pressure_level))
-        return vmr_by_level
+        clippedvmr = np.clip(vmr_by_level, 0, 1)
+        return clippedvmr
     
     def vmr_gradient(self, species):
         """
@@ -592,7 +593,9 @@ class Parameterize():
         for i in range(1,nlevel):
             T[i]=np.exp( np.log(T[i-1]) + (np.log(reverseP[i])-np.log(reverseP[i-1])) * dT_by_level[i-1] )
 
-        return pd.DataFrame(dict(pressure=pressure, temperature=T[::-1]))
+        clippedT = np.clip(T, 1, 2*T[0])  ## Cap temperatures to twice the temperature at the bottom --hottest if no inversion.
+
+        return pd.DataFrame(dict(pressure=pressure, temperature=clippedT[::-1]))
 
     def pt_guillot(self, Teq, T_int, logg1, logKir, alpha):
         """
