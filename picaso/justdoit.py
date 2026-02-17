@@ -5147,7 +5147,7 @@ class inputs():
 
         #kzz treatment ? lets store a constant kz profile if it exists 
         #DO I NEED A KZZ? 
-        need_kzz = cloudy or diseq_chem 
+        need_kzz = cloudy or diseq_chem or save_all_kzz
         if need_kzz: 
             #lets initiative a separate place to store this 
             self.inputs['atmosphere']['kzz']={}

@@ -356,7 +356,7 @@ def run_chemeq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
             save_profile,all_profiles, all_opd,
             convergence_criteria, final , 
             first_call_ever=True, verbose=verbose, moist = moist,
-            save_kzz=save_kzz,all_kzz=[],self_consistent_kzz=self_consistent_kzz)
+            save_kzz=save_kzz,self_consistent_kzz=self_consistent_kzz)
 
     #STEP 2) second profile call with stricter convergence criteria 
     it_max= 7
@@ -380,7 +380,7 @@ def run_chemeq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
             convergence_criteria,final ,      
             flux_net_ir_layer=flux_net_ir_layer, flux_plus_ir_attop=flux_plus_ir_attop, 
             verbose=verbose,moist = moist,
-            save_kzz=True,all_kzz=all_kzz,self_consistent_kzz=self_consistent_kzz)   
+            save_kzz=save_kzz,all_kzz=all_kzz,self_consistent_kzz=self_consistent_kzz)   
     
     #STEP 3) find strat that will now run profile several times, each time updating the opacities and chemistry 
     #and also refine the convective zone guess while it does this. 
@@ -394,7 +394,7 @@ def run_chemeq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
             CloudParameters,
             save_profile, all_profiles, all_opd,
             flux_net_ir_layer, flux_plus_ir_attop,
-            verbose=verbose, moist = moist,self_consistent_kzz=self_consistent_kzz)
+            verbose=verbose, moist = moist,self_consistent_kzz=self_consistent_kzz,all_kzz=all_kzz)
     
     return final_conv_flag, pressure, temp, dtdp, nstr_new, flux_net_ir_final,flux_net_v_final, flux_plus_final, chem_out, cld_out, all_profiles, all_opd,all_kzz  
 
@@ -3079,7 +3079,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
    #under what circumstances to do we compute a self consistent kzz calc 
     sc_kzz_and_clouds = cloudy #THIS IS ALWAYS BE TRUE.. 
     sc_kzz_and_diseq = self_consistent_kzz and diseq  
-    do_kzz_calc = sc_kzz_and_clouds or sc_kzz_and_diseq
+    do_kzz_calc = sc_kzz_and_clouds or sc_kzz_and_diseq or save_kzz
     constant_kzz =  ((not self_consistent_kzz) and diseq) #((not self_consistent_kzz) and cloudy) or
     if constant_kzz: 
         kz_chem = bundle.inputs['atmosphere']['kzz'].get('constant_kzz')
