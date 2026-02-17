@@ -405,9 +405,10 @@ class Parameterize():
         nlevel=len(self.pressure_level)
         abun_by_level=np.zeros(nlevel)
         P_knots = species['P_knots']
+        interp_kind=species['interpolation_method']
         if isinstance(P_knots, dict):
             P_knots = [P_knots[k]["value"] for k in sorted(P_knots.keys())]
-        interpolator = interpolate.interp1d(np.log10(P_knots), np.log10(abun_knots), kind='linear', bounds_error=False, fill_value='extrapolate')
+        interpolator = interpolate.interp1d(np.log10(P_knots), np.log10(abun_knots), kind=interp_kind, bounds_error=False, fill_value='extrapolate')
         vmr_by_level = 10**interpolator(np.log10(self.pressure_level))
         clippedvmr = np.clip(vmr_by_level, 0, 1)
 
