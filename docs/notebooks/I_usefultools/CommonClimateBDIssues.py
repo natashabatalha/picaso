@@ -1,11 +1,12 @@
 # ---
 # jupyter:
 #   jupytext:
+#     custom_cell_magics: kql
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.19.1
+#       jupytext_version: 1.11.2
 #   kernelspec:
 #     display_name: base
 #     language: python
@@ -44,6 +45,8 @@ from bokeh.plotting import show, figure
 mh = '0.0'#'+0.0' #log metallicity
 CtoO = '0.46'# # CtoO absolute ratio
 ck_db = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted', f'sonora_2121grid_feh{mh}_co{CtoO}.hdf5')
+
+sonora_profile_db = os.path.join(os.getenv('picaso_refdata'),'sonora_grids','bobcat')
 
 # %%
 cl_run = jdi.inputs(calculation="browndwarf", climate = True) # start a calculation
