@@ -4875,22 +4875,7 @@ class inputs():
         return 
     
     def inputs_climate(self, temp_guess= None, pressure= None, rfaci = 1,
-        rcb_guess = None,  rfacv = None, moistgrad = False
-        #deprecated and moved to atmosphere
-        #photochem=False, photochem_init_args=None, sonora_abunds_photochem = False, df_sonora_photochem = None,
-        #photochem_TOA_pressure = 1e-7*1e6, 
-        #, 
-        #deprecated and moved to virga and/or clouds 
-        #fhole = None, do_holes = False, fthin_cld = None, 
-        #cloudy = False, species = None, fsed = None, mieff_dir = None,
-        # beta = 1, virga_param = 'const',
-        #DEPRECATED and moved to atmosphere function
-        #deq_rainout= False, quench_ph3 = True, no_ph3 = False, 
-        #kinetic_CO2 = True, cold_trap = False,
-        #mh = None, CtoO = None
-        # removed nofczns and nstr as user input and simplified to rcb_guess. JM (01/08/26) 
-        # This will need to be modified in future when we allow for more than 2 convective zones.
-        ):
+        rcb_guess = None,  rfacv = None, moistgrad = False        ):
         """
         Get Inputs for Climate run
 
@@ -4918,7 +4903,8 @@ class inputs():
             raise Exception('Need to specify Teff with jdi.input for climate run')
         if self.inputs['planet']['gravity'] == 0.0:
             raise Exception('Need to specify gravity with jdi.input for climate run')
-
+        temp_guess = temp_guess.copy()
+        pressure = pressure.copy()
         self.inputs['climate']['guess_temp'] = temp_guess
         self.inputs['climate']['pressure'] = pressure
         # Define nstr here based on rcb_guess instead of user input
