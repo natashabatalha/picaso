@@ -9,7 +9,7 @@ If you want to get started quickly and are already familiar with many coding pri
 .. toctree::
    :maxdepth: 1
 
-   Simple Install </notebooks/Quickstart.ipynb>
+   Simple Install </notebooks/Quickstart.py>
 
 Installation
 ============

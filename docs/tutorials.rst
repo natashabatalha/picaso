@@ -1,13 +1,16 @@
 Tutorials
 =========
 
+.. note::
+   PICASO tutorials are now provided as Jupytext ``.py`` files. To learn how to download and run these as notebooks, please see our :ref:`Tutorial Workflow <notebook_workflow>` page.
+
 Getting Set Up After Installation
 ---------------
 
 .. toctree::
    :maxdepth: 1
 
-   Installation Instructions </notebooks/0_GetDataFunctions.py>
+   Installation Instructions </notebooks/Quickstart.py>
 
 Basics of Spectral Modeling 
 ---------------------------
