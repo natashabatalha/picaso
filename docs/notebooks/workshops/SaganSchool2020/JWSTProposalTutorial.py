@@ -63,8 +63,7 @@ d.check_environ()
 
 # %%
 # STEP 1: PandExo Reference Data if you have not already
-d.os.environ['pandeia_refdata'] = '/data/pandexo/pandeia_data-3.0rc3'
-
+os.environ['pandeia_refdata'] = '/data/pandexo/pandeia_data-2025.7-jwst'
 
 
 # %%
