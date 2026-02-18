@@ -95,7 +95,7 @@ This will download a copy of the code to your computer. You will automatically b
 .. image:: github_flow.jpg
 
 
-2) Create a branch off of ``dev`` with a useful name
+3) Create a branch off of ``dev`` with a useful name
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 It's likely you will be working on a specific subset of a bigger code project. Any changes you make on a new branch will not affect ``master`` or ``dev``, so you can feel free to beat up the code without damaging anything that is fully tested.
@@ -105,7 +105,7 @@ It's likely you will be working on a specific subset of a bigger code project. A
 	git checkout -b myfeature dev
 
 
-3) Work work work work...
+4) Work work work work...
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 Let's pretend that ``myfeature`` entails working on ``file1.py`` and ``file2.py``. After you are happy with an initial change, commit and push your changes.
 
@@ -138,6 +138,47 @@ Now you need to get your work back to the base branch.
 - [ ] Select natashabatalha:dev <- yourfork:dev (for example)
 - [ ] Click create pull request 
 
+Pull Request Best Practices
+---------------------------
+
+A high-quality and self-contained pull request (PR) makes it much easier for maintainers to review and merge your work. 
+
+**What to include in a PR:**
+
+1. **A clear and descriptive title.** 
+2. **A summary of the changes** and the motivation behind them. 
+3. **Reference any related issues** (e.g., "Closes #123").
+4. **Verification of changes**: Mention if you've added new tests or ran existing ones. Include screenshots if your changes affect plots or UI.
+
+**What NOT to include in a PR:**
+
+1. **Multiple fixes** are difficult for maintainers to parse and test. 
+2. **GitHub tracked scripts/notebooks/data** that do not specifically address a problem. For example, if you have a test script this should not be added to the repo itself but instead be attached to the PR. 
+
+**Example PR Description:**
+
+.. code-block:: markdown
+
+   ### Summary
+   This PR adds functionality to interpolate on the visscher_chemeq grid. 
+
+   ### Motivation
+   Currently, PICASO calls the nearest neighbor chemical equilibrium point in visscher_chemeq rather than interpolating.
+
+   ### Changes
+   - Added interpolation function in `picaso/justdoit.py`.
+   - Updated chemeq_visscher_2121 to... 
+   - Added tests in `tests/test_x.py`.
+
+   ### Verification
+   - Ran `pytest tests/test_x.py` and all tests passed.
+   - Verified output against ... 
+
+**Note on AI-Generated Contributions:**
+
+AI tools are great and the PICASO team uses them as well. However, if you use an AI tool (such as ChatGPT, GitHub Copilot, Jules, or others) to assist in generating your code or PR description, you **must** carefully vet every line of code. We will not accept PRs that look like bulk AI changes or contain unverified AI-generated code. The contributor is responsible for the correctness, style, and quality of the submitted code.
+
+
 Using Conda Enviornments
 ------------------------
 
@@ -149,7 +190,7 @@ To create your own environment with a specific name and python package:
 
 .. code-block:: bash
 
-	conda create --name your_env_name python=3.12 -y
+	conda create --name your_env_name python=3.13 -y
 
 
 If you have specific environment variables that need to be tied to here, then you can specify them. For example, in PICASO there is the environment variable ``picaso_refdata`` and ``PYSYN_CDBS``: 
