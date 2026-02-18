@@ -1,11 +1,13 @@
+# -*- coding: utf-8 -*-
 # ---
 # jupyter:
 #   jupytext:
+#     custom_cell_magics: kql
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.19.1
+#       jupytext_version: 1.11.2
 #   kernelspec:
 #     display_name: pic312
 #     language: python
@@ -819,8 +821,7 @@ plt.show()
 # %%
 mh = '1.0'#'+0.0' #log metallicity
 CtoO = '0.46'# # CtoO absolute ratio
-ck_db = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted', f'sonora_2121grid_feh{mh}_co{CtoO}_noTiOVO.hdf5')
-
+ck_db = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted', f'sonora_2121grid_feh{mh}_co{CtoO}_NoTiOVO.hdf5')
 opacity_ck = jdi.opannection(ck_db=ck_db,method='preweighted') # grab your opacities
 
 
