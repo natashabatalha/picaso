@@ -1313,26 +1313,30 @@ def get_continuum(db_file, species, temperature):
     #            WHERE molecule in {}
     #            AND temperature in {}""".format(str(tuple(species)), str(tuple(temp_nearest))))
 
-    if ((len(species) ==1 )& (len(temp_nearest) >1)):
-        cur.execute("""SELECT molecule,temperature,opacity
+    if (len(species) == 1) and (len(temp_nearest) > 1):
+        placeholders = ', '.join(['?'] * len(temp_nearest))
+        cur.execute(f"""SELECT molecule,temperature,opacity
                 FROM continuum
                 WHERE molecule = ?
-                AND temperature in {}""".format(str(tuple(temp_nearest))),( species[0],))
-    elif ((len(species) >1) & (len(temp_nearest) ==1)):
-        cur.execute("""SELECT molecule,temperature,opacity
+                AND temperature in ({placeholders})""", [species[0]] + list(temp_nearest))
+    elif (len(species) > 1) and (len(temp_nearest) == 1):
+        placeholders = ', '.join(['?'] * len(species))
+        cur.execute(f"""SELECT molecule,temperature,opacity
                 FROM continuum
-                WHERE molecule in {}
-                AND temperature = ?""".format(str(tuple(species))),( temp_nearest[0],))
-    elif ((len(species) ==1) & (len(temp_nearest) ==1)):
+                WHERE molecule in ({placeholders})
+                AND temperature = ?""", list(species) + [temp_nearest[0]])
+    elif (len(species) == 1) and (len(temp_nearest) == 1):
         cur.execute("""SELECT molecule,temperature,opacity
                     FROM continuum
                     WHERE molecule = ?
-                    AND temperature = ?""",(species[0],temp_nearest[0]))        
-    else: 
-        cur.execute("""SELECT molecule,temperature,opacity
+                    AND temperature = ?""", (species[0], temp_nearest[0]))
+    else:
+        placeholders_spec = ', '.join(['?'] * len(species))
+        placeholders_temp = ', '.join(['?'] * len(temp_nearest))
+        cur.execute(f"""SELECT molecule,temperature,opacity
                     FROM continuum
-                    WHERE molecule in {}
-                    AND temperature in {}""".format(str(tuple(species)), str(tuple(temp_nearest))))
+                    WHERE molecule in ({placeholders_spec})
+                    AND temperature in ({placeholders_temp})""", list(species) + list(temp_nearest))
 
     
     data= cur.fetchall()
@@ -1389,26 +1393,30 @@ def get_molecular(db_file, species, temperature,pressure):
     #here's a little code to get out the correct pair (so we dont have to worry about getting the exact number right)
     ind_pt = [min(pt_pairs, key=lambda c: math.hypot(c[1]- coordinate[0], c[2]-coordinate[1]))[0]
               for coordinate in  zip(pressure,temperature)]
-    if ((len(species) ==1 )& (len(ind_pt) >1)):
-        cur.execute("""SELECT molecule,ptid,pressure,temperature,opacity
+    if (len(species) == 1) and (len(ind_pt) > 1):
+        placeholders = ', '.join(['?'] * len(ind_pt))
+        cur.execute(f"""SELECT molecule,ptid,pressure,temperature,opacity
                 FROM molecular
                 WHERE molecule = ?
-                AND ptid in {}""".format(str(tuple(ind_pt))),( species[0],))
-    elif ((len(species) >1) & (len(ind_pt) ==1)):
-        cur.execute("""SELECT molecule,ptid,pressure,temperature,opacity
+                AND ptid in ({placeholders})""", [species[0]] + list(ind_pt))
+    elif (len(species) > 1) and (len(ind_pt) == 1):
+        placeholders = ', '.join(['?'] * len(species))
+        cur.execute(f"""SELECT molecule,ptid,pressure,temperature,opacity
                 FROM molecular
-                WHERE molecule in {}
-                AND ptid = ?""".format(str(tuple(species))),( ind_pt[0],))
-    elif ((len(species) ==1) & (len(ind_pt) ==1)):
+                WHERE molecule in ({placeholders})
+                AND ptid = ?""", list(species) + [ind_pt[0]])
+    elif (len(species) == 1) and (len(ind_pt) == 1):
         cur.execute("""SELECT molecule,ptid,pressure,temperature,opacity
                     FROM molecular
                     WHERE molecule = ?
-                    AND ptid = ?""",(species[0],ind_pt[0]))        
-    else: 
-        cur.execute("""SELECT molecule,ptid,pressure,temperature,opacity
+                    AND ptid = ?""", (species[0], ind_pt[0]))
+    else:
+        placeholders_spec = ', '.join(['?'] * len(species))
+        placeholders_ptid = ', '.join(['?'] * len(ind_pt))
+        cur.execute(f"""SELECT molecule,ptid,pressure,temperature,opacity
                     FROM molecular
-                    WHERE molecule in {}
-                    AND ptid in {}""".format(str(tuple(species)), str(tuple(ind_pt))))
+                    WHERE molecule in ({placeholders_spec})
+                    AND ptid in ({placeholders_ptid})""", list(species) + list(ind_pt))
 
 
     data= cur.fetchall()
@@ -1655,7 +1663,7 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
                 
             if not isinstance(wv_file_name,type(None)):
                 wvno_low,wvno_high,new_wno,new_dwno = get_wvno_grid(wv_file_name)
-            elif ((not isinstance(new_wno,type(None)))  &  
+            elif ((not isinstance(new_wno,type(None))) and
                 (not isinstance(new_dwno,type(None)))):
                 wvno_low = 0.5*(2*new_wno - new_dwno)
                 wvno_high = 0.5*(2*new_wno + new_dwno)
@@ -1857,7 +1865,7 @@ def compute_ck_molecular(molecule,og_directory,
     # GET CK WAVENUMBER GRID BY COMPUTING LOWER AND UPPER WAVENUM EDGES # 
     if not isinstance(wv_file_name,type(None)):
         wvno_low,wvno_high,new_wno,new_dwno = get_wvno_grid(wv_file_name)
-    elif ((not isinstance(new_wno,type(None)))  &  
+    elif ((not isinstance(new_wno,type(None))) and
         (not isinstance(new_dwno,type(None)))):
         wvno_low = 0.5*(2*new_wno - new_dwno)
         wvno_high = 0.5*(2*new_wno + new_dwno)
