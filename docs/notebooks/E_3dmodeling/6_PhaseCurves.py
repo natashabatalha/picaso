@@ -1,13 +1,14 @@
 # ---
 # jupyter:
 #   jupytext:
+#     custom_cell_magics: kql
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.19.1
+#       jupytext_version: 1.11.2
 #   kernelspec:
-#     display_name: Python 3 (ipykernel)
+#     display_name: pic312
 #     language: python
 #     name: python3
 # ---
@@ -75,7 +76,8 @@ ds_chem = jdi.xr.Dataset(
     ),
     attrs=dict(description="coords with vectors"),
 )
-all_gcm = gcm_out.update(ds_chem)
+gcm_out.update(ds_chem)
+all_gcm=gcm_out
 
 # %%
 all_gcm

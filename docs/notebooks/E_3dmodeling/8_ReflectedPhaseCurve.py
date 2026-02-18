@@ -88,9 +88,8 @@ ds_chem = jdi.xr.Dataset(
     ),
     attrs=dict(description="coords with vectors"),
 )
-all_gcm = gcm_out.update(ds_chem)
-
-all_gcm
+gcm_out.update(ds_chem)
+all_gcm = gcm_out
 
 # %%
 all_gcm['temperature'].isel(pressure=34).plot(x='lon',y='lat')
