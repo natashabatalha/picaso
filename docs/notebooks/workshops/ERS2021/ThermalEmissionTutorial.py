@@ -418,7 +418,7 @@ corresponding_t = 1630 #Kelvin, I have just eyeballed this from the plot
 corr_intensity = jpi.blackbody(corresponding_t, 1/opa.wno)[0]
 corr_flux = np.pi * corr_intensity
 #Step4: add to your plots
-pt_fig.circle(corresponding_t, at_pressure, size=10, color='black')
+pt_fig.scatter(corresponding_t, at_pressure, size=10, color='black')
 fig.line(1e4/opa.wno, corr_flux, color='black',line_width=4)
 jpi.show(jpi.row([fig, pt_fig]))
 

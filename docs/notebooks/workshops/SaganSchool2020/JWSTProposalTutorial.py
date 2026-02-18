@@ -129,7 +129,7 @@ pl_mass_err = pl_mass_err.dropna()
 pl_mass_fig = figure(x_axis_type='log', width=550, height=400, x_axis_label='Mj',
                     y_axis_label='Mass Uncertainty',y_range=[0,150],x_range=[1e-3, 10])
 
-pl_mass_fig.circle(pl_mass_err['pl_bmassj'],
+pl_mass_fig.scatter(pl_mass_err['pl_bmassj'],
                    100*pl_mass_err['pl_bmassjerr1']/pl_mass_err['pl_bmassj'],
                    color='black', size=5, alpha=0.5)
 
@@ -667,7 +667,7 @@ for i, inst in enumerate(to_run):
                 col = color.RdBu3[0] #blue is strong rejection of line
                 legend='Strong Favor'
             #hacked "heat map"
-            fig[i].square(MH, CLD, color = col, size=30,line_color='black',legend_label=legend)
+            fig[i].scatter(MH, CLD, color = col, size=30,line_color='black',legend_label=legend,marker='square')
 
 show(column(row(fig[0:2]), row(fig[2:4])))
 
@@ -789,7 +789,7 @@ for i, inst in enumerate(to_run):
                 legend='Strong Favor'
 
             #hacked heatmap
-            fig[i].square(MH, DT, color = col, size=30,line_color='black',legend_label=legend)
+            fig[i].scatter(MH, DT, color = col, size=30,line_color='black',legend_label=legend,marker='square')
 
 show(column(row(fig[0:2]), row(fig[2:4])))
 

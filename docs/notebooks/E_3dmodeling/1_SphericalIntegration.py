@@ -1,11 +1,12 @@
 # ---
 # jupyter:
 #   jupytext:
+#     custom_cell_magics: kql
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.19.1
+#       jupytext_version: 1.11.2
 #   kernelspec:
 #     display_name: pic312
 #     language: python
@@ -143,15 +144,15 @@ for ikey in names:
 
 # %%
 fig = jpi.figure(height=300, x_axis_label='gangle',y_axis_label='gweight')
-for i in [fig.line, fig.circle]: i(cases[0].inputs['disco']['gangle'],
+for i in [fig.line, fig.scatter]: i(cases[0].inputs['disco']['gangle'],
          cases[0].inputs['disco']['gweight'],color='red',
                                   legend_label=names[0]  )
 
-for i in [fig.line, fig.circle]: i(cases[1].inputs['disco']['gangle'],
+for i in [fig.line, fig.scatter]: i(cases[1].inputs['disco']['gangle'],
          cases[1].inputs['disco']['gweight'],color='blue',
                                  legend_label=names[1] )
 
-for i in [fig.line, fig.circle]: i(cases[2].inputs['disco']['gangle'],
+for i in [fig.line, fig.scatter]: i(cases[2].inputs['disco']['gangle'],
          cases[2].inputs['disco']['gweight']
                                    ,color='green',legend_label=names[2])
 

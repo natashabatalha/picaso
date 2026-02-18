@@ -69,7 +69,7 @@ pl_mass_err = pl_mass_err.dropna()
 fig = jpi.figure(x_axis_type='log',x_axis_label='Mass(Mj)',y_axis_label='Eql Temp (A=0)')
 source = jpi.ColumnDataSource(data=dict(
         pl_mass_err))
-cir = fig.circle(x='pl_bmassj',y='pl_eqt',size=5,
+cir = fig.scatter(x='pl_bmassj',y='pl_eqt',size=5,
                    color='Black', source = source)
 fig.add_tools(jpi.HoverTool(renderers=[cir], tooltips=[('Planet Name',f'@pl_name')]
                                   ))

@@ -235,7 +235,7 @@ fig = jpi.figure(y_axis_type='log',y_range=[1e2,1e-6], x_axis_type='log',
                  width=300, height=300, x_range=[1e5, 1e11])
 fig.line(df['kz']*1e4,df['pressure'])
 fig.line(10**df['splKz']*1e4, df['pressure'],color='red')
-fig.circle(10**y*1e4, 10**x,color='red',size=7)
+fig.scatter(10**y*1e4, 10**x,color='red',size=7)
 jpi.show(fig)
 
 # %%
