@@ -1,13 +1,17 @@
 Tutorials
 =========
 
-Getting Set Up After Installation
----------------
+.. note::
+   PICASO tutorials are now provided as Jupytext ``.py`` files. To learn how to download and run these as notebooks, please see our :ref:`Tutorial Workflow <notebook_workflow>` page.
 
+Getting Data and Setting up Environments after Installation
+-----------------------------------------------------------
+
+This quickstart notebook has some overlap with our installation instructions, but it is designed to be a quick way to get up and running with PICASO after you have installed it. It includes instructions for getting reference data, setting up environments, and checking environments have been successfully setup. 
 .. toctree::
    :maxdepth: 1
 
-   Installation Instructions </notebooks/0_GetDataFunctions.py>
+   Quickstart </notebooks/Quickstart.py>
 
 Basics of Spectral Modeling 
 ---------------------------
