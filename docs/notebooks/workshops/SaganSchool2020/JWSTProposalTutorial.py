@@ -202,7 +202,7 @@ GJ436b['observation']['sat_unit'] = '%'
 #
 
 # %%
-to_run = ['NIRISS SOSS', 'NIRSpec G395M', 'NIRCam F444W','MIRI LRS']
+to_run = ['NIRISS SOSS', 'NIRSpec G395H', 'NIRCam F444W','MIRI LRS']
 result = jdi.run_pandexo(GJ436b, to_run)
 
 # %% [markdown]
