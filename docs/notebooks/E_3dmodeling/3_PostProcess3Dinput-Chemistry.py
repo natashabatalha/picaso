@@ -1,13 +1,14 @@
 # ---
 # jupyter:
 #   jupytext:
+#     custom_cell_magics: kql
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.19.1
+#       jupytext_version: 1.11.2
 #   kernelspec:
-#     display_name: Python 3 (ipykernel)
+#     display_name: pic312
 #     language: python
 #     name: python3
 # ---
@@ -108,7 +109,8 @@ ds_chem = xr.Dataset(
 # ### Add chemistry to an existing GCM xarray
 
 # %%
-all_gcm = gcm_out.update(ds_chem)
+gcm_out.update(ds_chem)
+all_gcm = gcm_out
 
 # %%
 all_gcm['H2O'].isel(pressure=10).plot(x='lon',y='lat')
@@ -165,5 +167,3 @@ case_3d.inputs['atmosphere']['profile']['CH4'].isel(lat=0).plot(x='lon',y='press
                                                                 ax=ax)
 ax.set_ylim([3e2,1e-6])
 ax.set_yscale('log')
-
-# %%
