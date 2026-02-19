@@ -244,8 +244,8 @@ for i, inst in enumerate(to_run):
 
         # if you check out your plot below you'll see the noise budget blows up at the
         # detector edges so I usually make a 5*median cut to get rid of the crap
-        x = x[0][np.where(e[0]<5*np.min(e[0]))]
-        e = e[0][np.where(e[0]<5*np.min(e[0]))]*1e6 #PPM UNITS!
+        x = x[0][np.where(e[0]<5*np.median(e[0]))]
+        e = e[0][np.where(e[0]<5*np.median(e[0]))]*1e6 #PPM UNITS!
 
         #plot
         prec_fig.line(x,e, line_width=4, color = color.Colorblind6[i],legend_label=inst)
@@ -253,8 +253,8 @@ for i, inst in enumerate(to_run):
     else:
         x = result[i][inst]['FinalSpectrum']['wave']
         e = result[i][inst]['FinalSpectrum']['error_w_floor']
-        x = x[np.where(e<5*np.min(e))]
-        e = e[np.where(e<5*np.min(e))]*1e6  #PPM UNITS!
+        x = x[np.where(e<5*np.median(e))]
+        e = e[np.where(e<5*np.median(e))]*1e6  #PPM UNITS!
 
         prec_fig.line(x,e, line_width=4, color = color.Colorblind6[i],legend_label=inst)
 
