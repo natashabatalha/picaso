@@ -1,11 +1,12 @@
 # ---
 # jupyter:
 #   jupytext:
+#     custom_cell_magics: kql
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.19.1
+#       jupytext_version: 1.11.2
 #   kernelspec:
 #     display_name: pic312
 #     language: python
@@ -63,7 +64,7 @@ d.check_environ()
 
 # %%
 # STEP 1: PandExo Reference Data if you have not already
-os.environ['pandeia_refdata'] = '/data/pandexo/pandeia_data-2025.7-jwst'
+d.os.environ['pandeia_refdata'] = '/data/pandexo/pandeia_data-2025.7-jwst'
 
 
 # %%
