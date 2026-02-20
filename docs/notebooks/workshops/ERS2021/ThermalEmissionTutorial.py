@@ -502,8 +502,8 @@ case1.atmosphere(df = pd.DataFrame({
 
 # %%
 log_mh = 0 #log relative to solar
-c_o = 1 #relative to solar
-case1.chemeq_visscher( c_o, log_mh)
+c_o = 0.55 #solar value
+case1.chemeq_visscher_2121( c_o, log_mh)
 
 # %% [markdown]
 # Now you can check out what has been added to your `case1` bundle
@@ -568,8 +568,8 @@ cld1.atmosphere(df = pd.DataFrame({
                 'pressure':pressure,
                 'temperature':temperature}),verbose=False)
 log_mh = 0 #log relative to solar
-c_o = 1 #relative to solar
-cld1.chemeq_visscher( c_o, log_mh)
+c_o = 0.55 #absolute solar
+cld1.chemeq_visscher_2121( c_o, log_mh)
 
 # %% [markdown]
 # ## Adding a box model cloud

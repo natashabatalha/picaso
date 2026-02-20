@@ -2761,7 +2761,6 @@ class inputs():
         Zenodo: 
 
             - Bobcat Models: [profile.tar file](https://zenodo.org/record/1309035#.Xo5GbZNKjGJ)
-            - Elf OWL Models: [L Type Models](https://zenodo.org/records/10385987), [T Type Models](https://zenodo.org/records/10385821), [Y Type Models](https://zenodo.org/records/10381250)
 
         Note gravity is not an input because it grabs gravity from self. 
 
@@ -2828,7 +2827,9 @@ class inputs():
             self.channon_grid_low(filename=os.path.join(__refdata__,'chemistry','visscher_abunds_m+0.0_co1.0' ))
         elif chem=='grid':
             #solar C/O and M/H 
-            self.chemeq_visscher(c_o=1.0,log_mh=0.0)
+            #keeping the absolute c/o value here as 0.458 since this function 
+            #reads in bobcat specifically 
+            self.chemeq_visscher_2121(cto_absolute=0.458,log_mh=0.0)
         self.inputs['atmosphere']['sonora_filename'] = build_filename
 
 
@@ -3087,7 +3088,11 @@ class inputs():
 
         self.chem_interp(a)
 
-    chemeq_visscher = chemeq_visscher_1060
+    def chemeq_visscher(self, c_o, log_mh):
+        msg='chemeq_visscher() function now points an older version of the visscher table (1060 vs. 2121). The newer version was published in PICASO4 (Mang et al. 2026). In 2121, C/O is now specified as an absolute quantity, rather than a relative to solar quantity. Because of this big change we will use PICASO 4 to warn users but continue pointing this function to the 1060 version. In PICASO 5 we will fully move the chemeq_visscher function (and future versions there of) to utilize absolute C/O quantities. We recommend switching to using chemeq_visscher_2121() as you will see throughout our tutorials. In the future we will point chemeq_visscher simply to chemeq_visscher_2121 and input variable c_o will become c_o_absolute'
+        warnings.warn(msg)
+        self.chemeq_visscher_1060(c_o, log_mh)
+
     def channon_grid_low(self, filename = None):
         """
         Interpolate from visscher grid
@@ -3581,17 +3586,13 @@ class inputs():
         #append input
         self.inputs['atmosphere']['profile'] = pt_3d_ds
 
-    def chemeq_3d(self,c_o=1.0,log_mh=0.0, n_cpu=1): 
+    def chemeq_3d(self,c_o=None,log_mh=0.0,cto_absolute=0.55, n_cpu=1): 
         """
         You must have already ran atmosphere_3d or pre-defined an xarray gcm 
         before running this function. 
 
         This function will post-process sonora chemical equillibrium 
         chemistry onto your 3D grid. 
-
-        CURRENT options 
-        log m/h: 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
-        C/O: 0.5X, 1.0X, 1.5X, 2.0X, 2.5X
 
         Parameters
         ----------
@@ -3602,6 +3603,10 @@ class inputs():
         n_cpu : int 
             Number of cpu to use for parallelization of chemistry
         """
+        if isinstance(c_o, (float,int)):
+            cto_absolute = c_o*0.55
+            warnings.warn('I see you have entered keyword c_o. This value used to be assocated with a relative, not absolute c/o ratio. We have now switched to using cto_absolute, where solar=0.55. In picaso 4 we will still allow the old input c_o but in a future PICASO 5 we will discontinue that option and cto input will be defaulted to absolute values.')
+            
         not_molecules = ['temperature','pressure','kz']
         pt_3d_ds = self.inputs['atmosphere']['profile'].sortby('pressure') 
         lon = pt_3d_ds.coords['lon'].values
@@ -3620,7 +3625,7 @@ class inputs():
             #convert to 1d format
             self.inputs['atmosphere']['profile']=df
             #run chemistry, which adds chem to inputs['atmosphere']['profile']
-            self.chemeq_visscher(c_o=c_o,log_mh=log_mh)
+            self.chemeq_visscher_2121(cto_absolute,log_mh=log_mh)
             df_w_chem = self.inputs['atmosphere']['profile']            
             return df_w_chem
 

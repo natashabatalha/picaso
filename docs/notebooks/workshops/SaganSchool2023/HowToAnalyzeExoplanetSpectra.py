@@ -294,7 +294,7 @@ log_mh = 1.0 # log relative to solar
 # C/O is given in PICASO in units relative to solar C/O, which is worth noting because you're not giving it the actual ratio of carbon to oxygen, but rather the ratio relative to the Solar C/O. Solar C/O is ~0.5 ([Asplund et al. 2021](https://ui.adsabs.harvard.edu/abs/2021A%26A...653A.141A/abstract)), and let's set our value to be the same as Solar (i.e. 1 relative to Solar).
 
 # %% id="27069c4b-0a92-45f6-a21b-ed56682aef57"
-c_o = 1 # relative to solar
+c_o = 0.55 # absolute solar
 
 # %% [markdown] id="afc5200e-7afe-4366-bc8c-cb132951885c"
 # Now we can ask PICASO to make us a mixture of molecules consistent with the relative M/H metallicity and relative C/O ratio we set up, and we can take a look at what it creates. We can look at the "atmosphere profile" which shows us the abundances of various molecules at different levels of our atmosphere (levels being places where temperature and pressure differ in the manner we defined above).
@@ -302,7 +302,7 @@ c_o = 1 # relative to solar
 # This can help us find out which molecules we should really focus on during our analysis, and others that may be harder or redundant to look for based off of our C/O ratio and metallicity.
 
 # %% id="c618536e-3990-48b0-bb7e-516d1ab83223"
-w39.chemeq_visscher(c_o, log_mh)
+w39.chemeq_visscher_2121(c_o, log_mh)
 
 # %% [markdown] id="80b1b45d-eb0a-4373-8f83-165807d47e92"
 # Running this function sets a dataframe in your inputs dictionary, which you can access now with `w39.inputs['atmosphere']['profile']`. You can see that PICASO has given us loads of different molecules to work with, but many have miniscule abundances (note some e-38 values in there).
@@ -531,12 +531,12 @@ print('Simple First Guess', chisqr(model_iso))
 
 # %% id="ae270058"
 mh_grid_vals = [1, 10, 100]
-co_grid_vals = [1, 2.5]
+co_grid_vals = [0.55, 1.3] #absolute c/o ratios
 
 chemistry_grid = {}
 for imh in mh_grid_vals:
     for ico in co_grid_vals:
-        w39.chemeq_visscher(ico, np.log10(imh))
+        w39.chemeq_visscher_2121(ico, np.log10(imh))
         chemistry_grid[f'M/H={imh},C/O={ico}'] = w39.spectrum(opa, calculation='transmission', full_output=True)
         print(f'M/H={imh},C/O={ico}', chisqr(chemistry_grid[f'M/H={imh},C/O={ico}'] ))
 

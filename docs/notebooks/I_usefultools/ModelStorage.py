@@ -89,10 +89,10 @@ pl = jdi.inputs()#calculation='brown')
 pl.gravity(radius=1, radius_unit=u.Unit('R_jup'),
            mass=1, mass_unit=u.Unit('M_jup'))
 mh = 0
-cto = 1
+cto = 0.55 #solar value
 
 pl.atmosphere(filename=jdi.jupiter_pt(), sep='\s+')
-pl.chemeq_visscher(cto, mh)
+pl.chemeq_visscher_2121(cto, mh)
 pl.phase_angle(0)
 pl.clouds(filename=jdi.jupiter_cld(), sep='\s+')
 pl.star(opa, 5000,0,4, radius=1, radius_unit=u.Unit("R_sun"), semi_major=1, semi_major_unit=1*u.AU)

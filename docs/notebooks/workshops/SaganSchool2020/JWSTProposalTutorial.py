@@ -306,8 +306,8 @@ gj436_trans = pj.load_planet(choose_from.loc[choose_from['pl_name']==planet_name
 # %%
 #run picaso
 log_mh = 0 #this is relative to solar, so 10**log_mh = 1xsolar
-co = 1 # this is relative to solar, so 1xsolar
-gj436_trans.chemeq_visscher(co,log_mh)
+co = 0.55 # absolute solar value 
+gj436_trans.chemeq_visscher_2121(co,log_mh)
 
 df_picaso = gj436_trans.spectrum(opas, calculation='transmission', full_output=True)
 wno,cloud_free  = pj.mean_regrid(df_picaso['wavenumber'], df_picaso['transit_depth'] , R=150)
@@ -408,8 +408,8 @@ show(spec)
 # %%
 #run picaso
 log_mh = 2 #this is relative to solar, so 10**log_mh = 1xsolar
-co = 1 # this is relative to solar, so 1xsolar
-gj436_trans.chemeq_visscher(co,log_mh)
+co = 0.55 # absolute solar value
+gj436_trans.chemeq_visscher_2121(co,log_mh)
 
 df_picaso = gj436_trans.spectrum(opas, calculation='transmission', full_output=True)
 wno,cloud_free  = pj.mean_regrid(df_picaso['wavenumber'], df_picaso['transit_depth'] , R=150)
@@ -499,10 +499,10 @@ all_emis = {}
 
 # let's get the same chemistry as chimera for consistency
 logMH = 0 #log relative to solar
-CO = 1 #relative to solar
+CO = 0.55 #absolute solar value
 
 #add in chemistry to picaso bundle
-gj436_emis.chemeq_visscher(CO, logMH)
+gj436_emis.chemeq_visscher_2121(CO, logMH)
 
 #run picaso
 df_picaso = gj436_emis.spectrum(opas, calculation='thermal', full_output=True)
@@ -532,10 +532,10 @@ show(spec)
 
 # %%
 logMH = 2 #log relative to solar
-CO = 1 #relative to solar
+CO = 0.55 #absolute solar value
 
 #add in chemistry to picaso bundle
-gj436_emis.chemeq_visscher(CO, logMH)
+gj436_emis.chemeq_visscher_2121(CO, logMH)
 
 #run picaso
 df_picaso = gj436_emis.spectrum(opas, calculation='thermal', full_output=True)
@@ -600,8 +600,8 @@ ic = 0
 for logMH in logMHs:
     for log_dp in cloud_thickness:
 
-        CO = 1 #solar carbon to oxygen ratio
-        gj436_trans.chemeq_visscher(CO, logMH)
+        CO = 0.55 #solar carbon to oxygen ratio
+        gj436_trans.chemeq_visscher_2121(CO, logMH)
 
         #add in the cloud
         gj436_trans.clouds(g0=[0.9], w0=[0.9], opd=[10], p=[cloud_bottom], dp=[log_dp])
@@ -702,12 +702,12 @@ colors = color.viridis(len(logMHs)*len(DTs))
 ic = 0
 for MH in logMHs:
     for DT in DTs:
-        CO = 1 #solar carbon to oxygen ratio
+        CO = 0.55 #solar carbon to oxygen ratio
 
         #add in chemistry to picaso bundle T+DT, P
 
         gj436_emis.inputs['atmosphere']['profile']['temperature'] = T + DT
-        gj436_emis.chemeq_visscher(CO,MH)
+        gj436_emis.chemeq_visscher_2121(CO,MH)
 
         #run picaso
         df_picaso = gj436_emis.spectrum(opas, calculation='thermal', full_output=True)
@@ -820,11 +820,11 @@ show(column(row(fig[0:2]), row(fig[2:4])))
 
 # %%
 logMH = np.log10(100) #Solar metallicity taken by eye balling the Solar System fit #science
-CO = 1 #solar carbon to oxygen ratio
+CO = 0.55 #solar carbon to oxygen ratio
 gj436_trans= pj.load_planet(choose_from.loc[choose_from['pl_name']==planet_name],
                             opas,
                             pl_eqt=667,st_metfe = 0.02, st_teff=3479)
-gj436_trans.chemeq_visscher(CO, logMH)
+gj436_trans.chemeq_visscher_2121(CO, logMH)
 
 #now we can remove the abundance of CH4 using exclude mol
 df = jdi.copy.deepcopy(gj436_trans.inputs['atmosphere']['profile'])

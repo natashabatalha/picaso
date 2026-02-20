@@ -50,9 +50,9 @@ hatp26 = jdi.load_planet(hatp26_row,opa , st_metfe=0)#hatp26 is misst st_metfe s
 # That means you still need to add in the chemistry and cloud parameters
 
 # %%
-co=1.0#c/o ratio 1x solar
+absolute_co=0.55#solar
 logfeh = 1.5 #10^1.5 ~ 30x solar
-hatp26.chemeq_visscher(co,logfeh) #adds in template chemistry from sonora
+hatp26.chemeq_visscher_2121(absolute_co,logfeh) #adds in template chemistry from sonora
 df = hatp26.spectrum(opa, calculation='transmission+thermal')
 
 # %%
@@ -112,9 +112,9 @@ hatp26_row = nexsci.loc[nexsci['hostname']=='HAT-P-26']
 #add it to load planet function with opacity
 opa = jdi.opannection(wave_range=[0.3,1])
 hatp26 = jdi.load_planet(hatp26_row,opa ,st_metfe=0)
-co = 1
+co_absolute = 0.55
 logfeh=2
-hatp26.chemeq_visscher(co,logfeh)
+hatp26.chemeq_visscher_2121(co_absolute,logfeh)
 df = hatp26.spectrum(opa, calculation='reflected',full_output=True)
 
 # %%
