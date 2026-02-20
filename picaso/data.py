@@ -254,7 +254,7 @@ def get_data_config():
     },
     'picaso-lite':{
         'tutorial_sagan23':{
-            'url':{"picaso-lite-reference.tar.gz": "https://zenodo.org/records/16756162/files/picaso-lite-reference.tar.gz"},
+            'url':{"picaso-lite-reference.tar.gz": "https://zenodo.org/records/18708158/files/picaso-lite-reference.tar.gz"},
                 'description':'picaso-lite reference folder that includes the bare minimum to run the sagan 2023 tutorial set.',
             'default_destination':os.path.join(__refdata__)
             }
