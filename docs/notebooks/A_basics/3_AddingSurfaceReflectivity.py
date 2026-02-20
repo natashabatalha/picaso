@@ -7,9 +7,9 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.19.1
 #   kernelspec:
-#     display_name: Python [conda env:base] *
+#     display_name: pic312
 #     language: python
-#     name: conda-base-py
+#     name: python3
 # ---
 
 # %% [markdown]
