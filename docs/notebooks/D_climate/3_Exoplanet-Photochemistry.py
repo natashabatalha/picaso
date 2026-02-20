@@ -24,6 +24,8 @@
 # Here, we will use WASP-39 b as an example. We will begin by importing several packages required for the run.
 
 # %%
+import warnings
+warnings.filterwarnings("ignore")
 import picaso.justdoit as jdi
 import picaso.justplotit as jpi
 import picaso.photochem as picasochem
@@ -61,15 +63,9 @@ wv, F = stars.muscles_spectrum(
 # Initialize an opacity class, specifying the molecules you want to include opacities for.
 
 # %%
-gases_fly = [
-    'H2O','NH3','CO2','N2','HCN',
-    'H2','C2H2','C2H4','C2H6','Na',
-    'K','PH3','TiO','VO','FeH',
-    'SO2','H2S'
-]
 opacity_ck = jdi.opannection(
     method='resortrebin',
-    preload_gases=gases_fly
+    preload_gases='all'
 )
 
 
