@@ -383,7 +383,7 @@ def retrieve(config, param_tools):
     OPA = opannection(
         filename_db=config['OpticalProperties']['opacity_files'], #database(s)
         method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
-        wave_range=['OpticalProperties']['wave_range'],#state wavelength range desired of spectrum
+        wave_range=config['OpticalProperties']['wave_range'],#state wavelength range desired of spectrum
         **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
         )
     
