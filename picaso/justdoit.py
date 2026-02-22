@@ -1854,11 +1854,11 @@ class inputs():
             fine_flux_star = 10**interpolator(np.log10(wno_planet))
             
             # Compute binned flux using trapezoidal integration
-            fine_flux_star[:] = [np.trapz(fine_flux_star[(wno_planet >= wno_planet[i]) & 
-                                                        (wno_planet <= wno_planet[i+1])], 
-                                        x=-1/wno_planet[(wno_planet >= wno_planet[i]) & 
-                                                        (wno_planet <= wno_planet[i+1])]) 
-                                if i < len(wno_planet) - 1 else 0 for i in range(len(wno_planet))]
+            fine_flux_star = np.array([np.trapz(fine_flux_star[(wno_planet >= wno_planet[i]) &
+                                                        (wno_planet <= wno_planet[i+1])],
+                                        x=-1/wno_planet[(wno_planet >= wno_planet[i]) &
+                                                        (wno_planet <= wno_planet[i+1])])
+                                if i < len(wno_planet) - 1 else 0 for i in range(len(wno_planet))])
 
             # Linear extrapolation for the last point
             if len(wno_planet) > 2:
@@ -2761,7 +2761,6 @@ class inputs():
         Zenodo: 
 
             - Bobcat Models: [profile.tar file](https://zenodo.org/record/1309035#.Xo5GbZNKjGJ)
-            - Elf OWL Models: [L Type Models](https://zenodo.org/records/10385987), [T Type Models](https://zenodo.org/records/10385821), [Y Type Models](https://zenodo.org/records/10381250)
 
         Note gravity is not an input because it grabs gravity from self. 
 
@@ -2828,7 +2827,9 @@ class inputs():
             self.channon_grid_low(filename=os.path.join(__refdata__,'chemistry','visscher_abunds_m+0.0_co1.0' ))
         elif chem=='grid':
             #solar C/O and M/H 
-            self.chemeq_visscher(c_o=1.0,log_mh=0.0)
+            #keeping the absolute c/o value here as 0.458 since this function 
+            #reads in bobcat specifically 
+            self.chemeq_visscher_2121(cto_absolute=0.458,log_mh=0.0)
         self.inputs['atmosphere']['sonora_filename'] = build_filename
 
 
@@ -3087,7 +3088,11 @@ class inputs():
 
         self.chem_interp(a)
 
-    chemeq_visscher = chemeq_visscher_1060
+    def chemeq_visscher(self, c_o, log_mh):
+        msg='chemeq_visscher() function now points an older version of the visscher table (1060 vs. 2121). The newer version was published in PICASO4 (Mang et al. 2026). In 2121, C/O is now specified as an absolute quantity, rather than a relative to solar quantity. Because of this big change we will use PICASO 4 to warn users but continue pointing this function to the 1060 version. In PICASO 5 we will fully move the chemeq_visscher function (and future versions there of) to utilize absolute C/O quantities. We recommend switching to using chemeq_visscher_2121() as you will see throughout our tutorials. In the future we will point chemeq_visscher simply to chemeq_visscher_2121 and input variable c_o will become c_o_absolute'
+        warnings.warn(msg)
+        self.chemeq_visscher_1060(c_o, log_mh)
+
     def channon_grid_low(self, filename = None):
         """
         Interpolate from visscher grid
@@ -3575,20 +3580,19 @@ class inputs():
             attrs=dict(description="coords with vectors"),
         )
 
-        #append input
-        self.inputs['atmosphere']['profile'] = pt_3d_ds.update(ds_chem)
+        #update since .update now returns None in xarray
+        pt_3d_ds.update(ds_chem)
 
-    def chemeq_3d(self,c_o=1.0,log_mh=0.0, n_cpu=1): 
+        #append input
+        self.inputs['atmosphere']['profile'] = pt_3d_ds
+
+    def chemeq_3d(self,c_o=None,log_mh=0.0,cto_absolute=0.55, n_cpu=1): 
         """
         You must have already ran atmosphere_3d or pre-defined an xarray gcm 
         before running this function. 
 
         This function will post-process sonora chemical equillibrium 
         chemistry onto your 3D grid. 
-
-        CURRENT options 
-        log m/h: 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
-        C/O: 0.5X, 1.0X, 1.5X, 2.0X, 2.5X
 
         Parameters
         ----------
@@ -3599,6 +3603,10 @@ class inputs():
         n_cpu : int 
             Number of cpu to use for parallelization of chemistry
         """
+        if isinstance(c_o, (float,int)):
+            cto_absolute = c_o*0.55
+            warnings.warn('I see you have entered keyword c_o. This value used to be assocated with a relative, not absolute c/o ratio. We have now switched to using cto_absolute, where solar=0.55. In picaso 4 we will still allow the old input c_o but in a future PICASO 5 we will discontinue that option and cto input will be defaulted to absolute values.')
+            
         not_molecules = ['temperature','pressure','kz']
         pt_3d_ds = self.inputs['atmosphere']['profile'].sortby('pressure') 
         lon = pt_3d_ds.coords['lon'].values
@@ -3617,7 +3625,7 @@ class inputs():
             #convert to 1d format
             self.inputs['atmosphere']['profile']=df
             #run chemistry, which adds chem to inputs['atmosphere']['profile']
-            self.chemeq_visscher(c_o=1.0,log_mh=0.0)
+            self.chemeq_visscher_2121(cto_absolute,log_mh=log_mh)
             df_w_chem = self.inputs['atmosphere']['profile']            
             return df_w_chem
 
@@ -3635,6 +3643,7 @@ class inputs():
 
 
         data_vars = {imol:(["lon", "lat","pressure"], all_out[imol],{'units': 'v/v'}) for imol in results[0].keys() if imol not in not_molecules}
+        
         # put data into a dataset
         ds_chem = xr.Dataset(
             data_vars=data_vars,
@@ -3646,8 +3655,12 @@ class inputs():
             attrs=dict(description="coords with vectors"),
         )
 
+        #update with ds_chem values
+        #note new xarray now updates in place 
+        pt_3d_ds.update(ds_chem)
+
         #append input
-        self.inputs['atmosphere']['profile'] = pt_3d_ds.update(ds_chem)
+        self.inputs['atmosphere']['profile'] = pt_3d_ds
 
     def atmosphere_4d(self, ds=None, shift=None, plot=True, iz_plot=0,verbose=True, 
         zero_point='night_transit'): 
@@ -4247,7 +4260,7 @@ class inputs():
         self.inputs['clouds']['do_holes'] = do_holes
         if do_holes == True:
             if fhole == None: raise Exception ('fhole must be float 0-1 if do_holes = True')
-            if fthin_cld == None: raise Exception ('fhole must be float 0-1 if do_holes = True')
+            # if fthin_cld == None: raise Exception ('fhole must be float 0-1 if do_holes = True') #commenting out because fthin can be None if user doesn't need it
             self.inputs['clouds']['fhole'] = fhole
             self.inputs['clouds']['fthin_cld'] = fthin_cld
 
@@ -4367,7 +4380,7 @@ class inputs():
                     same place that you specified you pressure-temperature profile. \
                     Alternatively, you can manually add it by doing \
                     `case.inputs['atmosphere']['profile']['kz'] = KZ`")
-            df = self.inputs['atmosphere']['profile'].loc[:,['pressure','temperature','kz']]
+            df = self.inputs['atmosphere']['profile'].loc[:,['pressure','temperature','kz']].copy()
             
             cloud_p.gravity(gravity=self.inputs['planet']['gravity'],
                     gravity_unit=u.Unit(self.inputs['planet']['gravity_unit']))#
@@ -4866,21 +4879,8 @@ class inputs():
     
         return 
     
-    def inputs_climate(self, temp_guess= None, pressure= None, rfaci = 1,nofczns = 1 ,
-        nstr = None,  rfacv = None, moistgrad = False
-        #deprecated and moved to atmosphere
-        #photochem=False, photochem_init_args=None, sonora_abunds_photochem = False, df_sonora_photochem = None,
-        #photochem_TOA_pressure = 1e-7*1e6, 
-        #, 
-        #deprecated and moved to virga and/or clouds 
-        #fhole = None, do_holes = False, fthin_cld = None, 
-        #cloudy = False, species = None, fsed = None, mieff_dir = None,
-        # beta = 1, virga_param = 'const',
-        #DEPRECATED and moved to atmosphere function
-        #deq_rainout= False, quench_ph3 = True, no_ph3 = False, 
-        #kinetic_CO2 = True, cold_trap = False,
-        #mh = None, CtoO = None
-        ):
+    def inputs_climate(self, temp_guess= None, pressure= None, rfaci = 1,
+        rcb_guess = None,  rfacv = None, moistgrad = False        ):
         """
         Get Inputs for Climate run
 
@@ -4894,16 +4894,8 @@ class inputs():
             Default=1, Fractional contribution of thermal light in net flux
             Usually this is kept at one and then the redistribution is controlled 
             via rfacv
-        nofczns : integer
-            Number of guessed Convective Zones. 1 or 2
-        nstr : array
-            NSTR vector describes state of the atmosphere:
-            0   is top layer [0]
-            1   is top layer of top convective region
-            2   is bottom layer of top convective region
-            3   is top layer of lower radiative region
-            4   is top layer of lower convective region
-            5   is bottom layer of lower convective region [nlayer-1]
+        rcb_guess : int
+            Layer index of the initial Radiative-Convective Boundary (RCB) guess (replaces nstr input list)
         rfacv : float
             Fractional contribution of reflected light in net flux.
             =0 for no stellar irradition, 
@@ -4916,11 +4908,21 @@ class inputs():
             raise Exception('Need to specify Teff with jdi.input for climate run')
         if self.inputs['planet']['gravity'] == 0.0:
             raise Exception('Need to specify gravity with jdi.input for climate run')
-
+        temp_guess = temp_guess.copy()
+        pressure = pressure.copy()
         self.inputs['climate']['guess_temp'] = temp_guess
         self.inputs['climate']['pressure'] = pressure
+        # Define nstr here based on rcb_guess instead of user input
+        #     NSTR vector describes state of the atmosphere:
+        #     0   is top layer [0]
+        #     1   is top layer of top convective region
+        #     2   is bottom layer of top convective region
+        #     3   is top layer of lower radiative region
+        #     4   is top layer of lower convective region
+        #     5   is bottom layer of lower convective region [nlayer-1]
+        nstr = [0, rcb_guess, len(pressure)-2, 0, 0, 0]
         self.inputs['climate']['nstr'] = nstr
-        self.inputs['climate']['nofczns'] = nofczns
+        self.inputs['climate']['nofczns'] = 1 #hard coded to start with 1 but allows to solve for 2 (keeping it this way to more easily implement additional convective zones in future)
         self.inputs['climate']['rfacv'] = rfacv
         self.inputs['climate']['rfaci'] = rfaci
         self.inputs['climate']['moistgrad'] = moistgrad
@@ -4994,7 +4996,12 @@ class inputs():
         with_spec : bool 
             Runs picaso spectrum at the end to get the full converged outputs, Default=False
         save_all_kzz : bool
-            If you want to save and return all iterations in the kzz profile,True/False
+            If you want to save and return all iterations in the kzz profile,True/False. 
+            Note that if your calculation does not need a kzz profile at all, 
+            this will still compute it and return to you. Those this seems silly it 
+            is designed for folks coupling PICASO runs to other codes that need kzz 
+            as input (e.g., other cloud codes etc.) and this way they can get the kzz profile
+            without having to run a separate PICASO run.
         diseq_chem : bool
             If you want to run `on-the-fly' mixing (takes longer),True/False
         self_consistent_kzz : bool
@@ -5136,7 +5143,7 @@ class inputs():
 
         #kzz treatment ? lets store a constant kz profile if it exists 
         #DO I NEED A KZZ? 
-        need_kzz = cloudy or diseq_chem 
+        need_kzz = cloudy or diseq_chem or save_all_kzz
         if need_kzz: 
             #lets initiative a separate place to store this 
             self.inputs['atmosphere']['kzz']={}

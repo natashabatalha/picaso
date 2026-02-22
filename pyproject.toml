@@ -24,13 +24,15 @@ dependencies = [
     "stsynphot",
     "sphinx",
     "scipy",
-    "virga-exo==2.0",
+    "h5py",
+    "virga-exo==2.0.1",
     "xarray",
     "pooch",
     "tqdm",
-    "bibtexparser==1.4.3",
+    "bibtexparser==1.4.4",
     "netcdf4",
     "h5netcdf",
+    "jupytext",
 ]
 
 [project.urls]

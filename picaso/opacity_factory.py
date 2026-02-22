@@ -12,6 +12,9 @@ from scipy.io import FortranFile
 import glob
 from scipy.stats import binned_statistic
 import h5py
+import warnings 
+
+from .io_utils import read_visscher_2121
 
 __refdata__ = os.environ.get('picaso_refdata')
 
@@ -97,7 +100,7 @@ def insert_hitran_cia(original_file, molname, new_db, new_wno):
                          }} 
 
     cia = pd.read_csv(original_file,names=['wno','cm5/molecule2'], header=None,usecols=[0,1],
-                delim_whitespace=True)
+                sep=r'\s+')
     header = pd.read_csv(original_file,header=None,names=['header'])
 
 
@@ -251,7 +254,7 @@ def get_original_data(original_file,colnames,new_db, overwrite=False):
         Default is set to False as to not overwrite any existing files. This parameter controls overwriting 
         cia database 
    """
-    og_opacity = pd.read_csv(original_file,delim_whitespace=True,names=colnames)
+    og_opacity = pd.read_csv(original_file,sep=r'\s+',names=colnames)
     
     temperatures = og_opacity['wno'].loc[np.isnan(og_opacity[colnames[1]])].values
 
@@ -375,7 +378,7 @@ def h2h2_overtone(t, wno):
     H2-H2 absorption in cm-1 amagat-2       
     """
     fname = os.path.join(__refdata__, 'opacities','H2H2_ov2_eq.tbl')
-    df = pd.read_csv(fname, delim_whitespace=True).set_index('wavenumber').apply(np.log10)      
+    df = pd.read_csv(fname, sep=r'\s+').set_index('wavenumber').apply(np.log10)      
     temps = [ float(i) for i in df.keys()]
 
     if t > max(temps):
@@ -581,7 +584,7 @@ def adapt_array(arr):
 def convert_array(text):
     out = io.BytesIO(text)
     out.seek(0)
-    return np.load(out)
+    return np.load(out).copy()
 
 def open_local(db_f):
     """Code needed to open up local database, interpret arrays from bytes and return cursor"""
@@ -604,7 +607,7 @@ def adapt_array(arr):
 def convert_array(text):
     out = io.BytesIO(text)
     out.seek(0)
-    return np.load(out)
+    return np.load(out).copy()
 
 def open_local(db_f):
     """Code needed to open up local database, interpret arrays from bytes and return cursor"""
@@ -817,7 +820,7 @@ def insert_molecular_1060(molecule, min_wavelength, max_wavelength, new_R,
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1] 
         elif molecule =='CH3D':
             df = pd.read_csv(os.path.join(og_directory,molecule,'fort.{0}.bz2'.format(int(i)))
-                             ,delim_whitespace=True, skiprows=23,header=None)
+                             ,sep=r'\s+', skiprows=23,header=None)
             dset=df[1].values
             og_wvno_grid=df[0].values
         else: 
@@ -1006,14 +1009,17 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
             dset = np.load(open(fdata,'rb'))
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]  
         elif 'rfree_fort' in ftype: 
-            df = pd.read_csv(fdata,delim_whitespace=True, skiprows=27, header=None, names=['wno','cx'])
+            df = pd.read_csv(fdata,sep=r'\s+', skiprows=27, header=None, names=['wno','cx'])
             dset=df.loc[:,'cx'].values
             og_wvno_grid=df.loc[:,'wno'].values  
         elif 'h5' in ftype: 
             with h5py.File(fdata, 'r') as h5f:    
                 dset = h5f['cxs'][i-1]     
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]  
-
+        
+        dset = dset.copy()
+        og_wvno_grid = og_wvno_grid.copy() 
+        
         if not insert_direct:
             #interp on high res grid
             #basic interpolation here onto a new wavegrid that 
@@ -1067,10 +1073,10 @@ def get_kark_CH4_noTdependence(kark_dir,new_wave, temperature):
     opacity in cm2/species
     """
 
-    new_beers = pd.read_csv(os.path.join(kark_dir, 'kark_beers.csv'),delim_whitespace=True)
-    two_term = pd.read_csv(os.path.join(kark_dir, 'kark_two_term.csv'),delim_whitespace=True)
-    four_term = pd.read_csv(os.path.join(kark_dir, 'kark_four_term.csv'),delim_whitespace=True)
-    wts = pd.read_csv(os.path.join(kark_dir, 'kark_gauss_weights.csv'),delim_whitespace=True)
+    new_beers = pd.read_csv(os.path.join(kark_dir, 'kark_beers.csv'),sep=r'\s+')
+    two_term = pd.read_csv(os.path.join(kark_dir, 'kark_two_term.csv'),sep=r'\s+')
+    four_term = pd.read_csv(os.path.join(kark_dir, 'kark_four_term.csv'),sep=r'\s+')
+    wts = pd.read_csv(os.path.join(kark_dir, 'kark_gauss_weights.csv'),sep=r'\s+')
     wts4 = wts.loc[wts['number']==4,[str(i) for i in range(1,5)]].values
     wts2 = wts.loc[wts['number']==2,[str(i) for i in range(1,3)]].values
     wave = []
@@ -1136,7 +1142,7 @@ def get_optical_o3(file_o3,new_wvno_grid):
     new_wvno_grid : array
         Wavelength grid to interpolate the optical ozone data onto
     """
-    df1 = pd.read_csv(file_o3,delim_whitespace=True,names=['nm','cx'])
+    df1 = pd.read_csv(file_o3,sep=r'\s+',names=['nm','cx'])
     wno_old = 1e4/(df1['nm']*1e-3).values[::-1]
     opa = df1['cx'].values[::-1]
     o3 = np.interp(new_wvno_grid, wno_old ,opa, left=1e-100, right=1e-100)
@@ -1225,7 +1231,7 @@ def vresample_and_insert_molecular(molecule, min_wavelength, max_wavelength, new
     delwn = sfits['Delta Wavenum']
     start = sfits['Start Wavenum']
 
-    s = pd.read_csv(os.path.join(og_directory,'PTgrid1060.txt'),delim_whitespace=True,skiprows=1,
+    s = pd.read_csv(os.path.join(og_directory,'PTgrid1060.txt'),sep=r'\s+',skiprows=1,
                         header=None, names=['i','pressure','temperature'],dtype=str)
     #all pressures 
     pres=s['pressure'].values.astype(float)
@@ -1310,26 +1316,30 @@ def get_continuum(db_file, species, temperature):
     #            WHERE molecule in {}
     #            AND temperature in {}""".format(str(tuple(species)), str(tuple(temp_nearest))))
 
-    if ((len(species) ==1 )& (len(temp_nearest) >1)):
-        cur.execute("""SELECT molecule,temperature,opacity
+    if (len(species) == 1) and (len(temp_nearest) > 1):
+        placeholders = ', '.join(['?'] * len(temp_nearest))
+        cur.execute(f"""SELECT molecule,temperature,opacity
                 FROM continuum
                 WHERE molecule = ?
-                AND temperature in {}""".format(str(tuple(temp_nearest))),( species[0],))
-    elif ((len(species) >1) & (len(temp_nearest) ==1)):
-        cur.execute("""SELECT molecule,temperature,opacity
+                AND temperature in ({placeholders})""", [species[0]] + list(temp_nearest))
+    elif (len(species) > 1) and (len(temp_nearest) == 1):
+        placeholders = ', '.join(['?'] * len(species))
+        cur.execute(f"""SELECT molecule,temperature,opacity
                 FROM continuum
-                WHERE molecule in {}
-                AND temperature = ?""".format(str(tuple(species))),( temp_nearest[0],))
-    elif ((len(species) ==1) & (len(temp_nearest) ==1)):
+                WHERE molecule in ({placeholders})
+                AND temperature = ?""", list(species) + [temp_nearest[0]])
+    elif (len(species) == 1) and (len(temp_nearest) == 1):
         cur.execute("""SELECT molecule,temperature,opacity
                     FROM continuum
                     WHERE molecule = ?
-                    AND temperature = ?""",(species[0],temp_nearest[0]))        
-    else: 
-        cur.execute("""SELECT molecule,temperature,opacity
+                    AND temperature = ?""", (species[0], temp_nearest[0]))
+    else:
+        placeholders_spec = ', '.join(['?'] * len(species))
+        placeholders_temp = ', '.join(['?'] * len(temp_nearest))
+        cur.execute(f"""SELECT molecule,temperature,opacity
                     FROM continuum
-                    WHERE molecule in {}
-                    AND temperature in {}""".format(str(tuple(species)), str(tuple(temp_nearest))))
+                    WHERE molecule in ({placeholders_spec})
+                    AND temperature in ({placeholders_temp})""", list(species) + list(temp_nearest))
 
     
     data= cur.fetchall()
@@ -1386,26 +1396,30 @@ def get_molecular(db_file, species, temperature,pressure):
     #here's a little code to get out the correct pair (so we dont have to worry about getting the exact number right)
     ind_pt = [min(pt_pairs, key=lambda c: math.hypot(c[1]- coordinate[0], c[2]-coordinate[1]))[0]
               for coordinate in  zip(pressure,temperature)]
-    if ((len(species) ==1 )& (len(ind_pt) >1)):
-        cur.execute("""SELECT molecule,ptid,pressure,temperature,opacity
+    if (len(species) == 1) and (len(ind_pt) > 1):
+        placeholders = ', '.join(['?'] * len(ind_pt))
+        cur.execute(f"""SELECT molecule,ptid,pressure,temperature,opacity
                 FROM molecular
                 WHERE molecule = ?
-                AND ptid in {}""".format(str(tuple(ind_pt))),( species[0],))
-    elif ((len(species) >1) & (len(ind_pt) ==1)):
-        cur.execute("""SELECT molecule,ptid,pressure,temperature,opacity
+                AND ptid in ({placeholders})""", [species[0]] + list(ind_pt))
+    elif (len(species) > 1) and (len(ind_pt) == 1):
+        placeholders = ', '.join(['?'] * len(species))
+        cur.execute(f"""SELECT molecule,ptid,pressure,temperature,opacity
                 FROM molecular
-                WHERE molecule in {}
-                AND ptid = ?""".format(str(tuple(species))),( ind_pt[0],))
-    elif ((len(species) ==1) & (len(ind_pt) ==1)):
+                WHERE molecule in ({placeholders})
+                AND ptid = ?""", list(species) + [ind_pt[0]])
+    elif (len(species) == 1) and (len(ind_pt) == 1):
         cur.execute("""SELECT molecule,ptid,pressure,temperature,opacity
                     FROM molecular
                     WHERE molecule = ?
-                    AND ptid = ?""",(species[0],ind_pt[0]))        
-    else: 
-        cur.execute("""SELECT molecule,ptid,pressure,temperature,opacity
+                    AND ptid = ?""", (species[0], ind_pt[0]))
+    else:
+        placeholders_spec = ', '.join(['?'] * len(species))
+        placeholders_ptid = ', '.join(['?'] * len(ind_pt))
+        cur.execute(f"""SELECT molecule,ptid,pressure,temperature,opacity
                     FROM molecular
-                    WHERE molecule in {}
-                    AND ptid in {}""".format(str(tuple(species)), str(tuple(ind_pt))))
+                    WHERE molecule in ({placeholders_spec})
+                    AND ptid in ({placeholders_ptid})""", list(species) + list(ind_pt))
 
 
     data= cur.fetchall()
@@ -1552,8 +1566,8 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
 
     """
 
-    chem_grid = pd.read_csv(chemistry_file, sep=rf'\s+')
-    
+    #chem_grid = pd.read_csv(chemistry_file, sep=rf'\s+')
+    chem_grid = read_visscher_2121(chemistry_file)
 
 
 
@@ -1564,8 +1578,10 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
 
     if chem_grid.shape[0]>1460: 
         print('chem_grid is not 1460')
-        chem_grid = chem_grid.loc[chem_grid['T(K)'].isin( s1460['temperature_K'].astype(float).unique())].loc[chem_grid['P(bar)']<3.5].reset_index()
-
+        chem_grid = chem_grid.loc[chem_grid['temperature'].isin( s1460['temperature_K'].astype(float).unique())].loc[chem_grid['pressure']<10**3.5].reset_index()
+        assert chem_grid.shape[0]==1460, 'chem grid is still not 1460 shape'
+        chem_grid = chem_grid.drop('pressure',axis=1)
+        chem_grid = chem_grid.drop('temperature',axis=1)
 
     numw_uni = s1460['number_wave_pts'].values.astype(int)
     delwn_uni = s1460['delta_wavenumber'].values.astype(float)
@@ -1650,7 +1666,7 @@ def compute_sum_molecular(ck_molecules,og_directory,chemistry_file,
                 
             if not isinstance(wv_file_name,type(None)):
                 wvno_low,wvno_high,new_wno,new_dwno = get_wvno_grid(wv_file_name)
-            elif ((not isinstance(new_wno,type(None)))  &  
+            elif ((not isinstance(new_wno,type(None))) and
                 (not isinstance(new_dwno,type(None)))):
                 wvno_low = 0.5*(2*new_wno - new_dwno)
                 wvno_high = 0.5*(2*new_wno + new_dwno)
@@ -1852,7 +1868,7 @@ def compute_ck_molecular(molecule,og_directory,
     # GET CK WAVENUMBER GRID BY COMPUTING LOWER AND UPPER WAVENUM EDGES # 
     if not isinstance(wv_file_name,type(None)):
         wvno_low,wvno_high,new_wno,new_dwno = get_wvno_grid(wv_file_name)
-    elif ((not isinstance(new_wno,type(None)))  &  
+    elif ((not isinstance(new_wno,type(None))) and
         (not isinstance(new_dwno,type(None)))):
         wvno_low = 0.5*(2*new_wno - new_dwno)
         wvno_high = 0.5*(2*new_wno + new_dwno)
@@ -1895,7 +1911,7 @@ def compute_ck_molecular(molecule,og_directory,
             dset = np.fromfile(fdata, dtype=float) 
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]
         elif 'python' in ftype: 
-            dset = np.load(open(fdata,'rb'))
+            dset = np.load(open(fdata,'rb')).copy()
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]      
         elif 'hdf5' in ftype: 
             with h5py.File(fdata,'r') as f:
@@ -1948,6 +1964,7 @@ def compute_ck_molecular(molecule,og_directory,
 
         if verbose: print(i,p,t)
     
+
     if  isinstance(climate_filename, type(None)):
         return k_coeff_arr
     
@@ -2200,3 +2217,112 @@ def add_all_metadata(filename, version_number, default, resolution, wavemin, wav
     add_metadata_item(f, 'wavemin',wavemin)
     add_metadata_item(f, 'wavemax',wavemax)
     add_metadata_item(f, 'zenodo',zenodo_doi)
+
+def get_ck_tables(path, preload_gases=None, avail_continuum=None):
+    """
+    Unified loader for correlated-k files (both preweighted HDF5 and resortrebin directory).
+
+    Parameters
+    ----------
+    path : str
+        Path to either a single HDF5 file (preweighted) or a directory containing
+        individual molecule files (resortrebin).
+    preload_gases : list of str, optional
+        List of gases to load if in resortrebin mode.
+    avail_continuum : list of str, optional
+        List of available continuum molecules to check against.
+
+    Returns
+    -------
+    dict
+        Dictionary containing all loaded data.
+    """
+    output = {}
+    if os.path.isfile(path) and (('.hdf5' in path) or ('.h5' in path)):
+        # PORTED FROM get_h5_data
+        with h5py.File(path, "r") as f:
+            output['molecules'] = [x.decode('utf-8') for x in f["ck_molecules"][:]]
+            output['wno'] = f["wno"][:]
+            output['delta_wno'] = f["delta_wno"][:]
+            output['pressures'] = (f["pressures"][:])
+            output['temps'] = f["temperatures"][:]
+            output['gauss_pts'] = f["gauss_pts"][:]
+            output['gauss_wts'] = f["gauss_wts"][:]
+
+            #want the axes to be [npressure, ntemperature, nwave, ngauss ]
+            output['kappa'] = f["kcoeffs"][:]
+
+            output['full_abunds'] = pd.DataFrame(data=f["abunds"][:],
+                                               columns=[x.decode('utf-8') for x in f["abunds_map"][:]])
+
+        output['kcoeff_layers'] = output['full_abunds'].shape[0]
+        output['nwno'] = len(output['wno'])
+        output['ngauss'] = len(output['gauss_pts'])
+        #number of pressure points that exist for each temperature
+        output['full_abunds']['temperature'] = output['temps']
+        output['full_abunds']['pressure'] = output['pressures']
+        output['nc_p'] = output['full_abunds'].groupby('temperature').size().astype(int).values
+        #finally we want the unique values of temperature
+        output['temps'] = np.unique(output['full_abunds']['temperature'])
+        output['pressures'] = np.unique(output['full_abunds']['pressure'])
+
+    else:
+        # PORTED FROM load_kcoeff_arrays_first
+        if preload_gases is None:
+            raise ValueError("preload_gases must be provided for resortrebin mode (directory path).")
+
+        check_hdf5 = glob.glob(os.path.join(path, '*.hdf5'))
+        check_npy = glob.glob(os.path.join(path, '*.npy'))
+        output['kappas'] = {}
+        msg = []
+        for imol in preload_gases:
+            if os.path.join(path, f'{imol}_1460.hdf5') in check_hdf5:
+                with h5py.File(os.path.join(path, f'{imol}_1460.hdf5'), "r") as f:
+                    #in a future code version we could get these things from the hdf5 file and not assume the 661 table
+                    output['wno'] = f["wno"][:]
+                    output['nwno'] = len(output['wno'])
+                    output['delta_wno'] = f["delta_wno"][:]
+                    output['pressures'] = np.unique(f["pressures"][:])
+                    output['temps'] = np.unique(f["temperatures"][:])
+                    output['gauss_pts'] = f["gauss_pts"][:]
+                    output['gauss_wts'] = f["gauss_wts"][:]
+                    output['nc_p'] = [int(i) for i in f["nc_p"][:]]
+                    output['ngauss'] = len(output['gauss_pts'])
+                    #want the axes to be [npressure, ntemperature, nwave, ngauss ]
+                    output['kappas'][imol] = f["kcoeffs"][:]
+            elif os.path.join(path, f'{imol}_1460.npy') in check_npy:
+                msg += ['Warning: npy files for DEQ will be deprecated in PICASO v5. Please download the hdf5 files, explanation here https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html']
+                array = np.load(os.path.join(path, f'{imol}_1460.npy'))
+                pts, wts = g_w_2gauss(order=4, gfrac=0.95)
+
+                # Logic from get_new_wvno_grid_661
+                wvno_path = os.path.join(__refdata__, 'climate_INPUTS/')
+                wvno_new, dwni_new = np.loadtxt(os.path.join(wvno_path, "wvno_661"), usecols=[0, 1], unpack=True)
+                output['wno'] = wvno_new
+                output['delta_wno'] = dwni_new
+                output['nwno'] = len(wvno_new)
+
+                s1460 = pd.read_csv(os.path.join(__refdata__, 'opacities', 'grid1460.csv'))
+                pres = s1460['pressure_bar'].unique().astype(float)
+                temp = s1460['temperature_K'].unique().astype(float)
+                output['nc_p'] = s1460.groupby('temperature_K').size().values
+                output['pressures'] = pres
+                output['temps'] = temp
+                output['gauss_wts'] = wts
+                output['gauss_pts'] = pts
+                output['ngauss'] = array.shape[-1]
+                output['kappas'][imol] = array
+            elif avail_continuum and imol in ''.join(avail_continuum):
+                msg += [f'Found a CIA molecule, which doesnt require a correlated-K table. The gaseous opacity of {imol} will not be included unless you first create a CK table for it.']
+            else:
+                msg += [f'hdf5 or npy ck tables for {imol} not found in {path}. Please see tutorial documentation https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html to make sure you have downloaded the needed files and placed them in this folder']
+
+        if msg:
+            warnings.warn(' '.join(np.unique(msg)), UserWarning)
+
+        if len(output['kappas'].keys()) == 0:
+            raise Exception('Uh oh. No molecules are left to mix. Its likely you have not downloaded the correct files. Please see tutorial documentation https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html to make sure you have downloaded the needed files and placed them in this folder')
+
+        output['molecules'] = list(output['kappas'].keys())
+
+    return output
