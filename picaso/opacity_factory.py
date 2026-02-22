@@ -1006,7 +1006,7 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
             dset = np.fromfile(fdata, dtype=float) 
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]
         elif 'python' in ftype: 
-            dset = np.load(open(fdata,'rb')).copy()
+            dset = np.load(open(fdata,'rb'))
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]  
         elif 'rfree_fort' in ftype: 
             df = pd.read_csv(fdata,sep=r'\s+', skiprows=27, header=None, names=['wno','cx'])
@@ -1016,7 +1016,10 @@ def insert_molecular_1460(molecule, min_wavelength, max_wavelength,og_directory,
             with h5py.File(fdata, 'r') as h5f:    
                 dset = h5f['cxs'][i-1]     
             og_wvno_grid=np.arange(numw[i-1])*delwn[i-1]+start[i-1]  
-
+        
+        dset = dset.copy()
+        og_wvno_grid = og_wvno_grid.copy() 
+        
         if not insert_direct:
             #interp on high res grid
             #basic interpolation here onto a new wavegrid that 
