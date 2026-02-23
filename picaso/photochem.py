@@ -35,6 +35,14 @@ class EvoAtmosphereGasGiantPicaso(EvoAtmosphereGasGiant):
         """
         super().__init__(*args, **kwargs)
 
+        # Change the atomic composition to Lodders (2020)
+        gas = self.gdat.gas
+        molfracs_atoms_sun = gas.molfracs_atoms_sun
+        for i,atom in enumerate(gas.atoms_names):
+            molfracs_atoms_sun[i] = LODDERS2020_SUN_COMP[atom]
+        molfracs_atoms_sun /= np.sum(molfracs_atoms_sun)
+        gas.molfracs_atoms_sun = molfracs_atoms_sun
+
         # Path to a pickle file that will save atmospheric
         # states during a couple climate/photochemistry simulation.
         self.save_file = None
@@ -261,6 +269,7 @@ class EquilibriumChemistry(ChemEquiAnalysis):
             molfracs_atoms_sun = self.molfracs_atoms_sun
             for i,atom in enumerate(self.atoms_names):
                 molfracs_atoms_sun[i] = LODDERS2020_SUN_COMP[atom]
+            molfracs_atoms_sun /= np.sum(molfracs_atoms_sun)
             self.molfracs_atoms_sun = molfracs_atoms_sun
 
         self._molfracs_atoms_sun_save = self.molfracs_atoms_sun.copy()
@@ -304,7 +313,7 @@ class EquilibriumChemistry(ChemEquiAnalysis):
         # Set the composition
         self.molfracs_atoms_sun = molfracs_atoms_sun
 
-    def equilibrate_atmosphere(self, P, T, log10mh, CtoO_absolute):
+    def equilibrate_atmosphere(self, P, T, log10mh, CtoO_relative):
         """Solve for equilibrium chemistry across a vertical profile.
 
         Parameters
@@ -315,8 +324,8 @@ class EquilibriumChemistry(ChemEquiAnalysis):
             Temperatures in Kelvin aligned with `P`.
         log10mh : float
             log10 metallicity relative to solar.
-        CtoO_absolute : float
-            Absolute C/O ratio to target.
+        CtoO_relative : float
+            The C/O ratio relative to solar.
 
         Returns
         -------
@@ -331,14 +340,9 @@ class EquilibriumChemistry(ChemEquiAnalysis):
         if not isinstance(P, np.ndarray):
             raise ValueError('`T` should be a numpy array.')
 
-        # Some conversions
+        # Some conversions and copies
         P_cgs = P*1e6
         metallicity = 10.0**log10mh
-        indC = self.atoms_names.index('C')
-        indO = self.atoms_names.index('O')
-        CtoO_solar = self.molfracs_atoms_sun[indC]/self.molfracs_atoms_sun[indO]
-        CtoO_relative = CtoO_absolute/CtoO_solar
-
         gas_names = self.gas_names
         condensate_names = self.condensate_names
 
