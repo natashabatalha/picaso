@@ -10,6 +10,8 @@
 #     display_name: pic312
 #     language: python
 #     name: python3
+#   nbsphinx:
+#     execute: never
 # ---
 
 # %% [markdown]
