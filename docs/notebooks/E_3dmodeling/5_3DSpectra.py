@@ -28,8 +28,8 @@
 # **Citation: [Adams et al. 2022 "Spatially Resolved Modeling of Optical Albedos for a Sample of Six Hot Jupiters" ApJ](https://ui.adsabs.harvard.edu/abs/2022ApJ...926..157A/abstract)**
 
 # %%
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import pandas as pd
 import numpy as np
 

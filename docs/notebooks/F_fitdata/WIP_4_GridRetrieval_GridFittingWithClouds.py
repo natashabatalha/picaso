@@ -39,7 +39,7 @@
 #
 
 # %%
-import picaso.justdoit as jdi
+from picaso import justdoit as jdi
 import numpy as np
 import os
 pd = jdi.pd

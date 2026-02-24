@@ -19,8 +19,8 @@
 # In this tutorial you will learn the different integration schemes that exist within `PICASO`.
 
 # %%
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import numpy as np
 
 #picaso

@@ -16,8 +16,8 @@
 # # FAQs
 
 # %%
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import warnings
 warnings.filterwarnings('ignore')
 import numpy as np
@@ -156,7 +156,7 @@ jpi.show(fig)
 #
 # **Where do I put all the files?**
 #
-# `PICASO` uses the function [`justdoit.opannection`](https://natashabatalha.github.io/picaso/picaso.html#jdi.opannection) to grab the opacity file located in the reference directory [`opacities`](https://github.com/natashabatalha/picaso/tree/master/reference/opacities). In the installation instructions you will notice there is a step to place the zenodo file here. Just for completeness, internally, we specify the name of this [file here](https://github.com/natashabatalha/picaso/blob/891343fcc41faa345f8b85aaa8d50c4939c421a3/reference/config.json#L91).
+# `PICASO` uses the function [`justdoit.opannection`](https://natashabatalha.github.io/picaso/picaso.html#picaso.justdoit.opannection) to grab the opacity file located in the reference directory [`opacities`](https://github.com/natashabatalha/picaso/tree/master/reference/opacities). In the installation instructions you will notice there is a step to place the zenodo file here. Just for completeness, internally, we specify the name of this [file here](https://github.com/natashabatalha/picaso/blob/891343fcc41faa345f8b85aaa8d50c4939c421a3/reference/config.json#L91).
 #
 # The general recommendation is to keep one "default" file in your `reference/opacities` folder so that you do not need to worry about always specifying a file when running the code. Then assign one place, easy to locate, where you include the rest of the files. In order to access these will need to point to this file path  using the `filename_db` keyword in `opannection`.
 #

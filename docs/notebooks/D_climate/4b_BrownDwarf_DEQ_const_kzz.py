@@ -36,8 +36,8 @@
 # ### First, check that you have downloaded and placed the correlated-k files in the correct folder
 
 # %%
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import os;import glob
 os.listdir(os.path.join(os.getenv('picaso_refdata'),'opacities','resortrebin')) #should show you a list of files
 

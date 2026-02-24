@@ -27,10 +27,10 @@
 #
 
 # %%
-import virga.justplotit as vpi
-import virga.justdoit as vdi
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
+from virga import justplotit as vpi
+from virga import justdoit as vdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import os
 #plot tools
 

@@ -34,8 +34,8 @@
 # 2. Have you already installed picaso, set reference variables, and have an understanding of how to get new data products associated with PICASO? **PROCEED TO edit B.**
 
 # %%
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import picaso.data as d
 
 #uncomment and set path if you need to do this in the tutorial
@@ -174,9 +174,9 @@ choose_from.head()
 
 # %%
 # load pandexo
-import pandexo.engine.justdoit as panjdi
-import pandexo.engine.justplotit as panjpi
-import pandexo.engine.bintools as bi
+from pandexo.engine import justdoit as panjdi
+from pandexo.engine import justplotit as panjpi
+from pandexo.engine import bintools as bi
 
 # %%
 planet_name = 'GJ 436 b'

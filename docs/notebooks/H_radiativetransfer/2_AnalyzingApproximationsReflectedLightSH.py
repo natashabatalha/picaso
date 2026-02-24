@@ -18,8 +18,8 @@
 # In [Rooney et al 2023](add-link) we rigorously derive the spherical harmonics method for reflected light and benchmark the 4-term method (SH4) against [Toon et al. 1989](https://ui.adsabs.harvard.edu/abs/1989JGR....9416287T/abstract) and two independent methods. Here, we provide the code to reproduce the analysis that compares Toon89 with the higher fidelity 4-term spherical harmonics method for reflected light calculations.
 
 # %%
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import numpy as np
 import pandas as pd
 

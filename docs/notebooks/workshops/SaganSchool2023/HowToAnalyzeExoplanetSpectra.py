@@ -54,10 +54,10 @@
 # 2. Have you already installed picaso, set reference variables, and have an understanding of how to get new data products associated with PICASO? **PROCEED TO edit B.**
 
 # %%
-import virga.justplotit as vpi
-import virga.justdoit as vdi
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
+from virga import justplotit as vpi
+from virga import justdoit as vdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import picaso.data as d
 
 picaso_refdata = '/data/test/tutorial/picaso-lite-reference' #change to where you want this to live

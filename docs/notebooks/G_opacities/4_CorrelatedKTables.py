@@ -51,8 +51,8 @@
 #
 
 # %%
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import os
 
 ck_db_path = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted','sonora_2121grid_feh1.0_co0.46.hdf5')

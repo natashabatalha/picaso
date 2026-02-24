@@ -52,8 +52,8 @@
 # 1. How to create spectra and phase curves from 3D input
 
 # %%
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import pandas as pd
 import numpy as np
 import xarray as xr

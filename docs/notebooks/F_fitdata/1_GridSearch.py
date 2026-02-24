@@ -30,8 +30,8 @@
 # - [Download the final planet spectrum](https://zenodo.org/record/6959427#.Y1M0U-zMLvU)
 
 # %%
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import numpy as np
 import os
 

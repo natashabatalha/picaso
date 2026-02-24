@@ -22,8 +22,8 @@
 # 3. Ensuring that the reference pressure is lower than the lower pressure of your surface. `PICASO` default is 1 bar, which is often times too high.
 
 # %%
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import pandas as pd
 import numpy as np
 #picaso

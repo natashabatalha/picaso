@@ -24,8 +24,8 @@
 # For this tutorial we assume you already know the basics of running 1D models. Note that we have still not enabled this functionality for 3D and 4D runs. Please contact the developers if you are interested in this functionality.
 
 # %%
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 u = jdi.u #astropy units
 
 # %% [markdown]

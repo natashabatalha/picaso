@@ -24,8 +24,8 @@
 # 3. Create a Brown Dwarf Spectrum
 
 # %%
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import numpy as np
 import pandas as pd
 import astropy.units as u

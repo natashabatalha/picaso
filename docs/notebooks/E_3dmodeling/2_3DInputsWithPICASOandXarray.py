@@ -30,7 +30,7 @@
 #
 
 # %%
-import picaso.justdoit as jdi
+from picaso import justdoit as jdi
 import pandas as pd
 import numpy as np
 

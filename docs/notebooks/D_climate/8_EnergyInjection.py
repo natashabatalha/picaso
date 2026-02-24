@@ -20,10 +20,10 @@
 # You should be comfortable with running climate models by now, the minimum requirement for this tutorial is [One-Dimensional Climate Models: The Basics of Brown Dwarfs](https://natashabatalha.github.io/picaso/notebooks/D_climate/1_BrownDwarf_PreW.html).
 
 # %%
-import virga.justplotit as vpi
-import virga.justdoit as vdi
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
+from virga import justplotit as vpi
+from virga import justdoit as vdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import os
 import warnings
 warnings.filterwarnings('ignore')

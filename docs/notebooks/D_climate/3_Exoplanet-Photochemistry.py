@@ -24,8 +24,8 @@
 # Here, we will use WASP-39 b as an example. We will begin by importing several packages required for the run.
 
 # %%
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import warnings
 warnings.filterwarnings("ignore")
 import picaso.photochem as picasochem

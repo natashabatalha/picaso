@@ -42,8 +42,8 @@
 # **Note**: the two files above are dependent on metallicity and C/O.
 
 # %%
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import os
 import warnings
 warnings.filterwarnings('ignore')

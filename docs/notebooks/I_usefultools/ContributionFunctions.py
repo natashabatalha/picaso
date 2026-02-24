@@ -20,8 +20,8 @@
 # In this tutorial you will learn how to get molecular contribution plots and thermal contribution heatmaps. This will help you in analyzing your spectra.
 
 # %%
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 jpi.output_notebook()
 
 # %% [markdown]

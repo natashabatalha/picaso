@@ -22,8 +22,8 @@
 # **Note:** This notebook relies on having a R=500,000 database and therefore is **not** executable based on public data. For context, a R=500,000 database for 1-5$\mu$m is around 0.5 Tb. It is also not needed for most use cases. However, these are valuable tests for users to see in order to judge the required accuracy of a resampled opacity database
 
 # %%
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import picaso.opacity_factory as opa_fac
 jpi.output_notebook()
 

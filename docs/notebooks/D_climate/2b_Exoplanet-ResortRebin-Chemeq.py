@@ -24,8 +24,8 @@
 # - [how to compute a Brown Dwarf 1D climate model](https://natashabatalha.github.io/picaso/notebooks/D_climate/1_BrownDwarf_PreW.html)
 
 # %%
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import warnings
 warnings.filterwarnings('ignore')
 import astropy.units as u

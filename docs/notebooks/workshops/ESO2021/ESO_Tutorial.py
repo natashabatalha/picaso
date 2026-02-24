@@ -31,9 +31,9 @@
 #
 
 # %%
-import virga.justplotit as vpi
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
+from virga import justplotit as vpi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import warnings
 warnings.filterwarnings(action='ignore')
 jpi.output_notebook()

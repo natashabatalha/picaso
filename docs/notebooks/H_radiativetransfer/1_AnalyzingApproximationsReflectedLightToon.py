@@ -24,8 +24,8 @@
 # - how to run run a benchmark test against reference data within the PICASO code (leverages data from [Dlugach & Yanovitskij (1974)](https://ui.adsabs.harvard.edu/abs/1974Icar...22...66D/abstract) to replicates the study of [Batalha et al. (2019)](https://ui.adsabs.harvard.edu/abs/2019ApJ...878...70B/abstract) )
 
 # %%
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import warnings
 warnings.filterwarnings('ignore')
 #picaso
