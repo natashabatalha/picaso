@@ -32,7 +32,7 @@ import astropy.units as u
 import numpy as np
 import matplotlib.pyplot as plt
 # %matplotlib inline
-import xarray
+import xarray as xr
 from bokeh.plotting import show, figure
 
 # %% [markdown]
