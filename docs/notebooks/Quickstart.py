@@ -1,13 +1,15 @@
 # ---
 # jupyter:
 #   jupytext:
+#     custom_cell_magics: kql
+#     notebook_metadata_filter: nbsphinx
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.19.1
+#       jupytext_version: 1.11.2
 #   kernelspec:
-#     display_name: pic312
+#     display_name: base
 #     language: python
 #     name: python3
 #   nbsphinx:
@@ -15,12 +17,17 @@
 # ---
 
 # %% [markdown]
-# # Quickstart for Research
+# # Quickstart
 #
 # Here is the quickstart to getting up and running with `PICASO` using `python` to set environment variables and `get_data` to get everything you need.
-
-# %%
-# !pip install picaso
+#
+# Be sure to have followed the [installation instructions](https://github.com/James-Mang/dev_picaso/blob/9278a1df9bab306b9e03a2a427a59e7ddaaa7e09/docs/installation.rst) and follow the steps below depending on how you installed PICASO.
+#
+# This notebook is organized as follows:
+# 1. One additional step **only those who used pip or conda to install PICASO**
+# 2. Run PICASO environment checker
+# 2. Additional data that you might need **regardless of installation method**
+# 3. Quickstart for quick simple examples and workshops 
 
 # %% [markdown]
 # ## Create `picaso_refdata` environment variable
@@ -33,14 +40,18 @@
 import os
 print(os.environ['picaso_refdata'] ) #should return a path
 
-#does it not?? Lets make one
-os.environ['picaso_refdata'] = '/data/reference_data/picaso/reftest'
+#does it not?? Lets make sure you have it set in your environment:
+os.environ['picaso_refdata'] = 'YOUR_PATH/picaso/reference/'
+os.environ['PYSYN_CDBS'] = os.path.join(os.environ['picaso_refdata'],'stellar_grids')
 
 # %% [markdown]
-# Note what we did above sets the environment variable which is totally okay but this way you will need to add this to the top of all your future notebooks **before you import picaso**
+# Note what we did above sets the environment variable which is totally okay but this way you will need to add this to the top of all your future notebooks **before you import picaso** if you haven't set it in your bash file
 
 # %% [markdown]
-# ## Download reference data if installed through pip/conda
+# # 1. For those who pip or conda installed PICASO:
+
+# %% [markdown]
+# ## Download reference data directory
 #
 # We need this basic directory: https://github.com/natashabatalha/picaso/tree/master/reference
 #
@@ -49,12 +60,15 @@ os.environ['picaso_refdata'] = '/data/reference_data/picaso/reftest'
 # %%
 import picaso.data as data
 
-# %%
+# %% [markdown]
+# This next cell you can run to download **ALL** the reference data. You only need to run this next cell **ONCE**
+# **WARNING**: if you run it again, this will download all the reference data again and overwrite anything you have in there.
 
+# %%
 data.get_reference(os.environ['picaso_refdata']) #only ever need to do one time
 
 # %% [markdown]
-# ## Run PICASO Environment Checker
+# # 2. Run PICASO Environment Checker
 
 # %%
 data.check_environ()
@@ -63,13 +77,18 @@ data.check_environ()
 # You might see that we still need to download the resampled opacity file.
 
 # %% [markdown]
+# # 3. Additional reference data you'll need for PICASO
+
+# %% [markdown]
 # ## Downloading the resampled opacity file
 #
 # If you want to make this the picaso default then you should put it here:
 #
 # - $picaso_refdata/opacities
 #
-# The following function will do that for you if you have set up your path correctly
+# The following function will do that for you if you have set up your path correctly.
+#
+# **Note**: This is ~ 5GB file so please make sure that you have a reliable internet connection before trying to download this file, otherwise you might encounter a timeout error.
 
 # %%
 #commented out for docs build
@@ -88,7 +107,6 @@ data.get_data(category_download='resampled_opacity',target_download='default')
 
 # %%
 #now let's make sure we have the pysynphot environment variable set
-os.environ['PYSYN_CDBS'] = os.path.join(os.environ['picaso_refdata'],'stellar_grids') #or set your own..
 data.get_data(category_download='stellar_grids')
 
 # %% [markdown]
@@ -130,7 +148,7 @@ data.get_data(category_download='stellar_grids')
 data.get_data()
 
 # %% [markdown]
-# # Quickstart for Students & Learning
+# # 4. Quickstart for Students & Learning
 #
 # Here is the quickstart to getting up and running with `PICASO` using `python` to set environment variables and `get_data` to get everything you need for PICASO-lite
 

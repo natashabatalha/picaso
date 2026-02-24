@@ -2,24 +2,14 @@
 There are a few avenues for installing PICASO. To help determine which is best for you, we have a few questions to help you decide:
 1. Are you a researcher who wants to stay up-to-date with the latest changes and contribute to PICASO (or possibly contribute in the future)? Please follow the git clone instructions below. (Our General Recommendation)
 2. Are you a student or researcher who just wants to get started with PICASO quickly? Please follow the pip or conda install instructions below.
-3. Do you want to use PICASO for an assignment or workshop? Please follow the pip or conda install instructions below for picaso-lite.
-
-Quickstart
-==========
-
-If you want to get started quickly and are already familiar with many coding principles (pip, conda, environment variables, etc) then feel free to use our quickstart otherwise skip and read through the installation. 
-
-.. toctree::
-   :maxdepth: 1
-
-   Simple Install </notebooks/Quickstart.py>
+3. Do you want to use PICASO for an assignment or workshop? Jump to the picaso-lite section of the `Quickstart Notebook </notebooks/Quickstart.py>`_
 
 Installation
 ============
 
 Python >= 3.11 is recommended. It is also recommended you use environments (either conda or pip). Please check out `our conda environment tutorial <https://natashabatalha.github.io/picaso/contribution.html#using-conda-enviornments>`_.  
 
-Users can 1) install from source, 2) install from pip, 3) install from conda. 
+Users can 1) install from source or 2) install from pip or conda 
 
 Install from source via git
 ---------------------------
@@ -29,14 +19,11 @@ The Github repository contains the reference folder and helpful tutorials.
 .. code-block:: bash 
 
 	git clone https://github.com/natashabatalha/picaso.git
-
-You will also need to install the dependencies which you might have already in your environment.
-The list of packages you need to install are: bokeh, numpy, numba, pandas, joblib, photutils, astropy, matplotlib, stsynphot, sphinx, scipy, h5py, virga-exo, xarray, pooch, tqdm, bibtexparser, netcdf4, h5netcdf, jupytext. You can install these with pip or conda.
-While we do have these dependencies automatically installed when you pip install, if you pip install picaso, you will not have access to beta testinng functionalities.
-
+	cd picaso
+	pip install .
 
 Set your PICASO environmental variables
-```````````````````````````````````````````````
+```````````````````````````````````````
 
 Sometimes it is too troublesome to go through bash settings. We recommend adding these lines to the beginning of your notebook for a smoother and easier use since you might be changing between development directories.
 Add directly to python code
@@ -49,9 +36,23 @@ Add directly to python code
 	os.environ['PYSYN_CDBS'] = 'your_path/picaso/reference/stellar_grids/' #this is for the stellar data discussed below.
 	import picaso.justdoit as jdi
 
+While this is the easiest way to set things up, it can become tedious to have to define this before every single notebook.
+To move past this issue, once you're happy with your PICASO directory structure, you can follow the instructions below to set your environmental variables in your BASH file.
+
+
+Download your reference data!
+```````````````````````````````
+
+Now you can move on to download all your reference data!
+
+.. toctree::
+   :maxdepth: 1
+
+   Simple Install </notebooks/Quickstart.py>
+
 
 Install with Pip
-----------------
+=================
 
 .. code-block:: bash 
 
@@ -64,27 +65,9 @@ Install with conda
 
 	conda install conda-forge::picaso
 
-With a pip or conda install you will need to download the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ (explained below). This can simply be done by downloading a zip of the ``PICASO`` code from Github (which does not require git setup if that is not available to you). 
 
-
-Reference Data 
-==============
-
-PICASO has the ability to injest lots of different kinds of data. But not all are required. Only two are required: 1) The `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ and 2) the resampled opacity file which will let you do some basic spectral modeling. 
-
-+----------------------------------+------+-------------------------------+-------------------------------------------------------------+
-| Data Type                        | Req? | What it is primarily used for | Where it should go                                          |
-+==================================+======+===============================+=============================================================+
-| Reference                        | Yes  | everything                    | $picaso_refdata                                             |
-| Resampled Opacities              | Yes  | Spectroscopic modeling        | $picaso_refdata/opacities/opacities*.db                     |
-| Stellar Database                 | No   | Exoplanet modeling            | $PYSYN_CDBS/grid                                            |
-| Preweighted correlatedK Tables   | No   | Chemical equilibrium climate  | Your choice (default=$picaso_refdata/opacities/preweighted) |
-| By molecule correlatedK Tables   | No   | Disequilibrium climate        | Your choice (default=$picaso_refdata/opacities/resortrebin) |
-| Sonora grid models               | No   | Initial guess/grid fitting    | Your choice (default=$picaso_refdata/sonora_grids)          |
-| Virga Mieff files                | No   | Virga cloud modeling          | Your choice (default=$picaso_refdata/virga)                 |
-+----------------------------------+------+-------------------------------+-------------------------------------------------------------+
-
-
+Create PICASO Environment Variable
+----------------------------------
 
 Picaso relies on the user setting a basic "environment variable" called ``$picaso_refdata``. We recommend  **first** setting defining this environment variable and then using the PICASO donwload tools to automatically grab everything you need. 
 
@@ -94,10 +77,7 @@ to constantly set paths. ``$picaso_refdata`` will point to the basic contents of
 As a basic example, my ``$picaso_refdata`` path looks like this: ``'/Users/nbatalh1/Documents/codes/PICASO/picaso/reference'``. If I check inside this path I will see the basic contents of the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_. 
 
 
-Create PICASO Environment Variable
-----------------------------------
-
-There are several ways to create environment variables. Below are the three most popular methods. You only need to choose one that works best for you. If you have cloned the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ then the path you create below should point to here. 
+There are several ways to create environment variables. Below are the two most popular methods. You only need to choose one that works best for you. If you have cloned the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ then the path you create below should point to here. 
 
 Method 1: ``bash_profile`` or ``zshrc`` file
 ````````````````````````````````````````````
@@ -181,11 +161,33 @@ Notice here that I do **not** have a tilda (~) in front of ``./etc``. The full p
 
 
 Download PICASO Reference Data
-------------------------------
+````````````````````````````````
+Now you can move on to download all your reference data, you can do that now that you have your environment variable set!
 
-If you haven't yet gotten the data yet from Git, you can do that now that you have your environment variable set.
+.. toctree::
+   :maxdepth: 1
+	Simple Install </notebooks/Quickstart.py>
 
-Here is how you would do it in python after your environment variable is already set: 
+
+We **highly recommend** using our Quickstart notebook to get all your reference data. These next steps are the exact same way to get the data in our Quickstart notebook.
+
+
+Reference Data 
+==============
+
+PICASO has the ability to injest lots of different kinds of data. But not all are required. Only two are required: 1) The `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ and 2) the resampled opacity file which will let you do some basic spectral modeling. 
+
++----------------------------------+------+-------------------------------+-------------------------------------------------------------+
+| Data Type                        | Req? | What it is primarily used for | Where it should go                                          |
++==================================+======+===============================+=============================================================+
+| Reference                        | Yes  | everything                    | $picaso_refdata                                             |
+| Resampled Opacities              | Yes  | Spectroscopic modeling        | $picaso_refdata/opacities/opacities*.db                     |
+| Stellar Database                 | No   | Exoplanet modeling            | $PYSYN_CDBS/grid                                            |
+| Preweighted correlatedK Tables   | No   | Chemical equilibrium climate  | Your choice (default=$picaso_refdata/opacities/preweighted) |
+| By molecule correlatedK Tables   | No   | Disequilibrium climate        | Your choice (default=$picaso_refdata/opacities/resortrebin) |
+| Sonora grid models               | No   | Initial guess/grid fitting    | Your choice (default=$picaso_refdata/sonora_grids)          |
+| Virga Mieff files                | No   | Virga cloud modeling          | Your choice (default=$picaso_refdata/virga)                 |
++----------------------------------+------+-------------------------------+-------------------------------------------------------------+
 
 .. code-block:: python
 
