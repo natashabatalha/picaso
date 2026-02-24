@@ -13,11 +13,11 @@
 # ---
 
 # %%
+import picaso.justplotit as jpi
+import picaso.justdoit as jdi
 import picaso.parameterizations as pr
 import numpy as np
 
-import picaso.justdoit as jdi
-import picaso.justplotit as jpi
 jpi.output_notebook()
 
 # %%

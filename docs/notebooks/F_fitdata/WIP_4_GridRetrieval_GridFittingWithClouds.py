@@ -39,9 +39,9 @@
 #
 
 # %%
+import picaso.justdoit as jdi
 import numpy as np
 import os
-import picaso.justdoit as jdi
 pd = jdi.pd
 import picaso.analyze as lyz
 import xarray as xr

@@ -25,13 +25,13 @@
 #
 
 # %%
+import virga.justplotit as vpi
+import virga.justdoit as vdi
+import picaso.justplotit as jpi
+import picaso.justdoit as jdi
 import os
 import warnings
 warnings.filterwarnings('ignore')
-import picaso.justdoit as jdi
-import picaso.justplotit as jpi
-import virga.justdoit as vj
-import virga.justplotit as cldplt
 jpi.output_notebook()
 import astropy.units as u
 import numpy as np
@@ -132,11 +132,11 @@ out = cl_run.climate(opacity_ck, save_all_profiles = True, with_spec=True,
 # Now we can plot the results, first let's grab the condensation curve for all our cloud species
 
 # %%
-kcl_cond_p, kcl_cond_t = vj.condensation_t('KCl', 1, 2.2, pressure = out['pressure'])
-na2s_cond_p, na2s_cond_t = vj.condensation_t('Na2S', 1, 2.2, pressure = out['pressure'])
-mns_cond_p, mns_cond_t = vj.condensation_t('MnS', 1, 2.2, pressure = out['pressure'])
-zns_cond_p, zns_cond_t = vj.condensation_t('ZnS', 1, 2.2, pressure = out['pressure'])
-cr_cond_p, cr_cond_t = vj.condensation_t('Cr', 1, 2.2, pressure = out['pressure'])
+kcl_cond_p, kcl_cond_t = vdi.condensation_t('KCl', 1, 2.2, pressure = out['pressure'])
+na2s_cond_p, na2s_cond_t = vdi.condensation_t('Na2S', 1, 2.2, pressure = out['pressure'])
+mns_cond_p, mns_cond_t = vdi.condensation_t('MnS', 1, 2.2, pressure = out['pressure'])
+zns_cond_p, zns_cond_t = vdi.condensation_t('ZnS', 1, 2.2, pressure = out['pressure'])
+cr_cond_p, cr_cond_t = vdi.condensation_t('Cr', 1, 2.2, pressure = out['pressure'])
 
 # %%
 pressure_bobcat,temp_bobcat = np.loadtxt(jdi.os.path.join(
@@ -172,7 +172,7 @@ show(jpi.mixing_ratio(out['spectrum_output']['full_output'], limit=14, height=60
 
 # %%
 # once again we can do a quick sanity check to make sure a cloud is present
-show(cldplt.all_optics_1d(out['virga_output'], wave_range=[1,2]))
+show(vpi.all_optics_1d(out['virga_output'], wave_range=[1,2]))
 
 # %% [markdown]
 # ## Cloudy vs Clear Spectra

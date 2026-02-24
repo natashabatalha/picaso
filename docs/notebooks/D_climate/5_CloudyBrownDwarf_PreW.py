@@ -24,13 +24,13 @@
 #
 
 # %%
+import virga.justplotit as vpi
+import virga.justdoit as vdi
+import picaso.justplotit as jpi
+import picaso.justdoit as jdi
 import os
 import warnings
 warnings.filterwarnings('ignore')
-import picaso.justdoit as jdi
-import picaso.justplotit as jpi
-import virga.justdoit as vj
-import virga.justplotit as cldplt
 jpi.output_notebook()
 import astropy.units as u
 import numpy as np
@@ -108,7 +108,7 @@ out = cl_run.climate(opacity_ck, save_all_profiles=True,with_spec=False)
 # Before we plot the PT profile of the model, we want to grab the condensation curve for H2O just to help us visualize where in the atmosphere we expect the cloud to start forming. To the left of this condensation curve is where we expect the H2O vapour to condense into a cloud.
 
 # %%
-h2o_cond_p, h2o_cond_t = vj.condensation_t('H2O', 1, 2.2, pressure = out['pressure'])
+h2o_cond_p, h2o_cond_t = vdi.condensation_t('H2O', 1, 2.2, pressure = out['pressure'])
 
 # %%
 pressure_bobcat,temp_bobcat = np.loadtxt(jdi.os.path.join(
@@ -152,16 +152,16 @@ out['cld_df']
 # `virga_output` can then be directly used with virga functions to easily visualize the properties as well. For more details about these individual properties and how to interpret them, please take a look at the [Analyzing Your Runs](https://natashabatalha.github.io/virga/notebooks/3_AnalyzingRuns.html) virga tutorial.
 
 # %%
-show(cldplt.all_optics_1d(out['virga_output'], wave_range=[1,2]))
+show(vpi.all_optics_1d(out['virga_output'], wave_range=[1,2]))
 
 # %%
-show(cldplt.all_optics(out['virga_output']))
+show(vpi.all_optics(out['virga_output']))
 
 # %%
-show(cldplt.opd_by_gas(out['virga_output']))
+show(vpi.opd_by_gas(out['virga_output']))
 
 # %%
-show(cldplt.condensate_mmr(out['virga_output']))
+show(vpi.condensate_mmr(out['virga_output']))
 
 # %% [markdown]
 # ## Cloudy vs Clear Spectra

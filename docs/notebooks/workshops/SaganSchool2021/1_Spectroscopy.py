@@ -35,6 +35,8 @@
 # **Questions?** [Submit an Issue to PICASO Github](https://github.com/natashabatalha/picaso/issues) with any issues you are experiencing. Don't be shy! Others are likely experiencing similar problems
 
 # %%
+import picaso.justplotit as jpi
+import picaso.justdoit as jdi
 import warnings
 warnings.filterwarnings(action='ignore')
 import os
@@ -60,8 +62,6 @@ sonora_profile_db = os.path.join(os.getenv('picaso_refdata'),'sonora_grids','bob
 # - If you type `jdi.` followed by "tab" a box will pop up with all the available functions in `jdi`. This applies to any python function (e.g. `np`, `pd`)
 
 # %%
-import picaso.justdoit as jdi
-import picaso.justplotit as jpi
 jpi.output_notebook()
 
 # %%

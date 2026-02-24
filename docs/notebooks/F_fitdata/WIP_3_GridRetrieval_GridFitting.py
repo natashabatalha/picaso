@@ -47,9 +47,9 @@
 # </div>
 
 # %%
+import picaso.justdoit as jdi
 import numpy as np
 import os
-import picaso.justdoit as jdi
 import picaso.analyze as lyz
 import xarray as xr
 import matplotlib.pyplot as plt

@@ -29,11 +29,11 @@
 # 2. How to analyze the resulting output
 
 # %%
+import picaso.justplotit as jpi
+import picaso.justdoit as jdi
 import pandas as pd
 import numpy as np
 
-from picaso import justdoit as jdi
-from picaso import justplotit as jpi
 jpi.output_notebook()
 
 # %% [markdown]

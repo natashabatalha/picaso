@@ -20,13 +20,13 @@
 # Note that all comparisons with `CDISORT` are precomputed following Rooney et al's calculations, which used [V1 opacities](https://zenodo.org/record/3759675#.Y_aJROzMI8Y).
 
 # %%
+import picaso.justplotit as jpi
+import picaso.justdoit as jdi
 import numpy as np
 import pandas as pd
 import astropy.units as u
 
 #picaso
-from picaso import justdoit as jdi
-from picaso import justplotit as jpi
 
 jpi.output_notebook()
 

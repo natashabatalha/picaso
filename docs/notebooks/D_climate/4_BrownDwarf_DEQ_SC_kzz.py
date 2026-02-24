@@ -39,14 +39,14 @@
 # ### First, check that you have downloaded and placed the correlated-k files in the correct folder
 
 # %%
+import picaso.justplotit as jpi
+import picaso.justdoit as jdi
 import os
 os.listdir(os.path.join(os.getenv('picaso_refdata'),'opacities','resortrebin')) #should show you a list of files
 
 # %%
 import warnings
 warnings.filterwarnings('ignore')
-import picaso.justdoit as jdi
-import picaso.justplotit as jpi
 import astropy.units as u
 import numpy as np
 import matplotlib.pyplot as plt

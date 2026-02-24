@@ -21,11 +21,11 @@
 # A lot of this code is embedded in PICASO.
 
 # %%
+import picaso.justdoit as jdi
 import sqlite3
 import io
 import numpy as np
 import os
-import picaso.justdoit as jdi
 opa = jdi.opannection()
 
 # %% [markdown]

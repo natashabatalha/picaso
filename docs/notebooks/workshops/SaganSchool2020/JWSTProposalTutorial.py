@@ -34,6 +34,8 @@
 # 2. Have you already installed picaso, set reference variables, and have an understanding of how to get new data products associated with PICASO? **PROCEED TO edit B.**
 
 # %%
+import picaso.justplotit as jpi
+import picaso.justdoit as jdi
 import picaso.data as d
 
 #uncomment and set path if you need to do this in the tutorial
@@ -172,13 +174,13 @@ choose_from.head()
 
 # %%
 # load pandexo
-import pandexo.engine.justdoit as jdi
-import pandexo.engine.justplotit as jpi
+import pandexo.engine.justdoit as panjdi
+import pandexo.engine.justplotit as panjpi
 import pandexo.engine.bintools as bi
 
 # %%
 planet_name = 'GJ 436 b'
-GJ436b = jdi.load_exo_dict(planet_name=planet_name)
+GJ436b = panjdi.load_exo_dict(planet_name=planet_name)
 
 # %% [markdown]
 # For this initial run, the only 2 parameters you need to edit are:
@@ -204,7 +206,7 @@ GJ436b['observation']['sat_unit'] = '%'
 
 # %%
 to_run = ['NIRISS SOSS', 'NIRSpec G395H', 'NIRCam F444W','MIRI LRS']
-result = jdi.run_pandexo(GJ436b, to_run)
+result = panjdi.run_pandexo(GJ436b, to_run)
 
 # %% [markdown]
 # ### What is the approximate precision achieved by each observing mode in a single transit at native resolution??
@@ -240,7 +242,7 @@ XS = {}
 for i, inst in enumerate(to_run):
     if 'MIRI' not in inst:#LRS is already at around 100, so let's keep it at native R
 
-        x,y,e = jpi.jwst_1d_spec(result[i][inst], plot=False, model=False, R=100)
+        x,y,e = panjpi.jwst_1d_spec(result[i][inst], plot=False, model=False, R=100)
 
         # if you check out your plot below you'll see the noise budget blows up at the
         # detector edges so I usually make a 5*median cut to get rid of the crap
@@ -285,15 +287,13 @@ show(prec_fig)
 # %%
 #load picaso
 # load picaso
-import picaso.justdoit as pj
-import picaso.justplotit as pp
 
 # %%
 #load opacities
-opas = pj.opannection(wave_range=[1,12]) #defined in code 1
+opas = jdi.opannection(wave_range=[1,12]) #defined in code 1
 
 #load planet in the same way as before
-gj436_trans = pj.load_planet(choose_from.loc[choose_from['pl_name']==planet_name],
+gj436_trans = jdi.load_planet(choose_from.loc[choose_from['pl_name']==planet_name],
                             opas,
                             pl_eqt=667,st_metfe = 0.02, st_teff=3479)
 
@@ -310,7 +310,7 @@ co = 0.55 # absolute solar value
 gj436_trans.chemeq_visscher_2121(co,log_mh)
 
 df_picaso = gj436_trans.spectrum(opas, calculation='transmission', full_output=True)
-wno,cloud_free  = pj.mean_regrid(df_picaso['wavenumber'], df_picaso['transit_depth'] , R=150)
+wno,cloud_free  = jdi.mean_regrid(df_picaso['wavenumber'], df_picaso['transit_depth'] , R=150)
 
 # %%
 spec = figure(x_axis_type='log', y_axis_label='Relative Transit Depth',
@@ -370,7 +370,7 @@ spec.line(1e4/wno, cf_norm , color='black',line_width=3)
 y =1e6*( IRL['tdep'] - IRL.iloc[(IRL['micron']-1).abs().argsort()[0],2])
 
 #plot the data
-pp.plot_errorbar( IRL['micron'], IRL['tdep']
+jpi.plot_errorbar( IRL['micron'], IRL['tdep']
              , 1e6*IRL['etdep'] , spec,
              #formatting
              point_kwargs={'size':5,'color':'black'}, error_kwargs={'line_width':1,'color':'black'})
@@ -412,7 +412,7 @@ co = 0.55 # absolute solar value
 gj436_trans.chemeq_visscher_2121(co,log_mh)
 
 df_picaso = gj436_trans.spectrum(opas, calculation='transmission', full_output=True)
-wno,cloud_free  = pj.mean_regrid(df_picaso['wavenumber'], df_picaso['transit_depth'] , R=150)
+wno,cloud_free  = jdi.mean_regrid(df_picaso['wavenumber'], df_picaso['transit_depth'] , R=150)
 
 # %% [markdown]
 # Repeat the last exercise
@@ -436,7 +436,7 @@ spec.line(1e4/wno, all_models['1x'] , color='grey',line_width=3, legend_label='1
 y =1e6*( IRL['tdep'] - IRL.iloc[(IRL['micron']-1).abs().argsort()[0],2])
 
 #plot the data
-pp.plot_errorbar(IRL['micron'], IRL['tdep'] ,
+jpi.plot_errorbar(IRL['micron'], IRL['tdep'] ,
              1e6*IRL['etdep'] , spec,
              #formatting
              point_kwargs={'size':5,'color':'black'}, error_kwargs={'line_width':3,'color':'black'})
@@ -476,10 +476,10 @@ planet_name = 'GJ 436 b'
 
 # %%
 #load opacities
-opas = pj.opannection(wave_range=[1,12]) #defined in code 1
+opas = jdi.opannection(wave_range=[1,12]) #defined in code 1
 
 #load planet in the same way as before
-gj436_emis = pj.load_planet(choose_from.loc[choose_from['pl_name']==planet_name],
+gj436_emis = jdi.load_planet(choose_from.loc[choose_from['pl_name']==planet_name],
                             opas,
                             pl_eqt=667,st_metfe = 0.02, st_teff=3479)
 
@@ -506,7 +506,7 @@ gj436_emis.chemeq_visscher_2121(CO, logMH)
 
 #run picaso
 df_picaso = gj436_emis.spectrum(opas, calculation='thermal', full_output=True)
-wno, fpfs = pj.mean_regrid(df_picaso['wavenumber'], df_picaso['fpfs_thermal'] , R=150)
+wno, fpfs = jdi.mean_regrid(df_picaso['wavenumber'], df_picaso['fpfs_thermal'] , R=150)
 
 # %% [markdown]
 # Plot with our error bars from `PandExo`
@@ -539,7 +539,7 @@ gj436_emis.chemeq_visscher_2121(CO, logMH)
 
 #run picaso
 df_picaso = gj436_emis.spectrum(opas, calculation='thermal', full_output=True)
-wno, fpfs = pj.mean_regrid(df_picaso['wavenumber'], df_picaso['fpfs_thermal'] , R=150)
+wno, fpfs = jdi.mean_regrid(df_picaso['wavenumber'], df_picaso['fpfs_thermal'] , R=150)
 
 spec = figure(x_axis_type='log', y_axis_label='Eclipse Spectrum (Fplanet/Fstar)',
               x_axis_label='Wavelength(micron)',
@@ -608,7 +608,7 @@ for logMH in logMHs:
 
         #run picaso
         df_picaso = gj436_trans.spectrum(opas, calculation='transmission', full_output=True)
-        wno, model = pj.mean_regrid(df_picaso['wavenumber'], df_picaso['transit_depth'] , R=150)
+        wno, model = jdi.mean_regrid(df_picaso['wavenumber'], df_picaso['transit_depth'] , R=150)
 
         all_models_trans[logMH][log_dp] = 1e6*((model)- model[np.argmin(np.abs(1e4/wno-1))])
 
@@ -638,7 +638,7 @@ for i, inst in enumerate(to_run):
             y = all_models_trans[MH][CLD]
             #wno is at lower res than our observation so we have to finagle them onto the same axis
             binned_obs = bi.binning(XS[inst], XS[inst]*0, dy =ES[inst] ,newx=1e4/wno[::-1])
-            binned_model = pp.mean_regrid(wno, y, newx=1e4/binned_obs['bin_x'][::-1])[1]
+            binned_model = jpi.mean_regrid(wno, y, newx=1e4/binned_obs['bin_x'][::-1])[1]
 
             #add random noise to your binned model which is now our "fake data"
             fake_data = binned_model + np.random.randn(len(binned_obs['bin_dy']))*binned_obs['bin_dy']
@@ -711,9 +711,9 @@ for MH in logMHs:
 
         #run picaso
         df_picaso = gj436_emis.spectrum(opas, calculation='thermal', full_output=True)
-        wno_pic, fpfs = pj.mean_regrid(df_picaso['wavenumber'], df_picaso['fpfs_thermal'] , R=150)
+        wno_pic, fpfs = jdi.mean_regrid(df_picaso['wavenumber'], df_picaso['fpfs_thermal'] , R=150)
         #let's also save raw thermal flux (you'll see why next)
-        wno_pic, thermal = pj.mean_regrid(df_picaso['wavenumber'], df_picaso['thermal'] , R=150)
+        wno_pic, thermal = jdi.mean_regrid(df_picaso['wavenumber'], df_picaso['thermal'] , R=150)
 
         all_models_emis[MH][DT] = [fpfs*1e6,thermal]
 
@@ -742,10 +742,10 @@ for i, inst in enumerate(to_run):
             #wno is at lower res than our observation so we have to finagle them onto the same axis
             binned_obs = bi.binning(XS[inst], XS[inst]*0, dy =ES[inst] ,newx=1e4/wno_pic[::-1])
             #first get the binned Fp/Fs
-            binned_y_fpfs = pp.mean_regrid(wno_pic,  y_fpfs, newx=1e4/binned_obs['bin_x'][::-1])[1]
+            binned_y_fpfs = jpi.mean_regrid(wno_pic,  y_fpfs, newx=1e4/binned_obs['bin_x'][::-1])[1]
 
             #how just the Fp (since we will be replacing this with a blackbody)
-            binned_y_fp = pp.mean_regrid(wno_pic,  y_fp, newx=1e4/binned_obs['bin_x'][::-1])[1]
+            binned_y_fp = jpi.mean_regrid(wno_pic,  y_fp, newx=1e4/binned_obs['bin_x'][::-1])[1]
 
             #add random noise to your binned model which is now our "fake data"
             fake_data = binned_y_fpfs + np.random.randn(len(binned_obs['bin_dy']))*binned_obs['bin_dy']
@@ -821,19 +821,19 @@ show(column(row(fig[0:2]), row(fig[2:4])))
 # %%
 logMH = np.log10(100) #Solar metallicity taken by eye balling the Solar System fit #science
 CO = 0.55 #solar carbon to oxygen ratio
-gj436_trans= pj.load_planet(choose_from.loc[choose_from['pl_name']==planet_name],
+gj436_trans= jdi.load_planet(choose_from.loc[choose_from['pl_name']==planet_name],
                             opas,
                             pl_eqt=667,st_metfe = 0.02, st_teff=3479)
 gj436_trans.chemeq_visscher_2121(CO, logMH)
 
 #now we can remove the abundance of CH4 using exclude mol
-df = jdi.copy.deepcopy(gj436_trans.inputs['atmosphere']['profile'])
+df = panjdi.copy.deepcopy(gj436_trans.inputs['atmosphere']['profile'])
 
 gj436_trans.atmosphere(df=gj436_trans.inputs['atmosphere']['profile'], exclude_mol='CH4')
 out = gj436_trans.spectrum(opas
                           ,calculation='transmission', full_output=True)
 
-wno, trans_no_ch4 = pp.mean_regrid(out['wavenumber'],out['transit_depth'],R=150)
+wno, trans_no_ch4 = jpi.mean_regrid(out['wavenumber'],out['transit_depth'],R=150)
 
 trans_no_ch4 = 1e6*((trans_no_ch4)- trans_no_ch4[np.argmin(np.abs(1e4/wno-1))])
 
@@ -852,7 +852,7 @@ figt.line(1e4/wno, all_models_trans[2.0][2], line_width=3, color='black',
 # %%
 out = gj436_trans.spectrum(opas
                           ,calculation='thermal', full_output=True)
-wno_pic, fpfs_no_CH4 = pp.mean_regrid(out['wavenumber'],out['fpfs_thermal'],R=150)
+wno_pic, fpfs_no_CH4 = jpi.mean_regrid(out['wavenumber'],out['fpfs_thermal'],R=150)
 
 fige = figure(height= 250,width=600,
              x_axis_label='Wavelength(micron)',

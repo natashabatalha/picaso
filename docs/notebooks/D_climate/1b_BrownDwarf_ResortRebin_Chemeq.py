@@ -37,11 +37,11 @@
 #
 
 # %%
+import picaso.justplotit as jpi
+import picaso.justdoit as jdi
 import os
 import warnings
 warnings.filterwarnings('ignore')
-import picaso.justdoit as jdi
-import picaso.justplotit as jpi
 import astropy.units as u
 import numpy as np
 import matplotlib.pyplot as plt

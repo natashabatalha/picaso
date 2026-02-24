@@ -18,9 +18,9 @@
 # Here in this notebook we work on getting the pressure-dependent level fluxes and also comparing these level fluxes with our three methods of getting opacities (resort-rebin, resampled, and preweighted)
 
 # %%
+import picaso.justplotit as jpi
 import picaso.justdoit as jdi
 import numpy as np
-import picaso.justplotit as jpi
 
 # %%
 import os

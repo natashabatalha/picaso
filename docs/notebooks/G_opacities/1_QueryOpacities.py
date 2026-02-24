@@ -22,13 +22,13 @@
 # In this tutorial you wil learn how to quickly grab any opacity data
 
 # %%
+import picaso.justplotit as jpi
+import picaso.justdoit as jdi
 import warnings
 warnings.filterwarnings('ignore')
 import numpy as np
 import picaso.opacity_factory as opa
 #plotting
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
 jpi.output_notebook()
 
 # %% [markdown]

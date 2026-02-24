@@ -23,13 +23,13 @@
 # [basics of running/analyzing thermal spectra](https://natashabatalha.github.io/picaso/tutorials.html#basics-of-thermal-emission)
 
 # %%
+import picaso.justplotit as jpi
+import picaso.justdoit as jdi
 import sys
 import os
 
 import warnings
 warnings.filterwarnings('ignore')
-import picaso.justdoit as jdi
-import picaso.justplotit as jpi
 jpi.output_notebook()
 import astropy.units as u
 import numpy as np
