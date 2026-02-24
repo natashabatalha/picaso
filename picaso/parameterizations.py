@@ -391,7 +391,7 @@ class Parameterize():
 
         Parameters:
             species (dict): A dictionary containing the following keys:
-                - 'vmr_knots': A dictionary with keys 'vmr1', 'vmr2', and so on.
+                - 'vmr_knots': list of associated vmrs that match P_knots 
                 - 'P_knots': A dictionary or list of pressure knot values. 
 
             (I think now it should be possible to remove the 'value' key in the dictionaries)
@@ -399,9 +399,7 @@ class Parameterize():
             np.ndarray: An array of VMR values interpolated across the 
             pressure levels, clipped to the range [0, 1].
         """
-
-        VMR_knots = species['vmr_knots']
-        abun_knots = [VMR_knots[k]["value"] for k in sorted(VMR_knots.keys())]
+        abun_knots = species['vmr_knots']
         nlevel=len(self.pressure_level)
         abun_by_level=np.zeros(nlevel)
         P_knots = species['P_knots']
@@ -441,10 +439,10 @@ class Parameterize():
             capped at a maximum of 1.
         """
 
-        vmr_at_switch = species['vmr_switch']['value']
-        p_switch = species['p_switch']['value']
-        top = species['gradient_top']['value']
-        bottom = species['gradient_bottom']['value']
+        vmr_at_switch = species['vmr_switch']
+        p_switch = species['p_switch']
+        top = species['gradient_top']
+        bottom = species['gradient_bottom']
 
         log_p = np.log10(self.pressure_level)
         log_p_switch = np.log10(p_switch)

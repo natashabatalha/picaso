@@ -44,7 +44,9 @@ def prep_master_config():
     config['OpticalProperties']['virga_mieff']=config['OpticalProperties']['virga_mieff'].replace('_default_',os.getenv('picaso_refdata'))
     config['temperature']['userfile']['filename'] =config['temperature']['userfile']['filename'].replace('_default_',os.getenv('picaso_refdata'))
     config['temperature']['sonora_bobcat']['sonora_path'] =config['temperature']['sonora_bobcat']['sonora_path'].replace('_default_',os.getenv('picaso_refdata'))
-    
+    config['chemistry']['userfile']['filename'] =config['chemistry']['userfile']['filename'].replace('_default_',os.getenv('picaso_refdata'))
+    config['clouds']['cloud1']['userfile']['filename'] =config['clouds']['cloud1']['userfile']['filename'].replace('_default_',os.getenv('picaso_refdata'))
+
     return config
 
 
@@ -58,17 +60,17 @@ for i in go.pt_options:
 # %%
 #do all the chem options work?
 for i in go.chem_options:
-    with open('test_case1.toml', "rb") as f:
-        config = go.tomllib.load(f)
+    config = prep_master_config()
     config['chemistry']['method']=i
     print(i)
     test1 = go.run(driver_dict =config)
 
 # %%
 #do all the cloud options work?
-for i in go.cloud_options:
-    with open('test_case1.toml', "rb") as f:
-        config = go.tomllib.load(f)
+for i in go.cloud_options:#running everything except userfile since the pressures won't exaclty line up with this flex pressure option
+    config = prep_master_config()
     config['clouds']['cloud1_type']=i
     print(i)
     test1 = go.run(driver_dict =config)
+
+# %%

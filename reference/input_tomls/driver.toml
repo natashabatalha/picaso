@@ -48,7 +48,7 @@ w_unit = ''
 f_unit = '' 
 
 [temperature]
-profile = 'knots' 
+profile = 'userfile' 
 
 [temperature.userfile]
 filename='_default_/base_cases/HJ.pt' #columns names: temperature,pressure # units:Kelvin,bar (can also include chemistry in the same file)
@@ -108,40 +108,33 @@ teff=1000
 
 #TODO turn below into a notice
 #options: 'visscher', 'free', 'userfile'; delete this block if already given chem in pt userfile : future updates 'fast_chem' vs 'photo_chem'
+
 [chemistry]
 method='visscher' 
-
 
 [chemistry.free]#note all molecules must be case sensitive: e.g., TiO. Isotopologues should be specified with dashes e.g.,: 12-CO
 background={gases=['H2','He'], fraction=5.667} # optional 
 
 [chemistry.free.H2O]
 profile="2gradients" #constant, gradient, knots# # this emulates water rainout
-p_switch = {value=1e-2}
-vmr_switch={value=1e-3}
-gradient_top={value=-4}
-gradient_bottom={value=0}
+p_switch = 1e-2
+vmr_switch=1e-3
+gradient_top=-4
+gradient_bottom=0
 profile_options=['constant', 'gradient', 'knots']
 
 [chemistry.free.CH4]
 profile="knots"
 P_knots=[ 1e3, 1e1, 1e0, 1e-1, 1e-3]
 interpolation_method="slinear"
-
-#todo: these should be in the same format as how we input temperature knots just as a list of same size as pressures above 
-[chemistry.free.CH4.vmr_knots]
-vmr1 = {value=1e-3}
-vmr2 = {value=1e-5}
-vmr3 = {value=1e-6}
-vmr4 = {value=1e-4}
-vmr5 = {value=1e-5}
+vmr_knots=[1e-3, 1e-5, 1e-6, 1e-4, 1e-5]
 
 [chemistry.free.NH3]
 profile="2gradients"
-p_switch = {value=1e2}
-vmr_switch={value=1e-5}
-gradient_top={value=0}
-gradient_bottom={value=-1.5}
+p_switch = 1e2 
+vmr_switch=1e-5
+gradient_top=0
+gradient_bottom=-1.5
 
 [chemistry.free.H2S]
 profile="constant"
@@ -149,17 +142,17 @@ value=1e-8
 
 [chemistry.free.Na]
 profile="2gradients"
-p_switch = {value=1e1}
-vmr_switch={value=1e-4}
-gradient_top={value=-5}
-gradient_bottom={value=1}
+p_switch = 1e1
+vmr_switch=1e-4
+gradient_top=-5
+gradient_bottom=1
 
 [chemistry.visscher]
 cto_absolute=0.55
 log_mh=0
 
 [chemistry.userfile]
-filename='/Users/sjanson/Desktop/code/picaso/reference/base_cases/HJ.pt'
+filename='_default_/base_cases/HJ.pt'
 pd_kwargs={sep=' '}
 
 [clouds]
@@ -211,12 +204,15 @@ reference_wave=1 #reference wave in micron sets to alpha
 slab_kwargs={ptop= -1, dp= 1, reference_tau= 1} # ptop: log bar, dp: log bar, ref tau: micron
 deck_kwargs={ptop= -1, dp= 1} # ptop: log bar, dp: log bar
 
+[clouds.cloud1.userfile]
+filename='_default_/base_cases/HJ.cld'
+pd_kwargs={sep=' '}
+
 [clouds.patchy]
 npatch = 1
 patch1 = 'clear'
 patch2 = 'cloud1'
 frac_1 = 0.3 #this is the fraction assigned to patch 1
-
 
 [retrieval]
 
