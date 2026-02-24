@@ -7,7 +7,7 @@ Tutorials
 Getting Data and Setting up Environments after Installation
 -----------------------------------------------------------
 
-This quickstart notebook has some overlap with our installation instructions, but it is designed to be a quick way to get up and running with PICASO after you have installed it. It includes instructions for getting reference data, setting up environments, and checking environments have been successfully setup. 
+This quickstart notebook has some overlap with our installation instructions (Please read the installation page first!), but it is designed to be a quick way to get up and running with PICASO after you have installed it. It includes instructions for getting reference data, setting up environments, and checking environments have been successfully setup. 
 .. toctree::
    :maxdepth: 1
 
@@ -117,6 +117,7 @@ Useful Tools
 
 .. toctree::
    :maxdepth: 1
+   
    How to store and reuse models </notebooks/I_usefultools/ModelStorage.py>
    Spectral and Molecular Contribution Functions </notebooks/I_usefultools/ContributionFunctions.py>
    Common Climate Issues </notebooks/I_usefultools/CommonClimateBDIssues.py>
