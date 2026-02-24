@@ -1,5 +1,8 @@
 
-
+There are a few avenues for installing PICASO. To help determine which is best for you, we have a few questions to help you decide:
+1. Are you a researcher who wants to stay up-to-date with the latest changes and contribute to PICASO (or possibly contribute in the future)? Please follow the git clone instructions below. (Our General Recommendation)
+2. Are you a student or researcher who just wants to get started with PICASO quickly? Please follow the pip or conda install instructions below.
+3. Do you want to use PICASO for an assignment or workshop? Please follow the pip or conda install instructions below for picaso-lite.
 
 Quickstart
 ==========
@@ -26,8 +29,26 @@ The Github repository contains the reference folder and helpful tutorials.
 .. code-block:: bash 
 
 	git clone https://github.com/natashabatalha/picaso.git
-	cd picaso
-	pip install .
+
+You will also need to install the dependencies which you might have already in your environment.
+The list of packages you need to install are: bokeh, numpy, numba, pandas, joblib, photutils, astropy, matplotlib, stsynphot, sphinx, scipy, h5py, virga-exo, xarray, pooch, tqdm, bibtexparser, netcdf4, h5netcdf, jupytext. You can install these with pip or conda.
+While we do have these dependencies automatically installed when you pip install, if you pip install picaso, you will not have access to beta testinng functionalities.
+
+
+Set your PICASO environmental variables
+```````````````````````````````````````````````
+
+Sometimes it is too troublesome to go through bash settings. We recommend adding these lines to the beginning of your notebook for a smoother and easier use since you might be changing between development directories.
+Add directly to python code
+
+.. code-block:: python
+
+	import os
+	os.environ['picaso_refdata'] = 'your_path/picaso/reference/' #THIS MUST GO BEFORE YOUR IMPORT STATEMENT
+	#if you are using stellar grid models
+	os.environ['PYSYN_CDBS'] = 'your_path/picaso/reference/stellar_grids/' #this is for the stellar data discussed below.
+	import picaso.justdoit as jdi
+
 
 Install with Pip
 ----------------
@@ -110,20 +131,7 @@ If you have already downloaded reference data you can check that your variable h
 	base_cases chemistry config.json evolution opacities version.md
 
 
-Method 2: Add directly to python code (easiest)
-```````````````````````````````````````````````
-
-Sometimes it is too troublesome to go through bash settings and you may prefer to set it directly in your python code. 
-
-.. code-block:: python
-
-	import os
-	os.environ['picaso_refdata'] = 'your_path' #THIS MUST GO BEFORE YOUR IMPORT STATEMENT
-	#if you are using stellar grid models
-	os.environ['PYSYN_CDBS'] = 'your_path' #this is for the stellar data discussed below.
-	import picaso.justdoit as jdi
-
-Method 3: Add it to your conda enviornment
+Method 2: Add it to your conda enviornment
 ```````````````````````````````````````````
 
 This is my method of choice! It involves creating conda environment specific variables. If you are interested in learning more about environment variables, you can `read more about them here <https://natashabatalha.github.io/picaso/contribution.html#using-conda-enviornments>`_
