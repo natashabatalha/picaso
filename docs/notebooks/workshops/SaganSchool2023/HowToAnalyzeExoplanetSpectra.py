@@ -606,7 +606,7 @@ show_spectra(chemistry_grid)
 # %%
 # Write a simple function to identify the top most abundant species
 
-def find_top(grid, mh=1, co=1, n=4, method='average', more=False):
+def find_top(grid, mh=1, co=0.55, n=4, method='average', more=False):
     """
     Find the n most abundant oxygen- and carbon-bearing molecules for a given M/H and C/O ratio.
 
@@ -678,7 +678,7 @@ abundances = {}
 # Loop through the M/H grid values
 for i, mh in enumerate(mh_grid_vals):
     # Calculate total abundance of top 4 molecules for a given M/H value
-    top_dict = find_top(chemistry_grid, mh=mh, co=1, n=5, method='sum')
+    top_dict = find_top(chemistry_grid, mh=mh, co=0.55, n=5, method='sum')
     print(f'M/H={mh}, C/O=1:', top_dict)
 
     # Add molecule abundances dynamically and insert at the correct position
@@ -751,7 +751,7 @@ plt.show()
 # Get the average mean molecular weight of the atmosphere at each M/H value
 mmws = []
 for mh in mh_grid_vals:
-    mmws.append(np.mean(chemistry_grid[f'M/H={mh},C/O=1']['full_output']['layer']['mmw']))
+    mmws.append(np.mean(chemistry_grid[f'M/H={mh},C/O=0.55']['full_output']['layer']['mmw']))
 
 # Plot how the mean molecular weight of each molecules changes with M/H
 plt.figure(figsize=(8, 4), dpi=100)
