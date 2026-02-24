@@ -121,7 +121,7 @@ p_switch = 1e-2
 vmr_switch=1e-3
 gradient_top=-4
 gradient_bottom=0
-profile_options=['constant', 'gradient', 'knots']
+profile_options=['constant', '2gradients', 'knots']
 
 [chemistry.free.CH4]
 profile="knots"
