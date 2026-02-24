@@ -152,7 +152,7 @@ def make_inputs(kz=1e8, filename_guess=None):
     cl_run.atmosphere(
         mh=10,
         cto_relative=0.3,
-        chem_method='photochem+visscher',
+        chem_method='photochem',
         photochem_init_args=photochem_init_args
     )
     # Grab the Photochem object and adjust any settings if needed
