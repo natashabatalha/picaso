@@ -127,7 +127,7 @@ def get_data_config():
         },
     'virga_mieff':{
         'default':{
-            'url':{'virga.zip':'https://zenodo.org/records/5179187/files/virga.zip'},
+            'url':{'virga.zip':'https://zenodo.org/records/15886530/files/virga.zip'},
             'description':'Virga refractive index and Mie files on standard 196 grid. Spherical particles only.',
             'default_destination':os.path.join(__refdata__, 'virga')
             }, 
