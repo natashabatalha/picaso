@@ -45,6 +45,7 @@ import h5py
 __refdata__ = os.environ.get('picaso_refdata')
 __version__ = '4.0'
 
+LODDERS2020_C_TO_O = 0.54939759398
 
 if not os.path.exists(__refdata__): 
     raise Exception("You have not downloaded the PICASO reference data. You can find it on github here: https://github.com/natashabatalha/picaso/tree/master/reference . If you think you have already downloaded it then you likely just need to set your environment variable. See instructions here: https://natashabatalha.github.io/picaso/installation.html#download-and-link-reference-documentation . You can use `os.environ['PYSYN_CDBS']=<yourpath>` directly in python if you run the line of code before you import PICASO.")
@@ -2049,18 +2050,21 @@ class inputs():
                 raise Exception("Specify cto_relative or cto_absolute. Do not specify both.")
             if chem_method not in ['visscher_1060', 'visscher', 'on-the-fly', 'photochem']:
                 raise Exception(f"A chem option {chem_method} is not valid.") 
+            
+            if chem_method in ['visscher', 'on-the-fly', 'photochem']:
+                solar_cto = LODDERS2020_C_TO_O
+            elif chem_method == 'visscher_1060':
+                solar_cto = 0.458
 
-            if chem_method == 'visscher':
-                # These conversions between absolute and relative only work for the
-                # Visscher grid, which has a certain solar C/O baked in.
-                if cto_absolute is None:
-                    cto_absolute = cto_relative*0.549
-                elif cto_relative is None:
-                    cto_relative = cto_absolute/0.549
-            else:
-                if cto_relative is None:
-                    raise Exception('If chem_method is not visscher, you must specify cto_relative instead of cto_absolute.')
-                    
+            if cto_absolute is None:
+                warnings.warn(
+                    "The input `cto_relative` was converted to an absolute C/O ratio "
+                    f"assuming a Solar C/O = {solar_cto:.3f}"
+                )
+                cto_absolute = cto_relative*solar_cto
+            elif cto_relative is None:
+                cto_relative = cto_absolute/solar_cto
+   
             if chem_method == 'photochem':
                 if photochem_init_args is None:
                     raise Exception("Specify photochem_init_args when chem_method is set to 'photochem'.")
@@ -2154,7 +2158,7 @@ class inputs():
             self.chemeq_visscher_2121(cto_absolute, np.log10(mh)) 
         elif chem_method_str == 'on-the-fly' or chem_method_str == 'photochem':
             # chem_method of "photochem" still needs equilibrium chemistry.
-            self.chemeq_on_the_fly(cto_relative, np.log10(mh))
+            self.chemeq_on_the_fly(cto_absolute, np.log10(mh))
 
     def volatile_rainout(self,quench_levels,species_to_consider = ['H2O', 'CH4','NH3']):
         """
@@ -2857,7 +2861,7 @@ class inputs():
             self.chemeq_visscher_2121(cto_absolute=0.458,log_mh=0.0)
         self.inputs['atmosphere']['sonora_filename'] = build_filename
 
-    def chemeq_on_the_fly(self, cto_relative, log_mh, method='sonora-approx', chemeq_solver_init_args={}):
+    def chemeq_on_the_fly(self, cto_absolute, log_mh, method='sonora-approx', chemeq_solver_init_args={}):
         """
         Compute chemical equilibrium abundances for the current pressure–temperature
         profile using the `photochem.EquilibriumChemistry` solver and attach the
@@ -2865,12 +2869,12 @@ class inputs():
 
         Parameters
         ----------
-        cto_relative : float
-            Relative carbon-to-oxygen ratio (e.g., 1.0 for solar). Passed directly
+        cto_absolute : float
+            Absolute carbon-to-oxygen ratio. Passed directly
             to the equilibrium solver to set elemental abundances.
         log_mh : float
             Base-10 logarithm of the metallicity relative to solar. This value,
-            together with ``cto_relative``, defines the elemental composition used
+            together with ``cto_absolute``, defines the elemental composition used
             in the equilibrium calculation.
         method : str or None, optional
             Equilibrium chemistry approach to use. Default ``'sonora-approx'`` loads the
@@ -2917,6 +2921,9 @@ class inputs():
         P = self.inputs['atmosphere']['profile']['pressure'].to_numpy()
         T = self.inputs['atmosphere']['profile']['temperature'].to_numpy()
         solver = self.inputs['climate']['chemeq_solver']
+
+        # Convert to a relative C/O
+        cto_relative = cto_absolute/LODDERS2020_C_TO_O
 
         # Solve for equilibrium
         gases, condensates = solver.equilibrate_atmosphere(P, T, log_mh, cto_relative)
