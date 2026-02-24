@@ -337,7 +337,7 @@ class EquilibriumChemistry(ChemEquiAnalysis):
         # Check inputs
         if not isinstance(P, np.ndarray):
             raise ValueError('`P` should be a numpy array.')
-        if not isinstance(P, np.ndarray):
+        if not isinstance(T, np.ndarray):
             raise ValueError('`T` should be a numpy array.')
 
         # Some conversions and copies

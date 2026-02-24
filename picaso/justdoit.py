@@ -2870,8 +2870,8 @@ class inputs():
         Parameters
         ----------
         cto_absolute : float
-            Absolute carbon-to-oxygen ratio. Passed directly
-            to the equilibrium solver to set elemental abundances.
+            Absolute carbon-to-oxygen ratio. Converted internally to a
+            solar-relative C/O ratio before passing to the equilibrium solver.
         log_mh : float
             Base-10 logarithm of the metallicity relative to solar. This value,
             together with ``cto_absolute``, defines the elemental composition used
