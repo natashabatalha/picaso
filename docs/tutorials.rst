@@ -34,7 +34,7 @@ Chemistry
    :maxdepth: 1
 
    Chemical Equilibrium & Disequilibrium Hacks </notebooks/B_chemistry/1_ChemicalEquilibrium.py>
-   Full Kinetics/Photochemistry  </notebooks/A_basics/2_Photochemistry.py>
+   Full Kinetics/Photochemistry  </notebooks/B_chemistry/2_Photochemistry.py>
  
 
 Clouds
@@ -107,9 +107,9 @@ Radiative Transfer Techniques
 .. toctree::
    :maxdepth: 1
 
-   Toon Radiative Transfer in Reflected Light </notebooks/H_radiative_transfer/1_AnalyzingApproximationsReflectedLightToon.py>
-   Spherical Harmonics Radiative Transfer in Reflected Light </notebooks/H_radiative_transfer/2_AnalyzingApproximationsReflectedLightSH.py>
-   Spherical Harmonics Radiative Transfer in Thermal Emission </notebooks/H_radiative_transfer/3_AnalyzingApproximationsThermal.py>
+   Toon Radiative Transfer in Reflected Light </notebooks/H_radiativetransfer/1_AnalyzingApproximationsReflectedLightToon.py>
+   Spherical Harmonics Radiative Transfer in Reflected Light </notebooks/H_radiativetransfer/2_AnalyzingApproximationsReflectedLightSH.py>
+   Spherical Harmonics Radiative Transfer in Thermal Emission </notebooks/H_radiativetransfer/3_AnalyzingApproximationsThermal.py>
 
 
 Useful Tools
