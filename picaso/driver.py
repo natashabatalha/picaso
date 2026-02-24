@@ -23,7 +23,7 @@ dynesty.utils.pickle_module = dill
 
 chem_options = ['visscher', 'free', 'userfile']
 cloud_options = ['brewster_grey', 'brewster_mie', 'virga', 'flex_fsed', 'hard_grey', 'userfile']
-pt_options = ['userfile','isothermal', 'knots', 'guillot', 'sonora_bobcat',  'madhu_seager_09_inversion','madhu_seager_09_noinversion', 'zj_24'] #, 'molliere_20', 'Kitzman_20', 
+pt_options = ['userfile','isothermal', 'knots', 'guillot', 'sonora_bobcat',  'madhu_seager_09_inversion','madhu_seager_09_noinversion', 'zj24'] #, 'molliere_20', 'Kitzman_20', 
 
 def run(driver_file=None,driver_dict=None):
     if isinstance(driver_file,str):
@@ -43,7 +43,7 @@ def run(driver_file=None,driver_dict=None):
     
     #setup opacity outside main run
     opacity = opannection(
-        filename_db=config['OpticalProperties']['opacity_files'], #database(s)
+        filename_db=config['OpticalProperties']['opacity_file'], #database(s)
         method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
         **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
         )
@@ -381,7 +381,7 @@ def conv_non_uniform_R(model_flux, model_wl, R, obs_wl):
 def retrieve(config, param_tools):
 
     OPA = opannection(
-        filename_db=config['OpticalProperties']['opacity_files'], #database(s)
+        filename_db=config['OpticalProperties']['opacity_file'], #database(s)
         method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
         wave_range=config['OpticalProperties']['wave_range'],#state wavelength range desired of spectrum
         **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
@@ -438,7 +438,7 @@ def check_model_samples(config, N=100, samples=None):
         config (dict): Configuration dictionary containing the necessary parameters for 
             optical properties, retrieval, and other settings.
             - 'OpticalProperties': A dictionary with keys:
-                - 'opacity_files' (str): Path to the opacity database(s).
+                - 'opacity_file' (str): Path to the opacity database(s).
                 - 'opacity_method' (str): Method for handling opacity ('resampled', 'preweighted', etc.).
                 - 'opacity_kwargs' (dict): Additional arguments for opacity handling.
                 - 'virga_mieff' (str, optional): Directory for virga Mie efficiency files.
@@ -459,7 +459,7 @@ def check_model_samples(config, N=100, samples=None):
           as a numpy array.
     """
     OPA = opannection(
-        filename_db=config['OpticalProperties']['opacity_files'], #database(s)
+        filename_db=config['OpticalProperties']['opacity_file'], #database(s)
         method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
         **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
         )
@@ -489,7 +489,7 @@ def setup_spectrum_class(config, opacity, param_tools, stage=None):
 
     if isinstance(opacity,type(None)):
         opacity = opannection(
-        filename_db=config['OpticalProperties']['opacity_files'], #database(s)
+        filename_db=config['OpticalProperties']['opacity_file'], #database(s)
         method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
         **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
         ) #opanecction connects to the opacity database

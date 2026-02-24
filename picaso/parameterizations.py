@@ -615,7 +615,7 @@ class Parameterize():
         interpolator = interpolate.interp1d(np.log(pressures), dTs, kind='quadratic', bounds_error=False, fill_value='extrapolate')
         dT_by_level = interpolator(np.log(reverseP))    
 
-        T[0] = Tbottom['value']
+        T[0] = Tbottom # ['value'] 
         for i in range(1,nlevel):
             T[i]=np.exp( np.log(T[i-1]) + (np.log(reverseP[i])-np.log(reverseP[i-1])) * dT_by_level[i-1] )
 

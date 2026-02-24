@@ -237,13 +237,13 @@ def setup_config():
 
 def render_admin():
     # DATAPATH ENTERING
-    config['OpticalProperties']['opacity_files'] = st.text_input("Enter in the datapath to your opacities.db", value = config.get('OpticalProperties').get('opacity_files'))
+    config['OpticalProperties']['opacity_file'] = st.text_input("Enter in the datapath to your opacities.db", value = config.get('OpticalProperties').get('opacity_file').replace('_default_',PICASO_REFDATA_ENV_VAR))
     config['OpticalProperties']['opacity_method'] = st.selectbox("Opacity method", ("resampled")) #, "preweighted", "resortrebin"))
-    config['OpticalProperties']['virga_mieff'] = st.text_input("Enter in the datapath to your virga files", value = config.get('OpticalProperties').get('virga_mieff'))
+    config['OpticalProperties']['virga_mieff'] = st.text_input("Enter in the datapath to your virga files", value = config.get('OpticalProperties').get('virga_mieff').replace('_default_',PICASO_REFDATA_ENV_VAR))
 
     # OPACITY AND PARAM_TOOLS CONFIG
     opacity = jdi.opannection(
-        filename_db=config['OpticalProperties']['opacity_files'], #database(s)
+        filename_db=config['OpticalProperties']['opacity_file'], #database
         method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
         **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
     )
