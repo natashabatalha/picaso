@@ -168,7 +168,7 @@ print(relevant_molecules)
 # Now that we have condensed this to a meaningful set of molecules, we can proceed to plot the sequence
 #
 #
-# *Side note: You might try to see if the technique of taking the "median" yields the same results as "max" or "mean". This gives some insight into how dynamic moleculare abundances are as a function of pressure*
+# *Side note: You might try to see if the technique of taking the "median" yields the same results as "max" or "mean". This gives some insight into how dynamic molecular abundances are as a function of pressure*
 
 # %% [markdown]
 # ## Where in temperature space do chemical transitions seem to take place?
@@ -310,7 +310,7 @@ jpi.show(jpi.row(figs))
 #     - MIRI LRS
 #
 #
-# *$^*$what is the sublety that makes this a difficult mode to use universally*
+# *$^*$what is the subtlety that makes this a difficult mode to use universally*
 #
 # 2. Excluding the Prism, if you had to choose only one mode for JWST to observe the cold planet case, which would you choose? Repeat for hot planet case.
 # 3. Are there regions of parameter space where two molecule overlap could be problematic?

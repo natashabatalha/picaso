@@ -84,7 +84,6 @@ rfacv = 0.0 #we are focused on a brown dwarf so let's keep this as is
 kzval = pressure*0+1e9
 
 # %%
-# virga_dir = '/Users/nbatalh1/Documents/data/virga' # path to virga directory with the Mie scatering files
 virga_dir = os.path.join(os.getenv('picaso_refdata'),'virga') # path to virga directory with the Mie scattering files
 
 # %% [markdown]

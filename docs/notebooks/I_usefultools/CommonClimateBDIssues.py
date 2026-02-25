@@ -15,7 +15,7 @@
 
 # %% [markdown]
 # # Climate Model Common Issues
-# In this tutorial, we're going to highlight some of the most common issues that you could potentially encounter when running 1D climate models and what are the general recommendations to fix it! **You don't neccesarily need to rerun this notebook**, this is more for you to look at to see what issues might look like in your profiles and diagnostic plots.
+# In this tutorial, we're going to highlight some of the most common issues that you could potentially encounter when running 1D climate models and what are the general recommendations to fix it! **You don't necessarily need to rerun this notebook**, this is more for you to look at to see what issues might look like in your profiles and diagnostic plots.
 #
 # Now let's take a look at what weird things might happen in your climate models!
 

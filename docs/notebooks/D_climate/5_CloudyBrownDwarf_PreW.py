@@ -87,7 +87,6 @@ rfacv = 0.0 #we are focused on a brown dwarf so let's keep this as is
 # If you are unfamiliar with Virga, we highly recommend going through the [tutorials](https://natashabatalha.github.io/virga/tutorials.html) to understand the basics of how we generate those clouds before pairing them with the 1-D climate models here. It is also necessarry to have the mieff files generated for the cloud species you want to include.
 
 # %%
-# virga_dir = '//Users/nbatalh1/Documents/data/virga' # path to virga directory with the Mie scatering files
 virga_dir = os.path.join(os.getenv('picaso_refdata'),'virga') # path to virga directory with the Mie scattering files
 
 # %% [markdown]
@@ -220,7 +219,7 @@ plt.legend()
 plt.show()
 
 # %% [markdown]
-# So here you can see the large water cloud feature around 4-5 micron where the flux from this brown dwarf is being surpressed by the large water cloud opacity. Other water features can also be seen in other regions of the spectrum.
+# So here you can see the large water cloud feature around 4-5 micron where the flux from this brown dwarf is being suppressed by the large water cloud opacity. Other water features can also be seen in other regions of the spectrum.
 
 # %% [markdown]
 # ## Patchy Clouds

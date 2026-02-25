@@ -167,7 +167,7 @@ pc.gdat.verbose = False # No printing
 pc.var.diurnal_fac = 1.0
 
 # %% [markdown]
-# When modeling a gas giant, researchers often assume the planet has some composition relative to the Sun (i.e., a metallicity). The `EvoAtmosphereGasGiant` exention has a `ChemEquiAnalysis` object attached to it (`pc.gdat.gas`, see `from photochem.equilibrate import ChemEquiAnalysis` for details) for doing equilibrium chemistry calculations at depth in the gas giant atmosphere. This object contains an estimated composition of the Sun:
+# When modeling a gas giant, researchers often assume the planet has some composition relative to the Sun (i.e., a metallicity). The `EvoAtmosphereGasGiant` extension has a `ChemEquiAnalysis` object attached to it (`pc.gdat.gas`, see `from photochem.equilibrate import ChemEquiAnalysis` for details) for doing equilibrium chemistry calculations at depth in the gas giant atmosphere. This object contains an estimated composition of the Sun:
 
 # %%
 for i,atom in enumerate(pc.gdat.gas.atoms_names):

@@ -17,7 +17,7 @@
 #
 # ``PICASO`` currently comes with single opacity database that includes both the continuum and molecular opacity. The opacity file that comes included with has a 0.3-14 $\mu$m opacity grid sampled at R=15000. This is why we consistently bin our spectra to R~100. Contact us with opacity needs.
 #
-# We chose those use `sqlite3` for our database because of it's 1) user-friendliness, 2) speed, 3) scalability, 4) compatibility with parallel programing. In 2019, we tried out various other methods as well-- `json`, `hdf5`, `ascii`, `sqlalchemy`-- but `sqlite3` was truly better for this specific problem. Having revisited this problem recently `hdf5` has now outpaced `sqlite3` in terms of storage and perforance. Therefore in future PICASO v5 we will move away from `sqlite3` and toward `hdf5` which has a much larger user base now. 
+# We chose those use `sqlite3` for our database because of it's 1) user-friendliness, 2) speed, 3) scalability, 4) compatibility with parallel programming. In 2019, we tried out various other methods as well-- `json`, `hdf5`, `ascii`, `sqlalchemy`-- but `sqlite3` was truly better for this specific problem. Having revisited this problem recently `hdf5` has now outpaced `sqlite3` in terms of storage and performance. Therefore in future PICASO v5 we will move away from `sqlite3` and toward `hdf5` which has a much larger user base now. 
 #
 # In this tutorial you wil learn how to quickly grab any opacity data
 
@@ -82,7 +82,7 @@ data.keys()
 
 # %%
 #note these temperatures might be different from your input
-#if there isnt an exact point matching your input
+#if there isn't an exact point matching your input
 data['H2O'].keys()
 
 # %%

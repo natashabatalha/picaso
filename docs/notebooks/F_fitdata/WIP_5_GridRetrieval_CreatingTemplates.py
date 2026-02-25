@@ -29,13 +29,13 @@
 # 3. `picaso.analyze.prep_gridtrieval` function to simply generate and interpolate on a spectrum
 # 4. Running `virga` cloud models `picaso` forward modeling (e.g. computing transmission spectra with `justdoit.inputs`)
 #
-# ## Basics of Retreival Templates
+# ## Basics of Retrieval Templates
 #
 # We have introduced these templates in previous tutorials. Here will show a few more examples of template creation.
 #
 # **How should I use these templates??**
 #
-# These templates are supposed to offer you a headstart to building retreivals yourself. You are encouraged to write your own retrieval functions using these are **starting points**.
+# These templates are supposed to offer you a headstart to building retrievals yourself. You are encouraged to write your own retrieval functions using these are **starting points**.
 
 # %%
 import picaso.retrieval as pr
@@ -71,7 +71,7 @@ pr.create_template(rtype,sript_name,sampler_output,grid_kwargs=grid_kwargs)
 
 # %%
 rtype='grid_flexcloud' #first lets specify the retrieval type 'grid'
-sript_name='run_test.py' #speciy a script name
+sript_name='run_test.py' #specify a script name
 sampler_output='/data/test/ultranest/grid_flexcloud'
 
 grid_location = '/data2/models/WASP-17b/spec/zenodo/v1' # should ultimately point to location of all .nc files
@@ -98,7 +98,7 @@ pr.create_template(rtype,sript_name,sampler_output,grid_kwargs=grid_kwargs)
 
 # %%
 rtype='grid_virga' #first lets specify the retrieval type 'grid'
-sript_name='run_test.py' #speciy a script name
+sript_name='run_test.py' #specify a script name
 sampler_output='/data/test/ultranest/grid_virga'
 
 grid_location = '/data2/models/WASP-17b/spec/zenodo/v1' # should ultimately point to location of all .nc files

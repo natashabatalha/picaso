@@ -33,7 +33,7 @@ import os
 # %% [markdown]
 # ## First Define Database Specs (min, max wavelength, R)
 #
-# Opacities are computed "line-by-line" (LBL) grids that are R~1e6 accross a wide wavelength range (e.g. 0.3-300um). In order to make our calculations computationally feasible, we need to create databases that are a resampled subset of this full calculation.
+# Opacities are computed "line-by-line" (LBL) grids that are R~1e6 across a wide wavelength range (e.g. 0.3-300um). In order to make our calculations computationally feasible, we need to create databases that are a resampled subset of this full calculation.
 #
 # **CAUTIONS regarding resampling**: when you resample an opacity database you must resample to **at least 100x higher than your expected data**. For example:
 #
@@ -48,8 +48,8 @@ import os
 # The general procedure of the opacity factory is:
 #
 # 1. Interpolate the given opacity bundle to a common wavelength solution that is comparable R (`oldR` below) to the original LBL calculation
-# 2. Resample the opacity accordingly to `newR`. For example, if `oldR`=1e6 and `newR`=1e4, then every 100th point is taken for the final opacity specturm
-# 3. Insert that resampled opacity to the databse
+# 2. Resample the opacity accordingly to `newR`. For example, if `oldR`=1e6 and `newR`=1e4, then every 100th point is taken for the final opacity spectrum
+# 3. Insert that resampled opacity to the database
 #
 # ### Things to consider when choosing minw, maxw, and R
 #
@@ -145,11 +145,11 @@ dir_o3 = os.path.join(dir_extras,'O3_visible.txt')
 #
 
 # %%
-#original deirectory of the 1460 grid
+#original directory of the 1460 grid
 #for Lupu files remember to unzip!!
 og_directory ="/data/lupu"
 #og_directory='/data/weighted_cxs_1460/'
-#alkalis_dir = '/data/weighted_cxs_1460/alkalis'#this is technically the default (a folder called alkalis in og_directory) but if your alkalis are located somewhere else you can specificy the full path and add it below
+#alkalis_dir = '/data/weighted_cxs_1460/alkalis'#this is technically the default (a folder called alkalis in og_directory) but if your alkalis are located somewhere else you can specify the full path and add it below
 alkalis_dir = 'individual_file'
 
 # %% [markdown]
@@ -165,7 +165,7 @@ opa_fac.build_skeleton('/data/picaso_dbs/test.db')
 #
 # ### Option 1: my data is low resolution R<100
 #
-# If your data is at low resolution then you can proceed with what is below by resamplig the Lupu files to a lower resolution (R=10k)
+# If your data is at low resolution then you can proceed with what is below by resampling the Lupu files to a lower resolution (R=10k)
 
 # %%
 newR=10000
