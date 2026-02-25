@@ -2,6 +2,29 @@
 
 History
 -------
+
+4.0 (2026-2-25)
+~~~~~~~~~~~~~~~~
+Major functionality:
+
+* Cloudy equilibrium
+* Cloudy/clear photochemistry
+* Patchy cloud climates
+* New correlated-k format (bin files -> hdf5) and computed from OS code within picaso
+* Run photochem to create a spectrum
+* Correlated-K forward modeling
+* Patchy clouds in forward modeling
+* Some integration testing
+
+Enhancements:
+
+* Climate model has been completely restructured to improve workflow and readability (user input to climate code has changed dramatically for diseq and cloudy runs)
+* Level fluxes output in forward modeling for diagnostics
+* Leave one out climate modeling for individual molecule contributions
+* New get data tutorial auto downloads data that you need incl sonora grids, ck tables, virga files, stellar files, opacities 
+* Deprecates pysynphot in place of stsynphot
+* Opacity files starting with v3 now has zenodo DOI in meta data.
+
 3.3 (2024-11-12)
 ~~~~~~~~~~~~~~~~
 * Reflected light phase curves 
