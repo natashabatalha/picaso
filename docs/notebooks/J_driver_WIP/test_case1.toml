@@ -1,0 +1,189 @@
+observation_type = 'thermal' # options: 'transmission', 'thermal', 'reflected' or a combo e.g. transmission+thermal
+irradiated=true #options: true or false (if true, user needs to input star properties)
+calc_type='spectrum'#spectrum climate or retrieval
+
+[InputOutput]
+observation_data = 'path/to/spectrum.nc' #see docs on required data formats
+retrieval_output = 'path/to/output'
+spectrum_output = 'path/to/output.nc'
+
+[OpticalProperties]
+opacity_files = '/Users/nbatalh1/Documents/codes/PICASO/picaso/reference/opacities/opacities.db' # single db or list of opacity dbs 
+opacity_method = 'resampled' #list of options: resampled, preweighted, resortrebin
+opacity_kwargs = {} # any other inputs you want to give to justodit.opannection()
+virga_mieff = '/Users/nbatalh1/Documents/data/virga_0,3_15_R300/' # any other inputs you want to give to justodit.opannection()
+
+[object]
+radius    = {value=1.2, unit='Rjup'}
+mass      = {value=1.2, unit='Mjup'}
+gravity   = {value=1e4, unit='cm/s**2'}
+distance  = {value=10,  unit='parsec'}
+teff      = {value=500, unit='Kelvin'}
+teq       = {value=500, unit='Kelvin'}
+
+[geometry]
+phase = {value=0, unit='radian'} #planet phase angle
+
+[star]
+radius= {value=1, unit='Rsun'} 
+semi_major= {value=200, unit='AU'}
+type='grid' #'grid' or 'userfile'
+
+[star.grid]
+logg  = 4
+teff  = 5400
+feh   = 0
+database  ='phoenix'# options: phoenix, ck04models, or other pysynphot databases
+
+[star.userfile]
+filename = '' # simple two column format no header column1=wavelength, column2=flux
+w_unit = '' 
+f_unit = '' 
+
+[temperature]
+profile = 'userfile' #options: 'userfile','isothermal', 'knots', 'madhu_seager_09_inversion','madhu_seager_09_noinversion' ,'guillot', 'zj_24', 'molliere_20', 'Kitzman_20', 'sonora_bobcat'...
+
+[temperature.userfile]
+filename='/Users/nbatalh1/Documents/codes/PICASO/picaso/reference/base_cases/HJ.pt' #columns names: temperature,pressure # units:Kelvin,bar (can also include chemistry in the same file)
+pd_kwargs={sep=' '} #kwargs for pandas.read_csv
+
+[temperature.pressure]
+reference = {value=1e1,unit='bar'}
+min = {value=1e-7, unit='bar'}
+max = {value=1e3,unit='bar'}
+nlevel = 100
+spacing = 'log'
+
+[temperature.isothermal]
+T = 500
+
+[temperature.knots]
+P_knots=[1e2,1e1,1e0,1e-1,1e-3,1e-5]
+T_knots=[1000, 700, 400, 300, 250, 200]
+interpolation='brewster' #options are: brewster, linear, quadratic_spline, cubic_spline, OR any function from scipy.interpolate with associated kwargs passed to scipy_it
+scipy_interpolate_kwargs={}
+
+[temperature.madhu_seager_09_inversion]
+P_1=1e1
+P_2=1e-3
+P_3=1e-5
+T_3=1000
+alpha_1=1
+alpha_2=1
+beta=0.5
+
+[temperature.madhu_seager_09_noinversion]
+P_1=1e1
+P_3=1e-5
+T_3=1000
+alpha_1=1
+alpha_2=1
+beta=0.5
+
+[temperature.guillot]
+Teq=1000
+T_int=100
+logg1=-1
+logKir=-1.5
+alpha=0.5
+
+[temperature.sonora_bobcat]
+sonora_path='/Users/nbatalh1/Documents/data/sonora_bobcat/structures_m+0.0'
+teff=1000
+
+[chemistry]
+method='free' #options: 'visscher', 'free', 'userfile'; delete this block if already given chem in pt userfile : future updates 'fast_chem' vs 'photo_chem'
+
+[chemistry.free]#note all molecules must be case sensitive: e.g., TiO. Isotopologues should be specified with dashes e.g.,: 12-CO
+H2O={value=1e-4,unit='v/v'}
+CH4={values=[1e-4,1e-3],unit='v/v', pressures=[1e-2],pressure_unit='bar'}
+NH3={value=1e-4,unit='v/v'}
+background={gases=['H2','He'],fraction=5.667} # optional 
+
+[chemistry.visscher]
+cto_absolute=0.55
+log_mh=0
+
+[chemistry.userfile]
+filename='/Users/nbatalh1/Documents/codes/PICASO/picaso/reference/base_cases/HJ.pt'
+pd_kwargs={sep=' '}
+
+[clouds]
+cloud1_type='hard_grey' #options: brewster_grey, brewster_mie, virga, flex_fsed, hard_grey, userfile
+
+[clouds.cloud1.hard_grey]
+p = 1 # {value=1,unit='logbar'} #bottom pressure
+dp = 1 # {value=1,unit='logbar'} #thickness in log 
+w0 = 0 #single scattering albedo
+g0 = 0 #asymmetry
+opd = 10 #cloud optical depth per layer
+
+[clouds.cloud1.flex_fsed]
+condensate='SiO2'
+base_pressure=1 # {value=1 , unit='bar'}
+ndz=2 #arbitrary scaling for setting max optical depth of the cloud
+fsed=1
+distribution='lognorm' # "lognorm" or "hansen" .. make sure to add respective kwargs below
+lognorm_kwargs = {sigma=1, lograd = -4}  #log rad in log cm
+hansen_kwargs = {b=1 , lograd = -4}
+
+[clouds.cloud1.virga]
+mh = 1 
+condensates=['SiO2','Al2O3']
+fsed=1
+kzz=1e9 # {value=1e9,unit='cm**2/s'}
+mmw = 2.2
+sig =2 
+# can add any other virga param see justdoit.inputs.virga
+
+[clouds.cloud1.brewster_mie]
+condensate='SiO2'
+decay_type = 'slab' # can be 'slab' or 'decay' #make sure to add respective kwargs below
+slab_kwargs={ptop= -1, dp= 1, reference_tau= 1} # ptop: log bar, dp: log bar, ref tau: micron
+deck_kwargs={ptop= -1, dp= 1} # ptop: log bar, dp: log bar
+distribution = 'lognorm' # 'lognorm' or 'hansen', make sure to add respective kwargs below
+lognorm_kwargs = {sigma=1, lograd = -4}  #log rad in log cm
+hansen_kwargs = {b=1 , lograd = -4}
+
+[clouds.cloud1.brewster_grey]
+decay_type = 'slab' # can be 'slab' or 'decay' #make sure to add respective kwargs below
+alpha=-4 # used for wavelength dependent scattering cross section 
+ssa=1 # single scattering albedo set to 1 
+reference_wave=1 #reference wave in micron sets to alpha 
+slab_kwargs={ptop= -1, dp= 1, reference_tau= 1} # ptop: log bar, dp: log bar, ref tau: micron
+deck_kwargs={ptop= -1, dp= 1} # ptop: log bar, dp: log bar
+
+[clouds.cloud1.userfile]
+filename='/Users/nbatalh1/Documents/codes/PICASO/picaso/reference/base_cases/HJ.cld' #columns names: pressure, wavenumber, g0, w0, opd
+pd_kwargs={sep=' '} #kwargs for pandas.read_csv
+
+[clouds.patchy]
+npatch = 1
+patch1 = 'clear'
+patch2 = 'cloud1'
+frac_1 = 0.3 #this is the fraction assigned to patch 1
+
+[retrieval]
+fit=[
+    'object.radius',
+    'chemistry.free.H2O',
+    'clouds.slab-grey.ptop',
+    'clouds.slab-grey.dp',
+    'error_inflation'
+]
+convolution = 'tophat' #options: instrument, tophat, spectres
+
+[retrieval.prior]
+"object.radius" = {type='gaussian',mean=1,std=1}
+"chemistry.free.H2O" = {type='uniform',min=-12,max=0,log=true}
+"clouds.slab-grey.ptop" = {type='uniform',min=-3,max=2,log=true}
+"clouds.slab-grey.dp" = {type='uniform',min=0.005,max=2,log=true}
+"error_inflation" = {type='uniform',min=-2,max=4,log=true}
+
+[sampler]
+code='ultranest'#options: ultranest, emcee, pymultinest
+
+[sampler.ultranest]
+live_points = 100
+resume=true 
+ultranets_kwargs={}

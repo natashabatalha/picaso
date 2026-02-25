@@ -2,7 +2,6 @@ from .elements import ELEMENTS as ele
 import json 
 import os
 import re
-from .io_utils import read_json
 import astropy.units as u
 import astropy.constants as c
 import pandas as pd
@@ -133,12 +132,18 @@ class ATMSETUP():
                         except:
                             if i == 'e-':
                                 electrons = True
+                            elif 'guess' in i: 
+                                #this name is often added to the xarray inupt so let's not spam the user with warnings 
+                                pass 
+                            elif 'kz' in i: 
+                                #this name is often added to the xarray inupt so let's not spam the user with warnings 
+                                pass 
                             else: #don't raise exception, instead add user warning that a column has been automatically skipped
                                 #make sure no warnin for new lat/lon keys
                                 if 'lat' not in i:
                                     if 'lon' not in i:
                                         self.add_warnings("Ignoring %s in input file, not recognized molecule" % i)
-                                        warnings.warn("Ignoring %s in input file, not a recognized molecule" % i, UserWarning)
+                                        
                     
                     first = False
                     self.weights = weights 
@@ -194,9 +199,16 @@ class ATMSETUP():
                 if i == 'e-':
                     self.level['electrons'] = read['e-'].values
                     self.layer['electrons'] = 0.5*(self.level['electrons'][1:] + self.level['electrons'][:-1])
-                else:                   #don't raise exception, instead add user warning that a column has been automatically skipped
+                elif 'guess' in i: 
+                    #this name is often added to the xarray inupt so let's not spam the user with warnings 
+                    pass 
+                elif 'kz' in i: 
+                    #this name is often added to the xarray inupt so let's not spam the user with warnings 
+                    pass 
+                else:                   
+                    #don't raise exception, instead add user warning that a column has been automatically skipped
                     self.add_warnings("Ignoring %s in input file, not recognized molecule" % i)
-                    warnings.warn("Ignoring %s in input file, not a recognized molecule" % i, UserWarning)
+                    
         
         self.weights = weights 
 
@@ -206,6 +218,7 @@ class ATMSETUP():
                             self.level['mixingratios'][0:-1].reset_index(drop=True))
 
         self.level['temperature'] = read['temperature'].values
+        self.level['pressure_bar'] = read['pressure'].values
         self.level['pressure'] = read['pressure'].values*self.c.pconv #CONVERTING BARS TO DYN/CM2
         self.layer['temperature'] = 0.5*(self.level['temperature'][1:] + self.level['temperature'][:-1])
         self.layer['pressure'] = np.sqrt(self.level['pressure'][1:] * self.level['pressure'][:-1])
@@ -234,8 +247,7 @@ class ATMSETUP():
 
     def get_needed_continuum(self,available_ray_mol,available_continuum):
         """
-        This will define which molecules are needed for the continuum opacities. THis is based on 
-        temperature and molecules. This is terrible code I
+        This will define which molecules are needed for the continuum opacities.
 
         Parameters
         ----------
@@ -244,49 +256,31 @@ class ATMSETUP():
         available_continuum : list of str
             list of available continuum molecules 
         """
-        self.rayleigh_molecules = []
-        self.continuum_molecules = []
 
+        # Get simple names of each molecule
         simple_names = [convert_to_simple(i) for i in self.molecules]
-        
-        if "H2" in simple_names:
-            self.continuum_molecules += [['H2','H2']]
-        if ("H2" in simple_names) and ("He" in simple_names):
-            self.continuum_molecules += [['H2','He']]
-        if ("H2" in simple_names) and ("N2" in simple_names):
-            self.continuum_molecules += [['H2','N2']]   
-        if  ("H2" in simple_names) and ("H" in simple_names):
-            self.continuum_molecules += [['H2','H']]
-        if  ("H2" in simple_names) and ("CH4" in simple_names):
-            self.continuum_molecules += [['H2','CH4']]
-        if  ("N2" in simple_names):
-            self.continuum_molecules += [['N2','N2']]
-        if  ("CO2" in simple_names):
-            self.continuum_molecules += [['CO2','CO2']]      
-        if  ("O2" in simple_names):
-            self.continuum_molecules += [['O2','O2']]    
 
-        if ("H-" in simple_names):
+        # First deal with CIA
+        self.continuum_molecules = []
+        # For standard CIA opacities
+        for m1 in simple_names:
+            for m2 in simple_names:
+                if m1+m2 in available_continuum:
+                    self.continuum_molecules += [[m1,m2]]
+
+        # For special continuum opacities
+        if "H-" in simple_names and 'H-bf' in available_continuum:
             self.continuum_molecules += [['H-','bf']]
-        if ("H" in simple_names) and ("electrons" in self.level.keys()):
+        if "H" in simple_names and "electrons" in self.level.keys() and 'H-ff' in available_continuum:
             self.continuum_molecules += [['H-','ff']]
-        if ("H2" in simple_names) and ("electrons" in self.level.keys()):
+        if "H2" in simple_names and "electrons" in self.level.keys() and 'H2-' in available_continuum:
             self.continuum_molecules += [['H2-','']]
-        #now we can remove continuum molecules from self.molecules to keep them separate 
-        if 'H+' in ['H','H2-','H2','H-','He','N2']: self.add_warnings('No H+ continuum opacity included')
 
-        #remove anything not in opacity file
-        cm =[]
-        for i in self.continuum_molecules: 
-            if ''.join(i) in available_continuum: cm += [i]
-        self.continuum_molecules = cm
-
-        #and rayleigh opacity
+        # Deal with rayleigh opacity
+        self.rayleigh_molecules = []
         for i in simple_names: 
-            if i in available_ray_mol : self.rayleigh_molecules += [i]
-
-        
-        #self.molecules = np.array([ x for x in self.molecules if x not in ['H','H2-','H2','H-','He','N2', 'H+'] ])
+            if i in available_ray_mol: 
+                self.rayleigh_molecules += [i]
 
     def get_weights(self, molecule):
         """
@@ -374,7 +368,19 @@ class ATMSETUP():
         """
         self.level['den'] = self.level['pressure'] / (self.c.k_b * self.level['temperature']) 
         return
-
+    def get_dtdp(self):
+        """
+        Calculates density of atmospheres used on TP profile: LEVEL
+        units of cm-3
+        """
+        pressure = self.level['pressure']
+        temp = self.level['temperature']
+        #dtdp=np.zeros(shape=(self.nlevel-1))
+        #for j in range(self.nlevel -1):
+        #    dtdp[j] = (np.log( temp[j]) - np.log( temp[j+1]))/(np.log(pressure[j]) - np.log(pressure[j+1]))
+        dtdp = np.diff(np.log(temp))/np.diff(np.log(pressure))
+        self.layer['dtdp'] = dtdp
+        return
     def get_altitude(self, p_reference=1,constant_gravity=False):
         """
         Calculates z and gravity  
@@ -437,8 +443,105 @@ class ATMSETUP():
             dz[i] = scale_h*(np.log(plevel[i]/ plevel[i-1]))#plevel[i+1]/ plevel[i]))
             z[i-1] = z[i] + dz[i]
 
+        dz[0]=dz[1]#NB
+        dz[-1]=dz[-2]#NB
+
         self.level['z'] = z
         self.level['dz'] = dz
+
+        #for get_column_density calculation below we want gravity at layers
+        self.layer['gravity'] = 0.5*(gravity[0:-1] + gravity[1:])
+        if constant_gravity:
+            gravity[-1] = self.planet.gravity
+            gravity[0] = self.planet.gravity
+        else:
+            gravity[-1] = self.c.G * self.planet.mass / ( z[-1] )**2
+            gravity[0] = self.c.G * self.planet.mass / ( z[0] )**2
+
+        self.level['scale_height'] = self.c.k_b * tlevel / (mmw * gravity)
+
+    def get_altitude_deprecate(self, p_reference=1,constant_gravity=False):
+        """
+        Calculates z and gravity  
+
+        Parameters
+        ----------
+        p_reference : float
+            Reference pressure for radius. (bars)
+        constant_gravity : bool 
+            creates zero altitude dependence in the height
+        """
+        #convert to dyn/cm2
+        p_reference = p_reference*self.c.pconv
+
+        if np.isnan(self.planet.radius):
+            constant_gravity = True
+        #set zero arays of things we want out 
+        nlevel = self.c.nlevel
+
+        mmw = self.level['mmw'] * self.c.amu #make sure mmw in grams
+        tlevel = self.level['temperature']
+        plevel = self.level['pressure']
+        
+        if p_reference >= np.max(plevel):
+            p_reference = np.max(plevel)
+        else: 
+            #choose a reference pressure that is on the 
+            #user specified pressure grid
+            #if you dont do this your model becomes 
+            #highly sensitive to # of layers used 
+            p_reference = plevel[plevel>=p_reference][0]
+
+        z = np.zeros(np.shape(tlevel)) + self.planet.radius
+        dz = np.zeros(np.shape(tlevel)) 
+        gravity = np.zeros(np.shape(tlevel))  
+        scale_h_all = np.zeros(np.shape(tlevel))
+        #unique avoids duplicates for 3d grids where pressure is repeated for ngangle,ntangle
+        #would break for nonuniform pressure grids 
+        indx = np.unique(np.where(plevel>p_reference)[0]) 
+        #if there are any pressures less than the reference pressure
+
+        #first for pressures higher than the reference pressure (depth so the latter part of the array)
+        if len(indx)>0:
+            for i in indx-1:
+                if constant_gravity:
+                    gravity[i] = self.planet.gravity
+                else:
+                    gravity[i] = self.c.G * self.planet.mass / ( z[i] )**2
+
+                scale_h = self.c.k_b * tlevel[i] / (mmw[i] * gravity[i])
+                dz[i] = scale_h * (np.log(plevel[i+1] / plevel[i])) #from eddysed
+                z[i+1] = z[i] - dz[i]
+
+                scale_h_all[i]=scale_h
+
+
+        #this would be everything  below the reference pressure, or at low pressures, or at high altitudes 
+        for i in np.unique(np.where(plevel<=p_reference)[0])[::-1]:#[:-1]:#unique to avoid 3d bug
+            if constant_gravity:
+                gravity[i] = self.planet.gravity
+            else:
+                gravity[i] = self.c.G * self.planet.mass / ( z[i] )**2  
+
+            scale_h = self.c.k_b * tlevel[i] / (mmw[i] * gravity[i])
+            dz[i] = scale_h*(np.log(plevel[i]/ plevel[i-1]))#plevel[i+1]/ plevel[i]))
+            z[i-1] = z[i] + dz[i]
+            scale_h_all[i]=scale_h
+
+
+        """
+        scale_h_all[-1] = self.c.k_b * tlevel[-1] / (mmw[-1] * gravity[-1])
+        dz[-1] = scale_h_all[-1]*(np.log(plevel[-1]/ plevel[-2]))
+        scale_h_all[0] = self.c.k_b * tlevel[0] / (mmw[0] * gravity[0])
+        dz[0] = scale_h_all[0]*(np.log(plevel[1]/ plevel[0]))
+        if constant_gravity:
+            gravity[-1] = self.planet.gravity
+        else:
+            gravity[-1] = self.c.G * self.planet.mass / ( z[-1] )**2
+        """
+        self.level['z'] = z
+        self.level['dz'] = dz
+        self.level['scale_height'] = scale_h_all
 
         #for get_column_density calculation below we want gravity at layers
         self.layer['gravity'] = 0.5*(gravity[0:-1] + gravity[1:])
@@ -680,6 +783,9 @@ class ATMSETUP():
         except:
             pass
 
+        if len(self.warnings )>0: 
+            df['warnings'] = self.warnings
+
         return df
 
 def convert_to_simple(iso_name):
@@ -702,14 +808,15 @@ def separate_molecule_name(molecule_name):
     """used for separating molecules
     For example, CO2 becomes "C" "O2"
     """
-    elements = re.findall('[A-Z][a-z]?\d*|\d+', molecule_name)
+    elements = re.findall(r'[A-Z][a-z]?\d*|\d+', molecule_name)
     return elements
+
 def separate_string_number(string):
     """used for separating numbers from molecules
     For example, CO2 becomes "C" "O2" in `separate_molecule_name` 
     then this function turns it into [['C'],['O','2']]
     """
-    elements = re.findall('[A-Za-z]+|\d+', string)
+    elements = re.findall(r'[A-Za-z]+|\d+', string)
     return elements
 """
 ## not using this for now.

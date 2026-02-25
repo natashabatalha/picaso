@@ -4,7 +4,6 @@ import numpy as np
 import time
 import pickle as pk
 from scipy.linalg import solve_banded
-#from numpy.linalg import solve
 
 @jit(nopython=True, cache=True)
 def slice_eq(array, lim, value):
@@ -1752,7 +1751,7 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     if calc_type == 0: 
         all_b = blackbody(tlevel, 1/wno) #returns nlevel by nwave   
     elif calc_type==1:
-        all_b = blackbody_integrated(tlevel, wno, dwno)
+        all_b = blackbody_integrated(tlevel, wno, dwno)    
 
     b0 = all_b[0:-1,:]
     b1 = (all_b[1:,:] - b0) / dtau # eqn 26 toon 89
@@ -1801,7 +1800,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
     b_top = (1.0 - exp(-tau_top / mu1 )) * all_b[0,:] * pi #  Btop=(1.-np.exp(-tautop/ubari))*B[0]
     
     if hard_surface:
-        b_surface = all_b[-1,:]*pi #for terrestrial, hard surface  
+        emissivity = 1.0 - surf_reflect #Emissivity is 1 - surface reflectivity
+        b_surface =  emissivity*all_b[-1,:]*pi #for terrestrial, hard surface  
     else: 
         b_surface= (all_b[-1,:] + b1[-1,:]*mu1)*pi #(for non terrestrial)
 
@@ -1867,7 +1867,8 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
             iubar = ubar1[ng,nt]
 
             if hard_surface:
-                flux_plus[ng,nt,-1,:] = all_b[-1,:] *2*pi  # terrestrial flux /pi = intensity
+                emissivity = 1.0 - surf_reflect #Emissivity is 1 - surface reflectivity
+                flux_plus[ng,nt,-1,:] = emissivity*all_b[-1,:] *2*pi  # terrestrial flux /pi = intensity
             else:
                 flux_plus[ng,nt,-1,:] = ( all_b[-1,:] + b1[-1,:] * iubar)*2*pi #no hard surface   
                 
@@ -2629,8 +2630,13 @@ def get_transit_1d(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
             #this is the path length between two layers 
             #essentially tangent from the inner_shell and toward 
             #line of sight to the outer shell
-            integrate_segment=((outer_shell**2-reference_shell**2)**0.5-
-                    (inner_shell**2-reference_shell**2)**0.5)
+
+            # In python 3.11, if inner_shell equals reference shell, a float comprehension error can occur
+            # This if and elif is to try and fix that (so you don't get a spectrum full of nans)
+            if (inner_shell != reference_shell) and (outer_shell != reference_shell):
+                integrate_segment= (outer_shell**2-reference_shell**2)**0.5-(inner_shell**2-reference_shell**2)**0.5
+            elif (inner_shell == reference_shell):
+                integrate_segment= (outer_shell**2-reference_shell**2)**0.5
             #make sure to use the pressure and temperature  
             #between inner and outer shell
             #this is the same index as outer shell because ind = 0 is the outer-
@@ -3662,7 +3668,7 @@ def vec_dot(A,B):
     return C
 
 
-def tidal_flux(T_e, wave_in,nlevel, pressure, pm, hratio, col_den):
+def tidal_flux(T_e, nlevel, pressure, col_den, InjectionBundle):
     """
     Computes Tidal Fluxes in all levels. Py of TIDALWAVE subroutine. 
 	
@@ -3682,6 +3688,10 @@ def tidal_flux(T_e, wave_in,nlevel, pressure, pm, hratio, col_den):
 		Ratio of Scale Height over Chapman Scale Height
     col_den : array
         Column density array
+    inject_beam : bool
+        If True, inject an energy beam into the model
+    beam_profile : array
+        Beam profile to inject into the model. If None, no beam is injected.
     Returns
 	-------
 	Tidal Fluxes and DE/DM in ergs/g sec
@@ -3698,12 +3708,19 @@ def tidal_flux(T_e, wave_in,nlevel, pressure, pm, hratio, col_den):
 
     dedm=np.zeros(shape=(nlevel-1))
 
-    for j in range(nlevel):
-        if j > 1 :
-            tidal[j] = tidal[j-1] - chapman(pressure[j],pm,hratio)*col_den[j-1]
-            T_tot += tidal[j] -tidal[j-1]
-    
-    tidal = (tidal*wave_in/T_tot) + tide - (tidal[-1]*wave_in/T_tot)
+    if InjectionBundle.inject_beam == True:
+        for j in range(nlevel):
+            if j > 1 :
+                tidal[j] = tidal[j-1] - InjectionBundle.beam_profile[j]
+                T_tot += tidal[j] - tidal[j-1]
+        tidal = (tidal*np.sum(InjectionBundle.beam_profile)/T_tot) + tide - (tidal[-1]*np.sum(InjectionBundle.beam_profile)/T_tot)  
+    else:
+        for j in range(nlevel):
+            if j > 1 :
+                tidal[j] = tidal[j-1] - chapman(pressure[j],InjectionBundle.pm,InjectionBundle.hratio)*col_den[j-1]
+                T_tot += tidal[j] -tidal[j-1]
+            
+        tidal = (tidal*InjectionBundle.wave_in/T_tot) + tide - (tidal[-1]*InjectionBundle.wave_in/T_tot)
     
     #for j in range(nlevel-1):
         # dE/dM (ergs/g sec)
@@ -3850,7 +3867,7 @@ def planck_rad_deprecate(iw, T, dT ,  tmin, tmax, bb , y2, tp):
 
     if T < tmin :
        # itchx = 1
-        T= tmax
+        T= tmin #originally set = tmax JM
     elif T > tmax :
        # itchx = 1
         T=tmax
@@ -3880,252 +3897,3 @@ def blackbody_climate_deprecate(wave,temp, bb, y2, tp, tmin, tmax):
 
     return blackbody_array
 
-# still not developed fully. virga has a function already maybe just use that
-@jit(nopython=True, cache=True)
-def get_kzz(pressure, temp,grav,mmw,tidal,flux_net_ir_layer, flux_plus_ir_attop,t_table, p_table, grad, cp, calc_type,nstr):
-
-    grav_cgs = grav*1e2
-    p_cgs = pressure *1e6
-    
-    nlevel = len(temp)
-    
-    
-    if len(mmw) == len(temp)-1:
-        r_atmos = 8.3143e7/mmw
-    else:
-        r_atmos = 8.3143e7/mmw[:-1]
-
-    
-    nz= nlevel -1
-    p = np.zeros_like(p_cgs)
-    t = np.zeros_like(p_cgs)
-
-    for iz in range(nz-1, -1,-1):
-        itop = iz
-        ibot = iz+1
-
-        dlnp = np.log(p_cgs[ibot]/p_cgs[itop])
-        p[iz] = 0.5*(p_cgs[itop]+p_cgs[ibot])
-
-        dtdlnp = (temp[itop]-temp[ibot])/dlnp
-
-        t[iz] = temp[ibot] +np.log(p_cgs[ibot]/p[iz])*dtdlnp
-        #scale_h =  r_atmos[iz]*t[iz]/grav_cgs
-    
-    
-    # flux_plux_ir is already summed up with dwni in climate routine
-    # so just add to get f_sum
-
-    f_sum = np.sum(flux_plus_ir_attop)
-
-    sigmab =  0.56687e-4 #cgs
-
-    teff_now = (f_sum/sigmab)**0.25
-    target_teff = (abs(tidal[0])/sigmab)**0.25
-    flx_min = sigmab*((target_teff*0.05)**4)
-    
-    #print("Teff now ", teff_now, "Target Teff ", target_teff)
-
-    #     we explictly assume that the bottom layer is 100%
-    #     convective energy transport.  This helps with
-    #     the correction logic below and should always be true
-    #     in a well formed model.
-
-    chf = np.zeros_like(tidal)
-
-    chf[nz-1] = f_sum
-    
-    for iz in range(nz-1-1,-1,-1):
-        chf[iz] = f_sum - flux_net_ir_layer[iz]
-        ratio_min = (1./3.)*p[iz]/p[iz+1]
-        
-#     set the minimum allowed heat flux in a layer by assuming some overshoot
-#     the 1/3 is arbitrary, allowing convective flux to fall faster than
-#     pressure scale height
-        
-        if chf[iz] < ratio_min*chf[iz+1]:
-            chf[iz]= ratio_min*chf[iz+1]
-        
-#     Now we adjust so that the convective flux is equal to the3
-#     target convective flux to see if this helps with the
-#     convergence.
-    f_target = abs(tidal[0])
-    f_actual = chf[nz-1]
-    
-    ratio = f_target/f_actual
-    
-    for iz in range(nz-1,-1,-1):
-        
-        chf[iz] = max(chf[iz]*ratio,flx_min) 
-        
-    
-    player, tlayer = np.zeros(len(pressure)-1), np.zeros(len(pressure)-1)
-    lapse_ratio = np.zeros_like(player)
-    for j in range(len(pressure)-1):
-        tlayer[j]=0.5*(temp[j]+temp[j+1])
-        player[j]=np.sqrt(p_cgs[j]*p_cgs[j+1]) # cgs
-
-        dtdp = (np.log(temp[j])-np.log(temp[j+1]))/(np.log(p_cgs[j+1]/p_cgs[j]))
-        tbar = 0.5*(temp[j]+temp[j+1])
-        pbar = 0.5*(p_cgs[j] +p_cgs[j+1])
-        # weirdly layer routine of eddysed uses did_grad with pressures in cgs
-        # supposed to be used with pressure in bars
-        grad_x,cp_x = did_grad_cp(tbar, pbar, t_table, p_table, grad, cp, calc_type)
-        lapse_ratio[j] = min(np.array([1.0, -dtdp/grad_x]))
-        
-    
-    
-    rho_atmos = player/ (r_atmos * tlayer)
-    
-    c_p = (7./2.)*r_atmos
-    scale_h = r_atmos * tlayer / (grav_cgs)
-    
-    #0.1 just to explore was not here 
-    #mixl = scale_h #lapse_ratio*scale_h*1e-1
-    mixl = np.zeros_like(lapse_ratio)
-    for jj in range(len(pressure)-1):
-        mixl[jj] = max(0.1,lapse_ratio[jj])*scale_h[jj]
-    
-    scalef_kz = 1./3.
-    
-    kz = scalef_kz * scale_h * (mixl/scale_h)**(4./3.) *( ( r_atmos*chf[:-1] ) / ( rho_atmos*c_p ) )**(1./3.)
-    
-    
-    kz = np.append(kz,kz[-1])
-    
-    
-    #### julien moses 2021
-    
-    logp = np.log10(pressure)
-    wh = np.where(np.absolute(logp-(-3)) == np.min(np.absolute(logp-(-3))))
-    
-    kzrad1 = (5e8/np.sqrt(pressure[nstr[0]:nstr[1]]))*(scale_h[wh]/(620*1e5))*((target_teff/1450)**4)
-    kzrad2 = (5e8/np.sqrt(pressure[nstr[3]:nstr[4]]))*(scale_h[wh]/(620*1e5))*((target_teff/1450)**4)
-    #
-    if nstr[3] != 0:
-        kz[nstr[0]:nstr[1]] = kzrad1#/100 #*10#kz[nstr[0]:nstr[1]]/1.0
-        kz[nstr[3]:nstr[4]] = kzrad2#/100 #*10 #kz[nstr[3]:nstr[4]]/1.0
-    else:
-        kz[nstr[0]:nstr[1]] = kzrad1#/100
-    
-    return kz
-
-
-@jit(nopython=True, cache=True)
-def did_grad_cp( t, p, t_table, p_table, grad, cp, calc_type):
-    """
-    Parameters
-    ----------
-    t : float
-        Temperature  value
-    p : float 
-        Pressure value
-    t_table : array 
-        array of Temperature values with 53 entries
-    p_table : array 
-        array of Pressure value with 26 entries
-    grad : array 
-        array of gradients of dimension 53*26
-    cp : array 
-        array of cp of dimension 53*26
-    calc_type : int 
-        not used to make compatible with nopython. 
-    
-    Returns
-    -------
-    float 
-        grad_x,cp_x
-    
-    """
-    # Python version of DIDGRAD function in convec.f in EGP
-    # This has been benchmarked with the fortran version
-    
-       
-    temp_log= log10(t)
-    pres_log= log10(p)
-    
-    pos_t = locate(t_table, temp_log)
-    pos_p = locate(p_table, pres_log)
-
-    ipflag=0
-    if pos_p ==0: ## lowest pressure point
-        factkp= 0.0
-        ipflag=1
-    elif pos_p ==25 : ## highest pressure point
-        factkp= 1.0
-        pos_p=24  ## use highest point
-        ipflag=1
-
-    itflag=0
-    if pos_t ==0: ## lowest pressure point
-        factkt= 0.0
-        itflag=1
-    elif pos_t == 52 : ## highest temp point
-        factkt= 1.0
-        pos_t=51 ## use highest point
-        itflag=1
-    
-    if (pos_p > 0) and (pos_p < 26) and (ipflag == 0):
-        factkp= (-p_table[pos_p]+pres_log)/(p_table[pos_p+1]-p_table[pos_p])
-    
-    if (pos_t > 0) and (pos_t < 53) and (itflag == 0):
-        factkt= (-t_table[pos_t]+temp_log)/(t_table[pos_t+1]-t_table[pos_t])
-
-    
-    gp1 = grad[pos_t,pos_p]
-    gp2 = grad[pos_t+1,pos_p]
-    gp3 = grad[pos_t+1,pos_p+1]
-    gp4 = grad[pos_t,pos_p+1]
-
-    cp1 = cp[pos_t,pos_p]
-    cp2 = cp[pos_t+1,pos_p]
-    cp3 = cp[pos_t+1,pos_p+1]
-    cp4 = cp[pos_t,pos_p+1]
-
-
-    
-
-    grad_x = (1.0-factkt)*(1.0-factkp)*gp1 + factkt*(1.0-factkp)*gp2 + factkt*factkp*gp3 + (1.0-factkt)*factkp*gp4
-    cp_x= (1.0-factkt)*(1.0-factkp)*cp1 + factkt*(1.0-factkp)*cp2 + factkt*factkp*cp3 + (1.0-factkt)*factkp*cp4
-    cp_x= 10**cp_x
-    
-    
-    return grad_x,cp_x
-
-@jit(nopython=True, cache=True)
-def locate(array,value):
-    """
-    Parameters
-    ----------
-    array : array
-        Array to be searched.
-    value : float 
-        Value to be searched for.
-    
-    
-    Returns
-    -------
-    int 
-        location of nearest point by bisection method 
-    
-    """
-    # this is from numerical recipes
-    
-    n = len(array)
-    
-    
-    jl = 0
-    ju = n
-    while (ju-jl > 1):
-        jm=int(0.5*(ju+jl)) 
-        if (value >= array[jm]):
-            jl=jm
-        else:
-            ju=jm
-    
-    if (value <= array[0]): # if value lower than first point
-        jl=0
-    elif (value >= array[-1]): # if value higher than first point
-        jl= n-1
-    
-    return jl

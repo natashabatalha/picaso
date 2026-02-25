@@ -22,7 +22,10 @@ from .justdoit import inputs, opannection, mean_regrid, u, input_xarray, copy
 from bokeh.palettes import Cividis
 from multiprocessing import Pool
 
-
+#these are all acceptable input meta data attributes that can GridFitter will look for 
+possible_params = {'planet_params': ['logmh','rp','mp','tint', 'heat_redis','p_reference','logkzz','kzz','mh','cto','p_quench','rainout','teff','logg','gravity','m_length'],
+                   'stellar_params' : ['rs','logg','steff','feh','ms'],
+                   'cld_params': ['opd','ssa','asy','p_cloud','haze_eff','fsed']}
 
 class GridFitter(): 
     """
@@ -53,11 +56,22 @@ class GridFitter():
         in their own input
     to_fit : str 
         parameter to fit, default is transit_depth. other common is flux
+        Needs to be included in the xarray file data_vars. 
+    save_chem : bool 
+        Usually the to_fit parameter is an observable (e.g. transit depth, flux, brightness temperature)
+        But sometimes we want to also save the pressure-temperature info, 
+        the chemistry, cloud info, ect so that we can interpolate those to create 
+        spectra on the fly in a "gridtrieval". save_chem=True saves all that additional 
+        info. 
+    force_square : bool 
+        Checks to see if the grid is square and throws an error if it is not. 
+        If set to False, this check is not done
     """
     def __init__(self, grid_name, model_dir=None,
         to_fit='transit_depth', model_type='xarrays', save_chem=False, 
-        verbose=True):
+        verbose=True, force_square=True):
         self.verbose=verbose
+        self.force_square=force_square
         
         self.grids = []
         self.list_of_files = {}
@@ -65,7 +79,9 @@ class GridFitter():
         self.overview = {}
         self.wavelength={}
         self.temperature={}
-        if save_chem: self.chemistry={}
+        self.save_chem=save_chem
+        if save_chem: 
+            self.chemistry={}
         self.pressure={}
         self.spectra={}
         self.interp_params={}
@@ -75,6 +91,8 @@ class GridFitter():
             self.add_grid(grid_name, model_dir, to_fit=to_fit, save_chem=save_chem)
         elif model_type == 'user': 
             self.grids += [grid_name]
+        else: 
+            raise Exception("model_type can only be 'user' or 'xarrays'")
             
     def find_grid(self, grid_name, model_dir):
         """
@@ -97,7 +115,8 @@ class GridFitter():
         self.grids += [grid_name]
         self.find_grid(grid_name, model_dir)
         self.load_grid_params(grid_name,to_fit=to_fit,save_chem=save_chem)
-
+        if self.force_square: 
+            self.check_square(grid_name)
     def add_data(self, data_name, wlgrid_center,wlgrid_width,y_data,e_data): 
         """
         Adds data to class 
@@ -134,6 +153,33 @@ class GridFitter():
         'posteriors': self.posteriors
         }
 
+    def check_square(self,grid_name): 
+        """This function will check to make sure that your grid is square and 
+        suggest values for you to remove )
+        """
+        unique_params = copy.deepcopy(self.overview[grid_name]['planet_params'])
+        keys = copy.deepcopy(list(unique_params.keys()))
+        for i in keys:
+            if isinstance(unique_params[i],np.float64):
+                unique_params.pop(i)
+
+        pairs = []
+        all_lists = [unique_params[i] for i in unique_params.keys()]
+        
+        for combination in itertools.product(*all_lists):
+            pairs += [combination]
+        square = pd.DataFrame(pairs,columns=unique_params.keys())
+
+        all_grid = pd.DataFrame(self.grid_params[grid_name]['planet_params'])
+
+        #check if all rows are the same 
+        merged_df = pd.merge(all_grid,square, on=all_grid.columns.tolist(), how='left', indicator='_merge')
+        non_overlapping_rows = merged_df[merged_df['_merge'] == 'left_only']
+        
+        if non_overlapping_rows.shape[0]>1: 
+            self.verbose: print('Grid is not square. These values are missing')
+            self.verbose: print(grid_pairs)
+            raise Exception('force_square=True therefore we are crashing GridFitter until the folder of models has a square grid. Please remove files that are making the grid not square.') 
 
     def load_grid_params(self,grid_name,to_fit='transit_depth',
         save_chem=False):
@@ -153,9 +199,7 @@ class GridFitter():
         None 
             Creates self.overview, and self.grid_params
         """
-        possible_params = {'planet_params': ['rp','mp','tint', 'heat_redis','p_reference','logkzz','mh','cto','p_quench','rainout','teff','logg','m_length'],
-                           'stellar_params' : ['rs','logg','steff','feh','ms'],
-                           'cld_params': ['opd','ssa','asy','p_cloud','haze_eff','fsed']}
+        
 
         #define possible grid parameters
         self.grid_params[grid_name] = {i:{j:np.array([]) for j in possible_params[i]} for i in possible_params.keys()}
@@ -662,10 +706,11 @@ class GridFitter():
         return fig, ax 
 
 
-    def prep_gridtrieval(self, grid_name,add_ptchem=False):
+    def prep_gridtrieval(self, grid_name):
         """
         Preps the loaded grid for interpolated gridtrieval 
         """
+        add_ptchem=self.save_chem
         if add_ptchem:
             sqr_spec , sqr_pt, sqr_chem, uniq, offset_prior,df_grid_params = self.transform_4_interp(grid_name, add_ptchem=add_ptchem)
         else: 
@@ -891,7 +936,7 @@ def custom_interp(final_goal,fitter,grid_name, to_interp='spectra',array_to_inte
         See tutorial, provided loaded grid fitter tool
     grid_name : str
         name of grid provided to analyze.GridFitter
-    interp : str 
+    to_interp : str 
         Default = 'spectra', this dictates the entity you want to interpolate 
         Other option is to specify "custom" in this case you will have to 
         add in a array of something else (e.g. temperature, chemistry). 
@@ -940,7 +985,7 @@ def custom_interp(final_goal,fitter,grid_name, to_interp='spectra',array_to_inte
             weight_multip = [all_weights[i][j] for i, j in enumerate(irow)]
             inds = [hilos_inds[i][j] for i, j in enumerate(irow)]+[-1]
             spec_interp = get_last_dimension(spectra, inds)
-            interp+= np.product(weight_multip)*spec_interp
+            interp+= np.prod(weight_multip)*spec_interp
         return interp
     interp = weight_interp(grid_pars, final_goal, spectra,hypercube, hilos,hilos_inds)
     
@@ -962,7 +1007,18 @@ def get_last_dimension(arr, indices):
     for example, if arr = np.random.randn([4,4]) and indices = [1,-1], it would
     return arr[1,:]. this is slightly confusing because -1 usually indicates last element, 
     which is different from the use of ":". However, jit nopython cannot compare string 
-    elements. Therefore this code uses -1 in place of :. 
+    elements. Therefore this code uses -1 in place of :.
+
+    Parameters
+    ----------
+    arr : array
+        sorted array of values 
+    indices : list 
+        indices within the bounds of the array specified  
+
+    Returns
+    -------
+    last dimension of arr
     """
     if len(indices) == 1 and indices[0] == -1:
         return arr
@@ -1014,6 +1070,33 @@ def detection_test(fitter, molecule, min_wavelength, max_wavelength,
     """
     Computes the detection significance of a molecule given a grid name, data name, 
     filename
+
+    Parameters
+    ----------
+    fitter : analyze.GridFitter
+        class that has all the spectra information loaded
+    molecule : str
+        str of molecule to test for
+    min_wavelength : float
+        float of minimum wavelength to test for
+    max_wavelength : float
+        float of maximum wavelength to test for
+    grid_name : str
+        str of name of grid to test for
+    data_name : str
+        str of name of data to test for
+    filename : str
+        str of filename to test for
+    molecule_baseline : str, optional
+        str of molecule to test for baseline. The default is None.
+    baseline_wavelength : list, optional
+        list of two floats for the baseline wavelength. The default is [].
+    model_full : array, optional
+        array of model_full. The default is None.
+    opa_kwargs : dict, optional
+        dict of kwargs to pass to opannection. The default is {}.
+    plot : bool, optional
+        bool of whether to plot the results. The default is True.
     """
     try: 
         import dynesty 
@@ -1232,6 +1315,17 @@ def detection_test(fitter, molecule, min_wavelength, max_wavelength,
 def chi_squared(data,data_err,model,numparams):
     """
     Compute reduced chi squared assuming DOF = ndata_pts - num parameters  
+
+    Parameters
+    ---------
+    data : array
+        array of data to compare against model
+    data_err : array
+        array of data errors
+    model : array
+        array of modeled data to compare against data
+    numparams : int
+        int of number of parameters in the model
     """
     
     chi_squared = np.sum(((data-model)/(data_err))**2)/(len(data)-(numparams))
@@ -1243,6 +1337,28 @@ def chi_squared(data,data_err,model,numparams):
 
 
 def plot_atmosphere(location,bf_filename,gas_names=None,fig=None,ax=None,linestyle=None,color=None,label=None):
+    """
+    Plots the atmosphere from a Picaso output file.
+
+    Parameters
+    ----------
+    location : str
+        str of location of the Picaso output file
+    bf_filename : str
+        str of filename of the Picaso output file
+    gas_names : list, optional
+        list of gas names to plot. The default is None.
+    fig : matplotlib.figure.Figure, optional
+        matplotlib figure to plot on. The default is None.
+    ax : matplotlib.axes._axes.Axes, optional
+        matplotlib axes to plot on. The default is None.
+    linestyle : str, optional
+        str of linestyle to use. The default is None.
+    color : str, optional
+        str of color to use. The default is None.
+    label : str, optional
+        str of label to use. The default is None.
+    """
 
     f = os.path.join(location, bf_filename)
 
@@ -1453,3 +1569,4 @@ def _get_xarray_attr(attr_dict, parameter):
             #        param = param_flt
             #        pass            
     return param
+

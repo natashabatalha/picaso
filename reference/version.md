@@ -1,3 +1,23 @@
+Version 4.0
+-----------
+Major functionality:
+1. Cloudy equilibrium
+2. Cloudy/clear photochemistry
+3. Patchy cloud climates
+4. New correlated-k format (bin files -> hdf5) and computed from OS code within picaso
+5. Run photochem to create a spectrum
+6. Correlated-K forward modeling
+7. Patchy clouds in forward modeling
+8. Some integration testing
+
+Enhancements:
+1. Climate model has been completely restructured to improve workflow and readability (user input to climate code has changed dramatically for diseq and cloudy runs)
+2. Level fluxes output in forward modeling for diagnostics
+3. Leave one out climate modeling for individual molecule contributions
+4. New get data tutorial auto downloads data that you need incl sonora grids, ck tables, virga files, stellar files, opacities 
+5. Deprecates pysynphot in place of stsynphot
+6. Opacity files starting with v3 now has zenodo DOI in meta data.
+
 Version 3.4
 -----------
 - updates requirement to virga v2 to include ability to do fractals from virga 

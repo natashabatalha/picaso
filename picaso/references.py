@@ -1,4 +1,6 @@
 import bibtexparser
+from bibtexparser.bwriter import BibTexWriter
+from bibtexparser.bibdatabase import BibDatabase
 import os
 import json 
 import numpy as np
@@ -10,7 +12,9 @@ class References():
     def __init__(self): 
         bibfile = os.path.join(os.environ['picaso_refdata'],'references','references.bib')
         reflist = os.path.join(os.environ['picaso_refdata'],'references','reference_list.json')
-        bib_database = bibtexparser.parse_file(bibfile)
+        with open(bibfile) as bibtex_file:
+            bib_database = bibtexparser.load(bibtex_file)
+
         self.bib_dict = {i['ID']:i for i in bib_database.entries}
         self.reflist = json.load(open(reflist))         
 
@@ -91,10 +95,12 @@ class References():
 
         opa_tex = opa_tex_start+opa_tex+opa_tex_end
 
-        bibdb = bibtexparser.Library()
+        #bibdb = bibtexparser.Library()
+        db = BibDatabase()
         for ID in all_ids:
-            bibdb.add(self.bib_dict[ID])
-        return opa_tex, bibdb
+            db.entries += [self.bib_dict[ID]]
+        
+        return opa_tex, db
 
 def create_bib(bibdb, filename):
     """
@@ -107,4 +113,6 @@ def create_bib(bibdb, filename):
     file : str 
         filename
     """
-    bibtexparser.write_file(filename, bibdb)
+    writer = BibTexWriter()
+    with open(filename, 'w') as bibfile:
+        bibfile.write(writer.write(bibdb))

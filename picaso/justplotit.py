@@ -26,7 +26,7 @@ from scipy.stats import binned_statistic
 
 from .fluxes import blackbody, get_transit_1d
 from .opacity_factory import *
-from .climate import convec
+from .climate import convec, namedtuple, calculate_atm
 
 def mean_regrid(x, y, newx=None, R=None):
     """
@@ -102,7 +102,7 @@ def plot_errorbar(x,y,e,plot=None,point_kwargs={}, error_kwargs={},
             np.array(y_err.append((py - yerr, py + yerr)))
 
         plot.multi_line(x_err, y_err, **error_kwargs)
-        plot.circle(x, y, **point_kwargs)
+        plot.scatter(x, y, **point_kwargs)
         return plot
     elif plot_type=='matplotlib':
         point_kwargs['color'] = point_kwargs.get('color','k')
@@ -175,7 +175,7 @@ def plot_multierror(x,y,plot, dx_up=0, dx_low=0, dy_up=0, dy_low=0,
 
     plot.multi_line(x_err, y_err, **error_kwargs)
 
-    plot.circle(x, y, **point_kwargs)
+    plot.scatter(x, y, **point_kwargs)
     return
 
 def bin_errors(newx, oldx, dy):
@@ -580,15 +580,18 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
     Three bokeh plots with the single scattering, optical depth, and assymetry maps
     """
     if (pressure is not None):
-        pressure_label = 'Pressure (units by user)'
+        pressure_label = 'Pressure (bars)'
+        yaxis = 'log'
     else: 
-        pressure_label = 'Pressure Grid, TOA ->'
+        pressure_label = 'Pressure Index Grid, TOA ->'
+        pressure = np.array(range(nlayer))
+        yaxis = 'linear'
     if (wavelength is not None):
-        wavelength_label = 'Wavelength (units by user)'
+        wavelength_label = 'Wavelength (um)'
+        wave=wavelength
     else: 
-        wavelength_label = 'Wavenumber Grid'
-    cols = pals.magma(200)
-    color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
+        wavelength_label = 'Wavenumber Index Grid'
+        wave = np.array(range(nwno))
 
     if not isinstance(filename,type(None)):
         dat01 = pd.read_csv(filename, **pd_kwargs)
@@ -596,94 +599,43 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
         dat01=df
 
     #PLOT W0
-    scat01 = np.flip(np.reshape(dat01['w0'].values,(nlayer,nwno)),0)
-    xr, yr = scat01.shape
-    f01a = figure(x_range=[0, yr], y_range=[0,xr],
-                           x_axis_label=wavelength_label, y_axis_label=pressure_label,
-                           title="Single Scattering Albedo",
-                          width=300, height=300)
+        
+    w0 = np.reshape(dat01['w0'].astype(float).values,(nlayer,nwno))
+    opd = np.reshape(dat01['opd'].astype(float).values,(nlayer,nwno)) + 1e-60
+    g0 = np.reshape(dat01['g0'].astype(float).values,(nlayer,nwno))
+    
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
+    
+    # Plot W0
+    im1 = ax1.pcolormesh(wave, pressure, w0,  cmap='magma', vmin=0, vmax=1)
+    ax1.set_title("Single Scattering Albedo")
+    fig.colorbar(im1, ax=ax1)
 
+    # Plot OPD
+    im2 = ax2.pcolormesh(wave, pressure, opd,  cmap='viridis_r', norm=colors.LogNorm(vmin=1e-3, vmax=10))
+    ax2.set_title("Cloud Optical Depth Per Layer")
+    fig.colorbar(im2, ax=ax2)
 
-    f01a.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw =yr )
+    # Plot G0
+    im3 = ax3.pcolormesh(wave, pressure, g0,  cmap='gray_r', vmin=0, vmax=1)
+    ax3.set_title("Asymmetry Parameter")
+    fig.colorbar(im3, ax=ax3)
 
-    color_bar = ColorBar(color_mapper=color_mapper, #ticker=LogTicker(),
-                       label_standoff=12, border_line_color=None, location=(0,0))
+    for ax in [ax1, ax2, ax3]:
+        ax.set_xlabel(wavelength_label)
+        ax.set_ylabel(pressure_label)
+        if yaxis=='log': ax.set_yscale('log')
+        ax.set_ylim(pressure.max(), pressure.min())
 
-    f01a.add_layout(color_bar, 'left')
+    return fig
 
-
-    #PLOT OPD
-    scat01 = np.flip(np.reshape(dat01['opd'].values,(nlayer,nwno)),0)
-
-    xr, yr = scat01.shape
-    cols = pals.viridis(200)[::-1]
-    color_mapper = LogColorMapper(palette=cols, low=1e-3, high=10)
-
-
-    f01 = figure(x_range=[0, yr], y_range=[0,xr],
-                           x_axis_label=wavelength_label, y_axis_label=pressure_label,
-                           title="Cloud Optical Depth Per Layer",
-                          width=300, height=300)
-
-    f01.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw =yr )
-
-    color_bar = ColorBar(color_mapper=color_mapper, ticker=LogTicker(),
-                       label_standoff=12, border_line_color=None, location=(0,0))
-    f01.add_layout(color_bar, 'left')
-
-    #PLOT G0
-    scat01 = np.flip(np.reshape(dat01['g0'].values,(nlayer,nwno)),0)
-
-    xr, yr = scat01.shape
-    cols = pals.gray(200)[::-1]
-    color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
-
-
-    f01b = figure(x_range=[0, yr], y_range=[0,xr],
-                           x_axis_label=wavelength_label, y_axis_label=pressure_label,
-                           title="Assymetry Parameter",
-                          width=300, height=300)
-
-    f01b.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw =yr )
-
-    color_bar = ColorBar(color_mapper=color_mapper, ticker=BasicTicker(),
-                       label_standoff=12, border_line_color=None, location=(0,0))
-    f01b.add_layout(color_bar, 'left')
-
-    #CHANGE X AND Y AXIS TO BE PHYSICAL UNITS 
-    #indexes for pressure plot 
-    if (pressure is not None):
-        pressure = ["{:.1E}".format(i) for i in pressure[::-1]] #flip since we are also flipping matrices
-        npres = len(pressure)
-        ipres = np.array(range(npres))
-        #set how many we actually want to put on the figure 
-        #hard code ten on each.. 
-        ipres = ipres[::int(npres/10)]
-        pressure = pressure[::int(npres/10)]
-        #create dictionary for tick marks 
-        ptick = {int(i):j for i,j in zip(ipres,pressure)}
-        for i in [f01a, f01, f01b]:
-            i.yaxis.ticker = ipres
-            i.yaxis.major_label_overrides = ptick
-    if (wavelength is not None):
-        wave = ["{:.2F}".format(i) for i in wavelength]
-        nwave = len(wave)
-        iwave = np.array(range(nwave))
-        iwave = iwave[::int(nwave/10)]
-        wave = wave[::int(nwave/10)]
-        wtick = {int(i):j for i,j in zip(iwave,wave)}
-        for i in [f01a, f01, f01b]:
-            i.xaxis.ticker = iwave
-            i.xaxis.major_label_overrides = wtick       
-
-    return row(f01a, f01,f01b)
 
 def cloud(full_output):
     """
-    Plotting the cloud input from ``picaso``. 
+    Plotting the cloud input from ``picaso``.
 
-    The plot itselfs creates maps of the wavelength dependent single scattering albedo 
-    and cloud opacity as a function of altitude. 
+    The plot itselfs creates maps of the wavelength dependent single scattering albedo
+    and cloud opacity as a function of altitude.
 
 
     Parameters
@@ -692,94 +644,40 @@ def cloud(full_output):
 
     Returns
     -------
-    A row of two bokeh plots with the single scattering and optical depth map
+    A matplotlib figure with three subplots showing heatmaps of single scattering, optical depth, and asymmetry.
     """
-    cols = pals.magma(200)
-    color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
-
     dat01 = full_output['layer']['cloud']
+    pressure = full_output['layer']['pressure']
+    wave = 1e4 / full_output['wavenumber']
+    
+    w0 = dat01['w0'] 
+    opd = dat01['opd'] + 1e-60
+    g0 = dat01['g0'] 
 
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
+    
+    # Plot W0
+    im1 = ax1.pcolormesh(wave, pressure, w0,  cmap='magma', vmin=0, vmax=1)
+    ax1.set_title("Single Scattering Albedo")
+    fig.colorbar(im1, ax=ax1)
 
-    #PLOT W0
-    scat01 = np.flip(dat01['w0'],0)#[0:10,:]
-    xr, yr = scat01.shape
-    f01a = figure(x_range=[0, yr], y_range=[0,xr],
-                           x_axis_label='Wavelength (micron)', y_axis_label='Pressure (bar)',
-                           title="Single Scattering Albedo",
-                          width=300, height=300)
+    # Plot OPD
+    im2 = ax2.pcolormesh(wave, pressure, opd,  cmap='viridis_r', norm=colors.LogNorm(vmin=1e-3, vmax=10))
+    ax2.set_title("Cloud Optical Depth Per Layer")
+    fig.colorbar(im2, ax=ax2)
 
+    # Plot G0
+    im3 = ax3.pcolormesh(wave, pressure, g0,  cmap='gray_r', vmin=0, vmax=1)
+    ax3.set_title("Asymmetry Parameter")
+    fig.colorbar(im3, ax=ax3)
 
-    f01a.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw = yr)
+    for ax in [ax1, ax2, ax3]:
+        ax.set_xlabel('Wavelength (micron)')
+        ax.set_ylabel('Pressure (bar)')
+        ax.set_yscale('log')
+        ax.invert_yaxis()
 
-    color_bar = ColorBar(color_mapper=color_mapper, #ticker=LogTicker(),
-                       label_standoff=12, border_line_color=None, location=(0,0))
-
-    f01a.add_layout(color_bar, 'left')
-
-
-    #PLOT OPD
-    scat01 = np.flip(dat01['opd']+1e-60,0)
-
-    xr, yr = scat01.shape
-    cols = pals.viridis(200)[::-1]
-    color_mapper = LogColorMapper(palette=cols, low=1e-3, high=10)
-
-
-    f01 = figure(x_range=[0, yr], y_range=[0,xr],
-                           x_axis_label='Wavelength (micron)', y_axis_label='Pressure (bar)',
-                           title="Cloud Optical Depth Per Layer",
-                          width=300, height=300)
-
-    f01.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw = yr)
-
-    color_bar = ColorBar(color_mapper=color_mapper, ticker=LogTicker(),
-                       label_standoff=12, border_line_color=None, location=(0,0))
-    f01.add_layout(color_bar, 'left')
-
-    #PLOT G0
-    scat01 = np.flip(dat01['g0']+1e-60,0)
-
-    xr, yr = scat01.shape
-    cols = pals.gray(200)[::-1]
-    color_mapper = LinearColorMapper(palette=cols, low=0, high=1)
-
-
-    f01b = figure(x_range=[0, yr], y_range=[0,xr],
-                           x_axis_label='Wavelength (micron)', y_axis_label='Pressure (bar)',
-                           title="Assymetry Parameter",
-                          width=300, height=300)
-
-    f01b.image(image=[scat01],  color_mapper=color_mapper, x=0,y=0,dh=xr,dw = yr)
-
-    color_bar = ColorBar(color_mapper=color_mapper, ticker=BasicTicker(),
-                       label_standoff=12, border_line_color=None, location=(0,0))
-    f01b.add_layout(color_bar, 'left')
-
-    #CHANGE X AND Y AXIS TO BE PHYSICAL UNITS 
-    #indexes for pressure plot 
-    pressure = ["{:.1E}".format(i) for i in full_output['layer']['pressure'][::-1]] #flip since we are also flipping matrices
-    wave = ["{:.2F}".format(i) for i in 1e4/full_output['wavenumber']]
-    nwave = len(wave)
-    npres = len(pressure)
-    iwave = np.array(range(nwave))
-    ipres = np.array(range(npres))
-    #set how many we actually want to put on the figure 
-    #hard code ten on each.. 
-    iwave = iwave[::int(nwave/10)]
-    ipres = ipres[::int(npres/10)]
-    pressure = pressure[::int(npres/10)]
-    wave = wave[::int(nwave/10)]
-    #create dictionary for tick marks 
-    ptick = {int(i):j for i,j in zip(ipres,pressure)}
-    wtick = {int(i):j for i,j in zip(iwave,wave)}
-    for i in [f01a, f01, f01b]:
-        i.xaxis.ticker = iwave
-        i.yaxis.ticker = ipres
-        i.xaxis.major_label_overrides = wtick
-        i.yaxis.major_label_overrides = ptick
-
-
-    return row(f01a, f01, f01b)
+    return fig
 
 def lon_lat_to_cartesian(lon_r, lat_r, R = 1):
     """
@@ -1417,10 +1315,12 @@ def heatmap_taus(out, R=0):
         pcm.set_clim(-3.0, 3.0)
         ax.set_title(itau)
         ax.set_yscale('log')
-        ax.set_ylim([1e2,1e-3])
+        ax.set_ylim([np.max(out['full_output']['layer']['pressure']),np.min(out['full_output']['layer']['pressure'])])
         ax.set_ylabel('Pressure(bars)')
-        ax.set_ylabel('Wavelength(um)')
+        ax.set_xlabel('Wavelength(um)')
         cbar.set_label('log Opacity')
+    
+    return ax
 
 def phase_snaps(allout, x = 'longitude', y = 'pressure', z='temperature',palette='RdBu_r',
     y_log=True, x_log=False,z_log=False,
@@ -1731,7 +1631,7 @@ def thermal_contribution(full_output, tau_max=1.0,R=100,  **kwargs):
     ax.set_ylim(np.max(full_output['layer']['pressure']), np.min(full_output['layer']['pressure']))
     ax.set_yscale('log')
     ax.set_ylabel('Pressure (bar)', fontsize=20)
-    ax.set_xlabel('Wavelength ($\mu$m)', fontdict={'fontsize':20})
+    ax.set_xlabel(r'Wavelength ($\mu$m)', fontdict={'fontsize':20})
     cm = plt.colorbar(smap)
     cm.ax.set_ylabel('Emission Contribution Function', fontdict={'fontsize':18} )
     for l in cm.ax.yaxis.get_ticklabels():
@@ -1873,13 +1773,13 @@ def transmission_contribution(full_output ,R=None,  **kwargs):
                 np.min(full_output['layer']['pressure']))
     ax.set_yscale('log')
     ax.set_ylabel('Pressure (bar)')
-    ax.set_xlabel('Wavelength ($\mu$m)')
+    ax.set_xlabel(r'Wavelength ($\mu$m)')
     plt.colorbar(smap, label='Transmission CF')
     
     return fig, ax, 1e4/wno, CF_bin
 
 def brightness_temperature(out_dict,plot=True, R = None, with_guide=True): 
-    """
+    r"""
     Plots and returns brightness temperature
 
     $T_{\rm bright}=\dfrac{a}{{\lambda}log\left(\dfrac{{b}}{F(\lambda){\lambda}^5}+1\right)}$
@@ -1969,16 +1869,27 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
                 np.copy(clima_out['pressure']), 
                 np.copy(clima_out['all_profiles']))
     
-    nlevel = len(t_eq)
-    mols_to_plot = {i:np.zeros(len(all_profiles_eq)) for i in molecules}
-    spec = np.zeros(shape =(int(len(all_profiles_eq)/nlevel),opacity.nwno))
+    if 'cld_output_final' in clima_out:
+        # Code to be executed if clima_out['all_opd'] exists
+        all_opd = np.copy(clima_out['all_opd'])
+        cld_p = np.copy(clima_out['cld_output_picaso']['pressure'][0::196])
     
-    for i in range(int(len(all_profiles_eq)/nlevel)):
-        
-        picaso_bundle.add_pt(all_profiles_eq[i*nlevel:(i+1)*nlevel], 
+    nlevel = len(t_eq)
+    # added this so that it can actually plot up the PT profile that's broken up into chunks of profiles
+    nstep = int(all_profiles_eq.shape[0]/nlevel)
+    split_profiles = np.array_split(all_profiles_eq, nstep)
+
+    mols_to_plot = {i:np.zeros(all_profiles_eq.size) for i in molecules}
+    spec = np.zeros(shape =(nstep,opacity.nwno))
+    
+    for i in range(nstep):
+        picaso_bundle.add_pt(split_profiles[i], 
                              p_eq)
 
-        picaso_bundle.premix_atmosphere(opacity,picaso_bundle.inputs['atmosphere']['profile'])
+        picaso_bundle.premix_atmosphere(opacity)
+
+        if 'cld_output_picaso' in clima_out:
+            picaso_bundle.clouds(df=clima_out['cld_output_picaso'])
 
         df_spec = picaso_bundle.spectrum(opacity,calculation=calculation,full_output=True)
         spec[i,:] = df_spec[map_calc[calculation]]
@@ -1994,19 +1905,32 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
     plt.rcParams["font.weight"] = "bold"
     plt.rcParams["axes.labelweight"] = "bold"
 
+    fig = plt.figure(figsize=(50,10))
 
-    x='''
-    AA.BB.CC
-    '''
-    fig = plt.figure(figsize=(35,10))
+    # plot optical depth profile as well
+    if 'cld_output_picaso' in clima_out:
+        x='''
+        AA.BB.CC.DD
+        '''
 
-    ax = fig.subplot_mosaic(x,gridspec_kw={
+        ax = fig.subplot_mosaic(x,gridspec_kw={
+            # set the height ratios between the rows
+            "height_ratios": [1],
+            # set the width ratios between the columns
+            "width_ratios": [1,1,0.1,1,1,0.1,1,1,0.1,1,1]})
+
+    else:
+        x='''
+        AA.BB.CC
+        '''
+        ax = fig.subplot_mosaic(x,gridspec_kw={
             # set the height ratios between the rows
             "height_ratios": [1],
             # set the width ratios between the columns
             "width_ratios": [1,1,0.1,1,1,0.1,1,1]})
 
-    temp = all_profiles_eq[0*nlevel:(0+1)*nlevel]
+    temp = all_profiles_eq[0]
+    temp = split_profiles[0]
     lines = {}
     for imol,col in zip(molecules,Colorblind8):
         lines[imol], = ax['B'].loglog(mols_to_plot[imol][0:nlevel], p_eq,linewidth=3,color=col, label=imol)
@@ -2016,20 +1940,23 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
         lines['spec'], = ax['C'].semilogy(1e4/df_spec['wavenumber'], spec[0,:],linewidth=3,color="k")
     else: 
         lines['spec'], = ax['C'].plot(1e4/df_spec['wavenumber'], spec[0,:],linewidth=3,color="k")
+    
+    if 'cld_output_picaso' in clima_out: #bad hack to make shapes match but won't affect the plot
+        lines['opd'], = ax['D'].loglog(all_opd[:91], np.append(cld_p,0),linewidth=3,color='k')
 
     def init():
         #line.set_ydata(np.ma.array(x, mask=True))
 
         ax['A'].set_xlabel('Temperature [K]',fontsize=30)
         ax['A'].set_ylabel('Pressure [Bars]',fontsize=30)
-        ax['A'].set_xlim(200,2900)
-        ax['A'].set_ylim(205,1.8e-4)
+        ax['A'].set_xlim(0,max(t_eq))
+        ax['A'].set_ylim(max(p_eq),min(p_eq))
         ax['B'].set_xlabel('Abundance [V/V]',fontsize=30)
         ax['B'].set_ylabel('Pressure [Bars]',fontsize=30)
         ax['B'].set_xlim(1e-6,1e-2)
-        ax['B'].set_ylim(205,1.8e-4)
+        ax['B'].set_ylim(max(p_eq),min(p_eq))
         ax['B'].legend(fontsize=20)
-        ax['C'].set_xlabel('Wavelength [$\mu$m]',fontsize=30)
+        ax['C'].set_xlabel(r'Wavelength [$\mu$m]',fontsize=30)
         ax['C'].set_ylabel('Spectrum',fontsize=30)
         ax['C'].set_xlim(0,6)
         #ax['C'].set_ylim(1e7,1e14)
@@ -2043,22 +1970,37 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
         ax['C'].tick_params(axis='both',which='major',length =30, width=2,direction='in',labelsize=30)
         ax['C'].tick_params(axis='both',which='minor',length =10, width=2,direction='in',labelsize=30)
 
+        if 'cld_output_picaso' in clima_out:
+            ax['D'].set_xlabel('Optical Depth',fontsize=30)
+            ax['D'].set_ylabel('Pressure [Bars]',fontsize=30)
+            ax['D'].set_xlim(1e-7,1e3)
+            ax['D'].set_ylim(max(p_eq),min(p_eq))
+            ax['D'].minorticks_on()
+            ax['D'].tick_params(axis='both',which='major',length =30, width=2,direction='in',labelsize=30)
+            ax['D'].tick_params(axis='both',which='minor',length =10, width=2,direction='in',labelsize=30)
+
         for ikey in molecules+['temp']:
             lines[ikey].set_ydata(p_eq)
         
         lines['spec'].set_xdata(wv)
+
+        if 'cld_output_picaso' in clima_out:
+            lines['opd'].set_ydata(np.append(cld_p,max(cld_p)+1))
         return lines
     
     def animate(i):                       
-        lines['temp'].set_xdata(all_profiles_eq[i*nlevel:(i+1)*nlevel])
+        lines['temp'].set_xdata(split_profiles[i])
         
         for imol in molecules:
             lines[imol].set_xdata(mols_to_plot[imol][i*nlevel:(i+1)*nlevel])
         
         lines['spec'].set_ydata(spec[i,:][wh])
+
+        if 'cld_output_picaso' in clima_out:
+            lines['opd'].set_xdata(np.append(all_opd[i*90:(i+1)*90],1e-50))
         return lines
 
-    ani = animation.FuncAnimation(fig, animate, frames=int(len(all_profiles_eq)/nlevel),init_func=init,interval=50, blit=False)
+    ani = animation.FuncAnimation(fig, animate, frames=nstep,init_func=init,interval=50, blit=False)
     plt.close()
     return ani
 
@@ -2212,7 +2154,7 @@ def rt_heatmap(data,figure_kwargs={},cmap_kwargs={}):
     return p
 
     
-def pt_adiabat(clima_out, input_class, plot=True):
+def pt_adiabat(clima_out, input_class, opacityclass, plot=True):
     """
     Plot the PT profile with the adiabat 
 
@@ -2227,15 +2169,24 @@ def pt_adiabat(clima_out, input_class, plot=True):
     -------
     adiabat, dTdP, pressure 
     """
+    t_table = input_class.inputs['climate']['t_table']
+    p_table = input_class.inputs['climate']['p_table']
+    grad = input_class.inputs['climate']['grad']
+    cp = input_class.inputs['climate']['cp']
+    moist = input_class.inputs['climate']['moistgrad']
+    AdiabatBundle = namedtuple('AdiabatBundle', ['t_table', 'p_table', 'grad','cp'])
+    AdiabatBundle = AdiabatBundle(t_table,p_table,grad,cp)
+
+    Atmosphere = calculate_atm(input_class,opacityclass,only_atmosphere=True)
+
     layer_p = clima_out['spectrum_output']['full_output']['layer']['pressure']
     
     grad, cp = convec(clima_out['temperature'],clima_out['pressure'],
-                      input_class.inputs['climate']['t_table'], input_class.inputs['climate']['p_table'], 
-                      input_class.inputs['climate']['grad'], input_class.inputs['climate']['cp'])
+                      AdiabatBundle, Atmosphere,moist=moist)
                       
     plt.semilogy(clima_out['dtdp'], layer_p)
     plt.semilogy(grad,layer_p) 
-    plt.ylim([1e2,1e-4]), 
+    plt.ylim([1e4,1e-4]), 
     plt.xlabel('dT/dP vs adiabat')
     plt.ylabel('Pressure(bars)')
-    return cp, clima_out['dtdp'], layer_p
+    return cp, grad, clima_out['dtdp'], layer_p

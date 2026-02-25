@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "picaso"
+version = "4.0"
+description = "planetary intesity code for atmospheric scattering observations"
+readme = {file = "README.md", content-type = "text/markdown"}
+authors = [
+    {name = "Natasha E. Batalha", email = "natasha.e.batalha@gmail.com"},
+]
+license = {text = "GPL-3.0"}
+requires-python = ">=3.7"
+dependencies = [
+    "bokeh>=2.3.0,<3.8.2",
+    "numpy",
+    "numba",
+    "pandas",
+    "joblib",
+    "photutils",
+    "astropy",
+    "matplotlib",
+    "stsynphot",
+    "sphinx",
+    "scipy",
+    "h5py",
+    "virga-exo==2.0.1",
+    "xarray",
+    "pooch",
+    "tqdm",
+    "bibtexparser==1.4.4",
+    "netcdf4",
+    "h5netcdf",
+    "jupytext",
+]
+
+[project.urls]
+Homepage = "https://natashabatalha.github.io/picaso"
+Download = "https://github.com/natashabatalha/picaso"
+
+[project.scripts]
+picaso-notebooks = "picaso.integration_testing:main"

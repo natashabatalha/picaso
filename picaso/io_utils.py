@@ -2,6 +2,26 @@ import os
 import json 
 import pandas as pd
 import warnings 
+import h5py
+
+def read_visscher_2121(filename):
+    """
+    Explicit function to read and reformat channon's files 
+    
+    Parameters
+    -----------
+    filename: chem filename 
+
+    Returns
+    -------
+    pandas df 
+        columns include temperature (Kelvin), pressure (bar), and all molecules (v/v mixing ratio)
+    """
+    header = pd.read_csv(filename).keys()[0]
+    cols = header.replace('T(K)','temperature').replace('P(bar)','pressure').split()
+    a = pd.read_csv(filename,sep=r'\s+',skiprows=1,header=None, names=cols)
+    a['pressure']=10**a['pressure']
+    return a
 
 def read_json(filename, **kwargs):
     """
@@ -58,3 +78,16 @@ def read_hdf(filename, requires, raise_except=False, **kwargs):
     else: 
         d = pd.read_hdf(filename, hdf_name['table'].values[0])
     return d
+
+def write_all_profiles(save_all_profiles, all_profiles):
+    """
+    Saves all T(P) profiles to the file in "save_all_profiles"
+    """
+    if isinstance(save_all_profiles, str):
+        profiles_file = h5py.File(save_all_profiles, 'w')
+        gp = profiles_file.create_group("all_profiles")
+        num_digits = len(str(len(all_profiles)))
+        for (i, profile_to_save) in enumerate(all_profiles):
+            i_str = str(i).zfill(num_digits)
+            gp.create_dataset(f"pt_{i_str}", data=profile_to_save)
+        profiles_file.close()
