@@ -1,5 +1,5 @@
-Version 4.0 beta
-----------------
+Version 4.0
+-----------
 Major functionality:
 1. Cloudy equilibrium
 2. Cloudy/clear photochemistry
@@ -17,6 +17,11 @@ Enhancements:
 4. New get data tutorial auto downloads data that you need incl sonora grids, ck tables, virga files, stellar files, opacities 
 5. Deprecates pysynphot in place of stsynphot
 6. Opacity files starting with v3 now has zenodo DOI in meta data.
+
+Version 3.4
+-----------
+- updates requirement to virga v2 to include ability to do fractals from virga 
+- minor hot fix for sql queries
 
 Version 3.3
 -----------
