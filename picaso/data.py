@@ -441,7 +441,13 @@ def get_reference(path_to_picaso_refdata):
     path_to_picaso_refdata : str 
         path to picaso ref data 
     """
-    get_data(category_download='reference',target_download='default', final_destination_dir=path_to_picaso_refdata)
+
+    __refdata__=os.environ.get('picaso_refdata')
+    if os.path.exist(os.path.join(__refdata__,'config.json')):
+        print('It looks like you already have the default reference directory. This will overwrite all the files in your reference folder. If you would like to proceed, clear your reference folder and then rerun this function again.')
+        return
+    else:
+        get_data(category_download='reference',target_download='default', final_destination_dir=path_to_picaso_refdata)
 
 
 def get_data(category_download=None,target_download=None, final_destination_dir=None):
