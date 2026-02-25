@@ -17,17 +17,18 @@
 # ---
 
 # %% [markdown]
-# # Quickstart
+# # Quickstart for Research 
 #
-# Here is the quickstart to getting up and running with `PICASO` using `python` to set environment variables and `get_data` to get everything you need.
+# If you are student using PICASO for classrooms go to Quickstart for Students and Learning. 
+# Otherwise, here is the quickstart to getting up and running with `PICASO` using `python` to set environment variables and `get_data` to get everything you need.
 #
 # Be sure to have followed the [installation instructions](https://github.com/James-Mang/dev_picaso/blob/9278a1df9bab306b9e03a2a427a59e7ddaaa7e09/docs/installation.rst) and follow the steps below depending on how you installed PICASO.
 #
-# This notebook is organized as follows:
-# 1. One additional step **only those who used pip or conda to install PICASO**
-# 2. Run PICASO environment checker
-# 2. Additional data that you might need **regardless of installation method**
-# 3. Quickstart for quick simple examples and workshops 
+# This quickstart for research is organized as follows:
+# 1. Setup environment variable, if needed 
+# 2. Download required data
+# 3. Run PICASO environment checker
+# 4. Optional Data 
 
 # %% [markdown]
 # ## Create `picaso_refdata` environment variable
@@ -100,9 +101,6 @@ data.get_data_config()[1]['resampled_opacity']['default']['url']
 
 # %%
 data.check_environ()
-
-# %% [markdown]
-# You might see that we still need to download the resampled opacity file.
 
 # %% [markdown]
 # ## 3. Optional reference data you may want for PICASO
