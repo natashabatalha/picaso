@@ -38,7 +38,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 # %matplotlib inline
 from bokeh.plotting import show, figure
-import xarray
+import xarray as xr
 import pickle
 
 # %%
@@ -203,7 +203,7 @@ jpi.show(jpi.spectrum(wno,fp,x_axis_type='log',y_axis_type='log'))
 # This next spectrum is from the Sonora Elf Owl grid of models which are cloud-free to use as reference. To download the rest of the Sonora Elf Owl grid you can find them separated by [L](https://zenodo.org/records/10385987), [T](https://zenodo.org/records/10385821), and [Y](https://zenodo.org/records/10381250) dwarfs.
 
 # %%
-ds_elfowl = xarray.load_dataset("spectra_logzz_9.0_teff_400.0_grav_1000.0_mh_0.0_co_1.0.nc")
+ds_elfowl = xr.load_dataset("spectra_logzz_9.0_teff_400.0_grav_1000.0_mh_0.0_co_1.0.nc")
 
 # %% [markdown]
 # Now let's regrid the spectra to R=200 to make sure the two spectra are on the same grid
