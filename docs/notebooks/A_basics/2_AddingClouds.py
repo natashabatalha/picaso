@@ -13,7 +13,7 @@
 # ---
 
 # %% [markdown]
-# # Adding Cloud Opacity, Scattering, Assymetry
+# # Adding Cloud Opacity, Scattering, Asymmetry
 #
 #
 # Clouds play a critical role in shaping your reflected light spectrum.
@@ -120,7 +120,7 @@ jpi.show(jpi.spectrum(wno, alb, plot_width=500))
 #
 # 3)  It's assumed that these pressure grids correspond to your atmospheric grid. You will see errors through if #cld points != #atmo points - 1
 #
-# 4) You only have to speciy wavenumber grid if you aren't using `eddysed`
+# 4) You only have to specify wavenumber grid if you aren't using `eddysed`
 #
 # Let's look at the premade example to make sure we understand. Since this is from `eddysed`, and since i know my pressure grid is the same as my previous input, I don't have to have columns for pressure and temperature
 
@@ -146,7 +146,7 @@ fig = jpi.plot_cld_input( nwno, nlayer,filename=jdi.jupiter_cld(),sep=r'\s+')
 # %% [markdown]
 # ## Cloud Input for Using Single Parameter Box Model
 #
-# Sometimes we are looking for something simpler than a full cloud model. In these cases we can speciy our cloud layer with `g0`, `w0`, `opd` and then `p` (the pressure level in log10 bars) and `dp` (the cloud thickness also in log10 bars)
+# Sometimes we are looking for something simpler than a full cloud model. In these cases we can specify our cloud layer with `g0`, `w0`, `opd` and then `p` (the pressure level in log10 bars) and `dp` (the cloud thickness also in log10 bars)
 #
 # $\mathrm{cloud\_base(bars)} = 10^{p}$
 #

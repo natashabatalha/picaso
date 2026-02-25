@@ -110,7 +110,7 @@ labels+=['SH4 (OTHG multi)']
 albs+=[alb3]
 
 # %% [markdown]
-# Here we relax the constraint for OTHG to see how the multile scattering approximation in Toon impacts the spectrum.
+# Here we relax the constraint for OTHG to see how the multiple scattering approximation in Toon impacts the spectrum.
 
 # %%
 w_multi_form='TTHG'; w_multi_rayleigh='on'

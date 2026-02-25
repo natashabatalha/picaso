@@ -13,13 +13,13 @@
 # ---
 
 # %% [markdown]
-# # Model Formating Overview
+# # Model Formatting Overview
 #
 # This notebook was created to enable common formatting for the Early Release Science modeling initiatives. We will review:
 #
 # 1. Variable terminology
 # 2. File naming schemes
-# 3. Data formating
+# 3. Data formatting
 # 4. Physical unit archiving
 #
 # This is namely for the booking of the following model types:

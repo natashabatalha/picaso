@@ -133,7 +133,7 @@ out = cl_run.climate(opacity_ck, save_all_profiles = True, with_spec=True,
 # %% [markdown]
 # ## Compare Diseq and Chemeq Climate Profile
 #
-# For the case we chose to do a self-consistent kzz instead of a low, constantt kzz. We also use the resort-rebin chemistry method compared to the pre-weighted CK tables. For more information about the difference between these, you can look at the [Fun with Chem notebook]()
+# For the case we chose to do a self-consistent kzz instead of a low, constant kzz. We also use the resort-rebin chemistry method compared to the pre-weighted CK tables. For more information about the difference between these, you can look at the [Fun with Chem notebook]()
 
 # %%
 plt.ylim(200,1.7e-4)

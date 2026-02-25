@@ -20,7 +20,7 @@
 # - how to output create a climate model
 # - how to post process a high resolution spectral model from that climate model
 # - xarray file formats
-# - It is **very important you already understand how to analyze and diagnose the valididy of climate models**. Here we will use a streamlined function to trigger the creation of many models. However, there is always a chance that some of the climate runs do not converge. Therefore, it is important to you go back and assess each of these models.
+# - It is **very important you already understand how to analyze and diagnose the validity of climate models**. Here we will use a streamlined function to trigger the creation of many models. However, there is always a chance that some of the climate runs do not converge. Therefore, it is important to you go back and assess each of these models.
 #
 # The main goal of this notebook will be to create a mini mini grid of models that is on a function of :
 #
@@ -108,7 +108,7 @@ def run_climate(base_case_name, array_save_dir, mh, CtoO,
 # %% [markdown]
 # ### An important note about `add_output` kwarg in `jdi.output_xarray`
 #
-# Later, you might want to use your xarray grid as input for picaso's `GridFitting` function. `GridFitting` is discussed in the next set of tutorials. Without going into depth, the main thing to note at thi stage is that `GridFitting` looks at your xarray attributes to understand what parameters your grid is computed for. For example, if `GridFitter` encoutered 8 different xarray files and the attributes included varying M/H and C/O then it would conclude your grid has been created as a function of those two parameters.
+# Later, you might want to use your xarray grid as input for picaso's `GridFitting` function. `GridFitting` is discussed in the next set of tutorials. Without going into depth, the main thing to note at thi stage is that `GridFitting` looks at your xarray attributes to understand what parameters your grid is computed for. For example, if `GridFitter` encountered 8 different xarray files and the attributes included varying M/H and C/O then it would conclude your grid has been created as a function of those two parameters.
 #
 # SO, **if you are building a grid for use with `GridFitter` you must**:
 # - Use picaso's naming scheme for variables (which you can see with picaso.analyze.possible_params see example below)
@@ -223,7 +223,7 @@ fitting = lyz.GridFitter(grid_name, model_dir = os.path.join(array_save_dir,'spe
                          to_fit='transit_depth')
 
 # %% [markdown]
-# All we have done is point GridFitter to the directory and it has detected a grid that is a function of our two metallicities, internatl temperatures, and C/Os. This was possible because we gave it the correct naming parameters.
+# All we have done is point GridFitter to the directory and it has detected a grid that is a function of our two metallicities, internal temperatures, and C/Os. This was possible because we gave it the correct naming parameters.
 #
 #
 # These are the possible parameters that `GridFitter` searches for. Make sure to follow the example above to add them to the xarray output fields.

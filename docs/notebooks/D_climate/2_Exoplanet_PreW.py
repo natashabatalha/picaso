@@ -210,7 +210,7 @@ plt.title(r"T$_{\rm eff}$= 1000 K, log(g)=5.0",fontsize=25)
 #
 # where a = 1.43877735$\times$10$^{-2}$ m.K and b = 11.91042952$\times$10$^{-17}$ m$^4$kg/s$^3$
 #
-# Let's calculate the brigthness temperature of our current run and check if our pressure grid was okay.
+# Let's calculate the brightness temperature of our current run and check if our pressure grid was okay.
 
 # %%
 brightness_temp, figure= jpi.brightness_temperature(out['spectrum_output'])

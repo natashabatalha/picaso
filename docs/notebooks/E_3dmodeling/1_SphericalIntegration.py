@@ -47,7 +47,7 @@ case3 = jdi.inputs(calculation='browndwarf')
 
 
 # %% [markdown]
-# First case will be a full 10x10 grid, second will be the same 10x10 grid but leveraging symmetry, last will be a 1x10 grid. A 1x10 grid automaticlly leverages symmetry as we will see in the disco plots below.
+# First case will be a full 10x10 grid, second will be the same 10x10 grid but leveraging symmetry, last will be a 1x10 grid. A 1x10 grid automatically leverages symmetry as we will see in the disco plots below.
 
 # %%
 names = ['10x10', '10x10sym', '1x10']

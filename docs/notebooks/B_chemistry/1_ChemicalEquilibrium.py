@@ -62,7 +62,7 @@ CtoO = '0.46'# # CtoO absolute ratio
 ck_db = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted', f'sonora_2121grid_feh{mh}_co{CtoO}.hdf5')
 
 # %% [markdown]
-# Let's create two differnet opacity connections so that we can look at the chemical equilibrium that is encoded within the preweighted CK tables as well as the chemistry that is loaded from the chemistry tables.
+# Let's create two different opacity connections so that we can look at the chemical equilibrium that is encoded within the preweighted CK tables as well as the chemistry that is loaded from the chemistry tables.
 
 # %%
 cl_run = jdi.inputs(calculation="browndwarf", climate = True) # start a calculation
@@ -91,7 +91,7 @@ cl_run.add_pt(P= pressure, T= temp)
 # %% [markdown]
 # ## Option 1: Chemistry from the Pre-Weighted CK Tables
 #
-# Dont need to run this cell if you havent downloaded the preweighted correlated k files
+# Dont need to run this cell if you haven't downloaded the preweighted correlated k files
 
 # %%
 cl_run.premix_atmosphere(opa=opacity_preweighted)
