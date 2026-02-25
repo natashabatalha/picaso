@@ -41,7 +41,7 @@ Install with conda
 Reference Data 
 ==============
 
-PICASO has the ability to injest lots of different kinds of data. But not all are required. **Only two are required: 1) The `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ and 2) the resampled opacity file which will let you do some basic spectral modeling.**
+PICASO has the ability to ingest lots of different kinds of data. But not all are required. **Only two are required: 1) The `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ and 2) the resampled opacity file which will let you do some basic spectral modeling.**
 
 +----------------------------------+------+-------------------------------+-------------------------------------------------------------+
 | Data Type                        | Req? | What it is primarily used for | Where it should go                                          |
@@ -64,7 +64,7 @@ Get Required Data
 	import picaso.data as d
 	#where do you want to store your reference data? This should be the path to the reference folder you downloaded from github.
 	path_to_reference = "/path/to/picaso/reference/"
-	d.os.environ['picaso_refdata'] = path_to_reference #only needed if you are using python to set your environmnet variables otherwise you do not need this
+	d.os.environ['picaso_refdata'] = path_to_reference #only needed if you are using python to set your environment variables otherwise you do not need this
 	#get required data 1) reference data 
 	d.get_reference(d.os.environ['picaso_refdata'])
 	#get required data 2) resampled opacities
@@ -103,7 +103,7 @@ where the printout in a terminal will look something like this:
 Permanently Set Environment Variables
 -------------------------------------
 
-Setting environment variables help packages find data wihtout having to set a path everytime you run the code. 
+Setting environment variables help packages find data without having to set a path every time you run the code. 
 Above we set the environment using `python`'s `os.environ` which is a temporary way to set environment variables. 
 
 You can feel free to continue using this non-permanent. If so, whenever you install picaso you would need to add this line to your code **before** you import picaso.
@@ -148,12 +148,12 @@ If you have already downloaded reference data you can check that your variable h
 	base_cases chemistry config.json evolution opacities version.md
 
 
-Permanent Method 2: Add it to your conda enviornment
+Permanent Method 2: Add it to your conda environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This is my method of choice! It involves creating conda environment specific variables. If you are interested in learning more about environment variables, you can `read more about them here <https://natashabatalha.github.io/picaso/contribution.html#using-conda-enviornments>`_
 
-If you already an evironment setup, you can do the following -- which mimics the `bash_profile/method 1` example.  
+If you already an environment setup, you can do the following -- which mimics the `bash_profile/method 1` example.  
 
 .. code-block:: bash
 
@@ -205,9 +205,9 @@ You can continue using `get_data` to get all additional data that you might need
 Getting ``stsynphot`` Optional Stellar Data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In order to get stellar spectra needed for many exoplanet PICASO has already isntalled for you the `stsynphot package <https://stsynphot.readthedocs.io/en/latest/>`_ which has several download options for stellar spectra. This package also requires setting an environment variable called ``$PYSYN_CDBS``. Below are instructions for getting the stellar data manually and setting the environment variable (note you can also use picaso auto download to get these data). 
+In order to get stellar spectra needed for many exoplanet PICASO has already installed for you the `stsynphot package <https://stsynphot.readthedocs.io/en/latest/>`_ which has several download options for stellar spectra. This package also requires setting an environment variable called ``$PYSYN_CDBS``. Below are instructions for getting the stellar data manually and setting the environment variable (note you can also use picaso auto download to get these data). 
 
-The Default for ``PICASO`` is Castelli-Kurucz Atlas: `ck04models <https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/>`_ but we recommend ``pheonix`` models for climate modeling. 
+The Default for ``PICASO`` is Castelli-Kurucz Atlas: `ck04models <https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/>`_ but we recommend ``phoenix`` models for climate modeling. 
 
 Here is how you would do it with PICASO:
 
@@ -225,7 +225,7 @@ If you do not like that you can always use `wget` or just downloading the link b
 
 	wget http://ssb.stsci.edu/trds/tarfiles/synphot3.tar.gz
 
-When you untar this you should get a directory structure that looks like this ``<path>/grp/redcat/trds/grid/ck04models``.  **The full directory structure does not matter**. Only the last file ``grid`` is needed. You will need to create an enviornment variable that points to where ``grid/`` is located. We have a nice placeholder location in the picaso reference data file for these grids ``$picaso_refdata/stellar_grids``. So you can imagine something like: ``$picaso_refdata/stellar_grids/grid/ck04models``. Though it is not required for you to put them here as long as you make your environment variable point to the desired location where ``grid`` is. 
+When you untar this you should get a directory structure that looks like this ``<path>/grp/redcat/trds/grid/ck04models``.  **The full directory structure does not matter**. Only the last file ``grid`` is needed. You will need to create an environment variable that points to where ``grid/`` is located. We have a nice placeholder location in the picaso reference data file for these grids ``$picaso_refdata/stellar_grids``. So you can imagine something like: ``$picaso_refdata/stellar_grids/grid/ck04models``. Though it is not required for you to put them here as long as you make your environment variable point to the desired location where ``grid`` is. 
 
 
 Help Permanently Setting Stellar Data Environment Variable
