@@ -180,7 +180,7 @@ plt.show()
 cp, grad, dtdp, layer_p= jpi.pt_adiabat(out,cl_run,opacity_ck)
 
 # %% [markdown]
-# ### Checking if You Reached Radiative-Convective Equilibrium (RCE)
+# ## Checking if You Reached Radiative-Convective Equilibrium (RCE)
 #
 # Another indicator, on top of the lapse rate figure, that indicates your model isn't well converged even though it says `YAY ENDING WITH CONVERGENCE` is to look at the F_{net}/F_{IR} output. This will indicate to us that your model might not be in radiative-convective equilibrium (RCE).
 #

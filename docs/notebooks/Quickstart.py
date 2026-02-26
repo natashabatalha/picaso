@@ -31,7 +31,7 @@
 # 4. Optional Data 
 
 # %% [markdown]
-# ## Create `picaso_refdata` environment variable
+# ## 1. Create `picaso_refdata` environment variable
 #
 # We give [different ways of setting environment variables here](https://natashabatalha.github.io/picaso/installation). Setting them with `os` is perfectly fine though some users like setting them system wide so that they do not have to constantly set paths.
 #
@@ -51,12 +51,12 @@ os.environ['PYSYN_CDBS'] = os.path.join(os.environ['picaso_refdata'],'stellar_gr
 # Note what we did above sets the environment variable which is totally okay but this way you will need to add this to the top of all your future notebooks **before you import picaso** if you haven't set it in your bash file
 
 # %% [markdown]
-# ## 1. Download Required Data
+# ## 2. Download Required Data
 
 # %% [markdown]
 # Required data: 
 #
-# 1) This basic directory: https://github.com/natashabatalha/picaso/tree/master/reference (If you cloned on git you already have this!!!!!!)
+# 1) This basic directory: https://github.com/natashabatalha/picaso/tree/master/reference (**If you cloned on git you already have this!!!!!!**)
 # 2) Resampled opacities (7 Gb)
 #
 # We can get both through `picaso.data`
@@ -79,7 +79,7 @@ data.get_reference(os.environ['picaso_refdata']) #only ever need to do one time
 #
 # - $picaso_refdata/opacities
 #
-# **Note**: This is ~ 5GB file so please make sure that you have a reliable internet connection before trying to download this file, otherwise you might encounter a timeout error.
+# **Note**: This is ~ 7GB file so please make sure that you have a reliable internet connection before trying to download this file, otherwise you might encounter a timeout error.
 
 # %%
 data.get_data(category_download='resampled_opacity',target_download='default')
@@ -97,13 +97,13 @@ data.get_data(category_download='resampled_opacity',target_download='default')
 data.get_data_config()[1]['resampled_opacity']['default']['url']
 
 # %% [markdown]
-# ## 2. Run PICASO Environment Checker
+# ## 3. Run PICASO Environment Checker
 
 # %%
 data.check_environ()
 
 # %% [markdown]
-# ## 3. Optional reference data you may want for PICASO
+# ## 4. Optional reference data you may want for PICASO
 
 # %% [markdown]
 # ### Download the stellar grids needed for exoplanet modeling (optional)
